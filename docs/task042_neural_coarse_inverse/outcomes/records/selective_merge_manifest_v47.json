@@ -1,0 +1,56 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "qualified": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/io/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "behavior": "explicit v47 only; ordinary defaults unchanged",
+      "tests": "focused schema/live budget and deadline/cleanup; no fresh PDE solve"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_trace_selection.py",
+        "benchmarks/collect_trace_selection.py",
+        "benchmarks/qualify_trace_selection.py"
+      ],
+      "tests": "actual saved40 witness independent checker and focused13 tests"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v47.md",
+        "outcomes/trace_subspace_selection_v47.md",
+        "outcomes/records/*v47*"
+      ],
+      "classification": "valid negative research evidence, not solver qualification"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/trace_*selection*.py",
+        "src/solvers/bound_array_identity.py",
+        "input/task042_neural_coarse_inverse/*v47*"
+      ],
+      "status": "fixed-coordinate selection closed; generic identity reader not production-qualified"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v47",
+        "results/task042/task042_v47_*",
+        "tmp/task042/v47"
+      ],
+      "reason": "ignored arrays/raw/runtime; never whole research-branch merge"
+    }
+  ]
+}

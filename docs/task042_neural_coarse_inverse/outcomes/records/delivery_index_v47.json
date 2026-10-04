@@ -1,0 +1,105 @@
+{
+  "UTC": "2026-10-04T23:42:46.575583+00:00",
+  "response": "docs/task042_neural_coarse_inverse/response_v47.md",
+  "outcome": "docs/task042_neural_coarse_inverse/outcomes/trace_subspace_selection_v47.md",
+  "source_sha_science": "9c167a54c41e178e66f393ca1ff357ddf1a877c0",
+  "source_sha_final_code": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61",
+  "documentation_head": "reported after final commit/push; not numerical source",
+  "records": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v47.json",
+      "bytes": 136978,
+      "sha256": "87c1d915a376865884cd431aed352283cda6187e0128f6c130b5f74656262285"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/capacity_readiness_v47.json",
+      "bytes": 85112,
+      "sha256": "4ef950395d29e602fef80f103452d30fa12acb66a744364040b51c69ae19cfac"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/changed_files_v47.json",
+      "bytes": 2967,
+      "sha256": "0c7cd3c1c07c8f9042e38d84c7fe488149c46b14d8dcbc8d3d51c0151c4bb90c"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/dataset_split_v47.json",
+      "bytes": 14350,
+      "sha256": "a8b475126957a35d48fd40b6f80a9fc9de6199c5f96802f4d2fa17b2c9009dfb"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/environment_source_v47.json",
+      "bytes": 23625,
+      "sha256": "0eb154e4a96a2f8500dbfb8efd9f2a5c63f2b34bfe343ba8ed9a6b4c82a62872"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/final_delivery_validation_v47.json",
+      "bytes": 1770,
+      "sha256": "d8c86f3188019ec702543a95f9783f21ab1ff094a27c66f9aeceb3da134d71dd"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/github_rendering_v47.json",
+      "bytes": 724,
+      "sha256": "1ba8f84b01ad3d343a28e0c1bd9459ed26998490714b39494098f008e9bf2bc5"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/identity_binding_v47.json",
+      "bytes": 2254,
+      "sha256": "0b93096ba2d18f168faccb3f73dc5b485b18bff6f851556b5dfedc1565a1577e"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/omission_localization_v47.json",
+      "bytes": 12240,
+      "sha256": "3712a9161edec842118cad278876f6a5cf691f0dbdee7ffa2278d7b123dadd9a"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/oracle_comparison_v47.json",
+      "bytes": 247790,
+      "sha256": "604ac5770e10822083c31f98a16c9390d8861e7ef51d50c01779981c23775dd1"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_evidence_index_v47.json",
+      "bytes": 139436,
+      "sha256": "88521f3e2bae1c268ef86d8ea449072cd8c2634e4d75db7f0ab2b53bebd9b74a"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v47.json",
+      "bytes": 4182,
+      "sha256": "8cb3d2d5901acae66df1ec414458c3921b112a5afd7668a31a3e09b690d173bc"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/run_index_v47.json",
+      "bytes": 26730,
+      "sha256": "4508a852d5e7d586940ef43c775a9e33f553d2a3358996a50025e22b0fceeaa5"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/saved_witness_checker_v47.json",
+      "bytes": 32462,
+      "sha256": "362ba3e5045f14049e8b5d3ba2b0fe29116e79eea3a1a459fb6184c9f6271a08"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v47.json",
+      "bytes": 1647,
+      "sha256": "56fa4f3e6a9142ccc393cc720d0aa13fe43bdaf42909acf0cf9fcfb45d9cd7ff"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/software_failures_v47.json",
+      "bytes": 2289,
+      "sha256": "274eb312e3533677e9edd4c3dbe4ae8fb82ceaf153a396c24b8b0e9c591807dc"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_v47.json",
+      "bytes": 7592,
+      "sha256": "7c53689abdd6987a8f80196cc51a5ed52a3490e0f5583f368eafd1d57c645bac"
+    }
+  ],
+  "closed": true,
+  "active": null,
+  "raw_scope": "all new observed formal/aux logs and bound code; arrays indexed but kept ignored",
+  "counts": {
+    "actions": 146,
+    "B_actions": 0
+  },
+  "correctness": "SUBSPACE_WITNESS_ONLY/ORACLE_FAIL; no training, no target or NN20 qualification",
+  "queue_handoff": "execution-review-handoff-20261005-v47 after remote/clean checks",
+  "repository_work": "stop after one queue handoff, no merge"
+}

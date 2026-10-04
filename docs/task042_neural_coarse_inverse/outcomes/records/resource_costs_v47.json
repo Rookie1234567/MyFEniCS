@@ -1,0 +1,98 @@
+{
+  "UTC": "2026-10-04T23:42:46.575583+00:00",
+  "clock": {
+    "start_utc": "2026-10-04T22:58:00.897865127+00:00",
+    "start_monotonic": 1079675.76,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "review_commit": "93326fd0e4edc078c51da9af71bdc6f870e93c61",
+    "observed_utc": "2026-10-04T23:42:46.575643+00:00",
+    "observed_monotonic": 1082361.436510317,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 2685.6777780056,
+    "heavy_remaining_seconds": 80114.3222219944,
+    "total_remaining_seconds": 83714.3222219944
+  },
+  "supervised_seconds": 134.3987309508957,
+  "probe_seconds": 22.51911270688288,
+  "nonnested_launcher_seconds": 24.880469856085256,
+  "known_loaded_seconds": 193.16361595597118,
+  "science_seconds": 82.45020999526605,
+  "saved_array_diagnosis_seconds": 11.853406795067713,
+  "original_actions": {
+    "actions": 146,
+    "B_actions": 0
+  },
+  "counts_scope": "per-RHS A/AH incl failed/replayed real actions; synthetic fixture algebra not original actions",
+  "peak_bytes": 1127350272,
+  "ownswap_bytes": 0,
+  "max_sampling_gap_seconds": 1.017745051998645,
+  "original_csr_loading": {
+    "seconds": 7.643588040955365,
+    "payload_bytes": 971189544,
+    "adjoint_data_copy": false,
+    "hash_reader": "streaming file and no-copy member memoryview",
+    "csr_index_dtype": "<i4",
+    "native_declared_index_dtype": "int64",
+    "source_manifest": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/checkpoints/native_csr.json",
+      "sha256": "d37f1173780b08ea79ecc69695dc323f5a0d43b4ffd555bd9430533704b25632"
+    }
+  },
+  "A_AH_seconds": {
+    "A": 14.947907320223749,
+    "AH": 0.17723880405537784
+  },
+  "new_data_seconds": 18.751348447985947,
+  "teacher_or_reference_inverse_seconds": 0,
+  "training_seconds": 0,
+  "inference_seconds": 0,
+  "shared_workstation": true,
+  "absolute_zero_interference": "not claimed; readable resource/CPU gates passed; no neighbor changes",
+  "history_known_loaded_lower_seconds": 88474.7778976671,
+  "historical_cold_operator_preparation_manual_unsupervised_git_io_seconds": "unknown; not cleared",
+  "budget": {
+    "total_loaded": 3600,
+    "science": 2400,
+    "analysis": 180,
+    "probe": 90,
+    "tail_reserve": 180,
+    "actions": 1200
+  },
+  "final_post_checks_and_metadata_fees": "settled with explicit final 10s reserved upper; final fee bytes included inline, no recursive rewrite",
+  "known_loaded_lower_seconds": 182.16361595597118,
+  "metadata_fee_final": {
+    "seconds": 11.363951601088047,
+    "measured_metadata_seconds": 0.363951601088047,
+    "pre_actor_scope_error_charged_upper_seconds": 1.0,
+    "final_metadata_write_reserved_upper_seconds": 10.0,
+    "source_sha": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61",
+    "no_original_actions": true,
+    "note": "Last metadata-only tail not part of numerical/ML actor. Manual implementation/reading/Git/queue remain elapsed and unknown CPU cost; no fabricated exact cold total.",
+    "receipt": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v47/post_settlement_fee.json",
+      "sha256": "abee128efb3559f4117b03ba23694ee2c780fa74692c4e3e88776d5247fb9b99",
+      "bytes": 464
+    }
+  },
+  "final_runs": 20,
+  "final_samples": 195,
+  "closed": true,
+  "active": null,
+  "all_descendants_cleared": true,
+  "own_lock_obtained_and_released": true,
+  "storage": {
+    "new_physical_file_bytes": 233702484,
+    "new_limit_bytes": 1073741824,
+    "task_artifacts_bytes": 23429002410,
+    "task_limit_bytes": 25769803776,
+    "disk_free_bytes": 3348903374848,
+    "minimum_free_bytes": 53687091200,
+    "delivery_reserve_bytes": 268435456,
+    "no_evidence_deleted": true
+  },
+  "legacy_actor_wall_seconds_field": "unused legacy ledger field; billing consumes every runs[].elapsed_seconds plus probes, nonnested launcher and final fee",
+  "metadata_tail_memory_scope": "Very short metadata-only tail is outside numerical worker sampling; no CSR, fields or ML. Peak is measured sampled supervised task trees including their launcher, not continuous cgroup maximum."
+}

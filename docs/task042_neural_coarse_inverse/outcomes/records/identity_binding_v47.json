@@ -1,0 +1,61 @@
+{
+  "historical_dot": {
+    "degree": 4,
+    "scale": "unknown",
+    "mode_inventory": "unknown",
+    "source_sha": "39c5052476d48eb5d53870d80418e21c969980d8",
+    "source_blob": "8709e4e26ce15893b9296601bd542084d650074a",
+    "source_content_sha256": "af13b55e565642ec6ef1ec109e73ce38cdd6fdd4c2304e93117f8b0709185209",
+    "provenance": "original source AST and bound compact content, no execution"
+  },
+  "declared_p6_rejected_before_consumer": {
+    "accepted": false,
+    "mismatches": {
+      "degree": {
+        "required": 6,
+        "actual": 4
+      }
+    },
+    "consumer_called": false
+  },
+  "finite_original_csr": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/checkpoints/native_csr.json",
+    "sha256": "d37f1173780b08ea79ecc69695dc323f5a0d43b4ffd555bd9430533704b25632"
+  },
+  "finite_degree": 6,
+  "degree_evidence": "N1E p6 Legendre complete 6/60/450 moments",
+  "DtN": "absent",
+  "production_engine_qualification": false,
+  "historical_fixture_unchanged": true,
+  "actual_csr_source": "2878e1ec374b275e37bb07c02591ce68494d6f52",
+  "bound_literal": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge1_20261004T100337865573Z/result.json",
+    "sha256": "37c81a01c6b1ad4a4452a6f2b26c4bd9be1248bcf06d0340fe991f0368b4d93d"
+  },
+  "bound_graph": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_setup_20261004T134304643860Z/result.json",
+    "sha256": "92966b2a3c1522e0530999de7991763a691cb6f9dbcd84a590afd6525f031caa"
+  },
+  "finite_identity": {
+    "cells": 64,
+    "degree": 6,
+    "volume_quadrature": 15,
+    "native_rows": 45000,
+    "independent_rows": 42624,
+    "slave_rows": 2376,
+    "trace_rows": 13824,
+    "interior_rows": 28800,
+    "DtN": "absent"
+  },
+  "original_material": {
+    "path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+  },
+  "original_physical": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+  "known_dot_subset": {
+    "local_cells": 40,
+    "selected_sector_modes": 228
+  },
+  "complete_dot_mode_inventory": "unknown",
+  "historical_v46_untouched": true
+}

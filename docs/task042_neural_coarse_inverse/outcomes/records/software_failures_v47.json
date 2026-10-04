@@ -1,0 +1,46 @@
+{
+  "preserved": true,
+  "failures": [
+    {
+      "cause": "module Ruff unavailable in qualified pure environment",
+      "raw": "tmp/task042/v47/aux_pre_002/command1.stderr",
+      "repair": "existing read-only cached standalone Ruff, no install"
+    },
+    {
+      "cause": "sandbox local MPI1 PMIx socket denied; no arrays or A calls",
+      "raw": "results/task042/task042_v47_data_20261004T231401607260Z/supervision/worker.log",
+      "repair": "authorized host execution through approval channel"
+    },
+    {
+      "cause": "JH J exact structural nnz assumption rejects valid floating near-zero entries",
+      "raw": "results/task042/task042_v47_data_20261004T231442112353Z/supervision/worker.log",
+      "diagnosis": "tmp/task042/v47/aux_diagnose_001/supervision/worker.log",
+      "repair": "original1e-10 numeric identity gate; measured max1.0939513574508396e-14; tiny-roundoff and bad-map regression"
+    },
+    {
+      "cause": "targeted Ruff default import/style findings",
+      "raw": "tmp/task042/v47/aux_style_001/supervision/worker.log",
+      "repair": "only new Task042 imports/style; original scientific math unchanged"
+    },
+    {
+      "cause": "formal run_summary launcher overhead absent from inherited summary-only reader",
+      "repair": "V47-only two filename consumer, retroactively charge all current runs; no refunds; actual regression"
+    },
+    {
+      "cause": "initial std metadata launcher python absent; PID1 sandbox echoed command gives false actor candidate",
+      "repair": "qualified activation/date and executable/ancestor filter; no real actor stopped"
+    },
+    {
+      "cause": "final metadata launcher used wrong env key; default closed V36 rejected before actor",
+      "raw": "tmp/task042/v47/final_checks_launcher_scope_error.json",
+      "repair": "actual TASK042_PREPARATION_SCOPE=v47; historical ledger untouched; 1s conservative charged upper"
+    },
+    {
+      "cause": "final Markdown self-output linked tests_v47 before creation after all eight commands passed",
+      "raw": "tmp/task042/v47/aux_post_001/supervision/worker.log",
+      "repair": "create explicit pending self-output, targeted structural replay only; no scientific rerun"
+    }
+  ],
+  "old_negative_results_untouched": true,
+  "window_not_refreshed": true
+}

@@ -1,0 +1,45 @@
+{
+  "status": "PASSED",
+  "UTC": "2026-10-04T23:43:49.622712+00:00",
+  "clock": {
+    "start_utc": "2026-10-04T22:58:00.897865127+00:00",
+    "start_monotonic": 1079675.76,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "review_commit": "93326fd0e4edc078c51da9af71bdc6f870e93c61",
+    "observed_utc": "2026-10-04T23:43:49.622765+00:00",
+    "observed_monotonic": 1082424.483633818,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 2748.7249002456665,
+    "heavy_remaining_seconds": 80051.27509975433,
+    "total_remaining_seconds": 83651.27509975433
+  },
+  "seconds": 0.19352433015592396,
+  "final_documentation_tests": 15,
+  "archive_files_checked": 327,
+  "all_archive_original_versions_match": true,
+  "final_fee_hash_and_body": {
+    "sha256": "abee128efb3559f4117b03ba23694ee2c780fa74692c4e3e88776d5247fb9b99",
+    "body": {
+      "seconds": 11.363951601088047,
+      "measured_metadata_seconds": 0.363951601088047,
+      "pre_actor_scope_error_charged_upper_seconds": 1.0,
+      "final_metadata_write_reserved_upper_seconds": 10.0,
+      "source_sha": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61",
+      "no_original_actions": true,
+      "note": "Last metadata-only tail not part of numerical/ML actor. Manual implementation/reading/Git/queue remain elapsed and unknown CPU cost; no fabricated exact cold total."
+    }
+  },
+  "counts": {
+    "actions": 146,
+    "B_actions": 0
+  },
+  "closed": true,
+  "active": null,
+  "all_record_receipts_consistent": true,
+  "original_actions": 0,
+  "own_lock_free": true,
+  "cost_scope": "covered by previously declared final10s metadata reserve; no closed ledger reopened"
+}

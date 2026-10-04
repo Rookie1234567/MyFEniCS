@@ -1,0 +1,3460 @@
+{
+  "status": "FINITE_SELECTION_ANALYSIS_COMPLETE",
+  "scope": "SUBSPACE_WITNESS_ONLY",
+  "main_failures": [
+    {
+      "split": "train",
+      "sample": 0,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.016207153092532157,
+        "trace_error": 0.036372146467699554,
+        "rho": 0.5064169372532253,
+        "residual_numerator": 345.76053175367156,
+        "original_rhs_denominator": 682.7586249959484,
+        "omitted_energy": 0.00026267181136477546,
+        "coefficient_energy": 1.000000000000003,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 21333.822774401306
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 3.1648320765086688e-06,
+          "entity1_direction1": 6.689024162446703e-06,
+          "entity1_direction2": 1.0791627309760062e-07,
+          "entity2_direction0": 7.192929991408349e-05,
+          "entity2_direction1": 7.861804366228985e-05,
+          "entity2_direction2": 0.00010216269527634893
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 11600,
+            "entity_key": [
+              2,
+              1,
+              3,
+              1,
+              3
+            ],
+            "moment_index": 56,
+            "center_nm": [
+              41.75,
+              6.25,
+              125.0
+            ],
+            "omitted_energy": 1.723881751702629e-07
+          },
+          {
+            "canonical_id": 10315,
+            "entity_key": [
+              2,
+              0,
+              0,
+              2,
+              3
+            ],
+            "moment_index": 31,
+            "center_nm": [
+              0.0,
+              15.625,
+              125.0
+            ],
+            "omitted_energy": 1.7228703811546906e-07
+          },
+          {
+            "canonical_id": 4843,
+            "entity_key": [
+              2,
+              1,
+              1,
+              1,
+              2
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              20.75,
+              6.25,
+              90.0
+            ],
+            "omitted_energy": 1.722439493494754e-07
+          },
+          {
+            "canonical_id": 3908,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              1
+            ],
+            "moment_index": 44,
+            "center_nm": [
+              8.25,
+              15.625,
+              0.0
+            ],
+            "omitted_energy": 1.7154086622734891e-07
+          },
+          {
+            "canonical_id": 13212,
+            "entity_key": [
+              2,
+              1,
+              2,
+              3,
+              3
+            ],
+            "moment_index": 48,
+            "center_nm": [
+              29.25,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 1.7147212554866013e-07
+          },
+          {
+            "canonical_id": 13366,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              4
+            ],
+            "moment_index": 22,
+            "center_nm": [
+              8.25,
+              21.875,
+              130.0
+            ],
+            "omitted_energy": 1.713713724708123e-07
+          },
+          {
+            "canonical_id": 4468,
+            "entity_key": [
+              2,
+              0,
+              1,
+              0,
+              2
+            ],
+            "moment_index": 4,
+            "center_nm": [
+              16.5,
+              3.125,
+              90.0
+            ],
+            "omitted_energy": 1.7106286705282468e-07
+          },
+          {
+            "canonical_id": 2323,
+            "entity_key": [
+              2,
+              0,
+              1,
+              0,
+              1
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              16.5,
+              3.125,
+              30.0
+            ],
+            "omitted_energy": 1.7075542314052305e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 1,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.011594830484939736,
+        "trace_error": 0.02172106309468241,
+        "rho": 0.45263783388808426,
+        "residual_numerator": 163.7309291613205,
+        "original_rhs_denominator": 361.7261238524823,
+        "omitted_energy": 0.0001344400939744876,
+        "coefficient_energy": 0.9999999999999982,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 14121.028278420039
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 5.050712249699126e-06,
+          "entity1_direction1": 2.0814784277343823e-06,
+          "entity1_direction2": 1.8069783339831465e-07,
+          "entity2_direction0": 2.8660705295465274e-05,
+          "entity2_direction1": 4.1185319489242136e-05,
+          "entity2_direction2": 5.728118067894821e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 1209,
+            "entity_key": [
+              1,
+              2,
+              3,
+              2,
+              3
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              33.5,
+              12.5,
+              125.0
+            ],
+            "omitted_energy": 9.053095037522248e-08
+          },
+          {
+            "canonical_id": 865,
+            "entity_key": [
+              1,
+              0,
+              1,
+              3,
+              2
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              20.75,
+              18.75,
+              60.0
+            ],
+            "omitted_energy": 9.05267411894705e-08
+          },
+          {
+            "canonical_id": 5079,
+            "entity_key": [
+              2,
+              1,
+              3,
+              0,
+              0
+            ],
+            "moment_index": 15,
+            "center_nm": [
+              41.75,
+              0.0,
+              -5.0
+            ],
+            "omitted_energy": 9.052090261573277e-08
+          },
+          {
+            "canonical_id": 10038,
+            "entity_key": [
+              2,
+              2,
+              1,
+              3,
+              2
+            ],
+            "moment_index": 54,
+            "center_nm": [
+              20.75,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 9.037162238920546e-08
+          },
+          {
+            "canonical_id": 9372,
+            "entity_key": [
+              2,
+              1,
+              2,
+              2,
+              2
+            ],
+            "moment_index": 48,
+            "center_nm": [
+              29.25,
+              12.5,
+              90.0
+            ],
+            "omitted_energy": 9.021043551570635e-08
+          },
+          {
+            "canonical_id": 1131,
+            "entity_key": [
+              1,
+              2,
+              0,
+              3,
+              3
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              0.0,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 9.016688302309216e-08
+          },
+          {
+            "canonical_id": 1255,
+            "entity_key": [
+              1,
+              0,
+              2,
+              2,
+              4
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              29.25,
+              12.5,
+              130.0
+            ],
+            "omitted_energy": 9.007869380778575e-08
+          },
+          {
+            "canonical_id": 11512,
+            "entity_key": [
+              2,
+              2,
+              3,
+              1,
+              3
+            ],
+            "moment_index": 28,
+            "center_nm": [
+              41.75,
+              9.375,
+              120.0
+            ],
+            "omitted_energy": 8.987336739096062e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 2,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.008836939378020867,
+        "trace_error": 0.01915157638779448,
+        "rho": 0.49861081029534376,
+        "residual_numerator": 209.14539484906018,
+        "original_rhs_denominator": 419.4561981622027,
+        "omitted_energy": 7.809149757081591e-05,
+        "coefficient_energy": 1.0000000000000013,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 23667.175466796125
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 1.7781494144689675e-06,
+          "entity1_direction1": 3.822379050290909e-06,
+          "entity1_direction2": 5.477954664015708e-08,
+          "entity2_direction0": 2.1148079098885748e-05,
+          "entity2_direction1": 2.486200415243819e-05,
+          "entity2_direction2": 2.6426106308091928e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 8764,
+            "entity_key": [
+              2,
+              2,
+              3,
+              1,
+              2
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              41.75,
+              9.375,
+              60.0
+            ],
+            "omitted_energy": 6.186230439889196e-08
+          },
+          {
+            "canonical_id": 12385,
+            "entity_key": [
+              2,
+              1,
+              1,
+              3,
+              3
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              20.75,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 6.185699847519359e-08
+          },
+          {
+            "canonical_id": 3604,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              8.25,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 6.175777643706188e-08
+          },
+          {
+            "canonical_id": 13570,
+            "entity_key": [
+              2,
+              1,
+              3,
+              3,
+              3
+            ],
+            "moment_index": 46,
+            "center_nm": [
+              41.75,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 6.166043588765073e-08
+          },
+          {
+            "canonical_id": 5413,
+            "entity_key": [
+              2,
+              0,
+              3,
+              0,
+              1
+            ],
+            "moment_index": 49,
+            "center_nm": [
+              33.5,
+              3.125,
+              30.0
+            ],
+            "omitted_energy": 6.161636274607635e-08
+          },
+          {
+            "canonical_id": 7765,
+            "entity_key": [
+              2,
+              1,
+              1,
+              0,
+              3
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              20.75,
+              0.0,
+              125.0
+            ],
+            "omitted_energy": 6.153883421777682e-08
+          },
+          {
+            "canonical_id": 11623,
+            "entity_key": [
+              2,
+              0,
+              3,
+              1,
+              3
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              33.5,
+              9.375,
+              125.0
+            ],
+            "omitted_energy": 6.151390582335559e-08
+          },
+          {
+            "canonical_id": 9523,
+            "entity_key": [
+              2,
+              0,
+              2,
+              0,
+              3
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              25.0,
+              3.125,
+              125.0
+            ],
+            "omitted_energy": 6.148400573281437e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 3,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.02205587186793417,
+        "trace_error": 0.03921404766978943,
+        "rho": 0.3005817638744958,
+        "residual_numerator": 199.76879760955802,
+        "original_rhs_denominator": 664.6071772104212,
+        "omitted_energy": 0.00048646148385472933,
+        "coefficient_energy": 0.9999999999999989,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 9057.397449791639
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 1.588015142582313e-05,
+          "entity1_direction1": 2.3614304277332783e-05,
+          "entity1_direction2": 9.839662546746131e-06,
+          "entity2_direction0": 0.00013853174742930725,
+          "entity2_direction1": 0.00015902755392773485,
+          "entity2_direction2": 0.00013956806424778544
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 2527,
+            "entity_key": [
+              2,
+              1,
+              0,
+              1,
+              1
+            ],
+            "moment_index": 43,
+            "center_nm": [
+              8.25,
+              6.25,
+              30.0
+            ],
+            "omitted_energy": 5.500959545133301e-07
+          },
+          {
+            "canonical_id": 7204,
+            "entity_key": [
+              2,
+              1,
+              0,
+              2,
+              2
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              8.25,
+              12.5,
+              90.0
+            ],
+            "omitted_energy": 5.499834713459278e-07
+          },
+          {
+            "canonical_id": 8467,
+            "entity_key": [
+              2,
+              1,
+              3,
+              2,
+              1
+            ],
+            "moment_index": 43,
+            "center_nm": [
+              41.75,
+              12.5,
+              30.0
+            ],
+            "omitted_energy": 5.489464630707679e-07
+          },
+          {
+            "canonical_id": 8704,
+            "entity_key": [
+              2,
+              1,
+              3,
+              0,
+              2
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              41.75,
+              0.0,
+              90.0
+            ],
+            "omitted_energy": 5.486989433286269e-07
+          },
+          {
+            "canonical_id": 2361,
+            "entity_key": [
+              2,
+              0,
+              1,
+              0,
+              1
+            ],
+            "moment_index": 57,
+            "center_nm": [
+              16.5,
+              3.125,
+              30.0
+            ],
+            "omitted_energy": 5.481468412602461e-07
+          },
+          {
+            "canonical_id": 1495,
+            "entity_key": [
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "moment_index": 31,
+            "center_nm": [
+              0.0,
+              3.125,
+              -5.0
+            ],
+            "omitted_energy": 5.48106718975209e-07
+          },
+          {
+            "canonical_id": 6483,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              0
+            ],
+            "moment_index": 39,
+            "center_nm": [
+              8.25,
+              21.875,
+              -10.0
+            ],
+            "omitted_energy": 5.477053716716339e-07
+          },
+          {
+            "canonical_id": 4762,
+            "entity_key": [
+              2,
+              0,
+              0,
+              1,
+              2
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              0.0,
+              9.375,
+              90.0
+            ],
+            "omitted_energy": 5.472987770392905e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 4,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.019686812516097968,
+        "trace_error": 0.034894176878747914,
+        "rho": 0.6721208262377003,
+        "residual_numerator": 419.7463591236387,
+        "original_rhs_denominator": 624.5102706803975,
+        "omitted_energy": 0.00038757058704399133,
+        "coefficient_energy": 0.9999999999999993,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 21321.194519448552
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 2.6700232301783487e-07,
+          "entity1_direction1": 1.0273382377601867e-05,
+          "entity1_direction2": 4.564763143023692e-06,
+          "entity2_direction0": 9.175338985120392e-05,
+          "entity2_direction1": 0.0001261196391723188,
+          "entity2_direction2": 0.00015459241017682501
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 6622,
+            "entity_key": [
+              2,
+              1,
+              1,
+              3,
+              0
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              20.75,
+              18.75,
+              -5.0
+            ],
+            "omitted_energy": 2.989235684527839e-07
+          },
+          {
+            "canonical_id": 3021,
+            "entity_key": [
+              2,
+              1,
+              2,
+              1,
+              0
+            ],
+            "moment_index": 57,
+            "center_nm": [
+              29.25,
+              6.25,
+              -5.0
+            ],
+            "omitted_energy": 2.988940796624558e-07
+          },
+          {
+            "canonical_id": 177,
+            "entity_key": [
+              1,
+              1,
+              2,
+              1,
+              0
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              25.0,
+              9.375,
+              -10.0
+            ],
+            "omitted_energy": 2.986184796752762e-07
+          },
+          {
+            "canonical_id": 10462,
+            "entity_key": [
+              2,
+              1,
+              1,
+              2,
+              3
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              20.75,
+              12.5,
+              125.0
+            ],
+            "omitted_energy": 2.9828986734657364e-07
+          },
+          {
+            "canonical_id": 9305,
+            "entity_key": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "moment_index": 41,
+            "center_nm": [
+              29.25,
+              15.625,
+              60.0
+            ],
+            "omitted_energy": 2.9819869127591577e-07
+          },
+          {
+            "canonical_id": 12442,
+            "entity_key": [
+              2,
+              1,
+              1,
+              3,
+              3
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              20.75,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 2.981447093050341e-07
+          },
+          {
+            "canonical_id": 7821,
+            "entity_key": [
+              2,
+              1,
+              1,
+              0,
+              3
+            ],
+            "moment_index": 57,
+            "center_nm": [
+              20.75,
+              0.0,
+              125.0
+            ],
+            "omitted_energy": 2.980671721181988e-07
+          },
+          {
+            "canonical_id": 1340,
+            "entity_key": [
+              1,
+              1,
+              3,
+              3,
+              4
+            ],
+            "moment_index": 2,
+            "center_nm": [
+              33.5,
+              21.875,
+              130.0
+            ],
+            "omitted_energy": 2.9772840367841106e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 5,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.022625045292457388,
+        "trace_error": 0.042664970313921885,
+        "rho": 0.40371674652579015,
+        "residual_numerator": 481.09079709410025,
+        "original_rhs_denominator": 1191.6543002839426,
+        "omitted_energy": 0.0005118926744857478,
+        "coefficient_energy": 0.9999999999999991,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 21263.6390723374
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 7.531784408290157e-06,
+          "entity1_direction1": 6.64880789075887e-06,
+          "entity1_direction2": 7.071896516656271e-06,
+          "entity2_direction0": 0.00015578883088656267,
+          "entity2_direction1": 0.0001298904308117701,
+          "entity2_direction2": 0.00020496092397170957
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 9492,
+            "entity_key": [
+              2,
+              2,
+              2,
+              0,
+              3
+            ],
+            "moment_index": 48,
+            "center_nm": [
+              29.25,
+              3.125,
+              120.0
+            ],
+            "omitted_energy": 2.9745427172398033e-07
+          },
+          {
+            "canonical_id": 6612,
+            "entity_key": [
+              2,
+              1,
+              1,
+              3,
+              0
+            ],
+            "moment_index": 48,
+            "center_nm": [
+              20.75,
+              18.75,
+              -5.0
+            ],
+            "omitted_energy": 2.9739266528544065e-07
+          },
+          {
+            "canonical_id": 5783,
+            "entity_key": [
+              2,
+              0,
+              2,
+              2,
+              0
+            ],
+            "moment_index": 59,
+            "center_nm": [
+              25.0,
+              15.625,
+              -5.0
+            ],
+            "omitted_energy": 2.9735473375015685e-07
+          },
+          {
+            "canonical_id": 12817,
+            "entity_key": [
+              2,
+              2,
+              3,
+              2,
+              3
+            ],
+            "moment_index": 13,
+            "center_nm": [
+              41.75,
+              15.625,
+              120.0
+            ],
+            "omitted_energy": 2.97281314990344e-07
+          },
+          {
+            "canonical_id": 4101,
+            "entity_key": [
+              2,
+              2,
+              1,
+              2,
+              1
+            ],
+            "moment_index": 57,
+            "center_nm": [
+              20.75,
+              15.625,
+              0.0
+            ],
+            "omitted_energy": 2.9703194151745153e-07
+          },
+          {
+            "canonical_id": 6148,
+            "entity_key": [
+              2,
+              1,
+              2,
+              0,
+              2
+            ],
+            "moment_index": 4,
+            "center_nm": [
+              29.25,
+              0.0,
+              90.0
+            ],
+            "omitted_energy": 2.962952359394284e-07
+          },
+          {
+            "canonical_id": 5690,
+            "entity_key": [
+              2,
+              1,
+              2,
+              2,
+              0
+            ],
+            "moment_index": 26,
+            "center_nm": [
+              29.25,
+              12.5,
+              -5.0
+            ],
+            "omitted_energy": 2.9614444002361863e-07
+          },
+          {
+            "canonical_id": 771,
+            "entity_key": [
+              1,
+              1,
+              2,
+              3,
+              0
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              25.0,
+              21.875,
+              -10.0
+            ],
+            "omitted_energy": 2.959613513333328e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 6,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.0103282157411814,
+        "trace_error": 0.021819699911568458,
+        "rho": 0.7321823971434301,
+        "residual_numerator": 203.39406592585067,
+        "original_rhs_denominator": 277.79152670069857,
+        "omitted_energy": 0.00010667204039638735,
+        "coefficient_energy": 1.0000000000000009,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 19693.049702172953
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 3.518212039149978e-07,
+          "entity1_direction1": 6.865151778203284e-06,
+          "entity1_direction2": 8.560690798970158e-07,
+          "entity2_direction0": 2.7127191732890266e-05,
+          "entity2_direction1": 3.579115072292741e-05,
+          "entity2_direction2": 3.5680655878554495e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 3614,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 50,
+            "center_nm": [
+              8.25,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 8.863976688557295e-08
+          },
+          {
+            "canonical_id": 4464,
+            "entity_key": [
+              2,
+              0,
+              1,
+              0,
+              2
+            ],
+            "moment_index": 0,
+            "center_nm": [
+              16.5,
+              3.125,
+              90.0
+            ],
+            "omitted_energy": 8.852236028262121e-08
+          },
+          {
+            "canonical_id": 10811,
+            "entity_key": [
+              2,
+              1,
+              3,
+              3,
+              0
+            ],
+            "moment_index": 47,
+            "center_nm": [
+              41.75,
+              18.75,
+              -5.0
+            ],
+            "omitted_energy": 8.8507683631967e-08
+          },
+          {
+            "canonical_id": 13515,
+            "entity_key": [
+              2,
+              2,
+              3,
+              3,
+              3
+            ],
+            "moment_index": 51,
+            "center_nm": [
+              41.75,
+              21.875,
+              120.0
+            ],
+            "omitted_energy": 8.85034196382426e-08
+          },
+          {
+            "canonical_id": 8441,
+            "entity_key": [
+              2,
+              1,
+              3,
+              2,
+              1
+            ],
+            "moment_index": 17,
+            "center_nm": [
+              41.75,
+              12.5,
+              30.0
+            ],
+            "omitted_energy": 8.849811882450835e-08
+          },
+          {
+            "canonical_id": 8336,
+            "entity_key": [
+              2,
+              2,
+              3,
+              2,
+              0
+            ],
+            "moment_index": 32,
+            "center_nm": [
+              41.75,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 8.844094653355313e-08
+          },
+          {
+            "canonical_id": 6495,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              0
+            ],
+            "moment_index": 51,
+            "center_nm": [
+              8.25,
+              21.875,
+              -10.0
+            ],
+            "omitted_energy": 8.842853361601672e-08
+          },
+          {
+            "canonical_id": 3608,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 44,
+            "center_nm": [
+              8.25,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 8.84065674400343e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 7,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.01120565007990715,
+        "trace_error": 0.020410918932537145,
+        "rho": 0.38058872699378243,
+        "residual_numerator": 109.26671403347548,
+        "original_rhs_denominator": 287.0991868218434,
+        "omitted_energy": 0.00012556659371332302,
+        "coefficient_energy": 0.9999999999999993,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 9751.037490399742
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 3.6670051816907243e-06,
+          "entity1_direction1": 1.2996435332700829e-05,
+          "entity1_direction2": 3.1820907208515197e-07,
+          "entity2_direction0": 3.446662358648833e-05,
+          "entity2_direction1": 3.163144417371609e-05,
+          "entity2_direction2": 4.248687636664197e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 4947,
+            "entity_key": [
+              2,
+              0,
+              3,
+              0,
+              0
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              33.5,
+              3.125,
+              -5.0
+            ],
+            "omitted_energy": 1.008409249433413e-07
+          },
+          {
+            "canonical_id": 3707,
+            "entity_key": [
+              2,
+              1,
+              1,
+              2,
+              0
+            ],
+            "moment_index": 23,
+            "center_nm": [
+              20.75,
+              12.5,
+              -5.0
+            ],
+            "omitted_energy": 1.007487787770913e-07
+          },
+          {
+            "canonical_id": 673,
+            "entity_key": [
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              16.5,
+              9.375,
+              120.0
+            ],
+            "omitted_energy": 1.0050979265744337e-07
+          },
+          {
+            "canonical_id": 9795,
+            "entity_key": [
+              2,
+              0,
+              2,
+              1,
+              3
+            ],
+            "moment_index": 51,
+            "center_nm": [
+              25.0,
+              9.375,
+              125.0
+            ],
+            "omitted_energy": 1.0048746644784821e-07
+          },
+          {
+            "canonical_id": 12477,
+            "entity_key": [
+              2,
+              0,
+              1,
+              3,
+              3
+            ],
+            "moment_index": 33,
+            "center_nm": [
+              16.5,
+              21.875,
+              125.0
+            ],
+            "omitted_energy": 1.0044966887807455e-07
+          },
+          {
+            "canonical_id": 3075,
+            "entity_key": [
+              2,
+              0,
+              2,
+              1,
+              0
+            ],
+            "moment_index": 51,
+            "center_nm": [
+              25.0,
+              9.375,
+              -5.0
+            ],
+            "omitted_energy": 1.0015804652785836e-07
+          },
+          {
+            "canonical_id": 3624,
+            "entity_key": [
+              2,
+              0,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 0,
+            "center_nm": [
+              0.0,
+              15.625,
+              -5.0
+            ],
+            "omitted_energy": 1.0011964652957234e-07
+          },
+          {
+            "canonical_id": 13397,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              4
+            ],
+            "moment_index": 53,
+            "center_nm": [
+              8.25,
+              21.875,
+              130.0
+            ],
+            "omitted_energy": 1.0008534525138938e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 8,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.0015621025505328182,
+        "trace_error": 0.0033722694548399173,
+        "rho": 0.18804625572590447,
+        "residual_numerator": 66.00993061814626,
+        "original_rhs_denominator": 351.0302843485599,
+        "omitted_energy": 2.4401643783811344e-06,
+        "coefficient_energy": 0.9999999999999996,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 42257.10443634506
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 1.0826195197907599e-07,
+          "entity1_direction1": 8.065712423593812e-08,
+          "entity1_direction2": 2.8094976859105738e-08,
+          "entity2_direction0": 6.346894722212558e-07,
+          "entity2_direction1": 6.03358950422472e-07,
+          "entity2_direction2": 9.851019026632865e-07
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 9641,
+            "entity_key": [
+              2,
+              2,
+              2,
+              1,
+              3
+            ],
+            "moment_index": 17,
+            "center_nm": [
+              29.25,
+              9.375,
+              120.0
+            ],
+            "omitted_energy": 2.2387418433595502e-09
+          },
+          {
+            "canonical_id": 9817,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              2
+            ],
+            "moment_index": 13,
+            "center_nm": [
+              8.25,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 2.2364119935037705e-09
+          },
+          {
+            "canonical_id": 13685,
+            "entity_key": [
+              2,
+              2,
+              3,
+              2,
+              4
+            ],
+            "moment_index": 41,
+            "center_nm": [
+              41.75,
+              15.625,
+              130.0
+            ],
+            "omitted_energy": 2.2290223902845256e-09
+          },
+          {
+            "canonical_id": 8647,
+            "entity_key": [
+              2,
+              0,
+              3,
+              0,
+              2
+            ],
+            "moment_index": 43,
+            "center_nm": [
+              33.5,
+              3.125,
+              90.0
+            ],
+            "omitted_energy": 2.2239683456955275e-09
+          },
+          {
+            "canonical_id": 8667,
+            "entity_key": [
+              2,
+              1,
+              3,
+              0,
+              2
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              41.75,
+              0.0,
+              90.0
+            ],
+            "omitted_energy": 2.2237526789044703e-09
+          },
+          {
+            "canonical_id": 6419,
+            "entity_key": [
+              2,
+              1,
+              0,
+              3,
+              0
+            ],
+            "moment_index": 35,
+            "center_nm": [
+              8.25,
+              18.75,
+              -5.0
+            ],
+            "omitted_energy": 2.2214287808111596e-09
+          },
+          {
+            "canonical_id": 7412,
+            "entity_key": [
+              2,
+              0,
+              1,
+              2,
+              2
+            ],
+            "moment_index": 8,
+            "center_nm": [
+              16.5,
+              15.625,
+              90.0
+            ],
+            "omitted_energy": 2.2206663733620327e-09
+          },
+          {
+            "canonical_id": 2763,
+            "entity_key": [
+              2,
+              0,
+              1,
+              1,
+              1
+            ],
+            "moment_index": 39,
+            "center_nm": [
+              16.5,
+              9.375,
+              30.0
+            ],
+            "omitted_energy": 2.217973815400849e-09
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 9,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.0016591596388194035,
+        "trace_error": 0.003158266532330831,
+        "rho": 0.06656213994312572,
+        "residual_numerator": 62.466143784828745,
+        "original_rhs_denominator": 938.4635746116815,
+        "omitted_energy": 2.752810707087332e-06,
+        "coefficient_energy": 0.9999999999999996,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 37649.26672714711
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 9.559041763450007e-08,
+          "entity1_direction1": 9.408794756313646e-08,
+          "entity1_direction2": 4.6366558716775564e-08,
+          "entity2_direction0": 6.083059873468428e-07,
+          "entity2_direction1": 8.573089642549467e-07,
+          "entity2_direction2": 1.0511508315711287e-06
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 2835,
+            "entity_key": [
+              2,
+              0,
+              2,
+              0,
+              0
+            ],
+            "moment_index": 51,
+            "center_nm": [
+              25.0,
+              3.125,
+              -5.0
+            ],
+            "omitted_energy": 3.586372982026187e-09
+          },
+          {
+            "canonical_id": 12225,
+            "entity_key": [
+              2,
+              1,
+              0,
+              3,
+              3
+            ],
+            "moment_index": 21,
+            "center_nm": [
+              8.25,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 3.5856742412802596e-09
+          },
+          {
+            "canonical_id": 2296,
+            "entity_key": [
+              2,
+              2,
+              1,
+              0,
+              1
+            ],
+            "moment_index": 52,
+            "center_nm": [
+              20.75,
+              3.125,
+              0.0
+            ],
+            "omitted_energy": 3.5848223280442285e-09
+          },
+          {
+            "canonical_id": 977,
+            "entity_key": [
+              1,
+              0,
+              3,
+              3,
+              0
+            ],
+            "moment_index": 5,
+            "center_nm": [
+              41.75,
+              18.75,
+              -10.0
+            ],
+            "omitted_energy": 3.5832909402947228e-09
+          },
+          {
+            "canonical_id": 4609,
+            "entity_key": [
+              2,
+              2,
+              0,
+              1,
+              2
+            ],
+            "moment_index": 25,
+            "center_nm": [
+              8.25,
+              9.375,
+              60.0
+            ],
+            "omitted_energy": 3.580028593306225e-09
+          },
+          {
+            "canonical_id": 13062,
+            "entity_key": [
+              2,
+              2,
+              3,
+              1,
+              4
+            ],
+            "moment_index": 18,
+            "center_nm": [
+              41.75,
+              9.375,
+              130.0
+            ],
+            "omitted_energy": 3.578164092599501e-09
+          },
+          {
+            "canonical_id": 4287,
+            "entity_key": [
+              2,
+              1,
+              0,
+              0,
+              2
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              8.25,
+              0.0,
+              90.0
+            ],
+            "omitted_energy": 3.5704068062094712e-09
+          },
+          {
+            "canonical_id": 13201,
+            "entity_key": [
+              2,
+              1,
+              2,
+              3,
+              3
+            ],
+            "moment_index": 37,
+            "center_nm": [
+              29.25,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 3.5652754887797393e-09
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 10,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.002648134763471424,
+        "trace_error": 0.005434877918860521,
+        "rho": 0.07031038313006306,
+        "residual_numerator": 105.96537631359007,
+        "original_rhs_denominator": 1507.1085036981085,
+        "omitted_energy": 7.0126177255058525e-06,
+        "coefficient_energy": 0.9999999999999996,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 40015.09959964451
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 2.1813512261923212e-07,
+          "entity1_direction1": 1.616026539761902e-07,
+          "entity1_direction2": 8.462389884332484e-08,
+          "entity2_direction0": 1.6650515578794894e-06,
+          "entity2_direction1": 1.9388648348756037e-06,
+          "entity2_direction2": 2.944339657312013e-06
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 6764,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              1
+            ],
+            "moment_index": 20,
+            "center_nm": [
+              8.25,
+              21.875,
+              0.0
+            ],
+            "omitted_energy": 7.26213022462799e-09
+          },
+          {
+            "canonical_id": 10769,
+            "entity_key": [
+              2,
+              1,
+              3,
+              3,
+              0
+            ],
+            "moment_index": 5,
+            "center_nm": [
+              41.75,
+              18.75,
+              -5.0
+            ],
+            "omitted_energy": 7.2608923034716796e-09
+          },
+          {
+            "canonical_id": 9800,
+            "entity_key": [
+              2,
+              0,
+              2,
+              1,
+              3
+            ],
+            "moment_index": 56,
+            "center_nm": [
+              25.0,
+              9.375,
+              125.0
+            ],
+            "omitted_energy": 7.25727637551635e-09
+          },
+          {
+            "canonical_id": 5706,
+            "entity_key": [
+              2,
+              1,
+              2,
+              2,
+              0
+            ],
+            "moment_index": 42,
+            "center_nm": [
+              29.25,
+              12.5,
+              -5.0
+            ],
+            "omitted_energy": 7.244766708054689e-09
+          },
+          {
+            "canonical_id": 13722,
+            "entity_key": [
+              2,
+              2,
+              2,
+              3,
+              4
+            ],
+            "moment_index": 18,
+            "center_nm": [
+              29.25,
+              21.875,
+              130.0
+            ],
+            "omitted_energy": 7.236958252417817e-09
+          },
+          {
+            "canonical_id": 11683,
+            "entity_key": [
+              2,
+              2,
+              2,
+              3,
+              2
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              29.25,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 7.23195293419594e-09
+          },
+          {
+            "canonical_id": 3552,
+            "entity_key": [
+              2,
+              1,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 48,
+            "center_nm": [
+              8.25,
+              12.5,
+              -5.0
+            ],
+            "omitted_energy": 7.2316702855402995e-09
+          },
+          {
+            "canonical_id": 13118,
+            "entity_key": [
+              2,
+              2,
+              2,
+              3,
+              3
+            ],
+            "moment_index": 14,
+            "center_nm": [
+              29.25,
+              21.875,
+              120.0
+            ],
+            "omitted_energy": 7.226739480895822e-09
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 11,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.004475185151411825,
+        "trace_error": 0.010000250640408123,
+        "rho": 0.4143184890412293,
+        "residual_numerator": 156.66991021115786,
+        "original_rhs_denominator": 378.13883366321954,
+        "omitted_energy": 2.0027282139416867e-05,
+        "coefficient_energy": 0.9999999999999993,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 35008.58733447752
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 7.541949293331506e-07,
+          "entity1_direction1": 8.920318616204761e-07,
+          "entity1_direction2": 4.520640542002978e-07,
+          "entity2_direction0": 5.0844287017716e-06,
+          "entity2_direction1": 5.498980292196846e-06,
+          "entity2_direction2": 7.3455823002945135e-06
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 11566,
+            "entity_key": [
+              2,
+              1,
+              3,
+              1,
+              3
+            ],
+            "moment_index": 22,
+            "center_nm": [
+              41.75,
+              6.25,
+              125.0
+            ],
+            "omitted_energy": 1.698626010256376e-08
+          },
+          {
+            "canonical_id": 10251,
+            "entity_key": [
+              2,
+              1,
+              0,
+              2,
+              3
+            ],
+            "moment_index": 27,
+            "center_nm": [
+              8.25,
+              12.5,
+              125.0
+            ],
+            "omitted_energy": 1.6981435771628967e-08
+          },
+          {
+            "canonical_id": 2856,
+            "entity_key": [
+              2,
+              2,
+              2,
+              0,
+              0
+            ],
+            "moment_index": 12,
+            "center_nm": [
+              29.25,
+              3.125,
+              -10.0
+            ],
+            "omitted_energy": 1.6971570079606092e-08
+          },
+          {
+            "canonical_id": 4568,
+            "entity_key": [
+              2,
+              1,
+              1,
+              0,
+              2
+            ],
+            "moment_index": 44,
+            "center_nm": [
+              20.75,
+              0.0,
+              90.0
+            ],
+            "omitted_energy": 1.6963559680375334e-08
+          },
+          {
+            "canonical_id": 6025,
+            "entity_key": [
+              2,
+              2,
+              2,
+              0,
+              2
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              29.25,
+              3.125,
+              60.0
+            ],
+            "omitted_energy": 1.6949775401908045e-08
+          },
+          {
+            "canonical_id": 9818,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              2
+            ],
+            "moment_index": 14,
+            "center_nm": [
+              8.25,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 1.6921605511756654e-08
+          },
+          {
+            "canonical_id": 1196,
+            "entity_key": [
+              1,
+              0,
+              3,
+              2,
+              3
+            ],
+            "moment_index": 2,
+            "center_nm": [
+              41.75,
+              12.5,
+              120.0
+            ],
+            "omitted_energy": 1.6909226843493225e-08
+          },
+          {
+            "canonical_id": 5190,
+            "entity_key": [
+              2,
+              0,
+              3,
+              1,
+              0
+            ],
+            "moment_index": 6,
+            "center_nm": [
+              33.5,
+              9.375,
+              -5.0
+            ],
+            "omitted_energy": 1.6902907764835916e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 12,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.004357023015142346,
+        "trace_error": 0.00839085699343624,
+        "rho": 0.2581415526647943,
+        "residual_numerator": 85.09384541586986,
+        "original_rhs_denominator": 329.6402479083526,
+        "omitted_energy": 1.8983649554480147e-05,
+        "coefficient_energy": 1.0000000000000022,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 19530.272188174265
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 7.086555433693069e-07,
+          "entity1_direction1": 9.190741737974507e-07,
+          "entity1_direction2": 3.6002896948584645e-07,
+          "entity2_direction0": 4.5623491099463176e-06,
+          "entity2_direction1": 5.717978857216204e-06,
+          "entity2_direction2": 6.715562900665026e-06
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 5132,
+            "entity_key": [
+              2,
+              1,
+              3,
+              1,
+              0
+            ],
+            "moment_index": 8,
+            "center_nm": [
+              41.75,
+              6.25,
+              -5.0
+            ],
+            "omitted_energy": 1.838975880539374e-08
+          },
+          {
+            "canonical_id": 1637,
+            "entity_key": [
+              2,
+              2,
+              1,
+              0,
+              0
+            ],
+            "moment_index": 53,
+            "center_nm": [
+              20.75,
+              3.125,
+              -10.0
+            ],
+            "omitted_energy": 1.834074434736912e-08
+          },
+          {
+            "canonical_id": 475,
+            "entity_key": [
+              1,
+              0,
+              2,
+              0,
+              2
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              29.25,
+              0.0,
+              60.0
+            ],
+            "omitted_energy": 1.833726576707604e-08
+          },
+          {
+            "canonical_id": 4295,
+            "entity_key": [
+              2,
+              1,
+              0,
+              0,
+              2
+            ],
+            "moment_index": 11,
+            "center_nm": [
+              8.25,
+              0.0,
+              90.0
+            ],
+            "omitted_energy": 1.8334483085379087e-08
+          },
+          {
+            "canonical_id": 2627,
+            "entity_key": [
+              2,
+              2,
+              1,
+              1,
+              1
+            ],
+            "moment_index": 23,
+            "center_nm": [
+              20.75,
+              9.375,
+              0.0
+            ],
+            "omitted_energy": 1.831997486780108e-08
+          },
+          {
+            "canonical_id": 2500,
+            "entity_key": [
+              2,
+              1,
+              0,
+              1,
+              1
+            ],
+            "moment_index": 16,
+            "center_nm": [
+              8.25,
+              6.25,
+              30.0
+            ],
+            "omitted_energy": 1.831258764041761e-08
+          },
+          {
+            "canonical_id": 8356,
+            "entity_key": [
+              2,
+              2,
+              3,
+              2,
+              0
+            ],
+            "moment_index": 52,
+            "center_nm": [
+              41.75,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 1.8273523966375938e-08
+          },
+          {
+            "canonical_id": 6985,
+            "entity_key": [
+              2,
+              1,
+              1,
+              3,
+              1
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              20.75,
+              18.75,
+              30.0
+            ],
+            "omitted_energy": 1.8271485160688014e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 13,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.007128283140255396,
+        "trace_error": 0.013901732026060782,
+        "rho": 0.35548898085367525,
+        "residual_numerator": 191.96047556094007,
+        "original_rhs_denominator": 539.9899459610929,
+        "omitted_energy": 5.081242052764941e-05,
+        "coefficient_energy": 1.0000000000000018,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 26929.412283988226
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 1.684036825065615e-06,
+          "entity1_direction1": 2.713008163571195e-06,
+          "entity1_direction2": 8.18268049854858e-07,
+          "entity2_direction0": 1.4232457211538242e-05,
+          "entity2_direction1": 1.4984862587846688e-05,
+          "entity2_direction2": 1.637978768977282e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 2703,
+            "entity_key": [
+              2,
+              1,
+              1,
+              1,
+              1
+            ],
+            "moment_index": 39,
+            "center_nm": [
+              20.75,
+              6.25,
+              30.0
+            ],
+            "omitted_energy": 4.421037577916772e-08
+          },
+          {
+            "canonical_id": 5614,
+            "entity_key": [
+              2,
+              0,
+              3,
+              1,
+              1
+            ],
+            "moment_index": 10,
+            "center_nm": [
+              33.5,
+              9.375,
+              30.0
+            ],
+            "omitted_energy": 4.420292777405303e-08
+          },
+          {
+            "canonical_id": 7736,
+            "entity_key": [
+              2,
+              0,
+              1,
+              0,
+              3
+            ],
+            "moment_index": 32,
+            "center_nm": [
+              16.5,
+              3.125,
+              125.0
+            ],
+            "omitted_energy": 4.4149873995627114e-08
+          },
+          {
+            "canonical_id": 8195,
+            "entity_key": [
+              2,
+              1,
+              3,
+              2,
+              0
+            ],
+            "moment_index": 11,
+            "center_nm": [
+              41.75,
+              12.5,
+              -5.0
+            ],
+            "omitted_energy": 4.4095839275714305e-08
+          },
+          {
+            "canonical_id": 5917,
+            "entity_key": [
+              2,
+              1,
+              2,
+              2,
+              1
+            ],
+            "moment_index": 13,
+            "center_nm": [
+              29.25,
+              12.5,
+              30.0
+            ],
+            "omitted_energy": 4.4065359071072314e-08
+          },
+          {
+            "canonical_id": 8862,
+            "entity_key": [
+              2,
+              0,
+              3,
+              1,
+              2
+            ],
+            "moment_index": 18,
+            "center_nm": [
+              33.5,
+              9.375,
+              90.0
+            ],
+            "omitted_energy": 4.406331836559588e-08
+          },
+          {
+            "canonical_id": 7818,
+            "entity_key": [
+              2,
+              1,
+              1,
+              0,
+              3
+            ],
+            "moment_index": 54,
+            "center_nm": [
+              20.75,
+              0.0,
+              125.0
+            ],
+            "omitted_energy": 4.394630640234349e-08
+          },
+          {
+            "canonical_id": 9280,
+            "entity_key": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "moment_index": 16,
+            "center_nm": [
+              29.25,
+              15.625,
+              60.0
+            ],
+            "omitted_energy": 4.391612725401942e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 14,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.001621070884921696,
+        "trace_error": 0.0035492639495832436,
+        "rho": 0.2910394353478447,
+        "residual_numerator": 71.84011914642788,
+        "original_rhs_denominator": 246.8398107650462,
+        "omitted_energy": 2.627870813940818e-06,
+        "coefficient_energy": 1.0000000000000027,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 44316.457605059004
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 9.583339177508941e-08,
+          "entity1_direction1": 9.594992271359491e-08,
+          "entity1_direction2": 3.796690703566651e-08,
+          "entity2_direction0": 5.911484330227659e-07,
+          "entity2_direction1": 6.736396968596068e-07,
+          "entity2_direction2": 1.1333324625340899e-06
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 674,
+            "entity_key": [
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "moment_index": 2,
+            "center_nm": [
+              16.5,
+              9.375,
+              120.0
+            ],
+            "omitted_energy": 2.5173770360687115e-09
+          },
+          {
+            "canonical_id": 9157,
+            "entity_key": [
+              2,
+              1,
+              2,
+              3,
+              1
+            ],
+            "moment_index": 13,
+            "center_nm": [
+              29.25,
+              18.75,
+              30.0
+            ],
+            "omitted_energy": 2.517042151111941e-09
+          },
+          {
+            "canonical_id": 9460,
+            "entity_key": [
+              2,
+              2,
+              2,
+              0,
+              3
+            ],
+            "moment_index": 16,
+            "center_nm": [
+              29.25,
+              3.125,
+              120.0
+            ],
+            "omitted_energy": 2.516969694023542e-09
+          },
+          {
+            "canonical_id": 5970,
+            "entity_key": [
+              2,
+              0,
+              2,
+              2,
+              1
+            ],
+            "moment_index": 6,
+            "center_nm": [
+              25.0,
+              15.625,
+              30.0
+            ],
+            "omitted_energy": 2.5157034574077793e-09
+          },
+          {
+            "canonical_id": 9996,
+            "entity_key": [
+              2,
+              2,
+              1,
+              3,
+              2
+            ],
+            "moment_index": 12,
+            "center_nm": [
+              20.75,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 2.514896665809061e-09
+          },
+          {
+            "canonical_id": 10942,
+            "entity_key": [
+              2,
+              2,
+              3,
+              3,
+              0
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              41.75,
+              21.875,
+              -10.0
+            ],
+            "omitted_energy": 2.514796373143877e-09
+          },
+          {
+            "canonical_id": 6142,
+            "entity_key": [
+              2,
+              0,
+              2,
+              0,
+              2
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              25.0,
+              3.125,
+              90.0
+            ],
+            "omitted_energy": 2.5146639332561225e-09
+          },
+          {
+            "canonical_id": 12364,
+            "entity_key": [
+              2,
+              2,
+              1,
+              3,
+              3
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              20.75,
+              21.875,
+              120.0
+            ],
+            "omitted_energy": 2.5145618606242145e-09
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "train",
+      "sample": 15,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.009578185076423235,
+        "trace_error": 0.01796162643237305,
+        "rho": 0.39260433100663666,
+        "residual_numerator": 309.1828948270732,
+        "original_rhs_denominator": 787.5177893079501,
+        "omitted_energy": 9.174162935821698e-05,
+        "coefficient_energy": 1.0000000000000022,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 32279.90400688005
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 2.284305438640944e-06,
+          "entity1_direction1": 2.4257283071776624e-06,
+          "entity1_direction2": 1.2985548188361904e-06,
+          "entity2_direction0": 2.3475072062210706e-05,
+          "entity2_direction1": 2.352524569738895e-05,
+          "entity2_direction2": 3.8732723033962415e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 7318,
+            "entity_key": [
+              2,
+              2,
+              1,
+              2,
+              2
+            ],
+            "moment_index": 34,
+            "center_nm": [
+              20.75,
+              15.625,
+              60.0
+            ],
+            "omitted_energy": 6.21775806963384e-08
+          },
+          {
+            "canonical_id": 10190,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              3
+            ],
+            "moment_index": 26,
+            "center_nm": [
+              8.25,
+              15.625,
+              120.0
+            ],
+            "omitted_energy": 6.21600226514971e-08
+          },
+          {
+            "canonical_id": 1485,
+            "entity_key": [
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "moment_index": 21,
+            "center_nm": [
+              0.0,
+              3.125,
+              -5.0
+            ],
+            "omitted_energy": 6.210361188577506e-08
+          },
+          {
+            "canonical_id": 12004,
+            "entity_key": [
+              2,
+              0,
+              2,
+              2,
+              3
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              25.0,
+              15.625,
+              125.0
+            ],
+            "omitted_energy": 6.208597716950855e-08
+          },
+          {
+            "canonical_id": 5698,
+            "entity_key": [
+              2,
+              1,
+              2,
+              2,
+              0
+            ],
+            "moment_index": 34,
+            "center_nm": [
+              29.25,
+              12.5,
+              -5.0
+            ],
+            "omitted_energy": 6.193559016699368e-08
+          },
+          {
+            "canonical_id": 8434,
+            "entity_key": [
+              2,
+              1,
+              3,
+              2,
+              1
+            ],
+            "moment_index": 10,
+            "center_nm": [
+              41.75,
+              12.5,
+              30.0
+            ],
+            "omitted_energy": 6.185508989764013e-08
+          },
+          {
+            "canonical_id": 3600,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 36,
+            "center_nm": [
+              8.25,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 6.172622695873885e-08
+          },
+          {
+            "canonical_id": 9310,
+            "entity_key": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "moment_index": 46,
+            "center_nm": [
+              29.25,
+              15.625,
+              60.0
+            ],
+            "omitted_energy": 6.163562173875715e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "validation",
+      "sample": 0,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.012432343805931381,
+        "trace_error": 0.025883061638952747,
+        "rho": 0.4508210176822779,
+        "residual_numerator": 441.34782436030383,
+        "original_rhs_denominator": 978.9867975306989,
+        "omitted_energy": 0.00015456317250888064,
+        "coefficient_energy": 1.0000000000000018,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 35499.969374217275
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 5.8328398588986925e-06,
+          "entity1_direction1": 3.2627323688444357e-06,
+          "entity1_direction2": 2.2636922133508127e-06,
+          "entity2_direction0": 3.948744409195883e-05,
+          "entity2_direction1": 3.562954322586788e-05,
+          "entity2_direction2": 6.808692074995986e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 3381,
+            "entity_key": [
+              2,
+              2,
+              2,
+              1,
+              1
+            ],
+            "moment_index": 57,
+            "center_nm": [
+              29.25,
+              9.375,
+              0.0
+            ],
+            "omitted_energy": 1.019102655975751e-07
+          },
+          {
+            "canonical_id": 10402,
+            "entity_key": [
+              2,
+              2,
+              1,
+              2,
+              3
+            ],
+            "moment_index": 58,
+            "center_nm": [
+              20.75,
+              15.625,
+              120.0
+            ],
+            "omitted_energy": 1.0190963486686085e-07
+          },
+          {
+            "canonical_id": 11901,
+            "entity_key": [
+              2,
+              2,
+              2,
+              2,
+              3
+            ],
+            "moment_index": 57,
+            "center_nm": [
+              29.25,
+              15.625,
+              120.0
+            ],
+            "omitted_energy": 1.0188376521393349e-07
+          },
+          {
+            "canonical_id": 9863,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              2
+            ],
+            "moment_index": 59,
+            "center_nm": [
+              8.25,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 1.0183622111151718e-07
+          },
+          {
+            "canonical_id": 1989,
+            "entity_key": [
+              2,
+              0,
+              1,
+              1,
+              0
+            ],
+            "moment_index": 45,
+            "center_nm": [
+              16.5,
+              9.375,
+              -5.0
+            ],
+            "omitted_energy": 1.018171879402808e-07
+          },
+          {
+            "canonical_id": 1249,
+            "entity_key": [
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "moment_index": 1,
+            "center_nm": [
+              25.0,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 1.0181414347107034e-07
+          },
+          {
+            "canonical_id": 5139,
+            "entity_key": [
+              2,
+              1,
+              3,
+              1,
+              0
+            ],
+            "moment_index": 15,
+            "center_nm": [
+              41.75,
+              6.25,
+              -5.0
+            ],
+            "omitted_energy": 1.0176759174955562e-07
+          },
+          {
+            "canonical_id": 4158,
+            "entity_key": [
+              2,
+              1,
+              1,
+              2,
+              1
+            ],
+            "moment_index": 54,
+            "center_nm": [
+              20.75,
+              12.5,
+              30.0
+            ],
+            "omitted_energy": 1.0173973517984307e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "validation",
+      "sample": 1,
+      "family": "two_waves",
+      "metrics": {
+        "eta": 0.015572856969120434,
+        "trace_error": 0.027624467532373343,
+        "rho": 0.6005847338222069,
+        "residual_numerator": 327.59108846502005,
+        "original_rhs_denominator": 545.4535721881967,
+        "omitted_energy": 0.00024251387418068333,
+        "coefficient_energy": 1.0000000000000018,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 21036.030133366232
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 3.762033188054169e-06,
+          "entity1_direction1": 4.12280259552609e-07,
+          "entity1_direction2": 4.417605119930467e-06,
+          "entity2_direction0": 5.79738985732909e-05,
+          "entity2_direction1": 7.670128707105177e-05,
+          "entity2_direction2": 9.924676996880332e-05
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 11136,
+            "entity_key": [
+              2,
+              2,
+              3,
+              2,
+              2
+            ],
+            "moment_index": 12,
+            "center_nm": [
+              41.75,
+              15.625,
+              60.0
+            ],
+            "omitted_energy": 2.2742797661396694e-07
+          },
+          {
+            "canonical_id": 8504,
+            "entity_key": [
+              2,
+              0,
+              3,
+              2,
+              1
+            ],
+            "moment_index": 20,
+            "center_nm": [
+              33.5,
+              15.625,
+              30.0
+            ],
+            "omitted_energy": 2.26982830933437e-07
+          },
+          {
+            "canonical_id": 13219,
+            "entity_key": [
+              2,
+              1,
+              2,
+              3,
+              3
+            ],
+            "moment_index": 55,
+            "center_nm": [
+              29.25,
+              18.75,
+              125.0
+            ],
+            "omitted_energy": 2.26848287961702e-07
+          },
+          {
+            "canonical_id": 9811,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              2
+            ],
+            "moment_index": 7,
+            "center_nm": [
+              8.25,
+              21.875,
+              60.0
+            ],
+            "omitted_energy": 2.256585157019845e-07
+          },
+          {
+            "canonical_id": 11345,
+            "entity_key": [
+              2,
+              2,
+              3,
+              0,
+              3
+            ],
+            "moment_index": 41,
+            "center_nm": [
+              41.75,
+              3.125,
+              120.0
+            ],
+            "omitted_energy": 2.254191117732694e-07
+          },
+          {
+            "canonical_id": 4040,
+            "entity_key": [
+              2,
+              0,
+              0,
+              2,
+              1
+            ],
+            "moment_index": 56,
+            "center_nm": [
+              0.0,
+              15.625,
+              30.0
+            ],
+            "omitted_energy": 2.248909214552453e-07
+          },
+          {
+            "canonical_id": 11396,
+            "entity_key": [
+              2,
+              0,
+              3,
+              0,
+              3
+            ],
+            "moment_index": 32,
+            "center_nm": [
+              33.5,
+              3.125,
+              125.0
+            ],
+            "omitted_energy": 2.248180664426628e-07
+          },
+          {
+            "canonical_id": 8543,
+            "entity_key": [
+              2,
+              0,
+              3,
+              2,
+              1
+            ],
+            "moment_index": 59,
+            "center_nm": [
+              33.5,
+              15.625,
+              30.0
+            ],
+            "omitted_energy": 2.2422486569245115e-07
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "validation",
+      "sample": 2,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.000647155463000392,
+        "trace_error": 0.001292416943664164,
+        "rho": 0.08287896648231241,
+        "residual_numerator": 33.482166294384136,
+        "original_rhs_denominator": 403.98870443841406,
+        "omitted_energy": 4.188101932912527e-07,
+        "coefficient_energy": 1.0000000000000022,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 51737.439006002525
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 8.556725197579838e-09,
+          "entity1_direction1": 1.5810475978474666e-08,
+          "entity1_direction2": 5.093289597124458e-09,
+          "entity2_direction0": 1.2506607283670803e-07,
+          "entity2_direction1": 1.1069608215600537e-07,
+          "entity2_direction2": 1.5358754752536e-07
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 1771,
+            "entity_key": [
+              2,
+              2,
+              0,
+              1,
+              0
+            ],
+            "moment_index": 7,
+            "center_nm": [
+              8.25,
+              9.375,
+              -10.0
+            ],
+            "omitted_energy": 6.090135080441617e-10
+          },
+          {
+            "canonical_id": 9307,
+            "entity_key": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "moment_index": 43,
+            "center_nm": [
+              29.25,
+              15.625,
+              60.0
+            ],
+            "omitted_energy": 6.089978945213154e-10
+          },
+          {
+            "canonical_id": 6768,
+            "entity_key": [
+              2,
+              2,
+              0,
+              3,
+              1
+            ],
+            "moment_index": 24,
+            "center_nm": [
+              8.25,
+              21.875,
+              0.0
+            ],
+            "omitted_energy": 6.089360057314686e-10
+          },
+          {
+            "canonical_id": 9769,
+            "entity_key": [
+              2,
+              0,
+              2,
+              1,
+              3
+            ],
+            "moment_index": 25,
+            "center_nm": [
+              25.0,
+              9.375,
+              125.0
+            ],
+            "omitted_energy": 6.076427886601051e-10
+          },
+          {
+            "canonical_id": 11023,
+            "entity_key": [
+              2,
+              1,
+              3,
+              3,
+              1
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              41.75,
+              18.75,
+              30.0
+            ],
+            "omitted_energy": 6.072579460758299e-10
+          },
+          {
+            "canonical_id": 5540,
+            "entity_key": [
+              2,
+              2,
+              3,
+              1,
+              1
+            ],
+            "moment_index": 56,
+            "center_nm": [
+              41.75,
+              9.375,
+              0.0
+            ],
+            "omitted_energy": 6.046934506535041e-10
+          },
+          {
+            "canonical_id": 3583,
+            "entity_key": [
+              2,
+              2,
+              0,
+              2,
+              0
+            ],
+            "moment_index": 19,
+            "center_nm": [
+              8.25,
+              15.625,
+              -10.0
+            ],
+            "omitted_energy": 6.046265987945002e-10
+          },
+          {
+            "canonical_id": 861,
+            "entity_key": [
+              1,
+              2,
+              0,
+              3,
+              2
+            ],
+            "moment_index": 3,
+            "center_nm": [
+              0.0,
+              18.75,
+              90.0
+            ],
+            "omitted_energy": 6.045939122908713e-10
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    },
+    {
+      "split": "validation",
+      "sample": 3,
+      "family": "localized_two_waves",
+      "metrics": {
+        "eta": 0.0037492647462583906,
+        "trace_error": 0.007590967558321865,
+        "rho": 0.16855696450311924,
+        "residual_numerator": 177.39897928296153,
+        "original_rhs_denominator": 1052.4571310708354,
+        "omitted_energy": 1.4056986137536014e-05,
+        "coefficient_energy": 1.0000000000000013,
+        "passed": false,
+        "classification": "SUBSPACE_WITNESS_ONLY",
+        "original_action_gain": 47315.67154866781
+      },
+      "omission": {
+        "groups": {
+          "entity1_direction0": 4.0343412883659083e-07,
+          "entity1_direction1": 3.5925945732643876e-07,
+          "entity1_direction2": 2.8733042366667975e-07,
+          "entity2_direction0": 3.8616477209232285e-06,
+          "entity2_direction1": 3.4051435054074584e-06,
+          "entity2_direction2": 5.7401709013756234e-06
+        },
+        "hardest_coefficients": [
+          {
+            "canonical_id": 9964,
+            "entity_key": [
+              2,
+              0,
+              0,
+              3,
+              2
+            ],
+            "moment_index": 40,
+            "center_nm": [
+              0.0,
+              21.875,
+              90.0
+            ],
+            "omitted_energy": 1.337305760622278e-08
+          },
+          {
+            "canonical_id": 10505,
+            "entity_key": [
+              2,
+              0,
+              1,
+              2,
+              3
+            ],
+            "moment_index": 41,
+            "center_nm": [
+              16.5,
+              15.625,
+              125.0
+            ],
+            "omitted_energy": 1.336184929222825e-08
+          },
+          {
+            "canonical_id": 8578,
+            "entity_key": [
+              2,
+              2,
+              3,
+              0,
+              2
+            ],
+            "moment_index": 34,
+            "center_nm": [
+              41.75,
+              3.125,
+              60.0
+            ],
+            "omitted_energy": 1.3327041352621529e-08
+          },
+          {
+            "canonical_id": 1160,
+            "entity_key": [
+              1,
+              1,
+              0,
+              2,
+              4
+            ],
+            "moment_index": 2,
+            "center_nm": [
+              0.0,
+              15.625,
+              130.0
+            ],
+            "omitted_energy": 1.3293030435787961e-08
+          },
+          {
+            "canonical_id": 4487,
+            "entity_key": [
+              2,
+              0,
+              1,
+              0,
+              2
+            ],
+            "moment_index": 23,
+            "center_nm": [
+              16.5,
+              3.125,
+              90.0
+            ],
+            "omitted_energy": 1.3288009305357413e-08
+          },
+          {
+            "canonical_id": 2096,
+            "entity_key": [
+              2,
+              2,
+              0,
+              0,
+              1
+            ],
+            "moment_index": 32,
+            "center_nm": [
+              8.25,
+              3.125,
+              0.0
+            ],
+            "omitted_energy": 1.3279229964815034e-08
+          },
+          {
+            "canonical_id": 8980,
+            "entity_key": [
+              2,
+              0,
+              2,
+              3,
+              0
+            ],
+            "moment_index": 16,
+            "center_nm": [
+              25.0,
+              21.875,
+              -5.0
+            ],
+            "omitted_energy": 1.3250912889554392e-08
+          },
+          {
+            "canonical_id": 11394,
+            "entity_key": [
+              2,
+              0,
+              3,
+              0,
+              3
+            ],
+            "moment_index": 30,
+            "center_nm": [
+              33.5,
+              3.125,
+              125.0
+            ],
+            "omitted_energy": 1.3245770387375159e-08
+          }
+        ],
+        "squared_sum_matches": true
+      }
+    }
+  ],
+  "diagnostic80_range": {
+    "eta": [
+      1.4710968789523475e-05,
+      0.005467831790788324
+    ],
+    "trace_error": [
+      2.9378884067742653e-05,
+      0.010310913327244185
+    ],
+    "rho": [
+      0.0015683878305542518,
+      0.522128783148482
+    ]
+  },
+  "capacity": {
+    "target_trace": 105298704,
+    "target_internal": 238885200,
+    "target_total": 344183904,
+    "one_full_vector_bytes": 5506942464,
+    "one_trace_vector_bytes": 1684779264,
+    "half_trace_saved_payload_bytes": 842389632,
+    "max_full_vector_payload_saving": 0.15296866410115448,
+    "trace_fraction": 0.30593732820230896,
+    "17_FP64_feature_bytes_unstreamed": 14320623744,
+    "float64_scores_bytes": 842389632,
+    "sort_int64_index_bytes": 842389632,
+    "bool_mask_bytes": 105298704,
+    "network_max_parameters_FP64_bytes": 80000,
+    "actual_finite_median_sort_seconds": 0.0011325899977236986,
+    "target_sort_prediction_seconds": 16.714783913346455,
+    "prediction_scope": "single-core n log n same sorting, cache/communication/streaming unknown",
+    "solver_periodic_blocks_factor_residual_internal_lifetimes": "unknown",
+    "full_rhs_streaming_interface": "unknown",
+    "simultaneous_target_peak": "unknown"
+  },
+  "cost_necessary": {
+    "condition": "f*V-H >= .2*T_B; s >= (.2+H/T_B)/f",
+    "target_T_B": "unknown",
+    "f": "unknown for solver; vector-payload bound is not time saving",
+    "H": "actual V47 full new research cost plus unknown historical/cold data components; N=1 pays all",
+    "NN20": "NOT_QUALIFIED",
+    "multiple_RHS_amortization": "separate, not N=1"
+  },
+  "actual_training": "NOT_RUN_ORACLE_GATE",
+  "next": "different admissible representation needs evidence; do not retrain to defeat this fixed-coordinate lower bound",
+  "qualification": {
+    "forward_solve": "NOT_RUN",
+    "complete_DtN_EH_power": "NOT_QUALIFIED",
+    "original_size": "NOT_QUALIFIED",
+    "2TB_48h": "NOT_QUALIFIED",
+    "NN20": "NOT_QUALIFIED"
+  },
+  "environment": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "src_root": "/home/fenics/Projects/NN-Lab",
+    "affinity": [
+      0
+    ],
+    "math_pools": [
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "activation": "1",
+    "mode": "pure",
+    "MPI_size": 1,
+    "Torch_loaded": false,
+    "GPU_used": false,
+    "DataLoader_workers": 0
+  },
+  "actions_in_analysis": 0,
+  "stage": "ANALYSIS",
+  "source_sha": "9c167a54c41e178e66f393ca1ff357ddf1a877c0",
+  "elapsed_worker_seconds": 0.3682055571116507,
+  "input_sha256": "311ea83a7fe37b5dadb30b6581c18bcae616843cd57ba268a546f14507a087ba",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+  "object_lifetimes": [
+    {
+      "object": "complete e/c/expanded and witness vectors",
+      "role": "research audit only",
+      "target_deployment": false
+    },
+    {
+      "object": "original b",
+      "role": "predictor and full audit",
+      "streaming": "unknown"
+    },
+    {
+      "object": "17 features/scores/sort indices/mask",
+      "role": "selection",
+      "streaming": "must be designed; full features dominate saved vector payload"
+    },
+    {
+      "object": "trace vector/J/MPC routing",
+      "role": "decoder",
+      "complete_target_lifetime": "unknown"
+    },
+    {
+      "object": "all internal recovery/class cache",
+      "role": "unmodified future engine",
+      "complete_target_lifetime": "unknown"
+    },
+    {
+      "object": "full residual/all ports/solver/communication",
+      "role": "correctness and future engine",
+      "complete_target_lifetime": "unknown"
+    }
+  ],
+  "conditions": [
+    {
+      "f": 0.5,
+      "H_over_TB": 0.05,
+      "necessary_s": 0.5
+    },
+    {
+      "f": 0.5,
+      "H_over_TB": 0.1,
+      "necessary_s": 0.6
+    }
+  ],
+  "condition_scope": "hypothetical dimensionless conditions, not measured solver savings",
+  "next_recommendation": "close fixed-coordinate removal; only review a distinct information-preserving entity encoding plus equal-capacity linear control, with explicit NN20 necessary cost room; do not execute it now"
+}

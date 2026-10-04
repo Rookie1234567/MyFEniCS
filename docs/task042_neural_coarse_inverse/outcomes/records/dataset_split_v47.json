@@ -1,0 +1,525 @@
+{
+  "plan_sha256": "3ae7ae9f174d823b0c07cb0c5325f0e2e998920c2dbbee893304500d5310d617",
+  "split": {
+    "train": {
+      "seeds": [
+        427001,
+        427002,
+        427003,
+        427004,
+        427005,
+        427006,
+        427007,
+        427008,
+        427009,
+        427010,
+        427011,
+        427012,
+        427013,
+        427014,
+        427015,
+        427016
+      ],
+      "families": [
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves"
+      ]
+    },
+    "validation": {
+      "seeds": [
+        427101,
+        427102,
+        427103,
+        427104
+      ],
+      "families": [
+        "two_waves",
+        "two_waves",
+        "localized_two_waves",
+        "localized_two_waves"
+      ]
+    },
+    "heldout": {
+      "seeds": [
+        427201,
+        427202,
+        427203,
+        427204,
+        427205,
+        427206,
+        427207,
+        427208
+      ],
+      "families": [
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves"
+      ]
+    }
+  },
+  "generation": {
+    "k0": "2*pi/0.7 nm^-1",
+    "direction_rule": "two independently normalized isotropic normal 3-vectors",
+    "complex_polarization": "normalized independent real/imag normal 3-vectors",
+    "amplitude_range": [
+      0.5,
+      1.5
+    ],
+    "phase_range": [
+      -3.141592653589793,
+      3.141592653589793
+    ],
+    "center_fraction_range": [
+      0.2,
+      0.8
+    ],
+    "width_fraction_range": [
+      0.15,
+      0.4
+    ],
+    "interpolation": "complete original Basix N1E p6 Legendre x/M, covariant affine Piola, all 6/60/450 moments; q15 denotes frozen volume CSR quadrature",
+    "normalization": "common scale e,c,expanded by norm(native e), b computed from same scaled e",
+    "witness_seeds": [
+      427901,
+      427902
+    ]
+  },
+  "inventory": [
+    {
+      "split": "train",
+      "sample": 0,
+      "seed": 427001,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2611.5743494287385,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 1,
+      "seed": 427002,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2711.287010383771,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 2,
+      "seed": 427003,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 4053.83349294372,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 3,
+      "seed": 427004,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2533.3336864481607,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 4,
+      "seed": 427005,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 1183.9518157736666,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 5,
+      "seed": 427006,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 1968.2369679497042,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 6,
+      "seed": 427007,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2356.0093017976355,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 7,
+      "seed": 427008,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 3356.7745976831775,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 8,
+      "seed": 427009,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 1016.2629071041658,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 9,
+      "seed": 427010,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 313.3985011543691,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 10,
+      "seed": 427011,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 505.9460201562132,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 11,
+      "seed": 427012,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 967.1083992202363,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 12,
+      "seed": 427013,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 773.7077864210193,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 13,
+      "seed": 427014,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 736.1387030342042,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 14,
+      "seed": 427015,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 1331.1837035383926,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "train",
+      "sample": 15,
+      "seed": 427016,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 645.3907476892466,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "validation",
+      "sample": 0,
+      "seed": 427101,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 1633.2453032513702,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "validation",
+      "sample": 1,
+      "seed": 427102,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2233.8245329091387,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "validation",
+      "sample": 2,
+      "seed": 427103,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 670.1463997565925,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "validation",
+      "sample": 3,
+      "seed": 427104,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 543.4775289428181,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 0,
+      "seed": 427201,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 1667.7864043230934,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 1,
+      "seed": 427202,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 1680.3566736482887,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 2,
+      "seed": 427203,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2908.424048459233,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 3,
+      "seed": 427204,
+      "family": "two_waves",
+      "normalization_native_coefficient_norm": 2221.7937812810196,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 4,
+      "seed": 427205,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 445.1180653271346,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 5,
+      "seed": 427206,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 658.1102078208941,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 6,
+      "seed": 427207,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 547.182866808287,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    },
+    {
+      "split": "heldout",
+      "sample": 7,
+      "seed": 427208,
+      "family": "localized_two_waves",
+      "normalization_native_coefficient_norm": 375.7541059383796,
+      "slave_carrier_zero": true,
+      "trace_rows": 13824,
+      "internal_rows": 28800,
+      "all_internal_retained": true
+    }
+  ],
+  "complete_moment_pairings": [
+    {
+      "seed": 427901,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v47/task042_v47_data_20261004T231614458921Z/mapping_427901.npz",
+        "sha256": "f393b31ce9673ae4d3e405d30efe38998150f6f56886f8365e955e21e209415b",
+        "aliases": {},
+        "members": {
+          "direct": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "136d592ef4be16752b5c7d19073ae2f3aa54f1d5d0dd1a779035ff7612d7e798"
+          },
+          "independent": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1f5985ac71c6f723e4860da4c246d85245f54c023ba7e06122394f872f18f875"
+          },
+          "direct_cells": {
+            "shape": [
+              64,
+              882
+            ],
+            "dtype": "<c16",
+            "sha256": "93e49a4b2391f49ebaff1826f1ed754497ce3e2fb612cf7d600c49627b2a38a7"
+          },
+          "independent_cells": {
+            "shape": [
+              64,
+              882
+            ],
+            "dtype": "<c16",
+            "sha256": "4006b12d549880aaefc5f4658c28f45a56319d62c1797717afc5c147203f1ce0"
+          }
+        }
+      },
+      "all_coeff_relative": 4.697578182472444e-16,
+      "all_cell_relative": 4.3203649856520663e-16,
+      "shared_dof_max_relative": 7.940372602092324e-17,
+      "nonzero_internal_moments": 28800,
+      "passed": true
+    },
+    {
+      "seed": 427902,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v47/task042_v47_data_20261004T231614458921Z/mapping_427902.npz",
+        "sha256": "890f91d858ab2c1d12347e5c959ac477cf1592e21c6dca8a77a4684433429986",
+        "aliases": {},
+        "members": {
+          "direct": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "87b765a86a4844071976759be766ee0a13cd65c4b11a6684001946e9c7d4c8a2"
+          },
+          "independent": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bd46784caa3a31d1eecc59fd3b8145223dedc398a75399ec1781af5d58b493c6"
+          },
+          "direct_cells": {
+            "shape": [
+              64,
+              882
+            ],
+            "dtype": "<c16",
+            "sha256": "304acad2a787997e6ecf1084b5b5c7d45cf66ca34969d2385c3592d81e031410"
+          },
+          "independent_cells": {
+            "shape": [
+              64,
+              882
+            ],
+            "dtype": "<c16",
+            "sha256": "42eab0b77dcf07fd03d16c17fa2bafbf8a678fe99ca70341015faf7a2479a77a"
+          }
+        }
+      },
+      "all_coeff_relative": 5.073691995952663e-16,
+      "all_cell_relative": 4.728639677729669e-16,
+      "shared_dof_max_relative": 4.8703523689207656e-17,
+      "nonzero_internal_moments": 28800,
+      "passed": true
+    }
+  ],
+  "bridge_checks": {
+    "JH_J_identity": true,
+    "complete_independent_coverage": true,
+    "JH_J_max_error": 1.0939513574508396e-14,
+    "JH_J_relative_frobenius_error": 2.7863798017395122e-15,
+    "slave_zero": true,
+    "passed": true
+  },
+  "actual_native_permutations": [
+    0,
+    576,
+    4680,
+    32769,
+    36873
+  ],
+  "heldout": "generated/sealed; not consumed by oracle/training/checker",
+  "scale": "full native e norm; same multiplier for canonical/e/expanded and implicit b=Ae"
+}
