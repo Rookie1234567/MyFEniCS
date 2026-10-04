@@ -34,7 +34,7 @@ P6端口缓存记录是shape/nbytes元数据，不读数组值，也不等于RSS
 
 2 nm watchdog一次流式核验：706/706状态可读、解析错误0、warning0，最大间隔`0.388181 s`、末样本距clock_end `0.038676 s`；进程树RSS峰`3,351,232,512 B`，低于真实硬线`1.3e12 B`，tree swap峰0、PSS/USS关闭、后代清场。全机pswpin/out变化0/0单独记录。主审按watchdog配置、summary和live样本确认实际RSS硬线为`1.3e12 B`。compact v2另解释summary的12 GB launch/planning cap是诊断字段；未修改launcher。
 
-## 待启动审阅的5 nm正式回归草案
+## 启动前审阅草案（历史材料）
 
 草案为唯一的5 nm、p6细层/p3精确A3粗层完整场回归，待主审审核最终clean source、命令和准入后另行放行。输入身份固定为`v6_interleave_5nm_p6h4_q3`，`execution_mode=full_solve`，input SHA `4ca279159a4b391fe4b05f47c5ef13891db3eade68993db71ade806158a42818`、physical SHA `96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d`、resolved SHA `17a9657bd9cfb76baeed5aec07453057026ca20c1725c10fa44096bbab35d4d1`。模式库存600，mode SHA `dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645`；粗算子是真实A3，准确MUMPS因子一次，外层为零初值right FGMRES32、max2048，实际未知空间是p6凝聚trace+全部600个port变量；未凝聚原生p6 A6负责full residual与相关核验。未来运行source必须是最终clean完整SHA；目前e312ff721f0918c20d9b87ed1d72928b23d349df仅为当前base/文档收口HEAD，不能代替运行source。
 
@@ -47,4 +47,19 @@ P6端口缓存记录是shape/nbytes元数据，不读数组值，也不等于RSS
 
 reference的V6 F5对应tracked compact `records/v6_5nm_terminal.json` SHA `1812c3f8fd368f6783277b3e95df45abfb994591add7f5a0ff75c5302de7f71c`，主审receipt SHA `b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3`。实际boundary-fitted cell count必须从将来runtime mesh审计读取并记录；接受的same-discrete目标是3780 cells。输入`derived.mesh_cells=[13,7,35]`只代表名义初始划分，不能用其乘积替代真实3780。
 
-完整启动草案JSON：[p3_full5nm_p3_regression_launch_draft_v1.json](records/p3_full5nm_p3_regression_launch_draft_v1.json)。状态`DRAFT_NOT_APPROVED_NOT_STARTED`，当前未运行、未冻结最终运行source。草案资源合同保留PORD64/int64/complex128、MPI1/math1、root CPU9、worker CPU24、interleave node0-1、effective available至少`1437438953472 B`、真实进程树RSS hard `1300000000000 B`、PSS/USS关闭、无时间截止；每次正式启动仍fresh检查主机、邻负载、ABI、内存、磁盘和任务锁。后续是否运行由主审审核具体clean-SHA包决定。
+完整启动草案JSON：[p3_full5nm_p3_regression_launch_draft_v1.json](records/p3_full5nm_p3_regression_launch_draft_v1.json)保留为启动前证据；它已按批准包启动，终态见下节。
+
+## 唯一5 nm完整场回归：求解中断（2026-10-04）
+
+这次用户追加的p3候选已按批准包运行一次完整5 nm场，不是18-cell组件。p6细层保留，准确粗算子为A3/p3；`stages.jsonl`的旧`p4_build`字段是兼容别名，实际degree为3。最终分类为`USER_CONTROLLED_STOP`，只说明watchdog父进程进入SIGINT/SIGTERM处理路径；入站信号编号和发送者没有记录，不能称用户亲自停止。主审窄kernel journal查询无条目，不足以归因。此处分类也不是数值Gate失败：运行在第544个outer步后中断，未完成解算。
+
+| 项目 | 本场 measured 结果 | 边界 / 证据 |
+|---|---|---|
+| 身份与规模 | run `20261004T085614.837316Z`；source `2b0a7c1d6e5a20c5d0323469cd018deeb73898c2`（运行时clean）；input `4ca279159a4b391fe4b05f47c5ef13891db3eade68993db71ade806158a42818`；physical `96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d`；resolved `17a9657bd9cfb76baeed5aec07453057026ca20c1725c10fa44096bbab35d4d1`；实际p6/p3各3780 cells、600 modes，runtime mode SHA `dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645` | 正式mode map文件与numerical-output目录未在终态产出；运行stage事实已记录实际cell与mode库存。raw几何类175、tensor组6、oriented组和216（p6/p3各自相同），见[compact](records/p3_full5nm_terminal_compact_v1.json)。 |
+| setup与阶段 | workflow起点到`solve_started`同单调时钟`1117.064241 s`；runtime-build marker区间`478.061417 s`；p6 build子计时`48.982022 s`，实际A3 build（兼容字段p4_build）`10.922470 s`；symbolic API wall/CPU `2.104244/2.101128 s`；numeric API wall/CPU `69.681804/69.654041 s` | H6 parent marker `107.943479 s`；对角`5.026990 s`，power10子项`93.157356 s`（20次矩阵乘，乘法子计时`91.696840 s`）。这些子项与父stage边界有嵌套，不能加总成setup。 |
+| 迭代与A6 | 最后完整outer编号544，Schur相对量`0.0036393393688062795`；最近独立原A6检查是step536=`0.0038091382027435404`，高于`1e-6`；step544未留下已完成A6检查记录（`NOT_RECORDED_COMPLETED`），运行可能在该检查进行中被中断 | A6检查序列每8步记录在hash-bound `monitor_residuals.jsonl`，SHA `c370c6b9080f79bfe51aae9a455bf342dceef249187f89f1f03e541063b12ff9`。最后512检查点只存solution，true residual `0.004015580499214017`；manifest `full_solution_checkpoint_manifests/iteration_000512/manifest.json` SHA `f56a1795dc3a29d83d235117cccf1907b8993c7fd2965b75d8b52a334ce62029`，不承诺免setup恢复。 |
+| 与V6 q4 F5匹配窗口 | 同一前120步累计时间差除以120：p3=`52.973319714 s/step`，q4=`79.389986392 s/step`；q4/p3=`1.49868`（观察到p3单步墙钟少33.27%） | 使用主审回执定义`(solve_seconds[i120]-solve_seconds[i0])/120`；包含其间监控/输出，排除i120回调之后A6检查。两场非配对，且不是总time-to-solution比较。相同步数i120原A6：p3=`0.0489090873604`，q4=`1.06532658799e-6`，显示较快单步没有补上收敛差距。q4完整121步并通过A6；q3未完成。 |
+| 资源与终态 | watchdog summary报93536样本、树RSS峰`18428985344 B`（硬线`1300000000000 B`、warning `1170000000000 B`）、树swap峰0、PSS关闭、无时限、后代清场；global `pswpin +10`页、`pswpout +0`页，归因unknown | 约995 MB的resources日志仅以summary及首尾样本交叉核对；没有全量解析或hash，所以全程可读性unknown。末样本RSS`41205760 B`，距clock_end `0.046385312 s`。 |
+| 资格 | full workflow `30238.071032 s`；root CLI exit 3（peer exec session 52614读回），run_summary/worker/watchdog leader exit均为1；`NOT_QUALIFIED_INCOMPLETE_INTERRUPTED_RUN` | 完整场/EH/modal/RTA及checker未完成。`last_logged_solve_seconds`不是正常KSP返回API计时，后者unknown。不是solver资格、物理资格或“数值算法失败”结论；不重启、不续跑，不晋级2 nm/0.7 nm。主审终态回执SHA `90c29817e2854e102fea3d78253ad948e337862635eda008020b2bf04b060774`。 |
+
+运行summary、stages、iterations、A6监控、watchdog summary及512检查点manifest的文件hash见[5 nm终态compact](records/p3_full5nm_terminal_compact_v1.json)。主审匹配窗口回执为`tmp/p3_main_review/p3_full5nm_callback_window_comparison_v1.json`，SHA `cde0f0bafadfd1d118667d831f5cb90cfb9716e2121217fe99d74bb674f95d85`。本结果不改变既有V6 q4 F5通过事实；不将p3单步耗时比称为全求解提速或收敛资格。

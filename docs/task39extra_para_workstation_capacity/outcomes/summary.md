@@ -9,10 +9,11 @@
 | 5 nm p3真实FE/MPC组件 | 18 cells、600 modes；三次完整PC，每次C1/C2均PASS；主审接受 | 组件通过，不是3780-cell完整场或物理资格；保留两次失败attempt |
 | 2 nm p3真实FE/MPC组件 | 18 cells、3904 modes；三次完整PC，每次两次C均PASS；主审接受 | 组件通过，不是完整2 nm/P2/收敛资格 |
 | setup与小组件PC | build 221.760 s（非完整setup）；2 nm mean PC 5.145069 s | 旧q4比值仅非配对小组件工程对照；不外推完整步数或0.7 nm ETA |
-| 5 nm正式回归 | 输入/物理/模式身份及旧reference路线已整理成草案 | `DRAFT_NOT_APPROVED_NOT_STARTED`；source最终clean SHA、主审包与fresh准入仍待完成 |
+| 唯一5 nm正式回归 | run `20261004T085614.837316Z`；source `2b0a7c1d6e5a20c5d0323469cd018deeb73898c2` clean；真实3780 cells、600 modes、A3/p3；setup同钟 `1117.064241 s`；full workflow `30238.071032 s` | 第544个outer后归类`USER_CONTROLLED_STOP`；信号sender/编号未知；step544无已完成A6检查记录，可能中断于检查期间；最近已完成A6在step536=`0.0038091382027435404 > 1e-6`；`NOT_QUALIFIED_INCOMPLETE_INTERRUPTED_RUN`，不是数值Gate失败结论。见[终态compact](records/p3_full5nm_terminal_compact_v1.json) |
+| 匹配q4 F5的有限窗口观察 | i0→i120累计`solve_seconds`差/120：p3 `52.973319714 s/step`、q4 `79.389986392 s/step`，观察比`1.49868x` | 同step120 A6为p3 `0.0489090873604`、q4 `1.06532658799e-6`；单步更快没有弥补残差退化，非配对场、非总time-to-solution比较。主审回执绑定于终态compact |
 | 2 nm full/P2、0.7 nm场/容量资格 | `NOT_RUN` | 不自动继续；低内存p4逆新增试验0 |
 
-详见[S3结果](p3_mid_order_s3.md)、[S3 compact](records/p3_mid_order_s3_components_v1.json)、[5 nm启动草案](records/p3_full5nm_p3_regression_launch_draft_v1.json)和[post-V6回应](../response_post_v6_p3.md)。当前source patch SHA `41c0fddd633d09fe5bd0d706ca3a8e39ee7e1dc1ccd51215a79d8bfbb7a0650a`绑定15个冻结文件；commit后的clean source SHA尚未产生，正式场必须另绑定完整clean SHA。5 nm旧失败和方向原型的负结果均保留在compact与ignored attempt路径。
+详见[S3结果](p3_mid_order_s3.md)、[S3组件compact](records/p3_mid_order_s3_components_v1.json)、[5 nm终态compact](records/p3_full5nm_terminal_compact_v1.json)、[启动前草案](records/p3_full5nm_p3_regression_launch_draft_v1.json)和[post-V6回应](../response_post_v6_p3.md)。正式run绑定clean source SHA `2b0a7c1d6e5a20c5d0323469cd018deeb73898c2`；本轮仅归档文档，不改变运行源码和输入。5 nm旧失败、方向原型负例及512 solution-only检查点均保留。
 
 ## Review V6历史收口（2026-10-04；下文保留V6当时的结论）
 

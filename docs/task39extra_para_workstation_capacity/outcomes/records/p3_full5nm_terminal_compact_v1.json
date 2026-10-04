@@ -1,0 +1,197 @@
+{
+  "schema": "task39extra_para.p3_full5nm_interrupted_terminal_compact.v1",
+  "capture": {
+    "captured_at_utc": "2026-10-04T17:38:56Z",
+    "captured_at_local": "2026-10-05T01:38:56+08:00",
+    "timezone": "Asia/Shanghai"
+  },
+  "scope": "Review V6收口后用户追加的p3候选；本记录为唯一5nm full_solve尝试的轻量终态归档草案，不是Review V7，也不改变V6历史结论。",
+  "run": {
+    "run_id": "v6_interleave_5nm_p6h4_q3",
+    "run_directory": "results/euv_grazing1_phi0/v6_interleave_5nm_p6h4_q3__full3d_iterative__mpi1__Mna/20261004T085614.837316Z",
+    "source_sha": "2b0a7c1d6e5a20c5d0323469cd018deeb73898c2",
+    "source_after_clean": true,
+    "input_sha256": "4ca279159a4b391fe4b05f47c5ef13891db3eade68993db71ade806158a42818",
+    "physical_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+    "resolved_sha256": "17a9657bd9cfb76baeed5aec07453057026ca20c1725c10fa44096bbab35d4d1",
+    "runtime_modes": 600,
+    "runtime_mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+    "formal_mode_map_file": "NOT_PRESENT_AT_TERMINAL; runtime stage facts confirm 600 modes and the SHA above",
+    "actual_cells": {
+      "p6_owned_cell_count_global": 3780,
+      "actual_degree3_coarse_cell_count_global": 3780,
+      "coarse_cell_field_source": "stages.jsonl retained_condensed_components_complete.facts.p4_build; legacy compatibility field, actual coarse_degree=3"
+    },
+    "coarse_operator": "A3",
+    "legacy_p4_build_field_is_alias": true,
+    "geometry_and_tensor_inventory": {
+      "raw_geometry_classes_p6_p3": [175, 175],
+      "tensor_groups_p6_p3": [6, 6],
+      "oriented_class_count_sum_p6_p3": [216, 216]
+    }
+  },
+  "terminal": {
+    "run_summary_status": "finished",
+    "run_summary_exit_status": 1,
+    "full_workflow_monotonic_seconds": 30238.071031911997,
+    "root_cli_exit_code": 3,
+    "root_cli_exit_evidence": "peer exec session 52614 readback",
+    "worker_exit_code": 1,
+    "watchdog_classification": "USER_CONTROLLED_STOP",
+    "watchdog_leader_exit_code": 1,
+    "stop_event_utc": "2026-10-04T17:20:08.361441Z",
+    "watchdog_cleanup_end_utc": "2026-10-04T17:20:12.868272Z",
+    "descendants_cleared": true,
+    "host_processes_absent_check_utc": "2026-10-04T17:22:54Z",
+    "signal_attribution": "unknown: watchdog classification denotes its parent SIGINT/SIGTERM handler path; signal number and sender were not recorded. Narrow kernel journal query had no entries and does not identify an initiator.",
+    "watchdog_source_reference": "benchmarks/subreaper_watchdog.py:252-254,434-441,500-502",
+    "classification_limit": "interrupted during outer solve; not a numerical-gate failure classification and not solver/physics qualification"
+  },
+  "stage_timings_seconds": {
+    "workflow_start_to_solve_started_same_monotonic_clock": 1117.064241065993,
+    "runtime_build_marker_interval": {
+      "start_workflow_elapsed": 0.023052579956129193,
+      "complete_workflow_elapsed": 478.0844699270092,
+      "interval": 478.0614173470531
+    },
+    "builder_subtimers": {
+      "p6_build": 48.98202164599206,
+      "coarse_A3_build_from_legacy_p4_build_field": 10.922470333985984
+    },
+    "MUMPS_symbolic_api": {
+      "wall": 2.1042437040014192,
+      "process_cpu": 2.101128081000013,
+      "calls": 1
+    },
+    "MUMPS_numeric_api": {
+      "wall": 69.6818044949323,
+      "process_cpu": 69.654041054,
+      "calls": 1
+    },
+    "H6": {
+      "parent_marker_interval": 107.94347860105336,
+      "reference_metric_diagonal": 5.026990261045285,
+      "power10_child": 93.15735576697625,
+      "power_matrix_mult_count": 20,
+      "power_matrix_mult_child": 91.69684000208508
+    },
+    "later_setup_markers_workflow_elapsed": {
+      "owner_transfer_complete": 688.6287416859996,
+      "native_Aq_projection_check_complete": 746.5791801399319,
+      "same_object_setup_checks_complete": 1117.056075458997
+    },
+    "timing_scope": "API/build/H6 subtimers overlap broader stage intervals. They are distinct views and must not be summed into setup."
+  },
+  "solve_progress": {
+    "completed_outer_iterations": 544,
+    "outer_matvec_count": 560,
+    "outer_pc_count": 544,
+    "last_outer_schur_relative_at_544": 0.0036393393688062795,
+    "last_independent_original_A6_check": {
+      "iteration": 536,
+      "relative_residual": 0.0038091382027435404,
+      "gate": 1e-6,
+      "status": "not_passed"
+    },
+    "A6_at_iteration_544": "NOT_RECORDED_COMPLETED; the run may have been interrupted while this check was in progress; do not label the iteration-536 A6 value as an iteration-544 check",
+    "checkpoint_512": {
+      "kind": "solution_only",
+      "explicit_true_residual": 0.004015580499214017,
+      "manifest_path": "full_solution_checkpoint_manifests/iteration_000512/manifest.json",
+      "manifest_sha256": "f56a1795dc3a29d83d235117cccf1907b8993c7fd2965b75d8b52a334ce62029",
+      "solution_path": "full_solution_checkpoint_manifests/iteration_000512/solution_rank0.npy",
+      "solution_sha256_from_manifest": "3ea212a65d2379b6c2e71e0fb7dec828d928a0f4622b4e73e62b66bd7589636f",
+      "resume_limit": "not converged; solution-only does not promise setup-free or Krylov-state continuation"
+    },
+    "A6_sequence_source": {
+      "path": "monitor_residuals.jsonl",
+      "sha256": "c370c6b9080f79bfe51aae9a455bf342dceef249187f89f1f03e541063b12ff9",
+      "records": 84,
+      "unique_monitor_iterations": "0, 8, ..., 536; duplicate marker records are retained in the raw file and do not add solver steps",
+      "selected_values": [[0, 0.9999999999999997], [8, 0.8246263418228538], [16, 0.7012945570701865], [32, 0.2412229759973228], [64, 0.12420513403954604], [96, 0.06839085230241553], [120, 0.048909087360400255], [256, 0.016697073731281854], [384, 0.007580138696327602], [512, 0.004015580499214017], [528, 0.0038704283781092605], [536, 0.0038091382027435404]]
+    },
+    "iteration_log": {
+      "path": "iterations.jsonl",
+      "sha256": "5650bfe137178e855d01042a5eb1c087759d35abc27e011cf679c077a319bcb6",
+      "records": 561,
+      "last_logged_solve_seconds": 29076.65270797396,
+      "normal_ksp_return_api_seconds": "UNKNOWN_NOT_RECORDED",
+      "timing_boundary_note": "last_logged_solve_seconds is an iteration-log field, not a normal KSP return API timer",
+      "last_32_completed_step_wall_mean_seconds": 51.612689098124974,
+      "step_wall_scope": "callback-to-callback wall intervals include monitoring/check/output gaps; not pure preconditioner time"
+    }
+  },
+  "matched_q4_F5_comparison": {
+    "q4_run": "results/euv_grazing1_phi0/v6_interleave_5nm_p6h4_q4__full3d_iterative__mpi1__Mna/20261002T153058.967208Z",
+    "q4_source_sha": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+    "q4_tracked_compact": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_5nm_terminal.json",
+    "q4_tracked_compact_sha256": "1812c3f8fd368f6783277b3e95df45abfb994591add7f5a0ff75c5302de7f71c",
+    "q4_main_terminal_receipt_sha256": "b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3",
+    "q4_identity": {
+      "physical_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "input_sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9",
+      "resolved_sha256": "24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427",
+      "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "actual_cells": 3780,
+      "modes": 600,
+      "completed_outer_iterations": 121,
+      "final_original_A6_relative": 8.704501286501755e-7
+    },
+    "setup_same_monotonic_boundary_seconds": {
+      "p3": 1117.064241065993,
+      "q4": 1696.1960083970334
+    },
+    "matched_callback_window": {
+      "method": "(solve_seconds at i=120 - solve_seconds at i=0) / 120; duplicate restart labels do not change denominator; includes monitoring/output during interval and excludes the i=120 callback's subsequent A6 check",
+      "p3_mean_seconds_per_iteration": 52.973319714,
+      "q4_mean_seconds_per_iteration": 79.389986392,
+      "q4_over_p3_ratio": 1.49868,
+      "p3_time_reduction_percent": 33.27,
+      "comparison_receipt": "tmp/p3_main_review/p3_full5nm_callback_window_comparison_v1.json",
+      "comparison_receipt_sha256": "cde0f0bafadfd1d118667d831f5cb90cfb9716e2121217fe99d74bb674f95d85"
+    },
+    "matched_A6_at_iteration_120": {
+      "p3": 0.0489090873604,
+      "q4": 1.06532658799e-6
+    },
+    "interpretation": "Matched first-120 iteration wall time was lower for p3, but A6 residual was much worse at the same iteration. The runs are not paired controls; this does not establish lower total time-to-solution or an end-to-end speedup."
+  },
+  "resources": {
+    "watchdog_summary_sha256": "1008f98e07419acb797e7a650649aad3b2c45b15e5dfce608f158f7eeca4da5b",
+    "summary_sample_count": 93536,
+    "summary_tree_rss_peak_bytes": 18428985344,
+    "rss_warning_bytes": 1170000000000,
+    "rss_hard_limit_bytes": 1300000000000,
+    "summary_tree_swap_peak_bytes": 0,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "time_limit_mode": "none",
+    "resource_file_bytes": 995459861,
+    "resource_file_sha256": "NOT_COMPUTED; no full scan",
+    "full_sample_parseability": "UNKNOWN; only watchdog summary and first/last sample were cross-checked",
+    "first_sample": {"timestamp_ns": 1791104174935623770, "rss_bytes": 57085952, "swap_bytes": 0, "all_status_readable": true, "warning": false},
+    "last_sample": {"timestamp_ns": 1791134412821886780, "rss_bytes": 41205760, "swap_bytes": 0, "all_status_readable": true, "warning": false},
+    "last_sample_to_clock_end_seconds": 0.046385312,
+    "global_swap_page_delta": {"pswpin": 10, "pswpout": 0},
+    "global_swap_attribution": "unknown",
+    "read_scope": "head/tail bounded reads plus small watchdog summary; no full resources.jsonl parse or hash"
+  },
+  "evidence_files": {
+    "run_manifest.json": {"sha256": "ea3269db92866e9bdae45a360a9ed7dbcb29424269416a889dc2a2d108d3f866", "bytes": 22999},
+    "run_summary.json": {"sha256": "550ae1c5d6449097763b09465951605b03cfb2930d783bc12d7a0466b5ebc1dc", "bytes": 5486},
+    "workflow_phase.json": {"sha256": "bfd78e2a5e887d65d4e8d0547d5903d9f80c73cfb9cc5668c887922ef6e40401", "bytes": 2440},
+    "stages.jsonl": {"sha256": "07e91b10718a0ec0640509e5469a8154abca8addc15ebb48082101116a63d052", "bytes": 460579},
+    "iterations.jsonl": {"sha256": "5650bfe137178e855d01042a5eb1c087759d35abc27e011cf679c077a319bcb6", "bytes": 132198},
+    "monitor_residuals.jsonl": {"sha256": "c370c6b9080f79bfe51aae9a455bf342dceef249187f89f1f03e541063b12ff9", "bytes": 67069},
+    "watchdog/summary.json": {"sha256": "1008f98e07419acb797e7a650649aad3b2c45b15e5dfce608f158f7eeca4da5b", "bytes": 5215},
+    "full_solution_checkpoint_manifests/iteration_000512/manifest.json": {"sha256": "f56a1795dc3a29d83d235117cccf1907b8993c7fd2965b75d8b52a334ce62029", "bytes": 899},
+    "main_terminal_review_receipt": {"path": "tmp/p3_main_review/p3_full5nm_terminal_main_review_20261005_v1.json", "sha256": "90c29817e2854e102fea3d78253ad948e337862635eda008020b2bf04b060774"},
+    "main_callback_comparison_receipt": {"path": "tmp/p3_main_review/p3_full5nm_callback_window_comparison_v1.json", "sha256": "cde0f0bafadfd1d118667d831f5cb90cfb9716e2121217fe99d74bb674f95d85"}
+  },
+  "qualification": {
+    "full_solve_completed": false,
+    "original_A6_gate_passed": false,
+    "full_field_EH_modal_RTA_gates": "NOT_RUN_AFTER_INTERRUPT",
+    "status": "NOT_QUALIFIED_INCOMPLETE_INTERRUPTED_RUN",
+    "automatic_restart_or_continuation": "NOT_AUTHORIZED"
+  }
+}
