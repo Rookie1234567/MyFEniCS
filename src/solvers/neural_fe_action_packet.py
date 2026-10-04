@@ -132,7 +132,7 @@ class ActionPacket:
         Df += np.einsum("cpi,ci->p", a["Di"], i) + self._direct_D(field[a["masters"]])
         return result, Df - a["Hp"] @ alpha, Df
 
-    def audit(self, value):
+    def audit(self, value, *, port_solver=None):
         """Independent original/native/port audit of a scattered iterate."""
         began = perf_counter()
         action_seconds_before = self.costs["S"]
@@ -144,14 +144,17 @@ class ActionPacket:
         rp = a["gp"] + port
         augmented_rhs_norm = float(np.linalg.norm(np.r_[a["g"], a["gp"]]))
         augmented_norm = float(np.linalg.norm(np.r_[rfe, rp]))
-        hp_rp = np.linalg.solve(a["Hp"], rp)
+        # Explicit opt-in reuse of the *original* 40-port Hp factor. Default
+        # behavior and all independent uncondensed/native equations stay intact.
+        solve_hp = (lambda rhs: np.linalg.solve(a["Hp"], rhs)) if port_solver is None else port_solver
+        hp_rp = solve_hp(rp)
         correction = self._direct_B(hp_rp)
         correction += self._pullback(np.einsum("cip,p->ci", a["Bt"], hp_rp))
         native = rfe.copy()
         native[a["masters"]] -= correction
         native[a["idofs"]] -= np.einsum("cip,p->ci", a["Bi"], hp_rp)
         native_effective_rhs = a["g"].copy()
-        hp_gp = np.linalg.solve(a["Hp"], a["gp"])
+        hp_gp = solve_hp(a["gp"])
         native_effective_rhs[a["masters"]] -= self._direct_B(hp_gp)
         native_effective_rhs[a["masters"]] -= self._pullback(
             np.einsum("cip,p->ci", a["Bt"], hp_gp)

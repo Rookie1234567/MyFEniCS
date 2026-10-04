@@ -62,6 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.local_block_pair import load_local_block
         from src.io.block_direction_diagnostic import load_block_diagnostic
         from src.io.return_block_continuation import load_return_diagnostic as load_return_continuation
+        from src.io.full_input_online import load_online
         from src.io.full_input_block_v34 import load_return_diagnostic as load_full_input_v34
         from src.io.full_input_block_v33 import load_return_diagnostic as load_full_v33
         from src.io.return_block_v32 import load_return_diagnostic as load_return_v32
@@ -74,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
         from src.io.post_lsqr_polish import load_post_lsqr
         from src.io.gmres_residual_completion import load_residual_completion
         from src.io.augmented_trace_lsqr import load_augmented_trace
-        specification = load_full_input_v34(args.input_path) or load_full_v33(args.input_path) or load_return_v32(args.input_path) or load_return_v31(args.input_path) or load_return_continuation(args.input_path) or load_return_diagnostic(args.input_path) or load_joint_diagnostic(args.input_path) or load_block_diagnostic(args.input_path) or load_local_block(args.input_path) or load_image_minres(args.input_path) or load_p1_trace(args.input_path) or load_recycling(args.input_path) or load_fixed_ilu0(args.input_path) or load_post_lsqr(args.input_path) or load_residual_completion(args.input_path) or load_resumable_trace(args.input_path) or load_augmented_trace(args.input_path) or load_local_trace(args.input_path) or load_orthonormal_trace(args.input_path) or load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
+        specification = load_online(args.input_path) or load_full_input_v34(args.input_path) or load_full_v33(args.input_path) or load_return_v32(args.input_path) or load_return_v31(args.input_path) or load_return_continuation(args.input_path) or load_return_diagnostic(args.input_path) or load_joint_diagnostic(args.input_path) or load_block_diagnostic(args.input_path) or load_local_block(args.input_path) or load_image_minres(args.input_path) or load_p1_trace(args.input_path) or load_recycling(args.input_path) or load_fixed_ilu0(args.input_path) or load_post_lsqr(args.input_path) or load_residual_completion(args.input_path) or load_resumable_trace(args.input_path) or load_augmented_trace(args.input_path) or load_local_trace(args.input_path) or load_orthonormal_trace(args.input_path) or load_tangent_head(args.input_path) or load_actual_loss(args.input_path) or load_stable_head(args.input_path) or load_autonomous(args.input_path) or load_diagnostic(args.input_path) or load_calibration(args.input_path) or load_continuation(args.input_path) or load_interface(args.input_path)
         if specification is None:
             specification = load_and_resolve(args.input_path)
         from src.io.task042_profile import TASK042_PROFILES

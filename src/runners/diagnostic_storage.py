@@ -15,8 +15,8 @@ FREE_MINIMUM = 50 * 2**30
 
 def scope_paths(root, *, batch=32):
     root = Path(root).resolve()
-    if batch not in (32, 33, 34):
-        raise ValueError('storage scope is explicitly V32, V33 or V34')
+    if batch not in (32, 33, 34, 35):
+        raise ValueError('storage scope is explicitly V32, V33, V34 or V35')
     tmp = root / 'tmp/task042'
     artifact = root / 'benchmarks/artifacts/task042'
     results = root / 'results/task042'

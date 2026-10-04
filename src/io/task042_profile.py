@@ -6,6 +6,8 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 TASK042_PROFILES = {
+    'task042_v35_online': 'V35-ONLINE',
+    'task042_v35_verify': 'V35-VERIFY',
     'task042_v34_diagnostic': 'V34-DIAGNOSTIC',
     'task042_v33_diagnostic': 'V33-DIAGNOSTIC',
     'task042_v32_diagnostic': 'V32-DIAGNOSTIC',

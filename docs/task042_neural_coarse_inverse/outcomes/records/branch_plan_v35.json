@@ -1,0 +1,72 @@
+{
+  "batch": "V35_ONLINE_SEVEN_REGION",
+  "review_source": "e1926a9cb42329276da4a26f4304f71cbbf97198",
+  "window": {
+    "schema": "task042.v35.immutable-window",
+    "start_utc": "2026-10-04T00:43:44.120839067+00:00",
+    "start_monotonic": 999618.98,
+    "monotonic_precision_seconds": 0.01,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_seconds": 86400,
+    "heavy_seconds": 82800,
+    "review_sha": "e1926a9cb42329276da4a26f4304f71cbbf97198",
+    "handoff": "review-execution-handoff-20261004-v32",
+    "prior_closed_seconds": 212.19044355582446,
+    "review_auxiliary_seconds": 3.666822421,
+    "numeric_probe_cap_seconds": 900,
+    "actor_cap_seconds": 600,
+    "auxiliary_cap_seconds": 250,
+    "probe_cap_seconds": 20,
+    "cleanup_reserve_seconds": 30
+  },
+  "physical_and_action_identity": {
+    "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "mode_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+    "b_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b",
+    "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a"
+  },
+  "call_reservation": {
+    "Arnoldi_max": 512,
+    "cycles_max": 2,
+    "pc_apply_planned_upper": 530,
+    "J_solve_planned_upper": 1062,
+    "outer_solve_planned_upper": 3180,
+    "triangular_pass_planned_upper": 8484,
+    "S_SH_planned_upper": 1900,
+    "port_factor_planned_upper": 3,
+    "port_solve_planned_upper": 2100,
+    "original_audits_max": 4
+  },
+  "plan_status": "DERIVED_CALL_GRAPH_NOT_MEASURED",
+  "call_assumptions": [
+    "two GMRES256 cycles including finite returned B(y), zero initial effective matvec, principal/SH reader qualification and old/fast pairing",
+    "two PC J solves and six outer solves per nonzero call; additional fixed reader witnesses",
+    "unchanged original audit; one reusable Hp factor per process and one actor Hhat factor"
+  ],
+  "cost_planning": {
+    "reader_hash_setup_seconds": "unknown; prior V34 J-only load7.010996086; seven bundles are larger",
+    "J_solve_calibration_seconds_per_rhs": 0.1781649465,
+    "original_S_calibration_seconds": 0.06246571528026834,
+    "hypothetical_two_cycle_J_seconds": 183.866224788,
+    "hypothetical_two_cycle_S_seconds": 96.82185868441593,
+    "outer_solves_orthogonalization_LEDGER_IO_seconds": "unknown; new actual arbitrary-RHS deployment must measure",
+    "actor_hard_total_seconds": 600,
+    "simultaneous_total_seconds": 900,
+    "feasible_two_cycles": "unknown; one cycle progress and live hard budgets take precedence",
+    "performance_condition": "shared-workstation, inference from unmatched historical stages is inconclusive"
+  },
+  "forbidden": [
+    "warm/reference/cached direction inputs",
+    "new large LU",
+    "old5/7 independent factor reads",
+    "new training",
+    "restart/PC/threshold scans"
+  ],
+  "required_result": [
+    "returned cold state or trustworthy stop",
+    "cache-only checker",
+    "conditional one-state physics after factors released",
+    "original_scale_bridge_v35 regardless of outcome"
+  ]
+}

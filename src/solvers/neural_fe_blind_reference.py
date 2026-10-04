@@ -370,7 +370,7 @@ def verify_saved_reference(design, packet, route_records, identity, artifact):
     )
 
 
-def independent_physics(design, packet, reference, states, artifact, *, offline_diagnostic=None):
+def independent_physics(design, packet, reference, states, artifact, *, offline_diagnostic=None, audit_function=None):
     import ufl
     from dolfinx import fem
 
@@ -470,7 +470,7 @@ def independent_physics(design, packet, reference, states, artifact, *, offline_
         ref_E, ref_H = samples(refE)
         records = {}
         for name, z in all_states.items():
-            a = packet.audit(z)
+            a = (packet.audit if audit_function is None else audit_function)(z)
             total = packet.a["background"] + packet.recover(z)
             field = restore_p0_full_field(floquet, total)
             alpha = packet.a["background_alpha"] + z[packet.nt :]
