@@ -24,7 +24,6 @@ from benchmarks.task041_balh_workflow import (
     TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
     TASK041_P4_BACKEND_PAIR_CONTRACT_KIND,
     TASK041_P4_BACKEND_PAIR_MODE,
-    TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
     TASK041_REPRESENTATIVE_RHS_SCOPE,
     TASK041_SCHUR_SPEED_V2_PROFILE,
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
@@ -32,11 +31,11 @@ from benchmarks.task041_balh_workflow import (
     task041_is_explicit_p4_backend_pair,
     task041_p4_backend_pair_identity,
     task041_p4_refinement_target_binding,
+    task041_p4_registered_formal_target_scope,
     task041_review_v5_ledger_path,
     task041_schur_speed_v2_contract,
 )
 from src.io.input_validation import (
-    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     task041_balh_phase_limits_for_model,
     task041_balh_service_contract,
 )
@@ -115,9 +114,12 @@ def _service_contract(
             p4_refinement_target_tolerance is not None
             or p4_backend_pair_side is not None
         )
+        registered_target_scope = task041_p4_registered_formal_target_scope(
+            model_id
+        )
         if target_requested:
             if (
-                model_id != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+                registered_target_scope is None
                 or config.get("performance_profile") is not None
                 or side_setup_schedule is not None
                 or comparison_mode is not None
@@ -125,7 +127,7 @@ def _service_contract(
                 or p4_backend_pair_side is not None
             ):
                 raise Task041ServiceError(
-                    "registered P4 refinement target is limited to the 5 nm cell-condensed formal consumer"
+                    "registered P4 refinement target is limited to a registered cell-condensed formal consumer"
                 )
             try:
                 registered_target_binding = (
@@ -146,7 +148,7 @@ def _service_contract(
             if (
                 not isinstance(registered_target_binding, Mapping)
                 or registered_target_binding.get("scope")
-                != TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                != registered_target_scope
             ):
                 raise Task041ServiceError(
                     "registered P4 refinement target binding is incomplete"

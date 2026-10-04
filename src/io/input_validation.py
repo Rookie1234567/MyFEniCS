@@ -436,6 +436,9 @@ TASK041_BALH_W_LABEL = TASK041_MATERIAL_LABEL
 TASK041_BALH_2NM_MODEL_ID = (
     "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8"
 )
+TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID = (
+    "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8_cell_condensed"
+)
 TASK041_BALH_2NM_N = (0.99880148307, 0.000213688647)
 TASK041_BALH_2NM_W_LABEL = "W / tungsten, 2 nm"
 TASK041_BALH_2NM_PLANNING_CEILING_BYTES = 1649267441664
@@ -648,6 +651,22 @@ TASK041_BALH_CASES = {
         "cpu_set": "1-8",
         "reporting_harmonic_bound": 60,
     },
+}
+TASK041_BALH_CASES[TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID] = {
+    **TASK041_BALH_CASES[TASK041_BALH_2NM_MODEL_ID],
+    "run_id": "task041_2nm_p6h1p5_m1200_mpi8_cell_condensed",
+    "input": "input/official/task041/side_balh/2nm_p6h1p5_m1200_mpi8_cell_condensed.dat",
+    "service_contract_id": "task041_2nm_cell_condensed_service_v1",
+    "compute_wall_ledger_filename": TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME,
+    "compute_wall_ledger_path": (
+        "results/task041_review_v5_cpu_numa_condensed_speed/"
+        "r0_r1_20260920/r1_load_ledger_20260920.json"
+    ),
+    "solver_contract": "task041_side_balh_candidate_fgmres32_cell_condensed_v1",
+    "p4_inverse_backend": "cell_condensed",
+    "support_policy": "entity_closure",
+    "construction_audit": TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION,
+    "membind_node": 0,
 }
 TASK041_BALH_MODEL_IDS = frozenset(TASK041_BALH_CASES)
 TASK041_BALH_EXACT_MODEL_IDS = frozenset(
@@ -3738,6 +3757,7 @@ def load_and_resolve(path: str | Path) -> RunSpecification:
 
 
 __all__ = [
+    "TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID",
     "TASK041_BALH_2NM_COMPUTE_WALL_LEDGER_FILENAME",
     "TASK041_BALH_2NM_MODEL_ID",
     "TASK041_BALH_2NM_N",

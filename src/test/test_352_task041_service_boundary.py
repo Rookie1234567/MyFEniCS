@@ -22,6 +22,7 @@ from benchmarks.task041_balh_workflow import (
     task041_schur_speed_v2_contract,
 )
 from src.io.input_validation import (
+    TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
@@ -807,20 +808,31 @@ def test_registered_5nm_formal_target_keeps_case_resource_and_time_contract(
             )
 
 
-def test_v8_resource_policy_is_bound_by_registered_5nm_finalizer(
-    monkeypatch, tmp_path
+@pytest.mark.parametrize(
+    ("model_id", "input_name", "target_scope"),
+    [
+        (
+            TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+            "5nm_p6h4_m480_mpi8_cell_condensed.dat",
+            task041_balh_workflow.TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
+        ),
+        (
+            TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
+            "2nm_p6h1p5_m1200_mpi8_cell_condensed.dat",
+            task041_balh_workflow.TASK041_P4_REGISTERED_2NM_TARGET_SCOPE,
+        ),
+    ],
+)
+def test_v8_resource_policy_is_bound_by_registered_condensed_finalizer(
+    model_id, input_name, target_scope, monkeypatch, tmp_path
 ):
     repository_root = Path(__file__).resolve().parents[2]
-    model_id = TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
     registered = task041_balh_service_contract(model_id)
     ledger_path = (repository_root / registered["ledger"]["path"]).resolve()
     root = tmp_path / "v8-service-root"
     root.mkdir()
     policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
-    input_path = (
-        repository_root
-        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
-    )
+    input_path = repository_root / "input/official/task041/side_balh" / input_name
     config = {
         "unit": UNIT,
         "model_id": model_id,
@@ -893,9 +905,7 @@ def test_v8_resource_policy_is_bound_by_registered_5nm_finalizer(
     policy_binding = launch["task041_resource_policy"]
     target_binding = launch["p4_refinement_target_binding"]
     assert launch["p4_refinement_target_tolerance"] == 5.0e-13
-    assert target_binding["scope"] == (
-        "registered_5nm_cell_condensed_formal_consumer_target"
-    )
+    assert target_binding["scope"] == target_scope
 
     monkeypatch.setattr(
         service,

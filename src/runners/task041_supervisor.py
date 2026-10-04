@@ -8989,6 +8989,7 @@ def run_task041_public_supervisor(
     representative_rhs_binding: dict[str, Any] | None = None
     p4_backend_pair_identity: dict[str, Any] | None = None
     p4_refinement_target_binding: dict[str, Any] | None = None
+    registered_formal_target_scope: str | None = None
     p4_backend_pair_runtime = False
     compute_wall_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     compute_wall_phase_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
@@ -9058,9 +9059,6 @@ def run_task041_public_supervisor(
             task041_p4_refinement_target_tolerance is not None
             or task041_p4_backend_pair_side is not None
         ):
-            from benchmarks.task041_balh_workflow import (
-                TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
-            )
             from benchmarks.task041_balh_workflow import (
                 task041_p4_refinement_target_binding as bind_refinement_target,
             )
@@ -9133,6 +9131,15 @@ def run_task041_public_supervisor(
             compute_wall_enforced_limit_seconds = None
         legacy_native = legacy_native_packet_descriptor is not None
         registered_case = task041_balh_case(str(identity["model_id"]))
+        from benchmarks.task041_balh_workflow import (
+            task041_p4_registered_formal_target_scope,
+        )
+
+        registered_formal_target_scope = (
+            task041_p4_registered_formal_target_scope(
+                str(identity["model_id"])
+            )
+        )
         if (
             registered_case is not None
             and registered_case.get("p4_inverse_backend") == "cell_condensed"
@@ -9295,7 +9302,7 @@ def run_task041_public_supervisor(
                     case_runtime_contract is not None
                     and isinstance(p4_refinement_target_binding, Mapping)
                     and p4_refinement_target_binding.get("scope")
-                    == TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                    == registered_formal_target_scope
                     and performance_profile is None
                     and task041_p4_backend_pair_side is None
                 )

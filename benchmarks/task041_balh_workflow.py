@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from src.io.input_validation import (
+    TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
@@ -69,6 +70,9 @@ TASK041_P4_REFINEMENT_TARGET_TOLERANCE = 5.0e-13
 TASK041_P4_REGISTERED_5NM_TARGET_SCOPE = (
     "registered_5nm_cell_condensed_formal_consumer_target"
 )
+TASK041_P4_REGISTERED_2NM_TARGET_SCOPE = (
+    "registered_2nm_cell_condensed_formal_consumer_target"
+)
 TASK041_V8_SWAP_OBSERVE_CONTINUE = "task041_v8_swap_observe_continue"
 TASK041_V8_REVIEW_PATH = (
     "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md"
@@ -88,6 +92,19 @@ _TASK041_REPRESENTATIVE_RHS_EXPECTED = (
 )
 
 
+def task041_p4_registered_formal_target_scope(model_id: str) -> str | None:
+    """Return a target scope only for the registered condensed formal cases."""
+
+    return {
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID: (
+            TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+        ),
+        TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID: (
+            TASK041_P4_REGISTERED_2NM_TARGET_SCOPE
+        ),
+    }.get(str(model_id))
+
+
 def task041_v8_resource_policy_binding(
     model_id: str, policy: str | None
 ) -> dict[str, Any] | None:
@@ -99,6 +116,7 @@ def task041_v8_resource_policy_binding(
         raise ValueError(f"unsupported Task041 resource policy: {policy}")
     if model_id not in {
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
     } or task041_balh_service_contract(model_id) is None:
         raise ValueError(
@@ -185,8 +203,11 @@ def task041_p4_refinement_target_binding(
     ):
         raise ValueError("only the reviewed P4 target 5e-13 is supported")
     if p4_backend_pair_side is None:
+        registered_formal_scope = (
+            task041_p4_registered_formal_target_scope(model_id)
+        )
         registered_cell_condensed_formal = (
-            model_id == TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+            registered_formal_scope is not None
             and profile_id is None
             and scope is None
             and side_setup_schedule is None
@@ -201,11 +222,11 @@ def task041_p4_refinement_target_binding(
         )
         if not (registered_cell_condensed_formal or v2_candidate_formal):
             raise ValueError(
-                "the formal P4 target is limited to the registered 5 nm consumer"
+                "the formal P4 target is limited to a registered cell-condensed consumer"
             )
         return {
             "scope": (
-                TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                registered_formal_scope
                 if registered_cell_condensed_formal
                 else "registered_5nm_formal_consumer_target"
             ),
@@ -1204,7 +1225,9 @@ def build_task041_balh_candidate_consumer_command(
             and not (
                 isinstance(target_binding, Mapping)
                 and target_binding.get("scope")
-                == TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                == task041_p4_registered_formal_target_scope(
+                    str(normalized["model_id"])
+                )
             )
         )
     ):

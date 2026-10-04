@@ -68,6 +68,7 @@ from src.io.execution_plan import (
 )
 from src.io.input_loader import InputError
 from src.io.input_validation import (
+    TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
     load_and_resolve,
     task041_balh_diagnostic_output_enabled,
@@ -711,16 +712,35 @@ def test_task041_sequential_component_opt_in_is_bound_and_formal_rejected(
     ) == 2
 
 
-def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
-    tmp_path: Path, monkeypatch
+@pytest.mark.parametrize(
+    ("input_name", "expected_model_id", "expected_scope"),
+    [
+        (
+            "5nm_p6h4_m480_mpi8_cell_condensed.dat",
+            TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+            task041_balh_workflow.TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
+        ),
+        (
+            "2nm_p6h1p5_m1200_mpi8_cell_condensed.dat",
+            TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
+            task041_balh_workflow.TASK041_P4_REGISTERED_2NM_TARGET_SCOPE,
+        ),
+    ],
+)
+def test_registered_cell_condensed_formal_target_reaches_worker(
+    input_name, expected_model_id, expected_scope, tmp_path: Path, monkeypatch
 ):
-    input_path = (
-        REPOSITORY_ROOT
-        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
-    )
+    input_path = REPOSITORY_ROOT / "input/official/task041/side_balh" / input_name
     specification = _specification(input_path)
     model_id = str(specification.identity["model_id"])
-    assert model_id == TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    assert model_id == expected_model_id
+    if model_id == TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID:
+        old_2nm = _specification(
+            REPOSITORY_ROOT
+            / "input/official/task041/side_balh/2nm_p6h1p5_m1200_mpi8_balh.dat"
+        )
+        assert specification.physical_model_sha256 == old_2nm.physical_model_sha256
+        assert specification.identity["run_id"] != old_2nm.identity["run_id"]
     resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
     assert task041_balh_workflow.task041_balh_case(model_id)[
         "p4_inverse_backend"
@@ -746,11 +766,16 @@ def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
             resource_policy,
         ]
     ) == 0
-    assert captured["model_id"] == TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    assert captured["model_id"] == expected_model_id
     assert captured["performance_profile"] is None
     assert captured["task041_p4_refinement_target_tolerance"] == 5.0e-13
     assert captured["task041_p4_backend_pair_side"] is None
     assert captured["task041_resource_policy"] == resource_policy
+    assert task041_p4_refinement_target_binding(
+        model_id=model_id,
+        refinement_target_tolerance=5.0e-13,
+        p4_backend_pair_side=None,
+    )["scope"] == expected_scope
 
     command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
@@ -770,6 +795,52 @@ def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
     assert parsed.task041_p4_refinement_target_tolerance == 5.0e-13
     assert parsed.task041_p4_backend_pair_side is None
     assert parsed.task041_resource_policy == resource_policy
+    if model_id == TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID:
+        assert command[command.index("--cpu-list") + 1] == "1-8"
+        worker_python_index = command.index(str(sys.executable))
+        assert command[worker_python_index - 2 : worker_python_index + 1] == [
+            "numactl",
+            "--membind=0",
+            str(sys.executable),
+        ]
+
+        registered_case = task041_balh_workflow.task041_balh_case(model_id)
+        assert registered_case["p4_inverse_backend"] == "cell_condensed"
+        registered_contract = task041_balh_service_contract(model_id)
+        from src.runners import task041_service as service
+
+        resolved_contract = service._service_contract(
+            {
+                "model_id": model_id,
+                "public_command": command,
+                "performance_profile": None,
+                "scope": "formal_consumer",
+                "ledger_path": str(
+                    (REPOSITORY_ROOT / registered_contract["ledger"]["path"]).resolve()
+                ),
+            },
+            side_setup_schedule=None,
+            comparison_mode=None,
+            p4_refinement_target_tolerance=5.0e-13,
+            p4_backend_pair_side=None,
+            task041_resource_policy=resource_policy,
+        )
+        assert (
+            resolved_contract["p4_refinement_target"][
+                "max_corrections_per_p4_call"
+            ]
+            == 2
+        )
+        assert (
+            task041_balh_workflow.task041_balh_formal_physical_volume_context_factory(
+                specification,
+                candidate=True,
+                resource_policy=resource_policy,
+                refinement_target_tolerance=5.0e-13,
+                p4_inverse_backend="cell_condensed",
+            )
+            is None
+        )
 
     with pytest.raises(SystemExit) as unknown_policy:
         run_case._parser().parse_args(
@@ -782,18 +853,23 @@ def test_registered_5nm_cell_condensed_formal_target_reaches_worker(
     assert unknown_policy.value.code == 2
 
 
-def test_registered_formal_p4_target_rejects_13p5nm_and_2nm():
+def test_registered_formal_p4_target_rejects_13p5nm_and_old_2nm_full():
     for model_id in (
         TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
     ):
-        with pytest.raises(ValueError, match="registered 5 nm consumer"):
+        with pytest.raises(ValueError, match="registered cell-condensed consumer"):
             task041_p4_refinement_target_binding(
                 model_id=model_id,
                 refinement_target_tolerance=5.0e-13,
                 p4_backend_pair_side=None,
                 profile_id=None,
             )
+    assert task041_p4_refinement_target_binding(
+        model_id=TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
+        refinement_target_tolerance=5.0e-13,
+        p4_backend_pair_side=None,
+    )["scope"] == task041_balh_workflow.TASK041_P4_REGISTERED_2NM_TARGET_SCOPE
 
 
 def test_task041_common_layout_mode_binds_fixed_scope_and_cpu_range(
@@ -4398,18 +4474,20 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
 
 
 @pytest.mark.parametrize(
-    ("p4_pair", "correction_steps", "registered_formal_target"),
+    ("p4_pair", "correction_steps", "formal_target_model_id"),
     [
-        (False, 0, False),
-        (True, 0, False),
-        (True, 1, False),
-        (False, 0, True),
+        (False, 0, None),
+        (True, 0, None),
+        (True, 1, None),
+        (False, 0, TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID),
+        (False, 0, TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID),
     ],
     ids=[
         "public",
         "fixed-pair-default",
         "fixed-pair-correction",
-        "registered-cell-condensed-target",
+        "registered-5nm-cell-condensed-target",
+        "registered-2nm-cell-condensed-target",
     ],
 )
 def test_task041_balh_reused_public_producer_starts_only_one_consumer(
@@ -4417,25 +4495,36 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     monkeypatch,
     p4_pair: bool,
     correction_steps: int,
-    registered_formal_target: bool,
+    formal_target_model_id: str | None,
 ):
+    registered_formal_target = formal_target_model_id is not None
     input_prefix = (
-        "5nm_p6h4_m480_mpi8"
+        "2nm_p6h1p5_m1200_mpi8"
+        if formal_target_model_id == TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID
+        else "5nm_p6h4_m480_mpi8"
         if p4_pair or registered_formal_target
         else "13p5nm_p6h10_m120_mpi8"
     )
+    exact_input_name = (
+        "2nm_p6h1p5_m1200_mpi8_balh.dat"
+        if formal_target_model_id == TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID
+        else f"{input_prefix}_exact.dat"
+    )
     exact = _specification(
         REPOSITORY_ROOT
-        / f"input/official/task041/side_balh/{input_prefix}_exact.dat"
+        / f"input/official/task041/side_balh/{exact_input_name}"
+    )
+    candidate_input_name = (
+        "2nm_p6h1p5_m1200_mpi8_cell_condensed.dat"
+        if formal_target_model_id == TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID
+        else "5nm_p6h4_m480_mpi8_cell_condensed.dat"
+        if registered_formal_target
+        else f"{input_prefix}_balh.dat"
     )
     candidate = _specification(
         REPOSITORY_ROOT
         / "input/official/task041/side_balh"
-        / (
-            "5nm_p6h4_m480_mpi8_cell_condensed.dat"
-            if registered_formal_target
-            else f"{input_prefix}_balh.dat"
-        )
+        / candidate_input_name
     )
     from benchmarks.task041_balh_workflow import build_task041_balh_packet_identity
     from src.io.input_validation import (
@@ -4659,6 +4748,8 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         expected_p4_refinement_target_tolerance=None,
         expected_p4_backend_pair_side=None,
         representative_rhs_binding=None,
+        expected_diagnostic_output=False,
+        expected_diagnostic_model_id=None,
     ):
         observed_schedules.append(expected_side_setup_schedule)
         assert expected_side_setup_schedule == expected_schedule
@@ -4670,6 +4761,12 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             5.0e-13 if registered_formal_target else None
         )
         assert expected_p4_backend_pair_side is None
+        assert expected_diagnostic_output is task041_balh_diagnostic_output_enabled(
+            candidate_model
+        )
+        assert expected_diagnostic_model_id == (
+            candidate_model if expected_diagnostic_output else None
+        )
         if p4_pair:
             assert representative_rhs_binding["path"] == str(probe_manifest)
         return {
@@ -4915,11 +5012,13 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
             assert "--task041-top-causal-replay" not in command
             assert "--task041-p4-response-correction-steps" not in command
             assert any(
-                value.endswith("5nm_p6h4_m480_mpi8_cell_condensed.dat")
+                value.endswith(candidate_input_name)
                 for value in command
             )
             assert result["p4_refinement_target_request"]["scope"] == (
-                task041_balh_workflow.TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                task041_balh_workflow.task041_p4_registered_formal_target_scope(
+                    candidate_model
+                )
             )
             assert result["p4_refinement_target_request"]["requested_tolerance"] == (
                 5.0e-13
@@ -4932,18 +5031,22 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
                 "shared Review V5 ledger"
             )
             assert result["service_contract"]["memory_cap_bytes"] == (
-                53_221_163_008
+                registered_contract["memory_cap_bytes"]
             )
             assert result["service_contract"]["warning_memory_bytes"] == (
-                47_899_046_707
+                registered_contract["warning_memory_bytes"]
             )
             assert result["service_contract"]["runtime_reserve_bytes"] == (
                 412_316_860_416
             )
             assert result["service_contract"]["swap_limit_bytes"] == 0
             assert result["service_contract"]["model_id"] == candidate_model
-            assert result["limits"]["hard_memory_bytes"] == 53_221_163_008
-            assert result["limits"]["process_tree_rss_cap_bytes"] == 53_221_163_008
+            assert result["limits"]["hard_memory_bytes"] == (
+                registered_contract["memory_cap_bytes"]
+            )
+            assert result["limits"]["process_tree_rss_cap_bytes"] == (
+                registered_contract["memory_cap_bytes"]
+            )
             assert result["phase_limits"]["consumer"]["timeout_seconds"] is None
             assert task041_balh_case(candidate_model)["p4_inverse_backend"] == (
                 "cell_condensed"

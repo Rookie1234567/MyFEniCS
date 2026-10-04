@@ -214,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise InputError(str(exc)) from exc
         else:
             from benchmarks.task041_balh_workflow import (
-                TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
+                task041_p4_registered_formal_target_scope,
             )
 
             registered_formal_target = bool(
@@ -223,7 +223,9 @@ def main(argv: list[str] | None = None) -> int:
                 == "cell_condensed"
                 and isinstance(target_binding, dict)
                 and target_binding.get("scope")
-                == TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+                == task041_p4_registered_formal_target_scope(
+                    str(specification.identity.get("model_id", ""))
+                )
                 and args.task041_performance_profile is None
                 and target_side is None
             )
