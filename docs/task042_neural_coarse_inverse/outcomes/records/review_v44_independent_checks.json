@@ -1,0 +1,1203 @@
+{
+  "reviewed_head": "9a5434f23b78b16b7f8d7d56872eaec770204540",
+  "previous_review": "0217f004a38f109a6253923f83a9a24b19d85362",
+  "scope": "stdlib raw/source/scalar/resource/history audit; no FE/ML action or numerical replay",
+  "raw_archives": 227,
+  "current_originals_matching_version": 222,
+  "unmatched": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/post_settlement_fee.json",
+      "bytes": 339,
+      "sha256": "4cb2476e72743a0f7891b7209f05be3d4beaa94a8ef28110e3e6df7e9bf66ab2"
+    }
+  ],
+  "missing": [],
+  "delivery_record_hashes_checked": [
+    "benefit_necessary_conditions_v46.json",
+    "closed_window_v46.json",
+    "cold_n1_cost_contract_v46.json",
+    "critical_path_v46.json",
+    "documentation_final_structure_v46.json",
+    "dot_compact_snapshot_v46.json",
+    "engine_matching_v46.json",
+    "final_stdout_correction_v46.json",
+    "github_visual_v46.json",
+    "history_protection_v46.json",
+    "raw_evidence_index_v46.json",
+    "research_admission_v46.json",
+    "resource_costs_v46.json",
+    "resource_samples_audit_v46.json",
+    "run_index_v46.json",
+    "selective_merge_manifest_v46.json",
+    "software_failures_v46.json",
+    "tests_v46.json"
+  ],
+  "protected_files": 6130,
+  "history_files": 88,
+  "compiled_files": [
+    "src/solvers/neural_deployment_cost.py",
+    "src/solvers/neural_engine_contract.py",
+    "src/solvers/neural_decision_scope.py",
+    "src/solvers/full_moment_study.py",
+    "src/solvers/full_moment_scope.py",
+    "src/runners/port_preparation.py",
+    "benchmarks/neural_deployment_decision.py",
+    "src/test/test_neural_deployment_decision.py",
+    "benchmarks/qualify_neural_deployment.py"
+  ],
+  "formal_source": "4c40128d100860e24a5f50e220361c26bd1180b9",
+  "final_implementation_source": "109ad48d4625c1158cd70ce8d30605f2127de150",
+  "runs": [
+    {
+      "role": "STYLE",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 2.3047601499129087,
+      "exit_code": 1,
+      "peak": 74100736,
+      "samples": 4,
+      "max_interval": 0.8561658319085836,
+      "launcher_non_nested": 1.1293264580890536
+    },
+    {
+      "role": "STYLE",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 2.3347992228809744,
+      "exit_code": 0,
+      "peak": 65900544,
+      "samples": 4,
+      "max_interval": 0.850299202138558,
+      "launcher_non_nested": 1.1240766670089215
+    },
+    {
+      "role": "QUALIFY",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 6.1933048099745065,
+      "exit_code": 0,
+      "peak": 306192384,
+      "samples": 9,
+      "max_interval": 0.9249435509555042,
+      "launcher_non_nested": 1.1322936909273267
+    },
+    {
+      "role": "STYLE",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 2.3283543658908457,
+      "exit_code": 0,
+      "peak": 68833280,
+      "samples": 4,
+      "max_interval": 0.8461331699509174,
+      "launcher_non_nested": 1.1277877453248948
+    },
+    {
+      "role": "STYLE",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 2.330424608197063,
+      "exit_code": 0,
+      "peak": 69496832,
+      "samples": 4,
+      "max_interval": 0.8480336430948228,
+      "launcher_non_nested": 1.3016493448521942
+    },
+    {
+      "role": "QUALIFY",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 6.285950033925474,
+      "exit_code": 0,
+      "peak": 307077120,
+      "samples": 9,
+      "max_interval": 0.9409871669486165,
+      "launcher_non_nested": 1.1585397310554981
+    },
+    {
+      "role": "STYLE",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 2.33224343881011,
+      "exit_code": 0,
+      "peak": 69050368,
+      "samples": 4,
+      "max_interval": 0.8419425268657506,
+      "launcher_non_nested": 1.154832755913958
+    },
+    {
+      "role": "QUALIFY",
+      "source": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "elapsed": 6.355766081018373,
+      "exit_code": 0,
+      "peak": 306917376,
+      "samples": 9,
+      "max_interval": 0.9562209581490606,
+      "launcher_non_nested": 1.2884978810325265
+    },
+    {
+      "role": "DECISION",
+      "source": "4c40128d100860e24a5f50e220361c26bd1180b9",
+      "elapsed": 2.317759765079245,
+      "exit_code": 0,
+      "peak": 69795840,
+      "samples": 4,
+      "max_interval": 0.8115403219126165,
+      "launcher_non_nested": 1.1609864889178425
+    },
+    {
+      "role": "PREPARE",
+      "source": "4c40128d100860e24a5f50e220361c26bd1180b9",
+      "elapsed": 2.3789317910559475,
+      "exit_code": 0,
+      "peak": 70262784,
+      "samples": 4,
+      "max_interval": 0.8002227318938822,
+      "launcher_non_nested": 1.1377875390462577
+    },
+    {
+      "role": "STYLE",
+      "source": "4c40128d100860e24a5f50e220361c26bd1180b9",
+      "elapsed": 2.3849872150458395,
+      "exit_code": 0,
+      "peak": 67293184,
+      "samples": 4,
+      "max_interval": 0.865090232109651,
+      "launcher_non_nested": 1.1759855567943305
+    },
+    {
+      "role": "WINDOW",
+      "source": "4c40128d100860e24a5f50e220361c26bd1180b9",
+      "elapsed": 2.4037431550677866,
+      "exit_code": 0,
+      "peak": 59703296,
+      "samples": 4,
+      "max_interval": 0.8905417360365391,
+      "launcher_non_nested": 1.281489406246692
+    },
+    {
+      "role": "COLLECT",
+      "source": "109ad48d4625c1158cd70ce8d30605f2127de150",
+      "elapsed": 2.4553397761192173,
+      "exit_code": 0,
+      "peak": 64212992,
+      "samples": 4,
+      "max_interval": 0.8928020179737359,
+      "launcher_non_nested": 1.1820715037174523
+    },
+    {
+      "role": "DOCS",
+      "source": "109ad48d4625c1158cd70ce8d30605f2127de150",
+      "elapsed": 2.45692032109946,
+      "exit_code": 0,
+      "peak": 70389760,
+      "samples": 4,
+      "max_interval": 0.9030120291281492,
+      "launcher_non_nested": 1.2987830080091953
+    },
+    {
+      "role": "DOCS",
+      "source": "109ad48d4625c1158cd70ce8d30605f2127de150",
+      "elapsed": 2.40182126685977,
+      "exit_code": 0,
+      "peak": 70111232,
+      "samples": 4,
+      "max_interval": 0.8921721139922738,
+      "launcher_non_nested": 1.158426855225116
+    }
+  ],
+  "admissions": [
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_STYLE_006/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_DOCS_002/admission.json",
+      "selected_cpu": 3
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_STYLE_002/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_COLLECT_001/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_STYLE_005/admission.json",
+      "selected_cpu": 3
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_QUALIFY_001/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_QUALIFY_002/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_DECISION_001/admission.json",
+      "selected_cpu": 1
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_PREPARE_001/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_STYLE_003/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_WINDOW_001/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_QUALIFY_003/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_STYLE_001/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_DOCS_001/admission.json",
+      "selected_cpu": 0
+    },
+    {
+      "receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v46/aux_STYLE_004/admission.json",
+      "selected_cpu": 1
+    }
+  ],
+  "costs": {
+    "supervised": 47.26510600093752,
+    "probes": 19.409108648309484,
+    "launcher_non_nested": 17.81253463216126,
+    "known_lower": 85.53029829077423,
+    "charged_upper": 86.53029829077423,
+    "history_lower": 88474.7778976671
+  },
+  "cost_routes": [
+    {
+      "route": "R0",
+      "known_lower_seconds": 124.68974193860777,
+      "complete_seconds": null,
+      "inherited_prepare_train": 0.0,
+      "correct_count": 0
+    },
+    {
+      "route": "CL44",
+      "known_lower_seconds": 619.2285887566395,
+      "complete_seconds": null,
+      "inherited_prepare_train": 493.7489533459302,
+      "correct_count": 0
+    },
+    {
+      "route": "LIN-H",
+      "known_lower_seconds": 701.5235948761692,
+      "complete_seconds": null,
+      "inherited_prepare_train": 0.0,
+      "correct_count": 0
+    },
+    {
+      "route": "NN-L",
+      "known_lower_seconds": 696.17785803476,
+      "complete_seconds": null,
+      "inherited_prepare_train": 0.0,
+      "correct_count": 0
+    },
+    {
+      "route": "NN-H",
+      "known_lower_seconds": 702.623143412522,
+      "complete_seconds": null,
+      "inherited_prepare_train": 0.0,
+      "correct_count": 0
+    }
+  ],
+  "engine_fields": [
+    {
+      "layer": "physics",
+      "field": "unit",
+      "passed": true
+    },
+    {
+      "layer": "physics",
+      "field": "scale",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "period_nm",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "z_extent_nm",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "Si_block_width_height_nm",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "nonseparable_3D_capable",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "wavelength_nm",
+      "passed": true
+    },
+    {
+      "layer": "physics",
+      "field": "source_wavelength_nm",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "material_table_id",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "material_table_hash",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "Si_n",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "Si_epsilon",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "time_convention",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "grazing_degrees",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "azimuth_degrees",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "polarization",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "k_parallel_definition",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "periodic_axes",
+      "passed": false
+    },
+    {
+      "layer": "physics",
+      "field": "exterior",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "family",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "degree",
+      "passed": true
+    },
+    {
+      "layer": "discretization",
+      "field": "target_cells",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "h_nm_upper",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "quadrature_independently_qualified",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "native_canonical_dual_MPC_owner_complete",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "canonical_map_hash",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "orientation_hash",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "owner_hash",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "full_high_order_basis_qualified",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "Nedelec_version_hash",
+      "passed": false
+    },
+    {
+      "layer": "discretization",
+      "field": "mesh_discretization_hash",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "rhs_kind",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "full_PDE_solved",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "full_A",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "full_AH",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "complete_DtN",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "ordered_port_count",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "ordered_port_hash",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "all_quotients_complete",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "normalization_hash",
+      "passed": false
+    },
+    {
+      "layer": "problem",
+      "field": "original_true_residual_semantics",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "full_true_residual",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "full_field_curl_complex_channels",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "all_channel_power_energy",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "nonzero_interior_port_recovery",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "h_p_mode_accuracy",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "rho_limit",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "field_channel_limit",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "R_T_A_volume_limit",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "per_channel_power_limit",
+      "passed": false
+    },
+    {
+      "layer": "correctness",
+      "field": "energy_limit",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "source_sha",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "ABI_hash",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "complex_dtype",
+      "passed": true
+    },
+    {
+      "layer": "engineering",
+      "field": "thread_policy",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "payload_consumable",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "public_restore_command_verified",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "cold_N1_cost_complete",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "simultaneous_peak_measured",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "full_time_at_most_seconds",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "full_tree_peak_at_most_bytes",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "MPI_size",
+      "passed": false
+    },
+    {
+      "layer": "engineering",
+      "field": "runtime_manifest_hash",
+      "passed": false
+    },
+    {
+      "layer": "neural",
+      "field": "complete_residual_and_adjoint_interface",
+      "passed": false
+    },
+    {
+      "layer": "neural",
+      "field": "predict_input_output_order_bound",
+      "passed": false
+    },
+    {
+      "layer": "neural",
+      "field": "heldout_sealed_from_training",
+      "passed": false
+    },
+    {
+      "layer": "neural",
+      "field": "original_equation_auditor_available",
+      "passed": false
+    }
+  ],
+  "corrected_old_stdout_bytes": 355,
+  "software_tests": {
+    "pure_final": "COMPLETED",
+    "pure_final_test_count": 26,
+    "pure_passed": 25,
+    "ML_fixture_skipped_in_pure": 1,
+    "ML_isolated_test_count": 1,
+    "ML_isolated_result": "PASS",
+    "ML_no_model_instantiation_or_forward": true,
+    "pure_stdout_archive_source": "tmp/task042/v46/aux_WINDOW_001/supervision/worker.log",
+    "ML_stdout_archive_source": "tmp/task042/v46/aux_QUALIFY_003/command1.stderr",
+    "Ruff_compile_final": {
+      "status": "PASSED",
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "C408",
+            "--fix",
+            "--unsafe-fixes",
+            "src/solvers/neural_deployment_cost.py",
+            "src/solvers/neural_engine_contract.py",
+            "src/solvers/neural_decision_scope.py",
+            "src/solvers/full_moment_study.py",
+            "src/solvers/full_moment_scope.py",
+            "src/runners/port_preparation.py",
+            "benchmarks/neural_deployment_decision.py",
+            "src/test/test_neural_deployment_decision.py",
+            "benchmarks/qualify_neural_deployment.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--fix",
+            "src/solvers/neural_deployment_cost.py",
+            "src/solvers/neural_engine_contract.py",
+            "src/solvers/neural_decision_scope.py",
+            "src/solvers/full_moment_study.py",
+            "src/solvers/full_moment_scope.py",
+            "src/runners/port_preparation.py",
+            "benchmarks/neural_deployment_decision.py",
+            "src/test/test_neural_deployment_decision.py",
+            "benchmarks/qualify_neural_deployment.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "format",
+            "src/solvers/neural_deployment_cost.py",
+            "src/solvers/neural_engine_contract.py",
+            "src/solvers/neural_decision_scope.py",
+            "src/solvers/full_moment_study.py",
+            "src/solvers/full_moment_scope.py",
+            "src/runners/port_preparation.py",
+            "benchmarks/neural_deployment_decision.py",
+            "src/test/test_neural_deployment_decision.py",
+            "benchmarks/qualify_neural_deployment.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "src/solvers/neural_deployment_cost.py",
+            "src/solvers/neural_engine_contract.py",
+            "src/solvers/neural_decision_scope.py",
+            "src/solvers/full_moment_study.py",
+            "src/solvers/full_moment_scope.py",
+            "src/runners/port_preparation.py",
+            "benchmarks/neural_deployment_decision.py",
+            "src/test/test_neural_deployment_decision.py",
+            "benchmarks/qualify_neural_deployment.py"
+          ],
+          "returncode": 0
+        }
+      ],
+      "numeric_actions": 0,
+      "implementation_hashes": {
+        "src/solvers/neural_deployment_cost.py": "77fdaf6bc63669ce124edaa73fa5266ce3c73f65358c2cf2da7e50896a4a14f8",
+        "src/solvers/neural_engine_contract.py": "36d686fb00ade2b754b7487875b4eb9c240c6307304305a1eb90f7706c4b4c50",
+        "src/solvers/neural_decision_scope.py": "2efd39d1f0bffcd81f226229d0de6795e8748c53863eb147190d0204ff54d5e4",
+        "src/solvers/full_moment_study.py": "a780cd725b4e901d9c85b3c98db1c2848ca3887ddbd75744b09fb3d799a91536",
+        "src/solvers/full_moment_scope.py": "5dde724aeb5820779c257e4d545a2efade25ac6d932b6f22163f2ab4b1f98f3b",
+        "src/runners/port_preparation.py": "1c54a86d08364033011960bff8c569447041413da7cc74862f8e0e3201055710",
+        "benchmarks/neural_deployment_decision.py": "f28240ebf1297e13503d39467690ce8a150a0ab3d952e4fe4e18f347c9a452b6",
+        "src/test/test_neural_deployment_decision.py": "74dc6fef71bf298adea73abe1afd9f7d6cf434d6679cc0a6273591ea7818c53e",
+        "benchmarks/qualify_neural_deployment.py": "04ac26f57d88781146398f60e414480f43e8a0fcec10aeb7cb4c3f77a2503db4",
+        "input/task042_neural_coarse_inverse/neural_deployment_v46.json": "7cd38fef72a6f8581b777d62976e02bbf63c13667b6fcd89176e114e1815dd36"
+      }
+    },
+    "documentation_count": 15,
+    "documentation": {
+      "status": "PASSED",
+      "documentation_count": 15,
+      "returncode": 0,
+      "structures": [
+        {
+          "path": "docs/task042_neural_coarse_inverse/review_report_v43.md",
+          "tables": 8,
+          "links": 20,
+          "math_fences": 1,
+          "local_structure": "PASS"
+        },
+        {
+          "path": "docs/task042_neural_coarse_inverse/response_v46.md",
+          "tables": 1,
+          "links": 12,
+          "math_fences": 0,
+          "local_structure": "PASS"
+        },
+        {
+          "path": "docs/task042_neural_coarse_inverse/outcomes/neural_deployment_decision_v46.md",
+          "tables": 5,
+          "links": 9,
+          "math_fences": 1,
+          "local_structure": "PASS"
+        }
+      ],
+      "github_exact_url": "https://github.com/Rookie1234567/MyFEniCS/blob/0217f004a38f109a6253923f83a9a24b19d85362/docs/task042_neural_coarse_inverse/review_report_v43.md",
+      "github_visual": "NOT_VERIFIED",
+      "fetch_result": "web open Cache miss; no screenshot evidence",
+      "CI_claimed": false,
+      "numeric_actions": 0
+    },
+    "CI_claimed": false,
+    "old62_learning_tests_repeated": false,
+    "new_numeric_actions": 0
+  },
+  "dot_publication": {
+    "publication": "0a238243f353cf1e110170f92185d04d79ffbacc",
+    "source": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+    "tree": "c48eed05e8f3fd84556ffbcecefb9a3e13589e24",
+    "evidence_urls": {
+      "outcome": "https://github.com/Rookie1234567/MyFEniCS/blob/0a238243f353cf1e110170f92185d04d79ffbacc/docs/task40extra_dot_parallel_cloud/outcomes/paired_C1c_allq_zh.md",
+      "compact": "https://github.com/Rookie1234567/MyFEniCS/blob/0a238243f353cf1e110170f92185d04d79ffbacc/docs/task40extra_dot_parallel_cloud/outcomes/records/paired_C1c_allq/paired_C1c_compact.json"
+    },
+    "status": "FRESH_SAME80_SCALED_P4_PAIRED_ALLQ_REGULAR_NOTCH_QUALIFIED",
+    "degree": 4,
+    "modes": 532,
+    "qblocks": [
+      {
+        "q": 0,
+        "shape": [
+          1884,
+          1884
+        ],
+        "nnz": 436012,
+        "comparison": {
+          "label": "paired_q0_fresh_C1b",
+          "absolute_Frobenius_error": 4.296003980730039e-11,
+          "absolute_max_error": 6.2340683340419066e-12,
+          "reference_Frobenius_norm": 56452.64981885167,
+          "reference_maximum": 6299.882969692355,
+          "relative_Frobenius_error": 7.609924413672857e-16,
+          "relative_max_error": 9.895530383711775e-16,
+          "limit": 1e-11,
+          "passed": true
+        }
+      },
+      {
+        "q": 1,
+        "shape": [
+          1960,
+          1960
+        ],
+        "nnz": 454744,
+        "comparison": {
+          "label": "paired_q1_fresh_C1b",
+          "absolute_Frobenius_error": 5.888207883221423e-11,
+          "absolute_max_error": 1.4190663844428889e-11,
+          "reference_Frobenius_norm": 128849.0812489238,
+          "reference_maximum": 13701.723430006577,
+          "relative_Frobenius_error": 4.569848559374655e-16,
+          "relative_max_error": 1.0356845923011071e-15,
+          "limit": 1e-11,
+          "passed": true
+        }
+      },
+      {
+        "q": 2,
+        "shape": [
+          1960,
+          1960
+        ],
+        "nnz": 454744,
+        "comparison": {
+          "label": "paired_q2_fresh_C1b",
+          "absolute_Frobenius_error": 6.47284459995394e-11,
+          "absolute_max_error": 1.7799511272325695e-11,
+          "reference_Frobenius_norm": 176251.3022119344,
+          "reference_maximum": 20864.082826046084,
+          "relative_Frobenius_error": 3.6725088091381193e-16,
+          "relative_max_error": 8.531173606205842e-16,
+          "limit": 1e-11,
+          "passed": true
+        }
+      },
+      {
+        "q": 3,
+        "shape": [
+          1960,
+          1960
+        ],
+        "nnz": 455143,
+        "comparison": {
+          "label": "paired_q3_fresh_C1b",
+          "absolute_Frobenius_error": 5.1400691051605695e-11,
+          "absolute_max_error": 1.0982516507543137e-11,
+          "reference_Frobenius_norm": 96846.02288588721,
+          "reference_maximum": 8693.278377427716,
+          "relative_Frobenius_error": 5.307465347562146e-16,
+          "relative_max_error": 1.2633342716896627e-15,
+          "limit": 1e-11,
+          "passed": true
+        }
+      }
+    ],
+    "factor": {
+      "input_blocks": [
+        {
+          "q": 0,
+          "shape": [
+            1884,
+            1884
+          ],
+          "nnz": 436012,
+          "CSR_sha256": "a2bc9db900469dde4f8168522f568b30a211bdf00e787e6df46af7bc7b5add02",
+          "factor_seconds": 0.0972154179980862,
+          "CSR_payload_bytes": 8727780,
+          "factor_memory_bytes": null,
+          "public_backend": "scipy.sparse.linalg.splu",
+          "actual": {
+            "shape": [
+              1884,
+              1884
+            ],
+            "stored_entries_upper": 436012,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "qualified_PETSc_IntType": {
+            "shape": [
+              1884,
+              1884
+            ],
+            "stored_entries_upper": 436012,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "payload_bytes": 8727780
+        },
+        {
+          "q": 1,
+          "shape": [
+            1960,
+            1960
+          ],
+          "nnz": 454744,
+          "CSR_sha256": "2263cc289ace7c3897c84db1420391cf158e133c1cbdfb9244fd458f258ea09e",
+          "factor_seconds": 0.11369007300163503,
+          "CSR_payload_bytes": 9102724,
+          "factor_memory_bytes": null,
+          "public_backend": "scipy.sparse.linalg.splu",
+          "actual": {
+            "shape": [
+              1960,
+              1960
+            ],
+            "stored_entries_upper": 454744,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "qualified_PETSc_IntType": {
+            "shape": [
+              1960,
+              1960
+            ],
+            "stored_entries_upper": 454744,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "payload_bytes": 9102724
+        },
+        {
+          "q": 2,
+          "shape": [
+            1960,
+            1960
+          ],
+          "nnz": 454744,
+          "CSR_sha256": "8218a19e40470663e33aa87a0a7d3bc28b8a28c558ac5af719d25f363a9f24d3",
+          "factor_seconds": 0.1089503209987015,
+          "CSR_payload_bytes": 9102724,
+          "factor_memory_bytes": null,
+          "public_backend": "scipy.sparse.linalg.splu",
+          "actual": {
+            "shape": [
+              1960,
+              1960
+            ],
+            "stored_entries_upper": 454744,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "qualified_PETSc_IntType": {
+            "shape": [
+              1960,
+              1960
+            ],
+            "stored_entries_upper": 454744,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "payload_bytes": 9102724
+        },
+        {
+          "q": 3,
+          "shape": [
+            1960,
+            1960
+          ],
+          "nnz": 455143,
+          "CSR_sha256": "45e3deedcb1c4a086342f86c8dd2494779294b873d0aa3c5d312070fb17293f0",
+          "factor_seconds": 0.10669804800272686,
+          "CSR_payload_bytes": 9110704,
+          "factor_memory_bytes": null,
+          "public_backend": "scipy.sparse.linalg.splu",
+          "actual": {
+            "shape": [
+              1960,
+              1960
+            ],
+            "stored_entries_upper": 455143,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "qualified_PETSc_IntType": {
+            "shape": [
+              1960,
+              1960
+            ],
+            "stored_entries_upper": 455143,
+            "indices_dtype": "int32",
+            "indptr_dtype": "int32",
+            "indices_bits": 32,
+            "indptr_bits": 32,
+            "overflow_rejected_before_conversion": true
+          },
+          "payload_bytes": 9110704
+        }
+      ],
+      "tests": [
+        {
+          "q": 0,
+          "true_block_residual": 3.999254382199829e-13,
+          "repeated_difference": 0,
+          "linearity_difference": 3.163827607993879e-13,
+          "limit_residual": 1e-10,
+          "limit_linear": 1e-11
+        },
+        {
+          "q": 1,
+          "true_block_residual": 5.487783051253485e-13,
+          "repeated_difference": 0,
+          "linearity_difference": 3.286680486922774e-13,
+          "limit_residual": 1e-10,
+          "limit_linear": 1e-11
+        },
+        {
+          "q": 2,
+          "true_block_residual": 4.096852067495443e-13,
+          "repeated_difference": 0,
+          "linearity_difference": 1.7081200394710828e-13,
+          "limit_residual": 1e-10,
+          "limit_linear": 1e-11
+        },
+        {
+          "q": 3,
+          "true_block_residual": 5.801167172087387e-13,
+          "repeated_difference": 0,
+          "linearity_difference": 3.4829771690513766e-13,
+          "limit_residual": 1e-10,
+          "limit_linear": 1e-11
+        }
+      ],
+      "setup_seconds": 0.4613458919993718,
+      "all_q_factors": 4,
+      "factor_reuse_plus_minus_q": false,
+      "factor_L_U_copies": false,
+      "all_reformed_blocks_compared_before_factor": true,
+      "all_four_retained_simultaneously": true
+    },
+    "worker": {
+      "seconds": 2086.831996295001,
+      "RSS_peak_bytes": 656293888,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    "checker": {
+      "seconds": 29.930987872001424,
+      "RSS_peak_bytes": 427638784,
+      "checks": 399,
+      "all_pass": true,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    "proof_limits": {
+      "saved_live_FFCx_volume_authority": true,
+      "independent_new_volume_assembly": false,
+      "independent_native_map_reconstruction": false,
+      "producer_complete3968_column_controls_per_q": true,
+      "full16_crosspair_scan": false,
+      "fixed_manual532_full_AUTO_inventory": false,
+      "original_target_dimensions": false,
+      "target_accuracy": false,
+      "target_2TB48h": false
+    },
+    "regular": {
+      "generic": {
+        "rho": 6.683416220148841e-12,
+        "reference_solution_difference": 2.2348991724938034e-13
+      },
+      "interior_only": {
+        "rho": 2.7143253005853562e-12,
+        "reference_solution_difference": 3.9936314542390253e-13
+      },
+      "physical": {
+        "rho": 1.343582301562947e-12,
+        "reference_solution_difference": 3.2478342106148484e-13
+      },
+      "notch_supported": {
+        "rho": 2.4704190817528886e-12,
+        "reference_solution_difference": 3.469143956174925e-13
+      }
+    },
+    "notch": {
+      "generic": {
+        "rho": 5.125900339652496e-13,
+        "reference_solution_difference": 2.519616129938353e-14,
+        "iterations": 4,
+        "seconds": 1.5717607240003417
+      },
+      "interior_only": {
+        "rho": 4.2245122062952336e-13,
+        "reference_solution_difference": 2.7534761402029734e-14,
+        "iterations": 4,
+        "seconds": 1.588981419998163
+      },
+      "physical": {
+        "rho": 7.967120315864527e-12,
+        "reference_solution_difference": 6.998329819281883e-15,
+        "iterations": 3,
+        "seconds": 1.1172745399999258
+      },
+      "notch_supported": {
+        "rho": 5.732876896740217e-13,
+        "reference_solution_difference": 1.33245005913172e-14,
+        "iterations": 4,
+        "seconds": 1.5236678870023752
+      }
+    },
+    "old_degree_source": {
+      "publication": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/7f03a48d2962dd3ea967a07368b36acb4aae7f57/src/solvers/fresh_c1c_compact_prefactor.py",
+      "blob": "8709e4e26ce15893b9296601bd542084d650074a",
+      "lines": [
+        {
+          "line": 38,
+          "text": "    cfg=replace(cfg,nedelec_degree=4,visualization_degree=4,case_name='y_orbit_p4_algebra_regular')"
+        },
+        {
+          "line": 141,
+          "text": "        return {'status':STATUS,'scope':'selected b0/q0 compact prefactor only','degree':4,'twist':0,'q':0,"
+        }
+      ]
+    },
+    "review_scope": "publication/compact and old degree source only, no raw arrays requalification or branch/ref change"
+  },
+  "findings": [
+    {
+      "kind": "incorrect_frozen_metadata",
+      "path": "input/task042_neural_coarse_inverse/neural_deployment_v46.json",
+      "field": "dot_offered_contract.discretization.degree",
+      "reported": 6,
+      "actual_from_source": 4,
+      "affects_overall_rejection": false
+    },
+    {
+      "kind": "metadata_contract_scope",
+      "detail": "matcher checks assertions; hashing a compact does not independently validate every asserted field, full physical qualification remains separate"
+    }
+  ],
+  "repository_index_sha256": "172f3c2a40437ec3434880a7e7317a5978494e107984523f8ab633314eba5326",
+  "new_numeric_actions": 0,
+  "review_source_changes": false,
+  "limitations": [
+    "No repeated saved FE vectors, weights or old scientific payload audit; unchanged hashes preserve prior review scope",
+    "Dot publication and compact only, not independent raw numerical requalification",
+    "Formal metadata reject is supported; engine acceptance is not physical qualification",
+    "Review ordinary IO/human costs not monitored"
+  ],
+  "final_fee_snapshot": {
+    "path": "tmp/task042/v46/post_settlement_fee.json",
+    "sha256": "4cb2476e72743a0f7891b7209f05be3d4beaa94a8ef28110e3e6df7e9bf66ab2",
+    "bytes": 339,
+    "final": {
+      "seconds": 2.038683906197548,
+      "measured_lower_seconds": 1.038683906197548,
+      "final_tail_reserved_upper_seconds": 1,
+      "scope": "post-exit scalar settlement and metadata inventory repair plus one second reserved final bookkeeping; no actor restart",
+      "numeric_actions": 0,
+      "metadata_repair_measured_seconds": 0.3681120730470866
+    },
+    "archived_versions": [
+      {
+        "seconds": 1.6565367770381272,
+        "measured_lower_seconds": 0.6565367770381272,
+        "final_tail_reserved_upper_seconds": 1,
+        "scope": "both scalar settlement passes plus one-second final bookkeeping bound",
+        "numeric_actions": 0
+      }
+    ],
+    "delta_from_last_archive": 0.38214712915942073,
+    "classification": "final current metadata captured by independent review; latest fee receipt and tracked totals agree; archival gap is not a separately timed proof"
+  },
+  "review_helper_repair": "corrected ledger namespace/path lookup and removed unsupported assumption that metadata-repair timer was the only post-archive settlement change; reran stdlib audit; no production change or actor"
+}

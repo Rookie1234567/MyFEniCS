@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V44 / 当前研究保持关闭
+
+[Review V44](review_report_v44.md)独立审阅V46交付`9a5434f23b78b16b7f8d7d56872eaec770204540`：统一费用与整体拒绝决策成立；旧dot p4被写为p6的合同字段在本报告勘误，正向复用须先补真实字段绑定。原尺寸0.7nm完整解、2TB／48h和NN20仍未资格。
+
+审阅发现dot新发布`0a238243f353cf1e110170f92185d04d79ffbacc`，已有缩尺p4/all532/all-q规则及缺口完整问题证据，不能继续称最新只有q0；仍不授原尺寸或Task042资格。当前便宜的q因子／少量迭代没有显现冷N=1的20%神经机会，先看最佳传统准备阶段改进后的真实成本。本报告不新增V47执行批次，执行窗口拉取阅读、回执后保持停止；不为小勘误、纯FE演示或同A训练再循环报告。实质重新准入条件见§6。
+
+[独立核验及外部快照摘录](outcomes/records/review_v44_independent_checks.json) · [文档检查](outcomes/records/review_v44_documentation_checks.json)。最终费用小记录的339B新版本在审阅记录补存；所有旧task／review／response／raw及以下历史正文逐字保留。非merge approval，两个窗口不并行。
+
+---
+
 # Task042 V46最新交付：同一成本消费与引擎拒绝
 
 先确认算对，再比较从准备到审核的一次完整费用；unknown不能当0。本轮只修费用/身份决策，没有新PDE、模型推理或训练。原尺寸0.7nm完整解、2TB/48h和NN20仍未资格。
