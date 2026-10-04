@@ -317,8 +317,11 @@ def _complex_anderson_candidate_update(
     delta_f: np.ndarray | None,
     *,
     capture_coefficients: bool = False,
+    mixing_metric: str = "C_scaled_residual",
+    raw_residual: np.ndarray | None = None,
+    delta_raw_residual: np.ndarray | None = None,
 ) -> tuple[np.ndarray | None, dict[str, Any]]:
-    """Make one beta=1 complex Type-II Anderson update or report rank zero."""
+    """Make one beta=1 complex Type-II update or report rank zero."""
 
     current = np.asarray(modal, dtype=np.complex128)
     fixed_point = np.asarray(fixed_point_residual, dtype=np.complex128)
@@ -328,6 +331,20 @@ def _complex_anderson_candidate_update(
         np.all(np.isfinite(fixed_point))
     ):
         raise FloatingPointError("Complex Anderson update vectors are non-finite.")
+    if mixing_metric not in {"C_scaled_residual", "raw_residual"}:
+        raise ValueError("Unknown complex Anderson least-squares metric.")
+    if mixing_metric == "C_scaled_residual":
+        if raw_residual is not None or delta_raw_residual is not None:
+            raise ValueError("Raw residual data requires the raw mixing metric.")
+        mixing_vector = fixed_point
+    else:
+        if raw_residual is None:
+            raise ValueError("Raw Anderson mixing requires the current raw residual.")
+        mixing_vector = np.asarray(raw_residual, dtype=np.complex128)
+        if mixing_vector.shape != current.shape:
+            raise ValueError("Raw Anderson residual has an incompatible shape.")
+        if not bool(np.all(np.isfinite(mixing_vector))):
+            raise FloatingPointError("Raw Anderson residual is non-finite.")
     delta_f_values = (
         None if delta_f is None else np.asarray(delta_f, dtype=np.complex128)
     )
@@ -336,6 +353,8 @@ def _complex_anderson_candidate_update(
     if (delta_m is None) != (delta_f_values is None):
         raise ValueError("Complex Anderson iterate and residual histories must match.")
     if delta_f_values is None or delta_f_values.shape[1] == 0:
+        if delta_raw_residual is not None:
+            raise ValueError("Raw Anderson differences require a history column.")
         candidate = current + fixed_point
         if not bool(np.all(np.isfinite(candidate))):
             raise FloatingPointError("Complex Anderson startup step is non-finite.")
@@ -347,6 +366,7 @@ def _complex_anderson_candidate_update(
             "qr_scale": 0.0,
             "rank_cutoff": 0.0,
             "fit_residual_norm": None,
+            "mixing_metric": mixing_metric,
         }
     delta_m_values = np.asarray(delta_m, dtype=np.complex128)
     delta_f_values = np.asarray(delta_f_values, dtype=np.complex128)
@@ -357,9 +377,20 @@ def _complex_anderson_candidate_update(
         or delta_m_values.shape[0] != current.size
     ):
         raise ValueError("Complex Anderson difference histories have incompatible shapes.")
-    coefficients, diagnostics = _complex_anderson_qr_coefficients(
-        delta_f_values, fixed_point
-    )
+    if mixing_metric == "raw_residual":
+        if delta_raw_residual is None:
+            raise ValueError("Raw Anderson mixing requires raw residual history.")
+        delta_mixing = np.asarray(delta_raw_residual, dtype=np.complex128)
+        if delta_mixing.shape != delta_f_values.shape:
+            raise ValueError("Raw and scaled Anderson histories must align.")
+        coefficients, diagnostics = _complex_anderson_qr_coefficients(
+            delta_mixing, mixing_vector
+        )
+    else:
+        coefficients, diagnostics = _complex_anderson_qr_coefficients(
+            delta_f_values, mixing_vector
+        )
+    diagnostics["mixing_metric"] = mixing_metric
     if capture_coefficients:
         diagnostics["_capture_gamma"] = coefficients
     if diagnostics["effective_rank"] == 0:
@@ -1152,9 +1183,10 @@ def solve_action_modal_schur_anderson_complex_qr_research(
     rhs: np.ndarray,
     *,
     _borrowed_constraint_factor: Any,
+    raw_metric_mixing: bool = False,
     _capture_trace_record: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Bounded full-S Anderson research path with complex QR coefficients."""
+    """Bounded full-S complex QR path with an optional raw gamma metric."""
 
     if modal_action._destroyed:
         raise RuntimeError("On-demand modal Schur action has been destroyed.")
@@ -1164,6 +1196,9 @@ def solve_action_modal_schur_anderson_complex_qr_research(
     max_iterations, history_limit = 14, 4
     evaluation_limit = _MODAL_ANDERSON_S_EVALUATION_LIMIT
     beta = 1.0
+    if not isinstance(raw_metric_mixing, (bool, np.bool_)):
+        raise TypeError("Raw-metric Anderson selection must be an explicit boolean.")
+    mixing_metric = "raw_residual" if raw_metric_mixing else "C_scaled_residual"
     rhs_values = np.asarray(rhs, dtype=np.complex128)
     rhs_valid = rhs_values.shape == (modal_count,) and bool(np.all(np.isfinite(rhs_values)))
     if not comm.allreduce(rhs_valid, op=MPI.LAND):
@@ -1211,6 +1246,7 @@ def solve_action_modal_schur_anderson_complex_qr_research(
         _capture_trace_record["evaluations"] = residual_history
     mixing_history: list[dict[str, Any]] = []
     owner_states: list[tuple[np.ndarray, np.ndarray]] = []
+    owner_raw_residuals: list[np.ndarray] = []
     modal_values = np.zeros(modal_count, dtype=np.complex128)
     function_evaluations = total_evaluations = c_solves = iterations = 0
     final_evaluations = 0
@@ -1302,7 +1338,7 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                     "finite": False,
                 }
                 residual_history.append(row)
-            return None, row, error
+            return None, row, error, None
         c_solves += 1
         raw_norm, raw_metric, scaled_norm, fixed_point = values
         if capture_evaluation is None:
@@ -1332,14 +1368,21 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                 _capture_trace_record["capture_incomplete_reason"] = (
                     "evaluation_vector_not_captured"
                 )
-        return np.asarray(fixed_point, dtype=np.complex128), row, None
+        return (
+            np.asarray(fixed_point, dtype=np.complex128),
+            row,
+            None,
+            raw if raw_metric_mixing and comm.rank == root else None,
+        )
 
     for _ in range(max_iterations + 1):
         if total_evaluations >= evaluation_limit - 1:
             budget_exhausted = True
             stop_reason = "budget_exhausted"
             break
-        fixed_point, row, error = evaluate(modal_values, "complex_qr_iteration")
+        fixed_point, row, error, raw_residual = evaluate(
+            modal_values, "complex_qr_iteration"
+        )
         if error is not None:
             evaluation_failed = True
             stop_reason = error.split(":", 1)[0]
@@ -1360,7 +1403,12 @@ def solve_action_modal_schur_anderson_complex_qr_research(
             owner_states.append((modal_values.copy(), fixed_point.copy()))
             if len(owner_states) > history_limit + 1:
                 del owner_states[0]
+            if raw_metric_mixing:
+                if len(owner_raw_residuals) >= history_limit + 1:
+                    del owner_raw_residuals[0]
+                owner_raw_residuals.append(raw_residual)
             delta_m = delta_f = None
+            delta_raw_residual = None
             if len(owner_states) > 1:
                 delta_m = np.column_stack(
                     [owner_states[i + 1][0] - owner_states[i][0] for i in range(len(owner_states) - 1)]
@@ -1368,6 +1416,13 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                 delta_f = np.column_stack(
                     [owner_states[i + 1][1] - owner_states[i][1] for i in range(len(owner_states) - 1)]
                 )
+                if raw_metric_mixing:
+                    delta_raw_residual = np.column_stack(
+                        [
+                            owner_raw_residuals[i + 1] - owner_raw_residuals[i]
+                            for i in range(len(owner_raw_residuals) - 1)
+                        ]
+                    )
             try:
                 candidate, mix = _complex_anderson_candidate_update(
                     modal_values,
@@ -1375,6 +1430,9 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                     delta_m,
                     delta_f,
                     capture_coefficients=_capture_trace_record is not None,
+                    mixing_metric=mixing_metric,
+                    raw_residual=raw_residual if raw_metric_mixing else None,
+                    delta_raw_residual=delta_raw_residual,
                 )
                 gamma = mix.pop("_capture_gamma", None)
                 if _capture_trace_record is not None:
@@ -1423,7 +1481,7 @@ def solve_action_modal_schur_anderson_complex_qr_research(
         iterations += 1
 
     if not evaluation_failed and bool(np.all(np.isfinite(modal_values))):
-        _final_fixed_point, final_row, error = evaluate(
+        _final_fixed_point, final_row, error, _final_raw_residual = evaluate(
             modal_values, "final_validation"
         )
         final_evaluations = 1
@@ -1505,6 +1563,7 @@ def solve_action_modal_schur_anderson_complex_qr_research(
         "residual_evaluation_history": residual_history,
         "complex_qr_mixing_history": mixing_history,
         "mixing_method": "complex_qr_type_ii_research",
+        "mixing_metric": mixing_metric,
         "mixing_beta": beta,
         "constraint_scale_enabled": True,
         "real_coordinate_embedding": False,
@@ -1546,12 +1605,17 @@ class HybridActionModalSchurAndersonSystem:
         *,
         modal_owner: int,
         complex_qr_research: bool = False,
+        raw_metric_mixing: bool = False,
         capture_modal_solve_trace: bool = False,
     ) -> None:
         if not isinstance(complex_qr_research, (bool, np.bool_)):
             raise TypeError("Complex QR research selection must be an explicit boolean.")
         if not isinstance(capture_modal_solve_trace, (bool, np.bool_)):
             raise TypeError("Modal solve trace capture must be an explicit boolean.")
+        if not isinstance(raw_metric_mixing, (bool, np.bool_)):
+            raise TypeError("Raw-metric Anderson selection must be an explicit boolean.")
+        if raw_metric_mixing and not complex_qr_research:
+            raise ValueError("Raw-metric mixing requires the complex QR research path.")
         if capture_modal_solve_trace and not complex_qr_research:
             raise ValueError(
                 "Modal solve trace capture requires the complex QR research path."
@@ -1559,11 +1623,15 @@ class HybridActionModalSchurAndersonSystem:
         self.modal_action = modal_action
         self.modal_count = int(modal_action.modal_count)
         self.complex_qr_research = bool(complex_qr_research)
+        self.raw_metric_mixing = bool(raw_metric_mixing)
         self.capture_modal_solve_trace = bool(capture_modal_solve_trace)
         self.mixing_method = (
             "complex_qr_type_ii_research"
             if self.complex_qr_research
             else "petsc_snes_anderson_default"
+        )
+        self.mixing_metric = (
+            "raw_residual" if self.raw_metric_mixing else "C_scaled_residual"
         )
         self.modal_schur = None
         self.constraint_lu_owner_rank = int(modal_owner)
@@ -1634,6 +1702,7 @@ class HybridActionModalSchurAndersonSystem:
                 else "bounded_C_scaled_SNESANDERSON"
             ),
             "mixing_method": self.mixing_method,
+            "mixing_metric": self.mixing_metric,
             "status": "destroyed" if self._destroyed else "ready",
             "modal_count": self.modal_count,
             "real_coordinate_embedding": not self.complex_qr_research,
@@ -1824,6 +1893,7 @@ class HybridActionModalSchurAndersonSystem:
                     self.modal_action,
                     rhs,
                     _borrowed_constraint_factor=self,
+                    raw_metric_mixing=self.raw_metric_mixing,
                     _capture_trace_record=trace_record,
                 )
             else:
@@ -1894,6 +1964,7 @@ class HybridActionModalSchurAndersonSystem:
             "modal_coordinate_extra_bytes_two_explicit_vecs",
             "real_coordinate_subspace_violation",
             "mixing_method",
+            "mixing_metric",
             "mixing_beta",
             "complex_qr_mixing_history",
         )
@@ -3130,6 +3201,7 @@ def create_side_balh_block_ldu_preconditioner(
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     use_anderson_modal_inner: bool = False,
     complex_qr_research: bool = False,
+    raw_metric_mixing: bool = False,
     capture_modal_solve_trace: bool = False,
 ) -> HybridBlockLduPreconditioner:
     """Build the sampled Schur or an opt-in BAL_H modal inner solve.
@@ -3175,6 +3247,9 @@ def create_side_balh_block_ldu_preconditioner(
     if not isinstance(complex_qr_research, (bool, np.bool_)):
         raise TypeError("Complex QR research selection must be an explicit boolean.")
     complex_qr_research = bool(complex_qr_research)
+    if not isinstance(raw_metric_mixing, (bool, np.bool_)):
+        raise TypeError("Raw-metric Anderson selection must be an explicit boolean.")
+    raw_metric_mixing = bool(raw_metric_mixing)
     if not isinstance(capture_modal_solve_trace, (bool, np.bool_)):
         raise TypeError("Modal solve trace capture must be an explicit boolean.")
     capture_modal_solve_trace = bool(capture_modal_solve_trace)
@@ -3182,6 +3257,8 @@ def create_side_balh_block_ldu_preconditioner(
         raise ValueError(
             "Complex QR research requires the on-demand Anderson modal inner."
         )
+    if raw_metric_mixing and not complex_qr_research:
+        raise ValueError("Raw-metric mixing requires the complex QR research path.")
     if capture_modal_solve_trace and not (
         use_anderson_modal_inner and complex_qr_research
     ):
@@ -3219,6 +3296,7 @@ def create_side_balh_block_ldu_preconditioner(
                 modal_action,
                 modal_owner=layout.modal_owner,
                 complex_qr_research=complex_qr_research,
+                raw_metric_mixing=raw_metric_mixing,
                 capture_modal_solve_trace=capture_modal_solve_trace,
             )
             research_inventory = {

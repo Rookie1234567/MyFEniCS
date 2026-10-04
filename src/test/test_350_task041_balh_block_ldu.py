@@ -960,6 +960,88 @@ def test_complex_qr_anderson_coefficients_match_independent_complex_lstsq() -> N
     assert np.array_equal(current_f, original_vector)
 
 
+def test_complex_qr_raw_metric_changes_gamma_objective_only() -> None:
+    modal = np.asarray([0.2 + 0.4j, -0.3 + 0.1j, 0.7 - 0.2j], dtype=np.complex128)
+    fixed_point = np.asarray([0.1 - 0.2j, 0.4 + 0.3j, -0.2 + 0.6j])
+    delta_m = np.asarray(
+        [[0.3 + 0.1j, -0.2 + 0.4j], [0.5 - 0.2j, 0.1 + 0.7j], [-0.4 + 0.3j, 0.6 - 0.1j]],
+        dtype=np.complex128,
+    )
+    delta_f = np.asarray(
+        [[0.2 + 0.8j, -0.5 + 0.1j], [0.9 - 0.4j, 0.3 + 0.6j], [-0.1 + 0.2j, 0.7 - 0.5j]],
+        dtype=np.complex128,
+    )
+    raw_residual = np.asarray([0.6 + 0.2j, -0.1 + 0.9j, 0.4 - 0.7j])
+    delta_raw = np.asarray(
+        [[0.8 + 0.1j, -0.3 + 0.5j], [0.2 - 0.6j, 0.7 + 0.2j], [-0.5 + 0.4j, 0.1 + 0.9j]],
+        dtype=np.complex128,
+    )
+    originals = tuple(
+        values.copy() for values in (modal, fixed_point, delta_m, delta_f, raw_residual, delta_raw)
+    )
+
+    raw_candidate, raw_info = block_ldu._complex_anderson_candidate_update(
+        modal,
+        fixed_point,
+        delta_m,
+        delta_f,
+        capture_coefficients=True,
+        mixing_metric="raw_residual",
+        raw_residual=raw_residual,
+        delta_raw_residual=delta_raw,
+    )
+    expected_gamma = np.linalg.lstsq(delta_raw, raw_residual, rcond=None)[0]
+    expected_fit = delta_raw @ expected_gamma - raw_residual
+    expected_candidate = modal + fixed_point - (delta_m + delta_f) @ expected_gamma
+
+    assert raw_info["mixing_metric"] == "raw_residual"
+    assert raw_info["effective_rank"] == delta_raw.shape[1]
+    assert np.allclose(raw_info["_capture_gamma"], expected_gamma, rtol=2.0e-13, atol=2.0e-14)
+    assert np.linalg.norm(delta_raw.conj().T @ expected_fit) <= 2.0e-13
+    assert raw_info["fit_residual_norm"] == pytest.approx(
+        np.linalg.norm(expected_fit), rel=2.0e-13, abs=2.0e-14
+    )
+    assert np.allclose(raw_candidate, expected_candidate, rtol=2.0e-13, atol=2.0e-14)
+    assert all(np.array_equal(actual, before) for actual, before in zip(
+        (modal, fixed_point, delta_m, delta_f, raw_residual, delta_raw), originals
+    ))
+
+    identity_scaled, scaled_info = block_ldu._complex_anderson_candidate_update(
+        modal,
+        -raw_residual,
+        delta_m,
+        -delta_raw,
+        capture_coefficients=True,
+    )
+    identity_raw, identity_info = block_ldu._complex_anderson_candidate_update(
+        modal,
+        -raw_residual,
+        delta_m,
+        -delta_raw,
+        capture_coefficients=True,
+        mixing_metric="raw_residual",
+        raw_residual=raw_residual,
+        delta_raw_residual=delta_raw,
+    )
+    assert scaled_info["mixing_metric"] == "C_scaled_residual"
+    assert identity_info["mixing_metric"] == "raw_residual"
+    assert np.allclose(
+        scaled_info["_capture_gamma"], identity_info["_capture_gamma"],
+        rtol=2.0e-13, atol=2.0e-14,
+    )
+    assert np.allclose(identity_scaled, identity_raw, rtol=2.0e-13, atol=2.0e-14)
+    with pytest.raises(FloatingPointError, match="Raw Anderson residual is non-finite"):
+        block_ldu._complex_anderson_candidate_update(
+            modal,
+            fixed_point,
+            delta_m,
+            delta_f,
+            mixing_metric="raw_residual",
+            raw_residual=np.full(modal.shape, np.nan + 0.0j),
+            delta_raw_residual=delta_raw,
+        )
+
+
 def test_complex_qr_anderson_startup_rank_deficiency_and_nonfinite_history() -> None:
     modal = np.asarray([0.2 + 0.3j, -0.4 + 0.1j], dtype=np.complex128)
     fixed_point = np.asarray([0.05 - 0.2j, 0.3 + 0.4j], dtype=np.complex128)
@@ -1007,10 +1089,22 @@ def test_complex_qr_anderson_startup_rank_deficiency_and_nonfinite_history() -> 
         )
 
 
-def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> None:
+@pytest.mark.parametrize(
+    ("raw_metric_mixing", "capture_trace", "expected_metric"),
+    [
+        (False, True, "C_scaled_residual"),
+        (True, False, "raw_residual"),
+    ],
+)
+def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides(
+    raw_metric_mixing: bool,
+    capture_trace: bool,
+    expected_metric: str,
+) -> None:
     fixture = _side_block_fixture()
-    modal_action = None
+    context = None
     modal_system = None
+    modal_action = None
     solution = None
     rhs = np.asarray(
         [0.2 + 0.4j, -0.5 + 0.1j, 0.7 - 0.3j, -0.2 - 0.6j],
@@ -1023,20 +1117,27 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
         for side in ("bottom", "top")
     }
     try:
-        modal_action = block_ldu.HybridActionModalSchurApply(
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
             fixture["coupling"],
             fixture["bottom_inverse"],
             fixture["top_inverse"],
-        )
-        modal_system = block_ldu.HybridActionModalSchurAndersonSystem(
-            modal_action,
-            modal_owner=fixture["layout"].modal_owner,
+            sampled_columns=None,
+            sampled_column_roles=None,
+            sampled_column_contract_sha256=None,
+            use_anderson_modal_inner=True,
             complex_qr_research=True,
-            capture_modal_solve_trace=True,
+            raw_metric_mixing=raw_metric_mixing,
+            capture_modal_solve_trace=capture_trace,
         )
+        modal_system = context.action_modal_schur_system
+        modal_action = modal_system.modal_action
         assert modal_system.diagnostics["mixing_method"] == (
             "complex_qr_type_ii_research"
         )
+        assert modal_system.diagnostics["mixing_metric"] == expected_metric
         assert modal_system.diagnostics["real_coordinate_embedding"] is False
         oversized_rhs = np.full(rhs.shape, 1.0e308 + 0.0j, dtype=np.complex128)
         with pytest.raises(ValueError, match="RHS norm is non-finite"):
@@ -1053,6 +1154,7 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
         diagnostics = modal_system.diagnostics
         last_solve = diagnostics["last_solve"]
         assert last_solve["mixing_method"] == "complex_qr_type_ii_research"
+        assert last_solve["mixing_metric"] == expected_metric
         assert last_solve["mixing_beta"] == 1.0
         assert last_solve["real_coordinate_embedding"] is False
         assert last_solve["modal_coordinate_representation"] == "complex128_modal_values"
@@ -1102,22 +1204,25 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
             assert diagnostics["side_action_call_count"][side] == actual_calls
         assert diagnostics["constraint_lu_factorizations"] == 1
         capture = modal_system.export_modal_solve_capture(MPI.COMM_WORLD)
-        if MPI.COMM_WORLD.rank == 0:
-            assert capture["capture_status"] == "incomplete"
-            assert [row["solve_id"] for row in capture["traces"]] == [1, 2]
-            assert capture["traces"][0]["capture_complete"] is False
-            real_solve_trace = capture["traces"][1]
-            assert real_solve_trace["rhs_sha256"] == hashlib.sha256(
-                rhs.tobytes()
-            ).hexdigest()
-            assert real_solve_trace["s_evaluation_count"] == len(
-                real_solve_trace["evaluations"]
-            )
-            if last_solve["iterations"] > 1:
-                assert any(
-                    update.get("gamma") is not None
-                    for update in real_solve_trace["updates"]
+        if capture_trace:
+            if MPI.COMM_WORLD.rank == 0:
+                assert capture["capture_status"] == "incomplete"
+                assert [row["solve_id"] for row in capture["traces"]] == [1, 2]
+                assert capture["traces"][0]["capture_complete"] is False
+                real_solve_trace = capture["traces"][1]
+                assert real_solve_trace["rhs_sha256"] == hashlib.sha256(
+                    rhs.tobytes()
+                ).hexdigest()
+                assert real_solve_trace["s_evaluation_count"] == len(
+                    real_solve_trace["evaluations"]
                 )
+                if last_solve["iterations"] > 1:
+                    assert any(
+                        update.get("gamma") is not None
+                        for update in real_solve_trace["updates"]
+                    )
+            else:
+                assert capture is None
         else:
             assert capture is None
         assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
@@ -1128,18 +1233,24 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
                 f"status={last_solve['status']}, raw={last_solve['relative_residual']:.6e}, "
                 f"iterations={last_solve['iterations']}, S={last_solve['s_evaluation_count']}, "
                 f"side_calls={last_solve['side_action_calls']}, "
+                f"mixing={last_solve['mixing_metric']}, "
                 f"mixing_steps={len(last_solve['complex_qr_mixing_history'])}",
                 flush=True,
             )
     finally:
-        if modal_system is not None:
+        if context is not None and not context._destroyed:
+            context.destroy()
+        elif modal_system is not None:
             modal_system.destroy()
         elif modal_action is not None and not modal_action._destroyed:
             modal_action.destroy()
         _destroy_side_block_fixture(fixture)
 
 
-def test_side_balh_complex_qr_budget_reserves_real_final_check(monkeypatch) -> None:
+@pytest.mark.parametrize("raw_metric_mixing", [False, True])
+def test_side_balh_complex_qr_budget_reserves_real_final_check(
+    monkeypatch, raw_metric_mixing: bool
+) -> None:
     fixture = _side_block_fixture()
     modal_action = None
     modal_system = None
@@ -1163,12 +1274,16 @@ def test_side_balh_complex_qr_budget_reserves_real_final_check(monkeypatch) -> N
             modal_action,
             modal_owner=fixture["layout"].modal_owner,
             complex_qr_research=True,
+            raw_metric_mixing=raw_metric_mixing,
         )
         with pytest.raises(RuntimeError, match="did not converge"):
             modal_system.solve(rhs)
 
         last_solve = modal_system.diagnostics["last_solve"]
         assert last_solve["status"] == "not_converged"
+        assert last_solve["mixing_metric"] == (
+            "raw_residual" if raw_metric_mixing else "C_scaled_residual"
+        )
         assert last_solve["stop_reason"] == "budget_exhausted"
         assert last_solve["budget_exhausted"] is True
         assert last_solve["budget_reason"] == "S_EVALUATION_LIMIT"
@@ -1203,7 +1318,10 @@ def test_side_balh_complex_qr_budget_reserves_real_final_check(monkeypatch) -> N
         _destroy_side_block_fixture(fixture)
 
 
-def test_side_balh_complex_qr_zero_rhs_uses_absolute_raw_gate() -> None:
+@pytest.mark.parametrize("raw_metric_mixing", [False, True])
+def test_side_balh_complex_qr_zero_rhs_uses_absolute_raw_gate(
+    raw_metric_mixing: bool,
+) -> None:
     fixture = _side_block_fixture()
     modal_action = None
     modal_system = None
@@ -1223,11 +1341,15 @@ def test_side_balh_complex_qr_zero_rhs_uses_absolute_raw_gate() -> None:
             modal_action,
             modal_owner=fixture["layout"].modal_owner,
             complex_qr_research=True,
+            raw_metric_mixing=raw_metric_mixing,
         )
         solution = modal_system.solve(rhs)
         last_solve = modal_system.diagnostics["last_solve"]
         assert np.array_equal(solution, np.zeros_like(solution))
         assert last_solve["status"] == "converged"
+        assert last_solve["mixing_metric"] == (
+            "raw_residual" if raw_metric_mixing else "C_scaled_residual"
+        )
         assert last_solve["stop_reason"] == "unscaled_residual_target"
         assert last_solve["zero_rhs_absolute_residual"] is True
         assert last_solve["rhs_norm"] == 0.0
