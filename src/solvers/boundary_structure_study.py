@@ -114,6 +114,12 @@ def bridge(folder):
         if any(p["description"] == desc for p in complete):
             continue
         native_counter(len(desc["cells"]))
+        from benchmarks.archive_jit_cache import archive, restore_cached_sources
+
+        storage(192 * 2**20, namespace="v38")
+        restore_receipt = restore_cached_sources(
+            Path(os.environ["FFCX_CACHE_DIR"]), window.TMP
+        )
         start = perf_counter()
         data, V, mpc = build_patch(desc, cfg)
         setup = perf_counter() - start
@@ -124,7 +130,7 @@ def bridge(folder):
         for i, r in enumerate(rows):
             r["tile_ids"] = list(src.tile_ids(i))
         native = {}
-        cost = {}
+        cost = {"cache_source_restore": restore_receipt}
         began = perf_counter()
         if name == "min_ordinary":
             native = read_arrays(capacity["native_files"]["30"])
@@ -136,14 +142,13 @@ def bridge(folder):
             # C/o losslessly before the next form; .so stays loaded/reusable.
             # Reserve covers 4 resident so, one C/o pair, compression overlap
             # and hashes/evidence, with no q60 UFL generation.
-            cost["storage_before_JIT"] = storage(128 * 2**20, namespace="v38")
-            from benchmarks.archive_jit_cache import archive
+            cost["storage_before_JIT"] = storage(100 * 2**20, namespace="v38")
 
             assemblers = {}
             archives = []
             for side in ("top", "bottom"):
                 for j in (0, 1):
-                    storage(128 * 2**20, namespace="v38")
+                    storage(100 * 2**20, namespace="v38")
                     assemblers[(side, j)] = _ReusableSurfaceComponentAssembler(
                         V,
                         data,
@@ -151,14 +156,15 @@ def bridge(folder):
                         j,
                         quadrature_degree=30,
                     )
-                    archives.append(
-                        archive(
-                            Path(os.environ["FFCX_CACHE_DIR"]),
-                            window.TMP / f"jit_archive_{name}_{side}_{j}",
-                            namespace="v38",
-                            suffixes=(".c", ".o"),
-                        )
-                    )
+            archives.append(
+                archive(
+                    Path(os.environ["FFCX_CACHE_DIR"]),
+                    window.TMP / f"jit_archive_{name}_complete",
+                    namespace="v38",
+                    suffixes=(".c", ".o"),
+                    reuse_root=window.TMP,
+                )
+            )
             cost["jit_archives"] = archives
             for i, row in enumerate(rows):
                 mode = mode_object(row)

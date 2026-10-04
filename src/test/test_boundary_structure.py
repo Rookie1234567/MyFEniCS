@@ -167,7 +167,10 @@ def test_jit_archive_v38_exact_readback_and_scope():
         (cache / "a.c").write_bytes(b"generated q30" * 100)
         (cache / "a.so").write_bytes(b"loaded so")
         result = archive(
-            cache, Path(path) / "archive", namespace="v38", suffixes=(".c", ".o")
+            cache,
+            Path(path) / "jit_archive_initial",
+            namespace="v38",
+            suffixes=(".c", ".o"),
         )
         assert result["members"][0]["lossless_readback"]
         assert (
@@ -175,5 +178,18 @@ def test_jit_archive_v38_exact_readback_and_scope():
             == b"generated q30" * 100
         )
         assert (cache / "a.so").exists() and not (cache / "a.c").exists()
+        from benchmarks.archive_jit_cache import restore_cached_sources
+
+        restore_cached_sources(cache, Path(path))
+        assert (cache / "a.c").read_bytes() == b"generated q30" * 100
+        second = archive(
+            cache,
+            Path(path) / "jit_archive_second",
+            namespace="v38",
+            suffixes=(".c", ".o"),
+            reuse_root=Path(path),
+        )
+        assert second["members"][0]["archive"] == result["members"][0]["archive"]
+        assert second["members"][0]["reused_immutable_archive"]
         with pytest.raises(ValueError, match="scope"):
             archive(cache, Path(path) / "bad", namespace="v39")
