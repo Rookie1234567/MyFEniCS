@@ -610,7 +610,26 @@ def v21_worker(m,directory,artifact,design,marker,budget):
     if stage=="v21_joint_qualification":
         from src.solvers.fixed_phase_port_qualification import joint_qualification
         from benchmarks.fixed_phase_checker import joint_port_qualification
-        result = joint_qualification(design["fixture"],marker,budget)
+        retained = None
+        reuse = None
+        if m["attempt"] > 1:
+            path = ARTIFACTS / "index_v21_joint_qualification_attempt1.json"
+            prior = json.loads(path.read_text())
+            raw = prior["files"]["result"]
+            if sha(raw["path"]) != raw["sha256"]:
+                raise ValueError("V21_QUALIFICATION_REUSE_IDENTITY_CHANGED")
+            retained = prior["result"]
+            checks = joint_port_qualification(retained)
+            if (set(checks["failed"]) != {"quadrature_15_30"}
+                    or any(not r["passed"] for r in retained["affected_ports"] if r["degree"] in (3,4))
+                    or next(r for r in retained["affected_ports"] if r["degree"]==6)["quadrature_15_30"] <= 1e-8):
+                raise ValueError("V21_ONLY_EVIDENCED_P6_FIXTURE_ROLE_CORRECTION")
+            reuse = dict(index_path=str(path),index_sha256=sha(path),
+                         result=raw,source_sha=prior["source_sha"],
+                         components=["base","trace","phase_p3","phase_p4"],
+                         fresh_component="ordinary_p6")
+        result = joint_qualification(design["fixture"],marker,budget,retained=retained)
+        result["qualification_reuse_binding"] = reuse
         result["checker"] = joint_port_qualification(result)
         result["stage_qualified"] = result["checker"]["passed"]
         return result,{}

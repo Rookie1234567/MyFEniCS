@@ -164,6 +164,108 @@ def test_unrun_e4_descriptor_binds_p4_without_changing_frozen_g0():
     }
 
 
+def _joint_fixture():
+    r = valid()
+    r["details"]["zero_carrier_old_rhs_relative"] = 0.0
+    r["details"]["plane"] = [
+        dict(
+            z_sign=s,
+            physical_flux=dict(
+                channels=36,
+                physical_E_cross_H=True,
+                independent_Poynting_vs_port_max_absolute=0.0,
+                all_mode_vs_analytic_max_absolute=0.0,
+                reflected=0.0,
+                transmitted=1.0,
+                energy_closure=0.0,
+                per_mode_physical_power=[0.0] * 36,
+                per_mode_analytic_power=[0.0] * 36,
+            ),
+        )
+        for s in (-1, 1)
+    ]
+    native = dict(
+        status="PASS",
+        samples=[
+            dict(
+                original_native_relative=0.0,
+                adjoint_dot_relative=0.0,
+                augmented_native_relative=0.0,
+                original_port_operation_relative=0.0,
+                arbitrary_interior_norm=1.0,
+            )
+            for _ in range(3)
+        ],
+        nonzero_FE_and_port_load_relative=0.0,
+        nonzero_port_load_operation_relative=0.0,
+    )
+    import copy
+
+    return dict(
+        base=r,
+        trace=dict(
+            rows=[
+                dict(
+                    degree=p,
+                    facet=f,
+                    actual_cell_permutation=1,
+                    nodal_and_integral_relative=[0.0, 0.0],
+                    omitted_boundary_dof_difference=1.0,
+                )
+                for p in (3, 4, 6)
+                for f in range(6)
+            ]
+        ),
+        affected_ports=[
+            dict(
+                degree=p,
+                quadrature_15_30=0.0,
+                physical_rhs=0.0,
+                condensed_action_recovery=0.0,
+                accurate_vs_independent_decimal=0.0,
+                physical_ports=dict(samples=[[0.0] * 3 for _ in range(3)]),
+                generic_nonzero_interior_port_rejected=True,
+                nonzero_internal_and_port_rhs=True,
+                omitted_boundary_dof_negative=1.0,
+                native_action=copy.deepcopy(native),
+            )
+            for p in (3, 4, 6)
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    "damage", ["fake_pass", "nan", "missing", "missing_sample", "zero_interior"]
+)
+def test_joint_gate_recomputes_native_errors_instead_of_trusting_status(damage):
+    from benchmarks.fixed_phase_checker import joint_port_qualification
+
+    r = _joint_fixture()
+    assert joint_port_qualification(r)["passed"]
+    n = r["affected_ports"][2]["native_action"]
+    if damage == "missing_sample":
+        n["samples"].pop()
+    elif damage == "missing":
+        del n["samples"][0]["original_native_relative"]
+    elif damage == "zero_interior":
+        n["samples"][0]["arbitrary_interior_norm"] = 0.0
+    else:
+        n["samples"][0]["original_native_relative"] = (
+            float("nan") if damage == "nan" else 1e-8
+        )
+    assert (
+        "native_action_original_measurements" in joint_port_qualification(r)["failed"]
+    )
+
+
+def test_joint_gate_requires_physical_flux_receipt():
+    from benchmarks.fixed_phase_checker import joint_port_qualification
+
+    r = _joint_fixture()
+    del r["base"]["details"]["plane"][0]["physical_flux"]
+    assert not joint_port_qualification(r)["passed"]
+
+
 def test_corrupt_modes_background_and_physical_wavenumber():
     for name in ("incorrect_physical_ports_difference", "old_background_difference"):
         r = valid()

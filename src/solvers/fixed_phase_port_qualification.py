@@ -4,7 +4,7 @@ import gc
 import numpy as np
 
 
-def joint_qualification(design, marker, budget):
+def joint_qualification(design, marker, budget, *, retained=None):
     from src.solvers.fixed_phase_qualification import qualify
     from src.solvers.topological_port_trace import trace_qualification
     from benchmarks.fixed_phase_checker import qualification
@@ -19,13 +19,36 @@ def joint_qualification(design, marker, budget):
     from src.solvers.accurate_ports import recover_ports
     from benchmarks.accurate_port_checker import decimal_ports
 
-    base = qualify(design, marker, joint_ports=True)
+    # The real p6 role is ordinary, while E3/E4 use the transverse phase.
+    # A phase-p6 fixture tests an unrequested space and its quadrature is not
+    # the admission evidence for O6. Reuse the unaffected frozen qualifications
+    # on the one evidenced fixture correction, rather than replaying their LU.
+    base = (
+        retained["base"]
+        if retained is not None
+        else qualify(design, marker, joint_ports=True)
+    )
     check = qualification(base, joint_ports=True)
-    trace = trace_qualification(design, marker, budget)
-    affected = []
-    for degree in (3, 4, 6):
+    trace = (
+        retained["trace"]
+        if retained is not None
+        else trace_qualification(design, marker, budget)
+    )
+    affected = (
+        []
+        if retained is None
+        else [
+            dict(r, phase=True, role="E" + str(r["degree"]))
+            for r in retained["affected_ports"]
+            if r["degree"] in (3, 4)
+        ]
+    )
+    for degree in (6,) if retained is not None else (3, 4, 6):
         budget("affected port fixture")
-        model = build_model(design, degree, True, topological_ports=True, marker=marker)
+        phase = degree != 6
+        model = build_model(
+            design, degree, phase, topological_ports=True, marker=marker
+        )
         try:
             p, _ = export_native(model, marker)
             B, D, H = surface_blocks(model, p)
@@ -86,6 +109,8 @@ def joint_qualification(design, marker, budget):
             affected.append(
                 dict(
                     degree=degree,
+                    role=("E" if phase else "O") + str(degree),
+                    phase=phase,
                     passed=passed,
                     physical_ports=pair,
                     quadrature_15_30=drift,
@@ -115,4 +140,5 @@ def joint_qualification(design, marker, budget):
         affected_ports=affected,
         complete_air_flux_before_real_B=True,
         no_NN_or_Gram=True,
+        reused_unaffected_qualification=retained is not None,
     )
