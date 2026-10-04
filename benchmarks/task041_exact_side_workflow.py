@@ -13515,9 +13515,51 @@ def run_task041_consumer(
 
         def full_formal_runner(**kwargs: Any) -> Mapping[str, Any]:
             base_release = kwargs.pop("release_before_recovery")
+            modal_inner_failure_snapshot = None
+
+            def capture_modal_inner_failure_snapshot() -> dict[str, Any] | None:
+                if not use_anderson_modal_inner:
+                    return None
+                candidate_context = kwargs.get("context")
+                if candidate_context is None:
+                    return None
+                context_inventory = candidate_context.inventory
+                modal_inner = context_inventory.get("modal_inner_solver")
+                if not isinstance(modal_inner, Mapping):
+                    return None
+                last_solve = modal_inner.get("last_solve")
+                if (
+                    not isinstance(last_solve, Mapping)
+                    or last_solve.get("status") != "not_converged"
+                ):
+                    return None
+                return _jsonable(
+                    {
+                        "scope": "last_failed_modal_inner_solve_before_context_release",
+                        "solve_count": modal_inner.get("solve_count"),
+                        "s_evaluation_count": modal_inner.get("s_evaluation_count"),
+                        "anderson_iteration_count": modal_inner.get(
+                            "anderson_iteration_count"
+                        ),
+                        "constraint_lu_solve_calls": modal_inner.get(
+                            "constraint_lu_solve_calls"
+                        ),
+                        "not_converged_count": modal_inner.get(
+                            "not_converged_count"
+                        ),
+                        "side_action_call_count": modal_inner.get(
+                            "side_action_call_count"
+                        ),
+                        "last_solve": dict(last_solve),
+                    }
+                )
 
             def release_before_recovery() -> Mapping[str, Any]:
-                nonlocal current_stage
+                nonlocal current_stage, modal_inner_failure_snapshot
+                if modal_inner_failure_snapshot is None:
+                    modal_inner_failure_snapshot = (
+                        capture_modal_inner_failure_snapshot()
+                    )
                 current_stage = "outer_solve_objects_cleanup"
                 release = dict(base_release())
                 before_rss_values = [
@@ -13573,22 +13615,33 @@ def run_task041_consumer(
                 )
                 return release
 
-            return _run_v7_h4_exact_side_full_formal(
-                recovery_runner=recovery_runner,
-                producer={
-                    **producer,
-                    "_stage_callback": callback,
-                },
-                run_directory=root,
-                iterative_config=iterative_config,
-                require_rss_drop=not contract["balh"],
-                retained_solution_checkpoint=(
-                    retained_solution_checkpoint if contract["balh"] else None
-                ),
-                release_before_recovery=release_before_recovery,
-                allow_unqualified_diagnostic_recovery=diagnostic_output_enabled,
-                **kwargs,
-            )
+            try:
+                return _run_v7_h4_exact_side_full_formal(
+                    recovery_runner=recovery_runner,
+                    producer={
+                        **producer,
+                        "_stage_callback": callback,
+                    },
+                    run_directory=root,
+                    iterative_config=iterative_config,
+                    require_rss_drop=not contract["balh"],
+                    retained_solution_checkpoint=(
+                        retained_solution_checkpoint if contract["balh"] else None
+                    ),
+                    release_before_recovery=release_before_recovery,
+                    allow_unqualified_diagnostic_recovery=diagnostic_output_enabled,
+                    **kwargs,
+                )
+            except BaseException:
+                if modal_inner_failure_snapshot is None:
+                    modal_inner_failure_snapshot = (
+                        capture_modal_inner_failure_snapshot()
+                    )
+                if modal_inner_failure_snapshot is not None:
+                    candidate_failure_evidence["modal_inner_solver"] = (
+                        modal_inner_failure_snapshot
+                    )
+                raise
 
         current_stage = "factor_setup"
         shortwave_batch_kwargs = (

@@ -2264,6 +2264,218 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert run_target_configuration(None) == []
 
 
+def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
+    tmp_path: Path, monkeypatch
+):
+    from benchmarks import run_task037b_hybrid_iterative as recovery
+    from benchmarks import task039_v3_7_orchestration as orchestration
+    from benchmarks import task041_exact_side_workflow as worker
+    from src.solvers import hybrid_fem_modal_augmented_direct as layout_module
+
+    class FakeComm:
+        rank = 0
+        size = 8
+
+    source_sha = "c" * 40
+    input_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_cell_condensed.dat"
+    )
+    specification = _specification(input_path)
+    resolved_sha = worker.resolved_config_sha256(specification)
+    identity = task041_balh_workflow.build_task041_balh_packet_identity(
+        specification,
+        specification.as_jsonable(),
+        source_sha,
+        resolved_sha,
+    )
+    identity_path = tmp_path / "modal_inner_packet_identity.json"
+    identity_path.write_text(
+        json.dumps(identity, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    manifest_path = tmp_path / "modal_inner_packet_manifest.json"
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    manifest_sha = "d" * 64
+
+    residual_history = [
+        {
+            "evaluation": index,
+            "source": source,
+            "raw_residual_norm": raw,
+            "raw_target_metric": relative,
+            "scaled_residual_norm": scaled,
+            "finite": True,
+        }
+        for index, source, raw, relative, scaled in (
+            (1, "initial", 4.131, 1.0, 1.0),
+            (6, "callback", 0.361, 0.0874, 0.0821),
+            (10, "callback", 0.2193, 0.0531, 0.0498),
+            (11, "final_validation", 0.2192, 0.05308, 0.0497),
+        )
+    ]
+    last_solve = {
+        "status": "not_converged",
+        "stop_reason": "max_iterations",
+        "unscaled_residual_norm": 0.21923232695856398,
+        "rhs_norm": 4.131,
+        "relative_residual": 0.053080245980893843,
+        "max_iterations": 14,
+        "iterations": 14,
+        "function_evaluations": 15,
+        "s_evaluation_count": 16,
+        "constraint_lu_solve_calls": 15,
+        "snes_converged_reason": -2,
+        "callback_converged_reason": -2,
+        "budget_exhausted": False,
+        "side_action_calls": {"bottom": 10, "top": 10},
+        "residual_evaluation_history": residual_history,
+        "real_coordinate_embedding": True,
+        "modal_coordinate_representation": "real_parts_then_imag_parts_in_complex128",
+        "modal_coordinate_count": 8,
+        "modal_coordinate_extra_bytes_per_explicit_vec": 64,
+        "modal_coordinate_extra_bytes_two_explicit_vecs": 128,
+        "real_coordinate_subspace_violation": False,
+    }
+    modal_inner = {
+        "solve_count": 1,
+        "s_evaluation_count": 16,
+        "anderson_iteration_count": 14,
+        "constraint_lu_solve_calls": 15,
+        "not_converged_count": 1,
+        "side_action_call_count": {"bottom": 10, "top": 10},
+        "last_solve": last_solve,
+    }
+    fake_context = SimpleNamespace(
+        inventory={"modal_inner_solver": modal_inner}
+    )
+    events = []
+    summary_files = {}
+    modal_s_evaluations = 16
+    failure = RuntimeError("modal inner solve did not converge")
+    invoke_failure_runner = {"enabled": True}
+
+    def fake_setup_builder(**_kwargs):
+        return SimpleNamespace(
+            qep_release={"qep_calls": 0, "consumer_qep_required": False},
+            coupling=SimpleNamespace(
+                internal_unknown_count=1,
+                propagation_axial_target_h_nm=1.0,
+                propagation_axial_h_nm=1.0,
+                propagation_axial_cell_count=1,
+            ),
+            bottom=object(),
+            top=object(),
+        )
+
+    def base_release():
+        assert fake_context.inventory["modal_inner_solver"]["last_solve"] is last_solve
+        assert modal_s_evaluations == 16
+        events.append("context_release")
+        fake_context.inventory.clear()
+        return {"factor_cleanup_pass": True, "component_cleanup_pass": True}
+
+    def fail_formal_after_release(**kwargs):
+        assert kwargs["context"] is fake_context
+        kwargs["release_before_recovery"]()
+        events.append("formal_failure")
+        raise failure
+
+    def run_candidate_setup(*args, **kwargs):
+        assert kwargs["use_anderson_modal_inner"] is True
+        if not invoke_failure_runner["enabled"]:
+            raise AssertionError("unexpected candidate setup invocation")
+        return kwargs["full_formal_runner"](
+            setup=args[0],
+            layout=args[1],
+            operator=object(),
+            context=fake_context,
+            comm=kwargs["comm"],
+            marker_callback=kwargs["marker_callback"],
+            release_before_recovery=base_release,
+        )
+
+    def record_cleanup(*_args, **_kwargs):
+        events.append("consumer_cleanup")
+        return {"pass": True}
+
+    def record_json(path, payload, _comm):
+        if Path(path).name == "consumer_summary.json":
+            events.append("consumer_summary")
+            summary_files[Path(path)] = copy.deepcopy(payload)
+
+    def record_marker(_root, _started, stage, *, limits=None, **_kwargs):
+        return {"stage": stage, "resource": {}}
+
+    monkeypatch.setattr(orchestration, "_run_v7_h4_exact_side_full_formal", fail_formal_after_release)
+    monkeypatch.setattr(worker, "_collective_fresh_root", lambda path, _comm: Path(path).mkdir(parents=True, exist_ok=True) or Path(path))
+    monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"test": True})
+    monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *_a, **_k: None)
+    monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 10**15)
+    monkeypatch.setattr(worker, "_resource_snapshot", dict)
+    monkeypatch.setattr(worker, "_check_resource", lambda *_a, **_k: None)
+    monkeypatch.setattr(worker, "_write_rank0_json", record_json)
+    monkeypatch.setattr(worker, "_write_marker", record_marker)
+    monkeypatch.setattr(worker, "_task041_rank_numa_observed_backend", lambda **_k: None)
+    monkeypatch.setattr(
+        worker,
+        "_task041_consumer_sampled_column_contract",
+        lambda *_a, **_k: {
+            "columns": [0],
+            "roles": {"0": ["registered_sample_fixture"]},
+            "sha256": "e" * 64,
+        },
+    )
+    monkeypatch.setattr(recovery, "build_frozen_m10_setup", fake_setup_builder)
+    monkeypatch.setattr(recovery, "release_frozen_m10_objects", record_cleanup)
+    monkeypatch.setattr(
+        layout_module.HybridAugmentedLayout,
+        "build",
+        staticmethod(lambda *_a, **_k: SimpleNamespace()),
+    )
+    monkeypatch.setattr(worker, "_run_task041_balh_candidate_setup", run_candidate_setup)
+
+    with pytest.raises(RuntimeError, match="modal inner solve did not converge") as raised:
+        worker.run_task041_consumer(
+            input_path=input_path,
+            packet_manifest=manifest_path,
+            packet_identity=identity_path,
+            packet_manifest_sha256=manifest_sha,
+            run_directory=tmp_path / "modal_inner_failure_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            use_anderson_modal_inner=True,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+
+    assert raised.value is failure
+    assert events == [
+        "context_release",
+        "formal_failure",
+        "consumer_cleanup",
+        "consumer_summary",
+    ]
+    assert modal_s_evaluations == 16
+    assert fake_context.inventory == {}
+    assert len(summary_files) == 1
+    summary = next(iter(summary_files.values()))
+    assert summary["status"] == "IMPLEMENTATION_FAILURE"
+    assert summary["error"]["type"] == "RuntimeError"
+    assert summary["error"]["message"] == str(failure)
+    evidence = summary["factor_inventory"]["failure_evidence"][
+        "modal_inner_solver"
+    ]
+    assert evidence["scope"] == "last_failed_modal_inner_solve_before_context_release"
+    assert evidence["solve_count"] == 1
+    assert evidence["s_evaluation_count"] == 16
+    assert evidence["side_action_call_count"] == {"bottom": 10, "top": 10}
+    assert evidence["last_solve"] == last_solve
+    assert evidence["last_solve"]["residual_evaluation_history"] == residual_history
+    assert not any(isinstance(value, np.ndarray) for value in evidence["last_solve"].values())
+
+
 @pytest.mark.parametrize(
     ("side", "fail_at"),
     (("bottom", None), ("top", 2)),

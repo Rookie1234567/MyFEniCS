@@ -311,6 +311,7 @@ def solve_action_modal_schur_anderson(
     *,
     scale_residual_by_constraint: bool = False,
     real_coordinate_embedding: bool = False,
+    max_iterations: int = 8,
     _borrowed_constraint_factor: Any | None = None,
 ) -> dict[str, Any]:
     """Solve a bounded nonlinear modal equation with PETSc SNESANDERSON.
@@ -360,6 +361,11 @@ def solve_action_modal_schur_anderson(
     if not isinstance(real_coordinate_embedding, (bool, np.bool_)):
         raise TypeError("Real modal coordinate embedding must be an explicit boolean.")
     real_coordinate_embedding = bool(real_coordinate_embedding)
+    if isinstance(max_iterations, (bool, np.bool_)):
+        raise TypeError("Modal Anderson max_iterations must be an integer.")
+    max_iterations = int(max_iterations)
+    if max_iterations < 1:
+        raise ValueError("Modal Anderson max_iterations must be positive.")
     coordinate_count = 2 * modal_count if real_coordinate_embedding else modal_count
     coordinate_extra_bytes_per_vec = (
         modal_count * np.dtype(PETSc.ScalarType).itemsize
@@ -667,7 +673,7 @@ def solve_action_modal_schur_anderson(
                 ):
                     budget_exhausted = True
                     reason = PETSc.SNES.ConvergedReason.DIVERGED_FUNCTION_COUNT
-                elif int(iteration) >= 8:
+                elif int(iteration) >= max_iterations:
                     reason = PETSc.SNES.ConvergedReason.DIVERGED_MAX_IT
                 else:
                     reason = PETSc.SNES.ConvergedReason.ITERATING
@@ -685,7 +691,7 @@ def solve_action_modal_schur_anderson(
             rtol=0.0,
             atol=absolute_tolerance,
             stol=0.0,
-            max_it=8,
+            max_it=max_iterations,
         )
         snes.setConvergenceTest(convergence_test)
         # Reserve one of the sixteen allowed S evaluations for an independent
@@ -899,7 +905,7 @@ def solve_action_modal_schur_anderson(
             ),
             "budget_exhausted": bool(budget_exhausted),
             "anderson_history": 4,
-            "max_iterations": 8,
+            "max_iterations": max_iterations,
             "snes_converged_reason": snes_reason,
             "callback_converged_reason": callback_reason,
             "raw_cache_iteration_mismatch": bool(raw_cache_iteration_mismatch),
@@ -1045,6 +1051,7 @@ class HybridActionModalSchurAndersonSystem:
             rhs,
             scale_residual_by_constraint=True,
             real_coordinate_embedding=True,
+            max_iterations=14,
             _borrowed_constraint_factor=self,
         )
         side_calls = dict(result["side_action_calls"])
@@ -1063,6 +1070,7 @@ class HybridActionModalSchurAndersonSystem:
             "unscaled_residual_norm",
             "rhs_norm",
             "relative_residual",
+            "max_iterations",
             "iterations",
             "function_evaluations",
             "s_evaluation_count",

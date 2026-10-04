@@ -473,6 +473,8 @@ def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
         inner = result.inventory["modal_inner_solver"]
         assert result.inventory["modal_schur"] is None
         assert inner["constraint_lu_factorizations"] == 1
+        assert inner["last_solve"]["max_iterations"] == 14
+        assert inner["last_solve"]["s_evaluation_count"] <= 16
         assert inner["solve_count"] == result.inventory["pc_apply_count"]
         assert inner["solve_count"] > 1
         assert inner["s_evaluation_count"] >= inner["solve_count"]
@@ -539,8 +541,10 @@ def test_side_balh_anderson_inner_failure_is_synchronized_without_fallback(
             "bottom": fixture["bottom_inverse"].diagnostics["apply_count"],
             "top": fixture["top_inverse"].diagnostics["apply_count"],
         }
+        solver_options = []
 
-        def nonconverged(*_args, **_kwargs):
+        def nonconverged(*_args, **kwargs):
+            solver_options.append(dict(kwargs))
             return {
                 "status": "not_converged",
                 "stop_reason": "max_iterations",
@@ -549,6 +553,7 @@ def test_side_balh_anderson_inner_failure_is_synchronized_without_fallback(
                 "rhs_norm": 1.0,
                 "relative_residual": 0.25,
                 "iterations": 8,
+                "max_iterations": 14,
                 "function_evaluations": 8,
                 "s_evaluation_count": 9,
                 "constraint_lu_solve_calls": 8,
@@ -612,9 +617,16 @@ def test_side_balh_anderson_inner_failure_is_synchronized_without_fallback(
         )
         assert all(outcome[0] for outcome in outcomes)
         assert len(set(outcomes)) == 1
+        assert len(solver_options) == 1
+        assert solver_options[0]["max_iterations"] == 14
         assert context._destroyed is True
         assert context.inventory["pc_apply_count"] == 0
         assert context.inventory["modal_inner_solver"]["not_converged_count"] == 1
+        failed_inner = context.inventory["modal_inner_solver"]["last_solve"]
+        assert failed_inner["max_iterations"] == 14
+        assert failed_inner["s_evaluation_count"] == 9
+        assert failed_inner["s_evaluation_count"] <= 16
+        assert failed_inner["residual_evaluation_history"]
         after = {
             "bottom": fixture["bottom_inverse"].diagnostics["apply_count"],
             "top": fixture["top_inverse"].diagnostics["apply_count"],
@@ -790,6 +802,12 @@ def test_modal_real_coordinate_embedding_is_isometric_for_complex_values() -> No
         ]
         is False
     )
+    assert (
+        block_ldu.solve_action_modal_schur_anderson.__kwdefaults__[
+            "max_iterations"
+        ]
+        == 8
+    )
 
 
 def test_side_balh_modal_inner_explicitly_selects_real_coordinates(monkeypatch) -> None:
@@ -815,6 +833,7 @@ def test_side_balh_modal_inner_explicitly_selects_real_coordinates(monkeypatch) 
             "rhs_norm": float(np.linalg.norm(rhs)),
             "relative_residual": 1.0,
             "iterations": 0,
+            "max_iterations": 14,
             "function_evaluations": 0,
             "s_evaluation_count": 0,
             "constraint_lu_solve_calls": 0,
@@ -862,6 +881,7 @@ def test_side_balh_modal_inner_explicitly_selects_real_coordinates(monkeypatch) 
         assert np.array_equal(captured["rhs"], original_rhs)
         assert captured["kwargs"]["scale_residual_by_constraint"] is True
         assert captured["kwargs"]["real_coordinate_embedding"] is True
+        assert captured["kwargs"]["max_iterations"] == 14
         assert captured["kwargs"]["_borrowed_constraint_factor"] is modal_system
         diagnostics = modal_system.diagnostics
         assert diagnostics["real_coordinate_embedding"] is True
