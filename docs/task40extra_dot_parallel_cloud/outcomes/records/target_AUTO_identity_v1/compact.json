@@ -1,0 +1,463 @@
+{
+  "schema": "task40extra.target-auto-identity-compact.v1",
+  "status": "METADATA_IDENTITY_PASS_SURFACE_NOT_RUN",
+  "scope": "Full ordered original AUTO inventory at theta89/phi0; no mesh/form/JIT/carrier/factor/PDE/output qualification",
+  "source": {
+    "head": "6dba8257053c6b2e474b7808b708a745f202733b",
+    "tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+    "branch": "task40extra_dot_parallel_cloud",
+    "dirty": "",
+    "source_file_count": 1340,
+    "source_file_inventory_canonical_sha256": "9da3d8801ba4126fb374ce82799ff035badc8679c29ae4b2a97fe1b2c5dae5c2",
+    "complete_source_inventory_retained_in_worker_packet": true
+  },
+  "configuration": {
+    "air_height": 130.0,
+    "air_void_box_nm": null,
+    "case_name": "original_target_AUTO_p6_18cell_compiler_fixture",
+    "cell_notch": null,
+    "custom_polarization": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_rayleigh_tol": 1e-06,
+    "diffraction_sample_count_x": 24,
+    "diffraction_sample_count_y": 24,
+    "diffraction_top_probe_z": null,
+    "diffraction_zero_order_only": false,
+    "direct_release_base_after_augmentation": false,
+    "direct_release_solver_before_postprocess": false,
+    "divergence_penalty": 0.0,
+    "domain_z_max": 130.0,
+    "domain_z_min": -10.0,
+    "dtn_auxiliary_direct_projection_audit": false,
+    "dtn_auxiliary_direct_projection_tolerance": 1e-10,
+    "dtn_trace_alias_overlap_tolerance": 1e-08,
+    "dtn_y_invariant_n0_alias_preflight": false,
+    "electric_field_unit": "V/m",
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_grating": [
+      0.9997703539048498,
+      8.646237495554417e-06
+    ],
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9997703539048498,
+      8.646237495554417e-06
+    ],
+    "floquet_constraint_mode": "auto",
+    "floquet_constraint_mode_requested": "auto",
+    "floquet_phase_x": [
+      -0.8692301774091008,
+      0.49440762401215377
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ],
+    "full3d_reference_export": false,
+    "full3d_reference_plane_z": [],
+    "full3d_reference_sample_count_x": 40,
+    "full3d_reference_sample_count_y": 20,
+    "geometry_identity": "target50x25x140_regular",
+    "geometry_kind": "rectangular_block_grating",
+    "geometry_model_variant": "original",
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "grating_bounds": {
+      "x_max": 33.5,
+      "x_min": 16.5,
+      "y_max": 25.0,
+      "y_min": 0.0,
+      "z_max": 120.0,
+      "z_min": 0.0
+    },
+    "grating_height": 120.0,
+    "grating_index": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "grating_material_label": "Si / silicon at lambda0.7nm (fixed target)",
+    "grating_width_x": 17.0,
+    "grating_width_y": 25.0,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "incident_phi_deg": 0.0,
+    "incident_theta_deg": 89.0,
+    "interface_z": 0.0,
+    "k0": 8.975979010256552,
+    "lambda0": 0.7,
+    "length_unit": "nm",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993,
+    "magnetic_field_unit": "A/m",
+    "matrix_diagnostics_assemble_only": false,
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_factorization_only": false,
+    "mesh_axis_cell_counts": [
+      3,
+      2,
+      3
+    ],
+    "mesh_axis_cell_counts_requested": [
+      3,
+      2,
+      3
+    ],
+    "mesh_axis_x_values": [
+      0.0,
+      16.5,
+      33.5,
+      50.0
+    ],
+    "mesh_axis_x_values_requested": [
+      0.0,
+      16.5,
+      33.5,
+      50.0
+    ],
+    "mesh_axis_y_values": [
+      0.0,
+      12.5,
+      25.0
+    ],
+    "mesh_axis_y_values_requested": [
+      0.0,
+      12.5,
+      25.0
+    ],
+    "mesh_axis_z_profile": "exact_planes_18cell_boundary_compiler_fixture",
+    "mesh_axis_z_profile_requested": "exact_planes_18cell_boundary_compiler_fixture",
+    "mesh_axis_z_values": [
+      -10.0,
+      0.0,
+      120.0,
+      130.0
+    ],
+    "mesh_axis_z_values_requested": [
+      -10.0,
+      0.0,
+      120.0,
+      130.0
+    ],
+    "mesh_cell_type": "hexahedron",
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_cells": [
+      1,
+      1,
+      1
+    ],
+    "mesh_plan_id": "exact_planes_18cell_boundary_compiler_fixture_not_accuracy_mesh",
+    "mesh_refined_size": null,
+    "mesh_refined_size_resolved": 70.0,
+    "mesh_refinement_radius": null,
+    "mesh_refinement_radius_resolved": 140.0,
+    "mesh_spacing_mode": "boundary_fitted",
+    "mesh_spacing_mode_requested": "boundary_fitted",
+    "mesh_target_size": 140.0,
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_grating": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "n_substrate": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "nedelec_degree": 6,
+    "nedelec_fixed_trace_contract": "uniform_n1curl",
+    "nedelec_fixed_trace_enabled": false,
+    "nedelec_interior_degree": null,
+    "nedelec_interior_degree_resolved": 6,
+    "nedelec_trace_degree": null,
+    "nedelec_trace_degree_resolved": 6,
+    "omega": 2.690930810441219e+18,
+    "period_x": 50.0,
+    "period_y": 25.0,
+    "petsc_direct_solver_profile": "default",
+    "petsc_extra_options": {},
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "physical_z_max": 130.0,
+    "physical_z_min": -10.0,
+    "pml_alpha": 5.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_top_thickness": 0.0,
+    "polarization": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "polarization_kind": "s",
+    "propagation_direction": [
+      0.9998476951563913,
+      0.0,
+      -0.017452406437283376
+    ],
+    "reporting_diffraction_order_max_m": null,
+    "reporting_diffraction_order_max_n": null,
+    "scattering_background": "layered",
+    "stage4_assembly_time_cell_static_condensation": false,
+    "stage4_boundary_model": "dtn_port",
+    "stage4_cell_static_condensation": false,
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "stage4_floquet_slave_elimination": false,
+    "stage4_full3d_assembly_backend": "standard_full",
+    "stage4_local_h_refinement_plan": null,
+    "stage4_pml_outer_bc": "natural",
+    "stage4_preserve_structured_input_partition": false,
+    "stage4_variable_p_cell_degree_plan": null,
+    "stage_case": "stage4_block_grating",
+    "substrate_material_label": "Si / silicon at lambda0.7nm (fixed target)",
+    "substrate_thickness": 10.0,
+    "tags": {
+      "air": 1,
+      "bottom_pml": 5,
+      "grating": 3,
+      "substrate": 2,
+      "top_pml": 4,
+      "x_max": 12,
+      "x_min": 11,
+      "y_max": 14,
+      "y_min": 13,
+      "z_max": 16,
+      "z_min": 15
+    },
+    "unique_output": true,
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "validation_role": "numerical_sanity_only",
+    "visualization_degree": 6,
+    "wavevector": [
+      [
+        8.97461192517716,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.1566524338595219,
+        0.0
+      ]
+    ],
+    "x_max": 50.0,
+    "x_min": 0.0,
+    "y_max": 25.0,
+    "y_min": 0.0,
+    "z_max": 130.0,
+    "z_min": -10.0
+  },
+  "full_inventory": {
+    "fresh_mode_count": 32060,
+    "side_counts": {
+      "bottom": 16030,
+      "top": 16030
+    },
+    "classification_counts": {
+      "bottom": {
+        "evanescent": 0,
+        "near-cutoff": 0,
+        "propagating": 16030
+      },
+      "top": {
+        "evanescent": 0,
+        "near-cutoff": 0,
+        "propagating": 16030
+      }
+    },
+    "max_abs_m": 142,
+    "max_abs_n": 35,
+    "max_order": 142,
+    "ordered_keys_sha256": "08d7464c448a75bd5f41986f726ae0f97484cc050891dcfaaa24efc5f2900899",
+    "original_physical_manifest_sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e",
+    "config_sha256": "dab0cb22dd65f77751bdbb269d121b2dd9528bb1fe09beb26caed1fff4963e65",
+    "quadrature_degree_from_complete_inventory": 160,
+    "selected_original_keys": [
+      [
+        16028,
+        "top",
+        0,
+        0,
+        "s"
+      ],
+      [
+        16029,
+        "top",
+        0,
+        0,
+        "p"
+      ],
+      [
+        0,
+        "top",
+        -142,
+        -5,
+        "s"
+      ],
+      [
+        1,
+        "top",
+        -142,
+        -5,
+        "p"
+      ],
+      [
+        6018,
+        "top",
+        -85,
+        -35,
+        "s"
+      ],
+      [
+        6019,
+        "top",
+        -85,
+        -35,
+        "p"
+      ]
+    ],
+    "selection_reasons": [
+      {
+        "actual_near_cutoff": false,
+        "minimum_abs_beta_is_not_a_cutoff_assertion": true,
+        "original_mode_indices": [
+          16028,
+          16029
+        ],
+        "reasons": [
+          "incident00",
+          "smallest_abs_beta"
+        ],
+        "tuple": [
+          0,
+          0
+        ]
+      },
+      {
+        "actual_near_cutoff": false,
+        "minimum_abs_beta_is_not_a_cutoff_assertion": true,
+        "original_mode_indices": [
+          0,
+          1
+        ],
+        "reasons": [
+          "largest_abs_m"
+        ],
+        "tuple": [
+          -142,
+          -5
+        ]
+      },
+      {
+        "actual_near_cutoff": false,
+        "minimum_abs_beta_is_not_a_cutoff_assertion": true,
+        "original_mode_indices": [
+          6018,
+          6019
+        ],
+        "reasons": [
+          "largest_abs_n"
+        ],
+        "tuple": [
+          -85,
+          -35
+        ]
+      }
+    ],
+    "boundary_phase_bounds": {
+      "bottom": {
+        "bounds_computation_evaluated_exponentials": false,
+        "centered_boundary_log_abs": 0.0,
+        "global_z_argument_max": 89.74794813741744,
+        "global_z_argument_min": 0.7783212153916474,
+        "global_z_log_abs_max": -0.00038809343236541013,
+        "global_z_log_abs_min": -0.04475091845322057,
+        "port_z_nm": -10.0
+      },
+      "top": {
+        "bounds_computation_evaluated_exponentials": false,
+        "centered_boundary_log_abs": 0.0,
+        "global_z_argument_max": 1166.8573201643787,
+        "global_z_argument_min": 20.364816401737126,
+        "global_z_log_abs_max": -0.0,
+        "global_z_log_abs_min": -0.0,
+        "port_z_nm": 130.0
+      }
+    }
+  },
+  "costs": {
+    "supervisor_seconds": 8.306144989997847,
+    "sampled_process_tree_rss_peak_bytes": 495730688,
+    "sampled_swap_peak_bytes": 0,
+    "generator_and_original_manifest_worker_seconds": 6.489888570002222,
+    "worker_seconds_excludes_supervisor_imports_and_final_output": true
+  },
+  "source_and_resource_pass": true,
+  "artifact_hashes": {
+    "metadata/metadata_packet.json": {
+      "bytes": 9476,
+      "sha256": "94a401c6e931d16188ec7fa8e9e0ef6cdac5b88ae5516db8d71e074f7a8d2453"
+    },
+    "metadata/original_ordered_keys.json": {
+      "bytes": 850821,
+      "sha256": "08d7464c448a75bd5f41986f726ae0f97484cc050891dcfaaa24efc5f2900899"
+    },
+    "metadata/original_physical_manifest.json": {
+      "bytes": 36263033,
+      "sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e"
+    },
+    "metadata_result.json": {
+      "bytes": 183179,
+      "sha256": "d430c7556a196c0050fcc61d15b3285f370ddc6b00486ac2190908f31d961dde"
+    },
+    "summary.json": {
+      "bytes": 181292,
+      "sha256": "8b4d457080388eed9548f54bf536551c0ea40d99fdb13b9bbdf96780110583b9"
+    },
+    "events.jsonl": {
+      "bytes": 12653,
+      "sha256": "2cb0e28c171ceff1794171e72d7c243ee467567ab83f7056bca15ddb0107ff83"
+    }
+  },
+  "preservation": {
+    "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+    "receipt_sha256": "bbce568cce16ab1b4c79abb05f0198cabe9f84eed6a1dd6f09d2eb6f4409f5be",
+    "library_file_id": "libfile_01b478e1d1f48191bea7c9deea966423",
+    "version": 0,
+    "archive_bytes": 4893317,
+    "archive_sha256": "4c3deb139b5eb8c164c1873144685f45869c7f63b971fa05b7e969d8b0b09023",
+    "all_zip_members_verified": 10,
+    "uncompressed_bytes": 37626630
+  }
+}

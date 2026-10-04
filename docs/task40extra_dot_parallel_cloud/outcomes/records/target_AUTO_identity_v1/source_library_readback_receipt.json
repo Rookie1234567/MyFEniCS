@@ -1,0 +1,13 @@
+{
+  "library_file_id": "libfile_2a88aaf9331481918649166604c00c9d",
+  "file_id": "file_0000000013908207aa2b7e95bd5feb28",
+  "filename": "target_AUTO_inventory_source_checkpoint.zip",
+  "sha256": "ac52753eecb1c43e4bdc26759064d668d71d69a4d2ed0b8db536a4c9951fe062",
+  "members_verified": 14,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "metadata": {
+    "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+    "source_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+    "scope": "metadata-only source; actual ordered AUTO and surface NOT_RUN at freeze"
+  }
+}

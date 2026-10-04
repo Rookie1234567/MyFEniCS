@@ -1,0 +1,62 @@
+{
+  "library_file_id": "libfile_01b478e1d1f48191bea7c9deea966423",
+  "file_id": "file_00000000602c82079e69fb389f0c8a1c",
+  "filename": "target_AUTO_complete_inventory.zip",
+  "sha256": "4c3deb139b5eb8c164c1873144685f45869c7f63b971fa05b7e969d8b0b09023",
+  "members_verified": 10,
+  "uncompressed_bytes": 37626630,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "member_records": [
+    {
+      "path": "events.jsonl",
+      "bytes": 12653,
+      "sha256": "2cb0e28c171ceff1794171e72d7c243ee467567ab83f7056bca15ddb0107ff83"
+    },
+    {
+      "path": "metadata/metadata_packet.json",
+      "bytes": 9476,
+      "sha256": "94a401c6e931d16188ec7fa8e9e0ef6cdac5b88ae5516db8d71e074f7a8d2453"
+    },
+    {
+      "path": "metadata/original_ordered_keys.json",
+      "bytes": 850821,
+      "sha256": "08d7464c448a75bd5f41986f726ae0f97484cc050891dcfaaa24efc5f2900899"
+    },
+    {
+      "path": "metadata/original_physical_manifest.json",
+      "bytes": 36263033,
+      "sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e"
+    },
+    {
+      "path": "metadata/partial_metadata_record.json",
+      "bytes": 7540,
+      "sha256": "49cca5225ca725690451dbd878edcc64a7312a9c7845813802354af250ddca60"
+    },
+    {
+      "path": "metadata_result.json",
+      "bytes": 183179,
+      "sha256": "d430c7556a196c0050fcc61d15b3285f370ddc6b00486ac2190908f31d961dde"
+    },
+    {
+      "path": "resources.jsonl",
+      "bytes": 116754,
+      "sha256": "94857c2c6ea66962d6fcd0d54d9e97d82b303baba568dec1b969a98490f6161f"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 181292,
+      "sha256": "8b4d457080388eed9548f54bf536551c0ea40d99fdb13b9bbdf96780110583b9"
+    },
+    {
+      "path": "worker.log",
+      "bytes": 219,
+      "sha256": "2ede01de66407ee01e3e8caba57f9e5b61d1ed92c727aa7435ba1051477cc515"
+    }
+  ],
+  "metadata": {
+    "schema": "task40extra.complete-metadata-archive.v1",
+    "source": "6dba8257053c6b2e474b7808b708a745f202733b",
+    "scope": "full original AUTO identity only; no mesh/form/JIT",
+    "total_bytes": 37624967
+  }
+}
