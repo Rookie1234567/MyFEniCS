@@ -637,13 +637,50 @@ def execute(role, folder, state):
         from benchmarks.check_distributed_volume import check_recovery
 
         recovery = check_recovery()
+        from benchmarks.check_frozen_volume_dependencies import (
+            audit_internal_recovery,
+            check_saved_target_classes,
+        )
+
+        literal_inventory = check_saved_target_classes(upstream("v41_TOPOLOGY"))
+        internal_audit = audit_internal_recovery()
         result["volume_status"] = result["status"]
         result["recovery"] = recovery
-        result["passed"] = result["passed"] and recovery["passed"]
+        result["literal_class_inventory"] = literal_inventory
+        result["independent_internal_audit"] = internal_audit
+        result["volume_action_passed"] = all(
+            c["passed"]
+            for c in result["checks"]
+            if not c["kind"].startswith("internal_balance_cell")
+        )
+        result["passed"] = (
+            result["passed"]
+            and recovery["passed"]
+            and literal_inventory["passed"]
+            and internal_audit["passed"]
+        )
         result["status"] = (
             "DISTRIBUTED_VOLUME_ACTION_AND_AFFINE_RECOVERY_QUALIFIED_ON_WITNESSES"
             if result["passed"]
             else "DISTRIBUTED_VOLUME_NOT_QUALIFIED"
         )
         return result
+    if role in ("TARGET_GATE", "DEPLOY", "CAPACITY"):
+        from src.solvers.distributed_volume_delivery import (
+            capacity,
+            deploy,
+            target_gate,
+        )
+
+        if role == "TARGET_GATE":
+            return target_gate()
+        if role == "DEPLOY":
+            return deploy(folder)
+        return capacity()
+    if role.startswith("TARGET_"):
+        gate, _ = stage("TARGET_GATE")
+        if not gate["admitted"]:
+            raise ValueError(
+                "target numerical actor forbidden by recorded finite/resource/backend gate"
+            )
     raise NotImplementedError("V42 stage wiring incomplete: " + role)

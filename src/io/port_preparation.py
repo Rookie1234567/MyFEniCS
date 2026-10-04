@@ -377,6 +377,7 @@ def load_distributed_volume(path):
         "VOLUME4": 4,
         "RECOVERY2": 2,
         "RECOVERY4": 4,
+        "DEPLOY": 2,
         "TARGET_FORWARD": 2,
         "TARGET_ADJOINT": 2,
     }.get(stage, 1)

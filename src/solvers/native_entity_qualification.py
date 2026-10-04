@@ -11,6 +11,27 @@ REQUIRED = (
 )
 
 
+def require_direction_coverage(required, witnesses):
+    """A reused proof must explicitly cover every encountered native code."""
+    needed = set(map(int, required))
+    covered = set()
+    for witness in witnesses:
+        if not witness.get("source") or witness.get("passed") is not True:
+            raise ValueError("missing positive direction proof/source")
+        codes = witness.get("codes")
+        if codes is None or not len(codes):
+            raise ValueError("empty direction proof inventory")
+        covered.update(map(int, codes))
+    if not needed or not needed <= covered:
+        raise ValueError("missing encountered direction proof")
+    return {
+        "passed": True,
+        "required_codes": sorted(needed),
+        "covered_codes": sorted(covered),
+        "sources": [w["source"] for w in witnesses],
+    }
+
+
 def _positive(record):
     return (
         isinstance(record, dict)

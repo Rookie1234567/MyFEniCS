@@ -48,6 +48,79 @@ def test_empty_rank_and_default_pass_rejected():
     assert not complete_native_checks(r)
 
 
+def test_reused_direction_evidence_requires_explicit_source_and_full_coverage():
+    from src.solvers.native_entity_qualification import require_direction_coverage
+
+    proof = {
+        "source": {"sha256": "bound-array", "path": "saved.npz"},
+        "codes": [3, 7],
+        "passed": True,
+    }
+    assert require_direction_coverage([7, 3], [proof])["passed"]
+    with pytest.raises(ValueError, match="encountered"):
+        require_direction_coverage([3, 8], [proof])
+    with pytest.raises(ValueError, match="source"):
+        require_direction_coverage([3], [dict(proof, source=None)])
+
+
+def test_target_gate_cannot_promote_finite_action_or_payload_to_full_qualification():
+    from src.solvers.distributed_volume_delivery import target_decision
+
+    arguments = {
+        "finite_passed": True,
+        "neighbors": [],
+        "backend_ready": True,
+        "predicted_peak": 31 * 2**30,
+        "exclusive_lock_verified": True,
+    }
+    assert target_decision(**arguments)["admitted"]
+    for change, expected in [
+        ({"finite_passed": False}, "FINITE_NUMERICAL_GATE_FAILED"),
+        ({"neighbors": [{"pid": 42}]}, "OTHER_HEAVY_PRESENT"),
+        ({"predicted_peak": None}, "CONSERVATIVE_TARGET_RSS_PREDICTION_UNKNOWN"),
+        ({"backend_ready": False}, "TARGET_CANONICAL_VOLUME_BACKEND_NOT_IMPLEMENTED"),
+    ]:
+        result = target_decision(**(arguments | change))
+        assert not result["admitted"] and expected in result["reasons"]
+
+
+def test_checker_recomputes_oriented_class_and_rank_consumption():
+    from collections import Counter
+
+    from benchmarks.check_frozen_volume_dependencies import (
+        literal_class_counts,
+        require_declared_counts,
+    )
+
+    xyz = np.asarray(
+        [[x, y, z] for z in (2.0, 3.0) for y in (1.0, 2.0) for x in (18.0, 19.0)]
+    )
+    a = {
+        "coordinates": xyz,
+        "cell_vertices": np.arange(8)[None, :],
+        "cell_tags": np.array([3]),
+        "cell_permutations": np.array([15]),
+    }
+    raw, oriented, _ = literal_class_counts(a, 1)
+    row = {
+        "tag": 3,
+        "width_hex": [float(1).hex()] * 3,
+        "count": 1,
+        "rank_users": [0],
+        "permutation": 15,
+        "native_reference_vertex_order": list(range(8)),
+    }
+    require_declared_counts(
+        oriented, [row], oriented=True, users={next(iter(oriented)): {0}}
+    )
+    with pytest.raises(ValueError, match="rank users"):
+        require_declared_counts(
+            oriented, [row], oriented=True, users={next(iter(oriented)): {1}}
+        )
+    with pytest.raises(ValueError, match="counts"):
+        require_declared_counts(Counter(raw), [dict(row, count=2)])
+
+
 def test_self_consistent_saved_identity_rejects_live_material_and_helper_changes():
     keys = (
         "physical",

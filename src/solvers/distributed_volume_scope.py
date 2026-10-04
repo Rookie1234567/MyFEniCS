@@ -128,11 +128,13 @@ def implementation_hashes():
             "native_witness_csr",
             "distributed_saved_recovery",
             "distributed_recovery_study",
+            "distributed_volume_delivery",
         )
     )
     paths.update(
         (
             "benchmarks/check_distributed_volume.py",
+            "benchmarks/check_frozen_volume_dependencies.py",
             "benchmarks/qualify_distributed_volume.py",
             "src/test/test_distributed_volume.py",
             str(PLAN.relative_to(ROOT)),

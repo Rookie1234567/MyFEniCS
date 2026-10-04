@@ -38,6 +38,7 @@ def compare_mpi(reference, packets, label):
 
 def check_recovery():
     """Reassemble saved owned arrays and audit against the original CSR."""
+    import basix
     from scipy.sparse import csr_matrix
 
     from src.solvers.distributed_recovery_study import producer_store
@@ -47,6 +48,22 @@ def check_recovery():
     _, saved = s.read("recovery")
     _, sparse = s.read("oracle")
     _, literal = s.read("geometry")
+    _, numbering = s.read("system")
+    element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        6,
+        basix.LagrangeVariant.legendre,
+    )
+    expansion = csr_matrix(
+        (
+            literal["master_dual_coefficients"].conjugate(),
+            literal["master_rows"],
+            literal["master_offsets"],
+        ),
+        shape=(7056, 7056),
+    )
+    original_physical = expansion @ saved["u"]
     matrix = csr_matrix(
         (sparse["data"], sparse["indices"], sparse["indptr"]),
         shape=tuple(sparse["shape"]),
@@ -63,8 +80,11 @@ def check_recovery():
         ):
             raise ValueError("complete actual recovery rank inventory")
         joined, coverage = {}, np.zeros(matrix.shape[0], np.int32)
+        cells = []
         for p in packets:
             a = read_arrays(p["numeric"])
+            if p["environment"]["MPI_size"] != n or p["metadata"]["consumer_MPI"] != n:
+                raise ValueError("actual live recovery MPI identity")
             own = a["producer_owned_ids"]
             if len(np.unique(own)) != len(own) or np.any(
                 a["producer_row_owners"][own] != p["rank"]
@@ -90,6 +110,23 @@ def check_recovery():
                         own
                     ] = a[name]
             size = int(a["current_owned_size"][0])
+            cells.extend(a["producer_cells"][: int(a["owned_cells"][0])].tolist())
+            for j, cell in enumerate(a["producer_cells"]):
+                old_t = np.eye(882)
+                new_t = np.eye(882)
+                element.T_apply(
+                    old_t.ravel(), 882, int(literal["cell_permutations"][cell])
+                )
+                element.T_apply(new_t.ravel(), 882, int(a["consumer_permutations"][j]))
+                checks.append(
+                    dict(
+                        kind=f"MPI{n}_rank{p['rank']}_independent_cell_orientation_{cell}",
+                        **metric(
+                            new_t.T @ a["native_expanded"][a["native_cell_dofs"][j]],
+                            old_t.T @ original_physical[literal["cell_dofs"][cell]],
+                        ),
+                    )
+                )
             checks.extend(
                 [
                     dict(
@@ -108,12 +145,18 @@ def check_recovery():
                             a["rport"], saved["g"] + D @ saved["u"] - saved["alpha"]
                         ),
                     ),
+                    dict(
+                        kind=f"MPI{n}_rank{p['rank']}_all_12_channels",
+                        **metric(a["extracted_channels"], D @ saved["u"]),
+                    ),
                 ]
             )
             if np.any(a["native_computation"][a["native_slaves"]]):
                 raise ValueError("actual recovery computation slave zero")
         if not np.all(coverage == 1):
             raise ValueError("complete recovery owned rows exactly once")
+        if sorted(cells) != list(range(8)):
+            raise ValueError("eight actual recovery owned cells exactly once")
         for label in ("a", "b", "zero", "scale"):
             x = joined[label + "_x"]
             if not np.array_equal(x, saved[label + "_x"]) or np.any(
@@ -140,6 +183,13 @@ def check_recovery():
                 dict(kind=f"MPI{n}_affine_{name}", **metric(joined[name], saved[name]))
             )
         u = joined["u"]
+        ii = numbering["cell_interior"].ravel()
+        checks.append(
+            dict(
+                kind=f"MPI{n}_independent_CSR_internal_balance",
+                **metric((matrix @ u)[ii], saved["f"][ii]),
+            )
+        )
         checks.extend(
             [
                 dict(

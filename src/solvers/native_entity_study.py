@@ -1079,11 +1079,15 @@ def finish(role, folder):
         check_routing,
         ranks,
     )
-    from src.solvers.native_entity_qualification import complete_native_checks
+    from src.solvers.native_entity_qualification import (
+        complete_native_checks,
+        require_direction_coverage,
+    )
 
     require_envelope()
     checks = {}
     t = o = None
+    direction_proofs = []
     if role in ("DEPLOY", "CAPACITY"):
         checked, checked_path = stage("CHECK")
         if checked["status"] != "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE" or not checked["passed"]:
@@ -1106,6 +1110,14 @@ def finish(role, folder):
             ],
             "directions": check_directions(r["direction_witness"]["numeric"]),
         }
+        receipt = r["direction_witness"]["numeric"]
+        direction_proofs.append({
+            "source": {"path": receipt["path"], "sha256": receipt["sha256"]},
+            "codes": read_arrays(receipt)["codes"].tolist(),
+            "passed": checks[name]["directions"]["passed"],
+        })
+        if o is None:
+            o = r  # Explicit, hash-bound fallback when no new direction is needed.
     if (ARTIFACT / "TOPOLOGY.json").exists():
         t, _ = stage("TOPOLOGY")
         if "packets" in t:
@@ -1113,6 +1125,26 @@ def finish(role, folder):
     if (ARTIFACT / "ORIENTATION.json").exists():
         o, _ = stage("ORIENTATION")
         checks["ORIENTATION"] = check_directions(o["direction_witness"]["numeric"])
+        receipt = o["direction_witness"]["numeric"]
+        direction_proofs.append({
+            "source": {"path": receipt["path"], "sha256": receipt["sha256"]},
+            "codes": read_arrays(receipt)["codes"].tolist(),
+            "passed": checks["ORIENTATION"]["passed"],
+        })
+    if t is not None and o is not None:
+        try:
+            coverage = require_direction_coverage(
+                [c["permutation"] for c in t["oriented_classes"]], direction_proofs
+            )
+        except ValueError as error:
+            checks["ORIENTATION"] = {"passed": False, "checks": [], "reason": str(error)}
+            o = None
+        else:
+            if "ORIENTATION" not in checks:
+                proof = check_directions(o["direction_witness"]["numeric"])
+                checks["ORIENTATION"] = dict(proof, reused=True, coverage=coverage)
+            else:
+                checks["ORIENTATION"]["coverage"] = coverage
     if (ARTIFACT / "ROUTING.json").exists() and t is not None and o is not None:
         r, _ = stage("ROUTING")
         checks["ROUTING"] = check_routing(
