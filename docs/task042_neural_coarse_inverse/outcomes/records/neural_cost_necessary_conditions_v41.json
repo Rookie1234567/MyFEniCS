@@ -1,0 +1,10 @@
+{
+  "threshold": 0.2,
+  "same_correctness_required": true,
+  "time_condition": "T_NN_data+T_train+T_build+T_load+T_infer+T_correct+T_recover+T_audit+T_IO <= 0.8*T_best_qualified_nonNN_N1",
+  "memory_condition": "simultaneous_NN_process_tree_peak <= 0.8*simultaneous_best_qualified_nonNN_peak; other cost remains compliant",
+  "target_reference_baseline": "unknown/not qualified",
+  "target_step_and_K": "unknown",
+  "NN_training_this_batch": 0,
+  "traditional_owner_topology_class_optimizations_are_not_NN_gain": true
+}

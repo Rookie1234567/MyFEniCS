@@ -1,3 +1,21 @@
+# Task042 V41：原尺寸实际拓扑与owner边界接口完成
+
+本轮将全部trace行号复制改为按完整边／面实体向实际owner通信，保留原相位、方向和全部矩。真实MPI桥与原尺寸低阶拓扑已经完成，完整三维前向解尚未完成。
+
+| 对象／单位／身份 | measured结果及原因 | 资格边界 |
+|---|---|---|
+| 64hex／p6／三tag／真实MPI1/2/4 | 全向量max1.48144941502e-15<1e-10；slave精确0，跨rank周期角点 | 有限编号/MPC/owner资格，非h≤0.7精度 |
+| 原尺寸MPI2低阶geometry/topology | 530856hex、555814顶点、1642171边、1617214面；270raw／858oriented | 不建全目标p6空间／345771066向量／A；方向补审62种通过 |
+| 完整边界owner／新进程消费 | 378432行、上下各2628面、32060port，max1.39302196607e-15 | 路由和MPI2消费资格；匹配分布式volume未连接 |
+| 峰／ownswap／来源 | 1895116800B／0，shared-workstation，source81c776fddcd173cf7db898f20f3068eb7cf7ae2b | 采样树峰非连续cgroup峰；无新form/LU/QR/Krylov/训练 |
+| 完整PDE／场／功率／2TB48h／NN20% | NOT_RUN／NOT_QUALIFIED／NOT_DEMONSTRATED | 无official结果；传统接口优化非神经收益 |
+
+V40计数纠正为129逻辑=120实际+9alias，旧138不改写。失败接线、错误伴随输入和全部费用保留；只复用可信packet补受影响阶段。容量使用实际class/rank库存；PC/K、目标单步和完整恢复/审核仍unknown。[结果](outcomes/native_entity_owner_topology_v41.md) · [response](response_v41.md) · [checker](outcomes/records/component_checker_v41.json) · [费用](outcomes/records/resource_costs_v41.json) · [就绪](outcomes/records/integration_readiness_v41.json)。
+
+唯一下一建议：连接匹配同物理分布式体积引擎，先验证有限非零RHS及原作用消费，再申请完整目标容量/求解Gate，不再独立边界测速。以下历史全文保留。
+
+<!-- V41-LATEST-END -->
+
 # 当前审阅入口：Review V38 / 下一执行 V41
 
 [Review V38](review_report_v38.md)已独立审阅V40交付`b2dcd6a7497f272abb4c5298d8830b41fb803b84`。接受8hex／p6／MPI1的真实体积作用、非零载荷恢复及新进程消费；完整原尺寸0.7nm前向解、2TB／48h和NN20%仍未资格化。数组正确计数为11包／129逻辑成员／120实际成员／9别名，旧138记录保留并纠正说明。

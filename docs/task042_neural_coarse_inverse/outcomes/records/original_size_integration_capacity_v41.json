@@ -1,0 +1,53 @@
+{
+  "status": "MEASURED_TOPOLOGY_OWNER_CAPACITY_CONTRACT",
+  "checks": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_check_20261004T103642327887Z/result.json",
+    "sha256": "433582212d9c5b6d55c37dd895338841140c267f58725ce9bf4bb5d8a273d69b"
+  },
+  "complete_target_PDE": "NOT_RUN",
+  "NN20": "NOT_QUALIFIED",
+  "full_step_seconds": "unknown",
+  "48h_formula": "T_setup+K*(T_volume+T_boundary+T_adapter+T_PC)+T_recovery+T_audit+T_IO<=172800",
+  "K_limit": "unknown until full target step and convergence are measured",
+  "target_p6_native_dofmap": "NOT_CONSTRUCTED",
+  "readiness": {
+    "physical": "CANONICAL_USER_MATERIAL_AND_FROZEN_AXES",
+    "numbering": "FINITE_NATIVE_BRIDGE_ONLY_AND_TARGET_ENTITY_IDS",
+    "full_volume_operator": "MISSING_MATCHING_DISTRIBUTED_ENGINE",
+    "PC": "NOT_QUALIFIED_CLOSED_OLD_PCS_UNAVAILABLE",
+    "convergence": "NOT_QUALIFIED",
+    "distributed_recovery": "MISSING_MPI1_V40_ANCHOR_ONLY",
+    "accuracy_and_mode_truncation": "NOT_QUALIFIED",
+    "complete_cost": "unknown"
+  },
+  "actual_class_inventory": {
+    "raw": 270,
+    "oriented": 858,
+    "rank_private_raw_copies": 306,
+    "rank_private_oriented_copies": 900
+  },
+  "conditional_payload_bytes": {
+    "node_shared_raw_matrices": 3360631680,
+    "rank_private_raw_matrices": 3808715904,
+    "node_shared_LU_recovery_Schur_raw_classes": 3363223680,
+    "rank_private_LU_recovery_Schur_raw_classes": 3813057504,
+    "additional_oriented_matrices_if_materialized": 10679340672,
+    "one_full_complex128_native_vector": 5532337056,
+    "target_topology_packet_payload": 639674764,
+    "PC_Krylov_audit_lifecycle": "unknown",
+    "constraint_after_recovery_class_count": "unknown_not_equal_to_raw_count",
+    "alias_decode_workspace": "payload dedup does not guarantee process sharing"
+  },
+  "adapter_workspace_objects": {
+    "old_882_by84_float64_direction_buffer": 592704,
+    "new_largest_face_transform_complex128": 57600,
+    "new_per_entity_primal_and_dual_temporary": 2880,
+    "owner_send_receive_buffers": "actual per-rank packet; may coexist with source/target",
+    "old_86880B_claim": "one partial payload; never full RSS upper bound"
+  },
+  "stage": "CAPACITY",
+  "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "elapsed_worker_seconds": 1.118213459965773,
+  "input_sha256": "ef16ff838f1b47e3c09a61bdf1e245a46a79eae938f4770dc05f82b8c708e8b2",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

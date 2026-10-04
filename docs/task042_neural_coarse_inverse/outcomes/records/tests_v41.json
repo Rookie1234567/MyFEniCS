@@ -1,0 +1,238 @@
+{
+  "tests": [
+    {
+      "folder": "tmp/task042/v41/aux_inspect_inspect01",
+      "count": 16,
+      "failures": [
+        {
+          "name": "test_periodic_corner_is_once_and_dual_conjugated",
+          "kind": "failure",
+          "text": "def test_periodic_corner_is_once_and_dual_conjugated():\n        keys = np.array([[1, 2, 4, 4, 1], [2, 0, 4, 3, 1], [1, 0, 3, 4, 0]], np.int64)\n        p = np.exp(0.7j), np.exp(-0.4j)\n        master, phase = periodic_master(keys, (4, 4, 4), p)\n        assert np.array_equal(master[0], [1, 2, 0, 0, 1])\n>       assert phase[0] == p[0]*p[1]\nE       assert (0.9553364891256061+0.2955202066613395j) == ((0.7648421872844885+0.644217687237691j) * (0.9210609940028851-0.3894183423086505j))\n\nsrc/test/test_native_entities.py:39: AssertionError"
+        }
+      ],
+      "junit": {
+        "path": "tmp/task042/v41/aux_inspect_inspect01/pytest.xml",
+        "sha256": "31cca446cb71bd821409683bdfec024282c549b173c7ecea97f08283c1f54f5c",
+        "bytes": 2936
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre02",
+      "count": 18,
+      "failures": [
+        {
+          "name": "test_short_deadline_clears_only_own_descendant_tree",
+          "kind": "failure",
+          "text": "tmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre02/fixtures/test_short_deadline_clears_onl0')\n\n    def test_short_deadline_clears_only_own_descendant_tree(tmp_path):\n        import sys\n    \n        from benchmarks.subreaper_watchdog import supervise\n    \n>       result = supervise(\n            [\n                sys.executable,\n                \"-c\",\n                \"import subprocess,time,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)']); time.sleep(30)\",\n            ],\n            tmp_path / \"timeout\",\n            wall_seconds=1.5,\n            interval=0.25,\n            rss_hard_limit_bytes=512 * 2**20,\n            hard_stop_immediate=True,\n        )\n\nsrc/test/test_native_entities.py:206: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ncommand = ['/home/fenics/Projects/NN-Lab/.venv/bin/python', '-c', \"import subprocess,time,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)']); time.sleep(30)\"]\ndirectory = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre02/fixtures/test_short_deadline_clears_onl0/timeout')\n\n    def supervise(command: list[str], directory: Path, *, wall_seconds: float | None,\n                  interval: float = .25, grace_seconds: float = 2.0,\n                  cache_path: Path | None = None, phase_path: Path | None = None,\n                  solve_seconds: float | None = None, source_state: dict | None = None,\n                  worker_environment: dict | None = None, hard_stop_immediate: bool = False,\n                  cooperative_performance_stop: bool = False,\n                  timebase_guard: bool = False, timebase_policy: str = STRICT,\n                  stop_on_global_swap: bool = False,\n                  resource_stop_policy: str = 'legacy',\n                  rss_hard_limit_bytes: int | None = None,\n                  rss_warning_bytes: int | None = None,\n                  startup_headroom_bytes: int | None = None,\n                  memory_envelope_provider=None, health_check=None,\n                  include_pss: bool | None = None) -> dict:\n        \"\"\"Supervise one command; wall_seconds=None disables only the time gate.\"\"\"\n        if (not command or interval <= 0 or grace_seconds <= 0 or\n                (wall_seconds is not None and wall_seconds <= 0)):\n            raise ValueError('command and positive monitoring budgets are required')\n        if resource_stop_policy not in ('legacy', 'measured_tree_rss_only_v3'):\n            raise ValueError(f'unsupported resource_stop_policy: {resource_stop_policy!r}')\n        if rss_hard_limit_bytes is not None and int(rss_hard_limit_bytes) <= 0:\n            raise ValueError('rss_hard_limit_bytes must be positive')\n        if rss_warning_bytes is not None and int(rss_warning_bytes) <= 0:\n            raise ValueError('rss_warning_bytes must be positive')\n        if startup_headroom_bytes is not None and int(startup_headroom_bytes) < 0:\n            raise ValueError('startup_headroom_bytes must be nonnegative')\n        if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):\n            raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')\n        libc = ctypes.CDLL(None, use_errno=True)\n        # PR_SET_CHILD_SUBREAPER; Linux-only, intentionally no platform fallback.\n        if libc.prctl(36, 1, 0, 0, 0) != 0:\n            raise OSError(ctypes.get_errno(), 'cannot enable child subreaper')\n        if _children():\n>           raise RuntimeError('watchdog must be a dedicated parent with no existing children')\nE           RuntimeError: watchdog must be a dedicated parent with no existing children\n\nbenchmarks/subreaper_watchdog.py:222: RuntimeError"
+        }
+      ],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre02/pytest.xml",
+        "sha256": "96f5ba811c4999318bf1b3bce9174f13e6e68fd1e3ce8a62fe001ba6af11a1ef",
+        "bytes": 6428
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre03",
+      "count": 18,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre03/pytest.xml",
+        "sha256": "a418388b291e355e3b6a6abaf2fc573ab8036e8dd236668601517c4a69c47ba4",
+        "bytes": 2490
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre04",
+      "count": 18,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre04/pytest.xml",
+        "sha256": "39614408f3eec2118f066056f0625395b8f1e8331ded9c6dceb9751bd1059291",
+        "bytes": 2490
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre05",
+      "count": 18,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre05/pytest.xml",
+        "sha256": "8134d509997aa9371cc5ffe75bf52ba484bc7ff17e7e7bc26a48c6d2fa8d5148",
+        "bytes": 2490
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre06",
+      "count": 19,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre06/pytest.xml",
+        "sha256": "66a3bf83747ec1118cc1453e0ae8d7f1e37f0e847446863c4f7ba3de285bac9d",
+        "bytes": 2628
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre07",
+      "count": 19,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre07/pytest.xml",
+        "sha256": "24879e4530879cd5957074bf128a7d90e429dba26301064b55c579cf3849b112",
+        "bytes": 2628
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre08",
+      "count": 24,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre08/pytest.xml",
+        "sha256": "c0244224dab3de166b5f198f27e847dac82153e629036c31c2264adffc5c7a71",
+        "bytes": 3321
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre09",
+      "count": 24,
+      "failures": [
+        {
+          "name": "test_literal_owner_checker_end_to_end_inventory_faults[none]",
+          "kind": "failure",
+          "text": "tmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre09/fixtures/test_literal_owner_checker_end0')\nfault = 'none'\n\n    @pytest.mark.parametrize(\n        \"fault\", [\"none\", \"phase\", \"owner\", \"missing_face\", \"missing_rank\"]\n    )\n    def test_literal_owner_checker_end_to_end_inventory_faults(tmp_path, fault):\n        from benchmarks.check_native_entities import check_packets\n        from src.solvers.port_component_study import array_file\n    \n        arrays = {}\n        sizes = {}\n        for dimension in (1, 2):\n            keys = []\n            for axis in range(3):\n                for i in range(2):\n                    for j in range(2):\n                        for k in range(2):\n                            low = [i, j, k]\n                            if (dimension == 1 and low[axis] != 0) or (\n                                dimension == 2\n                                and any(low[a] != 0 for a in range(3) if a != axis)\n                            ):\n                                continue\n                            keys.append([dimension, axis, *low])\n            keys = np.array(keys, np.int64)\n            master, phase = periodic_master(keys, (1, 1, 1), (np.exp(0.3j), np.exp(-0.2j)))\n            lookup = {tuple(key): i for i, key in enumerate(keys)}\n            gid = np.arange(len(keys), dtype=np.int64)\n            ids = np.array([lookup[tuple(key)] for key in master], np.int64)\n            sizes[str(dimension)] = {\"owned\": len(keys), \"ghost\": 0, \"global\": len(keys)}\n            for name, value in (\n                (\"keys\", keys),\n                (\"native_ids\", gid),\n                (\"owners\", np.zeros(len(keys), np.int32)),\n                (\"master_keys\", master),\n                (\"master_ids\", ids),\n                (\"master_owners\", np.zeros(len(keys), np.int32)),\n                (\"phase\", phase),\n            ):\n                arrays[f\"entity{dimension}_\" + name] = value\n        if fault == \"phase\":\n            arrays[\"entity1_phase\"][1] *= np.exp(0.1j)\n        if fault == \"owner\":\n            arrays[\"entity2_master_owners\"][0] = 1\n        if fault == \"missing_face\":\n            arrays[\"entity2_keys\"] = arrays[\"entity2_keys\"][:-1]\n        arrays.update(\n            cell_native_ids=np.array([0], np.int64),\n            cell_tags=np.array([1], np.int32),\n            cell_raw_class_local=np.array([0], np.int32),\n            coordinates=np.array(\n                [[i, j, k] for k in (0.0, 1.0) for j in (0.0, 1.0) for i in (0.0, 1.0)],\n                np.float64,\n            ),\n            cell_vertices=np.array([list(range(8))], np.int32),\n            boundary_facets=np.arange(6, dtype=np.int32),\n        )\n        sizes[\"3\"] = {\"owned\": 1, \"ghost\": 0, \"global\": 1}\n        receipt = array_file(tmp_path / \"literal.npz\", **arrays)\n        record = {\n            \"rank\": 0,\n            \"MPI_size\": 1,\n            \"commit\": True,\n            \"numeric\": receipt,\n            \"metadata\": {\n                \"entity_sizes\": sizes,\n                \"raw_classes\": [\n                    {\"tag\": 1, \"width_hex\": [float(1).hex()] * 3, \"count\": 1, \"index\": 0}\n                ],\n                \"axis_cells\": [1, 1, 1],\n                \"phases\": [[np.cos(0.3), np.sin(0.3)], [np.cos(-0.2), np.sin(-0.2)]],\n            },\n        }\n        if fault in (\"owner\", \"missing_face\", \"missing_rank\"):\n            with pytest.raises(ValueError):\n                check_packets([] if fault == \"missing_rank\" else [record])\n        else:\n>           assert check_packets([record])[\"passed\"] == (fault == \"none\")\n\nsrc/test/test_native_entities.py:292: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nrecords = [{'MPI_size': 1, 'commit': True, 'metadata': {'axis_cells': [1, 1, 1], 'entity_sizes': {'1': {'ghost': 0, 'global': 12...l_owner_checker_end0/literal.npz', 'sha256': '6109e59d400a75a8cf936a381476bcb3b1860931af6b02da46fe85532ba6c267'}, ...}]\n\n    def check_packets(records, *, fixture=False):\n        if not records:\n            raise ValueError(\"empty actual rank inventory\")\n        ranks(records, records[0][\"MPI_size\"])\n        checks, owner_parts = [], {1: [], 2: []}\n        data = [read_arrays(r[\"numeric\"]) for r in records]\n        for record, a in zip(records, data, strict=True):\n            rank = record[\"rank\"]\n            for d, n in ((1, 6), (2, 60)):\n                size = record[\"metadata\"][\"entity_sizes\"][str(d)]\n                owned = size[\"owned\"]\n                keys = a[f\"entity{d}_keys\"]\n                if keys.shape != (owned + size[\"ghost\"], 5) or len(\n                    np.unique(keys, axis=0)\n                ) != len(keys):\n                    raise ValueError(\"complete literal local entity inventory\")\n                if np.any(a[f\"entity{d}_owners\"][:owned] != rank):\n                    raise ValueError(\"wrong actual native owner\")\n                owner_parts[d].append(\n                    np.column_stack(\n                        (\n                            keys[:owned],\n                            a[f\"entity{d}_native_ids\"][:owned],\n                            np.full(owned, rank, np.int64),\n                        )\n                    )\n                )\n                if fixture and a[f\"entity{d}_physical\"].shape != (len(keys), n):\n                    raise ValueError(\"complete high order entity moments\")\n                shape = record[\"metadata\"][\"axis_cells\"]\n                phases = [complex(*p) for p in record[\"metadata\"][\"phases\"]]\n                expected_master = keys.copy()\n                expected_phase = np.ones(len(keys), np.complex128)\n                for axis in (0, 1):\n                    on = (keys[:, 2 + axis] == shape[axis]) & (\n                        (d == 2) | (keys[:, 1] != axis)\n                    )\n                    expected_master[on, 2 + axis] = 0\n                    expected_phase[on] *= phases[axis]\n                if not np.array_equal(expected_master, a[f\"entity{d}_master_keys\"]):\n                    raise ValueError(\"wrong literal periodic master\")\n                checks.append(\n                    {\n                        \"kind\": f\"phase_dim{d}_rank{rank}\",\n                        **metric(expected_phase, a[f\"entity{d}_phase\"]),\n                    }\n                )\n            if fixture:\n                nn = record[\"metadata\"][\"original_function_local_rows\"]\n                if not np.all(a[\"dof_coverage\"] == 1) or np.any(\n                    a[\"computation\"][a[\"slave_local_dofs\"]]\n                ):\n                    raise ValueError(\"actual native coverage/slave zero\")\n                checks.append(\n                    {\n                        \"kind\": \"complete_native_MPC_rank\" + str(rank),\n                        **metric(a[\"expanded_native\"][:nn], a[\"independent_physical\"]),\n                    }\n                )\n                # Recompute the native MPC expansion directly from saved literal\n                # coefficients, including nonlocal masters already in the vector.\n                pred = a[\"computation\"].copy()\n                for slave in a[\"slave_local_dofs\"]:\n                    lo, hi = a[\"MPC_offsets\"][slave : slave + 2]\n                    pred[slave] = np.dot(\n                        a[\"MPC_coefficients\"][lo:hi],\n                        a[\"computation\"][a[\"MPC_masters\"][lo:hi]],\n                    )\n                checks.append(\n                    {\n                        \"kind\": \"literal_MPC_rank\" + str(rank),\n                        **metric(pred, a[\"expanded_native\"]),\n                    }\n                )\n                checks.append(\n                    {\n                        \"kind\": \"native_complex_scale_rank\" + str(rank),\n                        **metric(\n                            a[\"scaled_expanded\"], (0.37 - 0.91j) * a[\"expanded_native\"]\n                        ),\n                    }\n                )\n                if np.any(a[\"zero_expanded\"]):\n                    raise ValueError(\"actual zero native witness is nonzero\")\n        counts = {}\n        for d in (1, 2):\n            # Compact integer sort/search, no global Python entity/moment dictionary.\n            all_owned = np.concatenate(owner_parts[d])\n            void = np.dtype((np.void, 5 * 8))\n            keys = np.ascontiguousarray(all_owned[:, :5]).view(void).ravel()\n            order = np.argsort(keys)\n            sorted_keys = keys[order]\n            if np.any(sorted_keys[1:] == sorted_keys[:-1]):\n                raise ValueError(\"duplicate globally owned entity\")\n            counts[d] = len(all_owned)\n            for record, a in zip(records, data, strict=True):\n                requested = (\n                    np.ascontiguousarray(a[f\"entity{d}_master_keys\"]).view(void).ravel()\n                )\n                index = np.searchsorted(sorted_keys, requested)\n                if np.any(index >= len(sorted_keys)) or not np.array_equal(\n                    sorted_keys[index], requested\n                ):\n                    raise ValueError(\"missing actual periodic master\")\n                bound = all_owned[order[index], 5:]\n                if not np.array_equal(\n                    bound[:, 0], a[f\"entity{d}_master_ids\"]\n                ) or not np.array_equal(bound[:, 1], a[f\"entity{d}_master_owners\"]):\n                    raise ValueError(\"periodic master key/native owner mismatch\")\n            if counts[d] != records[0][\"metadata\"][\"entity_sizes\"][str(d)][\"global\"]:\n                raise ValueError(\"global entity coverage\")\n            del all_owned, keys, order, sorted_keys\n        if not fixture:\n            expected_cell_count = int(np.prod(records[0][\"metadata\"][\"axis_cells\"]))\n            native_cells = []\n            global_raw = {}\n            boundary_count = 0\n            for record, a in zip(records, data, strict=True):\n                n = record[\"metadata\"][\"entity_sizes\"][\"3\"][\"owned\"]\n                native_cells.append(a[\"cell_native_ids\"][:n])\n                if a[\"cell_tags\"].shape != (n,):\n                    raise ValueError(\"complete owned-cell material inventory\")\n                rows = record[\"metadata\"][\"raw_classes\"]\n                counts = np.bincount(a[\"cell_raw_class_local\"], minlength=len(rows))\n                if len(counts) != len(rows) or not np.array_equal(\n                    counts, [r[\"count\"] for r in rows]\n                ):\n                    raise ValueError(\"raw class exact consumption inventory\")\n                for lo in range(0, n, 4096):\n                    xyz = a[\"coordinates\"][a[\"cell_vertices\"][lo : min(lo + 4096, n)]]\n                    low, high = xyz.min(axis=1), xyz.max(axis=1)\n                    mid = (low + high) / 2\n                    tags = np.ones(len(xyz), np.int32)\n                    tags[mid[:, 2] < 0] = 2\n                    inside = (\n                        (mid[:, 0] >= 16.5)\n                        & (mid[:, 0] <= 33.5)\n                        & (mid[:, 2] >= 0)\n                        & (mid[:, 2] <= 120)\n                    )\n                    tags[inside] = 3\n                    if not np.array_equal(tags, a[\"cell_tags\"][lo : lo + len(xyz)]):\n                        raise ValueError(\"independent original-size three-tag geometry\")\n                    for i, widths in enumerate(high - low):\n                        index = int(a[\"cell_raw_class_local\"][lo + i])\n                        key = (int(tags[i]), *[float(w).hex() for w in widths])\n                        declared = rows[index]\n                        if key != (declared[\"tag\"], *declared[\"width_hex\"]):\n                            raise ValueError(\"exact raw float class mismatch\")\n                        global_raw[key] = global_raw.get(key, 0) + 1\n                faces = a[\"entity2_keys\"]\n                nf = record[\"metadata\"][\"entity_sizes\"][\"2\"][\"owned\"]\n                shape = np.array(record[\"metadata\"][\"axis_cells\"])\n                axis = faces[:nf, 1]\n                coordinate = faces[:nf, 2:][np.arange(nf), axis]\n                expected_boundary = np.flatnonzero(\n                    (coordinate == 0) | (coordinate == shape[axis])\n                )\n                actual_boundary = a[\"boundary_facets\"][a[\"boundary_facets\"] < nf]\n                if not np.array_equal(np.sort(actual_boundary), expected_boundary):\n                    raise ValueError(\"actual native exterior-face coverage\")\n                boundary_count += len(actual_boundary)\n            cells = np.concatenate(native_cells)\n            if len(cells) != expected_cell_count or not np.array_equal(\n                np.sort(cells), np.arange(expected_cell_count)\n            ):\n                raise ValueError(\"complete actual target owned-cell ID inventory\")\n            checks.append(\n                {\n                    \"kind\": \"actual_target_cells_raw_material_boundary\",\n                    \"passed\": True,\n                    \"cells\": len(cells),\n                    \"raw_classes\": len(global_raw),\n                    \"exterior_faces\": boundary_count,\n                }\n            )\n        if fixture:\n            total = records[0][\"metadata\"][\"actual_p6_global_rows\"]\n            primal = np.zeros(total, np.complex128)\n            expanded = np.zeros(total, np.complex128)\n            dual = np.zeros(total, np.complex128)\n            owned_coverage = np.zeros(total, np.int8)\n            predicted_pull = np.zeros(total, np.complex128)\n            for record, a in zip(records, data, strict=True):\n                n = record[\"metadata\"][\"owned_dofs\"]\n                gid = a[\"actual_dof_global_ids\"][:n]\n                np.add.at(owned_coverage, gid, 1)\n                primal[gid] = a[\"computation\"][:n]\n                expanded[gid] = a[\"expanded_native\"][:n]\n                dual[gid] = a[\"native_dual\"][:n]\n                slaves = set(map(int, a[\"slave_local_dofs\"]))\n                for row in range(n):\n                    if row in slaves:\n                        lo, hi = a[\"MPC_offsets\"][row : row + 2]\n                        masters = a[\"actual_dof_global_ids\"][a[\"MPC_masters\"][lo:hi]]\n                        np.add.at(\n                            predicted_pull,\n                            masters,\n                            a[\"MPC_coefficients\"][lo:hi].conjugate()\n                            * a[\"native_dual\"][row],\n                        )\n                    else:\n                        predicted_pull[gid[row]] += a[\"native_dual\"][row]\n                for d, moments in ((1, 6), (2, 60)):\n                    count = record[\"metadata\"][\"entity_sizes\"][str(d)][\"owned\"]\n                    keys = a[f\"entity{d}_keys\"][:count].astype(np.float64)\n                    k = keys @ np.array([1.17, 0.31, 0.73, 0.19, 0.47])\n                    j = np.arange(moments)[None, :]\n                    values = np.sin(k[:, None] + j * 0.37 + 424101 * 0.013) + 1j * np.cos(\n                        k[:, None] * 0.83 + j * 0.61 + 424101 * 0.017\n                    )\n                    checks.append(\n                        {\n                            \"kind\": f\"MPI_invariant_seed_dim{d}_rank{record['rank']}\",\n                            **metric(values, a[f\"entity{d}_owned_canonical\"]),\n                        }\n                    )\n            if not np.all(owned_coverage == 1):\n                raise ValueError(\"full finite native owned row coverage\")\n            for record, a in zip(records, data, strict=True):\n                n = record[\"metadata\"][\"owned_dofs\"]\n                gid = a[\"actual_dof_global_ids\"][:n]\n                checks.append(\n                    {\n                        \"kind\": \"independent_global_MPC_dual_rank\" + str(record[\"rank\"]),\n                        **metric(predicted_pull[gid], a[\"literal_dual_scatter\"][:n]),\n                    }\n                )\n            checks.append(\n                {\n                    \"kind\": \"independent_full_native_duality\",\n                    **metric(\n                        np.array([np.vdot(dual, expanded)]),\n                        np.array([np.vdot(predicted_pull, primal)]),\n                    ),\n                }\n            )\n        return {\n            \"passed\": all(c[\"passed\"] for c in checks),\n            \"checks\": checks,\n>           \"global_owned_edges\": counts[1],\n            \"global_owned_faces\": counts[2],\n        }\nE       IndexError: index 1 is out of bounds for axis 0 with size 1\n\nbenchmarks/check_native_entities.py:256: IndexError"
+        },
+        {
+          "name": "test_literal_owner_checker_end_to_end_inventory_faults[phase]",
+          "kind": "failure",
+          "text": "tmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre09/fixtures/test_literal_owner_checker_end1')\nfault = 'phase'\n\n    @pytest.mark.parametrize(\n        \"fault\", [\"none\", \"phase\", \"owner\", \"missing_face\", \"missing_rank\"]\n    )\n    def test_literal_owner_checker_end_to_end_inventory_faults(tmp_path, fault):\n        from benchmarks.check_native_entities import check_packets\n        from src.solvers.port_component_study import array_file\n    \n        arrays = {}\n        sizes = {}\n        for dimension in (1, 2):\n            keys = []\n            for axis in range(3):\n                for i in range(2):\n                    for j in range(2):\n                        for k in range(2):\n                            low = [i, j, k]\n                            if (dimension == 1 and low[axis] != 0) or (\n                                dimension == 2\n                                and any(low[a] != 0 for a in range(3) if a != axis)\n                            ):\n                                continue\n                            keys.append([dimension, axis, *low])\n            keys = np.array(keys, np.int64)\n            master, phase = periodic_master(keys, (1, 1, 1), (np.exp(0.3j), np.exp(-0.2j)))\n            lookup = {tuple(key): i for i, key in enumerate(keys)}\n            gid = np.arange(len(keys), dtype=np.int64)\n            ids = np.array([lookup[tuple(key)] for key in master], np.int64)\n            sizes[str(dimension)] = {\"owned\": len(keys), \"ghost\": 0, \"global\": len(keys)}\n            for name, value in (\n                (\"keys\", keys),\n                (\"native_ids\", gid),\n                (\"owners\", np.zeros(len(keys), np.int32)),\n                (\"master_keys\", master),\n                (\"master_ids\", ids),\n                (\"master_owners\", np.zeros(len(keys), np.int32)),\n                (\"phase\", phase),\n            ):\n                arrays[f\"entity{dimension}_\" + name] = value\n        if fault == \"phase\":\n            arrays[\"entity1_phase\"][1] *= np.exp(0.1j)\n        if fault == \"owner\":\n            arrays[\"entity2_master_owners\"][0] = 1\n        if fault == \"missing_face\":\n            arrays[\"entity2_keys\"] = arrays[\"entity2_keys\"][:-1]\n        arrays.update(\n            cell_native_ids=np.array([0], np.int64),\n            cell_tags=np.array([1], np.int32),\n            cell_raw_class_local=np.array([0], np.int32),\n            coordinates=np.array(\n                [[i, j, k] for k in (0.0, 1.0) for j in (0.0, 1.0) for i in (0.0, 1.0)],\n                np.float64,\n            ),\n            cell_vertices=np.array([list(range(8))], np.int32),\n            boundary_facets=np.arange(6, dtype=np.int32),\n        )\n        sizes[\"3\"] = {\"owned\": 1, \"ghost\": 0, \"global\": 1}\n        receipt = array_file(tmp_path / \"literal.npz\", **arrays)\n        record = {\n            \"rank\": 0,\n            \"MPI_size\": 1,\n            \"commit\": True,\n            \"numeric\": receipt,\n            \"metadata\": {\n                \"entity_sizes\": sizes,\n                \"raw_classes\": [\n                    {\"tag\": 1, \"width_hex\": [float(1).hex()] * 3, \"count\": 1, \"index\": 0}\n                ],\n                \"axis_cells\": [1, 1, 1],\n                \"phases\": [[np.cos(0.3), np.sin(0.3)], [np.cos(-0.2), np.sin(-0.2)]],\n            },\n        }\n        if fault in (\"owner\", \"missing_face\", \"missing_rank\"):\n            with pytest.raises(ValueError):\n                check_packets([] if fault == \"missing_rank\" else [record])\n        else:\n>           assert check_packets([record])[\"passed\"] == (fault == \"none\")\n\nsrc/test/test_native_entities.py:292: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nrecords = [{'MPI_size': 1, 'commit': True, 'metadata': {'axis_cells': [1, 1, 1], 'entity_sizes': {'1': {'ghost': 0, 'global': 12...l_owner_checker_end1/literal.npz', 'sha256': '425e29eca02c31d21e72868d80fed8d4c1ff46dc89e395e7e7bb58ca0e0e11b9'}, ...}]\n\n    def check_packets(records, *, fixture=False):\n        if not records:\n            raise ValueError(\"empty actual rank inventory\")\n        ranks(records, records[0][\"MPI_size\"])\n        checks, owner_parts = [], {1: [], 2: []}\n        data = [read_arrays(r[\"numeric\"]) for r in records]\n        for record, a in zip(records, data, strict=True):\n            rank = record[\"rank\"]\n            for d, n in ((1, 6), (2, 60)):\n                size = record[\"metadata\"][\"entity_sizes\"][str(d)]\n                owned = size[\"owned\"]\n                keys = a[f\"entity{d}_keys\"]\n                if keys.shape != (owned + size[\"ghost\"], 5) or len(\n                    np.unique(keys, axis=0)\n                ) != len(keys):\n                    raise ValueError(\"complete literal local entity inventory\")\n                if np.any(a[f\"entity{d}_owners\"][:owned] != rank):\n                    raise ValueError(\"wrong actual native owner\")\n                owner_parts[d].append(\n                    np.column_stack(\n                        (\n                            keys[:owned],\n                            a[f\"entity{d}_native_ids\"][:owned],\n                            np.full(owned, rank, np.int64),\n                        )\n                    )\n                )\n                if fixture and a[f\"entity{d}_physical\"].shape != (len(keys), n):\n                    raise ValueError(\"complete high order entity moments\")\n                shape = record[\"metadata\"][\"axis_cells\"]\n                phases = [complex(*p) for p in record[\"metadata\"][\"phases\"]]\n                expected_master = keys.copy()\n                expected_phase = np.ones(len(keys), np.complex128)\n                for axis in (0, 1):\n                    on = (keys[:, 2 + axis] == shape[axis]) & (\n                        (d == 2) | (keys[:, 1] != axis)\n                    )\n                    expected_master[on, 2 + axis] = 0\n                    expected_phase[on] *= phases[axis]\n                if not np.array_equal(expected_master, a[f\"entity{d}_master_keys\"]):\n                    raise ValueError(\"wrong literal periodic master\")\n                checks.append(\n                    {\n                        \"kind\": f\"phase_dim{d}_rank{rank}\",\n                        **metric(expected_phase, a[f\"entity{d}_phase\"]),\n                    }\n                )\n            if fixture:\n                nn = record[\"metadata\"][\"original_function_local_rows\"]\n                if not np.all(a[\"dof_coverage\"] == 1) or np.any(\n                    a[\"computation\"][a[\"slave_local_dofs\"]]\n                ):\n                    raise ValueError(\"actual native coverage/slave zero\")\n                checks.append(\n                    {\n                        \"kind\": \"complete_native_MPC_rank\" + str(rank),\n                        **metric(a[\"expanded_native\"][:nn], a[\"independent_physical\"]),\n                    }\n                )\n                # Recompute the native MPC expansion directly from saved literal\n                # coefficients, including nonlocal masters already in the vector.\n                pred = a[\"computation\"].copy()\n                for slave in a[\"slave_local_dofs\"]:\n                    lo, hi = a[\"MPC_offsets\"][slave : slave + 2]\n                    pred[slave] = np.dot(\n                        a[\"MPC_coefficients\"][lo:hi],\n                        a[\"computation\"][a[\"MPC_masters\"][lo:hi]],\n                    )\n                checks.append(\n                    {\n                        \"kind\": \"literal_MPC_rank\" + str(rank),\n                        **metric(pred, a[\"expanded_native\"]),\n                    }\n                )\n                checks.append(\n                    {\n                        \"kind\": \"native_complex_scale_rank\" + str(rank),\n                        **metric(\n                            a[\"scaled_expanded\"], (0.37 - 0.91j) * a[\"expanded_native\"]\n                        ),\n                    }\n                )\n                if np.any(a[\"zero_expanded\"]):\n                    raise ValueError(\"actual zero native witness is nonzero\")\n        counts = {}\n        for d in (1, 2):\n            # Compact integer sort/search, no global Python entity/moment dictionary.\n            all_owned = np.concatenate(owner_parts[d])\n            void = np.dtype((np.void, 5 * 8))\n            keys = np.ascontiguousarray(all_owned[:, :5]).view(void).ravel()\n            order = np.argsort(keys)\n            sorted_keys = keys[order]\n            if np.any(sorted_keys[1:] == sorted_keys[:-1]):\n                raise ValueError(\"duplicate globally owned entity\")\n            counts[d] = len(all_owned)\n            for record, a in zip(records, data, strict=True):\n                requested = (\n                    np.ascontiguousarray(a[f\"entity{d}_master_keys\"]).view(void).ravel()\n                )\n                index = np.searchsorted(sorted_keys, requested)\n                if np.any(index >= len(sorted_keys)) or not np.array_equal(\n                    sorted_keys[index], requested\n                ):\n                    raise ValueError(\"missing actual periodic master\")\n                bound = all_owned[order[index], 5:]\n                if not np.array_equal(\n                    bound[:, 0], a[f\"entity{d}_master_ids\"]\n                ) or not np.array_equal(bound[:, 1], a[f\"entity{d}_master_owners\"]):\n                    raise ValueError(\"periodic master key/native owner mismatch\")\n            if counts[d] != records[0][\"metadata\"][\"entity_sizes\"][str(d)][\"global\"]:\n                raise ValueError(\"global entity coverage\")\n            del all_owned, keys, order, sorted_keys\n        if not fixture:\n            expected_cell_count = int(np.prod(records[0][\"metadata\"][\"axis_cells\"]))\n            native_cells = []\n            global_raw = {}\n            boundary_count = 0\n            for record, a in zip(records, data, strict=True):\n                n = record[\"metadata\"][\"entity_sizes\"][\"3\"][\"owned\"]\n                native_cells.append(a[\"cell_native_ids\"][:n])\n                if a[\"cell_tags\"].shape != (n,):\n                    raise ValueError(\"complete owned-cell material inventory\")\n                rows = record[\"metadata\"][\"raw_classes\"]\n                counts = np.bincount(a[\"cell_raw_class_local\"], minlength=len(rows))\n                if len(counts) != len(rows) or not np.array_equal(\n                    counts, [r[\"count\"] for r in rows]\n                ):\n                    raise ValueError(\"raw class exact consumption inventory\")\n                for lo in range(0, n, 4096):\n                    xyz = a[\"coordinates\"][a[\"cell_vertices\"][lo : min(lo + 4096, n)]]\n                    low, high = xyz.min(axis=1), xyz.max(axis=1)\n                    mid = (low + high) / 2\n                    tags = np.ones(len(xyz), np.int32)\n                    tags[mid[:, 2] < 0] = 2\n                    inside = (\n                        (mid[:, 0] >= 16.5)\n                        & (mid[:, 0] <= 33.5)\n                        & (mid[:, 2] >= 0)\n                        & (mid[:, 2] <= 120)\n                    )\n                    tags[inside] = 3\n                    if not np.array_equal(tags, a[\"cell_tags\"][lo : lo + len(xyz)]):\n                        raise ValueError(\"independent original-size three-tag geometry\")\n                    for i, widths in enumerate(high - low):\n                        index = int(a[\"cell_raw_class_local\"][lo + i])\n                        key = (int(tags[i]), *[float(w).hex() for w in widths])\n                        declared = rows[index]\n                        if key != (declared[\"tag\"], *declared[\"width_hex\"]):\n                            raise ValueError(\"exact raw float class mismatch\")\n                        global_raw[key] = global_raw.get(key, 0) + 1\n                faces = a[\"entity2_keys\"]\n                nf = record[\"metadata\"][\"entity_sizes\"][\"2\"][\"owned\"]\n                shape = np.array(record[\"metadata\"][\"axis_cells\"])\n                axis = faces[:nf, 1]\n                coordinate = faces[:nf, 2:][np.arange(nf), axis]\n                expected_boundary = np.flatnonzero(\n                    (coordinate == 0) | (coordinate == shape[axis])\n                )\n                actual_boundary = a[\"boundary_facets\"][a[\"boundary_facets\"] < nf]\n                if not np.array_equal(np.sort(actual_boundary), expected_boundary):\n                    raise ValueError(\"actual native exterior-face coverage\")\n                boundary_count += len(actual_boundary)\n            cells = np.concatenate(native_cells)\n            if len(cells) != expected_cell_count or not np.array_equal(\n                np.sort(cells), np.arange(expected_cell_count)\n            ):\n                raise ValueError(\"complete actual target owned-cell ID inventory\")\n            checks.append(\n                {\n                    \"kind\": \"actual_target_cells_raw_material_boundary\",\n                    \"passed\": True,\n                    \"cells\": len(cells),\n                    \"raw_classes\": len(global_raw),\n                    \"exterior_faces\": boundary_count,\n                }\n            )\n        if fixture:\n            total = records[0][\"metadata\"][\"actual_p6_global_rows\"]\n            primal = np.zeros(total, np.complex128)\n            expanded = np.zeros(total, np.complex128)\n            dual = np.zeros(total, np.complex128)\n            owned_coverage = np.zeros(total, np.int8)\n            predicted_pull = np.zeros(total, np.complex128)\n            for record, a in zip(records, data, strict=True):\n                n = record[\"metadata\"][\"owned_dofs\"]\n                gid = a[\"actual_dof_global_ids\"][:n]\n                np.add.at(owned_coverage, gid, 1)\n                primal[gid] = a[\"computation\"][:n]\n                expanded[gid] = a[\"expanded_native\"][:n]\n                dual[gid] = a[\"native_dual\"][:n]\n                slaves = set(map(int, a[\"slave_local_dofs\"]))\n                for row in range(n):\n                    if row in slaves:\n                        lo, hi = a[\"MPC_offsets\"][row : row + 2]\n                        masters = a[\"actual_dof_global_ids\"][a[\"MPC_masters\"][lo:hi]]\n                        np.add.at(\n                            predicted_pull,\n                            masters,\n                            a[\"MPC_coefficients\"][lo:hi].conjugate()\n                            * a[\"native_dual\"][row],\n                        )\n                    else:\n                        predicted_pull[gid[row]] += a[\"native_dual\"][row]\n                for d, moments in ((1, 6), (2, 60)):\n                    count = record[\"metadata\"][\"entity_sizes\"][str(d)][\"owned\"]\n                    keys = a[f\"entity{d}_keys\"][:count].astype(np.float64)\n                    k = keys @ np.array([1.17, 0.31, 0.73, 0.19, 0.47])\n                    j = np.arange(moments)[None, :]\n                    values = np.sin(k[:, None] + j * 0.37 + 424101 * 0.013) + 1j * np.cos(\n                        k[:, None] * 0.83 + j * 0.61 + 424101 * 0.017\n                    )\n                    checks.append(\n                        {\n                            \"kind\": f\"MPI_invariant_seed_dim{d}_rank{record['rank']}\",\n                            **metric(values, a[f\"entity{d}_owned_canonical\"]),\n                        }\n                    )\n            if not np.all(owned_coverage == 1):\n                raise ValueError(\"full finite native owned row coverage\")\n            for record, a in zip(records, data, strict=True):\n                n = record[\"metadata\"][\"owned_dofs\"]\n                gid = a[\"actual_dof_global_ids\"][:n]\n                checks.append(\n                    {\n                        \"kind\": \"independent_global_MPC_dual_rank\" + str(record[\"rank\"]),\n                        **metric(predicted_pull[gid], a[\"literal_dual_scatter\"][:n]),\n                    }\n                )\n            checks.append(\n                {\n                    \"kind\": \"independent_full_native_duality\",\n                    **metric(\n                        np.array([np.vdot(dual, expanded)]),\n                        np.array([np.vdot(predicted_pull, primal)]),\n                    ),\n                }\n            )\n        return {\n            \"passed\": all(c[\"passed\"] for c in checks),\n            \"checks\": checks,\n>           \"global_owned_edges\": counts[1],\n            \"global_owned_faces\": counts[2],\n        }\nE       IndexError: index 1 is out of bounds for axis 0 with size 1\n\nbenchmarks/check_native_entities.py:256: IndexError"
+        }
+      ],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre09/pytest.xml",
+        "sha256": "77b35edb9d180f2c2d06531b8cc99fbf70350ca239b60f27043889d4b59bb63b",
+        "bytes": 36428
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre10",
+      "count": 5,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre10/pytest.xml",
+        "sha256": "b1ed027a4cf18fdd2ccf6ee72ec940cc2b01d01a94d7584e46f6ab9036c9d06c",
+        "bytes": 914
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre11",
+      "count": 24,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre11/pytest.xml",
+        "sha256": "f444bf3ff36b6f7f04f6593d436ff25d51d383d23619af6303fab71579efc0d0",
+        "bytes": 3321
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre12",
+      "count": 32,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre12/pytest.xml",
+        "sha256": "d913b2f14591098eafdf23e1e859f170b873de89aea452857eb944d5a5c642fd",
+        "bytes": 4469
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre13",
+      "count": 32,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre13/pytest.xml",
+        "sha256": "f0e7ed44e0729ececfee7182a5a5a2a2e38d729010ab0b64af1f4ce0d818e1cc",
+        "bytes": 4469
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre14",
+      "count": 33,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre14/pytest.xml",
+        "sha256": "594733a0ca16b4d291931535e1cef2bfdf0cc2f0efd9dbbb2742a44648af49b0",
+        "bytes": 4602
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre15",
+      "count": 5,
+      "failures": [],
+      "junit": {
+        "path": "tmp/task042/v41/aux_pre_pre15/pytest.xml",
+        "sha256": "c66b492d1d65b02208db4f5f85e7a42a0e2a41a2a6f262e10ffa677301b44f45",
+        "bytes": 938
+      }
+    },
+    {
+      "folder": "tmp/task042/v41/aux_post_final01",
+      "count": 38,
+      "junit": {
+        "path": "tmp/task042/v41/aux_post_final01/pytest.xml",
+        "sha256": "fbe8c5b8ce758fd9f3a3eb1a65f429bdc679b7419639f19573a458909524db3d",
+        "bytes": 5319
+      },
+      "failures": []
+    }
+  ],
+  "final_scientific_suite": "FINAL_COMMITTED_IMPLEMENTATION:38 passed; exact source and implementation bytes matched",
+  "actual_native_MPI": [
+    1,
+    2,
+    4
+  ],
+  "MPI_evidence": "native_numbering_witness_v41.json",
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN_UNRELATED_HEAVY_SCOPE",
+  "implementation_hashes": {
+    "benchmarks/check_native_entities.py": "a2885d265223b7a9cee87087ed29d0fc108ffe405371c47bdcb76c84cf7b6c84",
+    "benchmarks/qualify_native_entities.py": "4d19af35ed5f89dbb595379ee50b4497e02c81a8f1aef9c02c64b5230c53c148",
+    "input/task042_neural_coarse_inverse/native_entities_v41.json": "2b50ec5bd51bc61ef348953ea1599cb6d6983d7dad4504e94998f48fe97bfa30",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "scripts/run_case.py": "6832d88d989f8b77eb464a9c5045a85c7d9f22510eefdc8ea9bc28eb60a4afac",
+    "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+    "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/io/port_preparation.py": "37c10e118e32d6898cd825445d38f5e5f0aefe5658eca0b89ac67ff67b89f25e",
+    "src/runners/port_preparation.py": "96e89b1f0825b2e4a6c52dff93717d95f244938ca425e3b184598757fcd40feb",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/native_entity_adapter.py": "fb572b37fe7ab7e7b135cfda1b5a617fe5fcebce4a781cb4f82154286ce9334d",
+    "src/solvers/native_entity_dependencies.py": "41ce56f6c6dcd1818f527b18205799c2bb93e16fada4257475988770f2d5cab3",
+    "src/solvers/native_entity_protocol.py": "57d1496cf3fe1b3c520dae22929569e199ea4a7f5a428b8c493a3a5b01a606a4",
+    "src/solvers/native_entity_scope.py": "f6b0ebf872516577b87466aaa1c73d9b6d918acaf61d15f17705ea34e1aa7355",
+    "src/solvers/native_entity_study.py": "cf8b31bab5d61b0d660a10fc053db7ec1011f5f8840d8bf4d524937aa9223a43",
+    "src/solvers/native_entity_topology.py": "65755e5adbb71086c14821d86f689dae9eea48c94ec154efbc2896c3f4577a13",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "src/test/test_native_entities.py": "0215db2dc2469160fc1a0e754cb6e5d1e328f9d5fad312b008be5adaeb36cecc"
+  },
+  "qualified_record": {
+    "path": "tmp/task042/v41/qualification.json",
+    "sha256": "30bd03f3945c6ca73b51ae90dd3a403c4a2957f3c28205d3feaa8a5e3b223084",
+    "bytes": 2352
+  },
+  "final_source": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "final_focused_tests": 38,
+  "documentation_tests": 15,
+  "final_receipt": {
+    "path": "tmp/task042/v41/aux_post_final02/final_checks.json",
+    "sha256": "d73af5433227f7d11f19f08baa56ce01bb1b13d77f4d9f555d4916cefa3d61be",
+    "bytes": 7867
+  },
+  "Ruff": "PASS",
+  "compileall": "PASS",
+  "ABI_and_actual_math_getters": "PASS",
+  "latest_documentation_receipt": {
+    "path": "tmp/task042/v41/aux_post_final03/final_checks.json",
+    "sha256": "f2bdcf442b3994a0ad0a5a84d5b1dc1b2ce93014e60de349b06a074064df2596",
+    "bytes": 7869
+  }
+}

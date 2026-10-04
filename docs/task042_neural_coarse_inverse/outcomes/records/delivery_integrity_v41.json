@@ -1,0 +1,42 @@
+{
+  "clock": {
+    "start_utc_seconds": 1791106515.130953,
+    "start_monotonic": 1031509.98,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_seconds": 86400,
+    "heavy_seconds": 82800,
+    "label": "V41",
+    "first_observation_utc": "2026-10-04T09:35:15.130953671+00:00",
+    "review_commit": "718c42ef2be1ce375f940a5092ad503ab3729d5a",
+    "component_seconds": 4800,
+    "target_seconds": 2400,
+    "total_loaded_seconds": 7200,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "start_utc": "2026-10-04T09:35:15.130953671+00:00",
+    "heavy_limit_seconds": 82800,
+    "total_limit_seconds": 86400,
+    "observed_utc": "2026-10-04T10:58:37.077210+00:00",
+    "observed_monotonic": 1036511.938077584,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5001.958077584044,
+    "heavy_remaining_seconds": 77798.04192241596,
+    "total_remaining_seconds": 81398.04192241596
+  },
+  "status": "RAW_ARCHIVES_AND_FINAL_DOCUMENT_BYTES_VERIFIED",
+  "raw_archives": 636,
+  "original_and_archive_hashes": "ALL_PASS",
+  "documentation_hashes": "ALL_MATCH_FINAL03",
+  "scientific_member_checks": "reuse collection_receipt_v41.json,17packets708members; no replay",
+  "ledger_closed": true,
+  "active": null,
+  "metadata_seconds": 0.17594959901180118,
+  "count_semantics": "634 earlier integrity snapshot; final index includes frozen final receipt and post-return stdout versions",
+  "final_existing_originals": "ALL_MATCH_SOME_RETAINED_ARCHIVE_VERSION",
+  "final_version_archival": [
+    "tmp/task042/v41/final_settlement.stdout",
+    "docs/task042_neural_coarse_inverse/outcomes/records/final_settlement_v41.json"
+  ],
+  "metadata_final_versions_seconds": 0.1148141500307247
+}

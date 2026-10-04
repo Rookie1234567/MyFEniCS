@@ -1,3 +1,9 @@
+# V41测试与独立验收
+
+最终已提交source上的38项相关测试与15项文档合同测试通过，ABI/真实compile/Ruff、真实native MPI1/2/4及全部保存向量checker通过。缺rank/owner/phase/face/方向/散布反例拒绝；失败全部保留。GitHub视觉NOT_VERIFIED，无CI声明。[测试](records/tests_v41.json) · [文档](records/documentation_checks_v41.json)。旧历史正文保留。
+
+<!-- V41-LATEST-END -->
+
 # V39测试：边界接线通过，真实体积恢复缺项保留
 
 最后一次全相关serial为22项，最终新增callback反例及预算定点测试已复验；最终源码的小测试、真实compile／Ruff、15项文档合同结果见[tests](records/tests_v39.json)。相关MPI2/4为合成fixture，真实native仅MPI1。fixture dtype、carrier接线、旧输入FAIL等原始负例不删除，不称CI或完整PDE通过。以下历史逐字保留。

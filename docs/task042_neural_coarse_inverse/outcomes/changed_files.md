@@ -1,3 +1,9 @@
+# V41变更与依赖组
+
+opt-in实体协议/适配、阶段身份、真实拓扑研究核进src/solvers；runner复用旧监督，独立checker只重算保存数组，十个one-run入口明确stage。普通默认、原方程和旧证据不变，不碰dot/其他分支。[清单](records/changed_files_v41.json) · [依赖组](records/selective_merge_manifest_v41.json)。无production或merge批准，旧历史保留。
+
+<!-- V41-LATEST-END -->
+
 # V39变化：原生抽取／对偶散布、独立checker与部分体积接线
 
 数值核进入src/solvers，五个one-run入口复用runner／watchdog；新输入生命周期／callback检查、实体映射、费用及保存数组checker是opt-in。旧ActionPacket和native oracle保持独立，普通默认、其他任务及dot不改。体积接线修复未获得完整native重放资格。精确清单见[changed_files](records/changed_files_v39.json)，依赖分组见[manifest](records/selective_merge_manifest_v39.json)。旧task/review/response/raw及以下历史正文逐字保留。

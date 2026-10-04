@@ -1,0 +1,34 @@
+{
+  "callable": "src.solvers.native_entity_adapter.CompleteEntityAdapter.extract/scatter_into/canonical_from_physical",
+  "router": "src.solvers.native_entity_protocol.OwnerEntityRouter: complete 6/60 moments, only requested owner entries",
+  "inputs": [
+    "MPI communicator",
+    "actual owned native entity IDs",
+    "requested periodic master IDs and owners",
+    "complex primal phases",
+    "native vertex permutations",
+    "caller-owned canonical buffers"
+  ],
+  "output_semantics": "native complete-entity physical coefficients and conjugate owner dual; boundary canonical prefix rows are not full target DOLFINx p6 DOF IDs",
+  "target_volume": "NOT_CONNECTED",
+  "required_volume_fields": [
+    "native_entity_binding",
+    "independent_trace",
+    "internal_RHS",
+    "nonzero_port_RHS",
+    "forward",
+    "adjoint",
+    "recover",
+    "full_explicit_residual"
+  ],
+  "immutable_V40_anchor": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/RECOVER.json",
+    "sha256": "74cf9cae60cb015c9070974adb269d6c5a74c80f2bb735e843c9b199af332d75"
+  },
+  "new_consumer_result": {
+    "path": "benchmarks/artifacts/task042/v41/task042_v41_deploy_20261004T103909861078Z/result.json",
+    "sha256": "7adb8eaf685a799ee7a9a9fb325ec6bb1f920c2991e6ee69309303c7000c5844",
+    "bytes": 2460
+  },
+  "lifecycle": "one rank-local topology packet; only boundary owner buffers persistent for component consumer; no global trace Python dictionary or alltrace allgather"
+}

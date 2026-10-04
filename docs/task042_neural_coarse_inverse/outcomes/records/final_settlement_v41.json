@@ -1,0 +1,54 @@
+{
+  "status": "V41_CLOSED_DELIVERY_SETTLED",
+  "clock": {
+    "start_utc_seconds": 1791106515.130953,
+    "start_monotonic": 1031509.98,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_seconds": 86400,
+    "heavy_seconds": 82800,
+    "label": "V41",
+    "first_observation_utc": "2026-10-04T09:35:15.130953671+00:00",
+    "review_commit": "718c42ef2be1ce375f940a5092ad503ab3729d5a",
+    "component_seconds": 4800,
+    "target_seconds": 2400,
+    "total_loaded_seconds": 7200,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "start_utc": "2026-10-04T09:35:15.130953671+00:00",
+    "heavy_limit_seconds": 82800,
+    "total_limit_seconds": 86400,
+    "observed_utc": "2026-10-04T10:57:12.351187+00:00",
+    "observed_monotonic": 1036427.212054396,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4917.232054396067,
+    "heavy_remaining_seconds": 77882.76794560393,
+    "total_remaining_seconds": 81482.76794560393
+  },
+  "no_Task042_actor": true,
+  "ledger": {
+    "path": "tmp/task042/v41/ledger.json",
+    "sha256": "d4a5c8d184c87cd0c4609fdbd7508e98195fc6695ed2b3f68f47185610bc94e6",
+    "bytes": 51189
+  },
+  "total_charged_seconds": 635.1465546286199,
+  "supervised_seconds": 582.8742715173867,
+  "source": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "storage": {
+    "new_bytes": 1872487064,
+    "task_artifact_bytes": 17417388941,
+    "free_bytes": 3358343880704,
+    "reserve_bytes": 273026425,
+    "delivery_doc_and_raw_archive_bytes": 4590969,
+    "new_with_delivery_bytes": 1877078033
+  },
+  "seconds": 1.5993342420551926,
+  "immutable_scientific_array_check": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v41.json",
+    "sha256": "51b3cedb24d3f52a0e3c2469046fb4797f1d224a05909d536b5dbdcac80d847d",
+    "bytes": 170959
+  },
+  "array_check_replay": false,
+  "raw_archives_before_this_receipt": 633,
+  "complete_raw_index_count": 634
+}

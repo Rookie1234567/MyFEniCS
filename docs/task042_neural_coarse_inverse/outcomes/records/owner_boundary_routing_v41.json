@@ -1,0 +1,794 @@
+{
+  "status": "TARGET_BOUNDARY_OWNER_ROUTING_QUALIFIED",
+  "packets": [
+    {
+      "numeric": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T102752014232Z/boundary_rank0.npz",
+        "sha256": "6981227b5761a6123eb50a429c7b3b5253f80c2b646378672d91a589f2d01f5f",
+        "aliases": {},
+        "members": {
+          "boundary1_canonical_rows": {
+            "shape": [
+              5256,
+              6
+            ],
+            "dtype": "<i8",
+            "sha256": "c094931de3d74617e9290fb6c7563721c255589a4f6c8f40791893e1eae649d3"
+          },
+          "boundary1_owned_keys": {
+            "shape": [
+              5256,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "ae2d376df3f5a9a88351e5ad271634bb527fc07516083b048286eb0ce5352d36"
+          },
+          "boundary1_physical_keys": {
+            "shape": [
+              5365,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "46afd0f24a5209ee6c65d1d40fbe7991cdff0fff928d59a7ddb67b8db47528ad"
+          },
+          "boundary1_master_rows": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<i8",
+            "sha256": "d2d2b52176ebe38ccf83bb6c9e0853567c3b832d4669be957e56deb6b560da64"
+          },
+          "boundary1_phase": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<c16",
+            "sha256": "e835f4ed5213ec0ea8a22a4a7e53c14af5fe862d653400466304a3d391aee0f3"
+          },
+          "boundary1_permutation": {
+            "shape": [
+              5365,
+              2
+            ],
+            "dtype": "|i1",
+            "sha256": "4ff4a85150da0eecf066b68772d6ea269c1a9630eb17f8fd979b61b2c16e8808"
+          },
+          "boundary1_owned_values": {
+            "shape": [
+              5256,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "31785bd579020c640ef51f69a8ae58553f8f5b2cc1781f0fad65debec9468e99"
+          },
+          "boundary1_physical_dual": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "b81965eef62487937b928c701aeb7ab28033b694b7e0f09aeaa5f27b8e7216cc"
+          },
+          "boundary1_scattered_dual": {
+            "shape": [
+              5256,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "3f1dc08feb3490469001e31a0f2f4a2019e6e6609277a4a2578af153227a266b"
+          },
+          "boundary1_extracted": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "ad7c876a8fcdd1fd3a86f2b3ddf27de516129eb4b474f2ffce1aff322636f50c"
+          },
+          "boundary1_expected": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "ad7c876a8fcdd1fd3a86f2b3ddf27de516129eb4b474f2ffce1aff322636f50c"
+          },
+          "boundary1_canonical_extracted": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "80c9eb5440813eeee8475b4057d8f304d522a70d422a66f9dc328520a62959eb"
+          },
+          "boundary1_physical_native_ids": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<i8",
+            "sha256": "296b21182430718b054d6944cef72af96106e5c78f45db21d952238a79f99e16"
+          },
+          "boundary1_requested_master_ids": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<i8",
+            "sha256": "bc08ec873f80dc881bdc0f32ee581389641c51e08caec1c8a88d95567103eaad"
+          },
+          "boundary1_requested_master_owners": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<i4",
+            "sha256": "b5f1f56e6df16603f342a4a7e23faeb0a507e399b6436bcfa624414c5d50eea7"
+          },
+          "boundary1_owned_native_ids": {
+            "shape": [
+              5256
+            ],
+            "dtype": "<i8",
+            "sha256": "7fe2f9b2be2fd3786d7bb45db024a3f6b1cd13384d142e267ef01fc6e103a3ef"
+          },
+          "boundary2_canonical_rows": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<i8",
+            "sha256": "a0be70a42489581107b7dee877d18364517cf312f3edae61ac8e07f769358285"
+          },
+          "boundary2_owned_keys": {
+            "shape": [
+              2628,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "10d92ede2cab3316b9e101212b71e97d0412e6330005eda1b1861201325cd91b"
+          },
+          "boundary2_physical_keys": {
+            "shape": [
+              2628,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "10d92ede2cab3316b9e101212b71e97d0412e6330005eda1b1861201325cd91b"
+          },
+          "boundary2_master_rows": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<i8",
+            "sha256": "a0be70a42489581107b7dee877d18364517cf312f3edae61ac8e07f769358285"
+          },
+          "boundary2_phase": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<c16",
+            "sha256": "6e0b188295343f1eec447543614aa8d6062d2f02963013d448d3260b1abfa2ba"
+          },
+          "boundary2_permutation": {
+            "shape": [
+              2628,
+              4
+            ],
+            "dtype": "|i1",
+            "sha256": "52d183617f457bfe647a74d9903a270ebd6c2883ebec405f25152c0ac01b53b6"
+          },
+          "boundary2_owned_values": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "0de69d7738d287db31fcae700ad5d4bf302a34cedeea4546c8c743f961c070be"
+          },
+          "boundary2_physical_dual": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "8b54f792a8068fd7b837bbbe7af6dc4ee9c03ed8dc3f6703b9d58bb469f85ae7"
+          },
+          "boundary2_scattered_dual": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "b2c786658bd0f6767f1decd154f2bd9841a305f2e16123d0a38eb9d4a0ee37a0"
+          },
+          "boundary2_extracted": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "53578665367ff1f7852e3b10c5494911546d29697e11361966b1a62ad374126a"
+          },
+          "boundary2_expected": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "53578665367ff1f7852e3b10c5494911546d29697e11361966b1a62ad374126a"
+          },
+          "boundary2_canonical_extracted": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "60c52c5ab68f7b52c8f66c065f709700119e5e841e9a7fbe5f48941db69e7bae"
+          },
+          "boundary2_physical_native_ids": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i8",
+            "sha256": "85b6230e60f888e02691bdc202bb134c40fae5ab053996749106a4297e3c4f73"
+          },
+          "boundary2_requested_master_ids": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i8",
+            "sha256": "85b6230e60f888e02691bdc202bb134c40fae5ab053996749106a4297e3c4f73"
+          },
+          "boundary2_requested_master_owners": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i4",
+            "sha256": "6038ffcebdda472a6de7642c9ebc302018403f94b7ca3d9f34ca77283d72d7d8"
+          },
+          "boundary2_owned_native_ids": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i8",
+            "sha256": "85b6230e60f888e02691bdc202bb134c40fae5ab053996749106a4297e3c4f73"
+          },
+          "global_duality_left": {
+            "shape": [
+              1
+            ],
+            "dtype": "<c16",
+            "sha256": "c21d046b5734daf64fa8ea8d173489506c21a3eaa8b584042501ee936e5aeaa8"
+          },
+          "global_duality_right": {
+            "shape": [
+              1
+            ],
+            "dtype": "<c16",
+            "sha256": "ea9c203178049e4103ee8520e4f342d8520a029c7e622c23d89d7862d23554bb"
+          }
+        }
+      },
+      "metadata": {
+        "rank": 0,
+        "MPI_size": 2,
+        "owner_buffer_bytes": 12130752,
+        "producer": "ACTUAL_NATIVE_MESH_ENTITY_GLOBAL_IDS",
+        "consumer": "CANONICAL_BOUNDARY_MOMENT_PROTOCOL",
+        "full_target_volume_vector_allocated": false,
+        "all_trace_allgather": false
+      },
+      "source_sha": "cd6819e73607bbe68f14ee4290eed822a220bc2d",
+      "rank": 0,
+      "MPI_size": 2,
+      "environment": {
+        "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scalar": "complex128",
+        "IntType": "int64",
+        "MPI_size": 2,
+        "rank": 0,
+        "affinity": [
+          4
+        ],
+        "math_pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "module_paths": {
+          "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+          "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+          "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+          "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+          "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+        },
+        "GPU_used": false,
+        "DataLoader_workers": 0,
+        "shared_workstation": true
+      },
+      "commit": true
+    },
+    {
+      "numeric": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T102752014232Z/boundary_rank1.npz",
+        "sha256": "5368bd1459930de6c033b1425e8824fbe7247ba0033688d18dd444f183d5fe53",
+        "aliases": {},
+        "members": {
+          "boundary1_canonical_rows": {
+            "shape": [
+              5256,
+              6
+            ],
+            "dtype": "<i8",
+            "sha256": "31b7ae8433494864375b49774a8d4a4d1e5930fd0dae1bd22171a9ab7fb43128"
+          },
+          "boundary1_owned_keys": {
+            "shape": [
+              5256,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "e503de808b886e7088aea62ea5c1d7b699c9cea1d71b22d54caafab9c3aaf11c"
+          },
+          "boundary1_physical_keys": {
+            "shape": [
+              5365,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "440d6e91f9a7ebd4124439de65f4da38c793147477d6d78b5b8aeb6ee75d2ad3"
+          },
+          "boundary1_master_rows": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<i8",
+            "sha256": "ba8da8b2c2c34f6db4e6f585192876424a55a214d68cbb73f6b1316d37e9c1bd"
+          },
+          "boundary1_phase": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<c16",
+            "sha256": "e835f4ed5213ec0ea8a22a4a7e53c14af5fe862d653400466304a3d391aee0f3"
+          },
+          "boundary1_permutation": {
+            "shape": [
+              5365,
+              2
+            ],
+            "dtype": "|i1",
+            "sha256": "4ff4a85150da0eecf066b68772d6ea269c1a9630eb17f8fd979b61b2c16e8808"
+          },
+          "boundary1_owned_values": {
+            "shape": [
+              5256,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "f4ab1d311fc79aa27f1bef451be1a79479e0b6812f254496c3c919422f850be1"
+          },
+          "boundary1_physical_dual": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "2060248c86f9804a43d64b078688cee14a50804c86dc2a14b77c412d845f8fae"
+          },
+          "boundary1_scattered_dual": {
+            "shape": [
+              5256,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "f5404220724d023da4038d37577dbec49a9b708f0bec8e9a99e5cfff868ae93f"
+          },
+          "boundary1_extracted": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "2f37e0a1b6dc7fd60a241f15c8960ba73c85c9755d34f306ce72938e9636a129"
+          },
+          "boundary1_expected": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "2f37e0a1b6dc7fd60a241f15c8960ba73c85c9755d34f306ce72938e9636a129"
+          },
+          "boundary1_canonical_extracted": {
+            "shape": [
+              5365,
+              6
+            ],
+            "dtype": "<c16",
+            "sha256": "9da0b6692c5d73c8b987be8a3225628c07b415348569d3dcfb815a73ea79a453"
+          },
+          "boundary1_physical_native_ids": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<i8",
+            "sha256": "913712eed002c1d647279b8f3a4f9f211be49ccf9bc8fcffc345435eded5f864"
+          },
+          "boundary1_requested_master_ids": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<i8",
+            "sha256": "f86359a296b095f8618f48b989359c6615940e7180c129ac0b7d2fc503bad760"
+          },
+          "boundary1_requested_master_owners": {
+            "shape": [
+              5365
+            ],
+            "dtype": "<i4",
+            "sha256": "55f030090f6c364f1f449655c8a03d0964c73022e13edc2dd4c09b9677c413e0"
+          },
+          "boundary1_owned_native_ids": {
+            "shape": [
+              5256
+            ],
+            "dtype": "<i8",
+            "sha256": "60732f5855e9a534aceab9ac18f7d1170a75ef54780e412ea3847a1d28805de4"
+          },
+          "boundary2_canonical_rows": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<i8",
+            "sha256": "74c81d8886bacec2156ea6b9cd6c64c12bcbbb0c5d9c8fc1bff93d9b6bc9546e"
+          },
+          "boundary2_owned_keys": {
+            "shape": [
+              2628,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "59a845fd7cae0d9e4e384ec3145a51208ba66f397a554b49821f3ff89e6596a5"
+          },
+          "boundary2_physical_keys": {
+            "shape": [
+              2628,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "59a845fd7cae0d9e4e384ec3145a51208ba66f397a554b49821f3ff89e6596a5"
+          },
+          "boundary2_master_rows": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<i8",
+            "sha256": "74c81d8886bacec2156ea6b9cd6c64c12bcbbb0c5d9c8fc1bff93d9b6bc9546e"
+          },
+          "boundary2_phase": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<c16",
+            "sha256": "6e0b188295343f1eec447543614aa8d6062d2f02963013d448d3260b1abfa2ba"
+          },
+          "boundary2_permutation": {
+            "shape": [
+              2628,
+              4
+            ],
+            "dtype": "|i1",
+            "sha256": "52d183617f457bfe647a74d9903a270ebd6c2883ebec405f25152c0ac01b53b6"
+          },
+          "boundary2_owned_values": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "780f6d71b5b2b8645993f7cc2fe776ef2f16944044b388ee3f6a32ed79cd5585"
+          },
+          "boundary2_physical_dual": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "7f147127ec31b65e72290ac89dfcb9e6ebe2b1a396d21c3d4c045b18a8fce152"
+          },
+          "boundary2_scattered_dual": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "b43cdabfa929b3c9ed9be6baeb1bacee5e5c89e3ffd9599892e50402b8b640fe"
+          },
+          "boundary2_extracted": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "1b5ebb8e588ff4fe084cf2b70b1d36b52078f8816a91a35cdc7990a7dc54a4bf"
+          },
+          "boundary2_expected": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "1b5ebb8e588ff4fe084cf2b70b1d36b52078f8816a91a35cdc7990a7dc54a4bf"
+          },
+          "boundary2_canonical_extracted": {
+            "shape": [
+              2628,
+              60
+            ],
+            "dtype": "<c16",
+            "sha256": "cd48fcbf929cf55705b639d4aa671067c2305615827012b1f2d04d163292e5a1"
+          },
+          "boundary2_physical_native_ids": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i8",
+            "sha256": "5648a5ba209aff0d7bc1107bb9f247555d2d94dcafa72b7e4d46d9c4ca171cb7"
+          },
+          "boundary2_requested_master_ids": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i8",
+            "sha256": "5648a5ba209aff0d7bc1107bb9f247555d2d94dcafa72b7e4d46d9c4ca171cb7"
+          },
+          "boundary2_requested_master_owners": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i4",
+            "sha256": "826bf722104719e328ad5b6fa10b47c224400aa24a0660c7b2691b916a7eba92"
+          },
+          "boundary2_owned_native_ids": {
+            "shape": [
+              2628
+            ],
+            "dtype": "<i8",
+            "sha256": "5648a5ba209aff0d7bc1107bb9f247555d2d94dcafa72b7e4d46d9c4ca171cb7"
+          },
+          "global_duality_left": {
+            "shape": [
+              1
+            ],
+            "dtype": "<c16",
+            "sha256": "c21d046b5734daf64fa8ea8d173489506c21a3eaa8b584042501ee936e5aeaa8"
+          },
+          "global_duality_right": {
+            "shape": [
+              1
+            ],
+            "dtype": "<c16",
+            "sha256": "ea9c203178049e4103ee8520e4f342d8520a029c7e622c23d89d7862d23554bb"
+          }
+        }
+      },
+      "metadata": {
+        "rank": 1,
+        "MPI_size": 2,
+        "owner_buffer_bytes": 12130752,
+        "producer": "ACTUAL_NATIVE_MESH_ENTITY_GLOBAL_IDS",
+        "consumer": "CANONICAL_BOUNDARY_MOMENT_PROTOCOL",
+        "full_target_volume_vector_allocated": false,
+        "all_trace_allgather": false
+      },
+      "source_sha": "cd6819e73607bbe68f14ee4290eed822a220bc2d",
+      "rank": 1,
+      "MPI_size": 2,
+      "environment": {
+        "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scalar": "complex128",
+        "IntType": "int64",
+        "MPI_size": 2,
+        "rank": 1,
+        "affinity": [
+          5
+        ],
+        "math_pools": [
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+            "function": "openblas_get_num_threads",
+            "threads": 1
+          }
+        ],
+        "module_paths": {
+          "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+          "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+          "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+          "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+          "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+        },
+        "GPU_used": false,
+        "DataLoader_workers": 0,
+        "shared_workstation": true
+      },
+      "commit": true
+    }
+  ],
+  "complete_actions": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T103554889407Z/complete_boundary_actions.npz",
+    "sha256": "c9eaa29900bdc1243d791993bd0b41a49787cba4bf9b9dadec98750788abf01a",
+    "aliases": {},
+    "members": {
+      "routed_input": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "375a15a4b1d6a86a0ae30aa157e46975ddb6c0ee526c9290f38f68b8d503faf7"
+      },
+      "frozen_input": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "f09adbafd61eace2a3a5ddb2acba77fb7110a8be320f514d777b84e6ce42c68c"
+      },
+      "amplitudes": {
+        "shape": [
+          32060
+        ],
+        "dtype": "<c16",
+        "sha256": "f9ec2c173ef8407c399299dab5a49aef345f963508d6cf7f56c7cb6751bdd699"
+      },
+      "frozen_amplitudes": {
+        "shape": [
+          32060
+        ],
+        "dtype": "<c16",
+        "sha256": "bef282edc91d002049cee6ed0177ccd1dacfa5528e821a142d3e4a3d5266d1eb"
+      },
+      "forward": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "33bf83deb2f90f1bea8b382257f3fb8da2ebab2235f20dc1dd2e1db969a7790a"
+      },
+      "frozen_forward": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "62bffd86d11badeacc8d56e4c188b423cc61970ca6600db940a6c72bc1fa26f7"
+      },
+      "adjoint": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "d237237b8c3aa6e363c3dac2eefdd5c4806053bef84c905a20af0bf7482a85c1"
+      },
+      "frozen_adjoint": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "d237237b8c3aa6e363c3dac2eefdd5c4806053bef84c905a20af0bf7482a85c1"
+      },
+      "modal": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "8858128f26cbdfe9a5b7703bfa2beaac7d02fa23423c4621b1db868faa53bdb0"
+      },
+      "frozen_modal": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "8858128f26cbdfe9a5b7703bfa2beaac7d02fa23423c4621b1db868faa53bdb0"
+      },
+      "y": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "2fe1c49b08154f782be5ac0263f5d3cb6765332dab37ee2409623cf2adfdafca"
+      },
+      "alpha": {
+        "shape": [
+          32060
+        ],
+        "dtype": "<c16",
+        "sha256": "6a1cbb1d750a78b29a0aaf1f4c6766118ca218766327735fa6017d067763b921"
+      }
+    }
+  },
+  "rows": 378432,
+  "ports": 32060,
+  "faces_per_side": 2628,
+  "full_target_p6_dofmap": "NOT_CONSTRUCTED",
+  "native_full_volume_vector": "NOT_CONSTRUCTED",
+  "boundary_calls": {
+    "recover": 0,
+    "forward": 0,
+    "adjoint": 1,
+    "modal": 0
+  },
+  "action_input_identity": {
+    "forward_recover": "V38_inputs.x",
+    "adjoint": "V38_inputs.y",
+    "modal": "V38_inputs.alpha"
+  },
+  "NN_training": 0,
+  "stage": "ROUTING",
+  "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "elapsed_worker_seconds": 14.084444236010313,
+  "input_sha256": "a116894c14ef3e12362f8a2585994718b765f2ef2ec88dc8d0df5bbb8ce6af70",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+  "checks": [
+    {
+      "kind": "complete_canonical_378432_extract",
+      "numerator": 1.2101977371108815e-12,
+      "denominator": 868.7571097881325,
+      "relative": 1.3930219660660015e-15,
+      "passed": true
+    },
+    {
+      "kind": "complete_32060_amplitudes",
+      "numerator": 9.592956906861822e-15,
+      "denominator": 43.40481332420125,
+      "relative": 2.2101136192453272e-16,
+      "passed": true
+    },
+    {
+      "kind": "complete_32060_forward",
+      "numerator": 2.0547542280269826e-11,
+      "denominator": 39509.1552045175,
+      "relative": 5.200704032750467e-16,
+      "passed": true
+    },
+    {
+      "kind": "complete_32060_adjoint",
+      "numerator": 0.0,
+      "denominator": 39894.32300216494,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "complete_32060_modal",
+      "numerator": 0.0,
+      "denominator": 178968.5406526113,
+      "relative": 0.0,
+      "passed": true
+    }
+  ],
+  "old_failure_kept": true
+}

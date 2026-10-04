@@ -1,0 +1,126 @@
+{
+  "actual_sources": [
+    "4a25c8c05e9c39e2caa8dfe7d28acaea23d256fd",
+    "55945e4838529eeb5b05ddb4a2fc37c5f7f2d0cb",
+    "7a354429a06d01173f057d68eae377a95f1f66eb",
+    "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+    "cd6819e73607bbe68f14ee4290eed822a220bc2d",
+    "d9b329913b417367b5dda75cee5bc9448d1d8d9c",
+    "fa2fbcf761584597b77ca0be3707d79535c95eae"
+  ],
+  "final_implementation_source": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "implementation_hashes": {
+    "benchmarks/check_native_entities.py": "a2885d265223b7a9cee87087ed29d0fc108ffe405371c47bdcb76c84cf7b6c84",
+    "benchmarks/qualify_native_entities.py": "4d19af35ed5f89dbb595379ee50b4497e02c81a8f1aef9c02c64b5230c53c148",
+    "input/task042_neural_coarse_inverse/native_entities_v41.json": "2b50ec5bd51bc61ef348953ea1599cb6d6983d7dad4504e94998f48fe97bfa30",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "scripts/run_case.py": "6832d88d989f8b77eb464a9c5045a85c7d9f22510eefdc8ea9bc28eb60a4afac",
+    "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+    "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/io/port_preparation.py": "37c10e118e32d6898cd825445d38f5e5f0aefe5658eca0b89ac67ff67b89f25e",
+    "src/runners/port_preparation.py": "96e89b1f0825b2e4a6c52dff93717d95f244938ca425e3b184598757fcd40feb",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/native_entity_adapter.py": "fb572b37fe7ab7e7b135cfda1b5a617fe5fcebce4a781cb4f82154286ce9334d",
+    "src/solvers/native_entity_dependencies.py": "41ce56f6c6dcd1818f527b18205799c2bb93e16fada4257475988770f2d5cab3",
+    "src/solvers/native_entity_protocol.py": "57d1496cf3fe1b3c520dae22929569e199ea4a7f5a428b8c493a3a5b01a606a4",
+    "src/solvers/native_entity_scope.py": "f6b0ebf872516577b87466aaa1c73d9b6d918acaf61d15f17705ea34e1aa7355",
+    "src/solvers/native_entity_study.py": "cf8b31bab5d61b0d660a10fc053db7ec1011f5f8840d8bf4d524937aa9223a43",
+    "src/solvers/native_entity_topology.py": "65755e5adbb71086c14821d86f689dae9eea48c94ec154efbc2896c3f4577a13",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "src/test/test_native_entities.py": "0215db2dc2469160fc1a0e754cb6e5d1e328f9d5fad312b008be5adaeb36cecc"
+  },
+  "input_plan": {
+    "path": "input/task042_neural_coarse_inverse/native_entities_v41.json",
+    "sha256": "2b50ec5bd51bc61ef348953ea1599cb6d6983d7dad4504e94998f48fe97bfa30",
+    "bytes": 6471
+  },
+  "one_run_inputs": [
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_bridge1.dat",
+      "sha256": "eaded1051cebcca86d12f426e9a42d128eba060a86b16b4af1af49984203c0c0",
+      "bytes": 83
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_bridge2.dat",
+      "sha256": "20ce9223bd5d042d919b6388b4345d8224cf01a758423f88d7fa578e072fc072",
+      "bytes": 83
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_bridge4.dat",
+      "sha256": "4a9e8b1bb2a18fb6006ee2a21c60242959efc7d69ec5229e5028019e8dfb528b",
+      "bytes": 83
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_capacity.dat",
+      "sha256": "ef16ff838f1b47e3c09a61bdf1e245a46a79eae938f4770dc05f82b8c708e8b2",
+      "bytes": 85
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_check.dat",
+      "sha256": "89001642940140c932a1a466b899c221283ef2bdec3e9a089d65720f79c22373",
+      "bytes": 79
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_deploy.dat",
+      "sha256": "c29cf371bd34fc68a1d415e030e0b7c4bdf4f166a4f7cfff078bea78140fb3e1",
+      "bytes": 81
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_envelope.dat",
+      "sha256": "2d83d68050756d68697ce90743d87cc9054ef25effbd4b15bbbf85dc6c063ea1",
+      "bytes": 85
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_orientation.dat",
+      "sha256": "8caa4f733dd0c1e0e9a435ca10c9e0cc7fad99bfdfa90f230ab6a80ba5bd5d5a",
+      "bytes": 91
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_routing.dat",
+      "sha256": "a116894c14ef3e12362f8a2585994718b765f2ef2ec88dc8d0df5bbb8ce6af70",
+      "bytes": 83
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v41_topology.dat",
+      "sha256": "25af4bbfc8c7225c0091795bc495ff1c64cdcb99731d7e07c230288bd54a7e5f",
+      "bytes": 85
+    }
+  ],
+  "delivery_scripts": [
+    {
+      "path": "tmp/task042/v41/collect.py",
+      "sha256": "0a330ac10f654e9b41b12f9ce817c936467d29e287246c26db2fc665cec2f3b3",
+      "bytes": 12620
+    },
+    {
+      "path": "tmp/task042/v41/reclaim_bytecode.py",
+      "sha256": "d680bb66fbf63b2868a5dca88ce5d66beb93f1a52e228b7867cdac2c4c102a00",
+      "bytes": 1036
+    },
+    {
+      "path": "tmp/task042/v41/write_delivery.py",
+      "sha256": "d24142ff16dfdde0039210d299e74fc71001ada54f02f663ee89612163ad50b9",
+      "bytes": 29830
+    },
+    {
+      "path": "tmp/task042/v41/final_post.py",
+      "sha256": "7c160e73a5d48a8035abae49f02c8977d31463ed9d21d42dadbf951467c0bc0a",
+      "bytes": 6986
+    },
+    {
+      "path": "tmp/task042/v41/settle_delivery.py",
+      "sha256": "e48cf2582dba195699ff48536b0d22d63b5501b754c88e5606a4531f33e22ef1",
+      "bytes": 13737
+    },
+    {
+      "path": "tmp/task042/v41/settle_delivery.py",
+      "sha256": "131abd22eb403bf74eb4779790b77436eeb93a86a9a79167dcbc1f9322e2bb3a",
+      "bytes": 14058
+    }
+  ],
+  "document_HEAD_not_run_source": true,
+  "new_native_mesh_hex": 192,
+  "target_low_order_mesh_constructions": 1,
+  "new_forms_factors_QR_Krylov_training": 0
+}

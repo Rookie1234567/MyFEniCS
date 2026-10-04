@@ -1,0 +1,77 @@
+{
+  "merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/native_entity_adapter.py",
+        "src/solvers/native_entity_protocol.py",
+        "src/solvers/native_entity_dependencies.py"
+      ],
+      "behavior": "opt-in entity transformation/owner communication only; original equations/defaults unchanged",
+      "depends": [
+        "matching native p6 basis/MPC/phase/owner identity",
+        "V40/V38 immutable packets"
+      ],
+      "tests": "MPI1/2/4 native literal bridge, full routing and rejection tests",
+      "fresh_PDE": "NOT_RUN",
+      "order": 1,
+      "promotion": "no production qualification"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/io/port_preparation.py",
+        "scripts/run_case.py",
+        "src/solvers/native_entity_scope.py"
+      ],
+      "behavior": "explicit V41 scope/rank CPU/deadline/source/guard/diagnosed failed replay only",
+      "depends": [
+        "existing generic subreaper and shared admission"
+      ],
+      "tests": "schema/deadline own descendants/replay negative tests",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_native_entities.py",
+        "benchmarks/qualify_native_entities.py",
+        "src/test/test_native_entities.py"
+      ],
+      "behavior": "independent saved literal identity/phase/dual/orientation and native byte checks; no new solve",
+      "tests": "saved full arrays and counterexamples",
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v41.md",
+        "outcomes/native_entity_owner_topology_v41.md",
+        "outcomes/records/*v41*"
+      ],
+      "behavior": "positive interfaces/negative runs/costs and conditional capacity; no success rewrite",
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/native_entity_study.py",
+        "src/solvers/native_entity_topology.py",
+        "input/task042_neural_coarse_inverse/v41_*.dat",
+        "input/task042_neural_coarse_inverse/native_entities_v41.json"
+      ],
+      "behavior": "one finite and one target topology-only research protocol, not PDE solver"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v41",
+        "tmp/task042/v41",
+        "results/task042/task042_v41_*"
+      ],
+      "behavior": "large arrays/local caches/runtime evidence remain ignored"
+    }
+  ]
+}

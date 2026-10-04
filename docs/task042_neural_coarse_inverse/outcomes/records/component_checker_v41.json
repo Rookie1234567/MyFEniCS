@@ -1,0 +1,1844 @@
+{
+  "status": "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE",
+  "passed": true,
+  "checks": {
+    "BRIDGE1": {
+      "fixtures": [
+        {
+          "passed": true,
+          "checks": [
+            {
+              "kind": "phase_dim1_rank0",
+              "numerator": 0.0,
+              "denominator": 17.320508075688775,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank0",
+              "numerator": 0.0,
+              "denominator": 15.491933384829668,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank0",
+              "numerator": 2.3060117749824935e-15,
+              "denominator": 212.09461594082762,
+              "relative": 1.0872561591218556e-17,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank0",
+              "numerator": 0.0,
+              "denominator": 212.09461594082762,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank0",
+              "numerator": 4.395093240685857e-15,
+              "denominator": 208.3499020810886,
+              "relative": 2.1094769888470175e-17,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank0",
+              "numerator": 0.0,
+              "denominator": 42.39381575878129,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank0",
+              "numerator": 0.0,
+              "denominator": 119.92070835074523,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank0",
+              "numerator": 0.0,
+              "denominator": 140.3192598255199,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_full_native_duality",
+              "numerator": 1.8620016083058543e-12,
+              "denominator": 13151.849967332451,
+              "relative": 1.4157716313148593e-16,
+              "passed": true
+            }
+          ],
+          "global_owned_edges": 300,
+          "global_owned_faces": 240
+        }
+      ],
+      "directions": {
+        "passed": true,
+        "checks": [
+          {
+            "kind": "independent_two_axis_0",
+            "numerator": 0.0,
+            "denominator": 818442.9524527262,
+            "relative": 0.0,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_576",
+            "numerator": 1.346830512094216e-11,
+            "denominator": 818442.9524527235,
+            "relative": 1.645600964683014e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_4680",
+            "numerator": 1.8838346369460658e-11,
+            "denominator": 818442.9524527221,
+            "relative": 2.3017299266864745e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_32769",
+            "numerator": 1.3701157253247664e-11,
+            "denominator": 818442.9524527277,
+            "relative": 1.6740515893243062e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_36873",
+            "numerator": 1.9064646382355986e-11,
+            "denominator": 818442.9524527248,
+            "relative": 2.3293799922429176e-17,
+            "passed": true
+          }
+        ]
+      }
+    },
+    "BRIDGE2": {
+      "fixtures": [
+        {
+          "passed": true,
+          "checks": [
+            {
+              "kind": "phase_dim1_rank0",
+              "numerator": 0.0,
+              "denominator": 14.491376746189438,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank0",
+              "numerator": 0.0,
+              "denominator": 12.0,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank0",
+              "numerator": 1.8961066856168125e-13,
+              "denominator": 155.886030132184,
+              "relative": 1.2163416336980315e-15,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank0",
+              "numerator": 2.9893669801409083e-16,
+              "denominator": 155.886030132184,
+              "relative": 1.917661882598502e-18,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank0",
+              "numerator": 1.9943481397733556e-15,
+              "denominator": 153.13372746298947,
+              "relative": 1.3023572094889187e-17,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim1_rank1",
+              "numerator": 0.0,
+              "denominator": 14.491376746189438,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank1",
+              "numerator": 0.0,
+              "denominator": 11.999999999999998,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank1",
+              "numerator": 2.0230713554770571e-13,
+              "denominator": 155.91457454778882,
+              "relative": 1.2975511502659252e-15,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank1",
+              "numerator": 0.0,
+              "denominator": 159.6056833608625,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank1",
+              "numerator": 4.614913413071503e-15,
+              "denominator": 156.78770699723177,
+              "relative": 2.94341533622466e-17,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank0",
+              "numerator": 0.0,
+              "denominator": 28.281694526732675,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank0",
+              "numerator": 0.0,
+              "denominator": 86.21086326099314,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank1",
+              "numerator": 0.0,
+              "denominator": 31.581345273532452,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank1",
+              "numerator": 0.0,
+              "denominator": 83.35864290605298,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank0",
+              "numerator": 1.1233295596406768e-15,
+              "denominator": 107.27490937423458,
+              "relative": 1.0471503226554852e-17,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank1",
+              "numerator": 0.0,
+              "denominator": 85.83193761477321,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_full_native_duality",
+              "numerator": 2.729076160030173e-12,
+              "denominator": 7196.681235153013,
+              "relative": 3.7921314990299804e-16,
+              "passed": true
+            }
+          ],
+          "global_owned_edges": 300,
+          "global_owned_faces": 240
+        }
+      ],
+      "directions": {
+        "passed": true,
+        "checks": [
+          {
+            "kind": "independent_two_axis_0",
+            "numerator": 0.0,
+            "denominator": 818442.9524527262,
+            "relative": 0.0,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_72",
+            "numerator": 1.331017920421967e-11,
+            "denominator": 818442.9524527248,
+            "relative": 1.6262806301076308e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_585",
+            "numerator": 1.902768129487089e-11,
+            "denominator": 818442.952452724,
+            "relative": 2.3248634786149e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_4608",
+            "numerator": 1.3315836831821719e-11,
+            "denominator": 818442.952452723,
+            "relative": 1.6269718972979857e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_36864",
+            "numerator": 1.3489280248548797e-11,
+            "denominator": 818442.952452725,
+            "relative": 1.6481637734339177e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_36873",
+            "numerator": 1.9064646382355986e-11,
+            "denominator": 818442.9524527248,
+            "relative": 2.3293799922429176e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_36928",
+            "numerator": 1.6512101067590312e-11,
+            "denominator": 818442.9524527241,
+            "relative": 2.0175017718836187e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_37449",
+            "numerator": 2.3338264976521267e-11,
+            "denominator": 818442.9524527229,
+            "relative": 2.851544497582975e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1048720",
+            "numerator": 1.3483225040415992e-11,
+            "denominator": 818442.952452724,
+            "relative": 1.6474239285718362e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1573074",
+            "numerator": 2.705383404028629e-11,
+            "denominator": 818442.9524527255,
+            "relative": 3.305524711186142e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1610130",
+            "numerator": 3.398914296163676e-11,
+            "denominator": 818442.9524527232,
+            "relative": 4.152903126574374e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1839859",
+            "numerator": 4.526357558877108e-11,
+            "denominator": 818442.9524527238,
+            "relative": 5.530449673141473e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_2131529",
+            "numerator": 3.0279785165406916e-11,
+            "denominator": 818442.9524527258,
+            "relative": 3.6996818256744544e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_2135561",
+            "numerator": 3.025014772495604e-11,
+            "denominator": 818442.9524527242,
+            "relative": 3.696060627598035e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_4199497",
+            "numerator": 2.1178732918432728e-11,
+            "denominator": 818442.9524527225,
+            "relative": 2.587685904675943e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_5244088",
+            "numerator": 3.648193754115724e-11,
+            "denominator": 818442.9524527224,
+            "relative": 4.457480809362169e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_6293001",
+            "numerator": 2.7058914165815154e-11,
+            "denominator": 818442.9524527256,
+            "relative": 3.30614541731033e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_7866303",
+            "numerator": 6.036428152770209e-11,
+            "denominator": 818442.952452724,
+            "relative": 7.375502635437372e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_7867839",
+            "numerator": 6.236523113070156e-11,
+            "denominator": 818442.9524527224,
+            "relative": 7.619985112438745e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_16818248",
+            "numerator": 1.9027786369528107e-11,
+            "denominator": 818442.9524527233,
+            "relative": 2.3248763169754624e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_18129915",
+            "numerator": 5.554576246460081e-11,
+            "denominator": 818442.9524527225,
+            "relative": 6.786760433105376e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_31521864",
+            "numerator": 4.708054508510193e-11,
+            "denominator": 818442.9524527227,
+            "relative": 5.752452867241414e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_33559040",
+            "numerator": 1.3316275259655716e-11,
+            "denominator": 818442.952452723,
+            "relative": 1.6270254658249895e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_37756425",
+            "numerator": 3.692260354119018e-11,
+            "denominator": 818442.9524527241,
+            "relative": 4.5113228027121355e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_51672051",
+            "numerator": 6.055599599951833e-11,
+            "denominator": 818442.9524527242,
+            "relative": 7.398926928021441e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_67211776",
+            "numerator": 2.715744770746497e-11,
+            "denominator": 818442.9524527236,
+            "relative": 3.318184563270912e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_67998451",
+            "numerator": 5.111039054211885e-11,
+            "denominator": 818442.9524527243,
+            "relative": 6.244832384340329e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_81901101",
+            "numerator": 5.848388905063187e-11,
+            "denominator": 818442.9524527288,
+            "relative": 7.145750216965764e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_134812034",
+            "numerator": 3.2512148019788194e-11,
+            "denominator": 818442.9524527246,
+            "relative": 3.9724391202044325e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_134812546",
+            "numerator": 3.3868807417306045e-11,
+            "denominator": 818442.9524527233,
+            "relative": 4.1382001415990507e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_135074207",
+            "numerator": 5.1541609827365735e-11,
+            "denominator": 818442.9524527251,
+            "relative": 6.297520147605263e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_151068992",
+            "numerator": 3.169596453190428e-11,
+            "denominator": 818442.9524527228,
+            "relative": 3.8727151888738627e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_151069248",
+            "numerator": 1.903341973739004e-11,
+            "denominator": 818442.9524527225,
+            "relative": 2.3255646200325135e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_222405985",
+            "numerator": 4.723891980558729e-11,
+            "denominator": 818442.9524527227,
+            "relative": 5.771803601463113e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_226865974",
+            "numerator": 5.8123729685246536e-11,
+            "denominator": 818442.9524527264,
+            "relative": 7.101744783929065e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_239312385",
+            "numerator": 4.918527675615971e-11,
+            "denominator": 818442.9524527248,
+            "relative": 6.009615772090208e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_268468224",
+            "numerator": 9.686339103224958e-12,
+            "denominator": 818442.9524527271,
+            "relative": 1.1835081570678484e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_270568457",
+            "numerator": 3.266925960984314e-11,
+            "denominator": 818442.9524527242,
+            "relative": 3.991635521075639e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_302029321",
+            "numerator": 3.445410719214803e-11,
+            "denominator": 818442.9524527221,
+            "relative": 4.2097139561035304e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_303862747",
+            "numerator": 4.9803569339519265e-11,
+            "denominator": 818442.9524527245,
+            "relative": 6.085160754364985e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_319880144",
+            "numerator": 5.7054063319625354e-11,
+            "denominator": 818442.9524527213,
+            "relative": 6.97104949693133e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_404982793",
+            "numerator": 4.5985610828741354e-11,
+            "denominator": 818442.9524527239,
+            "relative": 5.618670267845901e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_405507471",
+            "numerator": 6.293225754200194e-11,
+            "denominator": 818442.9524527225,
+            "relative": 7.689266228440918e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_428339550",
+            "numerator": 6.71614094571331e-11,
+            "denominator": 818442.9524527262,
+            "relative": 8.205997651499404e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_430173193",
+            "numerator": 5.374550443761438e-11,
+            "denominator": 818442.952452724,
+            "relative": 6.566799100236482e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_453245449",
+            "numerator": 5.74739329883387e-11,
+            "denominator": 818442.952452723,
+            "relative": 7.022350527437482e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_604176384",
+            "numerator": 2.8510210706441936e-11,
+            "denominator": 818442.9524527275,
+            "relative": 3.483469510123085e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_610995951",
+            "numerator": 6.689250799352141e-11,
+            "denominator": 818442.9524527264,
+            "relative": 8.173142403273995e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_618884096",
+            "numerator": 4.8789129643191186e-11,
+            "denominator": 818442.9524527243,
+            "relative": 5.961213239967313e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_808979671",
+            "numerator": 5.076846919286132e-11,
+            "denominator": 818442.9524527222,
+            "relative": 6.203055330944887e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_816901268",
+            "numerator": 4.949554058376878e-11,
+            "denominator": 818442.9524527227,
+            "relative": 6.047524807372312e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_838860809",
+            "numerator": 1.3458584072812077e-11,
+            "denominator": 818442.9524527262,
+            "relative": 1.6444132156650775e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_838881352",
+            "numerator": 3.1988197083665827e-11,
+            "denominator": 818442.9524527241,
+            "relative": 3.908421104709014e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_839047232",
+            "numerator": 4.900347236777759e-11,
+            "denominator": 818442.9524527243,
+            "relative": 5.987402325467293e-17,
+            "passed": true
+          }
+        ]
+      }
+    },
+    "BRIDGE4": {
+      "fixtures": [
+        {
+          "passed": true,
+          "checks": [
+            {
+              "kind": "phase_dim1_rank0",
+              "numerator": 0.0,
+              "denominator": 10.246950765959598,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank0",
+              "numerator": 0.0,
+              "denominator": 8.48528137423857,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank0",
+              "numerator": 1.4948522646209037e-13,
+              "denominator": 110.14922814836073,
+              "relative": 1.3571155147882446e-15,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank0",
+              "numerator": 1.760893866893587e-16,
+              "denominator": 110.14922814836073,
+              "relative": 1.5986438547910904e-18,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank0",
+              "numerator": 1.3870256657863683e-15,
+              "denominator": 108.20444827048854,
+              "relative": 1.2818564189885184e-17,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim1_rank1",
+              "numerator": 0.0,
+              "denominator": 10.246950765959598,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank1",
+              "numerator": 0.0,
+              "denominator": 8.48528137423857,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank1",
+              "numerator": 1.6341842074583217e-13,
+              "denominator": 110.30982164425166,
+              "relative": 1.4814494150199548e-15,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank1",
+              "numerator": 2.938193488474812e-16,
+              "denominator": 110.30982164425166,
+              "relative": 2.6635828475459456e-18,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank1",
+              "numerator": 1.3806322928669184e-15,
+              "denominator": 108.36220634933139,
+              "relative": 1.2740902380818284e-17,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim1_rank2",
+              "numerator": 0.0,
+              "denominator": 10.246950765959598,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank2",
+              "numerator": 0.0,
+              "denominator": 8.48528137423857,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank2",
+              "numerator": 1.2212489083069212e-13,
+              "denominator": 110.30685349828708,
+              "relative": 1.1071378337574333e-15,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank2",
+              "numerator": 1.9279638981753172e-16,
+              "denominator": 110.30685349828708,
+              "relative": 1.747818777375656e-18,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank2",
+              "numerator": 1.158747563089936e-15,
+              "denominator": 108.35929060855058,
+              "relative": 1.0693569112370137e-17,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim1_rank3",
+              "numerator": 0.0,
+              "denominator": 10.2469507659596,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "phase_dim2_rank3",
+              "numerator": 0.0,
+              "denominator": 8.48528137423857,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "complete_native_MPC_rank3",
+              "numerator": 1.3612235442366384e-13,
+              "denominator": 110.18664985029436,
+              "relative": 1.2353797361895216e-15,
+              "passed": true
+            },
+            {
+              "kind": "literal_MPC_rank3",
+              "numerator": 2.419923704820555e-16,
+              "denominator": 115.35041139892519,
+              "relative": 2.0978890976396668e-18,
+              "passed": true
+            },
+            {
+              "kind": "native_complex_scale_rank3",
+              "numerator": 4.496107296091744e-15,
+              "denominator": 113.31380013288205,
+              "relative": 3.967837360338459e-17,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank0",
+              "numerator": 0.0,
+              "denominator": 22.33199142746265,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank0",
+              "numerator": 0.0,
+              "denominator": 63.00377914079577,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank1",
+              "numerator": 0.0,
+              "denominator": 20.39984594504238,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank1",
+              "numerator": 0.0,
+              "denominator": 54.13404013808223,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank2",
+              "numerator": 0.0,
+              "denominator": 20.1178316963918,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank2",
+              "numerator": 0.0,
+              "denominator": 60.850630915075776,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim1_rank3",
+              "numerator": 0.0,
+              "denominator": 21.854905781709917,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "MPI_invariant_seed_dim2_rank3",
+              "numerator": 0.0,
+              "denominator": 61.46711739530376,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank0",
+              "numerator": 1.1233295596406768e-15,
+              "denominator": 86.86702393933227,
+              "relative": 1.293159945740984e-17,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank1",
+              "numerator": 0.0,
+              "denominator": 59.667791312598375,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank2",
+              "numerator": 0.0,
+              "denominator": 65.98823474559974,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_global_MPC_dual_rank3",
+              "numerator": 0.0,
+              "denominator": 57.81173217927955,
+              "relative": 0.0,
+              "passed": true
+            },
+            {
+              "kind": "independent_full_native_duality",
+              "numerator": 4.590260058017161e-12,
+              "denominator": 7217.490359628447,
+              "relative": 6.35991158878869e-16,
+              "passed": true
+            }
+          ],
+          "global_owned_edges": 300,
+          "global_owned_faces": 240
+        }
+      ],
+      "directions": {
+        "passed": true,
+        "checks": [
+          {
+            "kind": "independent_two_axis_0",
+            "numerator": 0.0,
+            "denominator": 818442.9524527262,
+            "relative": 0.0,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1",
+            "numerator": 9.685956922711247e-12,
+            "denominator": 818442.9524527271,
+            "relative": 1.1834614610198752e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_9",
+            "numerator": 1.3457536784514933e-11,
+            "denominator": 818442.9524527262,
+            "relative": 1.6442852546026718e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_72",
+            "numerator": 1.331017920421967e-11,
+            "denominator": 818442.9524527248,
+            "relative": 1.6262806301076308e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_585",
+            "numerator": 1.902768129487089e-11,
+            "denominator": 818442.952452724,
+            "relative": 2.3248634786149e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_4608",
+            "numerator": 1.3315836831821719e-11,
+            "denominator": 818442.952452723,
+            "relative": 1.6269718972979857e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_32768",
+            "numerator": 9.685956922711247e-12,
+            "denominator": 818442.9524527271,
+            "relative": 1.1834614610198752e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_36873",
+            "numerator": 1.9064646382355986e-11,
+            "denominator": 818442.9524527248,
+            "relative": 2.3293799922429176e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_36936",
+            "numerator": 1.895886237176359e-11,
+            "denominator": 818442.9524527238,
+            "relative": 2.3164549605989456e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1048720",
+            "numerator": 1.3483225040415992e-11,
+            "denominator": 818442.952452724,
+            "relative": 1.6474239285718362e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1573074",
+            "numerator": 2.705383404028629e-11,
+            "denominator": 818442.9524527255,
+            "relative": 3.305524711186142e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_1610130",
+            "numerator": 3.398914296163676e-11,
+            "denominator": 818442.9524527232,
+            "relative": 4.152903126574374e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_4199497",
+            "numerator": 2.1178732918432728e-11,
+            "denominator": 818442.9524527225,
+            "relative": 2.587685904675943e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_5248145",
+            "numerator": 2.128152066069687e-11,
+            "denominator": 818442.9524527215,
+            "relative": 2.6002448425904463e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_6294537",
+            "numerator": 3.119370792891408e-11,
+            "denominator": 818442.9524527233,
+            "relative": 3.811347856980412e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_6295113",
+            "numerator": 3.697220123839049e-11,
+            "denominator": 818442.9524527248,
+            "relative": 4.5173828093444415e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_6329865",
+            "numerator": 3.025034900901488e-11,
+            "denominator": 818442.9524527242,
+            "relative": 3.6960852211336296e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_7905234",
+            "numerator": 5.059594599197886e-11,
+            "denominator": 818442.9524527235,
+            "relative": 6.181975889749197e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_16818248",
+            "numerator": 1.9027786369528107e-11,
+            "denominator": 818442.9524527233,
+            "relative": 2.3248763169754624e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_23111241",
+            "numerator": 3.1751372896415046e-11,
+            "denominator": 818442.9524527236,
+            "relative": 3.879485161581757e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_33559040",
+            "numerator": 1.3316275259655716e-11,
+            "denominator": 818442.952452723,
+            "relative": 1.6270254658249895e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_33559112",
+            "numerator": 1.8838656344042217e-11,
+            "denominator": 818442.9524527221,
+            "relative": 2.301767800380741e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_33591817",
+            "numerator": 2.1318457142974574e-11,
+            "denominator": 818442.9524527233,
+            "relative": 2.604757861141949e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_35132114",
+            "numerator": 3.017004359812325e-11,
+            "denominator": 818442.9524527224,
+            "relative": 3.6862732469879784e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_37756425",
+            "numerator": 3.692260354119018e-11,
+            "denominator": 818442.9524527241,
+            "relative": 4.5113228027121355e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_134287361",
+            "numerator": 1.6397214549014804e-11,
+            "denominator": 818442.9524527261,
+            "relative": 2.0034645664521035e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_134812034",
+            "numerator": 3.2512148019788194e-11,
+            "denominator": 818442.9524527246,
+            "relative": 3.9724391202044325e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_134812546",
+            "numerator": 3.3868807417306045e-11,
+            "denominator": 818442.9524527233,
+            "relative": 4.1382001415990507e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_151068672",
+            "numerator": 1.348354198399645e-11,
+            "denominator": 818442.952452725,
+            "relative": 1.6474626537608664e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_151069248",
+            "numerator": 1.903341973739004e-11,
+            "denominator": 818442.9524527225,
+            "relative": 2.3255646200325135e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_151069440",
+            "numerator": 2.8992060966735315e-11,
+            "denominator": 818442.9524527221,
+            "relative": 3.542343529240672e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_155264329",
+            "numerator": 3.570990010096473e-11,
+            "denominator": 818442.9524527212,
+            "relative": 4.363150784541403e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_168366978",
+            "numerator": 3.386897996504578e-11,
+            "denominator": 818442.9524527233,
+            "relative": 4.1382212240384825e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_268468224",
+            "numerator": 9.686339103224958e-12,
+            "denominator": 818442.9524527271,
+            "relative": 1.1835081570678484e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_270568457",
+            "numerator": 3.266925960984314e-11,
+            "denominator": 818442.9524527242,
+            "relative": 3.991635521075639e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_271617169",
+            "numerator": 3.408474173418295e-11,
+            "denominator": 818442.9524527232,
+            "relative": 4.1645836929791185e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_272145810",
+            "numerator": 4.414476331241112e-11,
+            "denominator": 818442.9524527214,
+            "relative": 5.3937495802386063e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_302026752",
+            "numerator": 1.3489989742877935e-11,
+            "denominator": 818442.952452725,
+            "relative": 1.6482504617396832e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_302028873",
+            "numerator": 3.1983147655261097e-11,
+            "denominator": 818442.9524527233,
+            "relative": 3.907804149258476e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_303600594",
+            "numerator": 3.939385950285716e-11,
+            "denominator": 818442.9524527225,
+            "relative": 4.813268827693003e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_319859665",
+            "numerator": 4.783314928734695e-11,
+            "denominator": 818442.9524527206,
+            "relative": 5.844408476363556e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_405347722",
+            "numerator": 4.401218089532804e-11,
+            "denominator": 818442.9524527219,
+            "relative": 5.377550232845391e-17,
+            "passed": true
+          },
+          {
+            "kind": "independent_two_axis_453060873",
+            "numerator": 3.87526136288541e-11,
+            "denominator": 818442.9524527227,
+            "relative": 4.734919338326472e-17,
+            "passed": true
+          }
+        ]
+      }
+    },
+    "TOPOLOGY": {
+      "passed": true,
+      "checks": [
+        {
+          "kind": "phase_dim1_rank0",
+          "numerator": 0.0,
+          "denominator": 912.0696245352945,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "phase_dim2_rank0",
+          "numerator": 0.0,
+          "denominator": 904.3859795463314,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "phase_dim1_rank1",
+          "numerator": 0.0,
+          "denominator": 912.0696245352946,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "phase_dim2_rank1",
+          "numerator": 0.0,
+          "denominator": 904.3859795463312,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "actual_target_cells_raw_material_boundary",
+          "passed": true,
+          "cells": 530856,
+          "raw_classes": 270,
+          "exterior_faces": 49292
+        }
+      ],
+      "global_owned_edges": 1642171,
+      "global_owned_faces": 1617214
+    },
+    "ORIENTATION": {
+      "passed": true,
+      "checks": [
+        {
+          "kind": "independent_two_axis_1081489",
+          "numerator": 1.9231592052779903e-11,
+          "denominator": 818442.9524527255,
+          "relative": 2.3497779527756088e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_1836022",
+          "numerator": 5.283033248462293e-11,
+          "denominator": 818442.9524527253,
+          "relative": 6.454980438929799e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_1840126",
+          "numerator": 5.7118724613322415e-11,
+          "denominator": 818442.9524527234,
+          "relative": 6.978950022374568e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_1872319",
+          "numerator": 5.722225606672799e-11,
+          "denominator": 818442.9524527233,
+          "relative": 6.991599829315335e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_5244089",
+          "numerator": 3.7762511622423105e-11,
+          "denominator": 818442.9524527233,
+          "relative": 4.61394548138704e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_6299209",
+          "numerator": 3.8125624950713215e-11,
+          "denominator": 818442.9524527233,
+          "relative": 4.6583118391401276e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_6331401",
+          "numerator": 3.399502358891061e-11,
+          "denominator": 818442.9524527227,
+          "relative": 4.153621640583964e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_7868415",
+          "numerator": 6.71060651495413e-11,
+          "denominator": 818442.9524527249,
+          "relative": 8.199235505472509e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_7872511",
+          "numerator": 6.774439541377331e-11,
+          "denominator": 818442.9524527236,
+          "relative": 8.277228756232278e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_7904703",
+          "numerator": 6.38029209686076e-11,
+          "denominator": 818442.9524527215,
+          "relative": 7.795646694421658e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_17867216",
+          "numerator": 3.7029134642640816e-11,
+          "denominator": 818442.9524527226,
+          "relative": 4.5243391163270853e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_17867217",
+          "numerator": 3.8267204609505755e-11,
+          "denominator": 818442.9524527233,
+          "relative": 4.675610498548001e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_22029816",
+          "numerator": 4.928683821492434e-11,
+          "denominator": 818442.9524527211,
+          "relative": 6.022024878731115e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_22062585",
+          "numerator": 5.116485195338181e-11,
+          "denominator": 818442.9524527224,
+          "relative": 6.251486655245817e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_25190976",
+          "numerator": 3.081199480644962e-11,
+          "denominator": 818442.9524527238,
+          "relative": 3.764708916377337e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_25195080",
+          "numerator": 3.767175945613491e-11,
+          "denominator": 818442.9524527227,
+          "relative": 4.6028570889687046e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_25227336",
+          "numerator": 3.773764003654454e-11,
+          "denominator": 818442.9524527251,
+          "relative": 4.610906590795568e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_26502134",
+          "numerator": 5.973496946862593e-11,
+          "denominator": 818442.9524527254,
+          "relative": 7.298611258073766e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_26506238",
+          "numerator": 6.581805086948264e-11,
+          "denominator": 818442.9524527242,
+          "relative": 8.041861765959124e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_26538494",
+          "numerator": 6.585238233039508e-11,
+          "denominator": 818442.9524527267,
+          "relative": 8.046056494597126e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_31485512",
+          "numerator": 4.518539110924065e-11,
+          "denominator": 818442.9524527239,
+          "relative": 5.520896841231059e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_31489608",
+          "numerator": 4.9260170703941565e-11,
+          "denominator": 818442.9524527235,
+          "relative": 6.018766556217249e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_31521865",
+          "numerator": 4.806763583325274e-11,
+          "denominator": 818442.9524527233,
+          "relative": 5.873058798930684e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_32534013",
+          "numerator": 6.863842567868142e-11,
+          "denominator": 818442.9524527242,
+          "relative": 8.386464257891717e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_32534525",
+          "numerator": 7.0835722270598e-11,
+          "denominator": 818442.9524527257,
+          "relative": 8.654937043359727e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_32538621",
+          "numerator": 7.347136504923084e-11,
+          "denominator": 818442.9524527254,
+          "relative": 8.976968379903628e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_32570876",
+          "numerator": 7.009416409658271e-11,
+          "denominator": 818442.952452724,
+          "relative": 8.564331073598142e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_33559104",
+          "numerator": 1.6376375590714233e-11,
+          "denominator": 818442.9524527225,
+          "relative": 2.000918395306265e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_35394547",
+          "numerator": 5.096137103911947e-11,
+          "denominator": 818442.9524527235,
+          "relative": 6.226624700768402e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_35394555",
+          "numerator": 5.465369723277391e-11,
+          "denominator": 818442.9524527227,
+          "relative": 6.677765025526441e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_35427258",
+          "numerator": 4.798877659236797e-11,
+          "denominator": 818442.9524527226,
+          "relative": 5.863423522501411e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_37756489",
+          "numerator": 3.8125667331947885e-11,
+          "denominator": 818442.9524527233,
+          "relative": 4.6583170174160895e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_37789193",
+          "numerator": 3.820113177154912e-11,
+          "denominator": 818442.9524527243,
+          "relative": 4.667537506073855e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_39329786",
+          "numerator": 5.938307359548395e-11,
+          "denominator": 818442.9524527241,
+          "relative": 7.255615485175078e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_39362490",
+          "numerator": 5.7537361817471074e-11,
+          "denominator": 818442.9524527233,
+          "relative": 7.030100466384635e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_50360896",
+          "numerator": 3.65028708399805e-11,
+          "denominator": 818442.9524527233,
+          "relative": 4.46003850733739e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_50360904",
+          "numerator": 3.7671780065075796e-11,
+          "denominator": 818442.9524527227,
+          "relative": 4.6028596070355805e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_50393672",
+          "numerator": 3.891976835359534e-11,
+          "denominator": 818442.9524527233,
+          "relative": 4.755342841790003e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_51672059",
+          "numerator": 6.369614543539869e-11,
+          "denominator": 818442.9524527233,
+          "relative": 7.782600515346004e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_51704827",
+          "numerator": 6.444261835064244e-11,
+          "denominator": 818442.9524527241,
+          "relative": 7.873806984044481e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_54558280",
+          "numerator": 4.9260099574542223e-11,
+          "denominator": 818442.9524527235,
+          "relative": 6.018757865397794e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_54591049",
+          "numerator": 5.114661492499683e-11,
+          "denominator": 818442.952452725,
+          "relative": 6.249258396290139e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_55607288",
+          "numerator": 6.70499423168935e-11,
+          "denominator": 818442.952452724,
+          "relative": 8.19237823674296e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_55640057",
+          "numerator": 6.845143337954808e-11,
+          "denominator": 818442.9524527256,
+          "relative": 8.363616935598444e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_71402536",
+          "numerator": 3.8683460461468706e-11,
+          "denominator": 818442.9524527247,
+          "relative": 4.726469981266429e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_71402537",
+          "numerator": 3.9898158965994046e-11,
+          "denominator": 818442.9524527256,
+          "relative": 4.8748857628288535e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_151068993",
+          "numerator": 3.311218106042206e-11,
+          "denominator": 818442.9524527236,
+          "relative": 4.045753092648781e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_222373225",
+          "numerator": 4.514096160663183e-11,
+          "denominator": 818442.952452722,
+          "relative": 5.515468301285108e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_222405992",
+          "numerator": 4.908870177151417e-11,
+          "denominator": 818442.9524527213,
+          "relative": 5.997815928942202e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_256081768",
+          "numerator": 6.88871660302073e-11,
+          "denominator": 818442.952452724,
+          "relative": 8.416856156408342e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_256114537",
+          "numerator": 7.188167343283857e-11,
+          "denominator": 818442.952452724,
+          "relative": 8.782734730309832e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_319880145",
+          "numerator": 5.7864915021938175e-11,
+          "denominator": 818442.9524527221,
+          "relative": 7.070121973501968e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_453245760",
+          "numerator": 6.282877589375617e-11,
+          "denominator": 818442.9524527215,
+          "relative": 7.676622506855242e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_453245761",
+          "numerator": 6.355523945131761e-11,
+          "denominator": 818442.9524527222,
+          "relative": 7.765384167687474e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_575692472",
+          "numerator": 5.639720327409495e-11,
+          "denominator": 818442.9524527229,
+          "relative": 6.8907922177206e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_575692473",
+          "numerator": 5.723487324209759e-11,
+          "denominator": 818442.9524527235,
+          "relative": 6.99314143650149e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_641949224",
+          "numerator": 6.007990266837191e-11,
+          "denominator": 818442.9524527257,
+          "relative": 7.34075630907729e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_641949225",
+          "numerator": 6.086941148481088e-11,
+          "denominator": 818442.9524527264,
+          "relative": 7.437221043005647e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_839014913",
+          "numerator": 4.8689016773874576e-11,
+          "denominator": 818442.9524527247,
+          "relative": 5.948981126657936e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_839047680",
+          "numerator": 5.0610613769164464e-11,
+          "denominator": 818442.9524527242,
+          "relative": 6.183768046079899e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_839932560",
+          "numerator": 4.303742747899298e-11,
+          "denominator": 818442.9524527211,
+          "relative": 5.258451716154171e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_two_axis_839965329",
+          "numerator": 4.520746148187351e-11,
+          "denominator": 818442.9524527222,
+          "relative": 5.523593470552236e-17,
+          "passed": true
+        }
+      ]
+    },
+    "ROUTING": {
+      "passed": true,
+      "checks": [
+        {
+          "kind": "frozen_input_dim1_rank0",
+          "numerator": 0.0,
+          "denominator": 251.95666945638908,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "literal_boundary_phase_dim1_rank0",
+          "numerator": 0.0,
+          "denominator": 73.24616030891993,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_extract_dim1_rank0",
+          "numerator": 0.0,
+          "denominator": 254.7157129092467,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "frozen_input_dim1_rank1",
+          "numerator": 0.0,
+          "denominator": 250.4079293202695,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "literal_boundary_phase_dim1_rank1",
+          "numerator": 0.0,
+          "denominator": 73.24616030891993,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_extract_dim1_rank1",
+          "numerator": 0.0,
+          "denominator": 253.06451046620998,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_dual_dim1_rank0",
+          "numerator": 0.0,
+          "denominator": 181.2303247979121,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_dual_dim1_rank1",
+          "numerator": 0.0,
+          "denominator": 181.43299346558896,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "frozen_input_dim2_rank0",
+          "numerator": 0.0,
+          "denominator": 561.1604645637761,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "literal_boundary_phase_dim2_rank0",
+          "numerator": 0.0,
+          "denominator": 51.264022471905186,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_extract_dim2_rank0",
+          "numerator": 1.3612011671882232e-14,
+          "denominator": 561.1604645637759,
+          "relative": 2.425689714699284e-17,
+          "passed": true
+        },
+        {
+          "kind": "frozen_input_dim2_rank1",
+          "numerator": 0.0,
+          "denominator": 560.046028883317,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "literal_boundary_phase_dim2_rank1",
+          "numerator": 0.0,
+          "denominator": 51.264022471905186,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_extract_dim2_rank1",
+          "numerator": 1.3418031561082411e-14,
+          "denominator": 560.046028883317,
+          "relative": 2.395880136466068e-17,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_dual_dim2_rank0",
+          "numerator": 0.0,
+          "denominator": 397.0880269568621,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "independent_literal_dual_dim2_rank1",
+          "numerator": 0.0,
+          "denominator": 397.0883270188184,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "recomputed_owner_duality_rank0",
+          "numerator": 4.716633845625664e-12,
+          "denominator": 270.0811687768003,
+          "relative": 1.7463764197212768e-14,
+          "passed": true
+        },
+        {
+          "kind": "stored_left_duality_rank0",
+          "numerator": 0.0,
+          "denominator": 270.0811687768003,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "recomputed_owner_duality_rank1",
+          "numerator": 4.716633845625664e-12,
+          "denominator": 270.0811687768003,
+          "relative": 1.7463764197212768e-14,
+          "passed": true
+        },
+        {
+          "kind": "stored_left_duality_rank1",
+          "numerator": 0.0,
+          "denominator": 270.0811687768003,
+          "relative": 0.0,
+          "passed": true
+        }
+      ],
+      "rows": 378432
+    },
+    "ACTIONS": [
+      {
+        "kind": "amplitudes",
+        "numerator": 9.592956906861822e-15,
+        "denominator": 43.40481332420125,
+        "relative": 2.2101136192453272e-16,
+        "passed": true
+      },
+      {
+        "kind": "forward",
+        "numerator": 2.0547542280269826e-11,
+        "denominator": 39509.1552045175,
+        "relative": 5.200704032750467e-16,
+        "passed": true
+      },
+      {
+        "kind": "adjoint",
+        "numerator": 0.0,
+        "denominator": 39894.32300216494,
+        "relative": 0.0,
+        "passed": true
+      },
+      {
+        "kind": "modal",
+        "numerator": 0.0,
+        "denominator": 178968.5406526113,
+        "relative": 0.0,
+        "passed": true
+      }
+    ]
+  },
+  "solver_qualified": false,
+  "stage": "CHECK",
+  "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "elapsed_worker_seconds": 69.54154018801637,
+  "input_sha256": "89001642940140c932a1a466b899c221283ef2bdec3e9a089d65720f79c22373",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

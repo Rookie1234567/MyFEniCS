@@ -1,0 +1,86 @@
+{
+  "status": "OWNER_BOUNDARY_FRESH_PROCESS_CONSUMPTION_QUALIFIED",
+  "checks": [
+    {
+      "kind": "consumer_1_extract_rank0",
+      "numerator": 0.0,
+      "denominator": 254.7157129092467,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_1_dual_rank0",
+      "numerator": 0.0,
+      "denominator": 181.2303247979121,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_2_extract_rank0",
+      "numerator": 0.0,
+      "denominator": 561.1604645637759,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_2_dual_rank0",
+      "numerator": 0.0,
+      "denominator": 397.0880269568621,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_1_extract_rank1",
+      "numerator": 0.0,
+      "denominator": 253.06451046620998,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_1_dual_rank1",
+      "numerator": 0.0,
+      "denominator": 181.43299346558896,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_2_extract_rank1",
+      "numerator": 0.0,
+      "denominator": 560.046028883317,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "consumer_2_dual_rank1",
+      "numerator": 0.0,
+      "denominator": 397.0883270188184,
+      "relative": 0.0,
+      "passed": true
+    }
+  ],
+  "upstream_independent": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_check_20261004T103642327887Z/result.json",
+    "sha256": "433582212d9c5b6d55c37dd895338841140c267f58725ce9bf4bb5d8a273d69b"
+  },
+  "volume_consumer": "NOT_CONNECTED_MATCHING_DISTRIBUTED_VOLUME_CALLBACK_REQUIRED",
+  "required_volume_fields": [
+    "native_entity_binding",
+    "independent_trace",
+    "internal_RHS",
+    "nonzero_port_RHS",
+    "forward",
+    "adjoint",
+    "recover",
+    "full_explicit_residual"
+  ],
+  "V40_nonzero_RHS_anchor": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/RECOVER.json",
+    "sha256": "74cf9cae60cb015c9070974adb269d6c5a74c80f2bb735e843c9b199af332d75"
+  },
+  "target_PDE": "NOT_RUN",
+  "stage": "DEPLOY",
+  "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+  "elapsed_worker_seconds": 2.286968485917896,
+  "input_sha256": "c29cf371bd34fc68a1d415e030e0b7c4bdf4f166a4f7cfff078bea78140fb3e1",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

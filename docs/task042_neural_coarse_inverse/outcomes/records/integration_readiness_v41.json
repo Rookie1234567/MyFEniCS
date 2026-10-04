@@ -1,0 +1,60 @@
+{
+  "items": [
+    {
+      "item": "物理、材料、三tag和原尺寸轴",
+      "status": "QUALIFIED_IDENTITY_AND_ACTUAL_TOPOLOGY",
+      "owner": "Task042",
+      "missing": "无新材料缺项；完整h/p/mode精度仍缺"
+    },
+    {
+      "item": "p6编号/MPC/owner bridge",
+      "status": "QUALIFIED_REAL_MPI1_2_4_ON_64HEX",
+      "owner": "Task042",
+      "missing": "全目标native p6编号未构造，体积引擎需给actual binding/hash"
+    },
+    {
+      "item": "目标低阶native实体库存",
+      "status": "QUALIFIED_MPI2_530856HEX_270RAW_858ORIENTED",
+      "owner": "Task042",
+      "missing": "非目标p6 FunctionSpace/dofmap"
+    },
+    {
+      "item": "378432行/32060port owner边界",
+      "status": "QUALIFIED_AND_NEW_MPI2_PROCESS_CONSUMED",
+      "owner": "Task042",
+      "missing": "与完整分布式volume callback实际连接"
+    },
+    {
+      "item": "有限非零fi/g恢复",
+      "status": "V40_MPI1_ANCHOR_REUSED_HASH_BOUND",
+      "owner": "Task042",
+      "missing": "完整目标分布式恢复及原残差接口"
+    },
+    {
+      "item": "全体积forward/adjoint/cache",
+      "status": "NOT_CONNECTED",
+      "owner": "匹配独立体积引擎；dot包需逐字段资格化",
+      "missing": "physical/basis/index/owner/class依赖、完整原作用及实际驻留消费包"
+    },
+    {
+      "item": "PC/参考逆和收敛",
+      "status": "NOT_QUALIFIED",
+      "owner": "后续明确求解合同",
+      "missing": "旧七/八块关闭；无可靠目标PC/已知K"
+    },
+    {
+      "item": "原方程、E/H/curl、通道/功率/能量和hp/mode",
+      "status": "NOT_RUN",
+      "owner": "完整目标求解及独立验证",
+      "missing": "匹配参考和精度证据"
+    },
+    {
+      "item": "2e12B/172800s、NN20%",
+      "status": "NOT_QUALIFIED_NOT_DEMONSTRATED",
+      "owner": "完整生命周期/公平NN与非NN对照",
+      "missing": "目标单步、K、PC、全恢复/审核/IO及最佳合格非NN baseline"
+    }
+  ],
+  "next_only": "把匹配同物理的分布式体积引擎接入已资格化的native实体/owner协议，先检验有限非零RHS与完整原作用，再申请目标容量/求解Gate；不再单开边界测速",
+  "no_automatic_new_run": true
+}
