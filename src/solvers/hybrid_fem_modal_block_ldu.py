@@ -64,6 +64,32 @@ def _replicated_modal_values(vector: PETSc.Vec) -> np.ndarray:
     return np.asarray(comm.bcast(local, root=owner), dtype=np.complex128)
 
 
+def _encode_modal_real_coordinates(values: np.ndarray) -> np.ndarray:
+    """Store complex modal values as real-valued ``[Re, Im]`` coordinates."""
+
+    modal_values = np.asarray(values, dtype=np.complex128)
+    if modal_values.ndim != 1:
+        raise ValueError("Modal values must be a one-dimensional vector.")
+    coordinates = np.empty(2 * modal_values.size, dtype=np.complex128)
+    coordinates[: modal_values.size] = modal_values.real
+    coordinates[modal_values.size :] = modal_values.imag
+    return coordinates
+
+
+def _decode_modal_real_coordinates(
+    coordinates: np.ndarray, modal_count: int
+) -> np.ndarray:
+    """Restore real-valued ``[Re, Im]`` coordinates to complex modal values."""
+
+    values = np.asarray(coordinates, dtype=np.complex128)
+    if values.shape != (2 * modal_count,):
+        raise ValueError("Real modal coordinates have the wrong shape.")
+    return np.asarray(
+        values[:modal_count].real + 1j * values[modal_count:].real,
+        dtype=np.complex128,
+    )
+
+
 def _action_diagnostics(action: Any) -> dict[str, Any]:
     diagnostics = getattr(action, "diagnostics", None)
     if callable(diagnostics):
@@ -101,6 +127,28 @@ def _direct_factor_count(diagnostics: dict[str, Any]) -> int:
     )
 
 
+def _factor_modal_constraint(
+    constraint_values: np.ndarray, modal_count: int
+) -> tuple[np.ndarray, np.ndarray, float]:
+    constraint = np.asarray(constraint_values, dtype=np.complex128)
+    if constraint.shape != (modal_count, modal_count):
+        raise ValueError("C has the wrong modal shape")
+    if not bool(np.all(np.isfinite(constraint))):
+        raise ValueError("C contains non-finite values")
+    condition = float(np.linalg.cond(constraint))
+    if not np.isfinite(condition) or condition * np.finfo(float).eps >= 1.0:
+        raise np.linalg.LinAlgError("C is singular at complex128 working precision")
+    lu, pivots = lu_factor(constraint, check_finite=True)
+    diagonal = np.diag(lu)
+    if not bool(np.all(np.isfinite(diagonal))) or bool(np.any(diagonal == 0.0)):
+        raise np.linalg.LinAlgError("C LU has a zero or non-finite pivot")
+    return (
+        np.asarray(lu, dtype=np.complex128),
+        np.asarray(pivots),
+        condition,
+    )
+
+
 @dataclass
 class HybridActionModalSchurSystem:
     """Small modal Schur system assembled from two borrowed actions."""
@@ -132,6 +180,10 @@ class HybridActionModalSchurSystem:
             and np.all(np.isfinite(self.lu))
             and np.all(np.isfinite(self.pivots))
         )
+
+    @property
+    def modal_count(self) -> int:
+        return int(self._shape[0])
 
     def solve(self, rhs: np.ndarray) -> np.ndarray:
         if self._destroyed:
@@ -258,6 +310,8 @@ def solve_action_modal_schur_anderson(
     rhs: np.ndarray,
     *,
     scale_residual_by_constraint: bool = False,
+    real_coordinate_embedding: bool = False,
+    _borrowed_constraint_factor: Any | None = None,
 ) -> dict[str, Any]:
     """Solve a bounded nonlinear modal equation with PETSc SNESANDERSON.
 
@@ -266,7 +320,11 @@ def solve_action_modal_schur_anderson(
     raw function norm is used directly by default: nonzero RHS uses a 1e-2
     relative target, while zero RHS uses a 1e-2 absolute target. The opt-in
     constraint scaling changes the Anderson residual, but convergence is
-    still decided from the matching unscaled residual.
+    still decided from the matching unscaled residual. A caller may lend an
+    owner-only C LU; standalone calls continue to factor and release their
+    own C LU. The optional real-coordinate embedding represents each complex
+    modal value by two real-valued PETSc scalars; its Anderson trajectory is
+    a real-coefficient candidate, not the complex-coefficient trajectory.
     """
 
     if modal_action._destroyed:
@@ -299,6 +357,15 @@ def solve_action_modal_schur_anderson(
     if not isinstance(scale_residual_by_constraint, (bool, np.bool_)):
         raise TypeError("Constraint residual scaling must be an explicit boolean.")
     scale_residual_by_constraint = bool(scale_residual_by_constraint)
+    if not isinstance(real_coordinate_embedding, (bool, np.bool_)):
+        raise TypeError("Real modal coordinate embedding must be an explicit boolean.")
+    real_coordinate_embedding = bool(real_coordinate_embedding)
+    coordinate_count = 2 * modal_count if real_coordinate_embedding else modal_count
+    coordinate_extra_bytes_per_vec = (
+        modal_count * np.dtype(PETSc.ScalarType).itemsize
+        if real_coordinate_embedding
+        else 0
+    )
 
     options = PETSc.Options()
     option_prefix = "task041_modal_inner_"
@@ -308,7 +375,7 @@ def solve_action_modal_schur_anderson(
     except KeyError:
         previous_history_option = None
 
-    local_modal_size = modal_count if comm.rank == root else 0
+    local_modal_size = coordinate_count if comm.rank == root else 0
     solution = None
     function_value = None
     snes = None
@@ -319,6 +386,7 @@ def solve_action_modal_schur_anderson(
     budget_callback_skipped = False
     nonfinite_evaluation = False
     raw_cache_iteration_mismatch = False
+    real_coordinate_subspace_violation = False
     callback_target_reached = False
     callback_reason = int(PETSc.SNES.ConvergedReason.ITERATING)
     last_snes_function_norm = None
@@ -379,35 +447,51 @@ def solve_action_modal_schur_anderson(
         constraint_lu_solve_calls += 1
         return np.asarray(scaled_values, dtype=np.complex128)
 
+    def decode_coordinates(coordinate_values: np.ndarray) -> np.ndarray:
+        nonlocal real_coordinate_subspace_violation
+        if not real_coordinate_embedding:
+            return np.asarray(coordinate_values, dtype=np.complex128)
+        # The coordinate vector is owner-read and broadcast by
+        # _replicated_modal_values, so every rank checks the same values.
+        if not bool(np.all(coordinate_values.imag == 0.0)):
+            real_coordinate_subspace_violation = True
+        return _decode_modal_real_coordinates(coordinate_values, modal_count)
+
     try:
-        if scale_residual_by_constraint:
+        if scale_residual_by_constraint and _borrowed_constraint_factor is not None:
+            factor = _borrowed_constraint_factor
+            local_factor_valid = bool(
+                getattr(factor, "modal_action", None) is modal_action
+                and int(getattr(factor, "modal_count", -1)) == modal_count
+                and int(getattr(factor, "constraint_lu_owner_rank", -1)) == root
+                and np.isfinite(float(getattr(factor, "constraint_condition", np.nan)))
+            )
+            factor_lu = getattr(factor, "constraint_lu", None)
+            factor_pivots = getattr(factor, "constraint_pivots", None)
+            if comm.rank == root:
+                local_factor_valid = bool(
+                    local_factor_valid
+                    and isinstance(factor_lu, np.ndarray)
+                    and factor_lu.shape == (modal_count, modal_count)
+                    and isinstance(factor_pivots, np.ndarray)
+                    and factor_pivots.shape == (modal_count,)
+                )
+            else:
+                local_factor_valid = bool(
+                    local_factor_valid and factor_lu is None and factor_pivots is None
+                )
+            if not comm.allreduce(local_factor_valid, op=MPI.LAND):
+                raise ValueError("Borrowed C LU must be valid only on the modal owner.")
+            constraint_lu = factor_lu
+            constraint_pivots = factor_pivots
+            constraint_condition_number = float(factor.constraint_condition)
+        elif scale_residual_by_constraint:
             owner_factor_result = None
             if comm.rank == root:
                 try:
-                    constraint = np.asarray(
-                        modal_action.modal_constraint, dtype=np.complex128
+                    lu, pivots, condition = _factor_modal_constraint(
+                        modal_action.modal_constraint, modal_count
                     )
-                    if constraint.shape != (modal_count, modal_count):
-                        raise ValueError("C has the wrong modal shape")
-                    if not bool(np.all(np.isfinite(constraint))):
-                        raise ValueError("C contains non-finite values")
-                    condition = float(np.linalg.cond(constraint))
-                    if (
-                        not np.isfinite(condition)
-                        or condition * np.finfo(float).eps >= 1.0
-                    ):
-                        raise np.linalg.LinAlgError(
-                            "C is singular at complex128 working precision"
-                        )
-                    lu, pivots = lu_factor(constraint, check_finite=True)
-                    diagonal = np.diag(lu)
-                    if (
-                        not bool(np.all(np.isfinite(diagonal)))
-                        or bool(np.any(diagonal == 0.0))
-                    ):
-                        raise np.linalg.LinAlgError(
-                            "C LU has a zero or non-finite pivot"
-                        )
                     constraint_lu = lu
                     constraint_pivots = pivots
                     constraint_condition_number = condition
@@ -425,9 +509,11 @@ def solve_action_modal_schur_anderson(
                 raise RuntimeError(str(factor_error))
             constraint_condition_number = float(factor_condition)
             constraint_lu_factorizations = 1
+        elif _borrowed_constraint_factor is not None:
+            raise ValueError("A borrowed C LU requires constraint residual scaling.")
 
         solution = PETSc.Vec().createMPI(
-            (local_modal_size, modal_count), comm=petsc_comm
+            (local_modal_size, coordinate_count), comm=petsc_comm
         )
         function_value = solution.duplicate()
         snes = PETSc.SNES().create(comm=petsc_comm)
@@ -441,7 +527,29 @@ def solve_action_modal_schur_anderson(
             if function_evaluations >= _MODAL_ANDERSON_S_EVALUATION_LIMIT - 1:
                 budget_callback_skipped = True
                 return
-            modal_values = _replicated_modal_values(modal_vector)
+            coordinate_values = _replicated_modal_values(modal_vector)
+            modal_values = decode_coordinates(coordinate_values)
+            if real_coordinate_subspace_violation:
+                latest_raw_cache.update(
+                    iterate=coordinate_values.copy(),
+                    residual=None,
+                    raw_norm=None,
+                    raw_metric=None,
+                    scaled_norm=None,
+                    finite=False,
+                )
+                residual_history.append(
+                    {
+                        "evaluation": function_evaluations,
+                        "source": "real_coordinate_subspace_violation",
+                        "raw_residual_norm": None,
+                        "raw_target_metric": None,
+                        "scaled_residual_norm": None,
+                        "finite": False,
+                    }
+                )
+                residual_vector.set(PETSc.ScalarType(np.nan))
+                return
             raw_residual = np.asarray(
                 modal_action.apply(modal_values) - rhs_values,
                 dtype=np.complex128,
@@ -454,7 +562,7 @@ def solve_action_modal_schur_anderson(
             if not globally_finite:
                 nonfinite_evaluation = True
                 latest_raw_cache.update(
-                    iterate=modal_values.copy(),
+                    iterate=coordinate_values.copy(),
                     residual=None,
                     raw_norm=None,
                     raw_metric=None,
@@ -479,7 +587,7 @@ def solve_action_modal_schur_anderson(
             if not bool(np.all(np.isfinite(scaled_residual))):
                 nonfinite_evaluation = True
                 latest_raw_cache.update(
-                    iterate=modal_values.copy(),
+                    iterate=coordinate_values.copy(),
                     residual=raw_residual.copy(),
                     raw_norm=raw_norm,
                     raw_metric=raw_metric,
@@ -499,8 +607,13 @@ def solve_action_modal_schur_anderson(
                 residual_vector.set(PETSc.ScalarType(np.nan))
                 return
             scaled_norm = float(np.linalg.norm(scaled_residual))
+            solver_residual = (
+                _encode_modal_real_coordinates(scaled_residual)
+                if real_coordinate_embedding
+                else scaled_residual
+            )
             latest_raw_cache.update(
-                iterate=modal_values.copy(),
+                iterate=coordinate_values.copy(),
                 residual=raw_residual.copy(),
                 raw_norm=raw_norm,
                 raw_metric=raw_metric,
@@ -517,7 +630,7 @@ def solve_action_modal_schur_anderson(
                     "finite": True,
                 }
             )
-            _set_owned_values(residual_vector, scaled_residual)
+            _set_owned_values(residual_vector, solver_residual)
 
         def convergence_test(_snes, iteration, norms):
             nonlocal convergence_callbacks, callback_target_reached
@@ -528,11 +641,13 @@ def solve_action_modal_schur_anderson(
             last_snes_function_norm = float(fnorm)
             if nonfinite_evaluation:
                 reason = PETSc.SNES.ConvergedReason.DIVERGED_FNORM_NAN
+            elif real_coordinate_subspace_violation:
+                reason = PETSc.SNES.ConvergedReason.DIVERGED_FUNCTION_DOMAIN
             elif budget_callback_skipped:
                 reason = PETSc.SNES.ConvergedReason.DIVERGED_FUNCTION_COUNT
             elif not latest_raw_cache["finite"]:
                 raw_cache_iteration_mismatch = True
-                reason = PETSc.SNES.ConvergedReason.DIVERGED_USER
+                reason = PETSc.SNES.ConvergedReason.DIVERGED_INNER
             else:
                 current_solution = _snes.getSolution()
                 try:
@@ -542,7 +657,7 @@ def solve_action_modal_schur_anderson(
                 cached_values = latest_raw_cache["iterate"]
                 if not np.array_equal(current_values, cached_values):
                     raw_cache_iteration_mismatch = True
-                    reason = PETSc.SNES.ConvergedReason.DIVERGED_USER
+                    reason = PETSc.SNES.ConvergedReason.DIVERGED_INNER
                 elif float(latest_raw_cache["raw_metric"]) <= 1.0e-2:
                     callback_target_reached = True
                     reason = PETSc.SNES.ConvergedReason.CONVERGED_FNORM_ABS
@@ -580,12 +695,17 @@ def solve_action_modal_schur_anderson(
 
         iterations = int(snes.getIterationNumber())
         snes_reason = int(snes.getConvergedReason())
-        modal_values = _replicated_modal_values(solution)
+        coordinate_values = _replicated_modal_values(solution)
+        modal_values = decode_coordinates(coordinate_values)
         residual_norm = float("inf")
         target_value = float("inf")
         final_target_reached = False
         final_scaled_norm = float("inf")
-        if not nonfinite_evaluation and bool(np.all(np.isfinite(modal_values))):
+        if (
+            not nonfinite_evaluation
+            and not real_coordinate_subspace_violation
+            and bool(np.all(np.isfinite(modal_values)))
+        ):
             final_residual = np.asarray(
                 modal_action.apply(modal_values) - rhs_values,
                 dtype=np.complex128,
@@ -605,7 +725,14 @@ def solve_action_modal_schur_anderson(
                     )
                     final_scaled_residual = scale_raw_residual(final_residual)
                     if bool(np.all(np.isfinite(final_scaled_residual))):
-                        final_scaled_norm = float(np.linalg.norm(final_scaled_residual))
+                        final_solver_residual = (
+                            _encode_modal_real_coordinates(final_scaled_residual)
+                            if real_coordinate_embedding
+                            else final_scaled_residual
+                        )
+                        final_scaled_norm = float(
+                            np.linalg.norm(final_solver_residual)
+                        )
                         final_target_reached = target_value <= 1.0e-2
                         residual_history.append(
                             {
@@ -664,6 +791,7 @@ def solve_action_modal_schur_anderson(
             and not budget_exhausted
             and not budget_callback_skipped
             and not raw_cache_iteration_mismatch
+            and not real_coordinate_subspace_violation
             and snes_reason > 0
         ):
             status = "converged"
@@ -676,6 +804,8 @@ def solve_action_modal_schur_anderson(
                 stop_reason = "nonfinite_residual"
             elif raw_cache_iteration_mismatch:
                 stop_reason = "raw_cache_iteration_mismatch"
+            elif real_coordinate_subspace_violation:
+                stop_reason = "real_coordinate_subspace_violation"
             elif snes_reason == int(PETSc.SNES.ConvergedReason.DIVERGED_MAX_IT):
                 stop_reason = "max_iterations"
             elif function_evaluations >= _MODAL_ANDERSON_S_EVALUATION_LIMIT - 1:
@@ -703,6 +833,13 @@ def solve_action_modal_schur_anderson(
             final_evaluations,
             iterations,
             status,
+            stop_reason,
+            float(residual_norm),
+            float(target_value),
+            total_evaluations,
+            constraint_lu_solve_calls,
+            real_coordinate_embedding,
+            real_coordinate_subspace_violation,
             tuple(sorted(side_action_calls.items())),
         )
         if any(value != rank_state for value in comm.allgather(rank_state)):
@@ -721,10 +858,27 @@ def solve_action_modal_schur_anderson(
             "last_snes_function_norm": last_snes_function_norm,
             "residual_evaluation_history": residual_history,
             "constraint_scale_enabled": scale_residual_by_constraint,
+            "real_coordinate_embedding": real_coordinate_embedding,
+            "modal_coordinate_representation": (
+                "real_parts_then_imag_parts_in_complex128"
+                if real_coordinate_embedding
+                else "complex128_modal_values"
+            ),
+            "modal_coordinate_count": coordinate_count,
+            "modal_coordinate_extra_bytes_per_explicit_vec": int(
+                coordinate_extra_bytes_per_vec
+            ),
+            "modal_coordinate_extra_bytes_two_explicit_vecs": int(
+                2 * coordinate_extra_bytes_per_vec
+            ),
+            "real_coordinate_subspace_violation": bool(
+                real_coordinate_subspace_violation
+            ),
             "constraint_condition_2": constraint_condition_number,
             "constraint_lu_owner_rank": root if scale_residual_by_constraint else None,
             "constraint_lu_factorizations": constraint_lu_factorizations,
             "constraint_lu_solve_calls": constraint_lu_solve_calls,
+            "constraint_lu_borrowed": _borrowed_constraint_factor is not None,
             "zero_rhs_absolute_residual": rhs_norm == 0.0,
             "iterations": iterations,
             "function_evaluations": function_evaluations,
@@ -763,6 +917,194 @@ def solve_action_modal_schur_anderson(
             options.setValue(history_option, previous_history_option)
         constraint_lu = None
         constraint_pivots = None
+
+
+class HybridActionModalSchurAndersonSystem:
+    """Owner-factored C scaling for a borrowed nonlinear modal action."""
+
+    def __init__(
+        self,
+        modal_action: HybridActionModalSchurApply,
+        *,
+        modal_owner: int,
+    ) -> None:
+        self.modal_action = modal_action
+        self.modal_count = int(modal_action.modal_count)
+        self.modal_schur = None
+        self.constraint_lu_owner_rank = int(modal_owner)
+        self.constraint_lu: np.ndarray | None = None
+        self.constraint_pivots: np.ndarray | None = None
+        self.constraint_condition = float("nan")
+        self.modal_constraint_local_bytes = int(
+            modal_action.modal_constraint.nbytes
+        )
+        self._destroyed = False
+        self._solve_count = 0
+        self._s_evaluation_count = 0
+        self._anderson_iteration_count = 0
+        self._constraint_lu_solve_calls = 0
+        self._not_converged_count = 0
+        self._side_action_call_count = {"bottom": 0, "top": 0}
+        self._side_action_call_count_known = {"bottom": True, "top": True}
+        self._last_solve: dict[str, Any] | None = None
+
+        operator = _action_operator(modal_action.bottom_action)
+        comm = operator.getComm().tompi4py()
+        owner_valid = self.constraint_lu_owner_rank == comm.size - 1
+        if not comm.allreduce(owner_valid, op=MPI.LAND):
+            raise ValueError("The modal C LU must use the final-rank modal owner.")
+        owner_result = None
+        if comm.rank == self.constraint_lu_owner_rank:
+            try:
+                (
+                    self.constraint_lu,
+                    self.constraint_pivots,
+                    condition,
+                ) = _factor_modal_constraint(
+                    modal_action.modal_constraint,
+                    self.modal_count,
+                )
+                owner_result = (True, condition, None)
+            except (ValueError, np.linalg.LinAlgError, FloatingPointError) as exc:
+                owner_result = (
+                    False,
+                    None,
+                    f"C factorization rejected: {type(exc).__name__}: {exc}",
+                )
+        factor_ok, condition, error = comm.bcast(
+            owner_result, root=self.constraint_lu_owner_rank
+        )
+        if not factor_ok:
+            self.destroy()
+            raise RuntimeError(str(error))
+        self.constraint_condition = float(condition)
+
+    @property
+    def modal_constraint(self) -> np.ndarray | None:
+        if self._destroyed:
+            return None
+        return self.modal_action.modal_constraint
+
+    @property
+    def requires_right_fgmres(self) -> bool:
+        return True
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "method": "bounded_C_scaled_SNESANDERSON",
+            "status": "destroyed" if self._destroyed else "ready",
+            "modal_count": self.modal_count,
+            "real_coordinate_embedding": True,
+            "modal_coordinate_representation": (
+                "real_parts_then_imag_parts_in_complex128"
+            ),
+            "modal_coordinate_count": 2 * self.modal_count,
+            "modal_coordinate_extra_bytes_per_explicit_vec": int(
+                self.modal_count * np.dtype(PETSc.ScalarType).itemsize
+            ),
+            "modal_coordinate_extra_bytes_two_explicit_vecs": int(
+                2 * self.modal_count * np.dtype(PETSc.ScalarType).itemsize
+            ),
+            "modal_schur_materialized": False,
+            "modal_schur_column_count": 0,
+            "modal_constraint_local_bytes": self.modal_constraint_local_bytes,
+            "modal_constraint_condition": float(self.constraint_condition),
+            "constraint_lu_owner_rank": self.constraint_lu_owner_rank,
+            "constraint_lu_factorizations": 1,
+            "constraint_lu_local_bytes": int(
+                0
+                if self.constraint_lu is None
+                else self.constraint_lu.nbytes + self.constraint_pivots.nbytes
+            ),
+            "constraint_lu_solve_calls": int(self._constraint_lu_solve_calls),
+            "solve_count": int(self._solve_count),
+            "anderson_iteration_count": int(self._anderson_iteration_count),
+            "s_evaluation_count": int(self._s_evaluation_count),
+            "not_converged_count": int(self._not_converged_count),
+            "side_action_call_count": {
+                side: (
+                    int(self._side_action_call_count[side])
+                    if self._side_action_call_count_known[side]
+                    else None
+                )
+                for side in ("bottom", "top")
+            },
+            "last_solve": (
+                None if self._last_solve is None else dict(self._last_solve)
+            ),
+            "destroyed": bool(self._destroyed),
+        }
+
+    def solve(self, rhs: np.ndarray) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("On-demand modal Anderson system has been destroyed.")
+        self._solve_count += 1
+        result = solve_action_modal_schur_anderson(
+            self.modal_action,
+            rhs,
+            scale_residual_by_constraint=True,
+            real_coordinate_embedding=True,
+            _borrowed_constraint_factor=self,
+        )
+        side_calls = dict(result["side_action_calls"])
+        for side in ("bottom", "top"):
+            delta = side_calls.get(side)
+            if delta is None:
+                self._side_action_call_count_known[side] = False
+            elif self._side_action_call_count_known[side]:
+                self._side_action_call_count[side] += int(delta)
+        self._s_evaluation_count += int(result["s_evaluation_count"])
+        self._anderson_iteration_count += int(result["iterations"])
+        self._constraint_lu_solve_calls += int(result["constraint_lu_solve_calls"])
+        summary_keys = (
+            "status",
+            "stop_reason",
+            "unscaled_residual_norm",
+            "rhs_norm",
+            "relative_residual",
+            "iterations",
+            "function_evaluations",
+            "s_evaluation_count",
+            "constraint_lu_solve_calls",
+            "snes_converged_reason",
+            "callback_converged_reason",
+            "budget_exhausted",
+            "side_action_calls",
+            "residual_evaluation_history",
+            "real_coordinate_embedding",
+            "modal_coordinate_representation",
+            "modal_coordinate_count",
+            "modal_coordinate_extra_bytes_per_explicit_vec",
+            "modal_coordinate_extra_bytes_two_explicit_vecs",
+            "real_coordinate_subspace_violation",
+        )
+        self._last_solve = {key: result[key] for key in summary_keys}
+        solution = result.pop("solution")
+        if result["status"] != "converged":
+            self._not_converged_count += 1
+            message = (
+                "Modal Anderson inner solve did not converge: "
+                f"stop_reason={result['stop_reason']}, "
+                f"raw_residual_norm={result['unscaled_residual_norm']:.17g}, "
+                f"relative_residual={result['relative_residual']:.17g}, "
+                f"iterations={result['iterations']}, "
+                f"S_evaluations={result['s_evaluation_count']}, "
+                f"side_action_calls={side_calls}"
+            )
+            del solution
+            raise RuntimeError(message)
+        return np.asarray(solution, dtype=np.complex128)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.constraint_lu = None
+        self.constraint_pivots = None
+        modal_action = self.modal_action
+        modal_action.destroy()
+        self.modal_action = None
+        self._destroyed = True
 
 
 def _build_action_modal_contribution(
@@ -1470,7 +1812,9 @@ class HybridBlockLduPreconditioner:
         coupling: HybridInternalModeCoupling,
         bottom_action: Any,
         top_action: Any,
-        action_modal_schur_system: HybridActionModalSchurSystem,
+        action_modal_schur_system: (
+            HybridActionModalSchurSystem | HybridActionModalSchurAndersonSystem
+        ),
         research_inventory: dict[str, Any] | None = None,
         dynamic_side_inventory: bool = False,
     ) -> None:
@@ -1485,7 +1829,8 @@ class HybridBlockLduPreconditioner:
             None if research_inventory is None else dict(research_inventory)
         )
         self._dynamic_side_inventory = bool(dynamic_side_inventory)
-        self.modal_schur = action_modal_schur_system.modal_schur
+        self.modal_schur = getattr(action_modal_schur_system, "modal_schur", None)
+        self.modal_count = int(action_modal_schur_system.modal_count)
         self.defer_action_modal_schur_release = False
         self._action_modal_schur_released = False
         self._destroyed = False
@@ -1519,6 +1864,19 @@ class HybridBlockLduPreconditioner:
         self._check_layouts()
 
     @property
+    def modal_constraint(self) -> np.ndarray:
+        constraint = self.action_modal_schur_system.modal_constraint
+        if constraint is None:
+            raise RuntimeError("Modal constraint was released before the LDU context.")
+        return constraint
+
+    @property
+    def requires_right_fgmres(self) -> bool:
+        return bool(
+            getattr(self.action_modal_schur_system, "requires_right_fgmres", False)
+        )
+
+    @property
     def direct_factor_count(self) -> int:
         return _direct_factor_count(
             _action_diagnostics(self.bottom_action)
@@ -1546,6 +1904,10 @@ class HybridBlockLduPreconditioner:
                 top.get("ilu_factor_count", top.get("factor_count", 0)),
             )
         )
+        on_demand_modal = isinstance(
+            self.action_modal_schur_system, HybridActionModalSchurAndersonSystem
+        )
+        system_diagnostics = self.action_modal_schur_system.diagnostics
         result = {
             "global_A_materialized": False,
             "direct_factor_count": bottom_direct + top_direct,
@@ -1561,12 +1923,35 @@ class HybridBlockLduPreconditioner:
             "pc_apply_count": int(self._pc_apply_count),
             "pc_apply_seconds": float(self._pc_apply_seconds),
             "borrowed_side_actions": True,
-            "modal_block_name": "approximate_action_schur",
-            "modal_block_condition": float(self.action_modal_schur_system.condition),
-            "modal_schur": self.action_modal_schur_system.diagnostics,
+            "modal_block_name": (
+                "on_demand_nonlinear_modal_inner"
+                if on_demand_modal
+                else "approximate_action_schur"
+            ),
+            "modal_block_condition": (
+                None
+                if on_demand_modal
+                else float(self.action_modal_schur_system.condition)
+            ),
+            "modal_schur": None if on_demand_modal else system_diagnostics,
             "action_modal_schur_released": bool(self._action_modal_schur_released),
             "destroyed": bool(self._destroyed),
         }
+        if on_demand_modal:
+            result.update(
+                {
+                    "modal_count": int(self.modal_count),
+                    "modal_schur_materialized": False,
+                    "modal_schur_storage_bytes": 0,
+                    "modal_inner_solver": system_diagnostics,
+                    "modal_constraint_condition": float(
+                        self.action_modal_schur_system.constraint_condition
+                    ),
+                    "modal_constraint_local_bytes": int(
+                        self.action_modal_schur_system.modal_constraint_local_bytes
+                    ),
+                }
+            )
         if self._research_inventory is not None:
             result.update(self._research_inventory)
         if self._dynamic_side_inventory:
@@ -1616,7 +2001,19 @@ class HybridBlockLduPreconditioner:
             raise ValueError("Bottom action ownership does not match layout.")
         if self._top_rhs.getLocalSize() != expected_top:
             raise ValueError("Top action ownership does not match layout.")
-        if self.modal_schur.shape != (self.layout.modal_count, self.layout.modal_count):
+        if self.modal_schur is None:
+            if self.modal_count != self.layout.modal_count:
+                raise ValueError("Modal solver count does not match layout.")
+            constraint = self.modal_constraint
+            if constraint.shape != (
+                self.layout.modal_count,
+                self.layout.modal_count,
+            ):
+                raise ValueError("Modal constraint does not match layout.")
+        elif self.modal_schur.shape != (
+            self.layout.modal_count,
+            self.layout.modal_count,
+        ):
             raise ValueError("Action modal Schur does not match layout.")
 
     def _source_parts(self, source: PETSc.Vec) -> np.ndarray:
@@ -1775,17 +2172,19 @@ def create_side_balh_block_ldu_preconditioner(
     bottom_side_inverse: Any,
     top_side_inverse: Any,
     *,
-    sampled_columns: Sequence[int],
-    sampled_column_roles: Mapping[str, Sequence[str]],
-    sampled_column_contract_sha256: str,
+    sampled_columns: Sequence[int] | None,
+    sampled_column_roles: Mapping[str, Sequence[str]] | None,
+    sampled_column_contract_sha256: str | None,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    use_anderson_modal_inner: bool = False,
 ) -> HybridBlockLduPreconditioner:
-    """Build the H1f approximate Schur from two borrowed BAL_H side inverses.
+    """Build the sampled Schur or an opt-in BAL_H modal inner solve.
 
     The side inverses are nonlinear finite-response operators from the H1e
-    candidate path.  Their sampled response columns therefore define only an
-    approximate preconditioner Schur, not the original global or reduced
-    operator.  The caller owns both side inverses and all side systems.
+    candidate path.  The default sampled response columns define only an
+    approximate preconditioner Schur. The opt-in Anderson branch avoids
+    Schur-column construction and requires right FGMRES. The caller owns both
+    side inverses and all side systems.
     """
 
     from .physical_balanced_side_inverse import SideBalancedInverse
@@ -1816,34 +2215,87 @@ def create_side_balh_block_ldu_preconditioner(
                 f"BAL_H {side} inverse must expose one live nested KSP"
             )
 
-    modal_schur = None
-    try:
-        modal_schur = build_hybrid_action_modal_schur(
-            coupling,
-            bottom_side_inverse,
-            top_side_inverse,
-            matrix_repeat_tolerance=1.0e-10,
-            sampled_columns=sampled_columns,
-            sampled_column_roles=sampled_column_roles,
-            sampled_column_contract_sha256=sampled_column_contract_sha256,
-            modal_batch_size=32,
-            early_sample_first=True,
-            marker_callback=marker_callback,
+    if not isinstance(use_anderson_modal_inner, (bool, np.bool_)):
+        raise TypeError("Anderson modal inner opt-in must be an explicit boolean.")
+    use_anderson_modal_inner = bool(use_anderson_modal_inner)
+    samples_supplied = any(
+        value is not None
+        for value in (
+            sampled_columns,
+            sampled_column_roles,
+            sampled_column_contract_sha256,
         )
-        research_inventory = {
-            "research_only": True,
-            "preconditioner_identity": "BAL_H_side_inverse_response_schur",
-            "modal_block_name": (
-                "finite_nonlinear_side_inverse_response_columns"
-            ),
-            "modal_schur_scope": "approximate_preconditioner_only",
-            "not_original_global_operator": True,
-            "not_original_reduced_operator": True,
-            "borrowed_side_actions": True,
-            "global_direct_factor_count": 0,
-            "global_hybrid_direct_factor_count": 0,
-            "p6_factor_count": 0,
-        }
+    )
+    if use_anderson_modal_inner and samples_supplied:
+        raise ValueError(
+            "On-demand modal inner solve cannot receive sampled Schur columns."
+        )
+    if use_anderson_modal_inner and marker_callback is not None:
+        raise ValueError("On-demand modal inner solve does not emit Schur markers.")
+    if not use_anderson_modal_inner and not all(
+        value is not None
+        for value in (
+            sampled_columns,
+            sampled_column_roles,
+            sampled_column_contract_sha256,
+        )
+    ):
+        raise ValueError("Sampled Schur metadata is required by the default BAL_H path.")
+
+    modal_schur = None
+    modal_system = None
+    modal_action = None
+    try:
+        if use_anderson_modal_inner:
+            modal_action = HybridActionModalSchurApply(
+                coupling,
+                bottom_side_inverse,
+                top_side_inverse,
+            )
+            modal_system = HybridActionModalSchurAndersonSystem(
+                modal_action,
+                modal_owner=layout.modal_owner,
+            )
+            research_inventory = {
+                "research_only": True,
+                "preconditioner_identity": "BAL_H_on_demand_modal_anderson",
+                "modal_block_name": "on_demand_nonlinear_modal_inner",
+                "modal_schur_scope": "not_materialized",
+                "not_original_global_operator": True,
+                "not_original_reduced_operator": True,
+                "borrowed_side_actions": True,
+                "global_direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+                "p6_factor_count": 0,
+            }
+        else:
+            modal_schur = build_hybrid_action_modal_schur(
+                coupling,
+                bottom_side_inverse,
+                top_side_inverse,
+                matrix_repeat_tolerance=1.0e-10,
+                sampled_columns=sampled_columns,
+                sampled_column_roles=sampled_column_roles,
+                sampled_column_contract_sha256=sampled_column_contract_sha256,
+                modal_batch_size=32,
+                early_sample_first=True,
+                marker_callback=marker_callback,
+            )
+            modal_system = modal_schur
+            research_inventory = {
+                "research_only": True,
+                "preconditioner_identity": "BAL_H_side_inverse_response_schur",
+                "modal_block_name": (
+                    "finite_nonlinear_side_inverse_response_columns"
+                ),
+                "modal_schur_scope": "approximate_preconditioner_only",
+                "not_original_global_operator": True,
+                "not_original_reduced_operator": True,
+                "borrowed_side_actions": True,
+                "global_direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+                "p6_factor_count": 0,
+            }
         return HybridBlockLduPreconditioner(
             layout,
             bottom_system,
@@ -1851,13 +2303,17 @@ def create_side_balh_block_ldu_preconditioner(
             coupling,
             bottom_side_inverse,
             top_side_inverse,
-            modal_schur,
+            modal_system,
             research_inventory=research_inventory,
             dynamic_side_inventory=True,
         )
     except BaseException:
-        if modal_schur is not None:
+        if modal_system is not None:
+            modal_system.destroy()
+        elif modal_schur is not None:
             modal_schur.destroy()
+        elif modal_action is not None:
+            modal_action.destroy()
         raise
 
 
@@ -2123,7 +2579,7 @@ def _true_residual_metrics(
             float(context._top_coupling.norm()),
             1.0e-30,
         )
-        modal_constraint = context.action_modal_schur_system.modal_constraint
+        modal_constraint = context.modal_constraint
         modal_scale = max(
             float(np.linalg.norm(rhs_modal)),
             float(np.linalg.norm(_replicated_modal_values(context._bottom_projection))),
@@ -2164,6 +2620,10 @@ def solve_hybrid_block_ldu_iterative(
     config = HybridBlockLduIterativeConfig() if config is None else config
     if context._destroyed:
         raise RuntimeError("Cannot solve with a destroyed block-LDU context.")
+    if context.requires_right_fgmres and str(config.ksp_type).lower() != "fgmres":
+        raise ValueError(
+            "The on-demand nonlinear modal inner requires right-preconditioned FGMRES."
+        )
     solution = operator.createVecRight()
     monitor_solution = operator.createVecRight()
     retained_solution = operator.createVecRight()
@@ -2194,6 +2654,7 @@ def solve_hybrid_block_ldu_iterative(
         global_true, block = _true_residual_metrics(
             operator, rhs, current_solution, context
         )
+        inventory = context.inventory
         row = {
             "iteration": int(iteration),
             "reported_relative_residual": float(reported),
@@ -2201,13 +2662,31 @@ def solve_hybrid_block_ldu_iterative(
             "bottom_true_relative_residual": float(block["bottom"]),
             "top_true_relative_residual": float(block["top"]),
             "modal_true_relative_residual": float(block["modal"]),
-            "pc_apply_count": int(context.inventory["pc_apply_count"]),
+            "pc_apply_count": int(inventory["pc_apply_count"]),
             "bottom_action_apply_count": int(
-                context.inventory["bottom_action_apply_count"]
+                inventory["bottom_action_apply_count"]
             ),
-            "top_action_apply_count": int(context.inventory["top_action_apply_count"]),
+            "top_action_apply_count": int(inventory["top_action_apply_count"]),
             "elapsed_seconds": float(time.perf_counter() - started),
         }
+        modal_inner = inventory.get("modal_inner_solver")
+        if isinstance(modal_inner, dict):
+            last_inner = modal_inner.get("last_solve") or {}
+            row.update(
+                {
+                    "modal_inner_solve_count": int(modal_inner["solve_count"]),
+                    "modal_inner_s_evaluation_count": int(
+                        modal_inner["s_evaluation_count"]
+                    ),
+                    "modal_inner_not_converged_count": int(
+                        modal_inner["not_converged_count"]
+                    ),
+                    "modal_inner_last_stop_reason": last_inner.get("stop_reason"),
+                    "modal_inner_last_raw_residual_norm": last_inner.get(
+                        "unscaled_residual_norm"
+                    ),
+                }
+            )
         decision = multimetric_true_residual_decision(
             int(iteration),
             row,

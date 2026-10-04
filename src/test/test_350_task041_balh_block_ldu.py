@@ -361,3 +361,395 @@ def test_side_balh_block_factory_releases_modal_on_constructor_error(monkeypatch
         assert fixture["top_inverse"].diagnostics["destroyed"] is False
     finally:
         _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
+    monkeypatch,
+) -> None:
+    fixture = _side_block_fixture()
+    original_action = original_context = context = result = rhs = None
+    action_before = action_after = None
+    try:
+        bottom = fixture["bottom"]
+        top = fixture["top"]
+        layout = fixture["layout"]
+        coupling = fixture["coupling"]
+        rhs = layout.pack(
+            bottom.b,
+            top.b,
+            internal_modal_rhs_correction(coupling),
+        )
+        rhs_before = _gather_vector(rhs)
+        original_action, original_context = create_hybrid_assembled_block_action(
+            bottom,
+            top,
+            coupling,
+        )
+        action_before = original_action.createVecLeft()
+        action_after = original_action.createVecLeft()
+        original_action.mult(rhs, action_before)
+        action_before_values = _gather_vector(action_before)
+
+        def reject_full_schur(*_args, **_kwargs):
+            raise AssertionError("on-demand modal inner must not build Schur columns")
+
+        monkeypatch.setattr(
+            block_ldu, "build_hybrid_action_modal_schur", reject_full_schur
+        )
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            layout,
+            bottom,
+            top,
+            coupling,
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+            sampled_columns=None,
+            sampled_column_roles=None,
+            sampled_column_contract_sha256=None,
+            use_anderson_modal_inner=True,
+        )
+        initial_inventory = context.inventory
+        initial_inner = initial_inventory["modal_inner_solver"]
+        assert context.modal_schur is None
+        assert context.modal_constraint.shape == (
+            layout.modal_count,
+            layout.modal_count,
+        )
+        assert initial_inventory["modal_schur"] is None
+        assert initial_inventory["modal_schur_materialized"] is False
+        assert initial_inventory["modal_schur_storage_bytes"] == 0
+        assert initial_inventory["modal_block_condition"] is None
+        assert "repeat_diagnostics" not in initial_inner
+        assert initial_inventory["modal_count"] == layout.modal_count
+        assert initial_inner["constraint_lu_factorizations"] == 1
+        assert initial_inner["constraint_lu_owner_rank"] == layout.modal_owner
+        assert (initial_inner["constraint_lu_local_bytes"] > 0) is (
+            MPI.COMM_WORLD.rank == layout.modal_owner
+        )
+
+        with pytest.raises(ValueError, match="requires right-preconditioned FGMRES"):
+            block_ldu.solve_hybrid_block_ldu_iterative(
+                original_action,
+                rhs,
+                context,
+                config=block_ldu.HybridBlockLduIterativeConfig(
+                    restart=10,
+                    max_it=10,
+                    ksp_type="gmres",
+                    fixed_preconditioner=True,
+                ),
+            )
+
+        result = block_ldu.solve_hybrid_block_ldu_iterative(
+            original_action,
+            rhs,
+            context,
+            config=block_ldu.HybridBlockLduIterativeConfig(
+                restart=20,
+                max_it=80,
+                threshold=5.0e-9,
+                ksp_type="fgmres",
+            ),
+        )
+        original_action.mult(rhs, action_after)
+        action_diff = _relative_or_absolute(
+            _gather_vector(action_after), action_before_values
+        )
+        rhs_diff = _relative_or_absolute(_gather_vector(rhs), rhs_before)
+        assert action_diff <= 1.0e-12
+        assert rhs_diff <= 1.0e-12
+        assert result.postsolve_audit["pass"] is True
+        for key in (
+            "reported_relative_residual",
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        ):
+            value = float(result.postsolve_audit[key])
+            assert np.isfinite(value) and 0.0 <= value <= 5.0e-9
+        inner = result.inventory["modal_inner_solver"]
+        assert result.inventory["modal_schur"] is None
+        assert inner["constraint_lu_factorizations"] == 1
+        assert inner["solve_count"] == result.inventory["pc_apply_count"]
+        assert inner["solve_count"] > 1
+        assert inner["s_evaluation_count"] >= inner["solve_count"]
+        assert all("modal_inner_solve_count" in row for row in result.history[1:])
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                "on-demand modal inner: "
+                f"PC={inner['solve_count']}, S={inner['s_evaluation_count']}, "
+                f"C_LU=1@rank{layout.modal_owner}, "
+                f"five_max={result.postsolve_audit['max_true_residual']:.3e}, "
+                f"operator_diff={action_diff:.3e}, RHS_diff={rhs_diff:.3e}",
+                flush=True,
+            )
+        result.destroy()
+        assert context.inventory["modal_inner_solver"]["destroyed"] is True
+        assert context.inventory["modal_inner_solver"]["constraint_lu_local_bytes"] == 0
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if result is not None and not result._destroyed:
+            result.destroy()
+        if context is not None and not context._destroyed:
+            context.destroy()
+        for vector in (rhs, action_before, action_after):
+            if vector is not None:
+                vector.destroy()
+        if original_action is not None:
+            original_action.destroy()
+        if original_context is not None:
+            original_context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_anderson_inner_failure_is_synchronized_without_fallback(
+    monkeypatch,
+) -> None:
+    fixture = _side_block_fixture()
+    original_action = original_context = context = rhs = outer_result = None
+    try:
+        layout = fixture["layout"]
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            layout,
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+            sampled_columns=None,
+            sampled_column_roles=None,
+            sampled_column_contract_sha256=None,
+            use_anderson_modal_inner=True,
+        )
+        rhs = layout.pack(
+            fixture["bottom"].b,
+            fixture["top"].b,
+            internal_modal_rhs_correction(fixture["coupling"]),
+        )
+        original_action, original_context = create_hybrid_assembled_block_action(
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+        )
+        before = {
+            "bottom": fixture["bottom_inverse"].diagnostics["apply_count"],
+            "top": fixture["top_inverse"].diagnostics["apply_count"],
+        }
+
+        def nonconverged(*_args, **_kwargs):
+            return {
+                "status": "not_converged",
+                "stop_reason": "max_iterations",
+                "solution": np.ones(context.modal_count, dtype=np.complex128),
+                "unscaled_residual_norm": 0.25,
+                "rhs_norm": 1.0,
+                "relative_residual": 0.25,
+                "iterations": 8,
+                "function_evaluations": 8,
+                "s_evaluation_count": 9,
+                "constraint_lu_solve_calls": 8,
+                "snes_converged_reason": int(
+                    PETSc.SNES.ConvergedReason.DIVERGED_MAX_IT
+                ),
+                "callback_converged_reason": int(
+                    PETSc.SNES.ConvergedReason.DIVERGED_MAX_IT
+                ),
+                "budget_exhausted": False,
+                "side_action_calls": {"bottom": 0, "top": 0},
+                "real_coordinate_embedding": True,
+                "modal_coordinate_representation": (
+                    "real_parts_then_imag_parts_in_complex128"
+                ),
+                "modal_coordinate_count": 2 * context.modal_count,
+                "modal_coordinate_extra_bytes_per_explicit_vec": (
+                    context.modal_count * np.dtype(PETSc.ScalarType).itemsize
+                ),
+                "modal_coordinate_extra_bytes_two_explicit_vecs": (
+                    2 * context.modal_count * np.dtype(PETSc.ScalarType).itemsize
+                ),
+                "real_coordinate_subspace_violation": False,
+                "residual_evaluation_history": [
+                    {
+                        "evaluation": 9,
+                        "source": "final_validation",
+                        "raw_residual_norm": 0.25,
+                        "raw_target_metric": 0.25,
+                        "finite": True,
+                    }
+                ],
+            }
+
+        monkeypatch.setattr(
+            block_ldu, "solve_action_modal_schur_anderson", nonconverged
+        )
+        caught = None
+        try:
+            outer_result = block_ldu.solve_hybrid_block_ldu_iterative(
+                original_action,
+                rhs,
+                context,
+                config=block_ldu.HybridBlockLduIterativeConfig(
+                    restart=5,
+                    max_it=5,
+                    threshold=5.0e-9,
+                    ksp_type="fgmres",
+                ),
+            )
+        except (RuntimeError, PETSc.Error, ValueError) as exc:
+            caught = exc
+        local_inner = context.inventory["modal_inner_solver"]["last_solve"]
+        outcomes = MPI.COMM_WORLD.allgather(
+            (
+                caught is not None,
+                local_inner["stop_reason"],
+                local_inner["unscaled_residual_norm"],
+                local_inner["s_evaluation_count"],
+            )
+        )
+        assert all(outcome[0] for outcome in outcomes)
+        assert len(set(outcomes)) == 1
+        assert context._destroyed is True
+        assert context.inventory["pc_apply_count"] == 0
+        assert context.inventory["modal_inner_solver"]["not_converged_count"] == 1
+        after = {
+            "bottom": fixture["bottom_inverse"].diagnostics["apply_count"],
+            "top": fixture["top_inverse"].diagnostics["apply_count"],
+        }
+        assert after["bottom"] - before["bottom"] == 1
+        assert after["top"] - before["top"] == 1
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if outer_result is not None:
+            outer_result.destroy()
+        if context is not None and not context._destroyed:
+            context.destroy()
+        if rhs is not None:
+            rhs.destroy()
+        if original_action is not None:
+            original_action.destroy()
+        if original_context is not None:
+            original_context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_modal_real_coordinate_embedding_is_isometric_for_complex_values() -> None:
+    modal_values = np.asarray(
+        [0.4 + 0.3j, -0.2 + 0.8j, 0.7 - 0.6j, -0.5 - 0.1j],
+        dtype=np.complex128,
+    )
+    original = modal_values.copy()
+
+    coordinates = block_ldu._encode_modal_real_coordinates(modal_values)
+    restored = block_ldu._decode_modal_real_coordinates(
+        coordinates, modal_values.size
+    )
+
+    assert coordinates.shape == (2 * modal_values.size,)
+    assert coordinates.dtype == np.complex128
+    assert np.all(coordinates.imag == 0.0)
+    assert np.array_equal(restored, modal_values)
+    assert np.linalg.norm(coordinates) == pytest.approx(
+        np.linalg.norm(modal_values), rel=0.0, abs=1.0e-15
+    )
+    assert np.array_equal(modal_values, original)
+    assert (
+        block_ldu.solve_action_modal_schur_anderson.__kwdefaults__[
+            "real_coordinate_embedding"
+        ]
+        is False
+    )
+
+
+def test_side_balh_modal_inner_explicitly_selects_real_coordinates(monkeypatch) -> None:
+    fixture = _side_block_fixture()
+    modal_action = None
+    modal_system = None
+    original_rhs = np.asarray(
+        [0.2 + 0.4j, -0.5 + 0.1j, 0.7 - 0.3j, -0.2 - 0.6j],
+        dtype=np.complex128,
+    )
+    rhs_before = original_rhs.copy()
+    captured = {}
+
+    def solver_stub(action, rhs, **kwargs):
+        captured["action"] = action
+        captured["rhs"] = np.asarray(rhs, dtype=np.complex128).copy()
+        captured["kwargs"] = dict(kwargs)
+        return {
+            "status": "not_converged",
+            "stop_reason": "synthetic_route_probe",
+            "solution": np.asarray(rhs, dtype=np.complex128).copy(),
+            "unscaled_residual_norm": 1.0,
+            "rhs_norm": float(np.linalg.norm(rhs)),
+            "relative_residual": 1.0,
+            "iterations": 0,
+            "function_evaluations": 0,
+            "s_evaluation_count": 0,
+            "constraint_lu_solve_calls": 0,
+            "snes_converged_reason": int(
+                PETSc.SNES.ConvergedReason.DIVERGED_INNER
+            ),
+            "callback_converged_reason": int(
+                PETSc.SNES.ConvergedReason.DIVERGED_INNER
+            ),
+            "budget_exhausted": False,
+            "side_action_calls": {"bottom": 0, "top": 0},
+            "residual_evaluation_history": [],
+            "real_coordinate_embedding": True,
+            "modal_coordinate_representation": (
+                "real_parts_then_imag_parts_in_complex128"
+            ),
+            "modal_coordinate_count": 2 * len(rhs),
+            "modal_coordinate_extra_bytes_per_explicit_vec": (
+                len(rhs) * np.dtype(PETSc.ScalarType).itemsize
+            ),
+            "modal_coordinate_extra_bytes_two_explicit_vecs": (
+                2 * len(rhs) * np.dtype(PETSc.ScalarType).itemsize
+            ),
+            "real_coordinate_subspace_violation": False,
+        }
+
+    monkeypatch.setattr(
+        block_ldu, "solve_action_modal_schur_anderson", solver_stub
+    )
+    try:
+        modal_action = block_ldu.HybridActionModalSchurApply(
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+        )
+        modal_system = block_ldu.HybridActionModalSchurAndersonSystem(
+            modal_action,
+            modal_owner=fixture["layout"].modal_owner,
+        )
+        with pytest.raises(RuntimeError, match="synthetic_route_probe"):
+            modal_system.solve(original_rhs)
+
+        assert np.array_equal(original_rhs, rhs_before)
+        assert captured["action"] is modal_action
+        assert np.array_equal(captured["rhs"], original_rhs)
+        assert captured["kwargs"]["scale_residual_by_constraint"] is True
+        assert captured["kwargs"]["real_coordinate_embedding"] is True
+        assert captured["kwargs"]["_borrowed_constraint_factor"] is modal_system
+        diagnostics = modal_system.diagnostics
+        assert diagnostics["real_coordinate_embedding"] is True
+        assert diagnostics["modal_coordinate_count"] == 2 * modal_system.modal_count
+        assert diagnostics["modal_coordinate_extra_bytes_per_explicit_vec"] == (
+            modal_system.modal_count * np.dtype(PETSc.ScalarType).itemsize
+        )
+        assert diagnostics["modal_coordinate_extra_bytes_two_explicit_vecs"] == (
+            2 * modal_system.modal_count * np.dtype(PETSc.ScalarType).itemsize
+        )
+        assert diagnostics["constraint_lu_factorizations"] == 1
+        assert diagnostics["not_converged_count"] == 1
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if modal_system is not None:
+            modal_system.destroy()
+        elif modal_action is not None and not modal_action._destroyed:
+            modal_action.destroy()
+        _destroy_side_block_fixture(fixture)
