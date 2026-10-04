@@ -1,0 +1,48 @@
+{
+  "status": "OPT_IN_LOCAL_CANDIDATE_Q60_RECOMMENDED",
+  "production_or_merge_approved": false,
+  "receiver_source": "31774b6282f61280fe33c162f9f48bf4ea526ce6",
+  "consumer": "FacetPolynomial.integral: two [0,1] Fourier-Legendre integrals",
+  "functions": [
+    "src.solvers.interval_facet_moments.unit_interval_moments",
+    "src.solvers.interval_facet_moments.IntervalFacetAdapter",
+    "src.solvers.local_facet_functionals.local_port_rows"
+  ],
+  "example": "benchmarks.facet_receiver_example.consume",
+  "source": "b5034e5ffab657146024ac429fe410f005049d3d",
+  "design": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/facet_component_v23.json",
+    "sha256": "00e1efebc576e50155a0684a15bdf2b5fc45f40cf8a6e3396a9544756c5b846c",
+    "bytes": 1212
+  },
+  "test_command": "source scripts/activate_task42extra.sh pure && python -m pytest -q src/test/test_interval_facet_moments.py src/test/test_portable_facet_oracle.py",
+  "bounds": "axis-aligned affine planar faces, real tangential frequency, representable original origin phase; caller-supplied expected coefficient/k/J/origin identity",
+  "denominators": "whole-cell original H; no boundary-norm replacement",
+  "native_dependencies": [
+    "qualified Basix native ABI for existing receiver only",
+    "NumPy",
+    "existing scipy.special.spherical_jn producer",
+    "stdlib Decimal independent checker"
+  ],
+  "missing_full_target_keys": "known present in main, not recreated; local interface does not require manifest",
+  "Main_manifest_SHA": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "Main_key_SHA": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "no_owner_layout_MPC_volume_W1_PC_C1_backend_copy": true,
+  "next_action": "use existing q60 under receiving line own material/key/authority Gates; no additional analytic optimization or FEINN batch requested",
+  "patch": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/cases/portable_interval_facet/receiver_opt_in.patch",
+    "sha256": "7dc900f7637635daf2ea251f62de302d16e0bcd567825bfed611fb1737df6534",
+    "bytes": 734
+  },
+  "README": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/cases/portable_interval_facet/README.md",
+    "sha256": "7b7cf0c96e581475d1e5aa34f4f0d59f7ec8f63e4b58238a337f5b4157fd57d5",
+    "bytes": 2821
+  },
+  "configuration": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/cases/portable_interval_facet/config.json",
+    "sha256": "0e28d0613088c9deb84ec010a3f521f5ae001a8c501d9dc403ebfbfaf049577e",
+    "bytes": 531
+  },
+  "nonzero_load_scope": "seed4212301 local original-coordinate gp fixture, not actual main full-target incident RHS"
+}

@@ -270,3 +270,12 @@ README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧�
 ## V22：可靠输出与解析面显式opt-in、独立比较
 
 新增src总场SplitVector/affine_state、资格状态机及解析Fourier-Legendre面组件，已有准确端口/物理比较/RHS/凝聚只加明确opt-in或计费，ordinary默认不改。既有参数化campaign/one-run与durable选择新独立V22 index，不复制runner/传统解；checker从原CSR/向量/物理数组重新判断，旧状态不覆盖。新增局部pure fixtures、9个dat、完整compact/CSV/Response/专题/导航/本任务总账；所有大场/CSR/原轨迹/浏览器图留ignored。六类依赖及测试/fresh数据/建议顺序见[manifest](records/selective_merge_manifest_v22.json)；production/core无晋级、没有merge授权。
+
+
+## V23：实际资格拦截与最小可消费[0,1]积分
+
+新增src严格资格守卫/区间矩适配/局部端口泛函，existing correction入口在加载/求解前拦截，ordinary receiver q60默认不变。沿已有campaign/one-run/durable增V23显式薄分派，不复制传统求解器；benchmarks只做固定局部fixture、独立Decimal/保存数组checker和完整冷成本记录。新增最小接收方示例/显式委托patch、5个dat、局部设计及3个定向测试文件。
+
+新增Response V23、单个专题、compact原分母/运行/资格/checker/成本/修复/渲染/六依赖组；本任务README/summary导航及自己的progress/model/test条目同步，全部历史不删。原task/review/旧场/旧α和其他分支未改，所有大数组/完整Decimal字符串/资源轨迹/浏览器profile留ignored。source与文档HEAD分开；无新Maxwell/Gram/NN，production numerical/core为空，接收线仍须自己的完整keys/物理资格。
+
+[六类依赖](records/selective_merge_manifest_v23.json)、[可运行包](../../../benchmarks/cases/portable_interval_facet/README.md)、[运行source](records/run_index_v23.json)。

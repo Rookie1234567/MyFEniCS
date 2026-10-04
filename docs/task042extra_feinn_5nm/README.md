@@ -1,8 +1,8 @@
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
-当前执行权威为 [Review V21](review_report_v21.md)，整批结果见 [Response V22](response_v22.md)。hi/lo的给定算子算术与解析面块/作用资格通过，实际原点物理投影仍FAIL；保存c的新算子残差触发E3/E4各一次同配置研究修正，独立完整比较为 STRICT_FINITE_P_FIELD_MODE_FAIL / REFERENCE_LIMITED。原尺寸32060-key冻结manifest本体缺失，交最小算法接口而不重建AUTO；无NN训练，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED，无production/merge approval。
+当前权威为 [Review V22](review_report_v22.md)，整批结果见 [Response V23](response_v23.md)。实际求解链已拒绝物理投影/oracle/仿射UNKNOWN的不合格角色；[可运行[0,1]面积分包](../../benchmarks/cases/portable_interval_facet/README.md)已完成p4/p6新跨度及独立原分母资格。解析与q60都够准，解析没有≥20%完整局部成本优势，推荐原有q60并关闭追加优化。全32060原件在主线端已核验，本轮不重建AUTO或全目标对象；无新Maxwell因子/solve/Gram/NN，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变，无production/merge approval。
 
-当前入口：[解析面/可靠输出专题](outcomes/reliable_affine_ports_v22.md)、[运行](outcomes/records/run_index_v22.json)、[checker](outcomes/records/independent_checker_v22.json)、[费用](outcomes/records/resource_costs_v22.json)、[最小接入包](outcomes/records/minimal_integration_v22.json)、[summary](outcomes/summary.md)。旧V21三种single-array失败、普通p6旧q15负项、中期较好/终态退化与全部历史保留；确定性修正不算神经收益。
+当前入口：[单个组件专题](outcomes/portable_facet_component_v23.md)、[运行/source](outcomes/records/run_index_v23.json)、[逐case checker](outcomes/records/independent_checker_v23.json)、[费用](outcomes/records/resource_costs_v23.json)、[最小接入包](outcomes/records/minimal_integration_v23.json)、[summary](outcomes/summary.md)。旧V21/V22 single-array及实际敏感投影失败、有限p场/模式FAIL、中期较好/终态退化与全部历史保留；确定性组件不算神经收益。
 
 | 项目 | 冻结身份 / 当前状态 |
 |---|---|
@@ -16,9 +16,9 @@
 | 历史与Task042区别 | 不仅训练trace、不求p4逆；端口仅准确解析消元；历史NN的内部FE系数由完整矩产生；本轮无网络 |
 | 历史Gram辅助成本 | 小型DUAL路线允许准确稀疏Gram因子，必须全程记账；不称无全局因子生产方案 |
 | 执行端 | 工作站原生Linux；独立worktree/环境/cache；已有项目只读，不改其运行 |
-| 本轮资源与预算 | Review V21完整43200s，最后留1800s；单空闲物理核/线程1、CPU-only/MPI1；pure2GiB/FEwarn12-hard16GiB、自身swap/OOC0；系统max(128GiB,有效整机10%)+384GiB邻增长。批次收口，不能自动再次运行 |
-| 当前结果 | 给定D/H算术通过；实际原点物理投影仍失败。两次修正native约6.29e-11/2.96e-10，散射场/完整模式仍超门；原尺寸manifest缺失，严格参考受限，NN暂停和D0/D1不变 |
-| 本轮检查边界 | 受影响pure fixtures、真实保存场MPC/损坏检查、空气Poynting、Ruff/compileall/局部文档与一次纯数组checker；full pytest/CI未运行，旧失败保留 |
+| 本轮资源与预算 | Review V22完整14400s，最后留1800s；单空闲物理核/线程1、CPU-only/MPI1；全部轻/native面组件warn1.75-hard2GiB，自身swap/OOC0；原系统及384GiB邻增长预留。批次收口，不能自动再次运行 |
+| 当前结果 | 两实现局部原分母门通过；完整时间改善0.232%，解析RSS反而更高，推荐q60。旧严格参考/物理投影/有限p仍失败，NN暂停和D0/D1不变 |
+| 本轮检查边界 | 47项pure fixture、原生Basix局部面、Decimal80/110及独立数组/864行原分母、Ruff/compileall/局部文档；无full pytest/CI/新PDE，旧失败保留 |
 | 历史V16数组分析源码 / checker源码 | `99f2968be8d715a6f2e6985f5b032c53ca505950` / `a14dd6187336c866f0a327760f10c4ece0140a8d`；[V16 run index](outcomes/records/run_index_v16.json)保留旧C1/数值身份 |
 | V22实际source | 修正/独立FE比较 `c3844846435764cd0ca7a4351a1ba8374373b6ae`；最小接入/最终pure checker `0a49003c9af140144aaf07f48f0c81e1490b5500`；其余阶段见新run index，不以文档HEAD冒充source |
 | 最终目标 | 原尺寸50×25×140nm、Si线宽17nm/高120nm、λ=0.7nm、完整三维FE；十进制2,000,000,000,000B整机、swap0、172800s完整流程；仍未运行/未资格化 |

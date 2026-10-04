@@ -1,0 +1,44 @@
+{
+  "repairs": [
+    {
+      "failure": "new-file Ruff E701/E702 then naming/unused import",
+      "hypothesis": "format-only, before numerical qualification",
+      "change": "format new files; explicit provider def and names",
+      "test": "35 then 47 targeted fixtures, Ruff/compileall",
+      "retry": "development only, old logs retained"
+    },
+    {
+      "failure": "V23 loader/workflow dispatch omissions",
+      "hypothesis": "prefix inventory incomplete; worker never started",
+      "change": "extend both explicit inventories; actual load/workflow mock passes",
+      "test": "full_entry_routing and final 47 fixture",
+      "retry": "P0 attempt2; original empty-directory failure accurately closed; no overwritten logs"
+    },
+    {
+      "failure": "arithmetic compact rows include lossy_single_array_negative with relative key",
+      "hypothesis": "three arithmetic roles incorrectly enumerated with negative control",
+      "change": "explicit scattered/background/total arithmetic; negative control retained",
+      "test": "arithmetic_schema_fix",
+      "retry": "P0 attempt3 completed; no more P0 retries"
+    },
+    {
+      "failure": "mpmath not installed in qualified environment",
+      "hypothesis": "independent scalar integration needs dependency-free equivalent",
+      "change": "stdlib Decimal80/110 integer-polynomial series plus fixed independent Gauss64",
+      "test": "47 fixtures then single P1 qualification",
+      "retry": "no install; no qualified native lifecycle replay"
+    }
+  ],
+  "formal_qualified_component_replays": 0,
+  "initial_P0_dispatch_and_compact_replays": 2,
+  "no_algorithm_weight_or_frequency_scan": true,
+  "full_failed_logs_in_resource_costs": true,
+  "notes": [
+    "initial resource refusal before worker retained with unmeasured peak",
+    "two fresh-window readmissions: first refused, second ran35 tests then lint failed; future ordinary stages freshly admitted",
+    "43-test development XML subsequently overwritten by47: old43 worker log retained; original XML NOT_RETAINED; final47 XML unique retained",
+    "unactivated read-only control python command exited127 before doing work; later qualified commands used",
+    "P0 attempt2 first refused PRIOR_ATTEMPT_NOT_CLEARED because original workflow had created an empty result directory before KeyError; no worker started. Both original PIDs were independently verified gone, empty directory gained accurate failure receipt, then same evidenced retry admitted."
+  ],
+  "normal_negative_results_are_not_bugs": true
+}

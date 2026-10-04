@@ -1,0 +1,90 @@
+{
+  "final_tests": 47,
+  "final_XML": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/final_tests_unique.xml",
+    "sha256": "e901581c232f294c1ca5831c5cbf7a7135f84baaaf264677b81ee8068eeb6b03",
+    "bytes": 6556
+  },
+  "qualified_activation": "scripts/activate_task42extra.sh pure/fe",
+  "CI": false,
+  "full_pytest": false,
+  "environment_install": false,
+  "Ruff": "PASS new component/checker files",
+  "compileall": "PASS targeted",
+  "P0_true_entry_guard_tests": true,
+  "independent_decimal_fixtures": true,
+  "damaged_array_and_identity_schema_tests": true,
+  "native_ABI": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/native_abi_current.json",
+    "sha256": "633090fb41d719d22bff0e6fbf2042213523d303d05de7811d06bede746617af",
+    "bytes": 2827
+  },
+  "native_stage_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v23_facet_qualification_attempt1.json",
+    "sha256": "e53b59f95d6642ba042e3a7818195d5bbd4137ce909f032cdb3c72a7acd64010",
+    "bytes": 13962
+  },
+  "early_failures_preserved": true,
+  "source_of_fixtures_before_checker": "b5034e5ffab657146024ac429fe410f005049d3d",
+  "actual_checker_source": "7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c",
+  "render": "PENDING_PUBLISHED_SCOPED_BROWSER",
+  "scoped_doc_CSV_history_patch": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/document_checks.json",
+    "sha256": "3c664f2a1f5416b739098675c27e28f5a0ef3e5d654b967fa7e6d8710bab08c3",
+    "bytes": 3040
+  },
+  "final_fixture_content_commit": "7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c",
+  "fixture_precommit_execution": "47-test developmental run preceded clean commit; tested files equal committed7a7c6b5a blobs, subsequent changes documents only",
+  "tested_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_portable_facet_oracle.py",
+      "sha256": "2bbd2356b8b91bccf61d73b0a8e5154152b7446f1fde23719f875303f6e94ba5",
+      "bytes": 3561
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_interval_facet_moments.py",
+      "sha256": "70019e4928b400aa8bef6467542f5061553324903716ed5a5b0bf9bc0018e9f6",
+      "bytes": 3280
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_strict_port_admission.py",
+      "sha256": "6422d8a08e6969b9192f5c455f7393b82568e1b2acf0aef7f882d5ed8a2c95af",
+      "bytes": 3871
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/interval_facet_moments.py",
+      "sha256": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed",
+      "bytes": 4652
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/strict_port_admission.py",
+      "sha256": "5d744d5ff83b6e34af3b542aa3dabe41737b5281e7fffdad93cbf44fc9f58dc0",
+      "bytes": 3998
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/local_facet_functionals.py",
+      "sha256": "3396f7737cc48a24432d3fca250687cd1a238d6c694cd27fa97cefecc6202890",
+      "bytes": 1701
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_oracle.py",
+      "sha256": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f",
+      "bytes": 5414
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_result_checker.py",
+      "sha256": "49ea516a60e77f8f29f0436ab79caa8260f43d0d35ad80662a9412afa6630758",
+      "bytes": 1715
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_lifecycle.py",
+      "sha256": "ae4205792a1e566cbf43755b65a2cb2d77b744ece6acc006e9e47890ca7b0cba",
+      "bytes": 17403
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_audit.py",
+      "sha256": "5edf1a830968a5b7c9441a0e81707fef42a005ea91cee2dc24b1f6d745f6cc6f",
+      "bytes": 7918
+    }
+  ]
+}

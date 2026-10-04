@@ -1,0 +1,542 @@
+{
+  "scope": "one-dimensional frequencies and bounded local facets; NOT complete 32060 modes or a target mesh",
+  "design": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/facet_component_v23.json",
+    "sha256": "00e1efebc576e50155a0684a15bdf2b5fc45f40cf8a6e3396a9544756c5b846c",
+    "bytes": 1212
+  },
+  "receiver": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/receiver_directional_boundary.py",
+    "sha256": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "bytes": 18730
+  },
+  "native_validation": {
+    "4": {
+      "native_dimension": 300,
+      "full_columns_retained": true,
+      "nonidentity_orientation": true,
+      "cell_info": 134221824,
+      "native_points": {
+        "bottom": {
+          "absolute": 5.329168129151316e-14,
+          "reference_norm": 82.9851838154745,
+          "denominator": 82.9851838154745,
+          "near_zero": false,
+          "relative": 6.421830842721553e-16
+        },
+        "top": {
+          "absolute": 5.2658052370390507e-14,
+          "reference_norm": 82.9851838154745,
+          "denominator": 82.9851838154745,
+          "near_zero": false,
+          "relative": 6.345476378949853e-16
+        }
+      },
+      "coefficient_hash": {
+        "bottom": "dad577f51e5377d16b3836c40346784418622b3d36c4461bd7a9120f0b59402e",
+        "top": "2dfeeb8846f3126361d2faa69b0341755eeb5232f7f048a2edc61898fe461373"
+      },
+      "edge_columns": 4,
+      "face_columns": 24,
+      "interior_columns": 108,
+      "interior_not_pruned": true,
+      "bytes": 240000
+    },
+    "6": {
+      "native_dimension": 882,
+      "full_columns_retained": true,
+      "nonidentity_orientation": true,
+      "cell_info": 134221824,
+      "native_points": {
+        "bottom": {
+          "absolute": 1.793462734808176e-13,
+          "reference_norm": 201.1858901635122,
+          "denominator": 201.1858901635122,
+          "near_zero": false,
+          "relative": 8.914455846533541e-16
+        },
+        "top": {
+          "absolute": 1.7502477647270855e-13,
+          "reference_norm": 201.1858901635122,
+          "denominator": 201.1858901635122,
+          "near_zero": false,
+          "relative": 8.699654649262857e-16
+        }
+      },
+      "coefficient_hash": {
+        "bottom": "d4863ae43801b982707089672de479695639b69dc0da5e5d3f725536433484d3",
+        "top": "6477113aa5fb363b767ad06c24eb02217de9a9cd5229af450148437e736b3857"
+      },
+      "edge_columns": 6,
+      "face_columns": 60,
+      "interior_columns": 450,
+      "interior_not_pruned": true,
+      "bytes": 1382976
+    }
+  },
+  "oracle_precisions": [
+    80,
+    110
+  ],
+  "Bessel_calls_in_oracle": 0,
+  "moment_80_110_max_absolute": 0.0,
+  "quadrature_cross_checks": [
+    {
+      "omega": 0.0,
+      "precisions_80_110": {
+        "absolute": 9.765342844147797e-88,
+        "reference_norm": 1.0,
+        "denominator": 1.0,
+        "near_zero": false,
+        "relative": 9.765342844147797e-88
+      },
+      "quad_recurrence": {
+        "absolute": 4.580726618262553e-117,
+        "reference_norm": 1.0,
+        "denominator": 1.0,
+        "near_zero": false,
+        "relative": 4.580726618262553e-117
+      }
+    },
+    {
+      "omega": 54.97787143782138,
+      "precisions_80_110": {
+        "absolute": 0.0,
+        "reference_norm": 0.0658918367309838,
+        "denominator": 0.0658918367309838,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "quad_recurrence": {
+        "absolute": 0.0,
+        "reference_norm": 0.0658918367309838,
+        "denominator": 0.0658918367309838,
+        "near_zero": false,
+        "relative": 0.0
+      }
+    },
+    {
+      "omega": -54.97787143782138,
+      "precisions_80_110": {
+        "absolute": 0.0,
+        "reference_norm": 0.0658918367309838,
+        "denominator": 0.0658918367309838,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "quad_recurrence": {
+        "absolute": 0.0,
+        "reference_norm": 0.0658918367309838,
+        "denominator": 0.0658918367309838,
+        "near_zero": false,
+        "relative": 0.0
+      }
+    }
+  ],
+  "local": {
+    "4": {
+      "B": {
+        "absolute": 0.0,
+        "reference_norm": 327.68502597825665,
+        "denominator": 327.68502597825665,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "D": {
+        "absolute": 0.0,
+        "reference_norm": 24.77620865763406,
+        "denominator": 24.77620865763406,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "H": {
+        "absolute": 0.0,
+        "reference_norm": 4999.853633782608,
+        "denominator": 4999.853633782608,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "original_H_min": 29.44377804032904,
+      "original_H_max": 1250.0,
+      "case_keys": [
+        [
+          -142,
+          0,
+          "bottom",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "bottom",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "bottom",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -142,
+          0,
+          "bottom",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "p",
+          0.14655172413793102
+        ]
+      ],
+      "nonzero_directions": 3,
+      "nonzero_load": true
+    },
+    "6": {
+      "B": {
+        "absolute": 0.0,
+        "reference_norm": 397.1801444438488,
+        "denominator": 397.1801444438488,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "D": {
+        "absolute": 0.0,
+        "reference_norm": 30.5910669471384,
+        "denominator": 30.5910669471384,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "H": {
+        "absolute": 0.0,
+        "reference_norm": 4999.853633782608,
+        "denominator": 4999.853633782608,
+        "near_zero": false,
+        "relative": 0.0
+      },
+      "original_H_min": 29.44377804032904,
+      "original_H_max": 1250.0,
+      "case_keys": [
+        [
+          -142,
+          0,
+          "bottom",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "bottom",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "s",
+          0.21153846153846154
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "p",
+          0.21153846153846154
+        ],
+        [
+          -142,
+          0,
+          "bottom",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -142,
+          0,
+          "bottom",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -142,
+          0,
+          "top",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "bottom",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -71,
+          35,
+          "top",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "bottom",
+          "p",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "s",
+          0.14655172413793102
+        ],
+        [
+          -70,
+          1,
+          "top",
+          "p",
+          0.14655172413793102
+        ]
+      ],
+      "nonzero_directions": 3,
+      "nonzero_load": true
+    }
+  },
+  "stage_qualified": true,
+  "component_qualified": true,
+  "strict_field_qualified": false,
+  "all32060_qualified": false,
+  "Maxwell_factor_solve_Gram_training": 0,
+  "worker_qualification_seconds": 2.895009630941786,
+  "oracle_arithmetic": "independent 80/110 integer-polynomial integrals; local contraction extended accumulator then complex128, fixed native binary64 coefficients",
+  "worker_wall_seconds": 2.9210889709647745,
+  "neural_gain": "NOT_TESTED",
+  "production_qualified": false
+}

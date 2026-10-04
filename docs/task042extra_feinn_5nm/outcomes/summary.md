@@ -1,3 +1,20 @@
+## 当前：Review V22 → Response V23（入口拒绝、可消费局部积分及q60出口）
+
+宽面片的波动积分需要足够精度，本轮已将现有解析矩接为接收方[0,1]接口，并实际运行固定p4/p6局部消费及独立原分母核验。两方案都够准，但解析未带来20%完整成本优势，**推荐已有可靠q60，结束额外解析优化**。没有新场或NN收益；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变。
+
+| 本轮局部实物 / measured | 解析 | q60 / 当前判断 |
+| --- | --- | --- |
+| 单位区间矩最大绝对差 | 3.554448e-16 | 9.082805e-14，均≤1e-12 |
+| 逐case/方向最大原分母相对差 | 1.657198e-13 | 1.976754e-11，均≤1e-10 |
+| 完整冷进程s / 同时树峰B | 64.46515 / 175190016 | 64.61506 / 114491392；仅0.232%时间改善，解析RSS增加53.016% |
+| P0实际入口 | 旧E3/E4负场可读，严格角色false | oracle/实际投影FAIL及仿射标量UNKNOWN都拒绝，所有新Maxwell因子/solve/Gram/NN=0 |
+| 原尺寸与历史 | 1213一维频率、两p各24局部case | 不是32060全模式/目标网格；旧物理投影/有限p/REFERENCE_LIMITED、M3600较好/Mfinal退化、D0成本否决/D1未运行保留 |
+| 预算/资源/测试 | 全批14400s，末段1800s；已测树峰179499008B、swap/OOC0 | 原ABI/MPI1/单核线程1及系统/384GiB邻预留；47最终fixture/独立数组通过，早期失败/NOT_RETAINED不改 |
+
+入口：[Response V23](../response_v23.md)、[单个专题](portable_facet_component_v23.md)、[可消费包](../../../benchmarks/cases/portable_interval_facet/README.md)、[完整source/运行](records/run_index_v23.json)、[原数组checker](records/independent_checker_v23.json)、[完整成本](records/resource_costs_v23.json)、[逐case864行](records/local_case_errors_v23.csv)、[六类依赖](records/selective_merge_manifest_v23.json)。完整原50×25×140nm/Si17/120nm、λ0.7三维FE、十进制2e12B整机、172800s和原门仍未达成，无production/merge批准。一次交棒后停止，不重复数值/归档批次。
+
+下方V22及全部历史原文保留；历史“当前/下一步”不是新的授权。
+
 ## 当前：Review V21 → Response V22（可靠输出、解析面矩与条件修正）
 
 已实现双分量总场输出和解析面端口，给定存储D/H下的准确算术、面块/作用及空气资格通过；实际原点投影对独立物理积分仍失败，严格角色资格未闭合。两份保存相位场在新算子中超残差门，启动链各执行一次同G0/p/κ修正，保留为研究数据。独立比较结论为 **STRICT_FINITE_P_FIELD_MODE_FAIL / REFERENCE_LIMITED**。没有NN训练或有效NN净增益，也没有合格O6参考或原尺寸解。

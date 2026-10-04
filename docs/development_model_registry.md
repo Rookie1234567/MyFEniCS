@@ -2123,3 +2123,18 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | --- | --- | --- |
 | 复用M5/p3两态C1，PDE8/ALL16固定球共同下降 | 无新FE/网络场；PDE8无稳定0.1%/native不增信号，ALL16终态为参考oracle；M3600保守界宽UNKNOWN | [专题](task042extra_feinn_5nm/outcomes/common_descent_v15.md)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v15.json) |
 | 原尺寸目标 / 生产 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；0.7nm完整FE、十进制2TB、172800s未资格化，历史结果不改 | [Response V15](task042extra_feinn_5nm/response_v15.md) |
+
+
+## 3.44.21 Task42extra Review V22：V23局部一维积分接入与实际资格拒绝
+
+本轮不是场求解：将已存有限元面多项式与波的积分接为[0,1]显式接口，保留原Piola/方向/原H，实际入口拒绝oracle/敏感投影和仿射UNKNOWN。原尺寸候选x=16.5/78、8.5/58nm，y=25/4nm、p4/p6局部300/882列；1213一维频率不是32060完整物理模式。
+
+| 同精度局部measured | 解析 | 原q60 |
+| --- | ---: | ---: |
+| 区间矩最大绝对差 / 门1e-12 | 3.55445e-16 | 9.08281e-14 |
+| 逐case/方向原分母最大相对差 / 门1e-10 | 1.65720e-13 | 1.97675e-11 |
+| 完整冷launcher s / 同时树峰B | 64.46515 / 175190016 | 64.61506 / 114491392 |
+
+没有20%局部收益，推荐已有可靠q60并关闭额外解析优化。新Maxwell全局/局部factor、solve、Gram、NN均0；小型Vandermonde坐标转换另计。原E/H/R/T/A没有新场，旧严格投影/有限p/参考受限失败不改；NN暂停、M3600较好/Mfinal退化、D0否决/D1未运行不变。原50×25×140nm、λ.7完整三维、decimal2e12B整机和172800s未资格化。
+
+[专题](task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md)、[Response](task042extra_feinn_5nm/response_v23.md)、[原分母864行](task042extra_feinn_5nm/outcomes/records/local_case_errors_v23.csv)、[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v23.json)。单次共享机冷对照、约0.5s采样，所有拒绝/失败/未测项费用保留；无production/merge批准。

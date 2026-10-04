@@ -1,0 +1,16 @@
+--- a/directional_boundary.py
++++ b/directional_boundary.py
+@@ -72,7 +72,12 @@
+         self.coefficients = MappingProxyType(self.coefficients)
+         self.active = MappingProxyType(self.active)
+ 
+-    def integral(self, side, k, J, origin, q):
++    def integral(self, side, k, J, origin, q, *, interval_moments=None, expected=None):
++        if interval_moments is not None:
++            from src.solvers.interval_facet_moments import integrate_receiver_facet
++            return integrate_receiver_facet(
++                self, side, k, J, origin, expected=expected,
++                moment_provider=interval_moments)
+         import basix
+ 
+         if np.linalg.norm(J - np.diag(np.diag(J))) > 1e-12 or np.any(np.diag(J) <= 0):

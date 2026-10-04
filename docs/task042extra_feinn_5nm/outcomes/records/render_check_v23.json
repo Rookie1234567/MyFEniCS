@@ -1,0 +1,16 @@
+{
+  "status": "PENDING_SCOPED_GITHUB_PUBLICATION",
+  "review_v22_reused": {
+    "report_SHA256": "c0b6645ef6372889ae2c19c4ee3f38b351f9b36a4081745ad5dda0310500452d",
+    "audit": "review_v22_evidence_audit.json",
+    "tables": 7,
+    "formula": 1,
+    "captures": 9,
+    "actual_visual_accepted": true
+  },
+  "new_pages": [
+    "response_v23.md",
+    "outcomes/portable_facet_component_v23.md"
+  ],
+  "local_parser_is_not_visual_PASS": true
+}

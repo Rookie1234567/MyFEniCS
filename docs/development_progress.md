@@ -3274,3 +3274,10 @@ pure身份/hash检查3.00520s、57,675,776B树峰、swap0，通过后清场。�
 Review V21授权P0/P1→P2→P3→条件E3/E4→P4整批执行。保存c不变时给定D/H下hi/lo恢复约1e-16；解析面p3/p4/p6块/作用与双向空气资格通过，新算子令E3/E4 native约.0044176/.000275503，启动链各执行一次同配置修正并先释放global factor/CSR再完整输出。最终独立保存向量复核揭示实际原点物理投影仍FAIL，启动前块/作用资格未覆盖该敏感性，不追认严格角色全资格。独立公共全场/6点/340×4模式/功率/区域结果STRICT_FINITE_P_FIELD_MODE_FAIL，旧体场差仅缩小约0.1%，仍无严格O6，REFERENCE_LIMITED。原尺寸manifest本体缺失，不制造32060库存，已交最小接入包。三正式失败/受控停止、旧single-array FAIL、所有旧负态/成本/UNKNOWN不删。
 
 这是确定性FE端口/输出组件，不是NN增益或2TB/48h目标证书。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED，D0成本否决/D1未运行，中期好态/最终退化保留。原50×25×140nm、Si17/120nm、λ.7完整3D/全部内部/双Floquet/全端口/decimal2e12B/172800s与原精度门不变；不改主线/dot、不合并master。[Response](task042extra_feinn_5nm/response_v22.md)、[专题](task042extra_feinn_5nm/outcomes/reliable_affine_ports_v22.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v22.json)。
+
+
+## 2026-10-04 Task42extra V23：可消费积分与q60成本出口
+
+Review V22整批完成，真实入口拒绝给定D/H算术通过而oracle/物理投影失败的旧E3/E4。原生p4/p6局部300/882列、非恒等方向、三复方向/非零载荷和Decimal80/110独立oracle通过；解析/q60逐case最坏1.6572e-13/1.97675e-11<1e-10。完整冷64.465/64.615s，但解析RSS175190016B高于q60的114491392B，无20%增益，推荐已有q60并结束追加优化。没有新FE场、Maxwell因子/solve、Gram或NN。原字段/负结果/M3600较好/Mfinal退化/D0成本否决/D1未运行及旧费用保留，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。原50×25×140nm/λ.7/decimal2e12B/172800s目标未达成。
+
+[Response V23](task042extra_feinn_5nm/response_v23.md)、[可运行包](../benchmarks/cases/portable_interval_facet/README.md)、[完整成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v23.json)。只读借鉴冻结接收方，不复制主线W1/AUTO/owner或dot C1/后端，未修改其他线；一次交棒后停止，无production/merge授权。

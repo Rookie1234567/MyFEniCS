@@ -1,0 +1,37 @@
+{
+  "P0": {
+    "audit_completed": true,
+    "strict_roles": {
+      "E3": false,
+      "E4": false
+    },
+    "solve_admitted": false
+  },
+  "P1": {
+    "component_qualified": true,
+    "actual_receiver_consumed": true,
+    "oracle": [
+      80,
+      110
+    ],
+    "full_target_qualified": false
+  },
+  "P2": {
+    "local_correctness": {
+      "analytic": true,
+      "q60": true
+    },
+    "local_20_percent_gain": false,
+    "decision": "RECOMMEND_EXISTING_QUALIFIED_Q60_CLOSE_ANALYTIC_OPTIMIZATION"
+  },
+  "Maxwell_global_factor": 0,
+  "Maxwell_local_factor": 0,
+  "Maxwell_solve": 0,
+  "Gram_factor": 0,
+  "NN_training": 0,
+  "new_global_FE_action": 0,
+  "legacy_status_unchanged": true,
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "target": "FULL_TARGET_NOT_QUALIFIED"
+}

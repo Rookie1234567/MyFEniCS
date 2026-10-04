@@ -1,0 +1,12 @@
+{
+  "schema": "portable_interval_facet_case.v1",
+  "design": "../../../input/task042extra_feinn_5nm/facet_component_v23.json",
+  "receiver_reference": "31774b6282f61280fe33c162f9f48bf4ea526ce6",
+  "producer_source": "b5034e5ffab657146024ac429fe410f005049d3d",
+  "checker_source": "7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c",
+  "baseline": "qualified existing q60",
+  "decision": "RECOMMEND_EXISTING_QUALIFIED_Q60_CLOSE_ANALYTIC_OPTIMIZATION",
+  "new_FE_solve": false,
+  "new_Maxwell_factor": false,
+  "production_approved": false
+}

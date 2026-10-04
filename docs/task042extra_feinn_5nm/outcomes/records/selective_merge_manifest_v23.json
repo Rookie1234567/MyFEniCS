@@ -1,0 +1,73 @@
+{
+  "groups": {
+    "production numerical/core": {
+      "approved": false,
+      "files": [],
+      "why": "strict full field/target never qualified"
+    },
+    "reusable runner/watchdog": {
+      "approved": false,
+      "files": [
+        "src/io/feinn_pilot.py",
+        "src/io/fixed_phase_pilot.py",
+        "src/runners/feinn_workflow.py",
+        "src/runners/fixed_phase_campaign.py",
+        "src/runners/portable_face_campaign.py",
+        "scripts/launch_task42extra_durable.py"
+      ],
+      "behavior": "explicit V23 opt-in only; same watchdog; no new solver",
+      "tests": "47 fixtures, closed durable runs"
+    },
+    "checker/benchmark": {
+      "files": [
+        "benchmarks/portable_facet_checks.py",
+        "benchmarks/portable_facet_audit.py",
+        "benchmarks/portable_facet_oracle.py",
+        "benchmarks/portable_facet_result_checker.py",
+        "benchmarks/portable_facet_lifecycle.py",
+        "benchmarks/facet_receiver_example.py",
+        "benchmarks/cases/portable_interval_facet/README.md",
+        "benchmarks/cases/portable_interval_facet/config.json",
+        "benchmarks/cases/portable_interval_facet/receiver_opt_in.patch"
+      ],
+      "behavior": "independent arrays/cold local fixture only",
+      "tests": "47 fixtures + P0/P1/P2/checker records"
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v23.md",
+        "docs/task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/*_v23.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/local_case_errors_v23.csv"
+      ],
+      "behavior": "new records; history retained"
+    },
+    "research-only": {
+      "files": [
+        "src/solvers/interval_facet_moments.py",
+        "src/solvers/local_facet_functionals.py",
+        "src/solvers/strict_port_admission.py",
+        "src/solvers/fixed_phase_reliable_ports.py"
+      ],
+      "behavior": "opt-in interval component and fail-closed actual solve guard; old ordinary receiver remains q60",
+      "fresh_PDE": "NOT_AUTHORIZED_NO_RUN",
+      "tests": "native local facet + actual entry stubs; not production target"
+    },
+    "do-not-merge": {
+      "files": [
+        "benchmarks/artifacts/task42extra/task42extra_v23_*",
+        "results/task42extra/task42extra_v23_*",
+        "tmp/task42extra/v23",
+        "tmp/task42extra/render/v23_*"
+      ],
+      "behavior": "large/raw/native packet, full Decimal strings, tree trace, browser profile/screenshots ignored"
+    }
+  },
+  "merge_authorized": false,
+  "suggested_order": [
+    "explicit guard plus tests",
+    "optional interval provider plus caller fixture",
+    "pure checker/compact documentation"
+  ],
+  "reception_requires_own_authority": true
+}

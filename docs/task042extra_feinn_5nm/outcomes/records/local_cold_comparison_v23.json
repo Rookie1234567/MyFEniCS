@@ -1,0 +1,251 @@
+{
+  "implementations": {
+    "analytic": {
+      "passed": true,
+      "interval_max_absolute": 3.554447978966673e-16,
+      "omitted_center_phase_negative_absolute": 0.9080059549953126,
+      "per_degree": {
+        "4": {
+          "whole": {
+            "B": {
+              "numerator": 1.7210772101519923e-11,
+              "reference_norm": 327.68502597825665,
+              "denominator": 327.68502597825665,
+              "near_zero": false,
+              "relative": 5.252230262929968e-14
+            },
+            "D": {
+              "numerator": 1.916361675825588e-12,
+              "reference_norm": 24.77620865763406,
+              "denominator": 24.77620865763406,
+              "near_zero": false,
+              "relative": 7.734684924180751e-14
+            },
+            "H": {
+              "numerator": 0.0,
+              "reference_norm": 4999.853633782608,
+              "denominator": 4999.853633782608,
+              "near_zero": false,
+              "relative": 0.0
+            },
+            "forward": {
+              "numerator": 1.7540129046428284e-12,
+              "reference_norm": 27.916232425168953,
+              "denominator": 27.916232425168953,
+              "near_zero": false,
+              "relative": 6.283129033778321e-14
+            },
+            "projection": {
+              "numerator": 1.8568418660030052e-16,
+              "reference_norm": 0.21837380288967992,
+              "denominator": 0.21837380288967992,
+              "near_zero": false,
+              "relative": 8.503043137189224e-16
+            },
+            "adjoint": {
+              "numerator": 8.581373014039591e-12,
+              "reference_norm": 471.8715941468068,
+              "denominator": 471.8715941468068,
+              "near_zero": false,
+              "relative": 1.8185822415429798e-14
+            }
+          },
+          "max_case_direction_relative": 1.6571980897538075e-13,
+          "passed": true
+        },
+        "6": {
+          "whole": {
+            "B": {
+              "numerator": 2.1251716548953854e-11,
+              "reference_norm": 397.1801444438488,
+              "denominator": 397.1801444438488,
+              "near_zero": false,
+              "relative": 5.3506492825092136e-14
+            },
+            "D": {
+              "numerator": 2.3666203224835603e-12,
+              "reference_norm": 30.5910669471384,
+              "denominator": 30.5910669471384,
+              "near_zero": false,
+              "relative": 7.736311801654706e-14
+            },
+            "H": {
+              "numerator": 0.0,
+              "reference_norm": 4999.853633782608,
+              "denominator": 4999.853633782608,
+              "near_zero": false,
+              "relative": 0.0
+            },
+            "forward": {
+              "numerator": 7.944835685386806e-13,
+              "reference_norm": 18.932366266264665,
+              "denominator": 18.932366266264665,
+              "near_zero": false,
+              "relative": 4.1964303741279315e-14
+            },
+            "projection": {
+              "numerator": 9.577474772508056e-17,
+              "reference_norm": 0.1986869904068759,
+              "denominator": 0.1986869904068759,
+              "near_zero": false,
+              "relative": 4.820383434715618e-16
+            },
+            "adjoint": {
+              "numerator": 2.966640533746864e-11,
+              "reference_norm": 546.1029784475847,
+              "denominator": 546.1029784475847,
+              "near_zero": false,
+              "relative": 5.432382995200243e-14
+            }
+          },
+          "max_case_direction_relative": 1.1148867322673595e-13,
+          "passed": true
+        }
+      },
+      "source_sha": "b5034e5ffab657146024ac429fe410f005049d3d",
+      "full_launch_seconds": 64.46514550200664,
+      "worker_seconds": 0.6543973919469863,
+      "phase_seconds": {
+        "oracle_read": 0.026631154003553092,
+        "native_first_coefficients": 0.29162635502871126,
+        "import_integral_contraction_adaptation": 0.3263814819511026,
+        "write_independent_check": 0.009757747990079224
+      },
+      "simultaneous_tree_peak_bytes": 175190016,
+      "own_swap": 0,
+      "cost_record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/run_summary.json",
+        "sha256": "add7b2ab828fc67eb63bc4accefe7e0f36ffa374dffd7bed92ab829f9b27fcdf",
+        "bytes": 2734
+      }
+    },
+    "q60": {
+      "passed": true,
+      "interval_max_absolute": 9.082805012334877e-14,
+      "omitted_center_phase_negative_absolute": 0.9080059549953126,
+      "per_degree": {
+        "4": {
+          "whole": {
+            "B": {
+              "numerator": 1.7195891589766047e-11,
+              "reference_norm": 327.68502597825665,
+              "denominator": 327.68502597825665,
+              "near_zero": false,
+              "relative": 5.247689160781814e-14
+            },
+            "D": {
+              "numerator": 1.9409828793172363e-12,
+              "reference_norm": 24.77620865763406,
+              "denominator": 24.77620865763406,
+              "near_zero": false,
+              "relative": 7.834059303174215e-14
+            },
+            "H": {
+              "numerator": 0.0,
+              "reference_norm": 4999.853633782608,
+              "denominator": 4999.853633782608,
+              "near_zero": false,
+              "relative": 0.0
+            },
+            "forward": {
+              "numerator": 1.748093557239277e-12,
+              "reference_norm": 27.916232425168953,
+              "denominator": 27.916232425168953,
+              "near_zero": false,
+              "relative": 6.261925071462065e-14
+            },
+            "projection": {
+              "numerator": 1.8780646475675095e-16,
+              "reference_norm": 0.21837380288967992,
+              "denominator": 0.21837380288967992,
+              "near_zero": false,
+              "relative": 8.600228702873703e-16
+            },
+            "adjoint": {
+              "numerator": 8.449457493856395e-12,
+              "reference_norm": 471.8715941468068,
+              "denominator": 471.8715941468068,
+              "near_zero": false,
+              "relative": 1.7906264328400394e-14
+            }
+          },
+          "max_case_direction_relative": 6.527518238594665e-13,
+          "passed": true
+        },
+        "6": {
+          "whole": {
+            "B": {
+              "numerator": 2.4510855639935754e-11,
+              "reference_norm": 397.1801444438488,
+              "denominator": 397.1801444438488,
+              "near_zero": false,
+              "relative": 6.171218773853124e-14
+            },
+            "D": {
+              "numerator": 7.183508168886618e-12,
+              "reference_norm": 30.5910669471384,
+              "denominator": 30.5910669471384,
+              "near_zero": false,
+              "relative": 2.3482372096729336e-13
+            },
+            "H": {
+              "numerator": 0.0,
+              "reference_norm": 4999.853633782608,
+              "denominator": 4999.853633782608,
+              "near_zero": false,
+              "relative": 0.0
+            },
+            "forward": {
+              "numerator": 1.0979224621378953e-12,
+              "reference_norm": 18.932366266264665,
+              "denominator": 18.932366266264665,
+              "near_zero": false,
+              "relative": 5.79918245134666e-14
+            },
+            "projection": {
+              "numerator": 3.0384697972855503e-16,
+              "reference_norm": 0.1986869904068759,
+              "denominator": 0.1986869904068759,
+              "near_zero": false,
+              "relative": 1.529274660139197e-15
+            },
+            "adjoint": {
+              "numerator": 3.273336326618798e-11,
+              "reference_norm": 546.1029784475847,
+              "denominator": 546.1029784475847,
+              "near_zero": false,
+              "relative": 5.993990979364296e-14
+            }
+          },
+          "max_case_direction_relative": 1.9767541885665567e-11,
+          "passed": true
+        }
+      },
+      "source_sha": "b5034e5ffab657146024ac429fe410f005049d3d",
+      "full_launch_seconds": 64.61506059695967,
+      "worker_seconds": 0.5033658549655229,
+      "phase_seconds": {
+        "oracle_read": 0.026576095027849078,
+        "native_first_coefficients": 0.3279266009340063,
+        "import_integral_contraction_adaptation": 0.13044908200390637,
+        "write_independent_check": 0.018412380013614893
+      },
+      "simultaneous_tree_peak_bytes": 114491392,
+      "own_swap": 0,
+      "cost_record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/run_summary.json",
+        "sha256": "04e2ff7a669c60ebf09598295d92c66b94399ca5fdd22b1de84acfd615787d4d",
+        "bytes": 2719
+      }
+    }
+  },
+  "decision": "RECOMMEND_EXISTING_QUALIFIED_Q60_CLOSE_ANALYTIC_OPTIMIZATION",
+  "time_improvement_fraction": 0.002320126199186534,
+  "RSS_improvement_fraction": -0.5301588437321121,
+  "one_cold_lifecycle_each": true,
+  "worker_time_is_not_whole_lifecycle": true,
+  "benchmark_uncertainty": "single shared-machine observation; no timing stability certificate; no 20% local gain",
+  "qualification_source": "b5034e5ffab657146024ac429fe410f005049d3d",
+  "producer_source": "b5034e5ffab657146024ac429fe410f005049d3d",
+  "checker_source": "7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c"
+}

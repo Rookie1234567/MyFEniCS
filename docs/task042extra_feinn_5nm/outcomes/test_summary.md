@@ -279,3 +279,12 @@ Review V18最终公式及旧专题两张区域表右侧的实际浏览器资格�
 求解前47项pure资格已冻结；最终checker的54项pure fixtures、Ruff/compileall通过，old/new比较alias禁止同角色控制授予准确参考，并显式保留guard digits。独立raw surface从CSR重算36/340模式及三个非零作用后才启动修正。真实p3/p4/p6面与两次新的双向空气Poynting通过，E3/E4完整未凝聚/独立弱式/存储D/H准确回代/MPC复验通过；实际c的独立物理面积分原点投影另列敏感性与未过项。最终compare-only/pure checker从保存场重算，不复求参考。实际source和数值负项见[测试](records/targeted_tests_v22.json)、[checker](records/independent_checker_v22.json)。没有full pytest、旧昂贵Gate、无关MPI、CI或环境重装。
 
 初始phase轴/JSON/lint/mock失败及三正式失败/受控停止均保留[repair](records/repair_log_v22.json)；早期42-test XML被复用输出路径覆盖，原日志/预期hash标NOT_RETAINED，未重放补历史，47项准入及最终54项XML各自独立冻结。文档parser、全CSV/raw/historical正文及局部实际GitHub视觉单列，不把结构通过当视觉；未变Review V21呈现按已验收收据复用。原registry两失败在输入与当前同样保留，不改其他任务。
+
+
+## V23：实际入口拒绝、局部面组件与独立保存数组
+
+47项最终pure fixture通过，包含真实load/workflow分派、campaign/direct求解哨兵前拒绝、schema/错caller/file/hash、独立Decimal80/110固定Gauss64、区间中心相位/1/2换元、局部复数法向/共轭伴随及损坏数组。Ruff/compileall局部通过，无full pytest/CI/安装。当前native complex128/int64/MPI1预检及60s窗口通过，Basix局部p4/p6方向/独立点值、上下s/p/三非零方向/原H完整消费已正式运行。两种实现仅各一次冷生命周期；后续独立checker只读保存数组，不重跑producer。
+
+P0最初workflow接线和compact负控字段失败保留，修复测试后最多两次重试；初期CPU拒绝及两次新窗口再准入、mpmath缺失和格式失败保留。资格化面组件没有重放；43-test早期XML被47-test覆盖，原XML NOT_RETAINED但日志/费用保留，最终47-test XML唯一保存。旧Review V22已视觉封存证据复用；新页视觉只记实际浏览器结果，不以本地parser替代。
+
+[测试](records/targeted_tests_v23.json)、[修复/限制](records/repair_log_v23.json)、[独立checker](records/independent_checker_v23.json)、[视觉](records/render_check_v23.json)、[完整费用](records/resource_costs_v23.json)。两实现局部都过，但解析成本无20%优势，推荐q60；不提升旧投影FAIL为严格解或NN收益。
