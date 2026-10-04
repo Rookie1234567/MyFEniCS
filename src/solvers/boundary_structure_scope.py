@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 from src.solvers.port_preparation_window import PreparationWindow
@@ -13,6 +14,30 @@ FE_ROLES = ("BRIDGE", "LAYOUT", "COMPONENT", "ORACLE")
 
 
 class StructureWindow(PreparationWindow):
+    def active_remaining(self, role):
+        """Read the current worker's budget; this never admits another actor."""
+        clock = self.require_live()
+        book = self.ledger()
+        active = book["active"]
+        if (
+            book["closed"]
+            or active is None
+            or active["role"] != role
+            or Path(active["folder"]).resolve()
+            != Path(os.environ["TASK042_V36_AUX_DIRECTORY"]).resolve()
+        ):
+            raise RuntimeError("V38 active worker budget identity")
+        current = max(
+            0.0,
+            clock["observed_monotonic"] - active["before_clock"]["observed_monotonic"],
+        )
+        used = sum(r["elapsed_seconds"] for r in book["runs"] if r["role"] in FE_ROLES)
+        return min(
+            self.component - used - current,
+            self.total - self.reserve - self.charged_wall() - current,
+            clock["heavy_remaining_seconds"],
+        )
+
     def remaining(self, role):
         self.require_ready()
         runs = self.ledger()["runs"]

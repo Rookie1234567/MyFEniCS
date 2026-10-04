@@ -443,7 +443,7 @@ def component(folder):
     for count in plan["cost_ladder"]:
         if count == nm:
             prior = ladder[-1]["measurement"]
-            remaining = window.remaining("COMPONENT") - (perf_counter() - stage_start)
+            remaining = window.active_remaining("COMPONENT")
             ratio = nm / ladder[-1]["count"]
             # Literal linear prefix upper extrapolation includes both q groups
             # and both inputs; actual tensor contraction may grow more slowly.
@@ -571,11 +571,6 @@ def component(folder):
         "volume_actions": 0,
         "training": 0,
     }
-
-
-# The total is still checked by the independent supervisor; this clock supports
-# in-stage remaining-cost admission without resetting the campaign deadline.
-stage_start = perf_counter()
 
 
 def explicit_oracle(folder):

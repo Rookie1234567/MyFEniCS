@@ -236,3 +236,37 @@ def test_new_action_inventory_rejects_missing_q():
     del d["q60_a_forward"]
     with pytest.raises(ValueError, match="inventory"):
         require_action_inventory(d, inp, 3, 2)
+
+
+def test_active_worker_budget_counts_current_wall_and_rejects_other_actor(
+    tmp_path, monkeypatch
+):
+    from src.solvers.boundary_structure_scope import StructureWindow
+
+    w = StructureWindow(tmp_path, total=7200, component=5400, reserve=180)
+    active = {
+        "role": "COMPONENT",
+        "folder": str(tmp_path / "worker"),
+        "before_clock": {"observed_monotonic": 100.0},
+    }
+    monkeypatch.setenv("TASK042_V36_AUX_DIRECTORY", active["folder"])
+    monkeypatch.setattr(
+        w,
+        "require_live",
+        lambda: {"observed_monotonic": 120.0, "heavy_remaining_seconds": 8000.0},
+    )
+    monkeypatch.setattr(w, "charged_wall", lambda: 300.0)
+    book = {
+        "active": active,
+        "closed": False,
+        "runs": [{"role": "BRIDGE", "elapsed_seconds": 200.0}],
+    }
+    monkeypatch.setattr(w, "ledger", lambda: book)
+    assert w.active_remaining("COMPONENT") == 5180.0
+    monkeypatch.setenv("TASK042_V36_AUX_DIRECTORY", str(tmp_path / "other"))
+    with pytest.raises(RuntimeError, match="identity"):
+        w.active_remaining("COMPONENT")
+    monkeypatch.setenv("TASK042_V36_AUX_DIRECTORY", active["folder"])
+    book["closed"] = True
+    with pytest.raises(RuntimeError, match="identity"):
+        w.active_remaining("COMPONENT")
