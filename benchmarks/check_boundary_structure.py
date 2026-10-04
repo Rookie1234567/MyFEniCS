@@ -9,6 +9,27 @@ from benchmarks.check_boundary_witness import metric, read_arrays
 from src.solvers.boundary_structure_scope import plan_record, read_stage
 
 
+def modal_physics(rows, *, area, k0, mu_r):
+    """Recompute all modal H and signed reference flux from frozen k/E."""
+    from src.solvers.directional_boundary import zvalue
+
+    h_errors, power_errors = [], []
+    for row in rows:
+        k = np.array([zvalue(v) for v in row["k_vector"]])
+        e = np.array([zvalue(v) for v in row["e_vector"]])
+        phase2 = abs(np.exp(1j * k[2] * row["reference_plane_nm"])) ** 2
+        H = area * (abs(e[0]) ** 2 + abs(e[1]) ** 2) * phase2
+        denominator = row["projection_denominator"]
+        if not np.isfinite(denominator) or denominator <= 0:
+            raise ValueError("nonpositive/nonfinite complete modal H")
+        h_errors.append(abs(H - denominator) / denominator)
+        h = np.cross(k, e) / (k0 * mu_r)
+        flux = 0.5 * (e[0] * h[1].conj() - e[1] * h[0].conj()).real
+        flux *= area * phase2 * (1 if row["side"] == "top" else -1)
+        power_errors.append(abs(flux - row["power_at_reference_unit_amplitude"]))
+    return np.array(h_errors), np.array(power_errors)
+
+
 def require_action_inventory(data, inputs, n, nm):
     required = {
         f"q{q}_{label}_{kind}"
@@ -133,6 +154,16 @@ def check_saved():
             inputs[key], rng.normal(size=n) + 1j * rng.normal(size=n)
         ):
             raise ValueError("preregistered mixed boundary seed identity")
+    from src.solvers.target_boundary_witness import parent_inventory
+    from src.solvers.target_port_preparation import target_config
+
+    _, modes = parent_inventory()
+    cfg, _ = target_config()
+    h_errors, power_errors = modal_physics(
+        modes, area=cfg.period_x * cfg.period_y, k0=cfg.k0, mu_r=cfg.mu_r
+    )
+    if len(modes) != nm or [r["mode_index"] for r in modes] != list(range(nm)):
+        raise ValueError("complete ordered modal physics identity")
     fullchecks = []
     for label, x, y in [
         ("a", inputs["x"], inputs["y"]),
@@ -150,29 +181,33 @@ def check_saved():
                     **metric(data[f"q30_{label}_{kind}"], data[f"q60_{label}_{kind}"]),
                 )
             )
-        f = data[f"q30_{label}_forward"]
-        h = data[f"q30_{label}_adjoint"]
-        fullchecks.append(
-            dict(
-                kind="dual",
-                input=label,
-                **metric(np.array([np.vdot(y, f)]), np.array([np.vdot(h, x)])),
+        for q in (30, 60):
+            f = data[f"q{q}_{label}_forward"]
+            h = data[f"q{q}_{label}_adjoint"]
+            fullchecks.append(
+                dict(
+                    kind="dual",
+                    input=label,
+                    q=q,
+                    **metric(np.array([np.vdot(y, f)]), np.array([np.vdot(h, x)])),
+                )
             )
-        )
-        fullchecks.append(
-            dict(
-                kind="linearity",
-                input=label,
-                **metric(data[f"q30_{label}_linear"], (0.37 - 0.91j) * f),
+            fullchecks.append(
+                dict(
+                    kind="linearity",
+                    input=label,
+                    q=q,
+                    **metric(data[f"q{q}_{label}_linear"], (0.37 - 0.91j) * f),
+                )
             )
-        )
-        fullchecks.append(
-            {
-                "kind": "zero",
-                "input": label,
-                "passed": not data[f"q30_{label}_zero"].any(),
-            }
-        )
+            fullchecks.append(
+                {
+                    "kind": "zero",
+                    "input": label,
+                    "q": q,
+                    "passed": not data[f"q{q}_{label}_zero"].any(),
+                }
+            )
     if not (ARTIFACT / "ORACLE.json").exists():
         result.update(full_action="PARTIAL_MISSING_ORACLE", fullchecks=fullchecks)
         return result
@@ -214,6 +249,8 @@ def check_saved():
         and all(c["passed"] for c in fullchecks)
         and max(data["H_errors"]) <= 1e-10
         and max(data["unit_power_errors"]) <= 1e-10
+        and max(h_errors) <= 1e-10
+        and max(power_errors) <= 1e-10
     )
     result.update(
         status="TARGET_BOUNDARY_ACTION_QUALIFIED_AT_FROZEN_Q"
@@ -224,7 +261,10 @@ def check_saved():
         q=30,
         modes=nm,
         rows=n,
-        H_max_relative=float(max(data["H_errors"])),
-        unit_power_max_absolute=float(max(data["unit_power_errors"])),
+        H_max_relative=float(max(h_errors)),
+        unit_power_max_absolute=float(max(power_errors)),
+        H_worst_original_index=int(h_errors.argmax()),
+        unit_power_worst_original_index=int(power_errors.argmax()),
+        modal_physics_recomputed_from_frozen_inventory=True,
     )
     return result

@@ -270,3 +270,28 @@ def test_active_worker_budget_counts_current_wall_and_rejects_other_actor(
     book["closed"] = True
     with pytest.raises(RuntimeError, match="identity"):
         w.active_remaining("COMPONENT")
+
+
+def test_modal_physics_is_recomputed_not_copied_from_saved_status():
+    from benchmarks.check_boundary_structure import modal_physics
+
+    rows = [
+        {
+            "side": side,
+            "k_vector": [0, 0, k],
+            "e_vector": [1, 0, 0],
+            "reference_plane_nm": 0,
+            "projection_denominator": 4,
+            "power_at_reference_unit_amplitude": 2,
+        }
+        for side, k in (("top", 2), ("bottom", -2))
+    ]
+    h, p = modal_physics(rows, area=4, k0=2, mu_r=1)
+    assert not h.any() and not p.any()
+    rows[0]["projection_denominator"] = 4.1
+    rows[1]["power_at_reference_unit_amplitude"] = 2.1
+    h, p = modal_physics(rows, area=4, k0=2, mu_r=1)
+    assert max(h) > 1e-10 and max(p) > 1e-10
+    rows[0]["projection_denominator"] = 0
+    with pytest.raises(ValueError, match="modal H"):
+        modal_physics(rows, area=4, k0=2, mu_r=1)
