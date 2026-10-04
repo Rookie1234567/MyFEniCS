@@ -3281,3 +3281,11 @@ Review V21授权P0/P1→P2→P3→条件E3/E4→P4整批执行。保存c不变�
 Review V22整批完成，真实入口拒绝给定D/H算术通过而oracle/物理投影失败的旧E3/E4。原生p4/p6局部300/882列、非恒等方向、三复方向/非零载荷和Decimal80/110独立oracle通过；解析/q60逐case最坏1.6572e-13/1.97675e-11<1e-10。完整冷64.465/64.615s，但解析RSS175190016B高于q60的114491392B，无20%增益，推荐已有q60并结束追加优化。没有新FE场、Maxwell因子/solve、Gram或NN。原字段/负结果/M3600较好/Mfinal退化/D0成本否决/D1未运行及旧费用保留，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。原50×25×140nm/λ.7/decimal2e12B/172800s目标未达成。
 
 [Response V23](task042extra_feinn_5nm/response_v23.md)、[可运行包](../benchmarks/cases/portable_interval_facet/README.md)、[完整成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v23.json)。只读借鉴冻结接收方，不复制主线W1/AUTO/owner或dot C1/后端，未修改其他线；一次交棒后停止，无production/merge授权。
+
+## 2026-10-05 Task42extra V24：W0实际组件闭环，原尺寸输入待接入
+
+用户要求继续W0而非重复暂停归档，本支在现有canonical工作树显式接收冻结主线d4b6ed6b组件：单元内准确消去内部量，再完整恢复，核对真实方向/MPC/非零内部及端口载荷是否仍等价原3D方程。一次80hex/p6 worker生成1619科学原件；原独立checker955数值门/4错误负控与本机完整读回完成。制造态native1.00025e-15、恢复最坏1.50063e-12，数学PASS；初始nice/IO/tmux绑定缺口保留，接收批次PASS_WITH_QUALIFICATIONS。
+
+两次EMFILE分别定位自有FD不足及canonical别名重复映射，一次数值前CPU误判定位观察器自耗；有限修复/定向测试后续进，原worker不重跑、原数学和raw不改。worker3363.419s/2338578432B，原父3478.277s/2383208448B，末次checker父203.854s/972025856B，pure读回6.972s/105771008B；zero own swap，父子不重复加和。新4h固定总窗计代码、准备、失败、等待和发布，不重置主线旧窗口；旧费用和精确累计UNKNOWN保留。
+
+原32060-key/36244923B manifest正文本机缺失，W1不以30250B库存摘要或重建AUTO替代；W2仍待dot C1c，未复制PC/存储。原尺寸50×25×140nm、Si17/120nm、λ.7完整3D、decimal2e12B/172800s及原精度门未达成，组件不是散射解/NN收益。FEINN暂停、M3600较好/Mfinal退化、D0否决/D1未运行不改。[Response](task042extra_feinn_5nm/response_v24.md)、[W0专题](task042extra_feinn_5nm/outcomes/w0_receiver_v24.md)、[完整费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v24.json)、[真实接入需求](task042extra_feinn_5nm/outcomes/records/next_input_and_handoff_v24.json)。

@@ -1,0 +1,227 @@
+{
+  "schema": "task42extra.w0-six-groups.v24",
+  "groups": {
+    "production numerical/core": [],
+    "reusable runner/watchdog": [
+      {
+        "path": "scripts/launch_task42extra_durable.py",
+        "numerical_math_changed": false,
+        "sha256": "41b2671925a4ad2213429de2586c8243392bb3ff24ad2e7c06d150d6892d06c0"
+      },
+      {
+        "path": "scripts/run_case.py",
+        "numerical_math_changed": false,
+        "sha256": "c41cbd7ff85d2ebb334f1fe3a19b5ae28074319f9f8297cb5ca223626debbb1c"
+      },
+      {
+        "path": "src/runners/feinn_resources.py",
+        "numerical_math_changed": false,
+        "sha256": "e1b017b3086f28f017bf6d0aa4c5decf71823163c875e31422d7de42f7b5ecc9"
+      },
+      {
+        "path": "src/runners/fresh_component_receiver.py",
+        "numerical_math_changed": false,
+        "sha256": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011"
+      },
+      {
+        "path": "src/runners/frozen_source_snapshot.py",
+        "numerical_math_changed": false,
+        "sha256": "b121325b8bd7e4a87bc2e8940c3609bd778a732514992fe11e17370308771da2"
+      },
+      {
+        "path": "src/runners/saved_component_checker.py",
+        "numerical_math_changed": false,
+        "sha256": "9088a562ca228666724ebcd171d813df7c8f762258945de64e595c63f2e62f2f"
+      },
+      {
+        "path": "src/runners/task042_shared.py",
+        "numerical_math_changed": false,
+        "sha256": "c45a40706c1403b7d9d609653d2bb7b4a49b409312590b7a69af0fdacfe81be5"
+      }
+    ],
+    "checker/benchmark": [
+      {
+        "path": "benchmarks/check_saved_array_snapshot.py",
+        "numerical_math_changed": false,
+        "sha256": "96eade1fbe59df494fff9e4cf0379130f9435af99dabda7b0537bfe9c3ad308b"
+      },
+      {
+        "path": "src/test/test_frozen_component_receiver.py",
+        "numerical_math_changed": false,
+        "sha256": "be18d3bfd4ec44f60126f2459924dfd343ac5e9273d8ce8ea2365a59ff03896e"
+      },
+      {
+        "path": "src/test/test_saved_array_snapshot.py",
+        "numerical_math_changed": false,
+        "sha256": "8e7b97d48ae273a5da71fc5079ecfd0a7f8b7d34688e4f307b57fa9333b348f2"
+      },
+      {
+        "path": "src/test/test_saved_component_checker_io.py",
+        "numerical_math_changed": false,
+        "sha256": "0c0096653be39337357b42a6a504b83577d93bf3873d0ee10598491d23e41bf2"
+      }
+    ],
+    "compact evidence/docs": [
+      {
+        "path": "docs/development_model_registry.md",
+        "numerical_math_changed": false,
+        "sha256": "099153cf112d642918d76b0936b268c40208b06b2684c7d91b172be99a3e7852"
+      },
+      {
+        "path": "docs/development_progress.md",
+        "numerical_math_changed": false,
+        "sha256": "526b4a92a802ac8d3f98d584a1b98c0c75bbf843acb0ba22eecc52cab6968881"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "numerical_math_changed": false,
+        "sha256": "cf77056fedaf3d485c7344ea1fb02fd53a74417093d2fc2dbc38db27e1dad8cc"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "numerical_math_changed": false,
+        "sha256": "8a08d04fcd19d6320d2c3a71c12dad770a5be23ef06ac82f8bcb212e269ed7df"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/design_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "66462f7a00c2a4096a1d7f06e0bf68a67e3bc61c7854916fefb4a49b0c0b6d27"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/durable_readback_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "fabab597d04b5a19fcd205ae829ee5dfb6ebe89cf6bf4dbfe00e460ec62ee16a"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "1e8e79c09a8e65d1b5e5dd99d7d81333bd5c8b128390567867fe3eecc2a878d0"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "2facd327dad72595b45806cd2fc3faf8b6ef79beb6aa47e5f98797c66df1b101"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/next_input_and_handoff_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "766600000a9ab6e45a13a5b3e2a7d33677c5677146d6eaca24adea47f2296a99"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v24.json",
+        "numerical_math_changed": false
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "e782905ffd49756bf12574ffcfb0f711efd54cc31618a475fe77efb24367b8dc"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v24.json",
+        "numerical_math_changed": false
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v24.json",
+        "numerical_math_changed": false
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v24.json",
+        "numerical_math_changed": false,
+        "sha256": "0c66943392ac4d438446208d560840791307fd8da9d73f7bcee5afbfc3603e21"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/w0_metrics_v24.csv",
+        "numerical_math_changed": false,
+        "sha256": "19391a366d03c4e9f75f1eb7e8090e7cd9a8ec671503d88629036df09401d5b5"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "numerical_math_changed": false,
+        "sha256": "8e93ef64201c34994856587abc63f24e8608067eac4ddfc7c96126d9bfa4b904"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "numerical_math_changed": false,
+        "sha256": "f84d852ff7e1d2e19153d58c5771d70f0261b4a4a370fa9f1c384c1c4b36402f"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/w0_receiver_v24.md",
+        "numerical_math_changed": false,
+        "sha256": "4ecb2ed24e6b42e13981b49021c2ec585488967e30bef9f113c5101d59b518c3"
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v24.md",
+        "numerical_math_changed": false,
+        "sha256": "d5bbe225ddee2c05171acad87563ab115ba1f13fc22cdace05521e9b19f4180c"
+      }
+    ],
+    "research-only": [
+      {
+        "path": "benchmarks/cases/fresh_c1_receiver/README.md",
+        "numerical_math_changed": false,
+        "sha256": "5d358490ed0f91c77b1d4cfa07991e5efe3caf42b29351085d6d512871a81cf9"
+      },
+      {
+        "path": "benchmarks/cases/fresh_c1_receiver/dependencies.json",
+        "numerical_math_changed": false,
+        "sha256": "7c56106693cb9ff3b48605466461b99e5e8fd27fd7bccfb59cd43d09bcc64703"
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v24_w0_component.dat",
+        "numerical_math_changed": false,
+        "sha256": "9e69fc9b579ac1aeae415fea32c6ca8232d36f4cf7246a085c49732c7577debd"
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v24_w0_control.dat",
+        "numerical_math_changed": false,
+        "sha256": "de8b530ffaa64cdab1a63cceea2a1a509af6f4856b43d13dbd6532c74ed14f8a"
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v24_w0_saved_check.dat",
+        "numerical_math_changed": false,
+        "sha256": "c31359544bc26cb0aa7a09357a28ddd34f44c0930cfa72d0351e8c525dc15bb3"
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v24_w0_saved_check_cached.dat",
+        "numerical_math_changed": false,
+        "sha256": "43e0d01b3815325b724f6e9e8ff3eb3d272422e1ce8f5fb7a755435f258da8ca"
+      },
+      {
+        "path": "input/task042extra_feinn_5nm/v24_w0_saved_check_repair.dat",
+        "numerical_math_changed": false,
+        "sha256": "67c20ed3fc7d671f1f9d151e8524a19e335cce469e528c460e24efaa50e0ac34"
+      }
+    ],
+    "do-not-merge": [
+      {
+        "path": "benchmarks/artifacts/task42extra/w0_receiver",
+        "reason": "raw primitive arrays/scientific reports/JIT/temp/numerical timelines/source cache remain ignored; dependency math not copied into production"
+      },
+      {
+        "path": "tmp/task42extra/durable/w0-receiver-*",
+        "reason": "own terminal/PID resource receipts; no cross-host service state"
+      },
+      {
+        "path": "tmp/task42extra/w0_receiver",
+        "reason": "failed checks/metadata scripts/admission/window/own policy evidence; exact bindings retained separately"
+      },
+      {
+        "path": "all old unqualified NN weights and failed solvers",
+        "reason": "no main solver/initialization or master authorization"
+      }
+    ]
+  },
+  "ordinary_default_changed": false,
+  "mathematical_worker_rewritten": false,
+  "dependency_math_commit": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+  "fresh_evidence": "independent_checker_v24.json + durable_readback_v24.json + resource qualifications",
+  "tests": "targeted_tests_v24.json:28 targeted fixtures, Ruff/compile, no fullpytest/CI",
+  "suggested_review_order": [
+    "read-only source snapshot/tests",
+    "explicit receiver/time/resource",
+    "saved checker I/O/readback",
+    "compact numerical/qualification evidence/docs"
+  ],
+  "production_promotion_or_merge_approval": false,
+  "next_receiver_requires_actual_manifest_and_own_effective_contract": true
+}

@@ -1,0 +1,913 @@
+{
+  "schema": "task42extra.w0-receiver-tests.v24",
+  "checks": [
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_initial",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_initial/junit.xml",
+        "sha256": "bf5c62b68d2ebe173403779b2f2476270e414cbfca2e65b8ffd344e4c7bbcdcf",
+        "bytes": 1639
+      },
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_initial/pytest/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.8093335828743875,
+          "sampled_process_tree_rss_peak_bytes": 59584512,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2118561837056,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2118561837056,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_01",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_01/junit.xml",
+        "sha256": "f3e7ad6a4447cff7065f93ee0a345b634099d8b43a7c7e797a3dec4489bd99be",
+        "bytes": 3377
+      },
+      "counts": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_01/0/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 2.264069750905037,
+          "sampled_process_tree_rss_peak_bytes": 122318848,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121181892608,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121181892608,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_01/1/summary.json",
+          "classification": "WORKER_FAILED",
+          "leader_exit_code": 1,
+          "elapsed_seconds": 1.7131722578778863,
+          "sampled_process_tree_rss_peak_bytes": 40099840,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121167851520,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121167851520,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_02",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_02/junit.xml",
+        "sha256": "f519928a9661715fe073f9909f1324d85a392c1509a511c24e5fffa5bc47ef39",
+        "bytes": 3377
+      },
+      "counts": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_02/0/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 2.342010251013562,
+          "sampled_process_tree_rss_peak_bytes": 121892864,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120721498112,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120721498112,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_02/1/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7021975589450449,
+          "sampled_process_tree_rss_peak_bytes": 39751680,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120658231296,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120658231296,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_02/2/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.4691185830160975,
+          "sampled_process_tree_rss_peak_bytes": 39751680,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120679297024,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120679297024,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_03",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_03/junit.xml",
+        "sha256": "1d7876566c8272cf5e414749286ff3241e2aa7e206795482118a7e84a1ddb92f",
+        "bytes": 4334
+      },
+      "counts": {
+        "tests": 25,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_03/0/summary.json",
+          "classification": "WORKER_FAILED",
+          "leader_exit_code": 1,
+          "elapsed_seconds": 2.281803095014766,
+          "sampled_process_tree_rss_peak_bytes": 87281664,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120564469760,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120564469760,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_04",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_04/junit.xml",
+        "sha256": "714f7953c45ae12880dfeb1750fa6f6e79d2b09a508d1cd330d1d1fbe1ea898a",
+        "bytes": 3517
+      },
+      "counts": {
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_04/0/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 2.241271188016981,
+          "sampled_process_tree_rss_peak_bytes": 86274048,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121940647936,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121940647936,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_04/1/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7036362818907946,
+          "sampled_process_tree_rss_peak_bytes": 39845888,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121867624448,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121867624448,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_04/2/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7502677801530808,
+          "sampled_process_tree_rss_peak_bytes": 39849984,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121875660800,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121875660800,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_05",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_05/junit.xml",
+        "sha256": "c2d9ef8ede88fbae5a008d4acbbe31eb22dce4be5feae48508229a5600164422",
+        "bytes": 3810
+      },
+      "counts": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_05/0/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 2.2669031200930476,
+          "sampled_process_tree_rss_peak_bytes": 87318528,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121150898176,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121150898176,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_05/1/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7212920100428164,
+          "sampled_process_tree_rss_peak_bytes": 40255488,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121156022272,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121156022272,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_05/2/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7772402020636946,
+          "sampled_process_tree_rss_peak_bytes": 40296448,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121178202112,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121178202112,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_06",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_06/junit.xml",
+        "sha256": "8c005c08cf3195f9266c9da022dc6d30e4f704bb06a0c7be6498305d8610c0d5",
+        "bytes": 3810
+      },
+      "counts": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_06/0/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 2.262288097059354,
+          "sampled_process_tree_rss_peak_bytes": 86913024,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120956104704,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120956104704,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_06/1/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7107165900524706,
+          "sampled_process_tree_rss_peak_bytes": 39718912,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120916275200,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120916275200,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_06/2/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7668856580276042,
+          "sampled_process_tree_rss_peak_bytes": 39723008,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2120924467200,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2120924467200,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    },
+    {
+      "directory": "tmp/task42extra/w0_receiver/checks_repair_07",
+      "junit": {
+        "path": "tmp/task42extra/w0_receiver/checks_repair_07/junit.xml",
+        "sha256": "4b0d3dff20a2522c441ab7769d61d06cc77c9e9a69f238bb82aed511a7419e9f",
+        "bytes": 3942
+      },
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_07/0/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 2.9652299371082336,
+          "sampled_process_tree_rss_peak_bytes": 87429120,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121830494208,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121830494208,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_07/1/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7056449281517416,
+          "sampled_process_tree_rss_peak_bytes": 40218624,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121804341248,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121804341248,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        },
+        {
+          "path": "tmp/task42extra/w0_receiver/checks_repair_07/2/summary.json",
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "elapsed_seconds": 1.7451138659380376,
+          "sampled_process_tree_rss_peak_bytes": 40239104,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139073,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2121805008896,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2121805008896,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          }
+        }
+      ]
+    }
+  ],
+  "full_pytest": false,
+  "CI": false,
+  "final_count": 28,
+  "final_source": "6eb24884c4443021150ce3d55fbf91a7395e21ee",
+  "qualified_native_environment_reinstalled": false,
+  "public_CLI_validated_inputs": [
+    {
+      "path": "input/task042extra_feinn_5nm/v24_w0_control.dat",
+      "sha256": "de8b530ffaa64cdab1a63cceea2a1a509af6f4856b43d13dbd6532c74ed14f8a",
+      "bytes": 221
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v24_w0_component.dat",
+      "sha256": "9e69fc9b579ac1aeae415fea32c6ca8232d36f4cf7246a085c49732c7577debd",
+      "bytes": 210
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v24_w0_saved_check.dat",
+      "sha256": "c31359544bc26cb0aa7a09357a28ddd34f44c0930cfa72d0351e8c525dc15bb3",
+      "bytes": 392
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v24_w0_saved_check_repair.dat",
+      "sha256": "67c20ed3fc7d671f1f9d151e8524a19e335cce469e528c460e24efaa50e0ac34",
+      "bytes": 406
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v24_w0_saved_check_cached.dat",
+      "sha256": "43e0d01b3815325b724f6e9e8ff3eb3d272422e1ce8f5fb7a755435f258da8ca",
+      "bytes": 420
+    }
+  ],
+  "local_markdown": {
+    "path": "tmp/task42extra/w0_receiver/closeout/local_markdown.json",
+    "sha256": "3140fd64c6ec98d80636af43fd97cd76ffe12ae2f0ce50fdc337e525dd96b43d",
+    "pages": 9,
+    "tables": 17,
+    "browser_visual_pass": false
+  }
+}

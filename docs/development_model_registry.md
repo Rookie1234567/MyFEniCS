@@ -2138,3 +2138,17 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 没有20%局部收益，推荐已有可靠q60并关闭额外解析优化。新Maxwell全局/局部factor、solve、Gram、NN均0；小型Vandermonde坐标转换另计。原E/H/R/T/A没有新场，旧严格投影/有限p/参考受限失败不改；NN暂停、M3600较好/Mfinal退化、D0否决/D1未运行不变。原50×25×140nm、λ.7完整三维、decimal2e12B整机和172800s未资格化。
 
 [专题](task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md)、[Response](task042extra_feinn_5nm/response_v23.md)、[原分母864行](task042extra_feinn_5nm/outcomes/records/local_case_errors_v23.csv)、[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v23.json)。单次共享机冷对照、约0.5s采样，所有拒绝/失败/未测项费用保留；无production/merge批准。
+
+## 3.44.22 Task42extra V24：W0原方程组件与保存数据独立闭环
+
+本轮研究原内部量准确消元/恢复的工程前置，不是散射前向解；全内部仍被保留。W0缩比规则80hex/p6、λ.7、φ5°、q27/532模式，MPC后52992独立复FE（36000内部/16992迹），存储55950；原B/D/H与native方向保持。
+
+| measured / derived | 实际值与限值 | 判断 |
+| --- | --- | --- |
+| 制造态native / FE、port增广 | 1.00025e-15 / 5.00108e-16、1.11980e-16，门1e-10 | 955独立数值门通过，4错误负控检出 |
+| 完整恢复 / 纯代数最坏相对差 | 1.50063e-12 / 2.50759e-14，门1e-11/1e-12 | 原全内部/载荷配对通过 |
+| 保存原件/本机readback | 1619文件、3287字段、625253744B、全部原hash一致 | 本机fsync/reopen通过，跨机/断电/后端未验证 |
+| 原W0完整父 / 最后checker完整父 | 3478.277s/2383208448B；203.854s/972025856B；自身swap0 | 失败/60s窗口在父墙钟内，嵌套阶段不重加 |
+| 原尺寸物理结果 / 神经 | E/H/curl/R/T/A及所有复模式NOT_RUN，NO_VERIFIED_NN_INCREMENT | 初始nice/IO/tmux缺口限定保留；W1原件缺失，W2待dot |
+
+数学源码d4b6ed6b原样，worker接收1527e115、最后checker/readback6eb24884；实际source和文档HEAD分开。FEINN_MAIN_SOLVER_ON_HOLD / FULL_TARGET_NOT_QUALIFIED、D0成本否决/D1未运行及旧较好/退化/负结果/UNKNOWN不改。原尺寸0.7nm完整3D、decimal2e12B/172800s合取未达成，无production或merge授权。[回执](task042extra_feinn_5nm/response_v24.md)、[原量955行](task042extra_feinn_5nm/outcomes/records/w0_metrics_v24.csv)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v24.json)。

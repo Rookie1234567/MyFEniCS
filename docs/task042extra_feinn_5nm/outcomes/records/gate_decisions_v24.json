@@ -1,0 +1,22 @@
+{
+  "schema": "task42extra.w0-receiver-gate.v24",
+  "numerical_component": "PASS",
+  "full_raw_independent_math": "PASS",
+  "local_persistent_readback": "PASS",
+  "whole_initial_resource_priority_contract": "QUALIFIED_INITIAL_NICE_IO_TERMINAL_BINDING_GAP_RETAINED",
+  "receiver_overall": "PASS_WITH_QUALIFICATIONS",
+  "W1": "NOT_RUN_FROZEN_32060_MANIFEST_UNAVAILABLE",
+  "W2": "HELD_PENDING_DOT_C1C_AND_W1",
+  "PDE_solved": false,
+  "official_results": false,
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "original_size_accuracy": "NOT_RUN",
+  "original_size_memory_time": "NOT_QUALIFIED",
+  "manufactured_control_not_scattering_solution": true,
+  "D0": "COST_VETO_CONFIRMED",
+  "D1": "NOT_RUN_COST_VETO",
+  "cross_machine_durability": "NOT_TESTED",
+  "production_or_merge_approval": false
+}

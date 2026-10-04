@@ -1,0 +1,22 @@
+{
+  "schema": "task42extra.w0-local-readback.v24",
+  "full_readback": {
+    "path": "benchmarks/artifacts/task42extra/w0_receiver/readback/saved_array_readback.json",
+    "sha256": "b98fef351093ecac65ab14d903ce5844577f3be73b407e8782cc3ddcd46219d7",
+    "bytes": 621608
+  },
+  "unique_member_count": 1619,
+  "logical_role_count": 3287,
+  "numeric_bytes": 625046512,
+  "file_bytes": 625253744,
+  "member_manifest_sha256": "3e9862fda086962986a3c1795b65f293937448ac93fd66d25d67b83ddf0e7e6c",
+  "cross_machine_storage_qualified": false,
+  "power_failure_tested": false,
+  "new_FE_actions": 0,
+  "new_factors": 0,
+  "new_solves": 0,
+  "worker_report_sha256": "324d59624b8cb7837d7dc0251e60cc060b292dccea05002d07710d6c205318bf",
+  "raw_directory": "benchmarks/artifacts/task42extra/w0_receiver/w0/raw",
+  "raw_deleted_or_modified": false,
+  "scope": "producer fsync files; post-freeze independent streamed reopen and raw directory fsync; no compressed archive or cross-host certificate"
+}

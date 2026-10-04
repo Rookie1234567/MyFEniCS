@@ -1,0 +1,59 @@
+{
+  "schema": "task42extra.w0-receiver-repair-log.v24",
+  "records": [
+    {
+      "failure": "initial receiver nice0/terminal affinity wide",
+      "hypothesis": "own launcher inheritance omitted",
+      "change": "identity-bound own runtime correction plus permanent inherited nice10/idleIO/core",
+      "test": "own PID/start identity and regression",
+      "retry": "FE worker not repeated",
+      "qualification": "initial gap retained"
+    },
+    {
+      "failure": "original checker EMFILE at soft1024",
+      "hypothesis": "retained saved mappings exceed descriptors",
+      "change": "own soft2048/hard unchanged",
+      "test": "real child EMFILE and isolated hard-bound fixture",
+      "retry": "saved arrays only; still failed due duplicate aliases"
+    },
+    {
+      "failure": "saved-check input public parser fallback",
+      "hypothesis": "leading comment hides explicit first-line marker",
+      "change": "move comment after marker",
+      "test": "public CLI non-FE validate fixture",
+      "retry": "no numerical stage before fixed"
+    },
+    {
+      "failure": "pre-numeric pinned CPU observer refusal",
+      "hypothesis": "sampler counts its own work against one inherited core",
+      "change": "opt-in measured own CPU subtraction with two retained safety ticks; no neighbor exclusion",
+      "test": "raw/adjusted samples and reserved-neighbor fixture",
+      "retry": "fresh observed admission, separate attempt; old refusal retained"
+    },
+    {
+      "failure": "second checker EMFILE despite2048",
+      "hypothesis": "logical aliases re-open identical canonical files (3385 requests vs1619unique)",
+      "change": "one readonly mmap per canonical name; own FD4096/hard1048576 unchanged",
+      "test": "5000 repeated aliases/close and final28fixtures",
+      "retry": "third mathematical checker PASS; full arrays unchanged"
+    },
+    {
+      "failure": "light Ruff9 errors and CLI fixture NameError",
+      "hypothesis": "test layout/assertion scope",
+      "change": "local formatting and assertion placement",
+      "test": "final28fixtures/Ruff/compile",
+      "retry": "recorded failed checks retained"
+    },
+    {
+      "failure": "pure evidence aggregation resource admission refused",
+      "hypothesis": "transient actual CPU occupancy",
+      "change": "no resource threshold changes",
+      "test": "one new measured2GiB admission",
+      "retry": "metadata collection1.830260518s/65986560B/swap0 passed, cleared"
+    }
+  ],
+  "no_blind_worker_replay": true,
+  "formal_IO_repairs": 2,
+  "formal_pre_numeric_admission_repairs": 1,
+  "old_failure_artifacts_retained": true
+}

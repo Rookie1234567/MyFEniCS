@@ -1,6 +1,22 @@
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
-当前权威为 [Review V22](review_report_v22.md)，整批结果见 [Response V23](response_v23.md)。实际求解链已拒绝物理投影/oracle/仿射UNKNOWN的不合格角色；[可运行[0,1]面积分包](../../benchmarks/cases/portable_interval_facet/README.md)已完成p4/p6新跨度及独立原分母资格。解析与q60都够准，解析没有≥20%完整局部成本优势，推荐原有q60并关闭追加优化。全32060原件在主线端已核验，本轮不重建AUTO或全目标对象；无新Maxwell因子/solve/Gram/NN，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变，无production/merge approval。
+当前为用户在 Review V23 后明确要求继续 W0 的一次接收批次，结果见 [Response V24](response_v24.md)。**W0 实际worker、955项独立原门及1619原件读回已完成，接收结果PASS_WITH_QUALIFICATIONS**；初始进程优先级缺口和全部失败保留。工作树已承载真实组件；W1当前缺已冻结32060-key manifest正文，未用摘要或重建AUTO替代，不是因工作树名称而不能运行。
+
+[W0专题](outcomes/w0_receiver_v24.md)、[run/source/hash](outcomes/records/run_index_v24.json)、[原量CSV](outcomes/records/w0_metrics_v24.csv)、[持久读回](outcomes/records/durable_readback_v24.json)、[费用/全部失败](outcomes/records/resource_costs_v24.json)、[下一输入](outcomes/records/next_input_and_handoff_v24.json)。原主线过期窗口没有重置，未修改其他分支或工作树，未新建clone/求解器/NN训练。
+
+| 当前对象 / 身份 | 实际结果与边界 |
+| --- | --- |
+| W0原组件 | 缩比同80hex/p6、52992独立复FE/36000内部/532端口，制造态native1.00025e-15、恢复最坏1.50063e-12；是组件等价性，不是散射前向解 |
+| 原尺寸端口W1 / 后端W2 | 冻结manifest本机缺失 / dot C1c前置未闭合；未运行，未自动重建或复制PC/存储 |
+| 新接收窗口 | 14400s、2026-10-04T14:46:52Z→18:46:52Z；含早期未测600s allowance、代码/失败/等待/存盘/发布，不延长旧窗口 |
+| 资源与源码 | 3GiB W0/2GiB轻树、CPU-only/MPI1/数学线程1、自身swap0、系统+384GiB邻余量；数学d4b6ed6b原样消费，接收1527e115/final checker6eb24884 |
+| 原最终目标 | 原50×25×140nm/Si17/120nm、λ0.7完整3D FE、decimal2e12B整机和172800s/原精度门尚未达成；FULL_TARGET_NOT_QUALIFIED |
+| FEINN及历史 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT，M3600较好/Mfinal退化、D0否决/D1未运行及全部负结果/UNKNOWN不改 |
+
+## 历史V23：积分组件收口（原证据保留）
+
+
+历史V23输入权威为 [Review V22](review_report_v22.md)，整批结果见 [Response V23](response_v23.md)。实际求解链已拒绝物理投影/oracle/仿射UNKNOWN的不合格角色；[可运行[0,1]面积分包](../../benchmarks/cases/portable_interval_facet/README.md)已完成p4/p6新跨度及独立原分母资格。解析与q60都够准，解析没有≥20%完整局部成本优势，推荐原有q60并关闭追加优化。全32060原件在主线端已核验，本轮不重建AUTO或全目标对象；无新Maxwell因子/solve/Gram/NN，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变，无production/merge approval。
 
 当前入口：[单个组件专题](outcomes/portable_facet_component_v23.md)、[运行/source](outcomes/records/run_index_v23.json)、[逐case checker](outcomes/records/independent_checker_v23.json)、[费用](outcomes/records/resource_costs_v23.json)、[最小接入包](outcomes/records/minimal_integration_v23.json)、[summary](outcomes/summary.md)。旧V21/V22 single-array及实际敏感投影失败、有限p场/模式FAIL、中期较好/终态退化与全部历史保留；确定性组件不算神经收益。
 

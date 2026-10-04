@@ -1,3 +1,20 @@
+# 当前：用户接续 W0 → Response V24
+
+已完成实际worker、原科学数组、955项独立数值门、4错误负控及1619原件持久读回；数学组件PASS，接收批次PASS_WITH_QUALIFICATIONS。初始nice/IO/终端绑定缺口、两次EMFILE、一次数值前CPU拒绝及全部成本保留。不是完整原尺寸前向解；没有NN净收益。
+
+| measured / derived / not_run，固定W0组件 | 当前值/状态 | 证据 |
+| --- | --- | --- |
+| 固定模型 | 80hex/p6、λ.7、φ5°、缩比规则80；独立FE52992/内部36000/端口532 | [回执](../response_v24.md)、[专题](w0_receiver_v24.md) |
+| 原native/增广制造态 | 1.00025e-15 / FE5.00108e-16、port1.11980e-16，门1e-10 | [955项原门](records/w0_metrics_v24.csv)、[原checker](records/independent_checker_v24.json) |
+| 完整作用/恢复、纯代数最大相对差 | 1.50063e-12 / 2.50759e-14，门1e-11/1e-12；错误H/共轭/符号/漏项检出 | [Gate](records/gate_decisions_v24.json) |
+| 本机保存/完整读回 | 1619原件/3287字段、625253744B文件、数值625046512B；非跨机/断电资格 | [readback](records/durable_readback_v24.json) |
+| 真正数值source | 主线数学d4b6ed6b；初始接收1527e115；最终checker/readback6eb24884，完整SHA/hash独立绑定 | [run index](records/run_index_v24.json) |
+| 成本/同时树峰 | worker3363.419s；原父3478.277s/2383208448B；最后checker父203.854s/972025856B；nested不相加，own swap0 | [完整账及流程限定](records/resource_costs_v24.json)、[修复](records/repair_log_v24.json) |
+| W1/W2 / 原终点 | 冻结32060原件本机缺失 / dot C1c待闭合；原50×25×140nm/λ.7完整3D、decimal2e12B/172800s仍NOT_QUALIFIED，E/H/R/T/A NOT_RUN | [接入条件](records/next_input_and_handoff_v24.json) |
+| 神经/旧证据 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；M3600较好/Mfinal退化、D0否决/D1未运行、全部失败/UNKNOWN及费用保持 | 下方V23及全部历史原文完整保留，无production/master合并批准 |
+
+下方是历史原文；其中“当前/下一步”不是新预算或自动启动许可。
+
 ## 当前：Review V22 → Response V23（入口拒绝、可消费局部积分及q60出口）
 
 宽面片的波动积分需要足够精度，本轮已将现有解析矩接为接收方[0,1]接口，并实际运行固定p4/p6局部消费及独立原分母核验。两方案都够准，但解析未带来20%完整成本优势，**推荐已有可靠q60，结束额外解析优化**。没有新场或NN收益；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变。

@@ -1,0 +1,534 @@
+{
+  "schema": "task42extra.w0-receiver-costs.v24",
+  "window": {
+    "schema": "task42extra.w0-receiver-window.v1",
+    "id": "w0_receiver_20261004T144652Z",
+    "authority": "user latest repeated instruction: continue W0 then full ports in the existing FEINN branch/worktree",
+    "T0_utc": "2026-10-04T14:46:52+00:00",
+    "budget_seconds": 14400,
+    "deadline_utc": "2026-10-04T18:46:52Z",
+    "deadline_monotonic": 1064606.860930351,
+    "recorded_utc": "2026-10-04T15:09:06.069935+00:00",
+    "prior_unmeasured_prepare_allowance_seconds": 600,
+    "first_retained_current_turn_clock_utc": "2026-10-04T14:56:52Z",
+    "old_main_window_reset": false,
+    "old_main_T0_utc": "2026-10-04T08:55:26.395534Z",
+    "old_main_deadline_utc": "2026-10-04T12:55:26.395534Z",
+    "no_history_cost_deleted": true,
+    "dependency_commit": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+    "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "input_branch_HEAD": "43304469ca307b10dbccaccdf9c1229ca17ef3e3"
+  },
+  "observed_delivery_snapshot_utc": "2026-10-04T16:45:17.710778+00:00",
+  "full_batch_elapsed_at_snapshot_seconds": 7105.710350311827,
+  "remaining_at_snapshot_seconds": 7294.289649688173,
+  "phase_costs": {
+    "original_FE_worker": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3363.4186572809704,
+      "sampled_process_tree_rss_peak_bytes": 2338578432,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_activity": {
+        "baseline": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "end": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "scope": "WSL-global diagnostic, not dedicated job"
+      },
+      "launch_envelope": {
+        "cap_policy": "min(dynamic_memory_envelope, explicit_tree_cap)",
+        "cgroup_limits": [],
+        "dynamic_launch_cap_bytes": 12000000000,
+        "effective_available_bytes": 2118236246016,
+        "effective_total_bytes": 2163100385280,
+        "launch_cap_bytes": 3221225472,
+        "mem_available_bytes": 2118236246016,
+        "mem_total_bytes": 2163100385280,
+        "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+        "reserve_bytes": 324465057792,
+        "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+        "static_tree_cap_bytes": 12000000000,
+        "tree_cap_bytes": 3221225472
+      }
+    },
+    "original_EMFILE_checker": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 47.87751452391967,
+      "sampled_process_tree_rss_peak_bytes": 405151744,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_activity": {
+        "baseline": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "end": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "scope": "WSL-global diagnostic, not dedicated job"
+      },
+      "launch_envelope": {
+        "cap_policy": "min(dynamic_memory_envelope, explicit_tree_cap)",
+        "cgroup_limits": [],
+        "dynamic_launch_cap_bytes": 12000000000,
+        "effective_available_bytes": 2123115110400,
+        "effective_total_bytes": 2163100385280,
+        "launch_cap_bytes": 3221225472,
+        "mem_available_bytes": 2123115110400,
+        "mem_total_bytes": 2163100385280,
+        "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+        "reserve_bytes": 324465057792,
+        "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+        "static_tree_cap_bytes": 12000000000,
+        "tree_cap_bytes": 3221225472
+      }
+    },
+    "second_EMFILE_checker_tree": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 71.80867281206883,
+      "sampled_process_tree_rss_peak_bytes": 328142848,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2120910168064,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2120910168064,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 3221225472,
+        "planning_cap_bytes": 3221225472,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      }
+    },
+    "final_original_math_checker_tree": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 142.49083482380956,
+      "sampled_process_tree_rss_peak_bytes": 972025856,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2121065533440,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2121065533440,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 3221225472,
+        "planning_cap_bytes": 3221225472,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      }
+    },
+    "pure_full_readback": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 6.97151927719824,
+      "sampled_process_tree_rss_peak_bytes": 105771008,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2121894453248,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2121894453248,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      }
+    }
+  },
+  "parent_lifecycles": [
+    {
+      "stage": "control_smoke",
+      "receiver_source_sha": "1527e11582dde9038a35f3b819f47caf080ce9b3",
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/receiver_result.json",
+        "sha256": "240f781ecbf95cdc7ae19b7b13c1d052f3d39b6a6a50cf4095b89625ed5a0ef7",
+        "bytes": 2295
+      },
+      "component_status": "CONTROL_SMOKE_PASS_NO_FE",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 73.39497447409667,
+      "rss_peak_bytes": 304410624,
+      "swap_peak_bytes": 0,
+      "cleared": true,
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/abi_receipt.json",
+          "sha256": "0354abbfe400624013742e2ddc984301ac8c4de95fda9d1c9ce4e07d55edd739",
+          "bytes": 9935
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/admission.json",
+          "sha256": "d49c30cbe9c69fc84a5ea77deff9901309499f322f5d867046373c86249e2e6e",
+          "bytes": 15393
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/checker_supervisor_summary.json",
+          "sha256": "983cd2ae4d5a3a06f3f889f0375f38cb7aafed1a896e82eb8c39e631313d6560",
+          "bytes": 2915
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/control_smoke_contract.json",
+          "sha256": "df611305c6b847f9a5d0e5b632042f43605291ac728044ace4aa55c153d21b4f",
+          "bytes": 229
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/pressure_stable_window.json",
+          "sha256": "f16bb5c47b285bba2d1c620a67dfd0245a952d7159219d35ab42e4422970aa96",
+          "bytes": 11431
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/receiver_admission.json",
+          "sha256": "8782d22de2c79c04d56c0b0b70668bb6271e3c4e8b957466037e1e9d774a3ec9",
+          "bytes": 266625
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/receiver_binding.json",
+          "sha256": "551a1693652038cc6d685068ba6f955af6bafe82ccb8d66571c54541f63dff4e",
+          "bytes": 1926
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/receiver_result.json",
+          "sha256": "240f781ecbf95cdc7ae19b7b13c1d052f3d39b6a6a50cf4095b89625ed5a0ef7",
+          "bytes": 2295
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/receiver_supervisor_summary.json",
+          "sha256": "949f353bdd40b8e7912b2ee2ff2479901e0a5d4f3f420ca2265ca218c4634bbf",
+          "bytes": 3896
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/run_summary.json",
+          "sha256": "24ba5b6dddc631fdf45e7eae2a088297901f0c7610842a9da7834c4a13e00174",
+          "bytes": 17060
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/control_smoke/worker_supervisor_summary.json",
+          "sha256": "e738ff1ce96fb7810ea0ed3c70e4953afc4630a16ef07ef7493851e6a49033ab",
+          "bytes": 2917
+        }
+      ]
+    },
+    {
+      "stage": "w0",
+      "receiver_source_sha": "1527e11582dde9038a35f3b819f47caf080ce9b3",
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/receiver_result.json",
+        "sha256": "0e16d57d3377859dbc1adb8d5a3c939d73a67b1c1d3f8ec59bfb14dff4a54d58",
+        "bytes": 2288
+      },
+      "component_status": "CHECKER_NOT_COMPLETED",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 3478.276792353019,
+      "rss_peak_bytes": 2383208448,
+      "swap_peak_bytes": 0,
+      "cleared": true,
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/abi_receipt.json",
+          "sha256": "73272f4d87554954f952dcb03f595d6b9c7462f061acf170133e99a9ed672233",
+          "bytes": 9935
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/admission.json",
+          "sha256": "9dd7afb8f8600b0a50a2c2d1c6665abb9952b18712609b24936aa20407957fff",
+          "bytes": 15371
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/checker_supervisor_summary.json",
+          "sha256": "20a093d09393d0d1d856d71864226de3e7a66f921955f71e2d02ebe46f333bb8",
+          "bytes": 2924
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/pressure_stable_window.json",
+          "sha256": "92bc4d28f76c6df53f4a420248ddaa1ea35fa70dbc5bb838c823f6747f5f6c2f",
+          "bytes": 11429
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/receiver_admission.json",
+          "sha256": "5c16291c1032f42e664a739dd367b2ef6ec7fe4431d733ccb3cea5344fb65c60",
+          "bytes": 267522
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/receiver_binding.json",
+          "sha256": "7b74fe94f0dc29faee791d572a968ccf58085c40ba1622773644ce34d4609157",
+          "bytes": 1917
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/receiver_result.json",
+          "sha256": "0e16d57d3377859dbc1adb8d5a3c939d73a67b1c1d3f8ec59bfb14dff4a54d58",
+          "bytes": 2288
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/receiver_supervisor_summary.json",
+          "sha256": "befca5ba5b1ec023ca972297ed7730111d5735041773f456cc95edc46ec4d8e2",
+          "bytes": 4590
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/run_summary.json",
+          "sha256": "c6c43e8535766562d19fc668089d407758c5163a7e02675b11685c084d126c93",
+          "bytes": 11444
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/same_live_literal532.json",
+          "sha256": "a3aa9769882ed316968ee5e6db4ae73f6072e57cb0dec41f6c3542ef28efeebd",
+          "bytes": 2410199
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/worker_supervisor_summary.json",
+          "sha256": "738e633483a611b60afc17be1b4722db1ac68b1c18e93e10de0495333944fd46",
+          "bytes": 7449
+        }
+      ]
+    },
+    {
+      "stage": "saved_check_repair_02",
+      "receiver_source_sha": "9d13a29d2009ae21bd088f1d8aa5403a0dbfed93",
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/receiver_result.json",
+        "sha256": "3264f39bcc601f56386ed211dc54aeb231b4a13919056a2e72aa4afa66d19548",
+        "bytes": 2417
+      },
+      "component_status": "NOT_RETAINED",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 133.1687347930856,
+      "rss_peak_bytes": 328142848,
+      "swap_peak_bytes": 0,
+      "cleared": true,
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/abi_receipt.json",
+          "sha256": "c314efb044669e7bdc9adbbaae3ddbf8cfa3c7fe636285060f4e9db4bf2da2f0",
+          "bytes": 9935
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/descriptor_admission.json",
+          "sha256": "0cde619b5b5a94eb6cc0faa85ee0c222fbac9d868f58d3ee3bab69e73dabf9cd",
+          "bytes": 189
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/pressure_stable_window.json",
+          "sha256": "ddd788e86ac001d6a7dcff6f1f97750211fd96367bfbb55aaca0219895566090",
+          "bytes": 11428
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/receiver_admission.json",
+          "sha256": "06cfc5f749d3b058b40b7be69bfc885cb5da7290fa4c513bf4e6549c6ffb392e",
+          "bytes": 183792
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/receiver_binding.json",
+          "sha256": "fd9a85b7dc9fb8f495bd4bffd26ce2bcba7a427d9c7454608c51dae4d3c83a3e",
+          "bytes": 2056
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/receiver_process_policy.json",
+          "sha256": "c886f1f09e87bc7a993bfed1f82c9c730ace59dc75c5ff32c10672a15c753650",
+          "bytes": 321
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/receiver_result.json",
+          "sha256": "3264f39bcc601f56386ed211dc54aeb231b4a13919056a2e72aa4afa66d19548",
+          "bytes": 2417
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_02/receiver_supervisor_summary.json",
+          "sha256": "233d8528c18f5fe2efbc2ad1cb32b64f613704f075adacd874ade3fdbad978ec",
+          "bytes": 3870
+        }
+      ]
+    },
+    {
+      "stage": "saved_check_repair_03",
+      "receiver_source_sha": "6eb24884c4443021150ce3d55fbf91a7395e21ee",
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/receiver_result.json",
+        "sha256": "c821b371798f263aff8b5cdec49674d08a70977c7b0bc46597c8c1372ad1f55a",
+        "bytes": 2427
+      },
+      "component_status": "PASS_SAVED_COMPONENT_CHECK",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 203.8542940451298,
+      "rss_peak_bytes": 972025856,
+      "swap_peak_bytes": 0,
+      "cleared": true,
+      "files": [
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/abi_receipt.json",
+          "sha256": "ab583a310f3c7862cb2e34f38e21270f9256c5674181d9cb237b3782d9a9bdcf",
+          "bytes": 9935
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/descriptor_admission.json",
+          "sha256": "76b1a4bee9f3a682a12c024e08f2716390992e2cc20a91d828309a9d6c902663",
+          "bytes": 233
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/pressure_stable_window.json",
+          "sha256": "96de0101fec6d3369a36f129ac9e289e6b32f4ae15c0282a39e4b288e3062e2a",
+          "bytes": 11428
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/receiver_admission.json",
+          "sha256": "6a0753e14c09744fadc758b40bc8d0a3d654ef7ca6b38e2a417f284eac0a2f80",
+          "bytes": 182524
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/receiver_binding.json",
+          "sha256": "5bdddb65994486f3ada6a9e9798b485df4cd337cc6c62203b3aa3f13efb6222c",
+          "bytes": 2056
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/receiver_process_policy.json",
+          "sha256": "ef88fc7e38787eb86aa03546602278d23b4b4be0b03d64df291f07eff296ad69",
+          "bytes": 323
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/receiver_result.json",
+          "sha256": "c821b371798f263aff8b5cdec49674d08a70977c7b0bc46597c8c1372ad1f55a",
+          "bytes": 2427
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/receiver_supervisor_summary.json",
+          "sha256": "1a4c0f7e4af595228cab48e1f9c891f5bd99e588af284a9859450c611801ce0c",
+          "bytes": 3869
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/run_summary.json",
+          "sha256": "21301f280cd210c4e4cd95bee9420d56220d2546e216c8bec2f746e2a1b20b58",
+          "bytes": 868
+        }
+      ]
+    }
+  ],
+  "targeted_tests_costs_file": "targeted_tests_v24.json",
+  "nested_times_not_additive": true,
+  "sampled_numerical_tree_peak_bytes": 2383208448,
+  "memory_scope": "sampled simultaneous process-tree RSS; preparation/document/browser peak not yet wholly measured",
+  "own_swap_measured_bytes": 0,
+  "OOC_used": false,
+  "own_swap_measurement_scope": "each stored supervised tree; no universal continuous kernel proof",
+  "priority_initial_gap": {
+    "path": "tmp/task42extra/w0_receiver/runtime_policy_correction.json",
+    "sha256": "984bc81789cd6e26c4d856ec3b90a386ffc76a0798c8e97d7594b0ca9581a095",
+    "bytes": 2194
+  },
+  "priority_initial_whole_run_PASS": false,
+  "neighbors_modified": false,
+  "pre_numeric_failed_bootstrap_elapsed_exact": "NOT_RETAINED",
+  "pre_numeric_failed_bootstrap_accounting_upper_seconds": 600,
+  "checker_inherited_wall_cap_seconds": 4500,
+  "late_delivery_and_publish_costs": "pending final ignored delivery receipt; bounded by unchanged window",
+  "all_old_costs_retained": true,
+  "old_unlinked_loss_seconds": 3284,
+  "exact_all_project_cumulative_seconds": "UNKNOWN",
+  "old_main_window_reset": false,
+  "new_FE_worker_started_once": true,
+  "factor_scope": "only original component/local interior LU and independent checker local algebra; no global p6 Maxwell matrix/factor/PDE solve",
+  "time_origin_scope": "monotonic elapsed from fixed new-window T0; includes explicit600s prior unmeasured prepare allowance, not an exact measured early stage wall",
+  "metadata_collection_supervision": "tmp/task42extra/w0_receiver/closeout/supervision_retry1/collect/summary.json",
+  "metadata_collection_resource_refusals": 1,
+  "metadata_collection_re_admission": "one new measured window; passed, not a threshold change or background polling",
+  "full_project_cost_not_reset": true,
+  "delivery_snapshot_before_publish_seconds": 7632.938736757031,
+  "light_metadata_and_docs": {
+    "closeout/supervision_retry1/collect/summary.json": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.8302605180069804,
+      "sampled_process_tree_rss_peak_bytes": 65986560,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "closeout/docs_supervision/check/summary.json": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.8623136889655143,
+      "sampled_process_tree_rss_peak_bytes": 60153856,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  }
+}

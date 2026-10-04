@@ -32,3 +32,18 @@ launcher、独立 tmux、监督、编译器和 worker 同树计费，任务末�
 
 FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED
 保持。只有 W0 完整结果才可决定后续端口接入；W1/W2 和全目标资格不能继承。
+
+本轮已实际完成 worker、955项原独立checker、4项故意错误负控及1619原件
+完整读回，见 [Response V24](../../../docs/task042extra_feinn_5nm/response_v24.md)。
+原worker和raw未重放/覆盖；两次EMFILE与数值前CPU拒绝保留。保存检查仅用：
+`v24_w0_saved_check.dat`、有定位证据的`v24_w0_saved_check_repair.dat`、
+`v24_w0_saved_check_cached.dat`，分别保留独立attempt目录；现有目录均拒绝再次启动。
+
+最终loader用canonical名称复用只读mapping，不改变原数学checker；3385次请求
+对应1619映射。只提高自身soft FD到4096，hard1048576不变；不会修改系统/其他
+项目。接收器在tmux派生前传递nice10/idle-I/O/已观察单核，并验证自身终端PID/
+start/UID；单核观察器可显式补偿自己实测CPU自耗，保留2ticks安全量和原始忙率，
+邻worker/忙SMT排除不变。原运行的初始优先级缺口仍是流程限定，不追認PASS。
+
+W1已冻结的32060-key/36244923B原件在本机声明路径缺失；只有该原件hash及有效
+完整接入合同齐备才能执行，不用库存摘要或重建AUTO。W2仍受dot C1c及后端门。

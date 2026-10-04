@@ -1,0 +1,124 @@
+{
+  "schema": "task42extra.w0-receiver-math-closure.v24",
+  "original_math_source": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+  "worker": {
+    "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/worker_report.json",
+    "sha256": "324d59624b8cb7837d7dc0251e60cc060b292dccea05002d07710d6c205318bf",
+    "bytes": 6609752
+  },
+  "original_independent_checker": {
+    "path": "benchmarks/artifacts/task42extra/w0_receiver/saved_check_repair_03/checker_report.json",
+    "sha256": "9434bebf2b74c4ee418b873ba7800f7cc27ec4bf45a06ba6d3f93b7c225567f1",
+    "bytes": 315983
+  },
+  "metrics_csv": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/w0_metrics_v24.csv",
+    "sha256": "19391a366d03c4e9f75f1eb7e8090e7cd9a8ec671503d88629036df09401d5b5",
+    "bytes": 60112
+  },
+  "metric_count": 955,
+  "all_metric_values_recomputed_pass": true,
+  "worst_by_original_limit": {
+    "1e-12": {
+      "metric": "arbitrary/augmented_fe_residual",
+      "error_norm": 1.1990572598759359e-08,
+      "operation_scale": 478171.9561917341,
+      "relative_recomputed": 2.507585909942293e-14,
+      "limit": 1e-12,
+      "zero_scale": false,
+      "pass_recomputed": true
+    },
+    "1e-11": {
+      "metric": "manufactured/original_state_recovery",
+      "error_norm": 3.4557323471821024e-10,
+      "operation_scale": 230.2860421372163,
+      "relative_recomputed": 1.5006260540632327e-12,
+      "limit": 1e-11,
+      "zero_scale": false,
+      "pass_recomputed": true
+    },
+    "1e-10": {
+      "metric": "manufactured/residual/original_native",
+      "error_norm": 2.1680903279071415e-08,
+      "operation_scale": 21675543.28705992,
+      "relative_recomputed": 1.0002472829372951e-15,
+      "limit": 1e-10,
+      "zero_scale": false,
+      "pass_recomputed": true
+    }
+  },
+  "negative_controls": {
+    "Hhat_substituted_for_original_H": {
+      "error_norm": 0.23653824692238476,
+      "finite": true,
+      "limit": 1e-11,
+      "minimum_relative_separation": 0.001,
+      "operation_scale": 0.999741992982606,
+      "passed": false,
+      "relative": 0.23659929119982476,
+      "separated": true,
+      "zero_scale_rule": "error_must_be_exactly_zero"
+    },
+    "omitted_correction": {
+      "error_norm": 0.5366267056802988,
+      "finite": true,
+      "limit": 1e-11,
+      "minimum_relative_separation": 0.001,
+      "operation_scale": 1.8976492480748461,
+      "passed": false,
+      "relative": 0.2827849805356303,
+      "separated": true,
+      "zero_scale_rule": "error_must_be_exactly_zero"
+    },
+    "wrong_conjugation": {
+      "error_norm": 0.2495077618476858,
+      "finite": true,
+      "limit": 1e-11,
+      "minimum_relative_separation": 0.001,
+      "operation_scale": 1.8976492480748461,
+      "passed": false,
+      "relative": 0.13148254984466173,
+      "separated": true,
+      "zero_scale_rule": "error_must_be_exactly_zero"
+    },
+    "wrong_sign": {
+      "error_norm": 1.0732534113605976,
+      "finite": true,
+      "limit": 1e-11,
+      "minimum_relative_separation": 0.001,
+      "operation_scale": 1.8976492480748461,
+      "passed": false,
+      "relative": 0.5655699610712606,
+      "separated": true,
+      "zero_scale_rule": "error_must_be_exactly_zero"
+    }
+  },
+  "actual_inventory": {
+    "active_trace_rows": 16992,
+    "cell_count": 80,
+    "degree": 6,
+    "independent_rows": 52992,
+    "interior_rows": 36000,
+    "local_dimension": 882,
+    "local_interiors": 450,
+    "local_traces": 432,
+    "port_rows": 532,
+    "storage_rows": 55950
+  },
+  "independent_component_pass": true,
+  "same_live_native_receipt": {
+    "path": "benchmarks/artifacts/task42extra/w0_receiver/w0/same_live_literal532.json",
+    "sha256": "a3aa9769882ed316968ee5e6db4ae73f6072e57cb0dec41f6c3542ef28efeebd",
+    "bytes": 2410199
+  },
+  "all_saved_members_hash_checked": true,
+  "original_H_not_Hhat": true,
+  "source_cache_recheck": {
+    "path": "benchmarks/artifacts/task42extra/w0_receiver/readback/source_cache_recheck.json",
+    "sha256": "3cf3dc951dc19cc5845f6623388f5d66080ab346a6d5645395fdf0728f8d6380",
+    "bytes": 128
+  },
+  "math_checker_rewritten": false,
+  "FE_worker_replayed": false,
+  "full_target_qualified": false
+}

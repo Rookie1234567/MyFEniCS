@@ -1,0 +1,7 @@
+{
+  "schema": "task42extra.w0-render.v24",
+  "status": "PENDING_PUBLISH_AND_ACTUAL_BROWSER",
+  "browser_visual_pass": false,
+  "scope": "two new key pages only; old V23/review accepted render receipt reused",
+  "history_render_failures_retained": true
+}

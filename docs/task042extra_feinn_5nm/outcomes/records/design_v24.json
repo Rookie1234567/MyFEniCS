@@ -1,0 +1,23 @@
+{
+  "schema": "task42extra.w0-receiver-design.v24",
+  "authority": "latest explicit user request continues original W0 in existing FEINN branch; ReviewV23 literal no-batch was not silently treated as new grant",
+  "new_window": "tmp/task42extra/w0_receiver/window_record.json",
+  "old_main_window_reset": false,
+  "no_competing_clone": true,
+  "numerical_source_commit": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+  "user_branch_only": "task42extra_feinn_5nm",
+  "worker_count": 1,
+  "math_checker_unchanged": true,
+  "component_hard_bytes": 3221225472,
+  "light_tree_hard_bytes": 2147483648,
+  "neighbor_growth_reserve_bytes": 412316860416,
+  "MPI": 1,
+  "math_threads": 1,
+  "Torch": "NOT_IMPORTED",
+  "CPU": "observed vacant physical core per stage",
+  "NN_training": false,
+  "PDE_solved": false,
+  "reference_solved": false,
+  "W1_input": "existing frozen original manifest only",
+  "W2": "dot C1c prerequisite; no duplicate backend/PC"
+}

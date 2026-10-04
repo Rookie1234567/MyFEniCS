@@ -1,0 +1,35 @@
+{
+  "schema": "task42extra.w0-receiver-next-input.v1",
+  "observed_epoch": 1791128299.8857443,
+  "scope": "finite read-only probes at declared original paths and the fixed Git tree, not an AUTO rebuild",
+  "dependency_commit": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+  "expected_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+  "expected_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "expected_bytes": 36244923,
+  "expected_key_count": 32060,
+  "expected_ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "probes": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+      "exists": false,
+      "is_file": false
+    },
+    {
+      "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+      "exists": false,
+      "is_file": false
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+      "exists": false,
+      "is_file": false
+    }
+  ],
+  "git_tree_entry": "",
+  "other_worktree_modified": false,
+  "AUTO_generated": false,
+  "W1_status": "NOT_RUN_FROZEN_MANIFEST_UNAVAILABLE_AFTER_W0_NUMERICAL_CLOSURE",
+  "W2_status": "HELD_PENDING_W1_AND_DOT_C1C",
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "requested_from_user": "readable existing frozen manifest path/artifact URL; no manual clone/copy/install/run"
+}

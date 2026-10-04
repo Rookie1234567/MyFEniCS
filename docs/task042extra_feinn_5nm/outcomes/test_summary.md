@@ -288,3 +288,11 @@ Review V18最终公式及旧专题两张区域表右侧的实际浏览器资格�
 P0最初workflow接线和compact负控字段失败保留，修复测试后最多两次重试；初期CPU拒绝及两次新窗口再准入、mpmath缺失和格式失败保留。资格化面组件没有重放；43-test早期XML被47-test覆盖，原XML NOT_RETAINED但日志/费用保留，最终47-test XML唯一保存。旧Review V22已视觉封存证据复用；新页视觉只记实际浏览器结果，不以本地parser替代。
 
 [测试](records/targeted_tests_v23.json)、[修复/限制](records/repair_log_v23.json)、[独立checker](records/independent_checker_v23.json)、[视觉](records/render_check_v23.json)、[完整费用](records/resource_costs_v23.json)。两实现局部都过，但解析成本无20%优势，推荐q60；不提升旧投影FAIL为严格解或NN收益。
+
+## V24：W0实际科学raw与独立checker闭环
+
+最终28项pure定向fixtures覆盖固定源码、公共one-run识别、单调截止、自身终端PID/start/UID/锁、观察器自耗及邻任务保留、EMFILE子进程/自身hard FD不变、5000别名复用、数组损坏/缺件/额外字节/逃逸/关闭；Ruff/compileall通过。最终Junit见[测试索引](records/targeted_tests_v24.json)，最初9项Ruff错误、fixture NameError与入口首行错误均保留，不标full pytest或CI。
+
+实际原数学worker一次，独立checker总三次数值尝试（两次EMFILE/末次955门及4负控通过）与一次数值前CPU拒绝独立计费；原raw不覆盖。纯数组逐成员readback通过，6.97152s/105771008B/own swap0；没有新FE/factor/solve。stage原采样及source/hash见[运行](records/run_index_v24.json)、[原门](records/independent_checker_v24.json)、[readback](records/durable_readback_v24.json)。
+
+初始优先级/IO/终端亲和性缺口限定保留；W0同80组件不能替原尺寸散射有效解。新关键页[GitHub呈现记录](records/render_check_v24.json)独立记录实际范围/失败，旧V23已验收视觉按原收据复用，不重复批量渲染。

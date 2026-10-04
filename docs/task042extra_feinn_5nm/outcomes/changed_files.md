@@ -279,3 +279,9 @@ README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧�
 新增Response V23、单个专题、compact原分母/运行/资格/checker/成本/修复/渲染/六依赖组；本任务README/summary导航及自己的progress/model/test条目同步，全部历史不删。原task/review/旧场/旧α和其他分支未改，所有大数组/完整Decimal字符串/资源轨迹/浏览器profile留ignored。source与文档HEAD分开；无新Maxwell/Gram/NN，production numerical/core为空，接收线仍须自己的完整keys/物理资格。
 
 [六类依赖](records/selective_merge_manifest_v23.json)、[可运行包](../../../benchmarks/cases/portable_interval_facet/README.md)、[运行source](records/run_index_v23.json)。
+
+## V24：固定主线组件接收和保存检查器局部I/O修复
+
+新增src/runners/frozen_source_snapshot与fresh_component_receiver只做已有Git objects的最小hash-bound闭包、显式one-run/time/resource/锁/隔离tmux绑定，不维护第二个数学worker。saved_component_checker只为原数学checker提供自身FD及canonical只读加载，benchmarks/check_saved_array_snapshot逐原件stream/hash/关闭/fsync；没有新求解内核。feinn_resources/task042_shared仅加显式opt-in单核观察器自耗补偿，ordinary default与邻任务排除门保持。scripts公开入口及5个receiver dat均拒绝重复run目录；旧失败目录不覆盖。
+
+三份targeted test文件最终28项通过，数学d4b6ed6b源码/cache133文件未改。新增response_v24/W0专题、compact数值/Gate/资源/修复/输入/955行CSV，README更新当前用户接续、summary仅前置并逐字保留历史；自己的progress/model/test同步。raw/科学报告/依赖cache/终端/完整采样留ignored。无其他分支/工作树或master变动；六组边界见[manifest](records/selective_merge_manifest_v24.json)。
