@@ -1,0 +1,17 @@
+{
+  "error": "worker is not COMPLETED/exit0",
+  "error_type": "ValueError",
+  "passed": false,
+  "preflight": {
+    "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/surface_launcher_preflight_20261004T224727Z_2.json",
+    "sha256": "5d4e72eec011e3807f2ef9d96735c4e9fd2fb544ed8be49dadb5cba689d357ec"
+  },
+  "schema": "task40extra.selected-surface-launcher.v1",
+  "scope": "selected top/x component only; no target/full-C-D/PDE qualification",
+  "status": "SURFACE_LAUNCH_FAILED_OR_PARTIAL",
+  "traceback": "Traceback (most recent call last):\n  File \"/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/launch_target_surface_cost.py\", line 560, in main\n    require_summary(summary, preflight['source'], WALL)\n  File \"/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/launch_target_surface_cost.py\", line 105, in require_summary\n    require(summary.get('classification') == 'COMPLETED' and summary.get('leader_exit_code') == 0,\n  File \"/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/launch_target_surface_cost.py\", line 45, in require\n    raise ValueError(message)\nValueError: worker is not COMPLETED/exit0\n",
+  "watchdog_receipt": {
+    "path": "summary.json",
+    "sha256": "e806174c1650a4e097181ff7b5804e38c30f08662a055bf853f7fe0e9f15185a"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schema": "task40extra.independent-c2a-selected-surface-review.v1",
+  "status": "PASS_WITH_SCOPE",
+  "review_kind": "source-only final review plus existing JSON/log/hash evidence; no project execution by reviewer",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "source_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "observed_worktree_clean": true,
+  "core_sha256": "748e925d42b0da1e27240b10d47bf586173ced8ee44a93cd78ea4368a6dbae24",
+  "reference_sha256": "cace8b9b472b9f8b7187f4cde1d028219041483a29cfc1981f9e6801c661737a",
+  "launcher_sha256": "999cbac8a688c24b85eda88404cad4f6ebe44dd4022b2946f78d51c37656b865",
+  "launcher_tests_sha256": "971d32fe202dcb757ec8ab15e6b2e98bfbd083bc60d065238687811ef5bf9f71",
+  "observed_test_log": {
+    "path": "surface_launcher_synthetic_tests_frozen.log",
+    "sha256": "65a81fa94ad75d65feafc6d89c4feb506f623d9734ac6f16b66f8947c8cdaa09",
+    "passed": 19,
+    "seconds": 0.072,
+    "executed_by_reviewer": false
+  },
+  "actual_preflight": {
+    "path": "surface_launcher_preflight_20261004T224159Z_14.json",
+    "sha256": "1d9f47a9d84d96c498f5e2ed93a88885727bbfd19f2dd9711ca65559d1d3ffdf",
+    "status": "SOURCE_ABI_METADATA_LIBRARY_RESOURCE_PREFLIGHT_ONLY_PASS",
+    "surface_executed": false,
+    "dynamic_launch_cap_bytes": 3601444864,
+    "complete_metadata_current_parent_child_environment_equality": true,
+    "metadata_and_current_source_equality": true
+  },
+  "metadata_seal_review": {
+    "path": "independent_metadata_seal_review.json",
+    "sha256": "17e50c786db8c1a635b00ee6d1fcb418fde6422f41eeb9803a35317143f86c27",
+    "seal_sha256": "de12a2aca79e634c6c4b487a74bec51b561ecb448959372de2c8cb5f0f5a2f0a",
+    "library_receipt_sha256": "bbce568cce16ab1b4c79abb05f0198cabe9f84eed6a1dd6f09d2eb6f4409f5be",
+    "all_ten_archive_members_and_nine_original_worker_files_verified": true,
+    "actual_library_file_id_and_version_zero_xattrs_verified": true
+  },
+  "reviewed_gates": [
+    "Exact clean source/tree, qualified relative interpreter inode/hash and full environment dictionaries before and after work",
+    "Immutable complete original AUTO inventory, receipt, seal, archive, every member, source and metadata watchdog linkage before mesh",
+    "Producer predicted_total_bytes and reference requested_bytes/live_named_bytes normalized without omitted workspace or double-counting alias totals",
+    "Unchanged supervisor with 3 GiB whole-tree cap, 4500 s wall, zero process/global swap, strict timebase, complete identities, immediate stop and descendant cleanup",
+    "Measured RSS plus declared allocation plus 128 MiB reserve before guarded allocations",
+    "Exact 18-cell p6 native fixture, six selected top/x indices and three distinct phase tuples; no near-cutoff coverage claim",
+    "Primary degree 160 with 6561 points; independent public Function.eval rules at degrees 168/176 with 7225/7921 points across six actual top facets",
+    "Raw K^H contraction versus integral phase times conjugate of expanded native field; independently checked native ownership, cell order and MPC equations",
+    "Unchanged raw-to-masked cutoff; exact persisted artifact hashes; three nonzero native trace states",
+    "Primary versus degree+16 and degree+8 versus degree+16 at 1e-10 integral operation scale with exact-zero rule and finite guards",
+    "Saved scalar recheck admits 1 MiB then validates exact NPY length, 6x3 header, native dtype, no objects and no Fortran layout before materialization",
+    "Source, environment, result, artifact and watchdog postconditions retained; failed and partial records retained"
+  ],
+  "closed_review_findings": [
+    "Real receipt metadata.source schema replaces nonexistent metadata.source_head/source_tree; exact tree remains bound by seal/current source",
+    "Saved scalar arrays are bounded by header and exact file payload before np.load"
+  ],
+  "remaining_concrete_source_or_schema_blocker": null,
+  "scope_limits": [
+    "This is source and orchestration readiness, not numerical qualification or launch authorization",
+    "Compiler/native workspace declarations are allowances; the whole-process watchdog may legitimately stop large FFCx tables",
+    "Only selected top/x components are covered; no full C/D, all-mode action, carrier, H matrix, volume, factor, PDE or output qualification",
+    "Source durability and fresh launch-time admission remain the coordinator's separate gates"
+  ],
+  "reviewer_executed_project_imports_tests_FE_JIT_or_numerical_dispatch": false
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "library_file_id": "libfile_39eff9ced79081919d56c4f6f08d975d",
+  "file_id": "file_00000000afe08207a2e2f83e9850b54a",
+  "file_name": "target_AUTO_selected_surface_source_checkpoint.zip",
+  "version": 0,
+  "archive_bytes": 131036,
+  "archive_sha256": "83e3c5e0d1c7f7aa92544beb3e962d4e9d4065db3d9b98d3f6187185ea0882a3",
+  "members_verified": 24,
+  "full_uncompressed_bytes": 370609,
+  "member_manifest_sha256": "8d80a37b35b1bdfb12e6c08cb2f1155cf2e7feb393d07a2f5ec45eeb6a706c59",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "source_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "qualification": "SOURCE_REVIEW_PASS_SURFACE_NOT_RUN",
+  "scope": "six selected original top/x modes only, degree160 primary versus168/176 public reference",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/surface_source_fresh_readback/target_AUTO_selected_surface_source_checkpoint.zip"
+}

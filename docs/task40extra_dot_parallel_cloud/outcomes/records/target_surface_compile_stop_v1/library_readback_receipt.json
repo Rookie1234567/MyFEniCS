@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "library_file_id": "libfile_531062cd6f0081919ef43bfad1cb8d02",
+  "file_id": "file_00000000a8988207ad7c337875425b6a",
+  "file_name": "target_p6_degree160_compile_cap_stop.zip",
+  "version": 0,
+  "archive_bytes": 220313,
+  "archive_sha256": "2a21143e40ead61e35873784d42973625d22fbb740a434349708d2d56392f933",
+  "members_verified": 11,
+  "full_uncompressed_bytes": 1887259,
+  "member_manifest_sha256": "38b5804fea111f3fc76e94e06e12526728224f629a1208d3029ef0d0450de641",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "scientific_status": "RESOURCE_CONTROLLED_STOP_NO_SURFACE_ACTION_QUALIFICATION",
+  "scope": "cold p6 degree160 single top/x primary compile stopped before C/binary/vector output",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/surface_failed_terminal_packet/fresh_library_readback/target_p6_degree160_compile_cap_stop.zip",
+  "zero_byte_files_preserved": [
+    "primary_jit_cache/libffcx_forms_95a67c23f6c12ab69186e8a85bee9c802642554b.c",
+    "primary_jit_cache/libffcx_forms_95a67c23f6c12ab69186e8a85bee9c802642554b.c.~44"
+  ]
+}

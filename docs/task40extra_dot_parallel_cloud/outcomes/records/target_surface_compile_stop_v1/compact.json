@@ -1,0 +1,174 @@
+{
+  "schema": "task40extra.target-surface-compile-stop.compact.v1",
+  "status": "RESOURCE_CONTROLLED_STOP",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "published_source_commit": "0b86023780aa9fba658ac44998c002cf6312f5b3",
+  "surface_fixture": {
+    "cells": 18,
+    "degree": 6,
+    "element_dimension": 882,
+    "accuracy_mesh": false
+  },
+  "form": "one production top/x form",
+  "quadrature_degree": 160,
+  "mode_count": 32060,
+  "selected_original_mode_indices": [
+    16028,
+    16029,
+    0,
+    1,
+    6018,
+    6019
+  ],
+  "scope": "compiler-budget negative only; no completed surface action or quadrature comparison",
+  "resources": {
+    "classification": "RESOURCE_CONTROLLED_STOP",
+    "leader_exit_code": -9,
+    "elapsed_seconds": 75.94835301800049,
+    "sampled_process_tree_rss_peak_bytes": 3247665152,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "stop_event": {
+      "reason": "RESOURCE_CONTROLLED_STOP",
+      "monotonic": 47586.745980287,
+      "timestamp_ns": 1791154122867629196,
+      "grace_seconds": 2
+    },
+    "launch_envelope": {
+      "mem_total_bytes": 10451464192,
+      "mem_available_bytes": 7873613824,
+      "effective_total_bytes": 10451464192,
+      "effective_available_bytes": 7873613824,
+      "reserve_bytes": 4294967296,
+      "launch_cap_bytes": 3221225472,
+      "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+      "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+      "static_tree_cap_bytes": 12000000000,
+      "cgroup_limits": [],
+      "dynamic_launch_cap_bytes": 3578646528,
+      "tree_cap_bytes": 3221225472,
+      "cap_policy": "min(dynamic_memory_envelope, explicit_tree_cap)"
+    }
+  },
+  "outputs": {
+    "C_source_bytes": 0,
+    "binary_produced": false,
+    "surface_vectors_produced": false,
+    "reference_results_produced": false,
+    "factor_calls": 0,
+    "PDE_calls": 0,
+    "volume_form_calls": 0
+  },
+  "precompile_admission": {
+    "measured_current_whole_tree_RSS_bytes": 448032768,
+    "predicted_additional_bytes": 1744830464,
+    "reserve_bytes": 134217728,
+    "admission_total_bytes": 2327080960,
+    "cap_bytes": 3221225472,
+    "prediction_not_bound": true
+  },
+  "library": {
+    "status": "PASS",
+    "library_file_id": "libfile_531062cd6f0081919ef43bfad1cb8d02",
+    "file_id": "file_00000000a8988207ad7c337875425b6a",
+    "file_name": "target_p6_degree160_compile_cap_stop.zip",
+    "version": 0,
+    "archive_bytes": 220313,
+    "archive_sha256": "2a21143e40ead61e35873784d42973625d22fbb740a434349708d2d56392f933",
+    "members_verified": 11,
+    "full_uncompressed_bytes": 1887259,
+    "member_manifest_sha256": "38b5804fea111f3fc76e94e06e12526728224f629a1208d3029ef0d0450de641",
+    "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+    "scientific_status": "RESOURCE_CONTROLLED_STOP_NO_SURFACE_ACTION_QUALIFICATION",
+    "scope": "cold p6 degree160 single top/x primary compile stopped before C/binary/vector output",
+    "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/surface_failed_terminal_packet/fresh_library_readback/target_p6_degree160_compile_cap_stop.zip",
+    "zero_byte_files_preserved": [
+      "primary_jit_cache/libffcx_forms_95a67c23f6c12ab69186e8a85bee9c802642554b.c",
+      "primary_jit_cache/libffcx_forms_95a67c23f6c12ab69186e8a85bee9c802642554b.c.~44"
+    ]
+  },
+  "raw_members": [
+    {
+      "path": "launch_preflight.json",
+      "bytes": 186865,
+      "sha256": "5d4e72eec011e3807f2ef9d96735c4e9fd2fb544ed8be49dadb5cba689d357ec"
+    },
+    {
+      "path": "launcher_terminal_result.json",
+      "bytes": 1495,
+      "sha256": "2aba1dbfbf871029eae26d118ea78142f23047ccd7b679a204f6d37bf6fd25ec"
+    },
+    {
+      "path": "phase.json",
+      "bytes": 124,
+      "sha256": "9359ee8c39b2e2aa60885673949ecf18d67a0b6a2aa838f0aeb587d8c6c0a2d4"
+    },
+    {
+      "path": "primary_jit_cache/libffcx_forms_95a67c23f6c12ab69186e8a85bee9c802642554b.c",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "primary_jit_cache/libffcx_forms_95a67c23f6c12ab69186e8a85bee9c802642554b.c.~44",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "resources.jsonl",
+      "bytes": 1492219,
+      "sha256": "e8e5e490e7892db4a46bf0ddb26d92be261079fe002a2a5bc6dc2bdbdabc25ad"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 181614,
+      "sha256": "e806174c1650a4e097181ff7b5804e38c30f08662a055bf853f7fe0e9f15185a"
+    },
+    {
+      "path": "surface/partial_surface_record.json",
+      "bytes": 10165,
+      "sha256": "256b685b4d23b79143bd351c75f4656b8a6e661e3d84e2340fe271bcd08ad522"
+    },
+    {
+      "path": "surface_events.jsonl",
+      "bytes": 12555,
+      "sha256": "36b775cc9f89fc7528a168393e46c9957ed8f322eb14d869d09d705a4a3a3173"
+    },
+    {
+      "path": "worker.log",
+      "bytes": 219,
+      "sha256": "b3e471b19572212eae04d3ed134e6dd66279e0a4944d1ca0ad64afac1e9a3b35"
+    },
+    {
+      "path": "member_manifest.json",
+      "bytes": 2003,
+      "sha256": "38b5804fea111f3fc76e94e06e12526728224f629a1208d3029ef0d0450de641"
+    }
+  ],
+  "limitations": [
+    "No lower quadrature or mode truncation substituted",
+    "No cap increase or numerical retry",
+    "No inference about workstation feasibility, full inverse, physical accuracy, or target qualification"
+  ],
+  "compiler_stage_diagnostic": {
+    "samples": 302,
+    "max_compiler_descendant_count": 0,
+    "observed_comms": [
+      "python"
+    ],
+    "peak_members": [
+      {
+        "pid": 2,
+        "comm": "python",
+        "rss_bytes": 100106240
+      },
+      {
+        "pid": 44,
+        "comm": "python",
+        "rss_bytes": 3147558912
+      }
+    ],
+    "internal_allocation_function": "NOT_MEASURED"
+  }
+}
