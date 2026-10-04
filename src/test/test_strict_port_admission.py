@@ -34,7 +34,7 @@ def fixture(tmp_path):
     "failure",
     list(LIMITS)
     + list(IDENTITY_FIELDS)
-    + ["file", "oracle_UNKNOWN", "consumers", "shared", "p6_only"],
+    + ["file", "oracle_UNKNOWN", "consumers", "shared", "schema", "p6_only"],
 )
 def test_real_campaign_and_direct_solver_guards(tmp_path, monkeypatch, failure):
     from src.runners import fixed_phase_campaign as campaign
@@ -53,6 +53,8 @@ def test_real_campaign_and_direct_solver_guards(tmp_path, monkeypatch, failure):
         r["all_consumers"] = False
     elif failure == "shared":
         r["shared_physics"] = False
+    elif failure == "schema":
+        r["schema"] = "unsupported.schema"
     else:
         r["p6_failed"] = True  # An unrelated role is not a shared failure.
     state = qualification(r, e)
@@ -91,3 +93,12 @@ def test_low_bytes_corrupted_after_binding(tmp_path):
     assert qualification(r, e)["strict_complete_qualified"]
     (tmp_path / "frozen.json").write_text('{"frozen":null}\n')
     assert "actual_hash_bound_files" in qualification(r, e)["failed"]
+
+
+@pytest.mark.parametrize("key", ["identity", "files", "metrics"])
+def test_corrupted_mapping_rejected_before_entry(tmp_path, key):
+    from src.runners.fixed_phase_campaign import v22_admission
+    r, e = fixture(tmp_path)
+    r[key] = None
+    with pytest.raises(ValueError, match="MAPPING"):
+        v22_admission("v22_e3_correction", [], strict_evidence=r, current_expected=e)

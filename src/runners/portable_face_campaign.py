@@ -7,4 +7,13 @@ def run_stage(manifest, artifact, marker, budget):
 
     if manifest["stage"] == "v23_admission_audit":
         return admission_audit(ROOT, artifact, marker, budget)
+    from benchmarks.portable_facet_lifecycle import qualify, cold_lifecycle
+
+    if manifest["stage"] == "v23_facet_qualification":
+        return qualify(ROOT, artifact, marker, budget)
+    implementations = {"v23_analytic_cold": "analytic", "v23_q60_cold": "q60"}
+    if manifest["stage"] in implementations:
+        return cold_lifecycle(
+            ROOT, artifact, marker, budget, implementations[manifest["stage"]]
+        )
     raise ValueError("V23_EXPLICIT_COMPONENT_STAGE_REQUIRED")

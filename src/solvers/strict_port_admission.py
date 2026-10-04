@@ -41,6 +41,8 @@ def qualification(record, expected):
     if record.get("schema") != "strict_port_qualification.v1":
         errors.append("schema")
     identity = record.get("identity", {})
+    if not isinstance(identity, dict):
+        raise ValueError("STRICT_IDENTITY_MAPPING_REQUIRED")
     identity_valid = all(
         isinstance(expected.get(k), str)
         and len(expected[k]) == (40 if k == "source" else 64)
@@ -52,6 +54,8 @@ def qualification(record, expected):
         errors.append("caller_expected_identity")
     bindings = record.get("files", {})
     expected_files = expected.get("files", {})
+    if not isinstance(bindings, dict) or not isinstance(expected_files, dict):
+        raise ValueError("STRICT_FILE_BINDING_MAPPINGS_REQUIRED")
     files_valid = bool(expected_files) and set(bindings) == set(expected_files)
     for name, original in expected_files.items():
         actual = bindings.get(name)
@@ -69,6 +73,8 @@ def qualification(record, expected):
     if not files_valid:
         errors.append("actual_hash_bound_files")
     metrics = record.get("metrics", {})
+    if not isinstance(metrics, dict):
+        raise ValueError("STRICT_METRIC_MAPPING_REQUIRED")
     gates = {}
     for key, limit in LIMITS.items():
         value = metrics.get(key)
@@ -81,11 +87,11 @@ def qualification(record, expected):
         gates[key] = record.get(key) is True
         if not gates[key]:
             errors.append(key)
-    readable = bool(identity_valid and files_valid)
+    readable = bool(identity_valid and files_valid and record.get("schema") == "strict_port_qualification.v1")
     return dict(
-        component_passed=bool(gates["shared_physics"] and gates["role_component"]),
+        component_passed=bool(readable and gates["shared_physics"] and gates["role_component"]),
         negative_field_readable=readable,
-        strict_complete_qualified=bool(readable and all(gates.values())),
+        strict_complete_qualified=bool(not errors and readable and all(gates.values())),
         solve_admitted=False,
         execution_authority="review_report_v22.md: all new Maxwell factors/solves=0",
         gates=gates,

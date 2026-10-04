@@ -42,7 +42,12 @@ STAGES.update({
     "v22_target_local_face": ("fe",7200,"conditional",None),
     "v22_saved_checker": ("pure",1800,"D",None),
 })
-STAGES.update({"v23_admission_audit": ("pure", 1200, "P0", None)})
+STAGES.update({
+    "v23_admission_audit": ("pure", 1200, "P0", None),
+    "v23_facet_qualification": ("fe", 3000, "P1", None),
+    "v23_analytic_cold": ("fe", 1200, "P2", None),
+    "v23_q60_cold": ("fe", 1200, "P2", None),
+})
 
 
 def load(path, raw, config):

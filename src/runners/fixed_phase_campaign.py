@@ -283,6 +283,17 @@ def launch(spec):
         group_used_seconds_at_launch=used,
     )
     write(directory / "run_manifest.json", state)
+    if version == 23:
+        state["field_space"] = "NONE: local Basix facet/array component only; no new FE field"
+        component_path = ROOT / "input/task042extra_feinn_5nm/facet_component_v23.json"
+        if component_path.is_file():
+            state["component_design"] = dict(path=str(component_path), sha256=sha(component_path))
+        if spec.derived["environment_mode"] == "fe":
+            current_abi = ROOT / "tmp/task42extra/v23/native_abi_current.json"
+            if not json.loads(current_abi.read_text()).get("qualified"):
+                raise RuntimeError("V23_CURRENT_NATIVE_COMPONENT_ABI_REQUIRED")
+            state["current_native_ABI"] = dict(path=str(current_abi), sha256=sha(current_abi))
+        write(directory / "run_manifest.json", state)
     try:
         with (ROOT / "tmp/task42extra/numerical.lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -418,6 +429,9 @@ def worker(directory):
                     or sha(m["frozen_inputs"]["path"]) != m["frozen_inputs"]["sha256"]):
                 raise RuntimeError("V21_BOUND_ABI_OR_INPUT_CHANGED")
             if m["campaign_version"] == 23:
+                for item in (m.get("component_design"), m.get("current_native_ABI")):
+                    if item and sha(item["path"]) != item["sha256"]:
+                        raise RuntimeError("V23_COMPONENT_OR_ABI_CHANGED")
                 from src.runners.portable_face_campaign import run_stage
                 result,files = run_stage(m,artifact,marker,budget)
             else:
