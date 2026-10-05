@@ -121,9 +121,15 @@ class WaveSubspace:
         )
 
 
-def optimal_amplitudes(action, subspace, columns):
+def optimal_amplitudes(action, subspace, columns, *, applied_columns=None):
     """Independent small SVD; both learned and fixed routes receive this."""
-    B = np.column_stack([action.apply(columns[:, j]) for j in range(columns.shape[1])])
+    B = (
+        np.column_stack([action.apply(columns[:, j]) for j in range(columns.shape[1])])
+        if applied_columns is None
+        else np.asarray(applied_columns)
+    )
+    if B.shape != columns.shape or B.dtype != np.complex128 or not np.isfinite(B).all():
+        raise ValueError("BOUNDED_ORIGINAL_ACTION_COLUMNS_INVALID")
     Z = subspace.project(B)
     left, singular, right = linalg.svd(Z, full_matrices=False)
     if not len(singular) or singular[0] == 0:

@@ -36,6 +36,21 @@ def window():
     return data
 
 
+def stage_deadline(spec, allocation, campaign):
+    """Preserve the original window and leave time for full frozen-field gates."""
+    training = spec["role"] in (
+        "LEARNED_WAVE_GREEDY",
+        "FIXED_WAVE_GREEDY_CONTROL",
+    )
+    # Both routes receive the same common cost node. Subsequent continuation
+    # must also leave the FE rebuild/checker and final delivery within the one
+    # original 48h window; this is no new window or solver success condition.
+    reserve = 10800 if training else 1800
+    return min(
+        allocation["deadline_monotonic"], campaign["deadline_monotonic"] - reserve
+    ), reserve
+
+
 def durable(spec, *, origin, attempt=1):
     from src.runners.durable_terminal import launch_tmux
     from src.runners.feinn_resources import admission
@@ -137,6 +152,7 @@ def launch(spec):
         in (
             "checks",
             "fast_checks",
+            "local_action_checks",
             "calibration",
             "verify",
             "LEARNED_WAVE_GREEDY",
@@ -163,9 +179,7 @@ def launch(spec):
             bind_own_terminal_core(terminal, facts["cpu"])
             os.sched_setaffinity(0, {int(facts["cpu"])})
             now = monotonic()
-            deadline = min(
-                allocation["deadline_monotonic"], campaign["deadline_monotonic"] - 1800
-            )
+            deadline, reserve = stage_deadline(spec, allocation, campaign)
             if deadline - now <= 300:
                 raise TimeoutError("V30_STAGE_SAVE_RESERVE_UNAVAILABLE")
             stamp = datetime.now(timezone.utc).isoformat()
@@ -180,18 +194,35 @@ def launch(spec):
                         "src/solvers/neural_wave_factorized.py",
                         "src/solvers/neural_wave_qualification.py",
                         "src/solvers/neural_wave_reconstruction.py",
+                        "src/postprocessing/neural_wave_audit.py",
                         "src/solvers/neural_wave_subspace.py",
                         "src/solvers/neural_wave_greedy.py",
+                        "src/solvers/neural_wave_local_action.py",
+                        "src/solvers/neural_wave_local_qualification.py",
                         "src/runners/neural_wave_campaign.py",
                         "src/runners/neural_wave_worker.py",
+                        "src/io/neural_wave_campaign.py",
                         "src/runners/feinn_resources.py",
                         "src/runners/task042_shared.py",
+                        "src/runners/durable_terminal.py",
+                        "src/runners/guarded_exec.py",
+                        "src/runners/fresh_component_receiver.py",
+                        "src/runners/w1_admission_scope.py",
+                        "src/solvers/feinn_native.py",
+                        "src/solvers/feinn_reference.py",
                         "benchmarks/subreaper_watchdog.py",
+                        "scripts/activate_task42extra.sh",
+                        "scripts/launch_task42extra_durable.py",
+                        "scripts/run_case.py",
                     )
                 },
                 utc=stamp,
                 route_origin_monotonic=allocation["origin_monotonic"],
                 stage_deadline_monotonic=deadline,
+                inherited_allocation_deadline_monotonic=allocation[
+                    "deadline_monotonic"
+                ],
+                remaining_independent_verification_and_delivery_reserve_s=reserve,
                 worker_stop_monotonic=deadline - 150,
                 campaign=campaign,
                 cpu=facts["cpu"],
@@ -199,7 +230,7 @@ def launch(spec):
                 math_threads=1,
                 cpu_only=True,
                 rss_hard_bytes=hard,
-                rss_warn_bytes=12 * 2**30,
+                rss_warn_bytes=min(12 * 2**30, int(0.875 * hard)),
                 own_swap_bytes_allowed=0,
                 artifact=str(artifact.relative_to(ROOT)),
                 input_sha256=spec["input_sha256"],
@@ -254,7 +285,7 @@ def launch(spec):
                 directory / "supervised",
                 wall_seconds=deadline - monotonic(),
                 rss_hard_limit_bytes=hard,
-                rss_warning_bytes=12 * 2**30,
+                rss_warning_bytes=min(12 * 2**30, int(0.875 * hard)),
                 hard_stop_immediate=True,
                 source_state=manifest,
                 memory_envelope_provider=lambda: envelope(hard),

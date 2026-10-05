@@ -1,0 +1,42 @@
+{
+  "schema": "neural-wave.committed-milestone.v1",
+  "scope": "partial 256-column committed milestone, not numerical completion or NN gain",
+  "actual_source_sha": "fa84926b7a8b6cd1e9b6c6c4b6be2edef4d069a4",
+  "route": "LEARNED_WAVE_GREEDY",
+  "columns": 256,
+  "full_native_relative": 0.5535684168680776,
+  "augmented_relative": 0.5535684168680776,
+  "original_total_augmented_relative_not_independent_FE": 0.2622263340184999,
+  "route_elapsed_seconds": 3016.7290350450203,
+  "actual_continuous_q_updates": 256,
+  "max_prediction_actual_decrease_load_scaled_defect": 1.9327508829944785e-15,
+  "rank": {
+    "rank": 256,
+    "columns": 256,
+    "rcond": 1e-12,
+    "orthogonality": 1.8407895199569548e-14,
+    "projected_residual": 3.150321746419659e-15
+  },
+  "small_R_singular_min": 0.023514682833650817,
+  "small_R_singular_max": 2.643033853094865,
+  "rank_file": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/rank_256.json",
+    "sha256": "6a6cc9bd47c2c17cc456a863e1c13ca77699d5f13b800272fd4774bb90086b35"
+  },
+  "state": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00255.npz",
+    "sha256": "cb7f0b5c26b456f27317d7126dedeb06bdcf41de429d1c6b58b5eb682b223cf2"
+  },
+  "immutable_history_prefix": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis_growth.jsonl",
+    "first_complete_lines": 256,
+    "prefix_bytes": 502035,
+    "prefix_sha256": "af4f40f10089028c34a481df109016d32ec33b8e67924721bf6877c3b369bb12"
+  },
+  "reference_used_for_training": false,
+  "global_Gram_factor_count": 0,
+  "global_Maxwell_factor_count": 0,
+  "m5_full_discrete_numerical_gate": false,
+  "neural_increment_qualified": false,
+  "independent_field_and_power_checker": "NOT_RUN_YET"
+}

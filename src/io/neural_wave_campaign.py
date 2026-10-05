@@ -14,11 +14,15 @@ ARTIFACTS = ROOT / "benchmarks/artifacts/task42extra/v30"
 STAGES = {
     "v30_wave_checks": ("fe", 7200, "checks"),
     "v30_wave_fast_checks": ("ml", 1800, "fast_checks"),
+    "v30_wave_local_action_checks": ("ml", 3600, "local_action_checks"),
     "v30_wave_calibration_5nm": ("fe", 1800, "calibration"),
     "v30_wave_calibration_0p7nm": ("fe", 1800, "calibration"),
     "v30_m5_fixed_wave": ("ml", 172800, "FIXED_WAVE_GREEDY_CONTROL"),
     "v30_m5_learned_wave": ("ml", 172800, "LEARNED_WAVE_GREEDY"),
     "v30_m5_verify": ("fe", 7200, "verify"),
+    "v30_m5_saved_audit": ("pure", 7200, "saved_audit"),
+    "v30_m5_verify_final": ("fe", 7200, "verify"),
+    "v30_m5_saved_audit_final": ("pure", 7200, "saved_audit"),
 }
 
 
@@ -91,6 +95,10 @@ def training_open_allowed(path, design):
     except TypeError:
         return True  # file descriptor, not a new filename
     if file.suffix in (".pt", ".pth"):
+        return False
+    if file.is_relative_to(ARTIFACTS) and any(
+        part.startswith(("v30_m5_verify", "v30_m5_saved_audit")) for part in file.parts
+    ):
         return False
     if file.suffix == ".npz":
         allowed = {

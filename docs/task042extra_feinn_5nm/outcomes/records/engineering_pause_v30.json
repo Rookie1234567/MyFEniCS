@@ -1,0 +1,25 @@
+{
+  "kind": "PLANNED_COMPLETE_BOUNDARY_ENGINEERING_PAUSE",
+  "worker_pid": 2215517,
+  "start_ticks": 111914598,
+  "monotonic": 1124260.717273392,
+  "original_source_sha": "fa84926b7a8b6cd1e9b6c6c4b6be2edef4d069a4",
+  "latest_complete_boundary_sha256": "9d78526611d4929c1ae86eac123e2bc89818daa67342af9f0656b26c9420da67",
+  "columns": 366,
+  "native_relative": 0.520400756255448,
+  "reason": "qualify exact input-support original A/AH reuse; original full native audits and accepted prefix retained",
+  "not_a_numeric_failure": true,
+  "campaign_deadline_monotonic": 1286000.0,
+  "accepted_prefix_not_replayed": true,
+  "supervision": {
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": -2,
+    "elapsed_seconds": 5116.618266012985,
+    "launch_to_summary_seconds": 5180.431140770204,
+    "sampled_process_tree_rss_peak_bytes": 779169792,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "raw_supervision_semantics": "WORKER_FAILED/-2 is the exact supervised SIGINT outcome; this was planned engineering pause, not numerical failure, OOM or budget exit",
+  "prefix_primitive_counters": "NOT_RETAINED; complete supervised wall cost retained, no training replay to reconstruct counters"
+}

@@ -148,6 +148,27 @@ def verify(design, action, packet, artifact, marker):
         physics, comparisons = field_physics(
             model, action, reference, states, artifact, marker
         )
+        from src.postprocessing.neural_wave_audit import save_complete_field_samples
+
+        raw_fields, mpc_checks = save_complete_field_samples(
+            model, action, packet, reference, states, artifact, marker
+        )
+        physics["ordered_mode_sides"] = [m.side for m in model["bundle"]["modes"]]
+        physics["original_mode_manifest"] = dict(
+            schema="fullspace-dtn.mode-manifest.v1",
+            profile="full3d_scalable_v1",
+            mode_count=len(model["record"]["modes"]),
+            modes=model["record"]["modes"],
+        )
+        physics["ordered_mode_k_vectors"] = np.asarray(
+            [m.k_vector for m in model["bundle"]["modes"]]
+        )
+        physics["ordered_mode_e_vectors"] = np.asarray(
+            [m.e_vector for m in model["bundle"]["modes"]]
+        )
+        physics["port_area_nm2"] = (model["cfg"].x_max - model["cfg"].x_min) * (
+            model["cfg"].y_max - model["cfg"].y_min
+        )
         high_physics, _ = field_physics(
             model,
             action,
@@ -176,6 +197,14 @@ def verify(design, action, packet, artifact, marker):
                 / max(np.linalg.norm(oldnorms), 1e-30)
             )
             rec["quadrature_pass"] &= rec["FE_norm_q15_q30_relative"] <= 1e-8
+            recovery = (
+                max(
+                    physics["records"][name]["audit"][k]
+                    for k in ("port_full_rhs_relative", "port_operation_relative")
+                )
+                <= 1e-10
+                and mpc_checks[name] <= 1e-10
+            )
             joint = bool(
                 comp["numerical_equation_pass"]
                 and comp["field_reconstruction_pass"]
@@ -183,13 +212,17 @@ def verify(design, action, packet, artifact, marker):
                 and rec["quadrature_pass"]
                 and rec["model_reconstruction_pass"]
                 and physics["reference_pass"]
+                and recovery
             )
             comp.update(
                 m5_full_discrete_numerical_gate=joint,
+                verifier_provisional_joint_pass=joint,
                 quadrature_pass=rec["quadrature_pass"],
                 model_reconstruction_pass=rec["model_reconstruction_pass"],
-                pde_only_solver_qualified=joint,
-                official_candidate_results=joint,
+                qualified=False,
+                pde_only_solver_qualified=False,
+                official_candidate_results=False,
+                qualification_scope="pending independent saved-array checker",
                 production_initialization_allowed=False,
             )
         return dict(
@@ -201,6 +234,10 @@ def verify(design, action, packet, artifact, marker):
             reference_loaded_only_by_verifier=True,
             reference_pass=physics["reference_pass"],
             reconstruction=reconstruction,
+            raw_complete_fields=dict(
+                path=str(raw_fields.relative_to(ROOT)), sha256=digest(raw_fields)
+            ),
+            independent_MPC_recovery_checks=mpc_checks,
             physics=physics,
             comparisons=comparisons,
             region_errors=regions,
@@ -283,6 +320,15 @@ def main():
             ]
             result = compare_factorized(packet, patches)
             marker("complete_tensor_moment_pair", result)
+        elif spec["role"] == "local_action_checks":
+            require_checks()
+            from src.solvers.neural_wave_local_qualification import qualify
+
+            result = qualify(action, packet, design, marker)
+            result["local_action_source_sha256"] = digest(
+                ROOT / "src/solvers/neural_wave_local_action.py"
+            )
+            marker("complete_original_local_action_pair", result)
         elif spec["role"] == "calibration":
             from src.solvers.neural_wave_qualification import analytic_calibration
 
@@ -305,6 +351,42 @@ def main():
             )
         elif spec["role"] == "verify":
             result = verify(design, action, packet, artifact, marker)
+        elif spec["role"] == "saved_audit":
+            from src.postprocessing.neural_wave_audit import check_saved_arrays
+
+            paired = (
+                "v30_m5_verify_final"
+                if spec["stage"].endswith("_final")
+                else "v30_m5_verify"
+            )
+            frozen_file = ARTIFACTS / paired / "result.json"
+            frozen = json.loads(frozen_file.read_text())
+            raw = ROOT / frozen["raw_complete_fields"]["path"]
+            if digest(raw) != frozen["raw_complete_fields"]["sha256"]:
+                raise ValueError("FROZEN_COMPLETE_FIELD_ARRAY_HASH_FAILED")
+            with np.load(raw, allow_pickle=False) as arrays:
+                samples = {key: np.array(arrays[key]) for key in arrays.files}
+            result = check_saved_arrays(
+                action,
+                frozen["physics"],
+                samples,
+                frozen["reconstruction"],
+                frozen["independent_MPC_recovery_checks"],
+                dict(
+                    model=design["model"],
+                    mode_manifest_sha256=design["native_identity"][
+                        "mode_manifest_sha256"
+                    ],
+                ),
+            )
+            result["bound_verifier_result_sha256"] = digest(frozen_file)
+            result["bound_verifier_result_path"] = str(frozen_file.relative_to(ROOT))
+            result["bound_complete_field_samples_sha256"] = digest(raw)
+            result["candidate_source_sha"] = {
+                name: frozen["reconstruction"][name]["candidate_source_sha"]
+                for name in result["records"]
+            }
+            marker("saved_array_original_gate_recomputation", result)
         else:
             require_checks()
             fast = json.loads(
@@ -333,6 +415,21 @@ def main():
                 moments_sha256=design["files"]["moments_q30"]["sha256"],
                 route_origin_monotonic=manifest["route_origin_monotonic"],
             )
+            local_file = ARTIFACTS / "v30_wave_local_action_checks/result.json"
+            if local_file.exists():
+                local_record = json.loads(local_file.read_text())
+                if (
+                    not local_record["implementation_qualified"]
+                    or local_record["local_action_source_sha256"]
+                    != digest(ROOT / "src/solvers/neural_wave_local_action.py")
+                    or local_record["actual_native_sha256"]
+                    != design["files"]["native"]["sha256"]
+                    or local_record["actual_moments_sha256"]
+                    != design["files"]["moments_q30"]["sha256"]
+                ):
+                    raise ValueError("LOCAL_INPUT_SUPPORT_ACTION_NOT_QUALIFIED")
+                binding["exact_local_input_support_reuse"] = True
+                binding["local_action_qualification_sha256"] = digest(local_file)
             result = run_greedy(
                 action,
                 packet,

@@ -1,0 +1,5 @@
+schema_version = 1
+[neural_wave]
+stage = "v30_m5_verify_final"
+design_sha256 = "df336d93f6f7b2ab2cb600fe70f224b1e8e056ac5552c589a0391ff5a4a11b37"
+native_target = 1e-10

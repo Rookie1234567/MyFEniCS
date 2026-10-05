@@ -1,6 +1,6 @@
 # 当前 V30：本支只做神经求解研究
 
-[Review V29](review_report_v29.md)授权新的局部复指数神经元和逐步扩充空间，连续推进到原M5联合数值Gate或明确硬失败出口。训练不读参考、禁止全局Gram/Maxwell因子；固定方向控制获得相同能力和完整预算。首次实现/资格正在进行，尚无新的数值通过或NN净收益。[设计与专题](outcomes/neural_wave_galerkin_v30.md)。以下全部旧正文保留为历史，不构成续做W0/W1或旧训练的授权。
+[Review V29](review_report_v29.md)授权新的局部复指数神经元和逐步扩充空间，连续推进到原M5联合数值Gate或明确硬失败出口。训练不读参考、禁止全局Gram/Maxwell因子；固定方向控制获得相同能力和完整预算。全矩/梯度资格与两波长解析校准已实际完成，LEARNED_WAVE_GREEDY已完整保存366列、native0.5204007563；当前资格化等价局部作用后续算，原列与全部成本保留，尚无新的联合数值通过或NN净收益。[设计与专题](outcomes/neural_wave_galerkin_v30.md)、[256列原方程里程碑](outcomes/records/learning_milestone_256_v30.json)。以下全部旧正文保留为历史，不构成续做W0/W1或旧训练的授权。
 
 # 当前 V29：原尺寸完整口面固定见证通过，本机主线 API 包已消费
 

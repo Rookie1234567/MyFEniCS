@@ -236,15 +236,22 @@ class BasisStore:
         return value
 
 
-def variable_projection(action, subspace, moments, patch, q, *, gradient):
+def variable_projection(action, subspace, moments, patch, q, *, gradient, local=None):
     columns = moments.columns(patch, q)
-    p, z, record = optimal_amplitudes(action, subspace, columns)
+    p, z, record = optimal_amplitudes(
+        action, subspace, columns,
+        applied_columns=local.columns(columns) if local is not None else None,
+    )
     amplitude = p.reshape(-1, 3)
     score = record["score"]
     if not gradient:
         return score, amplitude, columns @ p, record, None
     # Envelope derivative of ||r-Zp||^2; p is the tiny SVD minimizer.
-    cotangent = action.apply(subspace.project(subspace.r - z), adjoint=True)
+    projected = subspace.project(subspace.r - z)
+    cotangent = (
+        action.apply(projected, adjoint=True)
+        if local is None else local.adjoint(projected)
+    )
     gq, _ = moments.vjp(patch, q, amplitude, cotangent)
     gq *= 2 / float(np.vdot(action.f, action.f).real)
     return score, amplitude, columns @ p, record, gq
@@ -259,6 +266,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     if bytes_plan > 12 * 2**30:
         raise ValueError("AUTHORIZED_CAPACITY_PLANNING_LINE_EXCEEDED")
     moments = WaveMoments(packet, batch=8)
+    local_actions = {}
     space = WaveSubspace(action, capacity)
     store = BasisStore(Path(artifact) / "basis", binding)
     rng = np.random.default_rng(strategy["seed"])
@@ -272,6 +280,16 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             saved[k] for k in ("level", "width", "resolution_index", "stagnant")
         )
         failures, learning_updates = saved["failures"], saved["learning_updates"]
+        prior_costs = saved.get("cost_state")
+        if prior_costs:
+            # Restoration has already checked the complete original residual.
+            # Retain that fresh cost as well as the previous measured counters.
+            for key in action.counts:
+                action.counts[key] += prior_costs["action_counts"][key]
+                action.costs[key] += prior_costs["action_seconds"][key]
+            moments.counts.update(prior_costs["moment_counts"])
+            moments.seconds.update(prior_costs["moment_seconds"])
+            space.seconds.update(prior_costs["qr_seconds"])
         marker(
             "complete_boundary_recovered",
             dict(
@@ -324,6 +342,16 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             space.r,
             iteration,
         )
+        local = None
+        if binding.get("exact_local_input_support_reuse", False):
+            from src.solvers.neural_wave_local_action import LocalWaveAction
+
+            if patch not in local_actions:
+                support = moments.rows[moments.cells(patch)].ravel()
+                local_actions[patch] = LocalWaveAction(action, support[support >= 0])
+                if sum(x.retained_bytes for x in local_actions.values()) > 2 * 2**30:
+                    raise MemoryError("LOCAL_NUMERIC_CACHE_AUTHORIZED_2GIB_EXCEEDED")
+            local = local_actions[patch]
         resolution = strategy["direction_resolutions"][resolution_index]
         dictionary = direction_dictionary(
             2 * np.pi / design["model"]["wavelength_nm"], resolution
@@ -336,7 +364,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             q = dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
             try:
                 value = variable_projection(
-                    action, space, moments, patch, q, gradient=False
+                    action, space, moments, patch, q, gradient=False, local=local
                 )
                 candidates.append((value[0], q, value))
             except ValueError as error:
@@ -367,7 +395,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     refined = np.clip(refined, -bound, bound)
                     try:
                         value = variable_projection(
-                            action, space, moments, patch, refined, gradient=False
+                            action, space, moments, patch, refined, gradient=False, local=local
                         )
                         candidates.append((value[0], refined, value))
                     except ValueError as error:
@@ -394,12 +422,19 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     / width
                 )
                 seed_c = moments.forward(patch, q, p_seed)
-                seed_z = space.project(action.apply(seed_c))
+                seed_z = space.project(
+                    action.apply(seed_c) if local is None
+                    else local.columns(seed_c[:, None])[:, 0]
+                )
+                projected_seed = space.project(seed_z - space.r)
                 _, gp = moments.vjp(
                     patch,
                     q,
                     p_seed,
-                    2 * action.apply(space.project(seed_z - space.r), adjoint=True),
+                    2 * (
+                        action.apply(projected_seed, adjoint=True)
+                        if local is None else local.adjoint(projected_seed)
+                    ),
                 )
                 amplitude_learning = dict(
                     initial_seed_real=p_seed.real.tolist(),
@@ -420,6 +455,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                         patch,
                         flat.reshape(width, 3),
                         gradient=True,
+                        local=local,
                     )
                     calls.append(
                         dict(
@@ -447,7 +483,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     )
                     trial_q = result.x.reshape(width, 3)
                     trial = variable_projection(
-                        action, space, moments, patch, trial_q, gradient=False
+                        action, space, moments, patch, trial_q, gradient=False, local=local
                     )
                     if trial[0] >= best[0]:
                         q, best = trial_q, trial
@@ -512,6 +548,9 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     <= 64 * np.finfo(float).eps * action.bnorm
                     else 0
                 )
+                # Compute the complete native/augmented audit before saving;
+                # the public committed row is still published only afterwards.
+                event["audit"] = action.audit(space.c)
                 store.commit(
                     space,
                     model,
@@ -526,10 +565,16 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                         stagnant=stagnant,
                         failures=failures,
                         learning_updates=learning_updates,
+                        cost_state=dict(
+                            action_counts=action.counts.copy(),
+                            action_seconds=action.costs.copy(),
+                            moment_counts=moments.counts.copy(),
+                            moment_seconds=moments.seconds.copy(),
+                            qr_seconds=space.seconds.copy(),
+                        ),
                     ),
                 )
                 # Publishing the audit follows durable commit, never precedes it.
-                event["audit"] = action.audit(space.c)
                 with history.open("a") as stream:
                     stream.write(json.dumps(event) + "\n")
                     stream.flush()
@@ -588,6 +633,12 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         qr_seconds=space.seconds,
         capacity_plan_bytes=bytes_plan,
         numerical_gate="PENDING_INDEPENDENT_FULL_FIELD_CHECKER",
+        exact_local_input_support_reuse=binding.get("exact_local_input_support_reuse", False),
+        local_numeric_cache_bytes=sum(x.retained_bytes for x in local_actions.values()),
+        local_action_costs=[dict(counts=x.counts, seconds=x.seconds) for x in local_actions.values()],
+        inherited_primitive_counters_retained=(
+            previous is None or "cost_state" in previous["algorithm_state"]
+        ),
     )
     atomic_json(Path(artifact) / "result.json", result)
     return result

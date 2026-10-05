@@ -2228,3 +2228,19 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 原目标与NN | 原完整3D/decimal2e12B/172800s原门保持 | FULL_TARGET_NOT_QUALIFIED / NO_VERIFIED_NN_INCREMENT |
 
 旧较好M3600/退化Mfinal、D0成本否决/D1未运行、全部失败/UNKNOWN和历史费用保留。无新global/local Maxwell factor/solve、Gram、NN/B2/W2，不修改主线/dot，不merge master。[专题](task042extra_feinn_5nm/outcomes/versioned_manifest_and_boundary_v28.md)、[source/run](task042extra_feinn_5nm/outcomes/records/run_index_v28.json)、[包](task042extra_feinn_5nm/outcomes/main_handoff_v28.md)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v28.json)。
+
+## 3.44.27 Task42extra V30进行中：局部波动神经子空间与同p3求解资格
+
+每轮学习一个局部复指数函数的连续方向和幅值，再冻结并扩展累计空间，目的是求准原M5离散方程；不能消除p3自身的连续离散误差。相同物理种子、窗口及稳定小系统代数供固定字典残差选向控制使用，学习和全部辅助成本独立计费。没有全局Gram/Maxwell因子训练、参考标签或传统完成器；旧结果不改。
+
+| measured / running / not_run | 本轮已有证据、单位和限值 | 资格边界 |
+| --- | --- | --- |
+| 原M5 | λ5nm、384hex、p3、31968独立复FE、40端口；统一Si表和真实三维缺口 | 与原native/moments/reference身份绑定；非全尺寸目标 |
+| S0完整矩、梯度及稳定代数 | 全映射/独立FE配对约1e-15≤1e-10；非零方向差分最坏2.65e-7≤1e-5；source96d9618c4d14177d58e7a4ea39008e8744e2a944 | IMPLEMENTATION_QUALIFIED；不是M5求解通过 |
+| 张量收缩见证 | 原forward/VJP2.3542s，张量5.8718s另有0.1620s建立，配对约1e-15 | 正确但更慢，正式两路线选择原稀疏完整矩；不是缓存/NN收益 |
+| 5nm解析校准 | 原空气波1.90149e-16；p3 E相对1.96187e-3、scaled-curl/H1.18467e-2 | 连续离散未资格化；固定同p3离散求解仍按Review V29评分 |
+| 未缩放0.7nm校准 | 原空气波1.34419e-15；p3 E1.03306、curl/H0.953036 | 不在此不合格空间训练；不是条件长度×0.14三维pilot |
+| 两路线及联合场/功率门 | 学习路线实际进行，连续波矢有更新；固定控制/独立完整验收依赖串行推进 | 联合Gate和同精度20%神经资源收益尚未判定 |
+| 资源 | S0采样同时树峰2634264576B，swap0；其它资格/校准原值见记录；唯一172800s总窗 | 完整研发费用和案例冷时间分列；不重置旧成本 |
+
+[新机制及策略](task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md)、[S0及定向资格](task042extra_feinn_5nm/outcomes/records/implementation_qualification_v30.json)、[实际校准/负成本](task042extra_feinn_5nm/outcomes/records/analytic_and_moment_cost_v30.json)。这是进行中总账，终态在实际联合Gate或明确失败出口后补记。原50×25×140nm、λ0.7nm完整三维FE、decimal2e12B、swap/OOC0、172800s及原精度门仍未达成；FULL_TARGET_NOT_QUALIFIED，旧FEINN主求解器及旧NN贡献状态保留。

@@ -2,7 +2,8 @@
 
 | 当前授权 | 实际阶段 | 数值结论 |
 | --- | --- | --- |
-| [Review V29](../review_report_v29.md)：局部波动神经子空间及同能力固定控制 | 新实现/targeted资格，随后连续S0–S4 | M5联合Gate/神经资源收益尚未判定，原尺寸0.7nm仍未资格化 |
+| [Review V29](../review_report_v29.md)：局部波动神经子空间及同能力固定控制 | S0全矩/梯度和S1解析校准实测完成，S2学习路线运行中；控制及独立审核依赖串行推进 | M5联合Gate/神经资源收益尚未判定，原尺寸0.7nm仍未资格化 |
+| 部分256列里程碑 / measured，不是终态 | native0.5535684；256次连续q更新；秩256/256，正交缺陷1.84e-14；实际source fa84926b… | 小空间投影残差3.15e-15不能代替完整原方程；[原值、prefix/state/hash](records/learning_milestone_256_v30.json) |
 
 [新机制与设计](neural_wave_galerkin_v30.md)。本支只做神经，不再续做W0/W1/全口面/存储或传统完成器。以下所有历史结果、负态、费用和UNKNOWN完整保留。
 

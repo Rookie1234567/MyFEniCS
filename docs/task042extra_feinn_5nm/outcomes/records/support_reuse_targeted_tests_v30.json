@@ -1,0 +1,46 @@
+{
+  "status": "TARGETED_IMPLEMENTATION_LOGIC_PASS_NOT_FE_EVIDENCE",
+  "junit_path": "tmp/task42extra/v30/bootstrap/support_reuse_and_saved_audit_1/junit.xml",
+  "junit_sha256": "16d9c3c46bdb5aa455a652471dbd7d9c1a4692854897b6234a555f68af4f29f7",
+  "test_suites": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "29",
+    "time": "0.420",
+    "timestamp": "2026-10-05T19:21:48.139420",
+    "hostname": "fenics-ws01"
+  },
+  "supervision": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "elapsed_seconds": 2.2479202998802066,
+    "sampled_process_tree_rss_peak_bytes": 113606656,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "tested_dirty_source_binding": {
+    "git_head": "fa84926b7a8b6cd1e9b6c6c4b6be2edef4d069a4",
+    "worktree_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042extra_feinn_5nm/README.md\n M docs/task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md\n M docs/task042extra_feinn_5nm/outcomes/summary.md\n M src/io/neural_wave_campaign.py\n M src/runners/neural_wave_campaign.py\n M src/runners/neural_wave_worker.py\n M src/solvers/neural_wave_greedy.py\n M src/solvers/neural_wave_subspace.py\n?? docs/task042extra_feinn_5nm/outcomes/records/learning_milestone_256_v30.json\n?? input/task042extra_feinn_5nm/v30_m5_saved_audit.dat\n?? input/task042extra_feinn_5nm/v30_m5_saved_audit_final.dat\n?? input/task042extra_feinn_5nm/v30_m5_verify_final.dat\n?? input/task042extra_feinn_5nm/v30_wave_local_action_checks.dat\n?? src/postprocessing/neural_wave_audit.py\n?? src/solvers/neural_wave_local_action.py\n?? src/solvers/neural_wave_local_qualification.py\n?? src/test/test_neural_wave_audit.py\n?? src/test/test_neural_wave_local_action.py\n",
+    "files": {
+      "src/postprocessing/neural_wave_audit.py": "e255765030f73c309a197dc38b500c08cb28cf381e34e01a0e540870f43f3b9b",
+      "src/runners/neural_wave_worker.py": "af69ab0936d92d8dd56003752c101261795b33c43a04288cf9a0a8679c5e63b3",
+      "src/runners/neural_wave_campaign.py": "56bac7bd94ced12e0ccd22ac1b01ad6122d2b40698c9a83981fec6e6ba7f59c3",
+      "src/io/neural_wave_campaign.py": "de95346acd6f7fef6c0f5a9873533fb32a2a5f08cf3fa24b113ba10f12be21a8",
+      "src/test/test_neural_wave_audit.py": "29fb5f32ee3de95448b25421a02f074462314f5945aa2f2b0defb5512b706466",
+      "src/test/test_neural_wave.py": "568c8e0a8a47f1998da81fd3d697c80cbac0f08ac7596afb97f5509ae8d0e725",
+      "src/solvers/neural_wave_greedy.py": "0873246480823341e45027da9d4eb8c8ff91df129cc01f73830cce06a0abd43a",
+      "src/solvers/neural_wave_subspace.py": "d986c49eac85c9611a44cc0c3ee37f641ae8c4d161cdebf3e630bcd52a0147e8",
+      "src/solvers/neural_wave_local_action.py": "06bc5145bf9af9c6ed09b5829b21e1bccd5ada98c5c26cce6c3283ab29d9167d",
+      "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+      "src/test/test_neural_wave_local_action.py": "7227e6276d9f429f0d6599dc1761d7cecdbf0273e389f975a03f12c18f750099"
+    },
+    "scope": "synthetic logic/corrupt-record fixtures, not FE numerical evidence"
+  },
+  "full_pytest_run": false,
+  "qualification_runner": {
+    "path": "tmp/task42extra/v30/run_targeted_audit.py",
+    "sha256": "82bbfa07e294fb4cc1bd58cb68b7eacbc9a020059696db6c587bc898712e98d0"
+  }
+}
