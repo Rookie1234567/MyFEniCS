@@ -39,7 +39,7 @@ def implementation_hashes():
     paths = ["scripts/run_case.py", "scripts/activate_task042.sh", "src/io/scattering_anchor.py",
              "src/runners/port_preparation.py", "src/runners/task042_shared.py",
              "src/solvers/scattering_anchor_scope.py", "src/solvers/scattering_anchor.py",
-             "src/solvers/scattering_y_orbit_reuse.py", "benchmarks/subreaper_watchdog.py",
+             "src/solvers/scattering_y_orbit_reuse.py", "src/solvers/scattering_anchor_two_cell.py", "benchmarks/subreaper_watchdog.py",
              "benchmarks/qualify_scattering_anchor.py", "src/test/test_scattering_anchor.py", str(PLAN.relative_to(ROOT)),
              "input/materials/si_optical_constants_v1.json"]
     # Bind the complete local public FE/PETSc code used by this new anchor.

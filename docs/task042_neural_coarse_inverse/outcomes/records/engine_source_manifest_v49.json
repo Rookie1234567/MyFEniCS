@@ -132,6 +132,16 @@
       "definition_sha256": "9d25eb62368bb4040f3164c365b08d9f9391db31317035b5b2b44c8ddc787998",
       "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
       "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/y_orbit_two_cell_transport.py",
+      "definition": "TwoCellNativeTransport",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "dd9c4252582738e9c1a9112ad6a7984ec138205e",
+      "file_sha256": "7e58039d1b679c48e4b452cd71214819bb1272f56d10ab4e1fc52c50eb9f2c13",
+      "definition_sha256": "20b61a538171420b1cabf5b20295ef997f489243721051de8c188ec2ef8cb82c",
+      "reason": "complete native dual folding and primal lifting for both two-cell twists; no global native R/F/Q",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
     }
   ],
   "read_dependency_inventory": {

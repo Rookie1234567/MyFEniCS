@@ -17,10 +17,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
-from scipy import sparse
-from scipy.linalg import lu_factor, lu_solve
 
-from src.runners.task042_shared import write_json
+from src.runners.task042_shared import write_json, _json_metadata
 from .scattering_anchor_scope import ROOT, ARTIFACT, plan_record, stage, window
 
 
@@ -55,7 +53,7 @@ class Journal:
                "RSS_bytes":int(next(l.split()[1] for l in Path('/proc/self/status').read_text().splitlines() if l.startswith('VmRSS:')))*1024,
                "clock":window.snapshot(), **data}
         with (self.folder/'events.jsonl').open('a') as out:
-            out.write(json.dumps(row, default=lambda x: x.item() if isinstance(x,np.generic) else str(x))+'\n');out.flush()
+            out.write(json.dumps(_json_metadata(row),allow_nan=False)+'\n');out.flush()
         print(name, round(row['elapsed_s'],3), flush=True)
         return row
 
@@ -154,16 +152,17 @@ def boundary_support(bundle):
     return tuple(groups),byrow
 
 
-def condense(bundle,journal):
+def condense(bundle,journal,expected=None):
     from dolfinx import fem
     from .hcurl_assembly_time_condensation import build_unconstrained_assembly_time_condensation
     from .p4_cell_condensed_inverse import assemble_condensed_ports,P4CellCondensedInverse
     cfg=bundle['cfg'];degree=bundle['degree'];space=bundle['setup']['spaces'][degree];floquet=bundle['setup']['floquets'][degree]
     groups,rowgroups=boundary_support(bundle)
+    port_count=len(bundle['modes'])
     with journal.measured('condensation_local_factors'):
         compiled=fem.form(bundle['volume_action'].bilinear_form)
         system=build_unconstrained_assembly_time_condensation(compiled,space,bundle['setup']['mesh_data'].cell_tags,
-            mpc=floquet.mpc,appended_global_rows=532,appended_support_owned_cell_groups=groups,
+            mpc=floquet.mpc,appended_global_rows=port_count,appended_support_owned_cell_groups=groups,
             appended_support_group_by_row=rowgroups,dense_appended_block=True,
             sum_duplicate_cell_integrals=True,strict_local_checks=True,defer_final_assembly=True,
             geometry_identity_policy='raw_unrounded',share_identity_cache=True,
@@ -171,10 +170,11 @@ def condense(bundle,journal):
         del compiled
         terms=assemble_condensed_ports(system,bundle['dtn_action'].carrier)
         inverse=P4CellCondensedInverse(system,None,port_terms=terms,owns_condensed=True,owns_factor=False)
-    if degree==4 and (system.full_rows,system.active_rows,system.active_interior_rows)!=(17204,7232,8640):
+    expected=(17204,7232,8640) if expected is None and degree==4 else expected
+    if expected is not None and (system.full_rows,system.active_rows,system.active_interior_rows)!=expected:
         raise ValueError('frozen full native/trace/interior dimensions differ')
-    if degree==4 and system.active_rows+532>10000:raise MemoryError('finite p4 authority row capacity')
-    journal.event('condensed_objects_ready',rows=system.active_rows+532,nnz=int(system.matrix.getInfo()['nz_used']),
+    if degree==4 and system.active_rows+port_count>10000:raise MemoryError('finite p4 authority row capacity')
+    journal.event('condensed_objects_ready',rows=system.active_rows+port_count,nnz=int(system.matrix.getInfo()['nz_used']),
                   cell_classes=len(system.interior_lu_by_class),independent_FE=system.active_rows+system.active_interior_rows)
     return system,inverse
 
@@ -189,6 +189,7 @@ class DirectFactor:
                 self.ksp=PETSc.KSP().create(PETSc.COMM_SELF);self.ksp.setOperators(matrix)
                 self.ksp.setType('preonly');pc=self.ksp.getPC();pc.setType('lu');pc.setFactorSolverType('mumps');self.ksp.setUp()
             else:
+                from scipy import sparse
                 from scipy.sparse.linalg import splu
                 self.backend='SuperLU_COLAMD_FIXED_FALLBACK_BACKEND_UNAVAILABLE'
                 ip,ix,v=matrix.getValuesCSR();csr=sparse.csr_matrix((v,ix,ip),shape=matrix.getSize())
@@ -328,74 +329,20 @@ def small_condensation_witness():
 
 
 def engine(case,folder,journal):
-    """Unchanged published FGMRES32, complete four-q regular reference.
-
-    Local new ABI constructs the full80 bounded condensed reference before
-    extracting all four branches. This replaces donor ignored authority readers
-    and two40 assembly preparation only; the full regular inverse, primal/dual
-    coordinates, outer original equation and all aliases are unchanged. It is
-    not claimed to reproduce donor construction cost or run-source bytes.
-    """
-    from petsc4py import PETSc
-    from scipy.sparse.linalg import splu
-    from .scattering_y_orbit_reuse import build_y_orbit_layout,trace_layout_coordinates,FullOriginalAction,solve_notched_fgmres
+    """Published two-cell/all-four-q inverse, unchanged FGMRES32 outer."""
+    from .scattering_anchor_two_cell import TwoCellInverse
+    from .scattering_y_orbit_reuse import FullOriginalAction,solve_notched_fgmres
     from .fullspace_same_mesh_hcurl_pmg_physical import build_physical_rhs,_build_split_volume_action,destroy_same_mesh_physical_action
     from .fullspace_physical_action import FullspacePhysicalAction
     from dolfinx import mesh as dxmesh
     cfg,setup,geometry=make_setup('REGULAR',4,journal)
-    bundle=rhs=system=inverse=action=target_bundle=solution=None
-    branch_factors=[];maps=[]
+    bundle=rhs=pc=action=target_bundle=solution=None
     try:
         bundle,rhs,rf=build_bundle(cfg,setup,journal)
-        system,inverse=condense(bundle,journal)
-        with journal.measured('canonical_mapping_all4q_factors'):
-            layout=build_y_orbit_layout(setup['spaces'][4],setup['floquets'][4],cfg,
-                plan_record()['physical_descriptor']['geometry']['axes_nm'])
-            trace=trace_layout_coordinates(layout,system,allocation_gate=journal.allocation)
-            qt=(trace['R_t']@trace['F_t']).tocsr()
-            ip,ix,vd=system.matrix.getValuesCSR();csr=sparse.csr_matrix((vd,ix,ip),shape=system.matrix.getSize())
-            h=np.array([e.normalization_h for e in bundle['dtn_action'].carrier.entries])
-            branch_checks=[]
-            for q in range(4):
-                ids=np.array([i for i,m in enumerate(bundle['modes']) if int(m.n)%4==q],dtype=int)
-                pm=sparse.csr_matrix((1/np.sqrt(h[ids]),(ids,np.arange(len(ids)))),shape=(532,len(ids)))
-                qm=sparse.block_diag((qt[:,q*trace['trace_width']:(q+1)*trace['trace_width']],pm),format='csr')
-                matrix=(qm.conj().T@csr@qm).tocsc()
-                journal.allocation('q_'+str(q)+'_factor',{'matrix_payload_bytes':sum(a.nbytes for a in (matrix.data,matrix.indices,matrix.indptr)), 'workspace_bytes':128*2**20})
-                factor=splu(matrix,permc_spec='COLAMD')
-                w=np.cos(np.arange(matrix.shape[0])*.37)+1j*np.sin(np.arange(matrix.shape[0])*.23)
-                x=factor.solve(w);err=relative(matrix@x-w,w)
-                if err>1e-10:raise ValueError('newABI complete regular q factor residual')
-                maps.append(qm);branch_factors.append(factor)
-                branch_checks.append({'q':q,'rows':matrix.shape[0],'aliases':len(ids),'residual':err,'nnz':matrix.nnz})
-                del matrix
-            del csr,vd,ix,ip
-
-        class ModalFactor:
-            def solve_repeated(self,b,x):
-                out=np.zeros(system.active_rows+532,complex)
-                for qm,f in zip(maps,branch_factors,strict=True):out+=qm@f.solve(np.asarray(qm.conj().T@b.array))
-                x.array[:]=out;journal.calls['factor']+=4
-
-        inverse.factor=ModalFactor()
-
-        class CompleteInverse:
-            def apply_array(self,b):
-                r=PETSc.Vec().createSeq(layout.full_rows,comm=PETSc.COMM_SELF);r.set(0);r.array[layout.independent]=b
-                try:
-                    x=inverse.apply(r)
-                    try:return x.array[layout.independent].copy()
-                    finally:x.destroy()
-                finally:r.destroy()
-            def apply(self,_pc,b,x):x.array[:]=self.apply_array(b.array)
-
-        pc=CompleteInverse()
-        # New independent real-action qualification before using this exact PC.
-        rng=np.random.default_rng(49003);w=rng.standard_normal(len(layout.independent))+1j*rng.standard_normal(len(layout.independent))
-        action=FullOriginalAction(bundle['physical_action'],layout)
-        xp=pc.apply_array(w);defect=relative(action.apply(xp)-w,w)
-        if defect>1e-10:raise ValueError('all4q regular inverse real uncondensed identity')
-        journal.event('all4q_inverse_qualified',true_defect=defect,branch_checks=branch_checks)
+        with journal.measured('two_cell_all4q_reference_inverse'):
+            pc=TwoCellInverse(bundle,journal)
+        witness=pc.qualify(folder)
+        journal.event('all4q_inverse_qualified',checks=witness['norms'])
         target_bundle=bundle
         if case=='NOTCH':
             tags=setup['mesh_data'].cell_tags;centers=geometry['cell_centers']
@@ -403,7 +350,6 @@ def engine(case,folder,journal):
             hit=np.all((centers>=box[:,0])&(centers<=box[:,1]),axis=1)&(tags.values==cfg.tags.grating)
             if hit.sum()!=2:raise ValueError('original notch physical cell inventory')
             values=tags.values.copy();values[hit]=cfg.tags.air;geometry['cell_tags']=values
-            # PC bundle keeps original regular tags; target has independent tags.
             target_setup=dict(setup);target_mesh=SimpleNamespace(mesh=setup['mesh'],facet_tags=setup['mesh_data'].facet_tags,
                 cell_tags=dxmesh.meshtags(setup['mesh'],3,tags.indices,values))
             target_setup['mesh_data']=target_mesh;target_cfg=configuration('NOTCH')
@@ -411,27 +357,25 @@ def engine(case,folder,journal):
                 volume=_build_split_volume_action(target_mesh,target_cfg,setup['spaces'][4],setup['floquets'][4],jit_options={})
                 physical=FullspacePhysicalAction(volume,bundle['dtn_action'],owns_dtn=False)
             target_bundle={**bundle,'cfg':target_cfg,'setup':target_setup,'volume_action':volume,'physical_action':physical,'action':physical}
-            action.close();action=FullOriginalAction(physical,layout)
             rhs.destroy();rhs,rf=build_physical_rhs(target_bundle)
-        b=rhs.array[layout.independent].copy()
+        action=FullOriginalAction(target_bundle['physical_action'],pc.layout)
+        b=rhs.array[pc.layout.independent].copy()
         with journal.measured('outer_original_FGMRES32'):
             u,krylov=solve_notched_fgmres(action,pc,b)
-        solution=rhs.duplicate();solution.set(0);solution.array[layout.independent]=u
+        solution=rhs.duplicate();solution.set(0);solution.array[pc.layout.independent]=u
         port=target_bundle['dtn_action'].recover_auxiliary(solution).copy()
-        # Persist the returned state before any expensive/fragile output.
         arrays=save_arrays(folder/'solution.npz',u_storage=solution.array.copy(),port=port,rhs=rhs.array.copy(),
-            independent=layout.independent,slaves=np.asarray(setup['floquets'][4].mpc.slaves),**geometry)
+            independent=pc.layout.independent,slaves=np.asarray(setup['floquets'][4].mpc.slaves),**geometry)
         write_json(folder/'returned_state.json',{'arrays':arrays,'krylov':krylov,'audit_pending':True})
-        norms,vectors=audit_original(target_bundle,rhs,solution,port,journal)
+        with journal.measured('original_audit'):
+            norms,vectors=audit_original(target_bundle,rhs,solution,port,journal)
         residual_packet=save_arrays(folder/'audit_vectors.npz',**vectors)
         journal.calls['A']+=action.calls
-        # Release all global/q factors and the condensed matrix before fields.
-        inverse.factor=None;branch_factors.clear();maps.clear();gc.collect()
-        system.matrix.destroy();system.matrix=None;journal.event('all4q_factors_matrix_released')
+        pc_calls=pc.calls;pc.destroy();pc=None;journal.event('all4q_local_factors_released')
         output=outputs(target_bundle,solution,port,folder,journal)
-        return {'status':'COMPLETED','case':case,'degree':4,'engine':'ALL4Q_REGULAR_REFERENCE_RIGHT_FGMRES32',
-                'construction_adapter':'full80 local newABI condensed preparation; donor two40 authority readers not reused',
-                'all_q':[0,1,2,3],'branch_checks':branch_checks,'PC_real_action_defect':defect,
+        return {'status':'COMPLETED','case':case,'degree':4,'engine':'TWO_CELL_ALL4Q_RIGHT_FGMRES32',
+                'construction_adapter':'local newABI fresh two40 exact volume and transported original532 carrier; no full80 condensed matrix',
+                'all_q':[0,1,2,3],'inverse_checks':witness,'PC_calls':pc_calls,
                 'arrays':arrays,'audit_arrays':residual_packet,'original_audit':norms,'krylov':krylov,'output':output,
                 'RHS':rf,'timings':journal.timings,'calls':journal.calls,
                 'equation_pass':max(norms['true'],norms['native'],norms['augmented'],norms['port'])<=1e-6 and norms['identity']<=1e-10 and norms['slave_zero']}
@@ -439,8 +383,7 @@ def engine(case,folder,journal):
         if action is not None:action.close()
         if solution is not None:solution.destroy()
         if rhs is not None:rhs.destroy()
-        branch_factors.clear();maps.clear()
-        if inverse is not None:inverse.destroy()
+        if pc is not None:pc.destroy()
         if target_bundle is not None and target_bundle is not bundle:target_bundle['physical_action'].destroy()
         if bundle is not None:destroy_same_mesh_physical_action(bundle)
 
