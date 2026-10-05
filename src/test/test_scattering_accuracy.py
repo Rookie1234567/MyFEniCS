@@ -53,6 +53,13 @@ class AccuracyTests(unittest.TestCase):
         self.assertEqual(context('v50')[0].label,'V50')
         self.assertEqual(p['review_commit'],'da151228815b08126dc636d3e195673ba04fe45f')
 
+    def test_live_storage_retains_immutable_baseline(self):
+        from src.runners.port_preparation import PreparationHealth
+        from unittest.mock import patch
+        with self.assertRaises(ValueError):PreparationHealth(Path('/tmp'),[],'v50')
+        h=PreparationHealth(Path('/tmp'),[],'v50',baseline_storage={'task_artifact_bytes':1000,'new_bytes':100})
+        with patch.object(h,'own_bytes',return_value=130):self.assertEqual(h.live_task_bytes(),1030)
+
     def test_complex_nonmutual_full532_functionals(self):
         rng=np.random.default_rng(50);n=11
         entries=[];ids=[]

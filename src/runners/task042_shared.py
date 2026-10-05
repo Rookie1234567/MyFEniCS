@@ -444,13 +444,14 @@ def _audit(*, observed_activity=False, observation=None):
 
 
 class SharedHealth:
-    def __init__(self, directory, neighbors=(), *, artifact_limit_bytes=20 * 2**30):
+    def __init__(self, directory, neighbors=(), *, artifact_limit_bytes=20 * 2**30, artifact_bytes_provider=None):
         self.directory = directory
         self.artifact_limit_bytes = artifact_limit_bytes
         self.neighbors = list(neighbors)
         self.last = 0.0
         self.pressure_count = 0
         self.result = {}
+        self.artifact_bytes_provider = artifact_bytes_provider
 
     def __call__(self):
         if time.monotonic() - self.last < 5.0:
@@ -458,7 +459,8 @@ class SharedHealth:
         self.last = time.monotonic()
         psi = pressure()
         disk = shutil.disk_usage(ROOT).free
-        payload = sum(p.stat().st_size for p in ARTIFACTS.rglob("*") if p.is_file())
+        payload = (self.artifact_bytes_provider() if self.artifact_bytes_provider is not None
+                   else sum(p.stat().st_size for p in ARTIFACTS.rglob("*") if p.is_file()))
         pressured = psi["some"]["avg10"] >= 1.0 or psi["full"]["avg10"] >= 0.1
         self.pressure_count = self.pressure_count + 1 if pressured else 0
         stop = self.pressure_count >= 3 or disk < 50 * 2**30 or payload > self.artifact_limit_bytes

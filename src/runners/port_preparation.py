@@ -89,21 +89,34 @@ def storage_limits(namespace):
 
 
 class PreparationHealth:
-    def __init__(self, folder, neighbors, namespace, *, limits=None):
+    def __init__(self, folder, neighbors, namespace, *, limits=None, baseline_storage=None):
         self.limits = storage_limits(namespace) if limits is None else limits
         if namespace in ("v45", "v46", "v47", "v48", "v49", "v50") and self.limits != storage_limits(namespace):
             raise ValueError("live guard must use the identical frozen plan")
-        self.shared = SharedHealth(
-            folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"]
-        )
         self.namespace, self.folder = namespace, folder
+        self.baseline_storage = baseline_storage
+        if namespace == 'v50' and baseline_storage is None:
+            raise ValueError('V50 exact prelaunch full-scope inventory required')
+        self.shared = SharedHealth(folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"],
+            artifact_bytes_provider=self.live_task_bytes if namespace=='v50' else None)
+
+    def own_bytes(self):
+        own=[ROOT / ('tmp/task042/'+self.namespace),ROOT / ('benchmarks/artifacts/task042/'+self.namespace)]
+        own.extend((ROOT/'results/task042').glob('task042_'+self.namespace+'_*'))
+        return inventory_paths(own,ROOT)['bytes']
+
+    def live_task_bytes(self):
+        # Sole-writer lock plus frozen immutable historical roots: count them
+        # exactly at launch, then add only the changing V50 namespace. No old
+        # file is removed or treated as free. Full total is rechecked at every
+        # stage boundary and final settlement.
+        return self.baseline_storage['task_artifact_bytes']-self.baseline_storage['new_bytes']+self.own_bytes()
 
     def __call__(self):
         row = dict(self.shared())
         if self.namespace == "v50":
-            roots = [ROOT / p for p in ("benchmarks/artifacts/task042", "tmp/task042", "results/task042", "docs/task042_neural_coarse_inverse")]
-            row["artifact_bytes"] = inventory_paths(roots, ROOT)["bytes"]
-            row["storage_scope"] = "deduplicated all Task042 tmp/results/docs/artifacts"
+            row['artifact_bytes']=self.live_task_bytes()
+            row['storage_scope']='exact immutable historical baseline + current sole-writer V50; full inventory each stage boundary'
         if self.namespace in (
             "v37",
             "v38",
@@ -401,7 +414,7 @@ def launch(
         (folder / "superseded_partial_pointer.json").write_bytes(
             ARTIFACT.joinpath(role + ".json").read_bytes()
         )
-    storage(
+    storage_record = storage(
         (1024 if namespace == "v42" else 32) * 2**20,
         namespace=namespace,
         cleanup=(namespace in ("v37", "v40") and role == "archive"),
@@ -521,7 +534,7 @@ def launch(
                 )
                 if role == "archive"
                 else PreparationHealth(
-                    folder, baseline["neighbor_processes"], namespace, limits=limits
+                    folder, baseline["neighbor_processes"], namespace, limits=limits, baseline_storage=storage_record
                 )
             ),
             stop_on_global_swap=False,
