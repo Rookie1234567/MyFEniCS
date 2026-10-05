@@ -37,5 +37,16 @@
     "path": "tmp/task42extra/w1_receiver/v26/check_RB_delivery_initial.py",
     "bytes": 5015,
     "sha256": "d79ef57fe11a2e011e2452e0ff37e2e7c7e6f2b6e046ae9989db62e06837f463"
-  }
+  },
+  "final_metadata_check": {
+    "path": "tmp/task42extra/w1_receiver/v26/final_delivery_document_check.json",
+    "bytes": 1253,
+    "sha256": "cf617c5ef0aa970a6ba01f8baf80424a5f5db1e7e2ab1b7a45cd080ab92db8b5"
+  },
+  "final_metadata_check_summary": {
+    "path": "tmp/task42extra/w1_receiver/v26/delivery_final_check/summary.json",
+    "bytes": 3557,
+    "sha256": "1c8632c8bc9ee955f46887c312045cb2dca6e775320556a7fafe1ef739f87a87"
+  },
+  "final_scope": "8 changed document scopes,7new tables,58links,100receipt occurrences and56 protected files; published4table lines checked identical; browser not called again within metadata checker"
 }

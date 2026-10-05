@@ -18,4 +18,4 @@
 
 源码、记录与输入的建议消费顺序见[分组manifest](records/selective_merge_manifest_v26.json)；当前包是可审阅的opt-in实现，**原生资格未闭合，不是production组件或有效前向解**。B2局部LU/恢复由主线自身合同承担，本支不重构旧104成员、AUTO、owner、传统PC或dot后端/存储。没有NN/Gram/全局Maxwell因子或solve，FEINN主求解器暂停、无验证神经净增益，原0.7nm完整三维/decimal2e12B/172800s目标和原门均保持。
 
-本轮完整回应见[Response V26](../response_v26.md)；元数据保存检查不等于B1数值checker，见[检查范围](records/independent_checker_v26.json)。实际新GitHub浏览器视图未运行；未改审阅页只复用其已封存的有限视觉范围，不授新页PASS。
+本轮完整回应见[Response V26](../response_v26.md)；元数据保存检查不等于B1数值checker，见[检查范围](records/independent_checker_v26.json)。两份新页的标题及全部4表已在发布`6a6983064c67a7cba13c64a046c557559c99a7d2`上实际目视通过（6图，21.901543s/1,775,185,920B/ownswap0并清场）；最终呈现尾段seal不移植为全页复验，其他导航页仍未视觉检查。未改审阅页只复用其已封存的有限范围。

@@ -303,12 +303,12 @@
       "sha256": "04e576da3dc85a996ee41f8c3b39364c46275890e36a2b45622b93a2a0289e2d"
     }
   ],
-  "mainline_correct_raw_checked_once": {
+  "mainline_raw_closeout_status": {
     "status": "NOT_AVAILABLE",
     "basis": "Review V25 §8.4 frozen mainline 2a67a2423fdd8b670d907ef6f9394a17bff8f2f6 has no new Response/raw; checked existing declared receiving paths once, no repeated disk search",
     "old_checkpoint_sha256": "a475bba1618abd74981622a66e127b2fd88b43f52a2339f5087115ed9b1a82f8",
     "old_checkpoint": "NOT_AVAILABLE_NOT_RECONSTRUCTED",
-    "checked_utc": "2026-10-05T01:06:56.780290+00:00",
+    "checked_utc": "2026-10-05T01:12:05.693619+00:00",
     "check_phase": "package closeout; B1 never reached",
     "declared_path_results": [
       {
@@ -323,6 +323,8 @@
         "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz",
         "is_file": false
       }
-    ]
+    ],
+    "declared_path_stat_rechecks": 2,
+    "scope": "two metadata closeout rechecks of3 already-declared checkpoint paths; no receiving-file scan, no B1 startup and no producer"
   }
 }

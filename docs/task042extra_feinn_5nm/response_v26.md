@@ -54,7 +54,7 @@
 
 ## 4. 交付、下一步和保留边界
 
-[接收说明](../../benchmarks/cases/w1_receiver/README.md)、[专题](outcomes/w1_input_recovery_v26.md)、[Gate](outcomes/records/gate_decisions_v26.json)、[完整run/source/hash](outcomes/records/run_index_v26.json)、[最小接入包](outcomes/records/integration_packet_v26.json)、[六类依赖](outcomes/records/selective_merge_manifest_v26.json)已更新。旧A原92项及Review V25有限视觉收据按绑定复用；新页本地结构检查独立记录，资源链关闭后未启动浏览器，**新GitHub视觉NOT_RUN**，不能沿用旧页PASS。[呈现边界](outcomes/records/render_check_v26.json)。
+[接收说明](../../benchmarks/cases/w1_receiver/README.md)、[专题](outcomes/w1_input_recovery_v26.md)、[Gate](outcomes/records/gate_decisions_v26.json)、[完整run/source/hash](outcomes/records/run_index_v26.json)、[最小接入包](outcomes/records/integration_packet_v26.json)、[六类依赖](outcomes/records/selective_merge_manifest_v26.json)已更新。旧A原92项及Review V25有限视觉收据按绑定复用；新页本地结构检查通过；随后在独立pure/2GiB轻监督中有限检查已发布`6a6983064c67a7cba13c64a046c557559c99a7d2`两新页，标题及全部4表、6图已实际目视通过。浏览器21.901543s、同时树峰1,775,185,920B、ownswap0并清场；这没有重新准入R。最终seal仅补呈现/费用尾段，未再视觉复验该尾段，其他导航页不授视觉PASS。[呈现边界](outcomes/records/render_check_v26.json)。
 
 保存M3600中期较好、Mfinal最终退化、D0成本否决/D1未运行、所有旧q30/q60负结果、FAIL/UNKNOWN和费用。不修改主线、dot、旧Task042或master。下一实质缺口是本支固定核准入链的可核归因与一次真正输入恢复；当前不得自动重新准入或重跑，需审阅明确新资源/修复范围后继续既有组件，不加新求解器或配置扫描。
 

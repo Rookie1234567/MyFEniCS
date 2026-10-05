@@ -303,4 +303,4 @@ P0最初workflow接线和compact负控字段失败保留，修复测试后最多
 
 初始JSON整数资源键、输出目录、缺冻结模块/Mapping及未使用导入lint失败均保留；四个受监督增量资格2.533773/2.688902/2.259993/2.656706s，最后16/16且Ruff通过；最大采样同时树峰93,003,776B、hard2GiB/ownswap0/清场。重新准入dat曾复用output_root，重复保护拒绝后仅修dat根并定向断言全部路径同根，另列严格修复轮限定；没有因此重复worker或生成器。
 
-两次R内层资源拒绝使ABI、native方向/MPC、完整q60/Decimal覆盖及数值保存checker全部未运行。关闭后只核saved receipt/JUnit/current source和43个Git原blob，不重producer、A/full pytest、昂贵FE、参考或NN。新页本地parser与旧正文保留检查另记；实际GitHub视觉NOT_RUN，旧review有限呈现按原审计复用。[测试](records/targeted_tests_v26.json)、[metadata checker](records/independent_checker_v26.json)、[修复](records/repair_log_v26.json)、[呈现](records/render_check_v26.json)。
+两次R内层资源拒绝使ABI、native方向/MPC、完整q60/Decimal覆盖及数值保存checker全部未运行。关闭后只核saved receipt/JUnit/current source和43个Git原blob，不重producer、A/full pytest、昂贵FE、参考或NN。新页本地parser与旧正文保留检查另记；实际GitHub两新页发布6a698306…标题及4表、6图目视通过，浏览器21.901543s/树峰1,775,185,920B/ownswap0且清场；其他导航/最终seal尾段不授视觉PASS，旧review有限范围按原审计复用。[测试](records/targeted_tests_v26.json)、[metadata checker](records/independent_checker_v26.json)、[修复](records/repair_log_v26.json)、[呈现](records/render_check_v26.json)。

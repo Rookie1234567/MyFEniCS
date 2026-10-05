@@ -6,16 +6,150 @@
     "bytes": 64258,
     "sha256": "f3637287c13340481a33c9bec7d38e1dc1acec4561dd170cef99b1a4b283f15a"
   },
-  "new_pages_visual": "NOT_RUN_RESOURCE_CHAIN_CLOSED",
+  "new_pages_visual": "PASS_FINITE_PUBLISHED_SCOPE",
   "new_pages_local_structure": "PASS_CHANGED_SCOPE_FENCES_LINKS_TABLES_HISTORY",
-  "browser_started": false,
-  "visual_pass_claimed": false,
+  "browser_started": true,
+  "visual_pass_claimed": true,
   "new_display_math_blocks": 0,
   "old_visual_failures_and_scope_limits_preserved": true,
   "new_pages_local_check": {
     "pages": 8,
     "tables": 7,
     "local_links": 58,
-    "bound_receipt_occurrences": 77
-  }
+    "bound_receipt_occurrences": 100
+  },
+  "new_pages_visual_before_attempt": "NOT_RUN_RESOURCE_CHAIN_CLOSED_AT_CORE_PUBLICATION",
+  "publication_commit": "6a6983064c67a7cba13c64a046c557559c99a7d2",
+  "scope": "two new pages title/opening and all four complete tables; no claim about other updated navigation pages or final seal visual-tail text",
+  "render_records": {
+    "path": "tmp/task42extra/render/v26_RB_6a698306/render_records.json",
+    "bytes": 7042,
+    "sha256": "a1f7ec5afb9aed9bc4b8fd3faa1dc3f7810d76b0f4fafc013d1a0df25765bd5b"
+  },
+  "supervision": {
+    "path": "tmp/task42extra/w1_receiver/v26/delivery_render/summary.json",
+    "bytes": 3731,
+    "sha256": "3f0d8640a475447908f592f368123d788243694d50145a5a0e43605a7f1c8043"
+  },
+  "render_driver": {
+    "path": "benchmarks/render_task42extra.py",
+    "bytes": 11689,
+    "sha256": "628ac74ec12ec437de7d1e5101f384aa704f56b41fd9271a1c4e155882d7359b"
+  },
+  "command": {
+    "path": "tmp/task42extra/w1_receiver/v26/delivery_render/command.json",
+    "bytes": 169,
+    "sha256": "9d543e0551d649b0c74a0206bdbac0fb0c6ad4d1ad283ab176ea30184c91e2fd"
+  },
+  "admission": {
+    "path": "tmp/task42extra/w1_receiver/v26/delivery_render/admission.json",
+    "bytes": 260258,
+    "sha256": "9817f64780f8ece35a87211424dcd34525749230c216f067db673e5f3db5d6f4"
+  },
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6a6983064c67a7cba13c64a046c557559c99a7d2/docs/task042extra_feinn_5nm/response_v26.md",
+      "tables": 3,
+      "columns": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_RB_6a698306/00_top.png",
+          "bytes": 405952,
+          "sha256": "071cf2e0309bb111cb0f84d518a4ab535e2100a4ded2b3903c918c7319016c67"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_RB_6a698306/00_table_00.png",
+          "bytes": 389516,
+          "sha256": "b2c582ab65e12f2da1b3a39215bad549b4ddfa69364915121073d7095d255b57"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_RB_6a698306/00_table_01.png",
+          "bytes": 456291,
+          "sha256": "134eabcb5431ca374986513a3aee1c3b36a9af8bb6ce48dc5c5662d159d18596"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_RB_6a698306/00_table_02.png",
+          "bytes": 464446,
+          "sha256": "afff77970effd6f0c277f4942a70eef9b0cb75eec0c08b2486223fdfa409c783"
+        }
+      ],
+      "visual_assessment": "actual images viewed: title, complete table rows, long SHA fields and Chinese text readable; no clipped columns, no raw formula leakage"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/6a6983064c67a7cba13c64a046c557559c99a7d2/docs/task042extra_feinn_5nm/outcomes/w1_input_recovery_v26.md",
+      "tables": 1,
+      "columns": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      ],
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_RB_6a698306/01_top.png",
+          "bytes": 465025,
+          "sha256": "7419ca5f8f798e28becb83d045d8a0777a3bff5ab35d5a4a9c81bd85632637a6"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_RB_6a698306/01_table_00.png",
+          "bytes": 526720,
+          "sha256": "d2261821ef3ee820ea05c294cfdcf9fef77bb7e2fa29b16ad9971e3e96d010b8"
+        }
+      ],
+      "visual_assessment": "actual images viewed: title, complete table rows, long SHA fields and Chinese text readable; no clipped columns, no raw formula leakage"
+    }
+  ],
+  "images_actually_viewed": 6,
+  "final_seal_scope": "only visual/cost receipt and prose visual state appended; published scientific table bodies identical",
+  "published_documents": [
+    {
+      "bytes": 8745,
+      "sha256": "e8c9627b68d400285e05b055b568360ccd51f16dcb1d64770e30cfea21939edd",
+      "git_commit": "6a6983064c67a7cba13c64a046c557559c99a7d2",
+      "git_blob_path": "docs/task042extra_feinn_5nm/response_v26.md"
+    },
+    {
+      "bytes": 3783,
+      "sha256": "24a03d64efaf5abc3327d8c91b90e6eb56f8e65d571bb62d89391637d0734591",
+      "git_commit": "6a6983064c67a7cba13c64a046c557559c99a7d2",
+      "git_blob_path": "docs/task042extra_feinn_5nm/outcomes/w1_input_recovery_v26.md"
+    }
+  ]
 }

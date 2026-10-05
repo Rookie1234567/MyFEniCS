@@ -11,7 +11,7 @@
 | B0/B1/B2 / not_run | native/32060 q60/checker0；B2本包不授权，主线承担；factor/solve/NN0 | [保存收据核对](records/independent_checker_v26.json) |
 | 原完整目标与神经 / not_qualified | 原50×25×140nm、Si17/120nm、λ0.7、decimal2e12B整机/172800s未达成；全部原精度门保持 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED |
 
-[Response V26](../response_v26.md)、[专题](w1_input_recovery_v26.md)、[分组边界](records/selective_merge_manifest_v26.json)。旧中期较好/Mfinal退化、D0否决/D1未运行、q30/q60负结果、FAIL/UNKNOWN与全部成本均保留；新页实际GitHub视觉NOT_RUN，不把旧有限PASS移植。[呈现](records/render_check_v26.json)。本窗数值已关闭，一次交棒后停止；下方全部历史原文保留，旧“当前/下一步”不是新运行授权。
+[Response V26](../response_v26.md)、[专题](w1_input_recovery_v26.md)、[分组边界](records/selective_merge_manifest_v26.json)。旧中期较好/Mfinal退化、D0否决/D1未运行、q30/q60负结果、FAIL/UNKNOWN与全部成本均保留；两新页发布6a698306…的标题/全部4表、6图实际目视通过，21.901543s/树峰1,775,185,920B/ownswap0；seal呈现尾段及其他导航页未视觉复验，旧有限范围不扩大。[呈现](records/render_check_v26.json)。本窗数值已关闭，一次交棒后停止；下方全部历史原文保留，旧“当前/下一步”不是新运行授权。
 
 # 当前：Review V24 → Response V25，W1接收包与真实缺项
 
