@@ -13,6 +13,18 @@
       "result": "Failed to fetch: Cache miss / Internal Error",
       "method": "web open, no browser screenshots",
       "visual_pass": false
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d47654575ddf5d20aeb873c7d618ce7eba4aad76/docs/task042extra_feinn_5nm/response_v29.md",
+      "result": "Failed to fetch: Cache miss / Internal Error",
+      "method": "finite web open after actual push; no browser screenshot",
+      "visual_pass": false
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d47654575ddf5d20aeb873c7d618ce7eba4aad76/docs/task042extra_feinn_5nm/outcomes/full_surface_action_v29.md",
+      "result": "Failed to fetch: Cache miss / Internal Error",
+      "method": "finite web open after actual push; no browser screenshot",
+      "visual_pass": false
     }
   ],
   "new_pages_browser_visual": "NOT_RUN_RESOURCE_ADMISSION_QUOTA_EXHAUSTED",
@@ -146,8 +158,10 @@
     "elapsed_seconds": 0.06809916510246694,
     "formal_new_numerical_lifecycle": false
   },
-  "pending_published_new_page_fetch": true,
+  "pending_published_new_page_fetch": false,
   "previous_execution_RENDERED_VIEW_BLOCKED_preserved": true,
   "local_parser_is_not_visual_PASS": true,
-  "numerical_execution_not_blocked_by_web_error": true
+  "numerical_execution_not_blocked_by_web_error": true,
+  "published_pages_HEAD": "d47654575ddf5d20aeb873c7d618ce7eba4aad76",
+  "published_new_page_result": "RENDERED_VIEW_BLOCKED_CACHE_MISS_NO_VISUAL_PASS"
 }

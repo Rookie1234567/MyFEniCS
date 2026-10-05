@@ -975,6 +975,7 @@
   "project_exact_cumulative_seconds": "UNKNOWN",
   "old_loss_3284_seconds_and_all_prior_costs_retained": true,
   "no_new_browser_worker_after_sample24": true,
+  "publication_progress_snapshot": {"utc": "2026-10-05T07:22:43.373197+00:00", "monotonic": 1109958.234081934, "continuous_elapsed_seconds": 5374.084858790971, "deadline_remaining_seconds": 23425.91514120903, "published_pages_HEAD": "d47654575ddf5d20aeb873c7d618ce7eba4aad76"},
   "document_contract_seconds": 0.06809916510246694,
   "document_contract_scope": "finite pure metadata helper, no formal numerical or browser lifecycle; address-space<=2GiB/thread1; fresh numerical admission not claimed for editing/metadata"
 }
