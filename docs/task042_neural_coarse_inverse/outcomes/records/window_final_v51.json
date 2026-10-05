@@ -1,5 +1,19 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "immutable_review_sha": "97ca0d4e2d90f7479a757e66d43061b7d54bf3aa"
+  "start_utc": "2026-10-05T09:05:22.289231+00:00",
+  "start_monotonic": 1116117.150096009,
+  "first_proc_uptime_seconds": 1116117.15,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "heavy_limit_seconds": 22500,
+  "total_limit_seconds": 25200,
+  "review_commit": "97ca0d4e2d90f7479a757e66d43061b7d54bf3aa",
+  "intake_HEAD": "2980735e5f0fcf48d54258a4e29b351033cafb69",
+  "observed_utc": "2026-10-05T10:56:36.504432+00:00",
+  "observed_monotonic": 1122791.365299,
+  "start_monotonic_kind": "first observed UTC mapped to same boot monotonic; first proc uptime retained",
+  "closed": true,
+  "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "monotonic_same_boot": true,
+  "elapsed_seconds": 6674.215202990919,
+  "heavy_remaining_seconds": 15825.78479700908,
+  "total_remaining_seconds": 18525.78479700908
 }

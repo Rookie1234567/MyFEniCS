@@ -564,5 +564,76 @@
   "final_docs": "documentation_checks_v51.json",
   "no_full_repository_pytest": true,
   "CI": "NOT_RUN",
-  "scope": "新依赖最小回归；完整物理审核为主科学工作，非全旧数组重放"
+  "scope": "新依赖最小回归；完整物理审核为主科学工作，非全旧数组重放",
+  "final_documentation": {
+    "source_sha": "0b5905b2efdfe225c5f1470cfbb6d4f834015519",
+    "record": "documentation_checks_v51.json",
+    "documentation_count": 15,
+    "compiled_changed_source": [
+      "benchmarks/collect_phase_explicit_accuracy.py",
+      "benchmarks/qualify_phase_explicit_accuracy.py",
+      "scripts/run_case.py",
+      "src/io/phase_explicit_accuracy.py",
+      "src/runners/port_preparation.py",
+      "src/solvers/common_3d_forms.py",
+      "src/solvers/fixed_phase_fem.py",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "src/solvers/phase_explicit_accuracy.py",
+      "src/solvers/phase_explicit_accuracy_capacity.py",
+      "src/solvers/phase_explicit_accuracy_fields.py",
+      "src/solvers/phase_explicit_accuracy_scope.py",
+      "src/solvers/scattering_accuracy_boundary.py",
+      "src/test/test_phase_explicit_accuracy.py"
+    ],
+    "commands": [
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "unittest",
+          "-q",
+          "src.test.test_26_documentation_contract"
+        ],
+        "returncode": 0,
+        "seconds": 0.2801229781471193
+      },
+      {
+        "command": [
+          "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+          "check",
+          "--select",
+          "E9,F63,F7,F82",
+          "benchmarks/collect_phase_explicit_accuracy.py",
+          "benchmarks/qualify_phase_explicit_accuracy.py",
+          "scripts/run_case.py",
+          "src/io/phase_explicit_accuracy.py",
+          "src/runners/port_preparation.py",
+          "src/solvers/common_3d_forms.py",
+          "src/solvers/fixed_phase_fem.py",
+          "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+          "src/solvers/phase_explicit_accuracy.py",
+          "src/solvers/phase_explicit_accuracy_capacity.py",
+          "src/solvers/phase_explicit_accuracy_fields.py",
+          "src/solvers/phase_explicit_accuracy_scope.py",
+          "src/solvers/scattering_accuracy_boundary.py",
+          "src/test/test_phase_explicit_accuracy.py"
+        ],
+        "returncode": 0,
+        "seconds": 0.028217189013957977
+      },
+      {
+        "command": [
+          "git",
+          "-c",
+          "gc.auto=0",
+          "-c",
+          "maintenance.auto=false",
+          "diff",
+          "--check"
+        ],
+        "returncode": 0,
+        "seconds": 0.030534102115780115
+      }
+    ]
+  }
 }

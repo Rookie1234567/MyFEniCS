@@ -1,5 +1,46 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "immutable_review_sha": "97ca0d4e2d90f7479a757e66d43061b7d54bf3aa"
+  "parent": "source_bindings_v51.json",
+  "parent_sha256": "0176a1a8b0d6f3faa4934122c125c7c0b4236e01efd6f29e854a47b0d44c1e67",
+  "extra_formal_versions": [
+    {
+      "source_sha": "2a98c25c0790ff9724b99752f1aec45b393133fd",
+      "manifest": "tmp/task042/v51/aux_post_collect01/run_manifest.json",
+      "manifest_sha256": "740d3c27e28d7d95d30b24033b8c58e2661af85a83507a3dd4c880bbc2e98df6",
+      "verified_file_count": 106,
+      "closure_sha256": "362d13327794b39c691e0d1f34d8649e0f999a307b51e0e69c7c1ff20f208c27"
+    },
+    {
+      "source_sha": "b1d238d6fe9898bb6f3479f25d5ec805f3626916",
+      "manifest": "tmp/task042/v51/aux_post_modal01/run_manifest.json",
+      "manifest_sha256": "cc5019092ea58f07ee972b76646620421d33418ce5158d904b4185291955e76a",
+      "verified_file_count": 106,
+      "closure_sha256": "8da978dbc9a6114b279a13e675abfe7e70c5bc9008b393ff03b8e6b178e58871"
+    },
+    {
+      "source_sha": "0b5905b2efdfe225c5f1470cfbb6d4f834015519",
+      "manifest": "tmp/task042/v51/aux_post_docs01/run_manifest.json",
+      "manifest_sha256": "97e9035009e2e50e837ec3fd06e3beb7db58ba31ba655d829fa2fec7d41bb538",
+      "verified_file_count": 106,
+      "closure_sha256": "8da978dbc9a6114b279a13e675abfe7e70c5bc9008b393ff03b8e6b178e58871"
+    }
+  ],
+  "new_distinct_archive_bytes": [
+    {
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "975267769157861cffcf15f57b7f85a600da6f14787648718d6a237260d1e84e",
+      "archived": "benchmarks/artifacts/task042/v51/source_archive/975267769157861cffcf15f57b7f85a600da6f14787648718d6a237260d1e84e"
+    },
+    {
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "0e32f262b5ccba25dc6c6685ae78f8dd5419eab327587e53f2b546c6671291cf",
+      "archived": "benchmarks/artifacts/task042/v51/source_archive/0e32f262b5ccba25dc6c6685ae78f8dd5419eab327587e53f2b546c6671291cf"
+    }
+  ],
+  "final_document_check_source": "0b5905b2efdfe225c5f1470cfbb6d4f834015519",
+  "scientific_source_is_not_documentation_HEAD": true,
+  "metadata_helper": {
+    "path": "tmp/task042/v51/edit/finalize_v51.py",
+    "sha256": "33b13636e7968da0f046bf4e70c281c0ccbf586ba876dcf9041cfda0aff85f67",
+    "source_kind": "ignored delivery metadata, no science"
+  }
 }

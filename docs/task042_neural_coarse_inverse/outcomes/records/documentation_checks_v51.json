@@ -1,5 +1,334 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "immutable_review_sha": "97ca0d4e2d90f7479a757e66d43061b7d54bf3aa"
+  "status": "PASSED_LOCAL",
+  "checked_actual_delivery_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "05468d7b063a09e724e895fde4cad1d2509f96a387a9cee4b32b2de76719dda2",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "response_v51.md",
+        "outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "review_report_v49.md",
+        "outcomes/records/delivery_index_v51.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "a50539891c7f1a3bc68209ddd70d6eb1a5c7a5924ba4835d646d9fd963f5561b",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "../response_v51.md",
+        "phase_explicit_full3d_accuracy_v51.md",
+        "records/phase_accuracy_checks_v51.json",
+        "records/modal_power_recalculation_v51.json",
+        "records/resource_costs_final_v51.json",
+        "records/next_scale_capacity_v51.json",
+        "records/selective_merge_manifest_v51.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "5f379c129235d4ddfe43e876f29afcfbac2e19faeda7e7f6f1770e71d01b9188",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/tests_v51.json",
+        "records/tests_v51.json",
+        "records/phase_accuracy_checks_v51.json",
+        "records/modal_power_recalculation_v51.json",
+        "records/documentation_checks_v51.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "c1aeaf63a7cd39b9b8fd6dfcdc0986648751fc9fc2283655dc185c4e225dd5d5",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/changed_files_v51.json",
+        "records/minimal_migration_v51.json",
+        "records/selective_merge_manifest_v51.json",
+        "phase_explicit_full3d_accuracy_v51.md"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "680567e0f4a550730254967c1fa5ccebf5fb5c1d9ae185afb27b3cecf0ce6762",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/response_v51.md",
+        "task042_neural_coarse_inverse/outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v51.json",
+        "task042_neural_coarse_inverse/outcomes/records/next_scale_capacity_v51.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "29abead5d1b1e913d496615d42f50f314806c67370a3aba0def39cf6265fb669",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/response_v51.md",
+        "task042_neural_coarse_inverse/outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v51.json",
+        "task042_neural_coarse_inverse/outcomes/records/next_scale_capacity_v51.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v49.md",
+      "sha256": "c9c5dfbb906bf736f673744cde7d64aec7525bb864dfa8cbb541024244f7223c",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 39,
+          "columns": 3
+        },
+        {
+          "line": 58,
+          "columns": 3
+        },
+        {
+          "line": 107,
+          "columns": 3
+        },
+        {
+          "line": 127,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v50.md",
+        "outcomes/complete_physics_accuracy_cost_v50.md",
+        "outcomes/records/complete_accuracy_checks_v50.json",
+        "outcomes/records/resource_costs_final_v50.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v51.md",
+      "sha256": "bf0c311c6ef37a3a12991f783389a35b7bfc8dc897a03c7a86a84cd081896a68",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 3
+        },
+        {
+          "line": 22,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "review_report_v49.md",
+        "outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "outcomes/records/phase_accuracy_checks_v51.json",
+        "outcomes/records/physical_error_regions_v51.json",
+        "outcomes/records/cold_n1_costs_v51.json",
+        "outcomes/records/resource_costs_final_v51.json",
+        "outcomes/records/delivery_index_v51.json",
+        "outcomes/records/minimal_migration_v51.json",
+        "outcomes/records/tests_v51.json",
+        "outcomes/records/documentation_checks_v51.json",
+        "outcomes/records/next_scale_capacity_v51.json",
+        "outcomes/records/necessary_NN_cost_conditions_v51.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/phase_explicit_full3d_accuracy_v51.md",
+      "sha256": "1562811e633ad7ee592d79d0cbcd173bbab848d5bef78aea99bed793c68a7d4d",
+      "checked_scope": "new prefix or new full authority/result",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 2
+        },
+        {
+          "line": 28,
+          "columns": 3
+        },
+        {
+          "line": 43,
+          "columns": 7
+        },
+        {
+          "line": 52,
+          "columns": 3
+        },
+        {
+          "line": 63,
+          "columns": 4
+        },
+        {
+          "line": 75,
+          "columns": 5
+        },
+        {
+          "line": 91,
+          "columns": 3
+        },
+        {
+          "line": 104,
+          "columns": 5
+        },
+        {
+          "line": 128,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/physical_identity_bindings_v51.json",
+        "records/run_index_v51.json",
+        "records/delivery_index_v51.json",
+        "records/modal_power_recalculation_v51.json",
+        "records/physical_error_regions_v51.json",
+        "records/cold_n1_costs_v51.json",
+        "records/object_lifetimes_v51.json.gz",
+        "records/resource_costs_final_v51.json",
+        "records/necessary_NN_cost_conditions_v51.json",
+        "records/minimal_migration_v51.json",
+        "records/selective_merge_manifest_v51.json",
+        "records/delivery_index_v51.json",
+        "records/phase_accuracy_checks_v51.json",
+        "records/array_inventory_v51.json",
+        "records/raw_archive_index_v51.json",
+        "records/post_settlement_archive_v51.json",
+        "records/source_bindings_final_v51.json",
+        "records/resource_costs_final_v51.json",
+        "records/tests_v51.json",
+        "records/documentation_checks_v51.json"
+      ]
+    }
+  ],
+  "old_history_suffixes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 84994,
+      "sha256": "3de3794df72891326a734945c73609cc5d59341b847e4521f458fb7326cb9e3f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 133652,
+      "sha256": "74eb5a3d0c333222933bca1c9d3d1c1207002cea3f6d995c8a7b4e449df2281d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 74782,
+      "sha256": "3319c1e565e2ffcf7a2621cb23dabdb9b6080df57f3bfb414a8fd7006979b18d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 74583,
+      "sha256": "52f90ab6f93bf0ffe81246d67fa45f111f377789f1ed37a3bc05b81ad8cb9217"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 260658,
+      "sha256": "b59568188d13494296bb7f22ea861ae80349df27a74b4c3be46c5631d56ef11b"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 294571,
+      "sha256": "f48990a3af749e7a2df0dc46c2761cdb8d72573334dcfd1e2569841b9973e422"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_26_documentation_contract"
+      ],
+      "returncode": 0,
+      "seconds": 0.2801229781471193
+    },
+    {
+      "command": [
+        "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+        "check",
+        "--select",
+        "E9,F63,F7,F82",
+        "benchmarks/collect_phase_explicit_accuracy.py",
+        "benchmarks/qualify_phase_explicit_accuracy.py",
+        "scripts/run_case.py",
+        "src/io/phase_explicit_accuracy.py",
+        "src/runners/port_preparation.py",
+        "src/solvers/common_3d_forms.py",
+        "src/solvers/fixed_phase_fem.py",
+        "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+        "src/solvers/phase_explicit_accuracy.py",
+        "src/solvers/phase_explicit_accuracy_capacity.py",
+        "src/solvers/phase_explicit_accuracy_fields.py",
+        "src/solvers/phase_explicit_accuracy_scope.py",
+        "src/solvers/scattering_accuracy_boundary.py",
+        "src/test/test_phase_explicit_accuracy.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.028217189013957977
+    },
+    {
+      "command": [
+        "git",
+        "-c",
+        "gc.auto=0",
+        "-c",
+        "maintenance.auto=false",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "seconds": 0.030534102115780115
+    }
+  ],
+  "compiled_changed_source": [
+    "benchmarks/collect_phase_explicit_accuracy.py",
+    "benchmarks/qualify_phase_explicit_accuracy.py",
+    "scripts/run_case.py",
+    "src/io/phase_explicit_accuracy.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/common_3d_forms.py",
+    "src/solvers/fixed_phase_fem.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+    "src/solvers/phase_explicit_accuracy.py",
+    "src/solvers/phase_explicit_accuracy_capacity.py",
+    "src/solvers/phase_explicit_accuracy_fields.py",
+    "src/solvers/phase_explicit_accuracy_scope.py",
+    "src/solvers/scattering_accuracy_boundary.py",
+    "src/test/test_phase_explicit_accuracy.py"
+  ],
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN"
 }
