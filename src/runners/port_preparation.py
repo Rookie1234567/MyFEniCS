@@ -29,8 +29,10 @@ from src.solvers.port_preparation_window import implementation_hashes, window
 
 
 def storage_limits(namespace):
-    if namespace == "v50":
-        from src.solvers.scattering_accuracy_scope import plan_record
+    if namespace in ("v50", "v51"):
+        from src.solvers.phase_explicit_accuracy_scope import plan_record
+        if namespace == "v50":
+            from src.solvers.scattering_accuracy_scope import plan_record
         p = plan_record()
         return {k:p[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes", "evidence_reserve_bytes")}
     if namespace == "v49":
@@ -91,14 +93,14 @@ def storage_limits(namespace):
 class PreparationHealth:
     def __init__(self, folder, neighbors, namespace, *, limits=None, baseline_storage=None):
         self.limits = storage_limits(namespace) if limits is None else limits
-        if namespace in ("v45", "v46", "v47", "v48", "v49", "v50") and self.limits != storage_limits(namespace):
+        if namespace in ("v45", "v46", "v47", "v48", "v49", "v50", "v51") and self.limits != storage_limits(namespace):
             raise ValueError("live guard must use the identical frozen plan")
         self.namespace, self.folder = namespace, folder
         self.baseline_storage = baseline_storage
-        if namespace == 'v50' and baseline_storage is None:
+        if namespace in ('v50', 'v51') and baseline_storage is None:
             raise ValueError('V50 exact prelaunch full-scope inventory required')
         self.shared = SharedHealth(folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"],
-            artifact_bytes_provider=self.live_task_bytes if namespace=='v50' else None)
+            artifact_bytes_provider=self.live_task_bytes if namespace in ('v50', 'v51') else None)
 
     def own_bytes(self):
         own=[ROOT / ('tmp/task042/'+self.namespace),ROOT / ('benchmarks/artifacts/task042/'+self.namespace)]
@@ -114,7 +116,7 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace == "v50":
+        if self.namespace in ("v50", "v51"):
             row['artifact_bytes']=self.live_task_bytes()
             row['storage_scope']='exact immutable historical baseline + current sole-writer V50; full inventory each stage boundary'
         if self.namespace in (
@@ -132,6 +134,7 @@ class PreparationHealth:
             "v48",
             "v49",
             "v50",
+            "v51",
         ):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
@@ -174,7 +177,7 @@ FE_ROLES = (
 
 def preparation_memory_envelope(namespace):
     env=shared_envelope()
-    if namespace == 'v50':
+    if namespace in ('v50', 'v51'):
         # Preserve host/growth reserves. V50 alone has an explicit24GiB
         # sampled hard cap; ordinary namespaces retain their original gate.
         env['launch_cap_bytes']=min(24*2**30,env['effective_available_bytes']-env['reserve_bytes'])
@@ -183,8 +186,10 @@ def preparation_memory_envelope(namespace):
 
 
 def context(namespace):
-    if namespace == "v50":
-        from src.solvers import scattering_accuracy_scope as scope
+    if namespace in ("v50", "v51"):
+        from src.solvers import phase_explicit_accuracy_scope as scope
+        if namespace == "v50":
+            from src.solvers import scattering_accuracy_scope as scope
         return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v49":
         from src.solvers import scattering_anchor_scope as scope
@@ -248,7 +253,7 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     own.extend((ROOT / "results/task042").glob("task042_" + namespace + "_*"))
     new = inventory_paths(own, ROOT)["bytes"]
     roots = [ROOT / "benchmarks/artifacts/task042"]
-    if namespace == "v50":
+    if namespace in ("v50", "v51"):
         roots += [ROOT / "tmp/task042", ROOT / "results/task042", ROOT / "docs/task042_neural_coarse_inverse"]
     total = inventory_paths(roots, ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
@@ -256,7 +261,7 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     limit, task_limit, free_limit = (
         limits[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes")
     )
-    if namespace in ("v45", "v46", "v47", "v48", "v49", "v50"):
+    if namespace in ("v45", "v46", "v47", "v48", "v49", "v50", "v51"):
         reserve = max(reserve, limits["evidence_reserve_bytes"])
     new_reserve = 0 if namespace == "v46" else reserve
     if (
@@ -295,13 +300,13 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
-    if namespace == 'v50' and role == 'BOUNDARY':
+    if namespace in ('v50', 'v51') and role == 'BOUNDARY':
         fix=plan.get('diagnosed_boundary_inventory_repair',{})
         path=Path(fix.get('evidence_path','/not_present'))
         return (fix.get('source_sha')==previous.get('source_sha') and path.is_file()
             and hashlib.sha256(path.read_bytes()).hexdigest()==fix.get('evidence_sha256')
             and fix.get('root_cause')=='downstream_sparse_cutoff')
-    if namespace in ("v43", "v44", "v45", "v47", "v49", "v50"):
+    if namespace in ("v43", "v44", "v45", "v47", "v49", "v50", "v51"):
         return previous.get("status") == "FAILED"
     if namespace == "v42":
         # A failed attempt never counts as a published successful checkpoint.
@@ -333,7 +338,7 @@ def launch(
     if specification is not None:
         namespace = specification.derived.get("preparation_scope", "v36")
         if (
-            namespace in ("v43", "v44", "v45", "v47", "v49", "v50")
+            namespace in ("v43", "v44", "v45", "v47", "v49", "v50", "v51")
             and os.environ.get("TASK042_ENV_MODE")
             != specification.derived["environment_mode"]
         ):
@@ -342,7 +347,7 @@ def launch(
     started = time.monotonic()
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
-    if namespace in ("v48", "v49", "v50") and subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
+    if namespace in ("v48", "v49", "v50", "v51") and subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
         raise RuntimeError("V48 all producers/checkers/analysis require committed clean source")
     is_fe = role in FE_ROLES or (namespace == "v40" and specification is not None)
     if namespace == "v41":
@@ -353,10 +358,10 @@ def launch(
         from src.solvers.distributed_volume_scope import NATIVE
 
         is_fe = role in NATIVE
-    if namespace in ("v43", "v44", "v45", "v47", "v49", "v50"):
+    if namespace in ("v43", "v44", "v45", "v47", "v49", "v50", "v51"):
         is_fe = specification is not None
     if is_fe or (
-        namespace in ("v41", "v42", "v43", "v44", "v45", "v47", "v49", "v50") and specification is not None
+        namespace in ("v41", "v42", "v43", "v44", "v45", "v47", "v49", "v50", "v51") and specification is not None
     ):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
@@ -385,12 +390,12 @@ def launch(
     limits = storage_limits(namespace)
     if (
         specification is not None
-        and namespace in ("v45", "v47", "v49", "v50")
+        and namespace in ("v45", "v47", "v49", "v50", "v51")
         and dict(specification.derived["storage_limits"]) != limits
     ):
         raise ValueError("V45 resolved/live budget mismatch")
     seconds = window.remaining(role)
-    if specification is not None and namespace in ("v41", "v42", "v43", "v44", "v45", "v47", "v49", "v50"):
+    if specification is not None and namespace in ("v41", "v42", "v43", "v44", "v45", "v47", "v49", "v50", "v51"):
         seconds = min(seconds, float(specification.execution["timeout_seconds"]))
     if seconds <= 5:
         raise RuntimeError("V36 phase paid wall exhausted")
@@ -414,7 +419,7 @@ def launch(
     folder.mkdir(parents=True, exist_ok=False)
     if (
         specification is not None
-        and namespace in ("v39", "v40", "v43", "v44", "v45", "v47", "v49", "v50")
+        and namespace in ("v39", "v40", "v43", "v44", "v45", "v47", "v49", "v50", "v51")
         and ARTIFACT.joinpath(role + ".json").exists()
     ):
         (folder / "superseded_partial_pointer.json").write_bytes(
@@ -435,7 +440,7 @@ def launch(
             if specification
             else str(command),
         )
-        if namespace == 'v50' and preparation_memory_envelope(namespace)['launch_cap_bytes'] < 24*2**30:
+        if namespace in ('v50', 'v51') and preparation_memory_envelope(namespace)['launch_cap_bytes'] < 24*2**30:
             raise MemoryError('V50 host/growth reserves do not permit the explicit24GiB hard budget')
         ranks = (
             int(specification.execution["mpi_size"]) if specification is not None else 1
@@ -475,10 +480,10 @@ def launch(
             "cpu": baseline["cpu"],
             "rank_cpus": cpus,
             "MPI_size": ranks,
-            "planned_bytes": 16*2**30 if namespace == "v50" and is_fe else 8*2**30 if namespace == "v49" and is_fe else int(1.8 * 2**30) if namespace in ("v47", "v48") else 6 * 2**30 if is_fe else 2 * 2**30,
-            "new_volume_action_count": None if namespace in ("v49", "v50") else 0,
-            "new_factor_count": None if namespace in ("v49", "v50") else 0,
-            "numeric_object_inventory_status": "actual stage inventory in result/events; launcher unknown" if namespace in ("v49", "v50") else "historical scope inventory",
+            "planned_bytes": 16*2**30 if namespace in ("v50", "v51") and is_fe else 8*2**30 if namespace == "v49" and is_fe else int(1.8 * 2**30) if namespace in ("v47", "v48") else 6 * 2**30 if is_fe else 2 * 2**30,
+            "new_volume_action_count": None if namespace in ("v49", "v50", "v51") else 0,
+            "new_factor_count": None if namespace in ("v49", "v50", "v51") else 0,
+            "numeric_object_inventory_status": "actual stage inventory in result/events; launcher unknown" if namespace in ("v49", "v50", "v51") else "historical scope inventory",
             "storage_limits": limits,
         }
         if specification is not None:
@@ -489,7 +494,7 @@ def launch(
                 physical_sha256=specification.physical_model_sha256,
                 plan_sha256=hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             )
-            if namespace in ("v49", "v50"):
+            if namespace in ("v49", "v50", "v51"):
                 from src.io.scattering_anchor import write_identity_texts
                 write_identity_texts(folder, specification)
             if namespace in ("v44", "v45") and specification.derived.get(
@@ -520,8 +525,8 @@ def launch(
             interval=0.5,
             timebase_guard=True,
             hard_stop_immediate=True,
-            rss_hard_limit_bytes=(24 if namespace == "v50" and is_fe else 16 if namespace == "v49" and is_fe else 2 if namespace == "v47" else 8 if is_fe else 2) * 2**30,
-            rss_warning_bytes=(20 * 2**30 if namespace == "v50" and is_fe else 12 * 2**30 if namespace == "v49" and is_fe else int(1.5 * 2**30) if namespace in ("v47", "v48") else (6 if is_fe else 1) * 2**30),
+            rss_hard_limit_bytes=(24 if namespace in ("v50", "v51") and is_fe else 16 if namespace == "v49" and is_fe else 2 if namespace == "v47" else 8 if is_fe else 2) * 2**30,
+            rss_warning_bytes=(20 * 2**30 if namespace in ("v50", "v51") and is_fe else 12 * 2**30 if namespace == "v49" and is_fe else int(1.5 * 2**30) if namespace in ("v47", "v48") else (6 if is_fe else 1) * 2**30),
             memory_envelope_provider=lambda: preparation_memory_envelope(namespace),
             include_pss=False,
             source_state=state,
@@ -606,8 +611,10 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v50":
-            from src.solvers.scattering_accuracy import execute
+        if namespace in ("v50", "v51"):
+            from src.solvers.phase_explicit_accuracy import execute
+            if namespace == "v50":
+                from src.solvers.scattering_accuracy import execute
         elif namespace == "v49":
             from src.solvers.scattering_anchor import execute
         elif namespace == "v47":

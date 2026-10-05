@@ -13,12 +13,15 @@ from src.solvers.scattering_anchor import relative, save_arrays
 
 
 class SurfaceComponents:
-    def __init__(self, space, mpc, cfg, q, *, method='basix2d'):
+    def __init__(self, space, mpc, cfg, q, *, method='basix2d', phase_carrier=None):
         from src.solvers.target_boundary_witness import NativeFacetTiles
         from src.solvers.directional_boundary import FacetPolynomial
         self.tiles = NativeFacetTiles(space,mpc,cfg,(),q,'V50_EXACT_FULL_FACE')
         self.polynomial = FacetPolynomial(space.element.basix_element) if method=='separable' else None
         self.space,self.mpc,self.cfg,self.q,self.method=space,mpc,cfg,q,method
+        self.phase_carrier = np.zeros(3) if phase_carrier is None else np.asarray(phase_carrier, dtype=float)
+        if self.phase_carrier.shape != (3,) or not np.all(np.isfinite(self.phase_carrier)):
+            raise ValueError('fixed real phase carrier')
         self.cache={}; self.seconds=0.; self.calls=0
 
     def components(self, mode):
@@ -26,7 +29,7 @@ class SurfaceComponents:
         if key in self.cache:return self.cache[key]
         began=perf_counter(); n=self.space.dofmap.index_map.size_local
         out=np.zeros((n,2),np.complex128)
-        source=self.tiles; k=np.asarray(mode.k_vector,dtype=np.complex128)
+        source=self.tiles; k=np.asarray(mode.k_vector,dtype=np.complex128)-self.phase_carrier
         for _,(cell,J,origin,z) in source.faces.items():
             side='bottom' if z==0 else 'top'
             if side!=mode.side:continue

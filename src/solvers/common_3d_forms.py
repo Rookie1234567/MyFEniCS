@@ -29,6 +29,8 @@ def _build_physical_volume_terms(
     u,
     v,
     dx,
+    *,
+    phase_carrier=None,
 ):
     """Build the shared isotropic curl-curl and complex-mass forms.
 
@@ -37,6 +39,10 @@ def _build_physical_volume_terms(
     """
     curl_u = ufl.curl(u)
     curl_v = ufl.curl(v)
+    if phase_carrier is not None:
+        kappa = ufl.as_vector(tuple(PETSc.ScalarType(k) for k in phase_carrier))
+        curl_u = curl_u + 1j * ufl.cross(kappa, u)
+        curl_v = curl_v + 1j * ufl.cross(kappa, v)
     curl_curl = PETSc.ScalarType(0.0) * ufl.inner(curl_u, curl_v) * dx
     material_mass = PETSc.ScalarType(0.0) * ufl.inner(u, v) * dx
     for tag, eps_r in (
