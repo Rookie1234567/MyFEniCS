@@ -236,4 +236,4 @@ source manifest与Git blob初次逐版本核对1151组；raw初次归档618条�
 
 10个one-run dat真实validate；最终18focused、相关Ruff、完整source compile、独立deadline清场测试通过。最终15文档合同和Review V48／response／本结果的实际字节、链接／表格另验；没有全仓PDE重复或CI声明。精确GitHub页未取得视觉证据，NOT_VERIFIED。
 
-Selective merge按依赖组见[changed_files](records/changed_files_v50.json)：共享numerical/core仅opt-in hook，runner/watchdog与checker可复用；V50学习决策／科学入口仍research-only，旧负结果docs保留，不升级production default。没有merge approval。最终closed／active null、无后代／锁释放、推送同一分支并核实remote／clean/upstream后，一次原队列交回审阅并停止。
+Selective merge按依赖组见[changed_files](records/changed_files_v50.json)：共享numerical/core仅opt-in hook，runner/watchdog与checker可复用；V50学习决策／科学入口仍research-only，旧负结果docs保留，不升级production default。没有merge approval。按用户最新指令，最终closed／active null、无后代／锁释放、推送同一分支并核实remote／clean/upstream后暂停，本次不通知隔壁审阅窗口。

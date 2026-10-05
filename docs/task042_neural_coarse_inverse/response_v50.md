@@ -36,4 +36,4 @@
 
 神经再准入只有一个对象：在显式保留已知Bloch／入射相位的完整物理离散中，生成慢变化FE＋DtN系数，避免确实昂贵的准备，再由原方程与完整场／功率审核。当前四个空间不能准确表示场，不能继续在同一空间训练。诊断成本下即使尾部factor／solve免费也仅省8.56%／11.77%；若把可替代准备全部省去，冷数据／teacher／训练／加载／审核／纠错额外费用上限也仅9.382877／16.927820s，完整同case teacher已超过。新准确基线未闭合，这些是必要条件，不授NN性能分母。唯一下一建议是集中制定这个不同表示、完整准确性与全费用控制的新合同，本批不自动实现或训练。
 
-全部可达队列已完成并冻结；`FLAT_SELECTED/NOTCH_LOW/NOTCH_HIGH`明确not_run，不扩q/h/p、不跑目标规模／旧神经路线／dot实验。旧task／review／response／raw不改，无subagents、重置卡、GPU、其他分支／master操作或merge。完成费用结算、closed／active null、清场／锁释放、commit/push与实时remote／clean/upstream核实后，以`execution-review-handoff-20261005-v50`原队列一次交回，回应`review-execution-handoff-20261005-v48`，随后停止。
+全部可达队列已完成并冻结；`FLAT_SELECTED/NOTCH_LOW/NOTCH_HIGH`明确not_run，不扩q/h/p、不跑目标规模／旧神经路线／dot实验。旧task／review／response／raw不改，无subagents、重置卡、GPU、其他分支／master操作或merge。按用户最新明确指令，完成费用结算、closed／active null、清场／锁释放、commit/push与实时remote／clean/upstream核实后暂停，本次不通知隔壁审阅窗口。

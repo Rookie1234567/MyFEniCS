@@ -1,0 +1,7 @@
+{
+  "authority": "latest explicit user message",
+  "instruction": "推送完后先暂停，先不通知隔壁审阅窗口",
+  "review_queue_notification": "NOT_SENT",
+  "pause_after_push": true,
+  "old_review_handoff_is_superseded_only_for_notification": true
+}

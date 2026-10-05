@@ -1,0 +1,20 @@
+{
+  "status": "FIXED_TARGETED_METADATA_ONLY",
+  "root_cause": "optional parent calls field was assumed mandatory",
+  "old_failed_script_sha256": "f59675fa4ede1a53e12acd9373bca320dc6529529ef2d06918e01d15dd7b9382",
+  "new_script_sha256": "ce5b51f63006db1e9c4fe0c9eec391bc61d74281b190bcad8749f313a017ad25",
+  "failure_trace": "tmp/task042/v50/intake/final_metadata_calls_failure.stderr",
+  "failure_trace_sha256": "9c76068f8a85d9be28d130a0524316baf59791871b7904306d6ad99c95307f75",
+  "failure_trace_kind": "copy of original tool traceback; captured file did not exist at failure",
+  "retained_first_failure_cost": "post_settlement_fee.json final_timed_metadata_cleanup_archive_storage_seconds; not rolled back",
+  "tests": {
+    "present_calls": "PASS",
+    "missing_calls_preserves_unknown": "PASS",
+    "compile": "PASS",
+    "append_only_archive_reuse": "PASS"
+  },
+  "scientific_replay": 0,
+  "stage_calls_not_invented_as_zero": true,
+  "method": "minimum metadata repair; no FE/A/factor/model construction",
+  "seconds": 0.006614003097638488
+}
