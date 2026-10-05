@@ -19,7 +19,12 @@ class AnchorTests(unittest.TestCase):
         self.assertEqual(len(entries),8)
         specs=[load_scattering_anchor(p) for p in entries]
         self.assertEqual({s.derived['stage'] for s in specs},set(STAGES))
-        self.assertEqual(len({s.physical_model_sha256 for s in specs}),1)
+        bystage={s.derived['stage']:s for s in specs}
+        self.assertEqual(bystage['REFERENCE_REGULAR'].physical_model_sha256,bystage['ENGINE_REGULAR'].physical_model_sha256)
+        self.assertEqual(bystage['REFERENCE_NOTCH'].physical_model_sha256,bystage['ENGINE_NOTCH'].physical_model_sha256)
+        self.assertNotEqual(bystage['REFERENCE_NOTCH'].physical_model_sha256,bystage['REFERENCE_NOTCH_P5'].physical_model_sha256)
+        self.assertEqual(bystage['REFERENCE_NOTCH_P5'].discretization['degree'],5)
+        self.assertEqual(bystage['REFERENCE_NOTCH_P5'].discretization['expected_trace'],11600)
         self.assertEqual({s.execution['terminate_memory_gib'] for s in specs},{16})
 
     def test_unknown_or_multiple_stage_rejected(self):
