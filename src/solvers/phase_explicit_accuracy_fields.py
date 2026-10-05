@@ -29,6 +29,11 @@ class PhaseEvaluator(CellEvaluator):
         coef=self.transforms[info].T@function.x.array[self.space.dofmap.cell_dofs(c)]
         e=np.einsum('qjc,j->qc',tab[0],coef)@np.linalg.inv(J)
         curl=np.einsum('qjc,j->qc',curls,coef)@J.T/det
+        if len(self.eval_checks)<4:
+            witness=np.unique([0,len(points)//2,len(points)-1])
+            native=function.eval(points[witness],np.full(len(witness),c,np.int32))
+            check=relative(e[witness]-native,native);self.eval_checks.append(check)
+            if check>1e-11:raise ValueError('independent original native envelope evaluation')
         return self.physical(points,e,curl,k0)
 
     def gradient_indicator(self,function,c,k0):

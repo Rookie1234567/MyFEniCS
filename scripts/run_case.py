@@ -36,9 +36,13 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        if b'[task042_v51]' in args.input_path.read_bytes():
-            from src.io.phase_explicit_accuracy import load_phase_explicit_accuracy
-            specification = load_phase_explicit_accuracy(args.input_path)
+        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v51]',b'[task042_v52]')):
+            if b'[task042_v52]' in args.input_path.read_bytes():
+                from src.io.phase_notch_hp import load_phase_notch_hp
+                specification = load_phase_notch_hp(args.input_path)
+            else:
+                from src.io.phase_explicit_accuracy import load_phase_explicit_accuracy
+                specification = load_phase_explicit_accuracy(args.input_path)
             if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
                 raise InputError('V51 requires one explicit stage')
             if args.validate_only or args.dry_run:

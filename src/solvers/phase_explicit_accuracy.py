@@ -31,22 +31,24 @@ def configuration(case,degree=4,grid='ORIGINAL'):
     return cfg
 
 
-def make_setup(case,degree,grid,journal,phase=True):
+def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_descriptor=None):
     from mpi4py import MPI
     from dolfinx import mesh as dxmesh,fem,default_real_type
     from basix.ufl import element
     from src.geometry.mesh_builder_3d import _structured_hexa_mesh,_mark_boundary_facets,_mark_cells
     from src.constraints.floquet_3d import build_double_floquet_mpc
-    cfg=configuration(case,degree,grid);k=carrier(cfg,phase)
+    cfg=configuration(case,degree,grid) if configured is None else configured
+    geometry=plan_record()['physical_descriptor']['geometry'] if geometry_descriptor is None else geometry_descriptor
+    k=carrier(cfg,phase)
     with journal.measured('mesh_materials_envelope_MPC'):
         mesh=_structured_hexa_mesh(MPI.COMM_SELF,cfg.mesh_axis_x_values,cfg.mesh_axis_y_values,cfg.mesh_axis_z_values,preserve_input_partition=cfg.stage4_preserve_structured_input_partition)
         facets,_=_mark_boundary_facets(mesh,cfg);tags=_mark_cells(mesh,cfg)
         centers=dxmesh.compute_midpoints(mesh,3,tags.indices);regular=tags.values.copy();values=regular.copy()
         if case=='FLAT':values[centers[:,2]>0]=cfg.tags.air
         else:
-            box=np.asarray(plan_record()['physical_descriptor']['geometry']['notch_box_nm']).reshape(3,2)
+            box=np.asarray(geometry['notch_box_nm']).reshape(3,2)
             hit=np.all((centers>=box[:,0])&(centers<=box[:,1]),axis=1)&(regular==cfg.tags.grating)
-            expected=2 if grid=='ORIGINAL' else 2*int(grid[1:])
+            expected=(2 if grid=='ORIGINAL' else 2*int(grid[1:])) if geometry_descriptor is None else geometry['notch_expected_changed_cells']
             if int(hit.sum())!=expected:raise ValueError('genuine notch geometry/cell inventory')
             values[hit]=cfg.tags.air
         tags=dxmesh.meshtags(mesh,3,tags.indices,values)
@@ -86,7 +88,7 @@ def boundary_check(cfg,setup,folder,journal):
         with journal.measured(f'new_phase_all532_q{q}'):
             s=SurfaceComponents(V,mpc,cfg,q,method=method,phase_carrier=k)
             objects.append(build_fullspace_dtn_carrier_from_surface(modes,s.assemblers(),mpc,cfg,retain_all_nonzero=True));sources.append(s)
-    pair=carrier_pair(*objects,ids);rng=np.random.default_rng(51047);x=PETSc.Vec().createSeq(V.dofmap.index_map.size_local,comm=PETSc.COMM_SELF)
+    pair=carrier_pair(*objects,ids,expected_modes=len(modes));rng=np.random.default_rng(51047);x=PETSc.Vec().createSeq(V.dofmap.index_map.size_local,comm=PETSc.COMM_SELF)
     x.array[:]=rng.normal(size=x.getSize())+1j*rng.normal(size=x.getSize());x.array[mpc.slaves]=0
     values=[]
     for c in objects:

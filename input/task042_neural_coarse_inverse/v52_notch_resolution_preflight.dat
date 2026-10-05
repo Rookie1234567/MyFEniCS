@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v52]
+stage = "SETUP"
+run_id = "task042_v52_notch_resolution_preflight"
