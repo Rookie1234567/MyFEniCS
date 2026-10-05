@@ -54,10 +54,19 @@ def finite_power_comparison(reference,candidate):
             'candidate_energy_absolute':abs(c['volume_metrics']['energy_closure_error_port_volume'])}
 
 
+def p4_companion_mpc(space,mesh_data,cfg):
+    # MPC validates the actual edge/face degree. The physical mesh/material/
+    # wavevector are unchanged, but a p4 space must never receive a p5 layout.
+    from dataclasses import replace
+    from src.constraints.floquet_3d import build_double_floquet_mpc
+    companion=replace(cfg,nedelec_degree=4,visualization_degree=4)
+    return build_double_floquet_mpc(space,mesh_data,companion)
+
+
 def p_increment(folder,journal):
     from dolfinx import fem
     from basix.ufl import element
-    from .scattering_anchor import make_setup,build_bundle,audit_original,save_arrays
+    from .scattering_anchor import make_setup,build_bundle,audit_original,save_arrays,relative
     from .scattering_anchor_checks import checked_arrays,native_recovery_action_split_check,integrated_difference
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action,restore_p0_full_field
     from .common_3d_fields import stage4_layered_background_field
@@ -67,6 +76,11 @@ def p_increment(folder,journal):
     values4=checked_arrays(ref['arrays']);values5=checked_arrays(p5['arrays'])
     cfg,setup,geometry=make_setup('NOTCH',5,journal);bundle,rhs,_=build_bundle(cfg,setup,journal)
     try:
+        from src.io.scattering_anchor import load_scattering_anchor
+        p5_spec=load_scattering_anchor(ROOT/'input/task042_neural_coarse_inverse/v49_reference_notch_p5.dat')
+        if p5_spec.physical_model_sha256!=p5['physical_contract_sha256']:raise ValueError('p5 live/frozen physical descriptor')
+        if bundle['mode_sha256']!=p5['output']['mode_manifest_sha256']:raise ValueError('p5 live complete mode identity')
+        if relative(values5['rhs']-rhs.array,rhs.array)>1e-13:raise ValueError('p5 live/frozen physical RHS')
         for values in (values4,values5):
             for key in ('geometry_x','geometry_dofmap','cell_centers','cell_tags'):
                 if not np.array_equal(values[key],geometry[key]):raise ValueError('same physical mesh p-increment '+key)
@@ -77,9 +91,8 @@ def p_increment(folder,journal):
             E5,recovery,split=native_recovery_action_split_check(bundle,u,rhs,values5['port'],vectors,journal)
         finally:u.destroy()
         independent_arrays=save_arrays(Path(folder)/'P5_original_independent_audit.npz',**vectors,**split)
-        from src.constraints.floquet_3d import build_double_floquet_mpc
         V4=fem.functionspace(setup['mesh'],element('N1curl',setup['mesh'].basix_cell(),4))
-        mpc4=build_double_floquet_mpc(V4,setup['mesh_data'],cfg)
+        mpc4=p4_companion_mpc(V4,setup['mesh_data'],cfg)
         if not np.array_equal(mpc4.mpc.slaves,values4['slaves']):raise ValueError('p4 reconstruction canonical slave order')
         v4=PETSc.Vec().createSeq(len(values4['u_storage']),comm=PETSc.COMM_SELF);v4.array[:]=values4['u_storage']
         try:E4=restore_p0_full_field(mpc4,v4)
@@ -97,6 +110,8 @@ def p_increment(folder,journal):
         equation=max(norms[k] for k in ('true','native','augmented','port'))<=1e-6 and norms['identity']<=1e-10 and norms['slave_zero']
         recovering=max(recovery[k] for k in ('operation_scaled_interior','max_cell_operation_scaled','master_storage_max_abs','split_action_identity_operation_scale'))<=1e-10 and recovery['slave_storage_zero']
         return {'status':'measured','degree_pair':[4,5],'same_geometry_same_80mesh':True,
+                'actual_operator_identity':{'degree':5,'physical_contract_sha256':p5_spec.physical_model_sha256,
+                    'source_sha':p5['source_sha'],'mode_sha256':bundle['mode_sha256'],'parent_state_sha256':p5['arrays']['sha256']},
                 'p5_original_audit':norms,'p5_recovery':recovery,'independent_arrays':independent_arrays,
                 'p5_equation_pass':equation,'p5_direct_internal_target_pass':max(norms[k] for k in ('true','augmented','port'))<=1e-10,
                 'p5_recovery_pass':recovering,'p5_energy_pass':abs(p5['output']['volume_metrics']['energy_closure_error_port_volume'])<=1e-5,

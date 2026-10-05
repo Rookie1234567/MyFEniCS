@@ -204,5 +204,20 @@ class AnchorTests(unittest.TestCase):
                 native_recovery_action_split_check(bundle,Vec(u0),Vec(f),alpha,bad,j)
         self.assertEqual(len(calls),4)
 
+    def test_actual_p4_companion_mpc_uses_space_degree_and_keeps_physics(self):
+        from src.solvers.scattering_anchor_reporting import p4_companion_mpc
+        cfg=configuration('NOTCH',5);space=object();mesh_data=object();seen=[]
+        def builder(v,m,c):
+            self.assertIs(v,space);self.assertIs(m,mesh_data)
+            self.assertEqual((c.nedelec_degree,c.visualization_degree),(4,4))
+            for name in ('lambda0','n_substrate','n_grating','mesh_axis_x_values','mesh_axis_y_values','mesh_axis_z_values','floquet_phase_x','floquet_phase_y'):
+                self.assertEqual(getattr(c,name),getattr(cfg,name))
+            seen.append(c);return 'mpc'
+        # Keep this API-wiring fixture pure: importing the real constraint
+        # module initializes MPI, whereas the official COST run uses real MPC.
+        with patch.dict('sys.modules',{'src.constraints.floquet_3d':SimpleNamespace(build_double_floquet_mpc=builder)}):
+            self.assertEqual(p4_companion_mpc(space,mesh_data,cfg),'mpc')
+        self.assertEqual(len(seen),1);self.assertEqual(cfg.nedelec_degree,5)
+
 
 if __name__=='__main__':unittest.main()
