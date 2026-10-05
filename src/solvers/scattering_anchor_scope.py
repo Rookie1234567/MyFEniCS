@@ -40,7 +40,7 @@ def implementation_hashes():
              "src/runners/port_preparation.py", "src/runners/task042_shared.py",
              "src/solvers/scattering_anchor_scope.py", "src/solvers/scattering_anchor.py",
              "src/solvers/scattering_y_orbit_reuse.py", "src/solvers/scattering_anchor_two_cell.py", "src/solvers/scattering_anchor_checks.py", "src/solvers/scattering_anchor_reporting.py", "benchmarks/subreaper_watchdog.py",
-             "benchmarks/qualify_scattering_anchor.py", "src/test/test_scattering_anchor.py", str(PLAN.relative_to(ROOT)),
+             "benchmarks/qualify_scattering_anchor.py", "benchmarks/collect_scattering_anchor.py", "src/test/test_scattering_anchor.py", str(PLAN.relative_to(ROOT)),
              "input/materials/si_optical_constants_v1.json"]
     # Bind the complete local public FE/PETSc code used by this new anchor.
     p = plan_record()

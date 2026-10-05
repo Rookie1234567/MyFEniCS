@@ -25,6 +25,35 @@ def checked_arrays(record):
     return values
 
 
+def complete_finite_gate(row):
+    """Recompute the frozen finite criteria; recorded status is not evidence."""
+    field_names={'E_total','E_scattered','H_total','H_scattered','scaled_curl_total','scaled_curl_scattered'}
+    selected_names={'selected_E_total','selected_E_scattered','selected_H_total','selected_H_scattered','selected_curl_total','selected_curl_scattered'}
+    mode_names={'auxiliary_amplitude_total_projection_relative','outgoing_amplitude_relative','outgoing_amplitude_at_boundary_relative'}
+    if set(row['fields'])!=field_names or set(row['selected'])!=selected_names:
+        raise ValueError('complete E/H/curl observable inventory')
+    if row['all_modes']['mode_count']!=532 or not mode_names.issubset(row['all_modes']):
+        raise ValueError('complete532 complex mode inventory')
+    if set(row['power_differences'])!={'R_total','T_total','A_balance','A_volume'}:
+        raise ValueError('complete power inventory')
+    def audit(a,threshold):
+        return all(np.isfinite(a[k]) and 0<=a[k]<=threshold for k in ('true','native','augmented','port')) and np.isfinite(a['identity']) and 0<=a['identity']<=1e-10 and a['slave_zero'] is True
+    def recovery(r):
+        return all(np.isfinite(r[k]) and 0<=r[k]<=1e-10 for k in ('operation_scaled_interior','max_cell_operation_scaled','master_storage_max_abs')) and r['slave_storage_zero'] is True
+    field_values=[v['mixed_relative'] for v in row['fields'].values()]+list(row['selected'].values())+[row['all_modes'][k] for k in mode_names]
+    fields=all(np.isfinite(v) and 0<=v<=1e-4 for v in field_values)
+    power=all(np.isfinite(v) and 0<=v<=1e-5 for v in row['power_differences'].values())
+    modes=np.isfinite(row['all_modes']['mode_power_max_absolute']) and 0<=row['all_modes']['mode_power_max_absolute']<=1e-6
+    energies=all(np.isfinite(row[k]) and 0<=row[k]<=1e-5 for k in ('reference_energy_absolute','candidate_energy_absolute'))
+    ref=audit(row['reference_audit'],1e-10) and recovery(row['reference_recovery'])
+    equation=audit(row['candidate_audit'],1e-6);recovered=recovery(row['candidate_recovery'])
+    return {'reference_direct_and_recovery_pass':bool(ref),'candidate_equation_pass':bool(equation),
+            'candidate_recovery_pass':bool(recovered),'field_and_full_complex_vector_pass':bool(fields),
+            'power_mode_energy_pass':bool(power and modes and energies),
+            'FINITE_OBSERVABLE_PASS':bool(ref and equation and recovered and fields and power and modes and energies),
+            'comparison':'original frozen relative complete observable-vector norms, floor1e-12, no phase/normalization adjustment'}
+
+
 def integrated_difference(mesh,reference,candidate,k0):
     from dolfinx import fem
     import ufl

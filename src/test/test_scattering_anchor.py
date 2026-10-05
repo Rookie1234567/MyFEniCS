@@ -219,5 +219,26 @@ class AnchorTests(unittest.TestCase):
             self.assertEqual(p4_companion_mpc(space,mesh_data,cfg),'mpc')
         self.assertEqual(len(seen),1);self.assertEqual(cfg.nedelec_degree,5)
 
+    def test_compact_gate_recomputes_numbers_and_rejects_missing_observables(self):
+        import copy
+        from src.solvers.scattering_anchor_checks import complete_finite_gate
+        a={k:1e-12 for k in ('true','native','augmented','port','identity')};a['slave_zero']=True
+        r={k:1e-12 for k in ('operation_scaled_interior','max_cell_operation_scaled','master_storage_max_abs')};r['slave_storage_zero']=True
+        row={'reference_audit':a,'candidate_audit':a,'reference_recovery':r,'candidate_recovery':r,
+             'fields':{k:{'mixed_relative':1e-6} for k in ('E_total','E_scattered','H_total','H_scattered','scaled_curl_total','scaled_curl_scattered')},
+             'selected':{k:1e-6 for k in ('selected_E_total','selected_E_scattered','selected_H_total','selected_H_scattered','selected_curl_total','selected_curl_scattered')},
+             'all_modes':{k:1e-6 for k in ('auxiliary_amplitude_total_projection_relative','outgoing_amplitude_relative','outgoing_amplitude_at_boundary_relative')},
+             'power_differences':{k:1e-7 for k in ('R_total','T_total','A_balance','A_volume')},
+             'reference_energy_absolute':1e-8,'candidate_energy_absolute':1e-8,'FINITE_OBSERVABLE_PASS':False}
+        row['all_modes'].update(mode_count=532,mode_power_max_absolute=1e-8)
+        self.assertTrue(complete_finite_gate(row)['FINITE_OBSERVABLE_PASS'])
+        for key,value in [('true',1e-2),('native',np.nan),('port',-1.)]:
+            bad=copy.deepcopy(row);bad['candidate_audit'][key]=value;bad['FINITE_OBSERVABLE_PASS']=True
+            self.assertFalse(complete_finite_gate(bad)['FINITE_OBSERVABLE_PASS'])
+        bad=copy.deepcopy(row);bad['all_modes']['mode_count']=531
+        with self.assertRaisesRegex(ValueError,'532'):complete_finite_gate(bad)
+        bad=copy.deepcopy(row);del bad['selected']['selected_H_total']
+        with self.assertRaisesRegex(ValueError,'inventory'):complete_finite_gate(bad)
+
 
 if __name__=='__main__':unittest.main()
