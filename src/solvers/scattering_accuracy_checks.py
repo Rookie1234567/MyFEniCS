@@ -115,3 +115,25 @@ def saved_modal_effects(boundary,attribution):
             q47_parent= b['arrays']['q47']['sha256'],
             meaning='old clipped carrier and old untrimmed quadrature separated; all mode sums assembled before norms'))
     return dict(rows=rows,new_FE_volume_actions=0,new_PDE_solves=0)
+
+
+def port_storage_scales(port,projected,H,phase):
+    """Describe stored port coordinates, original rows and physical face scale.
+
+    Evanescent coefficients at z=0 can be large while their boundary values
+    are tiny. These are three distinct diagnostics, never a fitted rescaling
+    or replacement of a declared gate. Inputs are saved audit arrays only.
+    """
+    if any(np.asarray(v).shape!=(532,) for v in (port,projected,H,phase)):
+        raise ValueError('exact532 port scaling inventory')
+    if not all(np.all(np.isfinite(v)) for v in (port,projected,H,phase)) or np.any(np.asarray(H)<=0):
+        raise ValueError('finite nonzero original port normalization')
+    closed=projected/H;delta=port-closed;weighted=H*delta;face=phase*delta
+    if not np.all(np.isfinite(closed)):raise ValueError('port division overflow')
+    return dict(raw_reclose_relative=float(np.linalg.norm(delta)/max(np.linalg.norm(closed),1e-300)),
+        original_port_row_relative=float(np.linalg.norm(weighted)/max(np.linalg.norm(projected),1e-300)),
+        physical_boundary_max_absolute=float(np.max(np.abs(face))),
+        raw_delta_max_absolute=float(np.max(np.abs(delta))),
+        largest_raw_mode_index=int(np.argmax(np.abs(delta))),largest_boundary_mode_index=int(np.argmax(np.abs(face))),
+        H_min=float(np.min(H)),H_max=float(np.max(H)),phase_min_absolute=float(np.min(np.abs(phase))),
+        interpretation='saved original H and reference-plane phase; no correction, normalization choice or qualification change')

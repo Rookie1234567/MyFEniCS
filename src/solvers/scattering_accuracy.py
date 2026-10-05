@@ -454,6 +454,10 @@ def cost(folder,journal):
     import json
     from .scattering_accuracy_scope import ARTIFACT
     from .scattering_anchor_reporting import disjoint_timings
+    from .scattering_accuracy_checks import port_storage_scales
+    from .fullspace_dtn_action import build_dynamic_mode_inventory
+    from .dtn_port_3d import _mode_boundary_phase
+    independent={r['role']:r for r in stage('VERIFY')['rows']}
     rows=[]
     for role in SOLVES:
         try:r=stage(role)
@@ -465,7 +469,11 @@ def cost(folder,journal):
             time=disjoint_timings(events);ex=time['exclusive_seconds'];T=summary['launch_wall_seconds']
             V=sum(ex.get(k,0.) for k in ('condensation_local_factors','global_finite_factor_setup','solve_minimal_recovery','fixed_refinement'))
             tail=sum(ex.get(k,0.) for k in ('global_finite_factor_setup','solve_minimal_recovery','fixed_refinement'))
+            saved=checked_arrays(independent[role]['arrays']);cfg=configuration(r['case'],r['degree'],r['grid'])
+            modes,_,_=build_dynamic_mode_inventory(cfg)
+            scales=port_storage_scales(saved['port'],saved['projected'],saved['H'],np.asarray([_mode_boundary_phase(m,cfg) for m in modes]))
             rows.append(dict(role=role,timings=r['timings'],capacity=r['capacity'],build_audit=r['build_audit'],
+                saved_port_coordinate_scales=scales,independent_parent_array=independent[role]['arrays']['sha256'],
                 original_audit=r['original_audit'],tensor_checks_pass=r['tensor_checks']['pass_gate'],actual_array_hash=r['arrays']['sha256'],
                 **time,cold_dat_launch_seconds_lower=T,tree_peak_bytes=summary['sampled_process_tree_rss_peak_bytes'],
                 worker_unclassified_IO_cleanup_seconds=max(0.,r['elapsed_worker_seconds']-time['root_measured_seconds']),

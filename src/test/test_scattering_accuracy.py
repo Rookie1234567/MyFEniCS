@@ -180,5 +180,16 @@ class AccuracyTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError,'queue already frozen'):
                     solve('FLAT_P5',Path(t),None)
 
+    def test_raw_evanescent_port_and_physical_rows_are_separate(self):
+        from src.solvers.scattering_accuracy_checks import port_storage_scales
+        port=np.zeros(532,complex);proj=port.copy();H=np.ones(532);phase=np.ones(532,complex)
+        port[0]=1+1e-13;proj[0]=1
+        port[-1]=2e85;H[-1]=1e-170;proj[-1]=1e-85;phase[-1]=1e-100
+        r=port_storage_scales(port,proj,H,phase)
+        self.assertGreater(r['raw_reclose_relative'],.9)
+        self.assertLess(r['original_port_row_relative'],1e-12)
+        self.assertLess(r['physical_boundary_max_absolute'],1e-12)
+        with self.assertRaises(ValueError):port_storage_scales(port[:-1],proj,H,phase)
+
 
 if __name__=='__main__':unittest.main()
