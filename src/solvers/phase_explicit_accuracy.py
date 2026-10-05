@@ -161,7 +161,7 @@ def solve(role,folder,journal):
         inverse.factor=None;factor.destroy();factor=None;system.matrix.destroy();system.matrix=None;gc.collect();journal.event('factor_and_global_matrix_released_original_oracle_alive')
         _,recovery,rv=native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal);rec=save_arrays(folder/'recovery.npz',**rv)
         output=physical_output(bundle,u,port,geo,folder,journal)
-        accuracy=None;weak=None
+        accuracy=None;weak=None;pair=None;indicator=None
         if case=='FLAT':
             accuracy=flat_integrals(bundle,u,geo,folder,journal)
             full=flat_saved_physics(cfg,bundle['modes'],port,output,accuracy)
@@ -169,10 +169,22 @@ def solve(role,folder,journal):
             accuracy['complete_physics']=full;accuracy['pass_gate']=accuracy['pass_gate'] and full['pass_gate']
             vv,cc,_=analytic_weak(bundle,journal)
             weak=dict(relative=relative(rhs.array-vv-cc,rhs.array),arrays=save_arrays(folder/'independent_analytic_weak.npz',volume=vv,coupling=cc,rhs=rhs.array.copy()))
+        if role=='NOTCH_P5':
+            pair=compare_saved(stage('NOTCH_P4'),dict(case=case,degree=degree,grid=grid,arrays=arrays,output=output),folder,journal)
+            from .phase_explicit_accuracy_fields import PhaseEvaluator
+            from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+            env=restore_p0_full_field(setup['floquets'][degree],u);ev=PhaseEvaluator(env.function_space,15,bundle['kappa'])
+            with journal.measured('pre_registered_direction_h_indicator'):
+                per=np.asarray([ev.gradient_indicator(env,c,cfg.k0) for c in range(len(geo['cell_centers']))])
+            total=per.sum(axis=0);axis=int(np.argmax(total));indicator=dict(totals=total,selected_axis=('x','y','z')[axis],grid=('X2','Y2','Z2')[axis],
+                rule='sum h_K,d^2 integral(|partial_d u|^2+|partial_d Henv|^2), code units; first argmax gives x/y/z tie order',arrays=save_arrays(folder/'h_indicator.npz',per_cell=per,totals=total))
+            if not pair['pass_gate'] and equation_gate(norms,recovery) and stage('NOTCH_P4')['equation_pass']:
+                write_json(window.TMP/'h_selection.json',indicator|dict(parent_array_sha256=arrays['sha256']))
         eq=equation_gate(norms,recovery)
         result=dict(status='COMPLETED',role=role,case=case,degree=degree,grid=grid,representation='FIXED_PHASE_PERIODIC_NEDELEC_ENVELOPE',
             arrays=arrays,returned_arrays=early,original_audit=norms,recovery=recovery,recovery_arrays=rec,output=output,analytic=accuracy,analytic_weak=weak,
             accuracy_pass=eq and accuracy is not None and accuracy['pass_gate'],equation_pass=eq,direct_target_pass=max(norms[k] for k in ('true','augmented','port'))<=1e-10,
+            p_pair=pair,h_indicator=indicator,
             capacity=cap,build_audit=_json_metadata(system.build_audit),port_coordinates=factor.mapping if factor is not None else str(folder/'port_coordinate_map.npz'),
             boundary=boundary,mode_sha256=bundle['mode_sha256'],fixed_refinements=refinements,timings=journal.timings,calls=journal.calls,NN_training=0)
         write_json(folder/'scientific_result.json',result)
@@ -222,4 +234,32 @@ def verify_cost(folder,journal):
             receipt=save_arrays(folder/(role+'_independent_audit.npz'),**vec,**rv)
             rows.append(dict(role=role,parent=r['arrays']['sha256'],audit=a,recovery=rec,arrays=receipt,equation_pass=equation_gate(a,rec),analytic_pass=r['accuracy_pass'],power=r['output']['port_metrics'],volume=r['output']['volume_metrics']))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
-    return dict(status='COMPLETED',rows=rows,NN_training=0,target_qualified=False,NN20=False,timings=journal.timings,calls=journal.calls)
+    pairs=[]
+    if 'NOTCH_P4' in frozen['completed_solves'] and 'NOTCH_P5' in frozen['completed_solves']:
+        sub=folder/'NOTCH_p_pair';sub.mkdir();pairs.append(dict(kind='p4_p5',comparison=compare_saved(stage('NOTCH_P4'),stage('NOTCH_P5'),sub,journal)))
+    if 'NOTCH_HPROBE' in frozen['completed_solves']:
+        sub=folder/'NOTCH_h_pair';sub.mkdir();pairs.append(dict(kind='p5_h',comparison=compare_saved(stage('NOTCH_P5'),stage('NOTCH_HPROBE'),sub,journal)))
+    return dict(status='COMPLETED',rows=rows,pairs=pairs,NN_training=0,target_qualified=False,NN20=False,timings=journal.timings,calls=journal.calls)
+
+
+def compare_saved(coarse,fine,folder,journal):
+    from .phase_explicit_accuracy_fields import common_physical_difference
+    from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+    from .scattering_anchor_checks import mode_comparison
+    from petsc4py import PETSc
+    functions=[]
+    for r in (coarse,fine):
+        cfg,setup,geo=make_setup(r['case'],r['degree'],r['grid'],journal);v=checked_arrays(r['arrays'])
+        for key in ('geometry_x','geometry_dofmap','cell_tags','cell_centers'):
+            if not np.array_equal(geo[key],v[key]):raise ValueError('physical comparison geometry '+key)
+        vec=PETSc.Vec().createSeq(len(v['u_storage']),comm=PETSc.COMM_SELF);vec.array[:]=v['u_storage']
+        try:functions.append(restore_p0_full_field(setup['floquets'][r['degree']],vec))
+        finally:vec.destroy()
+    result=common_physical_difference(*functions,cfg,journal,folder)
+    modes=mode_comparison(coarse,fine)
+    power={k:abs(coarse['output']['port_metrics'][k]-fine['output']['port_metrics'][k]) for k in ('R_total','T_total','A_balance')}
+    power['A_volume']=abs(coarse['output']['volume_metrics']['A_volume_total']-fine['output']['volume_metrics']['A_volume_total'])
+    energies=[abs(r['output']['volume_metrics']['energy_closure_error_port_volume']) for r in (coarse,fine)]
+    result.update(modes=modes,power_differences=power,energies=energies)
+    result['pass_gate']=result['pass_gate'] and all(modes[k]<=1e-4 for k in modes if k.endswith('_relative')) and modes['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energies)<=1e-5
+    return result

@@ -31,6 +31,59 @@ class PhaseEvaluator(CellEvaluator):
         curl=np.einsum('qjc,j->qc',curls,coef)@J.T/det
         return self.physical(points,e,curl,k0)
 
+    def gradient_indicator(self,function,c,k0):
+        """Within-cell derivatives of u and Ckappa(u)/(i*k0); no JIT."""
+        import basix
+        J,o,det=self.geometry[c];inv=np.linalg.inv(J)
+        if not hasattr(self,'second_tabulation'):
+            self.second_tabulation=self.space.element.basix_element.tabulate(2,self.points)
+        tab=self.second_tabulation
+        info=int(self.permutations[c]);dim=self.space.element.space_dimension
+        if info not in self.transforms:
+            T=np.eye(dim);self.space.element.T_apply(T.ravel(),self.permutations[c:c+1],dim);self.transforms[info]=T
+        coef=self.transforms[info].T@function.x.array[self.space.dofmap.cell_dofs(c)]
+        first=np.asarray([np.einsum('qjc,j->qc',tab[basix.index(*(int(i==a) for i in range(3)))],coef)@inv for a in range(3)])
+        grad=np.einsum('aqc,ad->dqc',first,inv)
+        second=np.empty((3,3,len(self.points),3),complex)
+        for a in range(3):
+            for b in range(3):
+                index=basix.index(*(int(i==a)+int(i==b) for i in range(3)))
+                second[a,b]=np.einsum('qjc,j->qc',tab[index],coef)@inv
+        hess=np.einsum('abqc,ad,be->deqc',second,inv,inv)
+        dcurl=np.stack((hess[:,1,:,2]-hess[:,2,:,1],hess[:,2,:,0]-hess[:,0,:,2],hess[:,0,:,1]-hess[:,1,:,0]),axis=-1)
+        dh=(dcurl+1j*np.cross(self.kappa,grad))/(1j*k0)
+        widths=np.sum(np.abs(J),axis=1)
+        return widths**2*det*np.asarray([np.sum(self.weights[:,None]*(np.abs(grad[d])**2+np.abs(dh[d])**2)) for d in range(3)])
+
+
+def common_physical_difference(coarse,fine,cfg,journal,folder):
+    """Integrate on the finer geometry, evaluating both physical gVh fields."""
+    fc,ff=coarse,fine;ec=PhaseEvaluator(fc.function_space,23,np.asarray([cfg.kx,cfg.ky,0],float));ef=PhaseEvaluator(ff.function_space,23,ec.kappa)
+    # Affine boxes: a point's parent is found from actual stored vertices,
+    # never from a guessed native numbering or interpolated field.
+    bounds=np.asarray([[fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].min(axis=0),fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].max(axis=0)] for c in range(len(ec.geometry))])
+    sums={k:np.zeros(3) for k in ('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')};per=[];selected={k:[] for k in sums};selected_ref={k:[] for k in sums}
+    with journal.measured('common_physical_p_h_integrals'):
+        for c in range(len(ef.geometry)):
+            points,w,vf=ef.cell(ff,c,cfg.k0);mid=points.mean(axis=0)
+            parents=np.flatnonzero(np.all((mid>=bounds[:,0]-1e-12)&(mid<=bounds[:,1]+1e-12),axis=1))
+            if len(parents)!=1:raise ValueError('common physical cell-parent ambiguity')
+            p=int(parents[0]);vc=ec.at(fc,p,points,cfg.k0);bg=analytic(cfg,points);cell=[]
+            for name in sums:
+                k=name.split('_')[0];a=vc[k];b=vf[k]
+                if name.endswith('scattered'):a=a-bg[k];b=b-bg[k]
+                triple=np.asarray([np.sum(w[:,None]*np.abs(b-a)**2),np.sum(w[:,None]*np.abs(b)**2),np.sum(w[:,None]*np.abs(bg[k])**2)])
+                sums[name]+=triple;cell.append(triple)
+            per.append(cell)
+            cv=ec.at(fc,p,mid[None,:],cfg.k0);fv=ef.at(ff,c,mid[None,:],cfg.k0);bv=analytic(cfg,mid[None,:])
+            for name in sums:
+                k=name.split('_')[0];b=bv[k][0] if name.endswith('scattered') else 0
+                selected[name].append(cv[k][0]-b);selected_ref[name].append(fv[k][0]-b)
+    rows={k:dict(difference_L2=float(np.sqrt(v[0])),reference_L2=float(np.sqrt(v[1])),relative=float(np.sqrt(v[0])/max(np.sqrt(v[1]),1e-12)),incident_scaled=float(np.sqrt(v[0])/max(np.sqrt(v[2]),1e-12))) for k,v in sums.items()}
+    select={k:relative(np.asarray(selected[k])-selected_ref[k],selected_ref[k]) for k in sums}
+    arrays=save_arrays(folder/'common_physical_difference.npz',per_cell_integrals=np.asarray(per))
+    return dict(fields=rows,selected=select,arrays=arrays,q=23,full_cross_terms=True,pass_gate=max([r['relative'] for r in rows.values()]+list(select.values()))<=1e-4)
+
 
 def physical_output(bundle,u,port,geometry,folder,journal):
     from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
