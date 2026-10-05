@@ -1,0 +1,161 @@
+{
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual01",
+      "source_sha": "9a41df00b9577c870b8bda9c4411646f48f77a48",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual02",
+      "source_sha": "624f721e3c675e895b069ad67149dee18f01fdb7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "BOUNDARY",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_boundary_20261005T053412554450Z",
+      "source_sha": "624f721e3c675e895b069ad67149dee18f01fdb7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual03",
+      "source_sha": "440640056214e628a6e09aa3a43a355fb867bc7e",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ATTRIBUTION",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_attribution_20261005T054158028392Z",
+      "source_sha": "440640056214e628a6e09aa3a43a355fb867bc7e",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual04",
+      "source_sha": "0fd75a7ba02b25ff9c2e0514c3c0b351447c8a56",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "BOUNDARY",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_boundary_20261005T054736932217Z",
+      "source_sha": "0fd75a7ba02b25ff9c2e0514c3c0b351447c8a56",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual05",
+      "source_sha": "0495fcc83552a8b6b2e6ea691454c9877afa10fd",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ATTRIBUTION",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_attribution_20261005T055505169296Z",
+      "source_sha": "0495fcc83552a8b6b2e6ea691454c9877afa10fd",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "ATTRIBUTION",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_attribution_20261005T060040736251Z",
+      "source_sha": "0495fcc83552a8b6b2e6ea691454c9877afa10fd",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual06",
+      "source_sha": "50866b0d2047527f89fd283384f10029233065ff",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "SCREEN",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_screen_20261005T062538872532Z",
+      "source_sha": "50866b0d2047527f89fd283384f10029233065ff",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual07",
+      "source_sha": "4fa5da51556799f412e29ba5555ebb43a8e196a2",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "FLAT_P5",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_flat_p5_20261005T063327351229Z",
+      "source_sha": "4fa5da51556799f412e29ba5555ebb43a8e196a2",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual08",
+      "source_sha": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "FLAT_P5",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_flat_p5_20261005T065153346235Z",
+      "source_sha": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "GRAM_CONTROL",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_gram_control_20261005T065527876206Z",
+      "source_sha": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual09",
+      "source_sha": "e82b713ec9bc86b124ef9f623a981664ffe93ce2",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "VERIFY",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_verify_20261005T070038849471Z",
+      "source_sha": "e82b713ec9bc86b124ef9f623a981664ffe93ce2",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/aux_pre_qual10",
+      "source_sha": "f2173db00b8116a00f7b87e78b9e585ed83b38fa",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v50_cost_20261005T071218455371Z",
+      "source_sha": "f2173db00b8116a00f7b87e78b9e585ed83b38fa",
+      "classification": "COMPLETED"
+    }
+  ],
+  "pointers": {
+    "VERIFY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/result.json",
+      "sha256": "151a1da8ec57d4642f96220f20569779ff90d075da98c2806070bab7d6a00cc5"
+    },
+    "ATTRIBUTION": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/result.json",
+      "sha256": "eb9ca2da0f853c0100fb1b76bcb56fd04fffc4bc656bfd223848231f1aa0644d"
+    },
+    "SCREEN": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_screen_20261005T062538872532Z/result.json",
+      "sha256": "d718d5e9e2ee4a8977fad56c9bb253d8a31fa78c76ce14b5e5858434de6b148d"
+    },
+    "COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_cost_20261005T071218455371Z/result.json",
+      "sha256": "c512c88ed4e26ea0b7bbdc6c42c1688b909c5772f77c93db377ee5d17be522f4"
+    },
+    "BOUNDARY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_boundary_20261005T054736932217Z/result.json",
+      "sha256": "d252fb9484e725dc8ddd0616902236ce3b768da0b3684b2c0fbfae18aee652de"
+    },
+    "FLAT_P5": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_flat_p5_20261005T065153346235Z/result.json",
+      "sha256": "13c1896505581f557fa29600bbf33198dc4aeb68a3c6b8f02aea43ce6aa8f54d"
+    },
+    "GRAM_CONTROL": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_gram_control_20261005T065527876206Z/result.json",
+      "sha256": "3cbde723cf237b8bfae26dcd4585a5638337e24a5eda3a85e897fb46ee4cd04d"
+    }
+  },
+  "minimum_package": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/minimum_result_cost_package.json"
+}

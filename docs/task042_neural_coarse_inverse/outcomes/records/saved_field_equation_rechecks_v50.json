@@ -1,0 +1,1628 @@
+{
+  "rows": [
+    {
+      "degree": 4,
+      "parent_source": "e184c386a7187bd39d485de369071cb80badea55",
+      "parent_npz_hash": "85b10569bde61c7698c2d53934fc0259afa3afb523087ee5fa751a166805dce5",
+      "old_q": 23,
+      "new_q47_audit": {
+        "true": 0.24645100083006513,
+        "native": 0.24645100083006513,
+        "augmented": 0.24645100083006513,
+        "port": 3.137455308016298e-19,
+        "identity": 6.09243023475994e-17,
+        "slave_zero": true
+      },
+      "new_q63_true": 0.24645100083005428,
+      "old_native_true": 1.567841715961492e-12,
+      "rhs_change_relative": 1.2047138687612064e-13,
+      "q47_q63_residual_difference": 7.102031934032129e-14,
+      "arrays47": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/p4_saved_field_q47_audit.npz",
+        "sha256": "a99b0dccca261af89d5af8047d2271d6fcfe03957ce3ebdd19f4da8fda1c7eb2",
+        "members": {
+          "rhs": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "4c79b3f73b47ebe1b41b3eaa0e6f220b1fce101f9098be0dbec5f5c3e023444f"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "9cb3fb7cf8ea44bfbe837ee899a7a3c5727e0d701b05e558429cd076f4a82203"
+          },
+          "residual": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "7fb0154ed667bed461c28921415396100531d1f8ffd740582d686f6a59504c33"
+          },
+          "volume_action": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "f8ae5d359bf9836f7d6b2c761289356dd661ca9f35d9fcd44e7ff633c44da055"
+          },
+          "coupling_action": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "71c510778aa960fe55cd9c5f0a6d6a4855a66faa05ff28dd6e2bb5f9f4a3c50e"
+          },
+          "augmented_residual": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "8e9c1f4a737b7a956cb6aefd4e15a3e5f62387f3b7338d2d9999eb6e9cfcbfbd"
+          },
+          "port_residual": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "59c722f62468aa8e6f2027217a6f441abc842fbf640f73017d55e3a273375b52"
+          },
+          "projected": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "cf0208d01a2b6974c7e38d7d35b8875cc027c226b185e7a0b2bf29d33891bdda"
+          },
+          "H": {
+            "shape": [
+              532
+            ],
+            "dtype": "float64",
+            "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+          }
+        }
+      },
+      "arrays63": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/p4_saved_field_q63_audit.npz",
+        "sha256": "8c4665dc6b6cc8b39c10964e590ff66bff9ba392b9f22ae62c57258354947892",
+        "members": {
+          "rhs": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "da5351c03629c991b0d7a6b7d0c64b0abbb3961ddda8def21326fefa994e6325"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "fc9077d7c65ffaac976282de1a6fb55c18f3c3737f7a85203087a0eeef79ceca"
+          },
+          "residual": {
+            "shape": [
+              17204
+            ],
+            "dtype": "complex128",
+            "sha256": "8f9f8b12afbce3a5882fc9e8baabf7061adac79c3b3881fc4b3315d6062ad21f"
+          }
+        }
+      },
+      "actual_cell_class_assignment": [
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ]
+      ],
+      "original_volume_form_audit": {
+        "schema": "task038.fullspace-split-volume-action.v1",
+        "operator": "A_curl_curl_plus_A_complex_material_mass",
+        "component_count": 2,
+        "components": {
+          "curl_curl": {
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "matrix_type": "python",
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "mpc_enabled": true,
+            "slave_row_identity": true,
+            "apply_count": 2,
+            "global_rows": 17204,
+            "local_owned_rows": 17204,
+            "local_ghost_rows": 0,
+            "local_storage_entries": 17204,
+            "constraint_row_metadata_entries": 17204,
+            "constraint_count": 1332,
+            "owned_constraint_count": 1332,
+            "constraint_nnz": 1332,
+            "constraint_nnz_closes": true,
+            "form_rank": 1,
+            "coefficient_count": 1,
+            "ufl_coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "phase_application": "finalized_floquet_mpc_once",
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owner_local": true,
+            "numeric_allgather": false,
+            "replicated_global_numeric_vector": false,
+            "global_matrix_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_condensed_schur_materialized": false,
+            "cell_schur_matrix_materialized": false,
+            "slab_matrix_materialized": false,
+            "retained_dense_cell_tensor_count": 0,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "cell_schur_matrix_nnz": 0,
+            "slab_matrix_nnz": 0,
+            "factor_count": 0,
+            "ksp_created": false,
+            "dtn_used": false,
+            "ordinary_default_changed": false,
+            "fresh_packed_arrays_released": true,
+            "jit_options_explicit": true,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 275264,
+              "output_vector_local_storage_bytes": 275264,
+              "constraint_work_bytes": 21312,
+              "owned_slave_work_bytes": 21312,
+              "slave_indices_bytes": 5328,
+              "owned_slave_indices_bytes": 5328,
+              "flat_slave_indices_bytes": 5328,
+              "master_indices_bytes": 5328,
+              "conjugated_master_coefficients_bytes": 21312,
+              "packed_constants_bytes": 0
+            },
+            "retained_numeric_payload_local_bytes": 635776,
+            "retained_numeric_payload_global_sum_bytes": 635776,
+            "retained_numeric_payload_global_max_bytes": 635776,
+            "last_packed_coefficient_shapes": [
+              [
+                42,
+                300
+              ],
+              [
+                16,
+                300
+              ],
+              [
+                22,
+                300
+              ]
+            ],
+            "last_packed_coefficient_entry_count": 24000,
+            "last_packed_coefficient_bytes": 384000,
+            "per_apply_bounded_temporary_bytes": 384000
+          },
+          "complex_material_mass": {
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "matrix_type": "python",
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "mpc_enabled": true,
+            "slave_row_identity": false,
+            "apply_count": 2,
+            "global_rows": 17204,
+            "local_owned_rows": 17204,
+            "local_ghost_rows": 0,
+            "local_storage_entries": 17204,
+            "constraint_row_metadata_entries": 17204,
+            "constraint_count": 1332,
+            "owned_constraint_count": 1332,
+            "constraint_nnz": 1332,
+            "constraint_nnz_closes": true,
+            "form_rank": 1,
+            "coefficient_count": 1,
+            "ufl_coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "phase_application": "finalized_floquet_mpc_once",
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owner_local": true,
+            "numeric_allgather": false,
+            "replicated_global_numeric_vector": false,
+            "global_matrix_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_condensed_schur_materialized": false,
+            "cell_schur_matrix_materialized": false,
+            "slab_matrix_materialized": false,
+            "retained_dense_cell_tensor_count": 0,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "cell_schur_matrix_nnz": 0,
+            "slab_matrix_nnz": 0,
+            "factor_count": 0,
+            "ksp_created": false,
+            "dtn_used": false,
+            "ordinary_default_changed": false,
+            "fresh_packed_arrays_released": true,
+            "jit_options_explicit": true,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 275264,
+              "output_vector_local_storage_bytes": 275264,
+              "constraint_work_bytes": 21312,
+              "owned_slave_work_bytes": 21312,
+              "slave_indices_bytes": 5328,
+              "owned_slave_indices_bytes": 5328,
+              "flat_slave_indices_bytes": 5328,
+              "master_indices_bytes": 5328,
+              "conjugated_master_coefficients_bytes": 21312,
+              "packed_constants_bytes": 0
+            },
+            "retained_numeric_payload_local_bytes": 635776,
+            "retained_numeric_payload_global_sum_bytes": 635776,
+            "retained_numeric_payload_global_max_bytes": 635776,
+            "last_packed_coefficient_shapes": [
+              [
+                42,
+                300
+              ],
+              [
+                16,
+                300
+              ],
+              [
+                22,
+                300
+              ]
+            ],
+            "last_packed_coefficient_entry_count": 24000,
+            "last_packed_coefficient_bytes": 384000,
+            "per_apply_bounded_temporary_bytes": 384000
+          }
+        },
+        "slave_row_identity_owner": "curl_curl",
+        "constraint_identity_rows_exactly_once": true,
+        "phase_application": "each_component_finalized_floquet_mpc_once_no_wrapper_reapply",
+        "sum_output_buffer": "curl_curl_action_output",
+        "third_persistent_sum_vector": false,
+        "apply_count": 2,
+        "destroyed": false
+      },
+      "tensor_summary": {
+        "pass_gate": true,
+        "seconds": 142.29435121221468,
+        "factory": {
+          "schema_version": "task035b.affine-isotropic-maxwell-tensor-spec.v1",
+          "operator": "curl_coefficient*curlcurl_plus_tag_mass_coefficient*vector_mass",
+          "cell_type": "hexahedron",
+          "map_type": "covariantPiola",
+          "value_shape": [
+            3
+          ],
+          "dimension": 300,
+          "element_hash": 16913352432823651564,
+          "embedded_superdegree": 4,
+          "quadrature_degree": 8,
+          "curl_coefficient": [
+            1.0,
+            0.0
+          ],
+          "mass_coefficient_by_tag": {
+            "1": [
+              -80.56819919256618,
+              0.0
+            ],
+            "2": [
+              -80.54969220363235,
+              -0.0006967979055868613
+            ],
+            "3": [
+              -80.54969220363235,
+              -0.0006967979055868613
+            ]
+          },
+          "axis_aligned_affine_only": true,
+          "scalar_isotropic_only": true,
+          "pml_supported": false,
+          "divergence_penalty_supported": false,
+          "status": "affine_isotropic_reference_grams_built",
+          "pass": true,
+          "identity_sha256": "60f6c0f77bc95d07339439ad9362f1706c305283d06b414e483d866769d71a7f",
+          "quadrature_point_count": 125,
+          "quadrature_weight_sum": 1.0000000000000004,
+          "tabulation_seconds": 0.003922971896827221,
+          "gram_seconds": 0.07033049804158509,
+          "total_build_seconds": 0.07576783210970461,
+          "reference_component_count": 6,
+          "reference_component_bytes": 4320000,
+          "ordinary_default_changed": false
+        },
+        "requested_gram": false,
+        "failed_class_fallback": "original FFCx tensor; no approximate class merge"
+      },
+      "raw_class_count": 17,
+      "full_tensor_record_path": "benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/result.json"
+    },
+    {
+      "degree": 5,
+      "parent_source": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "parent_npz_hash": "bd1a17eb248ba4c364eb9831e281b399eea80351354947a971bf676aba9a7c74",
+      "old_q": 25,
+      "new_q47_audit": {
+        "true": 0.42493880660924543,
+        "native": 0.42493880660924543,
+        "augmented": 0.42493880660924543,
+        "port": 1.6145851797313678e-18,
+        "identity": 8.800948621092101e-17,
+        "slave_zero": true
+      },
+      "new_q63_true": 0.4249388066092322,
+      "old_native_true": 2.5759033957755938e-12,
+      "rhs_change_relative": 5.583268990353366e-14,
+      "q47_q63_residual_difference": 1.425107860313312e-13,
+      "arrays47": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/p5_saved_field_q47_audit.npz",
+        "sha256": "3c45673fc245e86b50f50dd74156c9a0ad8a73555dc4df6b72337e39d978dfa0",
+        "members": {
+          "rhs": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "cdc4f63ca6f5a35206a7c649272efb0dc21377d78b2e7bc8c9d512c491690b7f"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "e7eff6eb61c062ac9a58d962950314482bb17cf1704c0840b8c2b0082097c9a6"
+          },
+          "residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "b803385b2c3f9adb47435b58b6180367f57cf6b7fc4ffbc19dd268f627546b2d"
+          },
+          "volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "af7b162f604b37672d0e5d1a161551ae8943afe8c60c3389c02883358fa76b60"
+          },
+          "coupling_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "e1bc567486c0284804208947986af7b974bde95bc5c8e27667981e21bd9b239b"
+          },
+          "augmented_residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "1b1772672ce9c192a6a45eac3bb20d6ac20023f0eef2478f9d9e06f96f780ae7"
+          },
+          "port_residual": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "3b513e71c65a6cbf4e41ca1fde60ca0c19942c2413b7c052fefab5255dfcca9e"
+          },
+          "projected": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "20689594c6e952b3704b35d615a82bba8910d19dbffd09f5b6daaa87d2d067a0"
+          },
+          "H": {
+            "shape": [
+              532
+            ],
+            "dtype": "float64",
+            "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+          }
+        }
+      },
+      "arrays63": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/p5_saved_field_q63_audit.npz",
+        "sha256": "565f190b2b643bf0899d88d042be18480415da21c155ba0739fb4c18e6cb43a7",
+        "members": {
+          "rhs": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "7ef827b4924441d1030f3ae7a3711bd3b498a8d084142abdb7d0a45c9b925058"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "a783d93300180c6f44f8b4164aaa737376d3b3c63344ee4d1d094e8f4a69e986"
+          },
+          "residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "b9c10404949807cae09d21f4dac98b665e59be9203edd8888010ef6d630cfbbb"
+          }
+        }
+      },
+      "actual_cell_class_assignment": [
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          2,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          2,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074077,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.074074074074074
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          3,
+          0.44074074074074066,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.44074074074074077,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          2.0740740740740744
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.44074074074074066,
+          0.32407407407407407,
+          0.5185185185185182
+        ],
+        [
+          1,
+          0.8555555555555556,
+          0.32407407407407407,
+          0.5185185185185182
+        ]
+      ],
+      "original_volume_form_audit": {
+        "schema": "task038.fullspace-split-volume-action.v1",
+        "operator": "A_curl_curl_plus_A_complex_material_mass",
+        "component_count": 2,
+        "components": {
+          "curl_curl": {
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "matrix_type": "python",
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "mpc_enabled": true,
+            "slave_row_identity": true,
+            "apply_count": 2,
+            "global_rows": 32865,
+            "local_owned_rows": 32865,
+            "local_ghost_rows": 0,
+            "local_storage_entries": 32865,
+            "constraint_row_metadata_entries": 32865,
+            "constraint_count": 2065,
+            "owned_constraint_count": 2065,
+            "constraint_nnz": 2065,
+            "constraint_nnz_closes": true,
+            "form_rank": 1,
+            "coefficient_count": 1,
+            "ufl_coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "phase_application": "finalized_floquet_mpc_once",
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owner_local": true,
+            "numeric_allgather": false,
+            "replicated_global_numeric_vector": false,
+            "global_matrix_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_condensed_schur_materialized": false,
+            "cell_schur_matrix_materialized": false,
+            "slab_matrix_materialized": false,
+            "retained_dense_cell_tensor_count": 0,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "cell_schur_matrix_nnz": 0,
+            "slab_matrix_nnz": 0,
+            "factor_count": 0,
+            "ksp_created": false,
+            "dtn_used": false,
+            "ordinary_default_changed": false,
+            "fresh_packed_arrays_released": true,
+            "jit_options_explicit": true,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 525840,
+              "output_vector_local_storage_bytes": 525840,
+              "constraint_work_bytes": 33040,
+              "owned_slave_work_bytes": 33040,
+              "slave_indices_bytes": 8260,
+              "owned_slave_indices_bytes": 8260,
+              "flat_slave_indices_bytes": 8260,
+              "master_indices_bytes": 8260,
+              "conjugated_master_coefficients_bytes": 33040,
+              "packed_constants_bytes": 0
+            },
+            "retained_numeric_payload_local_bytes": 1183840,
+            "retained_numeric_payload_global_sum_bytes": 1183840,
+            "retained_numeric_payload_global_max_bytes": 1183840,
+            "last_packed_coefficient_shapes": [
+              [
+                42,
+                540
+              ],
+              [
+                16,
+                540
+              ],
+              [
+                22,
+                540
+              ]
+            ],
+            "last_packed_coefficient_entry_count": 43200,
+            "last_packed_coefficient_bytes": 691200,
+            "per_apply_bounded_temporary_bytes": 691200
+          },
+          "complex_material_mass": {
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "backend": "dolfinx.fem.assemble_vector + owner-local MPC R^H",
+            "matrix_type": "python",
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "mpc_enabled": true,
+            "slave_row_identity": false,
+            "apply_count": 2,
+            "global_rows": 32865,
+            "local_owned_rows": 32865,
+            "local_ghost_rows": 0,
+            "local_storage_entries": 32865,
+            "constraint_row_metadata_entries": 32865,
+            "constraint_count": 2065,
+            "owned_constraint_count": 2065,
+            "constraint_nnz": 2065,
+            "constraint_nnz_closes": true,
+            "form_rank": 1,
+            "coefficient_count": 1,
+            "ufl_coefficient_count": 1,
+            "compiled_coefficient_count": 1,
+            "phase_application": "finalized_floquet_mpc_once",
+            "orientation": "dolfinx_n1curl_form_kernel",
+            "owner_local": true,
+            "numeric_allgather": false,
+            "replicated_global_numeric_vector": false,
+            "global_matrix_materialized": false,
+            "global_constraint_matrix_materialized": false,
+            "global_condensed_schur_materialized": false,
+            "cell_schur_matrix_materialized": false,
+            "slab_matrix_materialized": false,
+            "retained_dense_cell_tensor_count": 0,
+            "dense_cell_tensor_materialized_per_apply": false,
+            "cell_schur_matrix_nnz": 0,
+            "slab_matrix_nnz": 0,
+            "factor_count": 0,
+            "ksp_created": false,
+            "dtn_used": false,
+            "ordinary_default_changed": false,
+            "fresh_packed_arrays_released": true,
+            "jit_options_explicit": true,
+            "retained_numeric_payload_components": {
+              "coefficient_function_local_array_bytes": 525840,
+              "output_vector_local_storage_bytes": 525840,
+              "constraint_work_bytes": 33040,
+              "owned_slave_work_bytes": 33040,
+              "slave_indices_bytes": 8260,
+              "owned_slave_indices_bytes": 8260,
+              "flat_slave_indices_bytes": 8260,
+              "master_indices_bytes": 8260,
+              "conjugated_master_coefficients_bytes": 33040,
+              "packed_constants_bytes": 0
+            },
+            "retained_numeric_payload_local_bytes": 1183840,
+            "retained_numeric_payload_global_sum_bytes": 1183840,
+            "retained_numeric_payload_global_max_bytes": 1183840,
+            "last_packed_coefficient_shapes": [
+              [
+                42,
+                540
+              ],
+              [
+                16,
+                540
+              ],
+              [
+                22,
+                540
+              ]
+            ],
+            "last_packed_coefficient_entry_count": 43200,
+            "last_packed_coefficient_bytes": 691200,
+            "per_apply_bounded_temporary_bytes": 691200
+          }
+        },
+        "slave_row_identity_owner": "curl_curl",
+        "constraint_identity_rows_exactly_once": true,
+        "phase_application": "each_component_finalized_floquet_mpc_once_no_wrapper_reapply",
+        "sum_output_buffer": "curl_curl_action_output",
+        "third_persistent_sum_vector": false,
+        "apply_count": 2,
+        "destroyed": false
+      },
+      "tensor_summary": {
+        "pass_gate": true,
+        "seconds": 743.9969858247787,
+        "factory": {
+          "schema_version": "task035b.affine-isotropic-maxwell-tensor-spec.v1",
+          "operator": "curl_coefficient*curlcurl_plus_tag_mass_coefficient*vector_mass",
+          "cell_type": "hexahedron",
+          "map_type": "covariantPiola",
+          "value_shape": [
+            3
+          ],
+          "dimension": 540,
+          "element_hash": 16913352432823651555,
+          "embedded_superdegree": 5,
+          "quadrature_degree": 10,
+          "curl_coefficient": [
+            1.0,
+            0.0
+          ],
+          "mass_coefficient_by_tag": {
+            "1": [
+              -80.56819919256618,
+              0.0
+            ],
+            "2": [
+              -80.54969220363235,
+              -0.0006967979055868613
+            ],
+            "3": [
+              -80.54969220363235,
+              -0.0006967979055868613
+            ]
+          },
+          "axis_aligned_affine_only": true,
+          "scalar_isotropic_only": true,
+          "pml_supported": false,
+          "divergence_penalty_supported": false,
+          "status": "affine_isotropic_reference_grams_built",
+          "pass": true,
+          "identity_sha256": "cec7286882e0bec9f5e0cd8e763b07dc952a340434e5ff93fb7ec8e995bbb68f",
+          "quadrature_point_count": 216,
+          "quadrature_weight_sum": 0.9999999999999991,
+          "tabulation_seconds": 0.017966493032872677,
+          "gram_seconds": 0.677536902949214,
+          "total_build_seconds": 0.7037375441286713,
+          "reference_component_count": 6,
+          "reference_component_bytes": 13996800,
+          "ordinary_default_changed": false
+        },
+        "requested_gram": false,
+        "failed_class_fallback": "original FFCx tensor; no approximate class merge"
+      },
+      "raw_class_count": 17,
+      "full_tensor_record_path": "benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/result.json"
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "compared_to_review": "da151228815b08126dc636d3e195673ba04fe45f",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/dtn_port_3d.py",
+        "src/solvers/fullspace_dtn_action.py",
+        "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+        "src/solvers/hcurl_assembly_time_condensation.py",
+        "src/solvers/scattering_anchor.py"
+      ],
+      "behavior": "optional tensor/source/full-inventory hooks only; ordinary defaults unchanged; production approval not granted",
+      "dependencies": [
+        "qualified complex FE ABI",
+        "canonical material table",
+        "original Full3D/MPC/FFCx oracle"
+      ],
+      "tests": "tests_v50 and documentation_checks_v50",
+      "fresh_PDE_evidence": [
+        "FLAT_P5",
+        "GRAM_CONTROL"
+      ],
+      "merge_order": "review reusable hooks first, then checker, leave numerical V50 research opt-in; no merge approval"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py",
+        "src/runners/task042_shared.py"
+      ],
+      "behavior": "V50 opt-in stage/storage/envelope and routing; existing supervision retained; sampled interval limitations explicit",
+      "dependencies": [
+        "qualified complex FE ABI",
+        "canonical material table",
+        "original Full3D/MPC/FFCx oracle"
+      ],
+      "tests": "tests_v50 and documentation_checks_v50",
+      "fresh_PDE_evidence": [
+        "FLAT_P5",
+        "GRAM_CONTROL"
+      ],
+      "merge_order": "review reusable hooks first, then checker, leave numerical V50 research opt-in; no merge approval"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_scattering_accuracy.py",
+        "benchmarks/qualify_scattering_accuracy.py",
+        "src/test/test_scattering_accuracy.py"
+      ],
+      "behavior": "independent saved-array checks and bounded qualification; no solver reimplementation",
+      "dependencies": [
+        "qualified complex FE ABI",
+        "canonical material table",
+        "original Full3D/MPC/FFCx oracle"
+      ],
+      "tests": "tests_v50 and documentation_checks_v50",
+      "fresh_PDE_evidence": [
+        "FLAT_P5",
+        "GRAM_CONTROL"
+      ],
+      "merge_order": "review reusable hooks first, then checker, leave numerical V50 research opt-in; no merge approval"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/scattering_accuracy_v50.json",
+        "input/task042_neural_coarse_inverse/v50_attribution.dat",
+        "input/task042_neural_coarse_inverse/v50_boundary.dat",
+        "input/task042_neural_coarse_inverse/v50_cost.dat",
+        "input/task042_neural_coarse_inverse/v50_flat_p5.dat",
+        "input/task042_neural_coarse_inverse/v50_flat_selected.dat",
+        "input/task042_neural_coarse_inverse/v50_gram_control.dat",
+        "input/task042_neural_coarse_inverse/v50_notch_high.dat",
+        "input/task042_neural_coarse_inverse/v50_notch_low.dat",
+        "input/task042_neural_coarse_inverse/v50_screen.dat",
+        "input/task042_neural_coarse_inverse/v50_verify.dat",
+        "src/io/scattering_accuracy.py",
+        "src/solvers/scattering_accuracy.py",
+        "src/solvers/scattering_accuracy_analytic.py",
+        "src/solvers/scattering_accuracy_boundary.py",
+        "src/solvers/scattering_accuracy_checks.py",
+        "src/solvers/scattering_accuracy_fields.py",
+        "src/solvers/scattering_accuracy_scope.py"
+      ],
+      "behavior": "V50 fixed finite research chain; full accuracy failed; not production default",
+      "dependencies": [
+        "qualified complex FE ABI",
+        "canonical material table",
+        "original Full3D/MPC/FFCx oracle"
+      ],
+      "tests": "tests_v50 and documentation_checks_v50",
+      "fresh_PDE_evidence": [
+        "FLAT_P5",
+        "GRAM_CONTROL"
+      ],
+      "merge_order": "review reusable hooks first, then checker, leave numerical V50 research opt-in; no merge approval"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v50.md",
+        "docs/task042_neural_coarse_inverse/outcomes/complete_physics_accuracy_cost_v50.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*v50*",
+        "docs/task042_neural_coarse_inverse/README.md",
+        "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "docs/development_progress.md",
+        "docs/development_model_registry.md"
+      ],
+      "behavior": "new response and prefixes only; old history preserved"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v50",
+        "tmp/task042/v50",
+        "results/task042/task042_v50_*"
+      ],
+      "behavior": "ignored scientific arrays/logs/JIT/cache and transient failed data retained locally; source/compact receipts bind their hashes"
+    }
+  ],
+  "implementation_paths": [
+    "benchmarks/collect_scattering_accuracy.py",
+    "benchmarks/qualify_scattering_accuracy.py",
+    "input/task042_neural_coarse_inverse/scattering_accuracy_v50.json",
+    "input/task042_neural_coarse_inverse/v50_attribution.dat",
+    "input/task042_neural_coarse_inverse/v50_boundary.dat",
+    "input/task042_neural_coarse_inverse/v50_cost.dat",
+    "input/task042_neural_coarse_inverse/v50_flat_p5.dat",
+    "input/task042_neural_coarse_inverse/v50_flat_selected.dat",
+    "input/task042_neural_coarse_inverse/v50_gram_control.dat",
+    "input/task042_neural_coarse_inverse/v50_notch_high.dat",
+    "input/task042_neural_coarse_inverse/v50_notch_low.dat",
+    "input/task042_neural_coarse_inverse/v50_screen.dat",
+    "input/task042_neural_coarse_inverse/v50_verify.dat",
+    "scripts/run_case.py",
+    "src/io/scattering_accuracy.py",
+    "src/runners/port_preparation.py",
+    "src/runners/task042_shared.py",
+    "src/solvers/dtn_port_3d.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/scattering_accuracy.py",
+    "src/solvers/scattering_accuracy_analytic.py",
+    "src/solvers/scattering_accuracy_boundary.py",
+    "src/solvers/scattering_accuracy_checks.py",
+    "src/solvers/scattering_accuracy_fields.py",
+    "src/solvers/scattering_accuracy_scope.py",
+    "src/solvers/scattering_anchor.py",
+    "src/test/test_scattering_accuracy.py"
+  ],
+  "ordinary_default_changed": false,
+  "merge_approval": false,
+  "old_task_review_response_raw_preserved": true
+}

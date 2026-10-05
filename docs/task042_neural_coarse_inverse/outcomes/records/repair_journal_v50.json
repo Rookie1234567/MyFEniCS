@@ -1,0 +1,54 @@
+{
+  "records": [
+    {
+      "path": "tmp/task042/v50/intake/boundary_inventory_repair.json",
+      "sha256": "cb0395c02189d2f5d8487d2844a638d79c259661f5d1fd4f95d968c562dfd4f1"
+    },
+    {
+      "path": "tmp/task042/v50/intake/boundary_inventory_repair_v2.json",
+      "sha256": "483c2daec7d86050036ab3a0a953f10470e04a90dd10a98b2f463a88e0617ac5"
+    },
+    {
+      "path": "tmp/task042/v50/intake/ffcx_metadata_repair.json",
+      "sha256": "7809b06579a55b9009133011e0a1654bf30930f2c2530d7fe66efdeb84134a88"
+    },
+    {
+      "path": "tmp/task042/v50/intake/formal_overhead_reader_repair.json",
+      "sha256": "8ce8fbb346fb03e46ae818b3c97d872f884d882513db81ac55e1551eed51738c"
+    },
+    {
+      "path": "tmp/task042/v50/intake/github_visual_review.json",
+      "sha256": "39d4d77909dfd7e24d42c390a76424ccb5f878f732872850d96db248cf0301a5"
+    },
+    {
+      "path": "tmp/task042/v50/intake/implementation_repairs.json",
+      "sha256": "86041cea3d1f4879303d36f1fb3f286d0a3c98abc4818423664aac340fa6f388"
+    },
+    {
+      "path": "tmp/task042/v50/intake/jit_marker_repair.json",
+      "sha256": "1dbc49d28143732df15c2b2a274626d9dfc79d51baeda6b76fdccecc00bca735"
+    },
+    {
+      "path": "tmp/task042/v50/intake/minimum_package_receipt.json",
+      "sha256": "c4af78adc3101ce084acac8c617824cd1d6050c2a9f5caa6736fcea041950a83"
+    },
+    {
+      "path": "tmp/task042/v50/intake/precommit_final_metadata_tests.json",
+      "sha256": "805e8d962425dfee2c1b8d555c2345e0f9f0fde9a5f2bfc09111b05183016a54"
+    },
+    {
+      "path": "tmp/task042/v50/intake/precommit_metadata_api_sandbox_failure.json",
+      "sha256": "0078a04acadd245dabc90c4cd5ebb1049c0456eb7fefb57de6faabe8a6357d8f"
+    },
+    {
+      "path": "tmp/task042/v50/intake/precommit_metadata_api_tests.json",
+      "sha256": "1bd8ccff0ca86c7a8b419c8384dc26d8c65b0143ea029fd6dd3840ba17955c37"
+    },
+    {
+      "path": "tmp/task042/v50/intake/supervision_repair.json",
+      "sha256": "b231a9a0db70a200ff5fc6e24020109aa941975270eff6cda06be2bfcba4c2e6"
+    }
+  ],
+  "software_failures_preserved": true,
+  "scientific_negative_is_not_bug": true
+}

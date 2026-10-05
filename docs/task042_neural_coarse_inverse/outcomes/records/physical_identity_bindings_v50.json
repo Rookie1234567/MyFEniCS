@@ -1,0 +1,656 @@
+{
+  "routes": [
+    {
+      "stage": "FLAT_P5",
+      "physical_contract_sha256": "c07e25b5d1275bf4f588eabe27c1415a66c23f7f2ccc3bff820b9a7668985c37",
+      "input_sha256": "705f5d8ec7a19591305a3991008b544f9eef9122b893d0f09c14e1ff76116db1",
+      "physical_model": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 80,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              0.0,
+              2.074074074074074,
+              4.148148148148148,
+              6.222222222222222,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 2,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "FLAT",
+          "notch_active": false,
+          "grid": "ORIGINAL",
+          "flat_air_above_interface": true,
+          "cell_count": 80
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 5,
+          "cell": "hexahedron",
+          "volume_quadrature": "original UFL automatic estimate from published physical forms, actual kernels recorded",
+          "surface_quadrature_rule": "max(10, 2*p+max(abs(m),abs(n))+6)",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "volume_form": "original FFCx curlcurl-minus-complex-mass"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "resolved_file_sha256": "72312bec6e99eadea0a2b9373745b9b2bc56944bc6b5c8de9695615be0a8e580",
+      "mode_sha256": "9206da3bcf687c4cbf9dbfad48a22456f4a75f5cf3c537331fcdf71a9f79b5a2",
+      "case": "FLAT",
+      "degree": 5,
+      "grid": "ORIGINAL",
+      "applied_surface_rule": "fixed q47 complete inventory; separate q63 verification",
+      "historical_resolved_rule_erratum": "inherited descriptive max(10,2p+...) label superseded by explicit47 and numerical factory; original resolved bytes preserved",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_flat_p5_20261005T065153346235Z/solution.npz",
+        "sha256": "e7e44c9f311ba5d3552c4da463ff45f95e255e56acd18ebac55234d26805e4a3",
+        "members": {
+          "u_storage": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "dae4963b0edc3471f53ab898d836170e799763016e08c74555dbb99d8837c3cc"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "09f3588767956f4d9f3c493fca1ff3fd0af987ac31838d1608b13b250fcac0bc"
+          },
+          "rhs": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "cdc4f63ca6f5a35206a7c649272efb0dc21377d78b2e7bc8c9d512c491690b7f"
+          },
+          "slaves": {
+            "shape": [
+              2065
+            ],
+            "dtype": "int32",
+            "sha256": "6dd797a443d2b6c8ba565c8ab8fb81b679463f9f50a927dc6dbcce839a18e6e0"
+          },
+          "cell_centers": {
+            "shape": [
+              80,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3709a6f9362b49b20f9efff6b9226e51560f49ef9f45d77bb6fbaa035c90ba11"
+          },
+          "cell_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "87665beb86e4d23bed044e92f4e648a34288b75055d53ed82ccabfb839d6cee6"
+          },
+          "regular_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+          },
+          "geometry_x": {
+            "shape": [
+              150,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "ce603db6b766c6f61c48a96e05370c09a10a5ab48f32ac66ae8f3fcd03866f6d"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              80,
+              8
+            ],
+            "dtype": "int32",
+            "sha256": "6446079296200f51e63f0fc8c64a2674545d6539be185ae474436ff4f6f1bf01"
+          },
+          "residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "632b5bd29d7e988e63e26560dc6d029472739dd2bfb2da270eafadedb90d98d8"
+          },
+          "volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "72a9f365c7cf802170dd4ab3afca6d739256195349149cbec7a432b180a42952"
+          },
+          "coupling_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "61b5c68a2935c66fbaa5aa2afb420e1848c93cc194efc2c7308ae3a979f0a50a"
+          },
+          "augmented_residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "8e0b6ef36937349284d230b49c718e006c36f9312e4dd3aea966a54b6d9937da"
+          },
+          "port_residual": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "5c2e2a03947c6c00baf638f9e97c76eee3f3282bf1e2701ced090969905dea83"
+          },
+          "projected": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "37a36081d90402b918206d123db96ffb782c63465335f37021feb3c1eece8fd5"
+          },
+          "H": {
+            "shape": [
+              532
+            ],
+            "dtype": "float64",
+            "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+          }
+        }
+      },
+      "returned_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_flat_p5_20261005T065153346235Z/returned_solution.npz",
+        "sha256": "594c4be6dc43452966949405f50b6c2d02b3e9e8cf9971e3fbf9816414183b5a",
+        "members": {
+          "u_storage": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "dae4963b0edc3471f53ab898d836170e799763016e08c74555dbb99d8837c3cc"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "09f3588767956f4d9f3c493fca1ff3fd0af987ac31838d1608b13b250fcac0bc"
+          },
+          "rhs": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "cdc4f63ca6f5a35206a7c649272efb0dc21377d78b2e7bc8c9d512c491690b7f"
+          },
+          "slaves": {
+            "shape": [
+              2065
+            ],
+            "dtype": "int32",
+            "sha256": "6dd797a443d2b6c8ba565c8ab8fb81b679463f9f50a927dc6dbcce839a18e6e0"
+          },
+          "cell_centers": {
+            "shape": [
+              80,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3709a6f9362b49b20f9efff6b9226e51560f49ef9f45d77bb6fbaa035c90ba11"
+          },
+          "cell_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "87665beb86e4d23bed044e92f4e648a34288b75055d53ed82ccabfb839d6cee6"
+          },
+          "regular_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+          },
+          "geometry_x": {
+            "shape": [
+              150,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "ce603db6b766c6f61c48a96e05370c09a10a5ab48f32ac66ae8f3fcd03866f6d"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              80,
+              8
+            ],
+            "dtype": "int32",
+            "sha256": "6446079296200f51e63f0fc8c64a2674545d6539be185ae474436ff4f6f1bf01"
+          }
+        }
+      },
+      "source_sha": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "capacity": {
+        "native": 32865,
+        "independent": 30800,
+        "trace": 11600,
+        "internal": 19200,
+        "rows": 12132,
+        "cells": 80,
+        "full_dense_single_payload": 2354966784,
+        "local_cache_conservative": 1119744000,
+        "planned_simultaneous_bytes": 9817879936,
+        "limit_bytes": 17179869184,
+        "admitted": true,
+        "status": "PREDICTED_DENSE_ENVELOPE",
+        "opaque_factor_actual": "unknown; tree RSS supervised"
+      }
+    },
+    {
+      "stage": "GRAM_CONTROL",
+      "physical_contract_sha256": "5d6e6ff9ee8b08788f579f5bcbf21e415e31b7fdf403ff4142878f723b8fb1d8",
+      "input_sha256": "5e25c2803f3bbc2226f2af49eb0ea42575564ad18e71cd05d0ca10c701856694",
+      "physical_model": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 80,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              0.0,
+              2.074074074074074,
+              4.148148148148148,
+              6.222222222222222,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 2,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "NOTCH",
+          "notch_active": true,
+          "grid": "ORIGINAL",
+          "flat_air_above_interface": false,
+          "cell_count": 80
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 5,
+          "cell": "hexahedron",
+          "volume_quadrature": "original UFL automatic estimate from published physical forms, actual kernels recorded",
+          "surface_quadrature_rule": "max(10, 2*p+max(abs(m),abs(n))+6)",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "volume_form": "original FFCx curlcurl-minus-complex-mass"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "resolved_file_sha256": "a4a69c888cac5b9e4251436955b3724ca0b354727115d1ef770626c3421d51df",
+      "mode_sha256": "9206da3bcf687c4cbf9dbfad48a22456f4a75f5cf3c537331fcdf71a9f79b5a2",
+      "case": "NOTCH",
+      "degree": 5,
+      "grid": "ORIGINAL",
+      "applied_surface_rule": "fixed q47 complete inventory; separate q63 verification",
+      "historical_resolved_rule_erratum": "inherited descriptive max(10,2p+...) label superseded by explicit47 and numerical factory; original resolved bytes preserved",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_gram_control_20261005T065527876206Z/solution.npz",
+        "sha256": "346893897abc87f8a84670ed58dec3b7334a60d2fbdf03cb9413c52cff31b40a",
+        "members": {
+          "u_storage": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "ba56e2a18fbd7b25ed36ada829318d75d5a3ea850f733206347578eb63e54909"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "1f86837f2a35d0ebcd2d1d8e5e8a8f6dc58f4c6eb729b2114bc2c06810c21e78"
+          },
+          "rhs": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "cdc4f63ca6f5a35206a7c649272efb0dc21377d78b2e7bc8c9d512c491690b7f"
+          },
+          "slaves": {
+            "shape": [
+              2065
+            ],
+            "dtype": "int32",
+            "sha256": "6dd797a443d2b6c8ba565c8ab8fb81b679463f9f50a927dc6dbcce839a18e6e0"
+          },
+          "cell_centers": {
+            "shape": [
+              80,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3709a6f9362b49b20f9efff6b9226e51560f49ef9f45d77bb6fbaa035c90ba11"
+          },
+          "cell_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "5d93ad29a5d6f71e33316df547fd5ceb8e476efe1939732e5653a22abba91de7"
+          },
+          "regular_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+          },
+          "geometry_x": {
+            "shape": [
+              150,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "ce603db6b766c6f61c48a96e05370c09a10a5ab48f32ac66ae8f3fcd03866f6d"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              80,
+              8
+            ],
+            "dtype": "int32",
+            "sha256": "6446079296200f51e63f0fc8c64a2674545d6539be185ae474436ff4f6f1bf01"
+          },
+          "residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "8729394d7de18c2c6e77297c0db6d6e2f25fed0adb8e026c736d61e13ef8ef7b"
+          },
+          "volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "8cdbd4503148d897f79f036186c4dc6a2aab1c80c5b3cbf9e0aeed46dccd8b12"
+          },
+          "coupling_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "f4be35d07ac6b99eca028ca8844bb60fffd509712292d0cccc212efe0f4fb075"
+          },
+          "augmented_residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "64bce8faf60c9eaac988b637d9a404ffb54bdee124b22fc23d4aad925dd2e264"
+          },
+          "port_residual": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "9e594121b5c82b8cb5b815effdee955e737ed78c9dc744c283410cafe3d88e37"
+          },
+          "projected": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "0f692ed27ed3fbfb2e94eaf685d5fa167864dc11ea1572abe5af6513dd79987a"
+          },
+          "H": {
+            "shape": [
+              532
+            ],
+            "dtype": "float64",
+            "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+          }
+        }
+      },
+      "returned_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_gram_control_20261005T065527876206Z/returned_solution.npz",
+        "sha256": "de76990f3c8434fac2f4d752b7ff929bc3aa4afdf7f11a859edbf077487b0353",
+        "members": {
+          "u_storage": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "ba56e2a18fbd7b25ed36ada829318d75d5a3ea850f733206347578eb63e54909"
+          },
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "1f86837f2a35d0ebcd2d1d8e5e8a8f6dc58f4c6eb729b2114bc2c06810c21e78"
+          },
+          "rhs": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "cdc4f63ca6f5a35206a7c649272efb0dc21377d78b2e7bc8c9d512c491690b7f"
+          },
+          "slaves": {
+            "shape": [
+              2065
+            ],
+            "dtype": "int32",
+            "sha256": "6dd797a443d2b6c8ba565c8ab8fb81b679463f9f50a927dc6dbcce839a18e6e0"
+          },
+          "cell_centers": {
+            "shape": [
+              80,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3709a6f9362b49b20f9efff6b9226e51560f49ef9f45d77bb6fbaa035c90ba11"
+          },
+          "cell_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "5d93ad29a5d6f71e33316df547fd5ceb8e476efe1939732e5653a22abba91de7"
+          },
+          "regular_tags": {
+            "shape": [
+              80
+            ],
+            "dtype": "int32",
+            "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+          },
+          "geometry_x": {
+            "shape": [
+              150,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "ce603db6b766c6f61c48a96e05370c09a10a5ab48f32ac66ae8f3fcd03866f6d"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              80,
+              8
+            ],
+            "dtype": "int32",
+            "sha256": "6446079296200f51e63f0fc8c64a2674545d6539be185ae474436ff4f6f1bf01"
+          }
+        }
+      },
+      "source_sha": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "capacity": {
+        "native": 32865,
+        "independent": 30800,
+        "trace": 11600,
+        "internal": 19200,
+        "rows": 12132,
+        "cells": 80,
+        "full_dense_single_payload": 2354966784,
+        "local_cache_conservative": 1119744000,
+        "planned_simultaneous_bytes": 9817879936,
+        "limit_bytes": 17179869184,
+        "admitted": true,
+        "status": "PREDICTED_DENSE_ENVELOPE",
+        "opaque_factor_actual": "unknown; tree RSS supervised"
+      }
+    }
+  ],
+  "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+  "canonical_material_path": "input/materials/si_optical_constants_v1.json",
+  "source_wavelength_nm": "0.699999988",
+  "nominal_wavelength_nm": "0.7"
+}

@@ -1,0 +1,108 @@
+{
+  "rows": [
+    {
+      "stage": "BOUNDARY",
+      "status": "COMPLETED",
+      "source": "0fd75a7ba02b25ff9c2e0514c3c0b351447c8a56",
+      "worker_seconds": 204.82484884816222,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_boundary_20261005T054736932217Z/result.json",
+        "sha256": "d252fb9484e725dc8ddd0616902236ce3b768da0b3684b2c0fbfae18aee652de"
+      }
+    },
+    {
+      "stage": "ATTRIBUTION",
+      "status": "COMPLETED",
+      "source": "0495fcc83552a8b6b2e6ea691454c9877afa10fd",
+      "worker_seconds": 1247.3034023570362,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_attribution_20261005T060040736251Z/result.json",
+        "sha256": "eb9ca2da0f853c0100fb1b76bcb56fd04fffc4bc656bfd223848231f1aa0644d"
+      }
+    },
+    {
+      "stage": "SCREEN",
+      "status": "COMPLETED",
+      "source": "50866b0d2047527f89fd283384f10029233065ff",
+      "worker_seconds": 194.11914244899526,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_screen_20261005T062538872532Z/result.json",
+        "sha256": "d718d5e9e2ee4a8977fad56c9bb253d8a31fa78c76ce14b5e5858434de6b148d"
+      }
+    },
+    {
+      "stage": "FLAT_P5",
+      "status": "COMPLETED",
+      "source": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "worker_seconds": 116.40909477090463,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_flat_p5_20261005T065153346235Z/result.json",
+        "sha256": "13c1896505581f557fa29600bbf33198dc4aeb68a3c6b8f02aea43ce6aa8f54d"
+      }
+    },
+    {
+      "stage": "FLAT_SELECTED",
+      "status": "not_run",
+      "reason": "conditional stage not admitted or unavailable"
+    },
+    {
+      "stage": "NOTCH_LOW",
+      "status": "not_run",
+      "reason": "conditional stage not admitted or unavailable"
+    },
+    {
+      "stage": "NOTCH_HIGH",
+      "status": "not_run",
+      "reason": "conditional stage not admitted or unavailable"
+    },
+    {
+      "stage": "GRAM_CONTROL",
+      "status": "COMPLETED",
+      "source": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "worker_seconds": 80.81829750421457,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_gram_control_20261005T065527876206Z/result.json",
+        "sha256": "3cbde723cf237b8bfae26dcd4585a5638337e24a5eda3a85e897fb46ee4cd04d"
+      }
+    },
+    {
+      "stage": "VERIFY",
+      "status": "COMPLETED",
+      "source": "e82b713ec9bc86b124ef9f623a981664ffe93ce2",
+      "worker_seconds": 288.50084388884716,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/result.json",
+        "sha256": "151a1da8ec57d4642f96220f20569779ff90d075da98c2806070bab7d6a00cc5"
+      }
+    },
+    {
+      "stage": "COST",
+      "status": "COMPLETED",
+      "source": "f2173db00b8116a00f7b87e78b9e585ed83b38fa",
+      "worker_seconds": 6.734790981980041,
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_cost_20261005T071218455371Z/result.json",
+        "sha256": "c512c88ed4e26ea0b7bbdc6c42c1688b909c5772f77c93db377ee5d17be522f4"
+      }
+    }
+  ],
+  "window": {
+    "start_utc": "2026-10-05T05:10:55.885225+00:00",
+    "start_monotonic": 1102050.746092382,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "first_intake_proc_uptime_seconds": 1102050.74,
+    "start_monotonic_kind": "derived from first observed UTC using current same-boot UTC/monotonic pair; first /proc/uptime retained",
+    "observed_utc": "2026-10-05T07:16:46.297414+00:00",
+    "observed_monotonic": 1109601.158281096,
+    "review_commit": "da151228815b08126dc636d3e195673ba04fe45f",
+    "closed": false,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 7550.412189006805,
+    "heavy_remaining_seconds": 14949.587810993195,
+    "total_remaining_seconds": 17649.587810993195
+  },
+  "old_ledgers_reopened": false
+}

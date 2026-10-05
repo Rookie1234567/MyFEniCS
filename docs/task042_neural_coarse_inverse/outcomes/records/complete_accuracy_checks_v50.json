@@ -1,0 +1,788 @@
+{
+  "status": "COMPLETED",
+  "rows": [
+    {
+      "role": "FLAT_P5",
+      "case": "FLAT",
+      "degree": 5,
+      "grid": "ORIGINAL",
+      "q47_q63_rhs_relative": 5.278787668116946e-14,
+      "frozen_port_reclose_relative": 0.025679580631762542,
+      "old_q_parent_comparison": null,
+      "original_audit": {
+        "true": 5.666314386973496e-12,
+        "native": 5.666314386973496e-12,
+        "augmented": 3.522352587708344e-12,
+        "port": 1.9670793391679828e-13,
+        "identity": 2.650142454680415e-16,
+        "slave_zero": true
+      },
+      "recovery": {
+        "operation_scaled_interior": 1.3075969058576326e-15,
+        "max_cell_operation_scaled": 2.1342642003299195e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "split_action_identity_operation_scale": 7.246300162100245e-16,
+        "internal_rhs_norm": 9.0079095434002e-14,
+        "basis": "independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action"
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/FLAT_P5_independent_audit.npz",
+        "sha256": "ce96052a1c4e07552b6ea91f5eb28206b7fec8264247d15a572c9f241cd7a6f2",
+        "members": {
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "09f3588767956f4d9f3c493fca1ff3fd0af987ac31838d1608b13b250fcac0bc"
+          },
+          "residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "bc161e0d4787d5e99e6eb874fcb81c3024f49c67b061c2834c8801c3e1f82b7f"
+          },
+          "volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "72a9f365c7cf802170dd4ab3afca6d739256195349149cbec7a432b180a42952"
+          },
+          "coupling_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "fd6de40164d02f507651e2fbe20d3ade2a1c7eeca0d94bb00b000c532c1467d4"
+          },
+          "augmented_residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "76d9976165c7edda9f53aa2875eaa43132601013e201ffb31ddf232c97549cbd"
+          },
+          "port_residual": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "1c80fdea522fa2b534167c06746fcf870ca18ac6425dc85c195c5619e3716b99"
+          },
+          "projected": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "c8eb7fe7f1e4df85dc4849a14765e2ccb20fbac2ff4bff2626b47029e3199bf2"
+          },
+          "H": {
+            "shape": [
+              532
+            ],
+            "dtype": "float64",
+            "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+          },
+          "interior_only_volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "416e826e0bf15817557d8d79c0175e2e62738743238065606f9ea3a9deaee3ae"
+          },
+          "trace_only_volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "18eb4869cf1a5207a8364c0aa5bdd8f5c4cc5d82163ca31ffd233508cae849f1"
+          },
+          "interior_rows": {
+            "shape": [
+              19200
+            ],
+            "dtype": "int32",
+            "sha256": "8e96cf27fff6c8174b6a2b4fe0714e3b204133a93bcbdc1b9a64f1b410fc3d44"
+          }
+        }
+      },
+      "equation_pass": true,
+      "recovery_pass": true,
+      "power": {
+        "R_total": 0.9998263554256993,
+        "R00_total": 0.9996595664737953,
+        "R00_s": 0.9996502456274309,
+        "R00_p": 9.32084636442113e-06,
+        "R00_by_polarization": {
+          "s": 0.9996502456274309,
+          "p": 9.32084636442113e-06
+        },
+        "T_total": 0.0001736278823087788,
+        "R_plus_T": 0.9999999833080081,
+        "A_balance": 1.6691991912103337e-08,
+        "R_total_dtn_port_modal": 0.9998263554256993,
+        "T_total_dtn_port_modal": 0.0001736278823087788,
+        "R_plus_T_dtn_port_modal": 0.9999999833080081,
+        "A_balance_dtn_port_modal": 1.6691991912103337e-08,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 0,
+            "volume_nm3": 0.0,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "missing",
+            "reason": "no cells tagged as grating",
+            "absorbed_power_code_units": null,
+            "A_volume": null
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 4.895125109026306e-10,
+            "A_volume": 1.6691674886791413e-08
+          }
+        },
+        "A_grating": null,
+        "A_substrate": 1.6691674886791413e-08,
+        "A_volume_grating": null,
+        "A_volume_substrate": 1.6691674886791413e-08,
+        "A_volume_total": 1.6691674886791413e-08,
+        "A_port_balance_minus_A_volume_total": 3.1702531192374757e-13,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -3.169686735304822e-13
+      },
+      "analytic": {
+        "fields": {
+          "E": {
+            "difference_squared": 36.23542688707263,
+            "reference_squared": 35.33215395950554,
+            "relative": 1.0127019213303672
+          },
+          "H": {
+            "difference_squared": 36.22991218979318,
+            "reference_squared": 35.32717545351553,
+            "relative": 1.0126962063651
+          },
+          "curl": {
+            "difference_squared": 2918.9787820364386,
+            "reference_squared": 2846.2469088495727,
+            "relative": 1.0126962063651
+          }
+        },
+        "selected_E_relative": 1.0169460969518977,
+        "pass_gate": false,
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/analytic_error.npz",
+          "sha256": "3397e9ee5c8ddb0ec139029e3b5335535f38697f3bc0d7d81197bc0fe0a0ea76",
+          "members": {
+            "per_cell_squared": {
+              "shape": [
+                80,
+                3,
+                2
+              ],
+              "dtype": "float64",
+              "sha256": "5ecafa588c60dfc8a6028fec341c16174340f0be14ddefa92f757f35e1eb7da7"
+            },
+            "selected_E": {
+              "shape": [
+                80,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "616dbacb2df26fb2ac8ac5bbfca1983d115a2d02c823f419f65199c7fde1b787"
+            },
+            "analytic_selected_E": {
+              "shape": [
+                80,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "df8224dc96d699604f8b309e100dcc0a1355f2b68defc929c56bc4117f66bc3c"
+            },
+            "analytic_selected_H": {
+              "shape": [
+                80,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "b1abc20a3c12665126a673f764355a157ebbc6581aedbb2ffe6353e49aebc338"
+            },
+            "analytic_selected_curl": {
+              "shape": [
+                80,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "f2eb13e073278477cf23161233fbaca71014cb8f27db7715a68e8e68426d6701"
+            }
+          }
+        },
+        "Fresnel": {
+          "r_s": {
+            "real": 0.3358309520585557,
+            "imag": -0.02551432067450185
+          },
+          "t_s": {
+            "real": 1.3358309520585556,
+            "imag": -0.02551432067450185
+          },
+          "r_p": {
+            "real": 0.33572888800930206,
+            "imag": -0.02551244834656496
+          },
+          "t_p": {
+            "real": 1.3358822164343254,
+            "imag": -0.025521157078624533
+          },
+          "r": {
+            "real": 0.3358309520585557,
+            "imag": -0.02551432067450185
+          },
+          "t": {
+            "real": 1.3358309520585556,
+            "imag": -0.02551432067450185
+          },
+          "R": 0.11343340892003724,
+          "T": 0.8865665910799625,
+          "R_plus_T": 0.9999999999999998,
+          "normal_power_admittance_ratio": 0.49664944196820765,
+          "cos_theta_i": 0.017452406437283376,
+          "cos_theta_t_real": 0.008668725761497078,
+          "cos_theta_t_imag": 0.0004989133932511646
+        },
+        "regions": {
+          "air_excluding_notch": 62,
+          "notch_air": 2,
+          "substrate": 16,
+          "Si_block": 0
+        },
+        "q": 31,
+        "zero_scattering_scale": "fixed incident field amplitude1; incident power, never analytic zero norm",
+        "complete_physics": {
+          "pass_gate": false,
+          "selected_fields_relative": {
+            "E": 1.0169460969518977,
+            "H": 1.0158609544127917,
+            "curl": 1.0158609544127917
+          },
+          "incident_projection": {
+            "q47_q63_max_absolute": 5.865457766192867e-16,
+            "q47_analytic_max_absolute": 4.2782028817874407e-16,
+            "q63_analytic_max_absolute": 2.7755575615628914e-16,
+            "fixed_incident_amplitude_scale": 1.0,
+            "pass_gate": true
+          },
+          "expected": {
+            "R": 0.11343340892003724,
+            "T": 0.8824589986143859,
+            "A_volume": 0.004107592465576793
+          },
+          "absolute_power_differences": {
+            "R_total": 0.886392946505662,
+            "T_total": 0.8822853707320771,
+            "A_balance": 0.004107575773584881,
+            "A_volume": 0.004107575773901906,
+            "maximum_single_mode_power": 0.8862168367073936,
+            "energy": 3.169686735304822e-13
+          },
+          "nonzero_orders_max_absolute_boundary_error": 0.010578925202803357,
+          "zero_scattered_L2_incident_scale": {
+            "E": 1.218712482666278,
+            "H": 1.2186197407459871,
+            "curl": 1.2186197407459871
+          },
+          "fixed_zero_rule": "amplitude1, Hcode1, scaledcurl1, physical domain volume, incident power; no near-zero denominator",
+          "source": "analytic passive Fresnel solution at original finite reference planes; no fitted phase or normalization",
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/FLAT_P5_all532_analytic.npz",
+            "sha256": "a860a037112c86a43a70ac54ed82b4ff6606957753087d41cd82df0af58d4a30",
+            "members": {
+              "all532_complex_boundary_error": {
+                "shape": [
+                  532
+                ],
+                "dtype": "complex128",
+                "sha256": "beb1be74a8b88b6e33d28bbc95929bf22adde97a84801d5629926ce912c4df6a"
+              },
+              "all532_reference_port": {
+                "shape": [
+                  532
+                ],
+                "dtype": "complex128",
+                "sha256": "62c7b1abf36918e895cc9dd00990987a4046864ed6df6043eb58da1b3debb903"
+              },
+              "all532_reference_power": {
+                "shape": [
+                  532
+                ],
+                "dtype": "float64",
+                "sha256": "fbd78ee1bf202172811d844c326a735379fd7e4d4c83363df7fc78491665ecb0"
+              },
+              "all532_power": {
+                "shape": [
+                  532
+                ],
+                "dtype": "float64",
+                "sha256": "0bd169c1d518b93306f475f6763ae0d0fa3ce35a0403c813164aa3595a1dc1bd"
+              },
+              "inc47": {
+                "shape": [
+                  532
+                ],
+                "dtype": "complex128",
+                "sha256": "e1a19cc6cb752edc5f149457e274dc7494af5cc6cbaa56e4ef258e49419b85f6"
+              },
+              "inc63": {
+                "shape": [
+                  532
+                ],
+                "dtype": "complex128",
+                "sha256": "512be0c5bcac818671a27602c4d0c584868376bdd1799a50758115aeca9aa7c2"
+              },
+              "analytic_incident_boundary": {
+                "shape": [
+                  532
+                ],
+                "dtype": "complex128",
+                "sha256": "228537bf20f2e41dbfd479448f59bfadae600cec7b4b119bb219a4295ae5d66f"
+              }
+            }
+          },
+          "interface": {
+            "actual_tangential_incident_scaled_jump": {
+              "E": 5.9855240250207436e-18,
+              "H": 0.00048808344289194506,
+              "curl": 0.00048808344289194485
+            },
+            "analytic_defect": {
+              "E": 0.0,
+              "H": 9.989364647059669e-15,
+              "dispersion": 0.0
+            },
+            "analytic_conventions_pass": true,
+            "face_count": 16,
+            "physical_z": 0.0,
+            "normal_component_excluded": true,
+            "actual_field_jump_role": "diagnostic at fixed face centers; full analytic field error controls physical accuracy"
+          }
+        },
+        "original_exact_analytic_weak": {
+          "relative": 4.550195827848486e-12,
+          "operation_scaled": 2.0310764763110674e-12,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/FLAT_P5_exact_analytic_weak.npz",
+            "sha256": "9ea4b35e77c173872d39b11ec3709096863743e26ea1a545fa8a0a907685571f",
+            "members": {
+              "volume": {
+                "shape": [
+                  32865
+                ],
+                "dtype": "complex128",
+                "sha256": "fa3d7392cf17bc89714ad327412850dcd617e4399a5432dbb84953359813d439"
+              },
+              "coupling": {
+                "shape": [
+                  32865
+                ],
+                "dtype": "complex128",
+                "sha256": "eeafebed6272b5b3e29d5fcef772ed57188bca371df7517be5a6728f07db4edb"
+              },
+              "port": {
+                "shape": [
+                  532
+                ],
+                "dtype": "complex128",
+                "sha256": "62c7b1abf36918e895cc9dd00990987a4046864ed6df6043eb58da1b3debb903"
+              },
+              "rhs": {
+                "shape": [
+                  32865
+                ],
+                "dtype": "complex128",
+                "sha256": "7ef827b4924441d1030f3ae7a3711bd3b498a8d084142abdb7d0a45c9b925058"
+              },
+              "residual": {
+                "shape": [
+                  32865
+                ],
+                "dtype": "complex128",
+                "sha256": "9ddb730a43ac8a57cc644f2ef201a3a4fca82a6bc8cd2b2b4aa58787853668fa"
+              }
+            }
+          },
+          "q": 31,
+          "pass_gate": true
+        }
+      },
+      "source_parent": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "parent_array": "e7e44c9f311ba5d3552c4da463ff45f95e255e56acd18ebac55234d26805e4a3"
+    },
+    {
+      "role": "GRAM_CONTROL",
+      "case": "NOTCH",
+      "degree": 5,
+      "grid": "ORIGINAL",
+      "q47_q63_rhs_relative": 5.278787668116946e-14,
+      "frozen_port_reclose_relative": 6.790410854813755e-05,
+      "old_q_parent_comparison": {
+        "fields": {
+          "E": {
+            "total_relative": 0.03091875342192934,
+            "same_analytic_scattered_relative": 0.0021841946225345157,
+            "difference_squared": 0.00017295629644631518
+          },
+          "H": {
+            "total_relative": 0.03299197261636457,
+            "same_analytic_scattered_relative": 0.0023570925810719352,
+            "difference_squared": 0.00020139191641907033
+          },
+          "curl": {
+            "total_relative": 0.03299197261636457,
+            "same_analytic_scattered_relative": 0.0023570925810719352,
+            "difference_squared": 0.016225784037824303
+          }
+        },
+        "selected": {
+          "selected_E_total": 0.03019267827854704,
+          "selected_E_scattered": 0.0029560199375116185,
+          "selected_H_total": 0.030524466530477693,
+          "selected_H_scattered": 0.00304719052679108,
+          "selected_curl_total": 0.030524466530477468,
+          "selected_curl_scattered": 0.0030471905267909784
+        },
+        "all_modes": {
+          "auxiliary_amplitude_total_projection_relative": 1.2332499518822315e+61,
+          "auxiliary_amplitude_total_projection_max_absolute": 8.791526885589758e+85,
+          "outgoing_amplitude_relative": 1.2332499518822315e+61,
+          "outgoing_amplitude_max_absolute": 8.791526885589758e+85,
+          "outgoing_amplitude_at_boundary_relative": 0.01637683056758822,
+          "outgoing_amplitude_at_boundary_max_absolute": 0.010565538986191617,
+          "mode_power_max_absolute": 2.284949891073751e-06,
+          "mode_count": 532
+        },
+        "power_absolute_differences": {
+          "R_total": 8.723604687510544e-07,
+          "T_total": 2.729314317522158e-06,
+          "A_balance": 1.8569538487711037e-06,
+          "A_volume": 1.8519209341127857e-06
+        },
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/GRAM_old_q_physical_difference.npz",
+          "sha256": "b1401287e12cc9663d331f0d97039cd6a3a7c40c38017271b1db4b5ced410cb5",
+          "members": {
+            "per_cell": {
+              "shape": [
+                80,
+                3,
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "4aa7245a8736c973dd35ed9ca5f11a97bf6aa3b8027dbb3cc3171d02cc160bc9"
+            }
+          }
+        },
+        "parent_source": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+        "parent_array_hash": "bd1a17eb248ba4c364eb9831e281b399eea80351354947a971bf676aba9a7c74",
+        "interpretation": "old q25 clipped vs new q47 full inventory; field differences quantify changed boundary, cannot qualify pure optimization or timing speedup"
+      },
+      "original_audit": {
+        "true": 7.021897982250272e-12,
+        "native": 7.021897982250272e-12,
+        "augmented": 3.1974179030690997e-12,
+        "port": 2.3813630538786966e-13,
+        "identity": 2.717842796968003e-16,
+        "slave_zero": true
+      },
+      "recovery": {
+        "operation_scaled_interior": 1.4123290493475249e-15,
+        "max_cell_operation_scaled": 2.6895800852202206e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "split_action_identity_operation_scale": 7.088537045209466e-16,
+        "internal_rhs_norm": 9.0079095434002e-14,
+        "basis": "independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action"
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_verify_20261005T070038849471Z/GRAM_CONTROL_independent_audit.npz",
+        "sha256": "ade0ee7af946adfd9d2a1735fe9ca93fbdbb9d4030966b4077bfa74bdfb2978c",
+        "members": {
+          "port": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "1f86837f2a35d0ebcd2d1d8e5e8a8f6dc58f4c6eb729b2114bc2c06810c21e78"
+          },
+          "residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "a36541731e254259b84e79c93d8fd046a81f357aa92484de3bf6a886dd84a534"
+          },
+          "volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "8cdbd4503148d897f79f036186c4dc6a2aab1c80c5b3cbf9e0aeed46dccd8b12"
+          },
+          "coupling_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "6409a4a1f9c2a6a78f1f324730590dee6c0c9ba3b2e0571e254f765072a282d9"
+          },
+          "augmented_residual": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "5422dcadfecfa0f0de1244479a8f5d6f4354b04f5aba3578feeb1c2a5a6bd8fd"
+          },
+          "port_residual": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "d85920e6d09c5427574ff587575d3b7499b85724234b6b8e5b0ea6ee5a994faf"
+          },
+          "projected": {
+            "shape": [
+              532
+            ],
+            "dtype": "complex128",
+            "sha256": "b6e197c908d4dfd9899f2ba82617fb9b481671b7ec63500dce02177ff8ddfe84"
+          },
+          "H": {
+            "shape": [
+              532
+            ],
+            "dtype": "float64",
+            "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+          },
+          "interior_only_volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "930503d49e8b2fa2fec84e0bc2c7aa36af0e8f623fc0560d39bbd73871ad7300"
+          },
+          "trace_only_volume_action": {
+            "shape": [
+              32865
+            ],
+            "dtype": "complex128",
+            "sha256": "b2a4984fc574eb9b1458fbbad7935ddf078fbf893eb9e7ed9af367a34f93b05d"
+          },
+          "interior_rows": {
+            "shape": [
+              19200
+            ],
+            "dtype": "int32",
+            "sha256": "8e96cf27fff6c8174b6a2b4fe0714e3b204133a93bcbdc1b9a64f1b410fc3d44"
+          }
+        }
+      },
+      "equation_pass": true,
+      "recovery_pass": true,
+      "power": {
+        "R_total": 0.9997965798492013,
+        "R00_total": 0.9996293903215775,
+        "R00_s": 0.9996201163155535,
+        "R00_p": 9.274006023989116e-06,
+        "R00_by_polarization": {
+          "s": 0.9996201163155535,
+          "p": 9.274006023989116e-06
+        },
+        "T_total": 0.00017388077455396525,
+        "R_plus_T": 0.9999704606237553,
+        "A_balance": 2.9539376244695802e-05,
+        "R_total_dtn_port_modal": 0.9997965798492013,
+        "T_total_dtn_port_modal": 0.00017388077455396525,
+        "R_plus_T_dtn_port_modal": 0.9999704606237553,
+        "A_balance_dtn_port_modal": 2.9539376244695802e-05,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 22,
+            "volume_nm3": 6.517400802723149,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 8.658048657320525e-07,
+            "A_volume": 2.952270475692933e-05
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 4.889132549969395e-10,
+            "A_volume": 1.667124111946371e-08
+          }
+        },
+        "A_grating": 2.952270475692933e-05,
+        "A_substrate": 1.667124111946371e-08,
+        "A_volume_grating": 2.952270475692933e-05,
+        "A_volume_substrate": 1.667124111946371e-08,
+        "A_volume_total": 2.9539375998048797e-05,
+        "A_port_balance_minus_A_volume_total": 2.46647005526816e-13,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -2.466915560717098e-13
+      },
+      "analytic": null,
+      "source_parent": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "parent_array": "346893897abc87f8a84670ed58dec3b7334a60d2fbdf03cb9413c52cff31b40a"
+    }
+  ],
+  "independent_surface_q": 63,
+  "calls": {
+    "A": 2,
+    "AH": 0,
+    "factor": 0,
+    "volume_only": 4
+  },
+  "timings": {
+    "mesh_MPC_FLAT_ORIGINAL_p5": 0.8493335999082774,
+    "JIT_original_volume_full532_CD_H": 212.5439586408902,
+    "physical_RHS": 0.8999015591107309,
+    "independent_analytic_full_volume_weak_integral": 16.62942759715952,
+    "mesh_MPC_NOTCH_ORIGINAL_p5": 0.24571812921203673,
+    "new_Gram_old_q_NOTCH_common_field_diagnostic": 30.623475131113082
+  },
+  "target_qualified": false,
+  "NN20_qualified": false,
+  "stage": "VERIFY",
+  "source_sha": "e82b713ec9bc86b124ef9f623a981664ffe93ce2",
+  "elapsed_worker_seconds": 288.50084388884716,
+  "input_sha256": "474a7f2413cbfb3443227d191e70759c4ca30d1464a6c020754ace4f71deecf3",
+  "physical_contract_sha256": "2d19d1f324b5625ea1f74306dc58dc1d23c426ecf57630cd1bd3b14eaaef2e6a"
+}

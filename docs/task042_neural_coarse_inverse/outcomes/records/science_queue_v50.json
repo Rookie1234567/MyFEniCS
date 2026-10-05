@@ -1,0 +1,49 @@
+{
+  "status": "FROZEN",
+  "clock": {
+    "start_utc": "2026-10-05T05:10:55.885225+00:00",
+    "start_monotonic": 1102050.746092382,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "first_intake_proc_uptime_seconds": 1102050.74,
+    "start_monotonic_kind": "derived from first observed UTC using current same-boot UTC/monotonic pair; first /proc/uptime retained",
+    "observed_utc": "2026-10-05T06:58:44.435081+00:00",
+    "observed_monotonic": 1108519.295948151,
+    "review_commit": "da151228815b08126dc636d3e195673ba04fe45f",
+    "closed": false,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 6468.549856185913,
+    "heavy_remaining_seconds": 16031.450143814087,
+    "total_remaining_seconds": 18731.450143814087
+  },
+  "completed_solves": {
+    "FLAT_P5": {
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_flat_p5_20261005T065153346235Z/result.json",
+        "sha256": "13c1896505581f557fa29600bbf33198dc4aeb68a3c6b8f02aea43ce6aa8f54d"
+      },
+      "source": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "array_sha256": "e7e44c9f311ba5d3552c4da463ff45f95e255e56acd18ebac55234d26805e4a3",
+      "role": "FLAT_P5"
+    },
+    "GRAM_CONTROL": {
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v50/task042_v50_gram_control_20261005T065527876206Z/result.json",
+        "sha256": "3cbde723cf237b8bfae26dcd4585a5638337e24a5eda3a85e897fb46ee4cd04d"
+      },
+      "source": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+      "array_sha256": "346893897abc87f8a84670ed58dec3b7334a60d2fbdf03cb9413c52cff31b40a",
+      "role": "GRAM_CONTROL"
+    }
+  },
+  "not_run": {
+    "FLAT_SELECTED": "not_run: all four fixed representation screens fail, finer end not qualified; no solve slot reallocated",
+    "NOTCH_LOW": "not_run: all four fixed representation screens fail, finer end not qualified; no solve slot reallocated",
+    "NOTCH_HIGH": "not_run: all four fixed representation screens fail, finer end not qualified; no solve slot reallocated"
+  },
+  "no_further_solve_allowed": true,
+  "source_when_frozen": "ba6644fae8ec62ba191a7bac04f2d21006c8264c",
+  "source_kind": "no active actors; metadata-only worktree fix pending clean commit"
+}

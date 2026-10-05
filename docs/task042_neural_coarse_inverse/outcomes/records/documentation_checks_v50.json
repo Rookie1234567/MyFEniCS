@@ -1,0 +1,6 @@
+{
+  "status": "NOT_RUN_PENDING_FINAL_COMMITTED_BYTES",
+  "reason": "created link target before clean documentation check; no test pass claimed",
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN"
+}
