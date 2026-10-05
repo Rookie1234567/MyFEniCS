@@ -99,6 +99,7 @@ def build_same_mesh_physical_action(
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     surface_assembler_factory: Any = None,
+    retain_all_surface_entries: bool = False,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -159,7 +160,7 @@ def build_same_mesh_physical_action(
     physical_action = None
     try:
         carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg
+            modes, assemblers, floquet.mpc, cfg, retain_all_nonzero=retain_all_surface_entries
         )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the

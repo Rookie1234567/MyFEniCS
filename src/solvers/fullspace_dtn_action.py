@@ -622,6 +622,8 @@ def build_fullspace_dtn_carrier_from_surface(
     surface_assemblers: Mapping[tuple[str, int], Any],
     mpc: Any,
     cfg: Any,
+    *,
+    retain_all_nonzero: bool = False,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
@@ -668,6 +670,7 @@ def build_fullspace_dtn_carrier_from_surface(
             components,
             (mode.e_vector[0], mode.e_vector[1]),
             comm=comm,
+            **({'relative_tol':0.,'absolute_tol':0.} if retain_all_nonzero else {}),
         )
         from .dtn_port_3d import _mode_projection_denominator, _traction_vector
 
@@ -677,6 +680,7 @@ def build_fullspace_dtn_carrier_from_surface(
             components,
             (-traction[0], -traction[1]),
             comm=comm,
+            **({'relative_tol':0.,'absolute_tol':0.} if retain_all_nonzero else {}),
         )
         entries.append(
             FullspaceDtnModeFunctional(

@@ -75,7 +75,7 @@ def carrier(space,mpc,cfg,q,*,method='basix2d'):
     from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory,build_fullspace_dtn_carrier_from_surface
     modes,identities,mode_sha=build_dynamic_mode_inventory(cfg)
     source=SurfaceComponents(space,mpc,cfg,q,method=method)
-    result=build_fullspace_dtn_carrier_from_surface(modes,source.assemblers(),mpc,cfg)
+    result=build_fullspace_dtn_carrier_from_surface(modes,source.assemblers(),mpc,cfg,retain_all_nonzero=True)
     return result,source,modes,identities,mode_sha
 
 
@@ -120,7 +120,7 @@ def boundary_stage(folder,journal,make_setup):
     from dolfinx import fem
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import _surface_assemblers
     from src.solvers.fullspace_dtn_action import build_fullspace_dtn_carrier_from_surface,FullspaceDtnAction
-    from src.solvers.dtn_port_3d import _assemble_mpc_vector,_incident_top_traction_form
+    from src.solvers.dtn_port_3d import _assemble_mpc_vector,_incident_top_traction_form,_assemble_mpc_form_vector,_set_scalar_constant
     rows=[]; rng=np.random.default_rng(50047)
     for degree,oldq in ((4,23),(5,25)):
         cfg,setup,geometry=make_setup('NOTCH',degree,'ORIGINAL',journal)
@@ -132,13 +132,24 @@ def boundary_stage(folder,journal,make_setup):
         with journal.measured(f'p{degree}_full532_original_native_q{oldq}'):
             assemblers=_surface_assemblers(space,setup['mesh_data'],cfg,oldq,jit_options={})
             old=build_fullspace_dtn_carrier_from_surface(modes,assemblers,mpc,cfg)
+            class UntrimmedNative:
+                def __init__(self,a):self.a=a
+                def assemble_entries(self,mode,mpc):
+                    for name,value in (('alpha',mode.alpha),('gamma',mode.gamma),('kz',mode.k_vector[2])):
+                        _set_scalar_constant(getattr(self.a,name),value)
+                    vec=_assemble_mpc_form_vector(self.a.form,mpc)
+                    try:
+                        a=vec.array;rows=np.flatnonzero(a!=0).astype(np.int64)
+                        return rows+vec.getOwnershipRange()[0],a[rows].copy()
+                    finally:vec.destroy()
+            old_full=build_fullspace_dtn_carrier_from_surface(modes,{k:UntrimmedNative(a) for k,a in assemblers.items()},mpc,cfg,retain_all_nonzero=True)
             del assemblers
-        high=carrier_pair(c47,c63,ids); low=carrier_pair(old,c63,ids)
+        high=carrier_pair(c47,c63,ids); low=carrier_pair(old,c63,ids);untrimmed=carrier_pair(old_full,c63,ids)
         n=space.dofmap.index_map.size_local
         v=fem.Function(space);v.x.array[:]=rng.normal(size=n)+1j*rng.normal(size=n);v.x.array[mpc.slaves]=0
         x=v.x.petsc_vec
         actions=[]
-        for cc in (c47,c63,old):
+        for cc in (c47,c63,old,old_full):
             action=FullspaceDtnAction(cc,comm=space.mesh.comm)
             target=x.duplicate();action.apply(x,target);forward=target.array.copy()
             # The old action has no public AH method. Its literal sparse
@@ -149,20 +160,21 @@ def boundary_stage(folder,journal,make_setup):
                 np.add.at(adjoint,e.projection_rows,np.conj(e.projection_values)*a)
             actions.append((forward,adjoint));target.destroy();action.destroy()
         paired={name:relative(actions[i][j]-actions[1][j],actions[1][j]) for name,i,j in
-                [('q47_forward',0,0),('q47_adjoint',0,1),('original_forward',2,0),('original_adjoint',2,1)]}
-        journal.calls['A']+=3;journal.calls['AH']+=3
+                [('q47_forward',0,0),('q47_adjoint',0,1),('original_forward',2,0),('original_adjoint',2,1),('original_untrimmed_forward',3,0),('original_untrimmed_adjoint',3,1)]}
+        journal.calls['A']+=4;journal.calls['AH']+=4
         inc47=s47.incident_traction();inc63=s63.incident_traction()
         native=_assemble_mpc_vector(_incident_top_traction_form(space,setup['mesh_data'],cfg),mpc,quadrature_degree=oldq,jit_options={})
         inc_old=native.array.copy();native.destroy()
         incident={'q47_q63_relative':relative(inc47-inc63,inc63),'old_q63_relative':relative(inc_old-inc63,inc63)}
         inventories={}
-        for label,cc in (('q47',c47),('q63',c63),('original',old)):
+        for label,cc in (('q47',c47),('q63',c63),('original',old),('original_untrimmed',old_full)):
             inventories[label]=save_arrays(folder/f'p{degree}_{label}_all532.npz',**pack_carrier(cc),
                 incident_traction=inc47 if label=='q47' else inc63 if label=='q63' else inc_old)
         witness=save_arrays(folder/f'p{degree}_action_pair.npz',input=v.x.array,forward47=actions[0][0],forward63=actions[1][0],forward_old=actions[2][0],
             adjoint47=actions[0][1],adjoint63=actions[1][1],adjoint_old=actions[2][1])
         passed=high['pass'] and incident['q47_q63_relative']<=1e-11 and max(paired['q47_forward'],paired['q47_adjoint'])<=1e-10
-        rows.append(dict(degree=degree,original_q=oldq,mode_sha256=digest,high_pair=high,original_pair=low,
+        rows.append(dict(degree=degree,original_q=oldq,mode_sha256=digest,high_pair=high,original_pair=low,original_untrimmed_pair=untrimmed,
+            preserve_all_nonzero_rows=True,legacy_pruning_separate_from_quadrature=True,
             bidirectional_action=paired,incident=incident,arrays=inventories,witness=witness,
             q47_q63_pass=passed,production_q=47,oracle_q=63,high_q_native_JIT=False,
             q47_cost_seconds=s47.seconds,q63_cost_seconds=s63.seconds))

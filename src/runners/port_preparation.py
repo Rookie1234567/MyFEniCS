@@ -295,6 +295,12 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
+    if namespace == 'v50' and role == 'BOUNDARY':
+        fix=plan.get('diagnosed_boundary_inventory_repair',{})
+        path=Path(fix.get('evidence_path','/not_present'))
+        return (fix.get('source_sha')==previous.get('source_sha') and path.is_file()
+            and hashlib.sha256(path.read_bytes()).hexdigest()==fix.get('evidence_sha256')
+            and fix.get('root_cause')=='downstream_sparse_cutoff')
     if namespace in ("v43", "v44", "v45", "v47", "v49", "v50"):
         return previous.get("status") == "FAILED"
     if namespace == "v42":

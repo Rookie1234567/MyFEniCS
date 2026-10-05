@@ -247,5 +247,11 @@
   "boundary_operation_limit": 1e-10,
   "zero_boundary_absolute_limit": 1e-12,
   "FLAT_zero_mode_absolute_scale": "unit incident amplitude and incident power; no near-zero analytic scattered denominator",
-  "parent_source_manifest_path": "docs/task042_neural_coarse_inverse/outcomes/records/engine_source_manifest_v49.json"
+  "parent_source_manifest_path": "docs/task042_neural_coarse_inverse/outcomes/records/engine_source_manifest_v49.json",
+  "diagnosed_boundary_inventory_repair": {
+    "root_cause": "downstream_sparse_cutoff",
+    "source_sha": "624f721e3c675e895b069ad67149dee18f01fdb7",
+    "evidence_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v50/intake/boundary_inventory_repair_v2.json",
+    "evidence_sha256": "483c2daec7d86050036ab3a0a953f10470e04a90dd10a98b2f463a88e0617ac5"
+  }
 }

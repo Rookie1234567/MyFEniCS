@@ -861,6 +861,7 @@ def _combine_owned_entries(
     *,
     comm: MPI.Intracomm,
     relative_tol: float = 1.0e-13,
+    absolute_tol: float = 1.0e-30,
 ) -> tuple[np.ndarray, np.ndarray]:
     row_blocks: list[np.ndarray] = []
     value_blocks: list[np.ndarray] = []
@@ -889,7 +890,9 @@ def _combine_owned_entries(
         summed_values = np.asarray([], dtype=np.complex128)
     local_maximum = float(np.max(np.abs(summed_values), initial=0.0))
     global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
-    cutoff = max(1.0e-30, relative_tol * global_maximum)
+    if relative_tol < 0 or absolute_tol < 0:
+        raise ValueError('sparse component tolerances must be nonnegative')
+    cutoff = max(absolute_tol, relative_tol * global_maximum)
     keep = np.abs(summed_values) > cutoff
     return _idx(unique_rows[keep]), summed_values[keep].copy()
 

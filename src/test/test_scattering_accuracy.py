@@ -81,6 +81,20 @@ class AccuracyTests(unittest.TestCase):
         self.assertFalse(carrier_pair(c,old,ids)['pass'])
         with self.assertRaises(ValueError):carrier_pair(SimpleNamespace(entries=[]),c,ids)
 
+    def test_public_carrier_preserves_tiny_nonzero_components(self):
+        # This needs the already qualified FE ABI, but constructs no mesh/form.
+        from mpi4py import MPI
+        from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory,build_fullspace_dtn_carrier_from_surface
+        cfg=configuration('FLAT',5);modes,_,_=build_dynamic_mode_inventory(cfg)
+        index=SimpleNamespace(local_range=(0,2),size_local=2,size_global=2,local_to_global=lambda x:np.asarray(x))
+        mpc=SimpleNamespace(function_space=SimpleNamespace(mesh=SimpleNamespace(comm=MPI.COMM_SELF),dofmap=SimpleNamespace(index_map=index)),slaves=np.array([],np.int32))
+        component=SimpleNamespace(assemble_entries=lambda mode,mpc:(np.array([0,1]),np.array([1e-120,2e-120],complex)))
+        assemblers={(s,j):component for s in ('top','bottom') for j in (0,1)}
+        raw=build_fullspace_dtn_carrier_from_surface(modes,assemblers,mpc,cfg,retain_all_nonzero=True)
+        legacy=build_fullspace_dtn_carrier_from_surface(modes,assemblers,mpc,cfg)
+        self.assertTrue(any(np.any(e.coupling_values!=0) for e in raw.entries))
+        self.assertTrue(all(len(e.coupling_values)==0 for e in legacy.entries))
+
     def test_background_cross_terms_are_not_added_norms(self):
         rng=np.random.default_rng(50);t=rng.normal(size=31)+1j*rng.normal(size=31);b=rng.normal(size=31)+1j*rng.normal(size=31)
         cross=-2*np.vdot(t,b).real

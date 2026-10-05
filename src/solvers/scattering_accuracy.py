@@ -67,7 +67,7 @@ def build_bundle(cfg,setup,journal,*,q=47):
         holder['source']=src
         return src.assemblers()
     with journal.measured('JIT_original_volume_full532_CD_H'):
-        bundle=build_same_mesh_physical_action(setup,cfg,cfg.nedelec_degree,surface_assembler_factory=surface)
+        bundle=build_same_mesh_physical_action(setup,cfg,cfg.nedelec_degree,surface_assembler_factory=surface,retain_all_surface_entries=True)
     bundle['dtn_quadrature_degree']=q
     from petsc4py import PETSc
     with journal.measured('physical_RHS'):
