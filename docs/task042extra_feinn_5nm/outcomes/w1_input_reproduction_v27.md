@@ -26,3 +26,5 @@
 [39项测试与全部早期失败](records/targeted_tests_v27.json)、[run/source](records/run_index_v27.json)、[工程修复](records/repair_log_v27.json)、[Gate](records/gate_decisions_v27.json)、[最小包](records/integration_packet_v27.json)。B0方向/MPC、B1全32060 q60/Decimal及完整RHS/原H、独立B1checker均NOT_RUN_R_BITWISE_REPRODUCTION_FAILED；B2由主线负责，本包不运行。主线/dot分支没有修改，不复制其全域AUTO、旧数组归因、p6恢复或存储。
 
 原场/通道/功率结果及目标仍未资格化；本轮不产生NN收益。旧M3600较好、Mfinal退化、D0否决/D1未运行、所有负结果/UNKNOWN保留。失败属于授权出口，不能用余下时间生成第二个清单或擅自降低原hash门；整批交付后停止等待审阅。
+
+实际GitHub呈现已有限核验：发布`007f61b8ce31224e9547e82a7cf7c70bf8374feb`的两新页标题/开头、全部3表和5张实际目视图可读；浏览器监督19.558924s、同时树峰1,705,955,328B、自身swap0并清场。复用Review V26原视觉收据，不重渲染历史；本seal仅追加呈现/成本收据与尾段文字，尾段及其他导航页未重新视觉核验。[呈现范围](records/render_check_v27.json)。

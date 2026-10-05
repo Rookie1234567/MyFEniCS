@@ -54,3 +54,5 @@ Git blob是固定提交里的源码，不是输出目录里的数值文件。现
 保持 **FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED**。原50×25×140nm、Si17/120nm、λ0.7完整三维FE、十进制2e12B整机、自身swap/OOC0、172800s完整冷流程及原精度门尚未达成。未来若要继续B，需要真实原hash-bound字节或新的明确身份合同；本轮不自行替换、放宽或重试该输入。
 
 [summary](outcomes/summary.md)、[run/source](outcomes/records/run_index_v27.json)、[可消费接入状态](outcomes/records/integration_packet_v27.json)、[呈现范围](outcomes/records/render_check_v27.json)。只提交推送本分支，精确fetch核验与自身清场后发一次正式通知，随后停止等待ChatGPT审阅；不改其他分支、不合并master。
+
+实际GitHub呈现已有限核验：发布`007f61b8ce31224e9547e82a7cf7c70bf8374feb`的两新页标题/开头、全部3表和5张实际目视图可读；浏览器监督19.558924s、同时树峰1,705,955,328B、自身swap0并清场。复用Review V26原视觉收据，不重渲染历史；本seal仅追加呈现/成本收据与尾段文字，尾段及其他导航页未重新视觉核验。[呈现范围](outcomes/records/render_check_v27.json)。

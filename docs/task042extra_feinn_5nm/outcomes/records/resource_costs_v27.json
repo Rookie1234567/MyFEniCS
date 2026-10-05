@@ -115,8 +115,8 @@
   "project_exact_cumulative": "UNKNOWN",
   "timing_nested_not_summed": true,
   "final_cost_receipt": "tmp/task42extra/w1_receiver/v27/delivery_receipt.json after exact push/fetch/cleanup/notification",
-  "continuous_elapsed_at_delivery_check_seconds": 1678.8370527280495,
-  "delivery_check_utc": "2026-10-05T02:12:38.467853+00:00",
+  "continuous_elapsed_at_delivery_check_seconds": 1884.5059702540748,
+  "delivery_check_utc": "2026-10-05T02:16:04.136771+00:00",
   "delivery_light_checks": [
     {
       "name": "compact_records",
@@ -364,5 +364,405 @@
         }
       }
     }
-  ]
+  ],
+  "continuous_elapsed_at_visual_seal_seconds": 1840.032995954156,
+  "visual_seal_utc": "2026-10-05T02:15:19.663796+00:00",
+  "finite_visual_closeout": {
+    "summary": {
+      "sampled_root_identity": null,
+      "workflow_deadline_seconds": 450,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "clock_info": {
+        "monotonic": {
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "adjustable": false,
+          "resolution": 1e-09
+        },
+        "utc": {
+          "implementation": "clock_gettime(CLOCK_REALTIME)",
+          "monotonic": false,
+          "adjustable": true,
+          "resolution": 1e-09
+        },
+        "boottime": {
+          "available": true,
+          "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+          "resolution": 1e-09
+        }
+      },
+      "clock_start": {
+        "monotonic": 1091431.4506012,
+        "boottime": 1091431.450605546,
+        "utc_ns": 1791166436589740140
+      },
+      "timebase_policy": "strict",
+      "timebase_policy_version": 1,
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        2059824,
+        2059825,
+        2059828,
+        2059882,
+        2059885,
+        2059907,
+        2059913,
+        2059980,
+        2060019,
+        2060024,
+        2060030,
+        2060049,
+        2060063,
+        2060169
+      ],
+      "sampled_process_tree_rss_peak_bytes": 1705955328,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139227,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139227,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2140689043456,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2140689043456,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 38,
+      "elapsed_seconds": 19.558924468932673,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance",
+      "clock_end": {
+        "monotonic": 1091451.009526726,
+        "boottime": 1091451.00952765,
+        "utc_ns": 1791166456148661428
+      },
+      "workflow_clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 19.558925525983796,
+          "boottime": 19.558922104071826,
+          "utc": 19.558921288
+        },
+        "budget_seconds": 19.558925525983796,
+        "discrepancy_seconds": 4.237983795007949e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "strict",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -4.237983795007949e-06,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.038498410023748875,
+            "boottime": 0.038498525973409414,
+            "utc": 0.038498629
+          },
+          "budget_seconds": 0.038498525973409414,
+          "discrepancy_seconds": 2.18976251124825e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 2.18976251124825e-07
+        },
+        "utc_positive_excess_seconds": 8.536109178607088e-06
+      }
+    },
+    "supervision": {
+      "path": "tmp/task42extra/w1_receiver/v27/delivery_render/summary.json",
+      "bytes": 3728,
+      "sha256": "7dd082f4f192aa60373231aef689b3b9e90d4041f57216d09b806b0f91a1329f"
+    },
+    "scope": "two new published pages, no R/B restart"
+  },
+  "all_new_supervised_sampled_tree_peak_bytes": 1705955328,
+  "delivery_check_supervision": {
+    "path": "tmp/task42extra/w1_receiver/v27/delivery_check/summary.json",
+    "bytes": 3554,
+    "sha256": "9dfb836c989b14081a2b76ea94a0fe60f815666da8930b9714769b140fc683a9"
+  },
+  "continuous_elapsed_at_final_cost_snapshot_seconds": 1933.9195374161936,
+  "final_cost_snapshot_utc": "2026-10-05T02:16:53.550337+00:00",
+  "final_document_check": {
+    "summary": {
+      "sampled_root_identity": null,
+      "workflow_deadline_seconds": 450,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "clock_info": {
+        "monotonic": {
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "adjustable": false,
+          "resolution": 1e-09
+        },
+        "utc": {
+          "implementation": "clock_gettime(CLOCK_REALTIME)",
+          "monotonic": false,
+          "adjustable": true,
+          "resolution": 1e-09
+        },
+        "boottime": {
+          "available": true,
+          "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+          "resolution": 1e-09
+        }
+      },
+      "clock_start": {
+        "monotonic": 1091558.188271832,
+        "boottime": 1091558.188275303,
+        "utc_ns": 1791166563327409458
+      },
+      "timebase_policy": "strict",
+      "timebase_policy_version": 1,
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        2060887
+      ],
+      "sampled_process_tree_rss_peak_bytes": 114221056,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139227,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139227,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2140713480192,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2140713480192,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 7,
+      "elapsed_seconds": 2.274795499863103,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance",
+      "clock_end": {
+        "monotonic": 1091560.4630678,
+        "boottime": 1091560.463068681,
+        "utc_ns": 1791166565602202430
+      },
+      "workflow_clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 2.2747959680855274,
+          "boottime": 2.2747933780774474,
+          "utc": 2.274792972
+        },
+        "budget_seconds": 2.2747959680855274,
+        "discrepancy_seconds": 2.9960855272292974e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "strict",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -2.9960855272292974e-06,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.03942460403777659,
+            "boottime": 0.03942432603798807,
+            "utc": 0.039424392
+          },
+          "budget_seconds": 0.03942460403777659,
+          "discrepancy_seconds": 2.7799978852272034e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -2.1203777658684864e-07
+        },
+        "utc_positive_excess_seconds": 9.045306337274184e-09
+      }
+    },
+    "supervision": {
+      "path": "tmp/task42extra/w1_receiver/v27/final_document_check/summary.json",
+      "bytes": 3560,
+      "sha256": "a550a1d22607014f5523a7fc4f088b3cca8226829c1ff0d5d72c372b8e09214e"
+    }
+  },
+  "visual_seal_check": {
+    "summary": {
+      "sampled_root_identity": null,
+      "workflow_deadline_seconds": 450,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "clock_info": {
+        "monotonic": {
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "adjustable": false,
+          "resolution": 1e-09
+        },
+        "utc": {
+          "implementation": "clock_gettime(CLOCK_REALTIME)",
+          "monotonic": false,
+          "adjustable": true,
+          "resolution": 1e-09
+        },
+        "boottime": {
+          "available": true,
+          "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+          "resolution": 1e-09
+        }
+      },
+      "clock_start": {
+        "monotonic": 1091514.199218052,
+        "boottime": 1091514.199221681,
+        "utc_ns": 1791166519338356274
+      },
+      "timebase_policy": "strict",
+      "timebase_policy_version": 1,
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        2060625
+      ],
+      "sampled_process_tree_rss_peak_bytes": 68644864,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139227,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139227,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2140724834304,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2140724834304,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 6,
+      "elapsed_seconds": 1.9630799288861454,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance",
+      "clock_end": {
+        "monotonic": 1091516.16229807,
+        "boottime": 1091516.162299029,
+        "utc_ns": 1791166521301432732
+      },
+      "workflow_clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 1.9630800180602819,
+          "boottime": 1.9630773479584605,
+          "utc": 1.963076458
+        },
+        "budget_seconds": 1.9630800180602819,
+        "discrepancy_seconds": 3.5600602819041427e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "strict",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -3.5600602819041427e-06,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.03932890691794455,
+            "boottime": 0.039328932063654065,
+            "utc": 0.039328976
+          },
+          "budget_seconds": 0.039328932063654065,
+          "discrepancy_seconds": 6.908205545108626e-08,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 6.908205545108626e-08
+        },
+        "utc_positive_excess_seconds": 4.3936345936468335e-08
+      }
+    },
+    "supervision": {
+      "path": "tmp/task42extra/w1_receiver/v27/visual_seal/summary.json",
+      "bytes": 3561,
+      "sha256": "be32a3d71a35460cc39a4a6052fa0839980a4477d293b063c967cdfc680a5c00"
+    }
+  },
+  "old_V26_final_delivery_receipt": {
+    "path": "tmp/task42extra/w1_receiver/v26/R_B_delivery_receipt.json",
+    "bytes": 3556,
+    "sha256": "b2e1e2e14643cfdb8eaa62958b0b1a688c5da2d32c14bcad787c9373d850399e"
+  },
+  "old_V26_notification_receipt": {
+    "path": "tmp/task42extra/w1_receiver/v26/R_B_notification_receipt.json",
+    "bytes": 1183,
+    "sha256": "e97d0b077bf4d8ee03b1a1f2602d79837df8ac4391e2c258c807eddd0452bc74"
+  }
 }

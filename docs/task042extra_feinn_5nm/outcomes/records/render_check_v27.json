@@ -6,10 +6,10 @@
     "bytes": 26176,
     "sha256": "8ea19bc7db05b16aa07ee6e81709a664d3c1e541fa6a6d59d3ada4761b3b8ab6"
   },
-  "new_pages_visual": "PENDING_FINITE_POST_PUBLICATION_CHECK",
+  "new_pages_visual": "PASS_FINITE_PUBLISHED_SCOPE",
   "new_pages_local_structure": "PASS_CHANGED_SCOPE_FENCES_TABLES_LINKS_SOURCE_HISTORY",
   "old_visual_failures_and_limits_preserved": true,
-  "visual_pass_claimed": false,
+  "visual_pass_claimed": true,
   "no_full_history_rerender": true,
   "new_math_blocks": 0,
   "new_pages_local_check": {
@@ -17,8 +17,8 @@
     "status": "PASS_LIGHT_DOCUMENT_RECEIPT_SOURCE_AND_HISTORY_CHECK",
     "pages": 9,
     "new_tables": 5,
-    "local_links": 54,
-    "receipt_occurrences": 76,
+    "local_links": 56,
+    "receipt_occurrences": 91,
     "protected_old_files": 58,
     "receiver_sources_verified": 29,
     "actual_generator_calls_in_checker": 0,
@@ -30,5 +30,162 @@
       "bytes": 5720,
       "sha256": "893f20c15b3ae109581fd327ac819974e77c74b540e8adb6856f9577f7b84ffc"
     }
-  }
+  },
+  "publication_commit": "007f61b8ce31224e9547e82a7cf7c70bf8374feb",
+  "scope": "two new page titles/openings and all3 complete tables/5 actually viewed images; no other navigation page or later seal-tail visual claim",
+  "render_records": {
+    "path": "tmp/task42extra/render/v27_R_007f61b8/render_records.json",
+    "bytes": 6692,
+    "sha256": "d72161adf292b670e1a1ccbfef74228dfe9182de16dd8b26b029901178c93645"
+  },
+  "supervision": {
+    "path": "tmp/task42extra/w1_receiver/v27/delivery_render/summary.json",
+    "bytes": 3728,
+    "sha256": "7dd082f4f192aa60373231aef689b3b9e90d4041f57216d09b806b0f91a1329f"
+  },
+  "driver": {
+    "path": "benchmarks/render_task42extra.py",
+    "bytes": 11689,
+    "sha256": "628ac74ec12ec437de7d1e5101f384aa704f56b41fd9271a1c4e155882d7359b"
+  },
+  "command": {
+    "path": "tmp/task42extra/w1_receiver/v27/delivery_render/command.json",
+    "bytes": 168,
+    "sha256": "7776b7ccc641f6acf9f4e1f70fedd19f4ba3b9ce2b60ae130fb5b45b3abca0ae"
+  },
+  "admission": {
+    "path": "tmp/task42extra/w1_receiver/v27/delivery_render/admission.json",
+    "bytes": 200932,
+    "sha256": "c78e7d6af0ce4b1566e0f3a962b7f4f07c5678e5964799d264fff7ce176839cc"
+  },
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/007f61b8ce31224e9547e82a7cf7c70bf8374feb/docs/task042extra_feinn_5nm/response_v27.md",
+      "heading_prefix": "",
+      "DOM": {
+        "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v27.md at 007f61b8ce31224e9547e82a7cf7c70bf8374feb · Rookie1234567/MyFEniCS · GitHub",
+        "scopeHeading": "entire task document",
+        "articleText": "Response V27：已实际生成，原清单逐字节重现失败\n\n本轮完成了 Review V26 的两处工程修复、定向资格和唯一原生 R 生成。保存文件没有达到原件的字节/hash门，因此停止依赖它的 B0/B1；这是输入重现失败，不是资源拒绝、q60失败或有限元求解失败。 已完成独立保存复核与拒绝闭环，没有重新生成、换环境试参或把不同清单登记成原件。\n\n端口清单描述每个外部波动模式的方向、极化和归一化。模式名称相同仍不能保证这些数值相同",
+        "ready": "complete",
+        "fonts": "loaded",
+        "tables": [
+          {
+            "columns": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 982.38330078125,
+            "scrollWidth": 982,
+            "clientWidth": 982
+          }
+        ],
+        "math": [],
+        "mathAfterScroll": []
+      },
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v27_R_007f61b8/00_top.png",
+          "sha256": "ac1f9a6e61cb5c4172d6cae030161637f5462a1219f1dc265a7c90fb3ca1fabe",
+          "bytes": 390999
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v27_R_007f61b8/00_table_00.png",
+          "sha256": "60753ff6783f0b8c83090fa44e210c46abbdaf18e6b718203544017d6df161e2",
+          "bytes": 486335
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v27_R_007f61b8/00_table_01.png",
+          "sha256": "842dca250de30686adf308bcc04f81d2492fb85b7ec2009c849068d585933350",
+          "bytes": 452684
+        }
+      ],
+      "visual_review": "pending human/model image inspection",
+      "visual_assessment": "actual images viewed: title/opening and all complete table rows readable, no clipped columns or raw formula leakage; scope is two published pages"
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/007f61b8ce31224e9547e82a7cf7c70bf8374feb/docs/task042extra_feinn_5nm/outcomes/w1_input_reproduction_v27.md",
+      "heading_prefix": "",
+      "DOM": {
+        "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/w1_input_reproduction_v27.md at 007f61b8ce31224e9547e82a7cf7c70bf8374feb · Rookie1234567/MyFEniCS · GitHub",
+        "scopeHeading": "entire task document",
+        "articleText": "V27：真实R输入重现及安全拒绝\n\n本轮要恢复的是外部模式的完整数值清单。它决定边界载荷和投影的复数方向/归一化；仅有相同名称不够。新选核范围与封存事务通过资格后，已使用冻结数学执行一次真实生成。运行正常完成，但原清单逐字节不符，因此B0/B1没有运行。\n\n固定原值与保存重算 / measured\t要求\t本轮值与分类\nmanifest字节数 / B\t36,244,923\t36,263,033；多18,110，FAIL\n完整manifes",
+        "ready": "complete",
+        "fonts": "loaded",
+        "tables": [
+          {
+            "columns": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "width": 993.2999877929688,
+            "scrollWidth": 993,
+            "clientWidth": 993
+          }
+        ],
+        "math": [],
+        "mathAfterScroll": []
+      },
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v27_R_007f61b8/01_top.png",
+          "sha256": "1f6743ea87d798956587f03e22ad9af39086aab3a8525cdc8f6c1f0c9b378f48",
+          "bytes": 403636
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v27_R_007f61b8/01_table_00.png",
+          "sha256": "3395d3b47c2d13cf10a106458977c890670716cda8e1d4d0ce6934a307ddba21",
+          "bytes": 533848
+        }
+      ],
+      "visual_review": "pending human/model image inspection",
+      "visual_assessment": "actual images viewed: title/opening and all complete table rows readable, no clipped columns or raw formula leakage; scope is two published pages"
+    }
+  ],
+  "images_actually_viewed": 5,
+  "final_seal_scope": "only render/cost receipt and prose visual-tail appended; scientific table bodies unchanged",
+  "published_documents": [
+    {
+      "git_commit": "007f61b8ce31224e9547e82a7cf7c70bf8374feb",
+      "git_blob_path": "docs/task042extra_feinn_5nm/response_v27.md",
+      "bytes": 7835,
+      "sha256": "db6b192d3481971d234c798e1b87e1ace4d9eb629c1ef8986f35b59e1656595d"
+    },
+    {
+      "git_commit": "007f61b8ce31224e9547e82a7cf7c70bf8374feb",
+      "git_blob_path": "docs/task042extra_feinn_5nm/outcomes/w1_input_reproduction_v27.md",
+      "bytes": 4009,
+      "sha256": "55e58ddaef26e7880ae61f1fd6e7e5ce3abb787950e1a5c880f5d80423cb6ae7"
+    }
+  ]
 }
