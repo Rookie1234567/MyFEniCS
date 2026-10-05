@@ -24,6 +24,38 @@ def is_surface(spec):
     return spec.get("component") == "original_size_full_surface_w1"
 
 
+def qualification_root(directory):
+    """Fixed evidenced V29 roots, not a new quota for an arbitrary source SHA."""
+    roots = {
+        "a29": "initial_startup_contract",
+        "a129": "complex_electric_conjugation",
+        "a229": "manifest_derived_reference_plane",
+        "a329": "original_native_vector_denominator",
+        "a429": "original_native_vector_denominator",
+        "a529": "original_native_vector_denominator",
+    }
+    name = Path(directory).name
+    if name not in roots:
+        raise ValueError("W29_FIXED_QUALIFICATION_REPAIR_ROOT_REQUIRED")
+    return roots[name]
+
+
+def lifecycle_case(spec, output, stage):
+    if is_surface(spec) and stage == "input_contract_checks":
+        return qualification_root(output)
+    return stage
+
+
+def lifecycle_count(spec, entries, case):
+    count = 0
+    for row in entries:
+        key = row["stage"]
+        if is_surface(spec) and row["stage"] == "input_contract_checks":
+            key = qualification_root(Path(row["output"]).parent)
+        count += key == case
+    return count
+
+
 def validate_surface_fields(value):
     stage = value.get("stage")
     expected_degree = {"surface_p4": 4, "surface_p6": 6}.get(stage, 0)

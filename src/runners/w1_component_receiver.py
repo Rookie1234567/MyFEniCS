@@ -480,9 +480,16 @@ def _launch_w1(spec):
         if charges["window_sha256"] != digest(spec["window_path"]):
             raise ValueError("W1_CHARGE_WINDOW_CHANGED")
         numeric_used = charged_seconds(charges["entries"], time.monotonic())
-        if sum(row["stage"] == stage for row in charges["entries"]) >= 3:
+        affected_case = stage
+        prior_count = sum(row["stage"] == stage for row in charges["entries"])
+        if spec.get("component") == "original_size_full_surface_w1":
+            from src.io.w1_surface_contract import lifecycle_case, lifecycle_count
+
+            affected_case = lifecycle_case(spec, output, stage)
+            prior_count = lifecycle_count(spec, charges["entries"], affected_case)
+        if prior_count >= 3:
             raise ValueError("W1_MAXIMUM_THREE_LIFECYCLES_PER_AFFECTED_CASE")
-        charge = {"stage": stage, "output": str(run), "origin_monotonic": origin}
+        charge = {"stage": stage, "output": str(run), "origin_monotonic": origin, "affected_case": affected_case}
         charges["entries"].append(charge)
         atomic_json(charge_path, charges)
         hard = hard_limit(spec)

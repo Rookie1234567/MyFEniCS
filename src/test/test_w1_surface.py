@@ -211,6 +211,20 @@ def test_relative_package_loader_has_fixed_instance_gate():
     assert "c354afa449fb80cfb5012e7d2ff66a3e3e64e088" in PACKAGE_LOADER
 
 
+def test_qualification_lifecycle_groups_only_fixed_roots():
+    from src.io.w1_surface_contract import lifecycle_case, lifecycle_count
+
+    spec = {"component": "original_size_full_surface_w1"}
+    entries = [dict(stage="input_contract_checks", output="/own/"+name+"/input_contract_checks") for name in ("a29","a129","a229")]
+    case = lifecycle_case(spec, "/own/a429", "input_contract_checks")
+    assert lifecycle_count(spec, entries, case) == 0
+    entries += [dict(stage="input_contract_checks", output="/own/"+name+"/input_contract_checks") for name in ("a329","a429","a529")]
+    assert lifecycle_count(spec, entries, case) == 3
+    with pytest.raises(ValueError):
+        lifecycle_case(spec, "/own/unlimited_new_source", "input_contract_checks")
+    assert lifecycle_case(spec, "/own/p429", "surface_p4") == "surface_p4"
+
+
 def small_geometry():
     vertices = np.array(
         [[i, j, k] for k in (0, 1) for j in (0, 1) for i in (0, 1)], float

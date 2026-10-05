@@ -1,0 +1,28 @@
+w1_receiver_schema = 2
+component = "original_size_full_surface_w1"
+stage = "input_contract_checks"
+input_origin = "independently_validated_v28"
+instance_id = "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28"
+math_commit = "c354afa449fb80cfb5012e7d2ff66a3e3e64e088"
+quadrature_degree = 60
+integration_profile = "q60_native"
+manifest_path = "benchmarks/artifacts/task42extra/w1_receiver/v28/input/mode_manifest.json"
+ledger_path = "benchmarks/artifacts/task42extra/w1_receiver/v28/scientific_input_receipt.json"
+physical_config_path = "input/task042extra_feinn_5nm/w1_resolved_config_v28.json"
+output_root = "benchmarks/artifacts/task42extra/w1_receiver/v29/a429"
+window_path = "tmp/task42extra/w1_receiver/v29/batch_window.json"
+source_manifest_path = "benchmarks/cases/w1_receiver/recovery_dependencies.json"
+coordinate_convention = "main_centered_nm"
+ledger_translation_nm = [25.0, 12.5, 0.0]
+checkpoint_path = ""
+A_qualification_path = "tmp/task42extra/w1_receiver/v29/P0_qualification_repair3.json"
+surface_scope = "original_2176_facets"
+degree = 0
+generic_seed = 4212801
+seam_seed = 4212901
+v28_reference_root = "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary"
+
+[prerequisite_paths]
+surface_p4 = "benchmarks/artifacts/task42extra/w1_receiver/v29/p429/surface_p4"
+surface_p6 = "benchmarks/artifacts/task42extra/w1_receiver/v29/p629/surface_p6"
+surface_check = "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check"
