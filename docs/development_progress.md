@@ -1,3 +1,18 @@
+# Task42extra V29：原尺寸全口面已实算，本机主线 API 消费完成
+
+这是FEINN支线的确定性边界辅助交付：区域内场与外部模式的交换，从两个面片推进到原尺寸所有上下口面。未训练NN或求解体内PDE；原尺寸完整目标仍未资格化，不改变其他支线结论。
+
+| measured / 同一新模式实例 | 新结果和边界 |
+| --- | --- |
+| 原尺寸完整边界 | 上下2,176面、p4/p6 trace行69,632/156,672、全部32,060传播模式；实际原类face_inventory=None调用 |
+| 独立原门 | 共1,027,260项失败0；最坏相对8.7841013e-11/7.4357178e-11≤1e-10；额外逐列1,360/4,947失败不授体内资格 |
+| 主线接入 | 37相对路径载荷文件/251,699,594B实际ready重开；MAIN_API_ADAPTER_LOCAL_PASS_NOT_REMOTE_INGESTED，非远程已接收 |
+| 正式全链费用/峰 | 976.193991953s（包含失败/资格阶段），最大采样同时树910,086,144B、swap0；开发/阅读/等待/发布仍入同一总窗 |
+| 启动修复 | 实际worker新CPU观察≤2.959228s、独立60s PSI；24份样本/813.597248s等待；V28旧陈旧准入限定保留 |
+| 结果/目标 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；完整原尺寸2TB/172800s原门未达；本轮辅助循环收口 |
+
+[Response V29](task042extra_feinn_5nm/response_v29.md)、[主题](task042extra_feinn_5nm/outcomes/full_surface_action_v29.md)、[source/运行](task042extra_feinn_5nm/outcomes/records/run_index_v29.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v29.json)。M3600较好/Mfinal退化、旧全部负结果/UNKNOWN/费用及其他任务下方原文完整保留。没有生产或合并master批准。
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

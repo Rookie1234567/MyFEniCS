@@ -1,3 +1,18 @@
+# 当前 V29：最终17项定向资格与全口面独立原门
+
+最终实现source为c94fe051752ab1576bc8b00548eb12109f18280a；17项pytest/Ruff/compileall全部通过，JUnit SHA a704fabb0b5701fa1eb6df76dda30f1f5630fe6d467325f00e11cd1b42e974b5。测试覆盖新鲜CPU/身份/cpuset/最后24份/拒绝25份、显式opt-in、完整API路由、周期映射、更新hash后的损坏数组、实际writer→seal→重开→消费者、失败监督/陈旧资源拒绝、D共轭、原清单参考面、原生原向量分母及固定根因计数。fixture中的Basix替身不是原生物理证据。
+
+| 实测资格 / source | 结果与边界 |
+| --- | --- |
+| final P0 / c94fe051… | 17/0，Ruff/compile exit0；轻树峰121204736B、swap0；[测试/hash](records/targeted_tests_v29.json) |
+| actual p4/p6 / ef9f9f39…/91023bdc… | 原生300/882列及全部2176口面/32060模式真实API，非stub；各一次健康producer |
+| separate saved checker / c94fe051… | 每p原门513630/0；额外1360/4947逐列失败保留，无体内资格；[全部保存结果](records/independent_checker_v29.json) |
+| actual package ready consumer / c94fe051… | 默认ready重开37文件/251699594B，不新增FE生命周期；[调用/消费](records/main_api_handoff_v29.json) |
+| 历史/失败与重用 | 开发序列化/格式、c29字段错误、c129分母分类失败、a329 worker前拒绝都保留；旧92A/39/V28受影响37按依赖复用，无全套重跑 |
+| 文档与网页 | 新页/新增前缀本地结构与链接另记；新页浏览器视觉NOT_RUN，有限GitHub访问Cache miss；不是全页或CI PASS |
+
+[运行source](records/run_index_v29.json)、[修复](records/repair_log_v29.json)、[费用](records/resource_costs_v29.json)、[呈现](records/render_check_v29.json)。最后代码修改后已重验相关资格，后续仅文档/compact记录；无full pytest、环境重装、无关MPI或CI。下方全部旧测试、失败和费用原文保留。
+
 # Targeted tests 与文档复核
 
 本页保留首次失败与修复后结果。完整suite与CI没有运行；检查限定于新增full-FE数学/事务/Riesz及本任务文档，不重跑旧heavy。

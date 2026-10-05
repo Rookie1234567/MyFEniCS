@@ -1,0 +1,94 @@
+{
+  "schema": "task42extra.full-surface-targeted-tests.v29",
+  "final_source": "c94fe051752ab1576bc8b00548eb12109f18280a",
+  "qualification": "tmp/task42extra/w1_receiver/v29/P0_qualification_repair3.json",
+  "pytest": {
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "test_names": [
+      "test_start_freshness_and_identity",
+      "test_last_grant_read_new_25_rejected",
+      "test_full_surface_contract_is_opt_in",
+      "test_real_api_adapter_all_facets",
+      "test_saved_array_damage_is_rejected",
+      "test_native_D_complex_polarization_conjugate",
+      "test_original_manifest_without_derived_reference_plane",
+      "test_native_vector_denominator_matches_accepted_contract",
+      "test_relative_package_loader_has_fixed_instance_gate",
+      "test_qualification_lifecycle_groups_only_fixed_roots",
+      "test_periodic_geometry_mapping",
+      "test_actual_writer_seal_reopen_consumer[NONE]",
+      "test_actual_writer_seal_reopen_consumer[SUPERVISION]",
+      "test_actual_writer_seal_reopen_consumer[STALE]",
+      "test_bootstrap_does_not_pin_current_numerical_namespace",
+      "test_schema2_is_explicit_and_schema1_strict",
+      "test_batch_window_no_reset_and_caps"
+    ],
+    "junit": {
+      "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/a429/input_contract_checks/junit.xml",
+      "bytes": 2164,
+      "sha256": "a704fabb0b5701fa1eb6df76dda30f1f5630fe6d467325f00e11cd1b42e974b5"
+    }
+  },
+  "Ruff_exit": 0,
+  "compileall_exit": 0,
+  "final_component": {
+    "status": "V29_SURFACE_CONTRACT_TESTS_PASS",
+    "pytest_exit_code": 0,
+    "ruff_exit_code": 0,
+    "compileall_exit_code": 0,
+    "raw": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v29/a429/input_contract_checks/junit.xml",
+      "bytes": 2164,
+      "sha256": "a704fabb0b5701fa1eb6df76dda30f1f5630fe6d467325f00e11cd1b42e974b5"
+    },
+    "scope": "PURE_STARTUP_AND_ADAPTER_LOGIC_ONLY",
+    "receiver_source_sha": "c94fe051752ab1576bc8b00548eb12109f18280a",
+    "binding_sha256": "b6cbcab1391e5150b62aa342f318b5285dbc3954b8bbdd1eda2af62126ef4cae",
+    "elapsed_seconds": 0.6459962069056928,
+    "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+    "input_origin": "independently_validated_v28",
+    "integration_profile": "q60_native",
+    "math_commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "NN_used": false,
+    "PDE_solved": false,
+    "official_results": false,
+    "full_target_qualified": false,
+    "raw_start_freshness": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v29/a429/input_contract_checks/worker_start_freshness.json",
+      "bytes": 914,
+      "sha256": "02c2bf189dc43535d8a38e93ec81469bdbc1888502f9dfb65b6d058dce3a093a"
+    }
+  },
+  "test_stage_supervision": {
+    "schema": "task42extra.w1-receiver-result.v1",
+    "receiver_source_sha": "c94fe051752ab1576bc8b00548eb12109f18280a",
+    "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "binding_sha256": "b6cbcab1391e5150b62aa342f318b5285dbc3954b8bbdd1eda2af62126ef4cae",
+    "component_status": "V29_SURFACE_CONTRACT_TESTS_PASS",
+    "receiver_classification": "COMPLETED",
+    "receiver_exit_code": 0,
+    "cleared": true,
+    "elapsed_seconds": 66.63018678082153,
+    "sampled_process_tree_rss_peak_bytes": 121204736,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "PDE_solved": false,
+    "worker_started": true,
+    "official_results": false,
+    "evidence_sha256": "5e77840fcee3ba42560ea076722768471bb1c6f5e1f7e9b8bcb695cef7337cd6"
+  },
+  "actual_source_binding": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/a429/input_contract_checks/binding.json",
+    "bytes": 12048,
+    "sha256": "b6cbcab1391e5150b62aa342f318b5285dbc3954b8bbdd1eda2af62126ef4cae"
+  },
+  "receiver_bound_files": 40,
+  "inherited_evidence": "V28 scientific input, native orientation/full local basis and accepted math closure reused by exact file/hash dependencies; old 92A/39 and affected 37 evidence not rerun wholesale",
+  "fixture_scope": "pure dummy Basix/API fixtures prove routing/schema/guard behavior only; physical empirical qualification is actual P1 arrays and P2 saved checker",
+  "ordinary_and_schema1_defaults_unchanged": true,
+  "CI": "NOT_RUN",
+  "full_pytest": "NOT_RUN",
+  "unrelated_MPI_or_ABI_install": "NOT_RUN",
+  "old_test_and_resource_failures_retained": true
+}

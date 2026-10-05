@@ -1,3 +1,11 @@
+# 当前 V29：原尺寸完整口面固定见证通过，本机主线 API 包已消费
+
+已实际覆盖上下2,176面、p4/p6、全部32,060模式。独立保存checker共1,027,260项原门检查失败0，最坏相对8.7841013e-11/7.4357178e-11≤1e-10；额外原生逐列诊断仍1,360/4,947项失败，未授微小内部迹或体内恢复资格。
+
+[Response V29](response_v29.md)、[完整口面/接入专题](outcomes/full_surface_action_v29.md)、[当前summary](outcomes/summary.md)、[checker/hash](outcomes/records/independent_checker_v29.json)、[可消费包/API](outcomes/records/main_api_handoff_v29.json)、[完整费用](outcomes/records/resource_costs_v29.json)。37个相对路径载荷文件已默认ready重开；状态MAIN_API_ADAPTER_LOCAL_PASS_NOT_REMOTE_INGESTED，主线远端未接入。
+
+FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED保持，无NN/Maxwell factor/solve/Gram；没有新全域场或功率。原50×25×140nm/Si17-120nm/λ0.7完整3D、decimal2e12B/ownswap-OOC0/172800s原门未达成。全口面辅助交付收口，停止等待审阅；不自动创建新数值包。下方所有旧“当前/下一步”均为完整保留的历史记录。
+
 # 当前 V28：可消费的新身份全模式代表面包已实际合格
 
 原尺寸λ0.7模式清单以显式schema2重新独立核验，416780字段检查通过；真实Basix控制和p4/p6两代表面各32060模式q60边界通过原门，1218328数值检查失败0。另一个新目录独立重开1043文件/1625383207B并再次通过，接收状态READY_FOR_MAIN_OPT_IN_NOT_INGESTED。不是只完成fixture、原件hash重现或索引封存。

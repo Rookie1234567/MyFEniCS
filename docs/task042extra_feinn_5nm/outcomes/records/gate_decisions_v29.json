@@ -1,0 +1,60 @@
+{
+  "schema": "task42extra.full-surface-gates.v29",
+  "authority": "Review V28 section5",
+  "basis": "actual frozen P1 arrays, separate saved checker c94 and matching post-supervision ready reopen",
+  "verdict": "ORIGINAL_SIZE_FULL_SURFACE_ACTION_EMPIRICAL_PASS_WITH_ADDITIONAL_COLUMN_DIAGNOSTIC_FAILURES",
+  "shared_input_science": "INHERITED_V28_ACCEPTED_SAME_HASH",
+  "physical_rows_modes_and_mapping": "PASS",
+  "fixed_witness_all_mode_and_trace_original_gate": "PASS",
+  "original_gate_count": 1027260,
+  "original_failed": 0,
+  "empirical_only": true,
+  "additional_individual_native_columns": "1360 p4 / 4947 p6 FAIL diagnostics, no all-column relative precision certificate",
+  "individual_tiny_column_or_volume_recovery_qualified": false,
+  "resource_start_freshness": {
+    "status": "PASS_FOR_ACTUAL_V29_FORMAL_STARTS",
+    "max_age_seconds": 2.959227613173425,
+    "threshold_seconds": 15,
+    "samples": 24,
+    "old_V28_gap_retained": true
+  },
+  "saved_source_clean_before_each_run": true,
+  "actual_main_API_local": "MAIN_API_ADAPTER_LOCAL_PASS_NOT_REMOTE_INGESTED",
+  "actual_ready_consumer_reopen": true,
+  "requested_answers": {
+    "new_input_scientifically_qualified": "V28 accepted and reused exact hash; no new producer",
+    "full_original_port_facets_original_gate": "PASS p4/p6, 2176 facets and all 32060 modes for fixed witnesses",
+    "actual_local_main_API_consumption": "PASS through frozen original classes; local ready package reopened, remote not ingested"
+  },
+  "NN_training": 0,
+  "Maxwell_factor_solve": 0,
+  "Gram": 0,
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "FEINN_main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "full_target": "FULL_TARGET_NOT_QUALIFIED",
+  "full_domain_E_H_curl_sample_scattering_R_T_A_or_true_PDE_residual": "NOT_RUN",
+  "skipped": {
+    "q60_phase_subdivision": "NOT_TRIGGERED_NO_RUN",
+    "stable_summation_numerical_repair": "NOT_TRIGGERED_NO_RUN",
+    "B2_W2_main_PC_dot_storage": "NOT_AUTHORIZED_NO_RUN",
+    "new_reference_PDE": "NOT_AUTHORIZED_NO_RUN"
+  },
+  "final_goal": {
+    "physical_size_nm": [
+      50,
+      25,
+      140
+    ],
+    "Si_line_width_height_nm": [
+      17,
+      120
+    ],
+    "vacuum_wavelength_nm": 0.7,
+    "complete_three_dimensional_FE": true,
+    "whole_machine_decimal_bytes": 2000000000000,
+    "ownswap_OOC": 0,
+    "complete_cold_seconds": 172800,
+    "strict_original_accuracy_unchanged": true
+  },
+  "historical_states": "M3600 better, Mfinal degraded, all FAIL/UNKNOWN and costs kept; D0 cost veto, D1 NOT_RUN"
+}

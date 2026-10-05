@@ -1,0 +1,72 @@
+{
+  "schema": "task42extra.full-surface-selective-merge.v29",
+  "merge_or_production_approval": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "decision": "no new production defaults or full PDE qualification; frozen c354 math is reused read-only"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/w1_start_freshness.py",
+        "src/runners/w1_admission_budget.py",
+        "src/runners/w1_admission_scope.py",
+        "src/runners/w1_component_receiver.py",
+        "src/runners/w1_component_payload.py"
+      ],
+      "behavior": "only explicit V29 startup identity/freshness and fixed per-root pure qualification count, old resource thresholds/caps unchanged",
+      "tests": "final17 and actual fresh whole-tree launches",
+      "order": 1
+    },
+    {
+      "group": "research-only opt-in adapter",
+      "files": [
+        "src/io/w1_surface_contract.py",
+        "src/io/w1_versioned_input.py",
+        "src/io/w1_evidence.py",
+        "src/runners/w1_surface_payload.py",
+        "src/solvers/w1_full_surface_action.py"
+      ],
+      "behavior": "pass manifest and face_inventory=None to unmodified original classes; construct full surface metadata/reference and save; no second PDE solver",
+      "tests": "actual p4/p6 same physics and full outputs, no fresh PDE",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/solvers/w1_full_surface_saved.py",
+        "src/test/test_w1_surface.py",
+        "input/task042extra_feinn_5nm/v29_*.dat"
+      ],
+      "behavior": "independent saved physical mapping/contraction and strict original norms; preserves additional per-column negative results",
+      "tests": "final17, c229 all original metrics, c129 failure retained",
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v29.md",
+        "docs/task042extra_feinn_5nm/outcomes/full_surface_action_v29.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/*_v29.*",
+        "docs/development_progress.md",
+        "docs/development_model_registry.md"
+      ],
+      "behavior": "current entries and hash-bound results; old historical body retained",
+      "order": 4
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task42extra/w1_receiver/v29",
+        "tmp/task42extra",
+        "historical resume_w1_preworker_admission.py",
+        "old supervised NN weights"
+      ],
+      "behavior": "ignored raw arrays/history/failed jobs and no production initialization or storage/remote certificate"
+    }
+  ],
+  "no_fresh_whole_PDE_evidence": true,
+  "main_ingestion_requires_own_volume_internal_and_physical_acceptance": true
+}

@@ -1,3 +1,23 @@
+# 当前：Review V28 → Response V29，原尺寸完整口面实算与本机 API 接入完成
+
+把区域内有限元场与外部模式交换的边界计算扩展到上下所有面，而非代表面乘数量。p4/p6各一次健康producer，独立保存checker采用原分母；固定见证的原门通过，但极小原生列的额外逐列负结果及体内未资格化边界保持。不是完整散射解或NN收益。
+
+| measured / 同实例 W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28 | 当前结果、原门与证据 |
+| --- | --- |
+| 物理/输入 | 原50×25×140nm、Si17/120nm、λ0.7、双Floquet；复用36,263,033B/SHA7dd07d71…输入，旧字节/ledger未恢复、等价UNKNOWN；[设计](records/design_v29.json) |
+| 原尺寸口面/空间 | 上下2,176面，x90/46/46/90、y4、z=-10/130nm；p4/p6边界trace行69,632/156,672，全部32,060所选传播模式；不是体积DoF |
+| 原门/独立数组 | p4/p6各513,630项失败0，最大相对8.784101295566122e-11/7.435717804637401e-11≤1e-10；[checker](records/independent_checker_v29.json)、[最大值/分子/分母](records/full_surface_metrics_v29.csv) |
+| 新宽度矩 | 3,503精确binary64频率/ell0..6，复用357、新3,146；最大绝对9.082805012334877e-14≤1e-12；p6完全复用p4参考 |
+| 额外负结果 | 61,200/179,928逐列诊断，1,360/4,947项失败；积分相对最大23.8779043/16.8054835，B/D约0.736/0.743；旧c129 FAIL保留，微小内部迹/体内恢复不授资格；[修复](records/repair_log_v29.json) |
+| 真正API/包 | 原FacetPolynomial/BoundaryLayout/DirectionalBoundaryAction(face_inventory=None)实际全口面调用；37相对路径文件/251,699,594B默认ready重开；MAIN_API_ADAPTER_LOCAL_PASS_NOT_REMOTE_INGESTED；[调用/消费](records/main_api_handoff_v29.json) |
+| source / 秒 / 采样同时树峰B | p4 ef9f9f39…/153.006203/814727168；p6 91023bdc…/91.694705/910086144；checker c94fe051…/162.992869/545341440；[完整SHA](records/run_index_v29.json) |
+| 所有费用/资源 | 正式阶段976.193991953s，开发/失败/等待/发布同一28800s连续窗另记；24/24样本、等待813.597248s≤900；实际worker CPU新鲜度最大2.959228s≤15，60s PSI、原系统及384GiB邻余量；采样ownswap0，未测峰UNKNOWN；[完整账](records/resource_costs_v29.json) |
+| 定向测试/呈现 | 最终17项/Ruff/compile通过，旧失败和健康资格不重跑；新页视觉未确认、旧渲染失败保留；[测试](records/targeted_tests_v29.json)、[呈现](records/render_check_v29.json) |
+| 全目标/神经/未运行 | 全域原残差、total/scattered E/H/curl、六样点、散射复通道、R/T/A/A_volume均NOT_RUN；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED |
+| 收口 | 关闭本轮确定性全口面辅助循环；主线须按自己的合同绑定同instance体积/内部/完整物理门，不混旧B/D/H；无master/production批准；[依赖分组](records/selective_merge_manifest_v29.json) |
+
+[回执](../response_v29.md)、[完整专题](full_surface_action_v29.md)。原尺寸0.7nm完整3D、decimal2e12B整机、ownswap/OOC0、172800s完整冷流程及原精度门尚未达成。M3600较好/Mfinal退化、D0成本否决/D1未运行、旧single-array/严格场/hash/资源失败、UNKNOWN和所有成本完整保留。下方全部历史原文不构成新的自动启动授权。
+
 # 当前：Review V27 → Response V28，新输入/全模式代表面/新目录消费者均已实际通过
 
 本批把可获得的V27清单定义为明确的新实例，再独立核对全部模式物理；随后完成真实原生方向控制、原q60全32060模式边界数组与独立新目录重开。接收状态READY_FOR_MAIN_OPT_IN_NOT_INGESTED。它让主线得到可实际消费的确定性边界包，尚未完成全域接入或原尺寸PDE；不是NN收益。旧原件缺失/旧bitwise失败保留。

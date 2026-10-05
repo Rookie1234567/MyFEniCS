@@ -1,0 +1,118 @@
+{
+  "schema": "task42extra.main-api-handoff.v29",
+  "status": "MAIN_API_ADAPTER_LOCAL_PASS_NOT_REMOTE_INGESTED",
+  "main_volume_or_remote_ingested": false,
+  "local_package_directory": "benchmarks/artifacts/task42extra/w1_receiver/v29/h29/surface_handoff/main_opt_in_bundle",
+  "package_manifest": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/h29/surface_handoff/main_opt_in_bundle/package_manifest.json",
+    "bytes": 6521,
+    "sha256": "e54d17b4184daf258901624afa487a2121fe6a97e2f1478c61c4b3731aed3ba9"
+  },
+  "package_manifest_bytes": 6521,
+  "package_file_count": 37,
+  "package_file_payload_bytes": 251699594,
+  "package_relative_live_dependencies": true,
+  "historical_absolute_paths_provenance_only": true,
+  "consumer_ready_reopen": {
+    "actual_ready_path_consumed": true,
+    "relative_package_manifest_sha256": "e54d17b4184daf258901624afa487a2121fe6a97e2f1478c61c4b3731aed3ba9",
+    "files": 37,
+    "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+    "new_numerical_lifecycle": false,
+    "physical_scope": "surface API only; receiver volume/internal binding remains separate"
+  },
+  "raw_consumer_reopen": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/h29/surface_handoff/ready_consumer_reopen.json",
+    "bytes": 354,
+    "sha256": "e500c9fcf0a11cb153a20686957f8bf3c9dd327a5bf6c267a0e28eb37f8809c1"
+  },
+  "ready_file": "benchmarks/artifacts/task42extra/w1_receiver/v29/h29/surface_handoff/main_opt_in_bundle/READY_FOR_MAIN_OPT_IN_NOT_REMOTE_INGESTED.json",
+  "consumer_reopen_scope": "37 complete file identities, fixed new instance, sealed original numeric reports; no second FE action/numerical lifecycle",
+  "actual_numerical_API_consumption_is_P1": true,
+  "actual_API": {
+    "p4": {
+      "provider": "Qualified V28 instance through FullSurfaceAdapter",
+      "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+      "math_commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "native_classes": [
+        "FacetPolynomial",
+        "BoundaryLayout",
+        "DirectionalBoundaryAction"
+      ],
+      "numerical_module": "src/solvers/directional_boundary.py",
+      "face_inventory": null,
+      "face_masks": null,
+      "actual_facets": 2176,
+      "actual_rows": 69632,
+      "actual_modes": 32060,
+      "statistics": {
+        "center": {
+          "project_calls": 8,
+          "scatter_calls": 7,
+          "project_seconds": 0.13404445187188685,
+          "scatter_seconds": 0.2055826571304351
+        },
+        "ledger": {
+          "project_calls": 8,
+          "scatter_calls": 7,
+          "project_seconds": 0.1394517682492733,
+          "scatter_seconds": 0.3162914542481303
+        }
+      },
+      "cache_bytes": {
+        "center": 9843040,
+        "ledger": 9843040
+      },
+      "mathematical_source_unmodified": true,
+      "remote_main_ingested": false
+    },
+    "p6": {
+      "provider": "Qualified V28 instance through FullSurfaceAdapter",
+      "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+      "math_commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "native_classes": [
+        "FacetPolynomial",
+        "BoundaryLayout",
+        "DirectionalBoundaryAction"
+      ],
+      "numerical_module": "src/solvers/directional_boundary.py",
+      "face_inventory": null,
+      "face_masks": null,
+      "actual_facets": 2176,
+      "actual_rows": 156672,
+      "actual_modes": 32060,
+      "statistics": {
+        "center": {
+          "project_calls": 8,
+          "scatter_calls": 7,
+          "project_seconds": 0.16801278782077134,
+          "scatter_seconds": 0.3184589701704681
+        },
+        "ledger": {
+          "project_calls": 8,
+          "scatter_calls": 7,
+          "project_seconds": 0.2961423280648887,
+          "scatter_seconds": 0.2802922099363059
+        }
+      },
+      "cache_bytes": {
+        "center": 13493536,
+        "ledger": 13493536
+      },
+      "mathematical_source_unmodified": true,
+      "remote_main_ingested": false
+    }
+  },
+  "native_classes_unmodified": true,
+  "provider_module": "code/w1_full_surface_action.py",
+  "relative_consumer": "consumer.py",
+  "qualification_scope": "all 2176 original port facets p4/p6 with fixed original generic and new seam witnesses, 32060 propagating modes; no volume solve/internal recovery",
+  "old_B_D_H_or_factors_must_not_mix": true,
+  "old_historical_manifest_recovered": false,
+  "cross_machine_or_power_loss_qualification": "NOT_RUN",
+  "external_receiver_location": "NOT_PROVIDED",
+  "next_main_requirement": "same instance explicit opt-in and main's own volume/internal binding and strict whole-PDE review",
+  "surface_auxiliary_loop": "CLOSED_AFTER_THIS_DELIVERY",
+  "NN_gain": false,
+  "full_target_qualified": false
+}

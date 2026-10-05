@@ -1,3 +1,18 @@
+# Task42extra V29模型账：原尺寸全口面组件通过，完整前向解未运行
+
+边界组件负责体内场与外部模式交换。本批只验证这一组件在原尺寸所有口面上的真实调用及固定见证，不能当作完整3D场、求解器收敛、端口截断或NN收益。
+
+| model / measured | 空间与模式 | 数值结果、成本及资格 |
+| --- | --- | --- |
+| 原50×25×140nm / λ0.7 / Si17-120 / 原双Floquet | 上下2,176面；p4 dim300、trace69632；p6 dim882、trace156672；32060传播模式；新schema2实例7dd07d71… | 每p原门513630/0，最大相对8.7841013e-11/7.4357178e-11≤1e-10；3,503频率矩绝对9.082805e-14≤1e-12 |
+| 额外原生逐列诊断 | 68局部case / 两侧两坐标 / 全300或882列 | p4 1360/p6 4947失败保留；积分相对23.8779043/16.8054835，B/D约0.736/0.743；无内部消元资格 |
+| 全口面/实际主线API | 原类face_inventory=None；全两分量/模式/trace/物理RHS、作用/伴随/坐标桥 | ORIGINAL_SIZE_FULL_SURFACE_ACTION_EMPIRICAL_PASS，仅固定见证；MAIN_API_ADAPTER_LOCAL_PASS_NOT_REMOTE_INGESTED |
+| 资源 / whole-tree sampled | CPU-only/MPI1/math1，formal swap0；原系统及384GiB邻增长预留 | 峰910086144B，正式阶段976.193991953s；新artifact快照966649196B，未测峰UNKNOWN；非完整目标成本 |
+| 实际全域场与功率 | total/scattered E/H/curl、6样点、散射复模式、R00_s/R00_p/R00_total、R/T/A/A_volume | 全部NOT_RUN，原full explicit residual及物理门未验；无完整三维参考/mesh或端口收敛证书 |
+| 旧神经/最终目标 | M3600较好/Mfinal退化、D0成本否决/D1未运行、全部负结果与UNKNOWN保留 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；decimal2e12B/ownswap-OOC0/172800s未达 |
+
+[统一summary](task042extra_feinn_5nm/outcomes/summary.md)、[原分母checker](task042extra_feinn_5nm/outcomes/records/independent_checker_v29.json)、[完整source](task042extra_feinn_5nm/outcomes/records/run_index_v29.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v29.json)。没有新NN/Gram/Maxwell factor/solve，不改其他支线下方数据；辅助交付后停止等待审阅，无master/production批准。
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

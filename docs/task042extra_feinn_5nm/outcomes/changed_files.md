@@ -1,3 +1,18 @@
+# 当前 V29改动：全口面薄适配与独立保存checker
+
+从Review V28 seal到最终实现c94fe051752ab1576bc8b00548eb12109f18280a共24文件、2724新增/30删除；后续本轮文档/compact记录为独立交付增量。冻结c354afa数学闭包不改，schema1和ordinary默认不变，所有数值stage先clean commit后运行。
+
+| 依赖组 / 建议审阅顺序 | 新增或改动 | 数值与资格边界 |
+| --- | --- | --- |
+| reusable runner/watchdog | w1_start_freshness、admission_budget/scope、component_receiver/payload | V29新观察身份/≤15s及固定根因资格化；原阈值/样本上限/数值case次数不放宽 |
+| research-only adapter | w1_surface_contract、surface_payload、full_surface_action、versioned_input/evidence | 复用原三类与face_inventory=None，不复制体积PDE/owner/传统PC；显式新实例 |
+| checker/benchmark | full_surface_saved、test_w1_surface、v29 one-run dat | 独立参考/保存数据、原分母与全部逐列诊断；最终17测试及实测P1/P2 |
+| compact/docs | response_v29、full_surface_action_v29、V29 records、summary/README/本页/test及自己的progress/registry条目 | 当前导航与来源/费用；旧正文、review、task、各支线数据不改 |
+| production numerical/core | 无新生产默认或完整PDE证据 | 表面固定见证经验资格不能授全目标/NN资格 |
+| do-not-merge | ignored原数组/完整CSV/tmux/cache/历史恢复脚本与NN权重 | 原FAIL/UNKNOWN留存，无生产初值/跨机/断电/存储资格 |
+
+[完整分组清单](records/selective_merge_manifest_v29.json)、[准确source及输入hash](records/run_index_v29.json)。未改Task042、其他分支/工作树、共享origin配置、task/review或master；没有amend/强推/merge批准。下方所有旧分组和文件清单逐字保留。
+
 # 改动范围与合并边界
 
 当前实现改动从发布提交起核对；最后的response/outcomes和总账追加另在交付commit中。实现未修改旧Task042历史、任务书或review。正式source hashes见[run index](records/run_index_v1.json)。

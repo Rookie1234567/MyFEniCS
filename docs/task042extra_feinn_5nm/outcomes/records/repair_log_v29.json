@@ -1,0 +1,194 @@
+{
+  "schema": "task42extra.full-surface-repairs.v29",
+  "repairs": [
+    {
+      "id": "development_receipt_key",
+      "failure": "Path dictionary key caused JSON writer TypeError before pytest; old process had already compiled code",
+      "hypothesis": "receipt map keys must be strings",
+      "change": "string keys before initial implementation freeze",
+      "test": "later formal writer/seal/reopen fixtures; final 17 passed",
+      "retry": "development2 then formal P0",
+      "records": {
+        "admission_observation.json": {
+          "path": "tmp/task42extra/w1_receiver/v29/dev_checks_1/admission_observation.json",
+          "bytes": 308838,
+          "sha256": "039e6e21c010c381f3f8b62b7adbc726bdb1aa21a3feb2c9bf73197e1d9e2d0a"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/w1_receiver/v29/dev_checks_1/pressure_stable_window.json",
+          "bytes": 11429,
+          "sha256": "6fc7a6a2ca16a4a97503b51adcaa8a8431c66fbc16ae26f51261e3d19aad29b7"
+        }
+      },
+      "source_SHA": "NOT_RETAINED",
+      "numeric_worker_started": false
+    },
+    {
+      "id": "development_lint",
+      "failure": "development2 pytest12 pass but Ruff multiline violations; development3 pytest12 pass but remaining F841 unused p",
+      "hypothesis": "minimal source formatting/unused local variable errors",
+      "change": "format and remove unused variable before ef9f9f3 implementation freeze",
+      "test": "all formal P0 Ruff/compile succeeded",
+      "retry": "final initial P0; no numeric producer rerun",
+      "records": [
+        {
+          "summary.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_2/summary.json",
+            "bytes": 1919,
+            "sha256": "ce1929232d3965ca97d766d66b19e5fe846592e7666e02c75f860e01df3aae87"
+          },
+          "junit.xml": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_2/junit.xml",
+            "bytes": 1556,
+            "sha256": "d4c915eba7c93b52d9a278273b5e697cef65bd4536b7cb0caebce36ba85ed0a7"
+          },
+          "source_files.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_2/source_files.json",
+            "bytes": 421,
+            "sha256": "227c7d97bcb1651d5bec11fd8249e9fe0ba26e0ee1e72c4ed14bd3c8d432745e"
+          },
+          "actual_test_sources.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_2/actual_test_sources.json",
+            "bytes": 1273,
+            "sha256": "ba75b76221991ddc29b4f068055b4e81e8e4e9848b76a1a6bded4f15a3d907a8"
+          },
+          "admission_observation.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_2/admission_observation.json",
+            "bytes": 215174,
+            "sha256": "62823ce2425b06724ebf44ea05556335a999182d70cfc83af0aa1f8339fa4ee0"
+          },
+          "pressure_stable_window.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_2/pressure_stable_window.json",
+            "bytes": 11429,
+            "sha256": "13008eb1a62f8e04d6a94814fc39346ecd00f03d590045f71ae07e3b8a5779ca"
+          }
+        },
+        {
+          "summary.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_3/summary.json",
+            "bytes": 1919,
+            "sha256": "fade5ec931614e2d53024b6239a2a2a2721b930ba0e03e12b9507d01b2cb2471"
+          },
+          "junit.xml": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_3/junit.xml",
+            "bytes": 1556,
+            "sha256": "495a8b1a1df038b30f9de793f2a0935048728927b92595ac5f80bdfb2e46894c"
+          },
+          "source_files.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_3/source_files.json",
+            "bytes": 421,
+            "sha256": "4dcd36b2625a48656bb5bfa4c3901390bb051e26de591ea83143acb7ac1a099d"
+          },
+          "actual_test_sources.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_3/actual_test_sources.json",
+            "bytes": 1273,
+            "sha256": "0cc92b00f2704a07650cd3f4f23c3e3bb063a15fb4fa32ec707ac38aec33a8db"
+          },
+          "admission_observation.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_3/admission_observation.json",
+            "bytes": 220641,
+            "sha256": "92367211e7f8cf87795c21b920506933c717cec5fb62b731ca15bc7c4702a887"
+          },
+          "pressure_stable_window.json": {
+            "path": "tmp/task42extra/w1_receiver/v29/dev_checks_3/pressure_stable_window.json",
+            "bytes": 11429,
+            "sha256": "cd77c873b47a7abd94d7e0ec30fefe1c064fc6f7ad7006fcaeefd4dc1c3285c0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "complex_D_checker",
+      "failure": "initial checker expression would conjugate complex polarization twice",
+      "hypothesis": "D is electric projection / H, distinct from traction B",
+      "change": "91023bdc62766c9ffde9471026d8875fac93860b corrected saved reference conjugation and added nonreal fixture",
+      "test": "a129/13 final17",
+      "retry": "checker was not run until this correction; healthy p4 reused",
+      "candidate_numerical_scheme_changed": false
+    },
+    {
+      "id": "missing_derived_reference_plane",
+      "failure": "c29 worker KeyError reference_plane_nm before complete p4/p6 report",
+      "hypothesis": "original manifest lacks helper-derived plane field",
+      "change": "6aae8132ed0d4b66d51a213dc7ce6b7a49382926 derives plane strictly from side/fixed physical contract and rejects conflicting explicit value",
+      "test": "a229/14 final17",
+      "retry": "c129 saved-only checker; healthy p4/p6 unchanged",
+      "cost_seconds": 72.52912535890937,
+      "old_result_preserved": true
+    },
+    {
+      "id": "original_native_vector_denominator",
+      "failure": "c129 FULL_SURFACE_NUMERICAL_FAILED, 6307 failed extra individual columns; all full-surface/individual-mode original outputs passed",
+      "hypothesis": "V29 checker split native arrays into per-column norms although accepted V28 uses full integral matrix/B vector/D vector norms",
+      "change": "bcdecd5b4991abed6572d288d7871fdf8b7c9656 restores original V28 source src/solvers/w1_saved_boundary.py record(integral,c,ref), record(B,Bc,Br), record(D_H,Dc,Dr); inherited 3 fixed complex directions; retains every individual failure as additional_column_diagnostic",
+      "test": "final17 includes original-native-vector denominator and strict role fixture",
+      "retry": "c229 new index, original data preserved, no producer recomputation",
+      "old_c129_source": "6aae8132ed0d4b66d51a213dc7ce6b7a49382926",
+      "old_metric_CSV": [
+        {
+          "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c129/surface_check/metrics_p4.csv",
+          "bytes": 90657612,
+          "sha256": "a867611a3d589be2812793aea506002188443a2ee2b8ca114e62ccdad8871fef"
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c129/surface_check/metrics_p6.csv",
+          "bytes": 106889500,
+          "sha256": "52c44ad09e077414e26856465b831925e54432542f54b271ed02d24d53a2602c"
+        }
+      ],
+      "original_limit_unchanged": 1e-10,
+      "candidate_data_changed": false,
+      "norm_scan": false,
+      "individual_small_columns_not_qualified": true
+    },
+    {
+      "id": "P0_case_lifecycle_guard",
+      "failure": "a329 blocked before worker by W1_MAXIMUM_THREE_LIFECYCLES_PER_AFFECTED_CASE, applying one blanket P0 count to distinct fixed root qualifications",
+      "hypothesis": "Review V28 bounds repairs per root cause, not 3 P0 launches across all roots",
+      "change": "c94fe051752ab1576bc8b00548eb12109f18280a adds explicit fixed qualification-root mapping only for new opt-in V29 P0; unknown root rejected; numeric stages old caps unchanged",
+      "test": "final17 includes fixed whitelist and unknown root rejection",
+      "retry": "a429 once; original_native_vector_denominator lifecycle #2; no source/admission/window reset",
+      "old_a329_records": {
+        "launcher.log": {
+          "path": "tmp/task42extra/durable/w1-receiver-a329-input_contract_checks/launcher.log",
+          "bytes": 698,
+          "sha256": "1e71a825358f04c26828d7936f0cccce95f616f546d8b8fe7c8a35017179ec40"
+        },
+        "admission_observation.json": {
+          "path": "tmp/task42extra/durable/w1-receiver-a329-input_contract_checks/admission_observation.json",
+          "bytes": 211749,
+          "sha256": "92e5def44d33666685c4d18463808c50b7ac9bdac462d082d8f0657f2952fe6e"
+        },
+        "launch_clock.json": {
+          "path": "tmp/task42extra/durable/w1-receiver-a329-input_contract_checks/launch_clock.json",
+          "bytes": 311,
+          "sha256": "d35dc10bae7d6f79bd08e23b65bb7caa0206d2bd5d355ccb0bc7a256ebc91a76"
+        },
+        "job.sh": {
+          "path": "tmp/task42extra/durable/w1-receiver-a329-input_contract_checks/job.sh",
+          "bytes": 684,
+          "sha256": "372ab88229dd1f573b8e50641b1927f7a288f0a0728da7d180a4e47656d6072b"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/durable/w1-receiver-a329-input_contract_checks/terminal_identity.json",
+          "bytes": 11459,
+          "sha256": "75544e5950c457d481b2ec84e8922df2e4a7f17363f452e51086eb5d9f4be74b"
+        }
+      },
+      "worker_started": false,
+      "resource_observation_charged": true
+    },
+    {
+      "id": "metadata_only_aggregation",
+      "failure": "tool-output truncation while loading old oversized report; one jq pipeline-precedence error",
+      "change": "load each final saved report separately and parenthesize jq expression",
+      "numeric_or_producer_retry": false,
+      "all_cost_inside_continuous_window": true
+    }
+  ],
+  "candidate_numerical_method_repairs": 0,
+  "normal_p4_producer_runs": 1,
+  "normal_p6_producer_runs": 1,
+  "healthy_upstreams_never_recomputed": true,
+  "all_old_negative_indices_intact": true
+}

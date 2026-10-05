@@ -1,0 +1,268 @@
+{
+  "schema": "task42extra.full-surface-independent-check.v29",
+  "actual_checker_source": "c94fe051752ab1576bc8b00548eb12109f18280a",
+  "math_source": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "actual_fresh_supervised_process": true,
+  "candidate_API_called_to_generate_reference": false,
+  "source_component_status": "ORIGINAL_SIZE_FULL_SURFACE_ACTION_EMPIRICAL_PASS",
+  "original_relative_limit": 1e-10,
+  "moment_absolute_limit": 1e-12,
+  "original_gates_checked": 1027260,
+  "original_failed": 0,
+  "additional_column_diagnostics_checked": 241128,
+  "additional_column_diagnostic_failed": 6307,
+  "denominator_scope": "V28 original full-native array/vector norm; independent full-vector norm or scalar complex modulus elsewhere; zero reference uses binary64 tiny only, no fitted floor",
+  "reference_identity_frozen_before_candidate": true,
+  "reference_frequency_inventory": {
+    "count": 3503,
+    "reused_V28_exact_binary64": 357,
+    "new_width_frequencies_Decimal80_110": 3146,
+    "ell": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "p6_reused_p4_all": true,
+    "max_abs_frequency": 54.97787143782138
+  },
+  "reports": [
+    {
+      "degree": 4,
+      "facets": 2176,
+      "rows": 69632,
+      "mode_count": 32060,
+      "checked_metrics": 574830,
+      "original_gate_metrics": 513630,
+      "failed_original_metrics": 0,
+      "additional_column_diagnostic_metrics": 61200,
+      "additional_column_diagnostic_failed": 1360,
+      "worst_original": {
+        "degree": 4,
+        "field": "seam_recover_key",
+        "role": "original_gate",
+        "mode_index": 26290,
+        "native_column": -1,
+        "case_index": -1,
+        "key": [
+          "bottom",
+          -56,
+          30,
+          "s"
+        ],
+        "numerator": 2.1154794583025582e-15,
+        "reference_norm": 0.00002408304944491443,
+        "denominator": 0.00002408304944491443,
+        "relative": 8.784101295566122e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "additional_column_diagnostic_maximum": {
+        "additional_individual_native_integral": {
+          "degree": 4,
+          "field": "additional_individual_native_integral",
+          "role": "additional_column_diagnostic",
+          "mode_index": 32058,
+          "native_column": 60,
+          "case_index": 3,
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "numerator": 5.322837647021275e-16,
+          "reference_norm": 2.229189623161748e-17,
+          "denominator": 2.229189623161748e-17,
+          "relative": 23.87790429183715,
+          "near_zero": false,
+          "passed": false
+        },
+        "additional_individual_native_B": {
+          "degree": 4,
+          "field": "additional_individual_native_B",
+          "role": "additional_column_diagnostic",
+          "mode_index": 16028,
+          "native_column": 183,
+          "case_index": 63,
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "numerator": 3.161014049596171e-19,
+          "reference_norm": 4.295418820536578e-19,
+          "denominator": 4.295418820536578e-19,
+          "relative": 0.7359035711449673,
+          "near_zero": false,
+          "passed": false
+        },
+        "additional_individual_native_D": {
+          "degree": 4,
+          "field": "additional_individual_native_D",
+          "role": "additional_column_diagnostic",
+          "mode_index": 16028,
+          "native_column": 183,
+          "case_index": 63,
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "numerator": 1.6142814876050623e-21,
+          "reference_norm": 2.1936046391152264e-21,
+          "denominator": 2.1936046391152264e-21,
+          "relative": 0.7359035711449673,
+          "near_zero": false,
+          "passed": false
+        }
+      },
+      "moment_maximum_absolute": 9.082805012334877e-14,
+      "oracle_maximum_absolute": 3.3422138886441676e-16,
+      "native_component_denominator": "V28 original complete matrix/vector norm, all 300/882 columns included; no clipping or new floor",
+      "reference_arithmetic": "saved Decimal110 moments; independent y-before-x extended contractions",
+      "complete_mode_and_trace_coverage": true,
+      "individual_tiny_columns_qualified_for_volume": false,
+      "raw_report": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check/check_p4.json",
+        "bytes": 39361,
+        "sha256": "356cbc385d9c0702a80d8280028e0993b27d91d2349a7681c3b333b8546500e9"
+      },
+      "raw_full_metrics": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check/metrics_p4.csv",
+        "bytes": 100520950,
+        "sha256": "c3c02e743f0ac239345777570fb20584f10ff8b2408cc26d1f0e1d1c136eee2b"
+      },
+      "raw_independent_reference": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check/independent_reference_p4.npz",
+        "bytes": 21758980,
+        "sha256": "f57ec41cd816a6e30d0c776fda1d43375c9f8dc5674191d018cbca030d3c0553"
+      }
+    },
+    {
+      "degree": 6,
+      "facets": 2176,
+      "rows": 156672,
+      "mode_count": 32060,
+      "checked_metrics": 693558,
+      "original_gate_metrics": 513630,
+      "failed_original_metrics": 0,
+      "additional_column_diagnostic_metrics": 179928,
+      "additional_column_diagnostic_failed": 4947,
+      "worst_original": {
+        "degree": 6,
+        "field": "generic_recover_key",
+        "role": "original_gate",
+        "mode_index": 8574,
+        "native_column": -1,
+        "case_index": -1,
+        "key": [
+          "top",
+          -67,
+          -35,
+          "s"
+        ],
+        "numerator": 1.4397376159927008e-13,
+        "reference_norm": 0.0019362456373677684,
+        "denominator": 0.0019362456373677684,
+        "relative": 7.435717804637401e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "additional_column_diagnostic_maximum": {
+        "additional_individual_native_integral": {
+          "degree": 6,
+          "field": "additional_individual_native_integral",
+          "role": "additional_column_diagnostic",
+          "mode_index": 16028,
+          "native_column": 404,
+          "case_index": 23,
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "numerator": 2.093757907395661e-15,
+          "reference_norm": 1.245877818238414e-16,
+          "denominator": 1.245877818238414e-16,
+          "relative": 16.805483465112903,
+          "near_zero": false,
+          "passed": false
+        },
+        "additional_individual_native_B": {
+          "degree": 6,
+          "field": "additional_individual_native_B",
+          "role": "additional_column_diagnostic",
+          "mode_index": 16028,
+          "native_column": 425,
+          "case_index": 63,
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "numerator": 3.161014049596174e-19,
+          "reference_norm": 4.253396533413672e-19,
+          "denominator": 4.253396533413672e-19,
+          "relative": 0.7431740785896633,
+          "near_zero": false,
+          "passed": false
+        },
+        "additional_individual_native_D": {
+          "degree": 6,
+          "field": "additional_individual_native_D",
+          "role": "additional_column_diagnostic",
+          "mode_index": 16028,
+          "native_column": 425,
+          "case_index": 63,
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "numerator": 1.6142814876050636e-21,
+          "reference_norm": 2.1721445003417215e-21,
+          "denominator": 2.1721445003417215e-21,
+          "relative": 0.7431740785896633,
+          "near_zero": false,
+          "passed": false
+        }
+      },
+      "moment_maximum_absolute": 9.082805012334877e-14,
+      "oracle_maximum_absolute": 3.3422138886441676e-16,
+      "native_component_denominator": "V28 original complete matrix/vector norm, all 300/882 columns included; no clipping or new floor",
+      "reference_arithmetic": "saved Decimal110 moments; independent y-before-x extended contractions",
+      "complete_mode_and_trace_coverage": true,
+      "individual_tiny_columns_qualified_for_volume": false,
+      "raw_report": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check/check_p6.json",
+        "bytes": 39283,
+        "sha256": "034d5f1e65ddab2b7808c003d835de1a6f3b75e2f3676a4e8fac2c36de68721b"
+      },
+      "raw_full_metrics": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check/metrics_p6.csv",
+        "bytes": 121739099,
+        "sha256": "c80fa6d0134b13dfaba272139d7fe8b283ea167a51110d0d529926ac59499342"
+      },
+      "raw_independent_reference": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v29/c229/surface_check/independent_reference_p6.npz",
+        "bytes": 41255940,
+        "sha256": "2f290885db74af5ae149f89074517400356f6786a9ac1d3099cb600a089d89bc"
+      }
+    }
+  ],
+  "strict_uniform_all_vector_error_bound": "NOT_PROVEN",
+  "internal_volume_or_static_condensation_precision": "NOT_QUALIFIED",
+  "old_checker_failed_status_preserved": "FULL_SURFACE_NUMERICAL_FAILED, c129, 6307 extra column failures",
+  "old_results_changed": false,
+  "producer_recomputed": false,
+  "publication_metric_table": "full_surface_metrics_v29.csv"
+}
