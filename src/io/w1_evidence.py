@@ -175,6 +175,53 @@ def validate_A(path, receiver_files):
 
     path = Path(path)
     value = json.loads(path.read_text())
+    if value.get("schema") == "w1-RB-delta-qualification.v1":
+        if (
+            value.get("scope") != "PURE_LOGIC_DELTA_ONLY"
+            or value.get("receiver_files") != receiver_files
+        ):
+            raise ValueError("W1_RB_DELTA_SOURCE")
+        inherited_path = check_file(value["inherited_A"], path.parent)
+        inherited = json.loads(inherited_path.read_text())
+        if inherited.get("schema") != "w1-A-qualification.v1":
+            raise ValueError("W1_RB_INHERITED_ORIGINAL_A_REQUIRED")
+        validate_A(inherited_path, inherited["receiver_files"])
+        changed = {
+            k: v
+            for k, v in receiver_files.items()
+            if inherited["receiver_files"].get(k) != v
+        }
+        if value.get("changed_receiver_files") != changed:
+            raise ValueError("W1_RB_DELTA_COVERAGE")
+        parent = path.parent
+        summary = json.loads(check_file(value["supervision"], parent).read_text())
+        junit = ET.parse(check_file(value["junit"], parent)).getroot()
+        if (
+            summary.get("classification") != "COMPLETED"
+            or summary.get("leader_exit_code") != 0
+            or summary.get("descendants_cleared") is not True
+            or summary.get("remaining_child_pids") != []
+            or summary.get("sampled_process_tree_swap_peak_bytes") != 0
+            or summary.get("rss_hard_limit_bytes") != 2 * 2**30
+        ):
+            raise ValueError("W1_RB_DELTA_SUPERVISION")
+        tests = list(junit.iter("testcase"))
+        required = {
+            "test_recovery_origin_disjoint_from_legacy",
+            "test_reproduced_receipt_rejects_false_supervision",
+            "test_reproduced_receipt_rejects_identity_and_source",
+            "test_RB_window_does_not_reset",
+            "test_complete_frequency_coverage",
+            "test_recovery_pending_cannot_start_B",
+        }
+        if not required <= {t.get("name", "").split("[")[0] for t in tests} or any(
+            list(t.iter("failure")) or list(t.iter("error")) or list(t.iter("skipped"))
+            for t in tests
+        ):
+            raise ValueError("W1_RB_DELTA_REQUIRED_TESTS")
+        for row in value["test_source_files"]:
+            check_file(row, Path(__file__).resolve().parents[2])
+        return value
     if (
         value.get("schema") != "w1-A-qualification.v1"
         or value.get("scope") != "PURE_LOGIC_ONLY"

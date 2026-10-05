@@ -88,15 +88,7 @@ def required_oracle_frequencies(modes, layout):
     ]
     selected = {0.0}
     for v in values:
-        selected.update([float(v.min()), float(v.max())])
-    for i, row in enumerate(modes):
-        if [row["side"], row["m"], row["n"], row["polarization"]] == [
-            "top",
-            -67,
-            -34,
-            "s",
-        ] or (row["m"] == 0 and row["n"] == 0 and row["polarization"] == "s"):
-            selected.update(float(v[i]) for v in values)
+        selected.update(float(value) for value in v)
     return sorted(selected)
 
 
@@ -189,6 +181,8 @@ def layout_for(modes, degree):
 
     phases, facts = _floquet_phases(modes)
     x = _proportional_axis([-25.0, -8.5, 0.0, 8.5, 25.0], 272)
+    if len(x) != 273:
+        raise ValueError("W1_ORIGINAL_PROPORTIONAL_AXIS")
     y = _proportional_axis([-12.5, -6.25, 0.0, 6.25, 12.5], 4)
     element = basix.create_element(
         basix.ElementFamily.N1E,
@@ -806,6 +800,34 @@ def main(argv=None):
     origin = time.monotonic()
     root = Path(__file__).resolve().parents[2]
     binding = json.loads(args.binding.read_text())
+    if binding["stage"] == "input_recovery":
+        contract = load_file("_w1_contract", root / "src/io/w1_receiver_contract.py")
+        for name, expected in binding["receiver_files"].items():
+            if contract.digest(root / name) != expected:
+                raise ValueError("W1_RECOVERY_SOURCE_CHANGED")
+        driver = load_file(
+            "_w1_input_recovery", root / "src/runners/w1_input_recovery.py"
+        )
+        run = Path(binding["run_path"])
+        guard(binding)
+        result = driver.recover(
+            args.frozen_source,
+            binding,
+            atomic_json=atomic_json,
+            file_receipt=file_receipt,
+        )
+        result.update(
+            receiver_source_sha=binding["receiver_source_sha"],
+            binding_sha256=contract.digest(args.binding),
+            elapsed_seconds=time.monotonic() - origin,
+        )
+        atomic_json(run / "component_result.json", result)
+        print(
+            json.dumps(
+                {k: result[k] for k in ("status", "mode_count", "ordered_key_sha256")}
+            )
+        )
+        return 0
     contract, component = source_modules(root, args.frozen_source, binding)
     run = Path(binding["run_path"])
     stage = binding["stage"]

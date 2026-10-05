@@ -26,6 +26,8 @@ from src.runners.fresh_component_receiver import (
 from src.runners.frozen_source_snapshot import materialize
 
 RECEIVER_FILES = [
+    "src/io/w1_reproduced_input.py",
+    "src/runners/w1_input_recovery.py",
     "src/io/finite_json.py",
     "src/io/w1_evidence.py",
     "src/solvers/w1_saved_equations.py",
@@ -51,7 +53,11 @@ def charged_seconds(entries, now):
 def remaining(window, *, now=None, utc_now=None):
     budget = (
         10800
-        if window.get("schema") == "task42extra.w1-receiver-B-window.v26"
+        if window.get("schema")
+        in {
+            "task42extra.w1-receiver-B-window.v26",
+            "task42extra.w1-receiver-RB-window.v26",
+        }
         else 14400
     )
     if (
@@ -59,6 +65,7 @@ def remaining(window, *, now=None, utc_now=None):
         not in (
             "task42extra.w1-receiver-window.v1",
             "task42extra.w1-receiver-B-window.v26",
+            "task42extra.w1-receiver-RB-window.v26",
         )
         or window.get("budget_seconds") != budget
         or window.get("numerical_and_checker_budget_seconds") != 7200
@@ -80,7 +87,7 @@ def remaining(window, *, now=None, utc_now=None):
 
 
 def prerequisite(stage, output, spec=None):
-    if stage == "control":
+    if stage in {"control", "input_recovery"}:
         return
     if spec is None:
         raise ValueError("W1_P1_FULL_SCIENTIFIC_BINDING_REQUIRED")
@@ -212,7 +219,7 @@ def launch_w1(spec):
         for folder in ("tmp", "jit"):
             (run / folder).mkdir()
         original = validate_originals(spec)
-        if not original["received"] and stage != "control":
+        if not original["received"] and stage not in {"control", "input_recovery"}:
             result = {
                 "component_status": original["status"],
                 "original_inputs": original,
@@ -240,9 +247,9 @@ def launch_w1(spec):
         charge = {"stage": stage, "output": str(run), "origin_monotonic": origin}
         charges["entries"].append(charge)
         atomic_json(charge_path, charges)
-        hard = 2 * 2**30 if stage == "control" else 16 * 2**30
+        hard = 2 * 2**30 if stage in {"control", "input_recovery"} else 16 * 2**30
         priority = set_own_low_priority()
-        facts = admission(hard, compensate_self=True)
+        facts = json.loads(json.dumps(admission(hard, compensate_self=True)))
         os.sched_setaffinity(0, {facts["cpu"]})
         terminal = json.loads(
             (
@@ -267,6 +274,8 @@ def launch_w1(spec):
         )
         materialize(ROOT, manifest_path, bundle)
         cap = stage_cap(remaining(window), numeric_used, stage)
+        if stage == "input_recovery":
+            cap = min(cap, window["origin_monotonic"] + 1800 - origin)
         # Setup, import and stable admission belong to the same stage clock.
         stage_deadline = origin + cap
         if stage_deadline - time.monotonic() <= 150:
@@ -341,7 +350,9 @@ def launch_w1(spec):
                 "PHYSICAL_WATCHDOG_PARENT_PID": str(os.getpid()),
             },
             rss_hard_limit_bytes=hard,
-            rss_warning_bytes=(1879048192 if stage == "control" else 12 * 2**30),
+            rss_warning_bytes=(
+                1879048192 if stage in {"control", "input_recovery"} else 12 * 2**30
+            ),
             memory_envelope_provider=lambda: envelope(hard),
             health_check=guarded_health,
             stop_on_global_swap=False,
@@ -351,6 +362,41 @@ def launch_w1(spec):
         atomic_json(run / "supervisor_summary.json", summary)
         path = run / "component_result.json"
         component = json.loads(path.read_text()) if path.exists() else {}
+        if (
+            stage == "input_recovery"
+            and component.get("status") == "BITWISE_REPRODUCED_INPUT_PENDING_RECEIPT"
+            and summary["classification"] == "COMPLETED"
+            and summary["leader_exit_code"] == 0
+            and summary["descendants_cleared"]
+            and not summary["remaining_child_pids"]
+            and summary["sampled_process_tree_swap_peak_bytes"] == 0
+        ):
+            from src.io.w1_evidence import file_receipt
+
+            receipt = {
+                **component,
+                "schema": "w1-reproduced-input-receipt.v1",
+                "status": "BITWISE_REPRODUCED_INPUT",
+                "math_commit": MATH_COMMIT,
+                "binding": file_receipt(run / "binding.json"),
+                "supervision": file_receipt(run / "supervisor_summary.json"),
+                "candidate": file_receipt(run / "recovery_candidate.json"),
+            }
+            atomic_json(spec["ledger_path"], receipt)
+            reproduced = validate_originals(spec)
+            input_file = Path(window["input_binding_file"])
+            if input_file.exists():
+                raise ValueError("W1_RB_INPUT_BINDING_ALREADY_FROZEN")
+            atomic_json(
+                input_file,
+                {
+                    "window_sha256": digest(spec["window_path"]),
+                    "original_inputs": reproduced,
+                    "A_qualification_sha256": digest(spec["A_qualification_path"]),
+                },
+            )
+            component["status"] = "BITWISE_REPRODUCED_INPUT"
+            atomic_json(path, component)
         result = {
             "schema": "task42extra.w1-receiver-result.v1",
             "receiver_source_sha": source_sha,
@@ -393,7 +439,7 @@ def durable_w1(spec, *, launch_origin=None):
     if "A_qualification_path" not in spec:
         raise ValueError("W1_A_QUALIFICATION_REQUIRED")
     if "A_qualification_path" in spec:
-        if not original["received"]:
+        if not original["received"] and spec["stage"] != "input_recovery":
             return {
                 "scope": "B_NOT_STARTED_INPUT_UNAVAILABLE",
                 "socket": None,
@@ -410,8 +456,8 @@ def durable_w1(spec, *, launch_origin=None):
     if (directory / "launch.json").exists():
         raise ValueError("W1_ALREADY_LAUNCHED_RECONNECT")
     set_own_low_priority()
-    hard = 2 * 2**30 if spec["stage"] == "control" else 16 * 2**30
-    facts = admission(hard)
+    hard = 2 * 2**30 if spec["stage"] in {"control", "input_recovery"} else 16 * 2**30
+    facts = json.loads(json.dumps(admission(hard)))
     os.sched_setaffinity(0, {facts["cpu"]})
     directory.mkdir(parents=True, exist_ok=True)
     atomic_json(
@@ -438,7 +484,9 @@ def durable_w1(spec, *, launch_origin=None):
 
 def stage_cap(window_left, numerical_used, stage):
     return min(
-        window_left - 1800, 7200 - numerical_used, 900 if stage == "control" else 7200
+        window_left - 1800,
+        7200 - numerical_used,
+        900 if stage in {"control", "input_recovery"} else 7200,
     )
 
 
@@ -447,6 +495,20 @@ def prepare_B_window(spec, original, *, launch_origin=None):
     if path.exists():
         old = json.loads(path.read_text())
         remaining(old)
+        if old.get("schema") == "task42extra.w1-receiver-RB-window.v26":
+            if spec["stage"] == "input_recovery":
+                if time.monotonic() >= old["origin_monotonic"] + 1800 - 150:
+                    raise TimeoutError("W1_R_WIRING_DEADLINE")
+                return
+            frozen = json.loads(Path(old["input_binding_file"]).read_text())
+            if (
+                frozen.get("window_sha256") != digest(path)
+                or frozen.get("original_inputs") != original
+                or frozen.get("A_qualification_sha256")
+                != digest(spec["A_qualification_path"])
+            ):
+                raise ValueError("W1_RB_IMMUTABLE_INPUT_BINDING")
+            return
         if old.get("original_inputs") != original or old.get(
             "A_qualification_sha256"
         ) != digest(spec["A_qualification_path"]):

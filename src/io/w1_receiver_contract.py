@@ -34,6 +34,7 @@ FIELDS = {
     "checkpoint_path",
 }
 STAGES = {
+    "input_recovery",
     "control",
     "boundary",
     "boundary_check",
@@ -46,7 +47,7 @@ STAGES = {
     "p6_top_check",
     "p6_bottom_check",
 }
-OPTIONAL_FIELDS = {"A_qualification_path", "prerequisite_paths"}
+OPTIONAL_FIELDS = {"A_qualification_path", "prerequisite_paths", "input_origin"}
 
 
 def digest(path):
@@ -76,6 +77,17 @@ def load_w1(path):
         or spec["ledger_translation_nm"] != [25.0, 12.5, 0.0]
     ):
         raise ValueError("W1_FIXED_MATH_Q60_COORDINATE_CONTRACT")
+    origin = spec.get("input_origin", "historical_ledger")
+    if (
+        origin not in {"historical_ledger", "bitwise_reproduced_v26"}
+        or (
+            origin == "bitwise_reproduced_v26"
+            and spec["stage"]
+            not in {"input_recovery", "control", "boundary", "boundary_check"}
+        )
+        or (spec["stage"] == "input_recovery" and origin != "bitwise_reproduced_v26")
+    ):
+        raise ValueError("W1_INPUT_ORIGIN_AND_REVIEW_SCOPE")
     for field in (
         "manifest_path",
         "ledger_path",
@@ -127,13 +139,42 @@ def validate_originals(spec):
             "received": False,
         }
     mpath, lpath = Path(spec["manifest_path"]), Path(spec["ledger_path"])
+    reproduced = spec.get("input_origin") == "bitwise_reproduced_v26"
     if (
         mpath.stat().st_size != MANIFEST_BYTES
         or digest(mpath) != MANIFEST_SHA
-        or digest(lpath) not in LEDGERS
+        or (not reproduced and digest(lpath) not in LEDGERS)
     ):
         raise ValueError("W1_ORIGINAL_BYTES_HASH_OR_LEDGER_MISMATCH")
     document, ledger = json.loads(mpath.read_text()), json.loads(lpath.read_text())
+    if reproduced:
+        import importlib.util
+
+        location = ROOT / "src/io/w1_reproduced_input.py"
+        module_spec = importlib.util.spec_from_file_location(
+            "_w1_reproduced_input", location
+        )
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        module.validate_receipt(
+            lpath,
+            mpath,
+            root=ROOT,
+            math_commit=MATH_COMMIT,
+            expected={
+                "manifest": MANIFEST_SHA,
+                "physical": PHYSICAL_SHA,
+                "inventory": INVENTORY_SHA,
+            },
+        )
+        ledger = {
+            "target_mode_physical_identity_sha256": module.canonical_sha(
+                ledger["target_mode_physical_identity"]
+            ),
+            "original_size_ordered_mode_inventory_identity_sha256": module.canonical_sha(
+                ledger["original_size_ordered_mode_inventory_identity"]
+            ),
+        }
     validate_inventory(document, ledger)
     selected = digest(lpath)
     return {
@@ -145,7 +186,9 @@ def validate_originals(spec):
         "ledger_path": str(lpath),
         "ledger_bytes": lpath.stat().st_size,
         "ledger_sha256": selected,
-        "ledger_variant": LEDGERS[selected],
+        "ledger_variant": "BITWISE_REPRODUCED_INPUT_NOT_HISTORICAL_LEDGER"
+        if reproduced
+        else LEDGERS[selected],
         "ordered_key_sha256": KEY_SHA,
         "physical_identity_sha256": PHYSICAL_SHA,
         "inventory_identity_sha256": INVENTORY_SHA,

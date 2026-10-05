@@ -1,6 +1,12 @@
 # W1 原尺寸边界接收包
 
-本入口把已经冻结的边界计算接到本工作站，并检查同一份输入是否到达全部消费者。它不重建模式库存、不重跑W0，不求原尺寸PDE，不训练网络。普通求解器默认行为不变。
+本入口把已经冻结的边界计算接到本工作站，并检查同一份输入是否到达全部消费者。Review V25 §8明确授权一次确定性输入恢复：仅从冻结Git源码生成模式元数据，逐字节匹配旧manifest，然后继续原生控制和q60全模式代表面资格。它不重跑W0、不求原尺寸PDE、不训练网络。普通求解器默认行为不变。
+
+## 当前接续：Review V25 §8
+
+旧ledger和旧NPZ仍未取得。新`bitwise_reproduced_v26`来源分支只在36,244,923B、完整manifest SHA、32060有序key SHA及固定Git物理身份全部一致时准入；新receipt记录真实来源、监督与清场，不冒充旧ledger。恢复失败停止B，不更换ABI试hash。
+
+先clean实现commit，再串行运行`v26_rb_input_recovery.dat`、`v26_rb_control.dat`、`v26_rb_boundary.dat`、`v26_rb_boundary_check.dat`，均由`python scripts/launch_task42extra_durable.py input/task042extra_feinn_5nm/<one-run>.dat`启动。唯一`R_B_window.json`从接线准备计10800s，R及接线1800s，数值/checker合计7200s，尾段1800s；R成功不重置。旧92项A资格复用，新增凭据/计时/全部频率覆盖只作增量资格。本包不自动运行B2局部LU/恢复，主线按自己的Review承担；下文旧入口及失败记录保留为历史，不是当前授权。
 
 数学来源为主线 `c354afa449fb80cfb5012e7d2ff66a3e3e64e088`，19个实际本地导入依赖与activation文件由[dependencies.json](dependencies.json)绑定。只读Git对象缓存不是新clone。receiver自身源码及已资格化的V23区间矩参照另行绑定，不把文档HEAD当数值源码。
 
