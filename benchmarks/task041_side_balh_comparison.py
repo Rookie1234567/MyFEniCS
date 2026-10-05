@@ -112,7 +112,8 @@ class Task041Result:
     root: Path
     public_root: Path
     summary: Mapping[str, Any]
-    run_manifest: Mapping[str, Any]
+    run_manifest: Mapping[str, Any] | None
+    public_input_envelope: Mapping[str, Any]
     authority: Mapping[str, Any]
     authority_path: Path
     identity: Mapping[str, Any]
@@ -556,8 +557,12 @@ def _validate_public_input_artifacts(
 
 
 def _authority_and_manifest(
-    summary: Mapping[str, Any], consumer_root: Path, public_root: Path
-) -> tuple[Path, dict[str, Any], dict[str, Any]]:
+    summary: Mapping[str, Any],
+    consumer_root: Path,
+    public_root: Path,
+    *,
+    require_run_manifest: bool = True,
+) -> tuple[Path, dict[str, Any], dict[str, Any] | None]:
     authority_value = summary.get("authority_path")
     authority_path = _absolute_writer_path(authority_value, "Task041 authority")
     authority = _read_json(authority_path, "Task041 authority")
@@ -565,8 +570,54 @@ def _authority_and_manifest(
         _fail("Task041 authority schema is unsupported")
     manifest_path = public_root / "run_manifest.json"
     if not manifest_path.is_file():
-        _fail("Task041 public run_manifest.json is missing")
+        if require_run_manifest:
+            _fail("Task041 public run_manifest.json is missing")
+        return authority_path, authority, None
     return authority_path, authority, _read_json(manifest_path, "Task041 run manifest")
+
+
+def _candidate_public_input_envelope(
+    public_root: Path,
+    manifest: Mapping[str, Any] | None,
+    identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Verify present public input files and report absent envelope pieces."""
+
+    missing: list[str] = []
+    checks: dict[str, Any] = {}
+    if manifest is None:
+        missing.append("run_manifest.json")
+    else:
+        _validate_manifest_identity(manifest, identity, "run_manifest")
+        checks["run_manifest_identity"] = "verified"
+    for filename, manifest_field, identity_field in (
+        ("input_original.dat", "input_sha256", "input_sha256"),
+        ("resolved_config.json", "resolved_config_sha256", "resolved_sha256"),
+    ):
+        path = public_root / filename
+        if not path.is_file():
+            missing.append(filename)
+            continue
+        observed = _sha256(path)
+        expected_identity = _digest(
+            identity.get(identity_field), 64, f"consumer_identity.{identity_field}"
+        )
+        if observed != expected_identity:
+            _fail(f"Task041 public {filename} bytes do not match consumer identity")
+        if manifest is not None:
+            expected_manifest = _digest(
+                manifest.get(manifest_field),
+                64,
+                f"run_manifest.{manifest_field}",
+            )
+            if observed != expected_manifest:
+                _fail(f"Task041 public {filename} bytes do not match run manifest")
+        checks[filename] = {"status": "verified", "sha256": observed}
+    return {
+        "status": "verified" if not missing else "missing_public_input_envelope",
+        "missing": missing,
+        "checks": checks,
+    }
 
 
 def _parse_external_orders(
@@ -1894,12 +1945,17 @@ def _resources(
 
 
 def _load_task041_side_balh_result(
-    run_directory: str | Path, *, method: str
+    run_directory: str | Path,
+    *,
+    method: str,
+    allow_missing_public_envelope: bool = False,
 ) -> Task041Result:
-    """Load one strict Task041 exact or candidate consumer result."""
+    """Load one Task041 consumer, optionally without its public input envelope."""
 
     if method not in {"candidate", "exact"}:
         _fail("method must be candidate or exact")
+    if allow_missing_public_envelope and method != "candidate":
+        _fail("artifact-only loading is restricted to candidate results")
     public_root, consumer_root, summary_path = _result_roots(run_directory)
     summary = _read_json(summary_path, "Task041 consumer summary")
     expected_profile = (
@@ -1928,7 +1984,10 @@ def _load_task041_side_balh_result(
     own_gates = _own_gates(summary, {})
     try:
         authority_path, authority, run_manifest = _authority_and_manifest(
-            summary, consumer_root, public_root
+            summary,
+            consumer_root,
+            public_root,
+            require_run_manifest=not allow_missing_public_envelope,
         )
     except Task041ComparisonError as exc:
         exc.context["own_gates"] = own_gates
@@ -1962,8 +2021,15 @@ def _load_task041_side_balh_result(
         raise
     if identity["source_sha"] != summary.get("source_sha"):
         _fail("consumer summary source SHA differs from consumer identity")
-    _validate_manifest_identity(run_manifest, identity, "run_manifest")
-    _validate_public_input_artifacts(public_root, run_manifest, identity)
+    if allow_missing_public_envelope:
+        public_input_envelope = _candidate_public_input_envelope(
+            public_root, run_manifest, identity
+        )
+    else:
+        assert run_manifest is not None
+        _validate_manifest_identity(run_manifest, identity, "run_manifest")
+        _validate_public_input_artifacts(public_root, run_manifest, identity)
+        public_input_envelope = {"status": "verified", "missing": [], "checks": {}}
     if legacy_native:
         _validate_legacy_consumer_binding(
             summary, identity, producer_identity, public_root
@@ -2024,17 +2090,25 @@ def _load_task041_side_balh_result(
     except Task041ComparisonError as exc:
         exc.context["own_gates"] = own_gates
         raise
-    try:
-        resources = _resources(public_root, method, identity["model_id"])
-    except Task041ComparisonError as exc:
-        exc.context["own_gates"] = own_gates
-        raise
+    if allow_missing_public_envelope:
+        resources = {
+            "status": "inconclusive",
+            "pass": False,
+            "reason": "artifact-only loading does not certify resource scope",
+        }
+    else:
+        try:
+            resources = _resources(public_root, method, identity["model_id"])
+        except Task041ComparisonError as exc:
+            exc.context["own_gates"] = own_gates
+            raise
     return Task041Result(
         method=method,
         root=consumer_root,
         public_root=public_root,
         summary=summary,
         run_manifest=run_manifest,
+        public_input_envelope=public_input_envelope,
         authority=authority,
         authority_path=authority_path,
         identity=identity,
@@ -2059,6 +2133,22 @@ def load_task041_side_balh_result(
         return _load_task041_side_balh_result(run_directory, method=method)
     except Task041ComparisonError as exc:
         exc.context.setdefault("method", method)
+        raise
+
+
+def load_task041_candidate_artifact_result(
+    run_directory: str | Path,
+) -> Task041Result:
+    """Load hash-bound candidate artifacts without inventing a run envelope."""
+
+    try:
+        return _load_task041_side_balh_result(
+            run_directory,
+            method="candidate",
+            allow_missing_public_envelope=True,
+        )
+    except Task041ComparisonError as exc:
+        exc.context.setdefault("method", "candidate")
         raise
 
 
@@ -2389,6 +2479,284 @@ def _pair_identity(
             },
         },
         "pass": all(checks.values()),
+    }
+
+
+def _candidate_artifact_pair_identity(
+    candidate: Task041Result, reference: Task041Result
+) -> dict[str, Any]:
+    base = _pair_identity(candidate, reference)
+    checks = dict(base["checks"])
+    checks.update(
+        {
+            "input_sha256": candidate.identity["input_sha256"]
+            == reference.identity["input_sha256"],
+            "resolved_sha256": candidate.identity["resolved_sha256"]
+            == reference.identity["resolved_sha256"],
+            "model_id": candidate.identity["model_id"]
+            == reference.identity["model_id"],
+        }
+    )
+    return {
+        "checks": checks,
+        "consumer_sources": {
+            "candidate": candidate.identity["source_sha"],
+            "reference": reference.identity["source_sha"],
+            "may_differ": True,
+        },
+        "consumer_inputs": {
+            "candidate": {
+                "input_sha256": candidate.identity["input_sha256"],
+                "resolved_sha256": candidate.identity["resolved_sha256"],
+                "model_id": candidate.identity["model_id"],
+            },
+            "reference": {
+                "input_sha256": reference.identity["input_sha256"],
+                "resolved_sha256": reference.identity["resolved_sha256"],
+                "model_id": reference.identity["model_id"],
+            },
+        },
+        "pass": all(checks.values()),
+    }
+
+
+def _artifact_integrity_view(result: Task041Result) -> dict[str, Any]:
+    grid_payload = result.authority["grid_payload"]
+    canonical = {
+        role: {
+            "manifest_sha256": item["sha256"],
+            "mpi_size": item["mpi_size"],
+            "global_summed_packet_count": item["global_summed_packet_count"],
+            "shard_sha256s": [
+                shard["file_sha256"] for shard in item["shards"]
+            ],
+        }
+        for role, item in result.canonical.items()
+    }
+    return {
+        "selected_packet": {
+            "manifest_sha256": result.packet["manifest_sha256"],
+            "identity_sha256": result.packet["identity_sha256"],
+        },
+        "grid_payload": {
+            "sha256": grid_payload["sha256"],
+            "bytes": grid_payload["bytes"],
+            "arrays": dict(result.array_descriptors),
+        },
+        "canonical": canonical,
+        "ordered_external_keys": [list(key) for key in result.external_keys],
+    }
+
+
+def _reference_labeled(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        result: dict[str, Any] = {}
+        for key, item in value.items():
+            output_key = str(key)
+            if output_key == "exact" or output_key == "right":
+                output_key = "reference"
+            elif output_key.startswith("exact_"):
+                output_key = "reference_" + output_key[len("exact_") :]
+            elif output_key.startswith("right_"):
+                output_key = "reference_" + output_key[len("right_") :]
+            elif output_key == "left":
+                output_key = "candidate"
+            elif output_key.startswith("left_"):
+                output_key = "candidate_" + output_key[len("left_") :]
+            result[output_key] = _reference_labeled(item)
+        return result
+    if isinstance(value, list):
+        return [_reference_labeled(item) for item in value]
+    if isinstance(value, tuple):
+        return [_reference_labeled(item) for item in value]
+    return value
+
+
+def _candidate_artifact_load_error(
+    role: str,
+    run_directory: str | Path,
+    error: Task041ComparisonError,
+) -> dict[str, Any]:
+    view = _side_error("candidate", run_directory, error)
+    view["comparison_role"] = role
+    if role == "reference":
+        view["display_name"] = "explicit-Schur reference"
+    return view
+
+
+def compare_task041_candidate_artifact_pair(
+    candidate_run: str | Path, reference_candidate_run: str | Path
+) -> dict[str, Any]:
+    """Compare two candidate artifact sets without inventing public run envelopes."""
+
+    candidate: Task041Result | None = None
+    reference: Task041Result | None = None
+    load_errors: dict[str, Any] = {}
+    for role, path in (
+        ("candidate", candidate_run),
+        ("reference", reference_candidate_run),
+    ):
+        try:
+            result = load_task041_candidate_artifact_result(path)
+        except Task041ComparisonError as exc:
+            load_errors[role] = _candidate_artifact_load_error(role, path, exc)
+        else:
+            if role == "candidate":
+                candidate = result
+            else:
+                reference = result
+
+    resource_comparability = {
+        "status": "inconclusive",
+        "pass": False,
+        "reason": "artifact-only candidate comparison does not certify resource scopes",
+    }
+    workflow_comparability = {
+        "status": "inconclusive",
+        "pass": False,
+        "reason": "artifact-only candidate comparison does not certify workflow scopes",
+    }
+    if load_errors:
+        return {
+            "schema": "task041.side_balh.candidate_artifact_pair.v1",
+            "candidate": (
+                {"method": "candidate", "load_pass": True}
+                if candidate is not None
+                else load_errors.get("candidate")
+            ),
+            "reference": (
+                {
+                    "method": "candidate",
+                    "display_name": "explicit-Schur reference",
+                    "load_pass": True,
+                }
+                if reference is not None
+                else load_errors.get("reference")
+            ),
+            "load_errors": load_errors,
+            "artifact_identity": {"status": "failed", "pass": False},
+            "numerical_comparison": {
+                "status": "not_evaluated_due_to_artifact_validation_failure",
+                "pass": False,
+            },
+            "resource_comparability": resource_comparability,
+            "workflow_comparability": workflow_comparability,
+            "full_comparison": {"status": "failed", "pass": False},
+            "pass": False,
+        }
+
+    assert candidate is not None and reference is not None
+    pair_identity = _candidate_artifact_pair_identity(candidate, reference)
+    envelopes = {
+        "candidate": dict(candidate.public_input_envelope),
+        "reference": dict(reference.public_input_envelope),
+    }
+    envelope_status = (
+        "verified"
+        if all(item["status"] == "verified" for item in envelopes.values())
+        else "missing_public_input_envelope"
+    )
+    if not pair_identity["pass"]:
+        return {
+            "schema": "task041.side_balh.candidate_artifact_pair.v1",
+            "candidate": {
+                **_side_success(candidate),
+                "display_name": "candidate",
+                "artifact_integrity": _artifact_integrity_view(candidate),
+            },
+            "reference": {
+                **_side_success(reference),
+                "display_name": "explicit-Schur reference",
+                "artifact_integrity": _artifact_integrity_view(reference),
+            },
+            "artifact_identity": {
+                "status": "failed",
+                "checks": pair_identity["checks"],
+                "consumer_sources": pair_identity["consumer_sources"],
+                "consumer_inputs": pair_identity["consumer_inputs"],
+                "pass": False,
+            },
+            "public_input_envelopes": {
+                "status": envelope_status,
+                "sides": envelopes,
+                "pass": envelope_status == "verified",
+            },
+            "numerical_comparison": {
+                "status": "not_evaluated_due_to_identity_mismatch",
+                "pass": False,
+            },
+            "resource_comparability": resource_comparability,
+            "workflow_comparability": workflow_comparability,
+            "full_comparison": {"status": "failed", "pass": False},
+            "pass": False,
+        }
+
+    coordinates = _compare_coordinates(candidate, reference)
+    for item in coordinates["fields"].values():
+        item["reference_shape"] = item.pop("exact_shape")
+        item["reference_dtype"] = item.pop("exact_dtype")
+        item["identical"] = item.pop("exact")
+    coordinates = _reference_labeled(coordinates)
+    selected_fields = _reference_labeled(
+        _compare_selected_fields(candidate, reference)
+    )
+    observables = _reference_labeled(_compare_observables(candidate, reference))
+    canonical = _reference_labeled(_compare_canonical(candidate, reference))
+    external = _reference_labeled(_compare_external(candidate, reference))
+    normal_flux = _reference_labeled(_compare_normal_flux(candidate, reference))
+    numerical_pass = bool(
+        candidate.own_gates["pass"]
+        and reference.own_gates["pass"]
+        and coordinates["pass"]
+        and selected_fields["pass"]
+        and observables["pass"]
+        and canonical["pass"]
+        and external["pass"]
+        and normal_flux["pass"]
+    )
+    full_status = (
+        "failed"
+        if not pair_identity["pass"] or not numerical_pass
+        else "inconclusive"
+    )
+    return {
+        "schema": "task041.side_balh.candidate_artifact_pair.v1",
+        "candidate": {
+            **_side_success(candidate),
+            "display_name": "candidate",
+            "artifact_integrity": _artifact_integrity_view(candidate),
+        },
+        "reference": {
+            **_side_success(reference),
+            "display_name": "explicit-Schur reference",
+            "artifact_integrity": _artifact_integrity_view(reference),
+        },
+        "artifact_identity": {
+            "status": "verified" if pair_identity["pass"] else "failed",
+            "checks": pair_identity["checks"],
+            "consumer_sources": pair_identity["consumer_sources"],
+            "consumer_inputs": pair_identity["consumer_inputs"],
+            "pass": pair_identity["pass"],
+        },
+        "public_input_envelopes": {
+            "status": envelope_status,
+            "sides": envelopes,
+            "pass": envelope_status == "verified",
+        },
+        "numerical_comparison": {
+            "status": "measured" if numerical_pass else "numeric_gate_fail",
+            "coordinates": coordinates,
+            "selected_fields": selected_fields,
+            "observables": observables,
+            "canonical": canonical,
+            "external": external,
+            "normal_flux": normal_flux,
+            "pass": numerical_pass,
+        },
+        "resource_comparability": resource_comparability,
+        "workflow_comparability": workflow_comparability,
+        "full_comparison": {"status": full_status, "pass": False},
+        "pass": False,
     }
 
 

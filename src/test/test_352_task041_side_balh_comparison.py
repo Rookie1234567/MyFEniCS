@@ -12,6 +12,7 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import benchmarks.task041_side_balh_comparison as comparison_module
 from benchmarks.canonical_vector_artifacts import (
     MANIFEST_SCHEMA,
     canonical_shard_manifest,
@@ -48,6 +49,7 @@ from benchmarks.task041_side_balh_comparison import (
     _resources,
     _task041_v8_public_to_finalizer_time_target,
     _validate_legacy_consumer_binding,
+    compare_task041_candidate_artifact_pair,
     compare_task041_side_balh_pair,
     load_task041_side_balh_result,
 )
@@ -520,6 +522,49 @@ def comparison_pair(tmp_path: Path) -> dict[str, object]:
     }
 
 
+@pytest.fixture
+def candidate_artifact_pair(tmp_path: Path) -> dict[str, Path]:
+    specification = _specification(CANDIDATE_INPUT)
+    producer_identity = build_task041_balh_packet_identity(
+        specification,
+        specification.as_jsonable(),
+        "a" * 40,
+        resolved_config_sha256(specification),
+    )
+    identities = [
+        build_task041_balh_packet_identity(
+            specification,
+            specification.as_jsonable(),
+            source_sha,
+            resolved_config_sha256(specification),
+        )
+        for source_sha in ("b" * 40, "c" * 40)
+    ]
+    packet = _packet_fixture(tmp_path, producer_identity)
+    canonical = _canonical_fixture(tmp_path)
+    orders = _external_orders(specification.as_jsonable())
+    roots = (tmp_path / "candidate_run", tmp_path / "explicit_schur_reference")
+    for root, identity in zip(roots, identities, strict=True):
+        _write_run(
+            root,
+            specification,
+            "candidate",
+            identity,
+            producer_identity,
+            packet,
+            canonical,
+            orders,
+            None,
+        )
+        for filename in (
+            "run_manifest.json",
+            "input_original.dat",
+            "resolved_config.json",
+        ):
+            (root / filename).unlink()
+    return {"candidate": roots[0], "reference": roots[1]}
+
+
 def test_task041_comparison_real_writer_pair_and_workflow_peak(comparison_pair):
     result = compare_task041_side_balh_pair(
         comparison_pair["candidate"], comparison_pair["exact"]
@@ -540,6 +585,198 @@ def test_task041_comparison_real_writer_pair_and_workflow_peak(comparison_pair):
     assert workflow["workflow_wall"]["exact_supervisor_wall_seconds"] == 5.0
     assert workflow["workflow_wall"]["candidate_phase_sum_seconds"] == 1.0
     assert workflow["workflow_wall"]["exact_phase_sum_seconds"] == 5.0
+
+
+def test_task041_candidate_artifact_pair_keeps_missing_envelope_inconclusive(
+    candidate_artifact_pair,
+):
+    result = compare_task041_candidate_artifact_pair(
+        candidate_artifact_pair["candidate"], candidate_artifact_pair["reference"]
+    )
+
+    assert result["candidate"]["method"] == "candidate"
+    assert result["reference"]["method"] == "candidate"
+    assert result["reference"]["display_name"] == "explicit-Schur reference"
+    for side in (result["candidate"], result["reference"]):
+        assert side["own_gates"]["external_q_pass"] is True
+        assert {
+            "modal_amplitudes",
+            "bottom_q",
+            "top_q",
+        } <= set(side["artifact_integrity"]["grid_payload"]["arrays"])
+    assert result["artifact_identity"]["status"] == "verified"
+    assert result["public_input_envelopes"]["status"] == (
+        "missing_public_input_envelope"
+    )
+    assert result["public_input_envelopes"]["pass"] is False
+    assert result["numerical_comparison"]["pass"] is True
+    assert set(result["numerical_comparison"]["observables"]["values"]) == {
+        "R_total",
+        "T_total",
+        "A_balance",
+        "A_volume",
+    }
+    assert result["numerical_comparison"]["selected_fields"]["pass"] is True
+    assert result["numerical_comparison"]["canonical"]["pass"] is True
+    assert result["numerical_comparison"]["external"]["pass"] is True
+    assert result["numerical_comparison"]["normal_flux"]["pass"] is True
+    assert result["resource_comparability"]["status"] == "inconclusive"
+    assert result["workflow_comparability"]["status"] == "inconclusive"
+    assert result["full_comparison"] == {"status": "inconclusive", "pass": False}
+    assert result["pass"] is False
+    with pytest.raises(Task041ComparisonError, match="run_manifest.json is missing"):
+        load_task041_side_balh_result(
+            candidate_artifact_pair["candidate"], method="candidate"
+        )
+
+
+@pytest.mark.parametrize(
+    ("tamper", "expected_error"),
+    (
+        ("payload_sha", "grid payload SHA mismatch"),
+        ("array_shape", "grid descriptor shape mismatch for E_V_per_m"),
+    ),
+)
+def test_task041_candidate_artifact_pair_rejects_payload_tampering(
+    candidate_artifact_pair, tamper, expected_error
+):
+    reference_summary_path = (
+        candidate_artifact_pair["reference"]
+        / "consumer"
+        / "consumer_summary.json"
+    )
+    reference_summary = json.loads(reference_summary_path.read_text(encoding="utf-8"))
+    authority_path = Path(reference_summary["authority_path"])
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    if tamper == "payload_sha":
+        authority["grid_payload"]["sha256"] = "0" * 64
+    else:
+        authority["grid_payload"]["arrays"]["E_V_per_m"]["shape"] = [
+            5,
+            20,
+            40,
+            4,
+        ]
+    authority_path.write_text(
+        json.dumps(authority, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+
+    result = compare_task041_candidate_artifact_pair(
+        candidate_artifact_pair["candidate"], candidate_artifact_pair["reference"]
+    )
+    assert result["load_errors"]["reference"]["pass"] is False
+    assert expected_error in result["load_errors"]["reference"]["errors"][0]
+    assert result["artifact_identity"]["status"] == "failed"
+    assert result["numerical_comparison"]["status"] == (
+        "not_evaluated_due_to_artifact_validation_failure"
+    )
+    assert result["full_comparison"]["status"] == "failed"
+
+
+def test_task041_candidate_artifact_pair_rejects_consumer_identity_mismatch(
+    candidate_artifact_pair, monkeypatch
+):
+    reference_summary_path = (
+        candidate_artifact_pair["reference"]
+        / "consumer"
+        / "consumer_summary.json"
+    )
+    reference_summary = json.loads(reference_summary_path.read_text(encoding="utf-8"))
+    reference_summary["identity"]["input_sha256"] = "f" * 64
+    reference_summary_path.write_text(
+        json.dumps(reference_summary, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    for name in (
+        "_compare_coordinates",
+        "_compare_selected_fields",
+        "_compare_observables",
+        "_compare_canonical",
+        "_compare_external",
+        "_compare_normal_flux",
+    ):
+        monkeypatch.setattr(
+            comparison_module,
+            name,
+            lambda *_args, _name=name, **_kwargs: pytest.fail(
+                f"{_name} ran after pair identity failed"
+            ),
+        )
+
+    result = compare_task041_candidate_artifact_pair(
+        candidate_artifact_pair["candidate"], candidate_artifact_pair["reference"]
+    )
+    assert result["artifact_identity"]["checks"]["input_sha256"] is False
+    assert result["artifact_identity"]["status"] == "failed"
+    assert result["numerical_comparison"] == {
+        "status": "not_evaluated_due_to_identity_mismatch",
+        "pass": False,
+    }
+    assert result["full_comparison"] == {"status": "failed", "pass": False}
+    assert result["pass"] is False
+
+
+def test_task041_candidate_artifact_pair_rejects_equal_length_key_reordering(
+    candidate_artifact_pair, monkeypatch
+):
+    reference_summary_path = (
+        candidate_artifact_pair["reference"]
+        / "consumer"
+        / "consumer_summary.json"
+    )
+    reference_summary = json.loads(reference_summary_path.read_text(encoding="utf-8"))
+    authority_path = Path(reference_summary["authority_path"])
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    keys = authority["external_mode_inventory"]["keys"]
+    authority["external_mode_inventory"]["keys"] = list(reversed(keys))
+    authority_path.write_text(
+        json.dumps(authority, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+    for name in (
+        "_compare_coordinates",
+        "_compare_selected_fields",
+        "_compare_observables",
+        "_compare_canonical",
+        "_compare_external",
+        "_compare_normal_flux",
+    ):
+        monkeypatch.setattr(
+            comparison_module,
+            name,
+            lambda *_args, _name=name, **_kwargs: pytest.fail(
+                f"{_name} ran after pair identity failed"
+            ),
+        )
+
+    result = compare_task041_candidate_artifact_pair(
+        candidate_artifact_pair["candidate"], candidate_artifact_pair["reference"]
+    )
+    assert result["artifact_identity"]["checks"]["external_keys"] is False
+    assert result["artifact_identity"]["status"] == "failed"
+    assert result["numerical_comparison"] == {
+        "status": "not_evaluated_due_to_identity_mismatch",
+        "pass": False,
+    }
+    assert result["full_comparison"] == {"status": "failed", "pass": False}
+    assert result["pass"] is False
+
+
+def test_task041_candidate_artifact_pair_rejects_present_input_hash_mismatch(
+    candidate_artifact_pair,
+):
+    (candidate_artifact_pair["candidate"] / "input_original.dat").write_bytes(
+        b"present but does not match the recorded input identity"
+    )
+
+    result = compare_task041_candidate_artifact_pair(
+        candidate_artifact_pair["candidate"], candidate_artifact_pair["reference"]
+    )
+    error = result["load_errors"]["candidate"]["errors"][0]
+    assert "input_original.dat bytes do not match consumer identity" in error
+    assert result["numerical_comparison"]["status"] == (
+        "not_evaluated_due_to_artifact_validation_failure"
+    )
+    assert result["full_comparison"] == {"status": "failed", "pass": False}
 
 
 def test_task041_time_override_is_worker_bound_and_keeps_resource_gates(tmp_path):
