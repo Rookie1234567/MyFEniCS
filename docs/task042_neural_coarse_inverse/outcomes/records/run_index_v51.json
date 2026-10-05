@@ -1,0 +1,103 @@
+{
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v51/aux_pre_02",
+      "source_sha": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "SETUP",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_phase_setup_20261005T092423912849Z",
+      "source_sha": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "FLAT_P4",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_flat_p4_20261005T092807038370Z",
+      "source_sha": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v51/aux_pre_03",
+      "source_sha": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "NOTCH_P4",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p4_20261005T093543455260Z",
+      "source_sha": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "NOTCH_P5",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p5_20261005T093849340024Z",
+      "source_sha": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v51/aux_pre_04",
+      "source_sha": "62537a4e7c56336160ec59f022081841abb8566c",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "NOTCH_P5",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p5_20261005T095631297885Z",
+      "source_sha": "62537a4e7c56336160ec59f022081841abb8566c",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v51/aux_pre_05",
+      "source_sha": "c3009dd66993b42961666758068f343cd67044e8",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "NOTCH_HPROBE",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_hprobe_20261005T100158322631Z",
+      "source_sha": "c3009dd66993b42961666758068f343cd67044e8",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v51/aux_pre_06",
+      "source_sha": "80e227660baac5bd89b0220455e4207bcb1d51d6",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_verify_cost_20261005T102116504896Z",
+      "source_sha": "80e227660baac5bd89b0220455e4207bcb1d51d6",
+      "classification": "COMPLETED"
+    }
+  ],
+  "pointers": {
+    "SETUP": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_phase_setup_20261005T092423912849Z/result.json",
+      "sha256": "1f6bed0ba2552b3d45582173856fc6af2c1c7f22a3e1822aa7cb8feae997007d"
+    },
+    "VERIFY_COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_verify_cost_20261005T102116504896Z/result.json",
+      "sha256": "e1c0e927fa50e06ddfa5037af15ee3d1fed2a37663c57606cfcbb34534c0e746"
+    },
+    "NOTCH_P5": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_notch_p5_20261005T095631297885Z/result.json",
+      "sha256": "3df82a7eb583aa3cdcdac5f9991ce23743eac5ca894b8f6fe01603ebc0ad47a5"
+    },
+    "NOTCH_P4": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_notch_p4_20261005T093543455260Z/result.json",
+      "sha256": "71268a9b059d51d7903c0d89e353e0f280246a5e5abeda8167156bb6ad17b3b5"
+    },
+    "FLAT_P4": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_flat_p4_20261005T092807038370Z/result.json",
+      "sha256": "7cb58877e0da8fe86480c2166788fc6b79f4e73f3402812a706795ceee473e1d"
+    },
+    "NOTCH_HPROBE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_notch_hprobe_20261005T100158322631Z/result.json",
+      "sha256": "1eab72464b87d3809248b9e55d25794178578d26abd5918c8473d282c8ccdbe3"
+    }
+  },
+  "original_failed_returns_preserved": true
+}

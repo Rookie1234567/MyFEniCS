@@ -1,0 +1,94 @@
+{
+  "rows": [
+    {
+      "role": "SETUP",
+      "status": "COMPLETED",
+      "source": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "solve_source": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_phase_setup_20261005T092423912849Z/result.json",
+        "sha256": "1f6bed0ba2552b3d45582173856fc6af2c1c7f22a3e1822aa7cb8feae997007d"
+      }
+    },
+    {
+      "role": "FLAT_P4",
+      "status": "COMPLETED",
+      "source": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "solve_source": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_flat_p4_20261005T092807038370Z/result.json",
+        "sha256": "7cb58877e0da8fe86480c2166788fc6b79f4e73f3402812a706795ceee473e1d"
+      }
+    },
+    {
+      "role": "FLAT_P5",
+      "status": "not_run",
+      "reason": "FLAT_P5/ORDINARY_CONTROL: F4 passed; conditional stages otherwise not admitted"
+    },
+    {
+      "role": "NOTCH_P4",
+      "status": "COMPLETED",
+      "source": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "solve_source": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_notch_p4_20261005T093543455260Z/result.json",
+        "sha256": "71268a9b059d51d7903c0d89e353e0f280246a5e5abeda8167156bb6ad17b3b5"
+      }
+    },
+    {
+      "role": "NOTCH_P5",
+      "status": "COMPLETED",
+      "source": "62537a4e7c56336160ec59f022081841abb8566c",
+      "solve_source": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_notch_p5_20261005T095631297885Z/result.json",
+        "sha256": "3df82a7eb583aa3cdcdac5f9991ce23743eac5ca894b8f6fe01603ebc0ad47a5"
+      }
+    },
+    {
+      "role": "NOTCH_HPROBE",
+      "status": "COMPLETED",
+      "source": "c3009dd66993b42961666758068f343cd67044e8",
+      "solve_source": "c3009dd66993b42961666758068f343cd67044e8",
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_notch_hprobe_20261005T100158322631Z/result.json",
+        "sha256": "1eab72464b87d3809248b9e55d25794178578d26abd5918c8473d282c8ccdbe3"
+      }
+    },
+    {
+      "role": "ORDINARY_CONTROL",
+      "status": "not_run",
+      "reason": "FLAT_P5/ORDINARY_CONTROL: F4 passed; conditional stages otherwise not admitted"
+    },
+    {
+      "role": "VERIFY_COST",
+      "status": "COMPLETED",
+      "source": "80e227660baac5bd89b0220455e4207bcb1d51d6",
+      "solve_source": "80e227660baac5bd89b0220455e4207bcb1d51d6",
+      "pointer": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v51/task042_v51_verify_cost_20261005T102116504896Z/result.json",
+        "sha256": "e1c0e927fa50e06ddfa5037af15ee3d1fed2a37663c57606cfcbb34534c0e746"
+      }
+    }
+  ],
+  "window": {
+    "start_utc": "2026-10-05T09:05:22.289231+00:00",
+    "start_monotonic": 1116117.150096009,
+    "first_proc_uptime_seconds": 1116117.15,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "review_commit": "97ca0d4e2d90f7479a757e66d43061b7d54bf3aa",
+    "intake_HEAD": "2980735e5f0fcf48d54258a4e29b351033cafb69",
+    "observed_utc": "2026-10-05T10:37:42.831104+00:00",
+    "observed_monotonic": 1121657.69197165,
+    "start_monotonic_kind": "first observed UTC mapped to same boot monotonic; first proc uptime retained",
+    "closed": false,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5540.5418756410945,
+    "heavy_remaining_seconds": 16959.458124358905,
+    "total_remaining_seconds": 19659.458124358905
+  },
+  "NN_training": 0
+}

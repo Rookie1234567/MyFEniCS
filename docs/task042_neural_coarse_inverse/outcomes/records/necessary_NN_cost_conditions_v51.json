@@ -1,0 +1,44 @@
+{
+  "rows": [
+    {
+      "role": "FLAT_P4",
+      "measured_launch_lower_seconds": 294.24835416604765,
+      "factor_solve_tail_seconds": 5.927422954002395,
+      "free_tail_optimistic_fraction": 0.020144285839089126,
+      "prepare_optimistic_replaceable_seconds": 171.24663894390687,
+      "N1_extra_cost_ceiling_if_all_this_preparation_free": 112.39696811069734,
+      "necessary_time_inequality": "fV-H >= 0.2*T_B",
+      "strongest_matching_accurate_traditional_total": "unknown; this direct anchor is not a fastest-baseline claim",
+      "simultaneous_peak20": "not demonstrated; shared/opaque allocator ownership unknown",
+      "NN_training": 0
+    },
+    {
+      "role": "NOTCH_P4",
+      "measured_launch_lower_seconds": 118.55477754794993,
+      "factor_solve_tail_seconds": 3.163235240848735,
+      "free_tail_optimistic_fraction": 0.02668163448385159,
+      "prepare_optimistic_replaceable_seconds": 90.38276255503297,
+      "N1_extra_cost_ceiling_if_all_this_preparation_free": 66.67180704544299,
+      "necessary_time_inequality": "fV-H >= 0.2*T_B",
+      "strongest_matching_accurate_traditional_total": "unknown; this direct anchor is not a fastest-baseline claim",
+      "simultaneous_peak20": "not demonstrated; shared/opaque allocator ownership unknown",
+      "NN_training": 0
+    },
+    {
+      "role": "NOTCH_HPROBE",
+      "measured_launch_lower_seconds": 841.5870383931324,
+      "factor_solve_tail_seconds": 20.842306860955432,
+      "free_tail_optimistic_fraction": 0.024765479873300186,
+      "prepare_optimistic_replaceable_seconds": 659.7395819961093,
+      "N1_extra_cost_ceiling_if_all_this_preparation_free": 491.4221743174828,
+      "necessary_time_inequality": "fV-H >= 0.2*T_B",
+      "strongest_matching_accurate_traditional_total": "unknown; this direct anchor is not a fastest-baseline claim",
+      "simultaneous_peak20": "not demonstrated; shared/opaque allocator ownership unknown",
+      "NN_training": 0
+    }
+  ],
+  "only_necessary_optimistic_bounds": true,
+  "data_teacher_training_loading_inference_cleanup_and_independent_audit_all_belong_to_H": true,
+  "no_finite_micro_cost_extrapolation_to_target_48h": true,
+  "NN20": false
+}

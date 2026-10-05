@@ -1,0 +1,85 @@
+{
+  "rows": [
+    {
+      "scale_relative_to_NH": 1,
+      "cells": 160,
+      "degree": 5,
+      "native": 64890,
+      "trace": 22400,
+      "internal": 38400,
+      "independent": 60800,
+      "manual_alias_design_estimate": 532,
+      "condensed_rows": 22932,
+      "one_complete_complex_vector_bytes": 972800,
+      "C_plus_D_payload_interval_bytes": {
+        "ideal_tangential_trace_stream_pair": 25600,
+        "no_clipping_boundary_cell_support_stream_upper": 276480,
+        "full_no_clipping_boundary_cell_inventory_upper": 147087360,
+        "all_native_dense_counterexample_not_required": 1104687360
+      },
+      "local_cache_no_dedup_conservative_upper_bytes": 2239488000,
+      "one_dense_condensed_payload_upper_bytes": 8414025984,
+      "factor_fill": "unknown",
+      "sparse_factor_workspace": "unknown",
+      "simultaneous_RSS_prediction": "unknown; not admitted without calibrated symbolic bound",
+      "iterations": "unknown",
+      "mode_truncation_accuracy": "unknown",
+      "status": "measured topology / derived payload"
+    },
+    {
+      "scale_relative_to_NH": 2,
+      "cells": 1280,
+      "degree": 5,
+      "native": 499380,
+      "trace": 176000,
+      "internal": 307200,
+      "independent": 483200,
+      "manual_alias_design_estimate": 1924,
+      "condensed_rows": 177924,
+      "one_complete_complex_vector_bytes": 7731200,
+      "C_plus_D_payload_interval_bytes": {
+        "ideal_tangential_trace_stream_pair": 102400,
+        "no_clipping_boundary_cell_support_stream_upper": 1105920,
+        "full_no_clipping_boundary_cell_inventory_upper": 2127790080,
+        "all_native_dense_counterexample_not_required": 30745827840
+      },
+      "local_cache_no_dedup_conservative_upper_bytes": 17915904000,
+      "one_dense_condensed_payload_upper_bytes": 506511196416,
+      "factor_fill": "unknown",
+      "sparse_factor_workspace": "unknown",
+      "simultaneous_RSS_prediction": "unknown; not admitted without calibrated symbolic bound",
+      "iterations": "unknown",
+      "mode_truncation_accuracy": "unknown",
+      "status": "predicted_not_run; same absolute cell widths and p, physical geometry scaled"
+    },
+    {
+      "scale_relative_to_NH": 4,
+      "cells": 10240,
+      "degree": 5,
+      "native": 3917160,
+      "trace": 1395200,
+      "internal": 2457600,
+      "independent": 3852800,
+      "manual_alias_design_estimate": 7300,
+      "condensed_rows": 1402500,
+      "one_complete_complex_vector_bytes": 61644800,
+      "C_plus_D_payload_interval_bytes": {
+        "ideal_tangential_trace_stream_pair": 409600,
+        "no_clipping_boundary_cell_support_stream_upper": 4423680,
+        "full_no_clipping_boundary_cell_inventory_upper": 32292864000,
+        "all_native_dense_counterexample_not_required": 915048576000
+      },
+      "local_cache_no_dedup_conservative_upper_bytes": 143327232000,
+      "one_dense_condensed_payload_upper_bytes": 31472100000000,
+      "factor_fill": "unknown",
+      "sparse_factor_workspace": "unknown",
+      "simultaneous_RSS_prediction": "unknown; not admitted without calibrated symbolic bound",
+      "iterations": "unknown",
+      "mode_truncation_accuracy": "unknown",
+      "status": "predicted_not_run; same absolute cell widths and p, physical geometry scaled"
+    }
+  ],
+  "actual_NH_peak_is_a_sampled_tree_measurement_not_the_visible_payload_bound": true,
+  "scalar_formula_scope": "connected structured periodic xy hex, canonical independent moments; no target dofmap allocated",
+  "future_manual_alias_ranges_are_a_capacity_design_not_qualified_AUTO_or_mode_convergence": true
+}

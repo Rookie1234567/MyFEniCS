@@ -1,0 +1,18 @@
+{
+  "rows": [
+    {
+      "id": 1,
+      "utc": "2026-10-05T09:55:05.257856+00:00",
+      "root_cause": "real-valued complex kx/ky incorrectly cast to float in common physical comparison",
+      "failure_source_sha": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "failed_run": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p5_20261005T093849340024Z",
+      "parent_array_sha256": "284aa7ca3ed34996eba808c192d8dfe3317c9d3ee67ebcd67e508ba3339b8864",
+      "saved_returned_solution": true,
+      "repair": "validated carrier real parts and explicit immutable postprocessing resume identity; no re-solve",
+      "targeted_test": "test_actual_common_comparison_accepts_real_complex_wavevector",
+      "replay": "only action audit, complete output, p/h integrals and h indicator",
+      "original_failed_worker_seconds": 610.3056859700009
+    }
+  ],
+  "ordinary_bug_is_not_numerical_stagnation": true
+}

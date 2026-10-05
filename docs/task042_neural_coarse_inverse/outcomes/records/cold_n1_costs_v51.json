@@ -1,0 +1,235 @@
+{
+  "routes": [
+    {
+      "role": "SETUP",
+      "source": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_phase_setup_20261005T092423912849Z",
+      "classification": "COMPLETED",
+      "worker_or_supervised_seconds": 124.71710179303773,
+      "cold_N1_dat_launch_lower_seconds": 140.92420328292064,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 0.5717194271273911,
+        "new_phase_all532_q47": 15.451799656031653,
+        "new_phase_all532_q63": 98.810168457916
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 0.5717194271273911,
+        "new_phase_all532_q47": 15.451799656031653,
+        "new_phase_all532_q63": 98.810168457916
+      },
+      "root_measured_seconds": 114.83368754107505,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    },
+    {
+      "role": "FLAT_P4",
+      "source": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_flat_p4_20261005T092807038370Z",
+      "classification": "COMPLETED",
+      "worker_or_supervised_seconds": 277.11191352806054,
+      "cold_N1_dat_launch_lower_seconds": 294.24835416604765,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 0.4453224439639598,
+        "JIT_full_Ckappa_and_complete532_carrier": 28.201407921966165,
+        "physical_incident_RHS": 0.1075555868446827,
+        "condensation_local_factors": 142.93767543509603,
+        "global_finite_factor_setup": 5.2076259991154075,
+        "solve_and_affine_internal_recovery": 0.17632673494517803,
+        "fixed_refinement": 0.5434702199418098,
+        "physical_E_H_curl_evaluation": 0.09137802897021174,
+        "all532_power_and_volume_absorption": 2.5346271260641515,
+        "analytic_physical_integrals_q23": 4.817496570991352,
+        "analytic_physical_integrals_q31": 11.045307837892324,
+        "independent_analytic_gVh_weak_q31": 50.06116984016262
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 0.4453224439639598,
+        "JIT_full_Ckappa_and_complete532_carrier": 28.201407921966165,
+        "physical_incident_RHS": 0.1075555868446827,
+        "condensation_local_factors": 142.93767543509603,
+        "global_finite_factor_setup": 5.2076259991154075,
+        "solve_and_affine_internal_recovery": 0.17632673494517803,
+        "fixed_refinement": 0.5434702199418098,
+        "physical_E_H_curl_evaluation": 0.09137802897021174,
+        "all532_power_and_volume_absorption": 2.5346271260641515,
+        "analytic_physical_integrals_q23": 4.817496570991352,
+        "analytic_physical_integrals_q31": 11.045307837892324,
+        "independent_analytic_gVh_weak_q31": 50.06116984016262
+      },
+      "root_measured_seconds": 246.1693637459539,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    },
+    {
+      "role": "NOTCH_P4",
+      "source": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p4_20261005T093543455260Z",
+      "classification": "COMPLETED",
+      "worker_or_supervised_seconds": 102.4662293381989,
+      "cold_N1_dat_launch_lower_seconds": 118.55477754794993,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 0.3587419679388404,
+        "JIT_full_Ckappa_and_complete532_carrier": 15.424568901071325,
+        "physical_incident_RHS": 0.08326763799414039,
+        "condensation_local_factors": 74.8749260159675,
+        "global_finite_factor_setup": 2.702449408126995,
+        "solve_and_affine_internal_recovery": 0.21836123685352504,
+        "fixed_refinement": 0.24242459586821496,
+        "physical_E_H_curl_evaluation": 0.13513803598470986,
+        "all532_power_and_volume_absorption": 2.3539225009735674
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 0.3587419679388404,
+        "JIT_full_Ckappa_and_complete532_carrier": 15.424568901071325,
+        "physical_incident_RHS": 0.08326763799414039,
+        "condensation_local_factors": 74.8749260159675,
+        "global_finite_factor_setup": 2.702449408126995,
+        "solve_and_affine_internal_recovery": 0.21836123685352504,
+        "fixed_refinement": 0.24242459586821496,
+        "physical_E_H_curl_evaluation": 0.13513803598470986,
+        "all532_power_and_volume_absorption": 2.3539225009735674
+      },
+      "root_measured_seconds": 96.39380030077882,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    },
+    {
+      "role": "NOTCH_P5",
+      "source": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p5_20261005T093849340024Z",
+      "classification": "WORKER_FAILED",
+      "worker_or_supervised_seconds": 610.3056859700009,
+      "cold_N1_dat_launch_lower_seconds": 625.7785140359774,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 1.0031507818493992,
+        "new_phase_all532_q47": 18.22995983902365,
+        "new_phase_all532_q63": 94.34043982299045,
+        "JIT_full_Ckappa_and_complete532_carrier": 36.75692742015235,
+        "physical_incident_RHS": 0.06227262900210917,
+        "condensation_local_factors": 400.95293094497174,
+        "global_finite_factor_setup": 10.455195309128612,
+        "solve_and_affine_internal_recovery": 0.5324024760629982,
+        "fixed_refinement": 0.5321566408965737,
+        "physical_E_H_curl_evaluation": 0.4712377400137484,
+        "all532_power_and_volume_absorption": 6.669517256086692
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 1.0031507818493992,
+        "new_phase_all532_q47": 18.22995983902365,
+        "new_phase_all532_q63": 94.34043982299045,
+        "JIT_full_Ckappa_and_complete532_carrier": 36.75692742015235,
+        "physical_incident_RHS": 0.06227262900210917,
+        "condensation_local_factors": 400.95293094497174,
+        "global_finite_factor_setup": 10.455195309128612,
+        "solve_and_affine_internal_recovery": 0.5324024760629982,
+        "fixed_refinement": 0.5321566408965737,
+        "physical_E_H_curl_evaluation": 0.4712377400137484,
+        "all532_power_and_volume_absorption": 6.669517256086692
+      },
+      "root_measured_seconds": 570.0061908601783,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    },
+    {
+      "role": "NOTCH_P5",
+      "source": "62537a4e7c56336160ec59f022081841abb8566c",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_p5_20261005T095631297885Z",
+      "classification": "COMPLETED",
+      "worker_or_supervised_seconds": 126.84785719914362,
+      "cold_N1_dat_launch_lower_seconds": 142.5739798049908,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 0.9673362169414759,
+        "JIT_full_Ckappa_and_complete532_carrier": 21.919510391075164,
+        "physical_incident_RHS": 0.08010924584232271,
+        "physical_E_H_curl_evaluation": 0.47611048305407166,
+        "all532_power_and_volume_absorption": 0.28846690407954156,
+        "common_physical_p_h_integrals": 83.49715590011328,
+        "pre_registered_direction_h_indicator": 11.081382542150095
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 0.9673362169414759,
+        "JIT_full_Ckappa_and_complete532_carrier": 21.919510391075164,
+        "physical_incident_RHS": 0.08010924584232271,
+        "physical_E_H_curl_evaluation": 0.47611048305407166,
+        "all532_power_and_volume_absorption": 0.28846690407954156,
+        "common_physical_p_h_integrals": 83.49715590011328,
+        "pre_registered_direction_h_indicator": 11.081382542150095
+      },
+      "root_measured_seconds": 118.31007168325596,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    },
+    {
+      "role": "NOTCH_HPROBE",
+      "source": "c3009dd66993b42961666758068f343cd67044e8",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_notch_hprobe_20261005T100158322631Z",
+      "classification": "COMPLETED",
+      "worker_or_supervised_seconds": 825.7347115629818,
+      "cold_N1_dat_launch_lower_seconds": 841.5870383931324,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 0.7750751320272684,
+        "new_phase_all532_q47": 19.61405391409062,
+        "new_phase_all532_q63": 102.71893124422058,
+        "JIT_full_Ckappa_and_complete532_carrier": 20.2134232299868,
+        "physical_incident_RHS": 0.13614114909432828,
+        "condensation_local_factors": 639.3900176170282,
+        "h_sparse_symbolic_capacity": 1.2423932070378214,
+        "h_bounded_numeric_factor": 17.95158781693317,
+        "solve_and_affine_internal_recovery": 0.8433148958720267,
+        "fixed_refinement": 0.805010941112414,
+        "physical_E_H_curl_evaluation": 0.9154608759563416,
+        "all532_power_and_volume_absorption": 0.23491446604020894
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 0.7750751320272684,
+        "new_phase_all532_q47": 19.61405391409062,
+        "new_phase_all532_q63": 102.71893124422058,
+        "JIT_full_Ckappa_and_complete532_carrier": 20.2134232299868,
+        "physical_incident_RHS": 0.13614114909432828,
+        "condensation_local_factors": 639.3900176170282,
+        "h_sparse_symbolic_capacity": 1.2423932070378214,
+        "h_bounded_numeric_factor": 17.95158781693317,
+        "solve_and_affine_internal_recovery": 0.8433148958720267,
+        "fixed_refinement": 0.805010941112414,
+        "physical_E_H_curl_evaluation": 0.9154608759563416,
+        "all532_power_and_volume_absorption": 0.23491446604020894
+      },
+      "root_measured_seconds": 804.8403244893998,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    },
+    {
+      "role": "VERIFY_COST",
+      "source": "80e227660baac5bd89b0220455e4207bcb1d51d6",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v51_verify_cost_20261005T102116504896Z",
+      "classification": "COMPLETED",
+      "worker_or_supervised_seconds": 772.2526549471077,
+      "cold_N1_dat_launch_lower_seconds": 788.3769202569965,
+      "exclusive_seconds": {
+        "mesh_materials_envelope_MPC": 3.296301015885547,
+        "JIT_full_Ckappa_and_complete532_carrier": 336.5691799109336,
+        "physical_incident_RHS": 1.3741387699265033,
+        "common_physical_p_h_integrals": 410.47244024579413
+      },
+      "inclusive_seconds_do_not_sum": {
+        "mesh_materials_envelope_MPC": 3.296301015885547,
+        "JIT_full_Ckappa_and_complete532_carrier": 336.5691799109336,
+        "physical_incident_RHS": 1.3741387699265033,
+        "common_physical_p_h_integrals": 410.47244024579413
+      },
+      "root_measured_seconds": 751.7120599425398,
+      "failed_and_repaired_work_not_free": true,
+      "cache": "same task namespace; OS/JIT not cleared; numeric factors are cold per case",
+      "unknown_preactivation_and_external_IO_not_zero": true
+    }
+  ],
+  "postprocessing_source_and_original_failed_solve_charged_separately": true,
+  "setup_and_unique_VERIFY_separately_charged": true,
+  "performance": "INCONCLUSIVE for no-contention speed; physical accuracy is independently evaluated"
+}
