@@ -182,7 +182,8 @@ class TwoCellInverse:
                 volume=self.original['volume_action'].apply(v).array.copy();coupling=np.zeros_like(volume);p=[];h=[]
                 for e,a in zip(self.original['dtn_action'].carrier.entries,alpha,strict=True):
                     np.add.at(coupling,e.coupling_rows,e.coupling_values*a);p.append(np.dot(e.projection_values,v.array[e.projection_rows]));h.append(e.normalization_h)
-                residual=b-(volume+coupling)[self.layout.independent];port_residual=g+np.asarray(p)-np.asarray(h)*alpha
+                h=np.asarray(h)
+                residual=b-(volume+coupling)[self.layout.independent];port_residual=g+np.asarray(p)-h*alpha
             finally:v.destroy()
             x=self.apply_array(b);defect=relative(action.apply(x)-b,b)
             arrays=save_arrays(folder/'all4q_witness.npz',FE_rhs=b,port_rhs=g,u=u,port=alpha,

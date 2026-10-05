@@ -79,6 +79,38 @@ class AnchorTests(unittest.TestCase):
         self.assertEqual(j.calls['factor'],2)
         self.assertGreater(np.linalg.norm(a@x.array-b),.1)
 
+    def test_actual_qualification_returns_and_persists_all_port_metadata(self):
+        # Call the real qualification workflow with a separate explicit
+        # non-Hermitian augmented operator, including tiny evanescent units.
+        from src.solvers.scattering_anchor_two_cell import TwoCellInverse
+        nt,np_=15872,532
+        h=np.geomspace(1e-194,2.,np_);sh=np.sqrt(h)
+        class Vec:
+            def createSeq(self,n,comm=None):self.array=np.zeros(n,complex);return self
+            def set(self,v):self.array[:]=v
+            def destroy(self):pass
+        class Action:
+            def __init__(self,*args):self.calls=0
+            def apply(self,x):
+                self.calls+=1;y=x.copy();y[:np_]*=2;return y
+            def close(self):pass
+        entries=[SimpleNamespace(coupling_rows=np.array([i]),coupling_values=np.array([sh[i]]),
+                   projection_rows=np.array([i]),projection_values=np.array([sh[i]]),normalization_h=h[i]) for i in range(np_)]
+        pc=TwoCellInverse.__new__(TwoCellInverse)
+        pc.original={'physical_action':None,'volume_action':SimpleNamespace(apply=lambda v:SimpleNamespace(array=v.array.copy())),
+                     'dtn_action':SimpleNamespace(carrier=SimpleNamespace(entries=entries))}
+        pc.layout=SimpleNamespace(full_rows=nt,independent=np.arange(nt));pc.checks=[]
+        pc.journal=SimpleNamespace(calls={'A':0},event=lambda *args,**kw:None)
+        def augmented(f,g):
+            u=f.copy();u[:np_]=(f[:np_]-g/sh)/2
+            return u,(g+sh*u[:np_])/h
+        pc.apply_augmented=augmented;pc.apply_array=lambda f:augmented(f,np.zeros(np_,complex))[0]
+        with tempfile.TemporaryDirectory() as t, patch.dict('sys.modules',{'petsc4py':SimpleNamespace(PETSc=SimpleNamespace(Vec=Vec,COMM_SELF=None))}), patch('src.solvers.scattering_anchor_two_cell.FullOriginalAction',Action):
+            result=pc.qualify(Path(t))
+            self.assertLess(max(result['norms'].values()),1e-12)
+            self.assertEqual(result['arrays']['members']['port_H']['shape'],[532])
+            self.assertEqual(set(np.load(result['arrays']['path']).files),set(result['arrays']['members']))
+
     def test_explicit_local_wrap_keeps_physical_wavevector(self):
         from dataclasses import replace
         from src.solvers.scattering_anchor_two_cell import PhaseConfiguration
