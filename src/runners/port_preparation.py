@@ -443,6 +443,9 @@ def launch(
                 physical_sha256=specification.physical_model_sha256,
                 plan_sha256=hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             )
+            if namespace == "v49":
+                from src.io.scattering_anchor import write_identity_texts
+                write_identity_texts(folder, specification)
             if namespace in ("v44", "v45") and specification.derived.get(
                 "training_resume"
             ):

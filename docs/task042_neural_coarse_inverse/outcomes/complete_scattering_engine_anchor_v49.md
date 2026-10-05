@@ -41,7 +41,7 @@
 | 最终 p5 原作用审核、跨 p 与费用 | `06d4fe2c40d40c301b9566d6fa4ba198a31ff468` |
 | compact checker / 元数据收集 | `81d5f7057efea3c4c22fef43afaec67c55ade323`；最终文档 HEAD 另报 |
 
-早期 e184 manifest 的 physical hash 表示两 case 总库存，并非单 case descriptor；新绑定分别为 REGULAR `7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd`、NOTCH `6b6963869d274b4f779626a11b93636a2a4257dd2b2990aa4f59b2686f97ad52`。独立 VERIFY 实际配对了几何、标签、模式、背景和 RHS；旧 manifest 原样保留。这是身份字段勘误，不追溯制造新的 clean 运行。
+早期 e184 manifest 的 physical hash 表示两 case 总库存，并非单 case descriptor；新绑定分别为 REGULAR `7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd`、NOTCH `6b6963869d274b4f779626a11b93636a2a4257dd2b2990aa4f59b2686f97ad52`。独立 VERIFY 实际配对了几何、标签、模式、背景和 RHS；旧 manifest 原样保留。这是身份字段勘误，不追溯制造新的 clean 运行。原 run 已有 input/resolved/manifest 中的 hash，但漏写两个单独 txt；F7 在 writer 补上，原运行只新增明确标记的 post-run 身份补档，不重算科学结果、不伪称 txt 原先存在。
 
 ## 2. 实际方法与独立性
 
@@ -165,6 +165,6 @@ T_B=C+V,\qquad fV-H\ge0.2T_B,\qquad 0\le f\le1.
 
 ## 7. 测试、证据与交付
 
-最终 targeted 17项 pure/复数/非互伴40端口/全532映射/原恢复/实际入口/独立checker测试通过；编译、Ruff致命规则、八dat的真实schema/stage验证和自有deadline后代清场试验通过。[测试](records/tests_v49.json)保留全部失败与最终source。最终15项文档合同、表格/链接/fenced公式、旧导航尾部不改及实际交付字节 hash见[文档检查](records/documentation_checks_v49.json)。本地通过不是CI；精确GitHub Review页 Cache miss，没有视觉证据，NOT_VERIFIED。
+最终 targeted 18项 pure/复数/非互伴40端口/全532映射/原恢复/实际入口/独立checker测试通过；编译、Ruff致命规则、八dat的真实schema/stage验证和自有deadline后代清场试验通过。[测试](records/tests_v49.json)保留全部失败与最终source。最终15项文档合同、表格/链接/fenced公式、旧导航尾部不改及实际交付字节 hash见[文档检查](records/documentation_checks_v49.json)。本地通过不是CI；精确GitHub Review页 Cache miss，没有视觉证据，NOT_VERIFIED。
 
 [run index](records/run_index_v49.json) · [交付索引](records/delivery_index_v49.json) · [源清单](records/engine_source_manifest_v49.json) · [实际源码](records/source_bindings_v49.json) · [changed files/selective merge](records/changed_files_v49.json)。大场/矩阵/日志在ignored artifact，紧凑记录入Git。数值核在src/solvers，普通默认不变；有限研究资格不升级production。原task/review/response/raw和全部失败保留，base不变，只push指定分支，最终closed、active null、清场/释放锁后一次原队列交回并停止。

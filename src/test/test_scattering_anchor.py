@@ -33,6 +33,20 @@ class AnchorTests(unittest.TestCase):
             path.write_text('schema_version=1\n[task042_v49]\nstage="OLD_WINDOW"\nrun_id="task042_v49_test"')
             with self.assertRaises(ValueError):load_scattering_anchor(path)
 
+    def test_real_dat_identity_export_and_reader_inventory(self):
+        from src.io.scattering_anchor import write_identity_texts
+        spec=load_scattering_anchor(ROOT/'input/task042_neural_coarse_inverse/v49_engine_notch.dat')
+        with tempfile.TemporaryDirectory() as t:
+            write_identity_texts(t,spec)
+            self.assertEqual((Path(t)/'input_sha256.txt').read_text().strip(),spec.input_sha256)
+            self.assertEqual((Path(t)/'physical_model_sha256.txt').read_text().strip(),spec.physical_model_sha256)
+            with self.assertRaises(FileExistsError):write_identity_texts(t,spec)
+        from dataclasses import replace
+        bad=replace(spec,raw_input_bytes=b'changed input')
+        with tempfile.TemporaryDirectory() as t:
+            with self.assertRaisesRegex(ValueError,'bytes/hash'):write_identity_texts(t,bad)
+            self.assertFalse(list(Path(t).iterdir()))
+
     def test_material_physics_axes_frozen(self):
         c=configuration('NOTCH')
         self.assertEqual(c.n_grating,complex(.999885140474,4.32477054e-6))

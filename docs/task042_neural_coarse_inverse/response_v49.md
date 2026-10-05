@@ -26,7 +26,7 @@
 
 本轮真实采用受控共享CPU，逐stage实时选核避忙SMT、MPI1/math1/GPU0/ownswap0，自有锁、隔离cache、计划≤8GiB、整树warn12/hard16GiB、0.5s配置监督；实际最大采样间隔以最终全集记录为准，无可写cgroup不称连续内核硬限制。未观察到资源Gate或持续压力触线，但邻任务可比阶段证据不可得，不能承诺绝对零干扰；没有操作邻任务。
 
-已定位shape/API/writer/公共guard和p4/p5重构degree接线问题同轮最小修复，失败与费用保留；普通不收敛未当bug改参数。[repair journal](outcomes/records/repair_journal_v49.jsonl)、[17项focused测试](outcomes/records/tests_v49.json)、[15项文档及实际字节检查](outcomes/records/documentation_checks_v49.json)可重算。本地测试不是CI，GitHub视觉Cache miss/NOT_VERIFIED。
+已定位shape/API/writer/公共guard和p4/p5重构degree接线问题同轮最小修复，失败与费用保留；普通不收敛未当bug改参数。原JSON已有完整hash，漏写的两个单独txt已在F7修复并明确post-run补档，不重跑科学链。[repair journal](outcomes/records/repair_journal_v49.jsonl)、[18项focused测试](outcomes/records/tests_v49.json)、[15项文档及实际字节检查](outcomes/records/documentation_checks_v49.json)可重算。本地测试不是CI，GitHub视觉Cache miss/NOT_VERIFIED。
 
 唯一下一建议：集中审阅该完整物理基线的p4/p5精度大差和准备剖面，确定准确代表性离散及最强精确共享控制后，才决定是否研究完整FE+DtN系数预测。只替代尾部factor/solve乐观也仅省1.598%/2.787%；连凝聚全省时冷teacher/训练/推理/纠错总允许量仅51.321350/46.628277s，同case完整teacher已超过，因此不自动训练或宣称NN20。[必要机会与同时峰](outcomes/records/opportunity_decision_v49.json)保留unknown。
 

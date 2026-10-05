@@ -11,6 +11,17 @@ from src.io.run_specification import RunSpecification
 from src.solvers.scattering_anchor_scope import ROOT, STAGES, plan_record, PLAN
 
 
+def write_identity_texts(folder, specification):
+    """Export exact identities without changing the resolved descriptor."""
+    if hashlib.sha256(specification.raw_input_bytes).hexdigest()!=specification.input_sha256:
+        raise InputError('V49 original input bytes/hash differ')
+    for name,value in (('input_sha256.txt',specification.input_sha256),
+                       ('physical_model_sha256.txt',specification.physical_model_sha256)):
+        if not re.fullmatch('[0-9a-f]{64}',value):raise InputError('V49 invalid identity digest')
+        path=Path(folder)/name
+        with path.open('x') as stream:stream.write(value+'\n')
+
+
 def load_scattering_anchor(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
