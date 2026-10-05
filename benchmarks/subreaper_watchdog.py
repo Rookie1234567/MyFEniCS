@@ -886,14 +886,39 @@ def main() -> int:
         '--pss-sampling-policy', choices=('sampled', 'disabled_by_profile'),
         default='sampled',
     )
+    parser.add_argument('--timebase-policy', default=STRICT)
+    parser.add_argument('--tree-cap-bytes', type=int)
+    parser.add_argument('--allow-physical-pressure-tree-cap', action='store_true')
+    parser.add_argument('--require-job-cgroup-zero-swap', action='store_true')
+    parser.add_argument('--campaign-window', type=Path)
+    parser.add_argument('--campaign-window-sha256')
+    parser.add_argument('--campaign-accounting-path', type=Path)
+    parser.add_argument('--source-branch')
+    parser.add_argument('--source-sha')
+    parser.add_argument('--source-clean', action='store_true')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
+    source_state = None
+    if args.source_branch is not None or args.source_sha is not None or args.source_clean:
+        source_state = {
+            "branch": args.source_branch,
+            "source_sha": args.source_sha,
+            "clean": args.source_clean,
+        }
     summary = supervise(command, args.directory, wall_seconds=args.wall_seconds,
                         interval=args.interval, grace_seconds=args.grace_seconds,
                         cache_path=args.cache_path, timebase_guard=args.timebase_guard,
-                        time_policy=args.time_policy, memory_policy=args.memory_policy,
-                        pss_sampling_policy=args.pss_sampling_policy)
+                        time_policy=args.time_policy, timebase_policy=args.timebase_policy,
+                        memory_policy=args.memory_policy,
+                        pss_sampling_policy=args.pss_sampling_policy,
+                        tree_cap_bytes=args.tree_cap_bytes,
+                        allow_physical_pressure_tree_cap=args.allow_physical_pressure_tree_cap,
+                        require_job_cgroup_zero_swap=args.require_job_cgroup_zero_swap,
+                        campaign_window_path=args.campaign_window,
+                        campaign_window_sha256=args.campaign_window_sha256,
+                        campaign_accounting_path=args.campaign_accounting_path,
+                        source_state=source_state)
     print(json.dumps(summary, allow_nan=False), flush=True)
     return 0 if summary['classification'] == 'COMPLETED' else 2
 

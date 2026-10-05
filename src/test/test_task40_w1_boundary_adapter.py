@@ -15,7 +15,17 @@ from src.solvers.native_boundary_adapter import (
     NativeBoundaryAdapter,
     independent_trace_port_terms,
 )
-from src.solvers.task40_w1_local_probe import _direct_full_basis_integral
+from src.solvers.task40_w1_local_probe import (
+    _direct_full_basis_integral,
+    analytic_full_basis_integral,
+    direct_single_face_projection,
+)
+from src.solvers import task40_w1_local_probe
+from src.solvers.task40_w1_moment_reference import AnalyticMomentBoundaryReference
+from benchmarks.check_task40_w1_boundary_probe import (
+    _recompute_v10_full_BD_rows,
+    _v10_local_algebra_check,
+)
 
 
 def _element():
@@ -79,6 +89,57 @@ def test_directional_action_matches_explicit_complete_facet_sum(q):
     np.testing.assert_allclose(action.project_components(trace), direct, rtol=2e-11, atol=2e-11)
 
 
+def test_q60_generic_complex_and_nonzero_port_inputs_match_independent_panel_rule():
+    polynomial = FacetPolynomial(_element())
+    layout = BoundaryLayout(
+        [0.0, 0.6, 1.5], [0.0, 0.8, 1.9], polynomial,
+        (np.exp(0.3j), np.exp(-0.2j)),
+    )
+    modes = _modes()
+    faces = [("top", 0, 0), ("bottom", 0, 0)]
+    action = DirectionalBoundaryAction(
+        layout, modes, 60, face_inventory=faces
+    )
+    reference = AnalyticMomentBoundaryReference(
+        layout, modes, face_inventory=faces
+    )
+    index = np.arange(layout.rows, dtype=np.float64)
+    trace = np.asarray(
+        np.sin(0.37 * (index + 1)) + 0.2 * np.cos(0.11 * index)
+        + 1j * (np.cos(0.23 * (index + 1)) - 0.3 * np.sin(0.17 * index)),
+        dtype=np.complex128,
+    )
+    alpha = np.asarray(
+        [0.3 + 0.7j, -0.5 + 0.2j, 0.8 - 0.1j, -0.2 - 0.9j],
+        dtype=np.complex128,
+    )
+    components = action.project_components(trace)
+    applied = action.apply(trace)
+    port_rhs = action.modal_rhs(alpha)
+    scattered = action.scatter_components(components)
+    reference_components = reference.project_components(trace)
+    reference_apply = reference.apply(trace)
+    reference_port_rhs = reference.modal_rhs(alpha)
+    reference_scattered = reference.scatter_components(components)
+    assert np.isfinite(components).all() and np.linalg.norm(components) > 0
+    assert np.isfinite(applied).all() and np.linalg.norm(applied) > 0
+    assert np.isfinite(port_rhs).all() and np.linalg.norm(port_rhs) > 0
+    component_scale = np.linalg.norm(reference_components, axis=1)
+    assert np.all(component_scale > 0)
+    assert np.max(
+        np.linalg.norm(components - reference_components, axis=1) / component_scale
+    ) <= 1e-10
+    assert np.linalg.norm(applied - reference_apply) / np.linalg.norm(reference_apply) <= 1e-10
+    assert np.linalg.norm(port_rhs - reference_port_rhs) / np.linalg.norm(reference_port_rhs) <= 1e-10
+    assert np.linalg.norm(scattered - reference_scattered) / np.linalg.norm(reference_scattered) <= 1e-10
+    for mode_index, mode in enumerate(modes):
+        face_i, face_j = 0, 0
+        direct = direct_single_face_projection(
+            layout, mode, trace, 60, face_i, face_j
+        )
+        np.testing.assert_allclose(components[mode_index], direct, rtol=1e-12, atol=1e-12)
+
+
 def test_native_adapter_adjoint_and_slave_storage_contract():
     matrix = csr_matrix(np.asarray([[1 + 0.3j, 2 - 0.2j, 0], [0, 0.5 - 0.7j, 0]], complex))
     adapter = NativeBoundaryAdapter(matrix, [1, 3], 3, 5, [2], identity="task40-fixture")
@@ -90,6 +151,141 @@ def test_native_adapter_adjoint_and_slave_storage_contract():
     invalid[2] = 1e-30
     with pytest.raises(ValueError, match="slave zero"):
         adapter.extract(invalid)
+
+
+def test_saved_p4_volume_tensor_reuse_skips_volume_form_assembly(monkeypatch):
+    import basix
+    import basix.ufl
+    from dolfinx import mesh
+    from mpi4py import MPI
+
+    bounds = ((0.0, 0.6), (0.0, 0.8), (120.0, 130.0))
+    lo = np.asarray([axis[0] for axis in bounds], dtype=np.float64)
+    hi = np.asarray([axis[1] for axis in bounds], dtype=np.float64)
+    msh = mesh.create_box(
+        MPI.COMM_SELF,
+        np.asarray([lo, hi]),
+        [1, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    msh.topology.create_entity_permutations()
+    geometry_map = np.asarray(msh.geometry.dofmap[0], dtype=np.int32)
+    coordinates = np.ascontiguousarray(msh.geometry.x[geometry_map])
+    cell_info = np.asarray(msh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    element = basix.ufl.element("N1curl", "hexahedron", 4).basix_element
+    interior = np.asarray(element.entity_dofs[3][0], dtype=np.int64)
+    trace = np.setdiff1d(np.arange(element.dim, dtype=np.int64), interior)
+    tensor = np.eye(element.dim, dtype=np.complex128)
+    saved_volume = {
+        "tensor": tensor,
+        "coordinates": coordinates,
+        "cell_info": cell_info,
+        "interior_positions": interior,
+        "trace_positions": trace,
+    }
+    config = SimpleNamespace(
+        tags=SimpleNamespace(air=1, substrate=2, grating=3),
+        eps_r=1.0 + 0.0j,
+        substrate_index=3.0 + 0.0j,
+        grating_index=3.0 + 0.0j,
+        k0=1.0,
+    )
+
+    def forbidden_reassembly(*_args, **_kwargs):
+        raise AssertionError("saved p4 reuse must not assemble its volume form")
+
+    monkeypatch.setattr(task40_w1_local_probe, "_build_physical_volume_terms", forbidden_reassembly)
+    local = task40_w1_local_probe._local_tensor(
+        4, bounds, config, config.tags.air, saved_volume=saved_volume
+    )
+    np.testing.assert_array_equal(local["tensor"], tensor)
+    assert local["volume_quadrature_policy"].startswith("reused hash-bound")
+    assert local["form_integral_ids"] == []
+    assert local["local_interior_dimension"] == 108
+
+
+def test_v10_checker_recomputes_full_native_bd_rows_on_a_complex_off_origin_fixture():
+    import basix
+    import basix.ufl
+    from dolfinx import mesh
+    from mpi4py import MPI
+
+    bounds = ((-3.0, -2.81), (1.25, 1.56), (120.0, 130.0))
+    lo = np.asarray([axis[0] for axis in bounds], dtype=np.float64)
+    hi = np.asarray([axis[1] for axis in bounds], dtype=np.float64)
+    msh = mesh.create_box(
+        MPI.COMM_SELF, np.asarray([lo, hi]), [1, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    msh.topology.create_entity_permutations()
+    cell_info = np.asarray(msh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    geometry_map = np.asarray(msh.geometry.dofmap[0], dtype=np.int32)
+    coordinates = np.ascontiguousarray(msh.geometry.x[geometry_map])
+    modes = [{
+        "side": "top",
+        "k_vector": [0.41 - 0.07j, -0.28 + 0.03j, 0.13 + 0.02j],
+        "e_vector": [1 + 0.2j, 0.3 - 0.1j, 0],
+        "traction_vector": [0.7 - 0.8j, -0.9 + 0.2j, 0],
+        "projection_denominator": 1.7,
+    }]
+    arrays = {
+        "p6_q60_top_local_cell_coordinates": coordinates,
+        "p6_q60_top_local_cell_orientation": cell_info,
+    }
+    checked = _recompute_v10_full_BD_rows(
+        arrays, "p6_q60_top_", modes, degree=6, side="top"
+    )
+    assert checked["mode_count"] == checked["expected_mode_count"] == 1
+    assert checked["all_native_rows_including_tiny_nonzero_checked"] is True
+    assert checked["clipped_or_dropped_rows"] is False
+    assert checked["pass"] is True
+
+
+def test_v10_checker_recomputes_local_equations_and_uses_full_row_gate_only():
+    prefix = "p6_q60_top_"
+    A = np.eye(2, dtype=np.complex128)
+    xi0 = np.asarray([1 + 0.2j])
+    xt = np.asarray([0.5 - 0.1j])
+    bi = np.asarray([0.3 + 0.2j])
+    bt = np.asarray([0.1 + 0.3j])
+    fi = A[:1, :1] @ xi0 + A[:1, 1:] @ xt + bi
+    ft = A[1:, :1] @ xi0 + A[1:, 1:] @ xt + bt
+    alpha = np.asarray([1 + 0.1j, 0.3 - 0.2j])
+    port_rhs = np.asarray([0.2 + 0.1j, -0.1 + 0.3j])
+    internal_b = np.asarray([0.2 + 0.0j, 0.1 + 0.0j])
+    internal_f = np.asarray([0.1 + 0.0j, 0.05 + 0.0j])
+    internal_trace = np.asarray([0.05 + 0.0j, 0.02 + 0.0j])
+    internal_x = -internal_b + internal_f - internal_trace
+    arrays = {
+        prefix + "local_native_tensor": A,
+        prefix + "interior_positions": np.asarray([0]),
+        prefix + "trace_positions": np.asarray([1]),
+        prefix + "recovered_interior": xi0,
+        prefix + "interior_rhs": fi,
+        prefix + "trace_values": xt,
+        prefix + "trace_rhs": ft,
+        prefix + "known_interior_solution": xi0,
+        prefix + "Bi_alpha": bi,
+        prefix + "Bt_alpha": bt,
+        prefix + "mode_alpha": alpha,
+        prefix + "port_rhs": port_rhs,
+        prefix + "port_internal_B_correction": internal_b,
+        prefix + "port_internal_rhs_correction": internal_f,
+        prefix + "port_internal_recovered_correction": internal_x,
+        prefix + "port_internal_trace_correction": internal_trace,
+        prefix + "port_trace_action": np.asarray([0.3 - 0.2j, 0.1 + 0.05j]),
+    }
+    case = {"analytic_full_row_crosscheck": {
+        "status": "PASS", "verified_mode_count": 2, "expected_mode_count": 2,
+        "B_full_native_rows_max_relative": 0.0,
+        "D_full_native_rows_max_relative": 0.0,
+        "B_internal_rows_max_absolute_error": 2e-30,
+        "D_internal_rows_max_absolute_error": 2e-30,
+        "small_nonzero_rows_clipped": False,
+        "ordered_full_row_pair_digest_sha256": "0" * 64,
+    }}
+    checked = _v10_local_algebra_check(arrays, prefix, case, expected_modes=2)
+    assert checked["pass"] is True
 
 
 @pytest.mark.parametrize("degree", [4, 6])
@@ -140,6 +336,28 @@ def test_direct_q30_full_dof_oracle_matches_candidate_integral(degree, side):
     np.testing.assert_allclose(direct, candidate, rtol=2e-11, atol=2e-11)
     assert rule.shape[1] == 2 and weights.shape == (len(rule),)
     assert direct.shape == (element.dim, 2)
+
+
+def test_analytic_full_native_integral_applies_nonzero_xy_phase_once():
+    import basix
+    import basix.ufl
+
+    element = basix.ufl.element("N1curl", "hexahedron", 6).basix_element
+    polynomial = FacetPolynomial(element)
+    side = "top"
+    origin = np.asarray([-3.0, 1.25, 120.0])
+    extent = np.asarray([0.19, 0.31, 10.0])
+    J = np.diag(extent)
+    vertices = basix.cell.geometry(basix.CellType.hexahedron)
+    coordinates = origin + vertices * extent
+    k = np.asarray([0.41 - 0.07j, -0.28 + 0.03j, 0.13 + 0.02j], dtype=np.complex128)
+    candidate = polynomial.integral_native(side, k, J, origin, 60)
+    analytic = analytic_full_basis_integral(polynomial, side, k, J, origin, dps=80)
+    direct, _, _ = _direct_full_basis_integral(
+        element, side, k, coordinates, quadrature_degree=60
+    )
+    np.testing.assert_allclose(analytic, direct, rtol=1e-11, atol=1e-11)
+    np.testing.assert_allclose(candidate, direct, rtol=1e-11, atol=1e-11)
 
 
 def test_direct_trace_carriers_use_owned_active_original_rows_only():

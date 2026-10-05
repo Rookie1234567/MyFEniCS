@@ -1,9 +1,15 @@
 """Targeted independent checks for Task40's saved W1 moments."""
 
 import mpmath as mp
+import numpy as np
 import pytest
 
-from src.solvers.task40_w1_moment_reference import legendre_exponential_moments
+from src.solvers.task40_w1_moment_reference import (
+    legendre_exponential_moments,
+    legendre_exponential_moment_table,
+    quadrature_legendre_exponential_moments,
+    segmented_legendre_exponential_moments,
+)
 
 
 def _direct(k, origin, length, degree, dps):
@@ -58,3 +64,43 @@ def test_fixed_100_digit_moment_check_is_stable_against_80_digits():
     ctx = mp.mp.clone()
     ctx.dps = 110
     assert max(abs(a - b) for a, b in zip(low, high, strict=True)) < ctx.mpf("1e-70")
+
+
+@pytest.mark.parametrize(
+    "k,origin,length",
+    [
+        (complex(-8.545132017764239, 0.0), -6.25, 6.25),  # registered q30 worst y frequency
+        (complex(8.97461192517716, 0.0), -6.652173913043478, 8.5 / 46),  # registered maximum x frequency on the saved panel
+        (0j, -6.25, 6.25),  # actual n=0 / ky=0 analytic limit
+        (complex(-8.848948219033568, -0.0003133995188219951), -6.25, 6.25),
+    ],
+)
+def test_q60_legendre_moments_match_independent_segmented_direct(k, origin, length):
+    degree = 6
+    q60 = quadrature_legendre_exponential_moments(
+        k, origin, length, degree, quadrature_degree=60
+    )
+    direct = segmented_legendre_exponential_moments(
+        k, origin, length, degree, dps=100, segments=5
+    )
+    analytic = legendre_exponential_moments(k, origin, length, degree, dps=80)
+    scipy_table = legendre_exponential_moment_table(
+        k, np.asarray([origin]), np.asarray([length]), degree
+    )[0]
+    direct_np = np.asarray([complex(value) for value in direct], dtype=np.complex128)
+    scale = max(float(np.linalg.norm(direct_np)), np.finfo(float).tiny)
+    assert np.linalg.norm(np.asarray(q60) - direct_np) / scale <= 1e-10
+    assert np.linalg.norm(np.asarray(analytic, dtype=np.complex128) - direct_np) / scale <= 1e-12
+    assert np.linalg.norm(scipy_table - direct_np) / scale <= 1e-12
+
+
+def test_vectorized_analytic_moment_table_matches_scalar_formula():
+    origins = np.asarray([-6.25, -6.25 + 6.25, -6.25 + 12.5])
+    lengths = np.asarray([6.25, 6.25, 6.25])
+    for k in (complex(-8.545132017764239, 0.0), complex(0.0, 0.04), 0j):
+        table = legendre_exponential_moment_table(k, origins, lengths, 6)
+        expected = np.asarray([
+            [complex(value) for value in legendre_exponential_moments(k, x, L, 6)]
+            for x, L in zip(origins, lengths, strict=True)
+        ])
+        np.testing.assert_allclose(table, expected, rtol=3e-13, atol=3e-13)

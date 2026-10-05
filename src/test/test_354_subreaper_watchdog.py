@@ -109,7 +109,7 @@ def test_monitor_failure_cleans_live_child_and_records_original_error(tmp_path):
 import json,sys,time
 from pathlib import Path
 import benchmarks.subreaper_watchdog as watchdog
-def broken(*args):
+def broken(*args, **kwargs):
     deadline=time.monotonic()+3
     while not Path({str(proof)!r}).exists() and time.monotonic()<deadline:
         time.sleep(.01)
@@ -173,8 +173,8 @@ import sys,json
 from pathlib import Path
 import benchmarks.subreaper_watchdog as watchdog
 original = watchdog.process_tree_snapshot
-def sample(*args):
-    result = original(*args)
+def sample(*args, **kwargs):
+    result = original(*args, **kwargs)
     if {resource_stop!r} and Path({str(ready)!r}).exists():
         result['rss_bytes'] = 10**15  # Inject the Gate, do not allocate this memory.
     return result

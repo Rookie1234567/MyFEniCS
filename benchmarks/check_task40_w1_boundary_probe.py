@@ -174,12 +174,477 @@ def _direct_witness_check(arrays: dict[str, np.ndarray], prefix: str) -> dict:
     }
 
 
+def _v10_local_algebra_check(
+    arrays: dict[str, np.ndarray], prefix: str, case: dict, expected_modes: int
+) -> dict:
+    """Recompute the compact local equations and verify streamed B/D row coverage."""
+    A = _need(arrays, prefix + "local_native_tensor")
+    ii = _need(arrays, prefix + "interior_positions").astype(np.int64)
+    tt = _need(arrays, prefix + "trace_positions").astype(np.int64)
+    if (
+        len(np.unique(np.r_[ii, tt])) != A.shape[0]
+        or not np.array_equal(np.sort(np.r_[ii, tt]), np.arange(A.shape[0]))
+    ):
+        raise ValueError(f"{prefix}: local interior/trace rows do not partition the native tensor")
+    Vii, Vit = A[np.ix_(ii, ii)], A[np.ix_(ii, tt)]
+    Vti, Vtt = A[np.ix_(tt, ii)], A[np.ix_(tt, tt)]
+    xi = _need(arrays, prefix + "recovered_interior")
+    fi = _need(arrays, prefix + "interior_rhs")
+    xt = _need(arrays, prefix + "trace_values")
+    ft = _need(arrays, prefix + "trace_rhs")
+    xi0 = _need(arrays, prefix + "known_interior_solution")
+    bi = _need(arrays, prefix + "Bi_alpha")
+    bt = _need(arrays, prefix + "Bt_alpha")
+    interior_rhs = Vii @ xi0 + Vit @ xt + bi
+    rhs_relative = _relative(fi - interior_rhs, Vii @ xi0, Vit @ xt, bi, fi)
+    direct_xi = np.linalg.solve(Vii, fi - Vit @ xt - bi)
+    interior_relative = _relative(
+        Vii @ xi + Vit @ xt + bi - fi, Vii @ xi, Vit @ xt, bi, fi
+    )
+    recovery_relative = _relative(xi - direct_xi, direct_xi)
+    state_relative = _relative(xi - xi0, xi0)
+    solve_b = np.linalg.solve(Vii, bi)
+    solve_f = np.linalg.solve(Vii, fi)
+    schur = Vtt - Vti @ np.linalg.solve(Vii, Vit)
+    original_trace = Vti @ xi + Vtt @ xt + bt - ft
+    reduced_trace = schur @ xt + (bt - Vti @ solve_b) - (ft - Vti @ solve_f)
+    trace_relative = _relative(original_trace - reduced_trace,
+                               Vti @ xi, Vtt @ xt, bt, ft,
+                               schur @ xt, bt - Vti @ solve_b, ft - Vti @ solve_f)
+    alpha = _need(arrays, prefix + "mode_alpha")
+    port_rhs = _need(arrays, prefix + "port_rhs")
+    internal_b = _need(arrays, prefix + "port_internal_B_correction")
+    internal_f = _need(arrays, prefix + "port_internal_rhs_correction")
+    internal_x = _need(arrays, prefix + "port_internal_recovered_correction")
+    internal_trace = _need(arrays, prefix + "port_internal_trace_correction")
+    trace_action = _need(arrays, prefix + "port_trace_action")
+    qhat = alpha + internal_b
+    affine = port_rhs + internal_f
+    original_port = alpha - port_rhs - internal_x - trace_action
+    reduced_port = qhat - affine - trace_action + internal_trace
+    port_relative = _relative(original_port - reduced_port,
+                              alpha, port_rhs, internal_x, trace_action,
+                              qhat, affine, internal_trace)
+    row_check = case.get("analytic_full_row_crosscheck", {})
+    row_gate = bool(
+        row_check.get("status") == "PASS"
+        and row_check.get("verified_mode_count") == expected_modes
+        and row_check.get("expected_mode_count") == expected_modes
+        and max(
+            float(row_check.get("B_full_native_rows_max_relative", float("inf"))),
+            float(row_check.get("D_full_native_rows_max_relative", float("inf"))),
+        ) <= 1e-10
+        and row_check.get("small_nonzero_rows_clipped") is False
+        and np.isfinite(float(row_check.get("B_internal_rows_max_absolute_error", float("nan"))))
+        and np.isfinite(float(row_check.get("D_internal_rows_max_absolute_error", float("nan"))))
+        and len(str(row_check.get("ordered_full_row_pair_digest_sha256", ""))) == 64
+    )
+    limits_pass = bool(
+        rhs_relative <= 1e-12
+        and interior_relative <= 1e-11
+        and recovery_relative <= 1e-11
+        and state_relative <= 1e-11
+        and trace_relative <= 1e-10
+        and port_relative <= 1e-10
+        and len(alpha) == expected_modes
+        and np.linalg.norm(fi) > 0
+        and np.linalg.norm(ft) > 0
+        and np.linalg.norm(port_rhs) > 0
+        and np.linalg.norm(alpha) > 0
+        and row_gate
+    )
+    return {
+        "interior_rhs_recomputed_relative": rhs_relative,
+        "interior_equation_recomputed_relative": interior_relative,
+        "direct_recovery_recomputed_relative": recovery_relative,
+        "known_state_recomputed_relative": state_relative,
+        "trace_elimination_recomputed_relative": trace_relative,
+        "port_elimination_recomputed_relative": port_relative,
+        "full_native_B_D_row_check": row_check,
+        "pass": limits_pass,
+    }
+
+
+def _recompute_v10_full_BD_rows(
+    arrays: dict[str, np.ndarray],
+    prefix: str,
+    modes: list[dict],
+    *,
+    degree: int,
+    side: str,
+) -> dict:
+    """Chunk-recompute q60 and analytic B/D over every native row and mode key."""
+    import basix
+    import basix.ufl
+    from dolfinx import fem, mesh
+    from mpi4py import MPI
+    from src.solvers.directional_boundary import FacetPolynomial
+    from src.solvers.task40_w1_moment_reference import (
+        legendre_exponential_moment_table,
+        quadrature_legendre_exponential_moments,
+    )
+
+    coordinates = _need(arrays, prefix + "local_cell_coordinates").astype(np.float64)
+    saved_cell_info = _need(arrays, prefix + "local_cell_orientation").astype(np.uint32)
+    lo, hi = coordinates.min(axis=0), coordinates.max(axis=0)
+    msh = mesh.create_box(
+        MPI.COMM_SELF, np.asarray([lo, hi]), [1, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    msh.topology.create_entity_permutations()
+    element = basix.ufl.element("N1curl", "hexahedron", degree)
+    V = fem.functionspace(msh, element)
+    cell_info = np.asarray(msh.topology.get_cell_permutation_info(), dtype=np.uint32)
+    if not np.array_equal(cell_info, saved_cell_info):
+        raise ValueError("V10 full B/D checker native orientation changed")
+    polynomial = FacetPolynomial(element.basix_element)
+    J = np.diag(hi - lo)
+    origin = lo.copy()
+    interior = np.asarray(element.basix_element.entity_dofs[3][0], dtype=np.int64)
+    x_q_cache: dict[complex, np.ndarray] = {}
+    y_q_cache: dict[complex, np.ndarray] = {}
+    x_a_cache: dict[complex, np.ndarray] = {}
+    y_a_cache: dict[complex, np.ndarray] = {}
+    max_B_relative = max_D_relative = 0.0
+    max_B_internal_abs = max_D_internal_abs = 0.0
+    max_B_internal_over_full = max_D_internal_over_full = 0.0
+    tiny_B = tiny_D = 0
+    checked = 0
+    digest = hashlib.sha256()
+
+    def moments(cache_q, cache_a, axis, wave):
+        key = complex(wave)
+        if key not in cache_q:
+            origin_axis = float(origin[axis])
+            length_axis = float(J[axis, axis])
+            cache_q[key] = np.asarray(
+                quadrature_legendre_exponential_moments(
+                    key, origin_axis, length_axis, degree, quadrature_degree=60
+                ), dtype=np.complex128,
+            )
+            cache_a[key] = legendre_exponential_moment_table(
+                key, np.asarray([origin_axis]), np.asarray([length_axis]), degree
+            )[0]
+        return cache_q[key], cache_a[key]
+
+    for index, mode in enumerate(modes):
+        if mode["side"] != side:
+            continue
+        k = np.asarray([complex(v["real"], v["imag"]) if isinstance(v, dict) else complex(v)
+                        for v in mode["k_vector"]], dtype=np.complex128)
+        qx, ax = moments(x_q_cache, x_a_cache, 0, k[0])
+        qy, ay = moments(y_q_cache, y_a_cache, 1, k[1])
+        z = origin[2] + (J[2, 2] if side == "top" else 0.0)
+        phase = np.exp(1j * k[2] * z)
+        factor = np.asarray([J[1, 1], J[0, 0]])
+        candidate_integral = np.einsum(
+            "a,b,abjc->jc", qx, qy, polynomial.coefficients[side], optimize=True
+        ) * factor * phase
+        reference_integral = np.einsum(
+            "a,b,abjc->jc", ax, ay, polynomial.coefficients[side], optimize=True
+        ) * factor * phase
+        e = np.asarray([complex(v["real"], v["imag"]) if isinstance(v, dict) else complex(v)
+                        for v in mode["e_vector"][:2]], dtype=np.complex128)
+        traction = np.asarray([
+            complex(v["real"], v["imag"]) if isinstance(v, dict) else complex(v)
+            for v in mode["traction_vector"][:2]
+        ], dtype=np.complex128)
+        h = float(mode["projection_denominator"])
+        candidate_B = np.ascontiguousarray(candidate_integral @ (-traction))
+        candidate_D = np.ascontiguousarray((candidate_integral @ e).conj() / h)
+        reference_B = np.ascontiguousarray(reference_integral @ (-traction))
+        reference_D = np.ascontiguousarray((reference_integral @ e).conj() / h)
+        if V.element.needs_dof_transformations:
+            for vector in (candidate_B, candidate_D, reference_B, reference_D):
+                V.element.T_apply(vector, cell_info, 1)
+        for candidate, reference_vector, kind in (
+            (candidate_B, reference_B, "B"), (candidate_D, reference_D, "D")
+        ):
+            delta = candidate - reference_vector
+            denominator = float(np.linalg.norm(reference_vector))
+            error = float(np.linalg.norm(delta))
+            relative = (error / denominator) if denominator > 0 else (0.0 if error == 0 else float("inf"))
+            internal_abs = float(np.max(np.abs(delta[interior]), initial=0.0))
+            internal_full = internal_abs / denominator if denominator > 0 else (0.0 if internal_abs == 0 else float("inf"))
+            if kind == "B":
+                max_B_relative = max(max_B_relative, relative)
+                max_B_internal_abs = max(max_B_internal_abs, internal_abs)
+                max_B_internal_over_full = max(max_B_internal_over_full, internal_full)
+                tiny_B += int(np.count_nonzero((np.abs(reference_vector[interior]) > 0)
+                                               & (np.abs(reference_vector[interior]) < 1e-12)))
+            else:
+                max_D_relative = max(max_D_relative, relative)
+                max_D_internal_abs = max(max_D_internal_abs, internal_abs)
+                max_D_internal_over_full = max(max_D_internal_over_full, internal_full)
+                tiny_D += int(np.count_nonzero((np.abs(reference_vector[interior]) > 0)
+                                               & (np.abs(reference_vector[interior]) < 1e-12)))
+        digest.update(np.asarray([index], dtype=np.int64).tobytes())
+        for vector in (candidate_B, reference_B, candidate_D, reference_D):
+            digest.update(np.ascontiguousarray(vector).tobytes())
+        checked += 1
+    return {
+        "mode_count": checked,
+        "expected_mode_count": sum(mode["side"] == side for mode in modes),
+        "q60_vs_analytic_B_full_rows_max_relative": max_B_relative,
+        "q60_vs_analytic_D_full_rows_max_relative": max_D_relative,
+        "tiny_B_internal_rows_max_absolute_error": max_B_internal_abs,
+        "tiny_D_internal_rows_max_absolute_error": max_D_internal_abs,
+        "tiny_B_internal_max_absolute_over_full_row_norm": max_B_internal_over_full,
+        "tiny_D_internal_max_absolute_over_full_row_norm": max_D_internal_over_full,
+        "tiny_nonzero_B_entries_below_1e-12": tiny_B,
+        "tiny_nonzero_D_entries_below_1e-12": tiny_D,
+        "all_native_rows_including_tiny_nonzero_checked": True,
+        "clipped_or_dropped_rows": False,
+        "checker_ordered_row_digest_sha256": digest.hexdigest(),
+        "pass": bool(checked == sum(mode["side"] == side for mode in modes)
+                     and max(max_B_relative, max_D_relative) <= 1e-10),
+    }
+
+
+def check_v10_saved_array_extension(output: Path, report_path: Path | None = None) -> dict:
+    """Independent V10 checker for the saved-array q60 and local-object extension."""
+    from src.solvers.directional_boundary import (
+        BoundaryLayout, DirectionalBoundaryAction, FacetPolynomial,
+    )
+    from src.solvers.task40_w1_local_probe import direct_single_face_projection
+    from src.solvers.task40_w1_moment_reference import (
+        AnalyticMomentBoundaryReference,
+        legendre_exponential_moments,
+        legendre_exponential_moment_table,
+        quadrature_legendre_exponential_moments,
+        segmented_legendre_exponential_moments,
+    )
+    import basix.ufl
+
+    output = Path(output).resolve()
+    report_path = report_path or output / "w1_v10_a_extension_report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if report.get("schema") != "task40extra.review_v10_w1_a_saved_array_extension.v1":
+        raise ValueError("unsupported V10 W1 extension report schema")
+    arrays_meta = report.get("arrays", {})
+    arrays_path = (ROOT / arrays_meta.get("path", "")).resolve()
+    if (
+        not arrays_path.is_file()
+        or _file_sha256(arrays_path) != arrays_meta.get("file_sha256")
+        or arrays_path.stat().st_size != arrays_meta.get("file_bytes")
+    ):
+        raise ValueError("V10 W1 extension raw archive identity mismatch")
+    with np.load(arrays_path, allow_pickle=False) as stream:
+        arrays = {key: stream[key] for key in stream.files}
+    if _numeric_hashes(arrays) != arrays_meta.get("member_numeric_sha256"):
+        raise ValueError("V10 W1 extension raw member hashes mismatch")
+    raw_path = ROOT / report["saved_w1_raw"]["path"]
+    reference_path = ROOT / report["saved_v9_reference"]["path"]
+    if (
+        _file_sha256(raw_path) != report["saved_w1_raw"]["sha256"]
+        or _file_sha256(reference_path) != report["saved_v9_reference"]["sha256"]
+    ):
+        raise ValueError("V10 W1 saved source arrays no longer match the report identity")
+    with np.load(raw_path, allow_pickle=False) as stream:
+        frozen = {key: stream[key] for key in stream.files}
+    with np.load(reference_path, allow_pickle=False) as stream:
+        reference_arrays = {key: stream[key] for key in stream.files}
+    modes_raw, identity = _load_frozen_modes()
+    if identity != report.get("input_inventory"):
+        raise ValueError("V10 extension ordered mode identity differs")
+    reference_planes = {"bottom": -10.0, "top": 130.0}
+    modes = [{
+        "side": row["side"], "k_vector": row["k_vector"],
+        "e_vector": row["e_vector"], "traction_vector": row["traction_vector"],
+        "reference_plane_nm": reference_planes[row["side"]],
+        "projection_denominator": row["projection_denominator"],
+        "mode_index": row["mode_index"], "m": row["m"], "n": row["n"],
+        "polarization": row["polarization"],
+    } for row in modes_raw]
+    x = np.asarray(frozen["surface_x_axis_nm"], dtype=np.float64)
+    y = np.asarray(frozen["surface_y_axis_nm"], dtype=np.float64)
+    phases = tuple(complex(v) for v in frozen["floquet_phases"])
+    representative_face = tuple(int(v) for v in frozen["representative_face_indices"][0])
+    faces = [("top", *representative_face), ("bottom", *representative_face)]
+    layout = BoundaryLayout(x, y, FacetPolynomial(
+        basix.ufl.element("N1curl", "hexahedron", 6).basix_element
+    ), phases)
+    trace = _need(arrays, "generic_trace").astype(np.complex128)
+    alpha = _need(arrays, "generic_alpha").astype(np.complex128)
+    action = DirectionalBoundaryAction(layout, modes, 60, face_inventory=faces)
+    analytic = AnalyticMomentBoundaryReference(layout, modes, face_inventory=faces)
+    candidate_components = action.project_components(trace)
+    reference_components = analytic.project_components(trace)
+    candidate_apply = action.apply(trace)
+    reference_apply = analytic.apply(trace)
+    candidate_port = action.modal_rhs(alpha)
+    reference_port = analytic.modal_rhs(alpha)
+    candidate_scatter = action.scatter_components(candidate_components)
+    reference_scatter = analytic.scatter_components(candidate_components)
+    frozen_mode_scale = np.linalg.norm(frozen["q60_components"], axis=1) / np.abs(frozen["denominators"])
+    mode_error = (
+        np.linalg.norm(candidate_components - reference_components, axis=1)
+        / np.abs(frozen["denominators"])
+        / frozen_mode_scale
+    )
+    frozen_action_norm = float(np.linalg.norm(frozen["q60_apply"]))
+    full_error = float(np.linalg.norm(candidate_apply - reference_apply) / frozen_action_norm)
+    port_error = float(np.linalg.norm(candidate_port - reference_port) / np.linalg.norm(reference_port))
+    scatter_error = float(np.linalg.norm(candidate_scatter - reference_scatter) / np.linalg.norm(reference_scatter))
+    stored_errors = {
+        "generic_components": _relative(candidate_components - _need(arrays, "generic_q60_components"), candidate_components),
+        "generic_apply": _relative(candidate_apply - _need(arrays, "generic_q60_apply"), candidate_apply),
+        "generic_port_rhs": _relative(candidate_port - _need(arrays, "generic_q60_port_rhs"), candidate_port),
+        "generic_scatter": _relative(candidate_scatter - _need(arrays, "generic_q60_scatter"), candidate_scatter),
+        "analytic_components": _relative(reference_components - _need(arrays, "generic_analytic_reference_components"), reference_components),
+        "analytic_apply": _relative(reference_apply - _need(arrays, "generic_analytic_reference_apply"), reference_apply),
+        "analytic_port_rhs": _relative(reference_port - _need(arrays, "generic_analytic_reference_port_rhs"), reference_port),
+        "analytic_scatter": _relative(reference_scatter - _need(arrays, "generic_analytic_reference_scatter"), reference_scatter),
+    }
+    frozen_e = np.asarray([[complex(v["real"], v["imag"]) if isinstance(v, dict) else complex(v)
+                            for v in row["e_vector"][:2]] for row in modes])
+    frozen_h = np.asarray(frozen["denominators"], dtype=np.float64)
+    saved_reference_recover = np.sum(
+        frozen_e.conj() * reference_arrays["reference_components_80"], axis=1
+    ) / frozen_h
+    frozen_per_mode = np.abs(frozen["q60_recover"] - saved_reference_recover) / frozen_mode_scale
+    frozen_full_error = float(
+        np.linalg.norm(frozen["q60_apply"] - reference_arrays["reference_action_80"])
+        / frozen_action_norm
+    )
+    witness = report.get("q60_finite_witness", {})
+    q60_metrics = {
+        "generic_max_per_mode_over_frozen_scale": float(np.max(mode_error)),
+        "generic_full_action_over_saved_q60_apply_norm": full_error,
+        "generic_port_rhs_relative": port_error,
+        "generic_scatter_relative": scatter_error,
+        "frozen_q60_max_per_mode_relative": float(np.max(frozen_per_mode)),
+        "frozen_q60_full_action_relative": frozen_full_error,
+        "stored_array_reconstruction": stored_errors,
+        "pass": bool(
+            np.max(mode_error) <= 1e-10 and full_error <= 1e-10
+            and port_error <= 1e-10 and scatter_error <= 1e-10
+            and np.max(frozen_per_mode) <= 1e-10 and frozen_full_error <= 1e-10
+            and max(stored_errors.values()) <= 1e-12
+        ),
+    }
+    moment_checks = []
+    for item in witness.get("moment_witnesses", []):
+        index = int(item["mode_index"])
+        mode = modes[index]
+        for axis_index, axis_label, coords, cell_index in (
+            (0, "x", x, representative_face[0]),
+            (1, "y", y, representative_face[1]),
+        ):
+            raw_k = mode["k_vector"][axis_index]
+            mode_k = (
+                complex(raw_k["real"], raw_k["imag"])
+                if isinstance(raw_k, dict) else complex(raw_k)
+            )
+            k = -np.conj(mode_k)
+            origin, length = float(coords[cell_index]), float(np.diff(coords)[cell_index])
+            q60 = np.asarray(quadrature_legendre_exponential_moments(
+                k, origin, length, 6, quadrature_degree=60
+            ), dtype=np.complex128)
+            analytic_mp = np.asarray([complex(v) for v in legendre_exponential_moments(
+                k, origin, length, 6, dps=80
+            )], dtype=np.complex128)
+            scipy_table = legendre_exponential_moment_table(
+                k, np.asarray([origin]), np.asarray([length]), 6
+            )[0]
+            direct_mp = np.asarray([complex(v) for v in segmented_legendre_exponential_moments(
+                k, origin, length, 6, dps=100, segments=5
+            )], dtype=np.complex128)
+            scale = float(np.linalg.norm(direct_mp))
+            q_error = float(np.linalg.norm(q60 - direct_mp) / scale)
+            scipy_error = float(np.linalg.norm(scipy_table - direct_mp) / scale)
+            mp_error = float(np.linalg.norm(analytic_mp - direct_mp) / scale)
+            moment_checks.append({"mode_index": index, "axis": axis_label,
+                                  "candidate_relative": q_error,
+                                  "scipy_analytic_relative": scipy_error,
+                                  "mpmath_closed_form_relative": mp_error})
+    direct_panel_checks = []
+    for item in witness.get("direct_panel_witnesses", []):
+        index = int(item["mode_index"])
+        direct = direct_single_face_projection(
+            layout, modes[index], trace, 60, *representative_face
+        )
+        scale = float(np.linalg.norm(direct))
+        error = float(np.linalg.norm(candidate_components[index] - direct) / scale)
+        direct_panel_checks.append({"mode_index": index, "relative": error})
+
+    local_results = []
+    for case in report.get("local_cases", []):
+        degree, side = int(case["degree"]), str(case["side"])
+        if case.get("case_status") != "PASS":
+            local_results.append({
+                "degree": degree, "side": side,
+                "recomputed": {"pass": False, "classification": case.get("case_status")},
+            })
+            continue
+        prefix = f"p{degree}_q60_{side}_"
+        expected = 16030
+        recomputed = _v10_local_algebra_check(arrays, prefix, case, expected)
+        full_rows = _recompute_v10_full_BD_rows(
+            arrays, prefix, modes, degree=degree, side=side
+        )
+        recomputed["full_native_row_recomputation"] = full_rows
+        recomputed["pass"] = bool(recomputed["pass"] and full_rows["pass"])
+        local_results.append({"degree": degree, "side": side, "recomputed": recomputed})
+    source_hash_check = {
+        relative: _file_sha256(ROOT / relative) == expected
+        for relative, expected in report.get("source_files_sha256", {}).items()
+    }
+    complete = len(local_results) == 4
+    independent_reference_max = max(
+        (item["scipy_analytic_relative"] for item in moment_checks),
+        default=float("inf"),
+    )
+    high_precision_reference_max = max(
+        (item["mpmath_closed_form_relative"] for item in moment_checks),
+        default=float("inf"),
+    )
+    candidate_moment_max = max(
+        (item["candidate_relative"] for item in moment_checks), default=float("inf")
+    )
+    panel_max = max((item["relative"] for item in direct_panel_checks), default=float("inf"))
+    pass_all = bool(
+        q60_metrics["pass"]
+        and independent_reference_max <= 1e-12
+        and high_precision_reference_max <= 1e-12
+        and candidate_moment_max <= 1e-10
+        and panel_max <= 1e-10
+        and all(row["recomputed"]["pass"] for row in local_results)
+        and all(source_hash_check.values())
+        and report.get("status") == "PASS_FINITE_A_COMPONENTS"
+        and complete
+    )
+    result = {
+        "schema": "task40extra.review_v10_w1_a_saved_array_checker.v1",
+        "status": "SAVED_ARRAYS_CHECK_PASS" if pass_all else "SAVED_ARRAYS_PARTIAL_OR_CONTROLLED_NEGATIVE",
+        "pass": pass_all,
+        "report_sha256": _file_sha256(report_path),
+        "arrays_file_sha256": arrays_meta["file_sha256"],
+        "input_identity_recomputed": identity,
+        "q60_full_generic_recomputation": q60_metrics,
+        "q60_moment_witnesses_recomputed": moment_checks,
+        "q60_direct_panel_witnesses_recomputed": direct_panel_checks,
+        "independent_reference_cross_error_max": independent_reference_max,
+        "candidate_cross_error_max": max(candidate_moment_max, panel_max),
+        "local_case_recomputations": local_results,
+        "source_hash_check": source_hash_check,
+        "p4_volume_reused": report.get("p4_volume_reused") is True,
+        "global_target_mpc_mapping": "NOT_RUN",
+    }
+    _atomic_json(output / "w1_v10_a_extension_checker.json", result)
+    return result
+
+
 def check(output: Path, report_path: Path | None = None) -> dict:
     output = Path(output).resolve()
+    if report_path is None and (output / "w1_v10_a_extension_report.json").is_file():
+        report_path = output / "w1_v10_a_extension_report.json"
     report_path = report_path or output / "w1_boundary_probe_report.json"
     if not report_path.is_file():
         report_path = output / "w1_boundary_probe_progress.json"
     report = json.loads(report_path.read_text(encoding="utf-8"))
+    if report.get("schema") == "task40extra.review_v10_w1_a_saved_array_extension.v1":
+        return check_v10_saved_array_extension(output, report_path)
     raw_meta = report.get("raw")
     if not isinstance(raw_meta, dict) or raw_meta.get("reopened_after_fsync") is not True:
         raise ValueError("saved raw array fsync/readback evidence is absent")

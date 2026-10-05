@@ -7,6 +7,7 @@ in bounded batches. It never builds a global volume operator or a dense Hhat.
 
 from __future__ import annotations
 
+import hashlib
 from time import perf_counter
 from typing import Any
 
@@ -14,6 +15,7 @@ import numpy as np
 
 from .directional_boundary import FacetPolynomial, zvalue
 from .common_3d_forms import _build_physical_volume_terms
+from .task40_w1_moment_reference import legendre_exponential_moments
 
 
 def _local_tensor(
@@ -21,6 +23,8 @@ def _local_tensor(
     bounds: tuple[tuple[float, float], tuple[float, float], tuple[float, float]],
     config: Any,
     material_tag: int,
+    *,
+    saved_volume: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     import basix.ufl
     import ufl
@@ -58,34 +62,73 @@ def _local_tensor(
         np.asarray([0], dtype=np.int32),
         np.asarray([material_tag], dtype=np.int32),
     )
-    dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
-    curl_curl, material_mass = _build_physical_volume_terms(config, u, v, dx)
-    a = curl_curl + material_mass
-    # Match common_3d_case_flow: fem.form(a) with the original DOLFINx/FFCx
-    # default degree estimation and no added quadrature override.
-    compiled = fem.form(a)
-    kernels = _cell_integral_kernels(compiled, sum_duplicate_cell_integrals=True)
     geometry_map = np.asarray(msh.geometry.dofmap[0], dtype=np.int32)
     coordinates = np.ascontiguousarray(msh.geometry.x[geometry_map], dtype=np.float64)
     if coordinates.shape != (8, 3):
         raise ValueError("local hexahedron geometry dof map must have eight vertices")
     coordinates_flat = np.ascontiguousarray(coordinates.ravel(), dtype=np.float64)
-    tensor = _tabulate_raw_tensor_class(
-        compiled,
-        kernels,
-        coordinates_flat,
-        tag=material_tag,
-        dimension=int(basix_element.dim),
-    )
     cell_info = np.asarray(msh.topology.get_cell_permutation_info(), dtype=np.uint32)
     if cell_info.shape != (1,):
         raise ValueError("one-cell native orientation inventory changed")
-    _orient_cell_tensor(V.element, tensor, cell_info)
+    if saved_volume is None:
+        dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+        curl_curl, material_mass = _build_physical_volume_terms(config, u, v, dx)
+        a = curl_curl + material_mass
+        # Match common_3d_case_flow: fem.form(a) with the original DOLFINx/FFCx
+        # default degree estimation and no added quadrature override.
+        compiled = fem.form(a)
+        kernels = _cell_integral_kernels(compiled, sum_duplicate_cell_integrals=True)
+        tensor = _tabulate_raw_tensor_class(
+            compiled,
+            kernels,
+            coordinates_flat,
+            tag=material_tag,
+            dimension=int(basix_element.dim),
+        )
+        _orient_cell_tensor(V.element, tensor, cell_info)
+        form_integral_ids = sorted(int(key) for key in kernels)
+        form_signature = compiled.module.ffi.string(
+            compiled.ufcx_form.signature
+        ).decode("ascii")
+        volume_policy = (
+            "fem.form(a) default; matches common_3d_case_flow; "
+            "no explicit degree override"
+        )
+    else:
+        required = {
+            "tensor", "coordinates", "cell_info", "interior_positions", "trace_positions"
+        }
+        if required - saved_volume.keys():
+            raise ValueError("saved local volume record is missing required arrays")
+        saved_coordinates = np.asarray(saved_volume["coordinates"], dtype=np.float64)
+        saved_cell_info = np.asarray(saved_volume["cell_info"], dtype=np.uint32)
+        if (
+            saved_coordinates.shape != (8, 3)
+            or not np.allclose(saved_coordinates, coordinates, rtol=0, atol=2e-14)
+            or saved_cell_info.shape != (1,)
+            or not np.array_equal(saved_cell_info, cell_info)
+        ):
+            raise ValueError("saved local volume geometry/orientation identity differs")
+        tensor = np.ascontiguousarray(saved_volume["tensor"], dtype=np.complex128)
+        if tensor.shape != (int(basix_element.dim), int(basix_element.dim)):
+            raise ValueError("saved local volume tensor has a different Basix dimension")
+        form_integral_ids = []
+        form_signature = "REUSED_SAVED_RAW_W1_NATIVE_VOLUME_TENSOR"
+        volume_policy = "reused hash-bound W1 raw local tensor; volume form not reassembled"
     interior = np.asarray(basix_element.entity_dofs[3][0], dtype=np.int64)
     trace = np.setdiff1d(np.arange(int(basix_element.dim), dtype=np.int64), interior)
     expected_interior = 450 if degree == 6 else 108 if degree == 4 else None
     if expected_interior is None or len(interior) != expected_interior:
         raise ValueError("local p4/p6 interior support differs from the native Basix inventory")
+    if saved_volume is not None and (
+        not np.array_equal(
+            np.asarray(saved_volume["interior_positions"], dtype=np.int64), interior
+        )
+        or not np.array_equal(
+            np.asarray(saved_volume["trace_positions"], dtype=np.int64), trace
+        )
+    ):
+        raise ValueError("saved local volume row partition differs from the native Basix inventory")
     Vii = np.ascontiguousarray(tensor[np.ix_(interior, interior)])
     Vit = np.ascontiguousarray(tensor[np.ix_(interior, trace)])
     Vti = np.ascontiguousarray(tensor[np.ix_(trace, interior)])
@@ -114,14 +157,12 @@ def _local_tensor(
         "Vtt": Vtt,
         "factor": factor,
         "interior_factor_identity_relative": float(identity_defect),
-        "form_integral_ids": sorted(int(key) for key in kernels),
-        "ufcx_form_signature": compiled.module.ffi.string(
-            compiled.ufcx_form.signature
-        ).decode("ascii"),
+        "form_integral_ids": form_integral_ids,
+        "ufcx_form_signature": form_signature,
         "local_full_dimension": int(basix_element.dim),
         "local_interior_dimension": int(len(interior)),
         "local_trace_dimension": int(len(trace)),
-        "volume_quadrature_policy": "fem.form(a) default; matches common_3d_case_flow; no explicit degree override",
+        "volume_quadrature_policy": volume_policy,
         "material_tag": int(material_tag),
         "epsilon_r": [
             complex(
@@ -174,6 +215,115 @@ def _direct_full_basis_integral(
         "q,q,qjc->jc", weights, phase, tabulation, optimize=True
     ) * np.asarray([(hi - lo)[1], (hi - lo)[0]])
     return np.ascontiguousarray(integrated), rule, weights
+
+
+def direct_single_face_projection(
+    layout: Any,
+    mode: dict[str, Any],
+    trace: np.ndarray,
+    quadrature_degree: int,
+    face_i: int,
+    face_j: int,
+) -> np.ndarray:
+    """Independent Basix quadrature for one physical panel and one mode."""
+    import basix
+
+    if (
+        isinstance(quadrature_degree, bool)
+        or not isinstance(quadrature_degree, int)
+        or quadrature_degree < 1
+    ):
+        raise ValueError("direct panel quadrature degree must be positive")
+    if not 0 <= face_i < layout.nx or not 0 <= face_j < layout.ny:
+        raise ValueError("direct panel index is outside the boundary layout")
+    side = mode.get("side")
+    if side not in ("top", "bottom"):
+        raise ValueError("direct panel mode must name top or bottom")
+    values = np.asarray(trace)
+    if (
+        values.shape != (layout.rows,)
+        or values.dtype != np.complex128
+        or not np.isfinite(values).all()
+    ):
+        raise ValueError("direct panel trace must be finite complex128 on the full layout")
+    rule, weights = basix.make_quadrature(
+        basix.CellType.quadrilateral, quadrature_degree
+    )
+    zref = 0.0 if side == "bottom" else 1.0
+    tab = layout.polynomial.element.tabulate(
+        0, np.column_stack((rule, np.full(len(rule), zref)))
+    )[0][:, layout.polynomial.active[side], :2]
+    dx = float(layout.x[face_i + 1] - layout.x[face_i])
+    dy = float(layout.y[face_j + 1] - layout.y[face_j])
+    reference_plane = float(mode["reference_plane_nm"])
+    points = np.column_stack((
+        layout.x[face_i] + dx * rule[:, 0],
+        layout.y[face_j] + dy * rule[:, 1],
+        np.full(len(rule), reference_plane),
+    ))
+    k_vector = np.asarray(
+        [zvalue(value) for value in mode["k_vector"]], dtype=np.complex128
+    )
+    basis_integral = np.einsum(
+        "q,qjc->jc",
+        weights * np.exp(-1j * np.conj(points @ k_vector)),
+        tab,
+        optimize=True,
+    ) * np.asarray([dy, dx])
+    local = (
+        values[layout.maps[side][face_i, face_j]]
+        * layout.weights[side][face_i, face_j]
+    )
+    return np.asarray(local @ basis_integral, dtype=np.complex128)
+
+
+def analytic_full_basis_integral(
+    polynomial: FacetPolynomial,
+    side: str,
+    wave_vector: np.ndarray,
+    jacobian: np.ndarray,
+    origin: np.ndarray,
+    *,
+    moment_cache: dict[tuple[int, complex, float, float, int, int], np.ndarray] | None = None,
+    dps: int = 60,
+) -> np.ndarray:
+    """Closed-form full native-row integral; x/y origin phase is included once."""
+    if side not in ("top", "bottom"):
+        raise ValueError("analytic native integral requires top or bottom")
+    k = np.asarray(wave_vector, dtype=np.complex128)
+    J = np.asarray(jacobian, dtype=np.float64)
+    x0 = np.asarray(origin, dtype=np.float64)
+    if (
+        k.shape != (3,) or J.shape != (3, 3) or x0.shape != (3,)
+        or not np.isfinite(k).all() or not np.isfinite(J).all()
+        or not np.isfinite(x0).all()
+    ):
+        raise ValueError("analytic native integral requires finite 3D wave/geometry vectors")
+    if np.any(np.diag(J) <= 0) or np.linalg.norm(J - np.diag(np.diag(J))) > 1e-12:
+        raise ValueError("analytic native integral requires positive axis-aligned geometry")
+    cache = {} if moment_cache is None else moment_cache
+    moments = []
+    for axis in (0, 1):
+        key = (
+            axis, complex(k[axis]), float(x0[axis]), float(J[axis, axis]),
+            int(polynomial.p), int(dps),
+        )
+        if key not in cache:
+            cache[key] = np.asarray([
+                complex(value)
+                for value in legendre_exponential_moments(
+                    k[axis], float(x0[axis]), float(J[axis, axis]),
+                    polynomial.p, dps=dps,
+                )
+            ], dtype=np.complex128)
+        moments.append(cache[key])
+    integrated = np.einsum(
+        "a,b,abjc->jc", moments[0], moments[1],
+        polynomial.coefficients[side], optimize=True,
+    ) * np.asarray([J[1, 1], J[0, 0]])
+    z_origin = x0[2] + (J[2, 2] if side == "top" else 0.0)
+    integrated *= np.exp(1j * k[2] * z_origin)
+    return np.ascontiguousarray(integrated, dtype=np.complex128)
 
 
 def native_local_face_witness(
@@ -268,6 +418,8 @@ def stream_boundary_correction(
     face_j: int,
     boundary_quadrature_degree: int = 30,
     batch_modes: int = 64,
+    saved_local_volume: dict[str, Any] | None = None,
+    verify_analytic_full_rows: bool = False,
 ) -> dict[str, Any]:
     """Apply one real p4/p6 local condensed block over all ordered keys.
 
@@ -278,7 +430,9 @@ def stream_boundary_correction(
     began = perf_counter()
     if side not in ("top", "bottom") or batch_modes < 1:
         raise ValueError("one physical port side and a positive mode batch are required")
-    local = _local_tensor(degree, bounds, config, material_tag)
+    local = _local_tensor(
+        degree, bounds, config, material_tag, saved_volume=saved_local_volume
+    )
     native_face = native_local_face_witness(
         local=local,
         layout=boundary_layout,
@@ -320,8 +474,32 @@ def stream_boundary_correction(
     internal_D_nonzero_entries = 0
     max_abs_internal_B = 0.0
     max_abs_internal_D = 0.0
+    analytic_moment_cache: dict[
+        tuple[int, complex, float, float, int, int], np.ndarray
+    ] = {}
+    analytic_verified: set[int] = set()
+    analytic_B_max_relative = 0.0
+    analytic_D_max_relative = 0.0
+    analytic_B_internal_max_abs_error = 0.0
+    analytic_D_internal_max_abs_error = 0.0
+    analytic_B_internal_max_over_full_scale = 0.0
+    analytic_D_internal_max_over_full_scale = 0.0
+    analytic_B_tiny_interior_nonzero = 0
+    analytic_D_tiny_interior_nonzero = 0
+    analytic_rows_digest = hashlib.sha256()
+
+    def relative_without_new_floor(candidate: np.ndarray, reference: np.ndarray) -> float:
+        error_norm = float(np.linalg.norm(candidate - reference))
+        reference_norm = float(np.linalg.norm(reference))
+        if reference_norm == 0.0:
+            return 0.0 if error_norm == 0.0 else float("inf")
+        return error_norm / reference_norm
 
     def native_mode_vectors(index: int) -> tuple[np.ndarray, np.ndarray]:
+        nonlocal analytic_B_max_relative, analytic_D_max_relative
+        nonlocal analytic_B_internal_max_abs_error, analytic_D_internal_max_abs_error
+        nonlocal analytic_B_internal_max_over_full_scale, analytic_D_internal_max_over_full_scale
+        nonlocal analytic_B_tiny_interior_nonzero, analytic_D_tiny_interior_nonzero
         row = modes[index]
         kv = np.asarray([zvalue(v) for v in row["k_vector"]], dtype=np.complex128)
         integrated = polynomial.integral_native(
@@ -346,6 +524,58 @@ def stream_boundary_correction(
             d_native = np.ascontiguousarray(d_native)
             local["dof_element"].T_apply(b_native, local["cell_info"], 1)
             local["dof_element"].T_apply(d_native, local["cell_info"], 1)
+        if verify_analytic_full_rows and index not in analytic_verified:
+            direct = analytic_full_basis_integral(
+                polynomial, side, kv, jacobian, origin,
+                moment_cache=analytic_moment_cache, dps=60,
+            )
+            direct_B = np.ascontiguousarray(direct @ (-traction))
+            direct_D = np.ascontiguousarray((direct @ e).conj() / h)
+            if local["dof_element"].needs_dof_transformations:
+                local["dof_element"].T_apply(direct_B, local["cell_info"], 1)
+                local["dof_element"].T_apply(direct_D, local["cell_info"], 1)
+            analytic_B_max_relative = max(
+                analytic_B_max_relative,
+                relative_without_new_floor(b_native, direct_B),
+            )
+            analytic_D_max_relative = max(
+                analytic_D_max_relative,
+                relative_without_new_floor(d_native, direct_D),
+            )
+            b_full_norm = float(np.linalg.norm(direct_B))
+            d_full_norm = float(np.linalg.norm(direct_D))
+            analytic_B_internal_max_abs_error = max(
+                analytic_B_internal_max_abs_error,
+                float(np.max(np.abs(b_native[interior] - direct_B[interior]), initial=0.0)),
+            )
+            analytic_D_internal_max_abs_error = max(
+                analytic_D_internal_max_abs_error,
+                float(np.max(np.abs(d_native[interior] - direct_D[interior]), initial=0.0)),
+            )
+            if b_full_norm > 0:
+                analytic_B_internal_max_over_full_scale = max(
+                    analytic_B_internal_max_over_full_scale,
+                    float(np.max(np.abs(b_native[interior] - direct_B[interior]), initial=0.0))
+                    / b_full_norm,
+                )
+            if d_full_norm > 0:
+                analytic_D_internal_max_over_full_scale = max(
+                    analytic_D_internal_max_over_full_scale,
+                    float(np.max(np.abs(d_native[interior] - direct_D[interior]), initial=0.0))
+                    / d_full_norm,
+                )
+            analytic_B_tiny_interior_nonzero += int(
+                np.count_nonzero((np.abs(direct_B[interior]) > 0)
+                                 & (np.abs(direct_B[interior]) < 1e-12))
+            )
+            analytic_D_tiny_interior_nonzero += int(
+                np.count_nonzero((np.abs(direct_D[interior]) > 0)
+                                 & (np.abs(direct_D[interior]) < 1e-12))
+            )
+            analytic_rows_digest.update(np.asarray([index], dtype=np.int64).tobytes())
+            for values in (b_native, direct_B, d_native, direct_D):
+                analytic_rows_digest.update(np.ascontiguousarray(values).tobytes())
+            analytic_verified.add(index)
         return b_native, d_native
 
     def port_vectors(index: int) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -360,6 +590,25 @@ def stream_boundary_correction(
             internal_B_nonzero_entries += int(np.count_nonzero(bi))
             max_abs_internal_B = max(max_abs_internal_B, float(np.max(np.abs(bi), initial=0.0)))
             local_integral_calls += 1
+
+    analytic_full_row_gate = bool(
+        not verify_analytic_full_rows
+        or (
+            len(analytic_verified) == len(active_indices)
+            and max(analytic_B_max_relative, analytic_D_max_relative) <= 1e-10
+        )
+    )
+    if verify_analytic_full_rows and not analytic_full_row_gate:
+        raise ValueError(
+            "q60 B/D full native-row analytic reference gate failed: "
+            f"mode_count={len(analytic_verified)}/{len(active_indices)}, "
+            f"B_full_rel={analytic_B_max_relative:.17g}, "
+            f"D_full_rel={analytic_D_max_relative:.17g}, "
+            f"B_internal_max_abs={analytic_B_internal_max_abs_error:.17g}, "
+            f"D_internal_max_abs={analytic_D_internal_max_abs_error:.17g}, "
+            f"tiny_nonzero_B={analytic_B_tiny_interior_nonzero}, "
+            f"tiny_nonzero_D={analytic_D_tiny_interior_nonzero}"
+        )
 
     from scipy.linalg import lu_solve
 
@@ -547,6 +796,26 @@ def stream_boundary_correction(
         "internal_D_native_nonzero_entries_over_all_modes": internal_D_nonzero_entries,
         "max_abs_internal_B_native": max_abs_internal_B,
         "max_abs_internal_D_native": max_abs_internal_D,
+        "analytic_full_row_crosscheck": {
+            "status": (
+                "PASS" if verify_analytic_full_rows and analytic_full_row_gate
+                else "NOT_REQUESTED"
+            ),
+            "reference": "closed-form one-dimensional Legendre/exponential moments; deduplicated by frequency",
+            "verified_mode_count": int(len(analytic_verified)),
+            "expected_mode_count": int(len(active_indices)),
+            "candidate_limit": 1e-10,
+            "B_full_native_rows_max_relative": analytic_B_max_relative,
+            "D_full_native_rows_max_relative": analytic_D_max_relative,
+            "B_internal_rows_max_absolute_error": analytic_B_internal_max_abs_error,
+            "D_internal_rows_max_absolute_error": analytic_D_internal_max_abs_error,
+            "B_internal_max_absolute_error_over_full_reference_norm": analytic_B_internal_max_over_full_scale,
+            "D_internal_max_absolute_error_over_full_reference_norm": analytic_D_internal_max_over_full_scale,
+            "B_tiny_nonzero_internal_entries_below_1e-12": analytic_B_tiny_interior_nonzero,
+            "D_tiny_nonzero_internal_entries_below_1e-12": analytic_D_tiny_interior_nonzero,
+            "ordered_full_row_pair_digest_sha256": analytic_rows_digest.hexdigest(),
+            "small_nonzero_rows_clipped": False,
+        },
         "small_key_native_carrier_witness": {
             "ordered_key_index": witness_index,
             "key": [
