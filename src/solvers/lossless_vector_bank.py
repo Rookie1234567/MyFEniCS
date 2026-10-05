@@ -255,6 +255,12 @@ class VectorBank:
             # RAW loaded directly into its canonical resident bank; get is view.
             self.raw = np.asarray([self._decode(i) for i in range(self.header['vectors'])])
             self.payload = b''
+            # Canonical resident RAW access requires neither codec indices nor
+            # entity ordering. Release them rather than charging RAW needless
+            # format metadata just to weaken this non-neural control.
+            self.header = {k:self.header[k] for k in ('ntrace','vectors','method','abi')}
+            self.rows = []
+            self.backend = None
 
     def _decode(self, i):
         out = np.empty(self.header['ntrace'], complex)
@@ -287,7 +293,7 @@ class VectorBank:
         mapping = sum(sys.getsizeof(x) for x in self.rows)
         header = python_bytes(self.header)
         raw_payload = sys.getsizeof(self.raw) if self.raw is not None else sys.getsizeof(self.payload)
-        max_block = max(x.size for x in self.rows) * 16
+        max_block = max((x.size for x in self.rows), default=0) * 16
         # Upper planning bound for block transformation/ctypes/shuffle copies,
         # learned activations/features, uint64 context table and one decoded
         # vector. Scalars/current/axpy block are common to RAW and compressed.

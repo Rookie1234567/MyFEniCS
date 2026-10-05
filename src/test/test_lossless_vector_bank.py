@@ -38,13 +38,16 @@ class CodecTests(unittest.TestCase):
             self.assertEqual(current.tobytes(),expected[1].tobytes())
             if method=='RAW':
                 self.assertTrue(np.shares_memory(bank.get(0),bank.raw))
+                self.assertEqual(bank.rows,[])
+                self.assertNotIn('index',bank.header)
 
     def test_special_bits_fallback(self):
         words=self.vectors.view('<u8')
         words.ravel()[:8]=[0,1<<63,1,0x8000000000000001,0x7ff0000000000000,0x7ff8000000000042,0xfff8000000000013,0x000fffffffffffff]
         for method in ('RAW','SHUFFLE:3','FCM','DFCM','LIN'):
             bank,_=self.bank(method);self.assertTrue(literal_check(bank,self.vectors))
-            self.assertTrue(bank.header['index'][0][0]['fallback'])
+            if method!='RAW':
+                self.assertTrue(bank.header['index'][0][0]['fallback'])
 
     def test_context_integer_exact(self):
         bits=self.vectors.view('<u8').tobytes()

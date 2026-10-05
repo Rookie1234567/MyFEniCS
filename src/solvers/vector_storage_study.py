@@ -216,9 +216,11 @@ def analyze(folder):
     for family,receipt in data_record['datasets'].items():
         vectors=read_arrays(receipt,ROOT,names=['canonical'])['canonical'][:,:13824]
         banks=encoded['banks'][family]
-        best=min(plan_record()['traditional'],key=lambda k:banks[k]['object_bytes']['complete_trace_bank_object_bytes'])
-        comparisons[family]={'best_traditional':best,'complete_bytes':{k:v['object_bytes']['complete_trace_bank_object_bytes'] for k,v in banks.items()},
-                             'files_bytes':{k:v['file_bytes'] for k,v in banks.items()},'NN_ratio':banks['NN']['object_bytes']['complete_trace_bank_object_bytes']/banks[best]['object_bytes']['complete_trace_bank_object_bytes'] if 'NN' in banks else None}
+        live={k:stage(f'CONSUME_{family}_{k.replace(":","_")}')['object_bytes'] for k in banks}
+        best=min(plan_record()['traditional'],key=lambda k:live[k]['complete_trace_bank_object_bytes'])
+        comparisons[family]={'best_traditional':best,'complete_bytes':{k:v['complete_trace_bank_object_bytes'] for k,v in live.items()},
+                             'files_bytes':{k:v['file_bytes'] for k,v in banks.items()},'NN_ratio':live['NN']['complete_trace_bank_object_bytes']/live[best]['complete_trace_bank_object_bytes'] if 'NN' in banks else None,
+                             'lifecycle':'actual consumer records; RAW unnecessary codec metadata released, producer preparation estimates retained historically'}
         for kind,weights in models.items():
             groups={}
             for block in data_record['blocks']:
