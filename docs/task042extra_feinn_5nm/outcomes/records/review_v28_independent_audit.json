@@ -303,7 +303,7 @@
     "fences_balanced": true
   },
   "rendered_view": {
-    "status": "TABLES_PASS_ONE_PROSE_FORMAT_FIX_PENDING_RECHECK",
+    "status": "PASS_LIMITED_RENDERED_SCOPE",
     "publication_commit": "5ac8fff6d515ced27f6d3cfd29b94dedf24117cb",
     "scope": "4 pages,10 complete tables,15 actual images; all viewed",
     "pages": [
@@ -714,12 +714,59 @@
       "descendants_cleared": true
     },
     "initial_finding": "literal ** in dot comparison prose on Review V28; remove emphasis only, scientific contents unchanged",
-    "executor_original_failure_retained": true
+    "executor_original_failure_retained": true,
+    "correction_publication_commit": "49d72fd868e950e689679d6e0c01d7c4597a3fb8",
+    "correction_visual": "Actual changed paragraph and adjoining history table viewed; no literal emphasis markers remain",
+    "correction_images": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_49d72fd8/00_scope_00_0_0.png",
+        "sha256": "a5a69a6eb69a589846f21299c05ccf2b9042f9f510929b33bbb59466a0b9798e",
+        "target": "@table2",
+        "geometry": {
+          "text": "已尝试 / 已知结果\t已否定或未验证\t本轮决策\nV11八组参数尺度、后续度量/优化与轨迹分析\tM3600散射E/curl约0.0933003/0.0935415，Mfinal约0.122945/0.123039；native却从约0.885852降至0.846542；约77%旧退化增量来自正交叉项\t同时保留较好中期与最",
+          "height": 428,
+          "width": 1012,
+          "scrollWidth": 1012,
+          "clientWidth": 1012
+        },
+        "visible": {
+          "top": 134.71665954589844,
+          "bottom": 562.7166595458984,
+          "left": 448.5,
+          "right": 1460.5,
+          "width": 1012,
+          "height": 428,
+          "offset": 0,
+          "scrollLeft": 0,
+          "viewportHeight": 1114,
+          "viewportWidth": 1600
+        }
+      }
+    ],
+    "correction_supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 12.11378538608551,
+      "sampled_process_tree_rss_peak_bytes": 1544982528,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "total_actual_images_viewed": 16,
+    "distinct_pages": 4,
+    "distinct_complete_tables": 10,
+    "source_state_note": "Only the two emphasis delimiters changed on Review V28; all tables, execution text and the other three pages remained byte-identical. Final seal changes JSON only.",
+    "final_page_hashes": {
+      "docs/task042extra_feinn_5nm/review_report_v28.md": "bcbcb4ccccb1775c68f1848be6f5f2f5c73d51b0a40ec2245a55be39f8000539",
+      "docs/task042extra_feinn_5nm/response_v28.md": "7d2b37acb5f46ae84d0c5630076dd865a0df3e7c53f20d6ce8a23e6255977860",
+      "docs/task042extra_feinn_5nm/outcomes/versioned_manifest_and_boundary_v28.md": "e8c093958f048655fa0f37c53184407c08f55ec3670e4d2b3d10c20dd9373ba3",
+      "docs/task042extra_feinn_5nm/outcomes/main_handoff_v28.md": "39d782c8b0ed9df06e4bdb7c45e0a9ea61180b8a9a8cff420e37b4122f0755eb"
+    }
   },
   "goal_status": "FULL_TARGET_NOT_QUALIFIED",
   "NN_status": "NO_VERIFIED_NN_INCREMENT",
   "new_FE_assembly_factor_solve_Gram_NN_calls": 0,
-  "review_snapshot_utc": "2026-10-05T05:47:55.709279+00:00",
-  "elapsed_from_saved_review_start_seconds": 1221.786282336805,
-  "prior_review_reading_cost": "NOT_MEASURED_BEFORE_SAVED_START"
+  "review_snapshot_utc": "2026-10-05T05:54:34.954661+00:00",
+  "elapsed_from_saved_review_start_seconds": 1621.0316775119863,
+  "prior_review_reading_cost": "NOT_MEASURED_BEFORE_SAVED_START",
+  "final_tail_cost": "additional Git/fetch/notification included in ignored review_v28/delivery_receipt.json; not yet measured at this snapshot"
 }
