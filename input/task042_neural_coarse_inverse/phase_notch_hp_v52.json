@@ -274,5 +274,14 @@
     "B0": "benchmarks/artifacts/task042/v51/NOTCH_HPROBE.json",
     "V51_delivery": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_index_v51.json"
   },
-  "historical_loaded_known_lower_seconds": 99422.4300580054
+  "historical_loaded_known_lower_seconds": 99422.4300580054,
+  "case_wall_seconds": {
+    "H": 3600,
+    "P": 6500,
+    "HP": 7500,
+    "T": 6500,
+    "M": 6500,
+    "SETUP": 900,
+    "VERIFY_COST": 1500
+  }
 }

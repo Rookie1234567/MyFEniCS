@@ -16,7 +16,8 @@ class HPWindow(AccuracyWindow):
         self.require_ready()
         reserve=1200 if role in SOLVES else 180
         limits=plan_record().get('case_wall_seconds',{})
-        return min(float(limits.get(role,3600 if role in STAGES else 900)),
+        used=sum(json.loads((Path(r['folder'])/'run_summary.json').read_text()).get('launch_wall_seconds',r['elapsed_seconds']) if (Path(r['folder'])/'run_summary.json').exists() else r['elapsed_seconds'] for r in self.ledger()['runs'] if r['role']==role)
+        return min(float(limits.get(role,3600 if role in STAGES else 900))-used,
                    self.total-self.charged_wall()-reserve,
                    self.snapshot()['heavy_remaining_seconds']-reserve)
 
@@ -38,7 +39,7 @@ def implementation_hashes():
     from .phase_explicit_accuracy_scope import implementation_hashes as parent
     names=list(parent())+[str(PLAN.relative_to(ROOT)),
         'src/solvers/phase_notch_hp_scope.py','src/solvers/phase_notch_hp.py',
-        'src/solvers/phase_notch_hp_capacity.py','src/solvers/phase_notch_hp_fields.py',
+        'src/solvers/phase_notch_hp_capacity.py','src/solvers/phase_notch_hp_fields.py','src/solvers/phase_notch_hp_modes.py',
         'src/io/phase_notch_hp.py','src/test/test_phase_notch_hp.py',
         'benchmarks/qualify_phase_notch_hp.py','benchmarks/collect_phase_notch_hp.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}

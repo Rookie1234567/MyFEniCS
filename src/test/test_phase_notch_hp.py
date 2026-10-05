@@ -102,5 +102,49 @@ class HPTests(unittest.TestCase):
         self.assertEqual(storage_limits('v52')['new_storage_bytes'],8*2**30)
         self.assertEqual(json.loads(plan.read_text())['assembly_row_cap'],80000)
 
+    def test_physical_mode_pairing_not_auxiliary_index_and_added_inventory(self):
+        from src.solvers.phase_notch_hp_modes import compare_payloads,keyed_modes
+        def payload(m,n):
+            rows=[]
+            for side in ('top','bottom'):
+                for i in range(-m,m+1):
+                    for j in range(-n,n+1):
+                        for pol in ('s','p'):
+                            value=[.1*(i+20),.1*(j+20)]
+                            rows.append(dict(side=side,m=i,n=j,polarization=pol,auxiliary_index=len(rows),power_ratio=.001,
+                                auxiliary_amplitude_total_projection=value,outgoing_amplitude=value,outgoing_amplitude_at_boundary=value))
+            return dict(reference_planes={'top_z':2.,'bottom_z':-1.},orders=rows)
+        a=payload(11,4);b=payload(11,4);b['orders'].reverse()
+        for i,row in enumerate(b['orders']):row['auxiliary_index']=i
+        r,v=compare_payloads(a,b,828)
+        self.assertEqual(r['outgoing_amplitude_at_boundary_relative'],0.)
+        self.assertEqual(r['partitions']['added296']['count'],296)
+        self.assertGreater(r['partitions']['added296']['reference_norm'],0.)
+        self.assertEqual(v['power_first'].shape,(828,))
+        b['orders'][0]=b['orders'][1]
+        with self.assertRaises(ValueError):keyed_modes(b,828)
+        with self.assertRaises(ValueError):keyed_modes(a,532)
+
+    def test_saved_timeline_reader_complete_and_interrupted_lower_bound(self):
+        from benchmarks.collect_phase_notch_hp import measured_timeline
+        with tempfile.TemporaryDirectory(dir=ROOT/'tmp/task042/v52') as d:
+            p=Path(d)/'events.jsonl'
+            rows=[dict(event='one_begin',elapsed_s=1.),dict(event='child_begin',elapsed_s=2.),
+                dict(event='child_end',elapsed_s=4.),dict(event='one_end',elapsed_s=5.)]
+            p.write_text(''.join(json.dumps(r)+'\n' for r in rows));r=measured_timeline(p)
+            self.assertTrue(r['complete']);self.assertEqual(sum(r['exclusive_seconds'].values()),4.)
+            rows.append(dict(event='lost_begin',elapsed_s=6.))
+            p.write_text(''.join(json.dumps(r)+'\n' for r in rows));r=measured_timeline(p)
+            self.assertFalse(r['complete']);self.assertEqual(r['unclosed_suffix_seconds'],'unknown')
+            self.assertEqual(sum(r['exclusive_seconds'].values()),4.)
+
+    def test_case_wall_does_not_reset_for_a_resume(self):
+        from src.solvers.phase_notch_hp_scope import HPWindow
+        with tempfile.TemporaryDirectory(dir=ROOT/'tmp/task042/v52') as d:
+            rd=Path(d);(rd/'run_summary.json').write_text(json.dumps(dict(launch_wall_seconds=130.)))
+            w=HPWindow(rd,label='test',total=18000,component=18000,auxiliary=18000,probe=120,reserve=180,bootstrap=0)
+            with patch.object(w,'require_ready'),patch.object(w,'charged_wall',return_value=200.),patch.object(w,'snapshot',return_value=dict(heavy_remaining_seconds=20000.)),patch.object(w,'ledger',return_value=dict(runs=[dict(role='H',folder=str(rd),elapsed_seconds=100.)])):
+                self.assertEqual(w.remaining('H'),3470.)
+
 
 if __name__=='__main__':unittest.main()

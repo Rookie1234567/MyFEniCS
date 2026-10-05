@@ -48,7 +48,12 @@ def require_stage(role):
     if not stage('SETUP')['pass_gate']:raise RuntimeError('V52 actual preflight not qualified')
     if role in ('HP','T','M'):
         pick=window.TMP/(role+'_admission.json')
-        if not pick.exists() or not json.loads(pick.read_text())['admitted']:raise RuntimeError('conditional '+role+' not admitted')
+        if not pick.exists():raise RuntimeError('conditional '+role+' not admitted')
+        decision=json.loads(pick.read_text())
+        if not decision['admitted'] or not decision.get('evidence'):raise RuntimeError('conditional '+role+' not bound')
+        for item in decision['evidence']:
+            path=Path(item['path']).resolve()
+            if not path.is_relative_to(ARTIFACT) or hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']:raise ValueError('conditional evidence changed')
     completed=[s for s in SOLVES if (ARTIFACT/(s+'.json')).exists() and stage(s).get('returned_arrays')]
     if len(completed)>=5:raise RuntimeError('five complete solves already consumed')
 
@@ -109,6 +114,13 @@ def solve_case(role,folder,journal):
 def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,folder,journal,cap,boundary,build_audit,norms,vectors):
     _,recovery,rv=native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal)
     rec=save_arrays(folder/'recovery.npz',**rv);output=physical_output(bundle,u,port,geo,folder,journal)
+    projected=None
+    if role=='M':
+        from .phase_notch_hp_modes import project_saved_parent
+        selected=json.loads((window.TMP/'mode_selection.json').read_text())
+        original=stage(selected['role'])
+        if original['arrays']['sha256']!=selected['parent_array_sha256']:raise ValueError('selected finite mode parent changed')
+        projected=project_saved_parent(original,bundle,geo,folder,journal)
     indicator=None
     if role=='P':
         from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
@@ -125,7 +137,7 @@ def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,fol
         recovery=recovery,recovery_arrays=rec,output=output,equation_pass=equation_gate(norms,recovery),
         direct_target_pass=max(norms[k] for k in ('true','augmented','port'))<=1e-10,
         capacity=cap,build_audit=build_audit,boundary=boundary,mode_sha256=bundle['mode_sha256'],
-        transverse_indicator=indicator,timings=journal.timings,calls=journal.calls,NN_training=0)
+        transverse_indicator=indicator,projected_parent828=projected,timings=journal.timings,calls=journal.calls,NN_training=0)
 
 
 def audit_saved_return(role,folder,journal,record):
@@ -179,7 +191,7 @@ def restore_record(r,journal):
 
 def compare_saved(first,second,folder,journal):
     from .phase_notch_hp_fields import common_difference
-    from .scattering_anchor_checks import mode_comparison
+    from .phase_notch_hp_modes import mode_comparison
     a=restore_record(first,journal);b=restore_record(second,journal)
     # These are the actual published V51 physical sampling points, never a
     # replacement set chosen to improve the comparison.
@@ -193,22 +205,24 @@ def compare_saved(first,second,folder,journal):
     qdef=max(abs(low['fields'][key][n]**2-r['fields'][key][n]**2)/max(r['fields'][key]['reference_L2']**2,1e-24)
         for key in r['fields'] for n in ('reference_L2','difference_L2'))
     r.update(quadrature_pair=[23,31],quadrature_operation_scaled=qdef,q23_arrays=low['arrays'])
-    modes=mode_comparison(first,second)
+    modes=mode_comparison(first,second,folder)
     power={key:abs(first['output']['port_metrics'][key]-second['output']['port_metrics'][key]) for key in ('R_total','T_total','A_balance')}
     power['A_volume']=abs(first['output']['volume_metrics']['A_volume_total']-second['output']['volume_metrics']['A_volume_total'])
     energies=[abs(x['output']['volume_metrics']['energy_closure_error_port_volume']) for x in (first,second)]
     r.update(modes=modes,power_differences=power,energies=energies,parent_array_sha256=[first['arrays']['sha256'],second['arrays']['sha256']],
         mode_qualification_quantity='physical outgoing amplitude at original boundary reference planes; raw diagnostic separately retained')
-    r['pass_gate']=r['pass_gate'] and first['equation_pass'] and second['equation_pass'] and qdef<=1e-10 and modes['outgoing_amplitude_at_boundary_relative']<=1e-4 and modes['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energies)<=1e-5
+    r['pass_gate']=r['pass_gate'] and first['equation_pass'] and second['equation_pass'] and first.get('direct_target_pass',max(first['original_audit'][k] for k in ('true','augmented','port'))<=1e-10) and second.get('direct_target_pass',False) and qdef<=1e-10 and modes['outgoing_amplitude_at_boundary_relative']<=1e-4 and modes['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energies)<=1e-5
     return r
 
 
 def compare_queue(folder,journal):
     pairs=[('B0','H'),('B0','P'),('H','P'),('H','HP'),('P','HP'),('P','T')];rows=[]
+    if (ARTIFACT/'M.json').exists() and stage('M').get('equation_pass'):
+        pairs.append((json.loads((window.TMP/'mode_selection.json').read_text())['role'],'M'))
     cache=ARTIFACT/'comparisons';cache.mkdir(exist_ok=True)
     for left,right in pairs:
         if any(x!='B0' and (not (ARTIFACT/(x+'.json')).exists() or not stage(x).get('equation_pass')) for x in (left,right)):continue
-        records=[parent(x) if x=='B0' else stage(x) for x in (left,right)];name=left+'_'+right
+        records=[stage('M')['projected_parent828'] if right=='M' and x==left else parent(x) if x=='B0' else stage(x) for x in (left,right)];name=left+'_'+right
         dest=cache/(name+'.json')
         if dest.exists():
             r=json.loads(dest.read_text())
@@ -233,8 +247,8 @@ def verify_cost(folder,journal):
         bundle,rhs=build_bundle(cfg,setup,journal,q=63);u=rhs.duplicate();u.array[:]=v['u_storage']
         try:
             norms,vectors=audit_original(bundle,rhs,u,v['port'],journal)
-            _,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vectors,journal)
-            receipt=save_arrays(folder/(role+'_independent_audit.npz'),**vectors,**rv)
+            field,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vectors,journal)
+            receipt=save_arrays(folder/(role+'_independent_audit.npz'),u_storage=u.array.copy(),rhs=rhs.array.copy(),port=v['port'],recovered_native_full=field.x.array.copy(),**vectors,**rv)
             rows.append(dict(role=role,parent=r['arrays']['sha256'],audit=norms,recovery=rec,arrays=receipt,equation_pass=equation_gate(norms,rec)))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
     return dict(status='COMPLETED',role='VERIFY_COST',rows=rows,cached_comparisons=compare_queue(folder,journal),
@@ -259,9 +273,10 @@ def execute(role,folder,state):
 def finish_comparisons(role,result,journal):
     partners={'H':['B0'],'P':['B0','H'],'HP':['H','P'],'T':['P'],'M':[]}[role]
     cache=ARTIFACT/'comparisons';cache.mkdir(exist_ok=True);rows=[]
+    if role=='M':partners=[json.loads((window.TMP/'mode_selection.json').read_text())['role']]
     for left in partners:
         if left!='B0' and (not (ARTIFACT/(left+'.json')).exists() or not stage(left).get('equation_pass')):continue
-        previous=parent(left) if left=='B0' else stage(left);name=left+'_'+role;dest=cache/(name+'.json')
+        previous=result['projected_parent828'] if role=='M' else parent(left) if left=='B0' else stage(left);name=left+'_'+role;dest=cache/(name+'.json')
         if dest.exists():
             r=json.loads(dest.read_text())
             if r['parent_array_sha256']!=[previous['arrays']['sha256'],result['arrays']['sha256']]:raise ValueError('cached comparison changed')
