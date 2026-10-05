@@ -1,0 +1,925 @@
+{
+  "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+  "historical_runtime_SHA": "3570347cbd1faf7149611146b8f0f1bdd71f19e6",
+  "historical_SHA_unavailable": "known external report; not fetched or used as current identity",
+  "used_definitions": [
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "_relative",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "84309b7d97dc52c9786bb2bbfa018423c65bb7834b3cace3f4c9cad09ccfd561",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "_right_sparse",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "2ec2ae94fa52ae8bbf8d1de7cff7927e48ddb97f842ea1eb00a727db5d9aa9f6",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "_congruence",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "70d980ab13aeb3c01093aafdc1659cd44acd9783ca1af9d047ce6355a8f3653e",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "_sparse_payload",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "5cdd989010340e825749174768864fac267460dc38f6cbc39122ca8534153b4d",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "YOrbitLayout",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "08eed94886908dbabf60e8719c2770f67bdb3f45bc2a258c91b1464f59505bb7",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "YOrbitEntities",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "b1e49393fc981c3e2563aa7299aefdc072cbf8a6c209e6c1af91c062065ca07a",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "collect_y_orbit_entities",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "811259f77c6eb92f634c6bfb63b09480d2f600ad996b58c3717f78eda4c0f967",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "build_y_orbit_layout",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "89453c5663891b38ca8faad194f31ac3f3fdf7a328fff245334aeed690e83d8a",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "FullOriginalAction",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "319e56546193defdc0b9b5e3aa639a0df16f7c0af604c73caa6557f2413440ec",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/task40extra_y_orbit_reference.py",
+      "definition": "solve_notched_fgmres",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "file_sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "definition_sha256": "ef2aac98a8a97c8ad4a580f0d8e7a52f2c26307da9b64632d634d9e14a94e5fc",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/y_orbit_condensed_adapter.py",
+      "definition": "_gate",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "ff902477322a1067b376ea015a95f2dfcb162fde",
+      "file_sha256": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+      "definition_sha256": "554ab0c82aa953537fbf5e71c97a586aaec3365a77b43a25b37edf56638e5898",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/y_orbit_condensed_adapter.py",
+      "definition": "_payload",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "ff902477322a1067b376ea015a95f2dfcb162fde",
+      "file_sha256": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+      "definition_sha256": "e5585d3bdfab0eb95e18ce94482e363cddf38e6a343e2881b1bf8162587186ee",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    },
+    {
+      "path": "src/solvers/y_orbit_condensed_adapter.py",
+      "definition": "trace_layout_coordinates",
+      "donor_commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "blob": "ff902477322a1067b376ea015a95f2dfcb162fde",
+      "file_sha256": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+      "definition_sha256": "9d25eb62368bb4040f3164c365b08d9f9391db31317035b5b2b44c8ddc787998",
+      "reason": "complete native moment/primal-dual map or unchanged published FGMRES32 algorithm",
+      "destination": "src/solvers/scattering_y_orbit_reuse.py"
+    }
+  ],
+  "read_dependency_inventory": {
+    "src/solvers/task40extra_y_orbit_reference.py": {
+      "blob": "23f148ad7c5bef5faf7d63f775eeb6d555981211",
+      "sha256": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+      "bytes": 51028,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_two_cell_inverse.py": {
+      "blob": "c8f652bbdc79f269bae3ab9e39dc480701ae02a5",
+      "sha256": "e9735caff59ca1132ef67ad3353b5acdb88d2a46d15adb738f58ca3e9eccc976",
+      "bytes": 15033,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_two_cell_inverse_probe.py": {
+      "blob": "8f60885f6b8fa64c9b8af761ef367d353588b0b0",
+      "sha256": "e2d6dd4ed151c5cfdf1900e6c578fd5cbf351b4190c8cf4e8130a94f0053eec0",
+      "bytes": 29942,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_two_cell_transport.py": {
+      "blob": "dd9c4252582738e9c1a9112ad6a7984ec138205e",
+      "sha256": "7e58039d1b679c48e4b452cd71214819bb1272f56d10ab4e1fc52c50eb9f2c13",
+      "bytes": 7942,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_two_cell_block_audit.py": {
+      "blob": "ae34450f8b8f7326c60649567df061701536fdd0",
+      "sha256": "4ba8df2f06d0feb35931b9aca51dee77bbe66bf0b555afe7f6d39b148cade46b",
+      "bytes": 26719,
+      "existing": false,
+      "identical": false
+    },
+    "src/io/input_validation.py": {
+      "blob": "7b2b8e7bf41461410ce07cc12c55e9079d6af52b",
+      "sha256": "ff78e45c5c67513846091576510a883ca7166b2fd40f009929d5d2ee37d66535",
+      "bytes": 119095,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/hcurl_canonical_vector_dolfinx.py": {
+      "blob": "c568e8d5db58b0b398ecb58e899f19aa43a22701",
+      "sha256": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+      "bytes": 54036,
+      "existing": true,
+      "identical": true
+    },
+    "src/common/modes_3d.py": {
+      "blob": "ab2355dc742bcf628fcb7be6e88a35814fc035d6",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "bytes": 10752,
+      "existing": true,
+      "identical": true
+    },
+    "src/geometry/mesh_builder_3d.py": {
+      "blob": "a605bca438655cce61e54cb58b2f399046af940e",
+      "sha256": "58016a498637ea2a993425eeae711c1a2fb62b3fad44e19e32fac87a0dca67b3",
+      "bytes": 51075,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": {
+      "blob": "2daf9c6f867a50803eb72eb80a97780ed4b4a61a",
+      "sha256": "acf962abbf25fa4f0b34e975ba6b932553be484bff66867354f69594965641f6",
+      "bytes": 34667,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": {
+      "blob": "90388493ada7b7fabcd9e2d900bfd1966612eb7f",
+      "sha256": "437542356ea441c65dd25c3ed4fa086af2ca67b1f53deff69c664f20c954bbb7",
+      "bytes": 31463,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_physical_action.py": {
+      "blob": "67300b811ddf6a426f0e51593e8b728dbf904b0d",
+      "sha256": "7e372f01379bb603be7877776213a32c740e8751df33a11561df4984e4a39768",
+      "bytes": 8557,
+      "existing": true,
+      "identical": false
+    },
+    "src/constraints/high_order_floquet_trace.py": {
+      "blob": "c84b7d2c75a94bd87223b20f0bc3dce9a24d06cf",
+      "sha256": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+      "bytes": 38224,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/y_orbit_transform_bank.py": {
+      "blob": "ff40105bd9139a856b09987596c961458f84ab0e",
+      "sha256": "9ece954f962dc6bab18a02f6b48b53998219fba3f611647a44404757f219b66f",
+      "bytes": 22512,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_sparse_reference.py": {
+      "blob": "7ac24c55299e02ffc65b2c0fd178bf873970833b",
+      "sha256": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+      "bytes": 32558,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_direct_profile.py": {
+      "blob": "51b0540281cabab78a7c41880b569d315865883e",
+      "sha256": "80f21ebebe816e23892ed7a7cf0cc5e273c748de473d2fbcb3e240b43b732391",
+      "bytes": 9800,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/dtn_boundary_plane_qualification.py": {
+      "blob": "a5d52f183106f52070db5e1c295039037da752cf",
+      "sha256": "848a3efd902ebdfda282cab4b50ac908e020b5806533b0e4a955d45d4983143e",
+      "bytes": 52652,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_two_cell_audit.py": {
+      "blob": "7b1e893b02f9b10e9f4b99629aa257ad2e335ad7",
+      "sha256": "6538e0afde2bb4bc14cbcfc7d334c97fa0da3955f7c7149cc47cde474b8cb2ee",
+      "bytes": 28967,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/fullspace_p4_blr.py": {
+      "blob": "6cc96f40fc4c6ac3860dfee867978cc43e9a525e",
+      "sha256": "6d9b9ada0264001e860517bf0136a0ff68f5dde193e4f1ec11378fdf4b169082",
+      "bytes": 5958,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/fullspace_dtn_action.py": {
+      "blob": "b4762f09cb302dbf498ae8999ab873644f7a1718",
+      "sha256": "fd5bfdb360dc2d7cca17ca910758d949ae8cc858b8fd3291521fd0670c4fc725",
+      "bytes": 48304,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/y_orbit_quotient_context.py": {
+      "blob": "7efe44c956ef1def9f3cc2e28d988a28d9978659",
+      "sha256": "0622024f93d0a7e056c7658c242a94d452aa0220cc04d548328ddf86f68ba6e6",
+      "bytes": 15793,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_quotient_condensed.py": {
+      "blob": "7976e86b5e929eec0fefb19df109e89822ff5fd1",
+      "sha256": "55846638b8d1bc2e3c0f3fa32c2b567e40e4e91743f4823526d2534d276b79fa",
+      "bytes": 21960,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_condensed_adapter.py": {
+      "blob": "ff902477322a1067b376ea015a95f2dfcb162fde",
+      "sha256": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+      "bytes": 31563,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_centered_evidence.py": {
+      "blob": "02784d378f89cfdf2898e496297767f91e61451d",
+      "sha256": "886b59fcf662c2198fbfb44bdf7cf640246c96e8be54b46d98bf135ef28e18aa",
+      "bytes": 21064,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_sparse_probe.py": {
+      "blob": "1c33a22a45e59e4f1d7dec2b5dff6d7f539e8d2e",
+      "sha256": "70b8446cf371146b6d96f7b370e33e04d655da8644c9111acd798ec3748ea16e",
+      "bytes": 28258,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_shared_transform_evidence.py": {
+      "blob": "9d24a9ef17e656553e486cea24cf2db6499c704b",
+      "sha256": "005d778122e9134b729e429a0dd294d13ac489ae22cd23d36be1e6093e382f98",
+      "bytes": 30008,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/original_port_blocks.py": {
+      "blob": "c2b10f0b30d6f713650af232958f7370bc79d7e6",
+      "sha256": "de6940522d97343484851f7abe75dbb6302a3b64be2f0903cee3361bc9816645",
+      "bytes": 11981,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/bounded_compact_q_projection.py": {
+      "blob": "26decc9f5120ce4303c45ad592acfc1dd6686c99",
+      "sha256": "5d665abfe976ec6846d8dcf51178827c424818e92bc877f647866be893f2b8a5",
+      "bytes": 29475,
+      "existing": false,
+      "identical": false
+    },
+    "src/io/input_loader.py": {
+      "blob": "2f774cb426b5071ba8475d2293eeec325afd0cc8",
+      "sha256": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+      "bytes": 1882,
+      "existing": true,
+      "identical": true
+    },
+    "src/io/resolved_config.py": {
+      "blob": "d50fee0d3c47407e35329a809891d635c3d68775",
+      "sha256": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+      "bytes": 1159,
+      "existing": true,
+      "identical": true
+    },
+    "src/io/run_specification.py": {
+      "blob": "ca07af67e38fb69e93a142c526d9dc1782c82528",
+      "sha256": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+      "bytes": 2916,
+      "existing": true,
+      "identical": true
+    },
+    "src/io/input_schema.py": {
+      "blob": "771a7129c3e7a420b5bd56f43369289fbc500791",
+      "sha256": "8e8dfbbb8fdee90f2bf490f37e094dae663697c46dafdd3209e85880d3120b6e",
+      "bytes": 43256,
+      "existing": true,
+      "identical": false
+    },
+    "src/common/config.py": {
+      "blob": "3e2a091f923012105d6cedb9fbd23da1e505bab0",
+      "sha256": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+      "bytes": 7989,
+      "existing": true,
+      "identical": true
+    },
+    "src/common/config_3d.py": {
+      "blob": "de49c098b9df015b7b07efbb3429a443a3b1d9b8",
+      "sha256": "612e615f4aa5ae0411556523b9061ee47a755b8110a7c097d28b8d6f698bfc1b",
+      "bytes": 40896,
+      "existing": true,
+      "identical": false
+    },
+    "src/geometry/v21_frozen_plan.py": {
+      "blob": "99115aa5f8d2675fccef6a3797601b83c7fc1a1a",
+      "sha256": "bd46b4058a70eb219c7c2bf316947d3b97c7f243b52a08859b7211e7fd9d339b",
+      "bytes": 26754,
+      "existing": false,
+      "identical": false
+    },
+    "src/io/physical_intermediate_profile.py": {
+      "blob": "4fcfefe7ef519e356632195348114f3e38e0e1d5",
+      "sha256": "30d8d230acbe4d7879d835a107a0f9ac63b5eedb6b95242d8917dc4defbce9ff",
+      "bytes": 54418,
+      "existing": true,
+      "identical": false
+    },
+    "src/geometry/task40_nonseparable_plan.py": {
+      "blob": "c191a8e4b4a82898a70bb016ef38c48834398b8d",
+      "sha256": "1a19f9e965aa348aed42da506ff6cd2cc794a051627fd0b0198ecd2fbf9db5b5",
+      "bytes": 8237,
+      "existing": false,
+      "identical": false
+    },
+    "src/geometry/tetra_mesh_audit.py": {
+      "blob": "e5d71a88eda133a714f13ead80e352b35a59ae83",
+      "sha256": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+      "bytes": 16315,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/hcurl_assembly_time_condensation.py": {
+      "blob": "a0da1e798b29cbc11e6b032719b43951fe0aab8a",
+      "sha256": "0edd5478ef5c08649c95c0d1ade16436b4833e169f4cc6835731bdf1bc0f1e26",
+      "bytes": 101109,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/hcurl_canonical_vector.py": {
+      "blob": "efaeef687219da26bea11d53a2ed03229f5ccc17",
+      "sha256": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+      "bytes": 9904,
+      "existing": true,
+      "identical": true
+    },
+    "src/geometry/cell_notch.py": {
+      "blob": "afea797d74f0f385b7dce10e5b56bee8b53c9cad",
+      "sha256": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+      "bytes": 2245,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_lor_edge_geometric_mg_global.py": {
+      "blob": "501b0ff0963f5f6dd319b45f7247b5ea46fa7ff6",
+      "sha256": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+      "bytes": 35476,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_lor_hx_root_cause.py": {
+      "blob": "c44d2e948c0b9a73bbdcda4332130fb1f542d587",
+      "sha256": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+      "bytes": 26308,
+      "existing": true,
+      "identical": true
+    },
+    "src/constraints/floquet_3d.py": {
+      "blob": "5ff047111b91bfca86912148e0d0c86bcc04ad0d",
+      "sha256": "a61fbaf1b03f73c2ce183643028fbfe2845f39d8531944682b4f93a1f460008f",
+      "bytes": 101199,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_lor_native_hx_fixture.py": {
+      "blob": "d3996d08a688c8706acc5b76a282a5c6f67c6d41",
+      "sha256": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+      "bytes": 67136,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py": {
+      "blob": "c7112a2193a33aa977b5851685b8328545620a25",
+      "sha256": "a30ad89ec902870cd3aef48b864c1059a831c7fb54d32b62e23649c4bd84c3d9",
+      "bytes": 50911,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg.py": {
+      "blob": "9bbcf2a6f883782205db55a4f0e966df6ec244ff",
+      "sha256": "d55a2d1b076be0950d5363625f7b00c5f00c1e9b2656b6b499dfe15afc62747f",
+      "bytes": 26203,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_mpc_action.py": {
+      "blob": "c585d185f6b9cdfe51777cffcd9b09a725469cd2",
+      "sha256": "487405fc1292ef2530be2abf66faa86a4b709facfe6362f164f6e4ece8c3d4c1",
+      "bytes": 21000,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/dtn_port_3d.py": {
+      "blob": "88bd9eaf52348b71d2a24a5f36fcb6e6e48fbe5f",
+      "sha256": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+      "bytes": 198192,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/dtn_boundary_phase_gauge.py": {
+      "blob": "b7afe69e9c9c33716b41b93fd8a1286ac7ce95e5",
+      "sha256": "ed32186a104e5dac13fecea66a14c43533ca757acde12cfc466dfd05d0449997",
+      "bytes": 36890,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/common_3d_forms.py": {
+      "blob": "a7826e0957874d8bcb5420b20d096b0cd2acf9ef",
+      "sha256": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+      "bytes": 8951,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": {
+      "blob": "b1fbedd01cab8e32e439ee2112bdf1ee1188994e",
+      "sha256": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+      "bytes": 19523,
+      "existing": true,
+      "identical": true
+    },
+    "src/postprocessing/diffraction_3d.py": {
+      "blob": "5ea6c93a2694d9170a7cab76974983165fcbd9de",
+      "sha256": "587efc81a90c8a65b1e3ff1ec2efe53084893f3d6545556d24a2f1636d9a419d",
+      "bytes": 45853,
+      "existing": true,
+      "identical": false
+    },
+    "src/postprocessing/postprocess_3d.py": {
+      "blob": "dfef017c035c7b8f20303cce10d46b30b9a78dbd",
+      "sha256": "6ddf2ac35729e7b8524ff6914f0a37a6837576c88afe642d6e8818586fbd8c1c",
+      "bytes": 21161,
+      "existing": true,
+      "identical": false
+    },
+    "src/postprocessing/rta_3d.py": {
+      "blob": "73d1cc8398f1a8c91bfa269a03fba6a56c5b30db",
+      "sha256": "c246484da85eb40192b99395183b7f3d1a988ff6b73893e22514f6e051870c7d",
+      "bytes": 12131,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/y_orbit_raw_observer_admission.py": {
+      "blob": "11aa349bc3bd4430c98216890255be0a3416e29e",
+      "sha256": "890c7e0df39826b1f6dac5cef827d7290ce2a73c22e0928e8ed03eb833010a10",
+      "bytes": 13765,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_quotient_raw_qualification.py": {
+      "blob": "600211d63a0851a1cc3866b81efd0a3027a62169",
+      "sha256": "873813600d8bc09ea8c8892721bce2f224ce1870b1d89b57569c43b8853feba5",
+      "bytes": 42492,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_raw_packet_spool.py": {
+      "blob": "ca7d1ccba93de3fd7e28f6fa60229fb729fe20c5",
+      "sha256": "bf547d06a49d5728f69c6350d6238744efaaf806142a5d06b676ded8a7cc3ae0",
+      "bytes": 25776,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/p6_cell_condensed_action.py": {
+      "blob": "5fd8201266dbd08f6535fa145d6aec6a50095fa6",
+      "sha256": "7f2b2132569f8f40d9ba62f42bfd8e07dfcecc7eb98f041bebff7f7c6bdab692",
+      "bytes": 91109,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/retained_port_block_layout.py": {
+      "blob": "d957b63de7e39c85fddbbfe7aaf7a2440bb9026b",
+      "sha256": "1b074f6efbe5689df55d0e7e55fbd3e3b3861caab5e9e27695e1f48c53b6fb50",
+      "bytes": 13222,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/p4_cell_condensed_inverse.py": {
+      "blob": "f629efbf41444aadd5017a8267a67912cfc6d2fa",
+      "sha256": "678eb3103e57505a42c996ee2818c0e9e757189c0a2f871c90f3f911faf210e7",
+      "bytes": 47994,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fresh_c1_p6_component.py": {
+      "blob": "57b1053baf73d8f2581003e1aad3f22d9805063e",
+      "sha256": "eeb08926025f9cb8e86b712834c0dd88f9856bcbd30464f737da3e449cc8b850",
+      "bytes": 55869,
+      "existing": false,
+      "identical": false
+    },
+    "src/solvers/y_orbit_live_boundary_contract.py": {
+      "blob": "f4f1e6b30e852c964d945aa7d24f8cb25370f0ef",
+      "sha256": "f8e9db9f9e19841eda03f5577e4682cdbf0d8f4b38d214a38e5b401cdedd2563",
+      "bytes": 17793,
+      "existing": false,
+      "identical": false
+    },
+    "src/common/units.py": {
+      "blob": "67ba8604e50dc14f28da82016313f44b67cc496f",
+      "sha256": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "bytes": 90,
+      "existing": true,
+      "identical": true
+    },
+    "src/io/physical_balanced_profile.py": {
+      "blob": "733a28b8fd177f64f7e201e996107e23d7e4026a",
+      "sha256": "972f9b2f7ffe0b5cdde340c48688139d62730d0b31649d31bbba638b6f4cd05f",
+      "bytes": 10493,
+      "existing": true,
+      "identical": false
+    },
+    "src/io/physical_recursive_profile.py": {
+      "blob": "0dedd983386691b032da012890ac032a872806ac",
+      "sha256": "2ff6240976a92f5696ee26061474e6dd7f09e653fc8cb2b5baef9962aadc3df6",
+      "bytes": 13621,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_lor_edge_geometric_mg.py": {
+      "blob": "4d8c01f1272d05ff10b78721fa3ce5d58bd8f529",
+      "sha256": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+      "bytes": 17448,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_lor_memory_first_foundation.py": {
+      "blob": "f93d65803a9cec65cbe30ea59dbe1f04901579d3",
+      "sha256": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+      "bytes": 39874,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_lor_topology.py": {
+      "blob": "e1468f2f26537e3420a4dc25a3029088cf2b0c21",
+      "sha256": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+      "bytes": 36290,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_lor_native_hx.py": {
+      "blob": "1d39ff3e9ddf0daf5891c7f75d1b25cd30272f41",
+      "sha256": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+      "bytes": 15243,
+      "existing": true,
+      "identical": true
+    },
+    "src/constraints/floquet_3d_high_order.py": {
+      "blob": "87eb506d03bc8ed50f50546a3afdf47fbf46e639",
+      "sha256": "78a54d98c5274f217698747bf074c202b9f8f43d914122629389d5ae371325ff",
+      "bytes": 36884,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/fullspace_lor_transfer.py": {
+      "blob": "5d000898c955018c3c1ad6a89ec8b4345dd70292",
+      "sha256": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+      "bytes": 38819,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/hcurl_affine_isotropic_tensor.py": {
+      "blob": "3b631a8eb8e827943954429fba2d8878ac186d40",
+      "sha256": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+      "bytes": 12261,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/condensed_reference_preflight.py": {
+      "blob": "a9dde346aea343618f069b5df3a2a1b5425cfc6d",
+      "sha256": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+      "bytes": 8004,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/common_3d_solve.py": {
+      "blob": "02965a25357a1e7990ac3f2fe34ac5b5e5cf9f2d",
+      "sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "bytes": 28324,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/condensed_dtn.py": {
+      "blob": "c688c175c715d8b36f83468b2cfb7825f548e53f",
+      "sha256": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+      "bytes": 42933,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/common_3d_utils.py": {
+      "blob": "5540bbaea04500c1dfd3cfcf70f18be30cbb0784",
+      "sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "bytes": 16894,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/hcurl_cell_static_condensation.py": {
+      "blob": "59f5b6e12e2e6017bf67c8993e5e725e9b0bda57",
+      "sha256": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+      "bytes": 23880,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/hcurl_variable_p_reduction.py": {
+      "blob": "9f3f62e884ef30976652e392a63d9ff9d988879c",
+      "sha256": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+      "bytes": 39455,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/mpc_form_action.py": {
+      "blob": "81bc14151a631ce18bff0971eecb3b8e0fde75cc",
+      "sha256": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+      "bytes": 3102,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/solve_vector_maxwell.py": {
+      "blob": "979d8141c1a5095a9dcba47514dc508032eff100",
+      "sha256": "dde88dbebf6249dcf3050ab64a286f3a422f8c9f4988b0d8f6642cc1723afe7c",
+      "bytes": 17349,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/static_local_schur_action.py": {
+      "blob": "e5286c3e9459883f59c98cc1ff820cb762234f93",
+      "sha256": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+      "bytes": 5956,
+      "existing": true,
+      "identical": true
+    },
+    "src/common/pml_3d.py": {
+      "blob": "242553873174bf597181a6c6df7d3247a3d20e7a",
+      "sha256": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "bytes": 2676,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py": {
+      "blob": "390da042c1dc33db4f74afad670ed34805f450f1",
+      "sha256": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+      "bytes": 29853,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_quadrature_diagonal.py": {
+      "blob": "66decccb2c89991581a87f421fd56758078612a4",
+      "sha256": "024426172542aa43b7840d2155de65b599e0c3df1afc4c67bb3121b5e2065c82",
+      "bytes": 17443,
+      "existing": true,
+      "identical": false
+    },
+    "src/common/analytic_fields_3d.py": {
+      "blob": "d7cefe19e7007e040cc1c4f41c6df4ab8b859640",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "bytes": 8267,
+      "existing": true,
+      "identical": true
+    },
+    "src/postprocessing/full3d_reference.py": {
+      "blob": "b26fed775a3cbdf325b005714d48e35e0c76a99b",
+      "sha256": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+      "bytes": 10389,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/fullspace_v17_p3_oracle.py": {
+      "blob": "9edf631a3232960d7150f0f28673e555ad7522db",
+      "sha256": "55e0cffde6463f1e736520a2b289ab565e61c8be3a8650142e59eec8aca21bb4",
+      "bytes": 50184,
+      "existing": true,
+      "identical": false
+    },
+    "src/solvers/hcurl_fixed_trace_element.py": {
+      "blob": "3929a28ef917fb3b16f9dfaf75ff3d53a27975be",
+      "sha256": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+      "bytes": 23133,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/variable_p_degree_plan.py": {
+      "blob": "7c1a6a4d3a5824bdb64d1267ccc5f387cd891b61",
+      "sha256": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "bytes": 14390,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/variable_p_periodic_orbits.py": {
+      "blob": "44e19ca5a92654d24e4f1efadcbe592a0fffb308",
+      "sha256": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+      "bytes": 30848,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/variable_p_transfer.py": {
+      "blob": "36e12ba3543965dfcc7dc8a6a4cd1e954b1d82d3",
+      "sha256": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "bytes": 12235,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/stage4_local_h.py": {
+      "blob": "f35b7516e9b5c518513816669916520778b83e25",
+      "sha256": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "bytes": 30930,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/hcurl_variable_p_assembly.py": {
+      "blob": "0f45ece2e75a2a673ba3e531c35178b1d61e972f",
+      "sha256": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+      "bytes": 76894,
+      "existing": true,
+      "identical": true
+    },
+    "src/common/materials.py": {
+      "blob": "901a4df9404c65449c918bb37a47ca0a2200c61f",
+      "sha256": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+      "bytes": 1594,
+      "existing": true,
+      "identical": true
+    },
+    "src/common/pml.py": {
+      "blob": "ff51bb5f5ccd1b651759a528dfde817305de4777",
+      "sha256": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+      "bytes": 3076,
+      "existing": true,
+      "identical": true
+    },
+    "src/constraints/floquet_constraint.py": {
+      "blob": "6eea9638dd552d814cca7f9178725916b752f657",
+      "sha256": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+      "bytes": 21068,
+      "existing": true,
+      "identical": true
+    },
+    "src/geometry/mesh_builder.py": {
+      "blob": "9499f74744dee2967b96ad4f8c4c44894aa0d582",
+      "sha256": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+      "bytes": 7786,
+      "existing": true,
+      "identical": true
+    },
+    "src/postprocessing/power_metrics.py": {
+      "blob": "e426a6b5b0bc14666a1e80e4ecf7713ab835dba7",
+      "sha256": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+      "bytes": 55522,
+      "existing": true,
+      "identical": true
+    },
+    "src/postprocessing/postprocess.py": {
+      "blob": "1f168e6e54e53ed2fde514bd5b9342b4033b19a0",
+      "sha256": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+      "bytes": 22226,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/fast_custom_element_ufl.py": {
+      "blob": "88c7af2a00e9b2688da7fe344c0ed241333a0672",
+      "sha256": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+      "bytes": 16507,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/fixed_trace_element_cache.py": {
+      "blob": "e98a2d827d7d42ae6731106dd91e7abd09c18020",
+      "sha256": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "bytes": 25501,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/variable_p_entity_map.py": {
+      "blob": "e9a83b81c4391291d99fe76e5bffde3732f3a4ff",
+      "sha256": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "bytes": 16074,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/exact_sequence_variable_p.py": {
+      "blob": "ed36c062c5ae4699966ff7bc74eb4091cee5e358",
+      "sha256": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "bytes": 38064,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": {
+      "blob": "62f0c713ec532526a8a48867cc1c80ec5feacf15",
+      "sha256": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "bytes": 18676,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/dyadic_hexa_refinement.py": {
+      "blob": "3aeb6b33ca6aed3c65d0f6a8102ef918c89e19e0",
+      "sha256": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "bytes": 30917,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/hcurl_broken_cell_trace.py": {
+      "blob": "c87f7b146915bea2a806f8f1a105dbd164197b1e",
+      "sha256": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "bytes": 86593,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/hcurl_broken_trace_graph.py": {
+      "blob": "439ea0c4f9dd669e544a835d3584d06113479124",
+      "sha256": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "bytes": 36667,
+      "existing": true,
+      "identical": true
+    },
+    "src/solvers/hcurl_variable_p_local.py": {
+      "blob": "6c434c1a657c47fd23eea69afdb8bbeecc4dade1",
+      "sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "bytes": 6768,
+      "existing": true,
+      "identical": true
+    },
+    "src/postprocessing/near_field_2d.py": {
+      "blob": "5e7c2d9d535803559ebccd4be0cb3cf951f4fcb4",
+      "sha256": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+      "bytes": 1999,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/hcurl_hanging_trace.py": {
+      "blob": "6be221e85ef0ce724654dc1d0b4d823cfec0de26",
+      "sha256": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "bytes": 51363,
+      "existing": true,
+      "identical": true
+    },
+    "src/adaptivity/hcurl_trace_constraint_graph.py": {
+      "blob": "a41ba251413c3850c7ca1efcaa791038fc7bce5a",
+      "sha256": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "bytes": 21218,
+      "existing": true,
+      "identical": true
+    }
+  },
+  "local_source_identity": "new committed Task042 SHA; differences to donor not claimed equivalent by hash",
+  "migration_reason": "only native entity/Fourier transforms and unchanged published outer FGMRES, public local Full3D constructors; no donor CLI or old authority scientific package"
+}

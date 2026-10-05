@@ -1,0 +1,100 @@
+{
+  "geometry": {
+    "scale_fraction": "7/135",
+    "cells": 80,
+    "axes_nm": {
+      "x": [
+        0.0,
+        0.8555555555555555,
+        1.2962962962962963,
+        1.737037037037037,
+        2.5925925925925926
+      ],
+      "y": [
+        0.0,
+        0.32407407407407407,
+        0.6481481481481481,
+        0.9722222222222222,
+        1.2962962962962963
+      ],
+      "z": [
+        -0.5185185185185185,
+        0.0,
+        2.074074074074074,
+        4.148148148148148,
+        6.222222222222222,
+        6.7407407407407405
+      ]
+    },
+    "notch_box_nm": [
+      1.2962962962962963,
+      1.737037037037037,
+      0.32407407407407407,
+      0.9722222222222222,
+      2.074074074074074,
+      4.148148148148148
+    ],
+    "notch_expected_changed_cells": 2,
+    "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+  },
+  "materials": {
+    "canonical_table": "input/materials/si_optical_constants_v1.json",
+    "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "Si_n": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon": "n*n",
+    "mu_r": [
+      1.0,
+      0.0
+    ]
+  },
+  "incidence": {
+    "wavelength_nm": 0.7,
+    "grazing_deg": 1.0,
+    "azimuth_deg": 5.0,
+    "polarization": "s",
+    "amplitude": [
+      1.0,
+      0.0
+    ]
+  },
+  "discretization": {
+    "degree": 4,
+    "cell": "hexahedron",
+    "expected_native": 17204,
+    "expected_FE_independent": 15872,
+    "expected_trace": 7232,
+    "expected_internal": 8640,
+    "volume_quadrature": "original UFL automatic estimate from published physical forms, actual kernels recorded",
+    "surface_quadrature_rule": "max(10, 2*p+max(abs(m),abs(n))+6)",
+    "surface_quadrature_degree": 23
+  },
+  "boundary": {
+    "Floquet": "xy complex high order canonical moments",
+    "manual_m": [
+      -9,
+      9
+    ],
+    "manual_n": [
+      -3,
+      3
+    ],
+    "sides": [
+      "top",
+      "bottom"
+    ],
+    "polarizations": [
+      "s",
+      "p"
+    ],
+    "complete_modes": 532,
+    "all_q": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

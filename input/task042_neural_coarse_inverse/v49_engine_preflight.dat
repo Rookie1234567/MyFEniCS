@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v49]
+stage = "PREFLIGHT"
+run_id = "task042_v49_engine_preflight"
