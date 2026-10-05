@@ -1328,6 +1328,6 @@
   ],
   "resource_receipt_finalization_elapsed_since_batch_origin_seconds": 7166.0770633011125,
   "unfinalized_setup_raw_entries": [],
-  "unfinalized_setup_cost_treatment": "both failed preworker entries share final consumer origin; their known failure spans are contained in the final1289.617945s interval; raw entries are preserved, no live worker inferred and no cost erased",
+  "unfinalized_setup_cost_treatment": "observed0 unfinalized entries: every raw charge has a saved endpoint. Failed preparation and final consumer share original origin, so use interval union rather than add overlapping durations; no live worker inferred and no cost erased",
   "measured_through_pre_seal_elapsed_seconds": 7883.223014453193
 }
