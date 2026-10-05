@@ -1,0 +1,464 @@
+{
+  "schema": "task042.review48.docs.v1",
+  "UTC": "2026-10-05T05:07:50.787504+00:00",
+  "reviewed_HEAD": "d9121ce635c4d4c3a7dc3933ca8a60d71eab6f32",
+  "expected_report": "review_report_v48.md",
+  "actual_report": "review_report_v48.md",
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v48.md",
+      "name": "review_report_v48.md",
+      "sha256": "c964439999d9516a1f38cd8b79325675b39e91cc377d330100d092658f304959",
+      "bytes": 31978,
+      "tables": [
+        {
+          "line": 17,
+          "columns": 2
+        },
+        {
+          "line": 30,
+          "columns": 2
+        },
+        {
+          "line": 44,
+          "columns": 4
+        },
+        {
+          "line": 60,
+          "columns": 3
+        },
+        {
+          "line": 75,
+          "columns": 5
+        },
+        {
+          "line": 86,
+          "columns": 5
+        },
+        {
+          "line": 108,
+          "columns": 2
+        },
+        {
+          "line": 192,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 9,
+          "path": "response_v49.md"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/complete_scattering_engine_anchor_v49.md"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/delivery_index_v49.json"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/raw_archive_index_v49.json"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/post_settlement_archive_v49.json"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/source_bindings_v49.json"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/array_inventory_v49.json"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/review_v48_independent_checks.json"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/review_v48_metadata_audit.py.gz"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/review_v48_repository_index.gz"
+        },
+        {
+          "line": 28,
+          "path": "outcomes/records/review_v48_documentation_checks.json"
+        },
+        {
+          "line": 69,
+          "path": "outcomes/records/p_increment_v49.json"
+        }
+      ],
+      "math_fences": [
+        {
+          "line": 172,
+          "value": "```math"
+        },
+        {
+          "line": 174,
+          "value": "```"
+        }
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v47.md",
+      "name": "review_report_v47.md",
+      "sha256": "ff656bb9de85be4089b4a5fbe83005fb39c22ce413c22b50d4cbf4695e1ead2a",
+      "bytes": 28878,
+      "tables": [
+        {
+          "line": 42,
+          "columns": 3
+        },
+        {
+          "line": 69,
+          "columns": 2
+        },
+        {
+          "line": 83,
+          "columns": 2
+        },
+        {
+          "line": 180,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 40,
+          "path": "review_report_v46.md"
+        },
+        {
+          "line": 40,
+          "path": "response_v48.md"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/summary.md"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/full_moment_hierarchy_v45.md"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/trace_subspace_selection_v47.md"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/lossless_vector_storage_v48.md"
+        }
+      ],
+      "math_fences": [
+        {
+          "line": 11,
+          "value": "```text"
+        },
+        {
+          "line": 32,
+          "value": "```"
+        },
+        {
+          "line": 115,
+          "value": "```math"
+        },
+        {
+          "line": 120,
+          "value": "```"
+        },
+        {
+          "line": 168,
+          "value": "```math"
+        },
+        {
+          "line": 170,
+          "value": "```"
+        },
+        {
+          "line": 208,
+          "value": "```bash"
+        },
+        {
+          "line": 217,
+          "value": "```"
+        },
+        {
+          "line": 239,
+          "value": "```bash"
+        },
+        {
+          "line": 241,
+          "value": "```"
+        }
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v49.md",
+      "name": "response_v49.md",
+      "sha256": "a0367a5edbaa15edb7e4420c694539ac4554df2c7c2f2ce8687e754260a62e33",
+      "bytes": 5219,
+      "tables": [
+        {
+          "line": 7,
+          "columns": 5
+        },
+        {
+          "line": 17,
+          "columns": 3
+        }
+      ],
+      "local_links": [
+        {
+          "line": 3,
+          "path": "review_report_v47.md"
+        },
+        {
+          "line": 15,
+          "path": "outcomes/complete_scattering_engine_anchor_v49.md"
+        },
+        {
+          "line": 23,
+          "path": "outcomes/records/cold_n1_costs_v49.json"
+        },
+        {
+          "line": 23,
+          "path": "outcomes/records/resource_costs_final_v49.json"
+        },
+        {
+          "line": 25,
+          "path": "outcomes/records/run_index_v49.json"
+        },
+        {
+          "line": 25,
+          "path": "outcomes/records/delivery_index_v49.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/repair_journal_v49.jsonl"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/tests_v49.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/documentation_checks_v49.json"
+        },
+        {
+          "line": 31,
+          "path": "outcomes/records/opportunity_decision_v49.json"
+        }
+      ],
+      "math_fences": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/complete_scattering_engine_anchor_v49.md",
+      "name": "complete_scattering_engine_anchor_v49.md",
+      "sha256": "432034b62319c0bc86cca3416a3daa827034dbd2c51b820536b51fbfda1874aa",
+      "bytes": 19408,
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 2
+        },
+        {
+          "line": 36,
+          "columns": 2
+        },
+        {
+          "line": 60,
+          "columns": 7
+        },
+        {
+          "line": 70,
+          "columns": 7
+        },
+        {
+          "line": 80,
+          "columns": 8
+        },
+        {
+          "line": 94,
+          "columns": 3
+        },
+        {
+          "line": 110,
+          "columns": 6
+        },
+        {
+          "line": 118,
+          "columns": 6
+        },
+        {
+          "line": 143,
+          "columns": 3
+        },
+        {
+          "line": 157,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 12,
+          "path": "../review_report_v47.md"
+        },
+        {
+          "line": 18,
+          "path": "../../../input/task042_neural_coarse_inverse/scattering_anchor_v49.json"
+        },
+        {
+          "line": 19,
+          "path": "../../../input/materials/si_optical_constants_v1.json"
+        },
+        {
+          "line": 32,
+          "path": "records/physical_identity_bindings_v49.json"
+        },
+        {
+          "line": 32,
+          "path": "records/physical_cases_v49.json"
+        },
+        {
+          "line": 34,
+          "path": "records/engine_source_manifest_v49.json"
+        },
+        {
+          "line": 34,
+          "path": "records/source_bindings_v49.json"
+        },
+        {
+          "line": 54,
+          "path": "records/object_lifetimes_v49.json"
+        },
+        {
+          "line": 58,
+          "path": "records/finite_independent_checks_v49.json"
+        },
+        {
+          "line": 68,
+          "path": "records/complete_physical_results_v49.json"
+        },
+        {
+          "line": 68,
+          "path": "records/array_inventory_v49.json"
+        },
+        {
+          "line": 92,
+          "path": "records/p_increment_v49.json"
+        },
+        {
+          "line": 108,
+          "path": "records/cold_n1_costs_v49.json"
+        },
+        {
+          "line": 131,
+          "path": "records/resource_costs_final_v49.json"
+        },
+        {
+          "line": 131,
+          "path": "records/repair_journal_v49.jsonl"
+        },
+        {
+          "line": 131,
+          "path": "records/raw_archive_index_v49.json"
+        },
+        {
+          "line": 131,
+          "path": "records/post_settlement_archive_v49.json"
+        },
+        {
+          "line": 153,
+          "path": "records/opportunity_decision_v49.json"
+        },
+        {
+          "line": 168,
+          "path": "records/tests_v49.json"
+        },
+        {
+          "line": 168,
+          "path": "records/documentation_checks_v49.json"
+        },
+        {
+          "line": 170,
+          "path": "records/run_index_v49.json"
+        },
+        {
+          "line": 170,
+          "path": "records/delivery_index_v49.json"
+        },
+        {
+          "line": 170,
+          "path": "records/engine_source_manifest_v49.json"
+        },
+        {
+          "line": 170,
+          "path": "records/source_bindings_v49.json"
+        },
+        {
+          "line": 170,
+          "path": "records/changed_files_v49.json"
+        }
+      ],
+      "math_fences": [
+        {
+          "line": 139,
+          "value": "```math"
+        },
+        {
+          "line": 141,
+          "value": "```"
+        }
+      ]
+    }
+  ],
+  "historical_review47_and_response49_outcome_unchanged": true,
+  "README": {
+    "path": "docs/task042_neural_coarse_inverse/README.md",
+    "sha256": "21dbf3a697ad8ee9c7f69caab5e8171af43d662d9076b4affe328ee1a05e872c",
+    "old_suffix_sha256": "125d092baeccc62130cc2d282e17f7ed124668179f8ff015df355ca151d7f372",
+    "old_suffix_preserved": true,
+    "new_prefix_links": [
+      "review_report_v48.md",
+      "outcomes/records/review_v48_independent_checks.json",
+      "outcomes/records/review_v48_documentation_checks.json",
+      "outcomes/complete_scattering_engine_anchor_v49.md"
+    ]
+  },
+  "review_archive_hashes": [
+    {
+      "path": "review_v48_repository_index.gz",
+      "sha256": "ed8229d2ce5ce9c9a0caa57ef79b7f9dc489483fd9b61ce7a322fb3a6bdc8d63",
+      "raw_sha256": "3d155d07eccb51b698d0f09ec2430b8ba47904e3b2ebba18655b73c0f402f437",
+      "raw_bytes": 4328406
+    },
+    {
+      "path": "review_v48_metadata_audit.py.gz",
+      "sha256": "6fe324cfc9d0a0c4d25e519a6eb8302d2dbe6ad503a981d38d557dd56ef2c31f",
+      "raw_sha256": "3ae361c39937a3e3ccea4e26629fed7dfd8e888a86c317ad2c3287ce4ed98b5b",
+      "raw_bytes": 12311
+    }
+  ],
+  "unittest": {
+    "command": "python -m unittest -q src.test.test_26_documentation_contract",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.046s\n\nOK\n",
+    "elapsed_seconds": 0.32063701818697155,
+    "scope": "pure stdlib documentation only, no FE"
+  },
+  "diff_check": "PASS",
+  "source_edits": false,
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN",
+  "script": "import gzip,hashlib,json,re,subprocess,sys,time\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nfrom urllib.parse import unquote\nroot=Path.cwd();d=root/'docs/task042_neural_coarse_inverse';r=d/'outcomes/records'\nbase='d9121ce635c4d4c3a7dc3933ca8a60d71eab6f32';version=48\nreport=d/f'review_report_v{version}.md';record=r/f'review_v{version}_documentation_checks.json';record.write_text('{}\\n')\ndef sha(b):return hashlib.sha256(b).hexdigest()\ndef git(*a):return subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false',*a])\nassert report.read_text().startswith('# Review V48：')\nold=git('show',base+':docs/task042_neural_coarse_inverse/README.md');assert (d/'README.md').read_bytes().endswith(old)\nchecked=[]\nfiles=(report,d/'review_report_v47.md',d/'response_v49.md',d/'outcomes/complete_scattering_engine_anchor_v49.md')\nfor p in files:\n if p!=report:assert p.read_bytes()==git('show',base+':'+str(p.relative_to(root)))\n tables=[];links=[];fences=[];inside=False;width=None\n for i,line in enumerate(p.read_text().splitlines(),1):\n  assert not any(ord(c)<32 and c!='\\t' for c in line),(p,i)\n  if line.startswith('```'):inside=not inside;fences.append(dict(line=i,value=line));continue\n  if inside:continue\n  assert '$$' not in line and '\\\\[' not in line and '\\\\]' not in line,(p,i)\n  if line.startswith('|'):\n   count=len(re.split(r'(?<!\\\\)\\|',line))-2\n   if width is None:tables.append(dict(line=i,columns=count));width=count\n   assert count==width,(p,i,count,width)\n  else:width=None\n  for label,url in re.findall(r'\\[([^\\]]+)\\]\\(([^)]+)\\)',line):\n   if url.startswith(('https://','http://','app:','#')):continue\n   assert (p.parent/unquote(url.split('#')[0])).resolve().exists(),(p,i,url)\n   links.append(dict(line=i,path=url))\n assert not inside\n checked.append(dict(path=str(p.relative_to(root)),name=p.name,sha256=sha(p.read_bytes()),bytes=p.stat().st_size,tables=tables,local_links=links,math_fences=fences))\nassert [v['name'] for v in checked]==['review_report_v48.md','review_report_v47.md','response_v49.md','complete_scattering_engine_anchor_v49.md']\nprefix=(d/'README.md').read_bytes()[:-len(old)].decode();prefix_links=[]\nfor label,url in re.findall(r'\\[([^\\]]+)\\]\\(([^)]+)\\)',prefix):\n assert (d/url).exists(),url\n prefix_links.append(url)\nstarted=time.perf_counter();t=subprocess.run([sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],capture_output=True,text=True);elapsed=time.perf_counter()-started;assert t.returncode==0,t.stdout+t.stderr\ngit('diff','--check');assert not git('diff','--name-only','--','src','benchmarks','scripts','input')\narchives=[]\nfor source,name in [(root/'tmp/task042/review_v48/repository_index.json','review_v48_repository_index.gz'),(Path('/tmp/task042_review48_audit.py'),'review_v48_metadata_audit.py.gz')]:\n b=(r/name).read_bytes();raw=gzip.decompress(b);assert raw==source.read_bytes();archives.append(dict(path=name,sha256=sha(b),raw_sha256=sha(raw),raw_bytes=len(raw)))\nout=dict(schema='task042.review48.docs.v1',UTC=datetime.now(timezone.utc).isoformat(),reviewed_HEAD=base,expected_report='review_report_v48.md',actual_report=checked[0]['name'],files=checked,historical_review47_and_response49_outcome_unchanged=True,README=dict(path=str((d/'README.md').relative_to(root)),sha256=sha((d/'README.md').read_bytes()),old_suffix_sha256=sha(old),old_suffix_preserved=True,new_prefix_links=prefix_links),review_archive_hashes=archives,unittest=dict(command='python -m unittest -q src.test.test_26_documentation_contract',returncode=t.returncode,stdout=t.stdout,stderr=t.stderr,elapsed_seconds=elapsed,scope='pure stdlib documentation only, no FE'),diff_check='PASS',source_edits=False,GitHub_visual='NOT_VERIFIED_CACHE_MISS',CI='NOT_RUN',script=Path(__file__).read_text())\nrecord.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\\n');print(json.dumps(dict(actual_reports=[c['name'] for c in checked],table_counts=[len(c['tables']) for c in checked],links=[len(c['local_links']) for c in checked],tests=t.stderr.strip(),diff_check='PASS'),ensure_ascii=False,indent=2))\n"
+}

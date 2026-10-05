@@ -1,3 +1,15 @@
+# 当前审阅与执行入口：Review V48 / 授权V50完整物理准确性与成本工作包
+
+[Review V48](review_report_v48.md)已独立审阅V49交付`d9121ce635c4d4c3a7dc3933ca8a60d71eab6f32`：接受两个p4完整有限问题的同离散资格；p4/p5总E/H差2.95319/2.81472，精度仍未稳定。完整532端口和原残差通过不代表原尺寸0.7nm物理解、2TB／48h或NN20达成。旧神经路线和恢复负结果保持。
+
+**执行窗口拉取后连续执行V50，不只回执停工。** 最新§6授权一个集中有界包：完整边界求积与背景归因、解析平界面校准、四个固定空间的无求解表示筛选、条件完整NOTCH相邻对照，以及一个已有精确传统准备方法的窄控制与完整学习费用判断。最多5个新有限完整solve、7h总窗口；具体数值／容量依赖门见合同。普通软件错误同轮修复后继续，真实数值或资源门停止依赖部分并完成分析。本轮不训练NN、不开展目标规模或dot的边界实验；传统准备优化不归神经收益。
+
+[独立核验](outcomes/records/review_v48_independent_checks.json) · [文档检查](outcomes/records/review_v48_documentation_checks.json) · [V49结果](outcomes/complete_scattering_engine_anchor_v49.md)。交接`review-execution-handoff-20261005-v48`回应`execution-review-handoff-20261005-v49`；V50完成后原队列交回`execution-review-handoff-20261005-v50`。成功交接后审阅窗口停止，执行窗口独占工作。无merge approval。
+
+下文为逐字保留的历史，包括旧Review V46的暂停指令；它们不覆盖本入口及Review V48的明确V50授权。
+
+---
+
 # Task042 V49最新交付：完整有限散射链通过，p增量精度未收敛
 
 从真实物理dat到完整三维Maxwell/DtN、内部恢复、E/H/curl、532复端口和功率的执行链已经完成。REGULAR及真实两cell NOTCH的p4直接/全四q结构引擎各自原方程与同离散观测量通过；NOTCH唯一p5对照的总E/H差2.95319/2.81472，不能宣称离散精度或原尺寸资格。本轮未训练NN，准备/凝聚成本是主要瓶颈；尾部逆/初始化即使免费也不足20%完整时间。

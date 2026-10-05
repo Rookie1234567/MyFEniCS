@@ -1,0 +1,758 @@
+{
+  "schema": "task042.review48.independent.v1",
+  "reviewed_HEAD": "d9121ce635c4d4c3a7dc3933ca8a60d71eab6f32",
+  "review47_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+  "delivery_records": 22,
+  "archive_versions_by_index": [
+    784,
+    941
+  ],
+  "current_raw_paths": 939,
+  "missing": [],
+  "self_referential_index_versions": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_index_v49.json",
+      "current_sha256": "4a9a98db23c0a66b6244891c76b6f31fc91053c790656c19d312fa3dd13d652f",
+      "archived_prior_hashes": [
+        "834e45936c1f15c38e313f3bfb172b5cb73f1c807b6132ad2084bacea72a4ea5"
+      ],
+      "scope": "self-referential final index; final HEAD and delivery bindings, not a scientific array mismatch"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/post_settlement_archive_v49.json",
+      "current_sha256": "23c01e9dc337781118e29da98a6ead47488bff68c53b036ae165f166ba4efbbb",
+      "archived_prior_hashes": [
+        "c2d36665ba82f173d5694f6a9efb55906aa21ce1c16cc9a58af21d4a497aeaed"
+      ],
+      "scope": "self-referential final index; final HEAD and delivery bindings, not a scientific array mismatch"
+    }
+  ],
+  "unexplained_unmatched": [],
+  "source_bindings_verified": 1215,
+  "NPZ_files": 22,
+  "NPZ_members": 240,
+  "NPZ_payload_bytes": 44695092,
+  "NPZ_records": [
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T030919475064Z/all4q_witness.npz",
+      "members": [
+        "FE_rhs",
+        "port_rhs",
+        "u",
+        "port",
+        "augmented_residual",
+        "port_residual",
+        "eliminated_u",
+        "manufactured_u",
+        "manufactured_port",
+        "port_H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T030919475064Z/audit_vectors.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T030919475064Z/fields.npz",
+      "members": [
+        "E_total",
+        "E_scattered",
+        "curl_total",
+        "curl_scattered",
+        "H_total",
+        "H_scattered",
+        "field_coordinates",
+        "selected_points",
+        "selected_E_total",
+        "selected_E_scattered",
+        "selected_H_total",
+        "selected_H_scattered",
+        "selected_curl_total",
+        "selected_curl_scattered"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T030919475064Z/solution.npz",
+      "members": [
+        "u_storage",
+        "port",
+        "rhs",
+        "independent",
+        "slaves",
+        "cell_centers",
+        "cell_tags",
+        "regular_tags",
+        "geometry_x",
+        "geometry_dofmap"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_reference_notch_p5_20261005T035027359896Z/fields.npz",
+      "members": [
+        "E_total",
+        "E_scattered",
+        "curl_total",
+        "curl_scattered",
+        "H_total",
+        "H_scattered",
+        "field_coordinates",
+        "selected_points",
+        "selected_E_total",
+        "selected_E_scattered",
+        "selected_H_total",
+        "selected_H_scattered",
+        "selected_curl_total",
+        "selected_curl_scattered"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_reference_notch_p5_20261005T035027359896Z/solution.npz",
+      "members": [
+        "u_storage",
+        "port",
+        "rhs",
+        "independent",
+        "slaves",
+        "cell_centers",
+        "cell_tags",
+        "regular_tags",
+        "geometry_x",
+        "geometry_dofmap",
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_reference_notch_20261005T024226716124Z/fields.npz",
+      "members": [
+        "E_total",
+        "E_scattered",
+        "curl_total",
+        "curl_scattered",
+        "H_total",
+        "H_scattered",
+        "field_coordinates",
+        "selected_points",
+        "selected_E_total",
+        "selected_E_scattered",
+        "selected_H_total",
+        "selected_H_scattered",
+        "selected_curl_total",
+        "selected_curl_scattered"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_reference_notch_20261005T024226716124Z/solution.npz",
+      "members": [
+        "u_storage",
+        "port",
+        "rhs",
+        "independent",
+        "slaves",
+        "cell_centers",
+        "cell_tags",
+        "regular_tags",
+        "geometry_x",
+        "geometry_dofmap",
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T024732634825Z/all4q_witness.npz",
+      "members": [
+        "FE_rhs",
+        "port_rhs",
+        "u",
+        "port",
+        "augmented_residual",
+        "port_residual",
+        "eliminated_u"
+      ],
+      "member_receipt": false
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T025418954954Z/all4q_witness.npz",
+      "members": [
+        "FE_rhs",
+        "port_rhs",
+        "u",
+        "port",
+        "augmented_residual",
+        "port_residual",
+        "eliminated_u",
+        "manufactured_u",
+        "manufactured_port",
+        "port_H"
+      ],
+      "member_receipt": false
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_accuracy_cost_report_20261005T040552399628Z/P5_original_independent_audit.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H",
+        "interior_only_volume_action",
+        "trace_only_volume_action",
+        "interior_rows"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_notch_20261005T031205654041Z/all4q_witness.npz",
+      "members": [
+        "FE_rhs",
+        "port_rhs",
+        "u",
+        "port",
+        "augmented_residual",
+        "port_residual",
+        "eliminated_u",
+        "manufactured_u",
+        "manufactured_port",
+        "port_H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_notch_20261005T031205654041Z/audit_vectors.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_notch_20261005T031205654041Z/fields.npz",
+      "members": [
+        "E_total",
+        "E_scattered",
+        "curl_total",
+        "curl_scattered",
+        "H_total",
+        "H_scattered",
+        "field_coordinates",
+        "selected_points",
+        "selected_E_total",
+        "selected_E_scattered",
+        "selected_H_total",
+        "selected_H_scattered",
+        "selected_curl_total",
+        "selected_curl_scattered"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_engine_notch_20261005T031205654041Z/solution.npz",
+      "members": [
+        "u_storage",
+        "port",
+        "rhs",
+        "independent",
+        "slaves",
+        "cell_centers",
+        "cell_tags",
+        "regular_tags",
+        "geometry_x",
+        "geometry_dofmap"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/REGULAR_REFERENCE_independent_audit.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": false
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/NOTCH_REFERENCE_independent_audit.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": false
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/REGULAR_CANDIDATE_independent_audit.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": false
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/NOTCH_CANDIDATE_independent_audit.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": false
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_reference_regular_20261005T023830942849Z/fields.npz",
+      "members": [
+        "E_total",
+        "E_scattered",
+        "curl_total",
+        "curl_scattered",
+        "H_total",
+        "H_scattered",
+        "field_coordinates",
+        "selected_points",
+        "selected_E_total",
+        "selected_E_scattered",
+        "selected_H_total",
+        "selected_H_scattered",
+        "selected_curl_total",
+        "selected_curl_scattered"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_reference_regular_20261005T023830942849Z/solution.npz",
+      "members": [
+        "u_storage",
+        "port",
+        "rhs",
+        "independent",
+        "slaves",
+        "cell_centers",
+        "cell_tags",
+        "regular_tags",
+        "geometry_x",
+        "geometry_dofmap",
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H"
+      ],
+      "member_receipt": true
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v49/task042_v49_accuracy_cost_report_20261005T040011674378Z/P5_original_independent_audit.npz",
+      "members": [
+        "residual",
+        "volume_action",
+        "coupling_action",
+        "augmented_residual",
+        "port_residual",
+        "projected",
+        "H",
+        "interior_only_volume_action",
+        "trace_only_volume_action",
+        "interior_rows"
+      ],
+      "member_receipt": false
+    }
+  ],
+  "member_receipts_found": 15,
+  "saved_array_norms_recomputed": [
+    {
+      "stage": "REFERENCE_REGULAR",
+      "saved_original_true": 1.776046125875458e-12,
+      "saved_augmented": 1.5046530712941761e-12,
+      "saved_port": 9.976038112979064e-14,
+      "all_modes": 532,
+      "energy_error": -4.238983719595524e-09,
+      "changed_cells": []
+    },
+    {
+      "stage": "REFERENCE_NOTCH",
+      "saved_original_true": 1.5678417159614912e-12,
+      "saved_augmented": 1.3270569342377522e-12,
+      "saved_port": 1.2315103962463163e-13,
+      "all_modes": 532,
+      "energy_error": -4.239629314284343e-09,
+      "changed_cells": [
+        38,
+        52
+      ]
+    },
+    {
+      "stage": "ENGINE_REGULAR",
+      "saved_original_true": 9.112582337275872e-13,
+      "saved_augmented": 9.112582100539202e-13,
+      "saved_port": 4.098041891555941e-18,
+      "all_modes": 532,
+      "energy_error": -4.238981610171777e-09,
+      "changed_cells": []
+    },
+    {
+      "stage": "ENGINE_NOTCH",
+      "saved_original_true": 8.03862329552053e-12,
+      "saved_augmented": 8.038623292836027e-12,
+      "saved_port": 1.3075170660334684e-16,
+      "all_modes": 532,
+      "energy_error": -4.239635864600189e-09,
+      "changed_cells": [
+        38,
+        52
+      ]
+    },
+    {
+      "stage": "REFERENCE_NOTCH_P5",
+      "saved_original_true": 2.5759033957755938e-12,
+      "saved_augmented": 1.8387295404896088e-12,
+      "saved_port": 2.429158526306038e-14,
+      "all_modes": 532,
+      "energy_error": -5.033161221135174e-09,
+      "changed_cells": [
+        38,
+        52
+      ]
+    }
+  ],
+  "p_increment_fields": {
+    "E_total": {
+      "reference_L2": 0.11337589424112537,
+      "difference_L2": 0.33482059446216383,
+      "mixed_relative": 2.953190329419362
+    },
+    "scaled_curl_total": {
+      "reference_L2": 0.12024311764960689,
+      "difference_L2": 0.3384505645384068,
+      "mixed_relative": 2.814718805983265
+    },
+    "H_total": {
+      "reference_L2": 0.12024311764960689,
+      "difference_L2": 0.3384505645384068,
+      "mixed_relative": 2.814718805983265
+    },
+    "E_scattered": {
+      "reference_L2": 5.367980079988659,
+      "difference_L2": 1.0362582669599363,
+      "mixed_relative": 0.19304435775069526
+    },
+    "scaled_curl_scattered": {
+      "reference_L2": 5.547915410274681,
+      "difference_L2": 1.5970261612332335,
+      "mixed_relative": 0.28786058242264434
+    },
+    "H_scattered": {
+      "reference_L2": 5.547915410274681,
+      "difference_L2": 1.5970261612332335,
+      "mixed_relative": 0.28786058242264434
+    }
+  },
+  "cold_costs_recomputed": [
+    {
+      "stage": "REFERENCE_REGULAR",
+      "cold_N1_lower": 118.67280561500229,
+      "exclusive_seconds": {
+        "mesh_MPC": 0.45265128603205085,
+        "JIT_tensor_CD_H_original_action": 22.833945193095133,
+        "physical_RHS": 3.4084512940607965,
+        "condensation_local_factors": 73.15984981600195,
+        "global_finite_factor_setup": 1.8043670109473169,
+        "solve_and_minimal_internal_recovery": 0.0916947100777179,
+        "original_audit": 0.3551343090366572,
+        "field_EH_curl_output": 6.344988280907273,
+        "all532_modes_power_absorption": 2.96662575006485
+      },
+      "factor_inventory": {
+        "global_finite_authority": 1,
+        "bounded_four_q_factors": 0,
+        "local_class_LU_counts": [
+          29
+        ]
+      }
+    },
+    {
+      "stage": "REFERENCE_NOTCH",
+      "cold_N1_lower": 71.54798732511699,
+      "exclusive_seconds": {
+        "mesh_MPC": 0.35943176108412445,
+        "JIT_tensor_CD_H_original_action": 2.9143052441067994,
+        "physical_RHS": 0.012852410087361932,
+        "condensation_local_factors": 58.94355651317164,
+        "global_finite_factor_setup": 1.8288561808876693,
+        "solve_and_minimal_internal_recovery": 0.1654615318402648,
+        "original_audit": 0.4401996999513358,
+        "field_EH_curl_output": 0.3021492219995707,
+        "all532_modes_power_absorption": 0.35287623293697834
+      },
+      "factor_inventory": {
+        "global_finite_authority": 1,
+        "bounded_four_q_factors": 0,
+        "local_class_LU_counts": [
+          30
+        ]
+      }
+    },
+    {
+      "stage": "ENGINE_REGULAR",
+      "cold_N1_lower": 137.5220627519302,
+      "exclusive_seconds": {
+        "mesh_MPC": 0.39900016295723617,
+        "JIT_tensor_CD_H_original_action": 2.950848942156881,
+        "physical_RHS": 0.012862359173595905,
+        "two_cell_0_setup_carrier": 4.683970054844394,
+        "condensation_local_factors": 111.6895537970122,
+        "two_cell_0_mapping_and_q_factors": 1.2366947170812637,
+        "two_cell_1_setup_carrier": 5.961130369920284,
+        "two_cell_1_mapping_and_q_factors": 1.2067448270972818,
+        "two_cell_all4q_reference_inverse": 0.5608896701596677,
+        "outer_original_FGMRES32": 0.7572094479110092,
+        "original_audit": 0.26248563500121236,
+        "field_EH_curl_output": 0.4851984160486609,
+        "all532_modes_power_absorption": 0.1753266640007496
+      },
+      "factor_inventory": {
+        "global_finite_authority": 0,
+        "bounded_four_q_factors": 4,
+        "local_class_LU_counts": [
+          20,
+          20
+        ]
+      }
+    },
+    {
+      "stage": "ENGINE_NOTCH",
+      "cold_N1_lower": 138.2356442550663,
+      "exclusive_seconds": {
+        "mesh_MPC": 0.3400834212079644,
+        "JIT_tensor_CD_H_original_action": 2.8782566310837865,
+        "physical_RHS": 0.0066527980379760265,
+        "two_cell_0_setup_carrier": 4.690000414848328,
+        "condensation_local_factors": 111.22653273795731,
+        "two_cell_0_mapping_and_q_factors": 1.1427045280579478,
+        "two_cell_1_setup_carrier": 5.635210599983111,
+        "two_cell_1_mapping_and_q_factors": 1.2282226658426225,
+        "two_cell_all4q_reference_inverse": 0.4839006601832807,
+        "notch_original_volume": 0.16028010798618197,
+        "outer_original_FGMRES32": 1.6682518920861185,
+        "original_audit": 0.4116188599728048,
+        "field_EH_curl_output": 0.3086293220985681,
+        "all532_modes_power_absorption": 0.1719663569238037
+      },
+      "factor_inventory": {
+        "global_finite_authority": 0,
+        "bounded_four_q_factors": 4,
+        "local_class_LU_counts": [
+          20,
+          20
+        ]
+      }
+    },
+    {
+      "stage": "REFERENCE_NOTCH_P5",
+      "cold_N1_lower": 463.0651586300228,
+      "exclusive_seconds": {
+        "mesh_MPC": 0.7503012719098479,
+        "JIT_tensor_CD_H_original_action": 49.57649569096975,
+        "physical_RHS": 7.313017826061696,
+        "condensation_local_factors": 367.39171366905794,
+        "global_finite_factor_setup": 6.5804332830011845,
+        "solve_and_minimal_internal_recovery": 0.32846315996721387,
+        "original_audit": 1.0352555999998003,
+        "field_EH_curl_output": 16.681568927131593,
+        "all532_modes_power_absorption": 5.831886298954487
+      },
+      "factor_inventory": {
+        "global_finite_authority": 1,
+        "bounded_four_q_factors": 0,
+        "local_class_LU_counts": [
+          30
+        ]
+      }
+    }
+  ],
+  "resource_samples": 2816,
+  "peak_bytes": 1840844800,
+  "own_swap": 0,
+  "max_sample_gap": 1.6298683870118111,
+  "new_known_lower": 3224.4154990241886,
+  "history_plus_new_lower": 92100.10441544611,
+  "protected_old_task_files": 7237,
+  "old_prefix_history_unchanged": true,
+  "final_tested_doc_hashes_match": true,
+  "scope": "hash/header/complete saved array norms and scalar recomputation only; no FE actions, assembly, solve, training, neural inference, JIT or MPI; review manual/IO costs unsupervised unknown",
+  "UTC": "2026-10-05T05:07:26.143523+00:00",
+  "repository_index": {
+    "tracked_files": 11844,
+    "text_bytes": 126689613,
+    "sha256": "3d155d07eccb51b698d0f09ec2430b8ba47904e3b2ebba18655b73c0f402f437",
+    "scope": "complete tracked byte/hash/navigation scan, repeated after compaction; NOT full repository semantic line-by-line audit",
+    "history_response_count": 49,
+    "history_review_count": 47
+  },
+  "diagnostics": {
+    "selected_saved_field_identity": {
+      "E": {
+        "p4_total_norm": 0.27231092290997366,
+        "p5_total_norm": 0.9993334077686084,
+        "total_difference_norm": 0.7406120391019867,
+        "scattered_difference_norm": 1.20847633095644,
+        "FE_background_difference_norm": 0.8880895869495203,
+        "scattered_square_terms": {
+          "total_difference_squared": 0.5485061924628026,
+          "background_difference_squared": 0.7887031144481698,
+          "cross": 0.1232057355709669
+        },
+        "difference_identity_error": 6.872548610699493e-16,
+        "scope": "same80 cell-center saved samples only; no new FE evaluation, not whole-volume error decomposition"
+      },
+      "H": {
+        "p4_total_norm": 0.2690313537421486,
+        "p5_total_norm": 1.0287207089451653,
+        "total_difference_norm": 0.7960453941551455,
+        "scattered_difference_norm": 2.686739589671586,
+        "FE_background_difference_norm": 2.489650400873952,
+        "scattered_square_terms": {
+          "total_difference_squared": 0.6336882695556211,
+          "background_difference_squared": 6.198359118571828,
+          "cross": 0.3865222345811947
+        },
+        "difference_identity_error": 6.493143620239547e-16,
+        "scope": "same80 cell-center saved samples only; no new FE evaluation, not whole-volume error decomposition"
+      },
+      "curl": {
+        "p4_total_norm": 2.4148197842904313,
+        "p5_total_norm": 9.233775490908043,
+        "total_difference_norm": 7.14528674914799,
+        "scattered_difference_norm": 24.11611816291746,
+        "FE_background_difference_norm": 22.347049741121403,
+        "scattered_square_terms": {
+          "total_difference_squared": 51.05512272754986,
+          "background_difference_squared": 499.3906321321542,
+          "cross": 31.141400388093437
+        },
+        "difference_identity_error": 5.881543852085651e-15,
+        "scope": "same80 cell-center saved samples only; no new FE evaluation, not whole-volume error decomposition"
+      }
+    },
+    "flat_analytic_scalar_control": {
+      "derivation": "r_s=(kz_air-kz_sub)/(kz_air+kz_sub), t_s=2*kz_air/(kz_air+kz_sub), kz_sub passive branch; mu=1",
+      "R_interface": 0.11343340891957432,
+      "T_interface": 0.8865665910804256,
+      "kz_air": 0.15665243385952313,
+      "kz_sub": [
+        0.07780134385941416,
+        0.004478058289365571
+      ],
+      "material_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "scope": "analytic flat background only, not numerical flat solve and not grating/notch truth",
+      "max_incident_phase_span_per_cell_rad": {
+        "x": 7.64906092146131,
+        "y": 0.2534871656238722,
+        "z": 0.3249087517086406
+      }
+    },
+    "original_FE_actions_or_solves": 0,
+    "script": "import cmath,json,math,hashlib\nfrom pathlib import Path\nimport numpy as np\nroot=Path.cwd();art=root/'benchmarks/artifacts/task042/v49'\ndef stage(n):return json.loads(Path(json.loads((art/(n+'.json')).read_text())['path']).read_text())\np4=stage('REFERENCE_NOTCH');p5=stage('REFERENCE_NOTCH_P5');a=np.load(p4['output']['fields']['path']);b=np.load(p5['output']['fields']['path'])\nout={}\nfor field in ('E','H','curl'):\n t4=a['selected_'+field+'_total'];s4=a['selected_'+field+'_scattered'];t5=b['selected_'+field+'_total'];s5=b['selected_'+field+'_scattered']\n dt=t5-t4;ds=s5-s4;dbg=(t5-s5)-(t4-s4)\n cross=2*np.vdot(dt,-dbg).real\n out[field]={'p4_total_norm':float(np.linalg.norm(t4)),'p5_total_norm':float(np.linalg.norm(t5)),'total_difference_norm':float(np.linalg.norm(dt)),'scattered_difference_norm':float(np.linalg.norm(ds)),'FE_background_difference_norm':float(np.linalg.norm(dbg)),\n 'scattered_square_terms':{'total_difference_squared':float(np.vdot(dt,dt).real),'background_difference_squared':float(np.vdot(dbg,dbg).real),'cross':float(cross)},\n 'difference_identity_error':float(np.linalg.norm(ds-(dt-dbg))),\n 'scope':'same80 cell-center saved samples only; no new FE evaluation, not whole-volume error decomposition'}\nn=complex(.999885140474,4.32477054e-6);g=math.radians(1);k0=2*math.pi/.7\nkz1=k0*math.sin(g);kz2=cmath.sqrt((k0*n)**2-(k0*math.cos(g))**2)\nif kz2.imag<0:kz2=-kz2\nrr=(kz1-kz2)/(kz1+kz2);tt=2*kz1/(kz1+kz2)\nflat={'derivation':'r_s=(kz_air-kz_sub)/(kz_air+kz_sub), t_s=2*kz_air/(kz_air+kz_sub), kz_sub passive branch; mu=1','R_interface':abs(rr)**2,'T_interface':kz2.real/kz1*abs(tt)**2,\n 'kz_air':kz1,'kz_sub':[kz2.real,kz2.imag],'material_n':[n.real,n.imag],'scope':'analytic flat background only, not numerical flat solve and not grating/notch truth'}\naxes=json.loads((root/'input/task042_neural_coarse_inverse/scattering_anchor_v49.json').read_text())['physical_descriptor']['geometry']['axes_nm']\nkx=k0*math.cos(g)*math.cos(math.radians(5));ky=k0*math.cos(g)*math.sin(math.radians(5))\nflat['max_incident_phase_span_per_cell_rad']={key:abs(k)*max(np.diff(axes[key])) for key,k in [('x',kx),('y',ky),('z',kz1)]}\nresult={'selected_saved_field_identity':out,'flat_analytic_scalar_control':flat,'original_FE_actions_or_solves':0}\nPath('/tmp/task042_review48_diagnostics.json').write_text(json.dumps(result,indent=2)+'\\n');print(json.dumps(result,indent=2))\n",
+    "script_sha256": "0516cbd20afb98ee7426d42b5d547ea03786394033264f1eb48afe10d0189a4e"
+  },
+  "intake": {
+    "canonical": "/home/fenics/Projects/NN-Lab",
+    "branch": "task42_neural_coarse_inverse",
+    "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+    "local_remote_HEAD_equal": "d9121ce635c4d4c3a7dc3933ca8a60d71eab6f32",
+    "clean": true,
+    "upstream_ahead_behind": [
+      0,
+      0
+    ],
+    "V49_closed": true,
+    "active": null,
+    "own_actor_count": 0,
+    "own_lock_obtained_then_released": true
+  },
+  "activation": {
+    "script": "scripts/activate_task042.sh pure",
+    "mode": "pure",
+    "TASK042_ACTIVATION": "1",
+    "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "FE_import_or_ABI_qualification": "NOT_RUN_NOT_NEEDED_FOR_PURE_METADATA",
+    "reviewer_cost": "manual/IO/unsupervised metadata unknown; documentation test elapsed recorded separately"
+  },
+  "review_audit_development": [
+    "Audit-only first assertion required current bytes to equal a prior raw version even for final self-referential delivery/settlement indices; scope corrected to exactly these two files, final HEAD and delivery hashes verified. No scientific actor rerun.",
+    "Audit-only energy closure floating arithmetic reordered subtraction; corrected comparison to four machine-epsilon absolute bound, not relative to a near-zero 1e-9 closure. Underlying scientific values and gates unchanged.",
+    "Navigation attempted nonexistent review_v47_independent_checks.json; no such file claimed as evidence and no historical file created. Review V47 itself was read."
+  ],
+  "dot_read_only_snapshot": {
+    "sha": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+    "parent": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+    "source": "read-only exact GitHub commit API + real ls-remote; no donor ref mutation",
+    "document": {
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/paired_boundary_support_pilot_v1_zh.md",
+      "git_blob": "586ec44d4d882662c43219ac8d10880ebcd0de70",
+      "text": "# 原尺寸边界支撑验证：完整882路线通过，84压缩未获资格\n\n这次 worker、独立保存数据 checker 和 Library 完整取回均通过。结论限定为原尺寸仿射边界试件的12个选定模式；84行数值压缩没有获资格，24个分量全部回退到完整882行。\n\n试件采用50×25×140 nm、λ=0.7 nm、θ=89°、φ=0°和p6。网格为3×2×3，共18个三维六面体单元，13224个原生存储自由度；它是边界/编译成本试件，不是精度合格网格。完整AUTO清单保持32060个模式；本次选择每侧(0,0)、(-142,-5)、(-85,-35)及其s/p偏振，覆盖上下两侧、x/y切向分量和全部12个端面。\n\n| 实测项目 | 结果 |\n|---|---:|\n| worker总时间 | 148.798 s |\n| worker进程树峰值RSS | 1,033,064,448 B |\n| 独立checker时间 | 3.778 s |\n| checker进程树峰值RSS | 403,435,520 B |\n| degree160原生阶段时间 | 33.452 s |\n| degree168/176公开求值阶段时间 | 67.374 s |\n| helper拥有数组/工作空间上界 | 84,456,500 B |\n| Swap | 0 |\n\n四个degree27实际FFCx分量形式先完成。24个完整FE/MPC/掩码分量控制，以及12个C/D控制，都通过原1e-11双范数门槛后才进入degree160。degree160分量、C双向作用和D泛函，与独立公开Function.eval的degree168/176结果比较；最大积分操作尺度相对缺陷为4.484e-14，参考收敛缺陷为2.200e-14，门槛仍为1e-10。辅助常数积分门槛仍为已披露的1e-12；权重未经归一化。\n\n数学上，p6 N1E六面体端面的切向迹由84个闭包自由度决定。实际Basix系数和原生变换含有很小的浮点项，因此本次没有把798个其余行直接置零。完整882行锚点、逐行误差界、真实MPC双向输运和两次原生产掩码都保留。\n\n数值压缩的负结论同样保留：24/24分量证书的掩码和范数条件均未通过，累计21308个行边界无法由保守界认证。锚点与提议结果的最大实测差为7.24e-13；保守界则远大于该差。最终C/D由完整882分量构造。通过完整路线不能解释为84压缩获得了速度或容量收益。\n\nchecker重放了96次MPC双向投影、96次分量掩码、96个实际误差界包含检查、48次C/D选择重放、72个完整FFCx向量比较及144个公开参考作用量。它没有重新构建基函数列，也没有验证未处理模式。\n\n数据已经完整保存在Library：worker数据389个文件，总759,919,015 B；含清单的390成员ZIP展开为759,987,904 B，压缩为87,590,500 B。355个NPY的文件哈希、头部和安全解析均核实；NPY文件总236,761,856 B，数值载荷236,716,416 B。独立checker包也已完整取回。完整身份、哈希和索引见[紧凑记录](records/boundary_support_pilot_v1/paired_compact_record.json)。\n\n下一步采用完整882流式积分，不放宽压缩证书，也不保存超限全模式图谱。先对代表性实际模式批次实测制表、相位收缩、MPC输运、掩码和参考成本，再决定固定完整32060清单的有界运行。全模式边界能力、体积组装与稀疏因子填充、完整PDE、物理精度以及2 TB/48 h目标均仍未获资格。\n\n本次保持独立云分支范围；原degree160 FFCx编译预算失败、先前辅助常数检查失败和所有历史负结果继续保留。代码与资源身份详见记录中的完整SHA256；canonical源为6dba8257，所有新实验代码均是显式固定的外部源。"
+    },
+    "compact": {
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/boundary_support_pilot_v1/paired_compact_record.json",
+      "git_blob": "3037eff4f12fd62ee66b737f9a8343e40112f21f"
+    },
+    "library_download": false,
+    "numerical_replay": false
+  },
+  "GitHub_visual": "NOT_VERIFIED: exact response_v49.md at reviewed HEAD returned Cache miss; local/source API access does not prove rendered page or CI",
+  "source_edits_by_reviewer": false,
+  "new_FE_actions_or_solves_or_training_by_reviewer": 0,
+  "decision": "Accept V49 two complete finite same-p4 physical comparisons and negative p4/p5 accuracy evidence; authorize bounded V50 complete-physics accuracy attribution/calibration, exact preparation control and NN cost decision. No NN training in V50, no target qualification.",
+  "final_target": "original-size 0.7nm full 3D FE, complete cold time <=172800s, simultaneous peak <=2e12B, NN >=20% same-correctness time or simultaneous peak gain with other compliant: NOT_QUALIFIED"
+}
