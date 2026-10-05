@@ -1,0 +1,52 @@
+{
+  "schema": "task42extra.input_identity_v28",
+  "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+  "input_origin": "independently_validated_v28",
+  "candidate_identity": {
+    "status": "CANDIDATE_PENDING_SCIENTIFIC_QUALIFICATION",
+    "received": false,
+    "candidate_available": true,
+    "manifest_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/input/mode_manifest.json",
+    "manifest_bytes": 36263033,
+    "manifest_sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e",
+    "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+    "input_origin": "independently_validated_v28",
+    "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+    "physical_config_sha256": "739f9e8bdb982653cf768ad67af7ba74fe4325eb1c46cf18db567c36ac64ab90",
+    "historical_bitwise_reproduction": false,
+    "equivalent_to_historical_numeric_manifest": "UNKNOWN",
+    "historical_ledger_recovered": false
+  },
+  "scientific_receipt": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/scientific_input_receipt.json",
+    "bytes": 2221,
+    "sha256": "45925efb4e5892176a108007a6cad0af58044273f1f312149363715718517e48"
+  },
+  "ready": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/inputs_READY.json",
+    "bytes": 245,
+    "sha256": "a04d27d963c6a0627007132f54e58f52d42bb91bfde1988c356ff3c042588cc0"
+  },
+  "historical_lookup": {
+    "path": "tmp/task42extra/w1_receiver/v28/historical_lookup.json",
+    "bytes": 805,
+    "sha256": "d3ac1b12041fa0b5f0a75bf1f65f52184ad7d4f53118344815f861f038f96e80"
+  },
+  "historical_bytes_status": "HISTORICAL_BYTES_UNAVAILABLE",
+  "historical_bitwise_reproduction": false,
+  "equivalent_to_historical_numeric_manifest": "UNKNOWN",
+  "historical_ledger_recovered": false,
+  "V28_new_generation_count": 0,
+  "old_schema1_constant_and_hash_behavior_unchanged": true,
+  "config": {
+    "path": "input/task042extra_feinn_5nm/w1_resolved_config_v28.json",
+    "bytes": 1903,
+    "sha256": "739f9e8bdb982653cf768ad67af7ba74fe4325eb1c46cf18db567c36ac64ab90"
+  },
+  "reference_definition": {
+    "path": "input/task042extra_feinn_5nm/w1_reference_definition_v28.json",
+    "bytes": 1049,
+    "sha256": "2c4e93a988908c559a1224ba43ecb55350f017bd888fa3a28708a85d9c9cdea6"
+  }
+}

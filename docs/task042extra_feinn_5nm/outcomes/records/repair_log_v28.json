@@ -1,0 +1,164 @@
+{
+  "schema": "task42extra.repair_log_v28",
+  "initial_development_failures": "precommit lint, incorrect field-fixture assertion, two resource CPU denials; all saved and costs retained",
+  "root_causes": [
+    {
+      "failure": "native phase helper returns three values, not two",
+      "hypothesis": "local wrapper API mismatch",
+      "change": "unpack phase_x,phase_y,facts",
+      "test": "32/33 targeted fixtures and literal frozen helper pairing",
+      "retry": "boundary_repair1",
+      "numeric_producer_completed": false
+    },
+    {
+      "failure": "new profile import invisible through frozen src namespace",
+      "hypothesis": "namespace shadowing",
+      "change": "explicit qualified profile injection by absolute module path",
+      "test": "34 targeted fixtures including injected profile moment qualification",
+      "retry": "boundary_repair2",
+      "result": "only successful complete producer"
+    },
+    {
+      "failure": "AF_UNIX absolute socket address length before worker",
+      "hypothesis": "address exceeds107bytes",
+      "change": "shorter relative spelling of exact same filesystem socket",
+      "test": "actual bind/connect OS fixture; same clock/scope; real checker completed",
+      "retry": "same original checker; no prior worker"
+    },
+    {
+      "failure": "valid24th sample refused on read by >= check",
+      "hypothesis": "budget off-by-one",
+      "change": "read allows24; before-admission still rejects25",
+      "test": "36 fixtures include old schema12/read boundary and new24/25",
+      "retry": "same unused24th consumer setup",
+      "result": "import wiring failure, no numeric consumer"
+    },
+    {
+      "failure": "receiver attributes do not affect its local import",
+      "hypothesis": "provider imported from w1_admission_budget inside function",
+      "change": "bind actual provider module; finish strictly same input/grant/clock after preserving both failures",
+      "test": "one separately supervised actual local-import regression; inherited36 unchanged",
+      "retry": "same original consumer; no new sample or pressure window",
+      "result": "LOCAL_RELOCATED_CONSUMER_PASS"
+    }
+  ],
+  "healthy_manifest_regenerated": false,
+  "healthy_complete_boundary_producer_repeated": false,
+  "unchanged_scientific_thresholds": true,
+  "original_records": [
+    {
+      "record": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume_setup_failure_1/receiver_failure.json",
+        "bytes": 322,
+        "sha256": "88f553321f2292e6713620b9879fa6bb1d0ef5f06ac4d8a7109989eb372fdb2b"
+      },
+      "failure": {
+        "schema": "w1-receiver-failure.v27",
+        "exception": "TimeoutError",
+        "reason": "W1_SHARED_RESOURCE_SAMPLES_OR_WAIT_EXHAUSTED",
+        "failed_monotonic": 1099444.220481983,
+        "native_worker_started": false,
+        "historical_tree_peak": "NOT_RETAINED_BEFORE_WATCHDOG",
+        "final_input_marker_not_authorized_by_failure": true
+      }
+    },
+    {
+      "record": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume_setup_failure_2/receiver_failure.json",
+        "bytes": 322,
+        "sha256": "cadc68f548c273c5086a85b910aff5e72daca28a624b133d6cca1463c5d9232c"
+      },
+      "failure": {
+        "schema": "w1-receiver-failure.v27",
+        "exception": "TimeoutError",
+        "reason": "W1_SHARED_RESOURCE_SAMPLES_OR_WAIT_EXHAUSTED",
+        "failed_monotonic": 1100100.843668049,
+        "native_worker_started": false,
+        "historical_tree_peak": "NOT_RETAINED_BEFORE_WATCHDOG",
+        "final_input_marker_not_authorized_by_failure": true
+      }
+    },
+    {
+      "stage_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary",
+      "saved_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary/receiver_result.json",
+        "bytes": 619,
+        "sha256": "dfedf69258da0bcf3c67e537ed60229f0ad0b0c2328fb53fa6faffb104d8b7c6"
+      },
+      "result": {
+        "schema": "task42extra.w1-receiver-result.v1",
+        "receiver_source_sha": "84e2c44cc0f94c82b89fcd045015835c4b5dc7bc",
+        "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+        "binding_sha256": "2a0b0519468cd334be1040e374959efee6c0dfb2df05f7928180c4f6ab9909db",
+        "component_status": "NOT_RETAINED",
+        "receiver_classification": "WORKER_FAILED",
+        "receiver_exit_code": 1,
+        "cleared": true,
+        "elapsed_seconds": 80.74895368493162,
+        "sampled_process_tree_rss_peak_bytes": 406605824,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "PDE_solved": false,
+        "worker_started": true,
+        "official_results": false
+      },
+      "worker_log": "retained under supervision/"
+    },
+    {
+      "stage_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair1/boundary",
+      "saved_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair1/boundary/receiver_result.json",
+        "bytes": 619,
+        "sha256": "862769b6ca577a7d65b013f94f8bab8f9a0b39d0d577792d944d9edfd15f65af"
+      },
+      "result": {
+        "schema": "task42extra.w1-receiver-result.v1",
+        "receiver_source_sha": "b181e162964e28e67f3e2428bff118bf48105196",
+        "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+        "binding_sha256": "ad1fba5201afcf9a9a496b2f1848bcbe4fcdd34573df2f47cea25383fc60b2ee",
+        "component_status": "NOT_RETAINED",
+        "receiver_classification": "WORKER_FAILED",
+        "receiver_exit_code": 1,
+        "cleared": true,
+        "elapsed_seconds": 87.41000872803852,
+        "sampled_process_tree_rss_peak_bytes": 414126080,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "PDE_solved": false,
+        "worker_started": true,
+        "official_results": false
+      },
+      "worker_log": "retained under supervision/"
+    }
+  ],
+  "typed_historical_context_note": "preworker context source receipt captures a161 Git blob; source path later edited, never asserted equal to current disk; finish context binds82 source separately",
+  "recovery_receipts": [
+    {
+      "path": "tmp/task42extra/durable/w1-receiver-u28-bundle_consume/preworker_resume_context.json",
+      "bytes": 1542,
+      "sha256": "ad4a5410297b3dc1eb3c3f5300a572093566d772e6aaf5eeb1ec33ec02058503"
+    },
+    {
+      "path": "tmp/task42extra/durable/w1-receiver-u28-bundle_consume/preworker_finish_context.json",
+      "bytes": 1947,
+      "sha256": "40464fa5caa201469fa60c3d76c02553d0124d0da509b612a350f2a55d776613"
+    },
+    {
+      "path": "tmp/task42extra/durable/w1-receiver-boundary_repair2-boundary_check/launch_recovery_sealed.json",
+      "bytes": 975,
+      "sha256": "223ba335cee12125d109b91a91e2b757c5c3359009493244294d34c0783b501e"
+    }
+  ],
+  "publication_metadata_only_repairs": [
+    {
+      "failure": "one excess parenthesis in compact collector",
+      "change": "correct syntax",
+      "test": "compileall then supervised collect2",
+      "result": "completed; producer unchanged"
+    },
+    {
+      "failure": "publication auditor assumed40 max-field rows, actual41",
+      "change": "use saved field-name set/unique coverage instead of invented count",
+      "test": "supervised publication2",
+      "result": "passed; numeric records unchanged"
+    }
+  ]
+}

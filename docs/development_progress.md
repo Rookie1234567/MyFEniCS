@@ -3317,3 +3317,14 @@ FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED
 R全链81.936506s、身份匹配终端树采样峰437,981,184B、2GiB/ownswap0；两层新样本/60s PSI通过。43源码与失败manifest封存，独立保存checker重算并验证实际消费者/commit拒绝，最终ledger/B标记未发布。B0/B1及独立B1checker按前置FAIL停止，FE action/factor/solve/Gram/NN0；未接管主线p6或dot后端。新10800s连续窗和所有旧费用保留，嵌套阶段不双加，项目精确累计UNKNOWN。
 
 FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED、M3600较好/Mfinal退化、D0成本否决/D1未运行保持；原50×25×140nm/Si17/120nm/λ0.7完整3D、decimal2e12B/172800s及原精度门仍未达成。交付后等待审阅，无master合并或继续数值许可。[回执](task042extra_feinn_5nm/response_v27.md)、[独立checker](task042extra_feinn_5nm/outcomes/records/independent_checker_v27.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v27.json)。
+
+
+## 2026-10-05 Task42extra V28：新身份全模式组件与可消费实物闭环
+
+新清单是独立的schema2实例，不冒充旧52d7ec80…原件。保持λ0.7/50×25×140nm/Si17/120nm及原32060有序模式，复用V27候选不再生成；独立416780字段检查失败0。实际Basix p4/p6完整300/882局部列、双非单位Floquet和角点通过；原q60两代表面各32060、357频率/ell0..6，1218328保存数组数值检查失败0，最坏9.595725209727146e-11≤1e-10。一维矩绝对9.082805012334877e-14≤1e-12，条件分面未触发。
+
+独立新目录实际重开1043文件/1625383207B并重算同一数值门，READY_FOR_MAIN_OPT_IN_NOT_INGESTED。pkg manifest SHA664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9。各真实source独立绑定，最终consumer82b74b2e7b2afa9660595cea37730c77b591e877；文档HEAD不替代source。
+
+修好解包/namespace/socket/quota/import问题，保留每次失败与费用。健康producer只一次；消费复用同一未启动worker的第24份准入/原时钟/已完成压力窗口，未称fresh CPU准入，时效流程限定交审阅。24份/873.628663s，原资源门不改；同时树采样峰810545152B、ownswap0，无Maxwell factor/solve/Gram/NN。
+
+这是确定性端口接入进展，主线尚未消费，完整全域E/H/curl/R/T/A等NOT_RUN，原decimal2e12B/172800s及精度门仍未达成。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED、M3600较好/Mfinal退化、D0否决/D1未运行保持，不改其他分支。[回执](task042extra_feinn_5nm/response_v28.md)、[可消费包](task042extra_feinn_5nm/outcomes/main_handoff_v28.md)、[原门](task042extra_feinn_5nm/outcomes/records/gate_decisions_v28.json)、[完整费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v28.json)。

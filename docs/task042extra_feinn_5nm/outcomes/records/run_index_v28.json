@@ -1,0 +1,446 @@
+{
+  "schema": "task42extra.run_index_v28",
+  "branch": "task42extra_feinn_5nm",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "review_publication": "ec05cb2ece095d54073563b02ab0da30f2795310",
+  "reviewed_baseline": "533768469e1a28789d16eef9fcac9e763ca28c5b",
+  "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "mathematical_source_closure": {
+    "path": "benchmarks/cases/w1_receiver/recovery_dependencies.json",
+    "bytes": 9980,
+    "sha256": "cccbcbaa3973f16ff53437db370a38f5187d1f19888789cac38a54a54b06a6ea"
+  },
+  "source_files": 43,
+  "source_bytes": 1054179,
+  "formal_runs": [
+    {
+      "stage": "input_contract_checks",
+      "source_sha": "9b1a9ec28cdd74510f8fd1ec0f40731c53d401de",
+      "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v28_input_contract_checks.dat",
+        "bytes": 1411,
+        "sha256": "b0ec42665cc870234b50487af70b25a1e9cf400dab5682eafcf269e8caf2ed36"
+      },
+      "run_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks/binding.json",
+        "bytes": 9496,
+        "sha256": "0b3630a52fe86a0d2e24a70ccc70ad5c1835db1e50b7b54eaa8ac285c24ef744"
+      },
+      "component": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks/component_result.json",
+        "bytes": 879,
+        "sha256": "6d5f0722abafa8f9aa57fdef32a1f23b70442027201bda20e91e35b841b8043d"
+      },
+      "evidence": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks/evidence.json",
+        "bytes": 7211,
+        "sha256": "76cc9b9599f5600e623892ad82d750a31ccc11f902b7ad48e62fc739048b9bf7"
+      },
+      "supervision": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks/supervisor_summary.json",
+        "bytes": 3861,
+        "sha256": "172d4188b5d58da9c5632f66acb350040a60ab9695b59c5f0d90605440c46791"
+      },
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks/receiver_result.json",
+        "bytes": 721,
+        "sha256": "29967d56b650104ff9080df8e4bb7718919676e7c15eb78dd663ab192de8eabd"
+      },
+      "scientific_status": "V28_INPUT_CONTRACT_TESTS_PASS",
+      "launcher_elapsed_seconds": 67.71470867609605,
+      "nested_watchdog_elapsed_seconds": 4.004297896055505,
+      "nested_worker_elapsed_seconds": 2.4029639770742506,
+      "sampled_tree_rss_peak_bytes": 124870656,
+      "sampled_tree_swap_peak_bytes": 0,
+      "hard_limit_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true,
+      "prewatchdog_tree_peak": "NOT_RETAINED",
+      "cpu": 41
+    },
+    {
+      "stage": "manifest_qualify",
+      "source_sha": "9b1a9ec28cdd74510f8fd1ec0f40731c53d401de",
+      "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v28_manifest_qualify.dat",
+        "bytes": 1406,
+        "sha256": "19c3ff85221284b7ece9bbd5750216911b6e7f406bfb5ab35b7548f44196d4a2"
+      },
+      "run_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify/binding.json",
+        "bytes": 9492,
+        "sha256": "915610be18b92e1eae2a6ceb952efd83d94f1b7f10b3bbf817e2d573ca575210"
+      },
+      "component": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify/component_result.json",
+        "bytes": 17412,
+        "sha256": "fbe1f76b19a57d59bbb6d695446712b409ce0633bb1b84c9c87f0bfbd1e6649d"
+      },
+      "evidence": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify/evidence.json",
+        "bytes": 7459,
+        "sha256": "f0c9eee9fac9b9a152e75953b0c6cdf9b11a9bd2a3506accf74838023ba243b0"
+      },
+      "supervision": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify/supervisor_summary.json",
+        "bytes": 3850,
+        "sha256": "9d8844b4d2c0157d0cf02ecf77b1415b2ddb8e7e20576824799c0efb2a565a35"
+      },
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify/receiver_result.json",
+        "bytes": 722,
+        "sha256": "82452dd1ff3e3022e3a3f2661921dcfa20061a54874c16ba06793c57fcb4d44e"
+      },
+      "scientific_status": "VERSIONED_MODE_INPUT_QUALIFIED",
+      "launcher_elapsed_seconds": 79.04394102888182,
+      "nested_watchdog_elapsed_seconds": 15.068185033043846,
+      "nested_worker_elapsed_seconds": 13.023892635013908,
+      "sampled_tree_rss_peak_bytes": 290721792,
+      "sampled_tree_swap_peak_bytes": 0,
+      "hard_limit_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true,
+      "prewatchdog_tree_peak": "NOT_RETAINED",
+      "cpu": 45
+    },
+    {
+      "stage": "control",
+      "source_sha": "84e2c44cc0f94c82b89fcd045015835c4b5dc7bc",
+      "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v28_native_control_retry1.dat",
+        "bytes": 1412,
+        "sha256": "3c75d6833af2f5b10400872b3ea891ffe428019a506913ef397ac5cd4cef87ad"
+      },
+      "run_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control/binding.json",
+        "bytes": 9842,
+        "sha256": "2ce7d92632fbf45958123b42b2726445c9b9cfad412c16209c47a2d4fe8276d5"
+      },
+      "component": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control/component_result.json",
+        "bytes": 2500,
+        "sha256": "8f317c099bad6298528b424782db0c033ca9e09c77da49397bdb4f481a301a74"
+      },
+      "evidence": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control/evidence.json",
+        "bytes": 8318,
+        "sha256": "0da37e4353f3647d73b0dec863469c1ac2af22b83da0b6dfbbb834b8a67c04bb"
+      },
+      "supervision": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control/supervisor_summary.json",
+        "bytes": 3873,
+        "sha256": "81b1e676e816cdca0868779af9f6d6302c86a2ba2f1d31506212b2e0805fbb49"
+      },
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control/receiver_result.json",
+        "bytes": 733,
+        "sha256": "39f8e4d583b884f689d394b2433b52021112be966bd4fa89ae0b6230caad6286"
+      },
+      "scientific_status": "CONTROL_NATIVE_BOUNDARY_PASS_NO_VOLUME_FE",
+      "launcher_elapsed_seconds": 73.58408730500378,
+      "nested_watchdog_elapsed_seconds": 8.816685956902802,
+      "nested_worker_elapsed_seconds": 2.915907957823947,
+      "sampled_tree_rss_peak_bytes": 255557632,
+      "sampled_tree_swap_peak_bytes": 0,
+      "hard_limit_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true,
+      "prewatchdog_tree_peak": "NOT_RETAINED",
+      "cpu": 16
+    },
+    {
+      "stage": "boundary",
+      "source_sha": "31b5ff639e4389c4c3bccd6605907a1b5b7be0e8",
+      "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v28_boundary_full_modes_repair2.dat",
+        "bytes": 1472,
+        "sha256": "e5c265cd0a2372f1f13c92eb2d77cec14789ccc1a50c24654e31b4fc7ec6d441"
+      },
+      "run_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary/binding.json",
+        "bytes": 9915,
+        "sha256": "27d29f968ac29455b6d71296ebb597050bc3f161800235708199ea9b94790aaa"
+      },
+      "component": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary/component_result.json",
+        "bytes": 267839,
+        "sha256": "53e29570ea35af880ee5bb396fe0c18516161c7f7c1a90e04358d47ed987a3dd"
+      },
+      "evidence": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary/evidence.json",
+        "bytes": 273995,
+        "sha256": "351e7490a3eaf9d78fb5be2e54621df22ba9ad19d45a7c13623d1215c01a0a03"
+      },
+      "supervision": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary/supervisor_summary.json",
+        "bytes": 3879,
+        "sha256": "3a4defd3f0c97941cfa7dd1769d5523507aea1763a9de637ed8d3b632cd2c7c2"
+      },
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary/receiver_result.json",
+        "bytes": 731,
+        "sha256": "aa8534486e5aeaf2847d8648a10b885a1f73164c4049d91bb0afd7f41663539d"
+      },
+      "scientific_status": "BOUNDARY_COMPLETE_PENDING_SAVED_CHECKER",
+      "launcher_elapsed_seconds": 319.0079771850724,
+      "nested_watchdog_elapsed_seconds": 254.3641729769297,
+      "nested_worker_elapsed_seconds": 249.94846833404154,
+      "sampled_tree_rss_peak_bytes": 810545152,
+      "sampled_tree_swap_peak_bytes": 0,
+      "hard_limit_bytes": 17179869184,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true,
+      "prewatchdog_tree_peak": "NOT_RETAINED",
+      "cpu": 12
+    },
+    {
+      "stage": "boundary_check",
+      "source_sha": "12809c50011ca7013c441704b424569b8b11c2f6",
+      "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v28_boundary_check_repair2.dat",
+        "bytes": 1463,
+        "sha256": "11b2e031c77debe18b83afbacfb676fa7c4e8024cc01072034a0023ef8672afb"
+      },
+      "run_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check/binding.json",
+        "bytes": 9912,
+        "sha256": "1850dd320a1c1589f7b481803d919e1edfeb3e65029bd109233832f55811591f"
+      },
+      "component": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check/component_result.json",
+        "bytes": 17168,
+        "sha256": "fa95d1031488b4518435685d385a41a9f603f3b8deb0b12a3ab9dd12f6eb0e17"
+      },
+      "evidence": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check/evidence.json",
+        "bytes": 7860,
+        "sha256": "a354d448f727cd1b1b0f15b07689ba49de0a38c9115d597f3b033eedf7b895ba"
+      },
+      "supervision": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check/supervisor_summary.json",
+        "bytes": 3859,
+        "sha256": "4438c426587814b393bca6b643c52cd4b9164baf955509f72ba86ac4d650e814"
+      },
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check/receiver_result.json",
+        "bytes": 741,
+        "sha256": "2c7232a7c312663674117ad3968545f9932498141556c4b90a0a2404841a66b9"
+      },
+      "scientific_status": "W1_REPRESENTATIVE_FACETS_FULL_MODE_EMPIRICAL_PASS",
+      "launcher_elapsed_seconds": 595.3922207439318,
+      "nested_watchdog_elapsed_seconds": 193.7794678339269,
+      "nested_worker_elapsed_seconds": 191.891660412075,
+      "sampled_tree_rss_peak_bytes": 483381248,
+      "sampled_tree_swap_peak_bytes": 0,
+      "hard_limit_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true,
+      "prewatchdog_tree_peak": "NOT_RETAINED",
+      "cpu": 12
+    },
+    {
+      "stage": "bundle_consume",
+      "source_sha": "82b74b2e7b2afa9660595cea37730c77b591e877",
+      "mathematical_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v28_bundle_consume_short.dat",
+        "bytes": 1465,
+        "sha256": "b7c170a944595680c881c3401f4f40618a9be23696611ef4b1f25b8bda8dcf49"
+      },
+      "run_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume",
+      "binding": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/binding.json",
+        "bytes": 10451,
+        "sha256": "e96a83e991438a1b74e8d1b1e4eb7d8fa5dde240a01ed79b849afe70995adbeb"
+      },
+      "component": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/component_result.json",
+        "bytes": 18266,
+        "sha256": "46717ec1362730f7a4808d2878b6185aa18aaa7d3d44079cebeeb4a5b037b781"
+      },
+      "evidence": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/evidence.json",
+        "bytes": 8378,
+        "sha256": "df0d53f25575780ca3d0f98621fce43987fc5cdbab74930a84c4535e505bcf0a"
+      },
+      "supervision": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/supervisor_summary.json",
+        "bytes": 3863,
+        "sha256": "dc54309a2fdc99b1692ee39520f2c04f219aab0fa585fb29466d5040e3880ed1"
+      },
+      "receiver_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/receiver_result.json",
+        "bytes": 722,
+        "sha256": "e83e5ac4a10bfac7ec9ad681e144bd4935a575af0fd9ac637fea1fcba8f1bc47"
+      },
+      "scientific_status": "LOCAL_RELOCATED_CONSUMER_PASS",
+      "launcher_elapsed_seconds": 1289.6179450131021,
+      "nested_watchdog_elapsed_seconds": 223.74090959411114,
+      "nested_worker_elapsed_seconds": 222.0791753719095,
+      "sampled_tree_rss_peak_bytes": 421486592,
+      "sampled_tree_swap_peak_bytes": 0,
+      "hard_limit_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true,
+      "prewatchdog_tree_peak": "NOT_RETAINED",
+      "cpu": 3
+    }
+  ],
+  "implementation_commits": [
+    {
+      "sha": "9b1a9ec28cdd74510f8fd1ec0f40731c53d401de",
+      "title": "Add opt-in versioned W1 scientific input and full-mode boundary handoff"
+    },
+    {
+      "sha": "84e2c44cc0f94c82b89fcd045015835c4b5dc7bc",
+      "title": "Preserve denied control admission and bind one new measured attempt"
+    },
+    {
+      "sha": "b181e162964e28e67f3e2428bff118bf48105196",
+      "title": "Fix frozen Floquet API and retain complete per-mode boundary checks"
+    },
+    {
+      "sha": "31b5ff639e4389c4c3bccd6605907a1b5b7be0e8",
+      "title": "Inject qualified facet profile across frozen source namespace"
+    },
+    {
+      "sha": "12809c50011ca7013c441704b424569b8b11c2f6",
+      "title": "Recover failed W1 socket launch with same clock and supervised worker"
+    },
+    {
+      "sha": "2e41aff0360551463545c73107920b040f2dea4c",
+      "title": "Use short durable namespace for relocated W1 numerical consumer"
+    },
+    {
+      "sha": "a16180c05cf5f5217aa01edc78a33c4c095b1eda",
+      "title": "Allow read of V28 last grant while forbidding new admission 25"
+    },
+    {
+      "sha": "82b74b2e7b2afa9660595cea37730c77b591e877",
+      "title": "Fix provider import for the already admitted V28 consumer stage"
+    }
+  ],
+  "retained_failures": [
+    {
+      "record": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume_setup_failure_1/receiver_failure.json",
+        "bytes": 322,
+        "sha256": "88f553321f2292e6713620b9879fa6bb1d0ef5f06ac4d8a7109989eb372fdb2b"
+      },
+      "failure": {
+        "schema": "w1-receiver-failure.v27",
+        "exception": "TimeoutError",
+        "reason": "W1_SHARED_RESOURCE_SAMPLES_OR_WAIT_EXHAUSTED",
+        "failed_monotonic": 1099444.220481983,
+        "native_worker_started": false,
+        "historical_tree_peak": "NOT_RETAINED_BEFORE_WATCHDOG",
+        "final_input_marker_not_authorized_by_failure": true
+      }
+    },
+    {
+      "record": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume_setup_failure_2/receiver_failure.json",
+        "bytes": 322,
+        "sha256": "cadc68f548c273c5086a85b910aff5e72daca28a624b133d6cca1463c5d9232c"
+      },
+      "failure": {
+        "schema": "w1-receiver-failure.v27",
+        "exception": "TimeoutError",
+        "reason": "W1_SHARED_RESOURCE_SAMPLES_OR_WAIT_EXHAUSTED",
+        "failed_monotonic": 1100100.843668049,
+        "native_worker_started": false,
+        "historical_tree_peak": "NOT_RETAINED_BEFORE_WATCHDOG",
+        "final_input_marker_not_authorized_by_failure": true
+      }
+    },
+    {
+      "stage_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary",
+      "saved_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary/receiver_result.json",
+        "bytes": 619,
+        "sha256": "dfedf69258da0bcf3c67e537ed60229f0ad0b0c2328fb53fa6faffb104d8b7c6"
+      },
+      "result": {
+        "schema": "task42extra.w1-receiver-result.v1",
+        "receiver_source_sha": "84e2c44cc0f94c82b89fcd045015835c4b5dc7bc",
+        "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+        "binding_sha256": "2a0b0519468cd334be1040e374959efee6c0dfb2df05f7928180c4f6ab9909db",
+        "component_status": "NOT_RETAINED",
+        "receiver_classification": "WORKER_FAILED",
+        "receiver_exit_code": 1,
+        "cleared": true,
+        "elapsed_seconds": 80.74895368493162,
+        "sampled_process_tree_rss_peak_bytes": 406605824,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "PDE_solved": false,
+        "worker_started": true,
+        "official_results": false
+      },
+      "worker_log": "retained under supervision/"
+    },
+    {
+      "stage_directory": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair1/boundary",
+      "saved_result": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair1/boundary/receiver_result.json",
+        "bytes": 619,
+        "sha256": "862769b6ca577a7d65b013f94f8bab8f9a0b39d0d577792d944d9edfd15f65af"
+      },
+      "result": {
+        "schema": "task42extra.w1-receiver-result.v1",
+        "receiver_source_sha": "b181e162964e28e67f3e2428bff118bf48105196",
+        "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+        "binding_sha256": "ad1fba5201afcf9a9a496b2f1848bcbe4fcdd34573df2f47cea25383fc60b2ee",
+        "component_status": "NOT_RETAINED",
+        "receiver_classification": "WORKER_FAILED",
+        "receiver_exit_code": 1,
+        "cleared": true,
+        "elapsed_seconds": 87.41000872803852,
+        "sampled_process_tree_rss_peak_bytes": 414126080,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "PDE_solved": false,
+        "worker_started": true,
+        "official_results": false
+      },
+      "worker_log": "retained under supervision/"
+    }
+  ],
+  "recovery_receipts": [
+    {
+      "path": "tmp/task42extra/durable/w1-receiver-u28-bundle_consume/preworker_resume_context.json",
+      "bytes": 1542,
+      "sha256": "ad4a5410297b3dc1eb3c3f5300a572093566d772e6aaf5eeb1ec33ec02058503"
+    },
+    {
+      "path": "tmp/task42extra/durable/w1-receiver-u28-bundle_consume/preworker_finish_context.json",
+      "bytes": 1947,
+      "sha256": "40464fa5caa201469fa60c3d76c02553d0124d0da509b612a350f2a55d776613"
+    },
+    {
+      "path": "tmp/task42extra/durable/w1-receiver-boundary_repair2-boundary_check/launch_recovery_sealed.json",
+      "bytes": 975,
+      "sha256": "223ba335cee12125d109b91a91e2b757c5c3359009493244294d34c0783b501e"
+    }
+  ],
+  "original_window": {
+    "path": "tmp/task42extra/w1_receiver/v28/batch_window.json",
+    "bytes": 721,
+    "sha256": "5183e6a2c461668af49260b2246922ed15de2ce15be4ffefe01d52f77d1fbf92"
+  },
+  "source_binding_note": "35 receiver file hashes in every actual binding; two narrow historical launch helpers also bound by their immutable Git commits and supplemental receipts; document HEAD is not run source"
+}

@@ -320,3 +320,19 @@ input/task042extra_feinn_5nm/v27_rb_control.dat
 input/task042extra_feinn_5nm/v27_rb_boundary.dat
 input/task042extra_feinn_5nm/v27_rb_boundary_check.dat
 ```
+
+
+## V28版本化输入与实际全模式交付边界
+
+| 依赖组 / 实际文件 | 行为和资格边界 |
+| --- | --- |
+| 显式schema2输入 | src/io/w1_versioned_input.py、w1_receiver_contract.py、w1_evidence.py；src/common/w1_mode_validation.py；resolved config/reference JSON | 新实例独立物理与typed receipt，旧schema1常量/默认拒绝保留；416780字段实际检查 |
+| 局部FE/积分与保存checker | src/solvers/w1_facet_profile.py、w1_saved_boundary.py、w1_boundary_components.py；src/runners/w1_versioned_payload.py、w1_component_payload.py | 原q60两代表面/32060实际资格；完整局部列，独立矩和真实入射；条件分面仅fixture，未运行，不授全域或PDE资格 |
+| 正式入口/保护 | src/runners/w1_component_receiver.py、w1_admission_budget.py、feinn_resources.py；input/task042extra_feinn_5nm/v28_*.dat | 独立stage/attempt、35源码绑定、24/900预算；阈值不放宽，读最后有效样本与新增采样分开，旧schema行为保持 |
+| 可消费包 | src/io/w1_boundary_bundle.py | 相对路径、所有文件hash和独立数值再验；新目录1043文件实际消费；READY在清场后写；不是主线接入或跨机存储证书 |
+| 纯定向回归 | src/test/test_w1_versioned_input.py、test_w1_preworker_resume.py | 最终36+1，旧92/39复用；损坏内容同步hash、材料/H/sign、状态/partial/失败监督等拒绝；不把stub算FE |
+| 极窄历史修复 / do-not-merge | scripts/recover_w1_socket_launch.py、resume_w1_preworker_admission.py | 只处理已失败且无数值worker的原命名空间，保留dat/hash/clock/source与失败；复用CPU准入有流程限定，不作为生产default |
+| compact docs/evidence | response_v28、两专题、V28 records、summary/README导航、progress/registry/test/本节 | 全部旧文字和负结果保留，准确run source不由文档HEAD替代；大数组ignored |
+| 无新增production或跨支 | 原数学c354afa449fb80cfb5012e7d2ff66a3e3e64e088与43-file快照只读 | no global/local Maxwell factor/solve/Gram/NN；无主线/dot修改或merge批准 |
+
+[依赖组清单](records/selective_merge_manifest_v28.json)、[实际所有source](records/run_index_v28.json)、[修复账](records/repair_log_v28.json)。本次通过是明确opt-in的输入与代表面资格，不提升普通生产默认。

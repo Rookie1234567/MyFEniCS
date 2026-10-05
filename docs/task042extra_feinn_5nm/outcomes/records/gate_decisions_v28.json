@@ -1,0 +1,68 @@
+{
+  "schema": "task42extra.gate_decisions_v28",
+  "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+  "VERSIONED_MODE_INPUT_QUALIFIED": true,
+  "W1_REPRESENTATIVE_FACETS_FULL_MODE_EMPIRICAL_PASS": true,
+  "LOCAL_RELOCATED_CONSUMER_PASS": true,
+  "input_scientific_gate": {
+    "count": 32060,
+    "field_checks": 416780,
+    "failed_count": 0,
+    "limit": 1e-10,
+    "groups": {
+      "top/s": 8015,
+      "top/p": 8015,
+      "bottom/s": 8015,
+      "bottom/p": 8015
+    },
+    "classifications": {
+      "propagating": 32060
+    }
+  },
+  "boundary_gate": {
+    "metric_checks": 1218328,
+    "failed_count": 0,
+    "maximum_original_relative": 9.595725209727146e-11,
+    "limit": 1e-10,
+    "one_dimensional_absolute": 9.082805012334877e-14,
+    "one_dimensional_limit": 1e-12
+  },
+  "handoff": "READY_FOR_MAIN_OPT_IN_NOT_INGESTED",
+  "main_ingestion_occurred": false,
+  "historical_bytes_recovery": "HISTORICAL_BYTES_UNAVAILABLE",
+  "historical_numeric_equivalence": "UNKNOWN",
+  "subdivision": "NOT_RUN_PRECONDITION_NOT_TRIGGERED",
+  "PDE_solve_factor_Gram_NN_calls": 0,
+  "full_E_H_curl_samples_channels_R_T_A_Avolume": "NOT_RUN_NO_GLOBAL_FIELD",
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "M3600_better_Mfinal_degraded_retained": true,
+  "D0": "COST_VETO",
+  "D1": "NOT_RUN",
+  "old_failures_and_UNKNOWN_retained": true,
+  "final_goal": {
+    "dimensions_nm": [
+      50,
+      25,
+      140
+    ],
+    "Si_width_height_nm": [
+      17,
+      120
+    ],
+    "lambda_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "full_cold_seconds": 172800,
+    "ownswap_OOC": 0
+  },
+  "resource_procedure_qualification": {
+    "numeric_evidence_accepted_only_by_actual_array_checks": true,
+    "same_preworker_stage_grant_reused": true,
+    "new_CPU_admission_at_final_worker_start": false,
+    "new_PSI_window_claimed": false,
+    "current_PSI_headroom_swap_disk_monitored_by_actual_watchdog": true,
+    "reuse_timeliness_and_scope_pending_review": true,
+    "no_extra_sample_25": true
+  }
+}

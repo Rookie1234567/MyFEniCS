@@ -1,3 +1,20 @@
+# 当前：Review V27 → Response V28，新输入/全模式代表面/新目录消费者均已实际通过
+
+本批把可获得的V27清单定义为明确的新实例，再独立核对全部模式物理；随后完成真实原生方向控制、原q60全32060模式边界数组与独立新目录重开。接收状态READY_FOR_MAIN_OPT_IN_NOT_INGESTED。它让主线得到可实际消费的确定性边界包，尚未完成全域接入或原尺寸PDE；不是NN收益。旧原件缺失/旧bitwise失败保留。
+
+| 当前实测对象 / 物理与身份 | 结果、原门与证据 |
+| --- | --- |
+| schema2新输入 | W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28；36263033B/SHA7dd07d71…；32060key/四组各8015；416780字段检查失败0，最大普通相对1.0747787677074433e-15≤1e-10；[输入/身份](records/input_identity_v28.json)、[科学检查](records/mode_validation_v28.json) |
+| 实际native控制 | p4/p6全300/882列、非单位双Floquet和角点；方向/MPC/伴随通过；[run/source](records/run_index_v28.json) |
+| 两代表面q60全模式 | 原top/bottom(100,1)、原面宽和分段；p4/p6各32060，1004完整chunk；357频率/ell0..6；一维矩绝对9.082805012334877e-14≤1e-12；[设计/分母](records/design_v28.json) |
+| 保存数组独立checker | 1218328项、失败0；最坏原相对9.595725209727146e-11≤1e-10，p6 top(-64,-35,p)回散布，门裕量约4.04%；[全部原数组hash](records/independent_checker_v28.json)、[最大值/分子/分母](records/boundary_metrics_v28.csv) |
+| 实际新目录消费者 | 重开1043文件/1625383207B，再核物理和全部数值门；两包manifest SHA664e4ad4…相同；[实际收据](records/consumer_receipt_v28.json)、[主线接入](main_handoff_v28.md) |
+| 资源和失败 | 新连续28800s窗；24采样/873.628663s等待；同时树采样峰810545152B、ownswap0；保留所有启动/namespace/socket/quota/import失败，健康producer不重跑；[费用](records/resource_costs_v28.json)、[修复](records/repair_log_v28.json) |
+| 未运行及边界 | 条件分面profile未触发；无新Maxwell/Gram因子或solve/NN；原尺寸全场残差、E/H/curl、样点、散射复通道、R/T/A/A_volume/R00 NOT_RUN；[Gate](records/gate_decisions_v28.json) |
+| 原目标/主求解器 | 原50×25×140nm、Si17/120nm、λ0.7、decimal2e12B/ownswapOOC0/172800s原门仍未达成；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED |
+
+[Response V28](../response_v28.md)、[专题](versioned_manifest_and_boundary_v28.md)、[定向测试/复用](records/targeted_tests_v28.json)、[分组合并边界](records/selective_merge_manifest_v28.json)、[呈现阻塞范围](records/render_check_v28.json)。M3600较好、Mfinal退化、D0成本否决/D1未运行及所有旧FAIL/UNKNOWN/费用不改。新清单与旧数值原件等价UNKNOWN；本次经验组件PASS不覆盖全域误差、全场或NN。交付清场后停止等待审阅；下方全部历史原文保留，旧“当前”不授新运行预算。
+
 # 当前：Review V26 → Response V27，唯一R真实生成但原字节重现失败
 
 修复pin前允许范围与内层新样本选择、Git/blob封存和marker-last事务，39项定向逻辑资格通过。已实际完成一次原生模式生成；文件比原要求多18,110B且完整hash不同，所以B0/B1停止。32060名称及物理身份一致不能替代数值原件，未用剩余时间重试候选。

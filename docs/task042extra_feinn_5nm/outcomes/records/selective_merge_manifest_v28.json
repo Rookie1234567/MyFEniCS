@@ -1,0 +1,106 @@
+{
+  "schema": "task42extra.selective_merge_manifest_v28",
+  "merge_approval": false,
+  "dependency_groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "numerical_change": "no new production default or global solver; empirical opt-in only",
+      "merge_approval": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/feinn_resources.py",
+        "src/runners/w1_admission_budget.py",
+        "src/runners/w1_component_payload.py",
+        "src/runners/w1_component_receiver.py",
+        "src/runners/w1_versioned_payload.py"
+      ],
+      "numerical_change": "explicit schema2 resources and stages; same original thresholds, schema1 strict",
+      "tests": "36 pure + real supervised chain",
+      "depends": [
+        "versioned io",
+        "unchanged durable/health infrastructure"
+      ]
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042extra_feinn_5nm/v28_boundary_check.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_check_repair1.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_check_repair2.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_check_subdivided.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_full_modes.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_full_modes_repair1.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_full_modes_repair2.dat",
+        "input/task042extra_feinn_5nm/v28_boundary_full_modes_subdivided.dat",
+        "input/task042extra_feinn_5nm/v28_bundle_consume.dat",
+        "input/task042extra_feinn_5nm/v28_bundle_consume_repair1.dat",
+        "input/task042extra_feinn_5nm/v28_bundle_consume_repair2.dat",
+        "input/task042extra_feinn_5nm/v28_bundle_consume_short.dat",
+        "input/task042extra_feinn_5nm/v28_bundle_consume_subdivided.dat",
+        "input/task042extra_feinn_5nm/v28_input_contract_checks.dat",
+        "input/task042extra_feinn_5nm/v28_manifest_qualify.dat",
+        "input/task042extra_feinn_5nm/v28_native_control.dat",
+        "input/task042extra_feinn_5nm/v28_native_control_retry1.dat",
+        "input/task042extra_feinn_5nm/w1_reference_definition_v28.json",
+        "input/task042extra_feinn_5nm/w1_resolved_config_v28.json",
+        "src/common/w1_mode_validation.py",
+        "src/io/w1_boundary_bundle.py",
+        "src/io/w1_evidence.py",
+        "src/io/w1_receiver_contract.py",
+        "src/io/w1_versioned_input.py",
+        "src/solvers/w1_boundary_components.py",
+        "src/solvers/w1_facet_profile.py",
+        "src/solvers/w1_saved_boundary.py"
+      ],
+      "numerical_change": "independent mode validation and full-mode facets; conditional deterministic subdivision not_run",
+      "tests": "actual B0/full32060/savedchecker/localconsumer",
+      "depends": [
+        "frozen c354 math",
+        "Basix native",
+        "Decimal oracle"
+      ]
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/test/test_w1_preworker_resume.py",
+        "src/test/test_w1_versioned_input.py"
+      ],
+      "numerical_change": "pure correctness/damage/source isolation fixtures",
+      "tests": "36 plus1; old92/39 dependency reuse"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v28.md",
+        "outcomes/records/*v28*",
+        "summary/current navigation",
+        "progress/model registry/test/changed_files"
+      ],
+      "numerical_change": false
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task42extra/w1_receiver/v28",
+        "tmp/task42extra",
+        "scripts/recover_w1_socket_launch.py",
+        "scripts/resume_w1_preworker_admission.py"
+      ],
+      "numerical_change": "ignored arrays and extremely narrow historical stage repairs, not reusable production launcher defaults"
+    }
+  ],
+  "suggested_review_order": [
+    "versioned io/source isolation",
+    "native facets and reference",
+    "saved checker/bundle",
+    "opt-in runner",
+    "compact records"
+  ],
+  "fresh_global_PDE_evidence": false,
+  "fresh_component_evidence": true,
+  "not_main_or_dot_changes": true
+}

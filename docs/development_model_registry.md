@@ -2195,3 +2195,21 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 原场/端口精度 | B0/B1/checker、E/H/curl/R/T/A/A_volume未运行；新factor/solve/NN0 | q60准确性UNKNOWN，原目标未资格化 |
 
 原完整3D、decimal2e12B/172800s原门不改；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED及全部旧负结果/费用保留，D0否决/D1未运行不改。真实hash失败后没有第二生成、改库或替代输入，无production/master批准。[回执](task042extra_feinn_5nm/response_v27.md)、[保存输入](task042extra_feinn_5nm/outcomes/records/input_reproduction_v27.json)、[独立复核](task042extra_feinn_5nm/outcomes/records/independent_checker_v27.json)、[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v27.json)。
+
+
+## 3.44.26 Task42extra V28：原尺寸模式输入与两个代表面的经验资格
+
+本条记录确定性边界组件，不是一个新的体网格散射解。新身份清单解决历史原件不可用的接入阻塞；同原λ0.7/50×25×140nm/Si17/120nm、32060模式和原归一化，schema1/旧负结果不改。独立核验模式物理、原生局部FE面及保存数组，付出全模式生成/审核/重开成本，收益限于主线可消费包。
+
+| measured / unknown / not_run | 实际值及原门 | 判断 |
+| --- | --- | --- |
+| 新输入独立科学资格 | 36263033B/SHA7dd07d71…；416780字段/0失败，最大普通相对1.07478e-15≤1e-10 | VERSIONED_MODE_INPUT_QUALIFIED；旧数值等价UNKNOWN |
+| 原生方向/约束 | p4/p6完整300/882列，双非单位Floquet和角点/MPC/伴随 | 实际native控制通过，不是体网格资格 |
+| 原q60代表面 | top/bottom(100,1)，p4/p6各32060；1004chunk，357频率/ell0..6 | 一维矩9.08281e-14≤1e-12；分面后备NOT_RUN |
+| 全保存组件/作用 | 1218328项，失败0；最坏9.595725209727146e-11≤1e-10，top(-64,-35,p)/p6 | 经验门通过，约4.04%裕量；不是统一全域误差界 |
+| 实际新目录消费者 | 1043文件/1625383207B，同package hash再次通过 | LOCAL_RELOCATED_CONSUMER_PASS；主线NOT_INGESTED |
+| 成本/资源 | boundary319.007977s、checker595.392221s、consumer1289.617945s；树峰810545152B/ownswap0 | 含失败准备和修复，子时间不另加；消费CPU准入样本复用有流程限定 |
+| E/H/curl、散射通道、R/T/A/A_volume/R00_s/R00_p/R00_total | 无全局PDE场 | NOT_RUN；模式字段/局部载荷不算这些结果 |
+| 原目标与NN | 原完整3D/decimal2e12B/172800s原门保持 | FULL_TARGET_NOT_QUALIFIED / NO_VERIFIED_NN_INCREMENT |
+
+旧较好M3600/退化Mfinal、D0成本否决/D1未运行、全部失败/UNKNOWN和历史费用保留。无新global/local Maxwell factor/solve、Gram、NN/B2/W2，不修改主线/dot，不merge master。[专题](task042extra_feinn_5nm/outcomes/versioned_manifest_and_boundary_v28.md)、[source/run](task042extra_feinn_5nm/outcomes/records/run_index_v28.json)、[包](task042extra_feinn_5nm/outcomes/main_handoff_v28.md)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v28.json)。

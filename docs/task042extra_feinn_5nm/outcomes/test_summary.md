@@ -310,3 +310,12 @@ P0最初workflow接线和compact负控字段失败保留，修复测试后最多
 新资源范围、失败观察、typed Git blob/磁盘封存、marker-last、实际writer/seal/reopen/消费者和窗口限额共23项新增，与16项受影响旧增量共39项通过；Ruff/compileall及四份v27dat validate-only通过。旧A92由原source/hash绑定复用，没有重跑。最初两次fixture各33pass/1fail及一次旧A路径资格失败保留；修好后扩充相关测试，最终39pass。clean实现904131e19396c4b6896d42056df2e27387908c1f之后无正式工程重放。[原日志](records/targeted_tests_v27.json)。
 
 唯一真实R得到BITWISE_REPRODUCTION_FAILED：文件36,263,033B，原36,244,923B，完整SHA不同；32060keys和物理hash一致不能替代原件。运行COMPLETED/exit0不等于科学PASS。实际43Git blobs与manifest封存成功，独立只读checker重算完整hash/keys/身份并用实际commit/消费者验证拒绝；checker4.873763s/341,622,784B/ownswap0、2GiB、子树清场。B0/B1和B1物理checker未运行，原字段差NOT_RETAINED；未full pytest/CI/旧昂贵回归，未调整ABI。[保存checker](records/independent_checker_v27.json)、[完整费用](records/resource_costs_v27.json)。
+
+
+## V28定向资格与真实数值验证
+
+最终36项pure delta通过；新增1项局部import/provider回归独立受监督通过，旧92A和39V27根据受影响依赖复用。正式input_contract阶段29项已通过；后续局部修复只补相关测试，所有precommit lint/fixture及资源拒绝保留，不full pytest、不重装、不声明CI。普通fixture中的Basix/积分替身不当作FE证据。
+
+实际科学资格另列：32060模式/416780字段检查；真实Basix p4/p6全列/非单位Floquet控制；1004完整chunk的全模式q60；独立pure保存checker1218328数值门；另一个新目录1043文件的模式物理与同一数值门重新核验，全部实际通过。原q60最大9.595725209727146e-11≤1e-10、一维矩9.082805012334877e-14≤1e-12，未放宽分母。健康producer不重跑；软件接线失败不是新的数学失败。消费最后复用同一已批准样本/PSI/clock，未重新采CPU，其流程限定如实单列。
+
+[测试与原JUnit](records/targeted_tests_v28.json)、[真实source/run](records/run_index_v28.json)、[独立数组checker](records/independent_checker_v28.json)、[实际consumer](records/consumer_receipt_v28.json)、[失败/修复](records/repair_log_v28.json)、[资源](records/resource_costs_v28.json)。最后Markdown/JSON/链接和历史保留结构检查单列，不冒称GitHub视觉PASS。

@@ -1,0 +1,99 @@
+{
+  "schema": "w1-publication-consistency.v28",
+  "status": "FOCUSED_STRUCTURE_IDENTITY_PASS",
+  "numeric_producer_repeated": false,
+  "old_history_preserved": [
+    "docs/task042extra_feinn_5nm/README.md",
+    "docs/task042extra_feinn_5nm/outcomes/summary.md",
+    "docs/development_progress.md",
+    "docs/development_model_registry.md",
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md"
+  ],
+  "protected_authorities_unchanged": 33,
+  "new_markdown_sections": [
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v28.md",
+      "sha256": "7d2b37acb5f46ae84d0c5630076dd865a0df3e7c53f20d6ce8a23e6255977860",
+      "tables": 2,
+      "table_widths": [
+        2,
+        2
+      ],
+      "parsed_new_scope_bytes": 9325
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/versioned_manifest_and_boundary_v28.md",
+      "sha256": "e8c093958f048655fa0f37c53184407c08f55ec3670e4d2b3d10c20dd9373ba3",
+      "tables": 2,
+      "table_widths": [
+        2,
+        2
+      ],
+      "parsed_new_scope_bytes": 6451
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/main_handoff_v28.md",
+      "sha256": "39d782c8b0ed9df06e4bdb7c45e0a9ea61180b8a9a8cff420e37b4122f0755eb",
+      "tables": 2,
+      "table_widths": [
+        2,
+        2
+      ],
+      "parsed_new_scope_bytes": 4671
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "sha256": "8ddb8b1c505c6d28ece49cc93a79bbfb456a6fddf06aa8e4441f757bbea6de3e",
+      "tables": 0,
+      "table_widths": [],
+      "parsed_new_scope_bytes": 1328
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "04620cf384572cae60684a6fa3024d0334de5f6ec1b660c83fcf8b7f11e31244",
+      "tables": 1,
+      "table_widths": [
+        2
+      ],
+      "parsed_new_scope_bytes": 3029
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "98a04118154e81df2efcc0683200fc83c6b4a1aa2189945d24ade54589c98616",
+      "tables": 0,
+      "table_widths": [],
+      "parsed_new_scope_bytes": 1823
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "bf76101f9a6fbedb3885a76638d395e723bdd997017ea3fe21d2e003a9f7ce8e",
+      "tables": 1,
+      "table_widths": [
+        3
+      ],
+      "parsed_new_scope_bytes": 2282
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "sha256": "407e78cc65ac9b6092876faff55e2d90bd6d6cb438e24ed8e1aceafc886fa650",
+      "tables": 0,
+      "table_widths": [],
+      "parsed_new_scope_bytes": 1373
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "sha256": "139a29c836d6ee5ade4ed0e34353ac237bedd160b38d013a12c23c32fb0dc9b4",
+      "tables": 1,
+      "table_widths": [
+        2
+      ],
+      "parsed_new_scope_bytes": 2354
+    }
+  ],
+  "compact_records": 12,
+  "raw_receipts_verified": 150,
+  "all_receipts_bytes": 756638441,
+  "snapshot_receipts_note": "stage/window/JUnit/actual raw files checked; no repeated 1218328-row numerical scoring",
+  "actual_visual_pass": false
+}

@@ -1,0 +1,115 @@
+{
+  "schema": "task42extra.targeted_tests_v28",
+  "final_delta_count": 36,
+  "provider_import_regression_count": 1,
+  "final_A": {
+    "path": "tmp/task42extra/w1_receiver/v28/P0_qualification_admission_fix.json",
+    "bytes": 6429,
+    "sha256": "3b3da79826a3ad7045b39607c606ce9dc7629f70ba7ebe5a5b33405142d4ac2f"
+  },
+  "source_of_36_delta": "a16180c05cf5f5217aa01edc78a33c4c095b1eda",
+  "source_of_import_regression": "82b74b2e7b2afa9660595cea37730c77b591e877",
+  "inherited_92_A_and_39_V27": "reused by exact affected dependency binding; not rerun",
+  "pure_fixture_scope": "schema/physics/key/H/material/sign/marker/supervision damages, writer-seal-reopen-consumer; stubs not native evidence",
+  "native_control": "actual Basix p4/p6 all columns, two nonunit seams and corner; separately qualified",
+  "runs": [
+    {
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v28/precommit2/junit.xml",
+        "bytes": 3730,
+        "sha256": "923ca357dcb63a068d60d28fc6913b688f4fe4a9c17e4eb46e0674170dca91f0"
+      },
+      "tests": 21,
+      "failure_count": 1,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v28/precommit4/junit.xml",
+        "bytes": 3732,
+        "sha256": "480f9fc9194e54458f2c1fd3f746df4a4dc2aa6c011802232a81a648b1cc726e"
+      },
+      "tests": 29,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v28/repair_delta1/junit.xml",
+        "bytes": 4095,
+        "sha256": "9d28aed4b81057d9c98ef28028c41a9d4d18864f876a4dc4e954415393633a7f"
+      },
+      "tests": 32,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v28/repair_delta2/junit.xml",
+        "bytes": 4227,
+        "sha256": "f098026f9f0b7e6e6fac2c738a11128ff9e23bf41caa8f9256fb025988a4ce08"
+      },
+      "tests": 33,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v28/repair_delta3/junit.xml",
+        "bytes": 4368,
+        "sha256": "9ff47fca4a715cec3239c00b556bf3742461698a036d9f0a87282d63fe4a1830"
+      },
+      "tests": 34,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks/junit.xml",
+        "bytes": 3732,
+        "sha256": "42c0faf2a0a0babe70f65ab72a684a3fd85409f17bb3eeaff0ffdc1d5a7bfe9e"
+      },
+      "tests": 29,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/quota_recovery_qualification/junit.xml",
+        "bytes": 4710,
+        "sha256": "3142a73285e3b6d11382ea9131de6b5b63351052db1a45e0419f9af8696f6fb4"
+      },
+      "tests": 36,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    },
+    {
+      "junit": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/import_fix_qualification/junit.xml",
+        "bytes": 345,
+        "sha256": "6bffdcffadf6f8ecc84a74802d225fced2eddec93015dfced8ecc1128e94868b"
+      },
+      "tests": 1,
+      "failure_count": 0,
+      "error_count": 0,
+      "skipped": 0
+    }
+  ],
+  "ruff_compileall": "passed for implementation and each affected repair",
+  "full_pytest": false,
+  "CI": "NOT_RUN",
+  "environment_reinstalled": false,
+  "publication_check": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v28.json",
+    "bytes": 3114,
+    "sha256": "85110de08b5bd7d019a764e15e2afc31cc61bb499af8abeaae1b49120989fa3a"
+  },
+  "publication_scope": "new9Markdown sections/table/fence/link;33protected authorities;150raw receipts; history prefix/suffix preservation; not visual or full numeric rerun"
+}

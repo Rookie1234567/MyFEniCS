@@ -1,0 +1,10 @@
+{
+  "schema": "task42extra.render_check_v28",
+  "status": "RENDERED_VIEW_BLOCKED",
+  "review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/ec05cb2ece095d54073563b02ab0da30f2795310/docs/task042extra_feinn_5nm/review_report_v27.md",
+  "actual_web_attempt": "2026-10-05 around04:46UTC: internal Error / Failed to fetch Cache miss",
+  "actual_browser_visual_pass": false,
+  "no_browser_launched": "24 actual resource admission samples exhausted; no extra browser subtree claimed qualified",
+  "local_markdown_structural_check": "FOCUSED_STRUCTURE_IDENTITY_PASS",
+  "old_visual_failure_history_retained": true
+}

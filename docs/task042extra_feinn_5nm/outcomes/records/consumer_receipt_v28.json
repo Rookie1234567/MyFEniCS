@@ -1,0 +1,1319 @@
+{
+  "schema": "task42extra.consumer_receipt_v28",
+  "actual_independent_consumer": {
+    "status": "LOCAL_RELOCATED_CONSUMER_PASS",
+    "coverage": {
+      "4": 32060,
+      "6": 32060
+    },
+    "coverage_complete": true,
+    "metric_checks": 1218328,
+    "failed_metric_count": 0,
+    "one_dimensional_moment_maximum_absolute": 9.082805012334877e-14,
+    "one_dimensional_moment_failed_count": 0,
+    "one_dimensional_failed_moments": [],
+    "maximum_by_field": {
+      "saved_reference": {
+        "degree": 4,
+        "key": [
+          "top",
+          -37,
+          30,
+          "s"
+        ],
+        "mode_index": 12792,
+        "field": "saved_reference",
+        "numerator": 2.6637783479160247e-16,
+        "reference_norm": 0.24984423364624772,
+        "denominator": 0.24984423364624772,
+        "relative": 1.0661756363317336e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "integral": {
+        "degree": 6,
+        "key": [
+          "top",
+          -79,
+          -35,
+          "s"
+        ],
+        "mode_index": 6870,
+        "field": "integral",
+        "numerator": 3.3921622945422232e-12,
+        "reference_norm": 0.7282038884618827,
+        "denominator": 0.7282038884618827,
+        "relative": 4.658258968799483e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "stored_B": {
+        "degree": 6,
+        "key": [
+          "top",
+          -71,
+          -35,
+          "s"
+        ],
+        "mode_index": 8006,
+        "field": "stored_B",
+        "numerator": 6.054718637660335e-12,
+        "reference_norm": 1.2433611298815685,
+        "denominator": 1.2433611298815685,
+        "relative": 4.869638025629009e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "stored_D_H": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -71,
+          35,
+          "s"
+        ],
+        "mode_index": 24176,
+        "field": "stored_D_H",
+        "numerator": 2.7182745627205078e-15,
+        "reference_norm": 0.0005582068326509018,
+        "denominator": 0.0005582068326509018,
+        "relative": 4.869654765441568e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "B": {
+        "degree": 6,
+        "key": [
+          "top",
+          -71,
+          -35,
+          "s"
+        ],
+        "mode_index": 8006,
+        "field": "B",
+        "numerator": 6.054718637660335e-12,
+        "reference_norm": 1.2433611298815685,
+        "denominator": 1.2433611298815685,
+        "relative": 4.869638025629009e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_H": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -71,
+          35,
+          "s"
+        ],
+        "mode_index": 24176,
+        "field": "D_H",
+        "numerator": 2.7182745627205078e-15,
+        "reference_norm": 0.0005582068326509018,
+        "denominator": 0.0005582068326509018,
+        "relative": 4.869654765441568e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "coordinate_integral": {
+        "degree": 6,
+        "key": [
+          "top",
+          -45,
+          3,
+          "s"
+        ],
+        "mode_index": 11706,
+        "field": "coordinate_integral",
+        "numerator": 3.4687294006575237e-12,
+        "reference_norm": 14.362693548599688,
+        "denominator": 14.362693548599688,
+        "relative": 2.4150967149164804e-13,
+        "near_zero": false,
+        "passed": true
+      },
+      "coordinate_B": {
+        "degree": 6,
+        "key": [
+          "top",
+          -45,
+          3,
+          "s"
+        ],
+        "mode_index": 11706,
+        "field": "coordinate_B",
+        "numerator": 6.457029066191344e-12,
+        "reference_norm": 26.7359624956065,
+        "denominator": 26.7359624956065,
+        "relative": 2.4151100104409643e-13,
+        "near_zero": false,
+        "passed": true
+      },
+      "coordinate_D": {
+        "degree": 6,
+        "key": [
+          "top",
+          -45,
+          3,
+          "s"
+        ],
+        "mode_index": 11706,
+        "field": "coordinate_D",
+        "numerator": 6.219778047816718e-16,
+        "reference_norm": 0.002575297205665152,
+        "denominator": 0.002575297205665152,
+        "relative": 2.4151690275337613e-13,
+        "near_zero": false,
+        "passed": true
+      },
+      "B_direction_0": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -83,
+          35,
+          "p"
+        ],
+        "mode_index": 22473,
+        "field": "B_direction_0",
+        "numerator": 9.65928028215423e-12,
+        "reference_norm": 0.5270084631509545,
+        "denominator": 0.5270084631509545,
+        "relative": 1.8328510749906985e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_direction_0": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -60,
+          -35,
+          "p"
+        ],
+        "mode_index": 25599,
+        "field": "D_direction_0",
+        "numerator": 7.27302795894483e-15,
+        "reference_norm": 0.0003948177024112649,
+        "denominator": 0.0003948177024112649,
+        "relative": 1.842123064524808e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "B_direction_1": {
+        "degree": 6,
+        "key": [
+          "top",
+          -88,
+          34,
+          "p"
+        ],
+        "mode_index": 5741,
+        "field": "B_direction_1",
+        "numerator": 3.509584593184491e-12,
+        "reference_norm": 0.05577661165101065,
+        "denominator": 0.05577661165101065,
+        "relative": 6.292215481183498e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_direction_1": {
+        "degree": 6,
+        "key": [
+          "top",
+          -55,
+          -34,
+          "p"
+        ],
+        "mode_index": 10271,
+        "field": "D_direction_1",
+        "numerator": 1.5320238080448584e-15,
+        "reference_norm": 2.693410212970274e-05,
+        "denominator": 2.693410212970274e-05,
+        "relative": 5.688044846148234e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "B_direction_2": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -93,
+          34,
+          "p"
+        ],
+        "mode_index": 21081,
+        "field": "B_direction_2",
+        "numerator": 3.663868166909987e-12,
+        "reference_norm": 0.07504673556238996,
+        "denominator": 0.07504673556238996,
+        "relative": 4.882115310484142e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_direction_2": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -50,
+          -34,
+          "p"
+        ],
+        "mode_index": 26991,
+        "field": "D_direction_2",
+        "numerator": 5.510666440737929e-15,
+        "reference_norm": 0.00010567009893021108,
+        "denominator": 0.00010567009893021108,
+        "relative": 5.214972349346812e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_components_key": {
+        "degree": 6,
+        "key": [
+          "top",
+          -85,
+          35,
+          "s"
+        ],
+        "mode_index": 6158,
+        "field": "original_components_key",
+        "numerator": 7.389282408699894e-12,
+        "reference_norm": 1.2233009573711218,
+        "denominator": 1.2233009573711218,
+        "relative": 6.040445210293539e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_recover_key": {
+        "degree": 6,
+        "key": [
+          "top",
+          -64,
+          -35,
+          "p"
+        ],
+        "mode_index": 9001,
+        "field": "original_recover_key",
+        "numerator": 4.307908906196561e-15,
+        "reference_norm": 4.489404200351269e-05,
+        "denominator": 4.489404200351269e-05,
+        "relative": 9.595725209727146e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_components_key": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -74,
+          34,
+          "s"
+        ],
+        "mode_index": 23748,
+        "field": "generic_components_key",
+        "numerator": 2.57493126007652e-12,
+        "reference_norm": 0.28079904297064234,
+        "denominator": 0.28079904297064234,
+        "relative": 9.170014373395604e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_recover_key": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -65,
+          34,
+          "s"
+        ],
+        "mode_index": 25026,
+        "field": "generic_recover_key",
+        "numerator": 2.0320969307912446e-15,
+        "reference_norm": 0.00012999642181585675,
+        "denominator": 0.00012999642181585675,
+        "relative": 1.56319451136106e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_components": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_components",
+        "numerator": 1.6520025599080584e-10,
+        "reference_norm": 2140.6263590105086,
+        "denominator": 2140.6263590105086,
+        "relative": 7.71737932196484e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_recover": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_recover",
+        "numerator": 1.3039325192298487e-13,
+        "reference_norm": 3.006016760306915,
+        "denominator": 3.006016760306915,
+        "relative": 4.337742012778122e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_apply": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_apply",
+        "numerator": 4.860449837674541e-11,
+        "reference_norm": 4419.796102955225,
+        "denominator": 4419.796102955225,
+        "relative": 1.0997000143116738e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_adjoint": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_adjoint",
+        "numerator": 3.6425667003443854e-11,
+        "reference_norm": 4002.2013504802458,
+        "denominator": 4002.2013504802458,
+        "relative": 9.101407903696035e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_modal_rhs": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_modal_rhs",
+        "numerator": 1.5697857339519334e-12,
+        "reference_norm": 43.59844769031563,
+        "denominator": 43.59844769031563,
+        "relative": 3.600554187392833e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_physical_rhs": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_physical_rhs",
+        "numerator": 5.816009294881332e-16,
+        "reference_norm": 0.1393147802986646,
+        "denominator": 0.1393147802986646,
+        "relative": 4.1747252390686085e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_components": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_components",
+        "numerator": 1.8336349393946236e-10,
+        "reference_norm": 2587.1023660411724,
+        "denominator": 2587.1023660411724,
+        "relative": 7.087601029875299e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_recover": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_recover",
+        "numerator": 1.4514559045473148e-13,
+        "reference_norm": 4.060474946217927,
+        "denominator": 4.060474946217927,
+        "relative": 3.574596380404349e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_apply": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_apply",
+        "numerator": 4.6594686339205555e-11,
+        "reference_norm": 5508.193598930438,
+        "denominator": 5508.193598930438,
+        "relative": 8.459159160319482e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_adjoint": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_adjoint",
+        "numerator": 3.230971763007875e-11,
+        "reference_norm": 3234.152627957189,
+        "denominator": 3234.152627957189,
+        "relative": 9.99016476550359e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_modal_rhs": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_modal_rhs",
+        "numerator": 5.270517615339287e-12,
+        "reference_norm": 70.13571630467801,
+        "denominator": 70.13571630467801,
+        "relative": 7.514741265981405e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_physical_rhs": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_physical_rhs",
+        "numerator": 5.816009294881332e-16,
+        "reference_norm": 0.1393147802986646,
+        "denominator": 0.1393147802986646,
+        "relative": 4.1747252390686085e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_center": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_center",
+        "numerator": 4.643672006275193e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.333222789656658e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_reference": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_reference",
+        "numerator": 4.1595541387032987e-17,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 2.9857235031243626e-16,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_absolute": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_absolute",
+        "numerator": 6.588773722749539e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 4.7294147172499934e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_absolute_reference": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_absolute_reference",
+        "numerator": 5.009354062639637e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.595708977827425e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_modal": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_modal",
+        "numerator": 4.612905320741956e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.3111384957523937e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_background_rhs_center": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_background_rhs_center",
+        "numerator": 4.64633415243464e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.3351336753169875e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_background_rhs_absolute": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_background_rhs_absolute",
+        "numerator": 6.592076211759899e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 4.731785240322477e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "background_bottom_k": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "background_bottom_k",
+        "numerator": 0.0,
+        "reference_norm": 8.97495053318526,
+        "denominator": 8.97495053318526,
+        "relative": 0.0,
+        "near_zero": false,
+        "passed": true
+      },
+      "background_r": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "background_r",
+        "numerator": 0.0,
+        "reference_norm": 0.33662291765432867,
+        "denominator": 0.33662291765432867,
+        "relative": 0.0,
+        "near_zero": false,
+        "passed": true
+      },
+      "background_t": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "background_t",
+        "numerator": 0.0,
+        "reference_norm": 1.335899608785517,
+        "denominator": 1.335899608785517,
+        "relative": 0.0,
+        "near_zero": false,
+        "passed": true
+      }
+    },
+    "maximum_original_relative": 9.595725209727146e-11,
+    "oracle_maximum_absolute": 3.3422138886441676e-16,
+    "oracle_frequency_count": 357,
+    "actual_frequency_count": 357,
+    "physical_incident_rhs_qualified": true,
+    "coordinate_physics_qualified": true,
+    "checker_FE_quadrature_generator_factor_solve_calls": 0,
+    "profile": "q60_native",
+    "full_target_qualified": false,
+    "official_results": false,
+    "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+    "package_manifest_sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9",
+    "files_reopened": 1043,
+    "manifest_sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e",
+    "read_only_source_package": true,
+    "FE_factor_solve_Gram_NN_calls": 0,
+    "cross_machine_or_power_failure_qualified": false
+  },
+  "component": {
+    "status": "LOCAL_RELOCATED_CONSUMER_PASS",
+    "coverage": {
+      "4": 32060,
+      "6": 32060
+    },
+    "coverage_complete": true,
+    "metric_checks": 1218328,
+    "failed_metric_count": 0,
+    "one_dimensional_moment_maximum_absolute": 9.082805012334877e-14,
+    "one_dimensional_moment_failed_count": 0,
+    "one_dimensional_failed_moments": [],
+    "maximum_by_field": {
+      "saved_reference": {
+        "degree": 4,
+        "key": [
+          "top",
+          -37,
+          30,
+          "s"
+        ],
+        "mode_index": 12792,
+        "field": "saved_reference",
+        "numerator": 2.6637783479160247e-16,
+        "reference_norm": 0.24984423364624772,
+        "denominator": 0.24984423364624772,
+        "relative": 1.0661756363317336e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "integral": {
+        "degree": 6,
+        "key": [
+          "top",
+          -79,
+          -35,
+          "s"
+        ],
+        "mode_index": 6870,
+        "field": "integral",
+        "numerator": 3.3921622945422232e-12,
+        "reference_norm": 0.7282038884618827,
+        "denominator": 0.7282038884618827,
+        "relative": 4.658258968799483e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "stored_B": {
+        "degree": 6,
+        "key": [
+          "top",
+          -71,
+          -35,
+          "s"
+        ],
+        "mode_index": 8006,
+        "field": "stored_B",
+        "numerator": 6.054718637660335e-12,
+        "reference_norm": 1.2433611298815685,
+        "denominator": 1.2433611298815685,
+        "relative": 4.869638025629009e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "stored_D_H": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -71,
+          35,
+          "s"
+        ],
+        "mode_index": 24176,
+        "field": "stored_D_H",
+        "numerator": 2.7182745627205078e-15,
+        "reference_norm": 0.0005582068326509018,
+        "denominator": 0.0005582068326509018,
+        "relative": 4.869654765441568e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "B": {
+        "degree": 6,
+        "key": [
+          "top",
+          -71,
+          -35,
+          "s"
+        ],
+        "mode_index": 8006,
+        "field": "B",
+        "numerator": 6.054718637660335e-12,
+        "reference_norm": 1.2433611298815685,
+        "denominator": 1.2433611298815685,
+        "relative": 4.869638025629009e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_H": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -71,
+          35,
+          "s"
+        ],
+        "mode_index": 24176,
+        "field": "D_H",
+        "numerator": 2.7182745627205078e-15,
+        "reference_norm": 0.0005582068326509018,
+        "denominator": 0.0005582068326509018,
+        "relative": 4.869654765441568e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "coordinate_integral": {
+        "degree": 6,
+        "key": [
+          "top",
+          -45,
+          3,
+          "s"
+        ],
+        "mode_index": 11706,
+        "field": "coordinate_integral",
+        "numerator": 3.4687294006575237e-12,
+        "reference_norm": 14.362693548599688,
+        "denominator": 14.362693548599688,
+        "relative": 2.4150967149164804e-13,
+        "near_zero": false,
+        "passed": true
+      },
+      "coordinate_B": {
+        "degree": 6,
+        "key": [
+          "top",
+          -45,
+          3,
+          "s"
+        ],
+        "mode_index": 11706,
+        "field": "coordinate_B",
+        "numerator": 6.457029066191344e-12,
+        "reference_norm": 26.7359624956065,
+        "denominator": 26.7359624956065,
+        "relative": 2.4151100104409643e-13,
+        "near_zero": false,
+        "passed": true
+      },
+      "coordinate_D": {
+        "degree": 6,
+        "key": [
+          "top",
+          -45,
+          3,
+          "s"
+        ],
+        "mode_index": 11706,
+        "field": "coordinate_D",
+        "numerator": 6.219778047816718e-16,
+        "reference_norm": 0.002575297205665152,
+        "denominator": 0.002575297205665152,
+        "relative": 2.4151690275337613e-13,
+        "near_zero": false,
+        "passed": true
+      },
+      "B_direction_0": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -83,
+          35,
+          "p"
+        ],
+        "mode_index": 22473,
+        "field": "B_direction_0",
+        "numerator": 9.65928028215423e-12,
+        "reference_norm": 0.5270084631509545,
+        "denominator": 0.5270084631509545,
+        "relative": 1.8328510749906985e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_direction_0": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -60,
+          -35,
+          "p"
+        ],
+        "mode_index": 25599,
+        "field": "D_direction_0",
+        "numerator": 7.27302795894483e-15,
+        "reference_norm": 0.0003948177024112649,
+        "denominator": 0.0003948177024112649,
+        "relative": 1.842123064524808e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "B_direction_1": {
+        "degree": 6,
+        "key": [
+          "top",
+          -88,
+          34,
+          "p"
+        ],
+        "mode_index": 5741,
+        "field": "B_direction_1",
+        "numerator": 3.509584593184491e-12,
+        "reference_norm": 0.05577661165101065,
+        "denominator": 0.05577661165101065,
+        "relative": 6.292215481183498e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_direction_1": {
+        "degree": 6,
+        "key": [
+          "top",
+          -55,
+          -34,
+          "p"
+        ],
+        "mode_index": 10271,
+        "field": "D_direction_1",
+        "numerator": 1.5320238080448584e-15,
+        "reference_norm": 2.693410212970274e-05,
+        "denominator": 2.693410212970274e-05,
+        "relative": 5.688044846148234e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "B_direction_2": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -93,
+          34,
+          "p"
+        ],
+        "mode_index": 21081,
+        "field": "B_direction_2",
+        "numerator": 3.663868166909987e-12,
+        "reference_norm": 0.07504673556238996,
+        "denominator": 0.07504673556238996,
+        "relative": 4.882115310484142e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "D_direction_2": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -50,
+          -34,
+          "p"
+        ],
+        "mode_index": 26991,
+        "field": "D_direction_2",
+        "numerator": 5.510666440737929e-15,
+        "reference_norm": 0.00010567009893021108,
+        "denominator": 0.00010567009893021108,
+        "relative": 5.214972349346812e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_components_key": {
+        "degree": 6,
+        "key": [
+          "top",
+          -85,
+          35,
+          "s"
+        ],
+        "mode_index": 6158,
+        "field": "original_components_key",
+        "numerator": 7.389282408699894e-12,
+        "reference_norm": 1.2233009573711218,
+        "denominator": 1.2233009573711218,
+        "relative": 6.040445210293539e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_recover_key": {
+        "degree": 6,
+        "key": [
+          "top",
+          -64,
+          -35,
+          "p"
+        ],
+        "mode_index": 9001,
+        "field": "original_recover_key",
+        "numerator": 4.307908906196561e-15,
+        "reference_norm": 4.489404200351269e-05,
+        "denominator": 4.489404200351269e-05,
+        "relative": 9.595725209727146e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_components_key": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -74,
+          34,
+          "s"
+        ],
+        "mode_index": 23748,
+        "field": "generic_components_key",
+        "numerator": 2.57493126007652e-12,
+        "reference_norm": 0.28079904297064234,
+        "denominator": 0.28079904297064234,
+        "relative": 9.170014373395604e-12,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_recover_key": {
+        "degree": 6,
+        "key": [
+          "bottom",
+          -65,
+          34,
+          "s"
+        ],
+        "mode_index": 25026,
+        "field": "generic_recover_key",
+        "numerator": 2.0320969307912446e-15,
+        "reference_norm": 0.00012999642181585675,
+        "denominator": 0.00012999642181585675,
+        "relative": 1.56319451136106e-11,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_components": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_components",
+        "numerator": 1.6520025599080584e-10,
+        "reference_norm": 2140.6263590105086,
+        "denominator": 2140.6263590105086,
+        "relative": 7.71737932196484e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_recover": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_recover",
+        "numerator": 1.3039325192298487e-13,
+        "reference_norm": 3.006016760306915,
+        "denominator": 3.006016760306915,
+        "relative": 4.337742012778122e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_apply": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_apply",
+        "numerator": 4.860449837674541e-11,
+        "reference_norm": 4419.796102955225,
+        "denominator": 4419.796102955225,
+        "relative": 1.0997000143116738e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_adjoint": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_adjoint",
+        "numerator": 3.6425667003443854e-11,
+        "reference_norm": 4002.2013504802458,
+        "denominator": 4002.2013504802458,
+        "relative": 9.101407903696035e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_modal_rhs": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_modal_rhs",
+        "numerator": 1.5697857339519334e-12,
+        "reference_norm": 43.59844769031563,
+        "denominator": 43.59844769031563,
+        "relative": 3.600554187392833e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "original_physical_rhs": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "original_physical_rhs",
+        "numerator": 5.816009294881332e-16,
+        "reference_norm": 0.1393147802986646,
+        "denominator": 0.1393147802986646,
+        "relative": 4.1747252390686085e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_components": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_components",
+        "numerator": 1.8336349393946236e-10,
+        "reference_norm": 2587.1023660411724,
+        "denominator": 2587.1023660411724,
+        "relative": 7.087601029875299e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_recover": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_recover",
+        "numerator": 1.4514559045473148e-13,
+        "reference_norm": 4.060474946217927,
+        "denominator": 4.060474946217927,
+        "relative": 3.574596380404349e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_apply": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_apply",
+        "numerator": 4.6594686339205555e-11,
+        "reference_norm": 5508.193598930438,
+        "denominator": 5508.193598930438,
+        "relative": 8.459159160319482e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_adjoint": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_adjoint",
+        "numerator": 3.230971763007875e-11,
+        "reference_norm": 3234.152627957189,
+        "denominator": 3234.152627957189,
+        "relative": 9.99016476550359e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_modal_rhs": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_modal_rhs",
+        "numerator": 5.270517615339287e-12,
+        "reference_norm": 70.13571630467801,
+        "denominator": 70.13571630467801,
+        "relative": 7.514741265981405e-14,
+        "near_zero": false,
+        "passed": true
+      },
+      "generic_physical_rhs": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "generic_physical_rhs",
+        "numerator": 5.816009294881332e-16,
+        "reference_norm": 0.1393147802986646,
+        "denominator": 0.1393147802986646,
+        "relative": 4.1747252390686085e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_center": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_center",
+        "numerator": 4.643672006275193e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.333222789656658e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_reference": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_reference",
+        "numerator": 4.1595541387032987e-17,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 2.9857235031243626e-16,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_absolute": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_absolute",
+        "numerator": 6.588773722749539e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 4.7294147172499934e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_absolute_reference": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_absolute_reference",
+        "numerator": 5.009354062639637e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.595708977827425e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_rhs_modal": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_rhs_modal",
+        "numerator": 4.612905320741956e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.3111384957523937e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_background_rhs_center": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_background_rhs_center",
+        "numerator": 4.64633415243464e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 3.3351336753169875e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "incident_background_rhs_absolute": {
+        "degree": 6,
+        "key": [],
+        "mode_index": -1,
+        "field": "incident_background_rhs_absolute",
+        "numerator": 6.592076211759899e-16,
+        "reference_norm": 0.13931478029866462,
+        "denominator": 0.13931478029866462,
+        "relative": 4.731785240322477e-15,
+        "near_zero": false,
+        "passed": true
+      },
+      "background_bottom_k": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "background_bottom_k",
+        "numerator": 0.0,
+        "reference_norm": 8.97495053318526,
+        "denominator": 8.97495053318526,
+        "relative": 0.0,
+        "near_zero": false,
+        "passed": true
+      },
+      "background_r": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "background_r",
+        "numerator": 0.0,
+        "reference_norm": 0.33662291765432867,
+        "denominator": 0.33662291765432867,
+        "relative": 0.0,
+        "near_zero": false,
+        "passed": true
+      },
+      "background_t": {
+        "degree": 4,
+        "key": [],
+        "mode_index": -1,
+        "field": "background_t",
+        "numerator": 0.0,
+        "reference_norm": 1.335899608785517,
+        "denominator": 1.335899608785517,
+        "relative": 0.0,
+        "near_zero": false,
+        "passed": true
+      }
+    },
+    "maximum_original_relative": 9.595725209727146e-11,
+    "oracle_maximum_absolute": 3.3422138886441676e-16,
+    "oracle_frequency_count": 357,
+    "actual_frequency_count": 357,
+    "physical_incident_rhs_qualified": true,
+    "coordinate_physics_qualified": true,
+    "checker_FE_quadrature_generator_factor_solve_calls": 0,
+    "profile": "q60_native",
+    "full_target_qualified": false,
+    "official_results": false,
+    "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+    "package_manifest_sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9",
+    "files_reopened": 1043,
+    "manifest_sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e",
+    "read_only_source_package": true,
+    "FE_factor_solve_Gram_NN_calls": 0,
+    "cross_machine_or_power_failure_qualified": false,
+    "raw": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_check/consumer_receipt.json",
+      "bytes": 16423,
+      "sha256": "0ffa45e41efe3a6f4d5b4690b5e7b88b8e9ee0c785acec2379f3c93d2de5e2ab"
+    },
+    "raw_metrics": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_check/boundary_metrics.csv",
+      "bytes": 176917352,
+      "sha256": "54193a32f902e733186e56bfdde18e9795924b2d414fd0975097661160fc8f14"
+    },
+    "package_manifest": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/bundle/package_manifest.json",
+      "bytes": 152633,
+      "sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9"
+    },
+    "relocated_manifest": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_package/package_manifest.json",
+      "bytes": 152633,
+      "sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9"
+    },
+    "bundle_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/bundle",
+    "relocated_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_package",
+    "copied_bytes": 1625383207,
+    "not_ingested_by_main": true,
+    "receiver_source_sha": "82b74b2e7b2afa9660595cea37730c77b591e877",
+    "binding_sha256": "e96a83e991438a1b74e8d1b1e4eb7d8fa5dde240a01ed79b849afe70995adbeb",
+    "elapsed_seconds": 222.0791753719095,
+    "input_origin": "independently_validated_v28",
+    "integration_profile": "q60_native",
+    "math_commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "NN_used": false,
+    "PDE_solved": false
+  },
+  "consumer_source": "82b74b2e7b2afa9660595cea37730c77b591e877",
+  "original_package_manifest": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/bundle/package_manifest.json",
+    "bytes": 152633,
+    "sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9"
+  },
+  "relocated_package_manifest": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_package/package_manifest.json",
+    "bytes": 152633,
+    "sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9"
+  },
+  "source_package_ready": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/bundle/READY_FOR_MAIN_OPT_IN_NOT_INGESTED.json",
+    "bytes": 511,
+    "sha256": "1ba3f7d9f2d8afec09eb1bf3c7b1c73d414b5e5b0c8137752200320b183a11cf"
+  },
+  "relocated_ready": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_package/READY_FOR_MAIN_OPT_IN_NOT_INGESTED.json",
+    "bytes": 511,
+    "sha256": "1ba3f7d9f2d8afec09eb1bf3c7b1c73d414b5e5b0c8137752200320b183a11cf"
+  },
+  "actual_receipt": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_check/consumer_receipt.json",
+    "bytes": 16423,
+    "sha256": "0ffa45e41efe3a6f4d5b4690b5e7b88b8e9ee0c785acec2379f3c93d2de5e2ab"
+  },
+  "full_relocated_metrics": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/u28/bundle_consume/relocated_check/boundary_metrics.csv",
+    "bytes": 176917352,
+    "sha256": "54193a32f902e733186e56bfdde18e9795924b2d414fd0975097661160fc8f14"
+  },
+  "package_files": 1043,
+  "package_data_bytes": 1625383207,
+  "identical_relative_manifests": true,
+  "main_handoff_status": "READY_FOR_MAIN_OPT_IN_NOT_INGESTED",
+  "main_ingestion_occurred": false,
+  "cross_machine_or_power_failure_qualified": false,
+  "resource_procedure_qualification": {
+    "numeric_evidence_accepted_only_by_actual_array_checks": true,
+    "same_preworker_stage_grant_reused": true,
+    "new_CPU_admission_at_final_worker_start": false,
+    "new_PSI_window_claimed": false,
+    "current_PSI_headroom_swap_disk_monitored_by_actual_watchdog": true,
+    "reuse_timeliness_and_scope_pending_review": true,
+    "no_extra_sample_25": true
+  }
+}

@@ -1,3 +1,11 @@
+# 当前 V28：可消费的新身份全模式代表面包已实际合格
+
+原尺寸λ0.7模式清单以显式schema2重新独立核验，416780字段检查通过；真实Basix控制和p4/p6两代表面各32060模式q60边界通过原门，1218328数值检查失败0。另一个新目录独立重开1043文件/1625383207B并再次通过，接收状态READY_FOR_MAIN_OPT_IN_NOT_INGESTED。不是只完成fixture、原件hash重现或索引封存。
+
+[Response V28](response_v28.md)、[当前summary](outcomes/summary.md)、[可消费包/防混用](outcomes/main_handoff_v28.md)、[原分子/分母](outcomes/records/independent_checker_v28.json)、[输入身份](outcomes/records/input_identity_v28.json)、[成本](outcomes/records/resource_costs_v28.json)。新实例与旧数值manifest等价UNKNOWN，旧schema1/失败不变；原q60经验通过、条件分面未运行。
+
+完整全域残差/场/功率未运行；原50×25×140nm、Si17/120nm、λ0.7完整3D、decimal2e12B/172800s原门仍未达成。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED、M3600较好/Mfinal退化、D0否决/D1未运行保持。完成交付后清场等待审阅，不自动启动NN、主线全局solve或其他分支任务。下面全部原文为历史记录，其“当前”与启动描述不是新授权。
+
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
 ## 当前：Response V27 — 已实际生成，原清单逐字节重现失败
