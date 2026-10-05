@@ -1300,6 +1300,8 @@ def test_side_inverse_builder_selects_explicit_cell_condensed_backend(monkeypatc
         assert "p4" not in captured
         assert captured["condensed_p4_callback"] is None
         assert captured["reuse_primal_route_plan_calls"] == [False]
+        assert inverse._reuse_leading_ph_dual is False
+        assert inverse._coupling._reuse_leading_ph is False
     finally:
         if inverse is not None:
             inverse.destroy()
@@ -1307,9 +1309,12 @@ def test_side_inverse_builder_selects_explicit_cell_condensed_backend(monkeypatc
         operator.destroy()
 
 
-@pytest.mark.parametrize("reuse_primal_route_plan", [False, True])
-def test_side_inverse_builder_forwards_primal_route_plan_to_single_transfer(
-    monkeypatch, reuse_primal_route_plan
+@pytest.mark.parametrize(
+    ("reuse_primal_route_plan", "reuse_leading_ph_dual"),
+    ((False, False), (True, False), (False, True), (True, True)),
+)
+def test_side_inverse_builder_forwards_reuse_flags_independently(
+    monkeypatch, reuse_primal_route_plan, reuse_leading_ph_dual
 ):
     captured = {}
     side_system, operator, _operator_context, b = _builder_side_system()
@@ -1319,6 +1324,7 @@ def test_side_inverse_builder_forwards_primal_route_plan_to_single_transfer(
         inverse = side_inverse_module.build_side_balanced_inverse(
             side_system,
             reuse_primal_route_plan=reuse_primal_route_plan,
+            reuse_leading_ph_dual=reuse_leading_ph_dual,
         )
         assert captured["reuse_primal_route_plan_calls"] == [
             reuse_primal_route_plan
@@ -1326,6 +1332,8 @@ def test_side_inverse_builder_forwards_primal_route_plan_to_single_transfer(
         assert captured["transfer"]._reuse_primal_route_plan is (
             reuse_primal_route_plan
         )
+        assert inverse._reuse_leading_ph_dual is reuse_leading_ph_dual
+        assert inverse._coupling._reuse_leading_ph is reuse_leading_ph_dual
         snapshot = inverse.primal_route_plan_snapshot()
         if reuse_primal_route_plan:
             assert snapshot["status"] == "not_captured_yet"
@@ -1402,6 +1410,36 @@ def test_side_inverse_route_plan_requires_strict_bool_before_building():
             None,
             reuse_primal_route_plan=1,
         )
+
+
+def test_side_inverse_leading_ph_reuse_requires_strict_bool_and_no_vector_observer(
+    monkeypatch,
+):
+    captured = {}
+    side_system, operator, _operator_context, b = _builder_side_system()
+    _install_stub_side_builders(monkeypatch, captured)
+    try:
+        with pytest.raises(
+            TypeError,
+            match="reuse_leading_ph_dual must be a boolean",
+        ):
+            side_inverse_module.build_side_balanced_inverse(
+                side_system,
+                reuse_leading_ph_dual=1,
+            )
+        with pytest.raises(
+            ValueError,
+            match="leading PH reuse is incompatible with mutable",
+        ):
+            side_inverse_module.build_side_balanced_inverse(
+                side_system,
+                diagnostic_callback=lambda _record: None,
+                reuse_leading_ph_dual=True,
+            )
+        assert captured == {}
+    finally:
+        b.destroy()
+        operator.destroy()
 
 
 def test_side_inverse_builder_forwards_fused_physical_factory_only_when_selected(

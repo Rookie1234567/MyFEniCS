@@ -71,6 +71,121 @@ TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_MIN_MEMAVAILABLE_BYTES = 384 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
+_TASK041_LEADING_PH_DUAL_COUNT_FIELDS = (
+    "PH_total",
+    "PH_audit",
+    "PH_audit_logical",
+    "PH_audit_leading_reused",
+)
+
+
+def _task041_leading_ph_dual_failure_count_snapshot(
+    *,
+    side_inverses: Mapping[str, Any],
+    side_diagnostics_after_destroy: Mapping[str, Any],
+    rank: int,
+) -> dict[str, Any]:
+    """Copy bounded local PH counters without adding a collective."""
+
+    sides: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        inverse = side_inverses.get(side)
+        if inverse is None:
+            sides[side] = {
+                "status": "not_created",
+                "read_point": "side_inverse_not_created",
+                "counts": dict.fromkeys(_TASK041_LEADING_PH_DUAL_COUNT_FIELDS),
+            }
+            continue
+        try:
+            diagnostics = side_diagnostics_after_destroy.get(side)
+            if isinstance(diagnostics, Mapping):
+                read_point = "retained_side_diagnostics_after_destroy"
+            else:
+                diagnostics = inverse.diagnostics
+                read_point = (
+                    "inverse_diagnostics_after_destroy"
+                    if diagnostics.get("destroyed") is True
+                    else "inverse_diagnostics_before_destroy"
+                )
+            if diagnostics.get("diagnostics_read_status") == "snapshot_error":
+                sides[side] = {
+                    "status": "snapshot_error",
+                    "read_point": diagnostics.get(
+                        "diagnostics_read_point", read_point
+                    ),
+                    "counts": dict.fromkeys(_TASK041_LEADING_PH_DUAL_COUNT_FIELDS),
+                    "error": diagnostics.get("diagnostics_read_error"),
+                }
+                continue
+            raw_counts = diagnostics.get("counts")
+            sides[side] = {
+                "status": "captured" if isinstance(raw_counts, Mapping) else "counts_unavailable",
+                "read_point": read_point,
+                "counts": {
+                    name: raw_counts.get(name) if isinstance(raw_counts, Mapping) else None
+                    for name in _TASK041_LEADING_PH_DUAL_COUNT_FIELDS
+                },
+            }
+        except BaseException as exc:  # noqa: BLE001 - preserve the solver exception
+            sides[side] = {
+                "status": "snapshot_error",
+                "read_point": "diagnostics_read_failed",
+                "counts": dict.fromkeys(_TASK041_LEADING_PH_DUAL_COUNT_FIELDS),
+                "error": {"type": type(exc).__name__, "message": str(exc)[:240]},
+            }
+    return {
+        "rank": int(rank),
+        "count_scope": "rank_local_not_reduced_or_summed",
+        "count_semantics": "existing cumulative side diagnostics; failure may include attempted calls",
+        "sides": sides,
+    }
+
+
+def _task041_release_candidate_sides_and_cleanup(
+    *,
+    side_inverses: Mapping[str, Any],
+    side_diagnostics_after_destroy: dict[str, Any],
+    marker_callback: Callable[[str, Mapping[str, Any]], Any],
+    comm: Any,
+    preserve_primary_failure: bool,
+) -> Mapping[str, Any]:
+    """Release Task041 candidate sides; only tolerate read errors under a primary failure."""
+
+    from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
+
+    for side, inverse in side_inverses.items():
+        inverse.destroy()
+        try:
+            diagnostics = dict(inverse.diagnostics)
+        except Exception as exc:
+            if not preserve_primary_failure:
+                raise
+            diagnostics = {
+                "diagnostics_read_status": "snapshot_error",
+                "diagnostics_read_point": "after_side_destroy",
+                "diagnostics_read_error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc)[:240],
+                },
+                "destroyed": None,
+                "p4_factor_count": None,
+                "nested_iterative_ksp_count": None,
+                "counts": dict.fromkeys(_TASK041_LEADING_PH_DUAL_COUNT_FIELDS),
+            }
+        side_diagnostics_after_destroy[side] = diagnostics
+        marker_callback(
+            f"{side}_construction_cleanup",
+            {
+                "source": "SideBalancedInverse.destroy",
+                "diagnostics": diagnostics,
+                "p4_factor_count": diagnostics.get("p4_factor_count"),
+                "nested_iterative_ksp_count": diagnostics.get(
+                    "nested_iterative_ksp_count"
+                ),
+            },
+        )
+    return collective_heap_cleanup(comm)
 
 
 def _task041_form_p4_residual_identity(
@@ -5222,6 +5337,7 @@ def _run_task041_balh_candidate_setup(
     use_anderson_modal_inner: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
     reuse_primal_route_plan: bool = False,
+    reuse_leading_ph_dual: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair: Mapping[str, Any] | None = None,
@@ -5277,6 +5393,12 @@ def _run_task041_balh_candidate_setup(
     if reuse_primal_route_plan and not fixed_h6_modal_gmres_research:
         raise Task041ModePrepError(
             "primal route-plan reuse requires the fixed-H6 modal research path"
+        )
+    if not isinstance(reuse_leading_ph_dual, bool):
+        raise Task041ModePrepError("reuse_leading_ph_dual must be a boolean")
+    if reuse_leading_ph_dual and not fixed_h6_modal_gmres_research:
+        raise Task041ModePrepError(
+            "leading PH dual reuse requires the fixed-H6 modal research path"
         )
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
@@ -5976,6 +6098,7 @@ def _run_task041_balh_candidate_setup(
             p4_inverse_backend=selected_backend,
             support_policy=selected_support_policy,
             reuse_primal_route_plan=reuse_primal_route_plan,
+            reuse_leading_ph_dual=reuse_leading_ph_dual,
             **(
                 {"volume_action_context_factory": physical_action_context_factory}
                 if physical_action_context_factory is not None
@@ -7434,7 +7557,9 @@ def _run_task041_balh_candidate_setup(
             )
         return primal_route_plan_release_snapshot
 
-    def release_before_recovery() -> Mapping[str, Any]:
+    def release_before_recovery(
+        *, preserve_primary_failure: bool = False
+    ) -> Mapping[str, Any]:
         nonlocal context, operator_context, operator, released
         nonlocal global_source, global_source_before
         nonlocal global_action_before, global_rhs_before
@@ -7481,28 +7606,45 @@ def _run_task041_balh_candidate_setup(
                 rhs.destroy()
                 common_first_rhs_by_side[side] = None
             common_first_entry_by_side[side] = None
-        for side, inverse in side_inverses.items():
-            inverse.destroy()
-            side_diagnostics_after[side] = dict(inverse.diagnostics)
-            marker_callback(
-                f"{side}_construction_cleanup",
-                {
-                    "source": "SideBalancedInverse.destroy",
-                    "diagnostics": side_diagnostics_after[side],
-                    "p4_factor_count": side_diagnostics_after[side].get(
-                        "p4_factor_count"
-                    ),
-                    "nested_iterative_ksp_count": side_diagnostics_after[side].get(
-                        "nested_iterative_ksp_count"
-                    ),
-                },
-            )
-        cleanup = collective_heap_cleanup(comm)
+        side_release = _task041_release_candidate_sides_and_cleanup(
+            side_inverses=side_inverses,
+            side_diagnostics_after_destroy=side_diagnostics_after,
+            marker_callback=marker_callback,
+            comm=comm,
+            preserve_primary_failure=preserve_primary_failure,
+        )
         released = True
-        factor_counts = {
-            side: int(diagnostics.get("p4_factor_count", 0))
-            for side, diagnostics in side_diagnostics_after.items()
-        }
+        cleanup = side_release
+        if preserve_primary_failure:
+            factor_counts = {
+                side: (
+                    value
+                    if isinstance(value := diagnostics.get("p4_factor_count"), int)
+                    and not isinstance(value, bool)
+                    else None
+                )
+                for side, diagnostics in side_diagnostics_after.items()
+            }
+            nested_ksp_counts = {
+                side: (
+                    value
+                    if isinstance(
+                        value := diagnostics.get("nested_iterative_ksp_count"), int
+                    )
+                    and not isinstance(value, bool)
+                    else None
+                )
+                for side, diagnostics in side_diagnostics_after.items()
+            }
+        else:
+            factor_counts = {
+                side: int(diagnostics.get("p4_factor_count", 0))
+                for side, diagnostics in side_diagnostics_after.items()
+            }
+            nested_ksp_counts = {
+                side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+                for side, diagnostics in side_diagnostics_after.items()
+            }
         objects_destroyed = bool(
             side_diagnostics_after
             and all(
@@ -7512,7 +7654,16 @@ def _run_task041_balh_candidate_setup(
         )
         factor_cleanup_pass = bool(
             factor_counts
-            and all(count == 0 for count in factor_counts.values())
+            and all(count is not None and count == 0 for count in factor_counts.values())
+        )
+        side_cleanup_pass = bool(
+            side_diagnostics_after
+            and all(
+                diagnostics.get("diagnostics_read_status") != "snapshot_error"
+                and nested_ksp_counts[side] is not None
+                and nested_ksp_counts[side] == 0
+                for side, diagnostics in side_diagnostics_after.items()
+            )
         )
         component_cleanup_pass = bool(
             context_status in {"destroyed", "not_created"}
@@ -7520,10 +7671,7 @@ def _run_task041_balh_candidate_setup(
             and operator_status in {"destroyed", "not_created"}
             and objects_destroyed
             and factor_cleanup_pass
-            and all(
-                int(diagnostics.get("nested_iterative_ksp_count", 0)) == 0
-                for diagnostics in side_diagnostics_after.values()
-            )
+            and side_cleanup_pass
         )
         release_snapshot = {
             "factor_count_after_cleanup": factor_counts,
@@ -7538,10 +7686,7 @@ def _run_task041_balh_candidate_setup(
                     "outer_operator_context": operator_context_status,
                     "outer_operator": operator_status,
                     "side_python_pc_and_ksp": objects_destroyed
-                    and all(
-                        int(diagnostics.get("nested_iterative_ksp_count", 0)) == 0
-                        for diagnostics in side_diagnostics_after.values()
-                    ),
+                    and side_cleanup_pass,
                     "full_action": objects_destroyed,
                     "p4_factor": factor_cleanup_pass,
                     "h6": objects_destroyed,
@@ -13440,6 +13585,7 @@ def _run_task041_balh_candidate_setup(
             )
             result["candidate_inventory"].update(
                 {
+                    "reuse_leading_ph_dual_requested": reuse_leading_ph_dual,
                     "modal_schur_materialized": context_inventory_before.get(
                         "modal_schur_materialized"
                     ),
@@ -13476,14 +13622,82 @@ def _run_task041_balh_candidate_setup(
         return result
     except BaseException:
         for side, inverse in side_inverses.items():
-            last_apply = dict(inverse.diagnostics.get("last_apply", {}))
+            try:
+                diagnostics = inverse.diagnostics
+                last_apply = dict(diagnostics.get("last_apply", {}))
+            except BaseException:
+                if reuse_leading_ph_dual:
+                    continue
+                raise
             if last_apply.get("failure_classification") in {
                 "P4_PHYSICAL_RESIDUAL_GATE",
                 "BALANCED_CONSTRAINT_REJECTED",
             }:
                 failure_evidence[side] = last_apply
+        if reuse_leading_ph_dual:
+            try:
+                failure_evidence["leading_ph_dual_reuse_counts"] = (
+                    _task041_leading_ph_dual_failure_count_snapshot(
+                        side_inverses=side_inverses,
+                        side_diagnostics_after_destroy=side_diagnostics_after,
+                        rank=comm.rank,
+                    )
+                )
+            except BaseException as snapshot_error:  # noqa: BLE001 - preserve primary failure
+                failure_evidence["leading_ph_dual_reuse_counts"] = {
+                    "rank": int(comm.rank),
+                    "count_scope": "rank_local_not_reduced_or_summed",
+                    "count_semantics": "existing cumulative side diagnostics; failure may include attempted calls",
+                    "read_point": "failure_snapshot_record_construction",
+                    "snapshot_error": {
+                        "type": type(snapshot_error).__name__,
+                        "message": str(snapshot_error)[:240],
+                    },
+                    "sides": {
+                        side: {
+                            "status": (
+                                "snapshot_error"
+                                if side in side_inverses
+                                else "not_created"
+                            ),
+                            "counts": dict.fromkeys(_TASK041_LEADING_PH_DUAL_COUNT_FIELDS),
+                        }
+                        for side in ("bottom", "top")
+                    },
+                }
         if not released:
-            release_before_recovery()
+            failure_release = release_before_recovery(
+                preserve_primary_failure=reuse_leading_ph_dual
+            )
+            if reuse_leading_ph_dual:
+                failure_counts = failure_evidence.get(
+                    "leading_ph_dual_reuse_counts"
+                )
+                if isinstance(failure_counts, dict):
+                    try:
+                        failure_counts["post_destroy_cleanup"] = {
+                            **_task041_leading_ph_dual_failure_count_snapshot(
+                                side_inverses=side_inverses,
+                                side_diagnostics_after_destroy=side_diagnostics_after,
+                                rank=comm.rank,
+                            ),
+                            "factor_count_after_cleanup": failure_release.get(
+                                "factor_count_after_cleanup"
+                            ),
+                            "factor_cleanup_pass": failure_release.get(
+                                "factor_cleanup_pass"
+                            ),
+                            "side_pc_and_ksp_cleanup_pass": failure_release.get(
+                                "component_cleanup", {}
+                            )
+                            .get("owned", {})
+                            .get("side_python_pc_and_ksp"),
+                        }
+                    except Exception as snapshot_error:  # noqa: BLE001 - keep primary failure
+                        failure_counts["post_destroy_cleanup_snapshot_error"] = {
+                            "type": type(snapshot_error).__name__,
+                            "message": str(snapshot_error)[:240],
+                        }
         if (
             reuse_primal_route_plan
             and comm.rank == 0
@@ -13526,6 +13740,7 @@ def run_task041_consumer(
     use_anderson_modal_inner: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
     reuse_primal_route_plan: bool = False,
+    reuse_leading_ph_dual: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair_request: Mapping[str, Any] | None = None,
@@ -13567,6 +13782,12 @@ def run_task041_consumer(
     if reuse_primal_route_plan and not fixed_h6_modal_gmres_research:
         raise Task041ModePrepError(
             "primal route-plan reuse requires the fixed-H6 modal research path"
+        )
+    if not isinstance(reuse_leading_ph_dual, bool):
+        raise Task041ModePrepError("reuse_leading_ph_dual must be a boolean")
+    if reuse_leading_ph_dual and not fixed_h6_modal_gmres_research:
+        raise Task041ModePrepError(
+            "leading PH dual reuse requires the fixed-H6 modal research path"
         )
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
@@ -15018,6 +15239,7 @@ def run_task041_consumer(
                     fixed_h6_modal_gmres_research
                 ),
                 reuse_primal_route_plan=reuse_primal_route_plan,
+                reuse_leading_ph_dual=reuse_leading_ph_dual,
                 complex_qr_research=complex_qr_research,
                 capture_modal_solve_trace=capture_modal_solve_trace,
                 same_g_modal_metric_pair=same_g_modal_metric_pair,

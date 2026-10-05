@@ -2023,6 +2023,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["p4_backend_pair_side"] is None
     assert captured["top_causal_replay"] is False
     assert captured["a6_response_pair"] is False
+    assert captured["reuse_leading_ph_dual"] is False
     assert captured["physical_action_context_factory"] is None
 
     formal_cell_condensed_path = (
@@ -2200,9 +2201,11 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
+            fixed_h6_modal_gmres_research=True,
         )
     assert captured["reuse_primal_route_plan"] is False
-    assert captured["fixed_h6_modal_gmres_research"] is False
+    assert captured["fixed_h6_modal_gmres_research"] is True
+    assert captured["reuse_leading_ph_dual"] is False
 
     captured.clear()
     with pytest.raises(
@@ -2225,6 +2228,46 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         )
     assert captured == {}
 
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="reuse_leading_ph_dual must be a boolean",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_leading_ph_nonbool_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            reuse_leading_ph_dual=1,
+        )
+    assert captured == {}
+
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="leading PH dual reuse requires the fixed-H6 modal research path",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_leading_ph_without_fixed_h6_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            reuse_leading_ph_dual=True,
+        )
+    assert captured == {}
+
     captured.clear()
     resource_policy_marker_limits_seen.clear()
     with pytest.raises(SetupReached):
@@ -2242,9 +2285,11 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             ),
             fixed_h6_modal_gmres_research=True,
             reuse_primal_route_plan=True,
+            reuse_leading_ph_dual=True,
         )
     assert captured["fixed_h6_modal_gmres_research"] is True
     assert captured["reuse_primal_route_plan"] is True
+    assert captured["reuse_leading_ph_dual"] is True
     assert captured["use_anderson_modal_inner"] is False
     assert captured["complex_qr_research"] is False
     assert captured["capture_modal_solve_trace"] is False
@@ -2479,11 +2524,15 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
 
 
 @pytest.mark.parametrize(
-    "modal_route",
-    ("anderson", "fixed_h6_budget_failure", "fixed_h6_converged_release"),
+    ("modal_route", "reuse_primal_route_plan"),
+    (
+        ("anderson", False),
+        ("fixed_h6_budget_failure", True),
+        ("fixed_h6_converged_release", False),
+    ),
 )
 def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
-    tmp_path: Path, monkeypatch, modal_route
+    tmp_path: Path, monkeypatch, modal_route, reuse_primal_route_plan
 ):
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task039_v3_7_orchestration as orchestration
@@ -2688,6 +2737,17 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
                 raise self.error
             return self.snapshot
 
+    class FakeSideInverseDiagnostics:
+        def __init__(self, diagnostics=None, error=None):
+            self._diagnostics = diagnostics
+            self._error = error
+
+        @property
+        def diagnostics(self):
+            if self._error is not None:
+                raise self._error
+            return self._diagnostics
+
     captured_route_plan_snapshot = {
         "status": "captured",
         "enabled": True,
@@ -2753,18 +2813,60 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         assert kwargs["capture_modal_solve_trace"] is (
             modal_route == "anderson"
         )
+        assert kwargs["reuse_leading_ph_dual"] is modal_route.startswith(
+            "fixed_h6"
+        )
         if modal_route.startswith("fixed_h6"):
-            assert kwargs["reuse_primal_route_plan"] is True
+            assert kwargs["reuse_primal_route_plan"] is reuse_primal_route_plan
             assert kwargs["task041_resource_policy"] == (
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             )
         else:
-            assert kwargs["reuse_primal_route_plan"] is False
+            assert reuse_primal_route_plan is False
+            assert kwargs["reuse_primal_route_plan"] is reuse_primal_route_plan
         if not invoke_failure_runner["enabled"]:
             raise AssertionError("unexpected candidate setup invocation")
 
+        leading_count_inputs = None
+        if kwargs["reuse_leading_ph_dual"]:
+            bottom_counts = {
+                "PH_total": 9,
+                "PH_audit": 3,
+                "PH_audit_logical": 4,
+                "PH_audit_leading_reused": 1,
+            }
+            if modal_route == "fixed_h6_budget_failure":
+                local_inverses = {
+                    "bottom": FakeSideInverseDiagnostics(),
+                    "top": FakeSideInverseDiagnostics(
+                        error=RuntimeError("injected PH count read failure")
+                    ),
+                }
+                retained_diagnostics = {
+                    "bottom": {"destroyed": True, "counts": bottom_counts}
+                }
+            else:
+                local_inverses = {
+                    "bottom": FakeSideInverseDiagnostics(),
+                    "top": FakeSideInverseDiagnostics(
+                        diagnostics={
+                            "destroyed": False,
+                            "counts": {
+                                "PH_total": None,
+                                "PH_audit": 3,
+                                "PH_audit_logical": 4,
+                                "PH_audit_leading_reused": 1,
+                            },
+                        }
+                    ),
+                }
+                retained_diagnostics = {
+                    "bottom": {"destroyed": True, "counts": bottom_counts}
+                }
+            leading_count_inputs = (local_inverses, retained_diagnostics)
+
         release_callback = base_release
-        if kwargs["reuse_primal_route_plan"]:
+        if reuse_primal_route_plan:
             route_sides = {
                 "bottom": FakeRoutePlanSnapshot(captured_route_plan_snapshot),
                 "top": (
@@ -2793,15 +2895,26 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
                 return release
 
             release_callback = release_with_route_plan_snapshot
-        return kwargs["full_formal_runner"](
-            setup=args[0],
-            layout=args[1],
-            operator=object(),
-            context=fake_context,
-            comm=kwargs["comm"],
-            marker_callback=kwargs["marker_callback"],
-            release_before_recovery=release_callback,
-        )
+        try:
+            return kwargs["full_formal_runner"](
+                setup=args[0],
+                layout=args[1],
+                operator=object(),
+                context=fake_context,
+                comm=kwargs["comm"],
+                marker_callback=kwargs["marker_callback"],
+                release_before_recovery=release_callback,
+            )
+        except BaseException:
+            if leading_count_inputs is not None:
+                kwargs["failure_evidence"][
+                    "leading_ph_dual_reuse_counts"
+                ] = worker._task041_leading_ph_dual_failure_count_snapshot(
+                    side_inverses=leading_count_inputs[0],
+                    side_diagnostics_after_destroy=leading_count_inputs[1],
+                    rank=kwargs["comm"].rank,
+                )
+            raise
 
     def record_cleanup(*_args, **_kwargs):
         events.append("consumer_cleanup")
@@ -2856,7 +2969,8 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             comm=comm,
             use_anderson_modal_inner=(modal_route == "anderson"),
             fixed_h6_modal_gmres_research=modal_route.startswith("fixed_h6"),
-            reuse_primal_route_plan=modal_route.startswith("fixed_h6"),
+            reuse_primal_route_plan=reuse_primal_route_plan,
+            reuse_leading_ph_dual=modal_route.startswith("fixed_h6"),
             complex_qr_research=(modal_route == "anderson"),
             capture_modal_solve_trace=(modal_route == "anderson"),
             task041_resource_policy=(
@@ -2865,24 +2979,16 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         )
 
     assert raised.value is failure
-    assert events == (
-        [
-            "trace_export",
-            "context_release",
-            "formal_failure",
-            "consumer_cleanup",
-            "consumer_summary",
-        ]
-        if modal_route == "anderson"
-        else [
-            "primal_route_plan_snapshot",
-            "context_release",
-            "formal_failure",
-            "consumer_cleanup",
-            "consumer_summary",
-        ]
+    expected_events = []
+    if modal_route == "anderson":
+        expected_events.append("trace_export")
+    if reuse_primal_route_plan:
+        expected_events.append("primal_route_plan_snapshot")
+    expected_events.extend(
+        ["context_release", "formal_failure", "consumer_cleanup", "consumer_summary"]
     )
-    assert comm.gather_calls == (0 if modal_route == "anderson" else 1)
+    assert events == expected_events
+    assert comm.gather_calls == int(reuse_primal_route_plan)
     assert modal_s_evaluations == last_solve.get(
         "total_matmult_calls", last_solve.get("s_evaluation_count")
     )
@@ -2936,35 +3042,75 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         assert summary["failure_evidence"]["side_rhs_audits"][
             "modal_inner_solver"
         ] == evidence
-        route_inventory = release_records[0]["primal_route_plan_inventory"]
-        assert route_inventory["status"] == "partial"
-        assert route_inventory["gather_count"] == 1
-        assert route_inventory["rank_record_count"] == 1
-        assert set(route_inventory["rank_records"][0]["sides"]) == {
-            "bottom",
-            "top",
+        ph_counts = summary["failure_evidence"]["side_rhs_audits"][
+            "leading_ph_dual_reuse_counts"
+        ]
+        assert ph_counts["rank"] == 0
+        assert ph_counts["count_scope"] == "rank_local_not_reduced_or_summed"
+        assert ph_counts["count_semantics"] == (
+            "existing cumulative side diagnostics; failure may include attempted calls"
+        )
+        assert ph_counts["sides"]["bottom"]["status"] == "captured"
+        assert ph_counts["sides"]["bottom"]["read_point"] == (
+            "retained_side_diagnostics_after_destroy"
+        )
+        assert ph_counts["sides"]["bottom"]["counts"] == {
+            "PH_total": 9,
+            "PH_audit": 3,
+            "PH_audit_logical": 4,
+            "PH_audit_leading_reused": 1,
         }
-        assert route_inventory["rank_records"][0]["sides"][
-            "bottom"
-        ]["status"] == "captured"
-        assert comm.gather_records[0][1] == 0
-        assert summary["failure_evidence"]["side_rhs_audits"][
-            "primal_route_plan_inventory"
-        ] == route_inventory
-        assert summary["failure_evidence"]["side_rhs_audits"][
-            "primal_route_plan_inventory_ref"
-        ] == "release_before_recovery.primal_route_plan_inventory"
         if modal_route == "fixed_h6_budget_failure":
-            assert route_inventory["rank_records"][0]["sides"][
-                "top"
-            ]["status"] == "snapshot_error"
-            assert route_inventory["rank_records"][0]["sides"][
-                "top"
-            ]["error"]["type"] == "RuntimeError"
+            assert ph_counts["sides"]["top"]["status"] == "snapshot_error"
+            assert ph_counts["sides"]["top"]["read_point"] == (
+                "diagnostics_read_failed"
+            )
+            assert ph_counts["sides"]["top"]["counts"] == {
+                "PH_total": None,
+                "PH_audit": None,
+                "PH_audit_logical": None,
+                "PH_audit_leading_reused": None,
+            }
         else:
+            assert ph_counts["sides"]["top"]["status"] == "captured"
+            assert ph_counts["sides"]["top"]["read_point"] == (
+                "inverse_diagnostics_before_destroy"
+            )
+            assert ph_counts["sides"]["top"]["counts"]["PH_total"] is None
+        if reuse_primal_route_plan:
+            route_inventory = release_records[0]["primal_route_plan_inventory"]
+            assert route_inventory["status"] == "partial"
+            assert route_inventory["gather_count"] == 1
+            assert route_inventory["rank_record_count"] == 1
+            assert set(route_inventory["rank_records"][0]["sides"]) == {
+                "bottom",
+                "top",
+            }
             assert route_inventory["rank_records"][0]["sides"][
-                "top"
-            ]["status"] == "not_captured_yet"
+                "bottom"
+            ]["status"] == "captured"
+            assert comm.gather_records[0][1] == 0
+            assert summary["failure_evidence"]["side_rhs_audits"][
+                "primal_route_plan_inventory"
+            ] == route_inventory
+            assert summary["failure_evidence"]["side_rhs_audits"][
+                "primal_route_plan_inventory_ref"
+            ] == "release_before_recovery.primal_route_plan_inventory"
+            if modal_route == "fixed_h6_budget_failure":
+                assert route_inventory["rank_records"][0]["sides"][
+                    "top"
+                ]["status"] == "snapshot_error"
+                assert route_inventory["rank_records"][0]["sides"][
+                    "top"
+                ]["error"]["type"] == "RuntimeError"
+            else:
+                assert route_inventory["rank_records"][0]["sides"][
+                    "top"
+                ]["status"] == "not_captured_yet"
+        else:
+            assert "primal_route_plan_inventory" not in summary[
+                "failure_evidence"
+            ]["side_rhs_audits"]
         if modal_route == "fixed_h6_budget_failure":
             assert evidence["last_solve"]["status"] == "budget_exhausted"
             assert evidence["last_solve"]["ksp_reason"] == 0
@@ -2975,6 +3121,132 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             assert evidence["last_solve"]["status"] == "converged"
             assert evidence["last_solve"]["raw_residual_pass"] is True
             assert evidence["s_evaluation_count"] == 5
+
+
+def test_task041_leading_ph_cleanup_preserves_primary_failure_on_diagnostics_error(
+    monkeypatch,
+):
+    from benchmarks import run_task037b_hybrid_iterative as recovery
+    from benchmarks import task041_exact_side_workflow as worker
+
+    events = []
+    diagnostics_error = RuntimeError("x" * 300)
+
+    class SideInverse:
+        def __init__(self, side, diagnostics=None, error=None):
+            self.side = side
+            self._diagnostics = diagnostics
+            self._error = error
+
+        def destroy(self):
+            events.append(f"{self.side}_destroy")
+
+        @property
+        def diagnostics(self):
+            events.append(f"{self.side}_diagnostics")
+            if self._error is not None:
+                raise self._error
+            return self._diagnostics
+
+    bottom = SideInverse("bottom", error=diagnostics_error)
+    top = SideInverse(
+        "top",
+        diagnostics={
+            "destroyed": True,
+            "p4_factor_count": None,
+            "nested_iterative_ksp_count": None,
+            "counts": {
+                "PH_total": None,
+                "PH_audit": 2,
+                "PH_audit_logical": 3,
+                "PH_audit_leading_reused": None,
+            },
+        },
+    )
+    side_diagnostics = {}
+    cleanup_records = []
+
+    def collective_cleanup(comm):
+        assert comm.rank == 0
+        events.append("collective_heap_cleanup")
+        return {"pass": True}
+
+    def marker_callback(stage, payload):
+        events.append(stage)
+        assert payload["source"] == "SideBalancedInverse.destroy"
+
+    monkeypatch.setattr(recovery, "collective_heap_cleanup", collective_cleanup)
+    comm = SimpleNamespace(rank=0, size=1)
+    primary_failure = RuntimeError("original modal solver failure")
+    with pytest.raises(RuntimeError) as raised:
+        try:
+            raise primary_failure
+        except RuntimeError:
+            cleanup_records.append(
+                worker._task041_release_candidate_sides_and_cleanup(
+                    side_inverses={"bottom": bottom, "top": top},
+                    side_diagnostics_after_destroy=side_diagnostics,
+                    marker_callback=marker_callback,
+                    comm=comm,
+                    preserve_primary_failure=True,
+                )
+            )
+            raise
+
+    assert raised.value is primary_failure
+    assert events == [
+        "bottom_destroy",
+        "bottom_diagnostics",
+        "bottom_construction_cleanup",
+        "top_destroy",
+        "top_diagnostics",
+        "top_construction_cleanup",
+        "collective_heap_cleanup",
+    ]
+    cleanup = cleanup_records[0]
+    assert cleanup == {"pass": True}
+    bottom_snapshot = side_diagnostics["bottom"]
+    assert bottom_snapshot["diagnostics_read_status"] == "snapshot_error"
+    assert bottom_snapshot["diagnostics_read_point"] == "after_side_destroy"
+    assert bottom_snapshot["diagnostics_read_error"] == {
+        "type": "RuntimeError",
+        "message": "x" * 240,
+    }
+    assert bottom_snapshot["destroyed"] is None
+    assert bottom_snapshot["p4_factor_count"] is None
+    assert bottom_snapshot["nested_iterative_ksp_count"] is None
+
+    failure_counts = worker._task041_leading_ph_dual_failure_count_snapshot(
+        side_inverses={"bottom": bottom, "top": top},
+        side_diagnostics_after_destroy=side_diagnostics,
+        rank=0,
+    )
+    assert failure_counts["sides"]["bottom"]["status"] == "snapshot_error"
+    assert failure_counts["sides"]["bottom"]["counts"] == {
+        "PH_total": None,
+        "PH_audit": None,
+        "PH_audit_logical": None,
+        "PH_audit_leading_reused": None,
+    }
+    assert failure_counts["sides"]["top"]["status"] == "captured"
+    assert failure_counts["sides"]["top"]["counts"] == {
+        "PH_total": None,
+        "PH_audit": 2,
+        "PH_audit_logical": 3,
+        "PH_audit_leading_reused": None,
+    }
+    not_created = worker._task041_leading_ph_dual_failure_count_snapshot(
+        side_inverses={"bottom": None, "top": None},
+        side_diagnostics_after_destroy={},
+        rank=0,
+    )
+    assert not_created["sides"]["bottom"]["status"] == "not_created"
+    assert not_created["sides"]["bottom"]["counts"] == {
+        "PH_total": None,
+        "PH_audit": None,
+        "PH_audit_logical": None,
+        "PH_audit_leading_reused": None,
+    }
 
 
 @pytest.mark.parametrize(
