@@ -1,0 +1,160 @@
+{
+  "schema": "neural-wave.projection-qualification.compact.v1",
+  "source_sha": "df47bf43407c17de211ce8b80bcf027cf65a9986",
+  "authority": "docs/task042extra_feinn_5nm/review_report_v29.md",
+  "classification": "IMPLEMENTATION_EQUIVALENCE_PASS_NOT_NN_GAIN",
+  "implementation_qualified": true,
+  "reference_loaded": false,
+  "full_solver_qualified": false,
+  "actual_attempt_elapsed_seconds": 105.22714501316659,
+  "supervisor_elapsed_seconds": 41.26886760699563,
+  "resource_summary": {
+    "sampled_process_tree_rss_peak_bytes": 1257132032,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true
+  },
+  "files": {
+    "benchmarks/artifacts/task42extra/v30/v30_wave_projection_checks/result.json": "34831cdd291de6c0eb2a2b4c3dc4bb7e8fd1322c8bd9d9e6cd7e67254502e7a0",
+    "benchmarks/artifacts/task42extra/v30/v30_wave_projection_checks/qualification_input_boundary.json": "976936f5e13bed25f3eb87ef2e1e18e1146460e07fb1e3b732a21701fcb4305c",
+    "tmp/task42extra/v30/durable/v30_wave_projection_checks_attempt1/run_manifest.json": "6f1b47ca10e11b699c62b9c1f37b8550d403b4debc228dc823b373503d8935e7",
+    "tmp/task42extra/v30/durable/v30_wave_projection_checks_attempt1/run_summary.json": "6a62308a5febbd61d6e032728d8d15ba5296728b067c9d61997a1e7f9f0cf549",
+    "tmp/task42extra/v30/durable/v30_wave_projection_checks_attempt1/abi.json": "6beacec9871b35f30c6d6e47ff530cb5eaf8017741d233d5be59ed32620299c1",
+    "tmp/task42extra/v30/durable/v30_wave_projection_checks_attempt1/supervised/summary.json": "968bdbc907940a5435e2f220382fb93319a5eca92f8f6a59b5d8dc97b4565084"
+  },
+  "checks": [
+    {
+      "saved_state": {
+        "columns": 64,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00063.npz",
+        "state_sha256": "82c3a0ddb1e304af28f57e6ebfc6be6de515abfe8ac0850c4d19c632a2143aae",
+        "basis_prefix_chunks_sha256": "7ca99b9f04c045a8eebd7c83f9409f2607901f482754d564d3a9e1ba4a75df47",
+        "native_relative": 0.6608412129200603
+      },
+      "module_width": 1,
+      "complete_original_A_pair_relative": 0.0,
+      "original_selected_AH_pair_relative": 0.0,
+      "two_pass_projection_relative": 1.5515243259863345e-16,
+      "native_score_relative": 1.155399532040095e-16,
+      "actual_complete_wave_relative": 7.913012350199897e-16,
+      "original_real_gradient_relative": 8.430723943631065e-16,
+      "retained_cache_bytes": 4779504,
+      "cost_pairs": {
+        "setup_s": 0.03735743509605527,
+        "original_complete_call_s": [
+          0.22017727489583194,
+          0.22715801815502346,
+          0.29323487519286573
+        ],
+        "cached_complete_call_s": [
+          0.06933031091466546,
+          0.13329821196384728,
+          0.07058793702162802
+        ],
+        "speed_including_first_setup": 2.3845216232767785,
+        "per_complete_call_ratio": 2.7105620522072345
+      }
+    },
+    {
+      "saved_state": {
+        "columns": 256,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00255.npz",
+        "state_sha256": "cb7f0b5c26b456f27317d7126dedeb06bdcf41de429d1c6b58b5eb682b223cf2",
+        "basis_prefix_chunks_sha256": "ff71f65ad2dc43e2ce1b4338c9866bd945dcdda0705710277a535caaeb6d1e86",
+        "native_relative": 0.5535684168680776
+      },
+      "module_width": 2,
+      "complete_original_A_pair_relative": 0.0,
+      "original_selected_AH_pair_relative": 0.0,
+      "two_pass_projection_relative": 1.9363446842468213e-16,
+      "native_score_relative": 9.352082540928723e-16,
+      "actual_complete_wave_relative": 1.2528987922788398e-15,
+      "original_real_gradient_relative": 3.6124059190514845e-15,
+      "retained_cache_bytes": 19116528,
+      "cost_pairs": {
+        "setup_s": 0.3361508131492883,
+        "original_complete_call_s": [
+          0.5983571410179138,
+          0.670852503972128,
+          0.5954953951295465
+        ],
+        "cached_complete_call_s": [
+          0.286730770021677,
+          0.20647765509784222,
+          0.28632122999988496
+        ],
+        "speed_including_first_setup": 1.6713611944943596,
+        "per_complete_call_ratio": 2.3920899325298444
+      }
+    },
+    {
+      "saved_state": {
+        "columns": 512,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00511.npz",
+        "state_sha256": "f14b1694861977032c697f446ba5b2ec41aaf9e6975dc4f2c2d6b9fdb35947f7",
+        "basis_prefix_chunks_sha256": "127e4787866428cfd17591c8bdf4e25cd587c4b42f28d430ae72fd2048d6bae4",
+        "native_relative": 0.4904158713227417
+      },
+      "module_width": 4,
+      "complete_original_A_pair_relative": 0.0,
+      "original_selected_AH_pair_relative": 0.0,
+      "two_pass_projection_relative": 2.0318545513055585e-16,
+      "native_score_relative": 7.105884627886305e-16,
+      "actual_complete_wave_relative": 1.980560055162523e-15,
+      "original_real_gradient_relative": 4.4209842493901714e-15,
+      "retained_cache_bytes": 40067568,
+      "cost_pairs": {
+        "setup_s": 1.2258554589934647,
+        "original_complete_call_s": [
+          1.2304198590572923,
+          1.1571765430271626,
+          1.1851864699274302
+        ],
+        "cached_complete_call_s": [
+          0.42428372614085674,
+          0.4313299509231001,
+          0.4323342440184206
+        ],
+        "speed_including_first_setup": 1.4212658397746658,
+        "per_complete_call_ratio": 2.7740119095882054
+      }
+    },
+    {
+      "saved_state": {
+        "columns": 512,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00511.npz",
+        "state_sha256": "f14b1694861977032c697f446ba5b2ec41aaf9e6975dc4f2c2d6b9fdb35947f7",
+        "basis_prefix_chunks_sha256": "127e4787866428cfd17591c8bdf4e25cd587c4b42f28d430ae72fd2048d6bae4",
+        "native_relative": 0.4904158713227417
+      },
+      "module_width": 8,
+      "complete_original_A_pair_relative": 0.0,
+      "original_selected_AH_pair_relative": 0.0,
+      "two_pass_projection_relative": 2.0516437950304203e-16,
+      "native_score_relative": 1.3153870916315977e-15,
+      "actual_complete_wave_relative": 4.5994429724903336e-15,
+      "original_real_gradient_relative": 2.982304393365761e-14,
+      "retained_cache_bytes": 40067568,
+      "cost_pairs": {
+        "setup_s": 1.2258554589934647,
+        "original_complete_call_s": [
+          1.8532612030394375,
+          1.8150868581142277,
+          1.79725461313501
+        ],
+        "cached_complete_call_s": [
+          0.5834399310406297,
+          0.623589735943824,
+          0.5671787331812084
+        ],
+        "speed_including_first_setup": 1.8218287779449476,
+        "per_complete_call_ratio": 3.0805866288189923
+      }
+    }
+  ],
+  "scope": "saved unlabelled native states 64/256/512; two-pass projection, complete original action/gradient and nonzero real directions; original loss, model and accepted columns unchanged",
+  "cost_scope": "one real cache build per state; width4/8 share that measured build, each individual cold ratio conservatively charges it; ratios are not additive cost or full NN resource gain"
+}

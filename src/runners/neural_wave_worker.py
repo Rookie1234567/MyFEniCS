@@ -345,6 +345,21 @@ def main():
                 qualified=result["implementation_qualified"],
                 states=[v["saved_state"]["columns"] for v in result["checks"]],
             ))
+        elif spec["role"] == "screening_checks":
+            require_checks()
+            from src.solvers.neural_wave_screening_qualification import CHAIN, qualify
+
+            result = qualify(
+                action, packet, design,
+                ARTIFACTS / "v30_m5_learned_wave/basis", artifact, marker,
+            )
+            result["bound_numerical_chain_sha256"] = {
+                path: digest(ROOT / path) for path in CHAIN
+            }
+            marker("bounded_independent_proposals_qualified", dict(
+                implementation_qualified=result["implementation_qualified"],
+                selected=result["complete_bounded_screening_selected"],
+            ))
         elif spec["role"] == "calibration":
             from src.solvers.neural_wave_qualification import analytic_calibration
 
@@ -459,6 +474,18 @@ def main():
                     raise ValueError("LOCAL_INPUT_SUPPORT_ACTION_NOT_QUALIFIED")
                 binding["exact_local_input_support_reuse"] = True
                 binding["local_action_qualification_sha256"] = digest(local_file)
+            screening_file = ARTIFACTS / "v30_wave_screening_checks/result.json"
+            if screening_file.exists():
+                from src.solvers.neural_wave_screening_qualification import CHAIN
+
+                screened = json.loads(screening_file.read_text())
+                if screened["bound_numerical_chain_sha256"] != {
+                    path: digest(ROOT / path) for path in CHAIN
+                }:
+                    raise ValueError("BOUNDED_PROPOSAL_NUMERICAL_CHAIN_CHANGED")
+                if screened["implementation_qualified"] and screened["complete_bounded_screening_selected"]:
+                    binding["bounded_candidate_screening_widths"] = screened["selected_bounded_screening_widths"]
+                binding["screening_qualification_sha256"] = digest(screening_file)
             result = run_greedy(
                 action,
                 packet,

@@ -388,50 +388,53 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             2 * np.pi / design["model"]["wavelength_nm"], resolution
         )
         candidates = []
-        for seed_number in range(strategy["screen_seeds"]):
-            offset = (iteration * strategy["screen_seeds"] + seed_number) % len(
-                dictionary
-            )
-            q = dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
-            try:
-                value = variable_projection(
-                    action, space, moments, patch, q, gradient=False, local=local, projector=projector
+
+        def screen(q_values):
+            if width in binding.get("bounded_candidate_screening_widths", []):
+                from src.solvers.neural_wave_screening import screen_candidates
+                return screen_candidates(
+                    action, space, moments, patch, q_values,
+                    local=local, projector=projector,
                 )
-                candidates.append((value[0], q, value))
-            except ValueError as error:
-                if str(error) != "DEGENERATE_NEW_DIRECTION":
-                    raise
+            result_values = []
+            for proposal in q_values:
+                try:
+                    result_values.append(variable_projection(
+                        action, space, moments, patch, proposal,
+                        gradient=False, local=local, projector=projector,
+                    ))
+                except ValueError as error:
+                    if str(error) != "DEGENERATE_NEW_DIRECTION":
+                        raise
+                    result_values.append(None)
+            return result_values
+
+        initial_candidates = []
+        for seed_number in range(strategy["screen_seeds"]):
+            offset = (iteration * strategy["screen_seeds"] + seed_number) % len(dictionary)
+            initial_candidates.append(
+                dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
+            )
+        for q, value in zip(initial_candidates, screen(initial_candidates), strict=True):
+            if value is None:
                 failures += 1
+            else:
+                candidates.append((value[0], q, value))
         iteration += 1
-        # Deterministic local refinement receives exactly the same opportunity
-        # on both routes. It is additional to the physical/spherical dictionary.
+        # Same six predeclared directions and stable ordering for both routes.
         if candidates:
             _, seed_q, _ = max(candidates, key=lambda x: x[0])
-            step = (
-                strategy["local_refinement_steps_k0"][resolution_index]
-                * 2
-                * np.pi
-                / design["model"]["wavelength_nm"]
-            )
+            step = strategy["local_refinement_steps_k0"][resolution_index] * 2 * np.pi / design["model"]["wavelength_nm"]
+            bound = strategy["q_component_bound_k0"] * 2 * np.pi / design["model"]["wavelength_nm"]
+            refined_candidates = []
             for axis in range(3):
                 for sign in (-1, 1):
                     refined = seed_q.copy()
                     refined[:, axis] += sign * step
-                    bound = (
-                        strategy["q_component_bound_k0"]
-                        * 2
-                        * np.pi
-                        / design["model"]["wavelength_nm"]
-                    )
-                    refined = np.clip(refined, -bound, bound)
-                    try:
-                        value = variable_projection(
-                            action, space, moments, patch, refined, gradient=False, local=local, projector=projector
-                        )
-                        candidates.append((value[0], refined, value))
-                    except ValueError as error:
-                        if str(error) != "DEGENERATE_NEW_DIRECTION":
-                            raise
+                    refined_candidates.append(np.clip(refined, -bound, bound))
+            for refined, value in zip(refined_candidates, screen(refined_candidates), strict=True):
+                if value is not None:
+                    candidates.append((value[0], refined, value))
         if not candidates:
             charge_projection()
             stagnant += 1
@@ -683,6 +686,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         inherited_primitive_counters_retained=primitive_history_complete,
         exact_two_pass_projection_reuse=binding.get("exact_two_pass_projection_reuse", False),
         projection_reuse_costs=projection_costs,
+        bounded_candidate_screening_widths=binding.get("bounded_candidate_screening_widths", []),
     )
     atomic_json(Path(artifact) / "result.json", result)
     return result

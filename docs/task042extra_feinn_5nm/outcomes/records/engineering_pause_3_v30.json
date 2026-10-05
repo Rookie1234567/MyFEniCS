@@ -1,0 +1,61 @@
+{
+  "classification": "PLANNED_EQUIVALENT_BATCHING_ENGINEERING_PAUSE_NOT_NUMERICAL_FAILURE",
+  "source_sha": "df47bf43407c17de211ce8b80bcf027cf65a9986",
+  "columns": 770,
+  "native_relative": 0.45703607130804935,
+  "boundary_sha256": "011546c15f49101f215d2e1781c475094cabeb3e3623e6d1b35fcc45f8380cf2",
+  "owned_identities": [
+    {
+      "role": "server",
+      "pid": 2257332,
+      "start_ticks": 112800269
+    },
+    {
+      "role": "pane",
+      "pid": 2257333,
+      "start_ticks": 112800270
+    },
+    {
+      "role": "worker",
+      "pid": 2257606,
+      "start_ticks": 112806502
+    }
+  ],
+  "reason": "qualify unchanged independent candidate batching and resume the original complete boundary; no budget or accepted column reset",
+  "post_boundary_trial_primitive_costs": "NOT_RETAINED; actual supervised wall cost retained",
+  "native_clearance": [
+    {
+      "role": "server",
+      "pid": 2257332,
+      "start_ticks": 112800269,
+      "state": "ABSENT"
+    },
+    {
+      "role": "pane",
+      "pid": 2257333,
+      "start_ticks": 112800270,
+      "state": "ABSENT"
+    },
+    {
+      "role": "worker",
+      "pid": 2257606,
+      "start_ticks": 112806502,
+      "state": "ABSENT"
+    }
+  ],
+  "numerical_lock": "FREE",
+  "actual_attempt_elapsed_seconds": 3412.691356702009,
+  "inherited_route_calendar_span_seconds": 12331.523823792115,
+  "inherited_span_is_additive_attempt_cost": false,
+  "supervisor_elapsed_seconds": 3348.6706743049435,
+  "sampled_process_tree_rss_peak_bytes": 1295011840,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "raw_classification": "WORKER_FAILED",
+  "raw_leader_exit_code": -2,
+  "descendants_cleared": true,
+  "files": {
+    "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt3/run_summary.json": "44af7388895a415aad69c2cb3af76242fc7fd2123b95af74507ce5c2c32591a8",
+    "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt3/supervised/summary.json": "45cee3d1bc11cbe724774c016e0011acefd07dac66b87c3ebb0ef71f30d23eb5",
+    "tmp/task42extra/v30/engineering_pause_3_requested.json": "6935b7a98b1cb9651b48f8b938e616c8779947ed7f8c68500b9be3d3f2763591"
+  }
+}

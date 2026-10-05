@@ -1,3 +1,7 @@
+# V30追加：等价候选分批及完整770列保全
+
+新增src/solvers/neural_wave_screening.py与其真实保存态资格模块、相应小fixture；原greedy仅把同序候选的数值计算有界分批，原SVD/QR/完整A/接受场不变。新stage明确注册于io/worker/campaign并绑定完整数值源码链，成本负宽度留原路径，不改普通默认。README/summary/本支progress与模型总账更新真实770列/投影资格，全部旧历史不改。该优化只减少重复工作，不是NN增量、PC或新物理。[实际保全与source](records/engineering_pause_3_v30.json)、[原配对](records/projection_qualification_v30.json)、[测试](records/screening_targeted_tests_v30.json)。
+
 # 当前V30：神经波动空间与独立完整场审核
 
 新增局部复指数完整矩/VJP、原残差驱动幅值SVD/真实波矢学习、稳定累计QR与原子边界；输入支持和投影缓存仅是同一原作用的等价复用，两条路线共同获得。独立保存checker读取原完整场/模式/物理数组而不信PASS。数值源在src，one-run/编排为薄opt-in，ordinary默认和其他分支不变。

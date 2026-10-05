@@ -142,7 +142,7 @@ class WaveSubspace:
         )
 
 
-def optimal_amplitudes(action, subspace, columns, *, applied_columns=None, projector=None):
+def optimal_amplitudes(action, subspace, columns, *, applied_columns=None, projector=None, projected_columns=None):
     """Independent small SVD; both learned and fixed routes receive this."""
     B = (
         np.column_stack([action.apply(columns[:, j]) for j in range(columns.shape[1])])
@@ -151,12 +151,16 @@ def optimal_amplitudes(action, subspace, columns, *, applied_columns=None, proje
     )
     if B.shape != columns.shape or B.dtype != np.complex128 or not np.isfinite(B).all():
         raise ValueError("BOUNDED_ORIGINAL_ACTION_COLUMNS_INVALID")
-    Z = subspace.project(B) if projector is None else projector.project(B, supported=True)
+    Z = (
+        subspace.project(B) if projector is None else projector.project(B, supported=True)
+    ) if projected_columns is None else np.asarray(projected_columns)
+    if Z.shape != B.shape or Z.dtype != np.complex128 or not np.isfinite(Z).all():
+        raise ValueError("BOUNDED_PROJECTED_CANDIDATE_COLUMNS_INVALID")
     left, singular, right = linalg.svd(Z, full_matrices=False)
-    if not len(singular) or singular[0] == 0:
-        raise ValueError("DEGENERATE_NEW_DIRECTION")
     original_projection_fallback = (
-        projector is not None and singular[-1] <= 1e-4 * singular[0]
+        projector is not None
+        and (not len(singular) or singular[-1] <= 1e-4 * singular[0]
+             or np.linalg.norm(Z) <= 1e-6 * np.linalg.norm(B))
     )
     if original_projection_fallback:
         # A nearly dependent tiny amplitude block can amplify the rounding
@@ -167,6 +171,8 @@ def optimal_amplitudes(action, subspace, columns, *, applied_columns=None, proje
         Z = subspace.project(B)
         projector.counts["explicit_two_pass_fallback"] += 1
         left, singular, right = linalg.svd(Z, full_matrices=False)
+    if not len(singular) or singular[0] == 0:
+        raise ValueError("DEGENERATE_NEW_DIRECTION")
     keep = singular > subspace.rcond * singular[0]
     p = right[keep].conj().T @ ((left[:, keep].conj().T @ subspace.r) / singular[keep])
     z = Z @ p

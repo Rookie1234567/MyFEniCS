@@ -16,6 +16,7 @@ STAGES = {
     "v30_wave_fast_checks": ("ml", 1800, "fast_checks"),
     "v30_wave_local_action_checks": ("ml", 3600, "local_action_checks"),
     "v30_wave_projection_checks": ("ml", 3600, "projection_checks"),
+    "v30_wave_screening_checks": ("ml", 3600, "screening_checks"),
     "v30_wave_calibration_5nm": ("fe", 1800, "calibration"),
     "v30_wave_calibration_0p7nm": ("fe", 1800, "calibration"),
     "v30_m5_fixed_wave": ("ml", 172800, "FIXED_WAVE_GREEDY_CONTROL"),

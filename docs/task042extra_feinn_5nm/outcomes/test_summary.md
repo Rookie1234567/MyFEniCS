@@ -1,3 +1,7 @@
+# V30追加：有界独立候选分批资格进行中
+
+20项受影响pure测试实际通过、零跳过，包含1/2/4/8宽度、重复/相关列、完整native接受场、无效投影、原复数梯度/QR/schema/标签隔离；实际独立60s PSI、树峰114233344B、自身swap0。健康旧35项及昂贵FE资格不重跑。新真实M5完整proposal配对随后运行，不以fixture代替物理或求解Gate。[绑定源/JUnit](records/screening_targeted_tests_v30.json)。Ruff初始F401已最小修正；Ruff/compileall/diff最终通过。后续正式source与本文件HEAD分列。
+
 # 当前V30：新增波动函数/完整原方程实现资格
 
 S0原M5完整映射、方向、MPC与非零梯度见证实际通过，属于实现资格。新增输入支持作用六见证也已实测；512列完整保存后，投影缓存及受影响保存checker的35项fixture通过，真实保存态配对尚未运行。[新定向测试](records/projection_targeted_tests_v30.json)、[局部作用](records/local_action_qualification_v30.json)、[完整保存与监督](records/engineering_pause_2_v30.json)。没有full pytest、重装或CI；原测试失败与全部旧资格保留。后续仅重验实际改动的计时项。

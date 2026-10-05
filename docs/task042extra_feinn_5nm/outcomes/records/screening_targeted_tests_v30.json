@@ -1,0 +1,53 @@
+{
+  "classification": "TARGETED_LOGIC_PASS_NOT_REAL_M5_GATE",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "20",
+    "time": "0.336",
+    "timestamp": "2026-10-05T21:22:10.373524",
+    "hostname": "fenics-ws01"
+  },
+  "source_binding": {
+    "git_head": "df47bf43407c17de211ce8b80bcf027cf65a9986",
+    "worktree_status": " M src/io/neural_wave_campaign.py\n M src/runners/neural_wave_campaign.py\n M src/runners/neural_wave_worker.py\n M src/solvers/neural_wave_greedy.py\n M src/solvers/neural_wave_subspace.py\n?? docs/task042extra_feinn_5nm/outcomes/records/projection_qualification_v30.json\n?? input/task042extra_feinn_5nm/v30_wave_screening_checks.dat\n?? src/solvers/neural_wave_screening.py\n?? src/solvers/neural_wave_screening_qualification.py\n?? src/test/test_neural_wave_screening.py\n",
+    "files": {
+      "src/postprocessing/neural_wave_audit.py": "e255765030f73c309a197dc38b500c08cb28cf381e34e01a0e540870f43f3b9b",
+      "src/runners/neural_wave_worker.py": "39bd1bcbe085807a12883053965f2a429945746a7468f905ab35f6a456eeaac1",
+      "src/runners/neural_wave_campaign.py": "93b02eb188527a7fc6872bf4b3798e32767c577459fe2e914fb162e3fe5f0470",
+      "src/io/neural_wave_campaign.py": "01df4ba8d494204900fbeec4dd77043e144105764465d4e37febeb3a19deca9a",
+      "src/test/test_neural_wave_audit.py": "29fb5f32ee3de95448b25421a02f074462314f5945aa2f2b0defb5512b706466",
+      "src/test/test_neural_wave.py": "568c8e0a8a47f1998da81fd3d697c80cbac0f08ac7596afb97f5509ae8d0e725",
+      "src/solvers/neural_wave_greedy.py": "f9d4584e2fcc98fb3e30049cb88c0d9b04b0900fb178f2dafe06221986d19977",
+      "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+      "src/solvers/neural_wave_local_action.py": "367835d5fe719d08a850d75b676196e07c55017d30cf8e4002d876278ddc6971",
+      "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+      "src/test/test_neural_wave_local_action.py": "7227e6276d9f429f0d6599dc1761d7cecdbf0273e389f975a03f12c18f750099",
+      "src/solvers/neural_wave_projection.py": "ecb4266a7eafc41e8e1a695913d7fdcda4b139fe59a964abbb612867897a0cbe",
+      "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+      "src/test/test_neural_wave_projection.py": "88b86624e6d36cf5ea55a2503a82ac7d0d1b6e9169d50dc14b75b980382298cc",
+      "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+      "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+      "src/test/test_neural_wave_screening.py": "686057a7ad5d2f7205fad2d855e0b6f53591ae2c2c4512131e742dbd2134d94f"
+    },
+    "scope": "synthetic logic/corrupt-record fixtures, not FE numerical evidence"
+  },
+  "actual_supervised_seconds": 1.8517360440455377,
+  "resource": {
+    "sampled_process_tree_rss_peak_bytes": 114233344,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0
+  },
+  "files": {
+    "tmp/task42extra/v30/bootstrap/bounded_candidate_screening_1/junit.xml": "ca6bfa2f0270ae4e17fab09aef331289a9352a1d750d79175ee886f00478d406",
+    "tmp/task42extra/v30/bootstrap/bounded_candidate_screening_1/binding.json": "b9046db9347921cec6a9ecaebc0fcd3d32c2ba19d22b486ca0db4a92a8752af2",
+    "tmp/task42extra/v30/bootstrap/bounded_candidate_screening_1/supervised/summary.json": "8ee195b559b68327339b3d3f325c10f32a05763216fdcb1f768d4b9d7f60e806",
+    "tmp/task42extra/v30/bootstrap/bounded_candidate_screening_1/admission.json": "e5b7184ab8672fa0271cb5897172b72bcdfd4165304df5e60b7fee78dc34240d",
+    "tmp/task42extra/v30/bootstrap/bounded_candidate_screening_1/pressure_stable_window.json": "4b445064641241cd6004bc26ca178fd350fc6969998c6e16a116f7a0eabee5ff"
+  },
+  "scope": "same candidate order, 1/2/4/8 widths, correlated/repeated columns, exact native accepted step, projected block corruption, original complex score/VJP, QR, stage identity and training labels; healthy 35 previous fixtures not rerun"
+}
