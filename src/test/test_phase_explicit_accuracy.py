@@ -60,5 +60,23 @@ class PhaseTests(unittest.TestCase):
         self.assertEqual(plan_record()['complete_solve_cap'],6)
         self.assertTrue(all(s.derived['environment_mode']=='fe' for s in specs))
 
+    def test_actual_common_comparison_accepts_real_complex_wavevector(self):
+        from unittest.mock import patch
+        from pathlib import Path
+        import tempfile
+        from src.solvers.phase_explicit_accuracy_fields import common_physical_difference
+        cube=np.asarray([[x,y,z] for x in (0,1) for y in (0,1) for z in (0,1)],float)
+        space=SimpleNamespace(mesh=SimpleNamespace(geometry=SimpleNamespace(x=cube,dofmap=np.asarray([np.arange(8)]))))
+        f=SimpleNamespace(function_space=space)
+        class Evaluator:
+            def __init__(self,space,q,k):self.geometry=[None];self.kappa=k
+            def at(self,*args):return {k:np.ones((1,3),complex) for k in ('E','H','curl')}
+            def cell(self,*args):return np.asarray([[.5,.5,.5]]),np.ones(1),self.at()
+        import contextlib
+        j=SimpleNamespace(measured=lambda _:contextlib.nullcontext())
+        with tempfile.TemporaryDirectory() as t,patch('src.solvers.phase_explicit_accuracy_fields.PhaseEvaluator',Evaluator),patch('src.solvers.phase_explicit_accuracy_fields.analytic',return_value={k:np.zeros((1,3),complex) for k in ('E','H','curl')}):
+            result=common_physical_difference(f,f,SimpleNamespace(kx=2+0j,ky=.2+0j,k0=3),j,Path(t))
+        self.assertTrue(result['pass_gate'])
+
 
 if __name__=='__main__':unittest.main()

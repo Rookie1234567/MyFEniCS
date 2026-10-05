@@ -58,7 +58,8 @@ class PhaseEvaluator(CellEvaluator):
 
 def common_physical_difference(coarse,fine,cfg,journal,folder,*,q=23):
     """Integrate on the finer geometry, evaluating both physical gVh fields."""
-    fc,ff=coarse,fine;ec=PhaseEvaluator(fc.function_space,q,np.asarray([cfg.kx,cfg.ky,0],float));ef=PhaseEvaluator(ff.function_space,q,ec.kappa)
+    from .fixed_phase_fem import carrier
+    fc,ff=coarse,fine;ec=PhaseEvaluator(fc.function_space,q,carrier(cfg));ef=PhaseEvaluator(ff.function_space,q,ec.kappa)
     # Affine boxes: a point's parent is found from actual stored vertices,
     # never from a guessed native numbering or interpolated field.
     bounds=np.asarray([[fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].min(axis=0),fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].max(axis=0)] for c in range(len(ec.geometry))])

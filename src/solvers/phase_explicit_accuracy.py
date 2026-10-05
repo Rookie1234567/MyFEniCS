@@ -130,6 +130,13 @@ def solve(role,folder,journal):
     from .scattering_accuracy_analytic import flat_saved_physics
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
     if (window.TMP/'scientific_queue_frozen.json').exists():raise RuntimeError('V51 queue frozen')
+    resume=window.TMP/(role+'_post_resume.json')
+    if resume.exists():
+        import hashlib
+        identity=journal.source_state.get('postprocessing_resume')
+        if identity is None or identity['sha256']!=hashlib.sha256(resume.read_bytes()).hexdigest():
+            raise ValueError('postprocessing resume must be bound to resolved/live manifest')
+        return resume_returned_state(role,folder,journal,json.loads(resume.read_text()))
     if role=='FLAT_P5' and stage('FLAT_P4').get('accuracy_pass'):return dict(status='NOT_RUN_F4_ACCURATE')
     if role.startswith('NOTCH') and not any((ARTIFACT/(x+'.json')).exists() and stage(x).get('accuracy_pass') for x in ('FLAT_P4','FLAT_P5')):
         return dict(status='NOT_RUN_FLAT_ACCURACY_GATE')
@@ -270,3 +277,46 @@ def compare_saved(coarse,fine,folder,journal):
     result.update(modes=modes,power_differences=power,energies=energies)
     result['pass_gate']=result['pass_gate'] and all(modes[k]<=1e-4 for k in modes if k.endswith('_relative')) and modes['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energies)<=1e-5
     return result
+
+
+def resume_returned_state(role,folder,journal,record):
+    """Re-audit/recover an already returned physical vector; no new solve."""
+    from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    from .phase_explicit_accuracy_fields import physical_output,PhaseEvaluator
+    from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+    import hashlib
+    old=Path(record['old_artifact']).resolve()
+    if not old.is_relative_to(ARTIFACT) or record['role']!=role:
+        raise ValueError('postprocessing resume stage/path')
+    for p,sha in record['saved_file_hashes'].items():
+        if hashlib.sha256((old/p).read_bytes()).hexdigest()!=sha:raise ValueError('returned state altered '+p)
+    v=checked_arrays(record['arrays']);cfg,setup,geo=make_setup(record['case'],record['degree'],record['grid'],journal)
+    for key in geo:
+        if not np.array_equal(geo[key],v[key]):raise ValueError('resume actual geometry/material '+key)
+    if not np.array_equal(v['slaves'],setup['floquets'][record['degree']].mpc.slaves) or not np.array_equal(v['kappa'],carrier(cfg)):
+        raise ValueError('resume canonical MPC/carrier')
+    bundle,rhs=build_bundle(cfg,setup,journal);u=rhs.duplicate();u.array[:]=v['u_storage']
+    try:
+        if relative(rhs.array-v['rhs'],rhs.array)>1e-13:raise ValueError('resume physical RHS changed')
+        norms,vectors=audit_original(bundle,rhs,u,v['port'],journal)
+        _,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vectors,journal)
+        output=physical_output(bundle,u,v['port'],geo,folder,journal)
+        rec_arrays=save_arrays(folder/'recovery.npz',**rv)
+        pair=compare_saved(stage('NOTCH_P4'),dict(case=record['case'],degree=record['degree'],grid=record['grid'],arrays=record['arrays'],output=output),folder,journal)
+        env=restore_p0_full_field(setup['floquets'][record['degree']],u);ev=PhaseEvaluator(env.function_space,15,bundle['kappa'])
+        with journal.measured('pre_registered_direction_h_indicator'):
+            per=np.asarray([ev.gradient_indicator(env,c,cfg.k0) for c in range(len(geo['cell_centers']))])
+        total=per.sum(axis=0);axis=int(np.argmax(total))
+        indicator=dict(totals=total,selected_axis=('x','y','z')[axis],grid=('X2','Y2','Z2')[axis],
+            rule='sum h_K,d^2 integral(|partial_d u|^2+|partial_d Henv|^2); code units; first argmax x/y/z',arrays=save_arrays(folder/'h_indicator.npz',per_cell=per,totals=total))
+        eq=equation_gate(norms,rec)
+        if eq and stage('NOTCH_P4')['equation_pass'] and not pair['pass_gate']:
+            write_json(window.TMP/'h_selection.json',indicator|dict(parent_array_sha256=record['arrays']['sha256']))
+        return dict(status='COMPLETED',role=role,case=record['case'],degree=record['degree'],grid=record['grid'],
+            representation='FIXED_PHASE_PERIODIC_NEDELEC_ENVELOPE',arrays=record['arrays'],returned_arrays=record['returned_arrays'],
+            solve_source_sha=record['solve_source_sha'],postprocessing_resume=record,original_audit=norms,recovery=rec,recovery_arrays=rec_arrays,
+            output=output,analytic=None,accuracy_pass=False,analytic_weak=None,p_pair=pair,h_indicator=indicator,equation_pass=eq,
+            direct_target_pass=max(norms[k] for k in ('true','augmented','port'))<=1e-10,capacity=record['capacity'],boundary=record['boundary'],
+            build_audit=record['build_audit'],mode_sha256=bundle['mode_sha256'],fixed_refinements_count=record['fixed_refinements_count'],
+            timings_parent_preserved=True,timings=journal.timings,calls=journal.calls,NN_training=0,new_complete_solves=0,new_factor_count=0)
+    finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)

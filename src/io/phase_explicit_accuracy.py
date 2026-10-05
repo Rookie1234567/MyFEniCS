@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 from src.io.input_loader import InputError
 from src.io.run_specification import RunSpecification
-from src.solvers.phase_explicit_accuracy_scope import ROOT,PLAN,STAGES,plan_record
+from src.solvers.phase_explicit_accuracy_scope import ROOT,PLAN,STAGES,plan_record,window
 
 
 def load_phase_explicit_accuracy(path):
@@ -32,11 +32,20 @@ def load_phase_explicit_accuracy(path):
         'volume_form':'full curl(u)+i*kappa cross u in trial AND test',
         'unknown':'TOTAL_ENVELOPE','representation':'E=exp(i*kappa.x)*u; not polynomial projection',
         'kappa':'physical real (kx_inc,ky_inc,0)','MPC':'unit envelope x/y; physical incidence unchanged'}
+    resume=window.TMP/(role+'_post_resume.json')
+    resumed={}
+    if resume.exists():
+        record=json.loads(resume.read_text())
+        if role!='NOTCH_P5' or record['role']!=role:
+            raise InputError('V51 saved-return postprocessing inventory')
+        resumed={'postprocessing_resume':{'path':str(resume),'sha256':hashlib.sha256(resume.read_bytes()).hexdigest(),
+            'solve_source_sha':record['solve_source_sha'],'parent_array_sha256':record['arrays']['sha256'],
+            'purpose':'audit/output of already returned saved physical state; no new solve'}}
     return RunSpecification(identity={'model_id':'task042_v51_phase_accuracy','run_id':item['run_id'],'batch':p['batch']},
         geometry=physical['geometry'],materials=physical['materials'],incidence=physical['incidence'],discretization=physical['discretization'],boundary=physical['boundary'],
         method={'kind':'fixed_phase_full3d_accuracy_opt_in'},solver={'degree':degree},
         execution={'mpi_size':1,'timeout_seconds':3600,'warning_memory_gib':20,'terminate_memory_gib':24,'require_zero_swap':True},
         output={'results_root':'results/task042'},derived={'stage':role,'physical_case':case,'grid':grid,'preparation_scope':'v51','environment_mode':'fe',
-            'storage_limits':{k:p[k] for k in ('new_storage_bytes','task_storage_bytes','free_bytes','evidence_reserve_bytes')},'plan_sha256':hashlib.sha256(PLAN.read_bytes()).hexdigest()},
+            'storage_limits':{k:p[k] for k in ('new_storage_bytes','task_storage_bytes','free_bytes','evidence_reserve_bytes')},'plan_sha256':hashlib.sha256(PLAN.read_bytes()).hexdigest(),**resumed},
         source_path=path,raw_input_bytes=raw,input_sha256=hashlib.sha256(raw).hexdigest(),
         physical_model_sha256=hashlib.sha256(json.dumps(physical,sort_keys=True,separators=(',',':')).encode()).hexdigest(),expected_output_parent=ROOT/'results/task042')
