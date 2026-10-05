@@ -851,7 +851,9 @@ def run_task40_v10_p6_reference_worker(
             evidence_prefix="v10_candidate",
             require_zero_swap=True,
         )
-        summary["abi"] = _abi_facts()
+        summary["abi"] = _abi_facts(
+            profile_identity=TASK40_V10_P6_REFERENCE_PROFILE,
+        )
         summary["campaign_authority"] = _candidate_contract(
             resolved_payload, contract, runtime
         )

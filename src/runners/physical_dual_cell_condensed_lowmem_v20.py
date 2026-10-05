@@ -27,6 +27,7 @@ from src.io.physical_intermediate_profile import (
     PROJECTION_LAYOUT_V31_PROFILE,
     TASK40_PROFILES,
     TASK40_REFERENCE_METRIC_PROFILE,
+    TASK40_V10_P4_CONTROL_PROFILE,
     FUSED_KERNEL_PROFILES,
     LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE,
     LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
@@ -1599,7 +1600,12 @@ def _run_physical_dual_cell_condensed_lowmem(
             "physical_intermediate_profile"
         ) != contract:
             raise ValueError("resolved V20 contract changed")
-        summary["abi"] = _abi_facts()
+        if profile_identity == TASK40_V10_P4_CONTROL_PROFILE:
+            summary["abi"] = _abi_facts(
+                profile_identity=profile_identity,
+            )
+        else:
+            summary["abi"] = _abi_facts()
         runtime = _V14Runtime(
             directory,
             stage,

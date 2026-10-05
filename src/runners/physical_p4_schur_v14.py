@@ -1010,7 +1010,16 @@ class _V14Runtime:
             raise V14ResourceStop(f"V14 {self.stage} resource gate failed: {value}")
         return value
 
-def _abi_facts() -> dict[str, Any]:
+def _abi_facts(
+    *,
+    profile_identity: str | None = None,
+) -> dict[str, Any]:
+    if profile_identity is not None:
+        from .task40_v10_abi import qualified_task40_v10_abi
+
+        return qualified_task40_v10_abi(
+            profile_identity=profile_identity,
+        )
     from .fine_reference_preflight import qualified_abi
 
     return qualified_abi()
