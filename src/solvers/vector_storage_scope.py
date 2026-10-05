@@ -47,6 +47,7 @@ def implementation_hashes():
              'src/solvers/lossless_vector_bank.py','src/solvers/causal_storage_predictor.py',
              'src/solvers/vector_storage_study.py','src/solvers/bound_array_identity.py',
              'benchmarks/check_vector_bank.py','benchmarks/qualify_vector_storage.py',
+             'benchmarks/collect_vector_bank.py',
              'src/test/test_lossless_vector_bank.py',str(PLAN.relative_to(ROOT))]
     return {n:file_hash(ROOT/n) for n in names}
 

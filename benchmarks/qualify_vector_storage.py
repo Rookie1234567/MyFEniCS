@@ -33,7 +33,7 @@ def main():
     if not smoke['descendants_cleared'] or smoke['classification']=='COMPLETED':
         raise RuntimeError('deadline/own descendants regression')
     write_json(folder/'tests.json',{'status':'PASSED','commands':rows,'source':source,'environment':environment(),'watchdog_test':smoke,'A_AH_B':0})
-    print(json.dumps({'status':'V48_FOCUSED_QUALIFICATION_PASSED','tests':9}),flush=True)
+    print(json.dumps({'status':'V48_FOCUSED_QUALIFICATION_PASSED','test_commands':len(commands)}),flush=True)
 
 
 if __name__=='__main__':
