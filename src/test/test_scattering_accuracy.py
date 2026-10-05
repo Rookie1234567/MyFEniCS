@@ -151,5 +151,21 @@ class AccuracyTests(unittest.TestCase):
             w.ledger=lambda:dict(runs=[dict(folder=str(aux),elapsed_seconds=20),dict(folder=str(run),elapsed_seconds=100)])
             self.assertEqual(w.launcher_overhead(),25)
 
+    def test_actual_compiler_analysis_metadata_without_JIT_or_mesh(self):
+        import ufl
+        from basix.ufl import element
+        from unittest.mock import patch
+        from src.solvers.scattering_accuracy import volume_form_identity
+        domain=ufl.Mesh(element('Lagrange','hexahedron',1,shape=(3,)))
+        space=ufl.FunctionSpace(domain,element('N1curl','hexahedron',5))
+        u=ufl.TrialFunction(space);v=ufl.TestFunction(space)
+        form=ufl.inner(ufl.curl(u),ufl.curl(v))*ufl.dx(metadata={'quadrature_degree':10})
+        compiled=SimpleNamespace(module=SimpleNamespace(ffi=SimpleNamespace(string=lambda x:x)),ufcx_form=SimpleNamespace(signature=b'test-signature'))
+        bundle=dict(volume_action=SimpleNamespace(component_actions={'curl':SimpleNamespace(_bilinear_form=form)}),
+            setup={'spaces':{5:SimpleNamespace(element=SimpleNamespace(basix_element='symbolic-p5'))}},degree=5)
+        with patch('dolfinx.fem.form',return_value=compiled):record=volume_form_identity(bundle)
+        self.assertEqual(record['components']['curl']['FFCx_integrals'][0]['metadata']['quadrature_degree'],10)
+        self.assertEqual(record['components']['curl']['ufcx_signature'],'test-signature')
+
 
 if __name__=='__main__':unittest.main()

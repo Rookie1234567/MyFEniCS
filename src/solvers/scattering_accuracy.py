@@ -116,6 +116,7 @@ class GramProvider:
             self.transforms.append((int(p),T))
         self.rows=[];self.folder=folder;self.journal=journal;self.use_gram=use_gram;self.elapsed=0.;self.failed=False
         self.qualified_raw={}
+        self.preparation_reuse=None
         if use_gram:
             # Reuse only exact raw tensor oracles, never a field or inverse.
             prior=stage('ATTRIBUTION')
@@ -127,6 +128,24 @@ class GramProvider:
                 for item in checks['all_actual_classes']:
                     self.qualified_raw[(item['tag'],*item['widths'])]=item
             if not self.qualified_raw:raise ValueError('no exact qualified raw tensor inventory')
+        elif (folder.name.startswith('task042_v50_flat_p5_') and
+              (repair_path:=Path(__file__).resolve().parents[2]/'tmp/task042/v50/intake/ffcx_metadata_repair.json').exists()):
+            # A failed metadata writer already saved these exact original
+            # tensors. Reuse the qualified bytes, never its matrix or factors.
+            import json,hashlib
+            repair=json.loads(repair_path.read_text());p=Path(repair['tensor_checks_path'])
+            if hashlib.sha256(p.read_bytes()).hexdigest()!=repair['tensor_checks_sha256']:
+                raise ValueError('failed-prepare tensor checkpoint hash')
+            checks=json.loads(p.read_text())
+            if (repair['physical_sha256']!=journal.source_state['physical_sha256'] or
+                    checks['factory']['identity_sha256']!=self.factory.audit['identity_sha256'] or not checks['pass_gate']):
+                raise ValueError('failed-prepare live physical/basis/material identity')
+            for name,h in repair['tensor_dependency_hashes'].items():
+                if hashlib.sha256((Path(__file__).resolve().parents[2]/name).read_bytes()).hexdigest()!=h:
+                    raise ValueError('failed-prepare tensor dependency changed '+name)
+            for item in checks['all_actual_classes']:
+                self.qualified_raw[(item['tag'],*item['widths'])]=item
+            self.preparation_reuse=repair
 
     def __call__(self,form,kernels,coordinates,*,tag,dimension):
         from .hcurl_assembly_time_condensation import _tabulate_raw_tensor_class
@@ -167,6 +186,7 @@ class GramProvider:
     def report(self):
         return dict(all_actual_classes=self.rows,pass_gate=not self.failed,seconds=self.elapsed,
             factory=dict(self.factory.audit),requested_gram=self.use_gram,
+            failed_prepare_checkpoint_reuse=self.preparation_reuse,
             failed_class_fallback='original FFCx tensor; no approximate class merge')
 
 
@@ -180,7 +200,7 @@ def volume_form_identity(bundle):
         form=action._bilinear_form
         data=analyze_ufl_objects([form],np.dtype(np.complex128))
         groups=[dict(metadata=integral.metadata(),subdomain=str(integral.subdomain_id()),integral_type=integral.integral_type())
-                for group in data.form_datas[0].integral_data for integral in group.integrals]
+                for group in data.form_data[0].integral_data for integral in group.integrals]
         compiled=fem.form(form)
         result[name]=dict(UFL_signature=form.signature(),FFCx_integrals=groups,
             ufcx_signature=compiled.module.ffi.string(compiled.ufcx_form.signature).decode())
@@ -279,10 +299,11 @@ def solve(role,folder,journal):
     bundle=rhs=system=inverse=u=factor=None
     try:
         bundle,rhs,rf=build_bundle(cfg,setup,journal)
+        # Check the installed compiler API before doing expensive local work.
+        write_json(folder/'original_volume_forms.json',volume_form_identity(bundle))
         provider=GramProvider(bundle,folder,journal,use_gram=role=='GRAM_CONTROL')
         system,inverse=condense(bundle,journal,expected=None,raw_tensor_provider=provider)
         write_json(folder/'build_audit.json',system.build_audit)
-        write_json(folder/'original_volume_forms.json',volume_form_identity(bundle))
         journal.owners('condensed_local_tensor_recovery_and_matrix',dict(system=system,inverse=inverse,provider=provider))
         factor=DirectFactor(system.matrix,journal);inverse.factor=factor
         with journal.measured('solve_minimal_recovery'):
@@ -348,12 +369,13 @@ def verify(folder,journal):
             for k in ('geometry_x','geometry_dofmap','cell_tags','cell_centers'):
                 if not np.array_equal(geometry[k],v[k]):raise ValueError('frozen/live geometry '+k)
             rhs_diff=relative(v['rhs']-rhs.array,rhs.array);u.array[:]=v['u_storage']
-            port=np.asarray(bundle['dtn_action'].recover_auxiliary(u))
+            closed_port=np.asarray(bundle['dtn_action'].recover_auxiliary(u));port=v['port']
+            port_reclose_relative=relative(port-closed_port,closed_port)
             norms,values=audit_original(bundle,rhs,u,port,journal)
             _,recovery,recovery_vec=native_recovery_action_split_check(bundle,u,rhs,port,values,journal)
             rec=save_arrays(folder/(role+'_independent_audit.npz'),port=port,**values,**recovery_vec)
             eq=max(norms[k] for k in ('true','native','augmented','port'))<=1e-6 and norms['identity']<=1e-10 and norms['slave_zero']
-            internal=max(recovery['operation_scaled_interior'],recovery['max_cell_operation_scaled'],recovery['split_action_identity_operation_scale'])<=1e-10
+            internal=max(recovery['operation_scaled_interior'],recovery['max_cell_operation_scaled'],recovery['split_action_identity_operation_scale'],recovery['master_storage_max_abs'])<=1e-10 and recovery['slave_storage_zero']
             power=r['output']['port_metrics'];vol=r['output']['volume_metrics']
             analytic_check=None
             if r['case']=='FLAT':
@@ -369,12 +391,48 @@ def verify(folder,journal):
                 weak['pass_gate']=weak['relative']<=1e-10 and weak['operation_scaled']<=1e-10
                 analytic_check.update(complete_physics=full,original_exact_analytic_weak=weak,
                     pass_gate=analytic_check['pass_gate'] and full['pass_gate'] and full['interface']['analytic_conventions_pass'] and weak['pass_gate'])
+            parent_comparison=gram_parent_comparison(bundle,u,geometry,r,folder,journal) if role=='GRAM_CONTROL' else None
             rows.append(dict(role=role,case=r['case'],degree=r['degree'],grid=r['grid'],q47_q63_rhs_relative=rhs_diff,
+                frozen_port_reclose_relative=port_reclose_relative,old_q_parent_comparison=parent_comparison,
                 original_audit=norms,recovery=recovery,arrays=rec,equation_pass=eq,recovery_pass=internal,
                 power=power,volume=vol,analytic=analytic_check,source_parent=r['source_sha'],parent_array=r['arrays']['sha256']))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
     return dict(status='COMPLETED',rows=rows,independent_surface_q=63,calls=journal.calls,timings=journal.timings,
         target_qualified=False,NN20_qualified=False)
+
+
+def gram_parent_comparison(bundle,u,geometry,record,folder,journal):
+    """Compare with V49 p5, explicitly diagnostic because boundary changed."""
+    from .scattering_anchor_scope import stage as old_stage
+    from .scattering_accuracy_fields import CellEvaluator,analytic
+    from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+    from .scattering_anchor_checks import mode_comparison
+    from petsc4py import PETSc
+    parent=old_stage('REFERENCE_NOTCH_P5');data=checked_arrays(parent['arrays'])
+    for k in ('geometry_x','geometry_dofmap','cell_tags','cell_centers'):
+        if not np.array_equal(geometry[k],data[k]):raise ValueError('old/new NOTCH control geometry '+k)
+    pvec=PETSc.Vec().createSeq(len(data['u_storage']),comm=PETSc.COMM_SELF);pvec.array[:]=data['u_storage']
+    try:old=restore_p0_full_field(bundle['setup']['floquets'][5],pvec)
+    finally:pvec.destroy()
+    current=restore_p0_full_field(bundle['setup']['floquets'][5],u)
+    ev=CellEvaluator(current.function_space,31);sums={k:np.zeros(3) for k in ('E','H','curl')};per=[]
+    with journal.measured('new_Gram_old_q_NOTCH_common_field_diagnostic'):
+        for c in range(len(geometry['cell_centers'])):
+            points,w,new=ev.cell(current,c,bundle['cfg'].k0);_,_,prior=ev.cell(old,c,bundle['cfg'].k0);bg=analytic(bundle['cfg'],points)
+            values=[]
+            for k in sums:
+                sq=lambda x:float(np.sum(w[:,None]*np.abs(x)**2))
+                pair=np.array([sq(new[k]-prior[k]),sq(prior[k]),sq(prior[k]-bg[k])]);sums[k]+=pair;values.append(pair)
+            per.append(values)
+    arrays=save_arrays(folder/'GRAM_old_q_physical_difference.npz',per_cell=np.asarray(per))
+    powers={k:abs(record['output']['port_metrics'][k]-parent['output']['port_metrics'][k]) for k in ('R_total','T_total','A_balance')}
+    powers['A_volume']=abs(record['output']['volume_metrics']['A_volume_total']-parent['output']['volume_metrics']['A_volume_total'])
+    old_fields=checked_arrays(parent['output']['fields']);new_fields=checked_arrays(record['output']['fields'])
+    selected={k:relative(new_fields[k]-old_fields[k],old_fields[k]) for k in old_fields if k.startswith('selected_') and k!='selected_points'}
+    return dict(fields={k:dict(total_relative=float(np.sqrt(p[0]/p[1])),same_analytic_scattered_relative=float(np.sqrt(p[0]/p[2])),difference_squared=float(p[0])) for k,p in sums.items()},
+        selected=selected,all_modes=mode_comparison(parent,record),power_absolute_differences=powers,arrays=arrays,
+        parent_source=parent['source_sha'],parent_array_hash=parent['arrays']['sha256'],
+        interpretation='old q25 clipped vs new q47 full inventory; field differences quantify changed boundary, cannot qualify pure optimization or timing speedup')
 
 
 def cost(folder,journal):
