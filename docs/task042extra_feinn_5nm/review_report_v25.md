@@ -1,6 +1,6 @@
 # Review V25：先补齐真实验收链，再一次完成全端口 W1
 
-> A阶段最新复审：纯逻辑修复已接受，B缺原件且未启动；见§7。§0–6保留初审证据与整批条件合同，不新增review编号。
+> 最新接续见§8：A纯逻辑修复接受；本机未找到原件。本次明确授权一次同hash输入恢复，成功后连续完成B0/B1及独立检查；局部LU/恢复留给主线，不重复A。§0–7保留各时点证据；§8列明覆盖条款，不新增review编号。
 
 ## 0. 裁决与实质推进
 
@@ -166,3 +166,71 @@ A的三张README截图实际同字节；本审阅按**一张有限视图**复核
 外部等待从A交付记录的2026-10-04T19:40:01.839628Z起另计日历成本；本次阶段审阅费用再单列，不冒称纯文件等待，也不把它摊销成48h目标收益。B尚未开始，原10800s／数值7200s／尾段1800s不变。没有原件时保持clean、停止工具，不反复扫描或排队抢核，不发确认收信或另一份暂停报告；整包完成或新的实质失败再集中Response V26。
 
 可直接转交执行窗口：**A阶段纯逻辑修复已独立接受，读取本节和审计收据后沿用Review V25条件许可。当前不重复A、不启动B；等待真实原件到位，届时在原门和单一B窗口内完成整批。FEINN主求解器仍暂停，原50×25×140nm／Si17/120nm／λ0.7完整3D FE、decimal2e12B、ownswap/OOC0、连续172800s及原精度目标尚未达到，无W2、全目标全局factor/solve或merge许可。**
+
+## 8. 原件接续审阅：一次恢复确定性输入，随后完成真实全模式边界资格
+
+本节回应用户最新要求：核实原件位置；取不到时仍安排有实质推进的工作。被审阅HEAD为 **4659bb427633ea9742cbe7097e60d34268a1eac7**，本次非交互精确远端查询与fetch一致，工作树clean。A已接受，B时钟和worker均未开始；不重新审A，也不新建Review V26。**本节明确覆盖§4–7的“只等旧原件／禁止再次生成库存”、必须旧ledger才能启动的输入分支、B计时起点及B2本轮范围；其他精度、安全、历史保留与非生产边界不变。** 旧正文是原时点记录，执行以本节为准。
+
+### 8.1 原件在哪里，哪些入口现在确实可用
+
+[本次检索及源码审计收据](outcomes/records/review_v25_input_recovery_audit.json)记录完整范围。重新刷新4942份tracked文件／113087227 B及结构标题，重点复读任务、当前合同、接收链和原生成源码；不是声称全仓逐行语义审计。有限检索覆盖本机Projects、可读/tmp、/mnt、/media及Downloads，共209420个唯一文件的元数据，检查准确文件名、已知字节数及相关ZIP目录，**候选0**。未越过权限、未递归符号链接；不可读系统目录、旧浏览器断链和排除环境目录均记入收据。因此结论是**本机指定范围不可取得**，不是“原件已经被删除”。没有重跑AUTO、FE、训练或A测试。
+
+主线最新 **2a67a2423fdd8b670d907ef6f9394a17bff8f2f6** 的[原件审计](https://github.com/Rookie1234567/MyFEniCS/blob/2a67a2423fdd8b670d907ef6f9394a17bff8f2f6/docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json)和目录规则指向生产端根 /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering。其下 benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/ 保存原manifest与ledger；target_ledger_v5_repair/ 保存同字节manifest及另一ledger。最后发布读取时点为2026-10-04T11:26:18.586819Z；**这些是另一台WSL机器上曾读到的准确位置，本机该根不存在，没有可验证的SSH或HTTP下载端点。** 旧NPZ的相对入口仍为 benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz，不是Git中的38MB正文。
+
+dot最新 **5890e0700cf7f1a61f01109227a32cdd80ad7d06** 的[Library读取收据](https://github.com/Rookie1234567/MyFEniCS/blob/5890e0700cf7f1a61f01109227a32cdd80ad7d06/docs/task40extra_dot_parallel_cloud/outcomes/records/target_AUTO_identity_v1/library_readback_receipt.json)有真实定位符：target_AUTO_complete_inventory.zip，Library ID为libfile_01b478e1d1f48191bea7c9deea966423，file ID为file_00000000602c82079e69fb389f0c8a1c，ZIP SHA为4c3deb139b5eb8c164c1873144685f45869c7f63b971fa05b7e969d8b0b09023。其中物理manifest为36263033 B／SHA 7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e，**不是所需52d7ec80原件**。当前工具没有这个Library ID的通用原文件下载入口；Pages的引用读取不等于任意Library下载。不能把ID编成URL或把dot归档直接塞进本支输入门。
+
+**现在真实可读的交付入口是冻结Git源码、输入dat和完整物理身份正文；不是缺失大文件。** 下节把这些现存字节变成一项可执行恢复工作。将来若生产端提供可读原件，按§4原hash接收即可，不再全面扫盘；若没有，就执行下面的一次恢复，不让用户手工clone、安装、跑程序或重复转述缺项。
+
+### 8.2 为什么可以尝试恢复，以及不能伪造什么
+
+manifest列出每个外部衍射波的波数、极化、牵引及原投影分母，是由固定输入计算的确定性数据。冻结函数build_ordered_mode_manifest只写schema、profile、mode_count和modes，**不含日期、机器路径或运行状态**；所以重现原文件的逐字节SHA是有意义且严格的验收。它仅恢复输入，不增加一个求解算法，也不能证明端口截断、网格精度或PDE正确。
+
+本次独立比较原生成source **19acb46e468eaf5d8fa56e767d391fefbfab49a4**、修复source **24a56962c733b9ae5454000cdae224dae6dda8f0**、W1数学source **c354afa449fb80cfb5012e7d2ff66a3e3e64e088**：modes_3d.py、原目标ledger runner及源dat逐字相同；manifest序列化、mode identity、库存生成、原H、traction、目标配置/身份函数的AST相同。相关整文件另有后续表面装配修改，不能把局部函数一致夸称整棵源码相同。**没有在审阅中运行生成器，跨ABI能否同字节仍待验证。**
+
+配套旧ledger含时间、绝对路径、旧run identity；不应伪造这些字段来碰旧hash。本轮允许一个独立的reproduced-input-receipt分支：保留原ledger两hash作为未取得的历史权威，写本次真实source/ABI/时间/命令与恢复方法，绝不标作旧原件收回。物理身份取自c354afa的docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json，其16783 B原文件SHA为 **03b5c44136f132d203237211ea1499faec1c25d3c1f47225e0c662d00aca4ea0**。本次已从其中完整对象重算：physical SHA为a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f，inventory SHA为39b457c3f0b9d8db5f85a8f1482734513d48670c017d4c8060cae734bdcd0c12，与旧记录一致。这个小文件可以从准确Git blob读取，不需要猜旧ledger正文。
+
+### 8.3 单一工作包：R → B0 → B1 → 保存checker → 可消费交付
+
+**现在授权执行这整个工作包，不在恢复成功或代码提交后再次等review。** 优先级和条件如下；B2局部因子/恢复改由主线承担，见§8.4。
+
+| 阶段／输入 | 实际工作与必要对照 | 严格出口 |
+| --- | --- | --- |
+| R，已接受A＋冻结c354afa源码/源dat/身份原文；无需外部文件 | 只读Git对象闭包，调用原目标配置、模式生成及manifest序列化一次；不运行带主线分支/环境写入的顶层build，不伪装主线HEAD；只补实际导入依赖 | 36244923 B、32060唯一有序keys、原52d7ec80完整SHA及03c1965c有序SHA同时相同；正文重算physical/inventory hash；否则不得进B |
+| R接收封存 | fsync/reopen原字节；新来源凭据与准确原blob绑定，真实SHA进入各dat/worker/checker；旧原件路径仍保留 | BITWISE_REPRODUCED_INPUT，不是旧ledger恢复或FE PASS；拒绝错来源、假hash标签、篡改物理正文、改模式及失败监督 |
+| B0，R通过或真实原件接收 | 现有公开dat链上的真实Basix方向、非单位Floquet两缝/角点、写出/重开/清场；fresh ABI与受测源码 | 原控制门通过；A的stub不得替代；只做一次合格原生控制 |
+| B1，B0通过，同身份、唯一q60 | 原(100,1)上下代表面，p4/p6全列、32060输出，B/D/H、三方向、forward/adjoint、坐标和真实入射边界载荷 | 区间矩≤1e−12；逐模式/作用/坐标/载荷各原门≤1e−10；全量分子/分母和失败key保留；仅代表面资格 |
+| 保存checker与交付 | 独立进程从原数组/凭据重算，给主线最小输入/ABI/source/布局/原门/成本包 | 正负/UNKNOWN分列；正确worker不因checker写出错误重跑；一次Response V26，不只交“已找回文件” |
+
+R的待实现入口应扩展现有W1 dat/receiver，使用明确的input_recovery阶段；schema和接收判定放src/io，编排沿现有监督/one-run入口。它是本轮新增接线，**当前命令还不能直接执行这个新stage**，执行者完成最小实现与定向检查后立即继续。生成使用c354afa冻结实现，不更换材料库、libm、模式范围、浮点精度或序列化器来试hash；不手调数字、不扫描环境。完整manifest的任意数值/顺序字节不匹配均保存为BITWISE_REPRODUCTION_FAILED，而不是放松为“数量一样”。仅路径、导入、写出等有明确原因的接线错误可用剩余修复池处理；已经生成但hash不匹配的正确执行不重算第二个候选。
+
+接收凭据必须有明确schema及独立分支，不能往原LEDGERS白名单塞任意运行hash。验证器固定检查原manifest字节/大小/keys、上述Git原文及source blob、正文重算physical/inventory digest、实际监督/清场和本次来源；对所有消费者返回相同科学身份。把伪造或缺项凭据挡在native前。新receipt内容SHA在首次R完成后冻结，后续不得换文件重启同窗。旧A中未改源码的资格复用；受影响输入/监督/时间与凭据测试形成新source增量资格，不把旧92项记录重新标成新source通过，也不重做全部A。
+
+B1继续复用本支V23的区间矩实现及Decimal80/110独立参照，不按主线新报告再写第二套Bessel算法。本批实际(100,1)面宽采用原_proportional_axis的90/46/46/90分段，不能沿用旧78/58/58/78计数。把实际manifest和这两个面宽给出的**所有去重一维频率、ell0..6**列为独立参照覆盖清单；复用同频率、同源码的V23资格，缺少的频率用已有固定Decimal80/110路径一次补齐。不能仅凭最大/最小/旧worst几个频率就称全范围参照已验，不能调整已有绝对门或超出固定56rad范围。已保留的所有mode/近零项均参与检查，不裁掉难模式。
+
+R的manifest满足原hash后，本轮新来源凭据可替代缺失旧ledger作**本批输入资格**；不认证旧运行成本、旧NPZ或main/dot的整个物理identity。旧NPZ继续NOT_AVAILABLE，不是本批必须等到的前置，也不允许凭新数据重造其104成员。实际原件以后到位可以一次比对，但不是新q60工作继续推进的额外审批。
+
+### 8.4 最新分工、成本与明确停止条件
+
+主线[Review V9](https://github.com/Rookie1234567/MyFEniCS/blob/2a67a2423fdd8b670d907ef6f9394a17bff8f2f6/docs/task40extra_0p7nm_engineering/review_report_v9.md)已把**旧104成员的q30/q60归因、两个p6局部恢复、保存p4体积复用**分配给主线；仍没有其新Response或可接收raw。故本支本包**不再自动运行原B2四个局部LU/恢复**，也不补造主线旧体积。当前独立贡献是可复现输入和本支已建立的独立参照/实际接收链：主线可消费其全模式结果，避免再实现同类积分；若启动时主线已交付同物理/同面/同列/同原分母的完整新raw，则优先运行本支独立保存checker，不重复正确producer。仅作一次交接时检查，不后台轮询。此处只安排本支，未修改或替主线授权。
+
+dot已完成小型C1a/b/c及后续校准，不能继续按“C1c未运行”安排重复工作。最新[分块表面记录](https://github.com/Rookie1234567/MyFEniCS/blob/5890e0700cf7f1a61f01109227a32cdd80ad7d06/docs/task40extra_dot_parallel_cloud/outcomes/chunked_surface_attempt1_v1_zh.md)中degree27机制最大差3.67045899e−13通过；degree160在原权重和检查停止：偏差2.66675571e−13大于32ε=7.10542736e−15，default/public规则字节相同，目标作用/参考仍未运行。它不是原样编译OOM，也不是全AUTO正确性通过。本支不复做该分块表面、调整它的门或接管其后端/存储。两侧Si/λ/角度参数虽可对齐，主线居中网格、本支代表面和dot 18cell/边界参考平面不同，未逐行桥接前不跨线移植误差或速度结论。主线1%门不替代本支1e−4最终门。
+
+**不增加原B的10800s额度；改为R/B共用一个连续窗口。** 从执行者本轮第一项恢复接线/准备开始固定唯一T0，含开发、测试、R、B0/B1、独立checker、失败、Git/保存/交付；R及新接线≤1800s，所有实际数值/数值checker累计≤7200s，最后1800s留交付，所有子额度还受总窗剩余约束，不相加扩额。已有A≤3600s与实际2361.839628s不重置。本次审阅和A后的真实外部等待单列，不冒充免费时间或连续14400s完成。
+
+现有prepare_B_window必须最小适配：R起点先持久保存，B输入一经封存再附加binding，**只继承R原deadline，绝不在R成功时新建“现在+10800s”**。相关资格更新不能修改A旧收据。仍只准一个窗口、共同修复池剩一轮；原case最多三次只是绝对上限，必须同时受剩余修复次数和总窗约束。小路径/schema/序列化错误同批定位修好继续，不再请示；真实hash/数值失败则结束依赖升级，保留完整负值和原因。
+
+R/轻检查/B0整树2GiB，B1原生组件及需要原生积分的checker沿原warn12/hard16GiB，纯数组checker/浏览器2GiB；单空闲物理核、数学线程1、MPI1、CPU-only、自身swap/OOC0、原PSI/整机和384GiB邻增长保护不放宽。新增盘仍≤8GiB、启动空闲≥50GiB，不构造32060²稠密矩阵。R只做模式元数据，没有mesh/space/FFCx/FE action/局部或全局Maxwell因子；导入FE库不计为FE运行，但应记录ABI。资源一次拒绝仅在实测状态变化后至多再准入一次，仍计原窗；不抢核或反复等新窗口。
+
+明确出口：R失败是输入重现失败；B0失败是原生资格未闭合；q60真实原门失败是该候选负结果，停止升级、不扫q/p、不换分母。参照不可靠则ORACLE_ACCURACY_UNRESOLVED，不能判q60通过。成功只称全模式**代表面组件**和可消费接入通过，仍不是完整前向解。全部错误和费用与旧M3600/Mfinal、D0否决/D1未运行及未知项目总费一并保留。FEINN主求解器继续暂停；原50×25×140nm／Si17/120nm／λ0.7完整3D FE、decimal2e12B整机、ownswap/OOC0、连续172800s及§0原精度门仍未达成。
+
+### 8.5 给执行 Codex 的接续文本
+
+~~~text
+在canonical /home/fenics/Projects/NN-Lab-V2、精确task42extra_feinn_5nm接棒，只读Review V25最新§8及review_v25_input_recovery_audit.json。输入HEAD4659bb427633ea9742cbe7097e60d34268a1eac7；A已接受，不重做A，不只交暂停记录。通知后你独占工作树。
+
+本机原manifest/ledger/旧NPZ不可取得；不要重复扫盘或编造下载URL。按§8新增一次R输入恢复，复用冻结c354afa的原目标配置、模式生成及序列化；明确允许这一次恢复，覆盖旧“禁止再生成库存”。必须逐字节得到36244923B/52d7ec80完整SHA及32060/03c1965c有序SHA，否则禁止B。用固定Git身份原文03b5c441…重算完整physical/inventory对象，生成有本次真实来源的新receipt；不冒充两份旧ledger，不改旧历史。验证器明确分支、实际消费者和负控定向通过后继续，不为新schema另等review。
+
+从第一项R接线准备冻结唯一10800s连续总窗，R及接线≤1800s、数值/checker≤7200s、尾段1800s，R成功不刷新B时钟；A费用、外部等待和本次审阅另列。输入通过即串行完成真实B0→唯一q60/B1全32060模式→独立保存checker和可供主线消费的包。实际两个面宽/全部去重频率的已有80/110位参照覆盖补齐，原门不降。只在整包完成或真实有界失败后交一次Response V26/通知。
+
+主线2a67a242…已负责旧数组归因和p6局部恢复，本支不自动跑B2的四个LU，不代跑主线/dot。dot5890e070…已有新机制通过和degree160规则负态，不能再用旧C1c未完成理由重做它。共同修复池剩一轮，正确raw优先复用；身份、数值或资源真失败保留后停止受影响升级，不长训练、扫配置或换标准。其他分支/master、原尺寸全局solve/W2及NN仍不授权，最终0.7nm完整前向目标不变。
+~~~

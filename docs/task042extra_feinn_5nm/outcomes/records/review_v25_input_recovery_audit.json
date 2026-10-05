@@ -1,0 +1,552 @@
+{
+  "schema": "task42extra.review-v25-input-recovery-audit.v1",
+  "reviewed_head": "4659bb427633ea9742cbe7097e60d34268a1eac7",
+  "branch": "task42extra_feinn_5nm",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "utc": "2026-10-05T00:17:43.924734+00:00",
+  "scope": "read-only original input search and frozen-source design review; no generator/FE/NN/A rerun",
+  "repository_refresh": {
+    "head": "4659bb427633ea9742cbe7097e60d34268a1eac7",
+    "scope": "all tracked bytes and structural headings refreshed; not a claim of line-by-line semantic audit",
+    "count": 4942,
+    "bytes": 113087227,
+    "counts": {
+      ".gitattributes": 1,
+      ".gitignore": 1,
+      "AGENTS.md": 1,
+      "Dockerfile.mpc": 1,
+      "README.md": 1,
+      "benchmarks": 538,
+      "docker": 2,
+      "docs": 3228,
+      "input": 263,
+      "notes": 100,
+      "scripts": 13,
+      "src": 793
+    }
+  },
+  "input_search": {
+    "utc": "2026-10-05T00:08:00.459944+00:00",
+    "roots": [
+      {
+        "path": "/home/fenics/Projects",
+        "exists": true
+      },
+      {
+        "path": "/tmp",
+        "exists": true
+      },
+      {
+        "path": "/mnt",
+        "exists": true
+      },
+      {
+        "path": "/media",
+        "exists": true
+      },
+      {
+        "path": "/home/fenics/Downloads",
+        "exists": true
+      },
+      {
+        "path": "/home/shenjh/Projects",
+        "exists": false
+      },
+      {
+        "path": "/mnt/data",
+        "exists": false
+      }
+    ],
+    "candidates": [],
+    "archives": [],
+    "errors": [
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v18_088334f7/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v25_A_ec34a3a3_prefix/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_changed_scroll_retry/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v3_publish_7513130/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v6_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v14_b8c7ede5/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v8_3fc0a6a/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v9_05619c3_render/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/w0_v24_bd041236/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v5_publish_c09e29c_native/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v25_A_ec34a3a3_prefix_offset/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v25_47bb6e72/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v2_review_task_sha11ba4d/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/c4_705654e/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v18_c5d320e0/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v11_key_pages_attempt2_actual/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v25_A_ec34a3a3/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v13_8e9a1cb0/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/c5_4450434/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v17_5fa3f892/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v15_response_table_retry/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v2_review_task_eager_sha11ba4d/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v19_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v15_2ca3cfc4/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_A_0f7fb9a8/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v22_final_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v15_8e4bb908/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v4_publish_6aab856_native/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v16_2a20254e/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v22_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v7_published/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v18_3869d354/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v3_new_docs_sha1930437/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/w0_v24_elements_bd041236/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v8_2530171/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v24_1b5290b9/profile/lock'",
+      "[Errno 2] No such file or directory: '/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/bmc_tools/extracted/usr/share/doc/libfreeipmi17/doc'",
+      "[Errno 13] Permission denied: '/tmp/codex-daemon-1000'",
+      "[Errno 13] Permission denied: '/media/root'"
+    ],
+    "metadata_file_count": 209420,
+    "excluded_directory_names": [
+      ".cache",
+      ".git",
+      "__pycache__",
+      "node_modules",
+      "pord64-overlay",
+      "prefix",
+      "pycache",
+      "site-packages",
+      "snap-private-tmp",
+      "xdg"
+    ],
+    "no_symlink_recursion": true,
+    "no_generation": true,
+    "seconds": 3.6114591581281275,
+    "scope_limit": "Absence within accessible declared/project/temp/download scopes; not proof of deletion on another host or Library."
+  },
+  "static_recovery": {
+    "scope": "static immutable Git blobs and AST only; no generator/import/FE executed",
+    "commits": [
+      "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+      "24a56962c733b9ae5454000cdae224dae6dda8f0",
+      "c354afa449fb80cfb5012e7d2ff66a3e3e64e088"
+    ],
+    "files": {
+      "src/common/modes_3d.py": [
+        {
+          "commit": "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+          "bytes": 11359,
+          "sha256": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+          "functions": {}
+        },
+        {
+          "commit": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+          "bytes": 11359,
+          "sha256": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+          "functions": {}
+        },
+        {
+          "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+          "bytes": 11359,
+          "sha256": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+          "functions": {}
+        }
+      ],
+      "src/solvers/fullspace_dtn_action.py": [
+        {
+          "commit": "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+          "bytes": 28411,
+          "sha256": "fe762d247099d136437b9603bda54c0f706d819d445a8b40f6ae45751813476d",
+          "functions": {
+            "_jsonable": "eb50806077209d5e44f2b204a881c859028e9399e09877c73c9e3ce0240e5d69",
+            "_canonical_json_bytes": "92e86b626c5c42ac190cc42192d099a346e2967832e25566cbb1fefef9136ba9",
+            "classify_port_mode": "7373908c1cc7beafdfda658d21da7df21d28f9ec4fbd9aa4577432b0413f4f07",
+            "_mode_identity": "78cd9083b37367827d95e19c8b66dee78c423e47ad827dd1847c89367621feb5",
+            "build_ordered_mode_manifest": "33d532c7268da6e76b3f7aee21697fa926af359684f5266993a3773755d0fd3f",
+            "build_dynamic_mode_inventory": "0b3ec84510f65fc4b94a8b647726d73136dac84e9a8f9cbb90be75ebf97fe8c3"
+          }
+        },
+        {
+          "commit": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+          "bytes": 28411,
+          "sha256": "fe762d247099d136437b9603bda54c0f706d819d445a8b40f6ae45751813476d",
+          "functions": {
+            "_jsonable": "eb50806077209d5e44f2b204a881c859028e9399e09877c73c9e3ce0240e5d69",
+            "_canonical_json_bytes": "92e86b626c5c42ac190cc42192d099a346e2967832e25566cbb1fefef9136ba9",
+            "classify_port_mode": "7373908c1cc7beafdfda658d21da7df21d28f9ec4fbd9aa4577432b0413f4f07",
+            "_mode_identity": "78cd9083b37367827d95e19c8b66dee78c423e47ad827dd1847c89367621feb5",
+            "build_ordered_mode_manifest": "33d532c7268da6e76b3f7aee21697fa926af359684f5266993a3773755d0fd3f",
+            "build_dynamic_mode_inventory": "0b3ec84510f65fc4b94a8b647726d73136dac84e9a8f9cbb90be75ebf97fe8c3"
+          }
+        },
+        {
+          "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+          "bytes": 32960,
+          "sha256": "5e846956a89620d3dc67f6d934bdd44f60e01515589045d81f975246da970784",
+          "functions": {
+            "_jsonable": "eb50806077209d5e44f2b204a881c859028e9399e09877c73c9e3ce0240e5d69",
+            "_canonical_json_bytes": "92e86b626c5c42ac190cc42192d099a346e2967832e25566cbb1fefef9136ba9",
+            "classify_port_mode": "7373908c1cc7beafdfda658d21da7df21d28f9ec4fbd9aa4577432b0413f4f07",
+            "_mode_identity": "78cd9083b37367827d95e19c8b66dee78c423e47ad827dd1847c89367621feb5",
+            "build_ordered_mode_manifest": "33d532c7268da6e76b3f7aee21697fa926af359684f5266993a3773755d0fd3f",
+            "build_dynamic_mode_inventory": "0b3ec84510f65fc4b94a8b647726d73136dac84e9a8f9cbb90be75ebf97fe8c3"
+          }
+        }
+      ],
+      "src/solvers/dtn_port_3d.py": [
+        {
+          "commit": "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+          "bytes": 197059,
+          "sha256": "1cc3400b975eeb2b1b0c7cd7a35f0b4c8d8c2c1bb0a004a99e2ad24c7c521c00",
+          "functions": {
+            "_mode_projection_denominator": "d626fc4714c4ec492b7d7b5bf4210ce40c6dffd22652d0cec419bdc0e34c4d5f",
+            "_traction_vector": "4c5355306d0514d9fedf4a560b7654d7057a36c12560837242dd752c4e60ad12"
+          }
+        },
+        {
+          "commit": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+          "bytes": 197059,
+          "sha256": "1cc3400b975eeb2b1b0c7cd7a35f0b4c8d8c2c1bb0a004a99e2ad24c7c521c00",
+          "functions": {
+            "_mode_projection_denominator": "d626fc4714c4ec492b7d7b5bf4210ce40c6dffd22652d0cec419bdc0e34c4d5f",
+            "_traction_vector": "4c5355306d0514d9fedf4a560b7654d7057a36c12560837242dd752c4e60ad12"
+          }
+        },
+        {
+          "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+          "bytes": 198132,
+          "sha256": "0724e3f5c5fd71ac1aa87d2bc27e4761ea05eb1da09b9ee997e71d36182e98f6",
+          "functions": {
+            "_mode_projection_denominator": "d626fc4714c4ec492b7d7b5bf4210ce40c6dffd22652d0cec419bdc0e34c4d5f",
+            "_traction_vector": "4c5355306d0514d9fedf4a560b7654d7057a36c12560837242dd752c4e60ad12"
+          }
+        }
+      ],
+      "benchmarks/run_task40_v5_target_ledger.py": [
+        {
+          "commit": "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+          "bytes": 22617,
+          "sha256": "608e76abb7be1a4487378125154b0274f2f74c2b8cb21d86e50d8587af8e5d55",
+          "functions": {
+            "_target_config": "93c6b18e1ff236dfcb508af10df18e321e912bee1e02f5700ddd31d79502fa43",
+            "_target_mode_physical_identity": "69b44baaaf034892dc0ffe1ed42b069e553aa89840249961940e2fc962cae4c3"
+          }
+        },
+        {
+          "commit": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+          "bytes": 22617,
+          "sha256": "608e76abb7be1a4487378125154b0274f2f74c2b8cb21d86e50d8587af8e5d55",
+          "functions": {
+            "_target_config": "93c6b18e1ff236dfcb508af10df18e321e912bee1e02f5700ddd31d79502fa43",
+            "_target_mode_physical_identity": "69b44baaaf034892dc0ffe1ed42b069e553aa89840249961940e2fc962cae4c3"
+          }
+        },
+        {
+          "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+          "bytes": 22617,
+          "sha256": "608e76abb7be1a4487378125154b0274f2f74c2b8cb21d86e50d8587af8e5d55",
+          "functions": {
+            "_target_config": "93c6b18e1ff236dfcb508af10df18e321e912bee1e02f5700ddd31d79502fa43",
+            "_target_mode_physical_identity": "69b44baaaf034892dc0ffe1ed42b069e553aa89840249961940e2fc962cae4c3"
+          }
+        }
+      ],
+      "input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_q4_review_v5.dat": [
+        {
+          "commit": "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+          "bytes": 3864,
+          "sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+          "functions": {}
+        },
+        {
+          "commit": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+          "bytes": 3864,
+          "sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+          "functions": {}
+        },
+        {
+          "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+          "bytes": 3864,
+          "sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+          "functions": {}
+        }
+      ]
+    },
+    "anchor": {
+      "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json",
+      "bytes": 16783,
+      "file_sha256": "03b5c44136f132d203237211ea1499faec1c25d3c1f47225e0c662d00aca4ea0",
+      "physical_recomputed": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+      "physical_expected": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+      "inventory_recomputed": "39b457c3f0b9d8db5f85a8f1482734513d48670c017d4c8060cae734bdcd0c12",
+      "inventory_expected": "39b457c3f0b9d8db5f85a8f1482734513d48670c017d4c8060cae734bdcd0c12",
+      "physical_body": {
+        "geometry": {
+          "air_void_box_nm": [
+            25.0,
+            33.49999999999999,
+            6.25,
+            18.75,
+            39.99999999999999,
+            79.99999999999999
+          ],
+          "grating_height_nm": 120.0,
+          "grating_width_x_nm": 17.0,
+          "grating_width_y_nm": 25.0,
+          "period_x_nm": 50.0,
+          "period_y_nm": 25.0,
+          "z_max_nm": 130.0,
+          "z_min_nm": -10.0
+        },
+        "incidence": {
+          "azimuth_deg": 0.0,
+          "electric_amplitude": [
+            1.0,
+            0.0
+          ],
+          "grazing_angle_deg": 1.0,
+          "polarization": "s",
+          "theta_from_positive_z_deg": 89.0
+        },
+        "materials": {
+          "bottom_external_medium": {
+            "label": "Si substrate",
+            "refractive_index": [
+              0.9998851703688496,
+              4.3236152269189515e-06
+            ],
+            "relative_permeability": [
+              1.0,
+              0.0
+            ]
+          },
+          "top_external_medium": {
+            "label": "air/vacuum",
+            "refractive_index": [
+              1.0,
+              0.0
+            ],
+            "relative_permeability": [
+              1.0,
+              0.0
+            ]
+          }
+        },
+        "ports": {
+          "bottom": {
+            "external_material": "Si substrate",
+            "reference_plane_z_nm": -10.0,
+            "side": "bottom"
+          },
+          "maximum_abs_m": null,
+          "maximum_abs_n": null,
+          "order_policy": "auto_propagating",
+          "top": {
+            "external_material": "air/vacuum",
+            "reference_plane_z_nm": 130.0,
+            "side": "top"
+          }
+        },
+        "scope": "original_size_external_port_and_mode_inventory_only; internal grating/notch geometry does not enter the external-mode calculation",
+        "wavelength_nm": 0.7
+      },
+      "ordered_inventory_body": {
+        "mode_manifest_bytes_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+        "ordered_physical_mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "target_mode_physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
+      }
+    },
+    "frozen_manifest_contains_only": [
+      "schema",
+      "profile",
+      "mode_count",
+      "modes"
+    ],
+    "manifest_excludes": [
+      "timestamp",
+      "hostname",
+      "absolute_path",
+      "environment",
+      "run_identity"
+    ],
+    "old_ledger_contains_dynamic_provenance": true
+  },
+  "remote_heads": {
+    "task42extra_feinn_5nm": "4659bb427633ea9742cbe7097e60d34268a1eac7",
+    "task40extra_0p7nm_engineering": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+    "task40extra_dot_parallel_cloud": "5890e0700cf7f1a61f01109227a32cdd80ad7d06"
+  },
+  "exact_remote_probe": "noninteractive ls-remote then explicit refspec fetch, shared fetch configuration unchanged",
+  "new_source_or_numerical_writes": false,
+  "new_generation_or_PDE_or_training": 0,
+  "current_outcome": "ORIGINALS_UNAVAILABLE_IN_ACCESSIBLE_SCOPES; authorize one bitwise reproduction and native B0/B1, no B2 duplicate",
+  "prior_A_acceptance_preserved": true,
+  "original_input_download_endpoint": "NOT_AVAILABLE",
+  "tool_boundary": "No generic Library-ID file download tool; no invented URL or SSH host; unrelated Drive/Pages were not searched.",
+  "new_execution_started": false,
+  "review_timing": {
+    "start_record": {
+      "utc": "2026-10-05T00:07:11.684783+00:00",
+      "monotonic": 1083826.545641301,
+      "scope": "review only; no execution R/B started",
+      "earlier_reading_seconds": "NOT_MEASURED"
+    },
+    "elapsed_since_start_record_seconds": 734.1342862530146,
+    "earlier_reading_seconds": "NOT_MEASURED",
+    "whole_project_cost": "UNKNOWN",
+    "read_metadata_tree_peak": "NOT_MEASURED",
+    "nested_checks_not_added_to_parent": true
+  },
+  "render": {
+    "status": "PENDING_PUBLICATION",
+    "scope": "new section 8, one table, no new math; unchanged section 0-7 evidence preserved"
+  },
+  "bindings": [
+    {
+      "path": "tmp/task42extra/review_v25_input/find_inputs.py",
+      "bytes": 3379,
+      "sha256": "b3aed03d3303fa51e8b8e6eb0a0178cb2cab7c69a8c1412b425102f8bbe95c42"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/input_search.json",
+      "bytes": 8338,
+      "sha256": "7c48ba65f20c3e674e0a4a63b5e81cf0ac5f50b2c32c88358dd0d0d4865d1510"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/repository_refresh.json",
+      "bytes": 2494728,
+      "sha256": "9b80240a28edc4c2e679b5b368b0835efd1b3d245ec6d7dc42fae438785dd0ff"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/recovery_static_audit.json",
+      "bytes": 10119,
+      "sha256": "4512c62d43348b30d55a20356ed4633196e85d4c6f6538405a704ca47617b7ad"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/check_review_attempt1.py",
+      "bytes": 3094,
+      "sha256": "4e80d9829b0cb0eaaf5760769b878d5d053e5f0ba38816e81c1d448babd01a13"
+    },
+    {
+      "commit": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+      "path": "docs/task40extra_0p7nm_engineering/AGENTS.md",
+      "bytes": 2459,
+      "sha256": "6e6dab8327051b0fb2b6259f86d784d139721b73c42f6607f302278091c4e354"
+    },
+    {
+      "commit": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+      "path": "docs/task40extra_0p7nm_engineering/review_report_v9.md",
+      "bytes": 36156,
+      "sha256": "4aa57834b8b5c6611ba6dd30c814fe4a52d6df0fd544fc3926b7f39bcec4be93"
+    },
+    {
+      "commit": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json",
+      "bytes": 16783,
+      "sha256": "03b5c44136f132d203237211ea1499faec1c25d3c1f47225e0c662d00aca4ea0"
+    },
+    {
+      "commit": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_boundary_checkpoint_closeout_v1.json",
+      "bytes": 16225,
+      "sha256": "b61bc8890990989e3b83c488738a53ccac6330e8574245f1caae3cdcb7b4b66a"
+    },
+    {
+      "commit": "5890e0700cf7f1a61f01109227a32cdd80ad7d06",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/target_AUTO_identity_v1/library_readback_receipt.json",
+      "bytes": 2063,
+      "sha256": "bbce568cce16ab1b4c79abb05f0198cabe9f84eed6a1dd6f09d2eb6f4409f5be"
+    },
+    {
+      "commit": "5890e0700cf7f1a61f01109227a32cdd80ad7d06",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/chunked_surface_attempt1_v1_zh.md",
+      "bytes": 2392,
+      "sha256": "c89a96c4ee37636b80651d2be91543e6c5d5f50e7090d3eb465e0b6a55212e62"
+    },
+    {
+      "commit": "5890e0700cf7f1a61f01109227a32cdd80ad7d06",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/chunked_surface_attempt1_v1/saved_rule_unit_mass_diagnostic.json",
+      "bytes": 1725,
+      "sha256": "232ef2b3e6ce2cbd58a6c235145078993db9449bc915ce71763f29e305f9f607"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/check_review.py",
+      "bytes": 3134,
+      "sha256": "a889ff24e089309a3f2fab8f5589762f0ae78bd2f1837f8abec111fd3eba3efe"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/document_check.json",
+      "bytes": 477,
+      "sha256": "f551be4bf3979671e2a969f8b6cfb156cc7fca4027c1b6a2e2d0992db55e1229"
+    }
+  ],
+  "authoring_events": [
+    {
+      "event": "initial large inline patch JS syntax error",
+      "mutation_occurred": false,
+      "repair": "quoted raw template; report edit then succeeded"
+    },
+    {
+      "event": "first documentation checker counted h3 headings as h2 by substring",
+      "numerical_effect": false,
+      "first_attempt_retained": "tmp/task42extra/review_v25_input/check_review_attempt1.py",
+      "repair": "anchor heading count to line start; second supervised check PASS"
+    }
+  ],
+  "find_inputs.py": "\"\"\"Finite read-only search for the declared W1 originals; no regeneration.\"\"\"\nimport datetime\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport time\nimport zipfile\n\nSTART = time.monotonic()\nROOTS = [Path(p) for p in (\n    '/home/fenics/Projects', '/tmp', '/mnt', '/media',\n    '/home/fenics/Downloads', '/home/shenjh/Projects', '/mnt/data',\n)]\nSKIP = {'.git', 'node_modules', '__pycache__', 'pycache', 'site-packages',\n        '.cache', 'xdg', 'prefix', 'pord64-overlay', 'snap-private-tmp'}\nNAMES = {'original_size_auto_mode_manifest.json', 'target_ledger.json',\n         'w1_boundary_probe_arrays.npz', 'original_physical_manifest.json',\n         'target_AUTO_complete_inventory.zip'}\nSIZES = {36244923, 38026664, 36263033}\nresult = {'utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),\n          'roots': [], 'candidates': [], 'archives': [], 'errors': [],\n          'metadata_file_count': 0, 'excluded_directory_names': sorted(SKIP),\n          'no_symlink_recursion': True, 'no_generation': True}\nseen = set()\nfor base in ROOTS:\n    result['roots'].append({'path': str(base), 'exists': base.exists()})\n    if not base.is_dir():\n        continue\n    for directory, dirs, files in os.walk(base, followlinks=False,\n            onerror=lambda exc: result['errors'].append(str(exc))):\n        dirs[:] = [d for d in dirs if d not in SKIP and not d.startswith(('.venv', 'systemd-private-'))]\n        for name in files:\n            if time.monotonic() - START > 120 or result['metadata_file_count'] >= 500000:\n                result['bounded_stop'] = True\n                break\n            path = Path(directory) / name\n            try:\n                st = path.stat()\n            except OSError as exc:\n                result['errors'].append(str(exc)); continue\n            identity = (st.st_dev, st.st_ino)\n            if identity in seen:\n                continue\n            seen.add(identity)\n            result['metadata_file_count'] += 1\n            if name in NAMES or st.st_size in SIZES:\n                h = hashlib.sha256()\n                with path.open('rb') as stream:\n                    for block in iter(lambda: stream.read(1048576), b''):\n                        h.update(block)\n                result['candidates'].append({'path': str(path), 'bytes': st.st_size, 'sha256': h.hexdigest()})\n            if name.endswith('.zip') and any(token in name.lower() for token in ('target', 'auto', 'w1', 'task40', 'ledger', 'inventory')):\n                try:\n                    with zipfile.ZipFile(path) as archive:\n                        matches = [dict(name=i.filename, bytes=i.file_size) for i in archive.infolist()\n                                   if Path(i.filename).name in NAMES or i.file_size in SIZES]\n                    result['archives'].append({'path': str(path), 'matches': matches})\n                except (OSError, zipfile.BadZipFile) as exc:\n                    result['errors'].append(str(exc))\n        if result.get('bounded_stop'):\n            break\n    if result.get('bounded_stop'):\n        break\nresult['seconds'] = time.monotonic() - START\nresult['scope_limit'] = 'Absence within accessible declared/project/temp/download scopes; not proof of deletion on another host or Library.'\nPath(__file__).with_name('input_search.json').write_text(json.dumps(result, indent=2) + '\\n')\nprint(json.dumps(result, indent=2))\n",
+  "check_review.py": "\"\"\"Local review integrity/Markdown checks; no numerical imports.\"\"\"\nimport hashlib\nimport json\nfrom pathlib import Path\nimport re\nimport subprocess\nimport time\n\nroot = Path.cwd()\nreport = root / 'docs/task042extra_feinn_5nm/review_report_v25.md'\nold_sha = '4659bb427633ea9742cbe7097e60d34268a1eac7'\nold = subprocess.check_output(['git', 'show', old_sha + ':' + str(report.relative_to(root))]).decode()\nnew = report.read_text()\nold_body = old[old.index('## 0.'):]\nnew_body = new[new.index('## 0.'):new.index('\\n## 8.')]\nassert new_body == old_body.rstrip() + '\\n', 'old sections changed'\nassert new.count('## 8.') == 1\nassert '52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d' in new\nassert '原case最多三次只是绝对上限' in new\nassert '不再自动运行原B2四个局部LU/恢复' in new\nassert '现在+10800s' in new\nassert '\\\\[' not in new and '\\\\]' not in new and '$$' not in new\nfence = None\ntables = []\ncurrent = []\nlinks = []\nfor line in new.splitlines():\n    if line.startswith(('```', '~~~')):\n        marker = line[:3]\n        if fence is None:\n            fence = marker\n        elif marker == fence:\n            fence = None\n        continue\n    if fence:\n        continue\n    if line.startswith('|'):\n        current.append(len(re.split(r'(?<!\\\\)\\|', line)) - 2)\n    elif current:\n        assert len(set(current)) == 1, current\n        tables.append(current)\n        current = []\n    for target in re.findall(r'\\]\\(([^)]+)\\)', line):\n        if not re.match(r'https?://', target):\n            assert (report.parent / target.split('#')[0]).exists(), target\n        links.append(target)\nassert fence is None\nchanged = subprocess.check_output(['git', 'diff', '--name-only', old_sha]).decode().splitlines()\nassert changed == [str(report.relative_to(root))], changed\nuntracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard']).decode().splitlines()\nassert untracked == ['docs/task042extra_feinn_5nm/outcomes/records/review_v25_input_recovery_audit.json'], untracked\naudit = json.loads((root / untracked[0]).read_text())\nassert audit['input_search']['candidates'] == []\nassert audit['static_recovery']['anchor']['physical_recomputed'] == audit['static_recovery']['anchor']['physical_expected']\nassert audit['static_recovery']['anchor']['inventory_recomputed'] == audit['static_recovery']['anchor']['inventory_expected']\nassert not (root / 'tmp/task42extra/w1_receiver/v26/B_window.json').exists()\nresult = dict(status='PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY',\n              report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),\n              old_sections_0_through_7_byte_identical=True,\n              tables=len(tables), table_columns=[a[0] for a in tables],\n              links=len(links), new_tables=1, new_math_blocks=0,\n              no_source_or_other_branch_changes=True, B_window_absent=True,\n              numerical_or_generator_or_A_test_calls=0,\n              monotonic=time.monotonic())\nPath(__file__).with_name('document_check.json').write_text(json.dumps(result, indent=2)+'\\n')\nprint(json.dumps(result))\n",
+  "document_check": {
+    "status": "PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY",
+    "report_sha256": "c3bd46b4f23b210f7dced39334477ce57550dbf9f6d9adae32de81132e1f2f3e",
+    "old_sections_0_through_7_byte_identical": true,
+    "tables": 4,
+    "table_columns": [
+      2,
+      3,
+      3,
+      3
+    ],
+    "links": 11,
+    "new_tables": 1,
+    "new_math_blocks": 0,
+    "no_source_or_other_branch_changes": true,
+    "B_window_absent": true,
+    "numerical_or_generator_or_A_test_calls": 0,
+    "monotonic": 1084499.028670477
+  },
+  "review_checks": [
+    {
+      "summary": "tmp/task42extra/checks/review_v25_input_docs_20261005T001744160309Z/summary.json",
+      "sha256": "10f5bc8a0e0d319d499be1f6e8f3448fd8e6208f0559c5981370badb2d2319ea",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.599025588016957,
+      "sampled_process_tree_rss_peak_bytes": 42946560,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "summary": "tmp/task42extra/checks/review_v25_input_docs_fix_20261005T001823005832Z/summary.json",
+      "sha256": "2fd9393f5b0edd85f9c5db4d94e96836378c5dfbccbe94c5b220d39e34777935",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.62339550210163,
+      "sampled_process_tree_rss_peak_bytes": 42930176,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "check_review_fixed.py": "\"\"\"Local review integrity/Markdown checks; no numerical imports.\"\"\"\nimport hashlib\nimport json\nfrom pathlib import Path\nimport re\nimport subprocess\nimport time\n\nroot = Path.cwd()\nreport = root / 'docs/task042extra_feinn_5nm/review_report_v25.md'\nold_sha = '4659bb427633ea9742cbe7097e60d34268a1eac7'\nold = subprocess.check_output(['git', 'show', old_sha + ':' + str(report.relative_to(root))]).decode()\nnew = report.read_text()\nold_body = old[old.index('## 0.'):]\nnew_body = new[new.index('## 0.'):new.index('\\n## 8.')]\nassert new_body == old_body.rstrip() + '\\n', 'old sections changed'\nassert sum(line.startswith('## 8.') for line in new.splitlines()) == 1\nassert '52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d' in new\nassert '原case最多三次只是绝对上限' in new\nassert '不再自动运行原B2四个局部LU/恢复' in new\nassert '现在+10800s' in new\nassert '\\\\[' not in new and '\\\\]' not in new and '$$' not in new\nfence = None\ntables = []\ncurrent = []\nlinks = []\nfor line in new.splitlines():\n    if line.startswith(('```', '~~~')):\n        marker = line[:3]\n        if fence is None:\n            fence = marker\n        elif marker == fence:\n            fence = None\n        continue\n    if fence:\n        continue\n    if line.startswith('|'):\n        current.append(len(re.split(r'(?<!\\\\)\\|', line)) - 2)\n    elif current:\n        assert len(set(current)) == 1, current\n        tables.append(current)\n        current = []\n    for target in re.findall(r'\\]\\(([^)]+)\\)', line):\n        if not re.match(r'https?://', target):\n            assert (report.parent / target.split('#')[0]).exists(), target\n        links.append(target)\nassert fence is None\nchanged = subprocess.check_output(['git', 'diff', '--name-only', old_sha]).decode().splitlines()\nassert changed == [str(report.relative_to(root))], changed\nuntracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard']).decode().splitlines()\nassert untracked == ['docs/task042extra_feinn_5nm/outcomes/records/review_v25_input_recovery_audit.json'], untracked\naudit = json.loads((root / untracked[0]).read_text())\nassert audit['input_search']['candidates'] == []\nassert audit['static_recovery']['anchor']['physical_recomputed'] == audit['static_recovery']['anchor']['physical_expected']\nassert audit['static_recovery']['anchor']['inventory_recomputed'] == audit['static_recovery']['anchor']['inventory_expected']\nassert not (root / 'tmp/task42extra/w1_receiver/v26/B_window.json').exists()\nresult = dict(status='PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY',\n              report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),\n              old_sections_0_through_7_byte_identical=True,\n              tables=len(tables), table_columns=[a[0] for a in tables],\n              links=len(links), new_tables=1, new_math_blocks=0,\n              no_source_or_other_branch_changes=True, B_window_absent=True,\n              numerical_or_generator_or_A_test_calls=0,\n              monotonic=time.monotonic())\nPath(__file__).with_name('document_check.json').write_text(json.dumps(result, indent=2)+'\\n')\nprint(json.dumps(result))\n"
+}
