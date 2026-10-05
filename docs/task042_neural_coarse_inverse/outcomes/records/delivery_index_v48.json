@@ -1,0 +1,23 @@
+{
+  "state": "FINAL_SETTLEMENT_PENDING",
+  "source_shas": [
+    "2bdcac4ecb299077858de01c730e72c97b6a0257",
+    "bc1d2f16badadc68c4cb725d38d1ce3a52f657cc",
+    "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+    "5c262ca2b57ab763a3df5cdb36db34bd781c77cc"
+  ],
+  "frozen_plan_sha256": "b07f9e68fd25044cc730996da072ac8d8234d40db10e1707910c53be926aed44",
+  "evidence": [
+    "candidate_comparison_v48.json",
+    "model_training_v48.json",
+    "lossless_checker_v48.json",
+    "prediction_bit_diagnostics_v48.json",
+    "resource_costs_final_v48.json",
+    "raw_evidence_index_v48.json",
+    "tests_v48.json",
+    "array_and_bank_inventory_v48.json"
+  ],
+  "response": "response_v48.md",
+  "qualification": "FINITE_LOSSLESS_STORAGE_COMPONENT_ONLY",
+  "NN20": false
+}

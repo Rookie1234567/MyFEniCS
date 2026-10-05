@@ -1,0 +1,412 @@
+{
+  "status": "FINITE_LOSSLESS_STORAGE_COMPONENT_ONLY",
+  "checks": [
+    {
+      "family": "heldout",
+      "method": "RAW",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "307d0cd7726d9413ec7ec33c900756562dc279e7ee6f80787adce0dfc044fc57",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1856591,
+      "object_bytes": {
+        "resident_bank_bytes": 1771179,
+        "compulsory_workspace_bytes": 225536,
+        "complete_trace_bank_object_bytes": 1996715,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "BYTE:3",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "7e4cfc59439b869df044e70ebf5bbaa728931d2d29855eaa64c9c94ca0ce41c3",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1799313,
+      "object_bytes": {
+        "resident_bank_bytes": 2395885,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4026349,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "BYTE:19",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "7a548f3dee4ef8774c3fa5d7437c682c16b9ddae801ccd76dc18d128715365a4",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1801081,
+      "object_bytes": {
+        "resident_bank_bytes": 2397653,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4028117,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "SHUFFLE:3",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "de394b3ef176343236127d89db3bd826c28f94711467a3fb2db691f1015347e1",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1751530,
+      "object_bytes": {
+        "resident_bank_bytes": 2348102,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 3978566,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "SHUFFLE:19",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "658fa7dd5ad47032d4f483d2a61a022269c0f11e110e850260f27497379ba2ea",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1692164,
+      "object_bytes": {
+        "resident_bank_bytes": 2288736,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 3919200,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "PREV",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "9c852b6f7621b2132ab3f7a9e722ae0b917737442896ac94ac6ed11022528964",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1794789,
+      "object_bytes": {
+        "resident_bank_bytes": 2391361,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4021825,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "FCM",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "806ca536895d803fe858610d420392a5fdcec362d83100a81b7e539ac637862b",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1819347,
+      "object_bytes": {
+        "resident_bank_bytes": 2415918,
+        "compulsory_workspace_bytes": 1663232,
+        "complete_trace_bank_object_bytes": 4079150,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "DFCM",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "735e1e49d02e5a727a093673039b21d34ac0c3f15b05f4f17bc470b8892cf5af",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1797756,
+      "object_bytes": {
+        "resident_bank_bytes": 2394328,
+        "compulsory_workspace_bytes": 1663232,
+        "complete_trace_bank_object_bytes": 4057560,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "LIN",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "f292b7b0f001b51e21e56aa97008e19c3eeefa1c542e5661ad37721d2fac9e58",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1801687,
+      "object_bytes": {
+        "resident_bank_bytes": 2399130,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4029594,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "heldout",
+      "method": "NN",
+      "vectors": 8,
+      "trace_complex_values": 110592,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "6cd68d3678ca31a9fbe421afeb98b1e462e253303edeababd60c48f04b311f72",
+      "consumer_arrays_sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+      "file_bytes": 1817934,
+      "object_bytes": {
+        "resident_bank_bytes": 2417133,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4047597,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 3686400
+    },
+    {
+      "family": "migration",
+      "method": "RAW",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "09fc9d2d0af0e5a147054d87bfd0b40d1db50add3c73f61c1f91d4ac4182a2ec",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3639816,
+      "object_bytes": {
+        "resident_bank_bytes": 3540651,
+        "compulsory_workspace_bytes": 225792,
+        "complete_trace_bank_object_bytes": 3766443,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "BYTE:3",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "e16f025fcf10f773ba893e860cade31f6a9d55c74be096f878bafd68af0a640d",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3403793,
+      "object_bytes": {
+        "resident_bank_bytes": 4017820,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5648540,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "BYTE:19",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "8a612acc7a2ebbda1181f2888e0fa111d414a953d5a8a707f1a4dad2a71a0567",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3342616,
+      "object_bytes": {
+        "resident_bank_bytes": 3956643,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5587363,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "SHUFFLE:3",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "51c09699c442bcac136d6cfabc365da09cd16a5b2c99692626ec2b29b0c2b48e",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3196175,
+      "object_bytes": {
+        "resident_bank_bytes": 3810202,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5440922,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "SHUFFLE:19",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "3e2d34dc2e0d3605fb678c546154ae9bf18dc6bc576441375c00d330ad4374f5",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3055144,
+      "object_bytes": {
+        "resident_bank_bytes": 3669174,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5299894,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "PREV",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "be1f38d21de29c51c2981dba8d3a265b7f5cfe509cd356e68c4dd5a403669f65",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3364600,
+      "object_bytes": {
+        "resident_bank_bytes": 3978627,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5609347,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "FCM",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "cbdc938ee9be6994e4193c6f8d49f8dc39d40927c7e6458c17a71d6c377d94c9",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3444907,
+      "object_bytes": {
+        "resident_bank_bytes": 4058933,
+        "compulsory_workspace_bytes": 1663488,
+        "complete_trace_bank_object_bytes": 5722421,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "DFCM",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "1459986376c894670cfe26207aef8f0c96f9066dcc01b22c0facf5b77482d912",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3389556,
+      "object_bytes": {
+        "resident_bank_bytes": 4003583,
+        "compulsory_workspace_bytes": 1663488,
+        "complete_trace_bank_object_bytes": 5667071,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "LIN",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "ca00d886ef096b24789c4f6bab55e472abee5b9d7bf1481decf8d62869040db6",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3510922,
+      "object_bytes": {
+        "resident_bank_bytes": 4125772,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5756492,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    },
+    {
+      "family": "migration",
+      "method": "NN",
+      "vectors": 16,
+      "trace_complex_values": 221184,
+      "trace_all_bits": true,
+      "full_canonical_all_bits": true,
+      "all_consumer_outputs_all_bits": true,
+      "bank_sha256": "0e7e14ad601d71e638eeb405151868acfe65394cb25e89d9fe20d153cfc374f8",
+      "consumer_arrays_sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+      "file_bytes": 3539118,
+      "object_bytes": {
+        "resident_bank_bytes": 4155724,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5786444,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "full_vector_scenario_add_internal_bytes": 7372800
+    }
+  ],
+  "source": {
+    "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+    "implementation_hashes": {
+      "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "src/runners/port_preparation.py": "921525d72d430c3d77e0bcc7ccc5cbb84ee02086cdd9e68ff6a601eb1f155e99",
+      "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+      "benchmarks/subreaper_watchdog.py": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+      "src/solvers/neural_decision_scope.py": "2efd39d1f0bffcd81f226229d0de6795e8748c53863eb147190d0204ff54d5e4",
+      "src/solvers/trace_selection_scope.py": "5aec5f1293d26de8b12b488a8d2676839a9ff9560d403dd749fc71508f7f57d8",
+      "src/solvers/vector_storage_scope.py": "a675d9300c078775d34b259fb244ba25e2fd7f793e7f162881bff89d64e2c131",
+      "src/solvers/lossless_vector_bank.py": "cb4b3b4f96f9257f6cb8652f31cbe5fe7422b9451bb245604d161ca9124c9c1f",
+      "src/solvers/causal_storage_predictor.py": "19b9ba711daa7f01932cf3a575b81ba41f410ee0d5e55a6ef0c8e9cf70e6e801",
+      "src/solvers/vector_storage_study.py": "c11135d4b58603e37873950deddf977085ace89ebf71ec08609adf2a31a34180",
+      "src/solvers/bound_array_identity.py": "ccdee83709e6ecfa2bb800ae3f4234669e2807e6dcf0b10019a4f0f645c1b5ff",
+      "benchmarks/check_vector_bank.py": "7fc723a63bf01fca8da7739e5382a010e5157f040c2c6823eef7b7aefda7e8b1",
+      "benchmarks/qualify_vector_storage.py": "24906a48ceef6fd96e513006ede10941b1a9546ea8212c626bf88a81a29318d0",
+      "src/test/test_lossless_vector_bank.py": "ac2f59b6c0d778d41ff5894a1119a5900965c556f88ebe43d269c31288e9ca84",
+      "input/task042_neural_coarse_inverse/vector_storage_v48.json": "b07f9e68fd25044cc730996da072ac8d8234d40db10e1707910c53be926aed44"
+    },
+    "clean": true
+  },
+  "no_original_inputs_in_decoder": true,
+  "originals_only_in_independent_checker": true,
+  "A_AH_B": 0,
+  "PDE_qualification": false,
+  "NN20_qualification": false
+}

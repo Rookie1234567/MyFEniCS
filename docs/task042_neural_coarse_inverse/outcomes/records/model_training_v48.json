@@ -1,0 +1,284 @@
+{
+  "models": [
+    {
+      "kind": "LIN",
+      "updates": 256,
+      "parameter_count": 26,
+      "parameter_change_norm": 0.4243937886076302,
+      "gradient_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "direction": 0,
+            "h": 0.001,
+            "analytic": -0.15077346449720258,
+            "central": -0.15077346449698936,
+            "operational_error": 2.1321833187926131e-13
+          },
+          {
+            "direction": 0,
+            "h": 0.0003,
+            "analytic": -0.15077346449720258,
+            "central": -0.1507734644971374,
+            "operational_error": 6.517009154549669e-14
+          },
+          {
+            "direction": 0,
+            "h": 0.0001,
+            "analytic": -0.15077346449720258,
+            "central": -0.15077346449787754,
+            "operational_error": 6.749600878208639e-13
+          },
+          {
+            "direction": 1,
+            "h": 0.001,
+            "analytic": 0.3939558111399184,
+            "central": 0.3939558111401009,
+            "operational_error": 1.8252066524837574e-13
+          },
+          {
+            "direction": 1,
+            "h": 0.0003,
+            "analytic": 0.3939558111399184,
+            "central": 0.39395581113987893,
+            "operational_error": 3.9468428525424315e-14
+          },
+          {
+            "direction": 1,
+            "h": 0.0001,
+            "analytic": 0.3939558111399184,
+            "central": 0.3939558111398789,
+            "operational_error": 3.952393967665557e-14
+          },
+          {
+            "direction": 2,
+            "h": 0.001,
+            "analytic": 0.15629898131970155,
+            "central": 0.15629898131974684,
+            "operational_error": 4.529709940470639e-14
+          },
+          {
+            "direction": 2,
+            "h": 0.0003,
+            "analytic": 0.15629898131970155,
+            "central": 0.15629898131974684,
+            "operational_error": 4.529709940470639e-14
+          },
+          {
+            "direction": 2,
+            "h": 0.0001,
+            "analytic": 0.15629898131970155,
+            "central": 0.15629898131974684,
+            "operational_error": 4.529709940470639e-14
+          }
+        ],
+        "gradient_norm": 1.888676247294727,
+        "fixed_scale": 1.0,
+        "gate": 1e-06
+      },
+      "Torch_threads": [
+        1,
+        1
+      ],
+      "DataLoader_workers": 0,
+      "selection": "whole actual validation stream including model/header/index; ties earlier",
+      "selected_update": 0,
+      "selected_weights": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_LIN_001/LIN_weights_0.npz",
+        "sha256": "335f5e40baf388d313e45928f5f3ee4901271d3b68d53be5faf0343de052ecc6",
+        "aliases": {},
+        "members": {
+          "w0": {
+            "shape": [
+              2,
+              12
+            ],
+            "dtype": "<f8",
+            "sha256": "c69652fbfbfb22a17a2f1f4c7bbd2ec499fecb39f0610dd76dde72d0ef27ecd1"
+          },
+          "w1": {
+            "shape": [
+              2
+            ],
+            "dtype": "<f8",
+            "sha256": "5c49b24af3f2d960039654e7b321abe4649c90af57e6b963443581ef76cb2809"
+          }
+        }
+      },
+      "checkpoint_bytes": [
+        {
+          "update": 0,
+          "bytes": 937723
+        },
+        {
+          "update": 64,
+          "bytes": 938272
+        },
+        {
+          "update": 128,
+          "bytes": 938570
+        },
+        {
+          "update": 256,
+          "bytes": 939236
+        }
+      ]
+    },
+    {
+      "kind": "NN",
+      "updates": 256,
+      "parameter_count": 1538,
+      "parameter_change_norm": 0.4929608055895224,
+      "gradient_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "direction": 0,
+            "h": 0.001,
+            "analytic": -0.012447480572477368,
+            "central": -0.012447482234501095,
+            "operational_error": 1.6620237269782123e-09
+          },
+          {
+            "direction": 0,
+            "h": 0.0003,
+            "analytic": -0.012447480572477368,
+            "central": -0.01244748072245135,
+            "operational_error": 1.4997398288529862e-10
+          },
+          {
+            "direction": 0,
+            "h": 0.0001,
+            "analytic": -0.012447480572477368,
+            "central": -0.012447480589594662,
+            "operational_error": 1.7117293693580393e-11
+          },
+          {
+            "direction": 1,
+            "h": 0.001,
+            "analytic": -0.009719772325068241,
+            "central": -0.009719772199323629,
+            "operational_error": 1.257446126390338e-10
+          },
+          {
+            "direction": 1,
+            "h": 0.0003,
+            "analytic": -0.009719772325068241,
+            "central": -0.009719772314046676,
+            "operational_error": 1.1021565604618644e-11
+          },
+          {
+            "direction": 1,
+            "h": 0.0001,
+            "analytic": -0.009719772325068241,
+            "central": -0.00971977232477883,
+            "operational_error": 2.8941085639111463e-13
+          },
+          {
+            "direction": 2,
+            "h": 0.001,
+            "analytic": 0.002581910263033574,
+            "central": 0.002581909117504999,
+            "operational_error": 1.1455285747752342e-09
+          },
+          {
+            "direction": 2,
+            "h": 0.0003,
+            "analytic": 0.002581910263033574,
+            "central": 0.002581910160115442,
+            "operational_error": 1.029181319160688e-10
+          },
+          {
+            "direction": 2,
+            "h": 0.0001,
+            "analytic": 0.002581910263033574,
+            "central": 0.0025819102511537295,
+            "operational_error": 1.1879844330486833e-11
+          }
+        ],
+        "gradient_norm": 1.244087428079049,
+        "fixed_scale": 1.0,
+        "gate": 1e-06
+      },
+      "Torch_threads": [
+        1,
+        1
+      ],
+      "DataLoader_workers": 0,
+      "selection": "whole actual validation stream including model/header/index; ties earlier",
+      "selected_update": 0,
+      "selected_weights": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_NN_001/NN_weights_0.npz",
+        "sha256": "f8296feed890ee36031b9441610ba8d1ca601bb0450a1f9a00514195549a4562",
+        "aliases": {},
+        "members": {
+          "w0": {
+            "shape": [
+              32,
+              12
+            ],
+            "dtype": "<f8",
+            "sha256": "509711ecb5d6077508f940729fd9394db8c0f4e3e49e20d76cdeefd5c84753c3"
+          },
+          "w1": {
+            "shape": [
+              32
+            ],
+            "dtype": "<f8",
+            "sha256": "962f7c2cd0d9c8a4e257e60042897e4e3a3f5ea78def2ee819ac2776aca474c6"
+          },
+          "w2": {
+            "shape": [
+              32,
+              32
+            ],
+            "dtype": "<f8",
+            "sha256": "1a065e046c5ea6d4d3526f7e8ab334030cdf48bc855bd1109c3706d12f3d0f22"
+          },
+          "w3": {
+            "shape": [
+              32
+            ],
+            "dtype": "<f8",
+            "sha256": "0c9376cb3250f778f40660b1e04277ee76ebeb512539b52326ec294f0908475f"
+          },
+          "w4": {
+            "shape": [
+              2,
+              32
+            ],
+            "dtype": "<f8",
+            "sha256": "7981dadeb510f2ff869f7bc14c92f0e59c3aa70e1e15ade4d5f045adc3d07d65"
+          },
+          "w5": {
+            "shape": [
+              2
+            ],
+            "dtype": "<f8",
+            "sha256": "0ba389f83d368faa3986f123ea066a1dba29eb4ad8a4a2500aa3dd643f25a6bb"
+          }
+        }
+      },
+      "checkpoint_bytes": [
+        {
+          "update": 0,
+          "bytes": 952163
+        },
+        {
+          "update": 64,
+          "bytes": 953158
+        },
+        {
+          "update": 128,
+          "bytes": 952855
+        },
+        {
+          "update": 256,
+          "bytes": 953210
+        }
+      ]
+    }
+  ],
+  "heldout_after_freeze": true,
+  "training_reference_parameters_read": false
+}

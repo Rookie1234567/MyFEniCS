@@ -1,0 +1,43 @@
+{
+  "finite": [
+    {
+      "family": "heldout",
+      "trace_rows": 13824,
+      "bank_vectors": 8,
+      "H_measured_training_encode_load_seconds_lower": 8.537127255927771,
+      "d_measured_decode_vdot_axpy_per_vector": 0.01727027236483991,
+      "d_RAW_vdot_axpy_per_vector": 0.00018384912982583046,
+      "N_1_8_100_conditional_known_component_seconds_per_use": {
+        "1": 8.81345161376521,
+        "8": 1.34346526482841,
+        "100": 0.3616956303967163
+      },
+      "unmeasured_shared_preparation_cleanup_independent_audit": "unknown, not zero",
+      "target_48h_r_max": "floor(max(0,172800-C-H-other)/d_target), C,H_other,d_target and r unknown; finite d not target extrapolation"
+    },
+    {
+      "family": "migration",
+      "trace_rows": 13824,
+      "bank_vectors": 16,
+      "H_measured_training_encode_load_seconds_lower": 8.691502806032076,
+      "d_measured_decode_vdot_axpy_per_vector": 0.02000826125004096,
+      "d_RAW_vdot_axpy_per_vector": 0.0001434272780898027,
+      "N_1_8_100_conditional_known_component_seconds_per_use": {
+        "1": 9.331767166033387,
+        "8": 1.7267022107553203,
+        "100": 0.7271793880616315
+      },
+      "unmeasured_shared_preparation_cleanup_independent_audit": "unknown, not zero",
+      "target_48h_r_max": "floor(max(0,172800-C-H-other)/d_target), C,H_other,d_target and r unknown; finite d not target extrapolation"
+    }
+  ],
+  "R_and_D_not_cold_N1": true,
+  "prior_known_lower_seconds": 88656.94151362307,
+  "target_cap_bytes": 2000000000000.0,
+  "target_bank_two_32_bytes": 107825872896,
+  "target_all_bank_free_fraction": 0.053912936448,
+  "peak_required_bank_fraction": 0.2,
+  "maximum_possible_M_B_without_any_extra_cost_bytes": 539129364480,
+  "NN_actual_net_byte_saving_vs_RAW": "negative on both finite banks; no positive actual M_B bound",
+  "cold_total_FE_CSR_IO": "unknown"
+}

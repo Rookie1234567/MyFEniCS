@@ -1,0 +1,62 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "new_PDE_qualification": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py"
+      ],
+      "scope": "v48 opt-in limits/source guard only; existing subreaper unchanged",
+      "behavior": "no ordinary default change",
+      "depends": [
+        "src/solvers/vector_storage_scope.py"
+      ],
+      "tests": "focused 10 pure tests + real supervised tree timeout/cleanup, no fresh PDE"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_vector_bank.py",
+        "benchmarks/collect_vector_bank.py",
+        "benchmarks/qualify_vector_storage.py",
+        "benchmarks/check_vector_storage_documents.py"
+      ],
+      "qualification": "finite byte/consumer not solver",
+      "tests": "10 small regressions, 20 real route/family independent originals, 15 docs"
+    },
+    {
+      "group": "compact evidence/docs",
+      "scope": "V48 records/outcome/response and navigation/registry/progress prefix, old suffix preserved",
+      "depends": [
+        "source arrays/bank/model hashes",
+        "all raw costs"
+      ]
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/lossless_vector_bank.py",
+        "src/solvers/causal_storage_predictor.py",
+        "src/solvers/vector_storage_scope.py",
+        "src/solvers/vector_storage_study.py",
+        "input/task042_neural_coarse_inverse/vector_storage_v48.json",
+        "src/test/test_lossless_vector_bank.py"
+      ],
+      "status": "finite byte/consumer pass but no NN advantage; no production default"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v48",
+        "tmp/task042/v48"
+      ],
+      "reason": "large original arrays/models/codec/logs remain ignored; hash-bound evidence only"
+    }
+  ],
+  "recommended_order": "review finite evidence -> pure reader/checker -> opt-in research scope; no numerical production deployment"
+}

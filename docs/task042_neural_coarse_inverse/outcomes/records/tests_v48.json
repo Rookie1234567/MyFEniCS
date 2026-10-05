@@ -1,0 +1,27 @@
+{
+  "status": "PASSED_LOCAL_FINAL_DOCS_PENDING",
+  "focused_receipts": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_001/tests.json",
+      "sha256": "66b7f062406de3e5273a921c92ad25061cde010f0f6f2decb4f01fdf9e5e2921"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_002/tests.json",
+      "sha256": "e4befbe84d1caaa77a412f0dc28917865f01e704f6ca35b1ca533778a5a2f1b7"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_003/tests.json",
+      "sha256": "b8923402d17cb9e6cf20c72c20bf54a58e6c4ea27617479893f9ccb66ef351e5"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_004/tests.json",
+      "sha256": "8fa859055308624e81a34d915941ae1fbbe3c19934b9967af69243cd2afd039f"
+    }
+  ],
+  "actual_latest_unittest_tests": 10,
+  "ML_FD_checks": 18,
+  "real_independent_route_family_checks": 20,
+  "CI": "NOT_RUN",
+  "final_doc_tests": 15,
+  "final_document_check_pending": true
+}

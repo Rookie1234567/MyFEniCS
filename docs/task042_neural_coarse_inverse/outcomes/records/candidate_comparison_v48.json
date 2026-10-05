@@ -1,0 +1,783 @@
+{
+  "rows": [
+    {
+      "family": "heldout",
+      "method": "RAW",
+      "file_bytes": 1856591,
+      "encoding_seconds": 0.02637739502824843,
+      "load_seconds": 0.02653369284234941,
+      "consume_seconds_including_all_decoding": 0.0029415860772132874,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 1771179,
+        "compulsory_workspace_bytes": 225536,
+        "complete_trace_bank_object_bytes": 1996715,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "307d0cd7726d9413ec7ec33c900756562dc279e7ee6f80787adce0dfc044fc57",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_RAW_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "BYTE:3",
+      "file_bytes": 1799313,
+      "encoding_seconds": 0.030376239912584424,
+      "load_seconds": 0.012483641970902681,
+      "consume_seconds_including_all_decoding": 0.03334309300407767,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2395885,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4026349,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "7e4cfc59439b869df044e70ebf5bbaa728931d2d29855eaa64c9c94ca0ce41c3",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_BYTE_3_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "BYTE:19",
+      "file_bytes": 1801081,
+      "encoding_seconds": 0.15976222697645426,
+      "load_seconds": 0.01193440891802311,
+      "consume_seconds_including_all_decoding": 0.03204872692003846,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2397653,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4028117,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "7a548f3dee4ef8774c3fa5d7437c682c16b9ddae801ccd76dc18d128715365a4",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_BYTE_19_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "SHUFFLE:3",
+      "file_bytes": 1751530,
+      "encoding_seconds": 0.030473480001091957,
+      "load_seconds": 0.012054116930812597,
+      "consume_seconds_including_all_decoding": 0.034928467124700546,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2348102,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 3978566,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "de394b3ef176343236127d89db3bd826c28f94711467a3fb2db691f1015347e1",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_SHUFFLE_3_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "SHUFFLE:19",
+      "file_bytes": 1692164,
+      "encoding_seconds": 0.22678708005696535,
+      "load_seconds": 0.012309934012591839,
+      "consume_seconds_including_all_decoding": 0.03640188998542726,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2288736,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 3919200,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "658fa7dd5ad47032d4f483d2a61a022269c0f11e110e850260f27497379ba2ea",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_SHUFFLE_19_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "PREV",
+      "file_bytes": 1794789,
+      "encoding_seconds": 0.13862856104969978,
+      "load_seconds": 0.012131956871598959,
+      "consume_seconds_including_all_decoding": 0.24659226392395794,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2391361,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4021825,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "9c852b6f7621b2132ab3f7a9e722ae0b917737442896ac94ac6ed11022528964",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_PREV_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "FCM",
+      "file_bytes": 1819347,
+      "encoding_seconds": 0.1917909700423479,
+      "load_seconds": 0.012379219057038426,
+      "consume_seconds_including_all_decoding": 0.35136982682161033,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2415918,
+        "compulsory_workspace_bytes": 1663232,
+        "complete_trace_bank_object_bytes": 4079150,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "806ca536895d803fe858610d420392a5fdcec362d83100a81b7e539ac637862b",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_FCM_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "DFCM",
+      "file_bytes": 1797756,
+      "encoding_seconds": 0.22334296884946525,
+      "load_seconds": 0.01221058121882379,
+      "consume_seconds_including_all_decoding": 0.3738720011897385,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2394328,
+        "compulsory_workspace_bytes": 1663232,
+        "complete_trace_bank_object_bytes": 4057560,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "735e1e49d02e5a727a093673039b21d34ac0c3f15b05f4f17bc470b8892cf5af",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_DFCM_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "LIN",
+      "file_bytes": 1801687,
+      "encoding_seconds": 0.112729846034199,
+      "load_seconds": 0.012224018108099699,
+      "consume_seconds_including_all_decoding": 0.19722141092643142,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2399130,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4029594,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "f292b7b0f001b51e21e56aa97008e19c3eeefa1c542e5661ad37721d2fac9e58",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_LIN_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "heldout",
+      "method": "NN",
+      "file_bytes": 1817934,
+      "encoding_seconds": 0.14878935203887522,
+      "load_seconds": 0.011995094828307629,
+      "consume_seconds_including_all_decoding": 0.2763243578374386,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 2417133,
+        "compulsory_workspace_bytes": 1630464,
+        "complete_trace_bank_object_bytes": 4047597,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "6cd68d3678ca31a9fbe421afeb98b1e462e253303edeababd60c48f04b311f72",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_NN_001/consumer.npz",
+        "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              16
+            ],
+            "dtype": "<c16",
+            "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "RAW",
+      "file_bytes": 3639816,
+      "encoding_seconds": 0.05585716897621751,
+      "load_seconds": 0.045605825958773494,
+      "consume_seconds_including_all_decoding": 0.004589672898873687,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 3540651,
+        "compulsory_workspace_bytes": 225792,
+        "complete_trace_bank_object_bytes": 3766443,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "09fc9d2d0af0e5a147054d87bfd0b40d1db50add3c73f61c1f91d4ac4182a2ec",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_RAW_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "BYTE:3",
+      "file_bytes": 3403793,
+      "encoding_seconds": 0.05951048596762121,
+      "load_seconds": 0.01746918400749564,
+      "consume_seconds_including_all_decoding": 0.06352005084045231,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 4017820,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5648540,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "e16f025fcf10f773ba893e860cade31f6a9d55c74be096f878bafd68af0a640d",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_BYTE_3_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "BYTE:19",
+      "file_bytes": 3342616,
+      "encoding_seconds": 0.39674760308116674,
+      "load_seconds": 0.01711605512537062,
+      "consume_seconds_including_all_decoding": 0.06751866498962045,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 3956643,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5587363,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "8a612acc7a2ebbda1181f2888e0fa111d414a953d5a8a707f1a4dad2a71a0567",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_BYTE_19_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "SHUFFLE:3",
+      "file_bytes": 3196175,
+      "encoding_seconds": 0.060153919039294124,
+      "load_seconds": 0.017762475879862905,
+      "consume_seconds_including_all_decoding": 0.06953338882885873,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 3810202,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5440922,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "51c09699c442bcac136d6cfabc365da09cd16a5b2c99692626ec2b29b0c2b48e",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_SHUFFLE_3_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "SHUFFLE:19",
+      "file_bytes": 3055144,
+      "encoding_seconds": 0.5430109628941864,
+      "load_seconds": 0.01631725998595357,
+      "consume_seconds_including_all_decoding": 0.06918550212867558,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 3669174,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5299894,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "3e2d34dc2e0d3605fb678c546154ae9bf18dc6bc576441375c00d330ad4374f5",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_SHUFFLE_19_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "PREV",
+      "file_bytes": 3364600,
+      "encoding_seconds": 0.2959570081438869,
+      "load_seconds": 0.017123610945418477,
+      "consume_seconds_including_all_decoding": 0.532771339872852,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 3978627,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5609347,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "be1f38d21de29c51c2981dba8d3a265b7f5cfe509cd356e68c4dd5a403669f65",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_PREV_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "FCM",
+      "file_bytes": 3444907,
+      "encoding_seconds": 0.4923209750559181,
+      "load_seconds": 0.017386010149493814,
+      "consume_seconds_including_all_decoding": 0.7467271690256894,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 4058933,
+        "compulsory_workspace_bytes": 1663488,
+        "complete_trace_bank_object_bytes": 5722421,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "cbdc938ee9be6994e4193c6f8d49f8dc39d40927c7e6458c17a71d6c377d94c9",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_FCM_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "DFCM",
+      "file_bytes": 3389556,
+      "encoding_seconds": 0.4240317379590124,
+      "load_seconds": 0.017540156841278076,
+      "consume_seconds_including_all_decoding": 0.8263948468957096,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 4003583,
+        "compulsory_workspace_bytes": 1663488,
+        "complete_trace_bank_object_bytes": 5667071,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "1459986376c894670cfe26207aef8f0c96f9066dcc01b22c0facf5b77482d912",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_DFCM_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "LIN",
+      "file_bytes": 3510922,
+      "encoding_seconds": 0.22706414014101028,
+      "load_seconds": 0.01839640107937157,
+      "consume_seconds_including_all_decoding": 0.40130735794082284,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 4125772,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5756492,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "ca00d886ef096b24789c4f6bab55e472abee5b9d7bf1481decf8d62869040db6",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_LIN_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    },
+    {
+      "family": "migration",
+      "method": "NN",
+      "file_bytes": 3539118,
+      "encoding_seconds": 0.2971896280068904,
+      "load_seconds": 0.017970368964597583,
+      "consume_seconds_including_all_decoding": 0.6402643600013107,
+      "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+      "objects": {
+        "resident_bank_bytes": 4155724,
+        "compulsory_workspace_bytes": 1630720,
+        "complete_trace_bank_object_bytes": 5786444,
+        "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+      },
+      "bank_sha256": "0e7e14ad601d71e638eeb405151868acfe65394cb25e89d9fe20d153cfc374f8",
+      "consumer_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_NN_001/consumer.npz",
+        "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+        "aliases": {},
+        "members": {
+          "scalars": {
+            "shape": [
+              32
+            ],
+            "dtype": "<c16",
+            "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+          },
+          "current": {
+            "shape": [
+              13824
+            ],
+            "dtype": "<c16",
+            "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+          }
+        }
+      },
+      "bit_identity": true
+    }
+  ],
+  "strict_component_necessary": [
+    {
+      "family": "heldout",
+      "NN_owned_resident_lower_bytes": 2417133,
+      "RAW_complete_upper_planning_bytes": 1996715,
+      "NN_even_without_decoder_workspace_exceeds_80_percent_RAW": true,
+      "comparison_not_RSS": true
+    },
+    {
+      "family": "migration",
+      "NN_owned_resident_lower_bytes": 4155724,
+      "RAW_complete_upper_planning_bytes": 3766443,
+      "NN_even_without_decoder_workspace_exceeds_80_percent_RAW": true,
+      "comparison_not_RSS": true
+    }
+  ],
+  "timing_three_repeats": "NOT_RUN_COMPONENT_GATE",
+  "shared_workstation": true,
+  "contention_comparison": "INCONCLUSIVE; no uncontended speedup claim"
+}

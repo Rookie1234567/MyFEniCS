@@ -1,0 +1,8 @@
+{
+  "status": "FINAL_ARCHIVE_AFTER_DOCS_AND_CLOSED",
+  "raw_roots": [
+    "tmp/task042/v48",
+    "benchmarks/artifacts/task042/v48"
+  ],
+  "array/bank_paths_in": "array_and_bank_inventory_v48.json"
+}

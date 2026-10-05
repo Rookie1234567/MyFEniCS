@@ -1,0 +1,50 @@
+{
+  "necessary": {
+    "target_trace_bytes": 1684779264,
+    "one_32_bank_bytes": 53912936448,
+    "conditional_two_32_banks_bytes": 107825872896,
+    "fraction_of_2e12_even_total_free_removal": 0.053912936448,
+    "peak_necessary": "V_best-V_NN-extra_workspace >=0.2*M_best; M_best<=5*(net_saving), and all training/preparation peaks compliant",
+    "time_necessary": "C+H+r*d+other<=172800 and <=0.8*T_best for time NN20; r_max=(172800-C-H-other)/d when numerator nonnegative",
+    "C": "unknown",
+    "target_read_count_r": "unknown",
+    "complete_engine_peak": "unknown",
+    "actual_target_bank_presence": "unknown",
+    "cold_N_1_8_100": "H charged once then amortized H/N only conditional; no target C/r to turn into real qualification",
+    "full_original_solver_lineage_known_lower_seconds": 88656.94151362307,
+    "historical_cold_FE_CSR_manual_IO": "unknown",
+    "pipeline_integration": "research VectorBank callable get; not connected to a complete qualified engine",
+    "training_peak_included_in_complete_cold_peak": true,
+    "dot_bank_presence": "not proved by frozen published metadata, no dot code executed"
+  },
+  "actual_bank_populations": {
+    "heldout": 8,
+    "migration": 16
+  },
+  "lifetime": [
+    {
+      "phase": "prepare",
+      "resident": "one source collection and one candidate encode; not deployment"
+    },
+    {
+      "phase": "train",
+      "resident": "train16 + validation4 source vectors, one-problem causal features, model/Adam/activations; no old A or FE"
+    },
+    {
+      "phase": "consume",
+      "resident": "one deployed byte bank or RAW resident array, model/map/header, one decoded trace/current and bounded block; no original arrays/all-bank decode cache"
+    },
+    {
+      "phase": "CHECK",
+      "resident": "original full coefficients/internal and one deployed bank plus independent outputs; correctness process cost charged"
+    },
+    {
+      "phase": "target",
+      "resident": "internal recover, class/cache/factors, port/communication/audit and full engine identity unknown"
+    }
+  ],
+  "independent_full_vector_scenario": "add 28800*16*population raw internal bytes to each trace-bank object, all original internal bits retained",
+  "complete_bank_byte_scope": "explicit Python-owned resident loads plus conservative decoder-workspace bound, not RSS; interpreter/allocator/library only in measured process-tree samples",
+  "NN20": false,
+  "qualified_full_engine": false
+}

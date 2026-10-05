@@ -1,0 +1,61 @@
+{
+  "aggregates": [
+    {
+      "family": "heldout",
+      "model": "LIN",
+      "count": 107136,
+      "prediction_square_error": 2.5379800742988463,
+      "normalized_square_error": 2696444.9343193704,
+      "xor_bits": 12714639,
+      "leading_zero_bits": 998769,
+      "sign_words_changed": 109571,
+      "exponent_words_changed": 183377,
+      "mantissa_words_changed": 214272,
+      "all_direction_moment_groups": 192
+    },
+    {
+      "family": "heldout",
+      "model": "NN",
+      "count": 107136,
+      "prediction_square_error": 2.154069684851042,
+      "normalized_square_error": 2680409.035942903,
+      "xor_bits": 12738859,
+      "leading_zero_bits": 974549,
+      "sign_words_changed": 107068,
+      "exponent_words_changed": 193208,
+      "mantissa_words_changed": 214272,
+      "all_direction_moment_groups": 192
+    },
+    {
+      "family": "migration",
+      "model": "LIN",
+      "count": 214272,
+      "prediction_square_error": 3.587471586028353e-10,
+      "normalized_square_error": 99562640.15072227,
+      "xor_bits": 25001871,
+      "leading_zero_bits": 2424945,
+      "sign_words_changed": 179032,
+      "exponent_words_changed": 351452,
+      "mantissa_words_changed": 428544,
+      "all_direction_moment_groups": 192
+    },
+    {
+      "family": "migration",
+      "model": "NN",
+      "count": 214272,
+      "prediction_square_error": 2.945427973739897e-10,
+      "normalized_square_error": 99551185.83364052,
+      "xor_bits": 25541563,
+      "leading_zero_bits": 1885253,
+      "sign_words_changed": 217325,
+      "exponent_words_changed": 391266,
+      "mantissa_words_changed": 428544,
+      "all_direction_moment_groups": 192
+    }
+  ],
+  "full_record": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P4_ANALYSIS_001/result.json",
+    "sha256": "38ab7487f9430f4b42a3b4cd7633670dc596e8f8dcf62d21b13a0a74ff9ab503"
+  },
+  "no_entropy_lower_bound_claim": true
+}

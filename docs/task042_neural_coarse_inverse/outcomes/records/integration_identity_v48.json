@@ -1,0 +1,15 @@
+{
+  "source_sha": "5c262ca2b57ab763a3df5cdb36db34bd781c77cc",
+  "files": {
+    "src/solvers/physical_retained_fgmres.py": "ffb7c1d8c743c347b72e8a9a2034c5f74e54b17c689b94ce11fa40657fa2c452",
+    "src/solvers/fullspace_memory_first_krylov.py": "f659325b9b4749faa7752e212b2ce4d8c0bd1fca9de84b39eb15ca34a545c3dc",
+    "src/solvers/lossless_vector_bank.py": "cb4b3b4f96f9257f6cb8652f31cbe5fe7422b9451bb245604d161ca9124c9c1f"
+  },
+  "own_solver": "PETSc-managed FGMRES/restart32 in physical_retained_fgmres; no get(VectorBank) adapter in this batch",
+  "new_storage_interface": "VectorBank.get(i), consume(bank) only research producer/consumer/checker",
+  "target_real_retained_direction_count": "unknown; 32/2x32 payload only a conditional scenario",
+  "dot_freeze": "5890e0700cf7f1a61f01109227a32cdd80ad7d06, published boundary component source6dba8257053c6b2e474b7808b708a745f202733b plus separately bound external helpers",
+  "dot_real_bank_presence": "unknown; published surface/limited solve metadata does not prove this trace bank",
+  "dot_references_or_solver_code_modified": false,
+  "qualified_complete_engine": false
+}

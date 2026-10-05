@@ -1,0 +1,55 @@
+{
+  "runs": [
+    {
+      "role": "P3_EVALUATION_DATA",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_EVALUATION_DATA_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "before_clock": {
+        "start_utc": "2026-10-05T00:15:02.759409342+00:00",
+        "start_monotonic": 1084297.62,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "total_limit_seconds": 86400,
+        "heavy_limit_seconds": 82800,
+        "review_commit": "e73baa45f59c0fcfc12ee1c00614c6933568f27e",
+        "first_clock_resolution": "shell uptime centiseconds; UTC nanoseconds",
+        "observed_utc": "2026-10-05T00:28:48.347989+00:00",
+        "observed_monotonic": 1085123.2088556,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 825.5888555999845,
+        "heavy_remaining_seconds": 81974.41114440002,
+        "total_remaining_seconds": 85574.41114440002
+      },
+      "elapsed_seconds": 1.834416297962889,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "peak_bytes": 46571520,
+      "swap_bytes": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      }
+    }
+  ],
+  "diagnosis": {
+    "source": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+    "stage": "P3_EVALUATION_DATA_001",
+    "classification": "MODULE_IMPORT_ERROR",
+    "evidence": "tmp/task042/v48/aux_P3_EVALUATION_DATA_001/supervision/worker.log",
+    "cause": "SciPy absent in qualified independent ML env",
+    "repair": "literal CSR conjugate-transpose accumulation from original saved mapping, no environment installation",
+    "old_failure_and_partial_heldout_retained": true,
+    "affected_replay": "EVALUATION_DATA only, models and rules not retrained"
+  },
+  "fixed_in_source": "bc1d2f16badadc68c4cb725d38d1ce3a52f657cc",
+  "replay": "affected EVALUATION_DATA only; training/freeze reused",
+  "noncritical_stdout_old_test_count": "qualifier printed9 while actual unittest stderr10 after added test; final qualifier prints command count, actual unittest controls count",
+  "RAW_metadata_lifecycle_correction": "f5822a63 releases indices; all old preparation estimates preserved, final metric from real consumers"
+}

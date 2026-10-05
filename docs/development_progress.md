@@ -1,3 +1,20 @@
+# Task042 V48最新交付：无损存储通过，冻结神经压缩额外收益为负
+
+保留所有有限元系数位，用因果预测+逐位XOR保存预测错误，真正按需恢复一条历史trace做内积/向量更新。本轮比较8条强传统控制和同特征LIN/NN，不是新PDE。
+
+| 对象 | 实测/限值 | 状态 |
+|---|---|---|
+| LIN/NN真训练 | 各256更新，26/1538实参数；FD门1e-6通过；val码流均选0 | 真训练，未取得训练后的码流改善 |
+| heldout8×10路线 | 全trace/full canonical/两遍consumer位相同 | 有限无损消费资格 |
+| 公开迁移16×10路线 | 完整位一致，不读取旧标签 | 迁移诊断，不是fresh PDE盲测 |
+| NN完整bank byte规划 | heldout2.02713×RAW、迁移1.53632×RAW，门≤.8 | FAIL；不做三次计时、不续训 |
+| shared-workstation一次consumer | NN .276324/.640264s，RAW .002942/.004590s | 保留成本负结果，不声称无争用性能 |
+| 原尺寸0.7nm/2TB48h/NN20 | 新FE/求解/原作用0，旧资格不变 | 未资格 |
+
+[response](task042_neural_coarse_inverse/response_v48.md) · [完整结果](task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md) · [最终资源/成本](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v48.json) · [独立checker](task042_neural_coarse_inverse/outcomes/records/lossless_checker_v48.json) · [必要条件](task042_neural_coarse_inverse/outcomes/records/conditional_cost_bounds_v48.json)。codecs/模型/码流为research-only，旧失败保留。以下历史逐字保留。
+
+<!-- V48-LATEST-END -->
+
 # Task042 V47最新交付：固定坐标50% trace删系数见证失败
 
 先检验知道答案时能否删去一半边/面系数，避免训练网络突破同一坐标下界。完整内部保留、原方程不变；新16/4/8振荡制造数据，前20问题主门0/20，条件NN/仿射训练与heldout消费未运行。原尺寸0.7nm/2TB48h/NN20未资格，旧负结果/closed不改。

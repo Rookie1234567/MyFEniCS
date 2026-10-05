@@ -1,0 +1,61 @@
+{
+  "status": "PRE_FINAL_DOC_SETTLEMENT_SNAPSHOT",
+  "clock": {
+    "start_utc": "2026-10-05T00:15:02.759409342+00:00",
+    "start_monotonic": 1084297.62,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "review_commit": "e73baa45f59c0fcfc12ee1c00614c6933568f27e",
+    "first_clock_resolution": "shell uptime centiseconds; UTC nanoseconds",
+    "observed_utc": "2026-10-05T00:41:08.274557+00:00",
+    "observed_monotonic": 1085863.135423966,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 1565.5154239658732,
+    "heavy_remaining_seconds": 81234.48457603413,
+    "total_remaining_seconds": 84834.48457603413
+  },
+  "run_count": 35,
+  "sampled_tree_peak_bytes": 365150208,
+  "own_swap_bytes": 0,
+  "supervised_seconds": 121.79705550335348,
+  "probe_seconds": 36.23933616140857,
+  "non_nested_launcher_seconds": 41.51727119111456,
+  "metadata_seconds_measured": 0.09848153195343912,
+  "known_new_loaded_lower_seconds": 199.65214438783005,
+  "conservative_tail_fee_not_yet_applied_seconds": 180,
+  "prior_known_lower_seconds": 88656.94151362307,
+  "historical_plus_current_lower_seconds": 88856.5936580109,
+  "unknown_costs": [
+    "cold FE/CSR construction",
+    "manual/unsupervised Git/IO",
+    "original complete engine N1"
+  ],
+  "zero_new_actions": {
+    "A": 0,
+    "AH": 0,
+    "B": 0,
+    "FE": 0,
+    "JIT": 0,
+    "mesh": 0,
+    "LU": 0,
+    "QR": 0,
+    "Krylov": 0,
+    "MPI": 0,
+    "GPU": 0
+  },
+  "ledger_active": null,
+  "shared_workstation": true,
+  "kernel_cgroup_task_hard_limit": "not delegated; sampled process tree stopping policy",
+  "final_snapshot_will_add_docs_and_archive_settlement": true,
+  "storage": {
+    "new_scope_bytes": 147057073,
+    "legacy_Task042_ML_cache_total_bytes_conservative_extra": 331915708,
+    "new_plus_all_legacy_cache_upper_bytes": 478972781,
+    "new_limit_bytes": 1073741824,
+    "Task_artifacts_bytes": 20393645744,
+    "Task_limit_bytes": 25769803776,
+    "evidence_reserve_bytes": 268435456
+  }
+}
