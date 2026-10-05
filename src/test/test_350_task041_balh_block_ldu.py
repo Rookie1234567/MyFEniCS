@@ -304,6 +304,541 @@ def _tiny_fixed_h6_modal_oracle(
     return constraint - bottom_feedback - top_feedback, bottom_feedback, top_feedback
 
 
+def _fixed_h6_modal_krylov_components():
+    """Build the tiny real-H6 recurrence with a dense modal-action oracle."""
+    fixture = _tiny_fixture()
+    bundles: list[dict[str, object]] = []
+    try:
+        for side in ("bottom", "top"):
+            bundle = _tiny_fixed_h6_bundle(side)
+            bundles.append(bundle)
+            bundle["adapter"] = FixedH6ActiveTraceAction(
+                bundle["active_operator"], bundle["condensed"], bundle["h6"]
+            )
+        selected = bundles[0]["selected_full_rows"]
+        bottom_h6 = _tiny_h6_dense_action(bundles[0]["h6"])
+        top_h6 = _tiny_h6_dense_action(bundles[1]["h6"])
+        expected, bottom_feedback, top_feedback = _tiny_fixed_h6_modal_oracle(
+            fixture, bottom_h6, top_h6, selected
+        )
+        assert np.linalg.norm(bottom_feedback) > 0.0
+        assert np.linalg.norm(top_feedback) > 0.0
+        return fixture, bundles, expected
+    except BaseException:
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, None)
+        raise
+
+
+def _destroy_fixed_h6_modal_krylov_components(
+    fixture: dict[str, object],
+    bundles: list[dict[str, object]],
+    system: object | None,
+) -> None:
+    if system is not None:
+        system.destroy()
+    for bundle in bundles:
+        adapter = bundle.get("adapter")
+        if adapter is not None:
+            adapter.destroy()
+        h6 = bundle.get("h6")
+        if h6 is not None:
+            h6.destroy()
+        operator = bundle.get("active_operator")
+        if operator is not None:
+            operator.destroy()
+    _destroy_fixture(fixture)
+
+
+def test_fixed_h6_modal_gmres_matches_dense_solve_and_borrows_adapters() -> None:
+    fixture, bundles, dense_operator = _fixed_h6_modal_krylov_components()
+    system = None
+    try:
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            fixture["coupling"],
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=MPI.COMM_WORLD.size - 1,
+        )
+        rhs = np.asarray(
+            [0.31 + 0.27j, -0.18 + 0.42j, 0.53 - 0.36j, -0.24 - 0.11j],
+            dtype=np.complex128,
+        )
+        rhs_before = rhs.copy()
+        for _ in range(2):
+            side_applies_before = [bundle["adapter"].audit["apply_count"] for bundle in bundles]
+            h6_mults_before = [int(bundle["h6"].matrix_mult_count) for bundle in bundles]
+            solution = system.solve(rhs)
+            expected_solution = np.linalg.solve(dense_operator, rhs_before)
+            independent_residual = dense_operator @ solution - rhs_before
+            independent_residual_norm = float(np.linalg.norm(independent_residual))
+            independent_relative = independent_residual_norm / float(np.linalg.norm(rhs_before))
+            condition_number = float(np.linalg.cond(dense_operator))
+            solution_error = _relative_or_absolute(solution, expected_solution)
+            # For A x* = b, ||x-x*||/||x*|| is bounded by
+            # cond(A) * ||A x-b||/||b||, up to floating-point roundoff.
+            roundoff_allowance = (
+                32.0 * np.finfo(np.float64).eps * condition_number
+            )
+            residual_condition_bound = (
+                condition_number * independent_relative + roundoff_allowance
+            )
+            solve = system.diagnostics["last_solve"]
+
+            assert np.isfinite(condition_number)
+            assert independent_relative <= system.rtol
+            assert solution_error <= residual_condition_bound, (
+                f"dense solution relative error {solution_error:.6e} exceeds "
+                f"conditioned residual bound {residual_condition_bound:.6e} "
+                f"(cond={condition_number:.6e}, relative residual={independent_relative:.6e})"
+            )
+            assert np.array_equal(rhs, rhs_before)
+            assert np.allclose(
+                _gather_vector(system._rhs), rhs_before, rtol=0.0, atol=0.0
+            )
+            assert solve["status"] == "converged"
+            assert solve["zero_initial_guess"] is True
+            assert solve["initial_solution_norm"] == 0.0
+            assert solve["final_residual_evaluated"] is True
+            assert np.isclose(
+                solve["final_residual_norm"],
+                independent_residual_norm,
+                rtol=1.0e-10,
+                atol=1.0e-13,
+            )
+            assert solve["constraint_lu_factorizations"] == 1
+            assert solve["local_constraint_lu_factorizations"] == (
+                1 if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1 else 0
+            )
+            owner_attempts = solve["owner_constraint_lu_solve_attempts"]
+            owner_successes = solve["owner_constraint_lu_solve_successes"]
+            assert solve["local_constraint_lu_solve_attempts"] == (
+                owner_attempts
+                if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1
+                else 0
+            )
+            assert solve["local_constraint_lu_solve_successes"] == (
+                owner_successes
+                if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1
+                else 0
+            )
+            assert owner_attempts == owner_successes
+            assert solve["constraint_lu_solve_count_scope"] == (
+                "owner_authoritative_replicated_report"
+            )
+            assert [
+                bundle["adapter"].audit["apply_count"] - before
+                for bundle, before in zip(bundles, side_applies_before, strict=True)
+            ] == [solve["total_matmult_calls"]] * 2
+            assert [
+                int(bundle["h6"].matrix_mult_count) - before
+                for bundle, before in zip(bundles, h6_mults_before, strict=True)
+            ] == [2 * solve["total_matmult_calls"]] * 2
+
+        zero = np.zeros(4, dtype=np.complex128)
+        zero_before = zero.copy()
+        zero_applies_before = [bundle["adapter"].audit["apply_count"] for bundle in bundles]
+        zero_solution = system.solve(zero)
+        zero_solve = system.diagnostics["last_solve"]
+        assert np.array_equal(zero_solution, zero)
+        assert np.array_equal(zero, zero_before)
+        assert np.allclose(_gather_vector(system._rhs), zero, rtol=0.0, atol=0.0)
+        assert zero_solve["status"] == "zero_rhs_exact"
+        assert zero_solve["final_residual_norm"] == 0.0
+        assert zero_solve["solver_matmult_calls"] == 0
+        assert zero_solve["total_matmult_calls"] == 1
+        assert zero_solve["owner_constraint_lu_solve_attempts"] == 0
+        assert zero_solve["owner_constraint_lu_solve_successes"] == 0
+        assert [
+            bundle["adapter"].audit["apply_count"] - before
+            for bundle, before in zip(bundles, zero_applies_before, strict=True)
+        ] == [1, 1]
+
+        system.destroy()
+        system = None
+        for bundle in bundles:
+            adapter = bundle["adapter"]
+            assert adapter.audit["destroyed"] is False
+            source = bundle["active_operator"].createVecRight()
+            target = bundle["active_operator"].createVecLeft()
+            try:
+                values = np.asarray([0.2 + 0.1j, -0.3 + 0.4j, 0.5 - 0.2j, 0.1 + 0.6j])
+                _set_vector(source, values)
+                adapter.apply(source, target)
+                assert np.all(np.isfinite(_gather_vector(target)))
+                assert adapter.audit["destroyed"] is False
+            finally:
+                target.destroy()
+                source.destroy()
+    finally:
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, system)
+
+
+def test_fixed_h6_modal_gmres_synchronizes_preflight_pc_and_budget_failures() -> None:
+    fixture, bundles, _dense_operator = _fixed_h6_modal_krylov_components()
+    system = None
+    try:
+        owner = MPI.COMM_WORLD.size - 1
+        wrong_owner = owner
+        if MPI.COMM_WORLD.rank == 0:
+            wrong_owner = owner - 1 if owner > 0 else -1
+        with pytest.raises(RuntimeError, match="input preflight") as owner_error:
+            block_ldu._FixedH6ModalKrylovSystem(
+                fixture["coupling"],
+                bundles[0]["adapter"],
+                bundles[1]["adapter"],
+                modal_owner=wrong_owner,
+            )
+        owner_errors = MPI.COMM_WORLD.allgather(str(owner_error.value))
+        assert len(set(owner_errors)) == 1
+        assert "rank 0" in owner_errors[0]
+        assert all(bundle["adapter"].audit["destroyed"] is False for bundle in bundles)
+
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            fixture["coupling"],
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=owner,
+        )
+        system._reset_attempt()
+        wrong_local_size = system.modal_count - 1 if MPI.COMM_WORLD.rank == owner else 0
+        wrong_global_size = system.modal_count - 1
+        bad_source = PETSc.Vec().createMPI(
+            (wrong_local_size, wrong_global_size), comm=system._matrix.getComm()
+        )
+        bad_target = PETSc.Vec().createMPI(
+            (wrong_local_size, wrong_global_size), comm=system._matrix.getComm()
+        )
+        try:
+            h6_counts = [int(bundle["h6"].apply_count) for bundle in bundles]
+            messages = []
+            try:
+                # Exercise the synchronized MatMult preflight directly.  The
+                # local petsc4py files do not establish cross-rank C-callback
+                # exception semantics, so this does not claim that bridge.
+                system._mat_mult(bad_source, bad_target)
+            except RuntimeError as exc:
+                messages.append(str(exc))
+            else:
+                pytest.fail("malformed S_H Mat vectors were not rejected")
+            preflight_messages = MPI.COMM_WORLD.allgather(messages[0])
+            assert len(set(preflight_messages)) == 1
+            assert f"rank {owner}" in preflight_messages[0]
+            assert [int(bundle["h6"].apply_count) for bundle in bundles] == h6_counts
+        finally:
+            bad_target.destroy()
+            bad_source.destroy()
+
+        pc_source = system._matrix.createVecRight()
+        pc_target = system._matrix.createVecRight()
+        try:
+            pc_source.set(1.0)
+            saved_lu = system._constraint_lu
+            if MPI.COMM_WORLD.rank == owner:
+                system._constraint_lu = None
+            try:
+                system._ksp.getPC().apply(pc_source, pc_target)
+            finally:
+                system._constraint_lu = saved_lu
+            pc_errors = MPI.COMM_WORLD.allgather(system._pc_failure_error)
+            assert len(set(pc_errors)) == 1
+            assert pc_errors[0] is not None
+            assert np.isinf(float(pc_target.norm()))
+            owner_lu_attempts = int(
+                MPI.COMM_WORLD.bcast(
+                    system._constraint_lu_solve_attempts
+                    if MPI.COMM_WORLD.rank == owner
+                    else None,
+                    root=owner,
+                )
+            )
+            owner_lu_successes = int(
+                MPI.COMM_WORLD.bcast(
+                    system._constraint_lu_solve_successes
+                    if MPI.COMM_WORLD.rank == owner
+                    else None,
+                    root=owner,
+                )
+            )
+            assert owner_lu_attempts == 1
+            assert owner_lu_successes == 0
+            assert system._constraint_lu_solve_attempts == (
+                1 if MPI.COMM_WORLD.rank == owner else 0
+            )
+            assert system._constraint_lu_solve_successes == 0
+        finally:
+            pc_target.destroy()
+            pc_source.destroy()
+
+        saved_lu = system._constraint_lu
+        if MPI.COMM_WORLD.rank == owner:
+            system._constraint_lu = None
+        rhs = np.asarray(
+            [0.31 + 0.27j, -0.18 + 0.42j, 0.53 - 0.36j, -0.24 - 0.11j],
+            dtype=np.complex128,
+        )
+        try:
+            with pytest.raises(RuntimeError):
+                system.solve(rhs)
+        finally:
+            system._constraint_lu = saved_lu
+        snapshot = system.diagnostics
+        solve = snapshot["last_solve"]
+        budget_exhausted = snapshot["budget_exhausted"]
+        assert solve["status"] == (
+            "budget_exhausted" if budget_exhausted else "pc_apply_failed"
+        )
+        assert solve["ksp_status"] in {
+            "raised_after_synchronized_pc_failure",
+            "returned_after_marked_pc_failure",
+            "raised_after_budget_exhaustion",
+        }
+        assert solve["pc_failure"] is not None
+        assert solve["final_residual_evaluated"] is False
+        assert solve["final_residual_status"] == "not_evaluated"
+        assert solve.get("final_residual_norm") is None
+        assert solve.get("final_relative_residual") is None
+        expected_not_evaluated_reason = (
+            "budget_exhausted_before_trusted_KSP_iterate"
+            if budget_exhausted
+            else "PC_failure_no_trusted_KSP_iterate"
+        )
+        assert solve["final_residual_not_evaluated_reason"] == (
+            expected_not_evaluated_reason
+        )
+        assert solve["local_constraint_lu_solve_attempts"] == (
+            1 if MPI.COMM_WORLD.rank == owner else 0
+        )
+        assert solve["local_constraint_lu_solve_successes"] == 0
+        if solve["constraint_lu_solve_count_scope"] == (
+            "owner_authoritative_replicated_report"
+        ):
+            assert solve["owner_constraint_lu_solve_attempts"] == 1
+            assert solve["owner_constraint_lu_solve_successes"] == 0
+        else:
+            assert solve["constraint_lu_solve_count_scope"] == (
+                "owner_value_unavailable_without_post_callback_collective"
+            )
+            assert solve["owner_constraint_lu_solve_attempts"] == (
+                1 if MPI.COMM_WORLD.rank == owner else None
+            )
+            assert solve["owner_constraint_lu_solve_successes"] == (
+                0 if MPI.COMM_WORLD.rank == owner else None
+            )
+        assert solve["ksp_reason"] is not None
+        assert all(bundle["adapter"].audit["destroyed"] is False for bundle in bundles)
+        system.destroy()
+        system = None
+        assert all(bundle["adapter"].audit["destroyed"] is False for bundle in bundles)
+
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            fixture["coupling"],
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=owner,
+        )
+        system._reset_attempt()
+        source = system._matrix.createVecRight()
+        target = system._matrix.createVecLeft()
+        try:
+            _set_vector(source, rhs)
+            side_before = [bundle["adapter"].audit["apply_count"] for bundle in bundles]
+            h6_before = [int(bundle["h6"].apply_count) for bundle in bundles]
+            # This remains method-level budget coverage: the following direct
+            # _mat_mult calls do not exercise PETSc's KSP Mat callback boundary.
+            for _ in range(system.solver_matmult_limit):
+                system._mat_mult(source, target)
+            assert system._solver_matmult_calls == 9
+            assert system._total_matmult_calls == 9
+            assert [
+                bundle["adapter"].audit["apply_count"] - before
+                for bundle, before in zip(bundles, side_before, strict=True)
+            ] == [9, 9]
+            assert [
+                int(bundle["h6"].apply_count) - before
+                for bundle, before in zip(bundles, h6_before, strict=True)
+            ] == [9, 9]
+            messages = []
+            try:
+                # Nine real S_H actions consume the solver budget; this tenth
+                # attempted solver action is rejected before side actions run.
+                system._mat_mult(source, target)
+            except RuntimeError as exc:
+                messages.append(str(exc))
+            else:
+                pytest.fail("S_H MatMult budget did not reject the extra action")
+            budget_messages = MPI.COMM_WORLD.allgather(messages[0])
+            assert len(set(budget_messages)) == 1
+            assert "budget exhausted" in budget_messages[0]
+            relative, finite = system._final_residual(float(np.linalg.norm(rhs)))
+            solve = system.diagnostics["last_solve"]
+            assert relative is None
+            assert finite is False
+            assert solve["status"] == "budget_exhausted"
+            assert solve["final_residual_evaluated"] is False
+            assert solve["final_residual_status"] == "not_evaluated"
+            assert solve["budget_used_solver_matmult_calls"] == 9
+            assert solve["budget_used_total_matmult_calls"] == 9
+            assert solve["blocked_matmult_attempts"] == 1
+            assert system._total_matmult_calls == 9
+        finally:
+            target.destroy()
+            source.destroy()
+    finally:
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, system)
+
+
+def test_fixed_h6_modal_gmres_budget_failure_crosses_real_ksp_callback() -> None:
+    fixture, bundles, _dense_operator = _fixed_h6_modal_krylov_components()
+    system = None
+    try:
+        owner = MPI.COMM_WORLD.size - 1
+        system = block_ldu._FixedH6ModalKrylovSystem(
+            fixture["coupling"],
+            bundles[0]["adapter"],
+            bundles[1]["adapter"],
+            modal_owner=owner,
+        )
+        system.solver_matmult_limit = 1
+        system.total_matmult_limit = 2
+        rhs = np.asarray(
+            [0.31 + 0.27j, -0.18 + 0.42j, 0.53 - 0.36j, -0.24 - 0.11j],
+            dtype=np.complex128,
+        )
+        rhs_before = rhs.copy()
+        side_before = [bundle["adapter"].audit["apply_count"] for bundle in bundles]
+        h6_apply_before = [int(bundle["h6"].apply_count) for bundle in bundles]
+        returned_solution = None
+        solve_error = None
+        try:
+            returned_solution = system.solve(rhs)
+        except Exception as exc:  # noqa: BLE001 - gather each rank's real KSP outcome
+            solve_error = f"{type(exc).__name__}: {exc}"
+
+        snapshot = system.diagnostics
+        solve = dict(snapshot["last_solve"])
+        local_record = {
+            "rank": MPI.COMM_WORLD.rank,
+            "solution_returned": returned_solution is not None,
+            "solve_error": solve_error,
+            "ksp_reason": solve.get("ksp_reason"),
+            "ksp_reason_present": "ksp_reason" in solve,
+            "ksp_status": solve.get("ksp_status"),
+            "iterations": solve.get("iterations"),
+            "status": solve.get("status"),
+            "budget_exhausted": snapshot["budget_exhausted"],
+            "solver_matmult_limit": system.solver_matmult_limit,
+            "total_matmult_limit": system.total_matmult_limit,
+            "solver_matmult_calls": solve.get("solver_matmult_calls"),
+            "total_matmult_calls": solve.get("total_matmult_calls"),
+            "blocked_matmult_attempts": snapshot["blocked_matmult_attempts"],
+            "side_apply_deltas": [
+                bundle["adapter"].audit["apply_count"] - before
+                for bundle, before in zip(bundles, side_before, strict=True)
+            ],
+            "h6_apply_deltas": [
+                int(bundle["h6"].apply_count) - before
+                for bundle, before in zip(bundles, h6_apply_before, strict=True)
+            ],
+            "final_residual_evaluated": solve.get("final_residual_evaluated"),
+            "final_residual_state": solve.get("final_residual_status"),
+            "final_residual_norm": solve.get("final_residual_norm"),
+            "final_relative_residual": solve.get("final_relative_residual"),
+            "final_residual_not_evaluated_reason": solve.get(
+                "final_residual_not_evaluated_reason"
+            ),
+            "raw_residual_pass": solve.get("raw_residual_pass"),
+            "rhs_unchanged": bool(np.array_equal(rhs, rhs_before)),
+        }
+        del returned_solution
+        destroy_error = None
+        try:
+            system.destroy()
+        except Exception as exc:  # noqa: BLE001 - capture cleanup outcome before gather
+            destroy_error = f"{type(exc).__name__}: {exc}"
+        local_record["system_destroyed"] = system._destroyed
+        local_record["destroy_error"] = destroy_error
+        local_record["owned_objects_released"] = (
+            system._ksp is None
+            and system._matrix is None
+            and system._modal_action is None
+            and all(
+                getattr(system, name) is None
+                for name in ("_rhs", "_solution", "_image", "_residual")
+            )
+            and system._constraint_lu is None
+            and system._constraint_pivots is None
+        )
+        adapter_alive = []
+        h6_alive = []
+        for bundle in bundles:
+            try:
+                adapter_alive.append(bundle["adapter"].audit["destroyed"] is False)
+            except Exception:  # noqa: BLE001 - report liveness instead of rank-local exit
+                adapter_alive.append(False)
+            try:
+                rows, columns = map(int, bundle["h6"].matrix.getSize())
+                h6_alive.append(rows > 0 and rows == columns)
+            except Exception:  # noqa: BLE001 - report liveness instead of rank-local exit
+                h6_alive.append(False)
+        local_record["borrowed_adapters_alive"] = adapter_alive
+        local_record["borrowed_h6_alive"] = h6_alive
+
+        # Each rank captures its real KSP callback outcome before this single
+        # post-solve collective; returning from it proves all ranks progressed.
+        records = MPI.COMM_WORLD.allgather(local_record)
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                "FIXED_H6_KSP_BUDGET_CALLBACK="
+                + json.dumps(records, sort_keys=True),
+                flush=True,
+            )
+
+        collective_fields = (
+            "solution_returned",
+            "status",
+            "budget_exhausted",
+            "solver_matmult_limit",
+            "total_matmult_limit",
+            "solver_matmult_calls",
+            "total_matmult_calls",
+            "blocked_matmult_attempts",
+            "final_residual_evaluated",
+            "final_residual_state",
+            "side_apply_deltas",
+            "h6_apply_deltas",
+        )
+        for field in collective_fields:
+            assert len({json.dumps(record[field], sort_keys=True) for record in records}) == 1
+        assert len(records) == MPI.COMM_WORLD.size
+        for record in records:
+            assert record["solution_returned"] is False
+            assert record["solve_error"] is not None
+            assert record["destroy_error"] is None
+            assert record["status"] == "budget_exhausted"
+            assert record["budget_exhausted"] is True
+            assert record["solver_matmult_limit"] == 1
+            assert record["total_matmult_limit"] == 2
+            assert record["solver_matmult_calls"] == 1
+            assert record["total_matmult_calls"] == 1
+            assert record["blocked_matmult_attempts"] == 1
+            assert record["final_residual_evaluated"] is False
+            assert record["final_residual_state"] == "not_evaluated"
+            assert record["final_residual_norm"] is None
+            assert record["final_relative_residual"] is None
+            assert record["final_residual_not_evaluated_reason"] is not None
+            assert record["raw_residual_pass"] is None
+            assert record["side_apply_deltas"] == [1, 1]
+            assert record["h6_apply_deltas"] == [1, 1]
+            assert record["rhs_unchanged"] is True
+            assert record["system_destroyed"] is True
+            assert record["owned_objects_released"] is True
+            assert record["borrowed_adapters_alive"] == [True, True]
+            assert record["borrowed_h6_alive"] == [True, True]
+            assert record["ksp_reason_present"] is True
+    finally:
+        _destroy_fixed_h6_modal_krylov_components(fixture, bundles, system)
+
+
 def test_fixed_h6_active_trace_action_matches_full_modal_feedback_oracle() -> None:
     """Exercise the real FixedH6 recurrence on tiny noncontiguous trace rows."""
 

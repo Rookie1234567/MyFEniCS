@@ -557,6 +557,730 @@ class HybridActionModalSchurApply:
         self._destroyed = True
 
 
+class _FixedH6ModalMatContext:
+    def __init__(self, owner: _FixedH6ModalKrylovSystem) -> None:
+        self.owner: _FixedH6ModalKrylovSystem | None = owner
+
+    def mult(self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.owner is None:
+            raise RuntimeError("Fixed-H6 modal Mat context was destroyed")
+        self.owner._mat_mult(source, target)
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        self.owner = None
+
+
+class _FixedH6ModalConstraintPcContext:
+    def __init__(self, owner: _FixedH6ModalKrylovSystem) -> None:
+        self.owner: _FixedH6ModalKrylovSystem | None = owner
+
+    def apply(self, _pc: PETSc.PC, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.owner is None:
+            raise RuntimeError("Fixed-H6 modal C-PC context was destroyed")
+        self.owner._apply_constraint_pc(_pc, source, target)
+
+    def destroy(self, _pc: PETSc.PC | None = None) -> None:
+        self.owner = None
+
+
+class _FixedH6ModalKrylovSystem:
+    """Standalone fixed-H6 modal solve; deliberately not connected to a PC."""
+
+    rtol = 1.0e-3
+    max_it = 8
+    solver_matmult_limit = 9
+    total_matmult_limit = 10
+
+    def __init__(
+        self,
+        coupling: HybridInternalModeCoupling,
+        bottom_action: Any,
+        top_action: Any,
+        *,
+        modal_owner: int,
+    ) -> None:
+        from .physical_balanced_side_inverse import FixedH6ActiveTraceAction
+
+        self._bottom_action = bottom_action
+        self._top_action = top_action
+        self._modal_action: HybridActionModalSchurApply | None = None
+        # The coupling projection is the shared communicator anchor.  No PETSc
+        # solver object or modal action is allocated before the first collective
+        # validation has rejected rank-local metadata errors.
+        petsc_comm = coupling.bottom.projection.getComm()
+        self._comm = petsc_comm.tompi4py()
+        self._modal_owner = -1
+        self.modal_count = 0
+        self.mode_count = 0
+        self._constraint_lu = self._constraint_pivots = None
+        self._constraint_lu_solve_attempts = 0
+        self._constraint_lu_solve_successes = 0
+        self._constraint_lu_factorizations_local = 0
+        self._constraint_lu_factorizations_owner = 0
+        self._solver_matmult_calls = self._total_matmult_calls = 0
+        self._blocked_matmult_attempts = 0
+        self._budget_exhausted = False
+        self._in_final_check = False
+        self._pc_failure_error: str | None = None
+        self._mat_preflight_failure: str | None = None
+        self._destroyed = False
+        self._last_solve: dict[str, Any] | None = None
+        self._matrix = self._ksp = None
+        self._rhs = self._solution = self._image = self._residual = None
+
+        local_error = None
+        local_signature = None
+        requested_owner = -1
+        mode_count = 0
+        constraint = None
+        try:
+            requested_owner = int(modal_owner)
+            mode_count = int(coupling.mode_count_per_direction)
+            modal_count = 2 * mode_count
+            if requested_owner != self._comm.size - 1:
+                raise ValueError("Modal ownership must be on the final MPI rank")
+            if mode_count <= 0:
+                raise ValueError("Fixed-H6 modal system requires nonempty modes")
+            if not all(
+                isinstance(action, FixedH6ActiveTraceAction)
+                for action in (bottom_action, top_action)
+            ):
+                raise TypeError("S_H requires two FixedH6ActiveTraceAction inputs")
+            constraint = np.asarray(
+                internal_modal_constraint_matrix(coupling), dtype=np.complex128
+            )
+            if constraint.shape != (modal_count, modal_count) or not np.all(
+                np.isfinite(constraint)
+            ):
+                raise ValueError("S_H modal constraint is malformed or non-finite")
+            side_shapes = []
+            for side, action, interface in (
+                ("bottom", bottom_action, coupling.bottom),
+                ("top", top_action, coupling.top),
+            ):
+                if action._destroyed or action._condensed is None or action._h6 is None:
+                    raise ValueError(f"{side} Fixed-H6 action is not live")
+                operator = action.operator
+                condensed = action._condensed
+                h6_matrix = action._h6.matrix
+                active_rows = int(condensed.active_rows)
+                full_rows = int(condensed.full_rows)
+                if operator.getSize() != (active_rows, active_rows):
+                    raise ValueError(f"{side} active operator shape is inconsistent")
+                if h6_matrix.getSize() != (full_rows, full_rows):
+                    raise ValueError(f"{side} Fixed-H6 shape is inconsistent")
+                if interface.projection.getSize() != (mode_count, active_rows):
+                    raise ValueError(f"{side} modal projection shape is inconsistent")
+                for matrix in (operator, h6_matrix, interface.projection):
+                    relation = MPI.Comm.Compare(
+                        self._comm, matrix.getComm().tompi4py()
+                    )
+                    if relation not in (MPI.IDENT, MPI.CONGRUENT):
+                        raise ValueError(f"{side} action communicator differs")
+                side_shapes.append((active_rows, full_rows))
+            local_signature = (
+                mode_count,
+                modal_count,
+                hashlib.sha256(np.ascontiguousarray(constraint).tobytes()).hexdigest(),
+                tuple(side_shapes),
+            )
+        except Exception as exc:  # noqa: BLE001 - synchronize rank-local setup errors
+            local_error = f"{type(exc).__name__}: {exc}"
+        preflight = self._comm.allgather((local_error, local_signature))
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, (error, _signature) in enumerate(preflight)
+            if error is not None
+        ]
+        signatures = [signature for error, signature in preflight if error is None]
+        if signatures and any(signature != signatures[0] for signature in signatures[1:]):
+            failures.extend(
+                f"rank {rank}: modal/action layout metadata differs"
+                for rank, (error, signature) in enumerate(preflight)
+                if error is None and signature != signatures[0]
+            )
+        if failures:
+            raise RuntimeError("Fixed-H6 modal input preflight failed; " + "; ".join(failures))
+
+        self._modal_owner = requested_owner
+        self.mode_count = mode_count
+        self.modal_count = 2 * mode_count
+        expected_constraint_sha = local_signature[2]
+
+        construction_error = None
+        try:
+            self._modal_action = HybridActionModalSchurApply(
+                coupling, bottom_action, top_action
+            )
+            constraint_sha = hashlib.sha256(
+                np.ascontiguousarray(self._modal_action.modal_constraint).tobytes()
+            ).hexdigest()
+            if constraint_sha != expected_constraint_sha:
+                raise ValueError("modal action constraint differs from validated input")
+        except Exception as exc:  # noqa: BLE001 - synchronize local construction errors
+            construction_error = f"{type(exc).__name__}: {exc}"
+        constructions = self._comm.allgather(construction_error)
+        construction_failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(constructions)
+            if error is not None
+        ]
+        if construction_failures:
+            if self._modal_action is not None:
+                self._modal_action.destroy()
+                self._modal_action = None
+            raise RuntimeError(
+                "Fixed-H6 modal action construction failed; "
+                + "; ".join(construction_failures)
+            )
+
+        factor_result = None
+        if self._comm.rank == self._modal_owner:
+            try:
+                lu, pivots, condition = _factor_modal_constraint(constraint, self.modal_count)
+                self._constraint_lu = lu
+                self._constraint_pivots = pivots
+                self._constraint_lu_factorizations_local += 1
+                factor_result = (True, condition, None, 1)
+            except Exception as exc:  # noqa: BLE001 - owner result is broadcast below
+                factor_result = (False, None, f"{type(exc).__name__}: {exc}", 0)
+        factor_ok, condition, factor_error, owner_factorizations = self._comm.bcast(
+            factor_result, root=self._modal_owner
+        )
+        self._constraint_lu_factorizations_owner = int(owner_factorizations)
+        if not factor_ok:
+            self.destroy()
+            raise RuntimeError(f"Fixed-H6 modal C factorization failed: {factor_error}")
+        self.constraint_condition = float(condition)
+
+        local_size = self.modal_count if self._comm.rank == self._modal_owner else 0
+        try:
+            self._matrix = PETSc.Mat().createPython(
+                ((local_size, self.modal_count), (local_size, self.modal_count)),
+                comm=petsc_comm,
+            )
+            self._matrix.setPythonContext(_FixedH6ModalMatContext(self))
+            self._matrix.setUp()
+            self._rhs = self._matrix.createVecRight()
+            self._solution = self._matrix.createVecRight()
+            self._image = self._matrix.createVecLeft()
+            self._residual = self._matrix.createVecLeft()
+            self._ksp = PETSc.KSP().create(petsc_comm)
+            self._ksp.setOperators(self._matrix)
+            self._ksp.setType(PETSc.KSP.Type.GMRES)
+            self._ksp.setGMRESRestart(self.max_it)
+            self._ksp.setPCSide(PETSc.PC.Side.RIGHT)
+            self._ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+            self._ksp.setInitialGuessNonzero(False)
+            self._ksp.setTolerances(rtol=self.rtol, atol=0.0, max_it=self.max_it)
+            pc = self._ksp.getPC()
+            pc.setType(PETSc.PC.Type.PYTHON)
+            pc.setPythonContext(_FixedH6ModalConstraintPcContext(self))
+            self._ksp.setUp()
+            pc.setFailedReason(PETSc.PC.FailedReason.NOERROR)
+        except BaseException:
+            self.destroy()
+            raise
+
+    def _raise_collective_error(self, local_error: str | None, stage: str) -> None:
+        errors = self._comm.allgather(local_error)
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(errors)
+            if error is not None
+        ]
+        if failures:
+            raise RuntimeError(f"Fixed-H6 modal {stage} failed; " + "; ".join(failures))
+
+    def _mat_mult(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        local_error = None
+        owner = self._modal_owner
+        expected = self.modal_count if self._comm.rank == owner else 0
+        try:
+            if self._destroyed:
+                raise RuntimeError("Fixed-H6 modal system was destroyed")
+            if source.getLocalSize() != expected or target.getLocalSize() != expected:
+                raise ValueError("S_H MatMult ownership differs from modal layout")
+            if self._in_final_check:
+                if self._total_matmult_calls >= self.total_matmult_limit:
+                    self._budget_exhausted = True
+                    raise RuntimeError("S_H total MatMult budget exhausted")
+            elif self._solver_matmult_calls >= self.solver_matmult_limit:
+                self._budget_exhausted = True
+                raise RuntimeError("S_H solver MatMult budget exhausted")
+        except Exception as exc:  # noqa: BLE001 - all ranks reject before action calls
+            local_error = f"{type(exc).__name__}: {exc}"
+        errors = self._comm.allgather(local_error)
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(errors)
+            if error is not None
+        ]
+        if failures:
+            detail = "; ".join(failures)
+            if self._budget_exhausted:
+                self._blocked_matmult_attempts += 1
+                self._last_solve.update(
+                    status="budget_exhausted",
+                    final_residual_evaluated=False,
+                    final_residual_status="not_evaluated",
+                    final_residual_not_evaluated_reason=(
+                        "solver_matmult_budget_exhausted_before_trusted_iterate"
+                    ),
+                    budget_used_solver_matmult_calls=self._solver_matmult_calls,
+                    budget_used_total_matmult_calls=self._total_matmult_calls,
+                    blocked_matmult_attempts=self._blocked_matmult_attempts,
+                )
+            else:
+                self._mat_preflight_failure = detail
+                self._last_solve.update(
+                    status="mat_preflight_failed",
+                    final_residual_evaluated=False,
+                    final_residual_status="not_evaluated",
+                    final_residual_not_evaluated_reason=(
+                        "MatMult_vector_layout_rejected_before_S_H"
+                    ),
+                )
+            raise RuntimeError(f"Fixed-H6 modal MatMult preflight failed; {detail}")
+
+        self._total_matmult_calls += 1
+        if not self._in_final_check:
+            self._solver_matmult_calls += 1
+        local_values = (
+            np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+            if self._comm.rank == owner
+            else None
+        )
+        values = np.asarray(self._comm.bcast(local_values, root=owner), dtype=np.complex128)
+        # The action itself contains multiple PETSc collectives.  Do not wrap it
+        # in a local try/allgather: an arbitrary rank-local callback exception
+        # cannot safely be synchronized after those collectives have diverged.
+        result = self._modal_action.apply(values)
+        local_error = None
+        if result.shape != (self.modal_count,) or not np.all(np.isfinite(result)):
+            local_error = "FloatingPointError: S_H returned a malformed or non-finite vector"
+        self._raise_collective_error(local_error, "MatMult result")
+        if self._comm.rank == owner:
+            target.getArray()[:] = result
+        if self._in_final_check:
+            self._last_solve["final_residual_evaluated"] = True
+
+    def _apply_constraint_pc(
+        self, pc: PETSc.PC, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        if self._pc_failure_error is not None:
+            pc.setFailedReason(PETSc.PC.FailedReason.SUBPC_ERROR)
+            target.set(PETSc.ScalarType(np.inf))
+            return
+        owner = self._modal_owner
+        expected = self.modal_count if self._comm.rank == owner else 0
+        local_error = None
+        values = solved = None
+        try:
+            if source.getLocalSize() != expected or target.getLocalSize() != expected:
+                raise ValueError("C-LU PC ownership differs from modal layout")
+            if self._comm.rank == owner:
+                values = np.asarray(source.getArray(readonly=True), dtype=np.complex128)
+                if not np.all(np.isfinite(values)):
+                    raise FloatingPointError("C-LU PC input is non-finite")
+                self._constraint_lu_solve_attempts += 1
+                solved = lu_solve(
+                    (self._constraint_lu, self._constraint_pivots),
+                    values,
+                    check_finite=True,
+                )
+                if not np.all(np.isfinite(solved)):
+                    raise FloatingPointError("C-LU PC result is non-finite")
+                self._constraint_lu_solve_successes += 1
+        except Exception as exc:  # noqa: BLE001 - synchronize owner solve failures
+            local_error = f"{type(exc).__name__}: {exc}"
+        errors = self._comm.allgather(local_error)
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(errors)
+            if error is not None
+        ]
+        if failures:
+            # Keep the local latch for result classification and also report
+            # failure through PETSc's Python-PC channel.  The non-finite
+            # output cannot be mistaken for a valid preconditioned vector.
+            self._pc_failure_error = "; ".join(failures)
+            pc.setFailedReason(PETSc.PC.FailedReason.SUBPC_ERROR)
+            target.set(PETSc.ScalarType(np.inf))
+            return
+        if self._comm.rank == owner:
+            target.getArray()[:] = solved
+
+    def _reset_attempt(self) -> None:
+        self._solver_matmult_calls = self._total_matmult_calls = 0
+        self._blocked_matmult_attempts = 0
+        self._constraint_lu_solve_attempts = 0
+        self._constraint_lu_solve_successes = 0
+        self._budget_exhausted = False
+        self._pc_failure_error = None
+        self._mat_preflight_failure = None
+        # Match the existing BAL_H KSP lifecycle: clear the prior callback
+        # failure before each new solve, then latch SUBPC_ERROR on a new one.
+        self._ksp.getPC().setFailedReason(PETSc.PC.FailedReason.NOERROR)
+        self._last_solve = {
+            "status": "running",
+            "ksp_reason": None,
+            "zero_initial_guess": True,
+            "solver_matmult_calls": 0,
+            "total_matmult_calls": 0,
+            "final_residual_evaluated": False,
+            "final_residual_status": "not_evaluated",
+            "local_constraint_lu_solve_attempts": 0,
+            "local_constraint_lu_solve_successes": 0,
+            "owner_constraint_lu_solve_attempts": 0,
+            "owner_constraint_lu_solve_successes": 0,
+            "constraint_lu_solve_count_scope": (
+                "owner_authoritative_replicated_report_after_KSP_return"
+            ),
+        }
+
+    def _final_residual(self, rhs_norm: float) -> tuple[float | None, bool]:
+        if self._budget_exhausted or self._total_matmult_calls >= self.total_matmult_limit:
+            self._budget_exhausted = True
+            self._last_solve.update(
+                status="budget_exhausted",
+                final_residual_evaluated=False,
+                final_residual_status="not_evaluated",
+                final_residual_not_evaluated_reason="S_H_matmult_budget_reserved_or_exhausted",
+                budget_used_solver_matmult_calls=self._solver_matmult_calls,
+                budget_used_total_matmult_calls=self._total_matmult_calls,
+                blocked_matmult_attempts=self._blocked_matmult_attempts,
+            )
+            return None, False
+        self._in_final_check = True
+        try:
+            self._matrix.mult(self._solution, self._image)
+        finally:
+            self._in_final_check = False
+        self._rhs.copy(self._residual)
+        self._residual.axpy(PETSc.ScalarType(-1.0), self._image)
+        residual_norm = float(self._residual.norm())
+        finite = bool(np.isfinite(residual_norm) and np.isfinite(rhs_norm))
+        relative = (
+            residual_norm / rhs_norm if finite and rhs_norm > 0.0 else None
+        )
+        self._last_solve.update(
+            final_residual_norm=residual_norm if finite else None,
+            final_relative_residual=relative,
+            final_residual_evaluated=True,
+            final_residual_status="evaluated",
+            final_residual_not_evaluated_reason=None,
+        )
+        return relative, finite and (residual_norm == 0.0 if rhs_norm == 0.0 else True)
+
+    def solve(self, rhs: np.ndarray) -> np.ndarray:
+        self._reset_attempt()
+        local_error = None
+        values = None
+        rhs_norm = float("nan")
+        try:
+            values = np.asarray(rhs, dtype=np.complex128)
+            if values.shape != (self.modal_count,) or not np.all(np.isfinite(values)):
+                raise ValueError("S_H RHS has the wrong shape or non-finite values")
+            rhs_norm = float(np.linalg.norm(values))
+            if not np.isfinite(rhs_norm):
+                raise FloatingPointError("S_H RHS norm is non-finite")
+        except Exception as exc:  # noqa: BLE001 - synchronize RHS rejection
+            local_error = f"{type(exc).__name__}: {exc}"
+        self._raise_collective_error(local_error, "RHS")
+        digests = self._comm.allgather(hashlib.sha256(values.tobytes()).hexdigest())
+        if len(set(digests)) != 1:
+            self._raise_collective_error("modal RHS differs across ranks", "RHS")
+
+        self._rhs.set(0.0)
+        self._solution.set(0.0)
+        if self._comm.rank == self._modal_owner:
+            self._rhs.getArray()[:] = values
+        self._rhs.assemble()
+        self._solution.assemble()
+        initial_solution_norm = float(self._solution.norm())
+        self._last_solve["initial_solution_norm"] = initial_solution_norm
+        if rhs_norm == 0.0:
+            relative, finite = self._final_residual(rhs_norm)
+            passed = bool(finite and relative is None and not self._budget_exhausted)
+            status = (
+                "budget_exhausted"
+                if self._budget_exhausted
+                else "zero_rhs_exact"
+                if passed
+                else "zero_rhs_failed"
+            )
+            self._last_solve.update(
+                status=status,
+                ksp_reason=None,
+                ksp_status="not_run_zero_rhs",
+                rhs_norm=0.0,
+                s_h_rtol=self.rtol,
+                solver_matmult_calls=self._solver_matmult_calls,
+                total_matmult_calls=self._total_matmult_calls,
+                local_constraint_lu_factorizations=(
+                    self._constraint_lu_factorizations_local
+                ),
+                constraint_lu_factorizations=(
+                    self._constraint_lu_factorizations_owner
+                ),
+                local_constraint_lu_solve_attempts=0,
+                local_constraint_lu_solve_successes=0,
+                owner_constraint_lu_solve_attempts=0,
+                owner_constraint_lu_solve_successes=0,
+                constraint_lu_solve_count_scope=(
+                    "owner_authoritative_replicated_report"
+                ),
+            )
+            if not passed:
+                raise RuntimeError(f"Fixed-H6 modal zero-RHS solve failed: {status}")
+            return np.zeros(self.modal_count, dtype=np.complex128)
+
+        try:
+            self._ksp.solve(self._rhs, self._solution)
+        except Exception as exc:
+            # Local petsc4py files identify PETSC_ERR_PYTHON but do not promise
+            # cross-rank callback-exception synchronization.  Do not start a
+            # new MPI collective here after an arbitrary callback exception.
+            # Explicit preflight and owner-PC failures use separate protocols.
+            try:
+                reason = int(self._ksp.getConvergedReason())
+            except PETSc.Error:
+                reason = None
+            try:
+                iterations = int(self._ksp.getIterationNumber())
+            except PETSc.Error:
+                iterations = None
+            if self._budget_exhausted:
+                status = "budget_exhausted"
+                not_evaluated_reason = (
+                    "budget_exhausted_before_trusted_KSP_iterate"
+                )
+                ksp_status = "raised_after_budget_exhaustion"
+            elif self._pc_failure_error is not None:
+                status = "pc_apply_failed"
+                not_evaluated_reason = "PC_failure_no_trusted_KSP_iterate"
+                ksp_status = "raised_after_synchronized_pc_failure"
+            elif self._mat_preflight_failure is not None:
+                status = "mat_preflight_failed"
+                not_evaluated_reason = "Mat_preflight_rejected_before_S_H"
+                ksp_status = "raised_after_mat_preflight_failure"
+            else:
+                status = "ksp_callback_failed"
+                not_evaluated_reason = "KSP_callback_exception_no_trusted_iterate"
+                ksp_status = "raised_local_sync_unverified"
+            self._last_solve.update(
+                status=status,
+                ksp_reason=reason,
+                ksp_status=ksp_status,
+                error=f"{type(exc).__name__}: {exc}",
+                iterations=iterations,
+                rhs_norm=rhs_norm,
+                solver_matmult_calls=self._solver_matmult_calls,
+                total_matmult_calls=self._total_matmult_calls,
+                final_residual_evaluated=False,
+                final_residual_status="not_evaluated",
+                final_residual_not_evaluated_reason=not_evaluated_reason,
+                pc_failure=self._pc_failure_error,
+                budget_used_solver_matmult_calls=self._solver_matmult_calls,
+                budget_used_total_matmult_calls=self._total_matmult_calls,
+                local_constraint_lu_factorizations=(
+                    self._constraint_lu_factorizations_local
+                ),
+                constraint_lu_factorizations=(
+                    self._constraint_lu_factorizations_owner
+                ),
+                local_constraint_lu_solve_attempts=self._constraint_lu_solve_attempts,
+                local_constraint_lu_solve_successes=self._constraint_lu_solve_successes,
+                owner_constraint_lu_solve_attempts=(
+                    self._constraint_lu_solve_attempts
+                    if self._comm.rank == self._modal_owner
+                    else None
+                ),
+                owner_constraint_lu_solve_successes=(
+                    self._constraint_lu_solve_successes
+                    if self._comm.rank == self._modal_owner
+                    else None
+                ),
+                constraint_lu_solve_count_scope=(
+                    "owner_value_unavailable_without_post_callback_collective"
+                ),
+            )
+            raise RuntimeError(
+                f"Fixed-H6 modal KSP failed: {self._last_solve['error']}"
+            ) from exc
+
+        reason = int(self._ksp.getConvergedReason())
+        iterations = int(self._ksp.getIterationNumber())
+        states = self._comm.allgather((reason, iterations, self._solver_matmult_calls))
+        if len(set(states)) != 1:
+            raise RuntimeError("Fixed-H6 modal KSP state differs across ranks")
+        owner_lu_solve_attempts = int(
+            self._comm.bcast(
+                self._constraint_lu_solve_attempts
+                if self._comm.rank == self._modal_owner
+                else None,
+                root=self._modal_owner,
+            )
+        )
+        owner_lu_solve_successes = int(
+            self._comm.bcast(
+                self._constraint_lu_solve_successes
+                if self._comm.rank == self._modal_owner
+                else None,
+                root=self._modal_owner,
+            )
+        )
+        if self._pc_failure_error is not None:
+            status = "budget_exhausted" if self._budget_exhausted else "pc_apply_failed"
+            not_evaluated_reason = (
+                "budget_exhausted_before_trusted_KSP_iterate"
+                if self._budget_exhausted
+                else "PC_failure_no_trusted_KSP_iterate"
+            )
+            self._last_solve.update(
+                status=status,
+                ksp_reason=reason,
+                ksp_status="returned_after_marked_pc_failure",
+                iterations=iterations,
+                rhs_norm=rhs_norm,
+                initial_solution_norm=initial_solution_norm,
+                solver_matmult_calls=self._solver_matmult_calls,
+                total_matmult_calls=self._total_matmult_calls,
+                final_residual_evaluated=False,
+                final_residual_status="not_evaluated",
+                final_residual_not_evaluated_reason=not_evaluated_reason,
+                pc_failure=self._pc_failure_error,
+                local_constraint_lu_factorizations=(
+                    self._constraint_lu_factorizations_local
+                ),
+                constraint_lu_factorizations=(
+                    self._constraint_lu_factorizations_owner
+                ),
+                local_constraint_lu_solve_attempts=self._constraint_lu_solve_attempts,
+                local_constraint_lu_solve_successes=self._constraint_lu_solve_successes,
+                owner_constraint_lu_solve_attempts=owner_lu_solve_attempts,
+                owner_constraint_lu_solve_successes=owner_lu_solve_successes,
+                constraint_lu_solve_count_scope=(
+                    "owner_authoritative_replicated_report"
+                ),
+            )
+            raise RuntimeError(f"Fixed-H6 modal solve failed: {status}")
+
+        relative, finite = self._final_residual(rhs_norm)
+        raw_pass = bool(relative is not None and finite and relative <= self.rtol)
+        if self._budget_exhausted:
+            status = "budget_exhausted"
+        elif reason <= 0:
+            status = "ksp_not_converged"
+        elif not raw_pass:
+            status = "final_residual_failed"
+        else:
+            status = "converged"
+        self._last_solve.update(
+            status=status,
+            ksp_reason=reason,
+            ksp_status="returned",
+            iterations=iterations,
+            rhs_norm=rhs_norm,
+            initial_solution_norm=initial_solution_norm,
+            s_h_rtol=self.rtol,
+            raw_residual_pass=raw_pass,
+            solver_matmult_calls=self._solver_matmult_calls,
+            total_matmult_calls=self._total_matmult_calls,
+            constraint_lu_factorizations=self._constraint_lu_factorizations_owner,
+            local_constraint_lu_factorizations=self._constraint_lu_factorizations_local,
+            local_constraint_lu_solve_attempts=self._constraint_lu_solve_attempts,
+            local_constraint_lu_solve_successes=self._constraint_lu_solve_successes,
+            owner_constraint_lu_solve_attempts=owner_lu_solve_attempts,
+            owner_constraint_lu_solve_successes=owner_lu_solve_successes,
+            constraint_lu_solve_count_scope="owner_authoritative_replicated_report",
+            budget_used_solver_matmult_calls=self._solver_matmult_calls,
+            budget_used_total_matmult_calls=self._total_matmult_calls,
+        )
+        if status != "converged":
+            raise RuntimeError(f"Fixed-H6 modal solve did not converge: {status}")
+        local_solution = (
+            np.asarray(self._solution.getArray(readonly=True), dtype=np.complex128).copy()
+            if self._comm.rank == self._modal_owner
+            else None
+        )
+        result = np.asarray(
+            self._comm.bcast(local_solution, root=self._modal_owner),
+            dtype=np.complex128,
+        )
+        return result
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        last_solve = self._last_solve
+        lu_solve_scope = (
+            "rank_local_counter; owner aggregate unavailable before a completed solve"
+            if last_solve is None
+            else last_solve.get(
+                "constraint_lu_solve_count_scope",
+                "rank_local_attempt/success counters; no owner aggregate recorded",
+            )
+        )
+        return {
+            "method": "fixed_h6_modal_gmres_research",
+            "operator": "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+            "rtol": self.rtol,
+            "restart": self.max_it,
+            "max_it": self.max_it,
+            "solver_matmult_limit": self.solver_matmult_limit,
+            "total_matmult_limit_including_final": self.total_matmult_limit,
+            "modal_owner": self._modal_owner,
+            "solver_matmult_calls": self._solver_matmult_calls,
+            "total_matmult_calls": self._total_matmult_calls,
+            "blocked_matmult_attempts": self._blocked_matmult_attempts,
+            "local_constraint_lu_factorizations": self._constraint_lu_factorizations_local,
+            "owner_constraint_lu_factorizations": self._constraint_lu_factorizations_owner,
+            "local_constraint_lu_solve_attempts": self._constraint_lu_solve_attempts,
+            "local_constraint_lu_solve_successes": self._constraint_lu_solve_successes,
+            "owner_constraint_lu_solve_attempts": (
+                None
+                if self._last_solve is None
+                else self._last_solve.get("owner_constraint_lu_solve_attempts")
+            ),
+            "owner_constraint_lu_solve_successes": (
+                None
+                if self._last_solve is None
+                else self._last_solve.get("owner_constraint_lu_solve_successes")
+            ),
+            "constraint_lu_solve_count_scope": lu_solve_scope,
+            "constraint_lu_factorizations_scope": "rank_local_and_owner_authoritative",
+            "pc_failure": self._pc_failure_error,
+            "mat_preflight_failure": self._mat_preflight_failure,
+            "budget_exhausted": self._budget_exhausted,
+            "last_solve": None if last_solve is None else dict(last_solve),
+            "destroyed": self._destroyed,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        ksp, self._ksp = self._ksp, None
+        matrix, self._matrix = self._matrix, None
+        for vector_name in ("_residual", "_image", "_solution", "_rhs"):
+            vector = getattr(self, vector_name)
+            if vector is not None:
+                vector.destroy()
+                setattr(self, vector_name, None)
+        if ksp is not None:
+            ksp.destroy()
+        if matrix is not None:
+            matrix.destroy()
+        if self._modal_action is not None:
+            self._modal_action.destroy()
+            self._modal_action = None
+        # Side adapters and their FixedH6/layout objects are borrowed.
+        self._bottom_action = None
+        self._top_action = None
+        self._constraint_lu = self._constraint_pivots = None
+
+
 def solve_action_modal_schur_anderson(
     modal_action: HybridActionModalSchurApply,
     rhs: np.ndarray,
