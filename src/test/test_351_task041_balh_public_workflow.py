@@ -2186,6 +2186,111 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         )
     )
 
+    captured.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_fixed_h6_default_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+    assert captured["fixed_h6_modal_gmres_research"] is False
+
+    captured.clear()
+    resource_policy_marker_limits_seen.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_fixed_h6_research_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+        )
+    assert captured["fixed_h6_modal_gmres_research"] is True
+    assert captured["use_anderson_modal_inner"] is False
+    assert captured["complex_qr_research"] is False
+    assert captured["capture_modal_solve_trace"] is False
+    assert captured["same_g_modal_metric_pair"] is None
+    assert captured["p4_inverse_backend"] == "cell_condensed"
+    assert captured["p4_refinement_target_tolerance"] is None
+    assert captured["p4_response_correction_steps"] == 0
+    assert captured["task041_resource_policy"] == (
+        task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    )
+    assert captured["sampled_column_contract"]["columns"] == [0]
+    assert resource_policy_marker_limits_seen[-1]["task041_resource_policy"] == (
+        task041_balh_workflow.task041_v8_resource_policy_binding(
+            task041_balh_workflow.TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+            task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        )
+    )
+
+    captured.clear()
+    with pytest.raises(worker.Task041ModePrepError, match="Fixed-H6"):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_wrong_fixed_h6_scope_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+        )
+    assert captured == {}
+
+    with pytest.raises(worker.Task041ModePrepError, match="Fixed-H6"):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_fixed_h6_and_anderson_rejected",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            use_anderson_modal_inner=True,
+            fixed_h6_modal_gmres_research=True,
+        )
+
+    with pytest.raises(worker.Task041ModePrepError, match="Fixed-H6"):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_fixed_h6_target_rejected",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            p4_refinement_target_tolerance=5.0e-13,
+            fixed_h6_modal_gmres_research=True,
+        )
+
     pair_request = {"schema": "task041.same_g_modal_metric_pair.v2"}
     prepared_pair = {
         "g": np.zeros(240, dtype=np.complex128),
@@ -2348,8 +2453,12 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert run_target_configuration(None) == []
 
 
+@pytest.mark.parametrize(
+    "modal_route",
+    ("anderson", "fixed_h6_budget_failure", "fixed_h6_converged_release"),
+)
 def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, monkeypatch, modal_route
 ):
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task039_v3_7_orchestration as orchestration
@@ -2397,41 +2506,116 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             (11, "final_validation", 0.2192, 0.05308, 0.0497),
         )
     ]
-    last_solve = {
-        "status": "not_converged",
-        "stop_reason": "max_iterations",
-        "unscaled_residual_norm": 0.21923232695856398,
-        "rhs_norm": 4.131,
-        "relative_residual": 0.053080245980893843,
-        "max_iterations": 14,
-        "iterations": 14,
-        "function_evaluations": 15,
-        "s_evaluation_count": 16,
-        "constraint_lu_solve_calls": 15,
-        "snes_converged_reason": -2,
-        "callback_converged_reason": -2,
-        "budget_exhausted": False,
-        "side_action_calls": {"bottom": 10, "top": 10},
-        "residual_evaluation_history": residual_history,
-        "real_coordinate_embedding": True,
-        "modal_coordinate_representation": "real_parts_then_imag_parts_in_complex128",
-        "modal_coordinate_count": 8,
-        "modal_coordinate_extra_bytes_per_explicit_vec": 64,
-        "modal_coordinate_extra_bytes_two_explicit_vecs": 128,
-        "real_coordinate_subspace_violation": False,
-    }
-    modal_inner = {
-        "solve_count": 1,
-        "s_evaluation_count": 16,
-        "anderson_iteration_count": 14,
-        "constraint_lu_solve_calls": 15,
-        "not_converged_count": 1,
-        "side_action_call_count": {"bottom": 10, "top": 10},
-        "last_solve": last_solve,
-    }
-    fake_context = SimpleNamespace(
-        inventory={"modal_inner_solver": modal_inner}
-    )
+    if modal_route.startswith("fixed_h6"):
+        converged_release = modal_route == "fixed_h6_converged_release"
+        last_solve = {
+            "status": "converged" if converged_release else "budget_exhausted",
+            "ksp_reason": 2 if converged_release else 0,
+            "ksp_status": "returned" if converged_release else "raised_after_budget_exhaustion",
+            "zero_initial_guess": True,
+            "rhs_norm": 4.131,
+            "s_h_rtol": 1.0e-3,
+            "solver_matmult_calls": 4 if converged_release else 9,
+            "total_matmult_calls": 5 if converged_release else 9,
+            "final_residual_evaluated": converged_release,
+            "final_residual_status": "evaluated" if converged_release else "not_evaluated",
+            "final_relative_residual": 2.0e-4 if converged_release else None,
+            "raw_residual_pass": converged_release,
+            "final_residual_not_evaluated_reason": (
+                None
+                if converged_release
+                else "budget_exhausted_before_trusted_KSP_iterate"
+            ),
+            "budget_used_solver_matmult_calls": 4 if converged_release else 9,
+            "budget_used_total_matmult_calls": 5 if converged_release else 9,
+            "blocked_matmult_attempts": 0 if converged_release else 1,
+            "owner_constraint_lu_solve_attempts": 4 if converged_release else None,
+            "owner_constraint_lu_solve_successes": 4 if converged_release else None,
+            "constraint_lu_solve_count_scope": (
+                "owner_authoritative_replicated_report"
+                if converged_release
+                else "owner_value_unavailable_without_post_callback_collective"
+            ),
+            "fixed_h6_side_action_apply_calls": {
+                "bottom": 5 if converged_release else 9,
+                "top": 5 if converged_release else 9,
+            },
+            "fixed_h6_side_action_count_scope": (
+                "per_rank_replicated; do_not_sum_across_ranks"
+            ),
+        }
+        modal_inner = {
+            "method": "fixed_h6_modal_gmres_research",
+            "solve_count": 1,
+            "solver_matmult_calls": 4 if converged_release else 9,
+            "total_matmult_calls": 5 if converged_release else 9,
+            "s_evaluation_count": 5 if converged_release else 9,
+            "not_converged_count": 0 if converged_release else 1,
+            "constraint_lu_factorizations": 1,
+            "owner_constraint_lu_solve_attempts": 4 if converged_release else None,
+            "owner_constraint_lu_solve_successes": 4 if converged_release else None,
+            "fixed_h6_modal_apply_calls": {
+                "bottom": 5 if converged_release else 9,
+                "top": 5 if converged_release else 9,
+            },
+            "last_solve": last_solve,
+        }
+        modal_s_evaluations = 5 if converged_release else 9
+        # These injected values exercise the context-level inventory paths;
+        # they are fixture data, not FE measurements.
+        fixed_h6_pc_side_apply_counts = {
+            "bottom": {"first": 11, "delta": 12},
+            "top": {"first": 21, "delta": None},
+        }
+        fixed_h6_pc_side_apply_count_scope = (
+            "successful direct side apply calls; per-rank replicated"
+        )
+        side_h6_callback_counts = {"bottom": 31, "top": None}
+        context_inventory = {
+            "modal_inner_solver": modal_inner,
+            "fixed_h6_modal_solver": modal_inner,
+            "fixed_h6_pc_side_apply_counts": fixed_h6_pc_side_apply_counts,
+            "fixed_h6_pc_side_apply_count_scope": (
+                fixed_h6_pc_side_apply_count_scope
+            ),
+            "side_h6_callback_counts": side_h6_callback_counts,
+        }
+    else:
+        last_solve = {
+            "status": "not_converged",
+            "stop_reason": "max_iterations",
+            "unscaled_residual_norm": 0.21923232695856398,
+            "rhs_norm": 4.131,
+            "relative_residual": 0.053080245980893843,
+            "max_iterations": 14,
+            "iterations": 14,
+            "function_evaluations": 15,
+            "s_evaluation_count": 16,
+            "constraint_lu_solve_calls": 15,
+            "snes_converged_reason": -2,
+            "callback_converged_reason": -2,
+            "budget_exhausted": False,
+            "side_action_calls": {"bottom": 10, "top": 10},
+            "residual_evaluation_history": residual_history,
+            "real_coordinate_embedding": True,
+            "modal_coordinate_representation": "real_parts_then_imag_parts_in_complex128",
+            "modal_coordinate_count": 8,
+            "modal_coordinate_extra_bytes_per_explicit_vec": 64,
+            "modal_coordinate_extra_bytes_two_explicit_vecs": 128,
+            "real_coordinate_subspace_violation": False,
+        }
+        modal_inner = {
+            "solve_count": 1,
+            "s_evaluation_count": 16,
+            "anderson_iteration_count": 14,
+            "constraint_lu_solve_calls": 15,
+            "not_converged_count": 1,
+            "side_action_call_count": {"bottom": 10, "top": 10},
+            "last_solve": last_solve,
+        }
+        modal_s_evaluations = 16
+        context_inventory = {"modal_inner_solver": modal_inner}
+    fake_context = SimpleNamespace(inventory=context_inventory)
     events = []
     captured_modal_trace = {
         "schema": "task041.modal_inner.solve_trace_capture.v1",
@@ -2456,7 +2640,7 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
 
     fake_context.action_modal_schur_system = FakeCaptureSystem()
     summary_files = {}
-    modal_s_evaluations = 16
+    release_records = []
     failure = RuntimeError("modal inner solve did not converge")
     invoke_failure_runner = {"enabled": True}
 
@@ -2475,21 +2659,36 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
 
     def base_release():
         assert fake_context.inventory["modal_inner_solver"]["last_solve"] is last_solve
-        assert modal_s_evaluations == 16
+        assert modal_s_evaluations == last_solve.get(
+            "total_matmult_calls", last_solve.get("s_evaluation_count")
+        )
         events.append("context_release")
         fake_context.inventory.clear()
         return {"factor_cleanup_pass": True, "component_cleanup_pass": True}
 
     def fail_formal_after_release(**kwargs):
         assert kwargs["context"] is fake_context
-        kwargs["release_before_recovery"]()
+        release_records.append(kwargs["release_before_recovery"]())
         events.append("formal_failure")
         raise failure
 
     def run_candidate_setup(*args, **kwargs):
-        assert kwargs["use_anderson_modal_inner"] is True
-        assert kwargs["complex_qr_research"] is True
-        assert kwargs["capture_modal_solve_trace"] is True
+        assert kwargs["use_anderson_modal_inner"] is (
+            modal_route == "anderson"
+        )
+        assert kwargs["fixed_h6_modal_gmres_research"] is (
+            modal_route.startswith("fixed_h6")
+        )
+        assert kwargs["complex_qr_research"] is (
+            modal_route == "anderson"
+        )
+        assert kwargs["capture_modal_solve_trace"] is (
+            modal_route == "anderson"
+        )
+        if modal_route.startswith("fixed_h6"):
+            assert kwargs["task041_resource_policy"] == (
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            )
         if not invoke_failure_runner["enabled"]:
             raise AssertionError("unexpected candidate setup invocation")
         return kwargs["full_formal_runner"](
@@ -2552,46 +2751,95 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             source_sha=source_sha,
             candidate=True,
             comm=FakeComm(),
-            use_anderson_modal_inner=True,
-            complex_qr_research=True,
-            capture_modal_solve_trace=True,
+            use_anderson_modal_inner=(modal_route == "anderson"),
+            fixed_h6_modal_gmres_research=modal_route.startswith("fixed_h6"),
+            complex_qr_research=(modal_route == "anderson"),
+            capture_modal_solve_trace=(modal_route == "anderson"),
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
         )
 
     assert raised.value is failure
-    assert events == [
-        "trace_export",
-        "context_release",
-        "formal_failure",
-        "consumer_cleanup",
-        "consumer_summary",
-    ]
-    assert modal_s_evaluations == 16
+    assert events == (
+        [
+            "trace_export",
+            "context_release",
+            "formal_failure",
+            "consumer_cleanup",
+            "consumer_summary",
+        ]
+        if modal_route == "anderson"
+        else [
+            "context_release",
+            "formal_failure",
+            "consumer_cleanup",
+            "consumer_summary",
+        ]
+    )
+    assert modal_s_evaluations == last_solve.get(
+        "total_matmult_calls", last_solve.get("s_evaluation_count")
+    )
     assert fake_context.inventory == {}
     assert len(summary_files) == 1
     summary = next(iter(summary_files.values()))
     assert summary["status"] == "IMPLEMENTATION_FAILURE"
     assert summary["error"]["type"] == "RuntimeError"
     assert summary["error"]["message"] == str(failure)
-    evidence = summary["factor_inventory"]["failure_evidence"][
-        "modal_inner_solver"
-    ]
-    assert evidence["scope"] == "last_failed_modal_inner_solve_before_context_release"
-    assert evidence["solve_count"] == 1
-    assert evidence["s_evaluation_count"] == 16
-    assert evidence["side_action_call_count"] == {"bottom": 10, "top": 10}
-    assert evidence["last_solve"] == last_solve
-    trace_capture = evidence["bounded_solve_trace_capture"]
-    assert trace_capture["trace_token"] == captured_modal_trace["trace_token"]
-    assert trace_capture["owner_rank"] == 7
-    assert trace_capture["writer_rank"] == 0
-    assert trace_capture["side_rhs_audit_path"]
-    assert not any(
-        isinstance(value, np.ndarray)
-        for value in trace_capture.values()
-    )
+    evidence = summary["factor_inventory"]["failure_evidence"]["modal_inner_solver"]
+    if modal_route == "anderson":
+        assert evidence["scope"] == (
+            "last_failed_modal_inner_solve_before_context_release"
+        )
+        assert evidence["solve_count"] == 1
+        assert evidence["s_evaluation_count"] == 16
+        assert evidence["side_action_call_count"] == {"bottom": 10, "top": 10}
+        assert evidence["last_solve"] == last_solve
+        trace_capture = evidence["bounded_solve_trace_capture"]
+        assert trace_capture["trace_token"] == captured_modal_trace["trace_token"]
+        assert trace_capture["owner_rank"] == 7
+        assert trace_capture["writer_rank"] == 0
+        assert trace_capture["side_rhs_audit_path"]
+        assert not any(
+            isinstance(value, np.ndarray)
+            for value in trace_capture.values()
+        )
+    else:
+        assert evidence["scope"] == (
+            "fixed_h6_modal_solver_snapshot_before_side_release"
+        )
+        assert evidence["diagnostics_source"] == "retained_bundle_diagnostics"
+        assert evidence["read_point"] == (
+            "retained_context_bundle_diagnostics_before_total_side_release; "
+            "inner KSP may already have been destroyed"
+        )
+        assert evidence["method"] == "fixed_h6_modal_gmres_research"
+        assert evidence["last_solve"] == last_solve
+        assert evidence["fixed_h6_pc_side_apply_counts"] == (
+            fixed_h6_pc_side_apply_counts
+        )
+        assert evidence["fixed_h6_pc_side_apply_count_scope"] == (
+            fixed_h6_pc_side_apply_count_scope
+        )
+        assert evidence["side_h6_callback_counts"] == side_h6_callback_counts
+        assert "fixed_h6_pc_side_apply_counts" not in modal_inner
+        assert "side_h6_callback_counts" not in modal_inner
+        assert release_records[0]["component_cleanup_pass"] is True
+        assert release_records[0]["fixed_h6_modal_solver"] == evidence
+        assert summary["lifecycle"]["outer_release"]["fixed_h6_modal_solver"] == evidence
+        assert summary["failure_evidence"]["side_rhs_audits"][
+            "modal_inner_solver"
+        ] == evidence
+        if modal_route == "fixed_h6_budget_failure":
+            assert evidence["last_solve"]["status"] == "budget_exhausted"
+            assert evidence["last_solve"]["ksp_reason"] == 0
+            assert evidence["last_solve"]["final_residual_status"] == "not_evaluated"
+            assert evidence["last_solve"]["blocked_matmult_attempts"] == 1
+            assert evidence["s_evaluation_count"] == 9
+        else:
+            assert evidence["last_solve"]["status"] == "converged"
+            assert evidence["last_solve"]["raw_residual_pass"] is True
+            assert evidence["s_evaluation_count"] == 5
 
 
 @pytest.mark.parametrize(

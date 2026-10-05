@@ -5153,9 +5153,11 @@ def _run_task041_balh_candidate_setup(
     p4_backend_pair_side: str | None = None,
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
+    fixed_h6_modal_gmres_research: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair: Mapping[str, Any] | None = None,
+    task041_resource_policy: str | None = None,
     physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -5168,6 +5170,7 @@ def _run_task041_balh_candidate_setup(
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
         task041_p4_refinement_target_binding,
     )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
@@ -5197,6 +5200,10 @@ def _run_task041_balh_candidate_setup(
         raise Task041ModePrepError("a6_response_pair must be a boolean")
     if not isinstance(use_anderson_modal_inner, bool):
         raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
+    if not isinstance(fixed_h6_modal_gmres_research, bool):
+        raise Task041ModePrepError(
+            "fixed_h6_modal_gmres_research must be a boolean"
+        )
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
     if complex_qr_research and not use_anderson_modal_inner:
@@ -5211,6 +5218,44 @@ def _run_task041_balh_candidate_setup(
         raise Task041ModePrepError(
             "same-g modal pairing requires the prepared complex-QR inner path"
         )
+    if fixed_h6_modal_gmres_research:
+        fixed_h6_registered_case = task041_balh_case(
+            str(identity.get("model_id", "")) if isinstance(identity, Mapping) else ""
+        )
+        if (
+            not isinstance(identity, Mapping)
+            or str(identity.get("model_id"))
+            != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+            or identity.get("mpi_size") != TASK041_BALH_MPI_SIZE
+            or identity.get("mode_count") != 120
+            or fixed_h6_registered_case is None
+            or fixed_h6_registered_case.get("p4_inverse_backend") != "cell_condensed"
+            or p4_inverse_backend != "cell_condensed"
+            or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
+            or p4_refinement_target_tolerance is not None
+            or p4_response_correction_steps != 0
+            or p4_backend_pair_side is not None
+            or representative_rhs_contract is not None
+            or performance_profile is not None
+            or side_setup_schedule is not None
+            or comparison_mode is not None
+            or top_causal_replay
+            or p4_correction_replay_from is not None
+            or a6_response_pair
+            or use_anderson_modal_inner
+            or complex_qr_research
+            or capture_modal_solve_trace
+            or same_g_modal_metric_pair is not None
+            or not isinstance(sampled_column_contract, Mapping)
+            or not sampled_column_contract.get("columns")
+            or not isinstance(sampled_column_contract.get("roles"), Mapping)
+            or not sampled_column_contract.get("sha256")
+        ):
+            raise Task041ModePrepError(
+                "Fixed-H6 modal GMRES is limited to the registered 13.5 nm "
+                "cell-condensed MPI8 V8 formal candidate with no target or "
+                "other diagnostic mode"
+            )
     if use_anderson_modal_inner and (
         not isinstance(identity, Mapping)
         or str(identity.get("model_id"))
@@ -13021,7 +13066,9 @@ def _run_task041_balh_candidate_setup(
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
             probe_side(side, side_inverses[side], system)
         cost_probe = cost_probe_summary(
-            on_demand_modal_inner=use_anderson_modal_inner
+            on_demand_modal_inner=(
+                use_anderson_modal_inner or fixed_h6_modal_gmres_research
+            )
         )
         for side in audit_phase:
             audit_phase[side] = "modal_schur"
@@ -13047,6 +13094,14 @@ def _run_task041_balh_candidate_setup(
                 "sampled_column_contract_sha256": sampled_column_contract["sha256"],
                 **(
                     {
+                        "modal_action_mode": (
+                            "fixed_h6_surrogate_on_demand_modal_gmres"
+                        ),
+                        "modal_schur_materialized": False,
+                        "modal_schur_column_count": 0,
+                    }
+                    if fixed_h6_modal_gmres_research
+                    else {
                         "modal_action_mode": "on_demand_nonlinear_inner",
                         "modal_schur_materialized": False,
                     }
@@ -13067,6 +13122,9 @@ def _run_task041_balh_candidate_setup(
             sampled_column_contract_sha256=sampled_column_contract["sha256"],
             marker_callback=marker_callback,
             use_anderson_modal_inner=use_anderson_modal_inner,
+            fixed_h6_modal_gmres_research=(
+                fixed_h6_modal_gmres_research
+            ),
             complex_qr_research=complex_qr_research,
             capture_modal_solve_trace=capture_modal_solve_trace,
         )
@@ -13209,7 +13267,11 @@ def _run_task041_balh_candidate_setup(
             "schema": "task041.side_balh.candidate_setup.v1",
             "status": str(formal_result.get("status")),
             "qualification_scope": qualification_scope,
-            "qualification_method": "task041_balh_side_inverse_response_fgmres32",
+            "qualification_method": (
+                "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                if fixed_h6_modal_gmres_research
+                else "task041_balh_side_inverse_response_fgmres32"
+            ),
             "qualification": "research_only_approximate_candidate",
             "admission_audit": admission_payload,
             "cost_probe": cost_probe,
@@ -13242,6 +13304,8 @@ def _run_task041_balh_candidate_setup(
                 "modal_block": (
                     "on_demand_nonlinear_modal_inner"
                     if use_anderson_modal_inner
+                    else context_inventory_before.get("modal_block_name")
+                    if fixed_h6_modal_gmres_research
                     else "finite_nonlinear_side_inverse_response_columns"
                 ),
                 "approximate_preconditioner_only": True,
@@ -13270,6 +13334,34 @@ def _run_task041_balh_candidate_setup(
                     "modal_schur_column_count": 0,
                     "early_sample_gate": context_inventory_before.get(
                         "early_sample_gate"
+                    ),
+                }
+            )
+        if fixed_h6_modal_gmres_research:
+            fixed_h6_solver_inventory = context_inventory_before.get(
+                "fixed_h6_modal_solver"
+            )
+            result["candidate_inventory"].update(
+                {
+                    "modal_schur_materialized": context_inventory_before.get(
+                        "modal_schur_materialized"
+                    ),
+                    "modal_schur_column_count": context_inventory_before.get(
+                        "modal_schur_column_count"
+                    ),
+                    "modal_schur_condition": context_inventory_before.get(
+                        "modal_schur_condition"
+                    ),
+                    "early_sample_gate": context_inventory_before.get(
+                        "early_sample_gate"
+                    ),
+                    "modal_inner_method": (
+                        fixed_h6_solver_inventory.get("method")
+                        if isinstance(fixed_h6_solver_inventory, Mapping)
+                        else None
+                    ),
+                    "modal_inner_method_source": (
+                        "factory_inventory.fixed_h6_modal_solver.method"
                     ),
                 }
             )
@@ -13315,6 +13407,7 @@ def run_task041_consumer(
     task041_resource_policy: str | None = None,
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
+    fixed_h6_modal_gmres_research: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair_request: Mapping[str, Any] | None = None,
@@ -13347,10 +13440,53 @@ def run_task041_consumer(
         raise Task041ModePrepError("a6_response_pair must be a boolean")
     if not isinstance(use_anderson_modal_inner, bool):
         raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
+    if not isinstance(fixed_h6_modal_gmres_research, bool):
+        raise Task041ModePrepError(
+            "fixed_h6_modal_gmres_research must be a boolean"
+        )
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
     if not isinstance(capture_modal_solve_trace, bool):
         raise Task041ModePrepError("capture_modal_solve_trace must be a boolean")
+    if fixed_h6_modal_gmres_research:
+        fixed_h6_registered_case = task041_balh_case(
+            str(normalized.get("model_id", ""))
+        )
+        if (
+            not candidate
+            or not contract.get("balh")
+            or normalized.get("model_id")
+            != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+            or fixed_h6_registered_case is None
+            or fixed_h6_registered_case.get("p4_inverse_backend")
+            != "cell_condensed"
+            or contract.get("p4_inverse_backend") != "cell_condensed"
+            or contract.get("mpi_size") != TASK041_BALH_MPI_SIZE
+            or comm.size != TASK041_BALH_MPI_SIZE
+            or contract.get("mode_count") != 120
+            or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
+            or p4_refinement_target_tolerance is not None
+            or p4_response_correction_steps != 0
+            or p4_backend_pair_side is not None
+            or packet_origin is not None
+            or legacy_native_binding is not None
+            or performance_profile is not None
+            or task041_rhs_probe_manifest is not None
+            or side_setup_schedule is not None
+            or comparison_mode is not None
+            or top_causal_replay
+            or p4_correction_replay_from is not None
+            or a6_response_pair
+            or use_anderson_modal_inner
+            or complex_qr_research
+            or capture_modal_solve_trace
+            or same_g_modal_metric_pair_request is not None
+        ):
+            raise Task041ModePrepError(
+                "Fixed-H6 modal GMRES is limited to the registered 13.5 nm "
+                "Si cell-condensed MPI8 V8 candidate with target=None and "
+                "no other diagnostic mode"
+            )
     same_g_pair_enabled = _task041_same_g_modal_metric_pair_scope(
         same_g_modal_metric_pair_request,
         identity={
@@ -13375,6 +13511,7 @@ def run_task041_consumer(
             or p4_response_correction_steps != 0
             or p4_backend_pair_side is not None
             or a6_response_pair
+            or fixed_h6_modal_gmres_research
         ),
     )
     if complex_qr_research and not use_anderson_modal_inner:
@@ -14412,7 +14549,8 @@ def run_task041_consumer(
 
         def full_formal_runner(**kwargs: Any) -> Mapping[str, Any]:
             base_release = kwargs.pop("release_before_recovery")
-            modal_inner_failure_snapshot = None
+            modal_inner_snapshot = None
+            modal_inner_snapshot_error = None
             modal_trace_capture = None
             modal_trace_capture_attempted = False
 
@@ -14458,49 +14596,138 @@ def run_task041_consumer(
                     candidate_context._modal_solve_trace_handoff = None
                 return modal_trace_capture
 
-            def capture_modal_failure_snapshot() -> dict[str, Any] | None:
-                if not use_anderson_modal_inner:
+            def capture_modal_inner_snapshot() -> dict[str, Any] | None:
+                nonlocal modal_inner_snapshot_error
+                if not (
+                    use_anderson_modal_inner
+                    or fixed_h6_modal_gmres_research
+                ):
                     return None
                 candidate_context = kwargs.get("context")
                 if candidate_context is None:
                     return None
-                modal_inner = candidate_context.inventory.get("modal_inner_solver")
-                if not isinstance(modal_inner, Mapping):
-                    return None
-                last_solve = modal_inner.get("last_solve")
-                if (
-                    not isinstance(last_solve, Mapping)
-                    or last_solve.get("status") != "not_converged"
-                ):
-                    return None
-                return _jsonable(
-                    {
-                        "scope": "last_failed_modal_inner_solve_before_context_release",
-                        "solve_count": modal_inner.get("solve_count"),
-                        "s_evaluation_count": modal_inner.get("s_evaluation_count"),
-                        "anderson_iteration_count": modal_inner.get(
-                            "anderson_iteration_count"
-                        ),
-                        "constraint_lu_solve_calls": modal_inner.get(
-                            "constraint_lu_solve_calls"
-                        ),
-                        "not_converged_count": modal_inner.get(
-                            "not_converged_count"
-                        ),
-                        "side_action_call_count": modal_inner.get(
-                            "side_action_call_count"
-                        ),
-                        "last_solve": dict(last_solve),
+                try:
+                    context_inventory = candidate_context.inventory
+                    if not isinstance(context_inventory, Mapping):
+                        return None
+                    if fixed_h6_modal_gmres_research:
+                        modal_inner = context_inventory.get(
+                            "fixed_h6_modal_solver"
+                        )
+                        if not isinstance(modal_inner, Mapping):
+                            return None
+                        last_solve = modal_inner.get("last_solve")
+                        if not isinstance(last_solve, Mapping):
+                            return None
+                        scalar_keys = (
+                            "method",
+                            "rtol",
+                            "restart",
+                            "max_it",
+                            "solver_matmult_limit",
+                            "total_matmult_limit_including_final",
+                            "modal_owner",
+                            "solver_matmult_calls",
+                            "total_matmult_calls",
+                            "solve_count",
+                            "s_evaluation_count",
+                            "not_converged_count",
+                            "cumulative_solver_matmult_calls",
+                            "cumulative_total_matmult_calls",
+                            "cumulative_constraint_lu_solve_attempts",
+                            "cumulative_constraint_lu_solve_successes",
+                            "constraint_lu_factorizations",
+                            "constraint_lu_solve_count_scope",
+                            "owner_constraint_lu_solve_attempts",
+                            "owner_constraint_lu_solve_successes",
+                            "fixed_h6_modal_apply_calls",
+                            "fixed_h6_modal_matrix_mult_calls",
+                            "blocked_matmult_attempts",
+                            "pc_failure",
+                            "mat_preflight_failure",
+                            "budget_exhausted",
+                        )
+                        return _jsonable(
+                            {
+                                "scope": "fixed_h6_modal_solver_snapshot_before_side_release",
+                                "diagnostics_source": "retained_bundle_diagnostics",
+                                "read_point": (
+                                    "retained_context_bundle_diagnostics_before_"
+                                    "total_side_release; inner KSP may already "
+                                    "have been destroyed"
+                                ),
+                                **{
+                                    key: modal_inner.get(key)
+                                    for key in scalar_keys
+                                    if key in modal_inner
+                                },
+                                **{
+                                    key: context_inventory.get(key)
+                                    for key in (
+                                        "fixed_h6_pc_side_apply_counts",
+                                        "fixed_h6_pc_side_apply_count_scope",
+                                        "side_h6_callback_counts",
+                                    )
+                                    if key in context_inventory
+                                },
+                                "last_solve": dict(last_solve),
+                            }
+                        )
+
+                    modal_inner = context_inventory.get("modal_inner_solver")
+                    if not isinstance(modal_inner, Mapping):
+                        return None
+                    last_solve = modal_inner.get("last_solve")
+                    if (
+                        not isinstance(last_solve, Mapping)
+                        or last_solve.get("status") != "not_converged"
+                    ):
+                        return None
+                    return _jsonable(
+                        {
+                            "scope": "last_failed_modal_inner_solve_before_context_release",
+                            "solve_count": modal_inner.get("solve_count"),
+                            "s_evaluation_count": modal_inner.get("s_evaluation_count"),
+                            "anderson_iteration_count": modal_inner.get(
+                                "anderson_iteration_count"
+                            ),
+                            "constraint_lu_solve_calls": modal_inner.get(
+                                "constraint_lu_solve_calls"
+                            ),
+                            "not_converged_count": modal_inner.get(
+                                "not_converged_count"
+                            ),
+                            "side_action_call_count": modal_inner.get(
+                                "side_action_call_count"
+                            ),
+                            "last_solve": dict(last_solve),
+                        }
+                    )
+                except Exception as exc:  # noqa: BLE001 - keep the primary solver error
+                    modal_inner_snapshot_error = {
+                        "type": type(exc).__name__,
+                        "message": str(exc)[:240],
                     }
-                )
+                    return None
 
             def release_before_recovery() -> Mapping[str, Any]:
-                nonlocal current_stage, modal_inner_failure_snapshot
+                nonlocal current_stage, modal_inner_snapshot
                 capture_modal_trace()
-                if modal_inner_failure_snapshot is None:
-                    modal_inner_failure_snapshot = capture_modal_failure_snapshot()
+                if modal_inner_snapshot is None:
+                    modal_inner_snapshot = capture_modal_inner_snapshot()
                 current_stage = "outer_solve_objects_cleanup"
                 release = dict(base_release())
+                if (
+                    fixed_h6_modal_gmres_research
+                    and modal_inner_snapshot is not None
+                ):
+                    release["fixed_h6_modal_solver"] = (
+                        modal_inner_snapshot
+                    )
+                if modal_inner_snapshot_error is not None:
+                    release["modal_inner_snapshot_error"] = (
+                        modal_inner_snapshot_error
+                    )
                 if comm.rank == 0 and isinstance(modal_trace_capture, Mapping):
                     release["modal_inner_solve_trace_capture"] = modal_trace_capture
                 before_rss_values = [
@@ -14575,12 +14802,16 @@ def run_task041_consumer(
                 )
             except BaseException:
                 capture_modal_trace(preserve_primary_exception=True)
-                if modal_inner_failure_snapshot is None:
-                    modal_inner_failure_snapshot = capture_modal_failure_snapshot()
-                if modal_inner_failure_snapshot is not None:
+                if modal_inner_snapshot is None:
+                    modal_inner_snapshot = capture_modal_inner_snapshot()
+                if modal_inner_snapshot is not None:
                     candidate_failure_evidence["modal_inner_solver"] = (
-                        modal_inner_failure_snapshot
+                        modal_inner_snapshot
                     )
+                if modal_inner_snapshot_error is not None:
+                    candidate_failure_evidence[
+                        "modal_inner_solver_snapshot_error"
+                    ] = modal_inner_snapshot_error
                 if comm.rank == 0 and isinstance(modal_trace_capture, Mapping):
                     snapshot = candidate_failure_evidence.get("modal_inner_solver")
                     if not isinstance(snapshot, dict):
@@ -14659,9 +14890,13 @@ def run_task041_consumer(
                 p4_backend_pair_side=p4_backend_pair_side,
                 a6_response_pair=a6_response_pair,
                 use_anderson_modal_inner=use_anderson_modal_inner,
+                fixed_h6_modal_gmres_research=(
+                    fixed_h6_modal_gmres_research
+                ),
                 complex_qr_research=complex_qr_research,
                 capture_modal_solve_trace=capture_modal_solve_trace,
                 same_g_modal_metric_pair=same_g_modal_metric_pair,
+                task041_resource_policy=task041_resource_policy,
                 physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity
