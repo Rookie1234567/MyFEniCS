@@ -378,18 +378,40 @@ def verify(folder,journal):
 
 
 def cost(folder,journal):
+    import json
     from .scattering_accuracy_scope import ARTIFACT
+    from .scattering_anchor_reporting import disjoint_timings
     rows=[]
     for role in SOLVES:
         try:r=stage(role)
         except FileNotFoundError:continue
-        if r['status']=='COMPLETED':rows.append(dict(role=role,timings=r['timings'],capacity=r['capacity'],build_audit=r['build_audit'],
-            original_audit=r['original_audit'],tensor_checks_pass=r['tensor_checks']['pass_gate'],actual_array_hash=r['arrays']['sha256'],
-            true_complete_N1='worker wall plus launcher/admission/output/independent audit; assembled in final collector; unknown stages not0'))
+        if r['status']=='COMPLETED':
+            ad=Path(r['arrays']['path']).parent;rd=Path(__file__).resolve().parents[2]/'results/task042'/ad.name
+            summary=json.loads((rd/'run_summary.json').read_text())
+            events=[json.loads(x) for x in (ad/'events.jsonl').read_text().splitlines()]
+            time=disjoint_timings(events);ex=time['exclusive_seconds'];T=summary['launch_wall_seconds']
+            V=sum(ex.get(k,0.) for k in ('condensation_local_factors','global_finite_factor_setup','solve_minimal_recovery','fixed_refinement'))
+            tail=sum(ex.get(k,0.) for k in ('global_finite_factor_setup','solve_minimal_recovery','fixed_refinement'))
+            rows.append(dict(role=role,timings=r['timings'],capacity=r['capacity'],build_audit=r['build_audit'],
+                original_audit=r['original_audit'],tensor_checks_pass=r['tensor_checks']['pass_gate'],actual_array_hash=r['arrays']['sha256'],
+                **time,cold_dat_launch_seconds_lower=T,tree_peak_bytes=summary['sampled_process_tree_rss_peak_bytes'],
+                worker_unclassified_IO_cleanup_seconds=max(0.,r['elapsed_worker_seconds']-time['root_measured_seconds']),
+                neural_necessary_time_bound=dict(T_B_diagnostic_only=T,V_replaceable_optimistic=V,C_shared=T-V,
+                    H_max_at_f1=V-.2*T,tail_only_fraction=tail/T,tail_only_H0_excluded=tail<.2*T,
+                    same_case_full_teacher_exceeds_allowance=T>V-.2*T,
+                    independent_VERIFY_and_data_train_load_correction_all_required=True,
+                    eligible_same_correctness_baseline=False,
+                    reason='fixed four-space analytic representation failed; no adjacent accurate physical anchor'),
+                true_complete_N1='measured dat launch lower bound; complete VERIFY separately charged, activation unknown not0'))
     from .scattering_accuracy_analytic import polynomial_phase_lower_bounds
     bounds=polynomial_phase_lower_bounds(configuration('FLAT',5))
     write_json(folder/'phase_representation_lower_bounds.json',bounds)
+    from .scattering_accuracy_checks import saved_modal_effects
+    modal=saved_modal_effects(stage('BOUNDARY'),stage('ATTRIBUTION'))
+    write_json(folder/'saved_boundary_mode_effects.json',modal)
+    journal.calls['cached_boundary_field_contractions']=8
     return dict(status='COMPLETED',rows=rows,selection=selection(),representation_lower_bounds=bounds,artifact_root=str(ARTIFACT),
+        saved_modal_effects=modal,
         learning_object='full physical FE+DtN coefficients bypassing measured preparation, audited by original equation',
         necessary_condition='fV-H >= .2 T_B; cold teacher, training, load, correction, audit all included',
         correctness_denominator='no new accurate baseline unless FLAT and adjacent fixed532 field/power gates pass',

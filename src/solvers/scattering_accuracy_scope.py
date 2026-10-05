@@ -12,6 +12,22 @@ STAGES = ('BOUNDARY', 'ATTRIBUTION', 'SCREEN', 'FLAT_P5', 'FLAT_SELECTED',
           'NOTCH_LOW', 'NOTCH_HIGH', 'GRAM_CONTROL', 'VERIFY', 'COST')
 SOLVES = ('FLAT_P5', 'FLAT_SELECTED', 'NOTCH_LOW', 'NOTCH_HIGH', 'GRAM_CONTROL')
 class AccuracyWindow(AnchorWindow):
+    def launcher_overhead(self):
+        # The inherited reader covers auxiliaries (summary.json). Formal dat
+        # stages save run_summary.json; retain their measured prelaunch costs.
+        import json
+        probes={}
+        for p in self.TMP.glob('probe_*.json'):
+            r=json.loads(p.read_text());key=str(Path(r['receipt_path']).parent)
+            probes[key]=probes.get(key,0.)+r['elapsed_seconds']
+        seconds=super().launcher_overhead()
+        for r in self.ledger()['runs']:
+            p=Path(r['folder'])/'run_summary.json'
+            if p.exists():
+                s=json.loads(p.read_text())
+                seconds+=max(0.,s['launch_wall_seconds']-r['elapsed_seconds']-probes.get(r['folder'],0.))
+        return seconds
+
     def remaining(self, role):
         self.require_ready()
         return min(3600 if role in STAGES else 900,

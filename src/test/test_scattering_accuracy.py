@@ -139,5 +139,17 @@ class AccuracyTests(unittest.TestCase):
         self.assertEqual(result['new_FE_objects'],0);self.assertEqual(result['new_A_calls'],0)
         self.assertTrue(all(r['H_curl_relative_lower_bound']>1e-4 for r in result['rows']))
 
+    def test_formal_and_auxiliary_launch_overhead_is_not_free_or_doubled(self):
+        from src.solvers.scattering_accuracy_scope import AccuracyWindow
+        with tempfile.TemporaryDirectory() as t:
+            root=Path(t);aux=root/'aux';run=root/'run';aux.mkdir();run.mkdir()
+            (aux/'summary.json').write_text(json.dumps(dict(launch_wall_seconds=30)))
+            (run/'run_summary.json').write_text(json.dumps(dict(launch_wall_seconds=120)))
+            for i,p,s in ((0,aux,3),(1,run,2)):
+                (root/f'probe_{i:03d}.json').write_text(json.dumps(dict(receipt_path=str(p/'admission.json'),elapsed_seconds=s)))
+            w=AccuracyWindow.__new__(AccuracyWindow);w.TMP=root
+            w.ledger=lambda:dict(runs=[dict(folder=str(aux),elapsed_seconds=20),dict(folder=str(run),elapsed_seconds=100)])
+            self.assertEqual(w.launcher_overhead(),25)
+
 
 if __name__=='__main__':unittest.main()

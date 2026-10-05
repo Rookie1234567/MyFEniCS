@@ -61,3 +61,57 @@ def check_boundary(record):
     return dict(status='INDEPENDENT_FULL_532_CHECK',rows=rows,pass_gate=all(r['pass_gate'] for r in rows),
         relative_scale='nonzero reference with pre-scaling, no1e-30 floor; exact zero uses1e-12 absolute',
         scientific_A_calls=0,source_parent=record['source_sha'])
+
+
+def saved_modal_effects(boundary,attribution):
+    """Decompose the fixed old field's boundary change, not a new solve.
+
+    Each complete mode is contracted before taking its norm. The sum retains
+    cancellation across modes and is paired with the saved full residual.
+    Both clipped and untrimmed old native inventories remain distinguishable.
+    """
+    from .scattering_anchor_scope import stage as old_stage
+    from .scattering_accuracy import configuration
+    from .fullspace_dtn_action import build_dynamic_mode_inventory
+    from .dtn_port_3d import _incident_projection_onto_top_mode
+    rows=[]
+    for b,r in zip(boundary['rows'],attribution['saved_original_equation_rechecks'],strict=True):
+        degree=b['degree'];cfg=configuration('NOTCH',degree)
+        modes,identities,_=build_dynamic_mode_inventory(cfg)
+        if len(modes)!=532 or r['degree']!=degree:raise ValueError('modal effect inventory')
+        old=old_stage('REFERENCE_NOTCH' if degree==4 else 'REFERENCE_NOTCH_P5')
+        state=checked_arrays(old['arrays']);new=checked_arrays(r['arrays47']);u=state['u_storage']
+        packed={k:checked_arrays(b['arrays'][k]) for k in ('q47','original','original_untrimmed')}
+        inc=np.asarray([_incident_projection_onto_top_mode(m,cfg) for m in modes]);totals={k:np.zeros_like(u) for k in packed}
+        differences={k:np.zeros_like(u) for k in ('original','original_untrimmed')};per=[];diagonal={k:0. for k in differences}
+        for i,identity in enumerate(identities):
+            contributions={}
+            for k,a in packed.items():
+                sl=slice(a['offsets'][i],a['offsets'][i+1]);ids=a['rows'][sl]
+                values=a['C'][sl]*(np.dot(a['D'][sl],u[ids])/a['H'][i]-inc[i])
+                contributions[k]=(ids,values);np.add.at(totals[k],ids,values)
+            row={k:identity[k] for k in ('mode_index','side','m','n','polarization')}
+            for k in differences:
+                delta=np.zeros_like(u)
+                for factor,key in ((1,'q47'),(-1,k)):
+                    ids,values=contributions[key];np.add.at(delta,ids,factor*values)
+                np.add.at(differences[k],np.arange(len(u)),delta)
+                n=float(np.linalg.norm(delta));diagonal[k]+=n*n
+                j=int(np.argmax(np.abs(delta)))
+                row[k+'_delta_norm']=n;row[k+'_largest_native_row']=j
+                row[k+'_largest_native_value']=[float(delta[j].real),float(delta[j].imag)]
+            per.append(row)
+        # Residual = traction - V*u - C*(D*u/H - incident).
+        predicted=packed['q47']['incident_traction']-packed['original']['incident_traction']-differences['original']
+        actual=new['residual']-state['residual']
+        operation_scale=np.linalg.norm(new['rhs'])+np.linalg.norm(state['rhs'])+np.linalg.norm(predicted)
+        identity=float(np.linalg.norm(predicted-actual)/max(operation_scale,1e-300))
+        if identity>1e-10:raise ValueError('saved old/new boundary residual decomposition identity')
+        rows.append(dict(degree=degree,mode_count=532,per_mode=per,
+            sum_change_norms={k:float(np.linalg.norm(v)) for k,v in differences.items()},
+            diagonal_squared=diagonal,cross_squared={k:float(np.linalg.norm(differences[k])**2-diagonal[k]) for k in differences},
+            old_new_residual_identity_operation_scaled=identity,
+            parent_old_array=old['arrays']['sha256'],parent_new_array=r['arrays47']['sha256'],
+            q47_parent= b['arrays']['q47']['sha256'],
+            meaning='old clipped carrier and old untrimmed quadrature separated; all mode sums assembled before norms'))
+    return dict(rows=rows,new_FE_volume_actions=0,new_PDE_solves=0)
