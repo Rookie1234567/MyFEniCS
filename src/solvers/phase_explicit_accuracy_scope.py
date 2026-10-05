@@ -35,6 +35,7 @@ def implementation_hashes():
     names = plan_record()['local_numeric_closure'] + [str(PLAN.relative_to(ROOT)),
         'src/solvers/phase_explicit_accuracy_scope.py','src/solvers/phase_explicit_accuracy.py',
         'src/solvers/phase_explicit_accuracy_fields.py','src/solvers/fixed_phase_fem.py',
+        'src/solvers/phase_explicit_accuracy_capacity.py',
         'src/io/phase_explicit_accuracy.py','src/runners/port_preparation.py',
         'scripts/run_case.py','scripts/activate_task042.sh','benchmarks/subreaper_watchdog.py',
         'src/test/test_phase_explicit_accuracy.py','benchmarks/qualify_phase_explicit_accuracy.py',

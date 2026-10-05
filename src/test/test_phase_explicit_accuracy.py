@@ -78,5 +78,24 @@ class PhaseTests(unittest.TestCase):
             result=common_physical_difference(f,f,SimpleNamespace(kx=2+0j,ky=.2+0j,k0=3),j,Path(t))
         self.assertTrue(result['pass_gate'])
 
+    def test_symbolic_capacity_is_required_not_measured_peak(self):
+        from src.solvers.phase_explicit_accuracy_capacity import numeric_plan
+        p=numeric_plan(2*2**30,{'infog':{'16':500,'17':600}})
+        self.assertTrue(p['admitted']);self.assertEqual(p['numeric_memory_allocation_cap_mb'],1200)
+        self.assertFalse(numeric_plan(2*2**30,{'infog':{'16':9000,'17':9000}})['admitted'])
+        with self.assertRaises(ValueError):numeric_plan(1,{'infog':{'16':0,'17':0}})
+
+    def test_existing_symbolic_backend_matches_direct_small_complex_system(self):
+        from petsc4py import PETSc
+        from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
+        rng=np.random.default_rng(511);A=rng.normal(size=(7,7))+1j*rng.normal(size=(7,7))+7*np.eye(7)
+        b=rng.normal(size=7)+1j*rng.normal(size=7)
+        mat=PETSc.Mat().createAIJ((7,7),nnz=7,comm=PETSc.COMM_SELF);mat.setValues(np.arange(7,dtype=PETSc.IntType),np.arange(7,dtype=PETSc.IntType),A);mat.assemble()
+        factor=_MumpsFactor(mat);rhs=mat.createVecRight();x=rhs.duplicate();rhs.array[:]=b
+        try:
+            factor.symbolic(mat);factor.numeric(mat);factor.solve_repeated(rhs,x)
+            self.assertLess(np.linalg.norm(A@x.array-b)/np.linalg.norm(b),1e-12)
+        finally:factor.destroy();mat.destroy();rhs.destroy();x.destroy()
+
 
 if __name__=='__main__':unittest.main()

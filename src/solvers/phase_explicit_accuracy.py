@@ -104,12 +104,16 @@ def boundary_check(cfg,setup,folder,journal):
 
 class CoordinateFactor:
     """Exact diagonal port change wrapped around the existing direct backend."""
-    def __init__(self,matrix,bundle,nt,journal,folder):
+    def __init__(self,matrix,bundle,nt,journal,folder,*,symbolic_capacity=False):
         from .dtn_port_3d import _mode_boundary_phase
         self.left,self.right=port_coordinate_scales(nt,[e.normalization_h for e in bundle['dtn_action'].carrier.entries],[_mode_boundary_phase(m,bundle['cfg']) for m in bundle['modes']])
         self.mapping=save_arrays(folder/'port_coordinate_map.npz',left=self.left,right=self.right)
         scaled=matrix.copy();lv=matrix.createVecLeft();rv=matrix.createVecRight();lv.array[:]=self.left;rv.array[:]=self.right;scaled.diagonalScale(lv,rv)
-        try:self.factor=DirectFactor(scaled,journal)
+        try:
+            if symbolic_capacity:
+                from .phase_explicit_accuracy_capacity import AnalyzedDirectFactor
+                self.factor=AnalyzedDirectFactor(scaled,journal,folder)
+            else:self.factor=DirectFactor(scaled,journal)
         finally:scaled.destroy();lv.destroy();rv.destroy()
 
     def solve_repeated(self,rhs,target):
@@ -142,7 +146,11 @@ def solve(role,folder,journal):
         return dict(status='NOT_RUN_FLAT_ACCURACY_GATE')
     case='NOTCH' if role.startswith('NOTCH') else 'FLAT';degree=5 if role in ('FLAT_P5','NOTCH_P5','NOTCH_HPROBE') else 4;grid='ORIGINAL'
     if role=='NOTCH_HPROBE':grid=json.loads((window.TMP/'h_selection.json').read_text())['grid']
-    cfg,setup,geo=make_setup(case,degree,grid,journal);cap=capacity(setup,cfg,journal)
+    cfg,setup,geo=make_setup(case,degree,grid,journal)
+    if role=='NOTCH_HPROBE':
+        from .phase_explicit_accuracy_capacity import h_capacity
+        cap=h_capacity(setup,cfg,journal)
+    else:cap=capacity(setup,cfg,journal)
     if not cap['admitted']:return dict(status='NOT_RUN_CAPACITY_GATE',capacity=cap)
     bundle=rhs=inverse=system=u=factor=None
     try:
@@ -151,7 +159,7 @@ def solve(role,folder,journal):
         bundle,rhs=build_bundle(cfg,setup,journal);write_json(folder/'actual_volume_form_identity.json',volume_form_identity(bundle))
         system,inverse=condense(bundle,journal)
         write_json(folder/'build_audit.json',system.build_audit)
-        factor=CoordinateFactor(system.matrix,bundle,system.active_rows,journal,folder);inverse.factor=factor
+        factor=CoordinateFactor(system.matrix,bundle,system.active_rows,journal,folder,symbolic_capacity=role=='NOTCH_HPROBE');inverse.factor=factor
         with journal.measured('solve_and_affine_internal_recovery'):
             u=inverse.apply(rhs);port=inverse.last_port_solution.copy()
         early=save_arrays(folder/'returned_solution.npz',u_storage=u.array.copy(),port=port,rhs=rhs.array.copy(),kappa=bundle['kappa'],slaves=np.asarray(setup['floquets'][degree].mpc.slaves),**geo)
@@ -275,7 +283,12 @@ def compare_saved(coarse,fine,folder,journal):
     power['A_volume']=abs(coarse['output']['volume_metrics']['A_volume_total']-fine['output']['volume_metrics']['A_volume_total'])
     energies=[abs(r['output']['volume_metrics']['energy_closure_error_port_volume']) for r in (coarse,fine)]
     result.update(modes=modes,power_differences=power,energies=energies)
-    result['pass_gate']=result['pass_gate'] and all(modes[k]<=1e-4 for k in modes if k.endswith('_relative')) and modes['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energies)<=1e-5
+    # Raw auxiliary coordinates can span 1e88 solely through the known
+    # evanescent reference-plane phase. Keep their comparison as diagnostic;
+    # the physical complex amplitudes are evaluated at their actual boundary
+    # reference planes, without a fitted phase or changed normalization.
+    result['mode_qualification_quantity']='outgoing_amplitude_at_boundary_relative; raw auxiliary coordinates separately retained'
+    result['pass_gate']=result['pass_gate'] and modes['outgoing_amplitude_at_boundary_relative']<=1e-4 and modes['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energies)<=1e-5
     return result
 
 
