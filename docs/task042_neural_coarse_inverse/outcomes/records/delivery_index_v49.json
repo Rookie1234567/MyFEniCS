@@ -41,29 +41,267 @@
     }
   },
   "compact_records": [
-    "array_inventory_v49.json",
-    "changed_files_v49.json",
-    "cold_n1_costs_v49.json",
-    "complete_physical_results_v49.json",
-    "documentation_checks_v49.json",
-    "engine_source_manifest_v49.json",
-    "finite_independent_checks_v49.json",
-    "object_lifetimes_v49.json",
-    "opportunity_decision_v49.json",
-    "p_increment_v49.json",
-    "physical_cases_v49.json",
-    "physical_identity_bindings_v49.json",
-    "post_settlement_archive_v49.json",
-    "raw_archive_index_v49.json",
-    "repair_journal_v49.jsonl",
-    "resource_costs_final_v49.json",
-    "resource_costs_snapshot_v49.json",
-    "run_index_v49.json",
-    "source_bindings_v49.json",
-    "tests_v49.json"
+    {
+      "path": "array_inventory_v49.json",
+      "bytes": 5453,
+      "sha256": "60c920876f4443142228ad0a9ad6291ffa110ac78f1c58d1edec9c66bb8df1b4"
+    },
+    {
+      "path": "changed_files_v49.json",
+      "bytes": 7704,
+      "sha256": "44ce49cc8d3c8a1d47531388848941be8c151969cb512ebc42c81a2cfe7f1e09"
+    },
+    {
+      "path": "cold_n1_costs_v49.json",
+      "bytes": 16794,
+      "sha256": "9094ec2a1234493de4d2a8336ee9311b907650e98b40723d729fd0e260bde666"
+    },
+    {
+      "path": "complete_physical_results_v49.json",
+      "bytes": 34743,
+      "sha256": "10a85cc86052f5e959c0f043e96e0524f2a47fb872c9dc1cc542e49c4078aada"
+    },
+    {
+      "path": "documentation_checks_v49.json",
+      "bytes": 17131,
+      "sha256": "34b143439a8f019c67650866b232d8a256a71eda09ebc0d628c11fd1c9315dfd"
+    },
+    {
+      "path": "engine_source_manifest_v49.json",
+      "bytes": 38693,
+      "sha256": "b2358ac7f7f6588a435ebb98f1ce50dbac850e42ec7d0c326bc20181de49f565"
+    },
+    {
+      "path": "finite_independent_checks_v49.json",
+      "bytes": 1125,
+      "sha256": "0a8750569e24081f8ce4169cabfa1f201f14a51165b792be1bfeb73b6d3f31e9"
+    },
+    {
+      "path": "ledger_final_v49.json",
+      "bytes": 36851,
+      "sha256": "cc7a1e0d07cfac70ead1cd393aace9255d00b07111c399f0fa8586de602efb62"
+    },
+    {
+      "path": "object_lifetimes_v49.json",
+      "bytes": 10743,
+      "sha256": "438dd0dcb2bf51aeb2b83990f8fa1bb8f3058c3ad5c36c151c3f7172af4734df"
+    },
+    {
+      "path": "opportunity_decision_v49.json",
+      "bytes": 3702,
+      "sha256": "c5700fc2dec686051abbe9790e0be316f2ba6129c1dad45254ea73abe3735c94"
+    },
+    {
+      "path": "p_increment_v49.json",
+      "bytes": 6543,
+      "sha256": "0cd3e3d3b8d2993ae7993f075f5f61e1cea5312eb0a74cdacc75ecc44bf3eb5e"
+    },
+    {
+      "path": "physical_cases_v49.json",
+      "bytes": 2102,
+      "sha256": "48fa29a921fa57129a3f184426d7122b9d10c4a7fbfd00bce78e013f0a185f9e"
+    },
+    {
+      "path": "physical_identity_bindings_v49.json",
+      "bytes": 4076,
+      "sha256": "5cefa97b832ee886ae369c645382b85ad5d51d57a5681ef822833111d8758770"
+    },
+    {
+      "path": "post_settlement_archive_v49.json",
+      "bytes": 320042,
+      "sha256": "23c01e9dc337781118e29da98a6ead47488bff68c53b036ae165f166ba4efbbb"
+    },
+    {
+      "path": "raw_archive_index_v49.json",
+      "bytes": 265387,
+      "sha256": "4876d2be31fd885e87bb9c00bc16e2474ccefe9e52f09dee7861c5b8098a9f06"
+    },
+    {
+      "path": "repair_journal_v49.jsonl",
+      "bytes": 8120,
+      "sha256": "574080a9547aa686f3b09f74b7d2295a46af9137bcb9b0149ec2321e60815244"
+    },
+    {
+      "path": "resource_costs_final_v49.json",
+      "bytes": 22996,
+      "sha256": "0342c86cd4f40002ad3ac56daefaa14bddbc254a7bb6245e8505349307550013"
+    },
+    {
+      "path": "resource_costs_snapshot_v49.json",
+      "bytes": 11559,
+      "sha256": "e4211b2e231826470bff04cd016b391d8cfd7225b8461318e8a82552f69b711a"
+    },
+    {
+      "path": "run_identity_inventory_v49.json",
+      "bytes": 82415,
+      "sha256": "ce93b0c71bf0aa491006037944f675fbe04dc40d4334465abe80fbf4d927e13f"
+    },
+    {
+      "path": "run_index_v49.json",
+      "bytes": 8967,
+      "sha256": "910ded6e56b18762569272b48e7be972bb08b9a39d4fb824b6dad236a2d5816a"
+    },
+    {
+      "path": "source_bindings_v49.json",
+      "bytes": 534961,
+      "sha256": "d611b16b5c90cd3336634d629dd6879dd7e9759ec79812dd1757a44672a44c82"
+    },
+    {
+      "path": "tests_v49.json",
+      "bytes": 20105,
+      "sha256": "292c4c342fa0951317dfb18daf6bb6c054273d8fb907433f5dc279b315434488"
+    }
   ],
   "mutable_final_fees_and_documentation_records_are_settled_after_document_tests": true,
   "new_NEURAL_TRAINING": 0,
   "TARGET_NOT_QUALIFIED": true,
-  "final_delivery_git_receipt": "delivery_git_v49.json"
+  "final_delivery_git_receipt": "tmp/task042/v49/delivery_git_v49.json",
+  "final_tested_markdown_hashes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v47.md",
+      "sha256": "ff656bb9de85be4089b4a5fbe83005fb39c22ce413c22b50d4cbf4695e1ead2a",
+      "tables": [
+        {
+          "line": 42,
+          "columns": 3
+        },
+        {
+          "line": 69,
+          "columns": 2
+        },
+        {
+          "line": 83,
+          "columns": 2
+        },
+        {
+          "line": 180,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "review_report_v46.md",
+        "response_v48.md",
+        "outcomes/summary.md",
+        "outcomes/full_moment_hierarchy_v45.md",
+        "outcomes/trace_subspace_selection_v47.md",
+        "outcomes/lossless_vector_storage_v48.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v49.md",
+      "sha256": "a0367a5edbaa15edb7e4420c694539ac4554df2c7c2f2ce8687e754260a62e33",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 5
+        },
+        {
+          "line": 17,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "review_report_v47.md",
+        "outcomes/complete_scattering_engine_anchor_v49.md",
+        "outcomes/records/cold_n1_costs_v49.json",
+        "outcomes/records/resource_costs_final_v49.json",
+        "outcomes/records/run_index_v49.json",
+        "outcomes/records/delivery_index_v49.json",
+        "outcomes/records/repair_journal_v49.jsonl",
+        "outcomes/records/tests_v49.json",
+        "outcomes/records/documentation_checks_v49.json",
+        "outcomes/records/opportunity_decision_v49.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/complete_scattering_engine_anchor_v49.md",
+      "sha256": "432034b62319c0bc86cca3416a3daa827034dbd2c51b820536b51fbfda1874aa",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 2
+        },
+        {
+          "line": 36,
+          "columns": 2
+        },
+        {
+          "line": 60,
+          "columns": 7
+        },
+        {
+          "line": 70,
+          "columns": 7
+        },
+        {
+          "line": 80,
+          "columns": 8
+        },
+        {
+          "line": 94,
+          "columns": 3
+        },
+        {
+          "line": 110,
+          "columns": 6
+        },
+        {
+          "line": 118,
+          "columns": 6
+        },
+        {
+          "line": 143,
+          "columns": 3
+        },
+        {
+          "line": 157,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "../review_report_v47.md",
+        "../../../input/task042_neural_coarse_inverse/scattering_anchor_v49.json",
+        "../../../input/materials/si_optical_constants_v1.json",
+        "records/physical_identity_bindings_v49.json",
+        "records/physical_cases_v49.json",
+        "records/engine_source_manifest_v49.json",
+        "records/source_bindings_v49.json",
+        "records/object_lifetimes_v49.json",
+        "records/finite_independent_checks_v49.json",
+        "records/complete_physical_results_v49.json",
+        "records/array_inventory_v49.json",
+        "records/p_increment_v49.json",
+        "records/cold_n1_costs_v49.json",
+        "records/resource_costs_final_v49.json",
+        "records/repair_journal_v49.jsonl",
+        "records/raw_archive_index_v49.json",
+        "records/post_settlement_archive_v49.json",
+        "records/opportunity_decision_v49.json",
+        "records/tests_v49.json",
+        "records/documentation_checks_v49.json",
+        "records/run_index_v49.json",
+        "records/delivery_index_v49.json",
+        "records/engine_source_manifest_v49.json",
+        "records/source_bindings_v49.json",
+        "records/changed_files_v49.json"
+      ]
+    }
+  ],
+  "ledger_closed": true,
+  "active": null,
+  "original_complete_arrays_and_sources_preserved": true,
+  "post_settlement_script": {
+    "classification": "POST_SETTLEMENT_LOW_LOAD_METADATA_NOT_SCIENTIFIC_RUN",
+    "source_sha_at_start": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+    "script_path": "tmp/task042/v49/settle_v49.py",
+    "script_sha256": "8362a6b09b9d914359bd13d6eda7aaf56cd51a09d023d7eb9878f5c07a404c0f",
+    "seconds_lower_so_far": 1.9595055461395532,
+    "own_metadata_process_ru_maxrss_bytes": 66072576,
+    "no_new_FE_A_AH_factor_training": true,
+    "outside_numeric_worker_watchdog": "low-load final settlement; no numerical source qualification claimed"
+  }
 }

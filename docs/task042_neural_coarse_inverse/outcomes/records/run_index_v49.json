@@ -143,6 +143,30 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused10",
       "source_sha": "81d5f7057efea3c4c22fef43afaec67c55ade323",
       "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_post_collect01",
+      "source_sha": "81d5f7057efea3c4c22fef43afaec67c55ade323",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_post_docs01",
+      "source_sha": "28a06d569de7ee0988768ebff3b7c4fd99488c99",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused11",
+      "source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_post_docs02",
+      "source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+      "classification": "COMPLETED"
     }
   ],
   "complete_stage_pointers": {
@@ -179,5 +203,7 @@
       "sha256": "ff96ef45758f2fd6751c2bf3d3d1ec91c215afe33f6c5347f60968387b43ab74"
     }
   },
-  "minimum_package": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/minimum_result_cost_package.json"
+  "minimum_package": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/minimum_result_cost_package.json",
+  "all_scientific_states_frozen": true,
+  "final_identity_inventory": "run_identity_inventory_v49.json"
 }

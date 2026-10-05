@@ -107,7 +107,7 @@
       }
     ],
     "implementation_hashes": {
-      "benchmarks/collect_scattering_anchor.py": "8b1d1ed67335e321f33dc7f3d7f67153f911a3ca09fa10772aba999b952ce2f2",
+      "benchmarks/collect_scattering_anchor.py": "165d8931aa5c060a560e1384182db2788903bf7946a1c75a6aa25a721f0d6943",
       "benchmarks/qualify_scattering_anchor.py": "a996f403d476390f72adb4129b2eb1f8a888f8cea2d83720c7719fb1880c7a11",
       "benchmarks/subreaper_watchdog.py": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
       "input/materials/si_optical_constants_v1.json": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
@@ -153,7 +153,7 @@
       "src/io/physical_recursive_profile.py": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
       "src/io/resolved_config.py": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
       "src/io/run_specification.py": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
-      "src/io/scattering_anchor.py": "ab45b5161c773775ae4de95a6f197fef13a17e4a8b76612952efd28c90b8640e",
+      "src/io/scattering_anchor.py": "2f3a971347c6d485e0bf0365481165128bfc196bcc9d55ae3dfd407c521e0724",
       "src/postprocessing/diffraction_3d.py": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
       "src/postprocessing/full3d_reference.py": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
       "src/postprocessing/near_field_2d.py": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
@@ -161,7 +161,7 @@
       "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
       "src/postprocessing/power_metrics.py": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
       "src/postprocessing/rta_3d.py": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
-      "src/runners/port_preparation.py": "4a6c93f11a5610822adbaa844d102cbabf7b826db919c1da83cd13386351f059",
+      "src/runners/port_preparation.py": "1db5d6a2221460bde824b936054357753dfc22941bab0e5889767ab8792e514a",
       "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
       "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
       "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
@@ -209,7 +209,7 @@
       "src/solvers/scattering_y_orbit_reuse.py": "cee15e29817a51b45c179848350391684a3ac1f583f92b3ca8f003e64ff0c636",
       "src/solvers/solve_vector_maxwell.py": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
       "src/solvers/static_local_schur_action.py": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
-      "src/test/test_scattering_anchor.py": "ff0780ad112ba80e65cd0e79c1f6bb6c7d8d73925ca117f40f05896575839c81"
+      "src/test/test_scattering_anchor.py": "e31226222a994e3b4ee06b5295566f78b986e5227fbd0b6d538ffeaf29d7afb7"
     },
     "watchdog_test": {
       "workflow_deadline_seconds": 1,
@@ -241,21 +241,21 @@
         }
       },
       "clock_start": {
-        "monotonic": 1099408.345661465,
-        "boottime": 1099408.345665301,
-        "utc_ns": 1791174413484799319
+        "monotonic": 1099888.535623083,
+        "boottime": 1099888.535625518,
+        "utc_ns": 1791174893674760213
       },
       "timebase_policy": "strict",
       "timebase_policy_version": 1,
       "stop_event": {
         "reason": "PERFORMANCE_CONTROLLED_STOP",
-        "monotonic": 1099409.472760309,
-        "timestamp_ns": 1791174414611896145,
+        "monotonic": 1099889.688010983,
+        "timestamp_ns": 1791174894827148990,
         "grace_seconds": 2.0
       },
       "first_SIGTERM": {
-        "monotonic": 1099409.472785605,
-        "timestamp_ns": 1791174414611919189,
+        "monotonic": 1099889.6880388,
+        "timestamp_ns": 1791174894827172419,
         "scope": "whole child tree"
       },
       "cache_metadata_stable": true,
@@ -264,10 +264,10 @@
       "descendants_cleared": true,
       "remaining_child_pids": [],
       "observed_child_pids": [
-        2106740,
-        2106741
+        2109918,
+        2109919
       ],
-      "sampled_process_tree_rss_peak_bytes": 59736064,
+      "sampled_process_tree_rss_peak_bytes": 59850752,
       "sampled_process_tree_swap_peak_bytes": 0,
       "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
       "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
@@ -289,56 +289,60 @@
       "job_swap_activity": "zero_supported_by_zero_global_activity",
       "launch_envelope": {
         "mem_total_bytes": 2163100385280,
-        "mem_available_bytes": 2139683938304,
+        "mem_available_bytes": 2138454003712,
         "effective_total_bytes": 2163100385280,
-        "effective_available_bytes": 2139683938304,
+        "effective_available_bytes": 2138454003712,
         "reserve_bytes": 324465057792,
         "launch_cap_bytes": 12000000000,
         "planning_cap_bytes": 12000000000,
         "cgroup_limits": []
       },
       "samples": 13,
-      "elapsed_seconds": 2.4886437749955803,
+      "elapsed_seconds": 2.6941069059539586,
       "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "source_state": "development_worktree; not formal PDE provenance",
       "clock_end": {
-        "monotonic": 1099410.834305646,
-        "boottime": 1099410.83430658,
-        "utc_ns": 1791174415973440301
+        "monotonic": 1099891.229729349,
+        "boottime": 1099891.229730206,
+        "utc_ns": 1791174896368863928
       },
       "workflow_clock_interval": {
         "elapsed_seconds": {
-          "monotonic": 2.488644180819392,
-          "boottime": 2.4886412790510803,
-          "utc": 2.488640982
+          "monotonic": 2.69410626613535,
+          "boottime": 2.694104688009247,
+          "utc": 2.694103715
         },
-        "budget_seconds": 2.488644180819392,
-        "discrepancy_seconds": 3.198819392036256e-06,
+        "budget_seconds": 2.69410626613535,
+        "discrepancy_seconds": 2.551135350081779e-06,
         "tolerance_seconds": 5.0,
         "policy": "strict",
         "policy_version": 1,
-        "utc_minus_monotonic_seconds": -3.198819392036256e-06,
+        "utc_minus_monotonic_seconds": -2.551135350081779e-06,
         "step": {
           "elapsed_seconds": {
-            "monotonic": 0.0392285268753767,
-            "boottime": 0.03922864212654531,
-            "utc": 0.039228676
+            "monotonic": 0.07543999003246427,
+            "boottime": 0.07544013415463269,
+            "utc": 0.075440127
           },
-          "budget_seconds": 0.03922864212654531,
-          "discrepancy_seconds": 1.4912462329569331e-07,
+          "budget_seconds": 0.07544013415463269,
+          "discrepancy_seconds": 1.441221684217453e-07,
           "tolerance_seconds": 5.0,
           "policy": "strict",
           "policy_version": 1,
-          "utc_minus_monotonic_seconds": 1.4912462329569331e-07
+          "utc_minus_monotonic_seconds": 1.3696753572989273e-07
         },
-        "utc_positive_excess_seconds": 1.3294849527528685e-07
+        "utc_positive_excess_seconds": 5.310265732694219e-08
       }
     },
     "science_actions": 0
   },
-  "focused_source_sha": "81d5f7057efea3c4c22fef43afaec67c55ade323",
-  "run_manifest_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused10/run_manifest.json",
+  "focused_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+  "run_manifest_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused11/run_manifest.json",
   "qualified_activation": "scripts/activate_task042.sh pure; real FE stage ABI in run manifests",
-  "documentation_final_pending": true,
-  "CI": "NOT_RUN"
+  "documentation_final_pending": false,
+  "CI": "NOT_RUN",
+  "final_documentation_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+  "final_test_count": 18,
+  "documentation_test_count": 15,
+  "expensive_scientific_replay_for_metadata": false
 }

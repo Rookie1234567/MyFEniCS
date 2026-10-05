@@ -1,0 +1,1686 @@
+{
+  "rows": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused01",
+      "source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused01/run_manifest.json",
+          "sha256": "18ebabee9a3e414b32ceeef09fb49041dec5fb09b8a0cc6a1130a95f7255ee10",
+          "bytes": 12434
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused01/admission.json",
+          "sha256": "28f80eb59596ab442dcafc52672421163669e32812df3fce223452990c2f054c",
+          "bytes": 441136
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused01/resource_baseline.json",
+          "sha256": "b649115b4b22bad45f5a17db73e7459534dc7aba194c92c4176ea9bd187941d8",
+          "bytes": 189988
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused01/summary.json",
+          "sha256": "93c7d5e8060c3ad94f2d533b2134f383aac342dd84d174e4dd562d69ed4a2df2",
+          "bytes": 16415
+        }
+      },
+      "MPI": 1,
+      "cpu": 2,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_preflight_20261005T023603192961Z",
+      "source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/input_original.dat",
+          "sha256": "c6dbd8befa316b505ccf7a07549767f957d490759ef697635d3e86a150be8aec",
+          "bytes": 93
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/resolved_config.json",
+          "sha256": "5e37f3212d432fea649312295c9514e122fe5d6516900a541bf567ead33586ee",
+          "bytes": 3376
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/run_manifest.json",
+          "sha256": "fe8db7c022a221e870b43221156a2061bc07c537689da637ae37c5ef64a634c0",
+          "bytes": 12700
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/source_sha.txt",
+          "sha256": "2444b539e61d4a0860cc23e69be147739de99093bea5d409c73b0b4ac0d9f65f",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/admission.json",
+          "sha256": "2ee818e04a0eceafdd76fc4442946e02a4a246387d07cac0ce785c82b4aa2a02",
+          "bytes": 630372
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/resource_baseline.json",
+          "sha256": "fded9d93d5c7983c8ae3ec8547fcda7040c9ee63619dfdf9877f0abe92161b55",
+          "bytes": 274476
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/run_summary.json",
+          "sha256": "c5c6b5f2587887120278c7c56f069fbd6f482f943a14717c53570758561a8913",
+          "bytes": 16686
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/input_sha256.txt",
+          "sha256": "69ae25be0ef9e31518db811d35e623f2115e300af2bf931f9f3fdd156998bf6f",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/physical_model_sha256.txt",
+          "sha256": "6cc8bc6bbbd6c7e94db9b21cef1e6b2370102834f06db67a7787b37283bbb6ab",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_preflight_20261005T023603192961Z/post_run_identity_completion.json",
+          "sha256": "f352219a36c52600d55f9576b57543fed2944a9f547ad54926332868adcaa764",
+          "bytes": 1462
+        }
+      },
+      "MPI": 1,
+      "cpu": 1,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.738961+00:00",
+          "observed_monotonic": 1100152.599828181,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.770190238953,
+          "heavy_remaining_seconds": 14315.229809761047,
+          "total_remaining_seconds": 17015.229809761047
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "c6dbd8befa316b505ccf7a07549767f957d490759ef697635d3e86a150be8aec",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "REFERENCE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_regular_20261005T023628436965Z",
+      "source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+      "classification": "WORKER_FAILED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/input_original.dat",
+          "sha256": "672683124229d1c903d905caa715abb1bb8475143e701c1542717b7052f962a1",
+          "bytes": 102
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/resolved_config.json",
+          "sha256": "b75cc5cb8237f9a02ba75f3e2a51cbb9491ed374b85b87c397a30f70a89a207a",
+          "bytes": 3386
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/run_manifest.json",
+          "sha256": "76735dc96792d1f4c2bd2ebd3154b2955f3b8455aec7776ca9d2cef3a9ef2c64",
+          "bytes": 12703
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/source_sha.txt",
+          "sha256": "2444b539e61d4a0860cc23e69be147739de99093bea5d409c73b0b4ac0d9f65f",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/admission.json",
+          "sha256": "0ab4ad3bd1fe56668a69a5a982d7286b578d2eb480905f6e7781eedbc134382f",
+          "bytes": 630084
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/resource_baseline.json",
+          "sha256": "5a04d166db142e98df5ec1478e14d0c04ef8ebf6706120cd7d6d3d31f51bbeec",
+          "bytes": 274526
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/run_summary.json",
+          "sha256": "472ee90023c28c26a6030a5ce731e14318879a7e86fd2f61c32349f323f3b260",
+          "bytes": 16704
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/input_sha256.txt",
+          "sha256": "a5f961670ed4b6fddfc698668e0cac454dd5c8cbc41363bb7bafb6e0f147aa0b",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023628436965Z/post_run_identity_completion.json",
+          "sha256": "926b2952420c959d41aeee3091da72ae454ae30147ab105d9ef13e162ed482ad",
+          "bytes": 1459
+        }
+      },
+      "MPI": 1,
+      "cpu": 1,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.744608+00:00",
+          "observed_monotonic": 1100152.605475007,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.775837182999,
+          "heavy_remaining_seconds": 14315.224162817001,
+          "total_remaining_seconds": 17015.224162817
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "672683124229d1c903d905caa715abb1bb8475143e701c1542717b7052f962a1",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused02",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused02/run_manifest.json",
+          "sha256": "0aa80b5ce0c0afd112a36f0e1e5d52769f3fa06e83b44d79790c571e0bfeae2e",
+          "bytes": 12436
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused02/admission.json",
+          "sha256": "53ba4b22d15323872b4d2ba86218ae8457c80c5a14dfcd5fc76b9a28c7f7bb1c",
+          "bytes": 436864
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused02/resource_baseline.json",
+          "sha256": "a097820294e919890a426819af25f1007c687fcd3202bf669bfbff82dde53079",
+          "bytes": 188414
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused02/summary.json",
+          "sha256": "8a3f85c6dcf992b6fc9b336998a2946cff0cb2f38a7812a9853fe8d90b29411f",
+          "bytes": 16415
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "REFERENCE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_regular_20261005T023830942849Z",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/input_original.dat",
+          "sha256": "672683124229d1c903d905caa715abb1bb8475143e701c1542717b7052f962a1",
+          "bytes": 102
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/resolved_config.json",
+          "sha256": "b75cc5cb8237f9a02ba75f3e2a51cbb9491ed374b85b87c397a30f70a89a207a",
+          "bytes": 3386
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/run_manifest.json",
+          "sha256": "6ab4ed7ec81a0bbd3bfc35620c6609c3b9ad0aa3fb8ed7f8a2f8482be25d7d97",
+          "bytes": 12708
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/source_sha.txt",
+          "sha256": "d379e10f4e8c2b9b759ce8cdf66d4d47e63831abfa7537199ee0445576171822",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/admission.json",
+          "sha256": "eb2158770eaf62d417f8f7f4bdb8b2545f8229b145f9c1e7971367f7ea02d514",
+          "bytes": 432642
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/resource_baseline.json",
+          "sha256": "8b1c8c33acdeeeea73beeafddd41825ff0c188ef5d7860c09f520a41f02c4150",
+          "bytes": 186662
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/run_summary.json",
+          "sha256": "9907ee214612f09661ccb74b7bacc7aeec4d0681b4e372700ca29c4e3ec3901f",
+          "bytes": 17089
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/input_sha256.txt",
+          "sha256": "a5f961670ed4b6fddfc698668e0cac454dd5c8cbc41363bb7bafb6e0f147aa0b",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_reference_regular_20261005T023830942849Z/post_run_identity_completion.json",
+          "sha256": "4b4a9d4915b1e6469aba1d5bf8c180632b23d4b64cb3c5a0acb52e299b992a65",
+          "bytes": 1462
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.751443+00:00",
+          "observed_monotonic": 1100152.612309713,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.782671928406,
+          "heavy_remaining_seconds": 14315.217328071594,
+          "total_remaining_seconds": 17015.217328071594
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "672683124229d1c903d905caa715abb1bb8475143e701c1542717b7052f962a1",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "REFERENCE_NOTCH",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_notch_20261005T024226716124Z",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/input_original.dat",
+          "sha256": "c151ae0f0d970d0d08c87bffcae38c61ea6624db1c1be187ab821a0cbfe92cf6",
+          "bytes": 98
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/resolved_config.json",
+          "sha256": "b3ea4b12416f67e1f546eab494907c6c36380cbbd233a0e3a6db6773a1ec091c",
+          "bytes": 3380
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/run_manifest.json",
+          "sha256": "99e217528cf29d52e80f6ad1d25c4b8d65ced68d3a6d18ecb3af6fa3fd6d7f6c",
+          "bytes": 12706
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/source_sha.txt",
+          "sha256": "d379e10f4e8c2b9b759ce8cdf66d4d47e63831abfa7537199ee0445576171822",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/admission.json",
+          "sha256": "fc6631b33431af7117f8af1d903e3d70c920179dde8e30d37afc28bdc66b752b",
+          "bytes": 441095
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/resource_baseline.json",
+          "sha256": "ec2c45be4e758a195fb65a14e5f5be3242a31f7b992d99d12d54d2480cf2390d",
+          "bytes": 189982
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/run_summary.json",
+          "sha256": "2a7f7d0f160ceef0e3d2cd4fc7d1e3dc933fae75f6f6d37a02409fa666ddbeb4",
+          "bytes": 16701
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/input_sha256.txt",
+          "sha256": "9167f2bbafa4c25906795c34cee43726dc61295f3dd10e627bf4f482d19cf24e",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/physical_model_sha256.txt",
+          "sha256": "c9b28bfc0df3d4b4509dcdec631734460dcf5e9a5ae108fe7b8b2008cfb0aa86",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_reference_notch_20261005T024226716124Z/post_run_identity_completion.json",
+          "sha256": "1b37617275d758e4b511c7be9eaddec9e006c843388c2150566e851412fa8c0c",
+          "bytes": 1462
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.761593+00:00",
+          "observed_monotonic": 1100152.622459334,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.792821645737,
+          "heavy_remaining_seconds": 14315.207178354263,
+          "total_remaining_seconds": 17015.207178354263
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "6b6963869d274b4f779626a11b93636a2a4257dd2b2990aa4f59b2686f97ad52",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "c151ae0f0d970d0d08c87bffcae38c61ea6624db1c1be187ab821a0cbfe92cf6",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused03",
+      "source_sha": "decca10b261af30540b7d57fdcef3aaac6a5812d",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused03/run_manifest.json",
+          "sha256": "7954b98687379623260a5c62c468e8c5c843a9cbd83d18d6428ea6cd99a0894d",
+          "bytes": 12550
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused03/admission.json",
+          "sha256": "dce96440a5d9f872e7048514d3e3bc7b88aafa4215bc501aff1455c9cf37e68d",
+          "bytes": 441284
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused03/resource_baseline.json",
+          "sha256": "e00d4ff71432c0569966d51faef7cbe9108cafdb7dd5816ce0ee303ae796f869",
+          "bytes": 190080
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused03/summary.json",
+          "sha256": "fafa5f33575cb3f6c106981584438effd383b43a753f16336b41da7f3ea3555b",
+          "bytes": 16528
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T024732634825Z",
+      "source_sha": "decca10b261af30540b7d57fdcef3aaac6a5812d",
+      "classification": "WORKER_FAILED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/input_original.dat",
+          "sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+          "bytes": 96
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/resolved_config.json",
+          "sha256": "9e0b7683b6c94e63a5833159c7a603463683819a993b54044f1723515f311b19",
+          "bytes": 3377
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/run_manifest.json",
+          "sha256": "39f0b37a7d3bc8143b826ca23153d7d564b71b43c62cb6edbb1d9a67a59287f9",
+          "bytes": 12823
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/source_sha.txt",
+          "sha256": "1d061bccb3229bae1b22d5a6b1332e4e5398329aecf62920df6f863b8469d56b",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/admission.json",
+          "sha256": "f4967bc30c774fa5be84c4855b0caa035a14f41cfb50fa23ddef8b315af67db3",
+          "bytes": 628340
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/resource_baseline.json",
+          "sha256": "89243b964d30d4f2b36f91d41e4c2f32f00f34e3cfe725f722edfdddb0821364",
+          "bytes": 273606
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/run_summary.json",
+          "sha256": "886642721040e1c288b8a998f91551c419d7aebd50b57d9afa5eee73f63affb8",
+          "bytes": 16825
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/input_sha256.txt",
+          "sha256": "1c51f27bb959905dde373371bbf5d90819baac6da110f9b060f872ae06e056e7",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T024732634825Z/post_run_identity_completion.json",
+          "sha256": "1aa17898f313333e92abf0c5dc7d95297b2e588f8669d5fc7ea4be273d682f92",
+          "bytes": 1462
+        }
+      },
+      "MPI": 1,
+      "cpu": 3,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.773899+00:00",
+          "observed_monotonic": 1100152.634765501,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.805127859116,
+          "heavy_remaining_seconds": 14315.194872140884,
+          "total_remaining_seconds": 17015.194872140884
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "decca10b261af30540b7d57fdcef3aaac6a5812d",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused04",
+      "source_sha": "239ffb308e235d4046a274ab82617aaa4f334d27",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused04/run_manifest.json",
+          "sha256": "ee47a392c2fea0bfb634a344c8b3de75c49c75a7ddc3e405a806009d7a473e36",
+          "bytes": 12669
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused04/admission.json",
+          "sha256": "db44283e9ea264b20873214dabde1609445e558598b97861b4d572f962584974",
+          "bytes": 440803
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused04/resource_baseline.json",
+          "sha256": "615316641e18502a904ceec632375d262a399bba3f671626727bca68f3ea8848",
+          "bytes": 189870
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused04/summary.json",
+          "sha256": "07ec3ff21a9a6e9d81bc75e603411a193096c888d5b0e4a2e380f921ed76a78a",
+          "bytes": 16653
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T025418954954Z",
+      "source_sha": "239ffb308e235d4046a274ab82617aaa4f334d27",
+      "classification": "WORKER_FAILED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/input_original.dat",
+          "sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+          "bytes": 96
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/resolved_config.json",
+          "sha256": "9e0b7683b6c94e63a5833159c7a603463683819a993b54044f1723515f311b19",
+          "bytes": 3377
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/run_manifest.json",
+          "sha256": "46a03c1ddd3ae464171d75ca1b2ab63f35699b4216f6139e6c80de5be95c689a",
+          "bytes": 12937
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/source_sha.txt",
+          "sha256": "53deb5d08448730ab0b4a305ce38e325dc81d20e0bc4d22851f19bb9c8d6047e",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/admission.json",
+          "sha256": "a57025b54f708d29cd1fbcf760914bd0efe38f8b03c8f6371b76b26e32dcf6e4",
+          "bytes": 440987
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/resource_baseline.json",
+          "sha256": "066e25e2dfa8e5e4c3c6ca5017776a254d4cc6193fa7481605ee9343cece816b",
+          "bytes": 189888
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/run_summary.json",
+          "sha256": "e6944146e93d7cbb44c134fce01ac23a95425ecbdbd61d520ccf91ed787c9ae7",
+          "bytes": 16940
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/input_sha256.txt",
+          "sha256": "1c51f27bb959905dde373371bbf5d90819baac6da110f9b060f872ae06e056e7",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T025418954954Z/post_run_identity_completion.json",
+          "sha256": "d2c6d6dd81a5499bcc2e5d25522d925f96473378960652eee40d3784e65dec23",
+          "bytes": 1461
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.787342+00:00",
+          "observed_monotonic": 1100152.648208331,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.818570613861,
+          "heavy_remaining_seconds": 14315.181429386139,
+          "total_remaining_seconds": 17015.18142938614
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "239ffb308e235d4046a274ab82617aaa4f334d27",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused05",
+      "source_sha": "3d379b8dcad5182ffa7c51a73e05ba2479a8a9b3",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused05/run_manifest.json",
+          "sha256": "fae476314ddd9f3f0c7d0b9942b99bee9da6aa881d7169b5e09db5a4cd942a3d",
+          "bytes": 12771
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused05/admission.json",
+          "sha256": "76d292ad1cebdaf28ec565ab824492c77d2d09051037e9fd88cb15efef6c8993",
+          "bytes": 441933
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused05/resource_baseline.json",
+          "sha256": "c0a10271dd673c46d0c4856c0d078b15a837081795ff3a9f9e0c61bc3cb3f65b",
+          "bytes": 190278
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused05/summary.json",
+          "sha256": "4bb8c94e937e59d912f353e6bc34d4bd5e75f0523208b64bb28f2d8422255173",
+          "bytes": 16739
+        }
+      },
+      "MPI": 1,
+      "cpu": 1,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T030002106817Z",
+      "source_sha": "3d379b8dcad5182ffa7c51a73e05ba2479a8a9b3",
+      "classification": "WORKER_FAILED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/input_original.dat",
+          "sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+          "bytes": 96
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/resolved_config.json",
+          "sha256": "9e0b7683b6c94e63a5833159c7a603463683819a993b54044f1723515f311b19",
+          "bytes": 3377
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/run_manifest.json",
+          "sha256": "4dd62475e80d4c5835e755d38243c7158327345f32bd5280be0232a41df5799d",
+          "bytes": 13040
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/source_sha.txt",
+          "sha256": "9b38d160fce0570de0dbebd70ef5b94e3431a4d5631cfac1d32f1b0252feca54",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/admission.json",
+          "sha256": "e96409dfe79ac7b7ceda9074f262bd5068f27410d7be639706d69d395a297015",
+          "bytes": 441384
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/resource_baseline.json",
+          "sha256": "08963d00d8601c65cf3f39a27feaf49a3a8e1dc341922927eadab4bf264fe69d",
+          "bytes": 190082
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/run_summary.json",
+          "sha256": "0d871ad68ff6cd82493e6f36a280915867a27399fbdca7c554781398cc04624c",
+          "bytes": 17042
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/input_sha256.txt",
+          "sha256": "1c51f27bb959905dde373371bbf5d90819baac6da110f9b060f872ae06e056e7",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030002106817Z/post_run_identity_completion.json",
+          "sha256": "10a73dfa939a65c0e58097c679dcadff592b97bd9e3a020d3bfd1245ba779d08",
+          "bytes": 1462
+        }
+      },
+      "MPI": 1,
+      "cpu": 1,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.799714+00:00",
+          "observed_monotonic": 1100152.660580719,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.830942869186,
+          "heavy_remaining_seconds": 14315.169057130814,
+          "total_remaining_seconds": 17015.169057130814
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "3d379b8dcad5182ffa7c51a73e05ba2479a8a9b3",
+        "original_manifest_physical_sha256": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": true,
+        "actual_input_sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused06",
+      "source_sha": "88c9f1047eb8c6afe1dfc47a78bf1ea9f139ef7e",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused06/run_manifest.json",
+          "sha256": "6c7665c55ea0b0603ae320a2cbf6c940324176ac4cb1637f1b67a8031247cdcc",
+          "bytes": 12772
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused06/admission.json",
+          "sha256": "3d8b7b32bfbad47a57002aabeeee72d402288057f301728cdcc7da7aed08f825",
+          "bytes": 441472
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused06/resource_baseline.json",
+          "sha256": "935af3ad0f76462a9ba49985eb732ed5ff031d5e5507c5211586fff011ea0e2e",
+          "bytes": 190012
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused06/summary.json",
+          "sha256": "8f572f3349eb74cfea19f8ba866d2c563e181889e9f077e835d77f85f6302c43",
+          "bytes": 16755
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T030638197121Z",
+      "source_sha": "88c9f1047eb8c6afe1dfc47a78bf1ea9f139ef7e",
+      "classification": "WORKER_FAILED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/input_original.dat",
+          "sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+          "bytes": 96
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/resolved_config.json",
+          "sha256": "683119bc9851dd37056582e7dc108dff94315987f1cd123a0ed3b48f5354d447",
+          "bytes": 3468
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/run_manifest.json",
+          "sha256": "58355c115a36a724b60a7e7b26a69891aa13f72cd31f61654e22e9794f865f59",
+          "bytes": 13039
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/source_sha.txt",
+          "sha256": "6851c669bae40b404c15b1e205483774919578df2df2b88e5a4f39ac0e7b4239",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/admission.json",
+          "sha256": "e512f88b9b2a93006a82b050f81a3839ddcad5ea1ff1db0f4455e9ddaa5cb85b",
+          "bytes": 441390
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/resource_baseline.json",
+          "sha256": "6a50d0cbe958e106a0d57fa87ff90dfe8aab1bed6d9cedc0b7118121fd2f0092",
+          "bytes": 190099
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/run_summary.json",
+          "sha256": "cba62903c304dd85b933be3abfaeceda3b3c281afec5dd17be47edef255c389e",
+          "bytes": 17045
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/input_sha256.txt",
+          "sha256": "1c51f27bb959905dde373371bbf5d90819baac6da110f9b060f872ae06e056e7",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030638197121Z/post_run_identity_completion.json",
+          "sha256": "23e55a549dcb534e1380be571182ead8b9a143186d8bdaabbf1c89ac3e44a703",
+          "bytes": 1462
+        }
+      },
+      "MPI": 1,
+      "cpu": 4,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.806836+00:00",
+          "observed_monotonic": 1100152.667702818,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.838064908981,
+          "heavy_remaining_seconds": 14315.161935091019,
+          "total_remaining_seconds": 17015.16193509102
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "88c9f1047eb8c6afe1dfc47a78bf1ea9f139ef7e",
+        "original_manifest_physical_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused07",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused07/run_manifest.json",
+          "sha256": "868efdae88dd4c00ac6ae39c9b33a7d324d85a1a2901b6e44e0252a86996a84d",
+          "bytes": 12770
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused07/admission.json",
+          "sha256": "40832f44eef7d7e198ac9f1eb04d979345a5b6b9908c3e9e3a7cd117d49a28cb",
+          "bytes": 441669
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused07/resource_baseline.json",
+          "sha256": "6357f2c8e43d55a85f1fbebeb2cb3c5246289738f5b163ab3ce7ede89f9de3a9",
+          "bytes": 190281
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused07/summary.json",
+          "sha256": "e3bb0d1c3aedab74e427cba0d4dca7d06461cf0192944221f701225dfd754334",
+          "bytes": 16753
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T030919475064Z",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/input_original.dat",
+          "sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+          "bytes": 96
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/resolved_config.json",
+          "sha256": "683119bc9851dd37056582e7dc108dff94315987f1cd123a0ed3b48f5354d447",
+          "bytes": 3468
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/run_manifest.json",
+          "sha256": "102768ecc4b54f41a213e0b954fc0fab01508639d5994ab47de6259bf96f6046",
+          "bytes": 13043
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/source_sha.txt",
+          "sha256": "58a74fc050783d93a5b634d1142fc9e8256a57950790745a7b44e801dffb7c39",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/admission.json",
+          "sha256": "af7ec5d56540317417efa4837bd88c41525e4b2d4e24c14675e4232a1a68115a",
+          "bytes": 632799
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/resource_baseline.json",
+          "sha256": "77405ca97dd6a2ef2232ccf00042cfa23911a61c4e8b4ac2ca1cf27f9e0eefe6",
+          "bytes": 275633
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/run_summary.json",
+          "sha256": "55a8971dbff552182aae8f174e249f0dc8c5736cbf399502fc6394494a76fa53",
+          "bytes": 17049
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/input_sha256.txt",
+          "sha256": "1c51f27bb959905dde373371bbf5d90819baac6da110f9b060f872ae06e056e7",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/physical_model_sha256.txt",
+          "sha256": "2c1995f8620151231a68aba13d2610201de951e263cda1868eac396c86efb038",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_regular_20261005T030919475064Z/post_run_identity_completion.json",
+          "sha256": "e99badd50e4a0bdbe7775672ac5843ead05089f6f44875f8211741d5d6eaa289",
+          "bytes": 1460
+        }
+      },
+      "MPI": 1,
+      "cpu": 13,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.817013+00:00",
+          "observed_monotonic": 1100152.677879607,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.84824180603,
+          "heavy_remaining_seconds": 14315.15175819397,
+          "total_remaining_seconds": 17015.15175819397
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+        "original_manifest_physical_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "independently_paired_current_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "d9a0f1e35fca2f376aa2b13936920b4742200c684252414dbf26501420f067ed",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "ENGINE_NOTCH",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_notch_20261005T031205654041Z",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/input_original.dat",
+          "sha256": "cf9660229b677cc04c824626339569cc90a761c3112e3db3948cca6da5e134e7",
+          "bytes": 92
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/resolved_config.json",
+          "sha256": "0ef9e2cb9222116452733c698c107bfaff08eaabc1cea28d78d3eaf7db72d1a7",
+          "bytes": 3457
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/run_manifest.json",
+          "sha256": "1a47159ef658f7f2cb7531f7667faad53f5ab52e3064b78612118560adb776ca",
+          "bytes": 13040
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/source_sha.txt",
+          "sha256": "58a74fc050783d93a5b634d1142fc9e8256a57950790745a7b44e801dffb7c39",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/admission.json",
+          "sha256": "e60221cb1e19c41454c166383bc98f3864ec2303292102ed4bfb6bfcf36d2c11",
+          "bytes": 437252
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/resource_baseline.json",
+          "sha256": "ad8774aa6175d7b3912a1ad609c6b0636e9536f38c150d072122074f4bf86fcc",
+          "bytes": 188560
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/run_summary.json",
+          "sha256": "08eba7ad44d4a146edeabad06124b8d7636951b372b4aeffdca31ea5cdf25aa9",
+          "bytes": 17037
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/input_sha256.txt",
+          "sha256": "143aa28727c7b59fd69f067e2931757720b825ead876e7213f6adecc131c46ea",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/physical_model_sha256.txt",
+          "sha256": "c9b28bfc0df3d4b4509dcdec631734460dcf5e9a5ae108fe7b8b2008cfb0aa86",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_engine_notch_20261005T031205654041Z/post_run_identity_completion.json",
+          "sha256": "02d0551f19d989dc58c47efc4c2e47fdb1a8432e14c44e91e61d453e98e345a4",
+          "bytes": 1460
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.826879+00:00",
+          "observed_monotonic": 1100152.68774594,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.858108043671,
+          "heavy_remaining_seconds": 14315.14189195633,
+          "total_remaining_seconds": 17015.14189195633
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+        "original_manifest_physical_sha256": "6b6963869d274b4f779626a11b93636a2a4257dd2b2990aa4f59b2686f97ad52",
+        "independently_paired_current_per_case_descriptor_sha256": "6b6963869d274b4f779626a11b93636a2a4257dd2b2990aa4f59b2686f97ad52",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "cf9660229b677cc04c824626339569cc90a761c3112e3db3948cca6da5e134e7",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "VERIFY_P4",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_verify_p4_20261005T031516308560Z",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/input_original.dat",
+          "sha256": "d3b2ae62bacef7618eafb661a809399a6b3baac10b1d8f0345279b11654dd21b",
+          "bytes": 86
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/resolved_config.json",
+          "sha256": "0d75308f92088c660c4be8df4492af44746f059dc932246ecf310af821804bac",
+          "bytes": 3451
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/run_manifest.json",
+          "sha256": "c2773937da742ae1607620418f2cd472342b9c4b8fb8079a5da3425966dfe7fc",
+          "bytes": 13035
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/source_sha.txt",
+          "sha256": "58a74fc050783d93a5b634d1142fc9e8256a57950790745a7b44e801dffb7c39",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/admission.json",
+          "sha256": "061455ac9fd5d01aacc3ddcc2b5eba7fe56d37d206a48674a60506809f50d277",
+          "bytes": 437065
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/resource_baseline.json",
+          "sha256": "4a567cd0bdc71d4423a57fecbb05f9a506a00484603a21c873d8571d29518861",
+          "bytes": 188512
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/run_summary.json",
+          "sha256": "0a8e1b8fa8d429b7abe93ad7d75d3bb2477365b1ffd429b907a8324bba12e789",
+          "bytes": 17218
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/input_sha256.txt",
+          "sha256": "4f031788b4cafd17c9fbb706c1af473851799cc9eb424157ae49b27c879839d4",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/physical_model_sha256.txt",
+          "sha256": "6cc8bc6bbbd6c7e94db9b21cef1e6b2370102834f06db67a7787b37283bbb6ab",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_verify_p4_20261005T031516308560Z/post_run_identity_completion.json",
+          "sha256": "4eb1ed89625ac25ee0ac9e74911e10e821aa51ea2c6c83717287d950eee33ad4",
+          "bytes": 1463
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.836992+00:00",
+          "observed_monotonic": 1100152.697858378,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.868220567703,
+          "heavy_remaining_seconds": 14315.131779432297,
+          "total_remaining_seconds": 17015.131779432297
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+        "original_manifest_physical_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "independently_paired_current_per_case_descriptor_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "d3b2ae62bacef7618eafb661a809399a6b3baac10b1d8f0345279b11654dd21b",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused08",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused08/run_manifest.json",
+          "sha256": "bc06730cc5cf60906a1c431de87bd5e0b04a2227702407786312694ebde664d3",
+          "bytes": 12890
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused08/admission.json",
+          "sha256": "6397a33a736e042558bc72985bed9232fb2ba0609074c219e6a6b5adefa501ca",
+          "bytes": 485632
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused08/resource_baseline.json",
+          "sha256": "480207191f6f20e576bef400573080a85b53199805a773b68c8ec97da4799ae7",
+          "bytes": 209173
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused08/summary.json",
+          "sha256": "afeef83a8fc4093043a896551c92162f038b0b6bbcb04695a9f10b2a937a8bfa",
+          "bytes": 16890
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "REFERENCE_NOTCH_P5",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/input_original.dat",
+          "sha256": "0fb519d12020bbb37cddafa2357ef922b091ac068e91ed0d2a635e2206003eda",
+          "bytes": 104
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/resolved_config.json",
+          "sha256": "2f942802f17eef2eaec399e21061dcdf7dd34f208ea1427cc27e9a855ede7b48",
+          "bytes": 3477
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/run_manifest.json",
+          "sha256": "5aae32a2d0fc17d29fd5c464ca684e882aa38cced5347b4b1ec8df9eca9f2603",
+          "bytes": 13165
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/source_sha.txt",
+          "sha256": "3920609823fc9003d208d958f7ee02e4f660c0163a1ec796ebf0f14c00a7a411",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/admission.json",
+          "sha256": "8431ff95b4fbbf2c7391a76a2a709a77446ad173b0a7d521e20985b546c3a522",
+          "bytes": 485822
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/resource_baseline.json",
+          "sha256": "5acae29fbf2713636d716945dbcd092994372cc018eac1c038254c098f6d48a4",
+          "bytes": 209131
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/run_summary.json",
+          "sha256": "cb26b86f1c3cb42d301670cf63f23f944325102e11027f61a8b4685f1dc23ece",
+          "bytes": 17629
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/input_sha256.txt",
+          "sha256": "1f65c1f7e5ea437e6c94b50447dcc75c4a4267ced15a139f8e48154e09a662de",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/physical_model_sha256.txt",
+          "sha256": "5ad89485b0ea7a91ed251313b8e2506f36b03d524aff4ca1cb9ab234f0b136d1",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z/post_run_identity_completion.json",
+          "sha256": "fa92c99e2e2be7f5ef8906649d7c8866669a9d54c533715f48d77b5def300c09",
+          "bytes": 1463
+        }
+      },
+      "MPI": 1,
+      "cpu": 34,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.932791+00:00",
+          "observed_monotonic": 1100152.793658634,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.964020252228,
+          "heavy_remaining_seconds": 14315.035979747772,
+          "total_remaining_seconds": 17015.035979747772
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+        "original_manifest_physical_sha256": "dcffc8784c0c3c1620c95084384ffa027f9d233b54e5ff5429bd1bb0185720a7",
+        "independently_paired_current_per_case_descriptor_sha256": "dcffc8784c0c3c1620c95084384ffa027f9d233b54e5ff5429bd1bb0185720a7",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "0fb519d12020bbb37cddafa2357ef922b091ac068e91ed0d2a635e2206003eda",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "classification": "WORKER_FAILED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/input_original.dat",
+          "sha256": "cc3421c435d1f6a891d5e3b6bf8e2ef22b9387a4c4d809b99b94953e3de28f46",
+          "bytes": 92
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/resolved_config.json",
+          "sha256": "2057ab314a2331d8dedada34871e06fa846420007151efc1f1553c3abadc5075",
+          "bytes": 3468
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/run_manifest.json",
+          "sha256": "64b4bbe08380e7c7bac00493bff667d31141f752d157a4ebaca0f531af04065b",
+          "bytes": 13151
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/source_sha.txt",
+          "sha256": "3920609823fc9003d208d958f7ee02e4f660c0163a1ec796ebf0f14c00a7a411",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/admission.json",
+          "sha256": "51320d4c58748e4ef8b831a58877d3f709eb6c72ac6cffc7db94ed6bf991b397",
+          "bytes": 488767
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/resource_baseline.json",
+          "sha256": "bce7d0cbf679dcefdbbd31b61c6a426001ec01d38035fab80ac5c97ef2569378",
+          "bytes": 210515
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/run_summary.json",
+          "sha256": "cafcc293314fdc23602846661af5e735848ed0e805c4e35f0eb94b0c390fe748",
+          "bytes": 17151
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/input_sha256.txt",
+          "sha256": "245d6cef411030112b6b18e85fbaedbe6a4a223620c918fcd3d19c8b486ebd61",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/physical_model_sha256.txt",
+          "sha256": "6cc8bc6bbbd6c7e94db9b21cef1e6b2370102834f06db67a7787b37283bbb6ab",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z/post_run_identity_completion.json",
+          "sha256": "38a65dd8f13be40402293f951eca61e9b4f60d9a00311278d8f11308da7de1d1",
+          "bytes": 1463
+        }
+      },
+      "MPI": 1,
+      "cpu": 12,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.960435+00:00",
+          "observed_monotonic": 1100152.821302785,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8184.991664409637,
+          "heavy_remaining_seconds": 14315.008335590363,
+          "total_remaining_seconds": 17015.008335590363
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+        "original_manifest_physical_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "independently_paired_current_per_case_descriptor_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "cc3421c435d1f6a891d5e3b6bf8e2ef22b9387a4c4d809b99b94953e3de28f46",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused09",
+      "source_sha": "06d4fe2c40d40c301b9566d6fa4ba198a31ff468",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused09/run_manifest.json",
+          "sha256": "2ff752bfa6b9572ca58d2fcdd5cf36a3306413bea4f555fd893e8640b818ea12",
+          "bytes": 12888
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused09/admission.json",
+          "sha256": "cd6b56749a10e9b626dc90be9f696a514dfbf4c31b78a1eac4521cdf487b5679",
+          "bytes": 675839
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused09/resource_baseline.json",
+          "sha256": "d05354f2e6578e48a2bc7a84a65d9182f6aac16816c049afdfd6f87dfada169e",
+          "bytes": 294358
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused09/summary.json",
+          "sha256": "9441047754ef88e1d297e24e2c29069c2aa9420056ee025f3ab66fa95f2c916a",
+          "bytes": 16892
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z",
+      "source_sha": "06d4fe2c40d40c301b9566d6fa4ba198a31ff468",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "input_original.dat": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/input_original.dat",
+          "sha256": "cc3421c435d1f6a891d5e3b6bf8e2ef22b9387a4c4d809b99b94953e3de28f46",
+          "bytes": 92
+        },
+        "resolved_config.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/resolved_config.json",
+          "sha256": "2057ab314a2331d8dedada34871e06fa846420007151efc1f1553c3abadc5075",
+          "bytes": 3468
+        },
+        "run_manifest.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/run_manifest.json",
+          "sha256": "acc6e9798f13fd8c5defc9dc7e1aa0e9562557656feb4d1a6048515abe3b811e",
+          "bytes": 13145
+        },
+        "source_sha.txt": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/source_sha.txt",
+          "sha256": "ed35e24e4451db65ad4407864a87ff339749fbf8df9e7ae82c4a55b48ffcc08c",
+          "bytes": 41
+        },
+        "admission.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/admission.json",
+          "sha256": "84ece2dc76c5c3777dad8029f02b03f4e63119cfe1fc8967e83cde0dd2acd2c4",
+          "bytes": 485701
+        },
+        "resource_baseline.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/resource_baseline.json",
+          "sha256": "de4d38bd6454c31ca3c58a4a83a5a0c8592b39318518709b7c233baa0b930334",
+          "bytes": 209186
+        },
+        "run_summary.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/run_summary.json",
+          "sha256": "9306574e5edeb9b2c56d401ef4decc04504757e0cc2e73060f6b23ff31059302",
+          "bytes": 17396
+        },
+        "input_sha256.txt": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/input_sha256.txt",
+          "sha256": "245d6cef411030112b6b18e85fbaedbe6a4a223620c918fcd3d19c8b486ebd61",
+          "bytes": 65
+        },
+        "physical_model_sha256.txt": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/physical_model_sha256.txt",
+          "sha256": "6cc8bc6bbbd6c7e94db9b21cef1e6b2370102834f06db67a7787b37283bbb6ab",
+          "bytes": 65
+        },
+        "post_run_identity_completion.json": {
+          "path": "results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z/post_run_identity_completion.json",
+          "sha256": "37135438a9c9b894f2d7fef7b7eaa7d06137ffc0a0bfa6a3c40198671e170db0",
+          "bytes": 1463
+        }
+      },
+      "MPI": 1,
+      "cpu": 11,
+      "environment_mode": "fe",
+      "post_run_completion": {
+        "scope": "POST_RUN_IDENTITY_TEXT_COMPLETION_NOT_ORIGINAL_LAUNCH_FILES",
+        "clock": {
+          "start_utc": "2026-10-05T02:22:52.968771+00:00",
+          "start_monotonic": 1091967.829659756,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "total_limit_seconds": 25200,
+          "heavy_limit_seconds": 22500,
+          "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+          "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+          "paired_probe_monotonic": 1091967.940120756,
+          "derived_first_monotonic_offset_seconds": 0.110461,
+          "observed_utc": "2026-10-05T04:39:17.971120+00:00",
+          "observed_monotonic": 1100152.831987136,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 8185.0023493766785,
+          "heavy_remaining_seconds": 14314.997650623322,
+          "total_remaining_seconds": 17014.99765062332
+        },
+        "completion_source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+        "original_source_sha": "06d4fe2c40d40c301b9566d6fa4ba198a31ff468",
+        "original_manifest_physical_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "independently_paired_current_per_case_descriptor_sha256": "5405ae8ce71d2df509d19d9ad4eedeae9f8bcd29e0442f85e26cd5deedd42eaf",
+        "legacy_two_case_inventory_hash_preserved": false,
+        "actual_input_sha256": "cc3421c435d1f6a891d5e3b6bf8e2ef22b9387a4c4d809b99b94953e3de28f46",
+        "scientific_vectors_or_old_manifest_rewritten": false
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused10",
+      "source_sha": "81d5f7057efea3c4c22fef43afaec67c55ade323",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused10/run_manifest.json",
+          "sha256": "1a2ee8536f69896d117c4e34095c73d5d1f4c3fb360744a9b22d1f5548af3dc5",
+          "bytes": 13005
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused10/admission.json",
+          "sha256": "9a761d497bf501766f5c98bbf47d877a0b0d8c41424e4498cd2d5eace55294ef",
+          "bytes": 440152
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused10/resource_baseline.json",
+          "sha256": "850d4fcc181d79e7ac2346836133c921467ce4030a5c8e27a5c72983a79706d0",
+          "bytes": 189848
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused10/summary.json",
+          "sha256": "31cd89faffff212b92a030f5ae6fa3978b4249e54a3f8be337852ec9529e0a9c",
+          "bytes": 16972
+        }
+      },
+      "MPI": 1,
+      "cpu": 1,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_post_collect01",
+      "source_sha": "81d5f7057efea3c4c22fef43afaec67c55ade323",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_post_collect01/run_manifest.json",
+          "sha256": "49c452134fe3d275c5eac4e96179a8735753d0a3f6dc8d5bc349c614d26c65db",
+          "bytes": 13004
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_post_collect01/admission.json",
+          "sha256": "78e1a44b1105f0de20a27f232d1933e079283ce1413f1f1b597d915512a15a31",
+          "bytes": 632046
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_post_collect01/resource_baseline.json",
+          "sha256": "4ec13d95ac4b9085ba4799ed38f02d9f313dae90de1d8f0ede01c97b54759e4d",
+          "bytes": 275544
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_post_collect01/summary.json",
+          "sha256": "6887ae1e11ee1efe621e8871ecbef626be49889228e8bc6f063329a38be05542",
+          "bytes": 16940
+        }
+      },
+      "MPI": 1,
+      "cpu": 7,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_post_docs01",
+      "source_sha": "28a06d569de7ee0988768ebff3b7c4fd99488c99",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_post_docs01/run_manifest.json",
+          "sha256": "0f0e447a5edeae31cc6dea799a91910da59bb20a3159bb026d419ab55170e904",
+          "bytes": 13006
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_post_docs01/admission.json",
+          "sha256": "d4d2491376c13b3018f044bd22e0d4b8da8a198e8696a5081dd2a6be56506a8a",
+          "bytes": 439871
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_post_docs01/resource_baseline.json",
+          "sha256": "b5a53ac89593d8c8d0e351a7c4f7813915ace77bb4c47999f15834dde6be25a9",
+          "bytes": 189695
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_post_docs01/summary.json",
+          "sha256": "0eb9846c85f2f6c22615b9f755062727e0af1d26bd2b478cf17663775015602c",
+          "bytes": 16939
+        }
+      },
+      "MPI": 1,
+      "cpu": 0,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused11",
+      "source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_pre_focused11/run_manifest.json",
+          "sha256": "bde6f6c89d6409621e118f17a0cf0c2a827cc84a6b2c97ab35f4545507e08634",
+          "bytes": 13004
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_pre_focused11/admission.json",
+          "sha256": "6d767a92c904214243a155e37e13c116358c1da4f7b18a14b0c21fff55bdf837",
+          "bytes": 439965
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_pre_focused11/resource_baseline.json",
+          "sha256": "235bd66e57624e791b2dc3cf406d6927bfcf04e4a1d0fdefab0f8896935fbece",
+          "bytes": 189771
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_pre_focused11/summary.json",
+          "sha256": "a0746a49c2f14e711532c70cb86bb0c8314ad2c17c7e148c5a1e5bdec624be69",
+          "bytes": 16980
+        }
+      },
+      "MPI": 1,
+      "cpu": 3,
+      "environment_mode": "pure"
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_post_docs02",
+      "source_sha": "2f8c73706fde41cb9c154a7a63596fb268ac8e21",
+      "classification": "COMPLETED",
+      "bound_files": {
+        "run_manifest.json": {
+          "path": "tmp/task042/v49/aux_post_docs02/run_manifest.json",
+          "sha256": "13673da0e2b6cb266c9feb304a9b6f30fe4971788a97128d8801bfa1aea5cd20",
+          "bytes": 13006
+        },
+        "admission.json": {
+          "path": "tmp/task042/v49/aux_post_docs02/admission.json",
+          "sha256": "e43820e48a647e01aa4ecc2668711f7481d58f4a42a373428fc8c0c65a518ec6",
+          "bytes": 631670
+        },
+        "resource_baseline.json": {
+          "path": "tmp/task042/v49/aux_post_docs02/resource_baseline.json",
+          "sha256": "f9df212b4604d9740c1030c0357ad0218c4011f4fe4a40fedaeab800fd9b2f93",
+          "bytes": 275696
+        },
+        "summary.json": {
+          "path": "tmp/task042/v49/aux_post_docs02/summary.json",
+          "sha256": "7e1da0c8bd35d79c0519e813981e452b2b84bb152327ae8e8c93c90933b2a4a3",
+          "bytes": 16940
+        }
+      },
+      "MPI": 1,
+      "cpu": 2,
+      "environment_mode": "pure"
+    }
+  ],
+  "old_manifests_preserved": true,
+  "new_scientific_actions": 0
+}

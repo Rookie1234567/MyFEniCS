@@ -1,28 +1,305 @@
 {
-  "status": "PENDING_FINAL_ACTUAL_BYTES",
-  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
-  "exact_render_attempt": {
-    "clock": {
-      "start_utc": "2026-10-05T02:22:52.968771+00:00",
-      "start_monotonic": 1091967.829659756,
-      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
-      "total_limit_seconds": 25200,
-      "heavy_limit_seconds": 22500,
-      "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
-      "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
-      "paired_probe_monotonic": 1091967.940120756,
-      "derived_first_monotonic_offset_seconds": 0.110461,
-      "observed_utc": "2026-10-05T04:23:04.265343+00:00",
-      "observed_monotonic": 1099179.126211253,
-      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
-      "monotonic_same_boot": true,
-      "elapsed_seconds": 7211.296572446823,
-      "heavy_remaining_seconds": 15288.703427553177,
-      "total_remaining_seconds": 17988.703427553177
+  "status": "PASSED_LOCAL",
+  "checked_actual_delivery_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v47.md",
+      "sha256": "ff656bb9de85be4089b4a5fbe83005fb39c22ce413c22b50d4cbf4695e1ead2a",
+      "tables": [
+        {
+          "line": 42,
+          "columns": 3
+        },
+        {
+          "line": 69,
+          "columns": 2
+        },
+        {
+          "line": 83,
+          "columns": 2
+        },
+        {
+          "line": 180,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "review_report_v46.md",
+        "response_v48.md",
+        "outcomes/summary.md",
+        "outcomes/full_moment_hierarchy_v45.md",
+        "outcomes/trace_subspace_selection_v47.md",
+        "outcomes/lossless_vector_storage_v48.md"
+      ]
     },
-    "exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/0b0e6b236aa1a7205f453841a0a41e209656ed98/docs/task042_neural_coarse_inverse/review_report_v47.md",
-    "tool_result": "Cache miss",
-    "visual_status": "NOT_VERIFIED",
-    "no_visual_screenshot_obtained": true
-  }
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v49.md",
+      "sha256": "a0367a5edbaa15edb7e4420c694539ac4554df2c7c2f2ce8687e754260a62e33",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 5
+        },
+        {
+          "line": 17,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "review_report_v47.md",
+        "outcomes/complete_scattering_engine_anchor_v49.md",
+        "outcomes/records/cold_n1_costs_v49.json",
+        "outcomes/records/resource_costs_final_v49.json",
+        "outcomes/records/run_index_v49.json",
+        "outcomes/records/delivery_index_v49.json",
+        "outcomes/records/repair_journal_v49.jsonl",
+        "outcomes/records/tests_v49.json",
+        "outcomes/records/documentation_checks_v49.json",
+        "outcomes/records/opportunity_decision_v49.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/complete_scattering_engine_anchor_v49.md",
+      "sha256": "432034b62319c0bc86cca3416a3daa827034dbd2c51b820536b51fbfda1874aa",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        },
+        {
+          "line": 16,
+          "columns": 2
+        },
+        {
+          "line": 36,
+          "columns": 2
+        },
+        {
+          "line": 60,
+          "columns": 7
+        },
+        {
+          "line": 70,
+          "columns": 7
+        },
+        {
+          "line": 80,
+          "columns": 8
+        },
+        {
+          "line": 94,
+          "columns": 3
+        },
+        {
+          "line": 110,
+          "columns": 6
+        },
+        {
+          "line": 118,
+          "columns": 6
+        },
+        {
+          "line": 143,
+          "columns": 3
+        },
+        {
+          "line": 157,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "../review_report_v47.md",
+        "../../../input/task042_neural_coarse_inverse/scattering_anchor_v49.json",
+        "../../../input/materials/si_optical_constants_v1.json",
+        "records/physical_identity_bindings_v49.json",
+        "records/physical_cases_v49.json",
+        "records/engine_source_manifest_v49.json",
+        "records/source_bindings_v49.json",
+        "records/object_lifetimes_v49.json",
+        "records/finite_independent_checks_v49.json",
+        "records/complete_physical_results_v49.json",
+        "records/array_inventory_v49.json",
+        "records/p_increment_v49.json",
+        "records/cold_n1_costs_v49.json",
+        "records/resource_costs_final_v49.json",
+        "records/repair_journal_v49.jsonl",
+        "records/raw_archive_index_v49.json",
+        "records/post_settlement_archive_v49.json",
+        "records/opportunity_decision_v49.json",
+        "records/tests_v49.json",
+        "records/documentation_checks_v49.json",
+        "records/run_index_v49.json",
+        "records/delivery_index_v49.json",
+        "records/engine_source_manifest_v49.json",
+        "records/source_bindings_v49.json",
+        "records/changed_files_v49.json"
+      ]
+    }
+  ],
+  "old_history_suffixes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "old_bytes": 80039,
+      "old_sha256": "09be591b20c77e6930c722d31beebdfc933571a16219ac58a1d16584e25ae970"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "old_bytes": 130376,
+      "old_sha256": "e63d92a80cbc4162373fd0ad56446cf7e1c1daa0e2740b30484986ceeff2269a"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "old_bytes": 257347,
+      "old_sha256": "37a15ead213202c11a70013e35e68e80bf6a168abfc79c7bbe4502f4d5b2f935"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "old_bytes": 291140,
+      "old_sha256": "af4416b863b5b24f17fd2969fa98446999827aaeef111dd6896c3a40716b3ea7"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_26_documentation_contract"
+      ],
+      "returncode": 0,
+      "seconds": 0.10458265710622072
+    },
+    {
+      "command": [
+        "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+        "check",
+        "--select",
+        "E9,F63,F7,F82",
+        "benchmarks/collect_scattering_anchor.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.004484216216951609
+    },
+    {
+      "command": [
+        "git",
+        "-c",
+        "gc.auto=0",
+        "-c",
+        "maintenance.auto=false",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "seconds": 0.024468089919537306
+    }
+  ],
+  "implementation_hashes": {
+    "benchmarks/collect_scattering_anchor.py": "165d8931aa5c060a560e1384182db2788903bf7946a1c75a6aa25a721f0d6943",
+    "benchmarks/qualify_scattering_anchor.py": "a996f403d476390f72adb4129b2eb1f8a888f8cea2d83720c7719fb1880c7a11",
+    "benchmarks/subreaper_watchdog.py": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+    "input/materials/si_optical_constants_v1.json": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "input/task042_neural_coarse_inverse/scattering_anchor_v49.json": "bf40f5011e9e628de0b18757e18e7e7ad9075993682dce114217f1239dcd27e4",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "scripts/run_case.py": "a87d499cfbf4e08e1b95e64207def8cba8b018cff01a838aa6a1f162098d9038",
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+    "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+    "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+    "src/adaptivity/fast_custom_element_ufl.py": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+    "src/adaptivity/fixed_trace_element_cache.py": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+    "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+    "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+    "src/adaptivity/stage4_local_h.py": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+    "src/adaptivity/variable_p_degree_plan.py": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+    "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+    "src/adaptivity/variable_p_periodic_orbits.py": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+    "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+    "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+    "src/common/config.py": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+    "src/common/config_3d.py": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+    "src/common/materials.py": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+    "src/common/modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+    "src/common/optical_material_table.py": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+    "src/common/pml.py": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+    "src/common/pml_3d.py": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+    "src/common/units.py": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+    "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+    "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+    "src/constraints/floquet_constraint.py": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/geometry/cell_notch.py": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+    "src/geometry/mesh_builder.py": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+    "src/geometry/mesh_builder_3d.py": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+    "src/geometry/tetra_mesh_audit.py": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+    "src/io/input_loader.py": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+    "src/io/input_schema.py": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393",
+    "src/io/input_validation.py": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15",
+    "src/io/physical_balanced_profile.py": "cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114",
+    "src/io/physical_intermediate_profile.py": "ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c",
+    "src/io/physical_recursive_profile.py": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
+    "src/io/resolved_config.py": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+    "src/io/run_specification.py": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+    "src/io/scattering_anchor.py": "2f3a971347c6d485e0bf0365481165128bfc196bcc9d55ae3dfd407c521e0724",
+    "src/postprocessing/diffraction_3d.py": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
+    "src/postprocessing/full3d_reference.py": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+    "src/postprocessing/near_field_2d.py": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+    "src/postprocessing/postprocess.py": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+    "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+    "src/postprocessing/power_metrics.py": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+    "src/postprocessing/rta_3d.py": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
+    "src/runners/port_preparation.py": "1db5d6a2221460bde824b936054357753dfc22941bab0e5889767ab8792e514a",
+    "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+    "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+    "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+    "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+    "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+    "src/solvers/condensed_dtn.py": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+    "src/solvers/condensed_reference_preflight.py": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+    "src/solvers/dtn_port_3d.py": "4e07a6daecb893caffe545bd79ff33dadfa123ef76adb6f968f0827f42907ebd",
+    "src/solvers/fullspace_dtn_action.py": "fe762d247099d136437b9603bda54c0f706d819d445a8b40f6ae45751813476d",
+    "src/solvers/fullspace_lor_edge_geometric_mg.py": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+    "src/solvers/fullspace_lor_edge_geometric_mg_global.py": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+    "src/solvers/fullspace_lor_hx_root_cause.py": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+    "src/solvers/fullspace_lor_memory_first_foundation.py": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+    "src/solvers/fullspace_lor_native_hx.py": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+    "src/solvers/fullspace_lor_native_hx_fixture.py": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+    "src/solvers/fullspace_lor_topology.py": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+    "src/solvers/fullspace_lor_transfer.py": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+    "src/solvers/fullspace_mpc_action.py": "5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82",
+    "src/solvers/fullspace_physical_action.py": "c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258",
+    "src/solvers/fullspace_quadrature_diagonal.py": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg.py": "51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "6a764fe3de06888e4b3ab595488c688d437af7984d1130417761ab55aa5d5c65",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py": "d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+    "src/solvers/fullspace_v17_p3_oracle.py": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+    "src/solvers/hcurl_affine_isotropic_tensor.py": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+    "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+    "src/solvers/hcurl_canonical_vector.py": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+    "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+    "src/solvers/hcurl_cell_static_condensation.py": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+    "src/solvers/hcurl_fixed_trace_element.py": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+    "src/solvers/hcurl_variable_p_assembly.py": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+    "src/solvers/mpc_form_action.py": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+    "src/solvers/p4_cell_condensed_inverse.py": "f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a",
+    "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+    "src/solvers/scattering_anchor.py": "61d226eda6511794a16e06cb6a2476ba401f7dda97c79f9ebd049b5b5763ac52",
+    "src/solvers/scattering_anchor_checks.py": "f8bf72f06565e023227d79bfd70cd22e0ed24b0b474714c49fa7cd2b393a68f1",
+    "src/solvers/scattering_anchor_reporting.py": "35d49bce811d5b6f259048e0ec058ad244ddcae95d2b89ab284e20c49936a26c",
+    "src/solvers/scattering_anchor_scope.py": "8c728d6bf64438d81c987e98326cb4fc762b572ac8cd404aef0b4dd6d6a1ebab",
+    "src/solvers/scattering_anchor_two_cell.py": "0ec4dba96d51220cb8b77576fabd33980913a164d372d39c3a483bedbb403fc5",
+    "src/solvers/scattering_y_orbit_reuse.py": "cee15e29817a51b45c179848350391684a3ac1f583f92b3ca8f003e64ff0c636",
+    "src/solvers/solve_vector_maxwell.py": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+    "src/solvers/static_local_schur_action.py": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+    "src/test/test_scattering_anchor.py": "e31226222a994e3b4ee06b5295566f78b986e5227fbd0b6d538ffeaf29d7afb7"
+  },
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN",
+  "new_FE_A_AH_factor_training": 0
 }
