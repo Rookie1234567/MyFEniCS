@@ -233,5 +233,14 @@ def test_nonunitary_complex_native_entities_preserve_primal_dual_work_and_two_tw
             rtol=2e-13,
             atol=2e-13,
         )
+        local_primal = transport.extract_primal(rhs)
+        local_dual = rng.normal(size=4) + 1j * rng.normal(size=4)
+        lifted_dual = transport.lift_dual(local_dual)
+        np.testing.assert_allclose(
+            np.vdot(local_dual, local_primal),
+            np.vdot(lifted_dual, rhs),
+            rtol=2e-13,
+            atol=2e-13,
+        )
         recon += transport.lift_primal(transport.extract_primal(rhs))
     np.testing.assert_allclose(recon, rhs, rtol=3e-13, atol=3e-13)

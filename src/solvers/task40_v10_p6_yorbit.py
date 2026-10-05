@@ -433,6 +433,23 @@ class TwoCellNativeTransport:
         folded = self._fold_canonical(canonical, dual=True)
         return self.local.transform(folded, direction="primal_from_canonical")
 
+    def lift_dual(self, local_native: Any) -> np.ndarray:
+        """Apply the adjoint of ``extract_primal`` to a local dual action.
+
+        Primal fields and dual residuals use different entity transforms.  In
+        canonical coordinates the two local cells fold with ``conj(tau)``;
+        the adjoint lift therefore contributes ``tau`` to the second global
+        copy, then converts the canonical result back with the full dual map.
+        """
+        canonical = self.local.transform(local_native, direction="dual_to_canonical")
+        panels = canonical.reshape((2, self.local.width) + canonical.shape[1:])
+        full = np.zeros((4, self.full.width) + canonical.shape[1:], dtype=np.complex128)
+        for cell in range(2):
+            full[cell] += panels[cell] / np.sqrt(2.0)
+            full[2 + cell] += self.tau * panels[cell] / np.sqrt(2.0)
+        native = full.reshape((len(self.full.independent),) + canonical.shape[1:])
+        return self.full.transform(native, direction="dual_from_canonical")
+
 
 @dataclass(frozen=True)
 class Task40V10SectorContext:

@@ -376,15 +376,462 @@ def _runtime_interior_rows(reference: Mapping[str, Any]) -> np.ndarray:
     return interior
 
 
+def _sector_native_forward_action(
+    reference: Mapping[str, Any],
+    full_solution_independent: Any,
+    petsc: Any,
+    *,
+    allocation_gate: Any,
+) -> tuple[np.ndarray, dict[int, dict[str, np.ndarray]], dict[str, Any]]:
+    """Synthesize the two local native actions into the global dual space."""
+
+    layout = reference["full_layout"]
+    solution = np.asarray(full_solution_independent, dtype=np.complex128)
+    if solution.shape != (layout.independent_rows,) or not np.isfinite(solution).all():
+        raise ValueError("regular action witness needs the complete finite saved p6 solution")
+    sectors = tuple(reference["sectors"])
+    if len(sectors) != 2 or [int(row["context"].twist_index) for row in sectors] != [0, 1]:
+        raise ValueError("regular action witness requires both ordered two-cell twists")
+    max_local_rows = max(int(row["entities"].full_rows) for row in sectors)
+    max_local_independent = max(len(row["entities"].independent) for row in sectors)
+    allocation_gate(
+        "task40_v10_regular_sector_forward_action",
+        {
+            "additional_payload_bytes": 16
+            * (2 * layout.independent_rows + 4 * max_local_rows + 2 * max_local_independent),
+            "workspace_bytes": 16 * (layout.independent_rows + 2 * max_local_rows),
+            "twist_count": 2,
+            "global_factor_count": 0,
+            "global_matrix_count": 0,
+        },
+    )
+    synthesized = np.zeros(layout.independent_rows, dtype=np.complex128)
+    mode_ids: list[np.ndarray] = []
+    local_action_vectors: dict[int, dict[str, np.ndarray]] = {}
+    sector_facts = []
+    for sector in sectors:
+        twist = int(sector["context"].twist_index)
+        transport = sector["transport"]
+        entities = sector["entities"]
+        local_values = np.asarray(transport.extract_primal(solution), dtype=np.complex128)
+        if local_values.shape != (len(entities.independent),):
+            raise ValueError("two-cell primal extraction returned the wrong local p6 layout")
+        local_storage = np.zeros(int(entities.full_rows), dtype=np.complex128)
+        local_storage[np.asarray(entities.independent, dtype=np.int64)] = local_values
+        local_action_storage = _apply_full_action_array(
+            sector["bundle"]["physical_action"], local_storage, petsc
+        )
+        local_action = np.asarray(
+            local_action_storage[np.asarray(entities.independent, dtype=np.int64)],
+            dtype=np.complex128,
+        ).copy()
+        lifted_dual = np.asarray(transport.lift_dual(local_action), dtype=np.complex128)
+        if lifted_dual.shape != synthesized.shape or not np.isfinite(lifted_dual).all():
+            raise ValueError("two-cell dual lift returned an invalid global p6 action")
+        synthesized += lifted_dual
+        local_action_vectors[twist] = {
+            "independent": local_action,
+            "full_storage": np.asarray(local_action_storage, dtype=np.complex128).copy(),
+        }
+        mode_ids.append(np.asarray(sector["context"].original_mode_indices, dtype=np.int64))
+        sector_facts.append(
+            {
+                "twist_index": twist,
+                "local_full_rows": int(entities.full_rows),
+                "local_independent_rows": int(len(entities.independent)),
+                "mode_count": int(len(sector["context"].original_mode_indices)),
+                "local_action_norm": float(np.linalg.norm(local_action)),
+                "lifted_dual_norm": float(np.linalg.norm(lifted_dual)),
+            }
+        )
+    ordered_modes = np.sort(np.concatenate(mode_ids))
+    if not np.array_equal(ordered_modes, np.arange(532, dtype=np.int64)):
+        raise ValueError("regular local forward actions do not cover all 532 port modes exactly once")
+    return synthesized, local_action_vectors, {
+        "twist_count": len(sector_facts),
+        "all_532_modes_covered_once": True,
+        "sectors": sector_facts,
+        "local_to_global_dual_map": "TwoCellNativeTransport.lift_dual",
+    }
+
+
+def _regular_local_recovery_facts(
+    reference: Mapping[str, Any],
+    solution_independent: Any,
+    alpha_global: Any,
+    fe_rhs_global: Any,
+    port_rhs_global: Any,
+    local_action_vectors: Mapping[int, Mapping[str, np.ndarray]],
+    petsc: Any,
+    *,
+    allocation_gate: Any,
+    operation_relative: Any,
+) -> dict[str, Any]:
+    """Check every local internal row and port identity with existing formulas."""
+
+    solution = np.asarray(solution_independent, dtype=np.complex128)
+    alpha = np.asarray(alpha_global, dtype=np.complex128)
+    fe_rhs = np.asarray(fe_rhs_global, dtype=np.complex128)
+    ports = np.asarray(port_rhs_global, dtype=np.complex128)
+    sectors = tuple(reference["sectors"])
+    internal_residuals = []
+    internal_scales = []
+    internal_effective_rhs = []
+    internal_action_outputs = []
+    internal_original_rows = []
+    internal_twist_indices = []
+    native_residuals = []
+    native_scales = []
+    port_residuals = []
+    port_scales = []
+    native_identity_differences = []
+    native_identity_scales = []
+    schur_port_differences = []
+    schur_port_scales = []
+    field_differences = []
+    field_scales = []
+    sector_facts = []
+    covered_modes: list[np.ndarray] = []
+    covered_internal_rows = 0
+    for sector in sectors:
+        twist = int(sector["context"].twist_index)
+        action = sector["action"]
+        condensed = action.condensed
+        transport = sector["transport"]
+        mode_ids = np.asarray(sector["context"].original_mode_indices, dtype=np.int64)
+        local_independent = np.asarray(transport.local.independent, dtype=np.int64)
+        local_full_rows = int(condensed.full_rows)
+        allocation_gate(
+            "task40_v10_regular_sector_internal_port_recovery",
+            {
+                "additional_payload_bytes": 16
+                * (10 * local_full_rows + 5 * int(action.reduced_size) + 8 * len(mode_ids)),
+                "workspace_bytes": 32 * 2**20,
+                "twist_index": twist,
+                "internal_rows": int(condensed.active_interior_rows),
+                "port_modes": int(len(mode_ids)),
+                "global_factor_count": 0,
+                "global_matrix_count": 0,
+            },
+        )
+        local_values = np.asarray(transport.extract_primal(solution), dtype=np.complex128)
+        local_storage = np.zeros(local_full_rows, dtype=np.complex128)
+        local_storage[local_independent] = local_values
+        local_rhs = np.zeros(local_full_rows, dtype=np.complex128)
+        local_rhs[local_independent] = transport.fold_dual(fe_rhs)
+        local_ports = ports[mode_ids] / np.sqrt(2.0)
+        local_alpha = alpha[mode_ids] * np.sqrt(2.0)
+        constraints = condensed.trace_constraints
+        active_original = np.asarray(
+            constraints.owned_active_original_dofs, dtype=np.int64
+        )
+        active_ids = np.asarray(
+            [constraints.original_to_active[int(row)] for row in active_original],
+            dtype=np.int64,
+        )
+        if (
+            len(active_original) != int(condensed.active_rows)
+            or not np.array_equal(np.sort(active_ids), np.arange(condensed.active_rows))
+            or len(mode_ids) != int(condensed.appended_rows)
+        ):
+            raise ValueError("local recovery trace/port coordinates do not match the frozen p6 layout")
+        reduced_solution = np.empty(int(action.reduced_size), dtype=np.complex128)
+        reduced_solution[active_ids] = local_storage[active_original]
+        reduced_solution[int(condensed.active_rows) :] = local_alpha
+
+        saved_local_action = np.asarray(
+            local_action_vectors[twist]["full_storage"], dtype=np.complex128
+        )
+
+        native_apply_calls = 0
+        native_apply_seconds = 0.0
+
+        def native_apply(local_field: Any) -> np.ndarray:
+            nonlocal native_apply_calls, native_apply_seconds
+            started = time.perf_counter()
+            try:
+                native_apply_calls += 1
+                return _apply_full_action_array(
+                    sector["bundle"]["physical_action"], local_field, petsc
+                )
+            finally:
+                native_apply_seconds += time.perf_counter() - started
+
+        evaluated = action.evaluate_native_residual(
+            reduced_solution,
+            local_rhs,
+            native_apply,
+            port_rhs=local_ports,
+            rhs_is_mpc_dual=True,
+        )
+        if native_apply_calls != 1 or not np.isfinite(native_apply_seconds):
+            raise ValueError(
+                f"twist {twist} recovered-field witness must perform and time one real FFCx action"
+            )
+        recovered_storage = np.asarray(evaluated["storage_solution"], dtype=np.complex128)
+        field_difference = recovered_storage - local_storage
+        field_scale = float(np.linalg.norm(recovered_storage)) + float(
+            np.linalg.norm(local_storage)
+        )
+        effective_rhs = np.asarray(evaluated["native_effective_rhs"], dtype=np.complex128)
+        interior_rows = np.unique(
+            np.concatenate(
+                [
+                    np.asarray(cell.interior_original_dofs, dtype=np.int64)
+                    for cell in condensed.cell_recovery_maps
+                ]
+            )
+        )
+        internal = effective_rhs[interior_rows] - saved_local_action[interior_rows]
+        lu_internal = np.asarray(evaluated["internal_residual"], dtype=np.complex128)
+        native_residual = np.asarray(evaluated["native_residual"], dtype=np.complex128)
+        port_residual = np.asarray(evaluated["augmented_port_residual"], dtype=np.complex128)
+        native_identity = np.asarray(
+            evaluated["native_identity_difference"], dtype=np.complex128
+        )
+        schur_port_identity = np.asarray(
+            evaluated["schur_port_identity_difference"], dtype=np.complex128
+        )
+        expected_internal = int(condensed.active_interior_rows)
+        if (
+            internal.shape != (expected_internal,)
+            or interior_rows.shape != (expected_internal,)
+            or lu_internal.shape != (expected_internal,)
+        ):
+            raise ValueError(
+                f"twist {twist} independent internal action did not cover every local row: "
+                f"action={internal.shape}, rows={interior_rows.shape}, LU={lu_internal.shape}, "
+                f"expected={(expected_internal,)}"
+            )
+        covered_internal_rows += int(internal.size)
+        covered_modes.append(mode_ids)
+        internal_residuals.append(internal.copy())
+        internal_effective_rhs.append(effective_rhs[interior_rows].copy())
+        internal_action_outputs.append(saved_local_action[interior_rows].copy())
+        internal_original_rows.append(interior_rows.copy())
+        internal_twist_indices.append(
+            np.full(internal.size, twist, dtype=np.int8)
+        )
+        internal_scales.append(float(evaluated["internal_operation_scale"]))
+        native_residuals.append(native_residual.copy())
+        native_scales.append(float(evaluated["native_rhs_operation_scale"]))
+        port_residuals.append(port_residual.copy())
+        port_scales.append(float(evaluated["port_operation_scale"]))
+        native_identity_differences.append(native_identity.copy())
+        native_identity_scales.append(float(evaluated["native_identity_operation_scale"]))
+        schur_port_differences.append(schur_port_identity.copy())
+        schur_port_scales.append(float(evaluated["schur_port_identity_operation_scale"]))
+        field_differences.append(field_difference.copy())
+        field_scales.append(field_scale)
+        sector_facts.append(
+            {
+                "twist_index": twist,
+                "global_q_indices": list(sector["context"].global_q_indices),
+                "internal_row_count": int(internal.size),
+                "internal_operation_scale": float(evaluated["internal_operation_scale"]),
+                "internal_residual_relative": float(
+                    operation_relative(
+                        np.linalg.norm(internal), evaluated["internal_operation_scale"]
+                    )
+                ),
+                "internal_action_source": "saved_field_local_native_ffcx_forward",
+                "internal_effective_rhs_source": "P6CellCondensedAction.native_effective_rhs",
+                "lu_internal_residual_relative_auxiliary": float(
+                    evaluated["internal_residual_relative"]
+                ),
+                "original_H_used_for_port_elimination": True,
+                "native_residual_relative": float(evaluated["native_residual_relative"]),
+                "native_rhs_operation_scale": float(evaluated["native_rhs_operation_scale"]),
+                "port_mode_count": int(len(mode_ids)),
+                "port_residual_relative": float(evaluated["port_residual_relative"]),
+                "port_operation_scale": float(evaluated["port_operation_scale"]),
+                "native_identity_relative": float(evaluated["native_identity_relative"]),
+                "native_identity_operation_scale": float(
+                    evaluated["native_identity_operation_scale"]
+                ),
+                "schur_port_identity_relative": float(
+                    evaluated["schur_port_identity_relative"]
+                ),
+                "schur_port_identity_operation_scale": float(
+                    evaluated["schur_port_identity_operation_scale"]
+                ),
+                "projected_saved_field_recovery_relative": float(
+                    operation_relative(np.linalg.norm(field_difference), field_scale)
+                ),
+                "projected_saved_field_rows": int(local_full_rows),
+                "recovered_field_ffcx_apply_count": native_apply_calls,
+                "recovered_field_ffcx_apply_seconds": native_apply_seconds,
+            }
+        )
+    ordered_modes = np.sort(np.concatenate(covered_modes))
+    if not np.array_equal(ordered_modes, np.arange(532, dtype=np.int64)):
+        raise ValueError("local recovery checks do not cover all 532 original-H port modes exactly once")
+    if covered_internal_rows != 36_000:
+        raise ValueError(
+            f"local recovery checks cover {covered_internal_rows} internal rows, expected 36000"
+        )
+
+    def join(values: list[np.ndarray]) -> np.ndarray:
+        return np.concatenate(values) if values else np.empty(0, dtype=np.complex128)
+
+    def aggregate(values: list[np.ndarray], scales: list[float]) -> float:
+        return float(operation_relative(np.linalg.norm(join(values)), sum(scales)))
+
+    joined_internal_rows = (
+        np.concatenate(internal_original_rows)
+        if internal_original_rows
+        else np.empty(0, dtype=np.int64)
+    )
+    joined_internal_twists = (
+        np.concatenate(internal_twist_indices)
+        if internal_twist_indices
+        else np.empty(0, dtype=np.int8)
+    )
+    if (
+        joined_internal_rows.shape != (36_000,)
+        or joined_internal_twists.shape != (36_000,)
+        or not np.array_equal(
+            np.lexsort((joined_internal_rows, joined_internal_twists)),
+            np.arange(36_000, dtype=np.int64),
+        )
+    ):
+        raise ValueError("internal witness arrays lost their twist/row ordering")
+
+    return {
+        "internal_row_count": covered_internal_rows,
+        "internal_residual_relative": aggregate(internal_residuals, internal_scales),
+        "internal_operation_scale": float(sum(internal_scales)),
+        "internal_action_source": "saved_field_local_native_ffcx_forward",
+        "internal_effective_rhs_source": "P6CellCondensedAction.native_effective_rhs",
+        "recovered_field_ffcx_apply_count": sum(
+            int(row["recovered_field_ffcx_apply_count"]) for row in sector_facts
+        ),
+        "recovered_field_ffcx_apply_seconds": sum(
+            float(row["recovered_field_ffcx_apply_seconds"]) for row in sector_facts
+        ),
+        "lu_internal_residual_relative_auxiliary": max(
+            (float(row["lu_internal_residual_relative_auxiliary"]) for row in sector_facts),
+            default=float("inf"),
+        ),
+        "local_native_residual_relative": aggregate(native_residuals, native_scales),
+        "local_native_rhs_operation_scale": float(sum(native_scales)),
+        "port_mode_count": int(len(ordered_modes)),
+        "port_residual_relative": aggregate(port_residuals, port_scales),
+        "port_operation_scale": float(sum(port_scales)),
+        "native_identity_relative": aggregate(
+            native_identity_differences, native_identity_scales
+        ),
+        "native_identity_operation_scale": float(sum(native_identity_scales)),
+        "schur_port_identity_relative": aggregate(
+            schur_port_differences, schur_port_scales
+        ),
+        "schur_port_identity_operation_scale": float(sum(schur_port_scales)),
+        "projected_saved_field_recovery_relative": aggregate(
+            field_differences, field_scales
+        ),
+        "sector_facts": sector_facts,
+        "arrays": {
+            "internal_residuals": join(internal_residuals),
+            "internal_effective_rhs": join(internal_effective_rhs),
+            "internal_saved_field_action": join(internal_action_outputs),
+            "internal_original_rows": joined_internal_rows,
+            "internal_twist_indices": joined_internal_twists,
+            "native_residuals": join(native_residuals),
+            "port_residuals": join(port_residuals),
+            "native_identity_differences": join(native_identity_differences),
+            "schur_port_identity_differences": join(schur_port_differences),
+            "projected_saved_field_differences": join(field_differences),
+        },
+    }
+
+
+def _regular_inverse_gate_facts(
+    *,
+    equation_relative: float,
+    action_relative: float,
+    recovery: Mapping[str, Any],
+    local_equation_relative: float,
+    port_closure_relative: float,
+    q_residual_relative: float,
+    q_coverage_passed: bool,
+) -> dict[str, Any]:
+    gates = {
+        "original_regular_equation": bool(
+            np.isfinite(equation_relative)
+            and equation_relative <= _REFERENCE_RESIDUAL_LIMIT
+        ),
+        "independent_sector_action_consistency": bool(
+            np.isfinite(action_relative) and action_relative <= _REGULAR_ACTION_LIMIT
+        ),
+        "full_internal_recovery": bool(
+            int(recovery["internal_row_count"]) == 36_000
+            and np.isfinite(float(recovery["internal_residual_relative"]))
+            and float(recovery["internal_residual_relative"]) <= _REGULAR_RECOVERY_LIMIT
+        ),
+        "two_local_original_equations": bool(
+            np.isfinite(local_equation_relative)
+            and local_equation_relative <= _REFERENCE_RESIDUAL_LIMIT
+        ),
+        "all_532_port_equations": bool(
+            int(recovery["port_mode_count"]) == 532
+            and np.isfinite(float(recovery["port_residual_relative"]))
+            and float(recovery["port_residual_relative"]) <= _PORT_CLOSURE_LIMIT
+        ),
+        "native_action_recovery_identity": bool(
+            np.isfinite(float(recovery["native_identity_relative"]))
+            and float(recovery["native_identity_relative"]) <= _IDENTITY_LIMIT
+        ),
+        "schur_port_recovery_identity": bool(
+            np.isfinite(float(recovery["schur_port_identity_relative"]))
+            and float(recovery["schur_port_identity_relative"]) <= _IDENTITY_LIMIT
+        ),
+        "saved_field_local_recovery_identity": bool(
+            np.isfinite(float(recovery["projected_saved_field_recovery_relative"]))
+            and float(recovery["projected_saved_field_recovery_relative"])
+            <= _REGULAR_RECOVERY_LIMIT
+        ),
+        "global_alpha_port_closure": bool(
+            np.isfinite(port_closure_relative)
+            and port_closure_relative <= _REGULAR_RECOVERY_LIMIT
+        ),
+        "all_four_q_true_residuals": bool(
+            q_coverage_passed
+            and np.isfinite(q_residual_relative)
+            and q_residual_relative <= _REFERENCE_RESIDUAL_LIMIT
+        ),
+    }
+    return {
+        "gates": gates,
+        "passed": all(gates.values()),
+        "failed_gates": [name for name, passed in gates.items() if not passed],
+        "limits": {
+            "original_regular_equation": _REFERENCE_RESIDUAL_LIMIT,
+            "independent_sector_action_consistency": _REGULAR_ACTION_LIMIT,
+            "full_internal_recovery": _REGULAR_RECOVERY_LIMIT,
+            "two_local_original_equations": _REFERENCE_RESIDUAL_LIMIT,
+            "all_532_port_equations": _PORT_CLOSURE_LIMIT,
+            "native_action_recovery_identity": _IDENTITY_LIMIT,
+            "schur_port_recovery_identity": _IDENTITY_LIMIT,
+            "saved_field_local_recovery_identity": _REGULAR_RECOVERY_LIMIT,
+            "global_alpha_port_closure": _REGULAR_RECOVERY_LIMIT,
+            "all_four_q_true_residuals": _REFERENCE_RESIDUAL_LIMIT,
+        },
+    }
+
+
 def _verify_regular_inverse(
     runtime: Any,
     reference: dict[str, Any],
     physical_rhs: Any,
     physical_rhs_facts: Mapping[str, Any],
+    *,
+    allocation_gate: Any,
 ) -> dict[str, Any]:
     """Check complete regular FE/port recovery with the live four-q factors."""
 
     from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
+    from src.solvers.p6_cell_condensed_action import _operation_relative
+    from petsc4py import PETSc
 
     inverse = reference["inverse"]
     layout = reference["full_layout"]
@@ -435,6 +882,7 @@ def _verify_regular_inverse(
         error = None
         try:
             bundle["physical_action"].apply(solution, applied)
+            native_action_storage = np.asarray(applied.array_r, dtype=np.complex128).copy()
             port_load.set(0.0)
             if np.any(g_rhs):
                 bundle["dtn_action"].apply_modal_rhs(g_rhs / h, port_load)
@@ -455,6 +903,24 @@ def _verify_regular_inverse(
                 equation_relative = float(error.norm()) / equation_scale
             finally:
                 expected.destroy()
+
+            sector_action, sector_action_vectors, sector_action_facts = (
+                _sector_native_forward_action(
+                    reference,
+                    solution_values,
+                    PETSc,
+                    allocation_gate=allocation_gate,
+                )
+            )
+            native_action_independent = native_action_storage[independent]
+            action_difference = sector_action - native_action_independent
+            action_operation_scale = float(np.linalg.norm(sector_action)) + float(
+                np.linalg.norm(native_action_independent)
+            )
+            action_relative = float(
+                _operation_relative(np.linalg.norm(action_difference), action_operation_scale)
+            )
+
             recovered_alpha = bundle["dtn_action"].recover_auxiliary(solution)
             alpha_expected = recovered_alpha + g_rhs / h
             port_scale = max(
@@ -464,6 +930,17 @@ def _verify_regular_inverse(
                 np.finfo(float).tiny,
             )
             port_relative = float(np.linalg.norm(alpha - alpha_expected)) / port_scale
+
+            recovery = _regular_local_recovery_facts(
+                reference,
+                solution_values,
+                alpha,
+                fe_rhs,
+                g_rhs,
+                PETSc,
+                allocation_gate=allocation_gate,
+                operation_relative=_operation_relative,
+            )
             solve_audit = inverse.last_solve_audit
             q_rows = [row for sector in solve_audit for row in sector["q_true_residuals"]]
             q_residual_max = max(
@@ -473,16 +950,18 @@ def _verify_regular_inverse(
             q_coverage_passed = (
                 len(q_rows) == 4 and {int(row["q"]) for row in q_rows} == {0, 1, 2, 3}
             )
-            passed = bool(
-                q_coverage_passed
-                and
-                np.isfinite(equation_relative)
-                and equation_relative <= _REGULAR_ACTION_LIMIT
-                and np.isfinite(port_relative)
-                and port_relative <= _REGULAR_RECOVERY_LIMIT
-                and np.isfinite(q_residual_max)
-                and q_residual_max <= _REFERENCE_RESIDUAL_LIMIT
+            gate_facts = _regular_inverse_gate_facts(
+                equation_relative=equation_relative,
+                action_relative=action_relative,
+                recovery=recovery,
+                local_equation_relative=float(recovery["local_native_residual_relative"]),
+                port_closure_relative=port_relative,
+                q_residual_relative=q_residual_max,
+                q_coverage_passed=q_coverage_passed,
             )
+            passed = bool(gate_facts["passed"])
+            builder_action_storage = np.zeros(layout.full_rows, dtype=np.complex128)
+            builder_action_storage[independent] = sector_action
             packet = _save_packet(
                 runtime,
                 f"v10_regular_inverse_{name}",
@@ -494,22 +973,98 @@ def _verify_regular_inverse(
                     "independent_storage_rows": independent.copy(),
                     "full_solution_storage": np.asarray(solution.array_r).copy(),
                     "physical_rhs_storage": expected_storage,
+                    "global_ffcx_action_storage": native_action_storage,
                     "native_action_plus_port_rhs_storage": np.asarray(applied.array_r).copy(),
                     "full_residual_storage": np.asarray(error.array_r).copy(),
+                    "sector_synthesized_action_storage": builder_action_storage,
+                    "sector_synthesized_action_independent": sector_action,
+                    "global_ffcx_action_independent": native_action_independent,
+                    "sector_action_difference_independent": action_difference,
+                    **{
+                        f"local_ffcx_action_twist{twist}": vector
+                        for twist, vector in sector_action_vectors.items()
+                    },
+                    "full_internal_recovery_residuals": recovery["arrays"][
+                        "internal_residuals"
+                    ],
+                    "full_internal_effective_rhs": recovery["arrays"][
+                        "internal_effective_rhs"
+                    ],
+                    "full_internal_saved_field_action": recovery["arrays"][
+                        "internal_saved_field_action"
+                    ],
+                    "full_internal_original_rows": recovery["arrays"][
+                        "internal_original_rows"
+                    ],
+                    "full_internal_twist_indices": recovery["arrays"][
+                        "internal_twist_indices"
+                    ],
+                    "full_internal_recovery_formula": (
+                        "effective_rhs - saved_field_local_ffcx_action"
+                    ),
+                    "full_internal_row_order": (
+                        "twist_index ascending; original storage row ascending within twist"
+                    ),
+                    "local_native_residuals": recovery["arrays"]["native_residuals"],
+                    "all_port_residuals": recovery["arrays"]["port_residuals"],
+                    "native_action_identity_differences": recovery["arrays"][
+                        "native_identity_differences"
+                    ],
+                    "schur_port_identity_differences": recovery["arrays"][
+                        "schur_port_identity_differences"
+                    ],
+                    "saved_field_local_recovery_differences": recovery["arrays"][
+                        "projected_saved_field_differences"
+                    ],
                     "port_rhs": g_rhs.copy(),
                     "returned_alpha": np.asarray(alpha, dtype=np.complex128).copy(),
                     "recovered_alpha_plus_rhs_over_h": np.asarray(
                         alpha_expected, dtype=np.complex128
                     ).copy(),
-                    "native_action_relative_residual": equation_relative,
+                    "original_regular_equation_relative_residual": equation_relative,
+                    "original_regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
+                    "sector_native_action_consistency_relative": action_relative,
+                    "sector_native_action_consistency_operation_scale": action_operation_scale,
+                    "full_internal_recovery_relative": recovery[
+                        "internal_residual_relative"
+                    ],
+                    "full_internal_recovery_operation_scale": recovery[
+                        "internal_operation_scale"
+                    ],
+                    "full_internal_recovery_rows": recovery["internal_row_count"],
+                    "local_original_equation_relative": recovery[
+                        "local_native_residual_relative"
+                    ],
+                    "all_port_equation_relative": recovery["port_residual_relative"],
+                    "all_port_equation_operation_scale": recovery["port_operation_scale"],
+                    "native_action_recovery_identity_relative": recovery[
+                        "native_identity_relative"
+                    ],
+                    "native_action_recovery_identity_operation_scale": recovery[
+                        "native_identity_operation_scale"
+                    ],
+                    "schur_port_recovery_identity_relative": recovery[
+                        "schur_port_identity_relative"
+                    ],
+                    "schur_port_recovery_identity_operation_scale": recovery[
+                        "schur_port_identity_operation_scale"
+                    ],
+                    "saved_field_local_recovery_relative": recovery[
+                        "projected_saved_field_recovery_relative"
+                    ],
+                    "recovered_field_ffcx_apply_count": recovery[
+                        "recovered_field_ffcx_apply_count"
+                    ],
+                    "recovered_field_ffcx_apply_seconds": recovery[
+                        "recovered_field_ffcx_apply_seconds"
+                    ],
                     "regular_recovery_relative_identity": port_relative,
+                    "gate_facts": gate_facts,
+                    "sector_action_facts": sector_action_facts,
+                    "local_recovery_facts": recovery["sector_facts"],
                     "maximum_q_true_residual_relative": q_residual_max,
                     "q_true_residuals": q_rows,
-                    "limits": {
-                        "native_action": _REGULAR_ACTION_LIMIT,
-                        "regular_recovery": _REGULAR_RECOVERY_LIMIT,
-                        "q_true_residual": _REFERENCE_RESIDUAL_LIMIT,
-                    },
+                    "limits": gate_facts["limits"],
                     "physical_rhs_facts": dict(physical_rhs_facts),
                 },
             )
@@ -520,20 +1075,60 @@ def _verify_regular_inverse(
                 "port_rhs_nonzero_count": int(np.count_nonzero(g_rhs)),
                 "port_rhs_norm": float(np.linalg.norm(g_rhs)),
                 "original_regular_equation_relative_residual": equation_relative,
-                "native_action_limit": _REGULAR_ACTION_LIMIT,
+                "original_regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
+                "sector_native_action_consistency_relative": action_relative,
+                "sector_native_action_consistency_operation_scale": action_operation_scale,
+                "sector_native_action_consistency_limit": _REGULAR_ACTION_LIMIT,
+                "sector_native_action_facts": sector_action_facts,
+                "full_internal_recovery_relative": recovery[
+                    "internal_residual_relative"
+                ],
+                "full_internal_recovery_operation_scale": recovery[
+                    "internal_operation_scale"
+                ],
+                "full_internal_recovery_rows": recovery["internal_row_count"],
+                "full_internal_recovery_limit": _REGULAR_RECOVERY_LIMIT,
+                "local_original_equation_relative": recovery[
+                    "local_native_residual_relative"
+                ],
+                "all_port_equation_relative": recovery["port_residual_relative"],
+                "all_port_equation_limit": _PORT_CLOSURE_LIMIT,
+                "native_action_recovery_identity_relative": recovery[
+                    "native_identity_relative"
+                ],
+                "native_action_recovery_identity_limit": _IDENTITY_LIMIT,
+                "schur_port_recovery_identity_relative": recovery[
+                    "schur_port_identity_relative"
+                ],
+                "schur_port_recovery_identity_limit": _IDENTITY_LIMIT,
+                "saved_field_local_recovery_relative": recovery[
+                    "projected_saved_field_recovery_relative"
+                ],
+                "saved_field_local_recovery_identity_limit": _REGULAR_RECOVERY_LIMIT,
+                "recovered_field_ffcx_apply_count": recovery[
+                    "recovered_field_ffcx_apply_count"
+                ],
+                "recovered_field_ffcx_apply_seconds": recovery[
+                    "recovered_field_ffcx_apply_seconds"
+                ],
                 "regular_port_closure_relative": port_relative,
                 "regular_recovery_limit": _REGULAR_RECOVERY_LIMIT,
                 "maximum_q_true_residual_relative": q_residual_max,
                 "q_true_residuals": q_rows,
                 "all_four_q_branches_exercised": q_coverage_passed,
-                "regular_equation_limit": _REGULAR_ACTION_LIMIT,
+                "all_532_port_modes_exercised": recovery["port_mode_count"] == 532,
+                "regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
                 "identity_limit": _REGULAR_RECOVERY_LIMIT,
                 "full_witness_packet": packet,
+                "gates": gate_facts["gates"],
+                "failed_gates": gate_facts["failed_gates"],
                 "passed": passed,
             }
+            runtime.marker(f"v10_regular_inverse_{name}_evaluated", row)
             if not passed:
                 raise ValueError(
-                    f"regular p6 inverse gate failed for {name}; full witness saved: {row}"
+                    f"regular p6 inverse gates failed for {name}: "
+                    f"{gate_facts['failed_gates']}; full witness saved: {row}"
                 )
             records.append(row)
             runtime.marker(f"v10_regular_inverse_{name}_complete", row)
@@ -552,8 +1147,13 @@ def _verify_regular_inverse(
         "case_count": len(records),
         "all_four_q_exercised_per_case": True,
         "all_36000_interior_rows_exercised": True,
-        "regular_equation_limit": _REGULAR_ACTION_LIMIT,
+        "all_532_port_modes_exercised_per_case": True,
+        "regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
+        "sector_native_action_consistency_limit": _REGULAR_ACTION_LIMIT,
         "regular_recovery_limit": _REGULAR_RECOVERY_LIMIT,
+        "all_port_equation_limit": _PORT_CLOSURE_LIMIT,
+        "native_action_recovery_identity_limit": _IDENTITY_LIMIT,
+        "schur_port_recovery_identity_limit": _IDENTITY_LIMIT,
         "q_true_residual_limit": _REFERENCE_RESIDUAL_LIMIT,
         "physical_rhs_facts": dict(physical_rhs_facts),
         "passed": len(records) == 4 and all(row["passed"] for row in records),
@@ -1090,7 +1690,11 @@ def run_task40_v10_p6_reference_worker(
         mapping_identity = _mapping_identity(reference)
         ref_rhs, ref_rhs_facts = build_physical_rhs(reference["global_bundle"])
         regular_checks = _verify_regular_inverse(
-            runtime, reference, ref_rhs, ref_rhs_facts
+            runtime,
+            reference,
+            ref_rhs,
+            ref_rhs_facts,
+            allocation_gate=allocation_gate,
         )
         ref_rhs.destroy()
         ref_rhs = None

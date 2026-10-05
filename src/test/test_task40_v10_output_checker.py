@@ -1,10 +1,14 @@
 import json
 import numpy as np
+import pytest
 from types import SimpleNamespace
 
 from src.runners.physical_diagnosis_worker import save_packet
 from src.runners.task40_v10_worker import _save_packet
-from src.runners.task40_v10_output_checker import verify_v10_output_bundle
+from src.runners.task40_v10_output_checker import (
+    verify_v10_output_bundle,
+    verify_v10_regular_internal_witness,
+)
 
 
 def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_path):
@@ -75,3 +79,72 @@ def test_nested_checkpoint_packet_creates_parent_and_roundtrips(tmp_path):
     with np.load(packet["arrays"]["path"], allow_pickle=False) as arrays:
         np.testing.assert_array_equal(arrays["array_0"], vector)
     assert any(name == "v10_raw_disk_admission" for name, _facts in runtime.markers)
+
+
+def _regular_internal_payload(
+    *,
+    limit=1.0e-11,
+    action_offset=1.0e-12 + 1.0e-12j,
+    residual_override=None,
+    operation_scale=None,
+    stored_relative=None,
+):
+    count = 36_000
+    effective_rhs = np.ones(count, dtype=np.complex128)
+    saved_action = effective_rhs - action_offset
+    residual = effective_rhs - saved_action
+    if operation_scale is None:
+        operation_scale = 2.0 * float(np.linalg.norm(effective_rhs))
+    if stored_relative is None:
+        stored_relative = float(np.linalg.norm(residual) / operation_scale)
+    return {
+        "full_internal_effective_rhs": effective_rhs,
+        "full_internal_saved_field_action": saved_action,
+        "full_internal_recovery_residuals": (
+            residual if residual_override is None else residual_override
+        ),
+        "full_internal_original_rows": np.tile(np.arange(count // 2, dtype=np.int64), 2),
+        "full_internal_twist_indices": np.repeat(np.array([0, 1], dtype=np.int8), count // 2),
+        "full_internal_recovery_rows": count,
+        "full_internal_recovery_operation_scale": operation_scale,
+        "full_internal_recovery_limit": limit,
+        "full_internal_recovery_relative": stored_relative,
+    }
+
+
+def test_regular_internal_checker_recomputes_residual_from_raw_arrays(tmp_path):
+    payload = _regular_internal_payload()
+    save_packet(tmp_path, "regular_internal", payload)
+    packet = json.loads((tmp_path / "regular_internal.json").read_text())
+
+    result = verify_v10_regular_internal_witness(tmp_path / "regular_internal.json")
+
+    assert result["passed"]
+    assert result["internal_row_count"] == 36_000
+    assert result["residual_algebra_defect_relative"] == 0.0
+    assert result["packet_npz_sha256"] == packet["arrays"]["sha256"]
+
+
+def test_regular_internal_checker_rejects_forged_saved_residual(tmp_path):
+    count = 36_000
+    payload = _regular_internal_payload(
+        action_offset=1.0e-4,
+        residual_override=np.zeros(count, dtype=np.complex128),
+        operation_scale=1.0e16,
+        stored_relative=0.0,
+    )
+    save_packet(tmp_path, "forged_regular_internal", payload)
+
+    with pytest.raises(ValueError, match="failed raw-array recomputation"):
+        verify_v10_regular_internal_witness(tmp_path / "forged_regular_internal.json")
+
+
+def test_regular_internal_checker_rejects_relaxed_limit(tmp_path):
+    save_packet(
+        tmp_path,
+        "relaxed_regular_internal",
+        _regular_internal_payload(limit=1.0e-6),
+    )
+
+    with pytest.raises(ValueError, match="fixed 1e-11 contract"):
+        verify_v10_regular_internal_witness(tmp_path / "relaxed_regular_internal.json")
