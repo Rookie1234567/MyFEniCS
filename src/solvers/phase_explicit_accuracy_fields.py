@@ -56,9 +56,9 @@ class PhaseEvaluator(CellEvaluator):
         return widths**2*det*np.asarray([np.sum(self.weights[:,None]*(np.abs(grad[d])**2+np.abs(dh[d])**2)) for d in range(3)])
 
 
-def common_physical_difference(coarse,fine,cfg,journal,folder):
+def common_physical_difference(coarse,fine,cfg,journal,folder,*,q=23):
     """Integrate on the finer geometry, evaluating both physical gVh fields."""
-    fc,ff=coarse,fine;ec=PhaseEvaluator(fc.function_space,23,np.asarray([cfg.kx,cfg.ky,0],float));ef=PhaseEvaluator(ff.function_space,23,ec.kappa)
+    fc,ff=coarse,fine;ec=PhaseEvaluator(fc.function_space,q,np.asarray([cfg.kx,cfg.ky,0],float));ef=PhaseEvaluator(ff.function_space,q,ec.kappa)
     # Affine boxes: a point's parent is found from actual stored vertices,
     # never from a guessed native numbering or interpolated field.
     bounds=np.asarray([[fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].min(axis=0),fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].max(axis=0)] for c in range(len(ec.geometry))])
@@ -81,8 +81,8 @@ def common_physical_difference(coarse,fine,cfg,journal,folder):
                 selected[name].append(cv[k][0]-b);selected_ref[name].append(fv[k][0]-b)
     rows={k:dict(difference_L2=float(np.sqrt(v[0])),reference_L2=float(np.sqrt(v[1])),relative=float(np.sqrt(v[0])/max(np.sqrt(v[1]),1e-12)),incident_scaled=float(np.sqrt(v[0])/max(np.sqrt(v[2]),1e-12))) for k,v in sums.items()}
     select={k:relative(np.asarray(selected[k])-selected_ref[k],selected_ref[k]) for k in sums}
-    arrays=save_arrays(folder/'common_physical_difference.npz',per_cell_integrals=np.asarray(per))
-    return dict(fields=rows,selected=select,arrays=arrays,q=23,full_cross_terms=True,pass_gate=max([r['relative'] for r in rows.values()]+list(select.values()))<=1e-4)
+    arrays=save_arrays(folder/f'common_physical_difference_q{q}.npz',per_cell_integrals=np.asarray(per))
+    return dict(fields=rows,selected=select,arrays=arrays,q=q,full_cross_terms=True,pass_gate=max([r['relative'] for r in rows.values()]+list(select.values()))<=1e-4)
 
 
 def physical_output(bundle,u,port,geometry,folder,journal):

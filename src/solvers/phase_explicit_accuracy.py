@@ -169,6 +169,7 @@ def solve(role,folder,journal):
             accuracy['complete_physics']=full;accuracy['pass_gate']=accuracy['pass_gate'] and full['pass_gate']
             vv,cc,_=analytic_weak(bundle,journal)
             weak=dict(relative=relative(rhs.array-vv-cc,rhs.array),arrays=save_arrays(folder/'independent_analytic_weak.npz',volume=vv,coupling=cc,rhs=rhs.array.copy()))
+            accuracy['pass_gate']=accuracy['pass_gate'] and weak['relative']<=1e-10
         if role=='NOTCH_P5':
             pair=compare_saved(stage('NOTCH_P4'),dict(case=case,degree=degree,grid=grid,arrays=arrays,output=output),folder,journal)
             from .phase_explicit_accuracy_fields import PhaseEvaluator
@@ -255,7 +256,13 @@ def compare_saved(coarse,fine,folder,journal):
         vec=PETSc.Vec().createSeq(len(v['u_storage']),comm=PETSc.COMM_SELF);vec.array[:]=v['u_storage']
         try:functions.append(restore_p0_full_field(setup['floquets'][r['degree']],vec))
         finally:vec.destroy()
-    result=common_physical_difference(*functions,cfg,journal,folder)
+    low=common_physical_difference(*functions,cfg,journal,folder,q=23)
+    result=common_physical_difference(*functions,cfg,journal,folder,q=31)
+    # All integral differences are scaled by physical reference energy.
+    # This retains nearly-zero differences without dividing by roundoff.
+    qdef=max(abs(low['fields'][k][n]**2-result['fields'][k][n]**2)/max(result['fields'][k]['reference_L2']**2,1e-24) for k in result['fields'] for n in ('reference_L2','difference_L2'))
+    result.update(quadrature_pair=[23,31],quadrature_operation_scaled=qdef,q23_arrays=low['arrays'])
+    result['pass_gate']=result['pass_gate'] and qdef<=1e-10
     modes=mode_comparison(coarse,fine)
     power={k:abs(coarse['output']['port_metrics'][k]-fine['output']['port_metrics'][k]) for k in ('R_total','T_total','A_balance')}
     power['A_volume']=abs(coarse['output']['volume_metrics']['A_volume_total']-fine['output']['volume_metrics']['A_volume_total'])
