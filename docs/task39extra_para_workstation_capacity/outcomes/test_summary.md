@@ -87,3 +87,13 @@ checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`�
 | 政策/profile定向重试 | `9 passed / 5.87 s` | 只覆盖修正后的V6_P3显式policy与旧V5 profile兼容case；不表示重新运行全部方向/实体/负例/C2见证。改动行Ruff、相关`py_compile`和`git diff --check`按已审launch package记录通过；无全仓pytest/CI声明 |
 
 完整场5 nm、完整2 nm/P2和0.7 nm场仍`NOT_RUN`。上表真实FE仅指18-cell组件见证；不等同于solver收敛、R/T/A资格或continuum精度。
+
+## V6收口后追加：0.7 nm p6→p3 S1定向验证
+
+| 检查 | 已观察结果 | 范围 |
+|---|---|---|
+| 已审源文件定向测试 | 17 passed / 0.81 s；外部同因子残差校正helper纯测试4项通过。此处记录既有执行结果，没有因归档重跑 | 测试绑定S1运行WIP源，不是全仓测试；source文件hash见[p3 S1 compact](records/p3_0p7_s1_component_v1.json) |
+| S1真实FE/MPC组件 | v5自然完成并由主审接受；72 cells/16 modes，准确A3一个factor，端口初次MatSolve API真实FAIL后一次外部校正PASS，三次完整PC的六个C返回均PASS | 这是受限组件见证，不是pytest、全h0.7模型或物理/收敛资格 |
+| 资源与失败保留 | 单次资源审计1089/1089样本可读、parse error 0、warning 0、RSS峰2763333632 B、task swap0；PSS/USS关闭。v3 serializer failure及v4显式端口单次MatSolve失败均保留 | 不重扫资源日志；完整摘要与原件hash见S1 compact |
+
+全网格S2尚未启动；无0.7全场PDE、factor或setup/KSP资格。上述17项和4项纯测试未因本次文档更新重跑，未执行全库pytest或CI。

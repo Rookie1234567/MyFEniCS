@@ -37,13 +37,18 @@ V6_BASE_PROFILES = {
     # contracts while selecting a degree-3 coarse operator.
     'dual_condensed_balh_native_5nm_p3_v6': 'dual_condensed_balh_native_5nm_v5',
     'dual_condensed_balh_native_2nm_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
+    'dual_condensed_balh_native_0p7nm_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
 }
+V6_0P7_P3_HP_OPTIN_PROFILES = frozenset(
+    {'dual_condensed_balh_native_0p7nm_p3_pilot16_v6'}
+)
 V6_NATIVE_PROFILES = frozenset(V6_BASE_PROFILES)
 V6_P3_PROFILES = frozenset(
     {
         'dual_condensed_balh_native_13p5_p3_v6',
         'dual_condensed_balh_native_5nm_p3_v6',
         'dual_condensed_balh_native_2nm_p3_pilot16_v6',
+        'dual_condensed_balh_native_0p7nm_p3_pilot16_v6',
     }
 )
 V6_R13_ANCHOR_PROFILES = frozenset({'dual_condensed_balh_native_13p5_p3_v6'})
@@ -51,6 +56,7 @@ V6_PILOT16_PROFILES = frozenset(
     {
         'dual_condensed_balh_native_2nm_pilot16_v6',
         'dual_condensed_balh_native_2nm_p3_pilot16_v6',
+        'dual_condensed_balh_native_0p7nm_p3_pilot16_v6',
     }
 )
 V6_COARSE_DEGREES = {
@@ -65,6 +71,9 @@ NATIVE_CASES.update(
     }
 )
 NATIVE_CASES.update({identity: NATIVE_CASES[base] for identity, base in V6_BASE_PROFILES.items()})
+NATIVE_CASES['dual_condensed_balh_native_0p7nm_p3_pilot16_v6'] = (
+    0.7, (0.7,), None, None, None
+)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 RETAINED_CONDENSED_PROFILE = 'dual_condensed_balh_native_5nm_v3'
 V5_NATIVE_PROFILES = frozenset(V5_NATIVE_CASES)
@@ -128,6 +137,7 @@ MATERIALS = {
     5.0: (0.99396854453, 0.00435380777),
     3.0: (0.99735217495, 0.000883207249),
     2.0: (0.99880148307, 0.000213688647),
+    0.7: (0.9998851259969171, 4.325285938225562e-06),
 }
 
 USER_MATERIAL_METADATA = {
@@ -145,6 +155,18 @@ USER_MATERIAL_METADATA = {
         'delta': 0.00603145547,
         'beta': 0.00435380777,
         'authority': 'user-provided for this execution; not independently database-verified',
+        'interpretation': 'complex refractive index n=1-delta+i*beta; epsilon=n*n',
+    },
+    0.7: {
+        'material': 'Si / silicon',
+        'density_g_cm3': 2.33,
+        'delta': 0.00011487400308289077,
+        'beta': 4.325285938225562e-06,
+        'authority': (
+            'derived by linear interpolation of the task R48 Henke table '
+            'and the recorded project wavelength conversion; material accuracy unqualified'
+        ),
+        'source_sha256': '3e947de11141efbba8b0df1ece4d75f56c72075d060cc2b457cf21be1400d884',
         'interpretation': 'complex refractive index n=1-delta+i*beta; epsilon=n*n',
     },
 }
@@ -172,6 +194,22 @@ def native_profile_facts(identity):
             shared_readonly_geometry=True, shared_contractions=False,
             combine_real_imag_transforms=False, continuous_projection_matmul=False,
             reuse_projection_work=False)
+        if identity in V6_0P7_P3_HP_OPTIN_PROFILES:
+            facts['wavelength_nm'] = 0.7
+            facts['allowed_mesh_targets_nm'] = [0.7]
+            facts['component_options'].update(
+                exact_carrier_diagonal_hp=True,
+                omit_structural_zero_hlocal=True,
+            )
+            facts['condensed_route'] = dict(
+                facts['condensed_route'],
+                hp_storage_policy='exact_carrier_diagonal',
+                hlocal_omission_policy='only_omitted_H_is_structural_zero',
+            )
+            material_facts = USER_MATERIAL_METADATA[0.7]
+            facts['campaign_authorization']['user_material'] = dict(material_facts)
+            facts['campaign_authorization'].pop('two_nm_material', None)
+            facts['campaign_authorization'].pop('five_nm_material', None)
         facts['outer']['planned_stop_iteration'] = 16 if pilot else None
         facts['outer']['screen']['enabled'] = False
         facts['campaign_authorization'].update(source=(
@@ -505,6 +543,39 @@ def validate_native_case(config):
             raise InputError(
                 f'{identity} fixes solver.coarse_degree={expected_degree}'
             )
+        if identity in V6_0P7_P3_HP_OPTIN_PROFILES:
+            # Validate the unchanged geometry/runner contract through the
+            # qualified 2 nm V5 shape, then check this profile's distinct
+            # wavelength, material interpolation, and boundary-fitted target.
+            legacy = deepcopy(config)
+            legacy['solver']['preconditioner'] = V6_BASE_PROFILES[identity]
+            legacy['solver']['coarse_degree'] = V5_NATIVE_CASES[
+                V6_BASE_PROFILES[identity]
+            ][2]
+            legacy['execution']['native_memory_policy'] = 'preferred_node1'
+            legacy['incidence']['wavelength_nm'] = 2.0
+            legacy['discretization']['mesh_target_nm'] = 1.5
+            legacy['materials']['n_substrate'] = list(MATERIALS[2.0])
+            legacy['materials']['n_grating'] = list(MATERIALS[2.0])
+            validate_native_case(legacy)
+            if config['incidence'].get('wavelength_nm') != 0.7:
+                raise InputError(f'{identity} fixes wavelength_nm=0.7')
+            if config['discretization'].get('mesh_target_nm') != 0.7:
+                raise InputError(f'{identity} fixes mesh_target_nm=0.7')
+            for key in ('n_substrate', 'n_grating'):
+                if tuple(config['materials'][key]) != MATERIALS[0.7]:
+                    raise InputError(f'{identity} fixes materials.{key}')
+            for key in ('substrate_name', 'grating_name'):
+                if config['materials'].get(key) != USER_MATERIAL_METADATA[0.7]['material']:
+                    raise InputError(
+                        f'{identity} fixes materials.{key}='
+                        f"{USER_MATERIAL_METADATA[0.7]['material']}"
+                    )
+            if config['solver'].get('ksp_type') != 'fgmres':
+                raise InputError(f'{identity} fixes solver.ksp_type=fgmres')
+            if config['execution'].get('timeout_seconds') is not None:
+                raise InputError(f'{identity} fixes execution.timeout_seconds=None')
+            return
         legacy = deepcopy(config)
         legacy['solver']['preconditioner'] = V6_BASE_PROFILES[identity]
         # Validate the inherited V5 physical campaign independently of the

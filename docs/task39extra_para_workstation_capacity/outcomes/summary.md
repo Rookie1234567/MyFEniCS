@@ -1,5 +1,19 @@
 # 原生迁移与容量任务：执行结果总账
 
+## V6收口后新增：0.7 nm p6→p3 S1有界组件（2026-10-05）
+
+用户最新授权将V6中“0.7 nm仅metadata规划”的范围限制扩展为实际p3候选验证；不改写task/review历史，也不新造Review V7。本条只记录72-cell/16-mode真实FE/MPC组件，不是全530856-cell、32060-mode的h0.7精度或收敛资格。运行源为base `c70ce2976e163421beb749b7003b015a3d22c5da`上的已接受WIP patch，不能把base HEAD单独称为本场完整source。
+
+| 项目 | 实测 / 身份 | 解释与证据边界 |
+|---|---|---|
+| S1离散与行数 | p6/h0.7、准确p3/A3；72 cells（其中9个真实h0.7细cell）、16个传播mode；fine p6 action/global DOF `51060`；A3增广矩阵`3472`行、未凝聚全行`6954` | 全h0.7网格未构建；轴规划73×36×202=530856和完整32060模式只绑定输入/既有planner身份 |
+| 原端口RHS | 单次MatSolve API初解原A3相对残差`1.1280721128506167e-10`，超过`1e-10`；同一因子一次外部残差校正后`1.7034136500666543e-12` | 初始FAIL与校正后PASS分列；不推断MUMPS内部精化；总factor symbolic/numeric/solve/logical=`1/1/9/7` |
+| 固定PC见证 | 三次完整PC，各C1/C2原A3与端口闭合均PASS；A3最大C返回`9.771047096651044e-14`，端口最大`1.0816913226307703e-15`；无额外C精化 | PC均值约0.729 s仅属本组件；JIT未控，不能与v3/v4墙钟作提速结论 |
+| Bi/Di与资源 | 实际非零Bi/Di约`1e-13`，诱导缩减端口RHS范数`6.991326421849728e-17`；RSS峰`2763333632 B`、task swap0、PSS/USS off、1089条资源样本全可读、后代清场 | 只属舍入量级，不是强耦合见证；全机swap归因unknown。资源只做一次终态审计，路径/hash及采样边界见compact |
+| 状态 | `S1_COMPONENT_PASS_NOT_FULL_MODEL_QUALIFICATION`；保留v3序列化失败和v4单次MatSolve真实Gate失败 | 不代表全场setup/KSP、材料/网格精度、收敛、48 h或2 TB资格。见[S1 compact](records/p3_0p7_s1_component_v1.json)及主审receipt SHA `af86c8abbdf86045580b1f563994491820458ad8f3e3b0dfc5637af8d77aaf04` |
+
+S2目标仍是同一planner的530856 cells/32060 modes，QA与计划16步共用一个准确A3因子；这是待审核启动包，不是已启动计算。原A3每次返回`<=1e-10`、最多两次同因子外部精化、完整原A6门`<=1e-6`、FGMRES32以及RSS-only `1.3e12 B`/PSS关闭/无时间截止均维持。此前S3/13.5 nm章节中“0.7 nm未运行”是对应历史时点的记录，由本节限域更新，不改其原始事实。
+
 ## V6收口后用户追加的p3候选（S3，2026-10-04）
 
 本节只记录用户追加的p6细层/p3准确粗修正候选；这是Review V6之后的补充执行范围，不是Review V7，也不改变下面保存的V6历史结论。正式路线的FGMRES作用于p6凝聚trace加全部port未知量（5 nm 600个、2 nm 3904个），完整未凝聚p6 A6仍用于原残差/相关作用。本次18-cell组件只做固定PC见证，没有运行FGMRES外层步；A3准确MUMPS因子与既有数值门保持不变。

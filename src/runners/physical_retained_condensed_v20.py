@@ -348,8 +348,26 @@ class RetainedCondensedRuntime:
                 share_identity_cache=True,
                 raw_tensor_evaluator=evaluators.get(6),
             )
+            hp_diagonal_optin = bool(options.get('exact_carrier_diagonal_hp', False))
+            omit_zero_hlocal_optin = bool(
+                options.get('omit_structural_zero_hlocal', False)
+            )
+            if hp_diagonal_optin or omit_zero_hlocal_optin:
+                from src.io.native_capacity_profile import V6_0P7_P3_HP_OPTIN_PROFILES
+
+                if profile_identity not in V6_0P7_P3_HP_OPTIN_PROFILES:
+                    raise ValueError(
+                        'carrier-diagonal Hp and omitted Hlocal storage are '
+                        'restricted to the explicit 0.7 nm V6 p3 profile'
+                    )
+                if not (hp_diagonal_optin and omit_zero_hlocal_optin):
+                    raise ValueError('the 0.7 nm Hp/Hlocal opt-ins must be enabled together')
             p6_action = build_p6_cell_condensed_action_from_carrier(
-                p6_system, p6_carrier, owns_condensed=True
+                p6_system,
+                p6_carrier,
+                owns_condensed=True,
+                exact_carrier_diagonal_hp=hp_diagonal_optin,
+                omit_structural_zero_hlocal=omit_zero_hlocal_optin,
             )
             groups, group_by_row = _support_groups(p4_space, p4_carrier)
             p4_system = build_unconstrained_assembly_time_condensation(
@@ -1648,8 +1666,7 @@ def run_retained_condensed_workflow(
             },
             "port": {
                 "appended_rows": int(runtime.p6_system.appended_rows),
-                "H_p_sha256": hashlib.sha256(runtime.p6_action.H_p.tobytes()).hexdigest(),
-                "Hhat_sha256": hashlib.sha256(runtime.p6_action.Hhat.tobytes()).hexdigest(),
+                **dict(runtime.p6_action.port_block_identity),
                 "fixed_vector_port_residuals": {
                     name: float(values["port_closure_relative"])
                     for name, values in setup_algebra.items()

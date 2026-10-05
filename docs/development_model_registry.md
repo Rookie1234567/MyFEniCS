@@ -1687,3 +1687,8 @@ canonical共享实体传递仅由显式V6_P3 profile启用：每个局部p3→p6
 | 0.7 nm规划 | planner axes `100×50×280`、1,400,000 cells、32,060 modes；派生p3/p4 retained+ports `63,122,060/117,792,060`行；约65个p6维complex128数组条件payload `288,695,742,400 B` | 无FE网格、矩阵、factor或PDE；材料/网格精度、factor fill、setup/numeric、收敛步数、48 h与2 TB可行性均未资格化。不得外推本anchor性能 |
 
 完整全场对照、证据hash、执行接管、donor lineage和0.7 nm元数据身份见[p3 anchor compact](task39extra_para_workstation_capacity/outcomes/records/p3_anchor_13p5nm_saved_field_pair_v1.json)及[S3 outcome](task39extra_para_workstation_capacity/outcomes/p3_mid_order_s3.md)。
+
+
+## 3.47 Task39extra_para：0.7 nm p3 S1有界组件（V6后用户追加授权）
+
+用户追加授权把此前仅做0.7 nm metadata规划的限制扩展到有界p3 FE/MPC验证；不改写V6 review/task，也不是全模型资格。S1在72 cells（9个真实h0.7细cell）和16个传播mode上通过固定PC组件见证，运行源是base `c70ce2976e163421beb749b7003b015a3d22c5da`上的WIP patch。fine p6 action/global DOF为51060；准确A3增广行3472、未凝聚全行6954。单次MatSolve API端口初解`1.1280721128506167e-10`真实超限，允许的一次同因子外部校正后`1.7034136500666543e-12`；三次完整PC的C1/C2均PASS，factor symbolic/numeric/solve/logical=`1/1/9/7`。Bi/Di约1e-13，仅舍入量级。RSS峰`2763333632 B`、tree swap0、PSS/USS关闭。状态为`S1_COMPONENT_PASS_NOT_FULL_MODEL_QUALIFICATION`；全场0.7精度、材料/网格精度、收敛、48h与2TB资格仍unknown。S1 compact及主审receipt见[outcome record](task39extra_para_workstation_capacity/outcomes/records/p3_0p7_s1_component_v1.json)。S2全530856 cells/32060 modes setup+16步仅准备包待审，尚未启动。

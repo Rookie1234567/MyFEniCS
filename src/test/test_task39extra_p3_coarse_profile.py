@@ -202,3 +202,57 @@ def test_checker_rejects_a3_runtime_with_legacy_a4_label(tmp_path):
     assert "p3 runtime summary does not identify the actual A3 operator" in result[
         "gate_failures"
     ]
+
+
+def test_0p7_p3_hp_optin_keeps_its_own_material_and_component_identity(tmp_path):
+    from copy import deepcopy
+
+    from src.io.native_capacity_profile import (
+        V6_0P7_P3_HP_OPTIN_PROFILES,
+        V6_P3_PROFILES,
+    )
+
+    input_path = ROOT / "input/task39extra_para_workstation_capacity/v6_0p7nm_p3_pilot16.dat"
+    spec = load_and_resolve(input_path)
+    identity = "dual_condensed_balh_native_0p7nm_p3_pilot16_v6"
+    assert identity == spec.solver["preconditioner"]
+    snapshot = spec.as_jsonable()
+    assert snapshot["incidence"]["wavelength_nm"] == 0.7
+    assert snapshot["discretization"]["mesh_target_nm"] == 0.7
+    assert spec.solver["coarse_degree"] == 3
+
+    facts = native_profile_facts(identity)
+    assert identity in V6_0P7_P3_HP_OPTIN_PROFILES & V6_P3_PROFILES
+    assert facts["campaign_authorization"]["user_material"]["source_sha256"] == (
+        "3e947de11141efbba8b0df1ece4d75f56c72075d060cc2b457cf21be1400d884"
+    )
+    assert "two_nm_material" not in facts["campaign_authorization"]
+    assert "five_nm_material" not in facts["campaign_authorization"]
+    assert facts["component_options"]["exact_carrier_diagonal_hp"] is True
+    assert facts["component_options"]["omit_structural_zero_hlocal"] is True
+
+    manifest = _base_manifest(
+        spec,
+        run_directory=tmp_path,
+        source_sha="a" * 40,
+        adapter_identity="task038.full3d_iterative",
+        start_time="2026-10-05T00:00:00Z",
+        resolved_sha="b" * 64,
+    )
+    assert manifest["component_options"] == facts["component_options"]
+    assert manifest["native_capacity_contract"]["profile"] == identity
+    assert manifest["native_capacity_contract"]["wavelength_nm"] == 0.7
+
+    wrong_material = deepcopy(snapshot)
+    wrong_material["materials"]["n_substrate"] = [0.99880148307, 0.000213688647]
+    with pytest.raises(InputError, match="materials.n_substrate"):
+        validate_native_case(wrong_material)
+
+    for old_identity in (
+        "dual_condensed_balh_native_5nm_p3_v6",
+        "dual_condensed_balh_native_2nm_p3_pilot16_v6",
+        "dual_condensed_balh_native_2nm_pilot16_v6",
+    ):
+        old_facts = native_profile_facts(old_identity)
+        assert "exact_carrier_diagonal_hp" not in old_facts["component_options"]
+        assert "omit_structural_zero_hlocal" not in old_facts["component_options"]

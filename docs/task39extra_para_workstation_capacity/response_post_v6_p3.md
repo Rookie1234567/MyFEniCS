@@ -62,3 +62,21 @@ M0核对的核心流程仍是BAL_H按C→A→H→A→C、随后`zc+s-t`；粗解
 既有planner按100×50×280轴得到1,400,000 cells和32,060 modes；周期拓扑公式派生p3/p4保留骨架加ports为63,122,060 / 117,792,060行，p6外层背景为277,592,060行。约65个p6维度complex128数组的`288,695,742,400 B`只是条件向量payload，不是RSS。P2控制中backend原始INFOG[22]=916713 MB；按cell比例推到约23.621 TB是敏感情景，单位/bytes换算与精确factor fill仍unknown，不能叫预测或下界。0.7 nm没有FE网格/全局矩阵/factor/PDE；材料模型和网格离散精度没有资格化，factor fill、setup/numeric wall time、收敛步数与0.7 nm field accuracy均unknown，48 h和2 TB目标仍`NOT_ESTABLISHED`。原planner record SHA `93d9c0cc8e479af528afc16d6a1165e26de49c433739440108c6ad35751bf25d`，planner script SHA `ac1b27c03e47ad77cf041ff0d6b414578bc0a76c78040b09fa4c58a90c8820a7`，production planner module SHA `042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e`，external-mode inventory SHA `806acae28c8efbe32c11d38ccfe79fc55e84ed2c11e27012fca58f2db105fa74`；mode manifest SHA、R48 review和其余公式见[anchor compact](outcomes/records/p3_anchor_13p5nm_saved_field_pair_v1.json)及[R48 plan](outcomes/records/v6_0p7nm_48h_capacity_plan.json)。
 
 保存场对照和归档阶段没有新运行PDE、因子或性能实验；本节之前的13.5 nm anchor 是本轮已批准并完成的一次完整场run。5 nm p3中断负结果照旧保留，不晋级2 nm/0.7 nm。
+
+
+## 0.7 nm S1有界真实FE/MPC组件（2026-10-05追加）
+
+用户最新授权将此前“0.7 nm仅metadata规划”的范围限制扩展为实际p3候选验证；不改写Review V6/task历史，也不新造Review V7。运行源为base `c70ce2976e163421beb749b7003b015a3d22c5da`上的已审WIP patch，不能只把base HEAD称为完整运行源码。输入SHA `3be4d0b12713f2cef4b7c90c97024b286d3ea8a7bd4d343b2178792f0121d480`，物理SHA `965c5ad2c25b817b01dbe5eaab1ee557a3d5c84ea4913b620466bb13f0795e4e`，resolved SHA `a6827e611dd0f3c043c3705debc51fe783902a3fbc5803718c288bd2fdca3edd`。本场72 cells（9个真实h0.7细cell）、16个传播mode；全模型planner为73×36×202=530856 cells、32060 modes，未构建。
+
+| 见证 | measured结果 | 边界 |
+|---|---|---|
+| 行数与作用空间 | p6 action/global DOF `51060`；p3准确A3增广行数`3472`，未凝聚全行`6954` | 分别对应原report中的`p3_A3_augmented_rows`与`p3_A3_full_rows` |
+| 显式端口RHS | 首次单次MatSolve API残差`1.1280721128506167e-10`，高于`1e-10`；同一因子一次外部残差校正后`1.7034136500666543e-12` | 首次FAIL真实保留；不推断MUMPS内部精化 |
+| 固定PC | 3次完整PC，每次C1/C2均通过原A3/端口门；factor symbolic/numeric/solve/logical=`1/1/9/7`；C额外精化0 | 不含外层FGMRES步 |
+| 内部端口与资源 | Bi/Di约`1e-13`、诱导RHS范数`6.991326421849728e-17`；RSS峰`2763333632 B`、task swap峰0、PSS/USS关闭 | Bi/Di仅舍入量级，不是强耦合见证；全机swap归因unknown |
+
+组件以`S1_COMPONENT_PASS_NOT_FULL_MODEL_QUALIFICATION`接受。v3序列化失败、v4真实单次MatSolve API门失败及v5校正路径均保留原件。本次worker总时长约400.759 s；compact记录的setup-build子阶段44.365 s，三个完整PC约0.729 s/次。JIT缓存未控制，不据此宣称v3/v4优化收益。资源单次审计的范围、计数和hash见[S1 compact](outcomes/records/p3_0p7_s1_component_v1.json)；终态主审receipt SHA `af86c8abbdf86045580b1f563994491820458ad8f3e3b0dfc5637af8d77aaf04`。
+
+## S2准备边界
+
+S2目标为完整planner规模530856 cells/32060 modes，QA与计划16个outer步共用一个准确A3因子；这是待审核启动包，不是已运行计算。原A3返回门`1e-10`、最多两次同因子外部精化、完整原A6门`1e-6`、FGMRES32、RSS-only硬线`1.3e12 B`、PSS/USS关闭、无时间截止等合同不变。包绑定最终clean source并经主审审核前不启动S2；16步停止点不自动获得收敛、RTA或0.7 nm物理资格。

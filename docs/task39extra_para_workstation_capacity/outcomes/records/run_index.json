@@ -183,13 +183,25 @@
       "exit_status": -9,
       "swap_bytes": 0,
       "pid_identity": {
-        "root": {"pid": 402109, "start_ticks": 181317305},
-        "mpi": {"pid": 402153, "start_ticks": 181317425},
-        "worker": {"pid": 402163, "start_ticks": 181317436},
-        "external_guard": {"pid": 1549434, "start_ticks": 197061667}
+        "root": {
+          "pid": 402109,
+          "start_ticks": 181317305
+        },
+        "mpi": {
+          "pid": 402153,
+          "start_ticks": 181317425
+        },
+        "worker": {
+          "pid": 402163,
+          "start_ticks": 181317436
+        },
+        "external_guard": {
+          "pid": 1549434,
+          "start_ticks": 197061667
+        }
       }
-    }
-    ,{
+    },
+    {
       "stage": "R13Q4",
       "attempt": 2,
       "run_id": "20260923T161715.636493Z",
@@ -199,7 +211,7 @@
       "input_sha256": "f9e20874ed86e8697b307ca9d2539ec04be8dd77dc7211cc9e0be8dae30746b5",
       "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
       "iterations": 126,
-      "true_residual": 9.283159218227881e-7,
+      "true_residual": 9.283159218227881e-07,
       "resource_status": "WATCHDOG_COMPLETED_CLEARED_CONTINUOUS"
     },
     {
@@ -212,7 +224,7 @@
       "input_sha256": "6773b6882c29b91590da7d9da85909fe97f71e574488b671ec44c8167f2a722a",
       "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
       "iterations": 361,
-      "true_residual": 9.467909430661342e-7,
+      "true_residual": 9.467909430661342e-07,
       "resource_status": "WATCHDOG_COMPLETED_CLEARED_CONTINUOUS"
     },
     {
@@ -233,7 +245,7 @@
       "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
       "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
       "iterations": 121,
-      "true_residual": 8.604222538518652e-7,
+      "true_residual": 8.604222538518652e-07,
       "tree_rss_peak_bytes": 38934622208,
       "tree_swap_peak_bytes": 0,
       "reference_mode_count": 600,
@@ -318,7 +330,11 @@
       "modes": 3904,
       "iterations": 16,
       "original_A6_iteration16": 0.35320202729663724,
-      "p4_symbolic_numeric_MatSolve": [1, 1, 49],
+      "p4_symbolic_numeric_MatSolve": [
+        1,
+        1,
+        49
+      ],
       "tree_rss_peak_bytes": 1150080622592,
       "tree_swap_peak_bytes": 0,
       "workflow_seconds": 111741.07083616301,
@@ -516,9 +532,35 @@
       "geometry_raw_classes": 96,
       "tensor_evaluations_or_groups_old_to_new": "96 to 12",
       "oriented_schur_lu_classes_old_to_new": "139 to 139"
+    },
+    {
+      "stage": "P3_0P7_S1_COMPONENT",
+      "attempt": 1,
+      "run_id": "h0p7_p3_s1_72cell_16mode_residual_refinement_v5_20261005T044500Z",
+      "record": "p3_0p7_s1_component_v1.json",
+      "status": "S1_COMPONENT_PASS_NOT_FULL_MODEL_QUALIFICATION",
+      "base_source_sha": "c70ce2976e163421beb749b7003b015a3d22c5da",
+      "source_identity": "accepted WIP patch; exact file hashes are in the record, not a clean source SHA",
+      "tracked_patch_sha256": "dca0b6c209952e9c2da8e446dac76587077a2e152aac9d178b3bc2de7fdad5cd",
+      "input_sha256": "3be4d0b12713f2cef4b7c90c97024b286d3ea8a7bd4d343b2178792f0121d480",
+      "physical_model_sha256": "965c5ad2c25b817b01dbe5eaab1ee557a3d5c84ea4913b620466bb13f0795e4e",
+      "resolved_config_sha256": "a6827e611dd0f3c043c3705debc51fe783902a3fbc5803718c288bd2fdca3edd",
+      "mode_sha256": "d6099ab1aa2cf51b8d51a81b8581ce23a3ada8f616980b8baf036d38ca940594",
+      "actual_cells": 72,
+      "h0p7_cells": 9,
+      "selected_modes": 16,
+      "full_model_cells_derived": 530856,
+      "full_model_modes": 32060,
+      "p6_action_full_rows": 51060,
+      "p3_A3_augmented_rows": 3472,
+      "p3_A3_full_rows": 6954,
+      "factor_symbolic_numeric_solve_logical": "1/1/9/7",
+      "main_acceptance_sha256": "af86c8abbdf86045580b1f563994491820458ad8f3e3b0dfc5637af8d77aaf04",
+      "resources_jsonl_sha256": "2c7eea887a04cf533d0cd2709785b4c6b236cf783d7faf433622e2d4662b5ca2",
+      "full_model_mode_sha256": "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "P3_13P5_ANCHOR_ACCEPTED_FOR_ORIGINAL_MODEL_ONLY; 5nm p3 remains interrupted, 2nm p3 and 0.7nm remain not run; no further calculation without an explicit decision"
+  "next_gate": "S2_FULL_0P7_SETUP_PLUS_16_PILOT_PACKAGE_PENDING_MAIN_REVIEW; not launched; S1 is bounded component evidence only"
 }

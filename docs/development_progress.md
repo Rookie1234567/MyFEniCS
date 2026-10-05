@@ -2883,3 +2883,8 @@ V25 donor BAL_H含默认`InexactBalanceLedger`，首次及每32次PC调用额外
 原13.5 nm anchor以source `a1a1e78a74a5497d7929a67f1de686965f30a066`完成361步，原A6 `9.454573485808941e-7`；同物理保存场的FE/EH/modal/R/T/A对照过数值阈值，但authority保持`REFERENCE_AUTHORITY_LIMITED`。旧→新setup/KSP/workflow为12.27x/1.09x/1.93x工程对照，非受控因果比较；A3 numeric区间未见加速。watchdog树RSS峰`5294153728 B`、17,924样本全可读、task swap0、PSS disabled、后代清场；global pswpin增加1页、归因unknown，资源读取为一遍解析加一遍取末行顺序IO。
 
 0.7 nm只有planner元数据：100×50×280轴、1,400,000 cells、32,060 modes；派生p3/p4 retained+ports 63,122,060/117,792,060行，约65个p6 complex128向量情景288,695,742,400 B。没有0.7 FE网格、矩阵、factor或PDE，材料/网格精度、factor fill、收敛、48 h及2 TB均未资格化。完整身份与证据见[p3 anchor compact](task39extra_para_workstation_capacity/outcomes/records/p3_anchor_13p5nm_saved_field_pair_v1.json)和[本任务S3结果](task39extra_para_workstation_capacity/outcomes/p3_mid_order_s3.md)。
+
+
+## Task39extra_para：0.7 nm p3 S1限域组件归档（2026-10-05）
+
+V6/R48收口后，用户追加授权将0.7 nm从metadata-only扩展到有界p3验证。S1在72 cells/16 modes上完成固定PC见证：A3增广/全行分别3472/6954，p6 action行为51060；端口初次MatSolve API为真实超限，单次同因子外部残差校正后通过，三次PC的C1/C2均通过。资源峰值2763333632 B、PSS/USS关闭、tree swap0。此项不是全0.7场资格；S2全网格setup+16步包待主审，尚未启动。记录见[p3 S1 compact](task39extra_para_workstation_capacity/outcomes/records/p3_0p7_s1_component_v1.json)及[post-V6 response](task39extra_para_workstation_capacity/response_post_v6_p3.md)。

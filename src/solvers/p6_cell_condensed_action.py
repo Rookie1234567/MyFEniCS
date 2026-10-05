@@ -8,9 +8,10 @@ adds the carrier blocks without allocating a global p6 matrix:
 ``[S_V, Bhat; -Dhat, Hhat]`` is evaluated by cell gather/multiply/scatter,
 while ``Hhat`` is the only dense object and is only ``nport`` by ``nport``.
 
-The original carrier block ``H_p`` is retained separately.  In particular,
-the BAL_H bridge below deliberately solves with ``H_p`` and never substitutes
-``Hhat``.  All arrays use the native non-Hermitian signs from
+The original carrier block ``H_p`` is retained separately (dense by default;
+an explicit carrier-only opt-in may keep its proven positive diagonal vector).
+In particular, the BAL_H bridge below deliberately solves with ``H_p`` and
+never substitutes ``Hhat``.  All arrays use the native non-Hermitian signs from
 ``[[V, B], [-D, H_p]]``; no conjugate transpose is inferred for ``D``.
 """
 
@@ -115,10 +116,47 @@ def _array_sha256(value: np.ndarray) -> str:
     """Hash one native little-endian array without gathering any matrix."""
 
     array = np.ascontiguousarray(value, dtype=np.complex128)
-    return hashlib.sha256(
-        repr((array.shape, str(array.dtype))).encode()
-        + array.tobytes(order="C")
-    ).hexdigest()
+    digest = hashlib.sha256()
+    digest.update(repr((array.shape, str(array.dtype))).encode())
+    if array.nbytes:
+        digest.update(memoryview(array).cast("B"))
+    return digest.hexdigest()
+
+
+def _array_payload_sha256(value: np.ndarray) -> str:
+    """Hash exactly the C-order payload bytes without a ``tobytes`` copy."""
+
+    array = np.ascontiguousarray(value)
+    digest = hashlib.sha256()
+    if array.nbytes:
+        digest.update(memoryview(array).cast("B"))
+    return digest.hexdigest()
+
+
+def _typed_array_sha256(value: np.ndarray) -> str:
+    """Hash shape/dtype metadata and payload while preserving the source dtype."""
+
+    array = np.ascontiguousarray(value)
+    digest = hashlib.sha256()
+    digest.update(repr((array.shape, str(array.dtype))).encode())
+    if array.nbytes:
+        digest.update(memoryview(array).cast("B"))
+    return digest.hexdigest()
+
+
+def _positive_hp_diagonal(value: Any, *, size: int) -> np.ndarray:
+    """Validate exact positive real carrier-H entries without matrix inference."""
+
+    raw = np.asarray(value)
+    if np.iscomplexobj(raw) and np.any(np.imag(raw) != 0.0):
+        raise ValueError("H_p diagonal entries must be real carrier normalizations")
+    result = np.array(np.asarray(np.real(raw), dtype=np.float64).reshape(-1), copy=True, order="C")
+    if result.shape != (size,):
+        raise ValueError(f"H_p diagonal has shape {result.shape}, expected {(size,)}")
+    if not np.isfinite(result).all() or np.any(result <= 0.0):
+        raise ValueError("H_p diagonal entries must be finite and strictly positive")
+    result.setflags(write=False)
+    return result
 
 
 @dataclass(frozen=True)
@@ -285,7 +323,8 @@ class _CellActionData:
     Bhat: np.ndarray
     Dhat: np.ndarray
     XiB: np.ndarray
-    Hlocal: np.ndarray
+    Hlocal: np.ndarray | None
+    Hlocal_is_omitted: bool
 
 
 def _normalise_port_terms(
@@ -295,7 +334,8 @@ def _normalise_port_terms(
     nt: int,
     appended_rows: int,
     name: str,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    omit_structural_zero_hlocal: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
     """Validate one cell's optional carrier block and fill omitted blocks."""
 
     if term is None:
@@ -306,7 +346,7 @@ def _normalise_port_terms(
             np.zeros((0, ni), dtype=np.complex128),
             np.zeros((0, nt), dtype=np.complex128),
             ports,
-            np.zeros((0, 0), dtype=np.complex128),
+            None if omit_structural_zero_hlocal else np.zeros((0, 0), dtype=np.complex128),
         )
     ports = np.ascontiguousarray(np.asarray(term.port_indices, dtype=PETSc.IntType)).reshape(-1)
     if len(np.unique(ports)) != len(ports) or np.any(ports < 0) or np.any(ports >= appended_rows):
@@ -316,8 +356,21 @@ def _normalise_port_terms(
     di = _complex_matrix(term.Di, f"{name}.Di", shape=(np_, ni))
     bt = np.zeros((nt, np_), dtype=np.complex128) if term.Bt is None else _complex_matrix(term.Bt, f"{name}.Bt", shape=(nt, np_))
     dt = np.zeros((np_, nt), dtype=np.complex128) if term.Dt is None else _complex_matrix(term.Dt, f"{name}.Dt", shape=(np_, nt))
-    h = np.zeros((np_, np_), dtype=np.complex128) if term.H is None else _complex_matrix(term.H, f"{name}.H", shape=(np_, np_))
+    if term.H is None and omit_structural_zero_hlocal:
+        h = None
+    else:
+        h = np.zeros((np_, np_), dtype=np.complex128) if term.H is None else _complex_matrix(term.H, f"{name}.H", shape=(np_, np_))
     return bi, bt, di, dt, ports, h
+
+
+def _merge_explicit_hlocal(H_p: np.ndarray | None, cell: _CellActionData) -> None:
+    """Merge only explicitly supplied local H; omitted H is structural zero."""
+
+    if not len(cell.ports) or cell.Hlocal is None or cell.Hlocal_is_omitted:
+        return
+    if H_p is None:
+        raise RuntimeError("explicit Hlocal requires the dense H_p fallback")
+    H_p[np.ix_(cell.ports, cell.ports)] += cell.Hlocal
 
 
 def _as_direct_term(value: P6DirectTracePortTerms, port_count: int) -> P6DirectTracePortTerms:
@@ -346,10 +399,12 @@ class P6CellCondensedAction:
         self,
         condensed: AssemblyTimeCondensedSystem,
         *,
-        H_p: Any,
+        H_p: Any | None = None,
+        H_p_diagonal: Any | None = None,
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
         owns_condensed: bool = False,
+        omit_structural_zero_hlocal: bool = False,
     ) -> None:
         if condensed.matrix is not None:
             raise ValueError("p6 action-only condensation cannot borrow a materialized matrix")
@@ -358,13 +413,43 @@ class P6CellCondensedAction:
             raise ValueError("p6 action-only condensation requires retained local Schur classes")
         self.condensed = condensed
         self.owns_condensed = bool(owns_condensed)
+        self._omit_structural_zero_hlocal = bool(omit_structural_zero_hlocal)
+        self._port_terms = dict(port_terms or {})
+        explicit_local_h = any(
+            term is not None and term.H is not None
+            for term in self._port_terms.values()
+        )
+        if H_p is not None and H_p_diagonal is not None:
+            raise ValueError("provide H_p or H_p_diagonal, not both")
+        if H_p_diagonal is not None and not explicit_local_h:
+            self._H_p = None
+            self._H_p_diagonal = _positive_hp_diagonal(
+                H_p_diagonal, size=condensed.appended_rows
+            )
+        else:
+            if H_p is None:
+                if H_p_diagonal is None:
+                    raise ValueError("H_p or H_p_diagonal is required")
+                diagonal = _positive_hp_diagonal(
+                    H_p_diagonal, size=condensed.appended_rows
+                )
+                H_p = np.zeros(
+                    (condensed.appended_rows, condensed.appended_rows),
+                    dtype=np.complex128,
+                )
+                np.fill_diagonal(H_p, diagonal)
+            self._H_p = np.array(
+                _complex_matrix(H_p, "H_p"),
+                dtype=np.complex128,
+                copy=True,
+                order="C",
+            )
+            if self._H_p.shape != (condensed.appended_rows, condensed.appended_rows):
+                raise ValueError("H_p shape differs from the appended port block")
+            self._H_p_diagonal = None
         # Hlocal contributions are merged into this original carrier block
         # below.  Own the copy explicitly so construction never mutates the
         # caller's carrier array; the large class payloads remain borrowed.
-        self._H_p = np.array(_complex_matrix(H_p, "H_p"), dtype=np.complex128, copy=True, order="C")
-        if self._H_p.shape != (condensed.appended_rows, condensed.appended_rows):
-            raise ValueError("H_p shape differs from the appended port block")
-        self._port_terms = dict(port_terms or {})
         unknown_cells = set(self._port_terms).difference(range(len(condensed.cell_recovery_maps)))
         if unknown_cells:
             raise ValueError(f"port terms refer to unknown cells: {sorted(unknown_cells)}")
@@ -374,8 +459,7 @@ class P6CellCondensedAction:
         # native A6 action and the BAL_H bridge use the same original block;
         # Hhat then receives only the internal-elimination correction.
         for cell in self._cells:
-            if len(cell.ports):
-                self._H_p[np.ix_(cell.ports, cell.ports)] += cell.Hlocal
+            _merge_explicit_hlocal(self._H_p, cell)
         self._direct_terms = tuple(
             _as_direct_term(term, condensed.appended_rows)
             for term in direct_trace_terms
@@ -386,7 +470,14 @@ class P6CellCondensedAction:
         self._direct_D_active: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._prepare_direct_terms()
         self._direct_terms = ()
-        self._Hhat = self._H_p.copy()
+        if self._H_p is not None:
+            self._Hhat = self._H_p.copy()
+        else:
+            self._Hhat = np.zeros(
+                (condensed.appended_rows, condensed.appended_rows),
+                dtype=np.complex128,
+            )
+            np.fill_diagonal(self._Hhat, self._H_p_diagonal)
         for cell in self._cells:
             if len(cell.ports):
                 self._Hhat[np.ix_(cell.ports, cell.ports)] += cell.Di @ cell.XiB
@@ -406,6 +497,12 @@ class P6CellCondensedAction:
             "active_trace_rows": int(condensed.active_rows),
             "appended_port_rows": int(condensed.appended_rows),
             "H_p_is_original_carrier_block": True,
+            "H_p_storage_policy": (
+                "carrier_diagonal_exact"
+                if self._H_p_diagonal is not None
+                else "dense_matrix"
+            ),
+            "Hlocal_structural_zero_omitted": self._omit_structural_zero_hlocal,
             "Hhat_is_retained_small_dense_block": True,
             "shared_S_V_buffer_count": len({id(cell.S_V) for cell in self._cells}),
             "shared_recovery_buffer_count": len({id(cell.recovery) for cell in self._cells}),
@@ -436,7 +533,10 @@ class P6CellCondensedAction:
                 nt=nt,
                 appended_rows=self.condensed.appended_rows,
                 name=f"port_terms[{index}]",
+                omit_structural_zero_hlocal=self._omit_structural_zero_hlocal,
             )
+            source_term = self._port_terms.get(index)
+            hlocal_is_omitted = source_term is None or source_term.H is None
             recovery = _borrow_matrix(
                 self.condensed.interior_from_trace_by_class[cell.class_key],
                 "interior recovery",
@@ -479,7 +579,8 @@ class P6CellCondensedAction:
                     Bhat=_readonly(bhat),
                     Dhat=_readonly(dhat),
                     XiB=_readonly(xib),
-                    Hlocal=_readonly(h),
+                    Hlocal=None if h is None else _readonly(h),
+                    Hlocal_is_omitted=hlocal_is_omitted,
                 )
             )
         return tuple(result)
@@ -551,7 +652,39 @@ class P6CellCondensedAction:
     def H_p(self) -> np.ndarray:
         """Borrow a readonly copy of the original carrier port block."""
 
-        return self._H_p.copy()
+        if self._H_p is not None:
+            return self._H_p.copy()
+        return np.diag(self._H_p_diagonal.astype(np.complex128, copy=False))
+
+    @property
+    def port_block_identity(self) -> Mapping[str, Any]:
+        """Return port-block storage identities without materializing a matrix."""
+
+        if self._H_p is not None:
+            hp_facts = {
+                "H_p_storage_policy": "dense_matrix",
+                "H_p_sha256": _array_payload_sha256(self._H_p),
+            }
+        else:
+            hp_facts = {
+                "H_p_storage_policy": "carrier_diagonal_exact",
+                "H_p_shape": [self.condensed.appended_rows, self.condensed.appended_rows],
+                "H_p_sha256": None,
+                "H_p_diagonal_sha256": _array_payload_sha256(self._H_p_diagonal),
+                "H_p_diagonal_length": int(self._H_p_diagonal.size),
+                "H_p_dense_materialized_for_identity": False,
+            }
+        return MappingProxyType(
+            {**hp_facts, "Hhat_sha256": _array_payload_sha256(self._Hhat)}
+        )
+
+    def _hp_apply(self, values: Any) -> np.ndarray:
+        """Apply the original H_p representation without substituting Hhat."""
+
+        vector = _complex_vector(values, "H_p vector", size=self.condensed.appended_rows)
+        if self._H_p_diagonal is not None:
+            return np.ascontiguousarray(self._H_p_diagonal * vector)
+        return np.ascontiguousarray(self._H_p @ vector)
 
     @property
     def Hhat(self) -> np.ndarray:
@@ -569,9 +702,42 @@ class P6CellCondensedAction:
     def buffer_inventory(self) -> Mapping[str, Any]:
         """Return a compact proof that class payloads are shared by cells."""
 
-        retained_arrays: list[np.ndarray] = [self._H_p, self._Hhat]
-        port_arrays: list[np.ndarray] = [self._H_p, self._Hhat]
+        retained_arrays: list[np.ndarray] = [self._Hhat]
+        port_arrays: list[np.ndarray] = [self._Hhat]
+        if self._H_p is not None:
+            retained_arrays.append(self._H_p)
+            port_arrays.append(self._H_p)
+        if self._H_p_diagonal is not None:
+            retained_arrays.append(self._H_p_diagonal)
+            port_arrays.append(self._H_p_diagonal)
+        port_count_histogram: dict[str, int] = {}
+        structural_zero_hlocal_cells = 0
+        materialized_omitted_hlocal_cells = 0
+        explicit_hlocal_cells = 0
+        no_port_cells = 0
+        source_alias_counts = {
+            "Bi_same_object_as_term": 0,
+            "Di_same_object_as_term": 0,
+            "port_indices_same_object_as_term": 0,
+        }
+        role_objects: dict[str, dict[int, np.ndarray]] = {
+            name: {}
+            for name in ("Bi", "Bt", "Di", "Dt", "Bhat", "Dhat", "XiB", "Hlocal")
+        }
         for cell in self._cells:
+            count_key = str(len(cell.ports))
+            port_count_histogram[count_key] = port_count_histogram.get(count_key, 0) + 1
+            if not len(cell.ports):
+                no_port_cells += 1
+            elif cell.Hlocal_is_omitted:
+                structural_zero_hlocal_cells += 1
+                materialized_omitted_hlocal_cells += int(cell.Hlocal is not None)
+            else:
+                explicit_hlocal_cells += 1
+            for role in role_objects:
+                array = getattr(cell, role)
+                if isinstance(array, np.ndarray):
+                    role_objects[role][id(array)] = array
             retained_arrays.extend(
                 [
                     cell.S_V,
@@ -589,11 +755,12 @@ class P6CellCondensedAction:
                     cell.Bhat,
                     cell.Dhat,
                     cell.XiB,
-                    cell.Hlocal,
                     cell.interior_lu[0],
                     cell.interior_lu[1],
                 ]
             )
+            if cell.Hlocal is not None:
+                retained_arrays.append(cell.Hlocal)
             port_arrays.extend(
                 [
                     cell.Bi,
@@ -603,8 +770,18 @@ class P6CellCondensedAction:
                     cell.Bhat,
                     cell.Dhat,
                     cell.XiB,
-                    cell.Hlocal,
                 ]
+            )
+            if cell.Hlocal is not None:
+                port_arrays.append(cell.Hlocal)
+        for index, cell in enumerate(self._cells):
+            term = self._port_terms.get(index)
+            if term is None:
+                continue
+            source_alias_counts["Bi_same_object_as_term"] += int(cell.Bi is term.Bi)
+            source_alias_counts["Di_same_object_as_term"] += int(cell.Di is term.Di)
+            source_alias_counts["port_indices_same_object_as_term"] += int(
+                cell.ports is term.port_indices
             )
         for rows, values in (*self._direct_B_original.values(), *self._direct_D_original.values(),
                              *self._direct_B_active.values(), *self._direct_D_active.values()):
@@ -619,6 +796,15 @@ class P6CellCondensedAction:
                 seen.add(id(value))
                 total += int(value.nbytes)
             return int(total)
+
+        role_shape_histograms: dict[str, dict[str, dict[str, int]]] = {}
+        for role, objects in role_objects.items():
+            histogram: dict[str, dict[str, int]] = {}
+            for array in objects.values():
+                key = f"{array.shape}|{array.dtype}|{array.nbytes}"
+                entry = histogram.setdefault(key, {"object_count": 0, "nbytes": int(array.nbytes)})
+                entry["object_count"] += 1
+            role_shape_histograms[role] = histogram
 
         return MappingProxyType(
             {
@@ -639,9 +825,32 @@ class P6CellCondensedAction:
                         + cell.Bhat.nbytes
                         + cell.Dhat.nbytes
                         + cell.XiB.nbytes
-                        + cell.Hlocal.nbytes
+                        + (0 if cell.Hlocal is None else cell.Hlocal.nbytes)
                         for cell in self._cells
                     )
+                ),
+                "active_port_cell_count": int(
+                    sum(value for key, value in port_count_histogram.items() if int(key) > 0)
+                ),
+                "port_count_per_cell_histogram": dict(sorted(port_count_histogram.items(), key=lambda item: int(item[0]))),
+                "Hlocal_structural_zero_omitted_cell_count": int(structural_zero_hlocal_cells),
+                "Hlocal_zero_matrix_materialized_cell_count": int(materialized_omitted_hlocal_cells),
+                "Hlocal_explicit_cell_count": int(explicit_hlocal_cells),
+                "no_port_cell_count": int(no_port_cells),
+                "port_role_unique_object_count": {
+                    role: len(values) for role, values in role_objects.items()
+                },
+                "port_role_unique_object_nbytes": {
+                    role: int(sum(array.nbytes for array in values.values()))
+                    for role, values in role_objects.items()
+                },
+                "port_role_shape_nbytes_histogram": role_shape_histograms,
+                "term_to_action_same_object_alias_counts": source_alias_counts,
+                "alias_scope": "ndarray object identity only; not shared backing-storage proof",
+                "H_p_storage_policy": (
+                    "carrier_diagonal_exact"
+                    if self._H_p_diagonal is not None
+                    else "dense_matrix"
                 ),
                 "unique_retained_cache_bytes": unique_nbytes(retained_arrays),
                 "unique_port_cache_bytes": unique_nbytes(port_arrays),
@@ -664,15 +873,25 @@ class P6CellCondensedAction:
                 "trace_rhs_projection_sha256": _array_sha256(cell.trace_from_interior),
                 "LU_payload_sha256": _array_sha256(cell.interior_lu[0]),
             }
+        hp_identity = (
+            {"H_p_sha256": _array_sha256(self._H_p)}
+            if self._H_p is not None
+            else {
+                "H_p_sha256": None,
+                "H_p_storage_policy": "carrier_diagonal_exact",
+                "H_p_shape": [self.condensed.appended_rows, self.condensed.appended_rows],
+                "H_p_diagonal_sha256": _typed_array_sha256(self._H_p_diagonal),
+            }
+        )
         return MappingProxyType(
             {
                 "schema_version": "task039extra.v19.p6-cell-condensed-cache-identity.v1",
                 "class_payloads": classes,
-                "H_p_sha256": _array_sha256(self._H_p),
                 "Hhat_sha256": _array_sha256(self._Hhat),
                 "matrix_hash": None,
                 "global_S6_matrix": False,
                 "global_A6_matrix": False,
+                **hp_identity,
             }
         )
 
@@ -784,7 +1003,10 @@ class P6CellCondensedAction:
         """Solve with the original ``H_p`` (never with ``Hhat``)."""
 
         values = _complex_vector(rhs, "H_p RHS", size=self.condensed.appended_rows)
-        result = np.ascontiguousarray(np.linalg.solve(self._H_p, values))
+        if self._H_p_diagonal is not None:
+            result = np.ascontiguousarray(values / self._H_p_diagonal)
+        else:
+            result = np.ascontiguousarray(np.linalg.solve(self._H_p, values))
         if not np.isfinite(result).all():
             raise FloatingPointError("H_p solve returned non-finite values")
         self._hp_solve_count += 1
@@ -944,7 +1166,8 @@ class P6CellCondensedAction:
         native_effective_rhs = rhs - self.apply_B_full(hp_inverse_port_rhs)
         native_residual = native_effective_rhs - native_output
         port_action = self.apply_D_full(field)
-        augmented_port_residual = ports_rhs + port_action - self._H_p @ alpha
+        original_hp_alpha = self._hp_apply(alpha)
+        augmented_port_residual = ports_rhs + port_action - original_hp_alpha
         reduced_rhs = self.reduce_rhs(
             rhs,
             port_rhs=ports_rhs,
@@ -1024,7 +1247,7 @@ class P6CellCondensedAction:
         native_scale = float(np.linalg.norm(native_effective_rhs))
         port_scale = (
             float(np.linalg.norm(port_action))
-            + float(np.linalg.norm(self._H_p @ alpha))
+            + float(np.linalg.norm(original_hp_alpha))
             + float(np.linalg.norm(ports_rhs))
         )
         schur_operation_scale = float(
@@ -1072,7 +1295,7 @@ class P6CellCondensedAction:
             ),
             "native_rhs_norm": float(np.linalg.norm(rhs)),
             "port_action_norm": float(np.linalg.norm(port_action)),
-            "port_hp_solution_norm": float(np.linalg.norm(self._H_p @ alpha)),
+            "port_hp_solution_norm": float(np.linalg.norm(original_hp_alpha)),
             "hp_solve_count": int(self._hp_solve_count),
             "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
             "strict_zero_slave_storage": True,
@@ -1153,6 +1376,8 @@ def build_p6_cell_condensed_action_from_carrier(
     *,
     H_p: Any | None = None,
     owns_condensed: bool = False,
+    exact_carrier_diagonal_hp: bool = False,
+    omit_structural_zero_hlocal: bool = False,
 ) -> P6CellCondensedAction:
     """Translate a native carrier into local/internal and direct trace terms.
 
@@ -1166,7 +1391,15 @@ def build_p6_cell_condensed_action_from_carrier(
     entries = tuple(getattr(carrier, "entries", ()))
     if len(entries) != condensed.appended_rows:
         raise ValueError("carrier entry count differs from appended port rows")
-    if H_p is None:
+    hp_diagonal = None
+    if exact_carrier_diagonal_hp:
+        if H_p is not None:
+            raise ValueError("exact carrier-diagonal H_p cannot be combined with an explicit H_p matrix")
+        hp_diagonal = np.asarray(
+            [getattr(entry, "normalization_h") for entry in entries]
+        )
+        hp = None
+    elif H_p is None:
         hp = np.zeros((condensed.appended_rows, condensed.appended_rows), dtype=np.complex128)
         for port, entry in enumerate(entries):
             hp[port, port] = complex(getattr(entry, "normalization_h"))
@@ -1228,9 +1461,11 @@ def build_p6_cell_condensed_action_from_carrier(
     return P6CellCondensedAction(
         condensed,
         H_p=hp,
+        H_p_diagonal=hp_diagonal,
         port_terms=terms,
         direct_trace_terms=direct,
         owns_condensed=owns_condensed,
+        omit_structural_zero_hlocal=omit_structural_zero_hlocal,
     )
 
 
