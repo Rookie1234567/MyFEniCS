@@ -141,6 +141,18 @@ def freeze(folder):
             'solver_queue_closed':True,'migration_allowed_after_this_record':True}
 
 
+def pullback(g, vector):
+    """Literal CSR conjugate-transpose accumulation; no SciPy/FE dependency."""
+    shape=tuple(g['shape'])
+    if vector.shape!=(shape[0],):
+        raise ValueError('native migration vector shape')
+    rows=np.repeat(np.arange(shape[0]),np.diff(g['bridge_indptr']))
+    contributions=np.conjugate(g['bridge_data'])*vector[rows]
+    result=np.zeros(shape[1],np.complex128)
+    np.add.at(result,g['bridge_indices'],contributions)
+    return result
+
+
 def evaluation_data(folder):
     frozen=stage('FREEZE');p=plan_record();d=stage('DATA')
     datasets={};provenance={}
@@ -156,16 +168,14 @@ def evaluation_data(folder):
     # Mapping only, no old operator/CSR solve or native FE process.
     graph_record=read_json(p['graph'],ROOT)
     g=read_arrays(graph_record['graph'],ROOT,names=['bridge_data','bridge_indices','bridge_indptr','shape'])
-    from scipy.sparse import csr_matrix
-    j=csr_matrix((g['bridge_data'],g['bridge_indices'],g['bridge_indptr']),shape=tuple(g['shape']))
     migration=read_arrays(p['migration'],ROOT,names=p['migration_members'])
     values=[]
     for name in p['migration_members']:
         v=migration[name]
         if v.ndim==2:
-            values.extend(j.conjugate().T@np.asarray(row) for row in v)
+            values.extend(pullback(g,np.asarray(row)) for row in v)
         else:
-            values.append(j.conjugate().T@v)
+            values.append(pullback(g,v))
     if len(values)!=16 or any(v.shape!=(42624,) for v in values):
         raise ValueError('fixed public migration inventory/bridge')
     datasets['migration']=save(folder,'migration',canonical=np.asarray(values))

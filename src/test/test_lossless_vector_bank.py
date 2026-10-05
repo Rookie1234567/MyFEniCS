@@ -95,6 +95,14 @@ class CodecTests(unittest.TestCase):
         self.assertEqual(storage_limits('v48')['new_storage_bytes'],2**30)
         self.assertEqual(json.loads(Path('input/task042_neural_coarse_inverse/vector_storage_v48.json').read_text())['A_AH_B'],0)
 
+    def test_actual_migration_pullback_without_scipy(self):
+        from src.solvers.vector_storage_study import pullback
+        matrix=np.array([[1+2j,0,3j],[2-1j,4j,0]],complex)
+        graph={'shape':np.array([2,3]),'bridge_indptr':np.array([0,2,4]),
+               'bridge_indices':np.array([0,2,0,1]),'bridge_data':np.array([1+2j,3j,2-1j,4j])}
+        vector=np.array([2+3j,-1+7j])
+        self.assertTrue(np.array_equal(pullback(graph,vector),matrix.conjugate().T@vector))
+
 
 if __name__=='__main__':
     unittest.main()
