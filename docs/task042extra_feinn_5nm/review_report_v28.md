@@ -100,7 +100,7 @@ V28 24份内外样本、前台等待873.628662888s，仍在原24/900限额内；
 
 主线只读最新 [Review V10](https://github.com/Rookie1234567/MyFEniCS/blob/d15554af7da49040565dab015dc09a16c1b18dde/docs/task40extra_0p7nm_engineering/review_report_v10.md) 的B/C拥有完整p6周期参考逆、真实三维缺口、Gx560工程锚点及全部内部恢复；A拥有两个真实p6局部体积/消元对象。**授权不是已运行成绩。**本支下一批不复制这些求解器、局部Maxwell分解或PC。
 
-dot 最新 [Response V15](https://github.com/Rookie1234567/MyFEniCS/blob/15713d3e09b63f65511c7b7f61fa043fdb23dca5/docs/task40extra_dot_parallel_cloud/response_v15.md) 已实际完成 p4/φ5/4×6×5/120cell、Ny6/K3、6q、532端口的Y点；完整12960内部未知量，regular/notch最大原残差约8.92748e-12/7.28650e-12，物理缺口3步。其Y缺口沿y移位，与旧X/XZ不是同场对照。worker/checker约1748.504/565.967s、峰1.607/1.707GB包含不同控制开销。**这是缩比7/135、p4、manual532和不同后端/缺口的工程校准，不是本原尺寸p6/AUTO32060的精度或速度证据。**不移植其通过标签，不复制C1/存储后端。
+dot 最新 [Response V15](https://github.com/Rookie1234567/MyFEniCS/blob/15713d3e09b63f65511c7b7f61fa043fdb23dca5/docs/task40extra_dot_parallel_cloud/response_v15.md) 已实际完成 p4/φ5/4×6×5/120cell、Ny6/K3、6q、532端口的Y点；完整12960内部未知量，regular/notch最大原残差约8.92748e-12/7.28650e-12，物理缺口3步。其Y缺口沿y移位，与旧X/XZ不是同场对照。worker/checker约1748.504/565.967s、峰1.607/1.707GB包含不同控制开销。这是缩比7/135、p4、manual532和不同后端/缺口的工程校准，不是本原尺寸p6/AUTO32060的精度或速度证据。不移植其通过标签，不复制C1/存储后端。
 
 后续跨分支比较必须先列几何与缺口、材料/损耗、波长/角度、FE阶数及内部空间、网格各轴、端口集合/参考面/H、场与误差分母、后端、完整冷成本及同时存活对象。缺一关键身份就只作定性依据。当前没有可相乘外推的“NN×积分×PC加速比”。
 

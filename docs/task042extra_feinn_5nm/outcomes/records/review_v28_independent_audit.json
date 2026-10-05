@@ -303,8 +303,418 @@
     "fences_balanced": true
   },
   "rendered_view": {
-    "status": "PENDING_REVIEW_PUBLICATION",
-    "executor_original_v28_failure_retained": true
+    "status": "TABLES_PASS_ONE_PROSE_FORMAT_FIX_PENDING_RECHECK",
+    "publication_commit": "5ac8fff6d515ced27f6d3cfd29b94dedf24117cb",
+    "scope": "4 pages,10 complete tables,15 actual images; all viewed",
+    "pages": [
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5ac8fff6d515ced27f6d3cfd29b94dedf24117cb/docs/task042extra_feinn_5nm/review_report_v28.md",
+        "table_count": 4,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/00_scope_00_0_0.png",
+            "sha256": "7236378e16b88f4aaab49fa787ac2b53288f74db181b76464c36ade989c01bf5",
+            "target": "@intro",
+            "geometry": {
+              "text": "Review V28：接受代表面实证，下一批推进原尺寸完整端口作用",
+              "height": 50.600006103515625,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 135,
+              "bottom": 185.60000610351562,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 50.600006103515625,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/00_scope_01_0_0.png",
+            "sha256": "654bbea61fbbfced3313ff83da5fc3cb9ab2a300de66462ccd37765d845b7f51",
+            "target": "@table0",
+            "geometry": {
+              "text": "独立核验对象\t审阅端实际结果及边界\n六阶段实际源码\t210项文件绑定吻合；文档 HEAD 没有替代运行源码\n默认 ready 消费路径\t1043文件，包 manifest SHA 664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9；实际成功，",
+              "height": 358.3999938964844,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.60000610351562,
+              "bottom": 493,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 358.3999938964844,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/00_scope_02_0_0.png",
+            "sha256": "32bd81db6eec35c4065e9a3534e92580835c7f4fddbb43f7d9a5d2cef8ec076a",
+            "target": "@table1",
+            "geometry": {
+              "text": "项目\t数值 / 原门\t审阅裁定\n新实例模式输入\t普通字段最大1.0747787677074433e-15；原门1e-10\tVERSIONED_MODE_INPUT_QUALIFIED，新身份成立\n一维矩\t最大绝对9.082805012334877e-14；门1e-12\t受测357频率、ell0..6通过；条件分面未触发",
+              "height": 479.20001220703125,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.8000030517578,
+              "bottom": 614.0000152587891,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 479.20001220703125,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/00_scope_03_0_0.png",
+            "sha256": "f6db5bce99026c31fee53f9f670002c4aa37c39a84e2b43a7f8238f1eddd3d8c",
+            "target": "@table2",
+            "geometry": {
+              "text": "已尝试 / 已知结果\t已否定或未验证\t本轮决策\nV11八组参数尺度、后续度量/优化与轨迹分析\tM3600散射E/curl约0.0933003/0.0935415，Mfinal约0.122945/0.123039；native却从约0.885852降至0.846542；约77%旧退化增量来自正交叉项\t同时保留较好中期与最",
+              "height": 428,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.71665954589844,
+              "bottom": 562.7166595458984,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 428,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/00_scope_04_0_0.png",
+            "sha256": "3706d73db7aec74f9227c1a0544eb05c1e73ae880872aa13031e7b05ed0933ef",
+            "target": "@table3",
+            "geometry": {
+              "text": "资源 / 调度\t固定约束\n环境与CPU\t工作站原生Linux，资格化activation/ABI，CPU-only、MPI1、数学线程1；一次一个数值或浏览器树\n自身内存\t纯逻辑/轻检查/浏览器≤2GiB、warn1.75；完整表面及其保存参考≤16GiB、warn12；取有效余量更小值\n系统保护\t原max(128Gi",
+              "height": 260,
+              "width": 941.8499755859375,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.78334045410156,
+              "bottom": 394.78334045410156,
+              "left": 448.5,
+              "right": 1390.3499755859375,
+              "width": 941.8499755859375,
+              "height": 260,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/00_scope_05_0_0.png",
+            "sha256": "e4f302ffbbcebd9d67b53e3326e71672f85e4cccb9b83345d90797821fe91db5",
+            "target": "@execution",
+            "geometry": {
+              "text": "在 canonical /home/fenics/Projects/NN-Lab-V2 精确分支 task42extra_feinn_5nm\n拉取并完整执行 review_report_v28.md，整批回复 response_v29.md。\nV28代表面数值与本机消费者已独立接受；旧CPU准入复用不授完整流程资格，\n",
+              "height": 288.316650390625,
+              "width": 629.75,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 744.38330078125,
+              "bottom": 1032.699951171875,
+              "left": 448.5,
+              "right": 1078.25,
+              "width": 629.75,
+              "height": 288.316650390625,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          }
+        ],
+        "visual_inspection": "all table columns/rows and specified intro/execution scope actually viewed",
+        "not_entire_prose_audit": true
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5ac8fff6d515ced27f6d3cfd29b94dedf24117cb/docs/task042extra_feinn_5nm/response_v28.md",
+        "table_count": 2,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/01_scope_00_0_0.png",
+            "sha256": "898e7b87734daa3a0c937b1a557850856206a54b307a37dcd67f1e154f495dc2",
+            "target": "@intro",
+            "geometry": {
+              "text": "Response V28：新身份输入、全模式代表面与实际消费者交付",
+              "height": 50.600006103515625,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 135,
+              "bottom": 185.60000610351562,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 50.600006103515625,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/01_scope_01_0_0.png",
+            "sha256": "72cb24ed07d0e35a64fd508cd412a2a0715691ee13d97fc6256466deb09084fd",
+            "target": "@table0",
+            "geometry": {
+              "text": "对象 / 实际检查\tmeasured结果、原门与证据\n新输入\t32060有序key，top/bottom×s/p各8015；416780项独立物理字段检查，失败0；最大普通相对误差1.0747787677074433e-15，门1e-10；输入身份、科学核验\n出射分支、H与物理背景\t从原配置独立重算k/beta、极化、",
+              "height": 476,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.8000030517578,
+              "bottom": 610.8000030517578,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 476,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/01_scope_02_0_0.png",
+            "sha256": "a6d11f1c5e73d84392be433bbb74702a37ada5e1eca4d391fa4865c362f14908",
+            "target": "@table1",
+            "geometry": {
+              "text": "阶段 / 实际clean source\t全链s / 同时进程树采样峰B\ninput_contract_checks / 9b1a9ec28cdd74510f8fd1ec0f40731c53d401de\t67.714709 / 124870656\nmanifest_qualify / 9b1a9ec28cdd74510f",
+              "height": 260,
+              "width": 781.5999755859375,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 135,
+              "bottom": 395,
+              "left": 448.5,
+              "right": 1230.0999755859375,
+              "width": 781.5999755859375,
+              "height": 260,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          }
+        ],
+        "visual_inspection": "all table columns/rows and specified intro/execution scope actually viewed",
+        "not_entire_prose_audit": true
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5ac8fff6d515ced27f6d3cfd29b94dedf24117cb/docs/task042extra_feinn_5nm/outcomes/versioned_manifest_and_boundary_v28.md",
+        "table_count": 2,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/02_scope_00_0_0.png",
+            "sha256": "bc1b041fbf13406fc1c189dbf4bd5523d23da238414a0397e62317b9ff7db732",
+            "target": "@intro",
+            "geometry": {
+              "text": "V28：版本化清单与全模式边界的实物资格",
+              "height": 50.600006103515625,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 135,
+              "bottom": 185.60000610351562,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 50.600006103515625,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/02_scope_01_0_0.png",
+            "sha256": "757ce5e84aee6bb9c97879be3da873bfa7ca21f1e65b7140e89760f10c1632aa",
+            "target": "@table0",
+            "geometry": {
+              "text": "身份 / 物理范围\t固定值\n新schema / instance\tschema2；W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28\n清单bytes / SHA256\t36263033 / 7dd07d7145c70759f53465b6ec11237a89effdf7d68a0d",
+              "height": 417,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.60000610351562,
+              "bottom": 551.6000061035156,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 417,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/02_scope_02_0_0.png",
+            "sha256": "4a5eccbc0655d391d6f83b4a96874a80a261291f60cae1d5634e6bece0136cbb",
+            "target": "@table1",
+            "geometry": {
+              "text": "数值检查 / 含义\t实际最大值、原门\n一维矩绝对差\t9.082805012334877e-14≤1e-12\nB / D-H列相对\t4.869638025629009e-12 / 4.869654765441568e-12≤1e-10\n三个复方向最大相对\tB第二方向6.292215481183498e-11≤1e-10\n",
+              "height": 334,
+              "width": 697.86669921875,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 197.1999969482422,
+              "bottom": 531.1999969482422,
+              "left": 448.5,
+              "right": 1146.36669921875,
+              "width": 697.86669921875,
+              "height": 334,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          }
+        ],
+        "visual_inspection": "all table columns/rows and specified intro/execution scope actually viewed",
+        "not_entire_prose_audit": true
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5ac8fff6d515ced27f6d3cfd29b94dedf24117cb/docs/task042extra_feinn_5nm/outcomes/main_handoff_v28.md",
+        "table_count": 2,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/03_scope_00_0_0.png",
+            "sha256": "19fe3741d422301cf21d7b2fc08881378afa2c42c49231a1884c7c8d0535f4ae",
+            "target": "@intro",
+            "geometry": {
+              "text": "V28主线接入包：已实际消费，尚未接入主线",
+              "height": 50.600006103515625,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 135,
+              "bottom": 185.60000610351562,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 50.600006103515625,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/03_scope_01_0_0.png",
+            "sha256": "f32ef1f4c05cd333ab8dd964f3ed72c66467035d502e5f1603c31c245f251569",
+            "target": "@table0",
+            "geometry": {
+              "text": "必须一致的接收对象\t本批实际值 / 相对位置\ninstance / schema\tW1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28 / 显式schema2\n包根，本机真实可用\tbenchmarks/artifacts/task42extra/w1_receiver/v28/u28",
+              "height": 463.20001220703125,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 134.60000610351562,
+              "bottom": 597.8000183105469,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 463.20001220703125,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v28_5ac8fff6/03_scope_02_0_0.png",
+            "sha256": "e02135d59237289b75db95c4ef6c177baab406106b504ca688cb2f84e72eb242",
+            "target": "@table1",
+            "geometry": {
+              "text": "允许说明 / 未验证出口\t状态\n新输入独立科学资格、两个p阶全部模式代表面、实际独立目录消费\t已完成，见Gate\n主线实际接入及全32060模式全域装配、MPC/内部恢复\tNOT_INGESTED / NOT_RUN，本包不代主线执行\n体场原残差、总/散射E/H/curl、六样本、散射复通道、R/T/A/A_volum",
+              "height": 343,
+              "width": 1012,
+              "scrollWidth": 1012,
+              "clientWidth": 1012
+            },
+            "visible": {
+              "top": 626.066650390625,
+              "bottom": 969.066650390625,
+              "left": 448.5,
+              "right": 1460.5,
+              "width": 1012,
+              "height": 343,
+              "offset": 0,
+              "scrollLeft": 0,
+              "viewportHeight": 1114,
+              "viewportWidth": 1600
+            }
+          }
+        ],
+        "visual_inspection": "all table columns/rows and specified intro/execution scope actually viewed",
+        "not_entire_prose_audit": true
+      }
+    ],
+    "render_raw": {
+      "path": "tmp/task42extra/render/review_v28_5ac8fff6/render_records.json",
+      "bytes": 28861,
+      "sha256": "883d20eeafd5413e081fc2b461d015dfb586ce5ed8ae512a8b70ba4da09c06c2"
+    },
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 57.40807572589256,
+      "sampled_process_tree_rss_peak_bytes": 1868161024,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "initial_finding": "literal ** in dot comparison prose on Review V28; remove emphasis only, scientific contents unchanged",
+    "executor_original_failure_retained": true
   },
   "goal_status": "FULL_TARGET_NOT_QUALIFIED",
   "NN_status": "NO_VERIFIED_NN_INCREMENT",
