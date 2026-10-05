@@ -503,6 +503,8 @@ def launch(
                 state["training_resume"] = specification.derived["training_resume"]
             if namespace == "v51" and specification.derived.get("postprocessing_resume"):
                 state["postprocessing_resume"] = specification.derived["postprocessing_resume"]
+            if namespace == "v51" and specification.derived.get("verification_inventory"):
+                state["verification_inventory"] = specification.derived["verification_inventory"]
             (folder / "source_sha.txt").write_text(source + "\n")
             command = [
                 sys.executable,

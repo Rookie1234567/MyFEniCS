@@ -97,5 +97,23 @@ class PhaseTests(unittest.TestCase):
             self.assertLess(np.linalg.norm(A@x.array-b)/np.linalg.norm(b),1e-12)
         finally:factor.destroy();mat.destroy();rhs.destroy();x.destroy()
 
+    def test_saved_vector_checker_rejects_wrong_coupling_and_nonfinite(self):
+        from benchmarks.collect_phase_explicit_accuracy import vector_audit
+        rng=np.random.default_rng(512);n=8;nm=40
+        u=rng.normal(size=n)+1j*rng.normal(size=n);u[-1]=0
+        V=rng.normal(size=(n,n))+1j*rng.normal(size=(n,n));V[-1,:]=0;V[:,-1]=0
+        C=rng.normal(size=(n,nm))+1j*rng.normal(size=(n,nm));C[-1,:]=0
+        D=rng.normal(size=(nm,n))+1j*rng.normal(size=(nm,n));D[:,-1]=0
+        H=2+rng.random(nm)+.2j;projected=D@u;port=projected/H
+        ip=np.arange(6);ui=u.copy();ui[6:]=0;ut=u-ui;vi=V@ui;vt=V@ut;volume=V@u;coupling=C@port
+        raw=dict(rhs=volume+coupling,u_storage=u,port=port,residual=np.zeros(n,complex),augmented_residual=np.zeros(n,complex),port_residual=np.zeros(nm,complex),projected=projected,
+            volume_action=volume,coupling_action=coupling,interior_rows=ip,interior_only_volume_action=vi,trace_only_volume_action=vt,recovered_native_full=u.copy())
+        boundary=dict(offsets=np.arange(nm+1)*n,rows=np.tile(np.arange(n),nm),C=C.T.ravel(),D=D.ravel(),H=H)
+        state={'slaves':np.asarray([7])}
+        self.assertTrue(vector_audit(raw,state,boundary,2)['pass_gate'])
+        bad={**raw,'coupling_action':coupling+1e-2};self.assertFalse(vector_audit(bad,state,boundary,2)['pass_gate'])
+        bad_boundary={**boundary,'C':boundary['C'].copy()};bad_boundary['C'][0]=np.nan
+        with self.assertRaises(ValueError):vector_audit(raw,state,bad_boundary,2)
+
 
 if __name__=='__main__':unittest.main()

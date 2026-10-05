@@ -63,26 +63,30 @@ def common_physical_difference(coarse,fine,cfg,journal,folder,*,q=23):
     # Affine boxes: a point's parent is found from actual stored vertices,
     # never from a guessed native numbering or interpolated field.
     bounds=np.asarray([[fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].min(axis=0),fc.function_space.mesh.geometry.x[fc.function_space.mesh.geometry.dofmap[c]].max(axis=0)] for c in range(len(ec.geometry))])
-    sums={k:np.zeros(3) for k in ('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')};per=[];selected={k:[] for k in sums};selected_ref={k:[] for k in sums}
+    sums={k:np.zeros(3) for k in ('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')};per=[];components=[];selected={k:[] for k in sums};selected_ref={k:[] for k in sums}
     with journal.measured('common_physical_p_h_integrals'):
         for c in range(len(ef.geometry)):
             points,w,vf=ef.cell(ff,c,cfg.k0);mid=points.mean(axis=0)
             parents=np.flatnonzero(np.all((mid>=bounds[:,0]-1e-12)&(mid<=bounds[:,1]+1e-12),axis=1))
             if len(parents)!=1:raise ValueError('common physical cell-parent ambiguity')
-            p=int(parents[0]);vc=ec.at(fc,p,points,cfg.k0);bg=analytic(cfg,points);cell=[]
+            p=int(parents[0]);vc=ec.at(fc,p,points,cfg.k0);bg=analytic(cfg,points);cell=[];parts=[]
             for name in sums:
                 k=name.split('_')[0];a=vc[k];b=vf[k]
                 if name.endswith('scattered'):a=a-bg[k];b=b-bg[k]
                 triple=np.asarray([np.sum(w[:,None]*np.abs(b-a)**2),np.sum(w[:,None]*np.abs(b)**2),np.sum(w[:,None]*np.abs(bg[k])**2)])
-                sums[name]+=triple;cell.append(triple)
+                sums[name]+=triple;cell.append(triple);parts.append(np.sum(w[:,None]*np.abs(b-a)**2,axis=0))
             per.append(cell)
+            components.append(parts)
             cv=ec.at(fc,p,mid[None,:],cfg.k0);fv=ef.at(ff,c,mid[None,:],cfg.k0);bv=analytic(cfg,mid[None,:])
             for name in sums:
                 k=name.split('_')[0];b=bv[k][0] if name.endswith('scattered') else 0
                 selected[name].append(cv[k][0]-b);selected_ref[name].append(fv[k][0]-b)
     rows={k:dict(difference_L2=float(np.sqrt(v[0])),reference_L2=float(np.sqrt(v[1])),relative=float(np.sqrt(v[0])/max(np.sqrt(v[1]),1e-12)),incident_scaled=float(np.sqrt(v[0])/max(np.sqrt(v[2]),1e-12))) for k,v in sums.items()}
     select={k:relative(np.asarray(selected[k])-selected_ref[k],selected_ref[k]) for k in sums}
-    arrays=save_arrays(folder/f'common_physical_difference_q{q}.npz',per_cell_integrals=np.asarray(per))
+    witness={}
+    for k in sums:
+        witness['selected_'+k+'_coarse']=np.asarray(selected[k]);witness['selected_'+k+'_fine']=np.asarray(selected_ref[k])
+    arrays=save_arrays(folder/f'common_physical_difference_q{q}.npz',per_cell_integrals=np.asarray(per),per_cell_component_error_squared=np.asarray(components),**witness)
     return dict(fields=rows,selected=select,arrays=arrays,q=q,full_cross_terms=True,pass_gate=max([r['relative'] for r in rows.values()]+list(select.values()))<=1e-4)
 
 

@@ -237,7 +237,11 @@ def execute(role,folder,state):
 def verify_cost(folder,journal):
     """One independent post-freeze action, no factor and no reference fitting."""
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
-    frozen=json.loads((window.TMP/'scientific_queue_frozen.json').read_text());rows=[]
+    import hashlib
+    path=window.TMP/'scientific_queue_frozen.json'
+    if journal.source_state.get('verification_inventory',{}).get('sha256')!=hashlib.sha256(path.read_bytes()).hexdigest():
+        raise ValueError('VERIFY must bind the frozen actual operator/state inventory')
+    frozen=json.loads(path.read_text());rows=[]
     for role,item in frozen['completed_solves'].items():
         pointer=json.loads((ARTIFACT/(role+'.json')).read_text())
         if pointer!=item['pointer']:raise ValueError('frozen solve pointer changed')
@@ -246,8 +250,8 @@ def verify_cost(folder,journal):
             if not np.array_equal(geo[key],v[key]):raise ValueError('frozen geometry identity '+key)
         bundle,rhs=build_bundle(cfg,setup,journal,q=63);u=rhs.duplicate();u.array[:]=v['u_storage']
         try:
-            a,vec=audit_original(bundle,rhs,u,v['port'],journal);_,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vec,journal)
-            receipt=save_arrays(folder/(role+'_independent_audit.npz'),**vec,**rv)
+            a,vec=audit_original(bundle,rhs,u,v['port'],journal);field,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vec,journal)
+            receipt=save_arrays(folder/(role+'_independent_audit.npz'),**vec,**rv,rhs=rhs.array.copy(),u_storage=u.array.copy(),port=v['port'],recovered_native_full=field.x.array.copy())
             rows.append(dict(role=role,parent=r['arrays']['sha256'],audit=a,recovery=rec,arrays=receipt,equation_pass=equation_gate(a,rec),analytic_pass=r['accuracy_pass'],power=r['output']['port_metrics'],volume=r['output']['volume_metrics']))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
     pairs=[]

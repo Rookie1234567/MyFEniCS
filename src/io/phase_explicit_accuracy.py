@@ -41,6 +41,13 @@ def load_phase_explicit_accuracy(path):
         resumed={'postprocessing_resume':{'path':str(resume),'sha256':hashlib.sha256(resume.read_bytes()).hexdigest(),
             'solve_source_sha':record['solve_source_sha'],'parent_array_sha256':record['arrays']['sha256'],
             'purpose':'audit/output of already returned saved physical state; no new solve'}}
+    if role=='VERIFY_COST':
+        frozen=window.TMP/'scientific_queue_frozen.json'
+        resumed['verification_inventory']={'status':'PENDING_QUEUE_FREEZE'}
+        if frozen.exists():
+            f=json.loads(frozen.read_text())
+            resumed['verification_inventory']={'path':str(frozen),'sha256':hashlib.sha256(frozen.read_bytes()).hexdigest(),
+                'parents':{k:v['pointer']['sha256'] for k,v in f['completed_solves'].items()}}
     return RunSpecification(identity={'model_id':'task042_v51_phase_accuracy','run_id':item['run_id'],'batch':p['batch']},
         geometry=physical['geometry'],materials=physical['materials'],incidence=physical['incidence'],discretization=physical['discretization'],boundary=physical['boundary'],
         method={'kind':'fixed_phase_full3d_accuracy_opt_in'},solver={'degree':degree},

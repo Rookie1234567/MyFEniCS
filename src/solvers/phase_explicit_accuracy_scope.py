@@ -39,6 +39,7 @@ def implementation_hashes():
         'src/io/phase_explicit_accuracy.py','src/runners/port_preparation.py',
         'scripts/run_case.py','scripts/activate_task042.sh','benchmarks/subreaper_watchdog.py',
         'src/test/test_phase_explicit_accuracy.py','benchmarks/qualify_phase_explicit_accuracy.py',
+        'benchmarks/collect_phase_explicit_accuracy.py',
         'input/materials/si_optical_constants_v1.json']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
 
