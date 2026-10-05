@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "library_file_id": "libfile_eddeb8c456888191b34a16bb9cdaa418",
+  "file_id": "file_000000001fb082078b5fa73983a5c590",
+  "file_name": "target_chunked_mass_v2_source_checkpoint.zip",
+  "version": 0,
+  "archive_bytes": 168301,
+  "archive_sha256": "96aa6ffdbc046eaed8a9c28992ed34734631b9fdb1578ead92f433301d6334ac",
+  "members_verified": 24,
+  "full_uncompressed_bytes": 531969,
+  "member_manifest_sha256": "73993045727fb77940477d833f865d746cda112e41efe9c9c994bd722a4babec",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "source_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "baseline_reference_sha256": "cace8b9b472b9f8b7187f4cde1d028219041483a29cfc1981f9e6801c661737a",
+  "active_reference_sha256": "a0af0fc4838f08af3236c926e383ff84a09ee69c0965c19693a2950a6de44094",
+  "qualification": "SOURCE_REVIEW_PASS_NUMERICAL_NOT_RUN",
+  "policy": "Auxiliary constant accuracy1e-12; no construction theorem or general field-error bound. Original rawweights, default/Gauss byte equality and actual1e-11 raw/1e-10 action/convergence gates unchanged.",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/mass_v2_source_fresh_readback/target_chunked_mass_v2_source_checkpoint.zip"
+}

@@ -1,0 +1,408 @@
+{
+  "schema": "task40extra.independent-rule-construction-diagnostic.v1",
+  "scope": "metadata-only standalone quadrature and saved data; no mesh/form/JIT/FEassembly/PDE",
+  "active_primary_weights_and_nodes_changed": false,
+  "independent_algorithm": "official installed scipy.special.roots_legendre one-dimensional Gauss-Legendre tensor product; affine[\u22121,1]\u2192[0,1]",
+  "records": [
+    {
+      "degree": 160,
+      "nodes": 6561,
+      "role": "exact saved failed primary",
+      "np_sum": 0.9999999999997333,
+      "fsum": 0.9999999999997333,
+      "longdouble_sum": "0.99999999999973331456",
+      "SciPy_fsum": 0.9999999999999999,
+      "max_sorted_node_abs_difference": 5.079270337660091e-14,
+      "max_sorted_weight_abs_difference": 2.5238108993094407e-15,
+      "weight_l1_difference": 2.995431614385035e-13,
+      "both_rules_positive_finite": true,
+      "moments": [
+        {
+          "powers": [
+            0,
+            0
+          ],
+          "exact": 1.0,
+          "Basix": 0.9999999999997333,
+          "SciPy": 0.9999999999999999,
+          "Basix_abs_error": 2.666755705149626e-13,
+          "SciPy_abs_error": 1.1102230246251565e-16,
+          "Basix_relative_error": 2.666755705149626e-13,
+          "SciPy_relative_error": 1.1102230246251565e-16
+        },
+        {
+          "powers": [
+            1,
+            0
+          ],
+          "exact": 0.5,
+          "Basix": 0.49999999999993655,
+          "SciPy": 0.49999999999999994,
+          "Basix_abs_error": 6.34492458573277e-14,
+          "SciPy_abs_error": 5.551115123125783e-17,
+          "Basix_relative_error": 1.268984917146554e-13,
+          "SciPy_relative_error": 1.1102230246251565e-16
+        },
+        {
+          "powers": [
+            0,
+            1
+          ],
+          "exact": 0.5,
+          "Basix": 0.49999999999993655,
+          "SciPy": 0.49999999999999994,
+          "Basix_abs_error": 6.34492458573277e-14,
+          "SciPy_abs_error": 5.551115123125783e-17,
+          "Basix_relative_error": 1.268984917146554e-13,
+          "SciPy_relative_error": 1.1102230246251565e-16
+        },
+        {
+          "powers": [
+            2,
+            2
+          ],
+          "exact": 0.1111111111111111,
+          "Basix": 0.11111111111111317,
+          "SciPy": 0.11111111111111142,
+          "Basix_abs_error": 2.067790383364354e-15,
+          "SciPy_abs_error": 3.191891195797325e-16,
+          "Basix_relative_error": 1.8610113450279187e-14,
+          "SciPy_relative_error": 2.8727020762175925e-15
+        },
+        {
+          "powers": [
+            6,
+            0
+          ],
+          "exact": 0.14285714285714285,
+          "Basix": 0.14285714285712628,
+          "SciPy": 0.14285714285714388,
+          "Basix_abs_error": 1.657007864253046e-14,
+          "SciPy_abs_error": 1.0269562977782698e-15,
+          "Basix_relative_error": 1.1599055049771323e-13,
+          "SciPy_relative_error": 7.188694084447889e-15
+        },
+        {
+          "powers": [
+            0,
+            6
+          ],
+          "exact": 0.14285714285714285,
+          "Basix": 0.14285714285712628,
+          "SciPy": 0.14285714285714388,
+          "Basix_abs_error": 1.657007864253046e-14,
+          "SciPy_abs_error": 1.0269562977782698e-15,
+          "Basix_relative_error": 1.1599055049771323e-13,
+          "SciPy_relative_error": 7.188694084447889e-15
+        },
+        {
+          "powers": [
+            6,
+            6
+          ],
+          "exact": 0.02040816326530612,
+          "Basix": 0.02040816326530683,
+          "SciPy": 0.020408163265306416,
+          "Basix_abs_error": 7.077671781985373e-16,
+          "SciPy_abs_error": 2.949029909160572e-16,
+          "Basix_relative_error": 3.468059173172833e-14,
+          "SciPy_relative_error": 1.4450246554886803e-14
+        },
+        {
+          "powers": [
+            12,
+            0
+          ],
+          "exact": 0.07692307692307693,
+          "Basix": 0.07692307692306882,
+          "SciPy": 0.07692307692307822,
+          "Basix_abs_error": 8.104628079763643e-15,
+          "SciPy_abs_error": 1.2906342661267445e-15,
+          "Basix_relative_error": 1.0536016503692736e-13,
+          "SciPy_relative_error": 1.6778245459647678e-14
+        },
+        {
+          "powers": [
+            0,
+            12
+          ],
+          "exact": 0.07692307692307693,
+          "Basix": 0.07692307692306882,
+          "SciPy": 0.07692307692307822,
+          "Basix_abs_error": 8.104628079763643e-15,
+          "SciPy_abs_error": 1.2906342661267445e-15,
+          "Basix_relative_error": 1.0536016503692736e-13,
+          "SciPy_relative_error": 1.6778245459647678e-14
+        }
+      ]
+    },
+    {
+      "degree": 168,
+      "nodes": 7225,
+      "role": "new metadata-only Basix rule diagnostic; no field/mesh/form",
+      "np_sum": 0.9999999999997549,
+      "fsum": 0.999999999999755,
+      "longdouble_sum": "0.99999999999975494245",
+      "SciPy_fsum": 1.0000000000000002,
+      "max_sorted_node_abs_difference": 4.6407322429331543e-14,
+      "max_sorted_weight_abs_difference": 2.113503057461774e-15,
+      "weight_l1_difference": 2.966969728699635e-13,
+      "both_rules_positive_finite": true,
+      "moments": [
+        {
+          "powers": [
+            0,
+            0
+          ],
+          "exact": 1.0,
+          "Basix": 0.999999999999755,
+          "SciPy": 1.0000000000000002,
+          "Basix_abs_error": 2.4502622153477205e-13,
+          "SciPy_abs_error": 2.220446049250313e-16,
+          "Basix_relative_error": 2.4502622153477205e-13,
+          "SciPy_relative_error": 2.220446049250313e-16
+        },
+        {
+          "powers": [
+            1,
+            0
+          ],
+          "exact": 0.5,
+          "Basix": 0.4999999999999415,
+          "SciPy": 0.5000000000000001,
+          "Basix_abs_error": 5.850875339774575e-14,
+          "SciPy_abs_error": 1.1102230246251565e-16,
+          "Basix_relative_error": 1.170175067954915e-13,
+          "SciPy_relative_error": 2.220446049250313e-16
+        },
+        {
+          "powers": [
+            0,
+            1
+          ],
+          "exact": 0.5,
+          "Basix": 0.4999999999999415,
+          "SciPy": 0.5000000000000001,
+          "Basix_abs_error": 5.850875339774575e-14,
+          "SciPy_abs_error": 1.1102230246251565e-16,
+          "Basix_relative_error": 1.170175067954915e-13,
+          "SciPy_relative_error": 2.220446049250313e-16
+        },
+        {
+          "powers": [
+            2,
+            2
+          ],
+          "exact": 0.1111111111111111,
+          "Basix": 0.11111111111111291,
+          "SciPy": 0.11111111111110976,
+          "Basix_abs_error": 1.8041124150158794e-15,
+          "SciPy_abs_error": 1.3461454173580023e-15,
+          "Basix_relative_error": 1.6237011735142914e-14,
+          "SciPy_relative_error": 1.211530875622202e-14
+        },
+        {
+          "powers": [
+            6,
+            0
+          ],
+          "exact": 0.14285714285714285,
+          "Basix": 0.14285714285712758,
+          "SciPy": 0.1428571428571384,
+          "Basix_abs_error": 1.5265566588595902e-14,
+          "SciPy_abs_error": 4.440892098500626e-15,
+          "Basix_relative_error": 1.0685896612017132e-13,
+          "SciPy_relative_error": 3.108624468950438e-14
+        },
+        {
+          "powers": [
+            0,
+            6
+          ],
+          "exact": 0.14285714285714285,
+          "Basix": 0.14285714285712758,
+          "SciPy": 0.1428571428571384,
+          "Basix_abs_error": 1.5265566588595902e-14,
+          "SciPy_abs_error": 4.440892098500626e-15,
+          "Basix_relative_error": 1.0685896612017132e-13,
+          "SciPy_relative_error": 3.108624468950438e-14
+        },
+        {
+          "powers": [
+            6,
+            6
+          ],
+          "exact": 0.02040816326530612,
+          "Basix": 0.020408163265306763,
+          "SciPy": 0.020408163265304844,
+          "Basix_abs_error": 6.418476861114186e-16,
+          "SciPy_abs_error": 1.27675647831893e-15,
+          "Basix_relative_error": 3.145053661945951e-14,
+          "SciPy_relative_error": 6.256106743762757e-14
+        },
+        {
+          "powers": [
+            12,
+            0
+          ],
+          "exact": 0.07692307692307693,
+          "Basix": 0.07692307692306945,
+          "SciPy": 0.07692307692307157,
+          "Basix_abs_error": 7.480127628411992e-15,
+          "SciPy_abs_error": 5.35682609381638e-15,
+          "Basix_relative_error": 9.72416591693559e-14,
+          "SciPy_relative_error": 6.963873921961294e-14
+        },
+        {
+          "powers": [
+            0,
+            12
+          ],
+          "exact": 0.07692307692307693,
+          "Basix": 0.07692307692306945,
+          "SciPy": 0.07692307692307157,
+          "Basix_abs_error": 7.480127628411992e-15,
+          "SciPy_abs_error": 5.35682609381638e-15,
+          "Basix_relative_error": 9.72416591693559e-14,
+          "SciPy_relative_error": 6.963873921961294e-14
+        }
+      ]
+    },
+    {
+      "degree": 176,
+      "nodes": 7921,
+      "role": "new metadata-only Basix rule diagnostic; no field/mesh/form",
+      "np_sum": 0.9999999999997765,
+      "fsum": 0.9999999999997765,
+      "longdouble_sum": "0.99999999999977650636",
+      "SciPy_fsum": 1.0000000000000002,
+      "max_sorted_node_abs_difference": 4.268807529683727e-14,
+      "max_sorted_weight_abs_difference": 2.005619859101783e-15,
+      "weight_l1_difference": 2.945669700077359e-13,
+      "both_rules_positive_finite": true,
+      "moments": [
+        {
+          "powers": [
+            0,
+            0
+          ],
+          "exact": 1.0,
+          "Basix": 0.9999999999997765,
+          "SciPy": 1.0000000000000002,
+          "Basix_abs_error": 2.23487894857044e-13,
+          "SciPy_abs_error": 2.220446049250313e-16,
+          "Basix_relative_error": 2.23487894857044e-13,
+          "SciPy_relative_error": 2.220446049250313e-16
+        },
+        {
+          "powers": [
+            1,
+            0
+          ],
+          "exact": 0.5,
+          "Basix": 0.4999999999999472,
+          "SciPy": 0.5000000000000001,
+          "Basix_abs_error": 5.2791104820926193e-14,
+          "SciPy_abs_error": 1.1102230246251565e-16,
+          "Basix_relative_error": 1.0558220964185239e-13,
+          "SciPy_relative_error": 2.220446049250313e-16
+        },
+        {
+          "powers": [
+            0,
+            1
+          ],
+          "exact": 0.5,
+          "Basix": 0.4999999999999472,
+          "SciPy": 0.5000000000000001,
+          "Basix_abs_error": 5.2791104820926193e-14,
+          "SciPy_abs_error": 1.1102230246251565e-16,
+          "Basix_relative_error": 1.0558220964185239e-13,
+          "SciPy_relative_error": 2.220446049250313e-16
+        },
+        {
+          "powers": [
+            2,
+            2
+          ],
+          "exact": 0.1111111111111111,
+          "Basix": 0.11111111111111303,
+          "SciPy": 0.11111111111111209,
+          "Basix_abs_error": 1.9290125052862095e-15,
+          "SciPy_abs_error": 9.853229343548264e-16,
+          "Basix_relative_error": 1.7361112547575885e-14,
+          "SciPy_relative_error": 8.867906409193438e-15
+        },
+        {
+          "powers": [
+            6,
+            0
+          ],
+          "exact": 0.14285714285714285,
+          "Basix": 0.14285714285712905,
+          "SciPy": 0.14285714285714596,
+          "Basix_abs_error": 1.379452108096757e-14,
+          "SciPy_abs_error": 3.1086244689504383e-15,
+          "Basix_relative_error": 9.656164756677299e-14,
+          "SciPy_relative_error": 2.1760371282653068e-14
+        },
+        {
+          "powers": [
+            0,
+            6
+          ],
+          "exact": 0.14285714285714285,
+          "Basix": 0.14285714285712905,
+          "SciPy": 0.14285714285714596,
+          "Basix_abs_error": 1.379452108096757e-14,
+          "SciPy_abs_error": 3.1086244689504383e-15,
+          "Basix_relative_error": 9.656164756677299e-14,
+          "SciPy_relative_error": 2.1760371282653068e-14
+        },
+        {
+          "powers": [
+            6,
+            6
+          ],
+          "exact": 0.02040816326530612,
+          "Basix": 0.020408163265306742,
+          "SciPy": 0.020408163265307006,
+          "Basix_abs_error": 6.210310043996969e-16,
+          "SciPy_abs_error": 8.847089727481716e-16,
+          "Basix_relative_error": 3.043051921558515e-14,
+          "SciPy_relative_error": 4.3350739664660416e-14
+        },
+        {
+          "powers": [
+            12,
+            0
+          ],
+          "exact": 0.07692307692307693,
+          "Basix": 0.07692307692307011,
+          "SciPy": 0.0769230769230806,
+          "Basix_abs_error": 6.813993813636898e-15,
+          "SciPy_abs_error": 3.677613769070831e-15,
+          "Basix_relative_error": 8.858191957727968e-14,
+          "SciPy_relative_error": 4.7808978997920804e-14
+        },
+        {
+          "powers": [
+            0,
+            12
+          ],
+          "exact": 0.07692307692307693,
+          "Basix": 0.07692307692307011,
+          "SciPy": 0.0769230769230806,
+          "Basix_abs_error": 6.813993813636898e-15,
+          "SciPy_abs_error": 3.677613769070831e-15,
+          "Basix_relative_error": 8.858191957727968e-14,
+          "SciPy_relative_error": 4.7808978997920804e-14
+        }
+      ]
+    }
+  ],
+  "elapsed_seconds": 0.044026602001395077,
+  "self_peak_RSS_bytes": 60710912,
+  "candidate_aux_constant_relative_accuracy": 1e-12,
+  "accuracy_budget_relation": "1 percent of unchanged1e-10 selected field integral-action tolerance; explicit auxiliary accuracy policy, not Gauss-construction theorem"
+}

@@ -1,0 +1,1674 @@
+{
+  "status": "PASS",
+  "library_file_id": "libfile_ee72fd8329c881918c1f4a9f426ed1fe",
+  "file_id": "file_0000000019188207994702d0cecd30e6",
+  "file_name": "target_chunked_selected_top_x_pass.zip",
+  "version": 0,
+  "archive_bytes": 21402287,
+  "archive_sha256": "ed89e8305330175fdba7f171f5cccc0f0030297eed3c43cf51bcd986ab4938ef",
+  "members_verified": 198,
+  "full_uncompressed_bytes": 157278231,
+  "member_manifest_sha256": "6994f5e1deb8729c2937ae850961f2196ed3aa65e38db608058a497df9eae8b0",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "external_source": {
+    "helper": "dff5871b767ed25ecd1500e0433cdc914773c013a46521d4c2bc3a4b0a37bef8",
+    "reference": "a0af0fc4838f08af3236c926e383ff84a09ee69c0965c19693a2950a6de44094",
+    "runner": "3705674a56b9f4e7afe0b5ff77215ee5180cd397d39e20f1f70423d888ea7683",
+    "launcher": "0a1f103a307ae5e95151424a645d6fca5cdeb772049951f1143d817aae8885d0"
+  },
+  "scientific_status": "SCOPED_SELECTED_TOP_X_COMPONENT_RESOURCE_SOURCE_PASS",
+  "scope": "six selected original top/x components on18cellp6 boundaryfixture; no fullC/D/PDE/output/targetcapacity qualification",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/mass_v2_terminal_packet/fresh_library_readback/target_chunked_selected_top_x_pass.zip",
+  "npy_count": 180,
+  "npy_numeric_bytes": 24052400,
+  "numeric_inventory_note": "Derived readback inventory; byte identity validated against supplied member SHA256; no separate producer numeric hash declared",
+  "npy_inventory": [
+    {
+      "path": "surface/contractions_degree_plus16.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 288,
+      "numeric_sha256": "f10a5ae3ffe40c6b0b0cd5a99cff1a29c919e721d9833439872f7e638f37c7c6"
+    },
+    {
+      "path": "surface/contractions_degree_plus8.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 288,
+      "numeric_sha256": "e0d92fc478d065ef5ea25e84d883487c29557f7d82373cc54bf67b19bdee8520"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_0_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "ecae9adbf87944e86c400ca066f1405f38d022693f5b0f192721cd9425f94620"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_0_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "d3c86bee89fe16c573c8f256f79a499a7698114d3807c937c1c6d43ed0d651e2"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_0_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "62bee57e7866d16bf679dbce68691dba7fd8bcb042c974fb076a3ed52f68b41a"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_0_top_x_masked_rows.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1160,
+      "numeric_sha256": "584c76a830e75edcbb6a5b43b4aa5be49fef569618bc31d12809e4014432409d"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_0_top_x_masked_values.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4640,
+      "numeric_sha256": "66e2dcdbd8b0478f78cf210fc5ece4634cbc732f5fe3eb58ad47980ffed0e67f"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_0_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "e753420681e20013b9c54c1235bd3188a9250864712bd01436ed685b5ccbacbe"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16028_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "6274dcd2a4cfa987cdfcdf9f899c3f3c2e4a0d2e347859e882bb51df25c78d6a"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16028_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "877e4685b78f9e69dea7782df24ce03b46f516ae22ae00a9fabe184147a1c501"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16028_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "7a47560e5c6ddcfa3e716c52d70fb4703800553eae635554a000edef5b566057"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16028_top_x_masked_rows.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 248,
+      "numeric_sha256": "1285ee7270ed754e39795886cb10966bf7194580c6cda5416d9b8bd3b53736b9"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16028_top_x_masked_values.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 992,
+      "numeric_sha256": "b924c04338e563f68465df4b07c695be86317bf11c64d41a66b52bae71720fc0"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16028_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "d9731a2012677afcee928834de16c72a6a5c8d32f26d668be700ae86459fe034"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16029_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "6274dcd2a4cfa987cdfcdf9f899c3f3c2e4a0d2e347859e882bb51df25c78d6a"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16029_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "877e4685b78f9e69dea7782df24ce03b46f516ae22ae00a9fabe184147a1c501"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16029_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "7a47560e5c6ddcfa3e716c52d70fb4703800553eae635554a000edef5b566057"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16029_top_x_masked_rows.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 248,
+      "numeric_sha256": "1285ee7270ed754e39795886cb10966bf7194580c6cda5416d9b8bd3b53736b9"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16029_top_x_masked_values.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 992,
+      "numeric_sha256": "b924c04338e563f68465df4b07c695be86317bf11c64d41a66b52bae71720fc0"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_16029_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "d9731a2012677afcee928834de16c72a6a5c8d32f26d668be700ae86459fe034"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_1_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "ecae9adbf87944e86c400ca066f1405f38d022693f5b0f192721cd9425f94620"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_1_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "d3c86bee89fe16c573c8f256f79a499a7698114d3807c937c1c6d43ed0d651e2"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_1_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "62bee57e7866d16bf679dbce68691dba7fd8bcb042c974fb076a3ed52f68b41a"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_1_top_x_masked_rows.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1160,
+      "numeric_sha256": "584c76a830e75edcbb6a5b43b4aa5be49fef569618bc31d12809e4014432409d"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_1_top_x_masked_values.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4640,
+      "numeric_sha256": "66e2dcdbd8b0478f78cf210fc5ece4634cbc732f5fe3eb58ad47980ffed0e67f"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_1_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "e753420681e20013b9c54c1235bd3188a9250864712bd01436ed685b5ccbacbe"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6018_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "5defab0ffec6f939c49968e0a84ba06d17750c4bf484581162d94d918abe3499"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6018_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "c64063620704e6f796e91a97077dc336a89b97246ddff304330cf50bcf3828cf"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6018_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "a7a1c11950540b21c5e75cfaf21dc0cecc371722f77ae9ffab99973f830a0ffd"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6018_top_x_masked_rows.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1036,
+      "numeric_sha256": "5b41fb97f8f4aca19b0dadf5c1b3dcdaab1a67c3546945740c22d03af0d1601c"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6018_top_x_masked_values.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4144,
+      "numeric_sha256": "ecc7b458ebdf8194eedb744729fa23849ef7a9beb8ac3c210816fc1ff739d0ff"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6018_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "14854e59a8f649868b3f0ea06a3fc2cc10b6793288f1489bb80b7cdfdc3bf180"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6019_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "5defab0ffec6f939c49968e0a84ba06d17750c4bf484581162d94d918abe3499"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6019_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "c64063620704e6f796e91a97077dc336a89b97246ddff304330cf50bcf3828cf"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6019_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "a7a1c11950540b21c5e75cfaf21dc0cecc371722f77ae9ffab99973f830a0ffd"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6019_top_x_masked_rows.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1036,
+      "numeric_sha256": "5b41fb97f8f4aca19b0dadf5c1b3dcdaab1a67c3546945740c22d03af0d1601c"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6019_top_x_masked_values.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4144,
+      "numeric_sha256": "ecc7b458ebdf8194eedb744729fa23849ef7a9beb8ac3c210816fc1ff739d0ff"
+    },
+    {
+      "path": "surface/mechanism_chunked/mode_6019_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "14854e59a8f649868b3f0ea06a3fc2cc10b6793288f1489bb80b7cdfdc3bf180"
+    },
+    {
+      "path": "surface/mechanism_chunked/rule_default_points.npy",
+      "shape": [
+        196,
+        2
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 3136,
+      "numeric_sha256": "38200a0430ac3ee58acd42287a12019c632b1dcdc432fe5441477a00bcbe45a5"
+    },
+    {
+      "path": "surface/mechanism_chunked/rule_default_weights.npy",
+      "shape": [
+        196
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 1568,
+      "numeric_sha256": "16e733e53962125725eadc4f2a9fee432ddde134854576fd3437689faffeb9db"
+    },
+    {
+      "path": "surface/mechanism_chunked/rule_gauss_points.npy",
+      "shape": [
+        196,
+        2
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 3136,
+      "numeric_sha256": "38200a0430ac3ee58acd42287a12019c632b1dcdc432fe5441477a00bcbe45a5"
+    },
+    {
+      "path": "surface/mechanism_chunked/rule_gauss_weights.npy",
+      "shape": [
+        196
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 1568,
+      "numeric_sha256": "16e733e53962125725eadc4f2a9fee432ddde134854576fd3437689faffeb9db"
+    },
+    {
+      "path": "surface/mechanism_chunked_b_FE.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "17f2307b6f21fa68c204aadc1789908104564f9354fed0c865d9bbb684c9fc3a"
+    },
+    {
+      "path": "surface/mechanism_chunked_mask.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 79344,
+      "numeric_sha256": "9b14e723f3219179788bc495728f639b15401b216e82b1929d4cfa786d71bf62"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_full.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "d58715fbae8fcd941e59ddd6382350c57161b8361ed309332216e731bb0ce9ea"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_rows_0.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 248,
+      "numeric_sha256": "1285ee7270ed754e39795886cb10966bf7194580c6cda5416d9b8bd3b53736b9"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_rows_1.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 248,
+      "numeric_sha256": "1285ee7270ed754e39795886cb10966bf7194580c6cda5416d9b8bd3b53736b9"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_rows_2.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1160,
+      "numeric_sha256": "584c76a830e75edcbb6a5b43b4aa5be49fef569618bc31d12809e4014432409d"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_rows_3.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1160,
+      "numeric_sha256": "584c76a830e75edcbb6a5b43b4aa5be49fef569618bc31d12809e4014432409d"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_rows_4.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1036,
+      "numeric_sha256": "5b41fb97f8f4aca19b0dadf5c1b3dcdaab1a67c3546945740c22d03af0d1601c"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_rows_5.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1036,
+      "numeric_sha256": "5b41fb97f8f4aca19b0dadf5c1b3dcdaab1a67c3546945740c22d03af0d1601c"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_values_0.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 992,
+      "numeric_sha256": "b924c04338e563f68465df4b07c695be86317bf11c64d41a66b52bae71720fc0"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_values_1.npy",
+      "shape": [
+        62
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 992,
+      "numeric_sha256": "b924c04338e563f68465df4b07c695be86317bf11c64d41a66b52bae71720fc0"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_values_2.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4640,
+      "numeric_sha256": "66e2dcdbd8b0478f78cf210fc5ece4634cbc732f5fe3eb58ad47980ffed0e67f"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_values_3.npy",
+      "shape": [
+        290
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4640,
+      "numeric_sha256": "66e2dcdbd8b0478f78cf210fc5ece4634cbc732f5fe3eb58ad47980ffed0e67f"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_values_4.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4144,
+      "numeric_sha256": "ecc7b458ebdf8194eedb744729fa23849ef7a9beb8ac3c210816fc1ff739d0ff"
+    },
+    {
+      "path": "surface/mechanism_chunked_masked_values_5.npy",
+      "shape": [
+        259
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4144,
+      "numeric_sha256": "ecc7b458ebdf8194eedb744729fa23849ef7a9beb8ac3c210816fc1ff739d0ff"
+    },
+    {
+      "path": "surface/mechanism_chunked_masks.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 79344,
+      "numeric_sha256": "9b14e723f3219179788bc495728f639b15401b216e82b1929d4cfa786d71bf62"
+    },
+    {
+      "path": "surface/mechanism_chunked_raw_MPC.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "877f260c0e8b10535dfa0339917a0bca3ea53822ecfe2703a2a773b103297cda"
+    },
+    {
+      "path": "surface/mechanism_chunked_recomputed_masked_full.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "d58715fbae8fcd941e59ddd6382350c57161b8361ed309332216e731bb0ce9ea"
+    },
+    {
+      "path": "surface/mechanism_chunked_rule_points.npy",
+      "shape": [
+        196,
+        2
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 3136,
+      "numeric_sha256": "38200a0430ac3ee58acd42287a12019c632b1dcdc432fe5441477a00bcbe45a5"
+    },
+    {
+      "path": "surface/mechanism_chunked_rule_weights.npy",
+      "shape": [
+        196
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 1568,
+      "numeric_sha256": "16e733e53962125725eadc4f2a9fee432ddde134854576fd3437689faffeb9db"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_0_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "441186521388768e918740d4bd345a0ba1e2af2ceb86b53b86605c8454daff07"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_0_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "412b1a23c562bdd282e76bec468a025e1f86dfad419b670f90d5a7d62a69f50e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_0_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "5974abbdf332a28e433b4ff0e6c5144fb7e51b9ac1b806c593b5b275adc44408"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_0_masked_rows.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 864,
+      "numeric_sha256": "1be299eda2840af833ce7f24200c8a6ed61463cce390690c98ff618e87a615a3"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_0_masked_values.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 3456,
+      "numeric_sha256": "789fc6daa8f6dfe2bfedbd5a3154bf9b06fa8335cae275a68214368353a7fe8a"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_0_raw_MPC.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "5bcda508709636324c57c06eb2fe9c507f286c38fb0b8c7fb66475024029dbfa"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16028_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "14a35789a7e5b4bb181fa537c0584312cb58a7d4817abe58da0276eeaa7fd32e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16028_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "a24df065b58e2f58cd896622c7d1cf070f536f94bfd6146c927769beef348bad"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16028_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "098a97b5a7c5d4d8b628420c181912a13bcc28ab822074bfbc64af414e10a97e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16028_masked_rows.npy",
+      "shape": [
+        36
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 144,
+      "numeric_sha256": "d56b170c4191e79b7857e8d8fad6e4f7cdb8a2ed7f3fd0693b2b797a65476e98"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16028_masked_values.npy",
+      "shape": [
+        36
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 576,
+      "numeric_sha256": "00a0a5a65393d345e4eeb3b3d7afeef91b0ae7bae932e510ace7bb8ff147ae38"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16028_raw_MPC.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "76b08254520f3b4f3a3bf504a672c6f08cd60c5302ef676849090e0fbe616f02"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16029_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "14a35789a7e5b4bb181fa537c0584312cb58a7d4817abe58da0276eeaa7fd32e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16029_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "a24df065b58e2f58cd896622c7d1cf070f536f94bfd6146c927769beef348bad"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16029_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "098a97b5a7c5d4d8b628420c181912a13bcc28ab822074bfbc64af414e10a97e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16029_masked_rows.npy",
+      "shape": [
+        36
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 144,
+      "numeric_sha256": "d56b170c4191e79b7857e8d8fad6e4f7cdb8a2ed7f3fd0693b2b797a65476e98"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16029_masked_values.npy",
+      "shape": [
+        36
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 576,
+      "numeric_sha256": "00a0a5a65393d345e4eeb3b3d7afeef91b0ae7bae932e510ace7bb8ff147ae38"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_16029_raw_MPC.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "76b08254520f3b4f3a3bf504a672c6f08cd60c5302ef676849090e0fbe616f02"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_1_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "441186521388768e918740d4bd345a0ba1e2af2ceb86b53b86605c8454daff07"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_1_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "412b1a23c562bdd282e76bec468a025e1f86dfad419b670f90d5a7d62a69f50e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_1_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "5974abbdf332a28e433b4ff0e6c5144fb7e51b9ac1b806c593b5b275adc44408"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_1_masked_rows.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 864,
+      "numeric_sha256": "1be299eda2840af833ce7f24200c8a6ed61463cce390690c98ff618e87a615a3"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_1_masked_values.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 3456,
+      "numeric_sha256": "789fc6daa8f6dfe2bfedbd5a3154bf9b06fa8335cae275a68214368353a7fe8a"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_1_raw_MPC.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "5bcda508709636324c57c06eb2fe9c507f286c38fb0b8c7fb66475024029dbfa"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6018_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "83220414d69b3c009f41c51493a123a9e20b5e93ba6afb1e3a823e71189ef01a"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6018_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "412b1a23c562bdd282e76bec468a025e1f86dfad419b670f90d5a7d62a69f50e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6018_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "da153d0d1e2487825b18f8b6fb48f5b3d22d5f6733fea87588e542e4622fab15"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6018_masked_rows.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 864,
+      "numeric_sha256": "1be299eda2840af833ce7f24200c8a6ed61463cce390690c98ff618e87a615a3"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6018_masked_values.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 3456,
+      "numeric_sha256": "d37fb0eed55cfaad7025b9aa771ba50b0c8a52219eeb34020039982dbade2c37"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6018_raw_MPC.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "8103b1f62308323e8d1e07d2276d53c9dea23b56500748c868b45ffba306404c"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6019_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "83220414d69b3c009f41c51493a123a9e20b5e93ba6afb1e3a823e71189ef01a"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6019_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "412b1a23c562bdd282e76bec468a025e1f86dfad419b670f90d5a7d62a69f50e"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6019_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "da153d0d1e2487825b18f8b6fb48f5b3d22d5f6733fea87588e542e4622fab15"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6019_masked_rows.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 864,
+      "numeric_sha256": "1be299eda2840af833ce7f24200c8a6ed61463cce390690c98ff618e87a615a3"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6019_masked_values.npy",
+      "shape": [
+        216
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 3456,
+      "numeric_sha256": "d37fb0eed55cfaad7025b9aa771ba50b0c8a52219eeb34020039982dbade2c37"
+    },
+    {
+      "path": "surface/mechanism_ffcx_mode_6019_raw_MPC.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "8103b1f62308323e8d1e07d2276d53c9dea23b56500748c868b45ffba306404c"
+    },
+    {
+      "path": "surface/mechanism_mode_0_only_FFCx_rows.npy",
+      "shape": [
+        0
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 0,
+      "numeric_sha256": "4c29a9d210fa7efa3f709243d99bbe2cd211657e356ae95574718ecd411150f1"
+    },
+    {
+      "path": "surface/mechanism_mode_0_only_chunked_rows.npy",
+      "shape": [
+        74
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 296,
+      "numeric_sha256": "b0d42b041be35e1f05ba74d509804975e5227a4be2ba633deed61b97963e22ce"
+    },
+    {
+      "path": "surface/mechanism_mode_16028_only_FFCx_rows.npy",
+      "shape": [
+        0
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 0,
+      "numeric_sha256": "4c29a9d210fa7efa3f709243d99bbe2cd211657e356ae95574718ecd411150f1"
+    },
+    {
+      "path": "surface/mechanism_mode_16028_only_chunked_rows.npy",
+      "shape": [
+        26
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 104,
+      "numeric_sha256": "5f5f1a641dfb19cf7c9ef6d06cd5b59bdae12b1b74c74d0b986ffbb24a19c42f"
+    },
+    {
+      "path": "surface/mechanism_mode_16029_only_FFCx_rows.npy",
+      "shape": [
+        0
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 0,
+      "numeric_sha256": "4c29a9d210fa7efa3f709243d99bbe2cd211657e356ae95574718ecd411150f1"
+    },
+    {
+      "path": "surface/mechanism_mode_16029_only_chunked_rows.npy",
+      "shape": [
+        26
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 104,
+      "numeric_sha256": "5f5f1a641dfb19cf7c9ef6d06cd5b59bdae12b1b74c74d0b986ffbb24a19c42f"
+    },
+    {
+      "path": "surface/mechanism_mode_1_only_FFCx_rows.npy",
+      "shape": [
+        0
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 0,
+      "numeric_sha256": "4c29a9d210fa7efa3f709243d99bbe2cd211657e356ae95574718ecd411150f1"
+    },
+    {
+      "path": "surface/mechanism_mode_1_only_chunked_rows.npy",
+      "shape": [
+        74
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 296,
+      "numeric_sha256": "b0d42b041be35e1f05ba74d509804975e5227a4be2ba633deed61b97963e22ce"
+    },
+    {
+      "path": "surface/mechanism_mode_6018_only_FFCx_rows.npy",
+      "shape": [
+        0
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 0,
+      "numeric_sha256": "4c29a9d210fa7efa3f709243d99bbe2cd211657e356ae95574718ecd411150f1"
+    },
+    {
+      "path": "surface/mechanism_mode_6018_only_chunked_rows.npy",
+      "shape": [
+        43
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 172,
+      "numeric_sha256": "c04a351bc5603cf3e342c31677ebd2b480878880ce5bd43d7bca3c71c2bf2f6d"
+    },
+    {
+      "path": "surface/mechanism_mode_6019_only_FFCx_rows.npy",
+      "shape": [
+        0
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 0,
+      "numeric_sha256": "4c29a9d210fa7efa3f709243d99bbe2cd211657e356ae95574718ecd411150f1"
+    },
+    {
+      "path": "surface/mechanism_mode_6019_only_chunked_rows.npy",
+      "shape": [
+        43
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 172,
+      "numeric_sha256": "c04a351bc5603cf3e342c31677ebd2b480878880ce5bd43d7bca3c71c2bf2f6d"
+    },
+    {
+      "path": "surface/native_expanded_fields_0.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "9de7a317b27ad87797e15abaa3ef507b4108bdc1ab29fe207e9b14e80fbadef8"
+    },
+    {
+      "path": "surface/native_expanded_fields_1.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "9ad5276ccc1fe4ef5da833116c8e75f44a9473101377235bee329953f93bd0ef"
+    },
+    {
+      "path": "surface/native_expanded_fields_2.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "4f2d15b673b2fad8752bd2c613ed4bce1cdc1b75645354866ceac8e546f6a81a"
+    },
+    {
+      "path": "surface/native_independent_states.npy",
+      "shape": [
+        13224,
+        3
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 634752,
+      "numeric_sha256": "99d5a72bf616073b0787bc14b86cffe8575162e6b4890bab42dcd8fbccd23b95"
+    },
+    {
+      "path": "surface/operation_scales_degree_plus16.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 144,
+      "numeric_sha256": "1f69b65de9959a07e70139d614466854eb7298baa301c6aaad74ece0b5dcd61e"
+    },
+    {
+      "path": "surface/operation_scales_degree_plus8.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 144,
+      "numeric_sha256": "39606b181203037cf0d392ec98985f8d772fe0877953f20d7cbb4593fece15d7"
+    },
+    {
+      "path": "surface/primary_cutoff_contraction_loss.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 288,
+      "numeric_sha256": "f1f818264c6a14386d7c30bfe352a025ce7149ec0ea435b1132f96dfdf06b6a2"
+    },
+    {
+      "path": "surface/primary_masked_contractions.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 288,
+      "numeric_sha256": "cff5b55634ab3e8c8de2160a6d06175ce6375aeea99fb89764cdede829fe8b71"
+    },
+    {
+      "path": "surface/primary_operation_scales.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 144,
+      "numeric_sha256": "05131fd46b89f21fb59067c42323c8074ec4e870535138a83755f19e11a199ff"
+    },
+    {
+      "path": "surface/primary_raw_contractions.npy",
+      "shape": [
+        6,
+        3
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 288,
+      "numeric_sha256": "426959f46ed10b67bea71a17e5930c766b15e75da2b32ab9100ed55dab1567ea"
+    },
+    {
+      "path": "surface/target_chunked/mode_0_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "a975641220bfc2433d722e0e5de437ec4f335fe97e06ded1dd6f06ccb754fe5d"
+    },
+    {
+      "path": "surface/target_chunked/mode_0_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "e55e93f118b47ca6918ebade2d68d54259717b1677c0ccbe2678f61c2e9c3d84"
+    },
+    {
+      "path": "surface/target_chunked/mode_0_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "988fd27c496eda717d130a0aa80ac8e014b4691b044a6a1c8872b69fd5c82398"
+    },
+    {
+      "path": "surface/target_chunked/mode_0_top_x_masked_rows.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1192,
+      "numeric_sha256": "d2446357f20c750d45db8b71c1c4ef278c6f0cb9ca77e2e8740619362152cb27"
+    },
+    {
+      "path": "surface/target_chunked/mode_0_top_x_masked_values.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4768,
+      "numeric_sha256": "1fed293663be40a4cc5e23b685b334e38a08de2c26171aefbfd3d3248bc98a23"
+    },
+    {
+      "path": "surface/target_chunked/mode_0_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "93053d18a523e9a0b4bc81d0d664b1f83fc14e6673131db8245411aa8842d6d9"
+    },
+    {
+      "path": "surface/target_chunked/mode_16028_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "b1f39ab8dbdb11759c7d77097f88da6db8289d241938b90f716b28889aea88e0"
+    },
+    {
+      "path": "surface/target_chunked/mode_16028_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "87100208acd4a31372451d10d642fd2df26af69752f5fa5dfd84baec0752ab42"
+    },
+    {
+      "path": "surface/target_chunked/mode_16028_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "06d98a52855abfb154d5fe31ff2c56d8cdedd34d65eaca80cc0de4767a780860"
+    },
+    {
+      "path": "surface/target_chunked/mode_16028_top_x_masked_rows.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 352,
+      "numeric_sha256": "4c9196ad3ad60d40843d4ae02de82830d5221a65b4d72690b6c54164bf55d662"
+    },
+    {
+      "path": "surface/target_chunked/mode_16028_top_x_masked_values.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1408,
+      "numeric_sha256": "eaf41d8e2b4cef1531047f502d014aaca7700273002328178c8f01e81ce4d7de"
+    },
+    {
+      "path": "surface/target_chunked/mode_16028_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "88c00d69e5e1dd311a93a9b094184144655493ee451724215f20ccde8d5df654"
+    },
+    {
+      "path": "surface/target_chunked/mode_16029_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "b1f39ab8dbdb11759c7d77097f88da6db8289d241938b90f716b28889aea88e0"
+    },
+    {
+      "path": "surface/target_chunked/mode_16029_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "87100208acd4a31372451d10d642fd2df26af69752f5fa5dfd84baec0752ab42"
+    },
+    {
+      "path": "surface/target_chunked/mode_16029_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "06d98a52855abfb154d5fe31ff2c56d8cdedd34d65eaca80cc0de4767a780860"
+    },
+    {
+      "path": "surface/target_chunked/mode_16029_top_x_masked_rows.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 352,
+      "numeric_sha256": "4c9196ad3ad60d40843d4ae02de82830d5221a65b4d72690b6c54164bf55d662"
+    },
+    {
+      "path": "surface/target_chunked/mode_16029_top_x_masked_values.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1408,
+      "numeric_sha256": "eaf41d8e2b4cef1531047f502d014aaca7700273002328178c8f01e81ce4d7de"
+    },
+    {
+      "path": "surface/target_chunked/mode_16029_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "88c00d69e5e1dd311a93a9b094184144655493ee451724215f20ccde8d5df654"
+    },
+    {
+      "path": "surface/target_chunked/mode_1_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "a975641220bfc2433d722e0e5de437ec4f335fe97e06ded1dd6f06ccb754fe5d"
+    },
+    {
+      "path": "surface/target_chunked/mode_1_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "e55e93f118b47ca6918ebade2d68d54259717b1677c0ccbe2678f61c2e9c3d84"
+    },
+    {
+      "path": "surface/target_chunked/mode_1_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "988fd27c496eda717d130a0aa80ac8e014b4691b044a6a1c8872b69fd5c82398"
+    },
+    {
+      "path": "surface/target_chunked/mode_1_top_x_masked_rows.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1192,
+      "numeric_sha256": "d2446357f20c750d45db8b71c1c4ef278c6f0cb9ca77e2e8740619362152cb27"
+    },
+    {
+      "path": "surface/target_chunked/mode_1_top_x_masked_values.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4768,
+      "numeric_sha256": "1fed293663be40a4cc5e23b685b334e38a08de2c26171aefbfd3d3248bc98a23"
+    },
+    {
+      "path": "surface/target_chunked/mode_1_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "93053d18a523e9a0b4bc81d0d664b1f83fc14e6673131db8245411aa8842d6d9"
+    },
+    {
+      "path": "surface/target_chunked/mode_6018_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "679a3f25171638751eae6eb9c5669be6478c356d4870209459e08c5140a41159"
+    },
+    {
+      "path": "surface/target_chunked/mode_6018_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "c50f797c85acbf657f23947652c47d4cc5d32908ec414b7829fdb898fc9d4fd3"
+    },
+    {
+      "path": "surface/target_chunked/mode_6018_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "320fabb3b927101668fb2afe3f0b07a35ba9cdbf3686e82bebf89904990461d1"
+    },
+    {
+      "path": "surface/target_chunked/mode_6018_top_x_masked_rows.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 2896,
+      "numeric_sha256": "542be5c091b3c27af27a8ea73916231ef04eead5bfc88052af799f938cd4556a"
+    },
+    {
+      "path": "surface/target_chunked/mode_6018_top_x_masked_values.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 11584,
+      "numeric_sha256": "f6d14e3acd05a09b1564d7428608cafd5435c7642e15b994456b39662d7de5c6"
+    },
+    {
+      "path": "surface/target_chunked/mode_6018_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "3fa9d96d13601f00a1f011125a04150cffd44ddb80fe2b86415dbb11f4cb80d4"
+    },
+    {
+      "path": "surface/target_chunked/mode_6019_top_x_b_FE.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "679a3f25171638751eae6eb9c5669be6478c356d4870209459e08c5140a41159"
+    },
+    {
+      "path": "surface/target_chunked/mode_6019_top_x_mask.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 13224,
+      "numeric_sha256": "c50f797c85acbf657f23947652c47d4cc5d32908ec414b7829fdb898fc9d4fd3"
+    },
+    {
+      "path": "surface/target_chunked/mode_6019_top_x_masked_full.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "320fabb3b927101668fb2afe3f0b07a35ba9cdbf3686e82bebf89904990461d1"
+    },
+    {
+      "path": "surface/target_chunked/mode_6019_top_x_masked_rows.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 2896,
+      "numeric_sha256": "542be5c091b3c27af27a8ea73916231ef04eead5bfc88052af799f938cd4556a"
+    },
+    {
+      "path": "surface/target_chunked/mode_6019_top_x_masked_values.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 11584,
+      "numeric_sha256": "f6d14e3acd05a09b1564d7428608cafd5435c7642e15b994456b39662d7de5c6"
+    },
+    {
+      "path": "surface/target_chunked/mode_6019_top_x_raw.npy",
+      "shape": [
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 211584,
+      "numeric_sha256": "3fa9d96d13601f00a1f011125a04150cffd44ddb80fe2b86415dbb11f4cb80d4"
+    },
+    {
+      "path": "surface/target_chunked/rule_default_points.npy",
+      "shape": [
+        6561,
+        2
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 104976,
+      "numeric_sha256": "aa120307315a3e17a02e3cd658a44fc195f79955be32e135f780a9dfdc51b2e3"
+    },
+    {
+      "path": "surface/target_chunked/rule_default_weights.npy",
+      "shape": [
+        6561
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 52488,
+      "numeric_sha256": "021236312844c53aec90295529f596da9d6a343e112d4ab86e39b181423f0add"
+    },
+    {
+      "path": "surface/target_chunked/rule_gauss_points.npy",
+      "shape": [
+        6561,
+        2
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 104976,
+      "numeric_sha256": "aa120307315a3e17a02e3cd658a44fc195f79955be32e135f780a9dfdc51b2e3"
+    },
+    {
+      "path": "surface/target_chunked/rule_gauss_weights.npy",
+      "shape": [
+        6561
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 52488,
+      "numeric_sha256": "021236312844c53aec90295529f596da9d6a343e112d4ab86e39b181423f0add"
+    },
+    {
+      "path": "surface/target_chunked_b_FE.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "bec606929ef34ca633df5615c1ce0753625bca6c98881d4ddbfa5700f6686a67"
+    },
+    {
+      "path": "surface/target_chunked_mask.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 79344,
+      "numeric_sha256": "c143f1fddc6a0666e50fc240d4100f9f41c89d5a1c9e435b573796e0881977ec"
+    },
+    {
+      "path": "surface/target_chunked_masked_full.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "d899a6e1549c50eb63c1cf4d6f128e9cba78e7802897e9433bf2b70ead9eea6b"
+    },
+    {
+      "path": "surface/target_chunked_masked_rows_0.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 352,
+      "numeric_sha256": "4c9196ad3ad60d40843d4ae02de82830d5221a65b4d72690b6c54164bf55d662"
+    },
+    {
+      "path": "surface/target_chunked_masked_rows_1.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 352,
+      "numeric_sha256": "4c9196ad3ad60d40843d4ae02de82830d5221a65b4d72690b6c54164bf55d662"
+    },
+    {
+      "path": "surface/target_chunked_masked_rows_2.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1192,
+      "numeric_sha256": "d2446357f20c750d45db8b71c1c4ef278c6f0cb9ca77e2e8740619362152cb27"
+    },
+    {
+      "path": "surface/target_chunked_masked_rows_3.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 1192,
+      "numeric_sha256": "d2446357f20c750d45db8b71c1c4ef278c6f0cb9ca77e2e8740619362152cb27"
+    },
+    {
+      "path": "surface/target_chunked_masked_rows_4.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 2896,
+      "numeric_sha256": "542be5c091b3c27af27a8ea73916231ef04eead5bfc88052af799f938cd4556a"
+    },
+    {
+      "path": "surface/target_chunked_masked_rows_5.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "int32",
+      "numeric_bytes": 2896,
+      "numeric_sha256": "542be5c091b3c27af27a8ea73916231ef04eead5bfc88052af799f938cd4556a"
+    },
+    {
+      "path": "surface/target_chunked_masked_values_0.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1408,
+      "numeric_sha256": "eaf41d8e2b4cef1531047f502d014aaca7700273002328178c8f01e81ce4d7de"
+    },
+    {
+      "path": "surface/target_chunked_masked_values_1.npy",
+      "shape": [
+        88
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1408,
+      "numeric_sha256": "eaf41d8e2b4cef1531047f502d014aaca7700273002328178c8f01e81ce4d7de"
+    },
+    {
+      "path": "surface/target_chunked_masked_values_2.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4768,
+      "numeric_sha256": "1fed293663be40a4cc5e23b685b334e38a08de2c26171aefbfd3d3248bc98a23"
+    },
+    {
+      "path": "surface/target_chunked_masked_values_3.npy",
+      "shape": [
+        298
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 4768,
+      "numeric_sha256": "1fed293663be40a4cc5e23b685b334e38a08de2c26171aefbfd3d3248bc98a23"
+    },
+    {
+      "path": "surface/target_chunked_masked_values_4.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 11584,
+      "numeric_sha256": "f6d14e3acd05a09b1564d7428608cafd5435c7642e15b994456b39662d7de5c6"
+    },
+    {
+      "path": "surface/target_chunked_masked_values_5.npy",
+      "shape": [
+        724
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 11584,
+      "numeric_sha256": "f6d14e3acd05a09b1564d7428608cafd5435c7642e15b994456b39662d7de5c6"
+    },
+    {
+      "path": "surface/target_chunked_masks.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "bool",
+      "numeric_bytes": 79344,
+      "numeric_sha256": "c143f1fddc6a0666e50fc240d4100f9f41c89d5a1c9e435b573796e0881977ec"
+    },
+    {
+      "path": "surface/target_chunked_raw_MPC.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "2a6391e9b2161f0f8e2e3697d391dee9f1868773eefe84a7330e74d44eb4cf2a"
+    },
+    {
+      "path": "surface/target_chunked_recomputed_masked_full.npy",
+      "shape": [
+        6,
+        13224
+      ],
+      "dtype": "complex128",
+      "numeric_bytes": 1269504,
+      "numeric_sha256": "d899a6e1549c50eb63c1cf4d6f128e9cba78e7802897e9433bf2b70ead9eea6b"
+    },
+    {
+      "path": "surface/target_chunked_rule_points.npy",
+      "shape": [
+        6561,
+        2
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 104976,
+      "numeric_sha256": "aa120307315a3e17a02e3cd658a44fc195f79955be32e135f780a9dfdc51b2e3"
+    },
+    {
+      "path": "surface/target_chunked_rule_weights.npy",
+      "shape": [
+        6561
+      ],
+      "dtype": "float64",
+      "numeric_bytes": 52488,
+      "numeric_sha256": "021236312844c53aec90295529f596da9d6a343e112d4ab86e39b181423f0add"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schema": "task40extra.chunked-selected-surface-mass-v2-review.v1",
+  "status": "PASS_WITH_SCOPE",
+  "review_kind": "read-only source/AST/JSON/log/hash inspection; no rule construction or numerical replay",
+  "canonical_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "canonical_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "canonical_worktree_observed_clean": true,
+  "source_roles": {
+    "unchanged_core_sha256": "748e925d42b0da1e27240b10d47bf586173ced8ee44a93cd78ea4368a6dbae24",
+    "unchanged_canonical_geometry_and_sealed_metadata_reference_sha256": "cace8b9b472b9f8b7187f4cde1d028219041483a29cfc1981f9e6801c661737a",
+    "active_external_reference_sha256": "a0af0fc4838f08af3236c926e383ff84a09ee69c0965c19693a2950a6de44094",
+    "external_helper_sha256": "dff5871b767ed25ecd1500e0433cdc914773c013a46521d4c2bc3a4b0a37bef8",
+    "external_runner_sha256": "3705674a56b9f4e7afe0b5ff77215ee5180cd397d39e20f1f70423d888ea7683",
+    "external_launcher_sha256": "0a1f103a307ae5e95151424a645d6fca5cdeb772049951f1143d817aae8885d0"
+  },
+  "diagnostic_evidence": {
+    "saved_rule_diagnostic_sha256": "232ef2b3e6ce2cbd58a6c235145078993db9449bc915ce71763f29e305f9f607",
+    "independent_SciPy_construction_diagnostic_sha256": "257f62d2dfd98afe804a1451c9c18f170df7dbcad7b15e0ff127c6b65146a774",
+    "degree160_measured_mass": 0.9999999999997333,
+    "degree160_constant_absolute_error": 2.666755705149626e-13,
+    "degrees168_and176_constant_absolute_errors": [2.4502622153477205e-13, 2.23487894857044e-13],
+    "independent_node_maximum_difference_at_most": 5.079270337660091e-14,
+    "independent_weights_L1_difference_at_most": 2.995431614385035e-13,
+    "reviewer_generated_new_rules": false
+  },
+  "accuracy_policy_assessment": {
+    "auxiliary_constant_absolute_limit": 1e-12,
+    "summation": "math.fsum of actual unmodified float64 weights",
+    "acceptable_as_explicit_auxiliary_accuracy_policy": true,
+    "one_percent_ratio_is_a_general_field_error_bound": false,
+    "Basix_construction_error_theorem_claimed": false,
+    "weights_normalized_or_replaced": false,
+    "basis_or_operator_values_modified": false,
+    "unchanged_fullraw_mechanism_relative_limit_against_both_norms": 1e-11,
+    "unchanged_field_integral_action_and_reference_convergence_limit": 1e-10,
+    "rationale": "The independently recorded constant and selected polynomial moments support the declared constant-integral sanity threshold. They do not prove general field-action accuracy; all original full-vector, action, finite, exact-zero and convergence gates remain necessary."
+  },
+  "source_boundary": {
+    "guard_metadata_AST_proof_sha256": "50c8b96996292782799165bc469c4056b918c64290696e034cd7542d21b7e21f",
+    "integration_boundary_sha256": "d869387272eb68920749f9494713c176c0e2a7e0a631fc1cf3b40a30192f0765",
+    "reviewer_confirmed_changed_helper_function": "assemble_chunked_top_x",
+    "reviewer_confirmed_changed_reference_function": "run_reference",
+    "only_added_numerical_helper": "unit_mass_metric",
+    "all_runner_function_and_class_ASTs_unchanged": true,
+    "supervisor_allocation_saved_raw_and_scalar_replay_functions_unchanged": true,
+    "metadata_baseline_and_active_reference_pins_distinct": true,
+    "source_environment_and_resource_postconditions_preserved": true
+  },
+  "observed_test_logs": {
+    "helper_and_guard": {"passed": 19, "seconds": 0.043, "sha256": "d05a5cfa0b412772a5ab0ee9421e333d6d09efb544919877d9000eaa62bd399a"},
+    "reference": {"passed": 12, "seconds": 0.021, "sha256": "6dd711b64e56a536997e4babb9ac59790741456950f152fbcebd12d7bf0411be"},
+    "launcher": {"passed": 26, "seconds": 0.195, "sha256": "7f692ffae65a666f21d8bded922eb64ffe534db04eddcafbbc31b3fe0873128c"},
+    "negative_mass_perturbation_both_signs": 1e-11,
+    "reviewer_executed_tests": false
+  },
+  "preflight": {
+    "path": "../surface_launcher_preflight_20261004T235450Z_2.json",
+    "sha256": "194992cac56ceb6b295f198c1ae94d737a90b59c6d91529973899e53275fe081",
+    "status": "SOURCE_ABI_METADATA_LIBRARY_RESOURCE_PREFLIGHT_ONLY_PASS",
+    "dynamic_launch_cap_bytes": 3678101504,
+    "exact_metadata_current_parent_child_source_and_environment": true,
+    "surface_executed": false
+  },
+  "remaining_concrete_blocker": null,
+  "scope": "Readiness of the explicitly approved auxiliary mass-policy revision only. Same six selected top/x components, live degree27 mechanism dependency and target degree160 versus168/176 action checks; 3 GiB/4500 s/zero swap, 128 MiB helper ownership and 128 MiB outer reserve retained. No launch authorization or numerical qualification follows from this source review.",
+  "source_Library_durability_and_fresh_launch_admission_are_separate_gates": true,
+  "reviewer_ran_project_imports_tests_FE_JIT_or_numerics": false
+}
