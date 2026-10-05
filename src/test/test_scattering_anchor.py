@@ -103,6 +103,17 @@ class AnchorTests(unittest.TestCase):
             self.assertEqual(record['members']['H']['shape'],[2])
             with self.assertRaisesRegex(TypeError,'Python objects'):save_arrays(path,data=[{'bad':1}])
 
+    def test_actual_owner_snapshot_call_preserves_unique_backing_and_event(self):
+        from src.solvers.scattering_anchor import Journal
+        with tempfile.TemporaryDirectory() as t:
+            journal=Journal(Path(t));events=[]
+            journal.event=lambda name,**facts:events.append((name,facts))
+            a=np.ones(32,complex);journal.owners('bounded',[a,a[2:],{'same':a}])
+            self.assertEqual(events[0][0],'object_owner_snapshot')
+            self.assertEqual(events[0][1]['owner_role'],'bounded')
+            self.assertEqual(events[0][1]['unique_visible_numpy_owner_bytes'],a.nbytes)
+            self.assertEqual(events[0][1]['unique_owner_count'],1)
+
     def test_save_arrays_failure_retains_completed_vector(self):
         with tempfile.TemporaryDirectory() as t:
             path=Path(t)/'packet.npz';save_arrays(path,z=np.arange(12,dtype=np.complex128))

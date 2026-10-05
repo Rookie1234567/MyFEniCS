@@ -88,7 +88,7 @@ class Journal:
             elif hasattr(x,'__dict__') and type(x).__module__.startswith(('src.solvers','scipy.sparse')):
                 for v in vars(x).values():visit(v)
         visit(objects)
-        self.event('object_owner_snapshot',name=name,unique_visible_numpy_owner_bytes=sum(owners.values()),
+        self.event('object_owner_snapshot',owner_role=name,unique_visible_numpy_owner_bytes=sum(owners.values()),
                    unique_owner_count=len(owners),opaque_factor_MPI_CFFI_PETSc_bytes='unknown; included in tree RSS')
 
     def allocation(self, name, facts):
