@@ -118,5 +118,26 @@ class AccuracyTests(unittest.TestCase):
         table=json.loads((ROOT/'input/materials/si_optical_constants_v1.json').read_text())
         self.assertIn('0.699999988',json.dumps(table))
 
+    def test_full_incident_projection_and_finite_reference_planes(self):
+        from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
+        from src.solvers.scattering_accuracy_analytic import incident_projection_witness,flat_modal_reference
+        c=configuration('FLAT',5);modes,_,_=build_dynamic_mode_inventory(c)
+        ref=flat_modal_reference(c,modes)
+        a=incident_projection_witness(c,modes,47);b=incident_projection_witness(c,modes,63)
+        self.assertEqual(a.shape,(532,))
+        self.assertLess(np.max(np.abs(a-b)),1e-11)
+        self.assertLess(np.max(np.abs(b-ref['incident']*ref['phase'])),1e-11)
+        self.assertGreater(ref['A_volume'],0)
+        self.assertLess(ref['T'],ref['Fresnel']['T'])
+        self.assertAlmostEqual(ref['R']+ref['T']+ref['A_volume'],1.)
+
+    def test_representation_lower_bounds_do_not_use_a_solution(self):
+        from src.solvers.scattering_accuracy_analytic import polynomial_phase_lower_bounds
+        result=polynomial_phase_lower_bounds(configuration('FLAT',5))
+        self.assertEqual({(r['grid'],r['degree']) for r in result['rows']},
+            {('ORIGINAL',5),('ORIGINAL',6),('X2',5),('X2',6)})
+        self.assertEqual(result['new_FE_objects'],0);self.assertEqual(result['new_A_calls'],0)
+        self.assertTrue(all(r['H_curl_relative_lower_bound']>1e-4 for r in result['rows']))
+
 
 if __name__=='__main__':unittest.main()

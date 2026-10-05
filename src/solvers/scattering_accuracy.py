@@ -115,14 +115,33 @@ class GramProvider:
             T=np.eye(V.element.space_dimension);V.element.T_apply(T.ravel(),np.asarray([p],dtype=np.uint32),V.element.space_dimension)
             self.transforms.append((int(p),T))
         self.rows=[];self.folder=folder;self.journal=journal;self.use_gram=use_gram;self.elapsed=0.;self.failed=False
+        self.qualified_raw={}
+        if use_gram:
+            # Reuse only exact raw tensor oracles, never a field or inverse.
+            prior=stage('ATTRIBUTION')
+            for row in prior['saved_original_equation_rechecks']:
+                checks=row['tensor_checks']
+                if row['degree']!=bundle['degree'] or not checks['pass_gate']:continue
+                if checks['factory']['identity_sha256']!=self.factory.audit['identity_sha256']:
+                    raise ValueError('qualified/new Gram basis/material identity')
+                for item in checks['all_actual_classes']:
+                    self.qualified_raw[(item['tag'],*item['widths'])]=item
+            if not self.qualified_raw:raise ValueError('no exact qualified raw tensor inventory')
 
     def __call__(self,form,kernels,coordinates,*,tag,dimension):
         from .hcurl_assembly_time_condensation import _tabulate_raw_tensor_class
         began=time.perf_counter()
-        original=_tabulate_raw_tensor_class(form,kernels,coordinates,tag=tag,dimension=dimension)
-        widths=tuple(np.ptp(np.asarray(coordinates).reshape(-1,3),axis=0));g=self.factory.tensor(tag=tag,widths=widths)
+        widths=tuple(np.ptp(np.asarray(coordinates).reshape(-1,3),axis=0))
+        previous=self.qualified_raw.get((tag,*widths))
+        if previous is None:
+            original=_tabulate_raw_tensor_class(form,kernels,coordinates,tag=tag,dimension=dimension)
+            components={k:_tabulate_raw_tensor_class(f,self.kernels[k],coordinates,tag=tag,dimension=dimension) for k,f in self.forms.items()}
+        else:
+            saved=checked_arrays(previous['arrays'])
+            if not np.array_equal(coordinates,saved['coordinates']):raise ValueError('unrounded raw coordinates changed')
+            original=saved['original'];components={'curl':saved['curl_original'],'material_mass':saved['mass_original']}
+        g=self.factory.tensor(tag=tag,widths=widths)
         m=self.factory.mass_tensor(tag=tag,widths=widths);c=g-m
-        components={k:_tabulate_raw_tensor_class(f,self.kernels[k],coordinates,tag=tag,dimension=dimension) for k,f in self.forms.items()}
         # Operation-scale denominators retain curl and mass before cancellation.
         scale=np.linalg.norm(components['curl'])+np.linalg.norm(components['material_mass'])
         checks={k:float(np.linalg.norm(delta)/max(den,1e-300)) for k,delta,den in (
@@ -135,9 +154,11 @@ class GramProvider:
         self.failed|=not good
         if not (self.folder/'reference_grams.npz').exists():
             save_arrays(self.folder/'reference_grams.npz',mass=np.asarray(self.factory.mass_components),curl=np.asarray(self.factory.curl_components))
-        receipt=save_arrays(self.folder/f'raw_class_{len(self.rows):03d}.npz',coordinates=coordinates,original=original,
+        receipt=previous['arrays'] if previous is not None else save_arrays(self.folder/f'raw_class_{len(self.rows):03d}.npz',coordinates=coordinates,original=original,
             curl_original=components['curl'],mass_original=components['material_mass'])
-        self.rows.append(dict(index=len(self.rows),tag=tag,widths=widths,checks=checks,oriented=oriented,pass_gate=good,arrays=receipt))
+        self.rows.append(dict(index=len(self.rows),tag=tag,widths=widths,checks=checks,oriented=oriented,pass_gate=good,arrays=receipt,
+            independent_oracle='hash-bound earlier exact FFCx class' if previous is not None else 'live original FFCx full/curl/mass',
+            returned_tensor='six Gram combination' if self.use_gram and good else 'original FFCx'))
         self.elapsed+=time.perf_counter()-began
         write_json(self.folder/'tensor_checks.json',self.report())
         # A failing optimization never prevents the original numerical route.
@@ -147,6 +168,25 @@ class GramProvider:
         return dict(all_actual_classes=self.rows,pass_gate=not self.failed,seconds=self.elapsed,
             factory=dict(self.factory.audit),requested_gram=self.use_gram,
             failed_class_fallback='original FFCx tensor; no approximate class merge')
+
+
+def volume_form_identity(bundle):
+    """Actual compiler analysis metadata, without compiling another form."""
+    from ffcx.analysis import analyze_ufl_objects
+    from dolfinx import fem
+    import ffcx
+    result={}
+    for name,action in bundle['volume_action'].component_actions.items():
+        form=action._bilinear_form
+        data=analyze_ufl_objects([form],np.dtype(np.complex128))
+        groups=[dict(metadata=integral.metadata(),subdomain=str(integral.subdomain_id()),integral_type=integral.integral_type())
+                for group in data.form_datas[0].integral_data for integral in group.integrals]
+        compiled=fem.form(form)
+        result[name]=dict(UFL_signature=form.signature(),FFCx_integrals=groups,
+            ufcx_signature=compiled.module.ffi.string(compiled.ufcx_form.signature).decode())
+    return dict(components=result,ffcx_version=ffcx.__version__,element=str(bundle['setup']['spaces'][bundle['degree']].element.basix_element),
+        polynomial_reason='axis-aligned affine geometry; constant isotropic material; tensor Nedelec polynomial products; actual FFCx degrees above',
+        exclusions='incident exponential and Fourier boundary are not polynomial and use independent q47/q63')
 
 
 def saved_equation_attribution(folder,journal):
@@ -242,14 +282,17 @@ def solve(role,folder,journal):
         provider=GramProvider(bundle,folder,journal,use_gram=role=='GRAM_CONTROL')
         system,inverse=condense(bundle,journal,expected=None,raw_tensor_provider=provider)
         write_json(folder/'build_audit.json',system.build_audit)
-        write_json(folder/'original_volume_forms.json',dict(components={k:[dict(metadata=i.metadata(),subdomain=str(i.subdomain_id()),estimated_polynomial_degree=str(i.integrand())) for i in v._bilinear_form.integrals()]
-            for k,v in bundle['volume_action'].component_actions.items()},element=str(setup['spaces'][degree].element.basix_element),
-            polynomial_reason='axis-aligned affine cell, constant material; Nedelec degree p; products at most2p; Fourier/incident not polynomial'))
+        write_json(folder/'original_volume_forms.json',volume_form_identity(bundle))
+        journal.owners('condensed_local_tensor_recovery_and_matrix',dict(system=system,inverse=inverse,provider=provider))
         factor=DirectFactor(system.matrix,journal);inverse.factor=factor
         with journal.measured('solve_minimal_recovery'):
             u=inverse.apply(rhs);port=inverse.last_port_solution.copy()
         # Save immediately, before any derived audit or field output can fail.
-        early=save_arrays(folder/'returned_solution.npz',u_storage=u.array.copy(),port=port,rhs=rhs.array.copy(),**geometry)
+        early=save_arrays(folder/'returned_solution.npz',u_storage=u.array.copy(),port=port,rhs=rhs.array.copy(),
+            slaves=np.asarray(setup['floquets'][degree].mpc.slaves),**geometry)
+        write_json(folder/'minimal_scientific_state.json',dict(status='AUDIT_PENDING',role=role,case=case,degree=degree,grid=grid,
+            source=journal.source_state,arrays=early,capacity=cap,build_audit=system.build_audit,
+            mode_sha256=bundle['mode_sha256'],boundary=bundle['boundary_cost']))
         journal.event('returned_solution_saved_before_audit',sha256=early['sha256'])
         norms,vectors=audit_original(bundle,rhs,u,port,journal);refinements=[]
         for _ in range(2):
@@ -262,10 +305,19 @@ def solve(role,folder,journal):
             slaves=np.asarray(setup['floquets'][degree].mpc.slaves),**geometry,**vectors)
         inverse.factor=None;factor.destroy();factor=None
         system.matrix.destroy();system.matrix=None;gc.collect();journal.event('condensed_matrix_released_before_output')
+        journal.owners('factor_released_original_oracle_retained',dict(bundle=bundle,inverse=inverse))
         _,recovery,recovery_vec=native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal)
         rec_arrays=save_arrays(folder/'recovery.npz',**recovery_vec)
         output=outputs(bundle,u,port,folder,journal)
         accuracy=analytic_comparison(bundle,u,geometry,folder,journal) if case=='FLAT' else None
+        if case=='FLAT':
+            from .scattering_accuracy_analytic import flat_saved_physics,flat_interface_witness
+            full=flat_saved_physics(cfg,bundle['modes'],port,output,accuracy)
+            arrays_full={k:full.pop(k) for k in list(full) if isinstance(full[k],np.ndarray)}
+            full['arrays']=save_arrays(folder/'analytic_all532.npz',**arrays_full)
+            full['interface']=flat_interface_witness(bundle,output)
+            accuracy['complete_physics']=full
+            accuracy['pass_gate']=accuracy['pass_gate'] and full['pass_gate'] and full['interface']['analytic_conventions_pass']
         return dict(status='COMPLETED',role=role,case=case,degree=degree,grid=grid,capacity=cap,arrays=arrays,returned_arrays=early,
             original_audit=norms,recovery=recovery,recovery_arrays=rec_arrays,output=output,analytic=accuracy,
             build_audit=_json_metadata(system.build_audit),tensor_checks=provider.report(),fixed_refinements=refinements,
@@ -282,7 +334,6 @@ def solve(role,folder,journal):
 
 
 def verify(folder,journal):
-    from petsc4py import PETSc
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
     rows=[]
     for role in SOLVES:
@@ -304,9 +355,23 @@ def verify(folder,journal):
             eq=max(norms[k] for k in ('true','native','augmented','port'))<=1e-6 and norms['identity']<=1e-10 and norms['slave_zero']
             internal=max(recovery['operation_scaled_interior'],recovery['max_cell_operation_scaled'],recovery['split_action_identity_operation_scale'])<=1e-10
             power=r['output']['port_metrics'];vol=r['output']['volume_metrics']
+            analytic_check=None
+            if r['case']=='FLAT':
+                from .scattering_accuracy_analytic import analytic_weak_witness,flat_saved_physics,flat_interface_witness
+                analytic_check=analytic_comparison(bundle,u,geometry,folder,journal)
+                full=flat_saved_physics(cfg,bundle['modes'],port,r['output'],analytic_check)
+                full['arrays']=save_arrays(folder/(role+'_all532_analytic.npz'),**{k:full.pop(k) for k in list(full) if isinstance(full[k],np.ndarray)})
+                full['interface']=flat_interface_witness(bundle,r['output'])
+                va,ca,ref=analytic_weak_witness(bundle,journal)
+                weak_residual=rhs.array-va-ca
+                weak=dict(relative=relative(weak_residual,rhs.array),operation_scaled=float(np.linalg.norm(weak_residual)/(np.linalg.norm(rhs.array)+np.linalg.norm(va)+np.linalg.norm(ca))),
+                    arrays=save_arrays(folder/(role+'_exact_analytic_weak.npz'),volume=va,coupling=ca,port=ref['port'],rhs=rhs.array.copy(),residual=weak_residual),q=31)
+                weak['pass_gate']=weak['relative']<=1e-10 and weak['operation_scaled']<=1e-10
+                analytic_check.update(complete_physics=full,original_exact_analytic_weak=weak,
+                    pass_gate=analytic_check['pass_gate'] and full['pass_gate'] and full['interface']['analytic_conventions_pass'] and weak['pass_gate'])
             rows.append(dict(role=role,case=r['case'],degree=r['degree'],grid=r['grid'],q47_q63_rhs_relative=rhs_diff,
                 original_audit=norms,recovery=recovery,arrays=rec,equation_pass=eq,recovery_pass=internal,
-                power=power,volume=vol,analytic=r.get('analytic'),source_parent=r['source_sha'],parent_array=r['arrays']['sha256']))
+                power=power,volume=vol,analytic=analytic_check,source_parent=r['source_sha'],parent_array=r['arrays']['sha256']))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
     return dict(status='COMPLETED',rows=rows,independent_surface_q=63,calls=journal.calls,timings=journal.timings,
         target_qualified=False,NN20_qualified=False)
@@ -321,7 +386,10 @@ def cost(folder,journal):
         if r['status']=='COMPLETED':rows.append(dict(role=role,timings=r['timings'],capacity=r['capacity'],build_audit=r['build_audit'],
             original_audit=r['original_audit'],tensor_checks_pass=r['tensor_checks']['pass_gate'],actual_array_hash=r['arrays']['sha256'],
             true_complete_N1='worker wall plus launcher/admission/output/independent audit; assembled in final collector; unknown stages not0'))
-    return dict(status='COMPLETED',rows=rows,selection=selection(),artifact_root=str(ARTIFACT),
+    from .scattering_accuracy_analytic import polynomial_phase_lower_bounds
+    bounds=polynomial_phase_lower_bounds(configuration('FLAT',5))
+    write_json(folder/'phase_representation_lower_bounds.json',bounds)
+    return dict(status='COMPLETED',rows=rows,selection=selection(),representation_lower_bounds=bounds,artifact_root=str(ARTIFACT),
         learning_object='full physical FE+DtN coefficients bypassing measured preparation, audited by original equation',
         necessary_condition='fV-H >= .2 T_B; cold teacher, training, load, correction, audit all included',
         correctness_denominator='no new accurate baseline unless FLAT and adjacent fixed532 field/power gates pass',
@@ -330,6 +398,7 @@ def cost(folder,journal):
 
 def execute(role,folder,state):
     journal=Journal(folder,window_scope=window,planning_limit_bytes=16*2**30)
+    journal.source_state=state
     if role=='BOUNDARY':
         from .scattering_accuracy_boundary import boundary_stage
         return boundary_stage(folder,journal,make_setup)
