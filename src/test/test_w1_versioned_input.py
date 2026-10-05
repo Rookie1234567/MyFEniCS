@@ -31,6 +31,97 @@ from src.solvers.w1_saved_boundary import read_npz, terms
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_actual_frozen_floquet_return_contract(monkeypatch):
+    import ast
+    import math
+    import sys
+    import types
+    from src.runners.w1_component_payload import layout_for
+
+    frozen = (
+        ROOT
+        / "benchmarks/artifacts/task42extra/w1_receiver/source_cccbcbaa3973f16f/benchmarks/run_task40_w1_boundary_probe.py"
+    )
+    tree = ast.parse(frozen.read_text())
+    node = next(
+        n
+        for n in tree.body
+        if isinstance(n, ast.FunctionDef) and n.name == "_floquet_phases"
+    )
+    scope = dict(
+        np=np,
+        math=math,
+        PERIOD_X_NM=50,
+        PERIOD_Y_NM=25,
+        zvalue=lambda v: complex(v["real"], v["imag"]),
+    )
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(frozen), "exec"), scope)
+    probe = types.ModuleType("benchmarks.run_task40_w1_boundary_probe")
+    probe._floquet_phases = scope["_floquet_phases"]
+    probe._proportional_axis = lambda b, n: np.linspace(b[0], b[-1], n + 1)
+    native = types.ModuleType("src.solvers.directional_boundary")
+    native.BoundaryLayout = lambda x, y, p, phases: types.SimpleNamespace(phases=phases)
+    native.FacetPolynomial = lambda e: e
+    # Only Basix/layout construction is stubbed. Actual frozen phase function runs.
+    basix = types.SimpleNamespace(
+        ElementFamily=types.SimpleNamespace(N1E=1),
+        CellType=types.SimpleNamespace(hexahedron=1),
+        LagrangeVariant=types.SimpleNamespace(legendre=1),
+        create_element=lambda *args: object(),
+    )
+    monkeypatch.setitem(sys.modules, "basix", basix)
+    monkeypatch.setitem(sys.modules, "src.solvers.directional_boundary", native)
+    monkeypatch.setitem(sys.modules, "benchmarks.run_task40_w1_boundary_probe", probe)
+    _, row = top_mode()
+    layout, facts = layout_for([row], 4)
+    assert len(layout.phases) == 2
+    assert abs(layout.phases[0] - np.exp(1j * row["alpha"]["real"] * 50)) < 1e-14
+    assert layout.phases[1] == 1 and "relative_consistency_spread" in facts
+
+
+def test_unaffected_actual_control_source_reuse():
+    from src.runners.w1_component_receiver import RECEIVER_FILES
+    from src.runners.w1_versioned_payload import _compatible_prior_control_source
+
+    run = (
+        ROOT / "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control"
+    )
+    binding = json.loads((run / "binding.json").read_text())
+    current = {p: versioned.digest(ROOT / p) for p in RECEIVER_FILES}
+    proof = _compatible_prior_control_source(binding, current)
+    assert proof["preserved_control_dependencies"] is True
+    assert set(proof["boundary_only_changed_files"]) <= {
+        "src/runners/w1_component_payload.py",
+        "src/runners/w1_versioned_payload.py",
+        "src/solvers/w1_saved_boundary.py",
+    }
+
+
+def test_control_reuse_protected_function_damage(tmp_path, monkeypatch):
+    import hashlib
+    import types
+    from src.runners import w1_versioned_payload as driver
+
+    path = "src/runners/w1_component_payload.py"
+    old = b"def layout_for():\n return 0\ndef control_layout():\n return 1\n"
+    new = old.replace(b"return 1", b"return -1")
+    target = tmp_path / path
+    target.parent.mkdir(parents=True)
+    target.write_bytes(new)
+    monkeypatch.setattr(driver, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        driver.subprocess, "run", lambda *a, **k: types.SimpleNamespace(stdout=old)
+    )
+    binding = dict(
+        receiver_source_sha="a" * 40,
+        receiver_files={path: hashlib.sha256(old).hexdigest()},
+    )
+    with pytest.raises(ValueError, match="UNTESTED_DEPENDENCY_CHANGE"):
+        driver._compatible_prior_control_source(
+            binding, {path: hashlib.sha256(new).hexdigest()}
+        )
+
+
 def top_mode():
     physical = json.loads(
         (ROOT / "input/task042extra_feinn_5nm/w1_resolved_config_v28.json").read_text()
@@ -329,6 +420,25 @@ def test_saved_numeric_damage_not_status(tmp_path):
     row["path"] = "../raw.npz"
     with pytest.raises(ValueError):
         read_npz(tmp_path, row)
+
+
+def test_absolute_moment_gate_not_contraction_cancellation():
+    value = dict(
+        coverage={"4": 32060, "6": 32060},
+        coverage_complete=True,
+        failed_metric_count=0,
+        physical_incident_rhs_qualified=True,
+        coordinate_physics_qualified=True,
+        maximum_original_relative=0.0,
+        oracle_maximum_absolute=0.0,
+        one_dimensional_moment_maximum_absolute=0.0,
+        one_dimensional_moment_failed_count=0,
+        maximum_by_field={"B": dict(relative=0.0)},
+    )
+    validate_boundary_summary(value)
+    value["one_dimensional_moment_maximum_absolute"] = 2e-12
+    with pytest.raises(ValueError, match="NUMERIC_GATE"):
+        validate_boundary_summary(value)
 
 
 def test_batch_window_no_reset_and_caps():

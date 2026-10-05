@@ -17,6 +17,78 @@ ROOT = Path(__file__).resolve().parents[2]
 INSTANCE = "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28"
 
 
+def _protected_ast(source, excluded):
+    import ast
+
+    tree = ast.parse(source)
+    tree.body = [
+        node
+        for node in tree.body
+        if not (
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name in excluded
+        )
+    ]
+    return ast.dump(tree, include_attributes=False)
+
+
+def _compatible_prior_control_source(binding, current_files):
+    """Reuse B0 only when every dependency outside boundary/checker repairs is unchanged.
+
+    Old bytes must match their actual Git blob.  The excluded functions never
+    execute in B0; control_layout, run_payload, supervisor, contracts and all
+    numerical control dependencies remain protected.  Current pure qualification
+    is separately required by the launcher.  This is not a generic source bypass.
+    """
+    import re
+
+    source = binding["receiver_source_sha"]
+    if not re.fullmatch(r"[0-9a-f]{40}", source):
+        raise ValueError("W28_CONTROL_SOURCE_SHA")
+    exclusions = {
+        "src/runners/w1_component_payload.py": {"layout_for"},
+        "src/solvers/w1_saved_boundary.py": {"check_saved"},
+        "src/runners/w1_versioned_payload.py": {
+            "prerequisite_v28",
+            "_protected_ast",
+            "_compatible_prior_control_source",
+            "qualify_moments",
+            "validate_boundary_summary",
+        },
+    }
+    old_files = binding["receiver_files"]
+    if old_files.keys() != current_files.keys():
+        raise ValueError("W28_CONTROL_DEPENDENCY_SET")
+    changed = []
+    for path, old_hash in old_files.items():
+        if old_hash == current_files[path]:
+            continue
+        if path not in exclusions:
+            raise ValueError("W28_CONTROL_PROTECTED_SOURCE:" + path)
+        old = subprocess.run(
+            ["git", "show", source + ":" + path],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            timeout=30,
+        ).stdout
+        new = (ROOT / path).read_bytes()
+        if hashlib.sha256(old).hexdigest() != old_hash or (
+            hashlib.sha256(new).hexdigest() != current_files[path]
+        ):
+            raise ValueError("W28_CONTROL_GIT_OR_CURRENT_HASH:" + path)
+        if _protected_ast(old, exclusions[path]) != _protected_ast(
+            new, exclusions[path]
+        ):
+            raise ValueError("W28_CONTROL_UNTESTED_DEPENDENCY_CHANGE:" + path)
+        changed.append(path)
+    return dict(
+        previous_source=source,
+        preserved_control_dependencies=True,
+        boundary_only_changed_files=changed,
+    )
+
+
 def prerequisite_v28(stage, spec, receiver_files):
     from src.io.w1_evidence import scientific_identity, validate_stage
     from src.io.w1_versioned_input import CONTRACT_KEYS, digest, validate_inputs
@@ -47,8 +119,11 @@ def prerequisite_v28(stage, spec, receiver_files):
                 continue
             if binding["contract"][key] != spec[key]:
                 raise ValueError("W28_PREREQUISITE_INSTANCE_OR_INPUT:" + key)
-        if binding["receiver_files"] != {p: digest(ROOT / p) for p in receiver_files}:
-            raise ValueError("W28_PREREQUISITE_SOURCE")
+        current_files = {p: digest(ROOT / p) for p in receiver_files}
+        if binding["receiver_files"] != current_files:
+            if name != "control":
+                raise ValueError("W28_PREREQUISITE_SOURCE")
+            _compatible_prior_control_source(binding, current_files)
         if binding["window_sha256"] != digest(spec["window_path"]):
             raise ValueError("W28_PREREQUISITE_WINDOW")
         if (
@@ -86,6 +161,11 @@ def validate_boundary_summary(value):
         or value["maximum_original_relative"] > 1e-10
         or not math.isfinite(value.get("oracle_maximum_absolute", float("inf")))
         or value["oracle_maximum_absolute"] > 1e-12
+        or not math.isfinite(
+            value.get("one_dimensional_moment_maximum_absolute", float("inf"))
+        )
+        or value["one_dimensional_moment_maximum_absolute"] > 1e-12
+        or value.get("one_dimensional_moment_failed_count") != 0
         or not value.get("maximum_by_field")
     ):
         raise ValueError("W28_FULL_NUMERIC_GATE_REQUIRED")
@@ -240,10 +320,34 @@ def qualify_moments(root, modes, layout, oracle, binding, run, helpers):
             dict(omega=w, absolute=float(np.max(abs(c[frequencies.index(w)] - d))))
         )
     maximum = max(maximum, max(v["absolute"] for v in direct_checks))
+    # Preserve the actual integration rule independently of its high-precision
+    # reference. This also exposes a one-dimensional absolute failure even if
+    # tensor contraction happens to cancel it in an empirical field witness.
+    import basix
+    from numpy.polynomial.legendre import legvander
+    from src.solvers.w1_facet_profile import q60_moments, subdivision_count, NATIVE
+
+    points, weights = basix.make_quadrature(basix.CellType.interval, 60)
+    t = points[:, 0]
+    if binding["contract"]["integration_profile"] == NATIVE:
+        integration = np.array(
+            [
+                (weights * np.exp(1j * w * t)) @ legvander(2 * t - 1, 6)
+                for w in frequencies
+            ]
+        )
+    else:
+        integration = np.array(
+            [q60_moments(w, 6, t, weights, subdivision_count(w)) for w in frequencies]
+        )
     helpers.atomic_arrays(
         run / "oracle.npz",
         dict(
-            frequencies=np.array(frequencies), analytic=a, reference80=b, reference110=c
+            frequencies=np.array(frequencies),
+            analytic=a,
+            reference80=b,
+            reference110=c,
+            integration_candidate=integration,
         ),
     )
     helpers.atomic_json(run / "moment_decimal110.json", exact)

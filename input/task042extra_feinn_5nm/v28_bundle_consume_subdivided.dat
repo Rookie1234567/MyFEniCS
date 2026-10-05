@@ -15,7 +15,7 @@ source_manifest_path = "benchmarks/cases/w1_receiver/recovery_dependencies.json"
 coordinate_convention = "main_centered_nm"
 ledger_translation_nm = [25.0, 12.5, 0.0]
 checkpoint_path = ""
-A_qualification_path = "tmp/task42extra/w1_receiver/v28/P0_qualification.json"
+A_qualification_path = "tmp/task42extra/w1_receiver/v28/P0_qualification_repair1.json"
 
 [prerequisite_paths]
 input_contract_checks = "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks"

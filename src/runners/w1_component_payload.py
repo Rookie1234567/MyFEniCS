@@ -180,7 +180,8 @@ def layout_for(modes, degree):
         _proportional_axis,
     )
 
-    phases, facts = _floquet_phases(modes)
+    phase_x, phase_y, facts = _floquet_phases(modes)
+    phases = (phase_x, phase_y)
     x = _proportional_axis([-25.0, -8.5, 0.0, 8.5, 25.0], 272)
     if len(x) != 273:
         raise ValueError("W1_ORIGINAL_PROPORTIONAL_AXIS")

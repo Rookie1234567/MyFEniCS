@@ -80,6 +80,12 @@ def check_saved(root, modes, physical, metrics_path, *, guard=lambda: None):
     analyticmax = float(np.max(abs(table["analytic"] - reference)))
     if not np.isfinite(reference).all() or max(oraclemax, analyticmax) > 1e-12:
         raise ValueError("W28_NUMERIC_ORACLE_UNQUALIFIED")
+    integration = table["integration_candidate"]
+    if integration.shape != reference.shape or not np.isfinite(integration).all():
+        raise ValueError("W28_INTEGRATION_MOMENT_LAYOUT")
+    moment_errors = abs(integration - reference)
+    moment_max = float(np.max(moment_errors))
+    moment_failed = int(np.count_nonzero(moment_errors > 1e-12))
     lookup = {float(w): reference[i] for i, w in enumerate(freq)}
     layouts = {}
     actions = {}
@@ -273,6 +279,22 @@ def check_saved(root, modes, physical, metrics_path, *, guard=lambda: None):
                     dual = weights * a[witness + "_dual"][rows]
                     proj = integral.conj().T @ trace
                     projected = np.vdot(e, proj) / H
+                    record(
+                        witness + "_components_key",
+                        a[witness + "_components"][i],
+                        proj,
+                        p,
+                        key,
+                        i,
+                    )
+                    record(
+                        witness + "_recover_key",
+                        a[witness + "_recover"][i],
+                        np.asarray(projected),
+                        p,
+                        key,
+                        i,
+                    )
                     outstate["components"][i] = proj
                     outstate["recover"][i] = projected
                     np.add.at(outstate["apply"], rows, weights.conj() * B * projected)
@@ -359,6 +381,7 @@ def check_saved(root, modes, physical, metrics_path, *, guard=lambda: None):
                 == ("bottom", 0, 0, "s")
             )
             kb = z(bottom["k_vector"])
+            record("background_bottom_k", packet["background_bottom_k"], kb, p)
             R = (kout[2] + kb[2]) / (kout[2] - kb[2])
             T = 1 + R
             record("background_r", packet["background_r"], np.array(R), p)
@@ -366,12 +389,29 @@ def check_saved(root, modes, physical, metrics_path, *, guard=lambda: None):
         out.flush()
     return dict(
         status="W1_REPRESENTATIVE_FACETS_FULL_MODE_EMPIRICAL_PASS"
-        if failed == 0
+        if failed == 0 and moment_failed == 0
         else "W1_FULL_MODE_NUMERICAL_FAIL",
         coverage={str(p): len(v) for p, v in coverage.items()},
         coverage_complete=True,
         metric_checks=count,
-        failed_metric_count=failed,
+        failed_metric_count=failed + moment_failed,
+        one_dimensional_moment_maximum_absolute=moment_max,
+        one_dimensional_moment_failed_count=moment_failed,
+        one_dimensional_failed_moments=[
+            dict(
+                omega=float(freq[i]),
+                ell=int(j),
+                numerator=float(moment_errors[i, j]),
+                absolute_limit=1e-12,
+                reference_norm=float(abs(reference[i, j])),
+                candidate=[
+                    float(integration[i, j].real),
+                    float(integration[i, j].imag),
+                ],
+                reference=[float(reference[i, j].real), float(reference[i, j].imag)],
+            )
+            for i, j in np.argwhere(moment_errors > 1e-12)
+        ],
         maximum_by_field=all_metrics,
         maximum_original_relative=max(m["relative"] for m in all_metrics.values()),
         oracle_maximum_absolute=max(oraclemax, analyticmax),
