@@ -10,7 +10,7 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 unit="myfenics-case-$(date -u +%Y%m%dT%H%M%S)-$$"
 log_dir="$repo_root/benchmarks/artifacts/user_services"
 mkdir -p "$log_dir"
-systemd-run --user --unit="$unit" --service-type=exec \
+systemd-run --user --expand-environment=no --unit="$unit" --service-type=exec \
     --property="WorkingDirectory=$repo_root" \
     --property="StandardOutput=append:$log_dir/$unit.log" \
     --property="StandardError=append:$log_dir/$unit.log" \
