@@ -177,7 +177,7 @@ A的三张README截图实际同字节；本审阅按**一张有限视图**复核
 
 主线最新 **2a67a2423fdd8b670d907ef6f9394a17bff8f2f6** 的[原件审计](https://github.com/Rookie1234567/MyFEniCS/blob/2a67a2423fdd8b670d907ef6f9394a17bff8f2f6/docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json)和目录规则指向生产端根 /home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering。其下 benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/ 保存原manifest与ledger；target_ledger_v5_repair/ 保存同字节manifest及另一ledger。最后发布读取时点为2026-10-04T11:26:18.586819Z；**这些是另一台WSL机器上曾读到的准确位置，本机该根不存在，没有可验证的SSH或HTTP下载端点。** 旧NPZ的相对入口仍为 benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz，不是Git中的38MB正文。
 
-dot最新 **5890e0700cf7f1a61f01109227a32cdd80ad7d06** 的[Library读取收据](https://github.com/Rookie1234567/MyFEniCS/blob/5890e0700cf7f1a61f01109227a32cdd80ad7d06/docs/task40extra_dot_parallel_cloud/outcomes/records/target_AUTO_identity_v1/library_readback_receipt.json)有真实定位符：target_AUTO_complete_inventory.zip，Library ID为libfile_01b478e1d1f48191bea7c9deea966423，file ID为file_00000000602c82079e69fb389f0c8a1c，ZIP SHA为4c3deb139b5eb8c164c1873144685f45869c7f63b971fa05b7e969d8b0b09023。其中物理manifest为36263033 B／SHA 7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e，**不是所需52d7ec80原件**。当前工具没有这个Library ID的通用原文件下载入口；Pages的引用读取不等于任意Library下载。不能把ID编成URL或把dot归档直接塞进本支输入门。
+封存时dot已更新至 **3f4fb69b20d33d382975bb96db73b44bba583ebd**，其未变的[Library读取收据](https://github.com/Rookie1234567/MyFEniCS/blob/3f4fb69b20d33d382975bb96db73b44bba583ebd/docs/task40extra_dot_parallel_cloud/outcomes/records/target_AUTO_identity_v1/library_readback_receipt.json)有真实定位符：target_AUTO_complete_inventory.zip，Library ID为libfile_01b478e1d1f48191bea7c9deea966423，file ID为file_00000000602c82079e69fb389f0c8a1c，ZIP SHA为4c3deb139b5eb8c164c1873144685f45869c7f63b971fa05b7e969d8b0b09023。其中物理manifest为36263033 B／SHA 7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e，**不是所需52d7ec80原件**。当前工具没有这个Library ID的通用原文件下载入口；Pages的引用读取不等于任意Library下载。不能把ID编成URL或把dot归档直接塞进本支输入门。
 
 **现在真实可读的交付入口是冻结Git源码、输入dat和完整物理身份正文；不是缺失大文件。** 下节把这些现存字节变成一项可执行恢复工作。将来若生产端提供可读原件，按§4原hash接收即可，不再全面扫盘；若没有，就执行下面的一次恢复，不让用户手工clone、安装、跑程序或重复转述缺项。
 
@@ -213,7 +213,9 @@ R的manifest满足原hash后，本轮新来源凭据可替代缺失旧ledger作*
 
 主线[Review V9](https://github.com/Rookie1234567/MyFEniCS/blob/2a67a2423fdd8b670d907ef6f9394a17bff8f2f6/docs/task40extra_0p7nm_engineering/review_report_v9.md)已把**旧104成员的q30/q60归因、两个p6局部恢复、保存p4体积复用**分配给主线；仍没有其新Response或可接收raw。故本支本包**不再自动运行原B2四个局部LU/恢复**，也不补造主线旧体积。当前独立贡献是可复现输入和本支已建立的独立参照/实际接收链：主线可消费其全模式结果，避免再实现同类积分；若启动时主线已交付同物理/同面/同列/同原分母的完整新raw，则优先运行本支独立保存checker，不重复正确producer。仅作一次交接时检查，不后台轮询。此处只安排本支，未修改或替主线授权。
 
-dot已完成小型C1a/b/c及后续校准，不能继续按“C1c未运行”安排重复工作。最新[分块表面记录](https://github.com/Rookie1234567/MyFEniCS/blob/5890e0700cf7f1a61f01109227a32cdd80ad7d06/docs/task40extra_dot_parallel_cloud/outcomes/chunked_surface_attempt1_v1_zh.md)中degree27机制最大差3.67045899e−13通过；degree160在原权重和检查停止：偏差2.66675571e−13大于32ε=7.10542736e−15，default/public规则字节相同，目标作用/参考仍未运行。它不是原样编译OOM，也不是全AUTO正确性通过。本支不复做该分块表面、调整它的门或接管其后端/存储。两侧Si/λ/角度参数虽可对齐，主线居中网格、本支代表面和dot 18cell/边界参考平面不同，未逐行桥接前不跨线移植误差或速度结论。主线1%门不替代本支1e−4最终门。
+dot已完成小型C1a/b/c及后续校准，不能继续按“C1c未运行”安排重复工作。封存时新增3f4fb69b的[六个top/x分量记录](https://github.com/Rookie1234567/MyFEniCS/blob/3f4fb69b20d33d382975bb96db73b44bba583ebd/docs/task40extra_dot_parallel_cloud/outcomes/chunked_surface_mass_v2_zh.md)：原尺寸18cell/p6边界夹具，三个tuple两极化、三个状态共18作用检查，degree160对168/176参考最大操作尺度差3.90869807e−14、参考间1.93952788e−14，监督44.552426s／树峰944046080 B、swap0。它采用明确的辅助常数积分绝对门1e−12，原节点/权重未归一化，原向量1e−11及作用1e−10门保持；这不是一般函数误差定理。本次从compact的分子与操作尺度独立重算两组各18项比值，并核对六组机制向量的已存范数比值；这些标量与发布结论一致，但没有取回NPY重新积分、求范数或验证FE。相关源码/政策差量及收据已只读核对。旧32ε停止、degree27机制结果及更早编译资源停止均保留；不能再称目标selected作用仍未运行，也不能将新局部PASS升级为完整AUTO。
+
+本支不复做dot的分块top/x、调整它的门或接管后端/存储。六个分量与本支两代表面、全部32060输出不同；其操作尺度是逐点绝对积分贡献和，不能替代本支原分母或场误差。两侧Si/λ/角度参数虽可对齐，主线居中网格、本支代表面和dot 18cell/边界参考平面不同，未逐行桥接前不移植误差或速度结论。dot仍缺完整top/bottom、x/y、全模式C/D及目标解，主线1%门也不替代本支1e−4最终门。新证据不改变本包分工和预算。
 
 **不增加原B的10800s额度；改为R/B共用一个连续窗口。** 从执行者本轮第一项恢复接线/准备开始固定唯一T0，含开发、测试、R、B0/B1、独立checker、失败、Git/保存/交付；R及新接线≤1800s，所有实际数值/数值checker累计≤7200s，最后1800s留交付，所有子额度还受总窗剩余约束，不相加扩额。已有A≤3600s与实际2361.839628s不重置。本次审阅和A后的真实外部等待单列，不冒充免费时间或连续14400s完成。
 
@@ -232,5 +234,5 @@ R/轻检查/B0整树2GiB，B1原生组件及需要原生积分的checker沿原wa
 
 从第一项R接线准备冻结唯一10800s连续总窗，R及接线≤1800s、数值/checker≤7200s、尾段1800s，R成功不刷新B时钟；A费用、外部等待和本次审阅另列。输入通过即串行完成真实B0→唯一q60/B1全32060模式→独立保存checker和可供主线消费的包。实际两个面宽/全部去重频率的已有80/110位参照覆盖补齐，原门不降。只在整包完成或真实有界失败后交一次Response V26/通知。
 
-主线2a67a242…已负责旧数组归因和p6局部恢复，本支不自动跑B2的四个LU，不代跑主线/dot。dot5890e070…已有新机制通过和degree160规则负态，不能再用旧C1c未完成理由重做它。共同修复池剩一轮，正确raw优先复用；身份、数值或资源真失败保留后停止受影响升级，不长训练、扫配置或换标准。其他分支/master、原尺寸全局solve/W2及NN仍不授权，最终0.7nm完整前向目标不变。
+主线2a67a242…已负责旧数组归因和p6局部恢复，本支不自动跑B2的四个LU，不代跑主线/dot。dot最新3f4fb69b…已完成六个selected top/x的degree160有限资格，旧规则负态仍保留；它不是本支全模式资格，也不重复其C1c/分块表面。共同修复池剩一轮，正确raw优先复用；身份、数值或资源真失败保留后停止受影响升级，不长训练、扫配置或换标准。其他分支/master、原尺寸全局solve/W2及NN仍不授权，最终0.7nm完整前向目标不变。
 ~~~

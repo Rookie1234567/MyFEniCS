@@ -386,7 +386,7 @@
   "remote_heads": {
     "task42extra_feinn_5nm": "4659bb427633ea9742cbe7097e60d34268a1eac7",
     "task40extra_0p7nm_engineering": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
-    "task40extra_dot_parallel_cloud": "5890e0700cf7f1a61f01109227a32cdd80ad7d06"
+    "task40extra_dot_parallel_cloud": "3f4fb69b20d33d382975bb96db73b44bba583ebd"
   },
   "exact_remote_probe": "noninteractive ls-remote then explicit refspec fetch, shared fetch configuration unchanged",
   "new_source_or_numerical_writes": false,
@@ -403,15 +403,14 @@
       "scope": "review only; no execution R/B started",
       "earlier_reading_seconds": "NOT_MEASURED"
     },
-    "elapsed_since_start_record_seconds": 734.1342862530146,
+    "elapsed_since_start_record_seconds": 1500.3929146530572,
     "earlier_reading_seconds": "NOT_MEASURED",
     "whole_project_cost": "UNKNOWN",
     "read_metadata_tree_peak": "NOT_MEASURED",
-    "nested_checks_not_added_to_parent": true
-  },
-  "render": {
-    "status": "PENDING_PUBLICATION",
-    "scope": "new section 8, one table, no new math; unchanged section 0-7 evidence preserved"
+    "nested_checks_not_added_to_parent": true,
+    "supervised_peak_bytes": 1729892352,
+    "self_swap_all_supervised_checks_bytes": 0,
+    "final_git_and_notification": "actual ignored delivery receipt; earlier reading remains NOT_MEASURED, no fabricated full review/project upper bound"
   },
   "bindings": [
     {
@@ -490,6 +489,111 @@
       "path": "tmp/task42extra/review_v25_input/document_check.json",
       "bytes": 477,
       "sha256": "f551be4bf3979671e2a969f8b6cfb156cc7fca4027c1b6a2e2d0992db55e1229"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_e5585cb8/render_records.json",
+      "bytes": 9136,
+      "sha256": "b6f27fda2ba314ce017a136ed43a4b054ed6c40bfa4dac96d0ee1ebbe952e424"
+    },
+    {
+      "path": "tmp/task42extra/checks/review_v25_input_render_20261005T002033979289Z/summary.json",
+      "bytes": 2075,
+      "sha256": "41c9da202307eb55a52864cbb5fe7d6b52a60cc965e94746ca366dc9947bc0db"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/render_section8.py",
+      "bytes": 8767,
+      "sha256": "0eb81e3d7eea34d4257f9139b21fa1081d79f925f658340729e0b129f3d733d7"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/render_urls.json",
+      "bytes": 227,
+      "sha256": "3a2217fd58a4969a2a926f966859a3fcbb5cbcb03a674c3b409b6a04f7efc7fb"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_e5585cb8/00_scope_00.png",
+      "bytes": 650847,
+      "sha256": "2584e3332aa418510f9815b10252fd84626ec62ec84bee97e8dda921a158b0cc"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_e5585cb8/00_scope_01.png",
+      "bytes": 593204,
+      "sha256": "674c335cb46db8cd71bca70dd800d8ab6369641f0d25403b8cd48c07467884d6"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_e5585cb8/00_scope_02.png",
+      "bytes": 600630,
+      "sha256": "5b7e87a54329e593ffbe1569d027326c1f99f2b246024d1ea2624f6a2f58f9b2"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_e5585cb8/00_scope_03.png",
+      "bytes": 662678,
+      "sha256": "378ddd6045d74dda9192d1f58704ec2497980f82db4644d3844c0782218ea11f"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_e5585cb8/00_scope_04.png",
+      "bytes": 596967,
+      "sha256": "f034a0a319025d3081b4a21d6657d2810920e587d3890179e16d7c7ff83a4882"
+    },
+    {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/chunked_surface_mass_v2_zh.md",
+      "bytes": 2862,
+      "sha256": "ec545b95b20b23b31e88eb5c084d652e7981c9a2eb9e3eb8f7aaca22c6b16342"
+    },
+    {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/chunked_surface_mass_v2/compact.json",
+      "bytes": 34738,
+      "sha256": "483df04a74540dd2ef766a6c6950e0f757691224a2610fd06cb9136434b4e2e8"
+    },
+    {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/chunked_surface_mass_v2/independent_mass_v2_source_launch_review.json",
+      "bytes": 4765,
+      "sha256": "3a263ae50405e3713a77fdf0b01d1df8d9b7c95cc43d760a0fff7cdc09248d73"
+    },
+    {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/chunked_surface_mass_v2/library_readback_receipt.json",
+      "bytes": 49323,
+      "sha256": "4beb7bbbd8de8289b2a69bf1fdc488d1d2ec5b8746b6917987dd78842c9adcd8"
+    },
+    {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/chunked_surface_mass_v2/target_chunked_surface_vector_mass_v2.py",
+      "bytes": 31575,
+      "sha256": "dff5871b767ed25ecd1500e0433cdc914773c013a46521d4c2bc3a4b0a37bef8"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/recheck_dot_compact.py",
+      "bytes": 3407,
+      "sha256": "fdb41718c53c10820f43267705c24dfd8cecc9fbad0f71ffb1162246af6bf0b2"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/post_compaction_refresh.json",
+      "bytes": 1057924,
+      "sha256": "2ebacb748aec2e23f03b7b18391de89027cf60a224467ae328032b374c5bf88d"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/check_review_final.py",
+      "bytes": 3314,
+      "sha256": "700e9424817be4c18b67e6080ed9323976f0ed88971169f0e1fc4e470f43ca2f"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/render_peer_delta.py",
+      "bytes": 8875,
+      "sha256": "e8475a0e2c290137b2e942e14ad3cb0e623568d154e14e2fdda9fdf959fb76a3"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/dot_late_compact_recheck.json",
+      "bytes": 13318,
+      "sha256": "a0ef03c8f3c71e8d2ad2730becf51e5d8187b80e02c3cda619fa92c95c436dc6"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/document_check_final.json",
+      "bytes": 476,
+      "sha256": "0048aec4e7b6e2582ff57880f43cd835bdc091f19ce3bbbb40aeeed7d9daae6e"
     }
   ],
   "authoring_events": [
@@ -546,7 +650,564 @@
       "sampled_process_tree_rss_peak_bytes": 42930176,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "summary": "tmp/task42extra/checks/review_v25_input_final_docs_20261005T003054223397Z/summary.json",
+      "sha256": "2b09317ca6923207f66c98a925a2e0dc6713506855e78d53bd2a5d34fc9b4171",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.6214261648710817,
+      "sampled_process_tree_rss_peak_bytes": 43163648,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "summary": "tmp/task42extra/checks/review_v25_input_publish_docs_20261005T003135764308Z/summary.json",
+      "sha256": "8df3e749b1920ed2194512df1e4b732970e91150cc896a304385d5f53e724824",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.5916670861188322,
+      "sampled_process_tree_rss_peak_bytes": 42946560,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
-  "check_review_fixed.py": "\"\"\"Local review integrity/Markdown checks; no numerical imports.\"\"\"\nimport hashlib\nimport json\nfrom pathlib import Path\nimport re\nimport subprocess\nimport time\n\nroot = Path.cwd()\nreport = root / 'docs/task042extra_feinn_5nm/review_report_v25.md'\nold_sha = '4659bb427633ea9742cbe7097e60d34268a1eac7'\nold = subprocess.check_output(['git', 'show', old_sha + ':' + str(report.relative_to(root))]).decode()\nnew = report.read_text()\nold_body = old[old.index('## 0.'):]\nnew_body = new[new.index('## 0.'):new.index('\\n## 8.')]\nassert new_body == old_body.rstrip() + '\\n', 'old sections changed'\nassert sum(line.startswith('## 8.') for line in new.splitlines()) == 1\nassert '52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d' in new\nassert '原case最多三次只是绝对上限' in new\nassert '不再自动运行原B2四个局部LU/恢复' in new\nassert '现在+10800s' in new\nassert '\\\\[' not in new and '\\\\]' not in new and '$$' not in new\nfence = None\ntables = []\ncurrent = []\nlinks = []\nfor line in new.splitlines():\n    if line.startswith(('```', '~~~')):\n        marker = line[:3]\n        if fence is None:\n            fence = marker\n        elif marker == fence:\n            fence = None\n        continue\n    if fence:\n        continue\n    if line.startswith('|'):\n        current.append(len(re.split(r'(?<!\\\\)\\|', line)) - 2)\n    elif current:\n        assert len(set(current)) == 1, current\n        tables.append(current)\n        current = []\n    for target in re.findall(r'\\]\\(([^)]+)\\)', line):\n        if not re.match(r'https?://', target):\n            assert (report.parent / target.split('#')[0]).exists(), target\n        links.append(target)\nassert fence is None\nchanged = subprocess.check_output(['git', 'diff', '--name-only', old_sha]).decode().splitlines()\nassert changed == [str(report.relative_to(root))], changed\nuntracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard']).decode().splitlines()\nassert untracked == ['docs/task042extra_feinn_5nm/outcomes/records/review_v25_input_recovery_audit.json'], untracked\naudit = json.loads((root / untracked[0]).read_text())\nassert audit['input_search']['candidates'] == []\nassert audit['static_recovery']['anchor']['physical_recomputed'] == audit['static_recovery']['anchor']['physical_expected']\nassert audit['static_recovery']['anchor']['inventory_recomputed'] == audit['static_recovery']['anchor']['inventory_expected']\nassert not (root / 'tmp/task42extra/w1_receiver/v26/B_window.json').exists()\nresult = dict(status='PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY',\n              report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),\n              old_sections_0_through_7_byte_identical=True,\n              tables=len(tables), table_columns=[a[0] for a in tables],\n              links=len(links), new_tables=1, new_math_blocks=0,\n              no_source_or_other_branch_changes=True, B_window_absent=True,\n              numerical_or_generator_or_A_test_calls=0,\n              monotonic=time.monotonic())\nPath(__file__).with_name('document_check.json').write_text(json.dumps(result, indent=2)+'\\n')\nprint(json.dumps(result))\n"
+  "check_review_fixed.py": "\"\"\"Local review integrity/Markdown checks; no numerical imports.\"\"\"\nimport hashlib\nimport json\nfrom pathlib import Path\nimport re\nimport subprocess\nimport time\n\nroot = Path.cwd()\nreport = root / 'docs/task042extra_feinn_5nm/review_report_v25.md'\nold_sha = '4659bb427633ea9742cbe7097e60d34268a1eac7'\nold = subprocess.check_output(['git', 'show', old_sha + ':' + str(report.relative_to(root))]).decode()\nnew = report.read_text()\nold_body = old[old.index('## 0.'):]\nnew_body = new[new.index('## 0.'):new.index('\\n## 8.')]\nassert new_body == old_body.rstrip() + '\\n', 'old sections changed'\nassert sum(line.startswith('## 8.') for line in new.splitlines()) == 1\nassert '52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d' in new\nassert '原case最多三次只是绝对上限' in new\nassert '不再自动运行原B2四个局部LU/恢复' in new\nassert '现在+10800s' in new\nassert '\\\\[' not in new and '\\\\]' not in new and '$$' not in new\nfence = None\ntables = []\ncurrent = []\nlinks = []\nfor line in new.splitlines():\n    if line.startswith(('```', '~~~')):\n        marker = line[:3]\n        if fence is None:\n            fence = marker\n        elif marker == fence:\n            fence = None\n        continue\n    if fence:\n        continue\n    if line.startswith('|'):\n        current.append(len(re.split(r'(?<!\\\\)\\|', line)) - 2)\n    elif current:\n        assert len(set(current)) == 1, current\n        tables.append(current)\n        current = []\n    for target in re.findall(r'\\]\\(([^)]+)\\)', line):\n        if not re.match(r'https?://', target):\n            assert (report.parent / target.split('#')[0]).exists(), target\n        links.append(target)\nassert fence is None\nchanged = subprocess.check_output(['git', 'diff', '--name-only', old_sha]).decode().splitlines()\nassert changed == [str(report.relative_to(root))], changed\nuntracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard']).decode().splitlines()\nassert untracked == ['docs/task042extra_feinn_5nm/outcomes/records/review_v25_input_recovery_audit.json'], untracked\naudit = json.loads((root / untracked[0]).read_text())\nassert audit['input_search']['candidates'] == []\nassert audit['static_recovery']['anchor']['physical_recomputed'] == audit['static_recovery']['anchor']['physical_expected']\nassert audit['static_recovery']['anchor']['inventory_recomputed'] == audit['static_recovery']['anchor']['inventory_expected']\nassert not (root / 'tmp/task42extra/w1_receiver/v26/B_window.json').exists()\nresult = dict(status='PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY',\n              report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),\n              old_sections_0_through_7_byte_identical=True,\n              tables=len(tables), table_columns=[a[0] for a in tables],\n              links=len(links), new_tables=1, new_math_blocks=0,\n              no_source_or_other_branch_changes=True, B_window_absent=True,\n              numerical_or_generator_or_A_test_calls=0,\n              monotonic=time.monotonic())\nPath(__file__).with_name('document_check.json').write_text(json.dumps(result, indent=2)+'\\n')\nprint(json.dumps(result))\n",
+  "notification": "one official queue message after final push/tracking/cleanup; no tools after acceptance",
+  "peer_heads_at_first_probe": {
+    "task42extra_feinn_5nm": "4659bb427633ea9742cbe7097e60d34268a1eac7",
+    "task40extra_0p7nm_engineering": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+    "task40extra_dot_parallel_cloud": "5890e0700cf7f1a61f01109227a32cdd80ad7d06"
+  },
+  "late_peer_update": {
+    "status": "INCORPORATED_BEFORE_HANDOFF",
+    "old_dot": "5890e0700cf7f1a61f01109227a32cdd80ad7d06",
+    "new_dot": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+    "source": "final noninteractive ls-remote then exact read-only tracking fetch",
+    "scope": "six selected top/x components, 18-cell p6 boundary fixture; not full C/D, all modes or full target",
+    "scalar_recheck": {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/chunked_surface_mass_v2/compact.json",
+      "bytes": 34738,
+      "sha256": "483df04a74540dd2ef766a6c6950e0f757691224a2610fd06cb9136434b4e2e8",
+      "scope": "Published compact scalar arithmetic only; no recovery of NPY, no independent FE/action integrals or vector norms.",
+      "groups": {
+        "raw_vs_public_eval_reference": {
+          "entries": [
+            {
+              "component": 0,
+              "state": 0,
+              "absolute_error": 3.907809365077467e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 2.2227085382327434e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 0,
+              "state": 1,
+              "absolute_error": 3.635073747199392e-11,
+              "scale": 950.6356877767497,
+              "relative_error": 3.8238347181145004e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 0,
+              "state": 2,
+              "absolute_error": 1.7501146860696882e-10,
+              "scale": 4477.4875315093495,
+              "relative_error": 3.908698067283571e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 1,
+              "state": 0,
+              "absolute_error": 3.907809365077467e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 2.2227085382327434e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 1,
+              "state": 1,
+              "absolute_error": 3.635073747199392e-11,
+              "scale": 950.6356877767497,
+              "relative_error": 3.8238347181145004e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 1,
+              "state": 2,
+              "absolute_error": 1.7501146860696882e-10,
+              "scale": 4477.4875315093495,
+              "relative_error": 3.908698067283571e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 2,
+              "state": 0,
+              "absolute_error": 3.006302106397344e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 1.7099435351458077e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 2,
+              "state": 1,
+              "absolute_error": 7.604637574683355e-12,
+              "scale": 950.6356877767497,
+              "relative_error": 7.999528812628852e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 2,
+              "state": 2,
+              "absolute_error": 1.0036683461891763e-10,
+              "scale": 4477.4875315093495,
+              "relative_error": 2.2415882548551562e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 3,
+              "state": 0,
+              "absolute_error": 3.006302106397344e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 1.7099435351458077e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 3,
+              "state": 1,
+              "absolute_error": 7.604637574683355e-12,
+              "scale": 950.6356877767497,
+              "relative_error": 7.999528812628852e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 3,
+              "state": 2,
+              "absolute_error": 1.0036683461891763e-10,
+              "scale": 4477.4875315093495,
+              "relative_error": 2.2415882548551562e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 4,
+              "state": 0,
+              "absolute_error": 2.5695999728542877e-12,
+              "scale": 1758.129461357328,
+              "relative_error": 1.461553332295837e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 4,
+              "state": 1,
+              "absolute_error": 5.109895412646803e-13,
+              "scale": 950.6356877767497,
+              "relative_error": 5.375240461040662e-16,
+              "recomputed_passed": true
+            },
+            {
+              "component": 4,
+              "state": 2,
+              "absolute_error": 2.4981735172560232e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 5.579409210356629e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 5,
+              "state": 0,
+              "absolute_error": 2.5695999728542877e-12,
+              "scale": 1758.129461357328,
+              "relative_error": 1.461553332295837e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 5,
+              "state": 1,
+              "absolute_error": 5.109895412646803e-13,
+              "scale": 950.6356877767497,
+              "relative_error": 5.375240461040662e-16,
+              "recomputed_passed": true
+            },
+            {
+              "component": 5,
+              "state": 2,
+              "absolute_error": 2.4981735172560232e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 5.579409210356629e-15,
+              "recomputed_passed": true
+            }
+          ],
+          "max_relative_error": 3.908698067283571e-14,
+          "all_passed": true,
+          "scale_definition": "sum(w*abs(phase)*abs(expanded_field_x))"
+        },
+        "reference_convergence_recomputed": {
+          "entries": [
+            {
+              "component": 0,
+              "state": 0,
+              "absolute_error": 1.7248149239196105e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 9.810511465907649e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 0,
+              "state": 1,
+              "absolute_error": 1.5347278816880772e-11,
+              "scale": 950.6356877767497,
+              "relative_error": 1.6144227503990968e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 0,
+              "state": 2,
+              "absolute_error": 8.684211881478879e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 1.9395278759272064e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 1,
+              "state": 0,
+              "absolute_error": 1.7248149239196105e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 9.810511465907649e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 1,
+              "state": 1,
+              "absolute_error": 1.5347278816880772e-11,
+              "scale": 950.6356877767497,
+              "relative_error": 1.6144227503990968e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 1,
+              "state": 2,
+              "absolute_error": 8.684211881478879e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 1.9395278759272064e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 2,
+              "state": 0,
+              "absolute_error": 1.3409961353910282e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 7.62740267349675e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 2,
+              "state": 1,
+              "absolute_error": 5.363623334605389e-12,
+              "scale": 950.6356877767497,
+              "relative_error": 5.6421438870544485e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 2,
+              "state": 2,
+              "absolute_error": 4.487639871647992e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 1.0022674189636929e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 3,
+              "state": 0,
+              "absolute_error": 1.3409961353910282e-11,
+              "scale": 1758.129461357328,
+              "relative_error": 7.62740267349675e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 3,
+              "state": 1,
+              "absolute_error": 5.363623334605389e-12,
+              "scale": 950.6356877767497,
+              "relative_error": 5.6421438870544485e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 3,
+              "state": 2,
+              "absolute_error": 4.487639871647992e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 1.0022674189636929e-14,
+              "recomputed_passed": true
+            },
+            {
+              "component": 4,
+              "state": 0,
+              "absolute_error": 2.595744290649846e-12,
+              "scale": 1758.129461357328,
+              "relative_error": 1.4764238628057883e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 4,
+              "state": 1,
+              "absolute_error": 7.560815613868066e-12,
+              "scale": 950.6356877767497,
+              "relative_error": 7.953431278758884e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 4,
+              "state": 2,
+              "absolute_error": 1.2279637201382276e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 2.7425285084474242e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 5,
+              "state": 0,
+              "absolute_error": 2.595744290649846e-12,
+              "scale": 1758.129461357328,
+              "relative_error": 1.4764238628057883e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 5,
+              "state": 1,
+              "absolute_error": 7.560815613868066e-12,
+              "scale": 950.6356877767497,
+              "relative_error": 7.953431278758884e-15,
+              "recomputed_passed": true
+            },
+            {
+              "component": 5,
+              "state": 2,
+              "absolute_error": 1.2279637201382276e-11,
+              "scale": 4477.4875315093495,
+              "relative_error": 2.7425285084474242e-15,
+              "recomputed_passed": true
+            }
+          ],
+          "max_relative_error": 1.9395278759272064e-14,
+          "all_passed": true,
+          "scale_definition": "sum(w*abs(phase)*abs(expanded_field_x))"
+        }
+      },
+      "mechanisms": [
+        {
+          "mode": 16028,
+          "comparison": "b_FE_fullraw",
+          "ratios": {
+            "left": 2.7068162634234323e-13,
+            "right": 2.7068162634235025e-13
+          }
+        },
+        {
+          "mode": 16028,
+          "comparison": "raw_MPC_fullraw",
+          "ratios": {
+            "left": 2.706297468549443e-13,
+            "right": 2.706297468549513e-13
+          }
+        },
+        {
+          "mode": 16028,
+          "comparison": "masked_fullvector",
+          "ratios": {
+            "left": 1.7752404725996091e-13,
+            "right": 1.775240472599655e-13
+          }
+        },
+        {
+          "mode": 16029,
+          "comparison": "b_FE_fullraw",
+          "ratios": {
+            "left": 2.7068162634234323e-13,
+            "right": 2.7068162634235025e-13
+          }
+        },
+        {
+          "mode": 16029,
+          "comparison": "raw_MPC_fullraw",
+          "ratios": {
+            "left": 2.706297468549443e-13,
+            "right": 2.706297468549513e-13
+          }
+        },
+        {
+          "mode": 16029,
+          "comparison": "masked_fullvector",
+          "ratios": {
+            "left": 1.7752404725996091e-13,
+            "right": 1.775240472599655e-13
+          }
+        },
+        {
+          "mode": 0,
+          "comparison": "b_FE_fullraw",
+          "ratios": {
+            "left": 3.6651222761641973e-13,
+            "right": 3.665122276164227e-13
+          }
+        },
+        {
+          "mode": 0,
+          "comparison": "raw_MPC_fullraw",
+          "ratios": {
+            "left": 3.6704589925639673e-13,
+            "right": 3.670458992563997e-13
+          }
+        },
+        {
+          "mode": 0,
+          "comparison": "masked_fullvector",
+          "ratios": {
+            "left": 3.0668945832106474e-13,
+            "right": 3.066894583210672e-13
+          }
+        },
+        {
+          "mode": 1,
+          "comparison": "b_FE_fullraw",
+          "ratios": {
+            "left": 3.6651222761641973e-13,
+            "right": 3.665122276164227e-13
+          }
+        },
+        {
+          "mode": 1,
+          "comparison": "raw_MPC_fullraw",
+          "ratios": {
+            "left": 3.6704589925639673e-13,
+            "right": 3.670458992563997e-13
+          }
+        },
+        {
+          "mode": 1,
+          "comparison": "masked_fullvector",
+          "ratios": {
+            "left": 3.0668945832106474e-13,
+            "right": 3.066894583210672e-13
+          }
+        },
+        {
+          "mode": 6018,
+          "comparison": "b_FE_fullraw",
+          "ratios": {
+            "left": 2.644177159600502e-13,
+            "right": 2.644177159600601e-13
+          }
+        },
+        {
+          "mode": 6018,
+          "comparison": "raw_MPC_fullraw",
+          "ratios": {
+            "left": 2.642510660538551e-13,
+            "right": 2.64251066053865e-13
+          }
+        },
+        {
+          "mode": 6018,
+          "comparison": "masked_fullvector",
+          "ratios": {
+            "left": 1.9141793845314254e-13,
+            "right": 1.914179384531497e-13
+          }
+        },
+        {
+          "mode": 6019,
+          "comparison": "b_FE_fullraw",
+          "ratios": {
+            "left": 2.644177159600502e-13,
+            "right": 2.644177159600601e-13
+          }
+        },
+        {
+          "mode": 6019,
+          "comparison": "raw_MPC_fullraw",
+          "ratios": {
+            "left": 2.642510660538551e-13,
+            "right": 2.64251066053865e-13
+          }
+        },
+        {
+          "mode": 6019,
+          "comparison": "masked_fullvector",
+          "ratios": {
+            "left": 1.9141793845314254e-13,
+            "right": 1.914179384531497e-13
+          }
+        }
+      ],
+      "resources_published_not_remeasured": {
+        "classification": "COMPLETED",
+        "elapsed_seconds": 44.55242638300115,
+        "sampled_process_tree_rss_peak_bytes": 944046080,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "qualified_full_C_D_or_allmode_or_outputs": false,
+      "status": "COMPACT_SCALAR_RATIOS_CONSISTENT_NOT_RAW_VERIFICATION",
+      "elapsed_seconds": 0.0025539828930050135
+    },
+    "changed_work_assignment": false,
+    "raw_NPY_retrieval_or_recomputation": false,
+    "policy_boundary": "auxiliary constant mass guard changed to1e-12, original raw vector1e-11 and action1e-10 unchanged; no claim of general construction error theorem"
+  },
+  "post_compaction_refresh": {
+    "scope": "Post-compaction quick byte/identity refresh; semantic audit remains scoped to task/review/changed code",
+    "head": "e5585cb8d28f6eb0ae5a0cda939f624f75419779",
+    "files": 4943,
+    "bytes": 113143700,
+    "elapsed_seconds": 0.4166287030093372,
+    "missing": [],
+    "goal": "original 50x25x140 nm, Si17/120 nm, lambda0.7 nm, full3D FE, complete internals/double Floquet/full ports, decimal2e12B machine, ownswap/OOC0,172800s continuous cold lifecycle, unchanged precision gates"
+  },
+  "render_history": [
+    {
+      "status": "PASS_FINITE_NEW_SECTION_AND_COMPLETE_NEW_TABLE",
+      "publication_commit": "e5585cb8d28f6eb0ae5a0cda939f624f75419779",
+      "report_sha256": "c3bd46b4f23b210f7dced39334477ce57550dbf9f6d9adae32de81132e1f2f3e",
+      "pages": 1,
+      "new_tables_fully_viewed": 1,
+      "new_math_blocks": 0,
+      "actual_screenshots_viewed": 5,
+      "scope": "section 8 heading/authority override, actual file location/library limitations, restoration rationale, complete new table including right column, division of work and budget/stop paragraphs",
+      "limitation": "Final execution-text fenced block has normal horizontal scrolling; only its visible left portion was visually inspected. Complete bytes and fenced structure passed local check. No whole-page visual PASS. Previous section 7 visual limitation unchanged.",
+      "supervision": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 19.273708551889285,
+        "sampled_process_tree_rss_peak_bytes": 1729892352,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "source_record": "tmp/task42extra/render/review_v25_input_e5585cb8/render_records.json"
+    }
+  ],
+  "render": {
+    "status": "PENDING_DELTA_RENDER_AFTER_PUBLICATION",
+    "scope": "Only changed dot paragraph and source-location reference; unchanged table/other §8 text reuse prior actual rendered evidence."
+  },
+  "document_check_final": {
+    "status": "PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY",
+    "report_sha256": "472628ce34ccfbe7a46e9a62f740c272f48458650dd57190f64a087345944c71",
+    "old_sections_0_through_7_byte_identical": true,
+    "tables": 4,
+    "table_columns": [
+      2,
+      3,
+      3,
+      3
+    ],
+    "links": 11,
+    "new_tables": 1,
+    "new_math_blocks": 0,
+    "no_source_or_other_branch_changes": true,
+    "B_window_absent": true,
+    "numerical_or_generator_or_A_test_calls": 0,
+    "monotonic": 1085291.76186093
+  }
 }
