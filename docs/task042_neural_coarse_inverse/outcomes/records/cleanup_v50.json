@@ -11,19 +11,19 @@
     "total_limit_seconds": 25200,
     "first_intake_proc_uptime_seconds": 1102050.74,
     "start_monotonic_kind": "derived from first observed UTC using current same-boot UTC/monotonic pair; first /proc/uptime retained",
-    "observed_utc": "2026-10-05T07:33:15.547621+00:00",
-    "observed_monotonic": 1110590.408489016,
+    "observed_utc": "2026-10-05T07:39:18.287039+00:00",
+    "observed_monotonic": 1110953.147905833,
     "review_commit": "da151228815b08126dc636d3e195673ba04fe45f",
     "closed": false,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 8539.662396633998,
-    "heavy_remaining_seconds": 13960.337603366002,
-    "total_remaining_seconds": 16660.337603366002
+    "elapsed_seconds": 8902.401813983917,
+    "heavy_remaining_seconds": 13597.598186016083,
+    "total_remaining_seconds": 16297.598186016083
   },
   "neighbor_actions": 0,
   "scope": "Task042 current worktree; no signal or cleanup of other jobs",
   "metadata_script_path": "tmp/task042/v50/final_delivery_metadata.py",
-  "metadata_script_sha256": "f59675fa4ede1a53e12acd9373bca320dc6529529ef2d06918e01d15dd7b9382",
+  "metadata_script_sha256": "ce5b51f63006db1e9c4fe0c9eec391bc61d74281b190bcad8749f313a017ad25",
   "metadata_script_kind": "non-numerical delivery; file snapshot, not clean PDE source"
 }

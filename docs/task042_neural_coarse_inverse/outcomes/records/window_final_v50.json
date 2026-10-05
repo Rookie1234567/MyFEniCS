@@ -1,0 +1,31 @@
+{
+  "start_utc": "2026-10-05T05:10:55.885225+00:00",
+  "start_monotonic": 1102050.746092382,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "heavy_limit_seconds": 22500,
+  "total_limit_seconds": 25200,
+  "first_intake_proc_uptime_seconds": 1102050.74,
+  "start_monotonic_kind": "derived from first observed UTC using current same-boot UTC/monotonic pair; first /proc/uptime retained",
+  "observed_utc": "2026-10-05T05:14:54.243491+00:00",
+  "observed_monotonic": 1102289.104358497,
+  "review_commit": "da151228815b08126dc636d3e195673ba04fe45f",
+  "closed": true,
+  "closed_clock": {
+    "start_utc": "2026-10-05T05:10:55.885225+00:00",
+    "start_monotonic": 1102050.746092382,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "first_intake_proc_uptime_seconds": 1102050.74,
+    "start_monotonic_kind": "derived from first observed UTC using current same-boot UTC/monotonic pair; first /proc/uptime retained",
+    "observed_utc": "2026-10-05T07:39:33.699843+00:00",
+    "observed_monotonic": 1110968.56071031,
+    "review_commit": "da151228815b08126dc636d3e195673ba04fe45f",
+    "closed": false,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 8917.814618110657,
+    "heavy_remaining_seconds": 13582.185381889343,
+    "total_remaining_seconds": 16282.185381889343
+  }
+}

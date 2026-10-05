@@ -1,0 +1,61 @@
+{
+  "status": "FINAL_INDEX_AND_CLOSED_STATE_VERIFIED",
+  "previous_delivery_record_and_document_hashes": "PASS",
+  "archive_version_hashes": "PASS",
+  "source_versions": 1499,
+  "raw_final_versions_checked": 619,
+  "new_appended_versions": [
+    {
+      "path": "tmp/task042/v50/final_delivery_metadata.py",
+      "sha256": "ce5b51f63006db1e9c4fe0c9eec391bc61d74281b190bcad8749f313a017ad25",
+      "bytes": 12289,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/ce5b51f63006db1e9c4fe0c9eec391bc61d74281b190bcad8749f313a017ad25"
+    },
+    {
+      "path": "tmp/task042/v50/final_delivery_metadata.stdout",
+      "sha256": "18401be87d40b380e9defa4e13e31b08be7e29827da73141b06c02c2948fa8d0",
+      "bytes": 1260,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/18401be87d40b380e9defa4e13e31b08be7e29827da73141b06c02c2948fa8d0"
+    },
+    {
+      "path": "tmp/task042/v50/final_delivery_metadata.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp/task042/v50/post_settlement_fee.json",
+      "sha256": "c84eb0c49c8a39050e0d7e79bd47f039cf4063b202cb0b5051dcf81e3dfdd0c6",
+      "bytes": 764,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/c84eb0c49c8a39050e0d7e79bd47f039cf4063b202cb0b5051dcf81e3dfdd0c6"
+    },
+    {
+      "path": "tmp/task042/v50/progress_journal.jsonl",
+      "sha256": "7d08727a6e2a25edf9ba860c603abe9391a5cb2d73fe488786a954aa4169fd31",
+      "bytes": 51376,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/7d08727a6e2a25edf9ba860c603abe9391a5cb2d73fe488786a954aa4169fd31"
+    },
+    {
+      "path": "tmp/task042/v50/ledger.json",
+      "sha256": "d068710f032347ef25aaafd149fdf47387fa617ecee8de4ae551d82fc8bd3983",
+      "bytes": 33932,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/d068710f032347ef25aaafd149fdf47387fa617ecee8de4ae551d82fc8bd3983"
+    },
+    {
+      "path": "tmp/task042/v50/window.json",
+      "sha256": "2ef9f9ed1f1edc09e2e7360bdf2527263a7017948eccff1479b3bcd56ac49917",
+      "bytes": 1428,
+      "archived": "benchmarks/artifacts/task042/v50/raw_final_settlement/2ef9f9ed1f1edc09e2e7360bdf2527263a7017948eccff1479b3bcd56ac49917"
+    }
+  ],
+  "closed": true,
+  "active": null,
+  "own_descendants_cleared": true,
+  "own_swap_peak_bytes": 0,
+  "ancestry": "base/review/initial task document all ancestor",
+  "protected_history_changed": [],
+  "scientific_replay": 0,
+  "delivery_only_seconds": 0.342205457855016,
+  "review_queue_notification": "NOT_SENT_USER_REQUEST_PAUSE_AFTER_PUSH",
+  "CI": "NOT_RUN"
+}
