@@ -1,0 +1,315 @@
+{
+  "schema": "task42extra.review-v28-independent-evidence.v1",
+  "reviewed_head": "f0c08dd7ccf2740ccc2031703dba4a1fe67b0975",
+  "review_role": "saved-evidence-only; no source/numerical production changes",
+  "overall_review": "PASS_WITH_QUALIFICATIONS",
+  "scientific_component_statuses": [
+    "VERSIONED_MODE_INPUT_QUALIFIED",
+    "W1_REPRESENTATIVE_FACETS_FULL_MODE_EMPIRICAL_PASS",
+    "LOCAL_RELOCATED_CONSUMER_PASS"
+  ],
+  "default_ready_gated_consumer_actually_executed": true,
+  "source_bindings": [
+    {
+      "stage": "input_contract_checks",
+      "source": "9b1a9ec28cdd74510f8fd1ec0f40731c53d401de",
+      "files": 35
+    },
+    {
+      "stage": "manifest_qualify",
+      "source": "9b1a9ec28cdd74510f8fd1ec0f40731c53d401de",
+      "files": 35
+    },
+    {
+      "stage": "control",
+      "source": "84e2c44cc0f94c82b89fcd045015835c4b5dc7bc",
+      "files": 35
+    },
+    {
+      "stage": "boundary",
+      "source": "31b5ff639e4389c4c3bccd6605907a1b5b7be0e8",
+      "files": 35
+    },
+    {
+      "stage": "boundary_check",
+      "source": "12809c50011ca7013c441704b424569b8b11c2f6",
+      "files": 35
+    },
+    {
+      "stage": "bundle_consume",
+      "source": "82b74b2e7b2afa9660595cea37730c77b591e877",
+      "files": 35
+    }
+  ],
+  "math_closure_checked": {
+    "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "files": 43,
+    "bytes": 1054179,
+    "saved_snapshot_matches_git_blobs": true
+  },
+  "csv_independent_arithmetic": [
+    {
+      "label": "boundary",
+      "rows": 1218328,
+      "failed": 0,
+      "max_relative": 9.595725209727146e-11,
+      "worst": {
+        "degree": "6",
+        "key": "[\"top\",-64,-35,\"p\"]",
+        "mode_index": "9001",
+        "field": "original_recover_key",
+        "numerator": "4.307908906196561e-15",
+        "reference_norm": "4.489404200351269e-05",
+        "denominator": "4.489404200351269e-05",
+        "relative": "9.595725209727146e-11",
+        "near_zero": "False",
+        "passed": "True"
+      },
+      "by_field": {
+        "saved_reference": 64120,
+        "integral": 64120,
+        "stored_B": 64120,
+        "stored_D_H": 64120,
+        "B": 64120,
+        "D_H": 64120,
+        "coordinate_integral": 64120,
+        "coordinate_B": 64120,
+        "coordinate_D": 64120,
+        "B_direction_0": 64120,
+        "D_direction_0": 64120,
+        "B_direction_1": 64120,
+        "D_direction_1": 64120,
+        "B_direction_2": 64120,
+        "D_direction_2": 64120,
+        "original_components_key": 64120,
+        "original_recover_key": 64120,
+        "generic_components_key": 64120,
+        "generic_recover_key": 64120,
+        "original_components": 2,
+        "original_recover": 2,
+        "original_apply": 2,
+        "original_adjoint": 4,
+        "original_modal_rhs": 2,
+        "original_physical_rhs": 2,
+        "generic_components": 2,
+        "generic_recover": 2,
+        "generic_apply": 2,
+        "generic_adjoint": 4,
+        "generic_modal_rhs": 2,
+        "generic_physical_rhs": 2,
+        "incident_rhs_center": 2,
+        "incident_rhs_reference": 2,
+        "incident_rhs_absolute": 2,
+        "incident_rhs_absolute_reference": 2,
+        "incident_rhs_modal": 2,
+        "incident_background_rhs_center": 2,
+        "incident_background_rhs_absolute": 2,
+        "background_bottom_k": 2,
+        "background_r": 2,
+        "background_t": 2
+      },
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v28/boundary_repair2/boundary_check/boundary_metrics.csv",
+        "bytes": 176917352,
+        "sha256": "54193a32f902e733186e56bfdde18e9795924b2d414fd0975097661160fc8f14"
+      }
+    },
+    {
+      "label": "modes",
+      "rows": 416780,
+      "failed": 0,
+      "max_relative": 1.0747787677074433e-15,
+      "worst": {
+        "mode_index": "17767",
+        "key": "[\"bottom\",-119,-13,\"p\"]",
+        "field": "projection_denominator",
+        "numerator": "5.684341886080801e-13",
+        "reference_norm": "528.8848325693841",
+        "denominator": "528.8848325693841",
+        "relative": "1.0747787677074433e-15",
+        "near_zero": "False",
+        "passed": "True"
+      },
+      "by_field": {
+        "alpha": 32060,
+        "gamma": 32060,
+        "beta": 32060,
+        "k_vector": 32060,
+        "e_vector": 32060,
+        "h_vector": 32060,
+        "refractive_index": 32060,
+        "electric_tangential_norm_sq": 32060,
+        "power_per_unit_amplitude": 32060,
+        "rayleigh_tolerance": 32060,
+        "projection_denominator": 32060,
+        "traction_vector": 32060,
+        "transversality": 32060
+      },
+      "source": {
+        "path": "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify/mode_field_metrics.csv",
+        "bytes": 44319267,
+        "sha256": "621847013bd020d93aec90e586cdb13ca59f0d7ec0b9bc77111f5540a411412f"
+      }
+    }
+  ],
+  "worst_key_decimal110": {
+    "degree": 6,
+    "mode_index": 9001,
+    "key": [
+      "top",
+      -64,
+      -35,
+      "p"
+    ],
+    "field": "original_recover_key",
+    "numerator": "4.3080169999389223277531581045597333491721660634846054814094470186074192169918757415403188018928882805989284776E-15",
+    "denominator": "0.000044894042003512490961942775221488905972059595002360882708957808405900037459147808263193417632303967409689706950",
+    "relative": "9.5959659849782848463938552067742916711193566759620085000886426094045383314143437876022104081731550578680382266E-11",
+    "passed_same_threshold": true,
+    "reference_re": "0.000041412380831836990779626076206659387680265050397433112611708613741195173961496374104035059956455138541837907640",
+    "reference_im": "-0.000017334639345889028941293616634440704002614841944243908250768262398283060722824990365263548329017461953480951026",
+    "scope": "saved exact binary64 coefficients/phase/trace and saved Decimal110 moment strings; different contraction, no new integration, no uniform bound"
+  },
+  "package_manifest_sha256": "664e4ad412e818553c0172060b9e158f7edb06a1a90539a40370985b1aa8a5a9",
+  "package_files_reopened": 1043,
+  "scope_limits": [
+    "two representative facets only",
+    "all chosen modes are propagating",
+    "topological trace action does not qualify volume interior correction",
+    "no cross-machine receipt",
+    "no full target or NN gain"
+  ],
+  "resource_finding": {
+    "status": "CONSUMER_START_ADMISSION_FRESHNESS_NOT_QUALIFIED",
+    "grant_utc": "2026-10-05T04:27:29.257504+00:00",
+    "first_actual_supervision_utc": "2026-10-05T04:45:10.780522+00:00",
+    "grant_age_at_first_supervision_seconds": 1061.5230176448822,
+    "actual_CPU_collision": "NOT_PROVEN",
+    "past_qualification_not_repaired_by_reviewer_rerun": true
+  },
+  "resource_recomputation": {
+    "admission_samples": 24,
+    "foreground_wait_seconds": 873.6286628881935,
+    "interval_union_seconds": 2597.460410617059,
+    "intervals": [
+      [
+        1096567.698241416,
+        1096635.416160673
+      ],
+      [
+        1096710.393185584,
+        1096789.570251865
+      ],
+      [
+        1097081.34886108,
+        1097154.960836668
+      ],
+      [
+        1097309.211261722,
+        1097389.962477675
+      ],
+      [
+        1098047.388296168,
+        1098134.799373687
+      ],
+      [
+        1098351.890374879,
+        1098674.642320674
+      ],
+      [
+        1098715.122378025,
+        1099311.026358328
+      ],
+      [
+        1099439.622683333,
+        1100729.757913254
+      ]
+    ]
+  },
+  "review_helper_repairs": [
+    {
+      "failure": "initial metadata helper incorrectly excluded CPU-observation time from foreground wait and stopped at assertion",
+      "first_value_seconds": 840.0521423027385,
+      "correct_value_seconds": 873.6286628881935,
+      "source_definition": "w1_admission_budget.update_budget sums every event elapsed_seconds",
+      "repair": "include the 33.576520585455 seconds of actual admission observation",
+      "numeric_rerun": false,
+      "scope": "reviewer metadata aggregation only; V28 original ledger unchanged"
+    }
+  ],
+  "review_audit_supervision": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "elapsed_seconds": 205.18204010487534,
+    "sampled_process_tree_rss_peak_bytes": 427425792,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "raw_receipts": [
+    {
+      "path": "tmp/task42extra/review_v28/audit_v28.py",
+      "bytes": 6617,
+      "sha256": "7d2b4a11a397f5826e965b6a55097da358755b4f9bb8aaa24022b51458645405"
+    },
+    {
+      "path": "tmp/task42extra/review_v28/audit.log",
+      "bytes": 1315,
+      "sha256": "6a4b42d4c8dd7081ea88bd1cf2c38ab3e6e47a016b2f38e9e283ab20c0398cf9"
+    },
+    {
+      "path": "tmp/task42extra/review_v28/independent_audit.json",
+      "bytes": 23189,
+      "sha256": "e2c63a1de5e7f5c3c1fb5c7c46767986cbc61f112b4a42fbb6cab494de3c1d93"
+    },
+    {
+      "path": "tmp/task42extra/checks/review_v28_saved_audit_20261005T053546448790Z/summary.json",
+      "bytes": 1933,
+      "sha256": "25c6c4d9417ce4df964846205777af840ea14c274e262a73b9dfe8eff5992a95"
+    },
+    {
+      "path": "tmp/task42extra/checks/review_v28_saved_audit_20261005T053546448790Z/admission.json",
+      "bytes": 292621,
+      "sha256": "b2988f55d8dcbb6d5c3fe6d9871483153dbcb58e748631625a2bf6e2d69aa2e4"
+    },
+    {
+      "path": "tmp/task42extra/review_v28/default_recipient/consumer_receipt.json",
+      "bytes": 16423,
+      "sha256": "0ffa45e41efe3a6f4d5b4690b5e7b88b8e9ee0c785acec2379f3c93d2de5e2ab"
+    },
+    {
+      "path": "tmp/task42extra/review_v28/repository_refresh_after_compaction.json",
+      "bytes": 798483,
+      "sha256": "44fbda6e63f57a5657a4af174e7759d7f3ffec73234ba3fb97a0ecebedcc18b8"
+    }
+  ],
+  "readonly_peer_refs": {
+    "main": "d15554af7da49040565dab015dc09a16c1b18dde",
+    "dot": "15713d3e09b63f65511c7b7f61fa043fdb23dca5"
+  },
+  "structural_review": {
+    "tables": 4,
+    "table_rows": [
+      8,
+      10,
+      8,
+      8
+    ],
+    "consistent_columns": true,
+    "local_links_checked": [
+      "outcomes/records/review_v28_independent_audit.json",
+      "outcomes/records/run_index_v28.json",
+      "outcomes/main_handoff_v28.md"
+    ],
+    "fences_balanced": true
+  },
+  "rendered_view": {
+    "status": "PENDING_REVIEW_PUBLICATION",
+    "executor_original_v28_failure_retained": true
+  },
+  "goal_status": "FULL_TARGET_NOT_QUALIFIED",
+  "NN_status": "NO_VERIFIED_NN_INCREMENT",
+  "new_FE_assembly_factor_solve_Gram_NN_calls": 0,
+  "review_snapshot_utc": "2026-10-05T05:47:55.709279+00:00",
+  "elapsed_from_saved_review_start_seconds": 1221.786282336805,
+  "prior_review_reading_cost": "NOT_MEASURED_BEFORE_SAVED_START"
+}
