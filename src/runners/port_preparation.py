@@ -120,7 +120,7 @@ class PreparationHealth:
         row = dict(self.shared())
         if self.namespace in ("v50", "v51", "v52"):
             row['artifact_bytes']=self.live_task_bytes()
-            row['storage_scope']=f'exact immutable historical baseline + current sole-writer {namespace.upper()}; full inventory each stage boundary'
+            row['storage_scope']=f'exact immutable historical baseline + current sole-writer {self.namespace.upper()}; full inventory each stage boundary'
         if self.namespace in (
             "v37",
             "v38",

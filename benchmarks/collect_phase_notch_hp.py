@@ -124,7 +124,7 @@ def collect():
             supervised_outside_timed_intervals_seconds=max(0.,run['elapsed_seconds']-timed),
             actual_calls=result.get('calls','unknown'),shared_workstation=True,resources=resources,
             cost_scope='supervision, failed work and postprocessing included; exclusive intervals must not be added twice',
-            factor_cache='numeric factor cold per case; OS/JIT cache not cleared')))
+            factor_cache='numeric factor cold per case; OS/JIT cache not cleared'))
         sources[run['source_sha']]=manifest['implementation_hashes']
         if (directory/'resolved_config.json').exists():
             resolved=json.loads((directory/'resolved_config.json').read_text())
