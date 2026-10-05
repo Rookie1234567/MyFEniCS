@@ -146,5 +146,19 @@ class HPTests(unittest.TestCase):
             with patch.object(w,'require_ready'),patch.object(w,'charged_wall',return_value=200.),patch.object(w,'snapshot',return_value=dict(heavy_remaining_seconds=20000.)),patch.object(w,'ledger',return_value=dict(runs=[dict(role='H',folder=str(rd),elapsed_seconds=100.)])):
                 self.assertEqual(w.remaining('H'),3470.)
 
+    def test_saved_resource_sampling_uses_all_samples_and_real_gaps(self):
+        from benchmarks.collect_phase_notch_hp import sampling_receipt
+        with tempfile.TemporaryDirectory(dir=ROOT/'tmp/task042/v52') as d:
+            p=Path(d)/'resources.jsonl'
+            rows=[dict(elapsed_seconds=t,rss_bytes=r,swap_bytes=s) for t,r,s in
+                ((0.,10,0),(0.5,50,2),(3.2,30,0),(3.7,20,0))]
+            p.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+            r=sampling_receipt(p)
+            self.assertEqual(r['sample_count'],4)
+            self.assertAlmostEqual(r['actual_max_sample_gap_seconds'],2.7)
+            self.assertEqual(r['sampled_tree_peak_bytes'],50)
+            self.assertEqual(r['own_swap_peak_bytes'],2)
+
+
 
 if __name__=='__main__':unittest.main()

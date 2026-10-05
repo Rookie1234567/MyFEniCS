@@ -31,11 +31,23 @@ def measured_timeline(path):
     return dict(t,complete=boundary==len(events),unclosed_suffix_seconds='unknown' if boundary<len(events) else None)
 
 
+def sampling_receipt(path):
+    count=0;previous=None;gap=0.;peak=swap=0
+    if Path(path).exists():
+        with Path(path).open() as source:
+            for line in source:
+                r=json.loads(line);now=r['elapsed_seconds'];count+=1
+                if previous is not None:gap=max(gap,now-previous)
+                previous=now;peak=max(peak,r['rss_bytes']);swap=max(swap,r['swap_bytes'])
+    return dict(sample_count=count,actual_max_sample_gap_seconds=gap,
+        sampled_tree_peak_bytes=peak,own_swap_peak_bytes=swap,sampled_not_cgroup=True)
+
+
 def saved_checks(states,comparisons):
     from benchmarks.collect_phase_explicit_accuracy import vector_audit
     from src.solvers.scattering_anchor import relative
-    from src.solvers.phase_notch_hp_modes import keyed_modes
-    rows=[];regions={};cache={}
+    from src.solvers.phase_notch_hp_modes import keyed_modes,compare_payloads
+    rows=[];regions={};cache={};pair_gates={}
     for row in states.get('VERIFY_COST',{}).get('rows',[]):
         s=states[row['role']];v=checked_arrays(s['arrays']);b=s['boundary']['arrays'][1]
         if b['sha256'] not in cache:cache[b['sha256']]=checked_arrays(b)
@@ -44,17 +56,21 @@ def saved_checks(states,comparisons):
         checked['recovery']['split_action_identity_operation_scale']=float(np.linalg.norm(vi+vt-raw['volume_action'])/max(np.linalg.norm(vi)+np.linalg.norm(vt),1e-30))
         modes=json.loads(Path(s['output']['fields']['path']).with_name('port_power.json').read_text())
         keyed_modes(modes,s['case_spec']['complete_modes'])
-        rows.append(dict(role=row['role'],recalculated=checked,mode_count=len(modes['orders']),parent_array_sha256=s['arrays']['sha256']))
+        rows.append(dict(role=row['role'],recalculated=checked,mode_count=len(modes['orders']),parent_array_sha256=s['arrays']['sha256'],
+            direct_internal_target_pass=max(checked['audit'][k] for k in ('true','augmented','port'))<=1e-10))
     fields=('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')
     notch=np.asarray(plan_record()['physical_descriptor']['geometry']['notch_box_nm']).reshape(3,2)
     for name,p in comparisons.items():
         a=checked_arrays(p['arrays']);b=checked_arrays(p['q23_arrays']);sums=a['per_cell_integrals'].sum(axis=0)
         if a['per_cell_integrals'].shape[1:]!=(6,3) or not np.isfinite(sums).all() or np.any(sums<0):raise ValueError('complete physical integral inventory')
-        actual=[]
+        components=a['per_cell_component_error_squared']
+        if components.shape!=a['per_cell_integrals'].shape or not np.isfinite(components).all() or np.any(components<0) or not np.allclose(components.sum(axis=2),a['per_cell_integrals'][:,:,0],rtol=1e-12,atol=1e-26):raise ValueError('complete physical component squared inventory')
+        actual=[];selected_values=[]
         for f,t in zip(fields,sums,strict=True):
             value=float(np.sqrt(t[0])/max(np.sqrt(t[1]),1e-12));actual.append(value)
             if not np.isclose(value,p['fields'][f]['relative'],rtol=1e-11,atol=1e-15):raise ValueError('physical relative from saved arrays')
             select=relative(a['selected_'+f+'_first']-a['selected_'+f+'_second'],a['selected_'+f+'_second'])
+            selected_values.append(select)
             if not np.isclose(select,p['selected'][f],rtol=1e-11,atol=1e-15):raise ValueError('fixed selected complex vector from saved arrays')
         qdef=float(np.max(np.abs(b['per_cell_integrals'].sum(axis=0)[:,:2]-sums[:,:2])/np.maximum(sums[:,1,None],1e-24)))
         centers=a['common_centers'];inside=np.all((centers>=notch[:,0])&(centers<=notch[:,1]),axis=1)
@@ -71,30 +87,64 @@ def saved_checks(states,comparisons):
             component_squared=a['per_cell_component_error_squared'].sum(axis=0),quadrature_operation_recalculated=qdef,
             full_cross_terms=True,source_array_sha256=p['arrays']['sha256'])
         if qdef>1e-10:raise ValueError('common quadrature operation gate')
-    return rows,regions
+        from src.solvers.phase_notch_hp import parent
+        left,right=name.split('_');first=states['M']['projected_parent828'] if right=='M' else parent(left) if left=='B0' else states[left];second=states[right]
+        payloads=[json.loads(Path(s.get('mode_power_path',Path(s['output']['fields']['path']).with_name('port_power.json'))).read_text()) for s in (first,second)]
+        modal,_=compare_payloads(*payloads,len(payloads[0]['orders']))
+        for k in ('outgoing_amplitude_at_boundary_relative','mode_power_max_absolute'):
+            if not np.isclose(modal[k],p['modes'][k],rtol=1e-10,atol=1e-15):raise ValueError('complete physical mode comparison from saved output')
+        power={k:abs(first['output']['port_metrics'][k]-second['output']['port_metrics'][k]) for k in ('R_total','T_total','A_balance')}
+        power['A_volume']=abs(first['output']['volume_metrics']['A_volume_total']-second['output']['volume_metrics']['A_volume_total'])
+        energy=[abs(s['output']['volume_metrics']['energy_closure_error_port_volume']) for s in (first,second)]
+        qualify=all(np.isfinite(x) and 0<=x<=1e-4 for x in actual+selected_values+[modal['outgoing_amplitude_at_boundary_relative']]) and modal['mode_power_max_absolute']<=1e-6 and max(power.values())<=1e-5 and max(energy)<=1e-5 and qdef<=1e-10
+        pair_gates[name]=dict(field_mode_power_pass=bool(qualify),field_max=max(actual),selected_max=max(selected_values),modal=modal,power=power,energies=energy,
+            source_parent_array_sha256=p['parent_array_sha256'],reference_floor=1e-12,quadrature_operation=qdef)
+        if bool(qualify)!=bool(p['pass_gate']):
+            # A false equation/direct gate may validly restrict an otherwise
+            # accurate pair, but a reported pass cannot override physical data.
+            if p['pass_gate']:raise ValueError('reported pair pass conflicts with saved scientific values')
+    return rows,regions,pair_gates
 
 
 def collect():
     window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);out=folder/'records';out.mkdir()
     pointers={r:json.loads((ARTIFACT/(r+'.json')).read_text()) for r in STAGES if (ARTIFACT/(r+'.json')).exists()}
-    states={r:stage(r) for r in pointers};costs=[];sources={};arrays=[]
+    states={r:stage(r) for r in pointers};costs=[];sources={};arrays=[];identities=[];lifetimes=[]
     for run in window.ledger()['runs']:
         directory=Path(run['folder']);manifest=json.loads((directory/'run_manifest.json').read_text());summary=directory/('run_summary.json' if (directory/'run_summary.json').exists() else 'summary.json')
         s=json.loads(summary.read_text());role=run['role'];worker=ARTIFACT/directory.name
         result=json.loads((worker/'result.json').read_text()) if (worker/'result.json').exists() else {}
         timings=measured_timeline(worker/'events.jsonl') if (worker/'events.jsonl').exists() else {}
+        resources=sampling_receipt(directory/'supervision/resources.jsonl')
+        timed=sum(timings.get('exclusive_seconds',{}).values())
         costs.append(dict(role=role,folder=run['folder'],source_sha=run['source_sha'],classification=s['classification'],
             supervised_wall_seconds=run['elapsed_seconds'],cold_N1_dat_launch_lower_seconds=s['launch_wall_seconds'],
             timings=timings,peak_bytes=run['peak_bytes'],swap_bytes=run['swap_bytes'],
-            actual_calls=result.get('calls','unknown'),shared_workstation=True))
+            recorded_disjoint_interval_seconds=timed,
+            supervised_outside_timed_intervals_seconds=max(0.,run['elapsed_seconds']-timed),
+            actual_calls=result.get('calls','unknown'),shared_workstation=True,resources=resources,
+            cost_scope='supervision, failed work and postprocessing included; exclusive intervals must not be added twice',
+            factor_cache='numeric factor cold per case; OS/JIT cache not cleared')))
         sources[run['source_sha']]=manifest['implementation_hashes']
+        if (directory/'resolved_config.json').exists():
+            resolved=json.loads((directory/'resolved_config.json').read_text())
+            identities.append(dict(role=role,source_sha=run['source_sha'],input_sha256=manifest['input_sha256'],
+                resolved_sha256=digest(directory/'resolved_config.json'),physical_sha256=manifest['physical_sha256'],
+                CPU=manifest['cpu'],rank_cpus=manifest['rank_cpus'],MPI_size=manifest['MPI_size'],
+                environment_mode=manifest['environment_mode'],
+                physical={k:resolved[k] for k in ('geometry','materials','incidence','discretization','boundary')}))
+        if (worker/'events.jsonl').exists():
+            events=[json.loads(line) for line in (worker/'events.jsonl').read_text().splitlines()]
+            lifetimes.append(dict(role=role,source_sha=run['source_sha'],
+                release_events=[r for r in events if 'released' in r['event'] or 'saved' in r['event']],
+                live_object_payload_not_RSS=True))
     for p in ARTIFACT.rglob('*.npz'):
         arrays.append(dict(path=str(p.relative_to(ROOT)),bytes=p.stat().st_size,sha256=digest(p)))
     comparisons={p.stem:json.loads(p.read_text()) for p in (ARTIFACT/'comparisons').glob('*.json')}
-    independent,regions=saved_checks(states,comparisons)
+    independent,regions,pair_gates=saved_checks(states,comparisons)
     checks=dict(cases={r:{k:v.get(k) for k in ('status','case_spec','equation_pass','direct_target_pass','original_audit','recovery','capacity')}
         for r,v in states.items() if r in SOLVES},comparisons=comparisons,
-        independent_audits=independent,decision=json.loads((window.TMP/'decision.json').read_text()),
+        independent_audits=independent,independent_pair_gates=pair_gates,decision=json.loads((window.TMP/'decision.json').read_text()),
         NN_training=0,NN20=False,target_qualified=False)
     # Only new arrays and records; old parent identities are references.
     write_json(out/'hp_accuracy_checks_v52.json',checks)
@@ -124,6 +174,9 @@ def collect():
             if not dest.exists():dest.write_bytes(data)
             bindings.append(dict(source_sha=sha,path=path,sha256=h,archived=str(dest.relative_to(ROOT))))
     write_json(out/'source_bindings_v52.json',dict(files=bindings,document_HEAD_is_not_run_source=True))
+    write_json(out/'physical_identity_bindings_v52.json',dict(runs=identities,
+        canonical_material_path='input/materials/si_optical_constants_v1.json'))
+    write_json(out/'object_lifetimes_v52.json',dict(routes=lifetimes))
     print(json.dumps(dict(status='V52_COLLECTED',records=str(out))))
 
 

@@ -77,7 +77,19 @@ def solve_case(role,folder,journal):
         system,inverse=condense(bundle,journal,expected=(cap['native'],cap['trace'],cap['internal']))
         write_json(folder/'build_audit.json',system.build_audit)
         if system.active_rows+len(bundle['modes'])!=spec['rows']:raise ValueError('condensed actual row identity')
-        factor=CoordinateFactor(system.matrix,bundle,system.active_rows,journal,folder,symbolic_capacity=True);inverse.factor=factor
+        try:
+            factor=CoordinateFactor(system.matrix,bundle,system.active_rows,journal,folder,symbolic_capacity=True)
+        except MemoryError as error:
+            path=folder/'h_symbolic_capacity.json'
+            if not path.exists():raise
+            symbolic=json.loads(path.read_text())
+            if symbolic['plan']['admitted'] is not False:raise
+            journal.event('bounded_numeric_not_admitted',reason=str(error),symbolic_plan=symbolic['plan'])
+            return dict(status='CAPACITY_BLOCKED',role=role,case_spec=spec,capacity=cap,boundary=boundary,
+                build_audit=_json_metadata(system.build_audit),symbolic_capacity=symbolic,
+                global_factor_state='SYMBOLIC_ONLY_NO_NUMERIC',new_global_numeric_factor_count=0,
+                new_complete_solves=0,reason=str(error))
+        inverse.factor=factor
         with journal.measured('solve_and_affine_internal_recovery'):
             u=inverse.apply(rhs);port=inverse.last_port_solution.copy()
         early=save_arrays(folder/'returned_solution.npz',u_storage=u.array.copy(),port=port,rhs=rhs.array.copy(),kappa=bundle['kappa'],
