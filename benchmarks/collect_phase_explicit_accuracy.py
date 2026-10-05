@@ -259,7 +259,36 @@ def cost_opportunity(costs):
     return {'rows':rows,'only_necessary_optimistic_bounds':True,'data_teacher_training_loading_inference_cleanup_and_independent_audit_all_belong_to_H':True,'no_finite_micro_cost_extrapolation_to_target_48h':True,'NN20':False}
 
 
+def modal_recalculation():
+    """Independent saved-mode flux/coordinate audit; no FE or original metric call."""
+    from src.solvers.phase_explicit_accuracy_scope import plan_record
+    window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);rows=[]
+    axes=plan_record()['physical_descriptor']['geometry']['axes_nm'];area=(axes['x'][-1]-axes['x'][0])*(axes['y'][-1]-axes['y'][0]);k0=2*np.pi/.7
+    incident=area*.5*np.sin(np.deg2rad(1));complex_pair=lambda x:complex(*x)
+    for role in ('FLAT_P4','NOTCH_P4','NOTCH_P5','NOTCH_HPROBE'):
+        r=stage(role);v=checked_arrays(r['arrays']);path=Path(r['output']['fields']['path']).with_name('port_power.json');p=json.loads(path.read_text())
+        maximum=0.;power_sum={'top':0.,'bottom':0.};normalization_defect=abs(p['incident_power_code_units']-incident)
+        for o in p['orders']:
+            a=complex_pair(o['alpha']);g=complex_pair(o['gamma']);beta=complex_pair(o['beta']);n=complex_pair(o['refractive_index']);sign=o['vertical_sign'];i=o['auxiliary_index'];kt=np.sqrt(abs(a)**2+abs(g)**2)
+            s=np.asarray([-g/kt,a/kt,0],complex);k=np.asarray([a,g,sign*beta]);e=s if o['polarization']=='s' else np.cross(k/(k0*n),s)
+            if o['polarization']=='p':e=e/np.linalg.norm(e)
+            total=complex_pair(o['auxiliary_amplitude_total_projection']);inc=complex_pair(o['incident_projection']);out=total-inc if o['side']=='top' else total
+            phase=complex_pair(o['boundary_phase']);boundary=out*phase;h=np.cross(k,e)/k0
+            unit=area*max(float(sign*.5*np.real(np.cross(e,np.conj(h)))[2]),0.)
+            power=unit*abs(boundary)**2;ratio=power/incident;power_sum[o['side']]+=ratio
+            coordinate=max(abs(total-v['port'][i])/max(abs(total),abs(v['port'][i]),1e-30),abs(out-complex_pair(o['outgoing_amplitude']))/max(abs(out),1e-30),abs(boundary-complex_pair(o['outgoing_amplitude_at_boundary']))/max(abs(boundary),1e-30))
+            maximum=max(maximum,coordinate,abs(power-o['modal_power_code_units'])/incident,abs(ratio-o['power_ratio']))
+        totals=max(abs(power_sum['top']-p['R_total']),abs(power_sum['bottom']-p['T_total']),abs(1-sum(power_sum.values())-p['A_balance']))
+        energy=abs(1-sum(power_sum.values())-r['output']['volume_metrics']['A_volume_total'])
+        good=maximum<=1e-10 and totals<=1e-10 and normalization_defect<=1e-12 and energy<=1e-5
+        rows.append(dict(role=role,parent_array_sha256=r['arrays']['sha256'],mode_json_sha256=digest(path),count=len(p['orders']),max_operation_scaled_coordinate_and_power_defect=maximum,totals_defect=totals,incident_power_defect=normalization_defect,energy_from_all532_and_volume=energy,recomputed_R=power_sum['top'],recomputed_T=power_sum['bottom'],pass_gate=good))
+    if not all(x['pass_gate'] and x['count']==532 for x in rows):raise ValueError('independent complete modal power/coordinate audit')
+    write_json(folder/'modal_power_recalculation.json',dict(rows=rows,new_FE_calls=0,original_power_function_calls=0,all_532_retained=True))
+    print(json.dumps(dict(status='PASSED_SAVED_ALL532_POWER',rows=len(rows))))
+
+
 if __name__=='__main__':
     if sys.argv[1:]==['--docs']:documents()
+    elif sys.argv[1:]==['--modal']:modal_recalculation()
     elif not sys.argv[1:]:collect()
     else:raise ValueError('unknown collector argument')
