@@ -4,7 +4,7 @@
   "input_review": "045b8d991a78d4e06962439e4e4ec1ac9668633e",
   "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
   "branch": "task42extra_feinn_5nm",
-  "utc": "2026-10-05T01:41:08.954974+00:00",
+  "utc": "2026-10-05T01:43:48.575753+00:00",
   "remote_heads": {
     "task42extra_feinn_5nm": "db02485a6058e64bb9bb0c0f567144773e65250c",
     "task40extra_0p7nm_engineering": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
@@ -188,7 +188,7 @@
       "earlier_reading": "NOT_MEASURED",
       "scope": "review only; no R/B started"
     },
-    "elapsed_since_recorded_start_seconds": 1283.0163194641937,
+    "elapsed_since_recorded_start_seconds": 1442.6370866501238,
     "earlier_reading": "NOT_MEASURED",
     "full_project": "UNKNOWN",
     "nested_not_added_to_parent": true,
@@ -296,9 +296,27 @@
         "sampled_process_tree_rss_peak_bytes": 46608384,
         "sampled_process_tree_swap_peak_bytes": 0,
         "descendants_cleared": true
+      },
+      {
+        "receipt": {
+          "path": "tmp/task42extra/checks/review_v26_budget_render_20261005T014222429926Z/summary.json",
+          "bytes": 2075,
+          "sha256": "bb778a811eab869a31bbafb0c96cc30018b65597ee255f3597b17a120dabd4ba"
+        },
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 12.587213403079659,
+        "sampled_process_tree_rss_peak_bytes": 1560186880,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
       }
     ],
-    "post_compaction_refresh": "0.3748882559593767s metadata byte read only; included in parent; not a new numerical qualification"
+    "post_compaction_refresh": "0.3748882559593767s metadata byte read only; included in parent; not a new numerical qualification",
+    "publication_tail_reserved_upper_bound_seconds": 600,
+    "review_bound_since_recorded_start_seconds": 2042.6370866501238,
+    "sampled_simultaneous_tree_peak_bytes": 1679699968,
+    "sampled_own_swap_peak_bytes": 0,
+    "tail_scope": "Final metadata commit/push, exact tracking and cleanup, handoff; actual delivery observation in ignored receipt, notification receipt in /tmp. Earlier reading unmeasured; historical project cost UNKNOWN."
   },
   "bindings": [
     {
@@ -535,62 +553,105 @@
       "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_06.png",
       "bytes": 548777,
       "sha256": "95d906c136dc878de8db34cfe8435144646dae78d691a17b7ba0ed454e1d967a"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v26_7ef2b2ee/render_records.json",
+      "bytes": 4985,
+      "sha256": "17b0af458b0aec1c9a82f0ec0db2d3fa7d7cf00676bdd32cde973f0d5f6e007d"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v26_7ef2b2ee/00_scope_00.png",
+      "bytes": 613003,
+      "sha256": "8c67832613be1ac9a9a3de8164b18099f7042d391465e047ae2e4df604dc96b3"
+    },
+    {
+      "path": "tmp/task42extra/review_v26/render_budget.py",
+      "bytes": 9007,
+      "sha256": "2a987e7f35186a79d5083d5a88df3107309f988f845c22ae8c113aaa6e5ccbcf"
+    },
+    {
+      "path": "tmp/task42extra/review_v26/render_urls_budget.json",
+      "bytes": 172,
+      "sha256": "0c3144b3a712f522b0844aa2b031bb840ac9c5beb4575dfaf0a1926d88858300"
     }
   ],
   "render": {
-    "status": "INITIAL_REVIEW_FINITE_VISUAL_PASS_TIMING_ADDITION_PENDING",
-    "publication": "a5898ca8913be4bdcaf6f3c8dceee8f45d04292c",
-    "report_sha256": "1f2604fcfbffdbcf84d2d81cabd2ea62a9d909c47f3ae7bcd873c392ca5f4a8e",
-    "records": {
-      "path": "tmp/task42extra/render/review_v26_a5898ca8/render_records.json",
-      "bytes": 11120,
-      "sha256": "e469119f5205bbd1a24300e64bee8bc9c27e227129781b1e114cce9c85b4316d"
-    },
-    "images": [
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_00.png",
-        "bytes": 414399,
-        "sha256": "1d4a48d139bb1378dc0e2bed576b1c3d82be13a3c5d667c20e1ecc9b1143fa97"
+    "status": "PASS_FINITE_GITHUB_VISUAL_WITH_UNCHANGED_SOURCE_REUSE",
+    "initial": {
+      "status": "PASS_FINITE_GITHUB_VISUAL",
+      "publication": "a5898ca8913be4bdcaf6f3c8dceee8f45d04292c",
+      "report_sha256": "1f2604fcfbffdbcf84d2d81cabd2ea62a9d909c47f3ae7bcd873c392ca5f4a8e",
+      "records": {
+        "path": "tmp/task42extra/render/review_v26_a5898ca8/render_records.json",
+        "bytes": 11120,
+        "sha256": "e469119f5205bbd1a24300e64bee8bc9c27e227129781b1e114cce9c85b4316d"
       },
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_01.png",
-        "bytes": 532569,
-        "sha256": "e16eab5aaffbed93d44c39d3abd75379380a34ed05c594f7344a0ef0a285a4a0"
-      },
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_02.png",
-        "bytes": 622985,
-        "sha256": "5951ed27ad89a50d0a1d4fbbc11f159df0ea9e704fad2e903442257ff4b9e7b6"
-      },
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_03.png",
-        "bytes": 606685,
-        "sha256": "d4b00a27a5ad804e93129105d4ceb2d3d0b3bc56824d3d72fd6341aae0d8a6f1"
-      },
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_04.png",
-        "bytes": 580383,
-        "sha256": "baa4ae66d6a25c1bf9a322db8b4abf540678b08ad232ff3c3b87559cc05595f7"
-      },
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_05.png",
-        "bytes": 640411,
-        "sha256": "79142b07493be13242bbe5a78478b175d19e59516546c956e6e83e16375249f9"
-      },
-      {
-        "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_06.png",
-        "bytes": 548777,
-        "sha256": "95d906c136dc878de8db34cfe8435144646dae78d691a17b7ba0ed454e1d967a"
+      "images": [
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_00.png",
+          "bytes": 414399,
+          "sha256": "1d4a48d139bb1378dc0e2bed576b1c3d82be13a3c5d667c20e1ecc9b1143fa97"
+        },
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_01.png",
+          "bytes": 532569,
+          "sha256": "e16eab5aaffbed93d44c39d3abd75379380a34ed05c594f7344a0ef0a285a4a0"
+        },
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_02.png",
+          "bytes": 622985,
+          "sha256": "5951ed27ad89a50d0a1d4fbbc11f159df0ea9e704fad2e903442257ff4b9e7b6"
+        },
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_03.png",
+          "bytes": 606685,
+          "sha256": "d4b00a27a5ad804e93129105d4ceb2d3d0b3bc56824d3d72fd6341aae0d8a6f1"
+        },
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_04.png",
+          "bytes": 580383,
+          "sha256": "baa4ae66d6a25c1bf9a322db8b4abf540678b08ad232ff3c3b87559cc05595f7"
+        },
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_05.png",
+          "bytes": 640411,
+          "sha256": "79142b07493be13242bbe5a78478b175d19e59516546c956e6e83e16375249f9"
+        },
+        {
+          "path": "tmp/task42extra/render/review_v26_a5898ca8/00_scope_06.png",
+          "bytes": 548777,
+          "sha256": "95d906c136dc878de8db34cfe8435144646dae78d691a17b7ba0ed454e1d967a"
+        }
+      ],
+      "actual_model_visual_inspection": {
+        "count": 7,
+        "complete_tables": 2,
+        "execution_block_complete": true,
+        "math_blocks": 0,
+        "scope": "verdict, identity table, both findings, work-package table, budget and full execution block; finite scope, not full page"
       }
-    ],
-    "actual_model_visual_inspection": {
-      "count": 7,
-      "complete_tables": 2,
-      "execution_block_complete": true,
-      "math_blocks": 0,
-      "scope": "verdict, identity table, both findings, work-package table, budget and full execution block; finite scope, not full page"
     },
-    "remaining": "Only added timing-contract paragraph needs changed-text actual GitHub visual check; unchanged table/execution source may be reused."
+    "final_text_publication": "7ef2b2eee4b2a9ddd65103a5c35af586a9d1147f",
+    "final_report_sha256": "ebc8ca3a55e1458c4a9494cfaab589c7aeab16ae798c289f3d822835cf423c9a",
+    "delta": {
+      "records": {
+        "path": "tmp/task42extra/render/review_v26_7ef2b2ee/render_records.json",
+        "bytes": 4985,
+        "sha256": "17b0af458b0aec1c9a82f0ec0db2d3fa7d7cf00676bdd32cde973f0d5f6e007d"
+      },
+      "image": {
+        "path": "tmp/task42extra/render/review_v26_7ef2b2ee/00_scope_00.png",
+        "bytes": 613003,
+        "sha256": "8c67832613be1ac9a9a3de8164b18099f7042d391465e047ae2e4df604dc96b3"
+      },
+      "actual_model_visual_inspection": "PASS: whole added timing paragraph and adjacent budget visible; no clipping",
+      "only_added_paragraph": "本轮P0开发和R运行的限额分列；须一起适配新窗口校验、prepare_B_window及stage_deadline，不能继续把新R截在旧origin+1800s。新增时间对照应覆盖P0接近1800s后R仍按自身≤900s及全局剩余正确限时，也覆盖总窗／7200s／交付预留不足时拒绝；不通过回写时钟来绕过旧代码。",
+      "all_other_bytes_identical_to_initial": true
+    },
+    "total_distinct_images_viewed": 8,
+    "complete_tables": 2,
+    "math_blocks": 0,
+    "scope": "Finite scopes only; both tables and complete execution block are unchanged and use inspected initial images; no full-page or new PDE qualification claim."
   },
   "handoff": "One official codex queue message after final push/clean; no tools after success",
   "document_check": {
@@ -626,5 +687,12 @@
     "bytes": 325,
     "sha256": "343061c2713427c7a34027ddadecf5d3b1e2edf07fa19d020a2b5e292fa7f0b5"
   },
-  "document_check_initial_retention": "Initial parsed fields and stdout log preserved; document_check.json legitimately replaced by final changed-text check; no claim that previous ignored JSON bytes remain at current path."
+  "document_check_initial_retention": "Initial parsed fields and stdout log preserved; document_check.json legitimately replaced by final changed-text check; no claim that previous ignored JSON bytes remain at current path.",
+  "final_metadata_check": {
+    "status": "ALL_BOUND_BYTES_MATCH",
+    "bound_artifacts": 51,
+    "supervised_summary_receipts": 9,
+    "report_matches_passed_final_document_check": true,
+    "only_review_and_audit_changed": true
+  }
 }
