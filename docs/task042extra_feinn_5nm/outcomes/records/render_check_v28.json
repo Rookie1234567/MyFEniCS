@@ -6,5 +6,21 @@
   "actual_browser_visual_pass": false,
   "no_browser_launched": "24 actual resource admission samples exhausted; no extra browser subtree claimed qualified",
   "local_markdown_structural_check": "FOCUSED_STRUCTURE_IDENTITY_PASS",
-  "old_visual_failure_history_retained": true
+  "old_visual_failure_history_retained": true,
+  "published_commit": "58ad593aa466e6667d1604414c5de9059e9a79d4",
+  "bounded_attempts": [
+    {
+      "role": "Review V27",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ec05cb2ece095d54073563b02ab0da30f2795310/docs/task042extra_feinn_5nm/review_report_v27.md",
+      "result": "Internal Error / Cache miss",
+      "actual_browser_visual_pass": false
+    },
+    {
+      "role": "published Response V28",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/58ad593aa466e6667d1604414c5de9059e9a79d4/docs/task042extra_feinn_5nm/response_v28.md",
+      "result": "Internal Error / Cache miss",
+      "actual_browser_visual_pass": false
+    }
+  ],
+  "numerical_work_blocked_by_web_failure": false
 }
