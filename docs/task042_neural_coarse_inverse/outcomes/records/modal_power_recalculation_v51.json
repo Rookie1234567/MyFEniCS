@@ -1,0 +1,59 @@
+{
+  "rows": [
+    {
+      "role": "FLAT_P4",
+      "parent_array_sha256": "b6c798c445ea3516172f24f1f8f8a3a95f14bd329f62aaaaed2b243d3dacf26a",
+      "mode_json_sha256": "9d450c0ac560d354f22e8b3a8aba7164bc7d4784581b83ea545a36189fd04a6c",
+      "count": 532,
+      "max_operation_scaled_coordinate_and_power_defect": 6.994405055138486e-15,
+      "totals_defect": 7.882583474838611e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all532_and_volume": 2.542957164286541e-13,
+      "recomputed_R": 0.11343340892067724,
+      "recomputed_T": 0.8824589986134957,
+      "pass_gate": true
+    },
+    {
+      "role": "NOTCH_P4",
+      "parent_array_sha256": "6bdfb2fd8be762ca1994eee47328db787a16190435afdba2042eca2b89725751",
+      "mode_json_sha256": "0220d9a4631dc107e9b48464244ca0b4e485ed9f9d65f22b4806d5f4098074f5",
+      "count": 532,
+      "max_operation_scaled_coordinate_and_power_defect": 6.994405055138486e-15,
+      "totals_defect": 7.66053886991358e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all532_and_volume": 4.579357726353095e-13,
+      "recomputed_R": 0.07621850390251678,
+      "recomputed_T": 0.9056652297396928,
+      "pass_gate": true
+    },
+    {
+      "role": "NOTCH_P5",
+      "parent_array_sha256": "284aa7ca3ed34996eba808c192d8dfe3317c9d3ee67ebcd67e508ba3339b8864",
+      "mode_json_sha256": "0da50b0a715163eca3cd7c11f63e6f5efdb698dcdc6e6ce94d0c53d00d51caaa",
+      "count": 532,
+      "max_operation_scaled_coordinate_and_power_defect": 7.105427357601002e-15,
+      "totals_defect": 7.66053886991358e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all532_and_volume": 3.371122825335249e-13,
+      "recomputed_R": 0.07621881007976991,
+      "recomputed_T": 0.9056647030173937,
+      "pass_gate": true
+    },
+    {
+      "role": "NOTCH_HPROBE",
+      "parent_array_sha256": "d98c193d753d3c3b689c1d4b874c3509b64a4b9ead8177d2eb8af9747435af3d",
+      "mode_json_sha256": "9f8ceb0e0d46bfc00b953f335c43048166dcc029b3d87b25910c5dab604167ce",
+      "count": 532,
+      "max_operation_scaled_coordinate_and_power_defect": 7.105427357601002e-15,
+      "totals_defect": 7.66053886991358e-15,
+      "incident_power_defect": 2.255140518769849e-16,
+      "energy_from_all532_and_volume": 7.227204945614574e-14,
+      "recomputed_R": 0.07621834309367377,
+      "recomputed_T": 0.905665161723907,
+      "pass_gate": true
+    }
+  ],
+  "new_FE_calls": 0,
+  "original_power_function_calls": 0,
+  "all_532_retained": true
+}

@@ -1,3 +1,19 @@
+# V51最小相关测试与完整物理审核
+
+| 层级 | 实际验证／边界 | 证据 |
+|---|---|---|
+| targeted最终数值核 | 10项：完整curl/弱式与kappa=0、非Hermitian非互伴非零内部/40port、真实UFL及容量接口 | [tests](records/tests_v51.json) |
+| 接线与监督 | 8个one-run schema，条件入口不盲跑；真实1s超时停止全部自身后代 | [tests](records/tests_v51.json) |
+| 主科学 | 新完整532 q47/q63、解析FLAT、NOTCH p/h、唯一独立原作用及保存数组checker | [科学门](records/phase_accuracy_checks_v51.json) |
+| 原功率公式独立重算 | 四状态×532模式，最大操作差7.10543e-15；无原power函数调用 | [mode checker](records/modal_power_recalculation_v51.json) |
+| 收口 | 最终相关compile/Ruff与一次15项紧凑文档合同，实际交付字节检查 | [文档记录](records/documentation_checks_v51.json) |
+
+没有CI、全库pytest、全旧artifact审核或全仓索引。GitHub视觉NOT_VERIFIED。N5合法返回后的writer/类型错误只做针对性修复与补审，未重解。所有失败/重放和监督费用均保留。
+
+以下历史逐字保留。
+
+<!-- V51-LATEST-END -->
+
 # V46最小测试及边界
 
 26项标量费用/身份/配置回归（pure24通过、ML专用1跳过并隔离单独通过），Ruff/compile、15文档合同见[tests_v46](records/tests_v46.json)。实际timing方法使用纯标量mock，完整合成合同PASS只证明消费软件；全五路线0/8与真实q0合同拒绝也已端到端执行。初始style失败和费用保留，未重跑62旧学习测试、旧FE或全数组审核。所有新数值/模型动作0。

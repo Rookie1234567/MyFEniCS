@@ -1,3 +1,18 @@
+# V51改动与依赖分组
+
+| 分组 | 数值行为／职责 | 资格边界 |
+|---|---|---|
+| src/solvers固定相位与场 | 实现E=g*u及完整Ckappa弱式、周期包络、精确端口/内部恢复、共同物理积分 | FLAT准确；NOTCH有限一致性FAIL，保持opt-in |
+| 既有runner与one-run输入 | 复用监督、事务保存、clean-source身份；独立V51 ledger/缓存 | 不复制大型runner，不改变其他任务或旧closed |
+| checker/测试 | 保存数组独立原残差、全部功率、区域/费用与容量推导 | 不重新求解、不把status当数值证据 |
+| compact docs/evidence | 本批增量、父hash、实际source、失败补审和完整费用 | 不嵌套旧campaign，不改旧task/review/response/raw |
+
+[改动清单](records/changed_files_v51.json)、[最小迁移](records/minimal_migration_v51.json)、[依赖合入manifest](records/selective_merge_manifest_v51.json)、[完整结果](phase_explicit_full3d_accuracy_v51.md)。finite直接因子用于准确参考，不是重新开放生产p4逆；没有NN训练/推理、隔壁实验或其他分支修改。未授merge approval。
+
+以下历史逐字保留。
+
+<!-- V51-LATEST-END -->
+
 # V46改动及选择性合入
 
 费用/身份纯核心进入src/solvers，实际FullMomentStudy.timing和冻结scope消费统一函数；通用runner新增v46预算/live guard。参数化纯标量决策CLI、25相关测试和最小资格入口复用既有监督。输入只冻小metadata/hash，dot只读一次compact；无模型/算子数值修改、无新PDE。文档与关键路径、最终stdout新版本见[manifest](records/selective_merge_manifest_v46.json)。研究-only、merge_approval=false；旧task/review/response/raw与各历史closed保持。

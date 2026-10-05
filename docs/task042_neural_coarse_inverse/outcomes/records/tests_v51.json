@@ -1,0 +1,568 @@
+{
+  "targeted_runs": [
+    {
+      "source_sha": "db95e8cf859385f02eef12f6bdd1a942f2cec2e7",
+      "directory": "tmp/task042/v51/aux_pre_02",
+      "raw_sha256": "d72e1564f59ece0b53bb6f045407202beaad2caf58689ba2c3dd763649de8f9a",
+      "targeted_test_count": 6,
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "unittest",
+            "-q",
+            "src.test.test_phase_explicit_accuracy"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "E9,F63,F7,F82",
+            "benchmarks/qualify_phase_explicit_accuracy.py",
+            "src/io/phase_explicit_accuracy.py",
+            "src/solvers/fixed_phase_fem.py",
+            "src/solvers/phase_explicit_accuracy.py",
+            "src/solvers/phase_explicit_accuracy_fields.py",
+            "src/solvers/phase_explicit_accuracy_scope.py",
+            "src/test/test_phase_explicit_accuracy.py",
+            "src/runners/port_preparation.py",
+            "scripts/run_case.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_hprobe.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_ordinary_flat_control.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_phase_setup.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_verify_cost.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        }
+      ],
+      "watchdog_classification": "PERFORMANCE_CONTROLLED_STOP",
+      "watchdog_descendants_cleared": true,
+      "science_actions": 0
+    },
+    {
+      "source_sha": "9100a925a2a074a2a305def8f27ec992451178c7",
+      "directory": "tmp/task042/v51/aux_pre_03",
+      "raw_sha256": "861e68b08eee607efa9d0835c5613dd039604a9f52c9690daa60f633b75be2b6",
+      "targeted_test_count": 6,
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "unittest",
+            "-q",
+            "src.test.test_phase_explicit_accuracy"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "E9,F63,F7,F82",
+            "benchmarks/qualify_phase_explicit_accuracy.py",
+            "src/io/phase_explicit_accuracy.py",
+            "src/solvers/fixed_phase_fem.py",
+            "src/solvers/phase_explicit_accuracy.py",
+            "src/solvers/phase_explicit_accuracy_fields.py",
+            "src/solvers/phase_explicit_accuracy_scope.py",
+            "src/test/test_phase_explicit_accuracy.py",
+            "src/runners/port_preparation.py",
+            "scripts/run_case.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_hprobe.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_ordinary_flat_control.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_phase_setup.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_verify_cost.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        }
+      ],
+      "watchdog_classification": "PERFORMANCE_CONTROLLED_STOP",
+      "watchdog_descendants_cleared": true,
+      "science_actions": 0
+    },
+    {
+      "source_sha": "62537a4e7c56336160ec59f022081841abb8566c",
+      "directory": "tmp/task042/v51/aux_pre_04",
+      "raw_sha256": "36c063d9181b0e1615f135889903c04ee5ca2be2fccd07d931d50ea827b5b6db",
+      "targeted_test_count": 7,
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "unittest",
+            "-q",
+            "src.test.test_phase_explicit_accuracy"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "E9,F63,F7,F82",
+            "benchmarks/qualify_phase_explicit_accuracy.py",
+            "src/io/phase_explicit_accuracy.py",
+            "src/solvers/fixed_phase_fem.py",
+            "src/solvers/phase_explicit_accuracy.py",
+            "src/solvers/phase_explicit_accuracy_fields.py",
+            "src/solvers/phase_explicit_accuracy_scope.py",
+            "src/test/test_phase_explicit_accuracy.py",
+            "src/runners/port_preparation.py",
+            "scripts/run_case.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_hprobe.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_ordinary_flat_control.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_phase_setup.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_verify_cost.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        }
+      ],
+      "watchdog_classification": "PERFORMANCE_CONTROLLED_STOP",
+      "watchdog_descendants_cleared": true,
+      "science_actions": 0
+    },
+    {
+      "source_sha": "c3009dd66993b42961666758068f343cd67044e8",
+      "directory": "tmp/task042/v51/aux_pre_05",
+      "raw_sha256": "702ecc89c4834b641a3b9ebcec1ff6d2dbe26b7531d87d67e91149de8dbefdda",
+      "targeted_test_count": 9,
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "unittest",
+            "-q",
+            "src.test.test_phase_explicit_accuracy"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "E9,F63,F7,F82",
+            "benchmarks/qualify_phase_explicit_accuracy.py",
+            "src/io/phase_explicit_accuracy.py",
+            "src/solvers/fixed_phase_fem.py",
+            "src/solvers/phase_explicit_accuracy.py",
+            "src/solvers/phase_explicit_accuracy_capacity.py",
+            "src/solvers/phase_explicit_accuracy_fields.py",
+            "src/solvers/phase_explicit_accuracy_scope.py",
+            "src/test/test_phase_explicit_accuracy.py",
+            "src/runners/port_preparation.py",
+            "scripts/run_case.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_hprobe.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_ordinary_flat_control.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_phase_setup.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_verify_cost.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        }
+      ],
+      "watchdog_classification": "PERFORMANCE_CONTROLLED_STOP",
+      "watchdog_descendants_cleared": true,
+      "science_actions": 0
+    },
+    {
+      "source_sha": "80e227660baac5bd89b0220455e4207bcb1d51d6",
+      "directory": "tmp/task042/v51/aux_pre_06",
+      "raw_sha256": "66641b72a2be23d8beb1964a955f68040f68d2447db837d9b42b72b353943aad",
+      "targeted_test_count": 10,
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "unittest",
+            "-q",
+            "src.test.test_phase_explicit_accuracy"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "E9,F63,F7,F82",
+            "benchmarks/collect_phase_explicit_accuracy.py",
+            "benchmarks/qualify_phase_explicit_accuracy.py",
+            "src/io/phase_explicit_accuracy.py",
+            "src/solvers/fixed_phase_fem.py",
+            "src/solvers/phase_explicit_accuracy.py",
+            "src/solvers/phase_explicit_accuracy_capacity.py",
+            "src/solvers/phase_explicit_accuracy_fields.py",
+            "src/solvers/phase_explicit_accuracy_scope.py",
+            "src/test/test_phase_explicit_accuracy.py",
+            "src/runners/port_preparation.py",
+            "scripts/run_case.py"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_flat_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_hprobe.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p4.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_notch_p5.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_ordinary_flat_control.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_phase_setup.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scripts/run_case.py",
+            "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v51_verify_cost.dat",
+            "--validate-only"
+          ],
+          "returncode": 0
+        }
+      ],
+      "watchdog_classification": "PERFORMANCE_CONTROLLED_STOP",
+      "watchdog_descendants_cleared": true,
+      "science_actions": 0
+    }
+  ],
+  "final_targeted_count": 10,
+  "schema_count": 8,
+  "final_docs": "documentation_checks_v51.json",
+  "no_full_repository_pytest": true,
+  "CI": "NOT_RUN",
+  "scope": "新依赖最小回归；完整物理审核为主科学工作，非全旧数组重放"
+}

@@ -1,0 +1,129 @@
+{
+  "groups": [
+    {
+      "name": "production numerical/core",
+      "files": [
+        "src/solvers/common_3d_forms.py",
+        "src/solvers/fixed_phase_fem.py",
+        "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+        "src/solvers/phase_explicit_accuracy.py",
+        "src/solvers/phase_explicit_accuracy_capacity.py",
+        "src/solvers/phase_explicit_accuracy_fields.py",
+        "src/solvers/scattering_accuracy_boundary.py"
+      ],
+      "mathematical_change": "opt-in gVh弱式/完整场/端口内部消元；普通default不改",
+      "qualification": "FLAT解析PASS；NOTCH准确性FAIL，研究路径不得直接升级production",
+      "dependencies": [
+        "既有hcurl凝聚、完整未截断DtN、canonical用户材料"
+      ],
+      "tests": [
+        "src.test.test_phase_explicit_accuracy"
+      ],
+      "fresh_evidence": [
+        "FLAT_P4",
+        "NOTCH_P4",
+        "NOTCH_P5",
+        "NOTCH_HPROBE"
+      ],
+      "order": 1
+    },
+    {
+      "name": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/io/phase_explicit_accuracy.py",
+        "src/runners/port_preparation.py",
+        "src/solvers/phase_explicit_accuracy_scope.py"
+      ],
+      "mathematical_change": "仅Task042 opt-in stage/隔离/身份/时间与存储门；采样树监督",
+      "dependencies": [
+        "production numerical/core"
+      ],
+      "tests": [
+        "8 dat schema",
+        "timeout whole-tree cleanup"
+      ],
+      "fresh_evidence": [
+        "all V51 manifests"
+      ],
+      "order": 2
+    },
+    {
+      "name": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_phase_explicit_accuracy.py",
+        "benchmarks/qualify_phase_explicit_accuracy.py",
+        "src/test/test_phase_explicit_accuracy.py"
+      ],
+      "mathematical_change": "不求解；从原始数组重算原方程/功率/费用及容量",
+      "dependencies": [
+        "raw arrays + parent hashes"
+      ],
+      "tests": [
+        "10 targeted",
+        "saved vector checks",
+        "independent all532 flux"
+      ],
+      "fresh_evidence": [
+        "VERIFY_COST",
+        "aux_post_collect01",
+        "aux_post_modal01"
+      ],
+      "order": 3
+    },
+    {
+      "name": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v51.md",
+        "docs/task042_neural_coarse_inverse/outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "outcomes/records/*_v51.*",
+        "six latest navigation prefixes"
+      ],
+      "mathematical_change": "none",
+      "dependencies": [
+        "all V51 run/source/hash records"
+      ],
+      "tests": [
+        "15 documentation contracts"
+      ],
+      "order": 4
+    },
+    {
+      "name": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/phase_explicit_accuracy_v51.json",
+        "input/task042_neural_coarse_inverse/v51_flat_p4.dat",
+        "input/task042_neural_coarse_inverse/v51_flat_p5.dat",
+        "input/task042_neural_coarse_inverse/v51_notch_hprobe.dat",
+        "input/task042_neural_coarse_inverse/v51_notch_p4.dat",
+        "input/task042_neural_coarse_inverse/v51_notch_p5.dat",
+        "input/task042_neural_coarse_inverse/v51_ordinary_flat_control.dat",
+        "input/task042_neural_coarse_inverse/v51_phase_setup.dat",
+        "input/task042_neural_coarse_inverse/v51_verify_cost.dat"
+      ],
+      "mathematical_change": "新finite80/160hex gVh full532 case，不是目标生产模型",
+      "dependencies": [
+        "groups1-4"
+      ],
+      "tests": [
+        "schema+fresh scientific gates"
+      ],
+      "order": 5
+    },
+    {
+      "name": "do-not-merge",
+      "files": [
+        "ignored results/JIT/raw arrays/factors",
+        "unqualified OC executor",
+        "all old closed campaign internals"
+      ],
+      "reason": "无目标/连续/NN20/production资格；大型artifact不入Git",
+      "order": null
+    }
+  ],
+  "merge_approval": false,
+  "production_default_changed": false,
+  "no_actual_merge": true,
+  "NN_training": 0,
+  "target_qualified": false
+}

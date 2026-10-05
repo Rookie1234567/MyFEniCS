@@ -1,3 +1,24 @@
+# Task042 V51最新交付：平界面准确，三维缺口精度仍未资格
+
+把已知的快速横向相位解析保留，让有限元计算包络，再恢复完整电场和磁场。它改善场的表示，仍使用原Maxwell方程和完整532模式；这是确定性离散，本批没有NN训练。FLAT解析场通过，NOTCH的p/h场差仍超过1e-4，不能用小残差或守恒代替准确性。
+
+| 实际完整物理解 | 原true/native残差，门1e-6 | 物理准确性 | dat启动下界s／采样整树峰GiB |
+|---|---|---|---|
+| 80hex/p4 FLAT | 2.88117e-12 | 解析E/H为3.85798e-8／4.63574e-8，PASS | 294.248354／1.032608 |
+| 80hex/p4 NOTCH | 2.93150e-12 | p4/p5 scattered E/H差9.61667e-4／9.41540e-4，FAIL | 118.554778／1.007263 |
+| 80hex/p5 NOTCH | 4.77771e-12 | p5/Z2 scattered E/H差8.53183e-4／8.53072e-4，FAIL | 625.778514＋补审142.573980／2.245213 |
+| 160hex/p5 NOTCH Z2 | 4.67476e-12 | 复通道差1.51246e-4，FAIL；功率差通过 | 841.587038／3.496330 |
+
+四次完整solve及冻结后的唯一独立VERIFY完成，全部恢复/slave门通过。N5后处理失败只补审，原返回向量和失败费用保留。F5/OC未运行；有限全局p4/p5直接因子存在，保存向量后释放，不重开生产p4强逆。所有成本为shared-workstation下界，OS/JIT未清，正式加速INCONCLUSIVE；原尺寸0.7nm、2TB/48h和NN20%未资格。唯一下一建议是新合同下同物理p5/Z4完整NOTCH对照，44532凝聚行超本批35000门，不自动启动。
+
+[执行回应](../response_v51.md)；[完整物理及R00_s/p/total](phase_explicit_full3d_accuracy_v51.md)；[科学门](records/phase_accuracy_checks_v51.json)；[完整532独立功率](records/modal_power_recalculation_v51.json)；[费用](records/resource_costs_final_v51.json)；[下一尺度](records/next_scale_capacity_v51.json)。
+
+NOTCH两增量的total/scattered E/H/curl、selected与参考面复振幅FAIL分别列出；R/T/A及体吸收通过不能覆盖这些失败。原模型统一结果、DoF和全模式数据见上述完整结果及父hash。选择合入分组见[manifest](records/selective_merge_manifest_v51.json)，未授merge approval。
+
+以下旧结果、负结果与scope逐字保留。
+
+<!-- V51-LATEST-END -->
+
 # Task042 V50最新交付：完整积分闭合，当前有限空间准确性不足
 
 先检验完整物理积分，再用解析平界面判定有限元空间是否足以表示真实波。本轮完成两个新完整p5求解、全532端口、原方程/恢复与完整场/功率审核，保留准确性负结果。六Gram通过是传统准备控制，不是神经增量；不会自动追加纯FE轮次或旧NN训练。
