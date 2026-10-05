@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
 
 
 def sha(path):
@@ -51,19 +52,24 @@ def seal_stage(run):
     result = json.loads((run / "component_result.json").read_text())
     # Every raw/oracle receipt published by the worker/checker is sealed.
     files = {}
+    git_sources = []
 
-    def collect(value):
+    def collect(value, field=None):
         if isinstance(value, dict):
             if {"path", "bytes", "sha256"} <= set(value):
                 path = check_file(
                     value, Path(binding["contract"]["output_root"]).parent
                 )
                 files[str(path)] = value
-            for child in value.values():
-                collect(child)
+            for key, child in value.items():
+                collect(child, key)
         elif isinstance(value, list):
             for child in value:
-                collect(child)
+                if field == "git_sources":
+                    check_git_blob(child, binding["math_source_sha"])
+                    git_sources.append(child)
+                else:
+                    collect(child)
 
     collect(result)
     return {
@@ -75,7 +81,18 @@ def seal_stage(run):
         "component": file_receipt(run / "component_result.json"),
         "supervision": file_receipt(run / "supervisor_summary.json"),
         "raw_files": list(files.values()),
+        "git_sources": git_sources,
     }
+
+
+def check_git_blob(row, commit):
+    """Git identities never pass through the filesystem artifact validator."""
+    if row.get("kind") != "git_blob" or row.get("commit") != commit:
+        raise ValueError("W1_GIT_BLOB_TYPED_IDENTITY")
+    root = Path(__file__).resolve().parents[2]
+    raw = subprocess.check_output(["git", "show", commit + ":" + row["path"]], cwd=root)
+    if len(raw) != row["bytes"] or hashlib.sha256(raw).hexdigest() != row["sha256"]:
+        raise ValueError("W1_GIT_BLOB_BYTES_HASH")
 
 
 def validate_stage(run, *, identity, statuses, expected_stage=None):
@@ -126,6 +143,8 @@ def validate_stage(run, *, identity, statuses, expected_stage=None):
         raise ValueError("W1_PREREQUISITE_STAGE_RESULT_BINDING")
     for file in receipt["raw_files"]:
         check_file(file, Path(binding["contract"]["output_root"]).parent)
+    for row in receipt.get("git_sources", []):
+        check_git_blob(row, binding["math_source_sha"])
     if not receipt["raw_files"]:
         raise ValueError("W1_PREREQUISITE_RAW_EVIDENCE_REQUIRED")
     return component
@@ -175,13 +194,21 @@ def validate_A(path, receiver_files):
 
     path = Path(path)
     value = json.loads(path.read_text())
-    if value.get("schema") == "w1-RB-delta-qualification.v1":
+    if value.get("schema") in {
+        "w1-RB-delta-qualification.v1",
+        "w1-P0-delta-qualification.v27",
+    }:
         if (
             value.get("scope") != "PURE_LOGIC_DELTA_ONLY"
             or value.get("receiver_files") != receiver_files
         ):
             raise ValueError("W1_RB_DELTA_SOURCE")
-        inherited_path = check_file(value["inherited_A"], path.parent)
+        inherited_parent = (
+            Path(__file__).resolve().parents[2] / "tmp/task42extra/w1_receiver/v26"
+            if value["schema"] == "w1-P0-delta-qualification.v27"
+            else path.parent
+        )
+        inherited_path = check_file(value["inherited_A"], inherited_parent)
         inherited = json.loads(inherited_path.read_text())
         if inherited.get("schema") != "w1-A-qualification.v1":
             raise ValueError("W1_RB_INHERITED_ORIGINAL_A_REQUIRED")
@@ -214,6 +241,14 @@ def validate_A(path, receiver_files):
             "test_complete_frequency_coverage",
             "test_recovery_pending_cannot_start_B",
         }
+        if value["schema"] == "w1-P0-delta-qualification.v27":
+            required |= {
+                "test_current_scope_preserves_protection",
+                "test_scope_identity_and_cpuset_reject",
+                "test_actual_R_writer_seal_reopen_consumer",
+                "test_R_seal_failure_never_publishes_inputs",
+                "test_P0_and_R_clocks_are_separate",
+            }
         if not required <= {t.get("name", "").split("[")[0] for t in tests} or any(
             list(t.iter("failure")) or list(t.iter("error")) or list(t.iter("skipped"))
             for t in tests

@@ -10,6 +10,23 @@ import sys
 import types
 
 
+def claim_generator(output, source_sha):
+    """A persisted once-only claim survives generator exceptions/namespaces."""
+    path = Path(output) / "R_generation_once.json"
+    value = {
+        "generation_invocations": 1,
+        "receiver_source_sha": source_sha,
+        "generated_result": "PENDING_OR_UNKNOWN",
+        "reason": "exclusive claim immediately before original inventory call",
+    }
+    with path.open("x") as stream:
+        json.dump(value, stream, indent=2)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    return path
+
+
 def selected_functions(path, names, namespace):
     """Execute exact named AST nodes, avoiding an unrelated top-level campaign."""
     tree = ast.parse(Path(path).read_text())
@@ -81,6 +98,9 @@ def recover(snapshot, binding, *, atomic_json, file_receipt):
     target = ns["_target_config"](cfg)
     # This is the single permitted generator invocation; serialization below
     # uses the same frozen function on returned rows, without a second build.
+    claim_generator(
+        Path(binding["spec"]["window_path"]).parent, binding["receiver_source_sha"]
+    )
     modes, rows, original_digest = build_dynamic_mode_inventory(target)
     from src.solvers.fullspace_dtn_action import (
         _canonical_json_bytes,
@@ -144,7 +164,9 @@ def recover(snapshot, binding, *, atomic_json, file_receipt):
         "ordered_key_sha256": key_sha,
         "target_mode_physical_identity": physical,
         "original_size_ordered_mode_inventory_identity": inventory,
-        "git_sources": files,
+        "git_sources": [
+            {**row, "kind": "git_blob", "commit": contract.MATH_COMMIT} for row in files
+        ],
         "frozen_named_function_exports": {
             "dtn_port_3d": [
                 "_outward_normal",

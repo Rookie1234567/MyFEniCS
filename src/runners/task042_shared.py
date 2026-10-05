@@ -73,6 +73,7 @@ def details(pid, stat):
             threads.append(
                 {
                     "tid": int(entry.name),
+                    "start_ticks": int(fields[19]),
                     "affinity": sorted(os.sched_getaffinity(int(entry.name))),
                     "cpu": int(fields[36]),
                 }
@@ -183,17 +184,35 @@ def compensate_pinned_observer(busy, before, after, cpu, cpu_seconds, ticks_per_
     own_ticks = max(0, int(cpu_seconds * ticks_per_second) - 2)
     adjusted = dict(busy)
     adjusted[cpu] = max(0.0, busy[cpu] - own_ticks / elapsed_ticks)
-    return adjusted, {"cpu": cpu, "own_cpu_seconds": cpu_seconds,
-                      "subtracted_ticks": own_ticks, "retained_safety_ticks": 2,
-                      "scope": "this single-thread pinned observer only"}
+    return adjusted, {
+        "cpu": cpu,
+        "own_cpu_seconds": cpu_seconds,
+        "subtracted_ticks": own_ticks,
+        "retained_safety_ticks": 2,
+        "scope": "this single-thread pinned observer only",
+    }
 
 
-def audit(*, observed_activity=False, compensate_self=False):
+def audit(
+    *,
+    observed_activity=False,
+    compensate_self=False,
+    candidate_scope=None,
+    observation_sink=None,
+):
     """Two short CPU samples; include worker parents, siblings and descendants."""
     before = proc_stats()
     own_affinity = sorted(os.sched_getaffinity(0))
-    if compensate_self and (not observed_activity or len(own_affinity) != 1
-                            or len(list(Path("/proc/self/task").iterdir())) != 1):
+    allowed = own_affinity
+    if candidate_scope is not None:
+        from src.runners.w1_admission_scope import validate_scope
+
+        allowed = validate_scope(candidate_scope)
+    if compensate_self and (
+        not observed_activity
+        or len(own_affinity) != 1
+        or len(list(Path("/proc/self/task").iterdir())) != 1
+    ):
         raise ValueError("self compensation requires a single-thread pinned observer")
     own_cpu_before = time.process_time()
     cpu_before = _cpu_ticks() if observed_activity else None
@@ -270,7 +289,7 @@ def audit(*, observed_activity=False, compensate_self=False):
         except (OSError, ValueError):
             continue
     topology = []
-    for cpu in sorted(os.sched_getaffinity(0)):
+    for cpu in allowed:
         path = Path(f"/sys/devices/system/cpu/cpu{cpu}/topology")
         siblings_text = (path / "thread_siblings_list").read_text().strip()
         siblings = set()
@@ -300,30 +319,66 @@ def audit(*, observed_activity=False, compensate_self=False):
         if compensate_self:
             if sorted(os.sched_getaffinity(0)) != own_affinity:
                 raise ValueError("pinned observer affinity changed during the sample")
-            cpu_busy_fraction, self_compensation = compensate_pinned_observer(
-                cpu_busy_fraction, cpu_before, cpu_after, own_affinity[0],
-                own_cpu_seconds, ticks_per_s)
+            own = os.getpid()
+            matching = (
+                own in threads_before
+                and own in threads_after
+                and threads_before[own][0] == threads_after[own][0]
+                and own in before
+                and own in after
+                and before[own]["start_ticks"] == after[own]["start_ticks"]
+            )
+            if candidate_scope is None:
+                cpu_busy_fraction, self_compensation = compensate_pinned_observer(
+                    cpu_busy_fraction,
+                    cpu_before,
+                    cpu_after,
+                    own_affinity[0],
+                    own_cpu_seconds,
+                    ticks_per_s,
+                )
+            elif matching:
+                measured = min(
+                    own_cpu_seconds,
+                    (threads_after[own][1] - threads_before[own][1]) / ticks_per_s,
+                )
+                cpu_busy_fraction, self_compensation = compensate_pinned_observer(
+                    cpu_busy_fraction,
+                    cpu_before,
+                    cpu_after,
+                    own_affinity[0],
+                    measured,
+                    ticks_per_s,
+                )
+                self_compensation["identity_matched"] = True
+            else:
+                self_compensation = {
+                    "identity_matched": False,
+                    "subtracted_ticks": 0,
+                    "reason": "UNKNOWN_UNMATCHED_SELF_COUNTERS",
+                }
         thread_deltas = {
             tid: last[1] - threads_before[tid][1]
             for tid, last in threads_after.items()
             if tid in threads_before and last[0] == threads_before[tid][0]
         }
         candidates = spare_cores(topology, rows, cpu_busy_fraction, thread_deltas)
+    failures = []
     if not candidates:
-        raise RuntimeError(
+        failures.append(
             "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling"
         )
     env = shared_envelope()
     if env["launch_cap_bytes"] < HARD:
-        raise RuntimeError(
+        failures.append(
             "Insufficient reserve + neighbor growth allowance + Task042 hard budget"
         )
     disk = shutil.disk_usage(ROOT).free
     if disk < 50 * 2**30:
-        raise RuntimeError("Disk headroom below 50 GiB")
+        failures.append("Disk headroom below 50 GiB")
     psi = pressure()
     if psi["some"]["avg10"] >= 1.0 or psi["full"]["avg10"] >= 0.1:
-        raise RuntimeError("Memory pressure already present")
+        failures.append("Memory pressure already present")
     gpu = subprocess.run(
         [
             "nvidia-smi",
@@ -365,10 +420,10 @@ def audit(*, observed_activity=False, compensate_self=False):
         "ancestors": ancestors,
         "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed",
     }
-    return {
+    result = {
         "schema": "task042.shared-resource-baseline.v2",
         "utc": datetime.now(timezone.utc).isoformat(),
-        "cpu": candidates[0],
+        "cpu": candidates[0] if candidates else None,
         "candidate_cpus": candidates,
         "admission_policy": "V3 observed CPU/thread activity"
         if observed_activity
@@ -376,6 +431,13 @@ def audit(*, observed_activity=False, compensate_self=False):
         "cpu_busy_fractions": cpu_busy_fraction,
         "raw_cpu_busy_fractions": raw_cpu_busy_fraction,
         "pinned_observer_self_compensation": self_compensation,
+        "candidate_scope": candidate_scope,
+        "allowed_candidate_cpus": allowed,
+        "observer_affinity": own_affinity,
+        "sample_interval_seconds": interval,
+        "cpu_counter_before": cpu_before,
+        "cpu_counter_after": cpu_after,
+        "failures": failures,
         "thread_delta_ticks": thread_deltas,
         "topology": topology,
         "neighbor_processes": rows,
@@ -389,6 +451,17 @@ def audit(*, observed_activity=False, compensate_self=False):
         "performance_identity": "shared-workstation",
         "migration_caveat": "Wide supervisor affinities retained; observed cores excluded. No claim of zero interference.",
     }
+    if candidate_scope is not None or observation_sink is not None:
+        from src.runners.w1_admission_scope import exclusion_reasons
+
+        result["per_core_exclusion_reasons"] = exclusion_reasons(
+            topology, rows, cpu_busy_fraction, thread_deltas
+        )
+    if observation_sink is not None:
+        observation_sink(result)
+    if failures:
+        raise RuntimeError(failures[0])
+    return result
 
 
 class SharedHealth:
@@ -463,6 +536,7 @@ def launch(specification):
     if stage.startswith("V7-"):
         expected_mode = specification.derived["environment_mode"]
         from src.runners.neural_fe_continuation import budget_snapshot
+
         remaining_budget = budget_snapshot()["remaining_seconds"]
         if remaining_budget <= 0:
             raise RuntimeError("V6+V7 cumulative numerical budget exhausted")
@@ -513,15 +587,25 @@ def launch(specification):
             ).strip(),
         }
         if stage.startswith("V6-"):
-            state.update(physical_model_complete=False, physical_operator_sha256=None,
-                         physical_hash_meaning="unresolved material-blocked design only",
-                         material_status="MATERIAL_0P7NM_BLOCKED", operator_constructed=False)
+            state.update(
+                physical_model_complete=False,
+                physical_operator_sha256=None,
+                physical_hash_meaning="unresolved material-blocked design only",
+                material_status="MATERIAL_0P7NM_BLOCKED",
+                operator_constructed=False,
+            )
         if stage.startswith("V7-"):
-            state.update(physical_model_complete=specification.derived["physical_model_complete"],
-                         physical_operator_sha256=specification.derived["physical_operator_sha256"],
-                         physical_hash_meaning=specification.derived["identity_hash_meaning"],
-                         material_status="MATERIAL_READY_USER_SUPPLIED",
-                         formal_pde=stage != "V7-M0")
+            state.update(
+                physical_model_complete=specification.derived[
+                    "physical_model_complete"
+                ],
+                physical_operator_sha256=specification.derived[
+                    "physical_operator_sha256"
+                ],
+                physical_hash_meaning=specification.derived["identity_hash_meaning"],
+                material_status="MATERIAL_READY_USER_SUPPLIED",
+                formal_pde=stage != "V7-M0",
+            )
         write_json(directory / "run_manifest.json", state)
         for filename, text in (
             ("source_sha.txt", source),
@@ -545,7 +629,13 @@ def launch(specification):
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=min(specification.execution["timeout_seconds"], remaining_budget) if stage.startswith("V7-") else 600 if stage.startswith("V6-") else 10800,
+            wall_seconds=min(
+                specification.execution["timeout_seconds"], remaining_budget
+            )
+            if stage.startswith("V7-")
+            else 600
+            if stage.startswith("V6-")
+            else 10800,
             interval=0.5,
             source_state=state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},

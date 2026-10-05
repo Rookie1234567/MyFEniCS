@@ -150,7 +150,7 @@ def validate_originals(spec):
     if reproduced:
         import importlib.util
 
-        location = ROOT / "src/io/w1_reproduced_input.py"
+        location = Path(__file__).with_name("w1_reproduced_input.py")
         module_spec = importlib.util.spec_from_file_location(
             "_w1_reproduced_input", location
         )
@@ -163,6 +163,7 @@ def validate_originals(spec):
             math_commit=MATH_COMMIT,
             expected={
                 "manifest": MANIFEST_SHA,
+                "bytes": MANIFEST_BYTES,
                 "physical": PHYSICAL_SHA,
                 "inventory": INVENTORY_SHA,
             },

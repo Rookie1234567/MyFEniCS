@@ -29,16 +29,30 @@ def envelope(hard=16 * 2**30):
     return value
 
 
-def admission(hard=16 * 2**30, *, compensate_self=False):
-    value = observed_audit(observed_activity=True, compensate_self=compensate_self)
+def admission(
+    hard=16 * 2**30,
+    *,
+    compensate_self=False,
+    candidate_scope=None,
+    observation_sink=None,
+):
+    value = observed_audit(
+        observed_activity=True,
+        compensate_self=compensate_self,
+        candidate_scope=candidate_scope,
+        observation_sink=observation_sink,
+    )
     value["memory"] = envelope(hard)
+    if observation_sink is not None:
+        observation_sink(value)
     if value["memory"]["launch_cap_bytes"] < hard:
         raise RuntimeError(
             "RESOURCE_WINDOW_UNAVAILABLE: system reserve + neighbor growth + task cap"
         )
     # CPU12 is merely a preference among freshly audited idle physical cores.
     cpus = value["candidate_cpus"]
-    value["cpu"] = 12 if 12 in cpus else cpus[0]
+    preferred = candidate_scope.get("preferred_cpu") if candidate_scope else 12
+    value["cpu"] = preferred if preferred in cpus else (12 if 12 in cpus else cpus[0])
     value["schema"] = "task42extra.resource-admission.v1"
     value["growth_basis"] = {
         "Task39": "observed solve, tree hard 1300000000000 B; remaining growth about 150 GB",

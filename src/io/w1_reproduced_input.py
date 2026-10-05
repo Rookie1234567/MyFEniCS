@@ -64,7 +64,8 @@ def validate_receipt(path, manifest_path, *, root, math_commit, expected):
     path, root = Path(path), Path(root)
     value = json.loads(path.read_text())
     if (
-        value.get("schema") != "w1-reproduced-input-receipt.v1"
+        value.get("schema")
+        not in {"w1-reproduced-input-receipt.v1", "w1-reproduced-input-receipt.v2"}
         or value.get("status") != "BITWISE_REPRODUCED_INPUT"
         or value.get("historical_ledger_recovered") is not False
         or value.get("math_commit") != math_commit
@@ -111,6 +112,8 @@ def validate_receipt(path, manifest_path, *, root, math_commit, expected):
     ):
         raise ValueError("W1_REPRODUCED_FULL_IDENTITY_BODY")
     for row in value["git_sources"]:
+        if value["schema"].endswith("v2"):
+            module.check_git_blob(row, math_commit)
         raw = subprocess.check_output(
             ["git", "show", math_commit + ":" + row["path"]], cwd=root
         )
@@ -130,4 +133,21 @@ def validate_receipt(path, manifest_path, *, root, math_commit, expected):
         "bytes"
     ] != expected.get("bytes", 36244923):
         raise ValueError("W1_REPRODUCED_EXACT_MANIFEST")
+    if value["schema"].endswith("v2"):
+        evidence_path = check_file(value["sealed_evidence"], parent)
+        check_file(value["receiver_result"], parent)
+        if evidence_path.parent != Path(value["binding"]["path"]).parent:
+            raise ValueError("W1_REPRODUCED_SEAL_RUN_PATH")
+        component = module.validate_stage(
+            evidence_path.parent,
+            identity=module.scientific_identity(binding),
+            statuses={"BITWISE_REPRODUCED_INPUT"},
+            expected_stage="input_recovery",
+        )
+        if (
+            candidate.get("git_sources") != value["git_sources"]
+            or candidate.get("manifest") != value["manifest"]
+            or component.get("manifest") != value["manifest"]
+        ):
+            raise ValueError("W1_REPRODUCED_CANDIDATE_SEAL_MATCH")
     return value

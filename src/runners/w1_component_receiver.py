@@ -26,6 +26,22 @@ from src.runners.fresh_component_receiver import (
 from src.runners.frozen_source_snapshot import materialize
 
 RECEIVER_FILES = [
+    "src/io/w1_recovery_commit.py",
+    "src/runners/w1_admission_scope.py",
+    "src/runners/w1_admission_budget.py",
+    "src/runners/feinn_resources.py",
+    "src/runners/task042_shared.py",
+    "src/runners/durable_terminal.py",
+    "src/runners/fresh_component_receiver.py",
+    "benchmarks/subreaper_watchdog.py",
+    "benchmarks/task034_wsl_resources.py",
+    "benchmarks/task038_full3d_jit_staging.py",
+    "src/runners/workflow_timebase.py",
+    "src/runners/frozen_source_snapshot.py",
+    "src/io/task042_profile.py",
+    "scripts/launch_task42extra_durable.py",
+    "scripts/run_case.py",
+    "scripts/activate_task42extra.sh",
     "src/io/w1_reproduced_input.py",
     "src/runners/w1_input_recovery.py",
     "src/io/finite_json.py",
@@ -57,6 +73,7 @@ def remaining(window, *, now=None, utc_now=None):
         in {
             "task42extra.w1-receiver-B-window.v26",
             "task42extra.w1-receiver-RB-window.v26",
+            "task42extra.w1-receiver-P0RB-window.v27",
         }
         else 14400
     )
@@ -66,11 +83,24 @@ def remaining(window, *, now=None, utc_now=None):
             "task42extra.w1-receiver-window.v1",
             "task42extra.w1-receiver-B-window.v26",
             "task42extra.w1-receiver-RB-window.v26",
+            "task42extra.w1-receiver-P0RB-window.v27",
         )
         or window.get("budget_seconds") != budget
         or window.get("numerical_and_checker_budget_seconds") != 7200
         or window.get("delivery_reserve_seconds") != 1800
-        or window.get("old_windows_not_reset") is not True
+        or (
+            window.get("old_windows_not_reset") is not True
+            and window.get("old_v26_window_preserved") is not True
+        )
+        or (
+            window.get("schema") == "task42extra.w1-receiver-P0RB-window.v27"
+            and (
+                window.get("P0_budget_seconds") != 1800
+                or window.get("R_stage_budget_seconds") != 900
+                or window.get("admission_samples_limit") != 12
+                or window.get("foreground_wait_limit_seconds") != 300
+            )
+        )
     ):
         raise ValueError("W1_WINDOW_BUDGET_IDENTITY")
     now = time.monotonic() if now is None else now
@@ -83,6 +113,14 @@ def remaining(window, *, now=None, utc_now=None):
     ).total_seconds()
     if abs(left - utc_left) > 5:
         raise RuntimeError("TIMEBASE_INCONSISTENCY")
+    if window["schema"] == "task42extra.w1-receiver-P0RB-window.v27":
+        interval = window["deadline_monotonic"] - window["origin_monotonic"]
+        utc_interval = (
+            datetime.datetime.fromisoformat(window["deadline_utc"])
+            - datetime.datetime.fromisoformat(window["T0_utc"])
+        ).total_seconds()
+        if abs(interval - 10800) > 0.01 or abs(utc_interval - 10800) > 0.01:
+            raise ValueError("W1_NEW_WINDOW_EXACT_10800S_BINDING")
     return min(left, utc_left)
 
 
@@ -185,8 +223,62 @@ def native_command(bundle, run, binding):
 
 
 def launch_w1(spec):
+    """Preserve errors and setup charges even before the watchdog starts."""
+    try:
+        return _launch_w1(spec)
+    except Exception as error:
+        run = Path(spec["output_root"]) / spec["stage"]
+        if run.is_dir():
+            atomic_json(
+                run / "receiver_failure.json",
+                {
+                    "schema": "w1-receiver-failure.v27",
+                    "exception": type(error).__name__,
+                    "reason": str(error),
+                    "failed_monotonic": time.monotonic(),
+                    "native_worker_started": (run / "supervisor_summary.json").exists(),
+                    "historical_tree_peak": "NOT_RETAINED_BEFORE_WATCHDOG"
+                    if not (run / "supervisor_summary.json").exists()
+                    else "SEE_SUMMARY",
+                    "final_input_marker_not_authorized_by_failure": True,
+                },
+            )
+        path = Path(spec["window_path"]).parent / (
+            "numerical_charges_" + digest(spec["window_path"])[:16] + ".json"
+        )
+        if path.exists():
+            charges = json.loads(path.read_text())
+            for row in charges["entries"]:
+                if row["output"] == str(run) and "elapsed_seconds" not in row:
+                    row.update(
+                        elapsed_seconds=time.monotonic() - row["origin_monotonic"],
+                        classification="RECEIVER_EXCEPTION",
+                        reason=str(error),
+                    )
+            atomic_json(path, charges)
+        raise
+
+
+def compute_stage_deadline(window, origin, numeric_used, stage, *, now=None):
+    now = time.monotonic() if now is None else now
+    cap = 900 if stage in {"input_recovery", "control"} else 7200
+    deadline = min(
+        origin + cap, window["deadline_monotonic"] - 1800, origin + 7200 - numeric_used
+    )
+    if (
+        window["schema"] == "task42extra.w1-receiver-RB-window.v26"
+        and stage == "input_recovery"
+    ):
+        deadline = min(deadline, window["origin_monotonic"] + 1800)
+    if deadline - now <= 150:
+        raise TimeoutError("W1_STAGE_SHARED_OR_SAVE_BUDGET_INSUFFICIENT")
+    return deadline
+
+
+def _launch_w1(spec):
     from benchmarks.subreaper_watchdog import supervise
-    from src.runners.feinn_resources import Health, admission, envelope, stable_window
+    from src.runners.feinn_resources import Health, envelope
+    from src.runners.w1_admission_budget import admit, stable
 
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("W1_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
@@ -249,20 +341,31 @@ def launch_w1(spec):
         atomic_json(charge_path, charges)
         hard = 2 * 2**30 if stage in {"control", "input_recovery"} else 16 * 2**30
         priority = set_own_low_priority()
-        facts = json.loads(json.dumps(admission(hard, compensate_self=True)))
-        os.sched_setaffinity(0, {facts["cpu"]})
         terminal = json.loads(
             (
                 ROOT / "tmp/task42extra/durable" / namespace / "terminal_identity.json"
             ).read_text()
         )
+        scope = terminal.get("allowed_scope")
+        if window["schema"] == "task42extra.w1-receiver-P0RB-window.v27":
+            previous = json.loads((durable / "prelaunch_admission.json").read_text())
+            if (
+                scope is None
+                or scope != previous.get("allowed_scope")
+                or clock.get("allowed_scope_sha256") != scope["body_sha256"]
+            ):
+                raise ValueError("W1_INNER_ALLOWED_SCOPE_BINDING")
+        # Validate this live server/pane/socket before widening only the search.
+        bind_own_terminal_core(terminal, min(os.sched_getaffinity(0)))
+        facts = admit(spec, run, hard, inner=True, scope=scope)
+        os.sched_setaffinity(0, {facts["cpu"]})
         terminal_policy = bind_own_terminal_core(terminal, facts["cpu"])
         atomic_json(run / "admission.json", facts)
         atomic_json(
             run / "process_policy.json",
             {"launcher": priority, "terminal": terminal_policy},
         )
-        stable_window(run, hard)
+        stable(spec, run, hard)
         manifest_path = Path(spec["source_manifest_path"])
         manifest = json.loads(manifest_path.read_text())
         if manifest["commit"] != MATH_COMMIT:
@@ -273,11 +376,7 @@ def launch_w1(spec):
             / ("source_" + digest(manifest_path)[:16])
         )
         materialize(ROOT, manifest_path, bundle)
-        cap = stage_cap(remaining(window), numeric_used, stage)
-        if stage == "input_recovery":
-            cap = min(cap, window["origin_monotonic"] + 1800 - origin)
-        # Setup, import and stable admission belong to the same stage clock.
-        stage_deadline = origin + cap
+        stage_deadline = compute_stage_deadline(window, origin, numeric_used, stage)
         if stage_deadline - time.monotonic() <= 150:
             raise TimeoutError("W1_SETUP_CONSUMED_SAVE_RESERVE")
         source_sha = subprocess.check_output(
@@ -362,41 +461,6 @@ def launch_w1(spec):
         atomic_json(run / "supervisor_summary.json", summary)
         path = run / "component_result.json"
         component = json.loads(path.read_text()) if path.exists() else {}
-        if (
-            stage == "input_recovery"
-            and component.get("status") == "BITWISE_REPRODUCED_INPUT_PENDING_RECEIPT"
-            and summary["classification"] == "COMPLETED"
-            and summary["leader_exit_code"] == 0
-            and summary["descendants_cleared"]
-            and not summary["remaining_child_pids"]
-            and summary["sampled_process_tree_swap_peak_bytes"] == 0
-        ):
-            from src.io.w1_evidence import file_receipt
-
-            receipt = {
-                **component,
-                "schema": "w1-reproduced-input-receipt.v1",
-                "status": "BITWISE_REPRODUCED_INPUT",
-                "math_commit": MATH_COMMIT,
-                "binding": file_receipt(run / "binding.json"),
-                "supervision": file_receipt(run / "supervisor_summary.json"),
-                "candidate": file_receipt(run / "recovery_candidate.json"),
-            }
-            atomic_json(spec["ledger_path"], receipt)
-            reproduced = validate_originals(spec)
-            input_file = Path(window["input_binding_file"])
-            if input_file.exists():
-                raise ValueError("W1_RB_INPUT_BINDING_ALREADY_FROZEN")
-            atomic_json(
-                input_file,
-                {
-                    "window_sha256": digest(spec["window_path"]),
-                    "original_inputs": reproduced,
-                    "A_qualification_sha256": digest(spec["A_qualification_path"]),
-                },
-            )
-            component["status"] = "BITWISE_REPRODUCED_INPUT"
-            atomic_json(path, component)
         result = {
             "schema": "task42extra.w1-receiver-result.v1",
             "receiver_source_sha": source_sha,
@@ -418,7 +482,15 @@ def launch_w1(spec):
             "worker_started": True,
             "official_results": False,
         }
-        if path.exists():
+        if (
+            stage == "input_recovery"
+            and component.get("status") == "BITWISE_REPRODUCED_INPUT_PENDING_RECEIPT"
+            and summary["classification"] == "COMPLETED"
+        ):
+            from src.io.w1_recovery_commit import commit_recovery
+
+            result = commit_recovery(run, spec, window, result)
+        elif path.exists():
             atomic_json(run / "evidence.json", seal_stage(run))
             result["evidence_sha256"] = digest(run / "evidence.json")
         atomic_json(run / "receiver_result.json", result)
@@ -431,7 +503,8 @@ def launch_w1(spec):
 
 def durable_w1(spec, *, launch_origin=None):
     from src.runners.durable_terminal import launch_tmux
-    from src.runners.feinn_resources import admission
+    from src.runners.w1_admission_budget import admit
+    from src.runners.w1_admission_scope import capture_scope
 
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("W1_DURABLE_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
@@ -457,7 +530,10 @@ def durable_w1(spec, *, launch_origin=None):
         raise ValueError("W1_ALREADY_LAUNCHED_RECONNECT")
     set_own_low_priority()
     hard = 2 * 2**30 if spec["stage"] in {"control", "input_recovery"} else 16 * 2**30
-    facts = json.loads(json.dumps(admission(hard)))
+    directory.mkdir(parents=True, exist_ok=True)
+    facts = admit(spec, directory, hard)
+    scope = capture_scope(facts)
+    facts["allowed_scope"] = scope
     os.sched_setaffinity(0, {facts["cpu"]})
     directory.mkdir(parents=True, exist_ok=True)
     atomic_json(
@@ -468,6 +544,7 @@ def durable_w1(spec, *, launch_origin=None):
             else launch_origin,
             "input_sha256": spec["input_sha256"],
             "window_sha256": digest(spec["window_path"]),
+            "allowed_scope_sha256": scope["body_sha256"],
         },
     )
     atomic_json(directory / "prelaunch_admission.json", facts)
@@ -478,7 +555,12 @@ def durable_w1(spec, *, launch_origin=None):
         + shlex.quote(spec["path"]),
     ]
     return launch_tmux(
-        directory, "task42extra-" + namespace, command, ROOT, management_supervised=True
+        directory,
+        "task42extra-" + namespace,
+        command,
+        ROOT,
+        management_supervised=True,
+        allowed_scope=scope,
     )
 
 
@@ -495,12 +577,32 @@ def prepare_B_window(spec, original, *, launch_origin=None):
     if path.exists():
         old = json.loads(path.read_text())
         remaining(old)
-        if old.get("schema") == "task42extra.w1-receiver-RB-window.v26":
+        if old.get("schema") == "task42extra.w1-receiver-P0RB-window.v27":
+            completion = json.loads((path.parent / "P0_complete.json").read_text())
+            if (
+                completion.get("window_sha256") != digest(path)
+                or completion.get("P0_elapsed_seconds", 1801) > 1800
+                or completion.get("qualification_sha256")
+                != digest(spec["A_qualification_path"])
+            ):
+                raise ValueError("W1_P0_COMPLETE_TIME_SOURCE_BINDING")
+            if spec["stage"] == "input_recovery":
+                if original["received"]:
+                    raise ValueError("W1_R_ALREADY_GENERATED_DO_NOT_REPEAT")
+                return
+        if old.get("schema") in {
+            "task42extra.w1-receiver-RB-window.v26",
+            "task42extra.w1-receiver-P0RB-window.v27",
+        }:
             if spec["stage"] == "input_recovery":
                 if time.monotonic() >= old["origin_monotonic"] + 1800 - 150:
                     raise TimeoutError("W1_R_WIRING_DEADLINE")
                 return
-            frozen = json.loads(Path(old["input_binding_file"]).read_text())
+            frozen = json.loads(
+                Path(
+                    old.get("input_binding_file", path.parent / "P0_R_B_inputs.json")
+                ).read_text()
+            )
             if (
                 frozen.get("window_sha256") != digest(path)
                 or frozen.get("original_inputs") != original
