@@ -1095,6 +1095,7 @@ def _task40_capacity_carrier(global_rows: int, sides: tuple[str, ...]):
     (
         (G0, "G0", 3, 7),
         (G1, "G1", 5, 11),
+        (B0_CONTROL, "B0", 3, 7),
         (E1_M2, "E1", 3, 7),
         (E2_M2, "E2", 5, 11),
     ),
@@ -1203,6 +1204,8 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
         expected_plan_id = (
             f"task40extra.{expected_mesh_id.lower()}.exact_planes.v1"
         )
+    elif expected_mesh_id == "B0":
+        expected_plan_id = "task40extra.b0.w0_80cell_exact_planes.v1"
     elif expected_mesh_id in {"GX560", "GZ528"}:
         expected_plan_id = (
             f"task40extra.{expected_mesh_id.lower()}.crossed_axes.v1"
@@ -1246,6 +1249,30 @@ def test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata(
         condensed.v22_capacity_context(
             common,
             cfg=wrong_plan_cfg,
+            p6_space_facts=p6_space_facts,
+            p4_metadata=p4_metadata,
+            coarse_degree=4,
+            evidence_prefix="task40q4",
+            task40_profile=True,
+        )
+
+    wrong_id_cfg = replace(cfg, mesh_plan_id="task40extra.b0.unapproved_plan.v1")
+    with pytest.raises(ValueError, match="mesh plan id is not in the frozen model allowlist"):
+        condensed.v22_capacity_context(
+            common,
+            cfg=wrong_id_cfg,
+            p6_space_facts=p6_space_facts,
+            p4_metadata=p4_metadata,
+            coarse_degree=4,
+            evidence_prefix="task40q4",
+            task40_profile=True,
+        )
+
+    wrong_counts_cfg = replace(cfg, mesh_axis_cell_counts=(4, 4, 4))
+    with pytest.raises(ValueError, match="mesh axis counts differ from the frozen plan"):
+        condensed.v22_capacity_context(
+            common,
+            cfg=wrong_counts_cfg,
             p6_space_facts=p6_space_facts,
             p4_metadata=p4_metadata,
             coarse_degree=4,

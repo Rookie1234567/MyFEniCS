@@ -441,6 +441,7 @@ def _task40_capacity_mesh_plan(cfg):
     )
 
     mesh_id_by_plan = {
+        "task40extra.b0.w0_80cell_exact_planes.v1": "B0",
         "task40extra.g0.exact_planes.v1": "G0",
         "task40extra.g1.exact_planes.v1": "G1",
         "task40extra.e1.electrical_size_exact_planes.v1": "E1",
