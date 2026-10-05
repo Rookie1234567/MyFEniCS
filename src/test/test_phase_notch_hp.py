@@ -159,6 +159,44 @@ class HPTests(unittest.TestCase):
             self.assertEqual(r['sampled_tree_peak_bytes'],50)
             self.assertEqual(r['own_swap_peak_bytes'],2)
 
+    def test_saved_modal_checker_uses_explicit_scope_not_closed_parent(self):
+        from benchmarks.collect_phase_explicit_accuracy import modal_recalculation
+        theta=np.deg2rad(1);k0=2*np.pi/.7
+        amplitude=.002+.001j;incident=.5*np.sin(theta);power=incident*abs(amplitude)**2
+        rows=[]
+        for side,sign in (('top',1),('bottom',-1)):
+            for m in range(-9,10):
+                for n in range(-3,4):
+                    for pol in ('s','p'):
+                        rows.append(dict(side=side,vertical_sign=sign,m=m,n=n,polarization=pol,
+                            auxiliary_index=len(rows),alpha=[k0*np.cos(theta),0],gamma=[0,0],
+                            beta=[k0*np.sin(theta),0],refractive_index=[1,0],
+                            auxiliary_amplitude_total_projection=[amplitude.real,amplitude.imag],
+                            incident_projection=[0,0],boundary_phase=[1,0],
+                            outgoing_amplitude=[amplitude.real,amplitude.imag],
+                            outgoing_amplitude_at_boundary=[amplitude.real,amplitude.imag],
+                            modal_power_code_units=power,power_ratio=abs(amplitude)**2))
+        r=266*abs(amplitude)**2
+        with tempfile.TemporaryDirectory(dir=ROOT/'tmp/task042/v52') as d:
+            directory=Path(d);path=directory/'port_power.json'
+            payload=dict(orders=rows,incident_power_code_units=incident,R_total=r,T_total=r,A_balance=1-2*r)
+            path.write_text(json.dumps(payload))
+            state=dict(arrays=dict(sha256='fixture'),output=dict(fields=dict(path=str(directory/'field.json')),
+                volume_metrics=dict(A_volume_total=1-2*r)))
+            calls=[]
+            scope=SimpleNamespace(window=SimpleNamespace(guard_worker_parent=lambda:calls.append('live')),
+                plan_record=lambda:dict(physical_descriptor=dict(geometry=dict(axes_nm=dict(x=[0,1],y=[0,1])))),
+                stage=lambda role:state if role=='NEW' else (_ for _ in ()).throw(AssertionError('wrong scope')))
+            with patch.dict('os.environ',{'TASK042_V36_AUX_DIRECTORY':d}),\
+                 patch('benchmarks.collect_phase_explicit_accuracy.window.guard_worker_parent',side_effect=AssertionError('closed old window')),\
+                 patch('benchmarks.collect_phase_explicit_accuracy.checked_arrays',return_value=dict(port=np.full(532,amplitude))):
+                modal_recalculation(scope=scope,role_names=('NEW',))
+                result=json.loads((directory/'modal_power_recalculation.json').read_text())
+                self.assertTrue(result['rows'][0]['pass_gate']);self.assertEqual(result['rows'][0]['count'],532)
+                payload['orders'][0]['power_ratio']+=1e-4;path.write_text(json.dumps(payload))
+                with self.assertRaises(ValueError):modal_recalculation(scope=scope,role_names=('NEW',))
+            self.assertEqual(calls,['live','live'])
+
 
 
 if __name__=='__main__':unittest.main()

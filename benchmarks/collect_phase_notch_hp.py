@@ -218,5 +218,9 @@ def documents():
 
 if __name__=='__main__':
     if sys.argv[1:]==['--docs']:documents()
+    elif sys.argv[1:]==['--modal']:
+        from benchmarks.collect_phase_explicit_accuracy import modal_recalculation
+        from src.solvers import phase_notch_hp_scope
+        modal_recalculation(scope=phase_notch_hp_scope,role_names=('H','P'))
     elif not sys.argv[1:]:collect()
     else:raise ValueError('collector arguments')

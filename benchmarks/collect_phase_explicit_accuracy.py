@@ -259,14 +259,15 @@ def cost_opportunity(costs):
     return {'rows':rows,'only_necessary_optimistic_bounds':True,'data_teacher_training_loading_inference_cleanup_and_independent_audit_all_belong_to_H':True,'no_finite_micro_cost_extrapolation_to_target_48h':True,'NN20':False}
 
 
-def modal_recalculation():
+def modal_recalculation(*, scope=None, role_names=('FLAT_P4','NOTCH_P4','NOTCH_P5','NOTCH_HPROBE')):
     """Independent saved-mode flux/coordinate audit; no FE or original metric call."""
-    from src.solvers.phase_explicit_accuracy_scope import plan_record
-    window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);rows=[]
-    axes=plan_record()['physical_descriptor']['geometry']['axes_nm'];area=(axes['x'][-1]-axes['x'][0])*(axes['y'][-1]-axes['y'][0]);k0=2*np.pi/.7
+    if scope is None:
+        from src.solvers import phase_explicit_accuracy_scope as scope
+    scope.window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);rows=[]
+    axes=scope.plan_record()['physical_descriptor']['geometry']['axes_nm'];area=(axes['x'][-1]-axes['x'][0])*(axes['y'][-1]-axes['y'][0]);k0=2*np.pi/.7
     incident=area*.5*np.sin(np.deg2rad(1));complex_pair=lambda x:complex(*x)
-    for role in ('FLAT_P4','NOTCH_P4','NOTCH_P5','NOTCH_HPROBE'):
-        r=stage(role);v=checked_arrays(r['arrays']);path=Path(r['output']['fields']['path']).with_name('port_power.json');p=json.loads(path.read_text())
+    for role in role_names:
+        r=scope.stage(role);v=checked_arrays(r['arrays']);path=Path(r['output']['fields']['path']).with_name('port_power.json');p=json.loads(path.read_text())
         maximum=0.;power_sum={'top':0.,'bottom':0.};normalization_defect=abs(p['incident_power_code_units']-incident)
         for o in p['orders']:
             a=complex_pair(o['alpha']);g=complex_pair(o['gamma']);beta=complex_pair(o['beta']);n=complex_pair(o['refractive_index']);sign=o['vertical_sign'];i=o['auxiliary_index'];kt=np.sqrt(abs(a)**2+abs(g)**2)
