@@ -94,6 +94,7 @@ def test_unaffected_actual_control_source_reuse():
         "src/runners/w1_component_payload.py",
         "src/runners/w1_versioned_payload.py",
         "src/solvers/w1_saved_boundary.py",
+        "src/runners/w1_admission_budget.py",
     }
 
 
@@ -171,6 +172,39 @@ def test_control_reuse_protected_function_damage(tmp_path, monkeypatch):
         driver._compatible_prior_control_source(
             binding, {path: hashlib.sha256(new).hexdigest()}
         )
+
+
+@pytest.mark.parametrize(
+    "schema,cap,allow_read",
+    [
+        ("task42extra.w1-v28-batch-window.v1", 24, True),
+        ("task42extra.w1-receiver-P0RB-window.v27", 12, False),
+    ],
+)
+def test_last_admission_read_is_not_next_admission(tmp_path, schema, cap, allow_read):
+    from src.runners.w1_admission_budget import update_budget
+
+    window = tmp_path / "batch_window.json"
+    atomic_json(window, dict(schema=schema))
+    atomic_json(
+        tmp_path / "resource_samples.json",
+        dict(events=[dict(kind="admission", elapsed_seconds=1) for _ in range(cap)]),
+    )
+    if allow_read:
+        assert len(update_budget(window)["events"]) == cap
+    else:
+        with pytest.raises(TimeoutError):
+            update_budget(window)
+    with pytest.raises(TimeoutError):
+        update_budget(window, before_admission=True)
+    atomic_json(
+        tmp_path / "resource_samples.json",
+        dict(
+            events=[dict(kind="admission", elapsed_seconds=1) for _ in range(cap + 1)]
+        ),
+    )
+    with pytest.raises(TimeoutError):
+        update_budget(window)
 
 
 def top_mode():

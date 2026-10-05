@@ -8,7 +8,7 @@ import time
 from src.io.finite_json import atomic_json
 
 
-def update_budget(window_path, event=None):
+def update_budget(window_path, event=None, *, before_admission=False):
     path = Path(window_path)
     window = json.loads(path.read_text())
     v28 = window.get("schema") == "task42extra.w1-v28-batch-window.v1"
@@ -25,7 +25,9 @@ def update_budget(window_path, event=None):
         count = sum(e["kind"] == "admission" for e in value["events"])
         waited = sum(e.get("elapsed_seconds", 0) for e in value["events"])
         if event is None:
-            if count >= (24 if v28 else 12) or waited >= (900 if v28 else 300):
+            limit = 24 if v28 else 12
+            exhausted = count >= limit if before_admission or not v28 else count > limit
+            if exhausted or waited >= (900 if v28 else 300):
                 raise TimeoutError("W1_SHARED_RESOURCE_SAMPLES_OR_WAIT_EXHAUSTED")
         else:
             value["events"].append(event)
@@ -40,7 +42,7 @@ def admit(spec, directory, hard, *, inner=False, scope=None):
 
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    update_budget(spec["window_path"])
+    update_budget(spec["window_path"], before_admission=True)
     started = time.monotonic()
     observed = {}
 

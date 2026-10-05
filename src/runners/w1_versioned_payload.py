@@ -32,7 +32,7 @@ def _protected_ast(source, excluded):
     return ast.dump(tree, include_attributes=False)
 
 
-def _compatible_prior_control_source(binding, current_files):
+def _compatible_prior_control_source(binding, current_files, *, prior_role="control"):
     """Reuse B0 only when every dependency outside boundary/checker repairs is unchanged.
 
     Old bytes must match their actual Git blob.  The excluded functions never
@@ -57,6 +57,17 @@ def _compatible_prior_control_source(binding, current_files):
             "validate_boundary_summary",
         },
     }
+    exclusions["src/runners/w1_admission_budget.py"] = {"update_budget", "admit"}
+    if prior_role != "control":
+        if prior_role != "boundary_check":
+            raise ValueError("W28_SOURCE_REUSE_ROLE")
+        exclusions = {
+            "src/runners/w1_admission_budget.py": {"update_budget", "admit"},
+            "src/runners/w1_versioned_payload.py": {
+                "prerequisite_v28",
+                "_compatible_prior_control_source",
+            },
+        }
     old_files = binding["receiver_files"]
     if old_files.keys() != current_files.keys():
         raise ValueError("W28_CONTROL_DEPENDENCY_SET")
@@ -122,9 +133,9 @@ def prerequisite_v28(stage, spec, receiver_files):
                 raise ValueError("W28_PREREQUISITE_INSTANCE_OR_INPUT:" + key)
         current_files = {p: digest(ROOT / p) for p in receiver_files}
         if binding["receiver_files"] != current_files:
-            if name != "control":
+            if name not in {"control", "boundary_check"}:
                 raise ValueError("W28_PREREQUISITE_SOURCE")
-            _compatible_prior_control_source(binding, current_files)
+            _compatible_prior_control_source(binding, current_files, prior_role=name)
         if binding["window_sha256"] != digest(spec["window_path"]):
             raise ValueError("W28_PREREQUISITE_WINDOW")
         if (
