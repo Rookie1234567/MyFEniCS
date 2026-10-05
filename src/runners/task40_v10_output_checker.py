@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 from pathlib import Path
@@ -33,6 +34,83 @@ def _raw_array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarr
 
 def _array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarray:
     return np.asarray(_raw_array_ref(record, key, arrays), dtype=np.complex128)
+
+
+def verify_v10_dtn_port_mode_table(
+    csv_path: str | Path, *, expected_channel_count: int = 532
+) -> dict[str, Any]:
+    """Verify complete top and bottom modal rows in the emitted DtN port table.
+
+    ``diffraction_channel_count`` from field postprocessing counts the 266
+    spatial/polarization orders once.  The official port table carries one row
+    for each of those orders on each side, so its complete channel count is
+    532 and both sides must contain the same 266 mode identities.
+    """
+
+    path = Path(csv_path).resolve()
+    expected = int(expected_channel_count)
+    expected_per_side = expected // 2
+    with path.open("r", encoding="utf-8", newline="") as stream:
+        reader = csv.DictReader(stream)
+        required = {"side", "m", "n", "polarization"}
+        columns = set(reader.fieldnames or ())
+        missing_columns = sorted(required - columns)
+        rows = list(reader)
+
+    side_counts = {"top": 0, "bottom": 0}
+    mode_sets: dict[str, set[tuple[int, int, str]]] = {"top": set(), "bottom": set()}
+    duplicate_modes = {"top": 0, "bottom": 0}
+    malformed_rows = 0
+    for row in rows:
+        side = str(row.get("side", "")).strip().lower()
+        if side not in mode_sets:
+            malformed_rows += 1
+            continue
+        side_counts[side] += 1
+        try:
+            key = (
+                int(row["m"]),
+                int(row["n"]),
+                str(row["polarization"]).strip().lower(),
+            )
+            if not key[2]:
+                raise ValueError("empty polarization")
+        except (KeyError, TypeError, ValueError):
+            malformed_rows += 1
+            continue
+        if key in mode_sets[side]:
+            duplicate_modes[side] += 1
+        mode_sets[side].add(key)
+
+    paired_modes = len(mode_sets["top"] & mode_sets["bottom"])
+    passed = bool(
+        expected > 0
+        and expected % 2 == 0
+        and not missing_columns
+        and malformed_rows == 0
+        and len(rows) == expected
+        and side_counts == {"top": expected_per_side, "bottom": expected_per_side}
+        and duplicate_modes == {"top": 0, "bottom": 0}
+        and len(mode_sets["top"]) == expected_per_side
+        and len(mode_sets["bottom"]) == expected_per_side
+        and mode_sets["top"] == mode_sets["bottom"]
+    )
+    return {
+        "schema": "task40extra.review_v10_dtn_port_mode_table_check.v1",
+        "csv_path": str(path),
+        "expected_channel_count": expected,
+        "actual_channel_count": len(rows),
+        "expected_modes_per_side": expected_per_side,
+        "channel_count_by_side": side_counts,
+        "unique_mode_count_by_side": {
+            side: len(mode_sets[side]) for side in ("top", "bottom")
+        },
+        "paired_top_bottom_mode_count": paired_modes,
+        "duplicate_mode_count_by_side": duplicate_modes,
+        "malformed_row_count": malformed_rows,
+        "missing_columns": missing_columns,
+        "passed": passed,
+    }
 
 
 def verify_v10_regular_internal_witness(packet_json: str | Path) -> dict[str, Any]:
@@ -157,6 +235,17 @@ def verify_v10_output_bundle(packet_json: str | Path) -> dict[str, Any]:
     if not all(row["passed"] for row in file_checks):
         raise ValueError("V10 scientific field/mode output file identity check failed")
 
+    port_table_paths = [
+        Path(str(item["path"])).resolve()
+        for item in identity.get("field_mode_and_diffraction_files", ())
+        if Path(str(item.get("path", ""))).name == "dtn_port_diffraction_orders_3d.csv"
+    ]
+    if len(port_table_paths) != 1:
+        raise ValueError("V10 output identity must contain exactly one full DtN port table")
+    port_mode_table_check = verify_v10_dtn_port_mode_table(port_table_paths[0])
+    if not port_mode_table_check["passed"]:
+        raise ValueError("V10 full top/bottom DtN port mode table is incomplete")
+
     residual_path = Path(str(identity["full_solution_packet_json"])).resolve()
     residual_record = json.loads(residual_path.read_text(encoding="utf-8"))
     array_manifest = residual_record.get("arrays")
@@ -220,6 +309,7 @@ def verify_v10_output_bundle(packet_json: str | Path) -> dict[str, Any]:
         "full_solution_storage_sha256": str(identity["full_solution_storage_sha256"]),
         "ordered_physical_mode_sha256": str(identity["ordered_physical_mode_sha256"]),
         "field_mode_and_diffraction_file_checks": file_checks,
+        "full_dtn_port_mode_table_check": port_mode_table_check,
         "residual_checks": residual_checks,
         "operator_reapplied_by_checker": False,
         "status": "PASS",

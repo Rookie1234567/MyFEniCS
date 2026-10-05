@@ -1,3 +1,4 @@
+import csv
 import json
 import numpy as np
 import pytest
@@ -6,6 +7,7 @@ from types import SimpleNamespace
 from src.runners.physical_diagnosis_worker import save_packet
 from src.runners.task40_v10_worker import _save_packet
 from src.runners.task40_v10_output_checker import (
+    verify_v10_dtn_port_mode_table,
     verify_v10_output_bundle,
     verify_v10_regular_internal_witness,
 )
@@ -17,6 +19,23 @@ def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_p
     import hashlib
 
     file_digest = hashlib.sha256(field_path.read_bytes()).hexdigest()
+    port_table_path = tmp_path / "dtn_port_diffraction_orders_3d.csv"
+    with port_table_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(
+            stream, fieldnames=("side", "m", "n", "polarization")
+        )
+        writer.writeheader()
+        for side in ("top", "bottom"):
+            for mode_index in range(266):
+                writer.writerow(
+                    {
+                        "side": side,
+                        "m": mode_index,
+                        "n": 0,
+                        "polarization": "s",
+                    }
+                )
+    port_table_digest = hashlib.sha256(port_table_path.read_bytes()).hexdigest()
     rhs = np.array([3 + 0j, 4 + 0j], dtype=np.complex128)
     applied = np.array([1 + 0j, 0 + 0j], dtype=np.complex128)
     residual = rhs - applied
@@ -49,7 +68,12 @@ def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_p
                         "path": str(field_path),
                         "size_bytes": field_path.stat().st_size,
                         "sha256": file_digest,
-                    }
+                    },
+                    {
+                        "path": str(port_table_path),
+                        "size_bytes": port_table_path.stat().st_size,
+                        "sha256": port_table_digest,
+                    },
                 ],
             }
         },
@@ -60,8 +84,40 @@ def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_p
     assert result["status"] == "PASS"
     assert all(row["passed"] for row in result["residual_checks"])
     assert result["field_mode_and_diffraction_file_checks"][0]["passed"]
+    assert result["full_dtn_port_mode_table_check"]["actual_channel_count"] == 532
+    assert result["full_dtn_port_mode_table_check"]["channel_count_by_side"] == {
+        "top": 266,
+        "bottom": 266,
+    }
     assert residual_record["arrays"]["sha256"]
     assert output_record["scientific_identity"]["full_solution_storage_sha256"] == "a" * 64
+
+
+def test_v10_dtn_port_mode_table_requires_paired_top_and_bottom_rows(tmp_path):
+    table = tmp_path / "dtn_port_modes.csv"
+
+    def write_rows(rows):
+        with table.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(
+                stream, fieldnames=("side", "m", "n", "polarization")
+            )
+            writer.writeheader()
+            writer.writerows(rows)
+
+    paired_rows = [
+        {"side": side, "m": mode, "n": 0, "polarization": "s"}
+        for side in ("top", "bottom")
+        for mode in (0, 1)
+    ]
+    write_rows(paired_rows)
+    result = verify_v10_dtn_port_mode_table(table, expected_channel_count=4)
+    assert result["passed"]
+    assert result["paired_top_bottom_mode_count"] == 2
+
+    write_rows([row for row in paired_rows if row["side"] == "top"])
+    incomplete = verify_v10_dtn_port_mode_table(table, expected_channel_count=4)
+    assert not incomplete["passed"]
+    assert incomplete["channel_count_by_side"] == {"top": 2, "bottom": 0}
 
 
 def test_nested_checkpoint_packet_creates_parent_and_roundtrips(tmp_path):

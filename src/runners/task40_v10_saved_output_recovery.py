@@ -274,7 +274,10 @@ def recover_task40_v10_saved_output(
 
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.postprocessing.task40_saved_field_h_comparison import restore_p6_total_field
-    from src.runners.task40_v10_output_checker import verify_v10_output_bundle
+    from src.runners.task40_v10_output_checker import (
+        verify_v10_dtn_port_mode_table,
+        verify_v10_output_bundle,
+    )
     from src.runners.task40_v10_worker import (
         _candidate_contract,
         _disk_admit,
@@ -483,19 +486,27 @@ def recover_task40_v10_saved_output(
         }
         energy_error = abs(power["R"] + power["T"] + power["A_volume"] - 1.0)
         absorption_error = abs(power["A"] - power["A_volume"])
+        output_files = _file_manifest(output_dir)
+        if not output_files:
+            raise ValueError("V10 field/mode/diffraction export produced no files")
+        port_mode_table_check = verify_v10_dtn_port_mode_table(
+            output_dir / "dtn_port_diffraction_orders_3d.csv",
+            expected_channel_count=_MODE_COUNT,
+        )
+        single_side_order_count_passed = (
+            output.get("diffraction_channel_count") == _MODE_COUNT // 2
+        )
         output_pass = bool(
             output.get("electric_finite") is True
             and output.get("auxiliary_finite") is True
-            and output.get("diffraction_channel_count") == _MODE_COUNT
+            and single_side_order_count_passed
+            and port_mode_table_check["passed"]
             and np.isfinite(list(power.values())).all()
             and alpha_identity <= _IDENTITY_LIMIT
             and port_closure <= _PORT_LIMIT
             and energy_error <= _ENERGY_LIMIT
             and absorption_error <= _ENERGY_LIMIT
         )
-        output_files = _file_manifest(output_dir)
-        if not output_files:
-            raise ValueError("V10 field/mode/diffraction export produced no files")
         disk_admission_after_output = _disk_admit(
             runtime,
             additional_bytes=0,
@@ -527,12 +538,18 @@ def recover_task40_v10_saved_output(
             "field_file_count": len(output_files),
             "independent_reevaluation": {
                 "entrypoint": "src.runners.task40_v10_output_checker.verify_v10_output_bundle",
-                "scope": "reopen output hashes and recompute saved full-residual algebra",
+                "scope": (
+                    "reopen output hashes, verify complete top/bottom port modes, "
+                    "and recompute saved full-residual algebra"
+                ),
             },
         }
         output_facts = {
             key: value for key, value in output.items() if key != "auxiliary"
         }
+        output_facts["diffraction_channel_count_scope"] = (
+            "single-face order count; complete top+bottom channels are independently checked"
+        )
         packet = {
             "schema": "task40extra.review_v10_b0_candidate_output.v1",
             "recovery_kind": "saved_field_postprocess_only",
@@ -545,6 +562,7 @@ def recover_task40_v10_saved_output(
             },
             "scientific_identity": scientific_identity,
             "output": output_facts,
+            "full_dtn_port_mode_table_check": port_mode_table_check,
             "power": power,
             "R_plus_T_plus_A_volume_minus_one": energy_error,
             "A_minus_A_volume": absorption_error,
@@ -607,6 +625,8 @@ def recover_task40_v10_saved_output(
             "saved_alpha_recovery_identity_relative": alpha_identity,
             "port_closure_relative_from_preserved_packet": port_closure,
             "power": power,
+            "full_dtn_port_mode_table_check": port_mode_table_check,
+            "single_side_order_count_passed": single_side_order_count_passed,
             "energy_closure_absolute": energy_error,
             "absorption_consistency_absolute": absorption_error,
             "output_packet": str(packet_path),
