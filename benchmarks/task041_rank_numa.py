@@ -6,7 +6,8 @@ import ctypes
 import json
 import mmap
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from numbers import Integral
 from pathlib import Path
 from typing import Any
 
@@ -408,14 +409,55 @@ def _check_private_resident_mapping(
         errors.append(f'{label} has resident pages outside node0')
 
 
+def normalize_expected_rank_cpus(
+    expected_rank_cpus: Sequence[int] | None,
+    *,
+    expected_mpi_size: int,
+) -> tuple[int, ...]:
+    """Freeze a rank-to-CPU map, preserving the historical 1-based default."""
+
+    if type(expected_mpi_size) is not int or expected_mpi_size <= 0:
+        raise ValueError('expected MPI size must be a positive integer')
+    if expected_rank_cpus is None:
+        return tuple(range(1, expected_mpi_size + 1))
+    if isinstance(expected_rank_cpus, (str, bytes, bytearray)) or not isinstance(
+        expected_rank_cpus, Sequence
+    ):
+        raise TypeError('expected rank CPUs must be a finite sequence')
+    if len(expected_rank_cpus) != expected_mpi_size:
+        raise ValueError(
+            'expected rank CPU map length must equal the MPI size '
+            f'({expected_mpi_size})'
+        )
+    if any(
+        isinstance(cpu, (bool, np.bool_)) or not isinstance(cpu, Integral)
+        for cpu in expected_rank_cpus
+    ):
+        raise ValueError('expected rank CPUs must be non-boolean integers')
+    cpus = tuple(int(cpu) for cpu in expected_rank_cpus)
+    if any(cpu < 0 for cpu in cpus):
+        raise ValueError('expected rank CPUs must be nonnegative')
+    if len(set(cpus)) != expected_mpi_size:
+        raise ValueError('expected rank CPUs must be unique')
+    return cpus
+
+
 def qualification_errors(
     payload: Mapping[str, Any],
     *,
     expected_mpi_size: int,
     previous_identities: Mapping[int, tuple[int, int]],
     require_startup_probe: bool,
+    expected_rank_cpus: Sequence[int] | None = None,
 ) -> list[str]:
     errors: list[str] = []
+    try:
+        expected_cpus = normalize_expected_rank_cpus(
+            expected_rank_cpus,
+            expected_mpi_size=int(expected_mpi_size),
+        )
+    except (TypeError, ValueError) as exc:
+        return [f'expected rank CPU map is invalid: {exc}']
     if payload.get('mpi_size') != int(expected_mpi_size):
         errors.append('mpi_size is not the expected MPI8 size')
     ranks = payload.get('ranks')
@@ -424,10 +466,13 @@ def qualification_errors(
     seen: set[int] = set()
     for item in ranks:
         rank = item.get('rank') if isinstance(item, Mapping) else None
-        if not isinstance(rank, int) or rank in seen or rank < 0:
+        if type(rank) is not int or rank in seen or rank < 0:
             errors.append('rank identity list is malformed')
             continue
         seen.add(rank)
+        if rank >= int(expected_mpi_size):
+            errors.append(f'rank {rank} is outside the expected MPI range')
+            continue
         evidence = item.get('evidence')
         if not isinstance(evidence, Mapping):
             errors.append(f'rank {rank} evidence is missing')
@@ -436,7 +481,7 @@ def qualification_errors(
         if not isinstance(identity, Mapping):
             errors.append(f'rank {rank} process identity is missing')
             continue
-        expected_cpu = rank + 1
+        expected_cpu = expected_cpus[rank]
         if identity.get('sched_getaffinity') != [expected_cpu]:
             errors.append(f'rank {rank} affinity is not CPU {expected_cpu}')
         if identity.get('current_cpu') != expected_cpu:

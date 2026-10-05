@@ -13744,6 +13744,7 @@ def run_task041_consumer(
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair_request: Mapping[str, Any] | None = None,
+    expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -13777,6 +13778,26 @@ def run_task041_consumer(
         raise Task041ModePrepError(
             "fixed_h6_modal_gmres_research must be a boolean"
         )
+    if expected_rank_cpus is not None and not fixed_h6_modal_gmres_research:
+        raise Task041ModePrepError(
+            "an explicit expected_rank_cpus map is limited to the fixed-H6 modal research path"
+        )
+    if expected_rank_cpus is None:
+        rank_numa_expected_cpus = tuple(
+            range(1, TASK041_BALH_MPI_SIZE + 1)
+        )
+    else:
+        from benchmarks.task041_rank_numa import normalize_expected_rank_cpus
+
+        try:
+            rank_numa_expected_cpus = normalize_expected_rank_cpus(
+                expected_rank_cpus,
+                expected_mpi_size=int(comm.size),
+            )
+        except (TypeError, ValueError) as exc:
+            raise Task041ModePrepError(
+                f"invalid expected_rank_cpus mapping: {exc}"
+            ) from exc
     if not isinstance(reuse_primal_route_plan, bool):
         raise Task041ModePrepError("reuse_primal_route_plan must be a boolean")
     if reuse_primal_route_plan and not fixed_h6_modal_gmres_research:
@@ -14494,6 +14515,7 @@ def run_task041_consumer(
                     expected_mpi_size=8,
                     previous_identities=rank_numa_identities,
                     require_startup_probe=stage == 'startup',
+                    expected_rank_cpus=rank_numa_expected_cpus,
                 )
                 all_stage_errors = comm.allgather(stage_errors)
                 merged_errors = sorted(
@@ -14503,10 +14525,16 @@ def run_task041_consumer(
                         for error in rank_errors
                     }
                 )
+                rank_cpu_policy = 'MPI8_EXPLICIT_RANK_CPU_MAP_socket0_node0'
+                if rank_numa_expected_cpus == tuple(range(1, 9)):
+                    rank_cpu_policy = 'MPI8_CPU1_8_socket0_node0'
+                elif rank_numa_expected_cpus == tuple(range(10, 18)):
+                    rank_cpu_policy = 'MPI8_CPU10_17_socket0_node0'
                 qualification = {
                     'status': 'passed' if not merged_errors else 'failed',
                     'errors': merged_errors or None,
-                    'policy': 'MPI8_CPU1_8_socket0_node0',
+                    'policy': rank_cpu_policy,
+                    'expected_rank_cpus': list(rank_numa_expected_cpus),
                 }
                 raw_payload = dict(payload)
                 payload = dict(raw_payload)

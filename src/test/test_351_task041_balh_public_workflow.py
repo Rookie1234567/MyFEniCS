@@ -59,7 +59,11 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_worker_time_stop_enforced,
     _Task041TopCausalPacketCapture,
 )
-from benchmarks.task041_rank_numa import append_stage_jsonl
+from benchmarks.task041_rank_numa import (
+    append_stage_jsonl,
+    normalize_expected_rank_cpus,
+    qualification_errors,
+)
 from scripts import run_case
 from src.io.execution_plan import (
     TASK041_PUBLIC_SUPERVISOR_ADAPTER,
@@ -116,6 +120,47 @@ class _RankNumaTestComm:
 
     def Barrier(self):
         self.barrier_calls += 1
+
+
+def _rank_numa_qualification_payload(expected_cpus, *, stage="later"):
+    ranks = []
+    for rank, cpu in enumerate(expected_cpus):
+        evidence = {
+            "rank_identity": {
+                "pid": 10000 + rank,
+                "starttime_ticks": 20000 + rank,
+                "sched_getaffinity": [cpu],
+                "current_cpu": cpu,
+                "cpu_topology": [
+                    {"os_cpu": cpu, "socket": 0, "numa_nodes": [0]}
+                ],
+            },
+            "task_policy": {
+                "status": "measured",
+                "mode": 2,
+                "effective_nodemask": [0],
+            },
+            "math_thread_environment": {"status": "measured", "all_one": True},
+            "short_private_probe": (
+                {
+                    "mapping": {
+                        "status": "measured",
+                        "private": True,
+                        "file_backed": False,
+                        "node_pages": {"N0": 1},
+                    }
+                }
+                if stage == "startup"
+                else {"status": "not_applicable"}
+            ),
+            "objects": (
+                []
+                if stage == "startup"
+                else [{"bytes": 0, "empty_owner": True}]
+            ),
+        }
+        ranks.append({"rank": rank, "evidence": evidence})
+    return {"mpi_size": len(expected_cpus), "ranks": ranks}
 
 
 def _specification(path: Path):
@@ -255,6 +300,111 @@ def test_task041_rank_numa_jsonl_write_error_is_broadcast_to_all_ranks(
     assert str(nonroot_error.value) == str(root_error.value)
     assert root_comm.barrier_calls == nonroot_comm.barrier_calls == 0
     assert not (tmp_path / "must-not-be-written.jsonl").exists()
+
+
+def test_task041_rank_numa_qualification_uses_frozen_cpu_map():
+    default_cpus = normalize_expected_rank_cpus(
+        None, expected_mpi_size=8
+    )
+    explicit_cpus = normalize_expected_rank_cpus(
+        tuple(range(10, 18)), expected_mpi_size=8
+    )
+    assert default_cpus == tuple(range(1, 9))
+    assert explicit_cpus == tuple(range(10, 18))
+
+    default_payload = _rank_numa_qualification_payload(default_cpus)
+    assert qualification_errors(
+        default_payload,
+        expected_mpi_size=8,
+        previous_identities={},
+        require_startup_probe=False,
+    ) == []
+    explicit_payload = _rank_numa_qualification_payload(explicit_cpus)
+    assert qualification_errors(
+        explicit_payload,
+        expected_mpi_size=8,
+        previous_identities={},
+        require_startup_probe=False,
+        expected_rank_cpus=explicit_cpus,
+    ) == []
+    default_errors = qualification_errors(
+        explicit_payload,
+        expected_mpi_size=8,
+        previous_identities={},
+        require_startup_probe=False,
+    )
+    assert any("affinity is not CPU 1" in error for error in default_errors)
+
+
+@pytest.mark.parametrize(
+    "mapping",
+    [
+        tuple(range(10, 17)),
+        (10, 11, 12, 13, 14, 15, 16, 16),
+        (10, 11, 12, 13, 14, 15, 16, True),
+        (10, 11, 12, 13, 14, 15, 16, -1),
+    ],
+    ids=("wrong_length", "duplicate", "boolean", "negative"),
+)
+def test_task041_rank_numa_rejects_invalid_expected_cpu_maps(mapping):
+    with pytest.raises(ValueError):
+        normalize_expected_rank_cpus(mapping, expected_mpi_size=8)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_error"),
+    [
+        ("affinity", "affinity is not CPU 13"),
+        ("current_cpu", "current CPU is not 13"),
+        ("socket", "CPU topology is not socket0/node0"),
+        ("node", "CPU topology is not socket0/node0"),
+        ("pid", "PID/starttime changed"),
+    ],
+)
+def test_task041_rank_numa_explicit_map_keeps_identity_and_placement_gates(
+    mutation, expected_error
+):
+    expected_cpus = tuple(range(10, 18))
+    payload = _rank_numa_qualification_payload(expected_cpus)
+    item = payload["ranks"][3]
+    identity = item["evidence"]["rank_identity"]
+    if mutation == "affinity":
+        identity["sched_getaffinity"] = [14]
+    elif mutation == "current_cpu":
+        identity["current_cpu"] = 14
+    elif mutation == "socket":
+        identity["cpu_topology"][0]["socket"] = 1
+    elif mutation == "node":
+        identity["cpu_topology"][0]["numa_nodes"] = [1]
+    previous = {
+        rank: (10000 + rank, 20000 + rank)
+        for rank in range(8)
+    }
+    if mutation == "pid":
+        previous[3] = (99999, 20003)
+    errors = qualification_errors(
+        payload,
+        expected_mpi_size=8,
+        previous_identities=previous,
+        require_startup_probe=False,
+        expected_rank_cpus=expected_cpus,
+    )
+    assert any(expected_error in error for error in errors)
+
+
+def test_task041_rank_numa_requires_exact_rank_evidence_set():
+    expected_cpus = tuple(range(10, 18))
+    payload = _rank_numa_qualification_payload(expected_cpus)
+    payload["ranks"][7]["rank"] = 8
+    errors = qualification_errors(
+        payload,
+        expected_mpi_size=8,
+        previous_identities={},
+        require_startup_probe=False,
+        expected_rank_cpus=expected_cpus,
+    )
+    assert any("outside the expected MPI range" in error for error in errors)
+    assert "not every expected rank supplied evidence" in errors
 
 
 def test_task041_cell_condensed_contract_survives_resolved_serialization():
@@ -1885,6 +2035,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
 ):
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task041_exact_side_workflow as worker
+    from benchmarks import task041_rank_numa
     from src.solvers import hybrid_fem_modal_augmented_direct as layout_module
     from src.solvers.physical_balanced_fused_volume import (
         build_task041_fused_physical_volume_context,
@@ -1944,6 +2095,9 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
 
     def intercept_candidate_setup(*_args, **kwargs):
         captured.update(kwargs)
+        rank_callback = kwargs.get("rank_numa_stage_callback")
+        if rank_callback is not None:
+            rank_callback("candidate_setup_probe")
         raise SetupReached
 
     resource_policy_marker_limits_seen = []
@@ -2068,6 +2222,67 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     )
     captured.clear()
     resource_policy_marker_limits_seen.clear()
+    explicit_rank_cpus = tuple(range(10, 18))
+
+    class RankNumaComm:
+        rank = 0
+        size = 8
+
+        def __init__(self, expected_cpus):
+            self.expected_cpus = expected_cpus
+
+        def gather(self, _local, root):
+            assert root == 0
+            return [
+                {
+                    "rank": entry["rank"],
+                    "stage": _local["stage"],
+                    "collective_status": "measured",
+                    "rank_error": None,
+                    "rank_errors": None,
+                    "evidence": entry["evidence"],
+                }
+                for entry in _rank_numa_qualification_payload(
+                    self.expected_cpus, stage=_local["stage"]
+                )["ranks"]
+            ]
+
+        @staticmethod
+        def bcast(value, root):
+            assert root == 0
+            return value
+
+        def allgather(self, value):
+            return [value] * self.size
+
+    qualified_rank_maps = []
+    original_qualification_errors = task041_rank_numa.qualification_errors
+
+    def record_expected_rank_map(payload, **kwargs):
+        qualified_rank_maps.append(
+            (kwargs["expected_rank_cpus"], payload["stage"])
+        )
+        return original_qualification_errors(payload, **kwargs)
+
+    monkeypatch.setattr(
+        task041_rank_numa,
+        "collective_snapshot",
+        lambda _comm, stage, _arrays, *, include_probe: {
+            "rank": 0,
+            "stage": stage,
+            "collective_status": "measured",
+            "rank_error": None,
+            "rank_errors": None,
+            "evidence": _rank_numa_qualification_payload(
+                _comm.expected_cpus,
+                stage="startup" if include_probe else "later",
+            )["ranks"][0]["evidence"],
+        },
+    )
+    monkeypatch.setattr(
+        task041_rank_numa, "qualification_errors", record_expected_rank_map
+    )
+    monkeypatch.setattr(task041_rank_numa, "append_stage_jsonl", lambda *_a, **_k: None)
     with pytest.raises(SetupReached):
         worker.run_task041_consumer(
             input_path=formal_cell_condensed_path,
@@ -2152,6 +2367,26 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         encoding="utf-8",
     )
     captured.clear()
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="explicit expected_rank_cpus map is limited",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_explicit_rank_map_without_fixed_h6_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            expected_rank_cpus=tuple(range(10, 18)),
+        )
+    assert captured == {}
+    captured.clear()
     resource_policy_marker_limits_seen.clear()
     with pytest.raises(SetupReached):
         worker.run_task041_consumer(
@@ -2186,6 +2421,46 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
         )
     )
+
+    default_rank_cpus = tuple(range(1, 9))
+    qualified_rank_maps.clear()
+    captured.clear()
+    resource_policy_marker_limits_seen.clear()
+    monkeypatch.setattr(
+        worker, "_task041_rank_numa_observed_backend", lambda **_k: "cell_condensed"
+    )
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_fixed_h6_default_cpu_map_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=RankNumaComm(default_rank_cpus),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+            reuse_primal_route_plan=True,
+            reuse_leading_ph_dual=True,
+        )
+    monkeypatch.setattr(worker, "_task041_rank_numa_observed_backend", lambda **_k: None)
+    assert [stage for _cpus, stage in qualified_rank_maps] == [
+        "startup",
+        "candidate_setup_probe",
+    ]
+    assert qualified_rank_maps[0][0] is qualified_rank_maps[1][0]
+    assert qualified_rank_maps[0][0] == default_rank_cpus
+    assert [
+        entry["qualification"]["expected_rank_cpus"]
+        for entry in captured["rank_numa_evidence"]
+    ] == [list(default_rank_cpus), list(default_rank_cpus)]
+    assert [
+        entry["qualification"]["policy"]
+        for entry in captured["rank_numa_evidence"]
+    ] == ["MPI8_CPU1_8_socket0_node0"] * 2
 
     captured.clear()
     with pytest.raises(SetupReached):
@@ -2270,6 +2545,10 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
 
     captured.clear()
     resource_policy_marker_limits_seen.clear()
+    qualified_rank_maps.clear()
+    monkeypatch.setattr(
+        worker, "_task041_rank_numa_observed_backend", lambda **_k: "cell_condensed"
+    )
     with pytest.raises(SetupReached):
         worker.run_task041_consumer(
             input_path=formal_13p5_cell_condensed_path,
@@ -2279,14 +2558,30 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             run_directory=tmp_path / "worker_13p5_fixed_h6_research_run",
             source_sha=source_sha,
             candidate=True,
-            comm=FakeComm(),
+            comm=RankNumaComm(explicit_rank_cpus),
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
             fixed_h6_modal_gmres_research=True,
             reuse_primal_route_plan=True,
             reuse_leading_ph_dual=True,
+            expected_rank_cpus=explicit_rank_cpus,
         )
+    monkeypatch.setattr(worker, "_task041_rank_numa_observed_backend", lambda **_k: None)
+    assert [stage for _cpus, stage in qualified_rank_maps] == [
+        "startup",
+        "candidate_setup_probe",
+    ]
+    assert qualified_rank_maps[0][0] is qualified_rank_maps[1][0]
+    assert qualified_rank_maps[0][0] == explicit_rank_cpus
+    assert [
+        entry["qualification"]["expected_rank_cpus"]
+        for entry in captured["rank_numa_evidence"]
+    ] == [list(explicit_rank_cpus), list(explicit_rank_cpus)]
+    assert [
+        entry["qualification"]["policy"]
+        for entry in captured["rank_numa_evidence"]
+    ] == ["MPI8_CPU10_17_socket0_node0"] * 2
     assert captured["fixed_h6_modal_gmres_research"] is True
     assert captured["reuse_primal_route_plan"] is True
     assert captured["reuse_leading_ph_dual"] is True
