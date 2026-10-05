@@ -283,6 +283,11 @@ def test_run_case_launcher_supervisor_worker_runtime_no_fe_chain(
 
     p4_payload = load_and_resolve(INPUT).as_jsonable()
     p6_payload = load_and_resolve(P6_INPUT).as_jsonable()
+    assert p4_payload["geometry"] == p6_payload["geometry"]
+    assert p4_payload["materials"] == p6_payload["materials"]
+    assert p4_payload["discretization"]["mesh_axis_y_values"] == p6_payload[
+        "discretization"
+    ]["mesh_axis_y_values"]
     p4_calls = []
 
     def p4_leaf(*args, **kwargs):
@@ -301,6 +306,8 @@ def test_run_case_launcher_supervisor_worker_runtime_no_fe_chain(
     assert p4_kwargs["rhs_identity_policy"] == "case_bound_physical_rhs"
     assert p4_kwargs["reuse_qualified_jit"] is True
     assert p4_kwargs["write_ordered_mode_manifest"] is True
+    assert p4_kwargs["write_geometry_audit"] is False
+    assert p4_kwargs["write_rectangular_air_void_audit"] is True
     assert p4_kwargs["save_complete_field_packet"] is True
     assert p4_kwargs["notch_by_stage"] == {"B0_CONTROL": False}
 

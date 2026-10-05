@@ -69,6 +69,7 @@ GX784_M2 = INPUT_ROOT / "nonseparable_gx784_p6_q4_review_v5.dat"
 E1_M2 = INPUT_ROOT / "nonseparable_e1_p6_q4_manual_m2_growth.dat"
 E2_M2 = INPUT_ROOT / "nonseparable_e2_p6_q4_manual_m2_growth.dat"
 G0_DIRECT = INPUT_ROOT / "nonseparable_g0_p6_direct_reference.dat"
+B0_CONTROL = INPUT_ROOT / "b0_p4_balh_control_v10.dat"
 
 
 def test_all_task40_inputs_resolve_to_the_frozen_physical_identity():
@@ -396,6 +397,7 @@ def test_task40_rejects_a_different_void_even_if_it_remains_inside_the_grating(
 @pytest.mark.parametrize(
     ("input_path", "mesh_id", "expected_axes", "expected_tags", "expected_void_cells"),
     [
+        (B0_CONTROL, "B0", (4, 4, 5), {1: 42, 2: 16, 3: 22}, 2),
         (G0, "G0", (6, 4, 14), {1: 224, 2: 24, 3: 88}, 8),
         (G1, "G1", (10, 4, 22), {1: 536, 2: 80, 3: 264}, 24),
         (E1_M2, "E1", (10, 4, 19), {1: 460, 2: 80, 3: 220}, 20),
@@ -430,6 +432,19 @@ def test_actual_mesh_builder_preserves_task40_void_and_material_counts(
         "z": True,
     }
     assert all(audit["nonseparable_extent_axes"].values())
+    if mesh_id == "B0":
+        actual_axes = {
+            axis: np.unique(mesh_data.mesh.geometry.x[:, index])
+            for index, axis in enumerate(("x", "y", "z"))
+        }
+        for axis in ("x", "y", "z"):
+            assert np.array_equal(
+                actual_axes[axis], np.asarray(plan["axis_coordinates_nm"][axis])
+            )
+        assert cfg.geometry_model_variant == "original"
+        assert cfg.geometry_identity == "task40extra_nonseparable_0p7nm_v1"
+        assert audit["owned_void_box_cell_count"] == 2
+        assert audit["non_air_tagged_void_box_cell_count"] == 0
 
 
 def test_task40_same_mesh_levels_preserve_air_void_audit_metadata():

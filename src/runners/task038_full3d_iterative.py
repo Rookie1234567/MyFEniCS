@@ -102,7 +102,7 @@ def run_full3d_iterative(
             restore_summary_schema=True,
             reuse_qualified_jit=True,
             write_ordered_mode_manifest=True,
-            write_geometry_audit=True,
+            write_geometry_audit=False,
             write_rectangular_air_void_audit=True,
             save_complete_field_packet=True,
             capacity_trial=True,
