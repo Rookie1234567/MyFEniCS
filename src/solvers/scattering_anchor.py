@@ -102,10 +102,24 @@ def configuration(case, degree=4):
 def make_setup(case, degree, journal):
     from mpi4py import MPI
     from dolfinx import mesh as dxmesh
-    from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+    from dolfinx import fem, default_real_type
+    from basix.ufl import element
+    from src.geometry.mesh_builder_3d import _structured_hexa_mesh,_mark_boundary_facets,_mark_cells
+    from src.constraints.floquet_3d import build_double_floquet_mpc
     cfg=configuration(case,degree)
     with journal.measured('mesh_MPC'):
-        setup=_build_same_mesh_levels(cfg,MPI.COMM_SELF,(degree,),include_positive_coefficients=False)
+        # The public level planner intentionally admits only historical R13
+        # explicit axes. This new opt-in calls its unchanged exact mesh/space/
+        # MPC constructors directly, without widening that historical guard.
+        axes=plan_record()['physical_descriptor']['geometry']['axes_nm']
+        mesh=_structured_hexa_mesh(MPI.COMM_SELF,axes['x'],axes['y'],axes['z'],
+                                  preserve_input_partition=cfg.stage4_preserve_structured_input_partition)
+        facet_tags,_=_mark_boundary_facets(mesh,cfg)
+        cell_tags=_mark_cells(mesh,cfg)
+        space=fem.functionspace(mesh,element('N1curl',mesh.basix_cell(),degree,dtype=default_real_type))
+        mesh_data=SimpleNamespace(mesh=mesh,cell_tags=cell_tags,facet_tags=facet_tags)
+        floquet=build_double_floquet_mpc(space,mesh_data,cfg)
+        setup={'mesh':mesh,'mesh_data':mesh_data,'spaces':{degree:space},'floquets':{degree:floquet}}
         mesh=setup['mesh']; tags=setup['mesh_data'].cell_tags
         centers=dxmesh.compute_midpoints(mesh,3,tags.indices)
         regular=tags.values.copy(); values=regular.copy()
