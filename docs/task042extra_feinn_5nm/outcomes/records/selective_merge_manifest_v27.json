@@ -1,0 +1,70 @@
+{
+  "schema": "w1-selective-merge.v27",
+  "groups": [
+    {
+      "group": "reusable_runner_watchdog",
+      "files": [
+        "src/runners/w1_admission_scope.py",
+        "src/runners/w1_admission_budget.py",
+        "src/runners/task042_shared.py",
+        "src/runners/feinn_resources.py",
+        "src/runners/durable_terminal.py",
+        "src/runners/w1_component_receiver.py"
+      ],
+      "change": "resource search, failure evidence and timing; optional arguments keep ordinary defaults",
+      "tests": "23new+16affectedpure; real bounded R lifecycle; old full FE evidence not rerun",
+      "production": "NOT_GRANTED",
+      "order": 1
+    },
+    {
+      "group": "checker_receipt",
+      "files": [
+        "src/io/w1_evidence.py",
+        "src/io/w1_recovery_commit.py",
+        "src/io/w1_reproduced_input.py",
+        "src/io/w1_receiver_contract.py"
+      ],
+      "change": "typed Git/disk identities, successful supervision and final-marker transaction",
+      "tests": "writer/seal/reopen/consumer fixture plus real sealed failure and refusal",
+      "production": "NOT_GRANTED",
+      "order": 2
+    },
+    {
+      "group": "research_only",
+      "files": [
+        "src/runners/w1_input_recovery.py",
+        "input/task042extra_feinn_5nm/v27_rb_input_recovery.dat",
+        "input/task042extra_feinn_5nm/v27_rb_control.dat",
+        "input/task042extra_feinn_5nm/v27_rb_boundary.dat",
+        "input/task042extra_feinn_5nm/v27_rb_boundary_check.dat",
+        "src/test/test_w1_recovery_handoff.py"
+      ],
+      "change": "one fixed exact-byte generator and bounded stage contract; original Maxwell math unchanged",
+      "fresh_PDE_evidence": "NONE",
+      "order": 3
+    },
+    {
+      "group": "compact_evidence_docs",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v27.md",
+        "docs/task042extra_feinn_5nm/outcomes/w1_input_reproduction_v27.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/*_v27.json"
+      ],
+      "change": "true input failure and independent witness; prior history preserved",
+      "order": 4
+    },
+    {
+      "group": "do_not_merge",
+      "files": [
+        "benchmarks/artifacts/task42extra/w1_receiver/v27_rb",
+        "tmp/task42extra/w1_receiver/v27",
+        "tmp/task42extra/durable/w1-receiver-v27_rb-input_recovery"
+      ],
+      "change": "large failed manifest, raw observations, caches, browser; ignored",
+      "order": null
+    }
+  ],
+  "production_numerical_core_changes": "NONE",
+  "master_merge_approved": false,
+  "old_source_and_default_solver_preserved": true
+}

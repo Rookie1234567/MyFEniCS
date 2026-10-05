@@ -2180,3 +2180,18 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 原完整终点 / not_qualified | decimal2e12B/172800s原精度门保持；M3600较好/Mfinal退化、全部失败/UNKNOWN/费用保留 | FULL_TARGET_NOT_QUALIFIED / NO_VERIFIED_NN_INCREMENT |
 
 初始JSON/fixture/lint及重新准入dat错误、严格修复池限定均真实保留；正式R树峰NOT_RETAINED，不用轻测试峰补造原生资格。FEINN_MAIN_SOLVER_ON_HOLD、D0成本否决/D1未运行不变，无production/master合并授权。[Response V26](task042extra_feinn_5nm/response_v26.md)、[source/run](task042extra_feinn_5nm/outcomes/records/run_index_v26.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v26.json)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v26.json)。
+
+## 3.44.25 Task42extra V27：真实原清单重现的有界负结果
+
+本条是原尺寸外部模式输入的身份检验，不是新FE模型或散射解。冻结数学c354afa/43文件、50×25×140nm/Si17/120nm/λ0.7与32060模式不变；接收source904131e19396c4b6896d42056df2e27387908c1f，后续文档HEAD分开。
+
+| measured / failed / not_run | 实际值、单位与原门 | 判断 |
+| --- | --- | --- |
+| 纯逻辑新资格 | 39/39；旧92A复用、Ruff/compileall/4dat通过 | 逻辑资格，不是FE证明 |
+| 唯一Rmanifest | 实际36,263,033B/SHA7dd07d71…，原36,244,923B/SHA52d7ec80… | BITWISE_REPRODUCTION_FAILED；多18,110B |
+| key/物理身份 | 32060唯一有序key/03c1965c…、物理a855565b…相同；inventory不同 | 原manifest数值差NOT_RETAINED；根因UNKNOWN |
+| 资源/完整R成本 | 全链81.936506s，终端树采样峰437,981,184B，hard2GiB/ownswap0 | 两层新样本及60s PSI通过，监督前峰未保留 |
+| 封存/拒绝 | 43Git blob＋实际manifest独立重开；最终ledger/B标记未发布 | 不把失败candidate交给B |
+| 原场/端口精度 | B0/B1/checker、E/H/curl/R/T/A/A_volume未运行；新factor/solve/NN0 | q60准确性UNKNOWN，原目标未资格化 |
+
+原完整3D、decimal2e12B/172800s原门不改；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED及全部旧负结果/费用保留，D0否决/D1未运行不改。真实hash失败后没有第二生成、改库或替代输入，无production/master批准。[回执](task042extra_feinn_5nm/response_v27.md)、[保存输入](task042extra_feinn_5nm/outcomes/records/input_reproduction_v27.json)、[独立复核](task042extra_feinn_5nm/outcomes/records/independent_checker_v27.json)、[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v27.json)。

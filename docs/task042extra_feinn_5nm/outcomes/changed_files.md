@@ -297,3 +297,26 @@ clean实现357748671d1e8106027c0ee680cfdedb874837ec新增src/io/w1_receiver_cont
 实现9ec41386新增src/io/w1_reproduced_input和src/runners/w1_input_recovery；在现有W1 IO/evidence/receiver/payload中加入显式input_recovery及bitwise_reproduced_v26分支。沿用同一durable/one-run，不复制求解器；冻结c354afa真实导入闭包扩为43文件，原19-file manifest不改。旧ledger白名单、数学源码、普通默认、原task/review不改。新增4个R/B dat、4个资源重新准入dat与16项pure测试；bc824b64的dat根错误由8675c955修正，全部失败保留，严格修复池流程限定不隐藏。
 
 本轮增加Response V26、专题及run/来源/测试/成本/repair/Gate/接收/分组/呈现compact；README/summary只前置当前条目，progress/model/test只追加本任务内容。原生worker0、模式生成0、B0/B1/checker未运行，不提升生产或NN资格。大日志、原资格、资源盘点与受监督轨迹留ignored；[六依赖组](records/selective_merge_manifest_v26.json)、[源文件hash](records/run_index_v26.json)明确收口边界，未修改其他分支或合并master。
+
+## Review V26 后续 V27：资源范围和恢复事务，原数学不改
+
+clean source904131e19396c4b6896d42056df2e27387908c1f的16个实现/输入/测试文件见下；原c354afa数学、旧review/task、V1–V26结果均未改。后续新增V27compact、Response/专题和导航/总账按[分组](records/selective_merge_manifest_v27.json)审阅，不以文档HEAD代替实际source。大失败manifest、原生cache、观察、worker日志和浏览器仍ignored，无production/default数值或master批准。
+
+```text
+src/io/w1_recovery_commit.py
+src/runners/w1_admission_scope.py
+src/runners/w1_admission_budget.py
+src/io/w1_evidence.py
+src/io/w1_reproduced_input.py
+src/io/w1_receiver_contract.py
+src/runners/w1_input_recovery.py
+src/runners/w1_component_receiver.py
+src/runners/feinn_resources.py
+src/runners/task042_shared.py
+src/runners/durable_terminal.py
+src/test/test_w1_recovery_handoff.py
+input/task042extra_feinn_5nm/v27_rb_input_recovery.dat
+input/task042extra_feinn_5nm/v27_rb_control.dat
+input/task042extra_feinn_5nm/v27_rb_boundary.dat
+input/task042extra_feinn_5nm/v27_rb_boundary_check.dat
+```

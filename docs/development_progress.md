@@ -3307,3 +3307,13 @@ FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED
 两次外层资源盘点有候选CPU，固定核内层均拒绝，原生worker/模式生成0；一次实测新窗口重新准入已耗尽。真实R、B0/B1、数值checker未运行，q60/跨ABI准确性UNKNOWN，源dat路径修正的严格工程池计数限定和全部初始失败保留。新增轻树峰93003776B、ownswap0；正式launcher树峰未采样，不能宣称完整资源资格。唯一R/B10800s窗包含开发/失败/等待/交付，R停止观察1358.198787s，旧A2361.839628s、旧V252846.101466s、旧失联3284s及真实日历间隔另保留，不重置费用。
 
 交付是明确可审阅的opt-in接收实现，数值链关闭，需先获得固定核准入链的可核归因与新的资源/修复范围，不能自动第三次准入。主线承担旧数组/p6恢复，本支不重复B2、dot后端或传统PC。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED、M3600较好/Mfinal退化、D0否决/D1未运行保持；原50×25×140nm/Si17/120nm/λ0.7完整3D、decimal2e12B/172800s及原门仍未达成。[回执](task042extra_feinn_5nm/response_v26.md)、[专题](task042extra_feinn_5nm/outcomes/w1_input_recovery_v26.md)、[完整账](task042extra_feinn_5nm/outcomes/records/resource_costs_v26.json)。
+
+## 2026-10-05 Task42extra V27：跨原生环境的唯一R重现失败及拒绝闭环
+
+本轮修复内层仅搜索已pin单核的缺口，保存pin前允许范围/身份并在新观察上保留原排除；修复Git源码与数值artifact混淆和成功标记提前发布。clean source904131e19396c4b6896d42056df2e27387908c1f，启动29实际依赖绑定。23新增＋16受影响旧测试共39通过；旧92项A复用，全部早期fixture/资格失败保留。
+
+已实际一次生成，而非只做实现/测试：原冻结c354afa数学/43文件生成36,263,033B/SHA7dd07d71…，与原36,244,923B/SHA52d7ec80…不符，多18,110B；32060唯一有序key和物理身份符合，含数值manifest的inventory hash不符。监督COMPLETED/0是运行成功，科学状态BITWISE_REPRODUCTION_FAILED。原字节不可用，逐字段数值差NOT_RETAINED/根因UNKNOWN；无第二候选、换ABI/序列化扫描。
+
+R全链81.936506s、身份匹配终端树采样峰437,981,184B、2GiB/ownswap0；两层新样本/60s PSI通过。43源码与失败manifest封存，独立保存checker重算并验证实际消费者/commit拒绝，最终ledger/B标记未发布。B0/B1及独立B1checker按前置FAIL停止，FE action/factor/solve/Gram/NN0；未接管主线p6或dot后端。新10800s连续窗和所有旧费用保留，嵌套阶段不双加，项目精确累计UNKNOWN。
+
+FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED、M3600较好/Mfinal退化、D0成本否决/D1未运行保持；原50×25×140nm/Si17/120nm/λ0.7完整3D、decimal2e12B/172800s及原精度门仍未达成。交付后等待审阅，无master合并或继续数值许可。[回执](task042extra_feinn_5nm/response_v27.md)、[独立checker](task042extra_feinn_5nm/outcomes/records/independent_checker_v27.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v27.json)。

@@ -1,0 +1,46 @@
+{
+  "schema": "w1-repair-log.v27",
+  "initial_P0_fixes": [
+    {
+      "failure": "fixture missing helper below overridden ROOT",
+      "hypothesis": "helper must be located relative to its module",
+      "change": "use actual __file__ sibling for w1_reproduced_input",
+      "test": "first failed run preserved; final actual writer/seal/reopen/consumer fixture passes"
+    },
+    {
+      "failure": "fixture expects original 36244923 byte count instead of fixture size",
+      "hypothesis": "function default captured before monkeypatch",
+      "change": "explicit expected bytes supplied by contract constants; production value unchanged",
+      "test": "two original one-failure receipts preserved; final39pass"
+    },
+    {
+      "failure": "inherited accepted A receipt outside new qualification private parent",
+      "hypothesis": "v27 reuses historical v26 qualification but must not accept arbitrary path",
+      "change": "bind only exact historical v26 A receipt plus current delta source/test receipts",
+      "test": "failed qualification saved separately; final validate_A passes"
+    }
+  ],
+  "authorized_changes": [
+    {
+      "failure": "old inner search accidentally one pinned core; failure observations missing",
+      "hypothesis": "pre-pin allowed range must be validated separately from fresh measurements",
+      "change": "capture original allowed/cpuset/topology/PID; optional current audit intersection; original exclusions/default preserved",
+      "test": "scope/SMT/neighbor/PID/failed-observation fixtures; actual outer and inner each passed on CPU12"
+    },
+    {
+      "failure": "Git blob incorrectly treated as disk receipt; final marker written before sealed success",
+      "hypothesis": "typed Git identity and disk artifact are different; final input is a transaction",
+      "change": "verify43 original Git blobs separately; cleared candidate→seal→reopen consumer→final ledger→marker last",
+      "test": "actual writer/seal/reopen fixtures and negative controls; real failed R sealed43 Git blobs and one manifest; actual failed candidate commit rejected"
+    }
+  ],
+  "formal_engineering_repair_rounds_limit": 2,
+  "formal_engineering_repair_rounds_used_after_clean_freeze": 0,
+  "formal_R_generator_replays": 0,
+  "genuine_input_mismatch": {
+    "status": "BITWISE_REPRODUCTION_FAILED",
+    "change": "none; preserve candidate and stop dependent B",
+    "numeric_retry": false
+  },
+  "correct_workers_not_repeated": true
+}

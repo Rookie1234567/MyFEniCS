@@ -1,3 +1,19 @@
+# 当前：Review V26 → Response V27，唯一R真实生成但原字节重现失败
+
+修复pin前允许范围与内层新样本选择、Git/blob封存和marker-last事务，39项定向逻辑资格通过。已实际完成一次原生模式生成；文件比原要求多18,110B且完整hash不同，所以B0/B1停止。32060名称及物理身份一致不能替代数值原件，未用剩余时间重试候选。
+
+| 固定对象 / measured、failed、not_run | 实际值、门与原因 | 证据 |
+| --- | --- | --- |
+| 实现/实际R source | 904131e19396c4b6896d42056df2e27387908c1f；数学c354afa、43文件/1,054,179B，启动29依赖 | [run/source](records/run_index_v27.json) |
+| P0逻辑资格 | 23新增＋16旧增量＝39pass；旧92A复用；P0完整边界1144.441616s | [测试/全部初始失败](records/targeted_tests_v27.json) |
+| R原件重现 / failed | 实际36,263,033B/SHA7dd07d71…；原36,244,923B/SHA52d7ec80…；只生成1次 | [输入原值/hash](records/input_reproduction_v27.json) |
+| 部分身份及安全拒绝 | 32060唯一有序key/物理hash一致；inventory hash不符；原数值逐字段差NOT_RETAINED；最终ledger/输入标记未发布 | [独立重算](records/independent_checker_v27.json) |
+| 真实R成本 / s、B | 全链81.936506s；同时终端树采样峰437,981,184B，hard2GiB/ownswap0；监督前峰未保留 | [完整账/不双加](records/resource_costs_v27.json) |
+| B0/B1/B1checker / not_run | 原重现门失败；q60准确性UNKNOWN；FE action/factor/solve/Gram/NN0 | [Gate](records/gate_decisions_v27.json)、[接入包](records/integration_packet_v27.json) |
+| 原完整目标与神经 | 原50×25×140nm、Si17/120nm、λ0.7、decimal2e12B/172800s和原精度门未达成 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED |
+
+[Response V27](../response_v27.md)、[专题](w1_input_reproduction_v27.md)、[有限修复](records/repair_log_v27.json)、[分组合并边界](records/selective_merge_manifest_v27.json)、[呈现范围](records/render_check_v27.json)。保留M3600较好、Mfinal退化、D0否决/D1未运行、所有旧FAIL/UNKNOWN和费用；不把COMPLETED运行状态写成科学PASS。交付后清场停止等待审阅，下方全部历史原文逐字保留，其旧“当前”不授新预算。
+
 # 当前：Review V25 §8 → Response V26，R输入接线完成、资源阻塞
 
 新增一次确定性输入恢复入口，要求原文件逐字节相同后才进入q60组件；16项增量fixture、Ruff、compileall通过，已接受92项A按hash复用。实际两次launcher在固定核内层审计拒绝，**原生worker和生成次数0，R/B0/B1及数值checker未运行**。这是部分实现交付，不能称找回原件、q60全模式资格或完整解。

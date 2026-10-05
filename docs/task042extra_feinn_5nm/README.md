@@ -1,5 +1,14 @@
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
+## 当前：Response V27 — 已实际生成，原清单逐字节重现失败
+
+Review V26两处工程修复和39项定向测试完成，旧92项A资格复用。唯一原生R实际生成36,263,033B/SHA7dd07d71…，要求36,244,923B/SHA52d7ec80…；32060有序key和物理hash一致，但数值原件门FAIL。失败文件已封存并独立重开，消费者拒绝，最终ledger/B输入标记均未创建。B0/B1未运行，q60精度仍UNKNOWN，不原样再生成。
+
+clean实现及实际R source为904131e19396c4b6896d42056df2e27387908c1f，数学c354afa、43-file闭包，启动29依赖；R全链81.936506s、同时树峰437,981,184B、2GiB/ownswap0。不是资源阻塞、q60失败、完整FE解或NN收益。[回执](response_v27.md)、[专题](outcomes/w1_input_reproduction_v27.md)、[输入/hash](outcomes/records/input_reproduction_v27.json)、[独立checker](outcomes/records/independent_checker_v27.json)、[费用](outcomes/records/resource_costs_v27.json)。
+
+FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变；M3600较好、Mfinal退化、D0否决/D1未运行与全部负结果/UNKNOWN保持。原50×25×140nm/Si17/120nm/λ0.7完整3D、decimal2e12B/172800s原门尚未达成，数值链关闭，等待ChatGPT审阅。下方原文为历史，不是当前启动许可。
+
+
 ## 当前：Response V26 — R接线资格完成，原生恢复在资源门前停止
 
 Review V25最新§8已授权一次确定性输入恢复；本轮新增实际R stage、独立新来源凭据、原窗继承和全频率覆盖，16项增量测试通过，旧92项A不重跑。两次内层固定核准入拒绝，原生worker/模式生成0，R逐字节恢复UNKNOWN、B0/B1未运行。不是缺远程review，也不是输入hash或q60数学失败。

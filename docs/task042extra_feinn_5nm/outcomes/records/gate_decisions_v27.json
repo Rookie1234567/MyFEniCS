@@ -1,0 +1,33 @@
+{
+  "schema": "w1-Gate.v27",
+  "P0": "PURE_LOGIC_DELTA_QUALIFIED",
+  "resource_outer_inner": "PASS_NEW_VERIFIED_ALLOWED_SCOPE",
+  "fresh_ABI": "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION",
+  "R": "BITWISE_REPRODUCTION_FAILED",
+  "B0": "NOT_RUN_R_BITWISE_REPRODUCTION_FAILED",
+  "B1_all_32060_q60": "NOT_RUN_R_BITWISE_REPRODUCTION_FAILED",
+  "B1_independent_saved_checker": "NOT_RUN_R_BITWISE_REPRODUCTION_FAILED",
+  "saved_R_independent_checker": "SAVED_FAILURE_VALIDATED_DEPENDENT_B_REJECTED",
+  "B2": "NOT_AUTHORIZED_MAINLINE_OWNS_RECOVERY",
+  "q60_accuracy": "UNKNOWN_NOT_RUN",
+  "official_results": false,
+  "new_production_qualification": false,
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "D0": "COST_VETO",
+  "D1": "NOT_RUN",
+  "retained_history": [
+    "M3600_better",
+    "Mfinal_degraded",
+    "all_old_FAIL_UNKNOWN_costs"
+  ],
+  "strict_original_gates_unchanged": {
+    "explicit_residual": 1e-06,
+    "E_H_scaled_curl_samples_complex_channels": 0.0001,
+    "power_energy": 1e-05,
+    "per_order_power": 1e-06
+  },
+  "no_hash_or_q_retry_after_genuine_mismatch": true,
+  "dependency_stop_basis": "Review V26 §3–4 exact original-byte/hash requirement; both mismatch on unique R"
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "w1-consumable-packet.v27",
+  "state": "ENTRY_LOGIC_QUALIFIED_R_INPUT_REJECTED_NOT_PHYSICALLY_QUALIFIED",
+  "canonical_root": "/home/fenics/Projects/NN-Lab-V2",
+  "branch": "task42extra_feinn_5nm",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "receiver_source_sha": "904131e19396c4b6896d42056df2e27387908c1f",
+  "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "runtime_prefix": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210",
+  "qualified_entry": "python scripts/launch_task42extra_durable.py <explicit-one-run.dat>",
+  "new_inputs": [
+    "input/task042extra_feinn_5nm/v27_rb_input_recovery.dat",
+    "input/task042extra_feinn_5nm/v27_rb_control.dat",
+    "input/task042extra_feinn_5nm/v27_rb_boundary.dat",
+    "input/task042extra_feinn_5nm/v27_rb_boundary_check.dat"
+  ],
+  "frozen_window": {
+    "path": "tmp/task42extra/w1_receiver/v27/P0_R_B_window.json",
+    "bytes": 885,
+    "sha256": "dd47bde81c608b52319c9bd47819536a7aa01d7626c4544afbbf5f508202af55"
+  },
+  "source_binding": {
+    "path": "benchmarks/artifacts/task42extra/w1_receiver/v27_rb/input_recovery/binding.json",
+    "bytes": 8211,
+    "sha256": "952e5f6d334738a05d464573a6d491888bbde31159c233197a88c3f886c2292f"
+  },
+  "actual_rejected_candidate": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v27_rb/input_recovery/original_size_auto_mode_manifest.json",
+    "bytes": 36263033,
+    "sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e"
+  },
+  "failed_candidate_allowed_as_original": false,
+  "no_launch_same_window_or_R_repeat": true,
+  "consumer_state": "NOT_RUN_INPUT_UNAVAILABLE",
+  "future_needed": "actual original hash-bound bytes/ledger or a new explicit identity contract; neither currently present",
+  "new_qualification_scope": "pure stage, resource selection, sealed receipts and refusal; no new B0/B1 physical qualification",
+  "mainline_owns": [
+    "old_arrays_attribution",
+    "p6_recovery",
+    "AUTO_full_domain",
+    "traditional_PC",
+    "global_PDE"
+  ],
+  "dot_owns": [
+    "C1c",
+    "blocked_storage",
+    "backend"
+  ],
+  "standalone_saved_failure_checker": {
+    "path": "tmp/task42extra/w1_receiver/v27/audit_saved_R.py",
+    "bytes": 4653,
+    "sha256": "ff460a5933da7da78181b112f087960349c8f5c6c71884281d1efaaff0dcb3b1"
+  },
+  "official_results": false
+}

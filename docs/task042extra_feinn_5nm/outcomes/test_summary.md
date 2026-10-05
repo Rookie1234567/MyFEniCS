@@ -304,3 +304,9 @@ P0最初workflow接线和compact负控字段失败保留，修复测试后最多
 初始JSON整数资源键、输出目录、缺冻结模块/Mapping及未使用导入lint失败均保留；四个受监督增量资格2.533773/2.688902/2.259993/2.656706s，最后16/16且Ruff通过；最大采样同时树峰93,003,776B、hard2GiB/ownswap0/清场。重新准入dat曾复用output_root，重复保护拒绝后仅修dat根并定向断言全部路径同根，另列严格修复轮限定；没有因此重复worker或生成器。
 
 两次R内层资源拒绝使ABI、native方向/MPC、完整q60/Decimal覆盖及数值保存checker全部未运行。关闭后只核saved receipt/JUnit/current source和43个Git原blob，不重producer、A/full pytest、昂贵FE、参考或NN。新页本地parser与旧正文保留检查另记；实际GitHub两新页发布6a698306…标题及4表、6图目视通过，浏览器21.901543s/树峰1,775,185,920B/ownswap0且清场；其他导航/最终seal尾段不授视觉PASS，旧review有限范围按原审计复用。[测试](records/targeted_tests_v26.json)、[metadata checker](records/independent_checker_v26.json)、[修复](records/repair_log_v26.json)、[呈现](records/render_check_v26.json)。
+
+## Review V26 后续 V27：39项增量资格、一次真实R及保存拒绝
+
+新资源范围、失败观察、typed Git blob/磁盘封存、marker-last、实际writer/seal/reopen/消费者和窗口限额共23项新增，与16项受影响旧增量共39项通过；Ruff/compileall及四份v27dat validate-only通过。旧A92由原source/hash绑定复用，没有重跑。最初两次fixture各33pass/1fail及一次旧A路径资格失败保留；修好后扩充相关测试，最终39pass。clean实现904131e19396c4b6896d42056df2e27387908c1f之后无正式工程重放。[原日志](records/targeted_tests_v27.json)。
+
+唯一真实R得到BITWISE_REPRODUCTION_FAILED：文件36,263,033B，原36,244,923B，完整SHA不同；32060keys和物理hash一致不能替代原件。运行COMPLETED/exit0不等于科学PASS。实际43Git blobs与manifest封存成功，独立只读checker重算完整hash/keys/身份并用实际commit/消费者验证拒绝；checker4.873763s/341,622,784B/ownswap0、2GiB、子树清场。B0/B1和B1物理checker未运行，原字段差NOT_RETAINED；未full pytest/CI/旧昂贵回归，未调整ABI。[保存checker](records/independent_checker_v27.json)、[完整费用](records/resource_costs_v27.json)。

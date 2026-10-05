@@ -1,0 +1,368 @@
+{
+  "schema": "w1-resource-cost.v27",
+  "window": {
+    "schema": "task42extra.w1-receiver-P0RB-window.v27",
+    "origin_monotonic": 1089674.491662067,
+    "T0_utc": "2026-10-05T01:44:39.630798+00:00",
+    "deadline_monotonic": 1100474.491662067,
+    "deadline_utc": "2026-10-05T04:44:39.630798+00:00",
+    "budget_seconds": 10800,
+    "P0_budget_seconds": 1800,
+    "R_stage_budget_seconds": 900,
+    "numerical_and_checker_budget_seconds": 7200,
+    "delivery_reserve_seconds": 1800,
+    "opening_read_only_checks_conservative_allowance_seconds": 120.0,
+    "origin_basis": "measured clock minus stated conservative opening allowance; not an exact historical first-command timestamp",
+    "review_head": "a9afaa9112d7395f7b8991602906606237db87c3",
+    "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "admission_samples_limit": 12,
+    "foreground_wait_limit_seconds": 300,
+    "formal_engineering_repair_rounds_limit": 2,
+    "old_v26_window_preserved": true
+  },
+  "window_binding": {
+    "path": "tmp/task42extra/w1_receiver/v27/P0_R_B_window.json",
+    "bytes": 885,
+    "sha256": "dd47bde81c608b52319c9bd47819536a7aa01d7626c4544afbbf5f508202af55"
+  },
+  "snapshot_utc": "2026-10-05T02:08:36.310389+00:00",
+  "continuous_elapsed_at_snapshot_seconds": 1436.6796054090373,
+  "origin_uncertainty": "measured creation clock minus explicit conservative120s opening allowance; not exact first-tool time",
+  "P0_completion_elapsed_seconds": 1144.4416162101552,
+  "P0_limit_seconds": 1800,
+  "R_limit_seconds": 900,
+  "R_full_launch_import_PSI_setup_seal_seconds": 81.9365056680981,
+  "R_worker_watchdog_seconds_nested_not_added": 18.688100159168243,
+  "R_numeric_charge_file": {
+    "path": "tmp/task42extra/w1_receiver/v27/numerical_charges_dd47bde81c608b52.json",
+    "bytes": 421,
+    "sha256": "7ed5ee0cabd581c231cf08713c05329c4a6655bb6fc8e9cdc01816a077d1f57e"
+  },
+  "samples": {
+    "schema": "w1-shared-admission-budget.v27",
+    "events": [
+      {
+        "kind": "admission",
+        "inner": false,
+        "stage": "input_recovery",
+        "origin_monotonic": 1090819.086577097,
+        "elapsed_seconds": 1.3392002140171826,
+        "observation_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/w1-receiver-v27_rb-input_recovery/admission_observation.json"
+      },
+      {
+        "kind": "admission",
+        "inner": true,
+        "stage": "input_recovery",
+        "origin_monotonic": 1090820.708343731,
+        "elapsed_seconds": 1.3104373279493302,
+        "observation_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v27_rb/input_recovery/admission_observation.json"
+      },
+      {
+        "kind": "PSI_stable_window",
+        "stage": "input_recovery",
+        "origin_monotonic": 1090822.036776573,
+        "elapsed_seconds": 60.00388464098796
+      }
+    ],
+    "admission_samples": 2,
+    "foreground_wait_seconds": 62.653522182954475
+  },
+  "R_B_max_real_samples": 12,
+  "R_B_wait_limit_seconds": 300,
+  "new_native_peak_bytes": 437981184,
+  "native_peak_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+  "before_watchdog_launch_PSI_tree_peak": "NOT_RETAINED",
+  "P0_and_audit_peaks_bytes": [
+    98144256,
+    341622784
+  ],
+  "P0_test_nested_seconds_not_added_again": 23.84876826335676,
+  "saved_R_audit_seconds_nested_not_added_again": 4.873763248091564,
+  "all_measured_tree_swap_bytes": 0,
+  "rss_cap_bytes": 2147483648,
+  "cpu_outer": 12,
+  "cpu_inner": 12,
+  "threads_MPI": [
+    1,
+    1
+  ],
+  "system_reserve_and_neighbor_growth": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 2141404811264,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 2141404811264,
+    "reserve_bytes": 628626898944,
+    "launch_cap_bytes": 2147483648,
+    "planning_cap_bytes": 2147483648,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 412316860416,
+    "shared_workstation": true
+  },
+  "native_numeric_B0_B1_seconds": 0,
+  "formal_engineering_repair_rounds_used": 0,
+  "old_cost_record": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v26.json",
+    "bytes": 6578,
+    "sha256": "73808b92e437c2d9b7d59b68b2f8082e332cce93f527a985f0e5ea7418f0f4f6"
+  },
+  "old_V26_delivered_seconds": 2590.7307235731278,
+  "old_A_seconds": 2361.839628,
+  "old_V25_seconds": 2846.101466,
+  "old_lost_seconds": 3284,
+  "old_external_and_review_calendar_gap_seconds": 17634.954029,
+  "all_historical_failures_costs_preserved": true,
+  "project_exact_cumulative": "UNKNOWN",
+  "timing_nested_not_summed": true,
+  "final_cost_receipt": "tmp/task42extra/w1_receiver/v27/delivery_receipt.json after exact push/fetch/cleanup/notification",
+  "continuous_elapsed_at_delivery_check_seconds": 1678.8370527280495,
+  "delivery_check_utc": "2026-10-05T02:12:38.467853+00:00",
+  "delivery_light_checks": [
+    {
+      "name": "compact_records",
+      "supervision": {
+        "path": "tmp/task42extra/w1_receiver/v27/compact_records/summary.json",
+        "bytes": 3556,
+        "sha256": "f39548f24aa2638175bd17883da273eb63d904d7cd3b97983aab008717e54325"
+      },
+      "summary": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 450,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 1091110.933212803,
+          "boottime": 1091110.933215502,
+          "utc_ns": 1791166116072349775
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          2057914
+        ],
+        "sampled_process_tree_rss_peak_bytes": 69578752,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139227,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139227,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2141402931200,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2141402931200,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 6,
+        "elapsed_seconds": 1.8505686081480235,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance",
+        "clock_end": {
+          "monotonic": 1091112.783780661,
+          "boottime": 1091112.783781487,
+          "utc_ns": 1791166117922915135
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 1.8505678579676896,
+            "boottime": 1.850565985077992,
+            "utc": 1.85056536
+          },
+          "budget_seconds": 1.8505678579676896,
+          "discrepancy_seconds": 2.497967689585323e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -2.497967689585323e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.03752844501286745,
+              "boottime": 0.03752837213687599,
+              "utc": 0.037528403
+            },
+            "budget_seconds": 0.03752844501286745,
+            "discrepancy_seconds": 7.28759914636612e-08,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -4.201286744887067e-08
+          },
+          "utc_positive_excess_seconds": 5.0147189512017576e-08
+        }
+      }
+    },
+    {
+      "name": "navigation",
+      "supervision": {
+        "path": "tmp/task42extra/w1_receiver/v27/navigation/summary.json",
+        "bytes": 3558,
+        "sha256": "acb948a84c85a8fa33e5669ae692e2f9f80578d09052e02fdb8deb376dfe3f2b"
+      },
+      "summary": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 450,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "clock_start": {
+          "monotonic": 1091286.654281274,
+          "boottime": 1091286.654284033,
+          "utc_ns": 1791166291793418325
+        },
+        "timebase_policy": "strict",
+        "timebase_policy_version": 1,
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          2059081
+        ],
+        "sampled_process_tree_rss_peak_bytes": 39636992,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139227,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139227,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2141251969024,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2141251969024,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 6,
+        "elapsed_seconds": 1.8773866060655564,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance",
+        "clock_end": {
+          "monotonic": 1091288.531667864,
+          "boottime": 1091288.531668831,
+          "utc_ns": 1791166293670802488
+        },
+        "workflow_clock_interval": {
+          "elapsed_seconds": {
+            "monotonic": 1.877386590000242,
+            "boottime": 1.8773847979027778,
+            "utc": 1.877384163
+          },
+          "budget_seconds": 1.877386590000242,
+          "discrepancy_seconds": 2.4270002418891323e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -2.4270002418891323e-06,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0377311569172889,
+              "boottime": 0.03773126285523176,
+              "utc": 0.037731237
+            },
+            "budget_seconds": 0.03773126285523176,
+            "discrepancy_seconds": 1.0593794286251068e-07,
+            "tolerance_seconds": 5.0,
+            "policy": "strict",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": 8.008271110138132e-08
+          },
+          "utc_positive_excess_seconds": 2.6034124633866895e-08
+        }
+      }
+    }
+  ]
+}

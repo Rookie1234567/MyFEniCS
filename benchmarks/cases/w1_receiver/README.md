@@ -1,5 +1,14 @@
 # W1 原尺寸边界接收包
 
+## 当前结果：Review V26 → Response V27
+
+本包新dat为v27_rb_input_recovery/control/boundary/boundary_check，独立P0_R_B_window10800s、P0≤1800s、R≤900s、数值/checker共享7200s、尾段1800s；全部受同一原点，不能沿用旧origin+1800截断R。原pin前范围仅用于内层新样本搜索，资源阈值和邻线程排除不变。
+
+39项pure逻辑检查通过、原A92复用；实际唯一R生成的manifest为36,263,033B/SHA7dd07d71…，原要求36,244,923B/SHA52d7ec80…，故BITWISE_REPRODUCTION_FAILED。43份Git源码与数值文件分别封存；最终ledger和B标记缺失，B0/B1不可运行。该文件只能作为失败证据，不可改名冒充原件或重复生成。真实成功R封存尚无证据，成功事务出口仅fixture合格。
+
+[Response V27](../../../docs/task042extra_feinn_5nm/response_v27.md)、[最小可消费状态](../../../docs/task042extra_feinn_5nm/outcomes/records/integration_packet_v27.json)、[完整hash/Gate](../../../docs/task042extra_feinn_5nm/outcomes/records/input_reproduction_v27.json)。数学原c354afa/43文件不改，新实际source904131e19396c4b6896d42056df2e27387908c1f；普通求解器不改变，无新FE/因子/求解/NN。以下内容保留为历史合同，旧串行命令不是当前许可，本批已停止。
+
+
 本入口把已经冻结的边界计算接到本工作站，并检查同一份输入是否到达全部消费者。Review V25 §8明确授权一次确定性输入恢复：仅从冻结Git源码生成模式元数据，逐字节匹配旧manifest，然后继续原生控制和q60全模式代表面资格。它不重跑W0、不求原尺寸PDE、不训练网络。普通求解器默认行为不变。
 
 ## 当前接续：Review V25 §8
