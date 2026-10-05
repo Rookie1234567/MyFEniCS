@@ -224,7 +224,9 @@ def analytic_comparison(bundle,u,geometry,folder,journal):
 
 
 def solve(role,folder,journal):
-    if not stage('BOUNDARY')['q47_q63_pass']:return dict(status='NOT_RUN_BOUNDARY_GATE',role=role)
+    from .scattering_accuracy_checks import check_boundary
+    boundary_gate=check_boundary(stage('BOUNDARY'));write_json(folder/'boundary_dependency_check.json',boundary_gate)
+    if not boundary_gate['pass_gate']:return dict(status='NOT_RUN_BOUNDARY_GATE',role=role,boundary_gate=boundary_gate)
     chosen=selection();case='FLAT' if role.startswith('FLAT') else 'NOTCH';degree=5;grid='ORIGINAL'
     if role in ('FLAT_SELECTED','NOTCH_LOW','NOTCH_HIGH'):
         if not chosen['admitted']:return dict(status='NOT_RUN_REPRESENTATION_GATE',selection=chosen,role=role)

@@ -100,6 +100,12 @@ class AccuracyTests(unittest.TestCase):
         cross=-2*np.vdot(t,b).real
         self.assertAlmostEqual(np.vdot(t-b,t-b).real,np.vdot(t,t).real+np.vdot(b,b).real+cross,11)
 
+    def test_small_nonzero_reference_has_no_absolute_floor(self):
+        from src.solvers.scattering_accuracy_checks import norm_pair
+        self.assertTrue(norm_pair(np.array([1e-180]),np.array([1e-180]))['pass_gate'])
+        self.assertFalse(norm_pair(np.array([2e-180]),np.array([1e-180]))['pass_gate'])
+        self.assertEqual(norm_pair(np.array([2e-180]),np.array([1e-180]))['relative'],1.)
+
     def test_original_closed_window_not_required_by_parser(self):
         from unittest.mock import patch
         with patch('src.solvers.scattering_anchor_scope.window.require_live',side_effect=RuntimeError('closed')):

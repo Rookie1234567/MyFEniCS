@@ -29,6 +29,12 @@ def main():
     result=supervise([sys.executable,'-c','import subprocess,time;subprocess.Popen(["sleep","20"]);time.sleep(20)'],
         folder/'watchdog_test',wall_seconds=1,interval=.1,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=128*2**20,include_pss=False)
     if not result['descendants_cleared'] or result['classification']=='COMPLETED':raise RuntimeError('deadline/own descendants cleanup')
+    from src.solvers.scattering_accuracy_scope import ARTIFACT,stage
+    if (ARTIFACT/'BOUNDARY.json').exists():
+        from src.solvers.scattering_accuracy_checks import check_boundary
+        raw=stage('BOUNDARY')
+        if raw['rows'][0].get('preserve_all_nonzero_rows'):
+            write_json(folder/'independent_boundary_check.json',check_boundary(raw))
     write_json(folder/'tests.json',dict(status='PASSED',commands=rows,implementation_hashes=hashes,watchdog_test=result,science_actions=0))
     print(json.dumps(dict(status='V50_QUALIFICATION_PASSED',commands=len(rows))))
 

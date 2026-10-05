@@ -37,6 +37,7 @@ def implementation_hashes():
     names = list(parent()) + ['src/solvers/scattering_accuracy_scope.py',
         'src/solvers/scattering_accuracy.py','src/solvers/scattering_accuracy_boundary.py',
         'src/solvers/scattering_accuracy_fields.py','src/io/scattering_accuracy.py',
+        'src/solvers/scattering_accuracy_checks.py',
         'src/test/test_scattering_accuracy.py','benchmarks/qualify_scattering_accuracy.py',
         'benchmarks/collect_scattering_accuracy.py',str(PLAN.relative_to(ROOT)),
         'src/solvers/hcurl_affine_isotropic_tensor.py','src/solvers/target_boundary_witness.py',
