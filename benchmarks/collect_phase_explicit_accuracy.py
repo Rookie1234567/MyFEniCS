@@ -9,6 +9,10 @@ import json
 import os
 import shutil
 import subprocess
+import re
+import sys
+import time
+from urllib.parse import unquote
 from pathlib import Path
 import numpy as np
 from src.runners.task042_shared import write_json
@@ -128,6 +132,9 @@ def collect():
             identities.append(dict(folder=str(rd),source=r['source_sha'],physical_sha256=manifest['physical_sha256'],input_sha256=manifest['input_sha256'],resolved_sha256=digest(rd/'resolved_config.json'),physical={k:resolved[k] for k in ('geometry','materials','incidence','discretization','boundary')},postprocessing_resume=manifest.get('postprocessing_resume')))
     store(out,'resource_costs_snapshot_v51',dict(runs=resources,known_prior_lower_seconds=96250.16526014329,charged_before_collector_settlement_seconds=window.charged_wall(),sampled_tree_peak_bytes=peak,own_swap_peak_bytes=swap,actual_max_sample_gap_seconds=maxgap,shared_workstation=True,sampled_not_cgroup=True,historical_unknowns_retained=True,current_collector_and_final_checks_not_yet_settled=True))
     store(out,'cold_n1_costs_v51',dict(routes=costs,postprocessing_source_and_original_failed_solve_charged_separately=True,setup_and_unique_VERIFY_separately_charged=True,performance='INCONCLUSIVE for no-contention speed; physical accuracy is independently evaluated'))
+    store(out,'physical_error_regions_v51',region_comparisons(stages))
+    store(out,'next_scale_capacity_v51',scale_bridge(stages))
+    store(out,'necessary_NN_cost_conditions_v51',cost_opportunity(costs))
     store(out,'object_lifetimes_v51',dict(routes=lifetimes));store(out,'physical_identity_bindings_v51',dict(runs=identities,material_table_id='SI_OPTICAL_CONSTANTS_USER_20260929_V1',canonical_material_path='input/materials/si_optical_constants_v1.json'))
     store(out,'run_index_v51',dict(runs=[{k:r[k] for k in ('role','folder','source_sha','classification')} for r in window.ledger()['runs']],pointers=pointers,original_failed_returns_preserved=True))
     store(out,'repair_journal_v51',dict(rows=[json.loads(x) for x in (window.TMP/'repair_journal.jsonl').read_text().splitlines()],ordinary_bug_is_not_numerical_stagnation=True))
@@ -156,4 +163,103 @@ def collect():
     print(json.dumps(dict(status='V51_COLLECTED',records=str(out),verdict=checks['verdict'])))
 
 
-if __name__=='__main__':collect()
+def documents():
+    """Check final new text/prefixes, preserving all immutable history bytes."""
+    window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY'])
+    task=ROOT/'docs/task042_neural_coarse_inverse';protected=[];targets=[]
+    authority='97ca0d4e2d90f7479a757e66d43061b7d54bf3aa'
+    for name in ('docs/task042_neural_coarse_inverse/README.md','docs/task042_neural_coarse_inverse/outcomes/summary.md',
+                 'docs/task042_neural_coarse_inverse/outcomes/test_summary.md','docs/task042_neural_coarse_inverse/outcomes/changed_files.md',
+                 'docs/development_progress.md','docs/development_model_registry.md'):
+        old=subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false','show',authority+':'+name],cwd=ROOT)
+        new=(ROOT/name).read_bytes()
+        if not new.endswith(old):raise ValueError('old history suffix changed '+name)
+        protected.append(dict(path=name,bytes=len(old),sha256=hashlib.sha256(old).hexdigest()))
+        targets.append((ROOT/name,new[:-len(old)].decode()))
+    targets += [(p,p.read_text()) for p in (task/'review_report_v49.md',task/'response_v51.md',task/'outcomes/phase_explicit_full3d_accuracy_v51.md')]
+    checked=[]
+    for p,body in targets:
+        width=None;inside=False;tables=[];links=[]
+        if '$$' in body or '\\[' in body:raise ValueError('unsupported new display math')
+        for i,line in enumerate(body.splitlines(),1):
+            if line.startswith('```'):inside=not inside;continue
+            if inside:continue
+            if line.startswith('|'):
+                count=len(re.split(r'(?<!\\)\|',line))-2
+                if width is None:tables.append(dict(line=i,columns=count));width=count
+                if width!=count:raise ValueError('table width '+str(p)+':'+str(i))
+            else:width=None
+            for target in re.findall(r'\]\(([^)]+)\)',line):
+                if target.startswith(('http','app:','#')):continue
+                if not (p.parent/unquote(target.split('#')[0])).exists():raise ValueError('missing link '+target)
+                links.append(target)
+        if inside:raise ValueError('unclosed math/code fence '+str(p))
+        checked.append(dict(path=str(p.relative_to(ROOT)),sha256=digest(p),checked_scope='new prefix or new full authority/result',tables=tables,links=links))
+    changed=subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false','diff','--name-only',authority,'HEAD'],cwd=ROOT,text=True).splitlines()
+    source=[n for n in changed if n.endswith('.py')]
+    for n in source:compile((ROOT/n).read_bytes(),n,'exec')
+    commands=[[sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],
+        ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*source],
+        ['git','-c','gc.auto=0','-c','maintenance.auto=false','diff','--check']]
+    rows=[]
+    for i,c in enumerate(commands):
+        begin=time.monotonic();r=subprocess.run(c,cwd=ROOT,capture_output=True,text=True)
+        (folder/f'command{i}.stdout').write_text(r.stdout);(folder/f'command{i}.stderr').write_text(r.stderr)
+        rows.append(dict(command=c,returncode=r.returncode,seconds=time.monotonic()-begin))
+        if r.returncode:raise RuntimeError('final relevant documentation/source test')
+    write_json(folder/'documentation_checks.json',dict(status='PASSED_LOCAL',checked_actual_delivery_bytes=checked,
+        old_history_suffixes=protected,commands=rows,compiled_changed_source=source,GitHub_visual='NOT_VERIFIED_CACHE_MISS',CI='NOT_RUN'))
+    print(json.dumps(dict(status='PASSED_LOCAL',documentation_tests=15)),flush=True)
+def region_comparisons(stages):
+    from src.solvers.phase_explicit_accuracy_scope import plan_record
+    box=np.asarray(plan_record()['physical_descriptor']['geometry']['notch_box_nm']).reshape(3,2)
+    rows=[]
+    for p in stages['VERIFY_COST']['pairs']:
+        fine=stages['NOTCH_P5' if p['kind']=='p4_p5' else 'NOTCH_HPROBE']
+        state=checked_arrays(fine['arrays']);centers=state['cell_centers'];tags=state['cell_tags']
+        notch=np.all((centers>box[:,0])&(centers<box[:,1]),axis=1)
+        masks={'air_excluding_notch':(tags==1)&~notch,'notch_air':(tags==1)&notch,'substrate':tags==2,'Si_block':tags==3}
+        if not np.all(sum(m.astype(int) for m in masks.values())==1):raise ValueError('non-overlapping actual region inventory')
+        arrays=checked_arrays(p['comparison']['arrays']);cell=arrays['per_cell_integrals'];components=arrays['per_cell_component_error_squared']
+        if cell.shape!=(len(centers),6,3) or components.shape!=cell.shape or not np.allclose(components.sum(axis=2),cell[:,:,0],rtol=1e-12,atol=1e-26):raise ValueError('complete regional physical integrals')
+        regions={}
+        for name,mask in masks.items():
+            sums=cell[mask].sum(axis=0)
+            regions[name]={'cell_count':int(mask.sum()),'fields':{k:{'error_L2_squared':float(s[0]),'reference_L2_squared':float(s[1]),'fraction_of_global_error_squared':float(s[0]/max(cell[:,j,0].sum(),1e-30))} for j,(k,s) in enumerate(zip(p['comparison']['fields'],sums,strict=True))}}
+        rows.append({'kind':p['kind'],'regions':regions,'component_error_squared':{k:components[:,j,:].sum(axis=0).tolist() for j,k in enumerate(p['comparison']['fields'])},'parent_sha256':p['comparison']['arrays']['sha256'],'squared_sums_equal_global':True,'background_cancels_in_error':True,'not_a_unique_root_cause_claim':True})
+    return {'rows':rows,'new_FE_or_solver_calls':0}
+
+
+def scale_bridge(stages):
+    """Visible storage interval, not an invented sparse-factor RSS prediction."""
+    rows=[]
+    for scale in (1,2,4):
+        nx,ny,nz,p=4*scale,4*scale,10*scale,5;cells=nx*ny*nz
+        trace=p*nx*ny*(3*nz+2)+2*p*(p-1)*nx*ny*(3*nz+1);internal=3*p*(p-1)**2*cells
+        native=p*(nx*(ny+1)*(nz+1)+(nx+1)*ny*(nz+1)+(nx+1)*(ny+1)*nz)+2*p*(p-1)*(nx*ny*(nz+1)+nx*(ny+1)*nz+(nx+1)*ny*nz)+internal
+        aliases=4*(18*scale+1)*(6*scale+1);condensed=trace+aliases;face_rows=2*nx*ny*p*p
+        rows.append({'scale_relative_to_NH':scale,'cells':cells,'degree':p,'native':native,'trace':trace,'internal':internal,'independent':trace+internal,'manual_alias_design_estimate':aliases,'condensed_rows':condensed,'one_complete_complex_vector_bytes':16*(trace+internal),
+            'C_plus_D_payload_interval_bytes':{'ideal_tangential_trace_stream_pair':32*face_rows,'no_clipping_boundary_cell_support_stream_upper':32*min(native,nx*ny*3*p*(p+1)**2),'full_no_clipping_boundary_cell_inventory_upper':32*min(native,nx*ny*3*p*(p+1)**2)*aliases,'all_native_dense_counterexample_not_required':32*native*aliases},
+            'local_cache_no_dedup_conservative_upper_bytes':13996800*cells,'one_dense_condensed_payload_upper_bytes':16*condensed**2,
+            'factor_fill':'unknown','sparse_factor_workspace':'unknown','simultaneous_RSS_prediction':'unknown; not admitted without calibrated symbolic bound','iterations':'unknown','mode_truncation_accuracy':'unknown',
+            'status':'measured topology / derived payload' if scale==1 else 'predicted_not_run; same absolute cell widths and p, physical geometry scaled'})
+    if any(rows[0][k]!=stages['NOTCH_HPROBE']['capacity'][k] for k in ('cells','native','trace','internal','independent')):raise ValueError('scale formula must recover measured NH topology')
+    return {'rows':rows,'actual_NH_peak_is_a_sampled_tree_measurement_not_the_visible_payload_bound':True,'scalar_formula_scope':'connected structured periodic xy hex, canonical independent moments; no target dofmap allocated','future_manual_alias_ranges_are_a_capacity_design_not_qualified_AUTO_or_mode_convergence':True}
+
+
+def cost_opportunity(costs):
+    rows=[]
+    for c in costs:
+        if c['role'] not in ('FLAT_P4','NOTCH_P4','NOTCH_P5','NOTCH_HPROBE') or c['classification']!='COMPLETED':continue
+        t=c['cold_N1_dat_launch_lower_seconds'];e=c['exclusive_seconds']
+        if not any('factor' in k for k in e):continue  # saved-return postprocessing is not a new cold solve
+        tail=sum(v for k,v in e.items() if k in ('global_finite_factor_setup','h_sparse_symbolic_capacity','h_bounded_numeric_factor','solve_and_affine_internal_recovery','fixed_refinement'))
+        prep=sum(v for k,v in e.items() if k in ('JIT_full_Ckappa_and_complete532_carrier','condensation_local_factors','physical_incident_RHS'))
+        rows.append({'role':c['role'],'measured_launch_lower_seconds':t,'factor_solve_tail_seconds':tail,'free_tail_optimistic_fraction':tail/t,'prepare_optimistic_replaceable_seconds':prep,'N1_extra_cost_ceiling_if_all_this_preparation_free':prep-.2*t,'necessary_time_inequality':'fV-H >= 0.2*T_B','strongest_matching_accurate_traditional_total':'unknown; this direct anchor is not a fastest-baseline claim','simultaneous_peak20':'not demonstrated; shared/opaque allocator ownership unknown','NN_training':0})
+    return {'rows':rows,'only_necessary_optimistic_bounds':True,'data_teacher_training_loading_inference_cleanup_and_independent_audit_all_belong_to_H':True,'no_finite_micro_cost_extrapolation_to_target_48h':True,'NN20':False}
+
+
+if __name__=='__main__':
+    if sys.argv[1:]==['--docs']:documents()
+    elif not sys.argv[1:]:collect()
+    else:raise ValueError('unknown collector argument')
