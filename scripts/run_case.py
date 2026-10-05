@@ -36,6 +36,18 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        from src.io.neural_wave_campaign import load_wave
+        wave = load_wave(args.input_path)
+        if wave is not None:
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('V30 requires one explicit neural wave stage')
+            if args.validate_only or args.dry_run:
+                print(json.dumps(wave, sort_keys=True))
+                return 0
+            from src.runners.neural_wave_campaign import launch
+            result = launch(wave)
+            print(json.dumps(result, sort_keys=True))
+            return 0 if result['classification'] == 'COMPLETED' and result['leader_exit_code'] == 0 else 3
         from src.io.w1_receiver_contract import load_w1
         w1 = load_w1(args.input_path)
         if w1 is not None:

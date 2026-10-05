@@ -1,0 +1,91 @@
+{
+  "contract": "review_report_v29.md",
+  "publication_sha": "8d617d4d206b08f38279320b67188db1b8ccd301",
+  "original_base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "strategy": {
+    "seed": 4213001,
+    "screen_seeds": 8,
+    "direction_resolutions": [
+      12,
+      48,
+      192,
+      768
+    ],
+    "local_refinement_steps_k0": [
+      0.5,
+      0.25,
+      0.125,
+      0.0625
+    ],
+    "q_component_bound_k0": 4.0,
+    "module_max_iterations": 12,
+    "module_max_evaluations": 18,
+    "width_sequence": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "width_column_thresholds": [
+      0,
+      256,
+      1024,
+      2048
+    ],
+    "support_sequence": [
+      "2x2x2 coarse C1 windows",
+      "4x3x4 C1 windows",
+      "actual 8x6x8 vertex stars"
+    ],
+    "support_column_thresholds": [
+      0,
+      32,
+      128
+    ],
+    "capacity_milestones": [
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "max_columns": 4096,
+    "native_target": 1e-08,
+    "moment_quadrature_degree": 30,
+    "rcond": 1e-12,
+    "route_seconds": 172800,
+    "stagnant_modules_before_enrichment": 8,
+    "amplitude_method": "exact small SVD with nonzero seed-gradient witness",
+    "direction_method": "continuous bounded L-BFGS-B of variable-projected native residual score",
+    "control_method": "physical/Fibonacci seeds plus residual selection and fixed symmetric local refinement",
+    "initial_state": "independent zero scattering",
+    "reference_used_for_training": false,
+    "features_reference_exposed": false,
+    "pde_only_solve": true,
+    "benchmark_previously_seen": true,
+    "production_initialization_allowed": false,
+    "common_comparison_seconds": 64800
+  },
+  "training_file_whitelist": {
+    "native": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+      "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+    },
+    "moments_q15": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q15.npz",
+      "sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e"
+    },
+    "moments_q30": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+      "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+    }
+  },
+  "reference_used_for_training": false,
+  "global_Gram_factor_training_allowed": false,
+  "global_Maxwell_factor_training_allowed": false,
+  "full_size_0p7_target_qualified": false,
+  "status": "pre_registered_before_first_learning"
+}

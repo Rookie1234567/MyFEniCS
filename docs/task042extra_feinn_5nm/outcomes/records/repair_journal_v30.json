@@ -1,0 +1,27 @@
+{
+  "scope": "initial development, all failures/cost retained",
+  "repairs": [
+    {
+      "failure": "supervise refused existing output directory before any test",
+      "hypothesis": "watchdog requires a newly created subdirectory",
+      "change": "dedicated supervised subdirectory",
+      "test": "pure_tests_02 supervisor launched; later completed runs",
+      "resume": "same batch; no official source/run claimed"
+    },
+    {
+      "failure": "three fixture tests: BLAS zgemv rejected empty initial Q",
+      "hypothesis": "zero-column subspace must return explicit empty transpose product",
+      "change": "zero-column branch in conjugate_product",
+      "test": "pure_tests_03 five passed; ML independent AD thereafter",
+      "resume": "initial QR/score/atomic tests continued"
+    },
+    {
+      "failure": "frozen-network fixture missing quadrature_degree telemetry key",
+      "hypothesis": "fixture did not implement actual packet metadata schema",
+      "change": "fixture carries degree30, no numerical algorithm change",
+      "test": "ml_tests_03 ten passed",
+      "resume": "independent model reconstruction now executed"
+    }
+  ],
+  "formal_repairs": []
+}

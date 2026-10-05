@@ -1,0 +1,5 @@
+schema_version = 1
+
+[neural_wave]
+stage = "v30_wave_calibration_5nm"
+design_sha256 = "3e291cadb3001a4e3b45cf905c468ffc2df2b5768e8dfb0be4b1193b6559f4a4"

@@ -1,0 +1,335 @@
+"""One V30 stage per supervised process; FE and training roles stay isolated."""
+
+import json
+import os
+from pathlib import Path
+import sys
+from time import monotonic, perf_counter
+import traceback
+
+import numpy as np
+
+from src.io.neural_wave_campaign import (
+    ROOT,
+    DESIGN,
+    ARTIFACTS,
+    load_training_files,
+    digest,
+)
+from src.solvers.neural_wave_greedy import atomic_json, atomic_npz
+
+
+def abi(mode):
+    result = dict(
+        python=sys.executable,
+        mode=mode,
+        activated=os.environ.get("TASK42EXTRA_ACTIVATION") == "1",
+        threads={
+            key: os.environ.get(key)
+            for key in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
+        },
+        cpu_affinity=sorted(os.sched_getaffinity(0)),
+        numpy=np.__version__,
+        cuda_visible=os.environ.get("CUDA_VISIBLE_DEVICES"),
+    )
+    if not result["activated"] or len(result["cpu_affinity"]) != 1:
+        raise RuntimeError("V30_ACTIVATION_OR_ONE_CORE_GATE_FAILED")
+    if any(value != "1" for value in result["threads"].values()):
+        raise RuntimeError("V30_MATH_THREAD_GATE_FAILED")
+    if mode == "fe":
+        from mpi4py import MPI
+        from petsc4py import PETSc
+        import dolfinx
+        import basix
+
+        if (
+            MPI.COMM_WORLD.size != 1
+            or PETSc.ScalarType != np.complex128
+            or PETSc.IntType != np.int64
+        ):
+            raise RuntimeError("V30_M5_COMPLEX128_INT64_MPI1_ABI_REQUIRED")
+        result.update(
+            mpi_size=MPI.COMM_WORLD.size,
+            petsc_scalar=str(PETSc.ScalarType),
+            petsc_int=str(PETSc.IntType),
+            dolfinx=dolfinx.__version__,
+            basix=basix.__version__,
+            torch_imported="torch" in sys.modules,
+        )
+        if result["torch_imported"]:
+            raise RuntimeError("FE_ROLE_MUST_NOT_IMPORT_TORCH")
+    elif mode == "ml":
+        import torch
+
+        torch.set_num_threads(1)
+        torch.set_num_interop_threads(1)
+        result.update(
+            torch=torch.__version__,
+            torch_threads=torch.get_num_threads(),
+            torch_interop=torch.get_num_interop_threads(),
+            torch_default_dtype=str(torch.get_default_dtype()),
+            neuron_and_derivative_dtype="float64/complex128 numpy; Torch independent tests only",
+        )
+    return result
+
+
+def require_checks():
+    file = ARTIFACTS / "v30_wave_checks" / "result.json"
+    record = json.loads(file.read_text())
+    if not record["implementation_qualified"]:
+        raise ValueError("NEW_WAVE_IMPLEMENTATION_NOT_QUALIFIED")
+    return record
+
+
+def verify(design, action, packet, artifact, marker):
+    from src.solvers.neural_wave_reconstruction import rebuild
+    from src.solvers.feinn_fem import build_model
+    from src.solvers.feinn_reference import field_physics, _region_field_errors
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+    )
+
+    states, reconstruction = {}, {}
+    highfile = ARTIFACTS / "v30_wave_checks" / "moments_q60.npz"
+    with np.load(highfile, allow_pickle=False) as arrays:
+        high = {k: np.array(arrays[k]) for k in arrays.files}
+    for stage, name in [
+        ("v30_m5_fixed_wave", "FIXED_WAVE_GREEDY_CONTROL"),
+        ("v30_m5_learned_wave", "LEARNED_WAVE_GREEDY"),
+    ]:
+        directory = ARTIFACTS / stage
+        c, saved, boundary = rebuild(directory / "basis", packet, marker)
+        higher, _, _ = rebuild(directory / "basis", high, marker)
+        same = float(np.linalg.norm(c - saved) / max(np.linalg.norm(saved), 1e-30))
+        drift = float(np.linalg.norm(c - higher) / max(np.linalg.norm(c), 1e-30))
+        action_drift = float(np.linalg.norm(action.apply(c - higher)) / action.bnorm)
+        reconstruction[name] = dict(
+            complete_model_mapping_relative=same,
+            coefficient_q30_q60_relative=drift,
+            original_action_q30_q60_load_relative=action_drift,
+            quadrature_pass=bool(max(drift, action_drift) <= 1e-8),
+            model_reconstruction_pass=bool(same <= 1e-10),
+            candidate_source_sha=boundary["binding"]["source_sha"],
+            committed_boundary_sha256=digest(directory / "basis/committed.json"),
+        )
+        states[name] = saved
+        atomic_npz(artifact / (stage + "_rebuild.npz"), c30=c, c60=higher, saved=saved)
+    # Only here, after independently frozen/reconstructed models, is the V1
+    # label loaded. This function is never imported by a training stage.
+    index = json.loads(
+        (ROOT / "benchmarks/artifacts/task42extra/index_e3_reference.json").read_text()
+    )
+    entry = index["files"]["reference"]
+    if digest(entry["path"]) != entry["sha256"]:
+        raise ValueError("SAME_P3_REFERENCE_HASH_FAILED")
+    with np.load(entry["path"], allow_pickle=False) as arrays:
+        reference, alpha = np.array(arrays["c"]), np.array(arrays["alpha"])
+    if (
+        np.linalg.norm(action.alpha(reference) - alpha)
+        / max(np.linalg.norm(alpha), 1e-30)
+        > 1e-10
+    ):
+        raise ValueError("REFERENCE_SAME_PORT_IDENTITY_FAILED")
+    marker(
+        "reference_loaded_after_candidate_freeze",
+        dict(reference_sha256=entry["sha256"], new_reference_solve_count=0),
+    )
+    model = build_model(design["model"], marker=marker)
+    try:
+        for key, expected in design["native_identity"].items():
+            if model["record"][key] != expected:
+                raise ValueError("INDEPENDENT_FE_PHYSICAL_IDENTITY_CHANGED: " + key)
+        physics, comparisons = field_physics(
+            model, action, reference, states, artifact, marker
+        )
+        high_physics, _ = field_physics(
+            model,
+            action,
+            reference,
+            states,
+            artifact / "norm_q30",
+            marker,
+            norm_quadrature_degree=30,
+        )
+        regions = {
+            name: _region_field_errors(model, action, reference, c)
+            for name, c in states.items()
+        }
+        for name, comp in comparisons.items():
+            rec = reconstruction[name]
+            oldnorms = np.r_[
+                physics["records"][name]["total_L2_scaled_curl_norms"],
+                physics["records"][name]["scattered_L2_scaled_curl_norms"],
+            ]
+            newnorms = np.r_[
+                high_physics["records"][name]["total_L2_scaled_curl_norms"],
+                high_physics["records"][name]["scattered_L2_scaled_curl_norms"],
+            ]
+            rec["FE_norm_q15_q30_relative"] = float(
+                np.linalg.norm(oldnorms - newnorms)
+                / max(np.linalg.norm(oldnorms), 1e-30)
+            )
+            rec["quadrature_pass"] &= rec["FE_norm_q15_q30_relative"] <= 1e-8
+            joint = bool(
+                comp["numerical_equation_pass"]
+                and comp["field_reconstruction_pass"]
+                and comp["power_check_pass"]
+                and rec["quadrature_pass"]
+                and rec["model_reconstruction_pass"]
+                and physics["reference_pass"]
+            )
+            comp.update(
+                m5_full_discrete_numerical_gate=joint,
+                quadrature_pass=rec["quadrature_pass"],
+                model_reconstruction_pass=rec["model_reconstruction_pass"],
+                pde_only_solver_qualified=joint,
+                official_candidate_results=joint,
+                production_initialization_allowed=False,
+            )
+        return dict(
+            verification_complete=True,
+            same_p3_reference_sha256=entry["sha256"],
+            reference_solve_count=0,
+            global_Maxwell_factor_count=0,
+            global_Gram_factor_count=0,
+            reference_loaded_only_by_verifier=True,
+            reference_pass=physics["reference_pass"],
+            reconstruction=reconstruction,
+            physics=physics,
+            comparisons=comparisons,
+            region_errors=regions,
+            full_size_0p7_target_qualified=False,
+            continuous_discretization_qualified=False,
+        )
+    finally:
+        destroy_same_mesh_physical_action(model["bundle"])
+
+
+def main():
+    directory = ROOT / Path(sys.argv[1])
+    manifest = json.loads((directory / "run_manifest.json").read_text())
+    spec = manifest["spec"]
+    artifact = ROOT / manifest["artifact"]
+    start = perf_counter()
+
+    def marker(stage, values):
+        print(
+            json.dumps(dict(stage=stage, values=values), default=lambda v: v.tolist()),
+            flush=True,
+        )
+        with (directory / "events.jsonl").open("a") as stream:
+            stream.write(
+                json.dumps(
+                    dict(stage=stage, values=values), default=lambda v: v.tolist()
+                )
+                + "\n"
+            )
+
+    try:
+        atomic_json(directory / "abi.json", abi(spec["mode"]))
+        design = json.loads(DESIGN.read_text())
+        if digest(DESIGN) != manifest["design_sha256"]:
+            raise ValueError("FROZEN_DESIGN_CHANGED_AFTER_LAUNCH")
+        if spec["role"] in ("LEARNED_WAVE_GREEDY", "FIXED_WAVE_GREEDY_CONTROL"):
+            from src.io.neural_wave_campaign import training_open_allowed
+
+            def firewall(event, arguments):
+                if event == "open" and not training_open_allowed(arguments[0], design):
+                    raise PermissionError(
+                        "UNLABELLED_TRAINING_FILE_ACCESS_REJECTED: " + str(arguments[0])
+                    )
+
+            sys.addaudithook(firewall)
+            marker(
+                "training_label_firewall_installed",
+                dict(
+                    reference_access_allowed=False,
+                    legacy_weights_allowed=False,
+                    Gram_packet_access_allowed=False,
+                ),
+            )
+        files = load_training_files(design)
+        from src.solvers.feinn_native import load_native
+
+        action = load_native(files["native"])
+        with np.load(files["moments_q30"], allow_pickle=False) as arrays:
+            packet = {key: np.array(arrays[key]) for key in arrays.files}
+        if action.size != 31968 or action.nc != 384 or action.np != 40:
+            raise ValueError("ORIGINAL_M5_FULL_FE_IDENTITY_FAILED")
+        if not np.array_equal(packet["master_native_rows"], action.a["masters"]):
+            raise ValueError("COMPLETE_MOMENT_MASTER_ORDER_MISMATCH")
+        if "reduced" in spec["stage"]:
+            raise ValueError("REDUCED_CASE_REQUIRES_NEW_QUALIFIED_PHYSICAL_PACKETS")
+        if spec["role"] == "checks":
+            from src.solvers.neural_wave_qualification import qualify
+
+            result = qualify(design["model"], action, packet, artifact, marker)
+        elif spec["role"] == "calibration":
+            from src.solvers.neural_wave_qualification import analytic_calibration
+
+            result = analytic_calibration(
+                design["model"],
+                0.7 if "0p7" in spec["stage"] else 5.0,
+                artifact,
+                marker,
+            )
+        elif spec["role"] == "verify":
+            result = verify(design, action, packet, artifact, marker)
+        else:
+            require_checks()
+            for dependency in (
+                "v30_wave_calibration_5nm",
+                "v30_wave_calibration_0p7nm",
+            ):
+                if not (ARTIFACTS / dependency / "result.json").exists():
+                    raise ValueError("INITIAL_ANALYTIC_CALIBRATION_NOT_RUN")
+            from src.solvers.neural_wave_greedy import run_greedy
+
+            design["strategy"]["native_target"] = spec["native_target"]
+            binding = dict(
+                route=spec["role"],
+                source_sha=manifest["source_sha"],
+                design_sha256=manifest["design_sha256"],
+                native_sha256=design["files"]["native"]["sha256"],
+                moments_sha256=design["files"]["moments_q30"]["sha256"],
+                route_origin_monotonic=manifest["route_origin_monotonic"],
+            )
+            result = run_greedy(
+                action,
+                packet,
+                design,
+                artifact,
+                binding,
+                manifest["worker_stop_monotonic"],
+                marker,
+            )
+        result.update(
+            source_sha=manifest["source_sha"],
+            input_sha256=spec["input_sha256"],
+            design_sha256=manifest["design_sha256"],
+            worker_elapsed_seconds=perf_counter() - start,
+            route_elapsed_seconds=monotonic() - manifest["route_origin_monotonic"],
+            actual_native_sha256=design["files"]["native"]["sha256"],
+            actual_moments_sha256=design["files"]["moments_q30"]["sha256"],
+            full_size_0p7_target_qualified=False,
+        )
+        atomic_json(artifact / "result.json", result)
+        marker(
+            "stage_frozen",
+            dict(stage=spec["stage"], result_sha256=digest(artifact / "result.json")),
+        )
+    except Exception as error:
+        atomic_json(
+            directory / "failure.json",
+            dict(
+                error=repr(error),
+                traceback=traceback.format_exc(),
+                elapsed_seconds=perf_counter() - start,
+                source_sha=manifest["source_sha"],
+            ),
+        )
+        raise
+
+
+if __name__ == "__main__":
+    main()

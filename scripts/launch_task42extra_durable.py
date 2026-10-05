@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.io.feinn_pilot import ROOT, load_pilot
+ROOT = Path(__file__).resolve().parents[1]
 from src.runners.durable_terminal import launch_tmux
 
 
@@ -25,6 +25,14 @@ def main():
         raise SystemExit(
             "usage: launch_task42extra_durable.py <one-run.dat> [--attempt 2|3|4]"
         )
+    from src.io.neural_wave_campaign import load_wave
+    wave = load_wave(sys.argv[1])
+    if wave is not None:
+        from src.runners.neural_wave_campaign import durable
+        result = durable(wave, origin=DURABLE_LAUNCH_ORIGIN,
+                         attempt=int(sys.argv[3]) if len(sys.argv) == 4 else 1)
+        print(json.dumps({k: result[k] for k in ('socket', 'session', 'output', 'scope')}))
+        return
     from src.io.w1_receiver_contract import load_w1
     w1 = load_w1(sys.argv[1])
     if w1 is not None:
@@ -42,6 +50,7 @@ def main():
         result = durable_launch(receiver)
         print(json.dumps({k: result[k] for k in ('socket', 'session', 'output', 'scope')}))
         return
+    from src.io.feinn_pilot import load_pilot
     spec = load_pilot(sys.argv[1])
     stages = {
         "v7_p_transfer_checks": ("v7_p_transfer_checks", "task42extra-v7-checks"),

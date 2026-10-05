@@ -323,7 +323,8 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
 
 
 def field_physics(
-    model, packet, reference, states, artifact, marker, *, diagnostic_only=False
+    model, packet, reference, states, artifact, marker, *, diagnostic_only=False,
+    norm_quadrature_degree=15,
 ):
     import ufl
     from dolfinx import fem
@@ -343,7 +344,8 @@ def field_physics(
     modes = model["bundle"]["modes"]
     inc = model["bundle"]["incident_projections"]
     native = native_numpy_apply(model["bundle"])
-    dx = ufl.Measure("dx", domain=data.mesh, metadata={"quadrature_degree": 15})
+    dx = ufl.Measure("dx", domain=data.mesh,
+                     metadata={"quadrature_degree": int(norm_quadrature_degree)})
     incident_scale = np.sqrt(
         np.prod([b - a for a, b in json_design_bounds(packet, model)])
     )

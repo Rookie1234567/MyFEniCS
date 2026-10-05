@@ -1,0 +1,81 @@
+{
+  "phase": "initial_implementation",
+  "final_targeted_tests": 10,
+  "passed": 10,
+  "failed": 0,
+  "test_kind": "small complex fixture / independent Torch AD / frozen rebuild / atomic and label isolation",
+  "junit": {
+    "path": "tmp/task42extra/v30/bootstrap/ml_tests_final_impl/junit.xml",
+    "sha256": "a33e2f6230e5f19ee4c11705840fcb30f388945a84992e95a0d78daa79adb849"
+  },
+  "tested_files": {
+    "src/solvers/neural_wave_subspace.py": "f840f1a78608ccb5d4f6b67a4e3e7278ba211978842f3ab4f5b49f45004b7004",
+    "src/solvers/neural_wave_moments.py": "3364d07b3a5bc24a69c8c53cb735bb95871a17d98875922051a3bf9d02e768df",
+    "src/solvers/neural_wave_qualification.py": "43ba45ff037413cdc121cfe9696b4d9ade7dc30173755b41a2d263d2e16658d3",
+    "src/solvers/neural_wave_greedy.py": "0d5dd5d51c287d08a6fbee5c95a0bc799dd03cf7e556cf1c4a67ecb13765780d",
+    "src/solvers/neural_wave_reconstruction.py": "01b24b7524e7c49f802d1fb715b027ca855e0b9098605510e5fd258fc87506c5",
+    "src/test/test_neural_wave.py": "135d644e8da82fc9d69728204ecf96d2264d61678f849ce3c930bcbafab1cebd",
+    "src/io/neural_wave_campaign.py": "5470f9914737566c73f179e0f9742012bb3b405855466b8f8fccf89f30759048"
+  },
+  "resource_summary": {
+    "sampled_root_identity": null,
+    "workflow_deadline_seconds": 300,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 2147483648,
+    "rss_warning_bytes": 1932735283,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      51
+    ],
+    "sampled_process_tree_rss_peak_bytes": 303149056,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 3139241,
+        "pswpout_pages": 5146004
+      },
+      "end": {
+        "pswpin_pages": 3139241,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2100287688704,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2100287688704,
+      "reserve_bytes": 628626898944,
+      "launch_cap_bytes": 2147483648,
+      "planning_cap_bytes": 2147483648,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 412316860416,
+      "shared_workstation": true
+    },
+    "samples": 18,
+    "elapsed_seconds": 4.503535964060575,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "ruff": "new modules PASS",
+  "compileall": "PASS",
+  "formal_FE_qualification": "NOT_RUN",
+  "historic_failure_logs_retained": true
+}
