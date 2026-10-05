@@ -53,6 +53,7 @@ def _compatible_prior_control_source(binding, current_files):
             "_protected_ast",
             "_compatible_prior_control_source",
             "qualify_moments",
+            "boundary_v28",
             "validate_boundary_summary",
         },
     }
@@ -249,7 +250,7 @@ def relative_receipt(path, parent, helpers):
     return value
 
 
-def qualify_moments(root, modes, layout, oracle, binding, run, helpers):
+def qualify_moments(root, modes, layout, oracle, binding, run, helpers, profile):
     """Reuse bound V23 exact-frequency witnesses; fill only missing frequencies."""
     import numpy as np
     from src.solvers.directional_boundary import zvalue
@@ -325,11 +326,10 @@ def qualify_moments(root, modes, layout, oracle, binding, run, helpers):
     # tensor contraction happens to cancel it in an empirical field witness.
     import basix
     from numpy.polynomial.legendre import legvander
-    from src.solvers.w1_facet_profile import q60_moments, subdivision_count, NATIVE
 
     points, weights = basix.make_quadrature(basix.CellType.interval, 60)
     t = points[:, 0]
-    if binding["contract"]["integration_profile"] == NATIVE:
+    if binding["contract"]["integration_profile"] == profile.NATIVE:
         integration = np.array(
             [
                 (weights * np.exp(1j * w * t)) @ legvander(2 * t - 1, 6)
@@ -338,7 +338,10 @@ def qualify_moments(root, modes, layout, oracle, binding, run, helpers):
         )
     else:
         integration = np.array(
-            [q60_moments(w, 6, t, weights, subdivision_count(w)) for w in frequencies]
+            [
+                profile.q60_moments(w, 6, t, weights, profile.subdivision_count(w))
+                for w in frequencies
+            ]
         )
     helpers.atomic_arrays(
         run / "oracle.npz",
@@ -403,7 +406,7 @@ def boundary_v28(root, binding, modes, component, run, helpers):
     )
     layout, _ = helpers.layout_for(modes, 4)
     oracle_row, _, refmom, freq = qualify_moments(
-        root, modes, layout, oracle, binding, run, helpers
+        root, modes, layout, oracle, binding, run, helpers, profile
     )
     index["oracle"] = oracle_row
     lookup = {float(w): refmom[j] for j, w in enumerate(freq)}

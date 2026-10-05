@@ -97,6 +97,57 @@ def test_unaffected_actual_control_source_reuse():
     }
 
 
+def test_qualified_oracle_uses_injected_profile_in_frozen_namespace(
+    tmp_path, monkeypatch
+):
+    import sys
+    import types
+    from src.runners.w1_versioned_payload import qualify_moments
+    from src.runners.w1_component_payload import load_file, atomic_arrays
+    from src.solvers import w1_facet_profile as injected
+    from src.solvers.interval_facet_moments import unit_interval_moments
+
+    # Simulate the frozen namespace: the new profile is not importable through it.
+    monkeypatch.setitem(sys.modules, "src.solvers.w1_facet_profile", None)
+    native = types.ModuleType("src.solvers.directional_boundary")
+    native.zvalue = lambda v: complex(v["real"], v["imag"])
+    monkeypatch.setitem(sys.modules, "src.solvers.directional_boundary", native)
+    q, w = np.polynomial.legendre.leggauss(31)
+    monkeypatch.setitem(
+        sys.modules,
+        "basix",
+        types.SimpleNamespace(
+            CellType=types.SimpleNamespace(interval=1),
+            make_quadrature=lambda *args: (((q + 1) / 2)[:, None], w / 2),
+        ),
+    )
+    helpers = types.SimpleNamespace(
+        file_receipt=file_receipt,
+        load_file=load_file,
+        atomic_arrays=atomic_arrays,
+        atomic_json=atomic_json,
+        guard=lambda b: None,
+    )
+    x = np.zeros(102)
+    x[101] = 8.5 / 46
+    layout = types.SimpleNamespace(x=x, y=np.array([-12.5, -6.25, 0]))
+    _, row = top_mode()
+    binding = dict(contract=dict(integration_profile=injected.NATIVE))
+    _, _, reference, frequencies = qualify_moments(
+        ROOT,
+        [row],
+        layout,
+        types.SimpleNamespace(unit_interval_moments=unit_interval_moments),
+        binding,
+        tmp_path,
+        helpers,
+        injected,
+    )
+    with np.load(tmp_path / "oracle.npz", allow_pickle=False) as raw:
+        assert len(frequencies) == 3
+        assert np.max(abs(raw["integration_candidate"] - reference)) < 1e-12
+
+
 def test_control_reuse_protected_function_damage(tmp_path, monkeypatch):
     import hashlib
     import types
