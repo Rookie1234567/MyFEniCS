@@ -175,6 +175,11 @@ def native_column_reference(data, modes, reference, packet):
     return values
 
 
+def native_D_columns(integral, electric, denominator):
+    """D projects onto the conjugate electric mode; it is not B Hermitian."""
+    return (np.asarray(integral) @ np.asarray(electric)).conj() / denominator
+
+
 def mode_vectors(modes, field):
     return np.array(
         [[complex(v["real"], v["imag"]) for v in m[field]] for m in modes],
@@ -389,10 +394,8 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
             electric = mode_vectors([m], "e_vector")[0, :2]
             h = m["projection_denominator"]
             cb, rb = -native["integral"][i] @ t, -value @ t
-            cd, rd = (
-                native["integral"][i].conj() @ electric / h,
-                value.conj() @ electric / h,
-            )
+            cd = native_D_columns(native["integral"][i], electric, h)
+            rd = native_D_columns(value, electric, h)
             for column in range(len(value)):
                 mode_index = int(native["mode_indices"][i])
                 record(

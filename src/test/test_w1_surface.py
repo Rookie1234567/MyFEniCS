@@ -166,6 +166,19 @@ def test_saved_array_damage_is_rejected(tmp_path):
         read_array(tmp_path, row)
 
 
+def test_native_D_complex_polarization_conjugate():
+    from src.solvers.w1_full_surface_saved import native_D_columns
+
+    integral = np.array([[1 + 2j, 3 - 4j], [-2 + 0.5j, 0.3 - 1j]])
+    electric = np.array([0.5 + 0.2j, -0.7 + 0.4j])
+    expected = np.array([
+        sum(integral[i, j] * electric[j] for j in range(2)).conjugate() / 1250
+        for i in range(2)
+    ])
+    np.testing.assert_allclose(native_D_columns(integral, electric, 1250), expected, rtol=1e-14, atol=0)
+    assert not np.allclose(integral.conj() @ electric / 1250, expected)
+
+
 def small_geometry():
     vertices = np.array(
         [[i, j, k] for k in (0, 1) for j in (0, 1) for i in (0, 1)], float
