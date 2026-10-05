@@ -1,0 +1,58 @@
+{
+  "status": "PASS",
+  "qualification": "WORKER_ONLY_CHECKER_PENDING",
+  "archive_name": "boundary_support_pilot_complete_worker.zip",
+  "archive_bytes": 87590500,
+  "archive_sha256": "f5b9ce1b2c000b12df1557d4429dbfefdcc82b2d0984560b3837e6c216af9ca0",
+  "members_verified": 390,
+  "full_uncompressed_bytes": 759987904,
+  "data_files_uncompressed_bytes": 759919015,
+  "member_manifest_sha256": "73ab422a6f478ffda53e2f633d959d89e1a2aeed3792e361ed2cff1091f0bf05",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "scope": "selected12 modes,both sides,xy,full882 anchors; all24 component certificates fell back",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/boundary_support_pilot/terminal_packet/fresh_library_readback/boundary_support_pilot_complete_worker.zip",
+  "npy_count": 355,
+  "npy_numeric_bytes": 236716416,
+  "numeric_inventory_sha256": "3cdc17ed2938d51ca7e85ff6dc07ee0d2423a03990f161bc8d55708b820efae0",
+  "numeric_validation_limit": "Every NPY file matches producer file-byte SHA256 and loads allow_pickle=False; derived shape/dtype/C-order hashes are inventories, not independent numerical validation or separately supplied producer numeric hashes. No PDE or checker executed.",
+  "parts": [
+    {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/boundary_support_pilot/terminal_packet/parts/boundary_support_worker.part000",
+      "file_name": "boundary_support_worker.part000",
+      "bytes": 33554432,
+      "sha256": "3a7cad33cbdb0ebb5f3ffbe929d7aedf80a5ce77dadffef83fac49577ba487aa",
+      "library_file_id": "libfile_d9510d72f30c819182c4ee45c784ac69",
+      "file_id": "file_00000000822481f9b253ad04a1682875",
+      "current_version_number": 0
+    },
+    {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/boundary_support_pilot/terminal_packet/parts/boundary_support_worker.part001",
+      "file_name": "boundary_support_worker.part001",
+      "bytes": 33554432,
+      "sha256": "5ebe0d5c558a2ce6db290df3329c006979318c80fe3cce5c672347ded2991d47",
+      "library_file_id": "libfile_0afe9b664034819188d5c314ee1ee86d",
+      "file_id": "file_0000000040ac81f995f99efbdc0d5bf7",
+      "current_version_number": 0
+    },
+    {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/boundary_support_pilot/terminal_packet/parts/boundary_support_worker.part002",
+      "file_name": "boundary_support_worker.part002",
+      "bytes": 20481636,
+      "sha256": "93a9131835515baf6be3b2ff976ef9222df66a7a61edabcb70c2dad2c69fd185",
+      "library_file_id": "libfile_33b6f74770e88191aa27061de1d47386",
+      "file_id": "file_00000000904081f985f07f396c1e7ea2",
+      "current_version_number": 0
+    }
+  ],
+  "split_manifest": {
+    "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/boundary_support_pilot/terminal_packet/parts/boundary_support_split_manifest.json",
+    "purpose": "create_library_file",
+    "status": "succeeded",
+    "file_id": "file_000000007e6081f9a7331906c95a1bb2",
+    "library_file_id": "libfile_16d7f1ed98188191a759c956f05e2a2d",
+    "file_name": "boundary_support_split_manifest.json",
+    "local_metadata_applied": true,
+    "path": "/boundary_support_split_manifest.json",
+    "current_version_number": 0
+  }
+}

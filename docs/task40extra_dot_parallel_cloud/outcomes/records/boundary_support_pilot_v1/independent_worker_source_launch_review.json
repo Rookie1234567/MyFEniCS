@@ -1,0 +1,82 @@
+{
+  "schema": "task40extra.boundary-support-worker-source-review.v1",
+  "status": "WORKER_SOURCE_PASS_WITH_SCOPE",
+  "canonical_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "canonical_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "canonical_worktree_observed_clean": true,
+  "source_sha256": {
+    "helper": "85d00a1f7059a41664b10f8441ce8aff13965d9455a016c748a810399aa2a271",
+    "reference": "b0cee0d3ba36c9d8b1b23dc00a7ac32590de4c7540a08db2811c6ba1c5f02c64",
+    "runner": "1d32f31d8160fb4b886cbaade3928b39844aa1702764789205be179d44844668",
+    "worker_launcher": "b46b8671663e52549899666bd94e7399463737340aa019ac94f4a8796ac2b03d",
+    "inherited_mass_v2_orchestration": "0a1f103a307ae5e95151424a645d6fca5cdeb772049951f1143d817aae8885d0"
+  },
+  "observed_evidence": {
+    "pure_test_log": "final_pure_tests.log",
+    "pure_test_log_sha256": "accbdafca1ef442ae21f3e450703b9fa26eaeffe32dba1b95ef61563ceb17afb",
+    "pure_tests_passed": 25,
+    "pure_test_seconds": 1.335,
+    "source_tests_receipt_sha256": "198693648c483be1e8090b7b1276dffdef6e4c9e4a3225d1acbed8a9d53ef7e4",
+    "preflight_path": "pilot_preflight_20261005T012804Z_2.json",
+    "preflight_sha256": "7e41a86f92742bb94e21d1b87c483bbeafc9b6cc5d4ef5c28f1decde2820903b",
+    "preflight_status": "SOURCE_ABI_METADATA_LIBRARY_RESOURCE_PREFLIGHT_ONLY_PASS",
+    "preflight_dynamic_launch_cap_bytes": 3718316032,
+    "complete_metadata_current_parent_child_source_and_environment_equal": true,
+    "preflight_numerical_worker_started": false
+  },
+  "reviewed_scope": {
+    "selected_modes": 12,
+    "physical_sides": ["top", "bottom"],
+    "components": ["x", "y"],
+    "phase_orders_per_side": [[0, 0], [-142, -5], [-85, -35]],
+    "both_polarizations": true,
+    "actual_boundary_facets": 12,
+    "native_rows": 13224,
+    "mandatory_local_anchor_rows": 882,
+    "proposed_closure_rows": 84,
+    "basis_hash": "16913352432823651554",
+    "basis_coefficient_sha256": "c0be730f050c40e2333362ceac4fac0d656eaf029cf7454a1dbbc21253e064da"
+  },
+  "reviewed_gates": [
+    "Actual reference face from literal affine geometry; actual public T preserves the full edge/face closure; exact basis identity is checked",
+    "Full882 finite values remain anchors; excluded finite contributions are bounded rather than presumed literal zeros",
+    "Local arithmetic bounds, full FE scatter and actual conjugated K^H transport include retained-kernel rounding and duplicate master accumulation",
+    "Stable directed norm estimates and subnormal-complex rejection; both raw and membership-certified retained vectors must pass L2/Linf certificates",
+    "Component cutoff membership and subsequent C/D combination cutoff are certified separately; failed final certificates select complete full882 output",
+    "Unsafe first-product underflow triggers a controlled certification stop; it is not claimed to continue through fallback",
+    "Four live degree27 FFCx side/axis forms with exact compiled-rule and Constant-pack identity; complete FE/MPC/masked and C/D vector gates1e-11 against both norms precede degree160",
+    "Degree160 selected component/C/D actions and degree168/176 reference convergence retain1e-10 independent integral operation scales and exact-zero rules",
+    "C traction signs, D conjugation exactly once and boundary-plane positive H diagonal match production conventions",
+    "All32060 real-transverse-phase metadata is kept distinct from actual finite phase checks on processed batches",
+    "Basis coefficient hashing is admitted before retrieval and released; MPC replay copies use actual nbytes; phase summaries are bounded and complete rowwise evidence is stored in NPY files",
+    "Inherited exact source/ABI/Library gates, qualified relative interpreter, current whole-tree RSS admission,128MiB reserve,3GiB/600s/zero-swap supervisor, strict clocks and descendant cleanup retained",
+    "Pilot-specific complete artifact path/length/hash checks and reference dependency registration replace incompatible old schemas"
+  ],
+  "resource_policy": {
+    "helper_owned_limit_bytes": 134217728,
+    "whole_tree_cap_bytes": 3221225472,
+    "wall_seconds": 600,
+    "outer_reserve_bytes": 134217728,
+    "complete_NPY_evidence_including_headers_cap_bytes": 536870912,
+    "full_packet_cap_bytes": 1073741824,
+    "predictions_are_measured_RSS": false
+  },
+  "remaining_worker_blocker": null,
+  "separate_saved_checker_disposition": {
+    "status": "NOT_INCLUDED_IN_WORKER_PASS_PENDING_THREE_PREVIOUSLY_IDENTIFIED_JOINS",
+    "reviewed_draft_sha256": "bb789e3b1b5f1b72d294182b83a54640aaf985f9cf9fb27fe4e457d7f9786a9b",
+    "remaining_joins": [
+      "Bind the exact component tuple at positional lookup, not only the overall label set",
+      "Validate FFCx sparse rows/values against the raw-derived cutoff before reconstructing C/D",
+      "Bind saved MPC payloads including masters to actual_native_signatures for each role"
+    ],
+    "standalone_checker_orchestration_requires_separate_review": true
+  },
+  "limits": [
+    "No numerical launch or actual pilot qualification is granted by this source review",
+    "No Basix-construction, continuum, all32060 numerical, speed, full C/D system, carrier, volume, factor, PDE or physical-output qualification",
+    "Worker success remains pending independent saved checking and complete durability",
+    "Source Library readback and fresh launch admission remain separate gates"
+  ],
+  "reviewer_ran_project_imports_tests_FE_JIT_or_numerics": false
+}

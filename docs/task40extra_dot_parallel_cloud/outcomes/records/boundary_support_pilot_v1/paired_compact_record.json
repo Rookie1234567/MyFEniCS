@@ -1,0 +1,127 @@
+{
+  "canonical_source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "checker_counts": {
+    "C_D_selected_replays": 48,
+    "FFCx_complete_vector_comparisons": 72,
+    "bound_containment_checks": 96,
+    "component_mask_replays": 96,
+    "dual_projections": 96,
+    "public_reference_action_checks": 144
+  },
+  "checker_report_sha256": "84d827eecb970daec223162c0e3d14fe9c507beac5722ce2fbd5ac193429982f",
+  "compression": {
+    "ambiguous_rows_total": 21308,
+    "both_mask_and_norm_certificates_failed": 24,
+    "certified84_components": 0,
+    "component_certificates": 24,
+    "full882_fallbacks": 24,
+    "maximum_measured_anchor_candidate_abs_difference": 7.238617048080084e-13,
+    "no_compression_gain_qualified": true,
+    "no_gate_relaxation": true
+  },
+  "durability": {
+    "checker_library_id": "libfile_d362cd3426a48191867add4c49f42044",
+    "checker_receipt_sha256": "db261b574df7fa0ac8779719f209464b31df4595ce5bca5feb69f67e7414eb84",
+    "worker_NPY_file_bytes": 236761856,
+    "worker_NPY_numeric_bytes": 236716416,
+    "worker_ZIP_members": 390,
+    "worker_ZIP_uncompressed_including_manifest_bytes": 759987904,
+    "worker_archive_bytes": 87590500,
+    "worker_data_file_bytes": 759919015,
+    "worker_files": 389,
+    "worker_index_library_id": "libfile_906c0bec0be88191a0610068389b6480",
+    "worker_receipt_sha256": "40eee408e370075fa25fa205ba41b046f7492baf8118846d09067356b5c66dd8"
+  },
+  "not_qualified": [
+    "84-row numerical compression",
+    "all32060 boundary numerics",
+    "carrier",
+    "volume/factor fill",
+    "PDE",
+    "physical accuracy",
+    "2TB48h target"
+  ],
+  "reference_checks": {
+    "Cdual": {
+      "max_operation_scaled_error": 4.475021343182909e-14,
+      "passed": true
+    },
+    "Cdual_convergence": {
+      "max_operation_scaled_error": 2.200174719121567e-14,
+      "passed": true
+    },
+    "Dfunctional": {
+      "max_operation_scaled_error": 4.474840882656699e-14,
+      "passed": true
+    },
+    "Dfunctional_convergence": {
+      "max_operation_scaled_error": 2.200161739300694e-14,
+      "passed": true
+    },
+    "component": {
+      "max_operation_scaled_error": 4.483790597482298e-14,
+      "passed": true
+    },
+    "component_convergence": {
+      "max_operation_scaled_error": 2.20013978797651e-14,
+      "passed": true
+    }
+  },
+  "resources": {
+    "checker_RSS_peak_bytes": 403435520,
+    "checker_seconds": 3.777678892998665,
+    "descendants_cleared": true,
+    "owned_workspace_upper_bytes": 84456500,
+    "swap_bytes": 0,
+    "worker_RSS_peak_bytes": 1033064448,
+    "worker_seconds": 148.79835170799925
+  },
+  "schema": "task40extra.original-affine-boundary-support-pilot-paired.v1",
+  "scope": {
+    "complete_AUTO_inventory": 32060,
+    "components": [
+      "x",
+      "y"
+    ],
+    "degree": 6,
+    "fixture_accuracy_qualified": false,
+    "fixture_cells": [
+      3,
+      2,
+      3
+    ],
+    "geometry_nm": "50x25x140",
+    "local_dofs": 882,
+    "native_rows": 13224,
+    "phases_per_side": [
+      [
+        0,
+        0
+      ],
+      [
+        -142,
+        -5
+      ],
+      [
+        -85,
+        -35
+      ]
+    ],
+    "phi_deg": 0,
+    "selected_mode_count": 12,
+    "sides": [
+      "top",
+      "bottom"
+    ],
+    "theta_deg": 89,
+    "unprocessed_modes_qualified": false,
+    "wavelength_nm": 0.7
+  },
+  "stage_seconds": {
+    "mechanism_native_wall_seconds": 9.69633280600101,
+    "public_reference_wall_seconds": 67.3741323409995,
+    "target_native_wall_seconds": 33.45158747700043
+  },
+  "status": "PAIRED_SELECTED_PILOT_PASS_WITH_FULL882_FALLBACK",
+  "worker_report_sha256": "cb2e240edfc8c583a7050ea5f9497f5ed7a9281527be9086c2bf5d4367e7200e"
+}

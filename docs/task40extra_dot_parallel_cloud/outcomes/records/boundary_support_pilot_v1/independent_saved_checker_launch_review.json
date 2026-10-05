@@ -1,0 +1,68 @@
+{
+  "schema": "task40extra.boundary-support-saved-checker-launch-review.v1",
+  "status": "SOURCE_AND_ORCHESTRATION_PASS_WITH_SCOPE",
+  "reviewed_at_utc": "2026-10-05T02:06:33Z",
+  "source": {
+    "head": "6dba8257053c6b2e474b7808b708a745f202733b",
+    "tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+    "clean": true
+  },
+  "exact_files": {
+    "launcher": {
+      "path": "launch_saved_boundary_support_checker.py",
+      "sha256": "9cfeccd86f84747b528b1a7e9f279b724e225c95d33291526c37de409fbb8f3e"
+    },
+    "saved_function": {
+      "path": "check_saved_boundary_pilot.py",
+      "sha256": "9cdf0722301a196c79a04d4bdad69ecd3998d042196e6069ce41f6fb9ddcef5c"
+    },
+    "prior_function_review": {
+      "path": "independent_saved_checker_source_supplement.json",
+      "sha256": "f1b60c93bfc80cea4fb0e629205b22732484cd86adfccd12c84fdba4c4ac9843"
+    },
+    "tests": {
+      "path": "test_saved_boundary_checker_launcher.py",
+      "sha256": "85ea1b22c692dc9f3c6bece77f31940b4994ca2e8719bf7881f9eb6a80fc004f"
+    },
+    "test_log": {
+      "path": "saved_launcher_tests.log",
+      "sha256": "75e15c18941727c6798d17851b11d71c8be85899f4bca2eb7e18e614ef159928",
+      "observed_result": "5 PASS in 0.008s; coordinator execution log, not rerun by reviewer"
+    },
+    "preflight": {
+      "path": "saved_checker_preflight_20261005T020219Z_13.json",
+      "sha256": "acae9d620737a03afad61eece699759778b42f3b245101a0f98dd3c5d9ffe3b2",
+      "status": "SOURCE_ABI_METADATA_LIBRARY_RESOURCE_PREFLIGHT_ONLY_PASS",
+      "dynamic_launch_cap_bytes": 3734978560,
+      "numeric_checker_started": false
+    }
+  },
+  "immutable_worker": {
+    "report_sha256": "cb2e240edfc8c583a7050ea5f9497f5ed7a9281527be9086c2bf5d4367e7200e",
+    "summary_sha256": "3e897087dddfe99896df287e4b12fe99adf90809859c19423094147ae3ffab17",
+    "complete_library_receipt_sha256": "40eee408e370075fa25fa205ba41b046f7492baf8118846d09067356b5c66dd8",
+    "archive_sha256": "f5b9ce1b2c000b12df1557d4429dbfefdcc82b2d0984560b3837e6c216af9ca0",
+    "member_manifest_sha256": "73ab422a6f478ffda53e2f633d959d89e1a2aeed3792e361ed2cff1091f0bf05",
+    "archive_bytes": 87590500,
+    "members": 390,
+    "full_uncompressed_bytes": 759987904,
+    "independent_metadata_checks": "Receipt/archive/split-parts/manifest/inventory hashes reconcile; report, child, terminal, preflight and watchdog source/ABI identities agree; 592 saved resource samples reconcile with summary",
+    "worker_peak_rss_bytes": 1033064448,
+    "worker_qualification": "WORKER_ONLY_CHECKER_PENDING",
+    "all24_component_certificates": "full882_fallback; negative support result preserved"
+  },
+  "reviewed_contract": [
+    "Worker launcher bytes are hashed at the exact sibling path before module execution; numerical function, helper/reference/runner and inherited canonical/external source pins are checked before saved-array work and after supervision.",
+    "Complete producer child/terminal PASS status, report/watchdog linkage, exact frozen full Library receipt and archive, sealed original metadata and complete environment dictionaries are checked before replay.",
+    "The fresh checker directory is disjoint from the immutable worker and original metadata directories.",
+    "Manifest parsing is preadmitted with actual immutable JSON bytes plus 32060*12288 bytes and 16MiB decoder allowance; only the exact twelve indexed rows are retained in an explicitly partial view after complete hash validation.",
+    "A retained 4MiB metadata allowance is added to every saved-array admission and to the complete 128MiB mapping/workspace ownership check; actual whole-tree RSS never assumes deallocation returns pages.",
+    "Only check_saved is dispatched; no FE runner, mesh, form, JIT, rule generation, factor or PDE entry point is invoked.",
+    "Existing supervision retains 3GiB, 600s, 128MiB reserve, MPI1/thread1, exact relative interpreter spelling, immediate stop, strict clock, zero global/job swap, complete identities and descendant cleanup.",
+    "The unchanged saved function retains all original 1e-11 both-norm raw/vector and 1e-10 operation-scale functional gates and exact certificate/fallback replay."
+  ],
+  "remaining_source_orchestration_blocker": null,
+  "reviewer_executed_project_imports_tests_FE_JIT_or_saved_numerics": false,
+  "scope": "Source and saved-authority consistency review for the selected12 boundary pilot only. This is not a numerical checker PASS, allmode qualification, or launch authorization.",
+  "next_actions_outside_this_review": "Coordinator must preserve/read back this exact source package and obtain the separate root launch decision with fresh resource admission."
+}

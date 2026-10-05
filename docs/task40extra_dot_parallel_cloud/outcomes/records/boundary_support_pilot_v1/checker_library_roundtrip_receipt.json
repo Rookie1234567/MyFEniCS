@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "library_file_id": "libfile_d362cd3426a48191867add4c49f42044",
+  "file_id": "file_00000000dacc8207b67a06b8533b2713",
+  "file_name": "boundary_support_pilot_final_checker.zip",
+  "version": 0,
+  "archive_bytes": 239877,
+  "archive_sha256": "fb22e189e5b47789102963056feeb01fc06753fcc8532e237dab616e9af92f44",
+  "members_verified": 16,
+  "full_uncompressed_bytes": 739468,
+  "member_manifest_sha256": "982a9905a19cd7dbc072fa4dee3e0357d0633e4a8939368d4edeb6eda1cd1d44",
+  "qualification": "SAVED_CHECKER_PACKET_DURABLE_SELECTED12_ALL24_FALLBACK_ONLY",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/boundary_support_pilot/final_checker_packet/fresh_library_readback/boundary_support_pilot_final_checker.zip"
+}
