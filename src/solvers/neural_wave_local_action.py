@@ -40,6 +40,8 @@ class LocalWaveAction:
         self.evals = a["evals"][selected]
         self.classes = a["classes"][self.cells]
         self.input_entries = self.mask[self.eids]
+        # Include every original nonzero DtN output entry, even tiny traces.
+        self.output_rows = np.unique(np.r_[self.eids, a["br"]])
         self.counts = dict(columns=0, adjoint=0)
         self.seconds = dict(build=perf_counter() - start, columns=0.0, adjoint=0.0)
 

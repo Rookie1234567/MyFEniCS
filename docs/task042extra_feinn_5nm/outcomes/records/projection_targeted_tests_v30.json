@@ -1,0 +1,58 @@
+{
+  "status": "TARGETED_PROJECTION_LOGIC_PASS_NOT_REAL_M5_EVIDENCE",
+  "junit": {
+    "path": "tmp/task42extra/v30/bootstrap/projection_cache_and_audit_1/junit.xml",
+    "sha256": "e9294d1d581db007fa54d4e04622c308a7d3f0a8653245bfb1a079deb2ea3776",
+    "suite": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "35",
+      "time": "0.446",
+      "timestamp": "2026-10-05T20:16:20.464690",
+      "hostname": "fenics-ws01"
+    }
+  },
+  "binding": {
+    "path": "tmp/task42extra/v30/bootstrap/projection_cache_and_audit_1/binding.json",
+    "sha256": "ed66df8a81aaa7bb7ea0bc3c9b0a2a88f007cc8642e94e95cfdc56130bfbeaca"
+  },
+  "supervision": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "elapsed_seconds": 2.355885874014348,
+    "sampled_process_tree_rss_peak_bytes": 113606656,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "real_saved_state_projection_qualification": "NOT_RUN_YET",
+  "full_pytest_run": false,
+  "stability_record_files": [
+    "tmp/task42extra/v30/bootstrap/projection_cache_and_audit_1/pressure_stable_window.json"
+  ],
+  "timing_only_after_affected_metadata_change": {
+    "junit_path": "tmp/task42extra/v30/bootstrap/projection_timing_cost_1/junit.xml",
+    "junit_sha256": "e2beebb510fa8e9a11e2115916fbca7c9742ba7cf57a54b9b2ca2a81f03464b5",
+    "suite": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "0.265",
+      "timestamp": "2026-10-05T20:18:24.241020",
+      "hostname": "fenics-ws01"
+    },
+    "binding_path": "tmp/task42extra/v30/bootstrap/projection_timing_cost_1/binding.json",
+    "binding_sha256": "ae5151e4744f834045807e74efb18c1f4a934049c2ea7bdb9687df58bbc54a9a",
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.3424163891468197,
+      "sampled_process_tree_rss_peak_bytes": 111833088,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  }
+}

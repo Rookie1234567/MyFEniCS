@@ -329,6 +329,22 @@ def main():
                 ROOT / "src/solvers/neural_wave_local_action.py"
             )
             marker("complete_original_local_action_pair", result)
+        elif spec["role"] == "projection_checks":
+            require_checks()
+            from src.solvers.neural_wave_projection_qualification import qualify
+
+            result = qualify(
+                action, packet, design,
+                ARTIFACTS / "v30_m5_learned_wave/basis", artifact, marker,
+            )
+            for name in ("local_action", "projection"):
+                result[name + "_source_sha256"] = digest(
+                    ROOT / ("src/solvers/neural_wave_" + name + ".py")
+                )
+            marker("saved_unlabelled_projection_chain_pair", dict(
+                qualified=result["implementation_qualified"],
+                states=[v["saved_state"]["columns"] for v in result["checks"]],
+            ))
         elif spec["role"] == "calibration":
             from src.solvers.neural_wave_qualification import analytic_calibration
 
@@ -416,6 +432,19 @@ def main():
                 route_origin_monotonic=manifest["route_origin_monotonic"],
             )
             local_file = ARTIFACTS / "v30_wave_local_action_checks/result.json"
+            projection_file = ARTIFACTS / "v30_wave_projection_checks/result.json"
+            if projection_file.exists():
+                projection_record = json.loads(projection_file.read_text())
+                if (
+                    not projection_record["implementation_qualified"]
+                    or not projection_record["original_action_and_vjp_paired"]
+                    or projection_record["projection_source_sha256"]
+                    != digest(ROOT / "src/solvers/neural_wave_projection.py")
+                ):
+                    raise ValueError("CACHED_TWO_PASS_PROJECTION_NOT_QUALIFIED")
+                local_file = projection_file
+                binding["exact_two_pass_projection_reuse"] = True
+                binding["projection_qualification_sha256"] = digest(projection_file)
             if local_file.exists():
                 local_record = json.loads(local_file.read_text())
                 if (

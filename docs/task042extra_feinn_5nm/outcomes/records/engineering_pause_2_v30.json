@@ -1,0 +1,46 @@
+{
+  "kind": "PLANNED_COMPLETE_BOUNDARY_ENGINEERING_PAUSE",
+  "worker_pid": 2240710,
+  "start_ticks": 112464163,
+  "monotonic": 1127490.987806323,
+  "original_source_sha": "dc89b32081eb9aa908ea7be4f1afee394f2647d9",
+  "latest_complete_boundary_sha256": "976936f5e13bed25f3eb87ef2e1e18e1146460e07fb1e3b732a21701fcb4305c",
+  "columns": 512,
+  "native_relative": 0.4904158713227417,
+  "reason": "qualify algebraically equivalent bounded two-pass residual projection cache against original full A/AH and saved unlabelled states; no prefix replay",
+  "not_a_numeric_failure": true,
+  "campaign_deadline_monotonic": 1286000.0,
+  "accepted_prefix_not_replayed": true,
+  "supervision": {
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": -2,
+    "elapsed_seconds": 2851.4166935079265,
+    "launch_to_summary_seconds": 8410.875703767175,
+    "sampled_process_tree_rss_peak_bytes": 930246656,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "raw_supervision_semantics": "WORKER_FAILED/-2 is exact supervised SIGINT outcome; planned complete-boundary engineering pause, not numerical failure, OOM or budget exit",
+  "prior_primitive_history": "First366 action counters NOT_RETAINED; later retained counters are a partial prefix, complete wall costs kept",
+  "owned_native_identity_check": {
+    "server": [
+      2240449,
+      112457940
+    ],
+    "launcher": [
+      2240450,
+      112457941
+    ],
+    "worker": [
+      2240710,
+      112464163
+    ],
+    "all_matched_processes_absent": true,
+    "numerical_lock": "FREE"
+  },
+  "rank_512": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/rank_512.json",
+    "sha256": "5bfe8b1ccd5f21430d7caba5728236bb90c34cc3d20b86c69e7270637df5126f"
+  },
+  "launch_to_summary_scope": "8410.875703767175s is the inherited route calendar span, not additive attempt2 cost; supervised attempt2 is 2851.4166935079265s. Prior imported/setup start-to-supervision exclusive cost NOT_RETAINED."
+}

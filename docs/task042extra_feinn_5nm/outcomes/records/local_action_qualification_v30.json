@@ -1,0 +1,181 @@
+{
+  "qualification_source_sha": "dc89b32081eb9aa908ea7be4f1afee394f2647d9",
+  "result": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_wave_local_action_checks/result.json",
+    "sha256": "2db04b1fe0bd019475b72e6f6115879fac0cc4eb27d0dbbc4f736c8f7387f665"
+  },
+  "implementation_qualified": true,
+  "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+  "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+  "local_action_source_sha256": "06bc5145bf9af9c6ed09b5829b21e1bccd5ada98c5c26cce6c3283ab29d9167d",
+  "checks": [
+    {
+      "support_level": 0,
+      "patch_index": 0,
+      "input_rows": 4641,
+      "original_touched_cells": 146,
+      "retained_cache_bytes": 765224,
+      "complete_A_columns_relative": 7.399346911301325e-17,
+      "selected_AH_relative": 0.0,
+      "complex_adjoint_relative": 4.146628183111221e-15,
+      "full_moment_real_VJP_relative": 0.0,
+      "nonzero_real_direction_FD_relative": 5.986237909513506e-10,
+      "batch1_8_relative": 0.0,
+      "native_score_relative_gradient_False": 3.6968010854071323e-16,
+      "actual_wave_field_relative_gradient_False": 1.0927579597954294e-15,
+      "native_score_relative_gradient_True": 3.6968010854071323e-16,
+      "actual_wave_field_relative_gradient_True": 1.0927579597954294e-15,
+      "native_score_gradient_relative": 3.4412959681314655e-15
+    },
+    {
+      "support_level": 0,
+      "patch_index": 13,
+      "input_rows": 31968,
+      "original_touched_cells": 384,
+      "retained_cache_bytes": 2118624,
+      "complete_A_columns_relative": 0.0,
+      "selected_AH_relative": 0.0,
+      "complex_adjoint_relative": 4.563906585635505e-14,
+      "full_moment_real_VJP_relative": 0.0,
+      "nonzero_real_direction_FD_relative": 1.538631518417317e-07,
+      "batch1_8_relative": 0.0,
+      "native_score_relative_gradient_False": 0.0,
+      "actual_wave_field_relative_gradient_False": 0.0,
+      "native_score_relative_gradient_True": 0.0,
+      "actual_wave_field_relative_gradient_True": 0.0,
+      "native_score_gradient_relative": 0.0
+    },
+    {
+      "support_level": 1,
+      "patch_index": 0,
+      "input_rows": 882,
+      "original_touched_cells": 44,
+      "retained_cache_bytes": 248816,
+      "complete_A_columns_relative": 6.303827511182002e-17,
+      "selected_AH_relative": 3.698292235767975e-18,
+      "complex_adjoint_relative": 3.0184572714369865e-15,
+      "full_moment_real_VJP_relative": 7.785561231548781e-17,
+      "nonzero_real_direction_FD_relative": 7.290636036088354e-10,
+      "batch1_8_relative": 0.0,
+      "native_score_relative_gradient_False": 1.6035409903578035e-16,
+      "actual_wave_field_relative_gradient_False": 1.0941428111968595e-15,
+      "native_score_relative_gradient_True": 1.6035409903578035e-16,
+      "actual_wave_field_relative_gradient_True": 1.0941428111968595e-15,
+      "native_score_gradient_relative": 5.806697166998673e-15
+    },
+    {
+      "support_level": 1,
+      "patch_index": 50,
+      "input_rows": 2724,
+      "original_touched_cells": 60,
+      "retained_cache_bytes": 339840,
+      "complete_A_columns_relative": 0.0,
+      "selected_AH_relative": 0.0,
+      "complex_adjoint_relative": 3.353817934266639e-14,
+      "full_moment_real_VJP_relative": 0.0,
+      "nonzero_real_direction_FD_relative": 1.1594340077160836e-08,
+      "batch1_8_relative": 0.0,
+      "native_score_relative_gradient_False": 0.0,
+      "actual_wave_field_relative_gradient_False": 0.0,
+      "native_score_relative_gradient_True": 0.0,
+      "actual_wave_field_relative_gradient_True": 0.0,
+      "native_score_gradient_relative": 0.0
+    },
+    {
+      "support_level": 2,
+      "patch_index": 0,
+      "input_rows": 144,
+      "original_touched_cells": 14,
+      "retained_cache_bytes": 99872,
+      "complete_A_columns_relative": 1.509854291913373e-17,
+      "selected_AH_relative": 0.0,
+      "complex_adjoint_relative": 1.0410649026407155e-15,
+      "full_moment_real_VJP_relative": 0.0,
+      "nonzero_real_direction_FD_relative": 3.6804902427431073e-09,
+      "batch1_8_relative": 0.0,
+      "native_score_relative_gradient_False": 2.015327509535323e-15,
+      "actual_wave_field_relative_gradient_False": 1.4448132806818069e-15,
+      "native_score_relative_gradient_True": 2.015327509535323e-15,
+      "actual_wave_field_relative_gradient_True": 1.4448132806818069e-15,
+      "native_score_gradient_relative": 4.989171087066607e-15
+    },
+    {
+      "support_level": 2,
+      "patch_index": 283,
+      "input_rows": 648,
+      "original_touched_cells": 26,
+      "retained_cache_bytes": 161120,
+      "complete_A_columns_relative": 0.0,
+      "selected_AH_relative": 0.0,
+      "complex_adjoint_relative": 6.506645301195687e-15,
+      "full_moment_real_VJP_relative": 0.0,
+      "nonzero_real_direction_FD_relative": 2.2041621937055917e-09,
+      "batch1_8_relative": 0.0,
+      "native_score_relative_gradient_False": 0.0,
+      "actual_wave_field_relative_gradient_False": 0.0,
+      "native_score_relative_gradient_True": 0.0,
+      "actual_wave_field_relative_gradient_True": 0.0,
+      "native_score_gradient_relative": 0.0
+    }
+  ],
+  "cost_pairs": [
+    {
+      "support_level": 0,
+      "patch_index": 0,
+      "old_s": 1.4116590570192784,
+      "new_s": 1.177991374861449,
+      "build_s": 0.0010644139256328344,
+      "speed_ratio_including_build": 1.198361114643401
+    },
+    {
+      "support_level": 0,
+      "patch_index": 13,
+      "old_s": 6.610201528063044,
+      "new_s": 6.7818912516813725,
+      "build_s": 0.0025170010048896074,
+      "speed_ratio_including_build": 0.9746840936772965
+    },
+    {
+      "support_level": 1,
+      "patch_index": 0,
+      "old_s": 0.7722471570596099,
+      "new_s": 0.3501716142054647,
+      "build_s": 0.0007128661964088678,
+      "speed_ratio_including_build": 2.205339112971306
+    },
+    {
+      "support_level": 1,
+      "patch_index": 50,
+      "old_s": 1.217483405256644,
+      "new_s": 0.7680835260543972,
+      "build_s": 0.0008120890706777573,
+      "speed_ratio_including_build": 1.5850924592938338
+    },
+    {
+      "support_level": 2,
+      "patch_index": 0,
+      "old_s": 0.7133557070046663,
+      "new_s": 0.1340617798268795,
+      "build_s": 0.0005414020270109177,
+      "speed_ratio_including_build": 5.321096795267505
+    },
+    {
+      "support_level": 2,
+      "patch_index": 283,
+      "old_s": 0.755904866149649,
+      "new_s": 0.29566697706468403,
+      "build_s": 0.0037637241184711456,
+      "speed_ratio_including_build": 2.556609039176794
+    }
+  ],
+  "scope": "Mathematically equivalent native input-support and exact selected adjoint; no field gate or NN resource gain",
+  "supervision": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "elapsed_seconds": 48.53596046590246,
+    "launch_to_summary_seconds": 112.43455286510289,
+    "sampled_process_tree_rss_peak_bytes": 436768768,
+    "sampled_process_tree_swap_peak_bytes": 0
+  }
+}

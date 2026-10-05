@@ -1,3 +1,7 @@
+# 当前V30：新增波动函数/完整原方程实现资格
+
+S0原M5完整映射、方向、MPC与非零梯度见证实际通过，属于实现资格。新增输入支持作用六见证也已实测；512列完整保存后，投影缓存及受影响保存checker的35项fixture通过，真实保存态配对尚未运行。[新定向测试](records/projection_targeted_tests_v30.json)、[局部作用](records/local_action_qualification_v30.json)、[完整保存与监督](records/engineering_pause_2_v30.json)。没有full pytest、重装或CI；原测试失败与全部旧资格保留。后续仅重验实际改动的计时项。
+
 # 当前 V29：最终17项定向资格与全口面独立原门
 
 最终实现source为c94fe051752ab1576bc8b00548eb12109f18280a；17项pytest/Ruff/compileall全部通过，JUnit SHA a704fabb0b5701fa1eb6df76dda30f1f5630fe6d467325f00e11cd1b42e974b5。测试覆盖新鲜CPU/身份/cpuset/最后24份/拒绝25份、显式opt-in、完整API路由、周期映射、更新hash后的损坏数组、实际writer→seal→重开→消费者、失败监督/陈旧资源拒绝、D共轭、原清单参考面、原生原向量分母及固定根因计数。fixture中的Basix替身不是原生物理证据。

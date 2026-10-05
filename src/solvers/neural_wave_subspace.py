@@ -28,6 +28,27 @@ class WaveSubspace:
         self.r = action.f.copy()
         self.a = np.empty(0, dtype=np.complex128)
         self.seconds = dict(orthogonalize=0.0, solve=0.0, true_residual=0.0)
+        self._small_basis_product = None
+        self._small_basis_product_columns = 0
+
+    def small_basis_inner_product(self):
+        """Actual small Q*Q, no inverse/factor; bind to accepted basis size."""
+        old = self._small_basis_product_columns
+        if self._small_basis_product is None or old > self.m or self.m - old > 1:
+            self._small_basis_product = conjugate_product(
+                self.Q[:, :self.m], self.Q[:, :self.m]
+            )
+        elif self.m == old + 1:
+            column = conjugate_product(self.Q[:, :self.m], self.Q[:, self.m - 1])
+            value = np.empty((self.m, self.m), np.complex128, order="F")
+            value[:old, :old] = self._small_basis_product
+            value[:, -1] = column
+            value[-1, :] = column.conj()
+            # Preserve the directly measured norm, including roundoff.
+            value[-1, -1] = column[-1]
+            self._small_basis_product = value
+        self._small_basis_product_columns = self.m
+        return self._small_basis_product
 
     def project(self, values):
         z = np.array(values, copy=True)
@@ -121,7 +142,7 @@ class WaveSubspace:
         )
 
 
-def optimal_amplitudes(action, subspace, columns, *, applied_columns=None):
+def optimal_amplitudes(action, subspace, columns, *, applied_columns=None, projector=None):
     """Independent small SVD; both learned and fixed routes receive this."""
     B = (
         np.column_stack([action.apply(columns[:, j]) for j in range(columns.shape[1])])
@@ -130,10 +151,22 @@ def optimal_amplitudes(action, subspace, columns, *, applied_columns=None):
     )
     if B.shape != columns.shape or B.dtype != np.complex128 or not np.isfinite(B).all():
         raise ValueError("BOUNDED_ORIGINAL_ACTION_COLUMNS_INVALID")
-    Z = subspace.project(B)
+    Z = subspace.project(B) if projector is None else projector.project(B, supported=True)
     left, singular, right = linalg.svd(Z, full_matrices=False)
     if not len(singular) or singular[0] == 0:
         raise ValueError("DEGENERATE_NEW_DIRECTION")
+    original_projection_fallback = (
+        projector is not None and singular[-1] <= 1e-4 * singular[0]
+    )
+    if original_projection_fallback:
+        # A nearly dependent tiny amplitude block can amplify the rounding
+        # difference of the equivalent cached projection. Use the original
+        # explicit two passes; its scientific rank threshold stays 1e-12.
+        if applied_columns is not None:
+            B = np.column_stack([action.apply(columns[:, j]) for j in range(columns.shape[1])])
+        Z = subspace.project(B)
+        projector.counts["explicit_two_pass_fallback"] += 1
+        left, singular, right = linalg.svd(Z, full_matrices=False)
     keep = singular > subspace.rcond * singular[0]
     p = right[keep].conj().T @ ((left[:, keep].conj().T @ subspace.r) / singular[keep])
     z = Z @ p
@@ -141,5 +174,8 @@ def optimal_amplitudes(action, subspace, columns, *, applied_columns=None):
     return (
         p,
         z,
-        dict(score=score, rank=int(keep.sum()), singular_values=singular.tolist()),
+        dict(
+            score=score, rank=int(keep.sum()), singular_values=singular.tolist(),
+            original_two_pass_rounding_fallback=original_projection_fallback,
+        ),
     )

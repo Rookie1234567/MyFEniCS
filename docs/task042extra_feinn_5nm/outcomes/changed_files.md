@@ -1,3 +1,9 @@
+# 当前V30：神经波动空间与独立完整场审核
+
+新增局部复指数完整矩/VJP、原残差驱动幅值SVD/真实波矢学习、稳定累计QR与原子边界；输入支持和投影缓存仅是同一原作用的等价复用，两条路线共同获得。独立保存checker读取原完整场/模式/物理数组而不信PASS。数值源在src，one-run/编排为薄opt-in，ordinary默认和其他分支不变。
+
+研究路径尚未授予完整M5/生产或NN资源收益；ignored大数组、旧权重和历史失败保持不合并。运行源码和本页文档HEAD分别记账；本批完整测试/新增文件在最终交付后冻结清单。
+
 # 当前 V29改动：全口面薄适配与独立保存checker
 
 从Review V28 seal到最终实现c94fe051752ab1576bc8b00548eb12109f18280a共24文件、2724新增/30删除；后续本轮文档/compact记录为独立交付增量。冻结c354afa数学闭包不改，schema1和ordinary默认不变，所有数值stage先clean commit后运行。
@@ -339,8 +345,8 @@ input/task042extra_feinn_5nm/v27_rb_boundary_check.dat
 
 ## V28版本化输入与实际全模式交付边界
 
-| 依赖组 / 实际文件 | 行为和资格边界 |
-| --- | --- |
+| 依赖组 | 实际文件 | 行为和资格边界 |
+| --- | --- | --- |
 | 显式schema2输入 | src/io/w1_versioned_input.py、w1_receiver_contract.py、w1_evidence.py；src/common/w1_mode_validation.py；resolved config/reference JSON | 新实例独立物理与typed receipt，旧schema1常量/默认拒绝保留；416780字段实际检查 |
 | 局部FE/积分与保存checker | src/solvers/w1_facet_profile.py、w1_saved_boundary.py、w1_boundary_components.py；src/runners/w1_versioned_payload.py、w1_component_payload.py | 原q60两代表面/32060实际资格；完整局部列，独立矩和真实入射；条件分面仅fixture，未运行，不授全域或PDE资格 |
 | 正式入口/保护 | src/runners/w1_component_receiver.py、w1_admission_budget.py、feinn_resources.py；input/task042extra_feinn_5nm/v28_*.dat | 独立stage/attempt、35源码绑定、24/900预算；阈值不放宽，读最后有效样本与新增采样分开，旧schema行为保持 |

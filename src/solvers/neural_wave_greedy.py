@@ -236,21 +236,26 @@ class BasisStore:
         return value
 
 
-def variable_projection(action, subspace, moments, patch, q, *, gradient, local=None):
+def variable_projection(action, subspace, moments, patch, q, *, gradient, local=None, projector=None):
     columns = moments.columns(patch, q)
     p, z, record = optimal_amplitudes(
         action, subspace, columns,
         applied_columns=local.columns(columns) if local is not None else None,
+        projector=projector,
     )
     amplitude = p.reshape(-1, 3)
     score = record["score"]
     if not gradient:
         return score, amplitude, columns @ p, record, None
     # Envelope derivative of ||r-Zp||^2; p is the tiny SVD minimizer.
-    projected = subspace.project(subspace.r - z)
+    fallback = record["original_two_pass_rounding_fallback"]
+    projected = (
+        subspace.project(subspace.r - z) if projector is None or fallback
+        else projector.project(subspace.r - z)
+    )
     cotangent = (
         action.apply(projected, adjoint=True)
-        if local is None else local.adjoint(projected)
+        if local is None or fallback else local.adjoint(projected)
     )
     gq, _ = moments.vjp(patch, q, amplitude, cotangent)
     gq *= 2 / float(np.vdot(action.f, action.f).real)
@@ -267,15 +272,18 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         raise ValueError("AUTHORIZED_CAPACITY_PLANNING_LINE_EXCEEDED")
     moments = WaveMoments(packet, batch=8)
     local_actions = {}
+    projection_costs = dict(build_s=0.0, project_s=0.0, calls=0, stable_fallbacks=0)
     space = WaveSubspace(action, capacity)
     store = BasisStore(Path(artifact) / "basis", binding)
     rng = np.random.default_rng(strategy["seed"])
     level, width, resolution_index, stagnant = 0, 1, 0, 0
     iteration, failures, learning_updates = 0, 0, 0
+    primitive_history_complete = True
     previous = store.restore(space, rng)
     if previous:
         iteration = previous["iteration"]
         saved = previous["algorithm_state"]
+        primitive_history_complete = saved.get("primitive_history_complete", False)
         level, width, resolution_index, stagnant = (
             saved[k] for k in ("level", "width", "resolution_index", "stagnant")
         )
@@ -290,6 +298,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             moments.counts.update(prior_costs["moment_counts"])
             moments.seconds.update(prior_costs["moment_seconds"])
             space.seconds.update(prior_costs["qr_seconds"])
+            projection_costs.update(prior_costs.get("projection_reuse", {}))
         marker(
             "complete_boundary_recovered",
             dict(
@@ -343,6 +352,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             iteration,
         )
         local = None
+        projector = None
         if binding.get("exact_local_input_support_reuse", False):
             from src.solvers.neural_wave_local_action import LocalWaveAction
 
@@ -352,6 +362,27 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 if sum(x.retained_bytes for x in local_actions.values()) > 2 * 2**30:
                     raise MemoryError("LOCAL_NUMERIC_CACHE_AUTHORIZED_2GIB_EXCEEDED")
             local = local_actions[patch]
+        if binding.get("exact_two_pass_projection_reuse", False):
+            from src.solvers.neural_wave_projection import ResidualProjectionCache
+
+            projector = ResidualProjectionCache(
+                space, local.output_rows,
+                additional_cache_bytes=sum(x.retained_bytes for x in local_actions.values()),
+            )
+            projection_costs["build_s"] += projector.seconds["build"]
+            projector_charged = dict(project_s=0.0, calls=0, stable_fallbacks=0)
+
+        def charge_projection():
+            if projector is None:
+                return
+            current = dict(
+                project_s=projector.seconds["project"],
+                calls=projector.counts["project"],
+                stable_fallbacks=projector.counts["explicit_two_pass_fallback"],
+            )
+            for key, value in current.items():
+                projection_costs[key] += value - projector_charged[key]
+                projector_charged[key] = value
         resolution = strategy["direction_resolutions"][resolution_index]
         dictionary = direction_dictionary(
             2 * np.pi / design["model"]["wavelength_nm"], resolution
@@ -364,7 +395,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             q = dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
             try:
                 value = variable_projection(
-                    action, space, moments, patch, q, gradient=False, local=local
+                    action, space, moments, patch, q, gradient=False, local=local, projector=projector
                 )
                 candidates.append((value[0], q, value))
             except ValueError as error:
@@ -395,13 +426,14 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     refined = np.clip(refined, -bound, bound)
                     try:
                         value = variable_projection(
-                            action, space, moments, patch, refined, gradient=False, local=local
+                            action, space, moments, patch, refined, gradient=False, local=local, projector=projector
                         )
                         candidates.append((value[0], refined, value))
                     except ValueError as error:
                         if str(error) != "DEGENERATE_NEW_DIRECTION":
                             raise
         if not candidates:
+            charge_projection()
             stagnant += 1
         else:
             _, q0, best = max(candidates, key=lambda x: x[0])
@@ -422,11 +454,18 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     / width
                 )
                 seed_c = moments.forward(patch, q, p_seed)
-                seed_z = space.project(
+                seed_action = (
                     action.apply(seed_c) if local is None
                     else local.columns(seed_c[:, None])[:, 0]
                 )
-                projected_seed = space.project(seed_z - space.r)
+                seed_z = (
+                    space.project(seed_action) if projector is None
+                    else projector.project(seed_action, supported=True)
+                )
+                projected_seed = (
+                    space.project(seed_z - space.r) if projector is None
+                    else projector.project(seed_z - space.r)
+                )
                 _, gp = moments.vjp(
                     patch,
                     q,
@@ -456,6 +495,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                         flat.reshape(width, 3),
                         gradient=True,
                         local=local,
+                        projector=projector,
                     )
                     calls.append(
                         dict(
@@ -483,7 +523,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     )
                     trial_q = result.x.reshape(width, 3)
                     trial = variable_projection(
-                        action, space, moments, patch, trial_q, gradient=False, local=local
+                        action, space, moments, patch, trial_q, gradient=False, local=local, projector=projector
                     )
                     if trial[0] >= best[0]:
                         q, best = trial_q, trial
@@ -502,8 +542,10 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     optimize_record["amplitude_learning"] = amplitude_learning
                     learning_updates += int(optimize_record["q_update_norm"] > 1e-12)
                 except TimeoutError:
+                    charge_projection()
                     stop = "MODULE_INTERRUPTED_AT_SAVE_RESERVE"
                     break
+            charge_projection()
             # Optimization uses the qualified sparse maps; the accepted field
             # always uses the original complete point-value matrix and geometry.
             from src.solvers.neural_wave_reconstruction import pointwise_moments
@@ -565,12 +607,14 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                         stagnant=stagnant,
                         failures=failures,
                         learning_updates=learning_updates,
+                        primitive_history_complete=primitive_history_complete,
                         cost_state=dict(
                             action_counts=action.counts.copy(),
                             action_seconds=action.costs.copy(),
                             moment_counts=moments.counts.copy(),
                             moment_seconds=moments.seconds.copy(),
                             qr_seconds=space.seconds.copy(),
+                            projection_reuse=projection_costs.copy(),
                         ),
                     ),
                 )
@@ -636,9 +680,9 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         exact_local_input_support_reuse=binding.get("exact_local_input_support_reuse", False),
         local_numeric_cache_bytes=sum(x.retained_bytes for x in local_actions.values()),
         local_action_costs=[dict(counts=x.counts, seconds=x.seconds) for x in local_actions.values()],
-        inherited_primitive_counters_retained=(
-            previous is None or "cost_state" in previous["algorithm_state"]
-        ),
+        inherited_primitive_counters_retained=primitive_history_complete,
+        exact_two_pass_projection_reuse=binding.get("exact_two_pass_projection_reuse", False),
+        projection_reuse_costs=projection_costs,
     )
     atomic_json(Path(artifact) / "result.json", result)
     return result

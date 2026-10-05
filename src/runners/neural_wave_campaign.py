@@ -51,6 +51,20 @@ def stage_deadline(spec, allocation, campaign):
     ), reserve
 
 
+def timing_fields(allocation, attempt_identity, now):
+    """Separate inherited route span from additive actual attempt wall time."""
+    origin = attempt_identity["origin_monotonic"]
+    if not allocation["origin_monotonic"] <= origin <= now:
+        raise ValueError("V30_ATTEMPT_COST_TIMEBASE_INCONSISTENT")
+    span = now - allocation["origin_monotonic"]
+    return dict(
+        launch_to_summary_seconds=span,
+        launch_to_summary_semantics="inherited allocation span including prior runs and pauses; not additive attempt cost",
+        inherited_route_allocation_span_seconds=span,
+        actual_attempt_elapsed_seconds=now - origin,
+    )
+
+
 def durable(spec, *, origin, attempt=1):
     from src.runners.durable_terminal import launch_tmux
     from src.runners.feinn_resources import admission
@@ -96,6 +110,12 @@ def durable(spec, *, origin, attempt=1):
     if directory.exists():
         raise RuntimeError("EXISTING_DURABLE_NAMESPACE: reconnect same job")
     directory.mkdir(parents=True)
+    atomic_json(directory / "attempt_identity.json", dict(
+        stage=stage, attempt=attempt, origin_monotonic=origin,
+        inherited_route_origin_monotonic=original["origin_monotonic"],
+        inherited_deadline_monotonic=original["deadline_monotonic"],
+        scope="actual attempt including imports, observation and supervision; no budget reset",
+    ))
     # This outer observation captures the originally permitted cpuset only.
     # The launcher performs stability and a fresh final observation before exec.
     facts = admission(
@@ -145,6 +165,7 @@ def launch(spec):
     allocation = json.loads(
         (ROOT / os.environ["TASK42EXTRA_WAVE_ALLOCATION"]).read_text()
     )
+    attempt_identity = json.loads((directory / "attempt_identity.json").read_text())
     campaign = window()
     hard = (
         16
@@ -153,6 +174,7 @@ def launch(spec):
             "checks",
             "fast_checks",
             "local_action_checks",
+            "projection_checks",
             "calibration",
             "verify",
             "LEARNED_WAVE_GREEDY",
@@ -199,6 +221,8 @@ def launch(spec):
                         "src/solvers/neural_wave_greedy.py",
                         "src/solvers/neural_wave_local_action.py",
                         "src/solvers/neural_wave_local_qualification.py",
+                        "src/solvers/neural_wave_projection.py",
+                        "src/solvers/neural_wave_projection_qualification.py",
                         "src/runners/neural_wave_campaign.py",
                         "src/runners/neural_wave_worker.py",
                         "src/io/neural_wave_campaign.py",
@@ -218,6 +242,7 @@ def launch(spec):
                 },
                 utc=stamp,
                 route_origin_monotonic=allocation["origin_monotonic"],
+                actual_attempt_origin_monotonic=attempt_identity["origin_monotonic"],
                 stage_deadline_monotonic=deadline,
                 inherited_allocation_deadline_monotonic=allocation[
                     "deadline_monotonic"
@@ -292,9 +317,7 @@ def launch(spec):
                 health_check=Health(directory, hard, [], artifact_root=ARTIFACTS),
                 sampled_root_identity=terminal["server"],
             )
-            result["launch_to_summary_seconds"] = (
-                monotonic() - allocation["origin_monotonic"]
-            )
+            result.update(timing_fields(allocation, attempt_identity, monotonic()))
             result["source_sha"] = source
             atomic_json(directory / "run_summary.json", result)
             return result
@@ -306,8 +329,7 @@ def launch(spec):
                     reason=repr(error),
                     source_sha=source,
                     descendants_cleared=True,
-                    launch_to_summary_seconds=monotonic()
-                    - allocation["origin_monotonic"],
+                    **timing_fields(allocation, attempt_identity, monotonic()),
                 ),
             )
             raise
