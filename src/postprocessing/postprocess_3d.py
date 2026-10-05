@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-import pyvista
 import ufl
 from mpi4py import MPI
 
@@ -16,6 +15,8 @@ from .full3d_reference import export_full3d_reference_samples
 
 def _field_grid(V_dg):
     cells, cell_types, coords = plot.vtk_mesh(V_dg)
+    import pyvista
+
     return pyvista.UnstructuredGrid(cells, cell_types, coords), coords
 
 

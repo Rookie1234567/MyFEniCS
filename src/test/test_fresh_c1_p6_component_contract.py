@@ -504,6 +504,21 @@ def test_pyvista_postprocessing_import_is_deferred_to_plot_callsite():
                 and isinstance(node.func, ast.Name) and node.func.id == "save_fields_and_plots")
     assert imports[0].lineno < call.lineno
 
+    postprocess_source = Path(__file__).parents[1] / "postprocessing" / "postprocess_3d.py"
+    postprocess_tree = ast.parse(postprocess_source.read_text())
+    assert not any(
+        isinstance(node, ast.Import) and any(alias.name == "pyvista" for alias in node.names)
+        for node in postprocess_tree.body
+    )
+    field_grid = next(
+        node for node in postprocess_tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "_field_grid"
+    )
+    assert any(
+        isinstance(node, ast.Import) and any(alias.name == "pyvista" for alias in node.names)
+        for node in ast.walk(field_grid)
+    )
+
 
 def test_budget_manifest_is_a_finite_complete_member_bound():
     runner = Path(__file__).parents[2] / "benchmarks" / "run_fresh_c1_p6_component.py"
