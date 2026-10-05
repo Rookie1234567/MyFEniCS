@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V46 / V48神经无损存储候选关闭
+
+[Review V46](review_report_v46.md)已独立审阅V48交付`6c3dadb21aa0edfa7498e5865cf955766882f58a`：接受有限逐位／实际消费与真实训练证据；NN在线规划为RAW的2.02713／1.53632倍，码流也输给shuffle19，按实际成本门关闭本冻结codec。consumer会短暂同时保留两条解码向量，严格单workspace不授；此复用限制不改变有限正确性和成本负结果。原尺寸0.7nm完整解、2TB／48h、NN20仍未获得。
+
+**本报告不授权V49或新的数值批次。** 执行窗口拉取完整报告与记录、一次回执后停止，不为局部勘误另建response或重训；后续仅在代表性完整引擎的真实身份／费用揭示一个独立学习对象及可核算20%机会时，集中制定新合同。允许有限完整问题作新pilot，不以先完成原尺寸作循环准入。最新dot边界进展已只读核对，不复制其求解器实验。具体验收、失败替代和重新准入见§6。
+
+[独立核验](outcomes/records/review_v46_independent_checks.json) · [文档检查](outcomes/records/review_v46_documentation_checks.json)。交接`review-execution-handoff-20261005-v46`回应`execution-review-handoff-20261005-v48`；两个窗口不并行，无merge approval。下文是逐字保留的历史，旧执行指令不覆盖本入口。
+
+---
+
 # 当前交付：V48完整系数无损预测存储
 
 [response_v48](response_v48.md)已连续回应[Review V45](review_report_v45.md)：P1→P4完成，LIN/NN各256真实更新、全部20路线×数据族逐位及实际消费通过。两个模型按val码流均选step0；NN相对RAW完整bank容量比例2.02713/1.53632，且码流也大于shuffle19，故20%门拒绝、候选关闭，不做三次计时或微调。仅有限无损存储组件资格，原尺寸0.7nm完整解/2TB48h/NN20未获。

@@ -1,0 +1,3212 @@
+{
+  "HEAD": "6c3dadb21aa0edfa7498e5865cf955766882f58a",
+  "review_base": "e73baa45f59c0fcfc12ee1c00614c6933568f27e",
+  "archive_entries": 481,
+  "current_paths_matched": 477,
+  "unmatched": [],
+  "missing": [],
+  "delivery_records": 22,
+  "protected_files": 6745,
+  "inventory_file_counts": {
+    ".json": 63,
+    ".npz": 33,
+    ".bank": 36,
+    ".pt": 8
+  },
+  "inventory_bytes": 134763910,
+  "npz_members_hashed": 77,
+  "npz_member_bytes": 39944576,
+  "NPZ_member_receipts_verified": 32,
+  "failed_partial_package_equivalence": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_EVALUATION_DATA_001/heldout.npz",
+      "member_identity_matches": [
+        "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_EVALUATION_DATA_002/heldout.npz"
+      ]
+    }
+  ],
+  "bank_headers_verified": {
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_BYTE_3.bank": {
+      "method": "BYTE:3",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1799313,
+      "header": 87159,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_FCM.bank": {
+      "method": "FCM",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3444907,
+      "header": 100862,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_LIN.bank": {
+      "method": "LIN",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1801687,
+      "header": 87397,
+      "model": 208,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_SHUFFLE_19.bank": {
+      "method": "SHUFFLE:19",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3055144,
+      "header": 101249,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_DFCM.bank": {
+      "method": "DFCM",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3389556,
+      "header": 100958,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_SHUFFLE_3.bank": {
+      "method": "SHUFFLE:3",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1751530,
+      "header": 87306,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_BYTE_19.bank": {
+      "method": "BYTE:19",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1801081,
+      "header": 87160,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_SHUFFLE_19.bank": {
+      "method": "SHUFFLE:19",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1692164,
+      "header": 87307,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_PREV.bank": {
+      "method": "PREV",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3364600,
+      "header": 100958,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_RAW.bank": {
+      "method": "RAW",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3639816,
+      "header": 100862,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_NN.bank": {
+      "method": "NN",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1817934,
+      "header": 87840,
+      "model": 12304,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_RAW.bank": {
+      "method": "RAW",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1856591,
+      "header": 87109,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_PREV.bank": {
+      "method": "PREV",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1794789,
+      "header": 87157,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_BYTE_3.bank": {
+      "method": "BYTE:3",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3403793,
+      "header": 100960,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_LIN.bank": {
+      "method": "LIN",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3510922,
+      "header": 101198,
+      "model": 208,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_DFCM.bank": {
+      "method": "DFCM",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1797756,
+      "header": 87157,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_BYTE_19.bank": {
+      "method": "BYTE:19",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3342616,
+      "header": 100961,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_SHUFFLE_3.bank": {
+      "method": "SHUFFLE:3",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3196175,
+      "header": 101251,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/migration_NN.bank": {
+      "method": "NN",
+      "vectors": 16,
+      "trace": 13824,
+      "bytes": 3539118,
+      "header": 101593,
+      "model": 12304,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_ENCODE_EVALUATION_001/heldout_FCM.bank": {
+      "method": "FCM",
+      "vectors": 8,
+      "trace": 13824,
+      "bytes": 1819347,
+      "header": 87109,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_LIN_001/LIN_validation_0.bank": {
+      "method": "LIN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 937723,
+      "header": 80501,
+      "model": 208,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_LIN_001/LIN_validation_128.bank": {
+      "method": "LIN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 938570,
+      "header": 80501,
+      "model": 208,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_LIN_001/LIN_validation_256.bank": {
+      "method": "LIN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 939236,
+      "header": 80501,
+      "model": 208,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_LIN_001/LIN_validation_64.bank": {
+      "method": "LIN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 938272,
+      "header": 80501,
+      "model": 208,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_NN_001/NN_validation_64.bank": {
+      "method": "NN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 953158,
+      "header": 80964,
+      "model": 12304,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_NN_001/NN_validation_256.bank": {
+      "method": "NN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 953210,
+      "header": 80964,
+      "model": 12304,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_NN_001/NN_validation_128.bank": {
+      "method": "NN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 952855,
+      "header": 80964,
+      "model": 12304,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRAIN_NN_001/NN_validation_0.bank": {
+      "method": "NN",
+      "vectors": 4,
+      "trace": 13824,
+      "bytes": 952163,
+      "header": 80964,
+      "model": 12304,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/BYTE_19.bank": {
+      "method": "BYTE:19",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4391203,
+      "header": 107861,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/SHUFFLE_19.bank": {
+      "method": "SHUFFLE:19",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4117106,
+      "header": 108223,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/PREV.bank": {
+      "method": "PREV",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4376880,
+      "header": 107858,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/SHUFFLE_3.bank": {
+      "method": "SHUFFLE:3",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4266285,
+      "header": 108223,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/BYTE_3.bank": {
+      "method": "BYTE:3",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4386786,
+      "header": 107860,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/DFCM.bank": {
+      "method": "DFCM",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4384105,
+      "header": 107858,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/RAW.bank": {
+      "method": "RAW",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4531428,
+      "header": 107738,
+      "model": 0,
+      "blocks": 6
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P2_TRADITIONAL_001/FCM.bank": {
+      "method": "FCM",
+      "vectors": 20,
+      "trace": 13824,
+      "bytes": 4436588,
+      "header": 107738,
+      "model": 0,
+      "blocks": 6
+    }
+  },
+  "source_snapshot_pairs": 83,
+  "nonnested_launcher_recomputed": 45.6235247538425,
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 4.329541316954419,
+      "samples": 9,
+      "peak": 102785024,
+      "max_gap": 0.7243813599925488,
+      "exit": 0,
+      "launch": 6.4670626351144165,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P1_DATA",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P1_DATA_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 2.297104304889217,
+      "samples": 5,
+      "peak": 121516032,
+      "max_gap": 0.7462589368224144,
+      "exit": 0,
+      "launch": 4.5579723480623215,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P2_TRADITIONAL",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P2_TRADITIONAL_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 6.013822301989421,
+      "samples": 12,
+      "peak": 108441600,
+      "max_gap": 0.7407454459462315,
+      "exit": 0,
+      "launch": 8.211235836846754,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P2_TRAIN_LIN",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P2_TRAIN_LIN_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 7.736059533897787,
+      "samples": 15,
+      "peak": 360271872,
+      "max_gap": 0.7532688700594008,
+      "exit": 0,
+      "launch": 9.919686570996419,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P2_TRAIN_NN",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P2_TRAIN_NN_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 8.376342809060588,
+      "samples": 16,
+      "peak": 365150208,
+      "max_gap": 0.7705161990597844,
+      "exit": 0,
+      "launch": 10.554321055999026,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P2_FREEZE",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P2_FREEZE_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 1.8395157151389867,
+      "samples": 4,
+      "peak": 46170112,
+      "max_gap": 0.7549775498919189,
+      "exit": 0,
+      "launch": 4.0496060638688505,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_EVALUATION_DATA",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_EVALUATION_DATA_001",
+      "source_sha": "2bdcac4ecb299077858de01c730e72c97b6a0257",
+      "seconds": 1.834416297962889,
+      "samples": 4,
+      "peak": 46571520,
+      "max_gap": 0.7462532890494913,
+      "exit": 1,
+      "launch": 4.119758788961917,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_002",
+      "source_sha": "bc1d2f16badadc68c4cb725d38d1ce3a52f657cc",
+      "seconds": 3.981155657907948,
+      "samples": 8,
+      "peak": 99319808,
+      "max_gap": 0.7497234409675002,
+      "exit": 0,
+      "launch": 6.143177306046709,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_EVALUATION_DATA",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_EVALUATION_DATA_002",
+      "source_sha": "bc1d2f16badadc68c4cb725d38d1ce3a52f657cc",
+      "seconds": 2.948278429917991,
+      "samples": 6,
+      "peak": 144191488,
+      "max_gap": 0.7563271939288825,
+      "exit": 0,
+      "launch": 5.106928922003135,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_ENCODE_EVALUATION",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_ENCODE_EVALUATION_001",
+      "source_sha": "bc1d2f16badadc68c4cb725d38d1ce3a52f657cc",
+      "seconds": 9.207860910100862,
+      "samples": 17,
+      "peak": 107708416,
+      "max_gap": 0.7598052429966629,
+      "exit": 0,
+      "launch": 11.50350805092603,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_003",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 4.061668582959101,
+      "samples": 8,
+      "peak": 99299328,
+      "max_gap": 0.7666601799428463,
+      "exit": 0,
+      "launch": 6.239601664943621,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_RAW",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_RAW_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.8821415710262954,
+      "samples": 4,
+      "peak": 47001600,
+      "max_gap": 0.7519543720409274,
+      "exit": 0,
+      "launch": 4.056938395835459,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_BYTE_3",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_BYTE_3_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.9086659231688827,
+      "samples": 4,
+      "peak": 46555136,
+      "max_gap": 0.7644462292082608,
+      "exit": 0,
+      "launch": 4.096513408003375,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_BYTE_19",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_BYTE_19_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.9179650580044836,
+      "samples": 4,
+      "peak": 46702592,
+      "max_gap": 0.7719149610493332,
+      "exit": 0,
+      "launch": 4.11986517184414,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_SHUFFLE_3",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_SHUFFLE_3_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.9077867500018328,
+      "samples": 4,
+      "peak": 47038464,
+      "max_gap": 0.7530787070281804,
+      "exit": 0,
+      "launch": 4.098153721075505,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_SHUFFLE_19",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_SHUFFLE_19_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.981493939179927,
+      "samples": 4,
+      "peak": 46796800,
+      "max_gap": 0.8234989780467004,
+      "exit": 0,
+      "launch": 4.213277237024158,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_PREV",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_PREV_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.9570772349834442,
+      "samples": 4,
+      "peak": 46694400,
+      "max_gap": 0.796783777885139,
+      "exit": 0,
+      "launch": 4.152483148034662,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_FCM",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_FCM_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.0066198320128024,
+      "samples": 4,
+      "peak": 46342144,
+      "max_gap": 0.8213401678949594,
+      "exit": 0,
+      "launch": 4.19155904604122,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_DFCM",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_DFCM_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.4962719168979675,
+      "samples": 5,
+      "peak": 84738048,
+      "max_gap": 0.7884824608918279,
+      "exit": 0,
+      "launch": 4.69870289391838,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_LIN",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_LIN_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.0001504099927843,
+      "samples": 4,
+      "peak": 46411776,
+      "max_gap": 0.8146111930254847,
+      "exit": 0,
+      "launch": 4.232893960084766,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_heldout_NN",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_heldout_NN_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.0086961700581014,
+      "samples": 4,
+      "peak": 46448640,
+      "max_gap": 0.8196412848774344,
+      "exit": 0,
+      "launch": 4.235913258977234,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_RAW",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_RAW_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.9849599748849869,
+      "samples": 4,
+      "peak": 46706688,
+      "max_gap": 0.7956990029197186,
+      "exit": 0,
+      "launch": 4.211099629057571,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_BYTE_3",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_BYTE_3_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 1.9977565070148557,
+      "samples": 4,
+      "peak": 47022080,
+      "max_gap": 0.8053870329167694,
+      "exit": 0,
+      "launch": 4.226888434030116,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_BYTE_19",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_BYTE_19_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.0505686041433364,
+      "samples": 4,
+      "peak": 46333952,
+      "max_gap": 0.8559288280084729,
+      "exit": 0,
+      "launch": 4.25440446799621,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_SHUFFLE_3",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_SHUFFLE_3_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.001469651935622,
+      "samples": 4,
+      "peak": 46440448,
+      "max_gap": 0.8052869609091431,
+      "exit": 0,
+      "launch": 4.229958869982511,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_SHUFFLE_19",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_SHUFFLE_19_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.0137160760350525,
+      "samples": 4,
+      "peak": 46485504,
+      "max_gap": 0.8118447940796614,
+      "exit": 0,
+      "launch": 4.23018994089216,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_PREV",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_PREV_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.6094102701172233,
+      "samples": 5,
+      "peak": 87597056,
+      "max_gap": 0.8097684350796044,
+      "exit": 0,
+      "launch": 4.822476266184822,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_FCM",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_FCM_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.6422871160320938,
+      "samples": 5,
+      "peak": 87822336,
+      "max_gap": 0.8343558530323207,
+      "exit": 0,
+      "launch": 4.882280706893653,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_DFCM",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_DFCM_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.6300758849829435,
+      "samples": 5,
+      "peak": 87584768,
+      "max_gap": 0.8168115520384163,
+      "exit": 0,
+      "launch": 4.85080741206184,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_LIN",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_LIN_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.571700931992382,
+      "samples": 5,
+      "peak": 85360640,
+      "max_gap": 0.8151011459995061,
+      "exit": 0,
+      "launch": 4.799021468963474,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CONSUME_migration_NN",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CONSUME_migration_NN_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 2.658971669850871,
+      "samples": 5,
+      "peak": 88465408,
+      "max_gap": 0.8486571290995926,
+      "exit": 0,
+      "launch": 4.90004839701578,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P3_CHECK",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P3_CHECK_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 12.34687103307806,
+      "samples": 20,
+      "peak": 130490368,
+      "max_gap": 0.8995156739838421,
+      "exit": 0,
+      "launch": 14.63926949701272,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "P4_ANALYSIS",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_P4_ANALYSIS_001",
+      "source_sha": "f5822a63fe28c527ee7edf58511d56bc79524fbe",
+      "seconds": 6.498780314112082,
+      "samples": 11,
+      "peak": 96083968,
+      "max_gap": 0.846495911013335,
+      "exit": 0,
+      "launch": 8.8497366651427,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_004",
+      "source_sha": "5c262ca2b57ab763a3df5cdb36db34bd781c77cc",
+      "seconds": 4.805202580057085,
+      "samples": 8,
+      "peak": 108576768,
+      "max_gap": 0.947412489913404,
+      "exit": 0,
+      "launch": 7.1119721829891205,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "metadata_collect",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_metadata_collect_001",
+      "source_sha": "5c262ca2b57ab763a3df5cdb36db34bd781c77cc",
+      "seconds": 2.292650223011151,
+      "samples": 4,
+      "peak": 46784512,
+      "max_gap": 0.9579215080011636,
+      "exit": 0,
+      "launch": 4.576349433045834,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_005",
+      "source_sha": "b897df39278262d4e92566fe3ee70e729916863b",
+      "seconds": 4.921810043975711,
+      "samples": 8,
+      "peak": 99520512,
+      "max_gap": 1.0245753719937056,
+      "exit": 0,
+      "launch": 7.270018486073241,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "metadata_docs",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_metadata_docs_001",
+      "source_sha": "b897df39278262d4e92566fe3ee70e729916863b",
+      "seconds": 2.402156945085153,
+      "samples": 4,
+      "peak": 46108672,
+      "max_gap": 1.000559695996344,
+      "exit": 0,
+      "launch": 4.833838230930269,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    },
+    {
+      "role": "archive",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_archive_001",
+      "source_sha": "b897df39278262d4e92566fe3ee70e729916863b",
+      "seconds": 1.7474903350230306,
+      "samples": 4,
+      "peak": 45948928,
+      "max_gap": 0.7350185930263251,
+      "exit": 0,
+      "launch": 4.189544211141765,
+      "receipt_keys": [
+        "workflow_deadline_seconds",
+        "solve_deadline_seconds",
+        "time_limit_mode",
+        "resource_stop_policy",
+        "rss_hard_limit_bytes",
+        "rss_warning_bytes",
+        "startup_headroom_bytes",
+        "swap_policy",
+        "global_swap_delta_policy",
+        "clock_info",
+        "clock_start",
+        "timebase_policy",
+        "timebase_policy_version",
+        "cache_metadata_stable",
+        "classification",
+        "leader_exit_code",
+        "descendants_cleared",
+        "remaining_child_pids",
+        "observed_child_pids",
+        "sampled_process_tree_rss_peak_bytes",
+        "sampled_process_tree_swap_peak_bytes",
+        "memory_scope",
+        "swap_scope",
+        "global_swap_activity",
+        "job_swap_activity",
+        "launch_envelope",
+        "samples",
+        "elapsed_seconds",
+        "cache_metadata_stamp",
+        "source_state",
+        "clock_end",
+        "workflow_clock_interval",
+        "stage",
+        "directory",
+        "launch_wall_seconds",
+        "shared_workstation"
+      ]
+    }
+  ],
+  "model_recomputation": [
+    {
+      "kind": "LIN",
+      "updates": 256,
+      "parameters": 26,
+      "selected": 0,
+      "validation_bytes": [
+        937723,
+        938272,
+        938570,
+        939236
+      ],
+      "maximum_FD_error": 6.749600878208639e-13
+    },
+    {
+      "kind": "NN",
+      "updates": 256,
+      "parameters": 1538,
+      "selected": 0,
+      "validation_bytes": [
+        952163,
+        953158,
+        952855,
+        953210
+      ],
+      "maximum_FD_error": 1.6620237269782123e-09
+    }
+  ],
+  "candidate_recomputation": [
+    {
+      "family": "heldout",
+      "best_online": "RAW",
+      "best_file": "SHUFFLE:19",
+      "NN_complete_ratio_to_RAW": 2.027128057834994,
+      "NN_resident_exceeds_RAW_80": true,
+      "NN_file_ratio_to_best": 1.0743249472273373,
+      "rows": [
+        {
+          "family": "heldout",
+          "method": "RAW",
+          "file_bytes": 1856591,
+          "encoding_seconds": 0.02637739502824843,
+          "load_seconds": 0.02653369284234941,
+          "consume_seconds_including_all_decoding": 0.0029415860772132874,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 1771179,
+            "compulsory_workspace_bytes": 225536,
+            "complete_trace_bank_object_bytes": 1996715,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "307d0cd7726d9413ec7ec33c900756562dc279e7ee6f80787adce0dfc044fc57",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_RAW_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "BYTE:3",
+          "file_bytes": 1799313,
+          "encoding_seconds": 0.030376239912584424,
+          "load_seconds": 0.012483641970902681,
+          "consume_seconds_including_all_decoding": 0.03334309300407767,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2395885,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 4026349,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "7e4cfc59439b869df044e70ebf5bbaa728931d2d29855eaa64c9c94ca0ce41c3",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_BYTE_3_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "BYTE:19",
+          "file_bytes": 1801081,
+          "encoding_seconds": 0.15976222697645426,
+          "load_seconds": 0.01193440891802311,
+          "consume_seconds_including_all_decoding": 0.03204872692003846,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2397653,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 4028117,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "7a548f3dee4ef8774c3fa5d7437c682c16b9ddae801ccd76dc18d128715365a4",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_BYTE_19_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "SHUFFLE:3",
+          "file_bytes": 1751530,
+          "encoding_seconds": 0.030473480001091957,
+          "load_seconds": 0.012054116930812597,
+          "consume_seconds_including_all_decoding": 0.034928467124700546,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2348102,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 3978566,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "de394b3ef176343236127d89db3bd826c28f94711467a3fb2db691f1015347e1",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_SHUFFLE_3_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "SHUFFLE:19",
+          "file_bytes": 1692164,
+          "encoding_seconds": 0.22678708005696535,
+          "load_seconds": 0.012309934012591839,
+          "consume_seconds_including_all_decoding": 0.03640188998542726,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2288736,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 3919200,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "658fa7dd5ad47032d4f483d2a61a022269c0f11e110e850260f27497379ba2ea",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_SHUFFLE_19_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "PREV",
+          "file_bytes": 1794789,
+          "encoding_seconds": 0.13862856104969978,
+          "load_seconds": 0.012131956871598959,
+          "consume_seconds_including_all_decoding": 0.24659226392395794,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2391361,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 4021825,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "9c852b6f7621b2132ab3f7a9e722ae0b917737442896ac94ac6ed11022528964",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_PREV_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "FCM",
+          "file_bytes": 1819347,
+          "encoding_seconds": 0.1917909700423479,
+          "load_seconds": 0.012379219057038426,
+          "consume_seconds_including_all_decoding": 0.35136982682161033,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2415918,
+            "compulsory_workspace_bytes": 1663232,
+            "complete_trace_bank_object_bytes": 4079150,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "806ca536895d803fe858610d420392a5fdcec362d83100a81b7e539ac637862b",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_FCM_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "DFCM",
+          "file_bytes": 1797756,
+          "encoding_seconds": 0.22334296884946525,
+          "load_seconds": 0.01221058121882379,
+          "consume_seconds_including_all_decoding": 0.3738720011897385,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2394328,
+            "compulsory_workspace_bytes": 1663232,
+            "complete_trace_bank_object_bytes": 4057560,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "735e1e49d02e5a727a093673039b21d34ac0c3f15b05f4f17bc470b8892cf5af",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_DFCM_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "LIN",
+          "file_bytes": 1801687,
+          "encoding_seconds": 0.112729846034199,
+          "load_seconds": 0.012224018108099699,
+          "consume_seconds_including_all_decoding": 0.19722141092643142,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2399130,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 4029594,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "f292b7b0f001b51e21e56aa97008e19c3eeefa1c542e5661ad37721d2fac9e58",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_LIN_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "heldout",
+          "method": "NN",
+          "file_bytes": 1817934,
+          "encoding_seconds": 0.14878935203887522,
+          "load_seconds": 0.011995094828307629,
+          "consume_seconds_including_all_decoding": 0.2763243578374386,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 2417133,
+            "compulsory_workspace_bytes": 1630464,
+            "complete_trace_bank_object_bytes": 4047597,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "6cd68d3678ca31a9fbe421afeb98b1e462e253303edeababd60c48f04b311f72",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_heldout_NN_001/consumer.npz",
+            "sha256": "9aa7aa50165610c9bd7e74bb23afba3c1fcf4eba94b24efc15c2e2b0243e679f",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  16
+                ],
+                "dtype": "<c16",
+                "sha256": "129b343ad06fda36c3bd61c6458bd1e8139e362b93e334aedddff2b5371a74e9"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "f76c1f3533e7e9d968646269c80c33370e8cf3b000f8edfeafb9c5eb85ee0292"
+              }
+            }
+          },
+          "bit_identity": true
+        }
+      ]
+    },
+    {
+      "family": "migration",
+      "best_online": "RAW",
+      "best_file": "SHUFFLE:19",
+      "NN_complete_ratio_to_RAW": 1.5363152980145989,
+      "NN_resident_exceeds_RAW_80": true,
+      "NN_file_ratio_to_best": 1.1584128276768624,
+      "rows": [
+        {
+          "family": "migration",
+          "method": "RAW",
+          "file_bytes": 3639816,
+          "encoding_seconds": 0.05585716897621751,
+          "load_seconds": 0.045605825958773494,
+          "consume_seconds_including_all_decoding": 0.004589672898873687,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 3540651,
+            "compulsory_workspace_bytes": 225792,
+            "complete_trace_bank_object_bytes": 3766443,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "09fc9d2d0af0e5a147054d87bfd0b40d1db50add3c73f61c1f91d4ac4182a2ec",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_RAW_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "BYTE:3",
+          "file_bytes": 3403793,
+          "encoding_seconds": 0.05951048596762121,
+          "load_seconds": 0.01746918400749564,
+          "consume_seconds_including_all_decoding": 0.06352005084045231,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 4017820,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5648540,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "e16f025fcf10f773ba893e860cade31f6a9d55c74be096f878bafd68af0a640d",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_BYTE_3_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "BYTE:19",
+          "file_bytes": 3342616,
+          "encoding_seconds": 0.39674760308116674,
+          "load_seconds": 0.01711605512537062,
+          "consume_seconds_including_all_decoding": 0.06751866498962045,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 3956643,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5587363,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "8a612acc7a2ebbda1181f2888e0fa111d414a953d5a8a707f1a4dad2a71a0567",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_BYTE_19_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "SHUFFLE:3",
+          "file_bytes": 3196175,
+          "encoding_seconds": 0.060153919039294124,
+          "load_seconds": 0.017762475879862905,
+          "consume_seconds_including_all_decoding": 0.06953338882885873,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 3810202,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5440922,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "51c09699c442bcac136d6cfabc365da09cd16a5b2c99692626ec2b29b0c2b48e",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_SHUFFLE_3_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "SHUFFLE:19",
+          "file_bytes": 3055144,
+          "encoding_seconds": 0.5430109628941864,
+          "load_seconds": 0.01631725998595357,
+          "consume_seconds_including_all_decoding": 0.06918550212867558,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 3669174,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5299894,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "3e2d34dc2e0d3605fb678c546154ae9bf18dc6bc576441375c00d330ad4374f5",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_SHUFFLE_19_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "PREV",
+          "file_bytes": 3364600,
+          "encoding_seconds": 0.2959570081438869,
+          "load_seconds": 0.017123610945418477,
+          "consume_seconds_including_all_decoding": 0.532771339872852,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 3978627,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5609347,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "be1f38d21de29c51c2981dba8d3a265b7f5cfe509cd356e68c4dd5a403669f65",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_PREV_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "FCM",
+          "file_bytes": 3444907,
+          "encoding_seconds": 0.4923209750559181,
+          "load_seconds": 0.017386010149493814,
+          "consume_seconds_including_all_decoding": 0.7467271690256894,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 4058933,
+            "compulsory_workspace_bytes": 1663488,
+            "complete_trace_bank_object_bytes": 5722421,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "cbdc938ee9be6994e4193c6f8d49f8dc39d40927c7e6458c17a71d6c377d94c9",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_FCM_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "DFCM",
+          "file_bytes": 3389556,
+          "encoding_seconds": 0.4240317379590124,
+          "load_seconds": 0.017540156841278076,
+          "consume_seconds_including_all_decoding": 0.8263948468957096,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 4003583,
+            "compulsory_workspace_bytes": 1663488,
+            "complete_trace_bank_object_bytes": 5667071,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "1459986376c894670cfe26207aef8f0c96f9066dcc01b22c0facf5b77482d912",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_DFCM_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "LIN",
+          "file_bytes": 3510922,
+          "encoding_seconds": 0.22706414014101028,
+          "load_seconds": 0.01839640107937157,
+          "consume_seconds_including_all_decoding": 0.40130735794082284,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 4125772,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5756492,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "ca00d886ef096b24789c4f6bab55e472abee5b9d7bf1481decf8d62869040db6",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_LIN_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        },
+        {
+          "family": "migration",
+          "method": "NN",
+          "file_bytes": 3539118,
+          "encoding_seconds": 0.2971896280068904,
+          "load_seconds": 0.017970368964597583,
+          "consume_seconds_including_all_decoding": 0.6402643600013107,
+          "decoder_separate_seconds": "not instrumented separately; included in actual full consumer",
+          "objects": {
+            "resident_bank_bytes": 4155724,
+            "compulsory_workspace_bytes": 1630720,
+            "complete_trace_bank_object_bytes": 5786444,
+            "accounting": "resident Python-owned headers/rows/model views plus bounded workspace upper plan; interpreter/library/allocator included separately in process-tree RSS"
+          },
+          "bank_sha256": "0e7e14ad601d71e638eeb405151868acfe65394cb25e89d9fe20d153cfc374f8",
+          "consumer_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v48/aux_P3_CONSUME_migration_NN_001/consumer.npz",
+            "sha256": "57812f9ea0f2735c6b15ef642b814c09fe7dc4485d1becebca5325ae57de5ec2",
+            "aliases": {},
+            "members": {
+              "scalars": {
+                "shape": [
+                  32
+                ],
+                "dtype": "<c16",
+                "sha256": "f7b44ad7741e851a5b422bbdcd565abe96110103e74d69bcd015c30b8c5c5123"
+              },
+              "current": {
+                "shape": [
+                  13824
+                ],
+                "dtype": "<c16",
+                "sha256": "34e841e11ab622c84896475eb3aeaeab2c8bfb820780fe58d7c603ccc60fff79"
+              }
+            }
+          },
+          "bit_identity": true
+        }
+      ]
+    }
+  ],
+  "supervised": 130.86851282743737,
+  "probe": 39.35502620274201,
+  "metadata_setup": 0.09848153195343912,
+  "known": 218.7474027988501,
+  "charged": 395.9455453159753,
+  "history_known_lower": 88875.68891642192,
+  "peak": 365150208,
+  "max_gap": 1.0245753719937056,
+  "freeze_utc": "2026-10-05T00:28:43.040398+00:00",
+  "first_failed_heldout_after_freeze": true,
+  "post_document_test_versions": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v48.md",
+      "tested_sha256": "c66bd7cca3533feb80b6ba41b3b5f47e1da99dfc31d03fd7a0b24a916652f1c0",
+      "final_sha256": "cd2bf0b256188bd65fd1e465d0c1eb989714cf18aada78e2ecfe4438f4fd5b97",
+      "matches_final": false
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md",
+      "tested_sha256": "c325037498166d260c9c3fd348e477342fa9e4797f311e4f0c4e27dfccd9dafb",
+      "final_sha256": "3ebc5c336f7a09a9d94b81e2855b481c8e6acb280e4653a54e4088cd00451f66",
+      "matches_final": false
+    }
+  ],
+  "closed": true,
+  "new_reviewer_FE_A_B_model_training_inference": 0,
+  "review_scope": "byte/header/hash and saved scalar checks; no scientific model/codec replay; tiny source lifetime witness separate",
+  "review_cost": "manual/hash/IO not supervised; no performance claim",
+  "schema": "task042.review46.independent.v1",
+  "UTC": "2026-10-05T01:10:36.689679+00:00",
+  "repository_index": {
+    "tracked_files": 11794,
+    "text_bytes": 124840081,
+    "sha256": "49e7fa3254b93956b3cc9e3de290504f3c4d32d19380cb229b86f3cc593c97e0",
+    "scope": "byte/hash/navigation scan, repeated after compaction; not full repository line-by-line semantic audit"
+  },
+  "source_lifetime_witness": {
+    "actual_function": "src.solvers.lossless_vector_bank.consume",
+    "tiny_synthetic_shape": [
+      3,
+      12
+    ],
+    "get_output_live_counts": [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "maximum_simultaneous_decoded_vectors": 2,
+    "cause": "RHS bank.get allocates before Python replaces the previous loop-local vector reference",
+    "old_scientific_arrays_read": 0,
+    "FE_A_training_inference_Krylov": 0,
+    "scope": "Python reference lifetime witness only; not a measured Task042 solver peak",
+    "script": "import json,weakref\nfrom pathlib import Path\nimport numpy as np\nfrom src.solvers.lossless_vector_bank import consume\nclass LifetimeBank:\n    header={'ntrace':12,'vectors':3}\n    def __init__(self):self.refs=[];self.max_live=0;self.calls=[]\n    def get(self,i):\n        vector=np.ones(12,dtype=np.complex128)*(i+1)\n        self.refs.append(weakref.ref(vector))\n        count=sum(r() is not None for r in self.refs)\n        self.max_live=max(self.max_live,count);self.calls.append(count)\n        return vector\nb=LifetimeBank();consume(b)\nout={'actual_function':'src.solvers.lossless_vector_bank.consume','tiny_synthetic_shape':[3,12],'get_output_live_counts':b.calls,'maximum_simultaneous_decoded_vectors':b.max_live,'cause':'RHS bank.get allocates before Python replaces the previous loop-local vector reference','old_scientific_arrays_read':0,'FE_A_training_inference_Krylov':0,'scope':'Python reference lifetime witness only; not a measured Task042 solver peak'}\nassert b.max_live==2\nPath('/tmp/task042_review46_lifetime.json').write_text(json.dumps(out,indent=2)+'\\n');print(json.dumps(out))\n",
+    "script_sha256": "0833bd6b807e60f3fbeb60de56a1e312ff3fdeab133013c390c65e3da2c48f67",
+    "implication": "Strict one decoded vector contract not satisfied; published block workspace reserve may cover overlap, so no claim that total planning bytes necessarily underestimate RSS. Negative NN resident comparison remains sufficient."
+  },
+  "review_audit_development": "One audit-only schema correction: artifact auxiliary metadata is summary.json, not receipt.json. No scientific actor rerun. Lifetime witness uses synthetic fake getter with actual consume function, not old science or neural codec.",
+  "dot_read_only_snapshot": {
+    "review": "V46",
+    "branch": "task40extra_dot_parallel_cloud",
+    "frozen_remote": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+    "access": "read-only GitHub commit/file and noninteractive ls-remote; no ref mutation or Library download",
+    "document": {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/3f4fb69b20d33d382975bb96db73b44bba583ebd/docs/task40extra_dot_parallel_cloud/outcomes/chunked_surface_mass_v2_zh.md",
+      "git_blob_sha": "85a41a658328b3bc2dd531078464d7044b2be7ba"
+    },
+    "compact_git_blob_sha": "643db5429ca0ca99248efdd606992d90c4a8bb3b",
+    "canonical_source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+    "actual_source_identities": {
+      "chunked_helper": {
+        "function": "assemble_chunked_top_x",
+        "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/chunked_native/target_chunked_surface_vector_mass_v2.py",
+        "sha256": "dff5871b767ed25ecd1500e0433cdc914773c013a46521d4c2bc3a4b0a37bef8"
+      },
+      "core": {
+        "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/solvers/target_auto_surface_cost.py",
+        "sha256": "748e925d42b0da1e27240b10d47bf586173ced8ee44a93cd78ea4368a6dbae24"
+      },
+      "reference_helper": {
+        "function": "run_reference",
+        "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/chunked_native/target_higher_quadrature_reference_mass_v2.py",
+        "sha256": "a0af0fc4838f08af3236c926e383ff84a09ee69c0965c19693a2950a6de44094"
+      },
+      "runner": {
+        "path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/chunked_native/run_chunked_surface_cost_mass_v2.py",
+        "sha256": "3705674a56b9f4e7afe0b5ff77215ee5180cd397d39e20f1f70423d888ea7683"
+      }
+    },
+    "selected_original_mode_indices": [
+      16028,
+      16029,
+      0,
+      1,
+      6018,
+      6019
+    ],
+    "selection_reasons": [
+      {
+        "actual_near_cutoff": false,
+        "minimum_abs_beta_is_not_a_cutoff_assertion": true,
+        "original_mode_indices": [
+          16028,
+          16029
+        ],
+        "reasons": [
+          "incident00",
+          "smallest_abs_beta"
+        ],
+        "tuple": [
+          0,
+          0
+        ]
+      },
+      {
+        "actual_near_cutoff": false,
+        "minimum_abs_beta_is_not_a_cutoff_assertion": true,
+        "original_mode_indices": [
+          0,
+          1
+        ],
+        "reasons": [
+          "largest_abs_m"
+        ],
+        "tuple": [
+          -142,
+          -5
+        ]
+      },
+      {
+        "actual_near_cutoff": false,
+        "minimum_abs_beta_is_not_a_cutoff_assertion": true,
+        "original_mode_indices": [
+          6018,
+          6019
+        ],
+        "reasons": [
+          "largest_abs_n"
+        ],
+        "tuple": [
+          -85,
+          -35
+        ]
+      }
+    ],
+    "published_scope": "original AUTO inventory; selected top/x raw and masked vectors only",
+    "published_status": "CHUNKED_SELECTED_TOP_X_COMPLETE",
+    "full_qualification": false,
+    "resources": {
+      "classification": "COMPLETED",
+      "elapsed_seconds": 44.55242638300115,
+      "sampled_process_tree_rss_peak_bytes": 944046080,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "auxiliary_policy": "fixed constant-function requirement1e-12; not a general field or construction bound; original weights unchanged; gamma_N proposal superseded",
+    "target_chunked_wall_seconds": 7.357206692999171,
+    "retained_array_payload_peak_bytes": 8048556,
+    "retained_array_payload_peak_definition": "maximum observed stage snapshot of actual named retained ndarray payload; native transient workspace excluded",
+    "saved_scalar_ratios_recomputed": {
+      "raw_vs_public_eval_reference": {
+        "entries": 18,
+        "maximum_ratio": 3.908698067283571e-14,
+        "relative_limit": 1e-10,
+        "all_recomputed_pass": true
+      },
+      "reference_convergence_recomputed": {
+        "entries": 18,
+        "maximum_ratio": 1.9395278759272064e-14,
+        "relative_limit": 1e-10,
+        "all_recomputed_pass": true
+      }
+    },
+    "recomputation_scope": "Published compact scalar numerator/scale only; no native FE or quadrature replay"
+  },
+  "GitHub_visual": "NOT_VERIFIED: exact V48 result page Cache miss; source/metadata access not rendered visual inspection",
+  "source_edits_by_reviewer": false,
+  "next_experiment_executed_by_reviewer": false,
+  "decision": "FINITE_LOSSLESS_STORAGE_COMPONENT_ONLY accepted; strict single decoder workspace not qualified; frozen neural codec closed by measured object-cost gate; no V49 authorized",
+  "final_target": "original-size 0.7nm full 3D FE, complete cold time <=172800s, simultaneous peak <=2e12B, NN >=20% same-correctness improvement: NOT_QUALIFIED"
+}
