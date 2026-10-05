@@ -389,6 +389,10 @@ def test_v10_bottom_continuation_reuses_parent_and_runs_only_independent_bottom_
     parent = root / "parent"
     (parent / "watchdog").mkdir(parents=True)
     output = root / "bottom-resume"
+    (output / "watchdog").mkdir(parents=True)
+    watchdog_summary_path = output / "watchdog" / "summary.json"
+    watchdog_summary_path.write_text('{"status":"SUPERVISOR_CREATED"}')
+    watchdog_summary_before = watchdog_summary_path.read_bytes()
     parent_arrays_path = parent / "parent_arrays.npz"
     parent_arrays_path.write_bytes(b"parent archive fixture")
     raw_path, reference_path = root / "w1_raw.npz", root / "v9_reference.npz"
@@ -586,6 +590,33 @@ def test_v10_bottom_continuation_reuses_parent_and_runs_only_independent_bottom_
     assert "p4_q60_bottom_fixture_bottom_object" in checkpoint_arrays[-1]
     assert "p6_q60_bottom_fixture_bottom_object" in checkpoint_arrays[-1]
     assert _sha(parent_report_path.read_bytes()) == result["parent_lineage"]["parent_report_sha256"]
+    assert watchdog_summary_path.read_bytes() == watchdog_summary_before
+
+
+@pytest.mark.parametrize(
+    "existing_result",
+    ["w1_v10_a_extension_report.json", "w1_v10_a_extension_arrays.npz"],
+)
+def test_v10_bottom_continuation_rejects_existing_results_but_allows_watchdog_dir(
+    monkeypatch, tmp_path, existing_result
+):
+    root = tmp_path.resolve()
+    output = root / "bottom-resume"
+    (output / "watchdog").mkdir(parents=True)
+    (output / "watchdog" / "summary.json").write_text('{"status":"SUPERVISOR_CREATED"}')
+    existing_path = output / existing_result
+    existing_path.write_bytes(b"do not overwrite")
+    monkeypatch.setattr(v10_runner, "ROOT", root)
+    monkeypatch.setattr(
+        v10_runner,
+        "stream_boundary_correction",
+        lambda **_kwargs: pytest.fail("existing result guard must run before any bottom computation"),
+    )
+
+    with pytest.raises(ValueError, match="already contains a V10 report or NPZ result"):
+        v10_runner.run_v10_bottom_continuation(output, root / "parent")
+
+    assert existing_path.read_bytes() == b"do not overwrite"
 
 
 @pytest.mark.parametrize("degree", [4, 6])

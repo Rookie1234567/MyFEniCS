@@ -1142,8 +1142,14 @@ def run_v10_bottom_continuation(
         raise ValueError("V10 continuation input and output must remain inside the repository")
     if output == parent_output:
         raise ValueError("bottom continuation output must be distinct from its parent checkpoint")
-    if output.exists() and any(output.iterdir()):
-        raise ValueError("bottom continuation output directory must be new and empty")
+    if any(
+        (output / name).exists()
+        for name in (
+            "w1_v10_a_extension_report.json",
+            "w1_v10_a_extension_arrays.npz",
+        )
+    ):
+        raise ValueError("bottom continuation output already contains a V10 report or NPZ result")
     if _file_sha256(raw_path) != SAVED_W1_RAW_SHA256:
         raise ValueError("saved W1 raw archive SHA mismatch")
     if _file_sha256(reference_path) != SAVED_W9_REFERENCE_SHA256:
