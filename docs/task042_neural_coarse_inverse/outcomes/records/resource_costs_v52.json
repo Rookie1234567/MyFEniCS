@@ -1,0 +1,368 @@
+{
+  "costs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v52/aux_pre_01",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 12.698684332892299,
+      "cold_N1_dat_launch_lower_seconds": 29.208896411117166,
+      "timings": {},
+      "peak_bytes": 329723904,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 0,
+      "supervised_outside_timed_intervals_seconds": 12.698684332892299,
+      "actual_calls": "unknown",
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 10,
+        "actual_max_sample_gap_seconds": 1.766869296086952,
+        "sampled_tree_peak_bytes": 329723904,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "SETUP",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v52_notch_resolution_preflight_20261005T114651523701Z",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 6.353750539943576,
+      "cold_N1_dat_launch_lower_seconds": 22.50202814093791,
+      "timings": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 2.198983286973089
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 2.198983286973089
+        },
+        "root_measured_seconds": 2.198983286973089,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "peak_bytes": 344530944,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 2.198983286973089,
+      "supervised_outside_timed_intervals_seconds": 4.154767252970487,
+      "actual_calls": {
+        "A": 0,
+        "AH": 0,
+        "factor": 0
+      },
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 5,
+        "actual_max_sample_gap_seconds": 1.6817353789228946,
+        "sampled_tree_peak_bytes": 344530944,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "H",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v52_notch_z4_p5_20261005T114754156158Z",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 2270.8302893519867,
+      "cold_N1_dat_launch_lower_seconds": 2286.97282292787,
+      "timings": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 3.7651754613034427,
+          "new_phase_all532_q47": 20.61765856994316,
+          "new_phase_all532_q63": 104.93827096698806,
+          "JIT_full_Ckappa_and_complete532_carrier": 41.53582525998354,
+          "physical_incident_RHS": 0.06908718100748956,
+          "condensation_local_factors": 1001.2601151219569,
+          "h_sparse_symbolic_capacity": 1.9086807530838996,
+          "h_bounded_numeric_factor": 33.68565968400799,
+          "solve_and_affine_internal_recovery": 1.2892736541107297,
+          "fixed_refinement": 2.0223109459038824,
+          "physical_E_H_curl_evaluation": 1.4175184238702059,
+          "all532_power_and_volume_absorption": 6.9434886041563,
+          "non_nested_common_physical_integrals_q23": 269.1639199380297,
+          "non_nested_common_physical_integrals_q31": 723.0758844758384
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 3.7651754613034427,
+          "new_phase_all532_q47": 20.61765856994316,
+          "new_phase_all532_q63": 104.93827096698806,
+          "JIT_full_Ckappa_and_complete532_carrier": 41.53582525998354,
+          "physical_incident_RHS": 0.06908718100748956,
+          "condensation_local_factors": 1001.2601151219569,
+          "h_sparse_symbolic_capacity": 1.9086807530838996,
+          "h_bounded_numeric_factor": 33.68565968400799,
+          "solve_and_affine_internal_recovery": 1.2892736541107297,
+          "fixed_refinement": 2.0223109459038824,
+          "physical_E_H_curl_evaluation": 1.4175184238702059,
+          "all532_power_and_volume_absorption": 6.9434886041563,
+          "non_nested_common_physical_integrals_q23": 269.1639199380297,
+          "non_nested_common_physical_integrals_q31": 723.0758844758384
+        },
+        "root_measured_seconds": 2211.6928690401837,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "peak_bytes": 6149042176,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 2211.6928690401837,
+      "supervised_outside_timed_intervals_seconds": 59.137420311803,
+      "actual_calls": {
+        "A": 4,
+        "AH": 2,
+        "factor": 2,
+        "volume_only": 2
+      },
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 1376,
+        "actual_max_sample_gap_seconds": 2.1711729909293354,
+        "sampled_tree_peak_bytes": 6149042176,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v52/aux_pre_02",
+      "source_sha": "138a1681a870fdd2e3d754365fc06d1dcabbe8dd",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 14.177505888976157,
+      "cold_N1_dat_launch_lower_seconds": 30.365640457952395,
+      "timings": {},
+      "peak_bytes": 321916928,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 0,
+      "supervised_outside_timed_intervals_seconds": 14.177505888976157,
+      "actual_calls": "unknown",
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 7,
+        "actual_max_sample_gap_seconds": 3.001507433131337,
+        "sampled_tree_peak_bytes": 321916928,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "P",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v52_notch_z2_p6_20261005T123022189129Z",
+      "source_sha": "138a1681a870fdd2e3d754365fc06d1dcabbe8dd",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 5888.579819462029,
+      "cold_N1_dat_launch_lower_seconds": 5904.757283959072,
+      "timings": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 7.274907930986956,
+          "new_phase_all532_q47": 32.67512564989738,
+          "new_phase_all532_q63": 184.02096407394856,
+          "JIT_full_Ckappa_and_complete532_carrier": 86.95424763602205,
+          "physical_incident_RHS": 0.0989917810074985,
+          "condensation_local_factors": 2940.6049363398924,
+          "h_sparse_symbolic_capacity": 2.3662464588414878,
+          "h_bounded_numeric_factor": 47.69463666295633,
+          "solve_and_affine_internal_recovery": 1.503548133885488,
+          "fixed_refinement": 2.2636373210698366,
+          "physical_E_H_curl_evaluation": 3.292683301959187,
+          "all532_power_and_volume_absorption": 16.423108079005033,
+          "scattered_envelope_transverse_indicator": 40.20428350195289,
+          "non_nested_common_physical_integrals_q23": 569.8720279170666,
+          "non_nested_common_physical_integrals_q31": 1836.3692376061808
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 7.274907930986956,
+          "new_phase_all532_q47": 32.67512564989738,
+          "new_phase_all532_q63": 184.02096407394856,
+          "JIT_full_Ckappa_and_complete532_carrier": 86.95424763602205,
+          "physical_incident_RHS": 0.0989917810074985,
+          "condensation_local_factors": 2940.6049363398924,
+          "h_sparse_symbolic_capacity": 2.3662464588414878,
+          "h_bounded_numeric_factor": 47.69463666295633,
+          "solve_and_affine_internal_recovery": 1.503548133885488,
+          "fixed_refinement": 2.2636373210698366,
+          "physical_E_H_curl_evaluation": 3.292683301959187,
+          "all532_power_and_volume_absorption": 16.423108079005033,
+          "scattered_envelope_transverse_indicator": 40.20428350195289,
+          "non_nested_common_physical_integrals_q23": 569.8720279170666,
+          "non_nested_common_physical_integrals_q31": 1836.3692376061808
+        },
+        "root_measured_seconds": 5771.618582394673,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "peak_bytes": 7501635584,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 5771.618582394673,
+      "supervised_outside_timed_intervals_seconds": 116.9612370673567,
+      "actual_calls": {
+        "A": 4,
+        "AH": 2,
+        "factor": 2,
+        "volume_only": 2
+      },
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 2205,
+        "actual_max_sample_gap_seconds": 3.284967669053003,
+        "sampled_tree_peak_bytes": 7501635584,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v52/aux_pre_03",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 11.949872391996905,
+      "cold_N1_dat_launch_lower_seconds": 28.94474745215848,
+      "timings": {},
+      "peak_bytes": 142028800,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 0,
+      "supervised_outside_timed_intervals_seconds": 11.949872391996905,
+      "actual_calls": "unknown",
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 5,
+        "actual_max_sample_gap_seconds": 3.6298985299654305,
+        "sampled_tree_peak_bytes": 142028800,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "HP",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v52_notch_z4_p6_20261005T141236838697Z",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 4729.424755652901,
+      "cold_N1_dat_launch_lower_seconds": 4746.490437683882,
+      "timings": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 2.785158888902515,
+          "new_phase_all532_q47": 38.337788914795965,
+          "new_phase_all532_q63": 197.9277049000375,
+          "JIT_full_Ckappa_and_complete532_carrier": 40.043715703999624,
+          "physical_incident_RHS": 0.23774740798398852,
+          "condensation_local_factors": 4423.364884239854,
+          "h_sparse_symbolic_capacity": 4.004665840882808
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 2.785158888902515,
+          "new_phase_all532_q47": 38.337788914795965,
+          "new_phase_all532_q63": 197.9277049000375,
+          "JIT_full_Ckappa_and_complete532_carrier": 40.043715703999624,
+          "physical_incident_RHS": 0.23774740798398852,
+          "condensation_local_factors": 4423.364884239854,
+          "h_sparse_symbolic_capacity": 4.004665840882808
+        },
+        "root_measured_seconds": 4706.701665896457,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "peak_bytes": 7202099200,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 4706.701665896457,
+      "supervised_outside_timed_intervals_seconds": 22.723089756444097,
+      "actual_calls": "unknown",
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 1440,
+        "actual_max_sample_gap_seconds": 3.9853615888860077,
+        "sampled_tree_peak_bytes": 7202099200,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v52_verify_cost_20261005T153359812603Z",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 352.41334315692075,
+      "cold_N1_dat_launch_lower_seconds": 369.53459501382895,
+      "timings": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 3.6216932961251587,
+          "JIT_full_Ckappa_and_complete532_carrier": 313.3191106079612,
+          "physical_incident_RHS": 1.4861318899784237
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 3.6216932961251587,
+          "JIT_full_Ckappa_and_complete532_carrier": 313.3191106079612,
+          "physical_incident_RHS": 1.4861318899784237
+        },
+        "root_measured_seconds": 318.4269357940648,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "peak_bytes": 1522126848,
+      "swap_bytes": 0,
+      "recorded_disjoint_interval_seconds": 318.4269357940648,
+      "supervised_outside_timed_intervals_seconds": 33.98640736285597,
+      "actual_calls": {
+        "A": 2,
+        "AH": 0,
+        "factor": 0,
+        "volume_only": 4
+      },
+      "shared_workstation": true,
+      "resources": {
+        "sample_count": 106,
+        "actual_max_sample_gap_seconds": 3.9739230540581048,
+        "sampled_tree_peak_bytes": 1522126848,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cost_scope": "supervision, failed work and postprocessing included; exclusive intervals must not be added twice",
+      "factor_cache": "numeric factor cold per case; OS/JIT cache not cleared"
+    }
+  ],
+  "charged_seconds": 13434.524787590904,
+  "clock": {
+    "start_utc": "2026-10-05T11:29:57.715299+00:00",
+    "start_monotonic": 1124792.576188262,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+    "first_proc_uptime_seconds": 1124792.57,
+    "first_work_record": {
+      "start_utc": "2026-10-05T11:30:02.998528+00:00",
+      "start_monotonic": 1124797.859417262,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 22500,
+      "total_limit_seconds": 25200,
+      "scientific_loaded_limit_seconds": 18000,
+      "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+    },
+    "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+    "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+    "closed": false,
+    "observed_utc": "2026-10-05T15:41:32.600220+00:00",
+    "observed_monotonic": 1139887.461087361,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 15094.884921073914,
+    "heavy_remaining_seconds": 7405.115078926086,
+    "total_remaining_seconds": 10105.115078926086
+  },
+  "historical_loaded_known_lower_seconds": 99422.4300580054,
+  "historical_unmeasured_fees": "unknown; never filled with zero",
+  "scope": "shared-workstation measured supervised/launch bounds, not uncontended speed"
+}

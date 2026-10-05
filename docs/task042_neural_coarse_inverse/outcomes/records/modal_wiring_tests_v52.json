@@ -1,0 +1,17 @@
+{
+  "status": "PASSED_LOCAL_TARGETED",
+  "command": "qualified activation; one HPTests saved-modal scope test + related Ruff/compile",
+  "source_HEAD": "6230cd12286fb823dabc4fac04a424922d860995",
+  "source_state": "working tree snapshot before clean commit",
+  "file_hashes": {
+    "benchmarks/collect_phase_explicit_accuracy.py": "07b031e7b9a642c12ab6f24e1a423dff9bb932d37102e7d9c81e449871d744de",
+    "benchmarks/collect_phase_notch_hp.py": "f36aee8257f5fb7fa47d828b459694166a5cb9310e9e2475033047b8dd437cd9",
+    "src/test/test_phase_notch_hp.py": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4"
+  },
+  "process_wall_seconds_lower": 0.528025488,
+  "unittest_seconds": 0.121,
+  "tests": 1,
+  "all_scientific_actions": 0,
+  "supervision": "metadata targeted test; not a new FE actor",
+  "stdout": "Ran 1 test in 0.121s; OK; PASSED_SAVED_ALL532_POWER rows1; All checks passed!; changed modules and delivery helpers compile PASS"
+}

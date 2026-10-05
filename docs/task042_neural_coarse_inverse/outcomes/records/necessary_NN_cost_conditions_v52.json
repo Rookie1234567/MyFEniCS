@@ -1,0 +1,36 @@
+{
+  "rows": [
+    {
+      "role": "H",
+      "cold_N1_dat_launch_lower_seconds": 2286.97282292787,
+      "complete_tail_removal_optimistic_fraction": 0.017011975239521058,
+      "prepare_replaceable_seconds_optimistic": 1042.865027562948,
+      "current_one_case_field_comparison_and_output_seconds": 1000.6008114418946,
+      "necessary_cold_time_condition": "fV-H >= 0.2*T_B",
+      "cold_extra_cost_ceiling_if_preparation_completely_removed": 585.4704629773739,
+      "strongest_same_accuracy_traditional_baseline": "unknown; accurate fixed532 anchor and fastest implementation not established by a residual alone",
+      "simultaneous_peak_condition": "saved simultaneously live bytes minus all new model/data/workspace >=0.2 baseline full peak; unknown",
+      "this_batch_NN_training": 0,
+      "NN20": "NOT_DEMONSTRATED",
+      "target48h": "NOT_QUALIFIED",
+      "micro_timings_cannot_be_extrapolated_to_target": true
+    },
+    {
+      "role": "P",
+      "cold_N1_dat_launch_lower_seconds": 5904.757283959072,
+      "complete_tail_removal_optimistic_fraction": 0.009116051005683681,
+      "prepare_replaceable_seconds_optimistic": 3027.658175756922,
+      "current_one_case_field_comparison_and_output_seconds": 2425.9570569042116,
+      "necessary_cold_time_condition": "fV-H >= 0.2*T_B",
+      "cold_extra_cost_ceiling_if_preparation_completely_removed": 1846.7067189651075,
+      "strongest_same_accuracy_traditional_baseline": "unknown; accurate fixed532 anchor and fastest implementation not established by a residual alone",
+      "simultaneous_peak_condition": "saved simultaneously live bytes minus all new model/data/workspace >=0.2 baseline full peak; unknown",
+      "this_batch_NN_training": 0,
+      "NN20": "NOT_DEMONSTRATED",
+      "target48h": "NOT_QUALIFIED",
+      "micro_timings_cannot_be_extrapolated_to_target": true
+    }
+  ],
+  "teacher_training_inference_IO_cleanup_and_independent_audit_charged_to_H": true,
+  "no_next_learning_object_automatically_admitted": true
+}

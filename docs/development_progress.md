@@ -1,3 +1,12 @@
+## Task042 V52：固定相位NOTCH p/h完整分辨对照
+
+结论 `FLAT_PASS_NOTCH_NOT_QUALIFIED`；完整方程与物理场分别验收，无NN训练。
+
+10项原新增定点测试及1项新增保存模式live-scope回归、相关Ruff/compile、7入口validate与自有后代超时清场见本轮测试记录。只改Task042必要src/io/solver/runner/input及增量证据，旧历史按原字节后缀保留。
+
+
+[response_v52](task042_neural_coarse_inverse/response_v52.md)；[完整物理/费用](task042_neural_coarse_inverse/outcomes/phase_notch_hp_accuracy_v52.md)。
+
 # Task042 V51最新交付：平界面准确，三维缺口精度仍未资格
 
 把已知的快速横向相位解析保留，让有限元计算包络，再恢复完整电场和磁场。它改善场的表示，仍使用原Maxwell方程和完整532模式；这是确定性离散，本批没有NN训练。FLAT解析场通过，NOTCH的p/h场差仍超过1e-4，不能用小残差或守恒代替准确性。

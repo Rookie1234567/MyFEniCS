@@ -1,0 +1,99 @@
+{
+  "rows": [
+    {
+      "scale_relative_to_HP": 1,
+      "cells": 320,
+      "degree": 6,
+      "trace": 64512,
+      "internal": 144000,
+      "native": 220200,
+      "independent": 208512,
+      "condensed_rows": 65044,
+      "manual_mode_capacity_design": 532,
+      "axes_splits": [
+        1,
+        1,
+        4
+      ],
+      "physical_geometry_scale": 1,
+      "complete_vector_payload_bytes": 3336192,
+      "boundary_C_D_payload_interval_bytes": [
+        19611648,
+        240242688
+      ],
+      "boundary_interval_scope": "value payload scenarios: ideal tangential layout versus all boundary-cell support; floating terms are not clipped",
+      "boundary_row_indices_payload_upper_bytes": 120121344,
+      "local_without_exact_class_dedup_bytes_upper": 11948912640,
+      "dense_condensed_payload_upper_bytes": 67691550976,
+      "factor_fill": "unknown",
+      "simultaneous_RSS": "unknown; not a numeric admission",
+      "iterations": "unknown",
+      "fixed_mode_accuracy": "unknown; mode counts are an explicit storage design, not qualified AUTO",
+      "status": "measured HP topology, derived payload"
+    },
+    {
+      "scale_relative_to_HP": 2,
+      "cells": 2560,
+      "degree": 6,
+      "trace": 511488,
+      "internal": 1152000,
+      "native": 1709904,
+      "independent": 1663488,
+      "condensed_rows": 513412,
+      "manual_mode_capacity_design": 1924,
+      "axes_splits": [
+        2,
+        2,
+        8
+      ],
+      "physical_geometry_scale": 2,
+      "complete_vector_payload_bytes": 26615808,
+      "boundary_C_D_payload_interval_bytes": [
+        283705344,
+        3475390464
+      ],
+      "boundary_interval_scope": "value payload scenarios: ideal tangential layout versus all boundary-cell support; floating terms are not clipped",
+      "boundary_row_indices_payload_upper_bytes": 1737695232,
+      "local_without_exact_class_dedup_bytes_upper": 95591301120,
+      "dense_condensed_payload_upper_bytes": 4217470107904,
+      "factor_fill": "unknown",
+      "simultaneous_RSS": "unknown; not a numeric admission",
+      "iterations": "unknown",
+      "fixed_mode_accuracy": "unknown; mode counts are an explicit storage design, not qualified AUTO",
+      "status": "predicted_not_run"
+    },
+    {
+      "scale_relative_to_HP": 4,
+      "cells": 20480,
+      "degree": 6,
+      "trace": 4073472,
+      "internal": 9216000,
+      "native": 13474464,
+      "independent": 13289472,
+      "condensed_rows": 4080772,
+      "manual_mode_capacity_design": 7300,
+      "axes_splits": [
+        4,
+        4,
+        16
+      ],
+      "physical_geometry_scale": 4,
+      "complete_vector_payload_bytes": 212631552,
+      "boundary_C_D_payload_interval_bytes": [
+        4305715200,
+        52745011200
+      ],
+      "boundary_interval_scope": "value payload scenarios: ideal tangential layout versus all boundary-cell support; floating terms are not clipped",
+      "boundary_row_indices_payload_upper_bytes": 26372505600,
+      "local_without_exact_class_dedup_bytes_upper": 764730408960,
+      "dense_condensed_payload_upper_bytes": 266443201855744,
+      "factor_fill": "unknown",
+      "simultaneous_RSS": "unknown; not a numeric admission",
+      "iterations": "unknown",
+      "fixed_mode_accuracy": "unknown; mode counts are an explicit storage design, not qualified AUTO",
+      "status": "predicted_not_run"
+    }
+  ],
+  "no_target_dofmap_or_matrix_allocated": true,
+  "prediction_basis": "same relative hp shape and physical cell widths; no unknown factor cost filled with zero"
+}

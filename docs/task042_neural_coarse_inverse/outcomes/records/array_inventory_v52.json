@@ -1,0 +1,164 @@
+{
+  "files": [
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_resolution_preflight_20261005T114651523701Z/geometry.npz",
+      "bytes": 18138,
+      "sha256": "96d97bf4a2db48c272cb614818c50e8c745264d1e2332fb96841ce197cf9c466"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/recovery.npz",
+      "bytes": 4434126,
+      "sha256": "de109f3cae7d238cbe1c805bc5402d81e269403c5fe8d9fd22eb7a0f4a438cca"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/returned_solution.npz",
+      "bytes": 4202768,
+      "sha256": "06e26bd18075f21153b63881061fc2bee291e48dd3c197617c48f42a0784d692"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/boundary_action_pair.npz",
+      "bytes": 14443048,
+      "sha256": "54a7d4caa8df70c1cdbb9f85c412b97de1c730722b32168af046c53313ad1ba1"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/port_coordinate_map.npz",
+      "bytes": 1425528,
+      "sha256": "7a47e116632cdfe31fbc74dd9c2ac900a32c22971693ac389dc33c4aa6cedb41"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/fields.npz",
+      "bytes": 2165322,
+      "sha256": "1b48e284029a85e0002423b5e5980a38fb932b41d808c15a72948fafd0e21433"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/phase_p5_q63_all532.npz",
+      "bytes": 144713730,
+      "sha256": "039a4b4777d0e4b9ee38a475de353a112c532fd1005dab4816754ea8278b9fcf"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/solution.npz",
+      "bytes": 12477986,
+      "sha256": "fd337b7ccc4174e96649a89bd1b8e8931eadf5d95c0aa9a5f9ffb7740b7b3e66"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p5_20261005T114754156158Z/phase_p5_q47_all532.npz",
+      "bytes": 102153730,
+      "sha256": "88f91ef5b9c3698b94fcc03ac8441c0ce9cff40742aff3d7d1ab54ff43f22b65"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p6_20261005T141236838697Z/boundary_action_pair.npz",
+      "bytes": 24664168,
+      "sha256": "2f19bc5b9474aa6b4779ab2095b7099fe65c02cc81b0148208bd2d89aa927fd1"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p6_20261005T141236838697Z/port_coordinate_map.npz",
+      "bytes": 2081912,
+      "sha256": "56ae0cc48b1dd09febfac7133112bf6eda8e9a79e4f7f836dc49d6c5e172438e"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p6_20261005T141236838697Z/phase_p6_q63_all532.npz",
+      "bytes": 245155330,
+      "sha256": "28e839271dc4da1e4dfc7a39bebfa2bde190c2b3f765c4f209f93252e6575dad"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z4_p6_20261005T141236838697Z/phase_p6_q47_all532.npz",
+      "bytes": 171611650,
+      "sha256": "191d192fe7be70b0e0c8b583bbd8dfd36154cfa2d5ed2bb77affcc4967a68886"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_verify_cost_20261005T153359812603Z/P_independent_audit.npz",
+      "bytes": 16262218,
+      "sha256": "a245e2656401392017dec32235f97fcc26aea2ad323786494a6a1f4ea429ff18"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_verify_cost_20261005T153359812603Z/H_independent_audit.npz",
+      "bytes": 18907978,
+      "sha256": "8e79032b7d1c6a6a2068eca37b6653e82ad34ff3625f37ef13d21fddb0fc8907"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/recovery.npz",
+      "bytes": 3831246,
+      "sha256": "2ba3e49cbe3296512bf2756ef708ed1d116b5c9f3b42d25e49e04696706a8899"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/returned_solution.npz",
+      "bytes": 3593760,
+      "sha256": "98b5a8f7068ea3d5ec411a6f37272f3804958437accdebc09d0a2fb1cdce92dd"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/boundary_action_pair.npz",
+      "bytes": 12400168,
+      "sha256": "44fdb2e50b4722434eac4a31166161d326ff2cf8c4b42713de0855222de72ab3"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/port_coordinate_map.npz",
+      "bytes": 1068152,
+      "sha256": "9ecbeb25ed6f7a6dbebeec8158de7e3f7d4d411de20476ab47e9ec2333d38b61"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/transverse_indicator.npz",
+      "bytes": 3102,
+      "sha256": "9e6d03e13a3639b6dfa059b400bb80c82dd4d20c14b4895665d0157bce5ff06f"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/fields.npz",
+      "bytes": 1823562,
+      "sha256": "e4c00413a32cb331c4514cfe50f0dca0a246eed40f3c38c963e8ad7a80b5e8f5"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/phase_p6_q63_all532.npz",
+      "bytes": 245155330,
+      "sha256": "e2a87d109feb291ccd258c2d830926182092d7bd474b4428f326653673404125"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/phase_p6_q47_all532.npz",
+      "bytes": 171611650,
+      "sha256": "d1d1dc65d2368f841e62c7130a36674b81b367e106ada87df1692eeb16b68aef"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/task042_v52_notch_z2_p6_20261005T123022189129Z/solution.npz",
+      "bytes": 10701618,
+      "sha256": "4a2b310045a754e17c0162e6621d5cdf4d0e5ed170948e6a850f53e1ab83d27f"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/B0_P_task042_v52_notch_z2_p6_20261005T123022189129Z/physical_mode_comparison.npz",
+      "bytes": 85024,
+      "sha256": "d15a6fa1d395efd2b91d00dfa2d028c387642d50b022ac1b149024f73cb32cae"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/B0_P_task042_v52_notch_z2_p6_20261005T123022189129Z/common_physical_difference_q23.npz",
+      "bytes": 210624,
+      "sha256": "a54935b9a9250d0e994d249a865e8929b05829e5817afe45fb4475a0067229d9"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/B0_P_task042_v52_notch_z2_p6_20261005T123022189129Z/common_physical_difference_q31.npz",
+      "bytes": 210624,
+      "sha256": "baca5618083cd763efe7d459b10f2c46ed5426519d07aa12572ed7d7d009e719"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/B0_H_task042_v52_notch_z4_p5_20261005T114754156158Z/common_physical_difference_q23.npz",
+      "bytes": 269504,
+      "sha256": "1f5ba22ce073c43f1525ebbd00379de951620f74ab4e699a5d0478e989d04c03"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/B0_H_task042_v52_notch_z4_p5_20261005T114754156158Z/common_physical_difference_q31.npz",
+      "bytes": 269504,
+      "sha256": "5320b92d1dd6f77817f6ca3bbd64e3471c8ae1931caee40fae2d902a07d4a88f"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/H_P_task042_v52_notch_z2_p6_20261005T123022189129Z/physical_mode_comparison.npz",
+      "bytes": 85024,
+      "sha256": "e8410dc664c7e549bc2e69c2519d721e59710d25005a542457d5b31e4fe2eb66"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/H_P_task042_v52_notch_z2_p6_20261005T123022189129Z/common_physical_difference_q23.npz",
+      "bytes": 269504,
+      "sha256": "19da28832673b6a63c48b40a97d45b8413db83967db3e78d0076b55bb16ec8a8"
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v52/comparisons/H_P_task042_v52_notch_z2_p6_20261005T123022189129Z/common_physical_difference_q31.npz",
+      "bytes": 269504,
+      "sha256": "de00f54e6830244c193b0222288cde55e862825d5de09ca851ebb1b30e14fc45"
+    }
+  ]
+}

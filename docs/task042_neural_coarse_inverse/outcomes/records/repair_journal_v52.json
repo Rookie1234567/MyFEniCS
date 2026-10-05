@@ -1,0 +1,70 @@
+{
+  "rows": [
+    {
+      "status": "PASSED",
+      "roots": [
+        "collector extra closing parenthesis",
+        "storage scope label needed self.namespace"
+      ],
+      "repairs": "one bracket and one metadata attribute; no numerical formulas or gates changed",
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "py_compile",
+            "benchmarks/collect_phase_notch_hp.py",
+            "src/runners/port_preparation.py",
+            "src/solvers/phase_notch_hp.py"
+          ],
+          "returncode": 0,
+          "seconds": 0.07592549012042582
+        },
+        {
+          "command": [
+            "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+            "check",
+            "--select",
+            "E9,F63,F7,F82",
+            "benchmarks/collect_phase_notch_hp.py",
+            "src/test/test_phase_notch_hp.py",
+            "src/runners/port_preparation.py",
+            "src/solvers/phase_notch_hp.py"
+          ],
+          "returncode": 0,
+          "seconds": 0.013957700924947858
+        },
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "unittest",
+            "-q",
+            "src.test.test_phase_notch_hp"
+          ],
+          "returncode": 0,
+          "seconds": 1.5913113518618047
+        }
+      ],
+      "seconds": 1.681367970071733,
+      "failures": [
+        {
+          "folder": "tmp/task042/v52/followup_targeted",
+          "known_test_seconds_lower_bound": 2.412,
+          "other_fees": "unknown, never zero",
+          "failed_source_sha": "93c315361c6245c3c1d3609aeb33ebbc272fa818",
+          "formal_scientific_actions": 0
+        },
+        {
+          "folder": "tmp/task042/v52/followup_repair_01",
+          "known_test_seconds_lower_bound": 1.274,
+          "other_fees": "unknown, never zero",
+          "failed_source_sha": "93c315361c6245c3c1d3609aeb33ebbc272fa818",
+          "formal_scientific_actions": 0
+        }
+      ],
+      "formal_scientific_actions": 0
+    }
+  ],
+  "scientific_returned_states_never_resolved_for_metadata_repairs": true
+}

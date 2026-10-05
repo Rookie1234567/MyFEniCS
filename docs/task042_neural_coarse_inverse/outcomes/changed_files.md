@@ -1,3 +1,12 @@
+## Task042 V52：固定相位NOTCH p/h完整分辨对照
+
+结论 `FLAT_PASS_NOTCH_NOT_QUALIFIED`；完整方程与物理场分别验收，无NN训练。
+
+新增phase_notch_hp的solver/scope/capacity/fields/modes及输入适配、7个one-run入口；runner只加V52隔离/计费接线；checker复用原独立方程与模式公式。依赖、行为、定点测试和建议合入顺序见[分组合入清单](records/selective_merge_manifest_v52.json)，本批无merge approval。旧历史按原字节后缀保留。
+
+
+[执行回应](../response_v52.md)；[完整场/功率/容量](phase_notch_hp_accuracy_v52.md)；[科学门](records/hp_accuracy_checks_v52.json)；[费用](records/resource_costs_final_v52.json)。
+
 # V51改动与依赖分组
 
 | 分组 | 数值行为／职责 | 资格边界 |

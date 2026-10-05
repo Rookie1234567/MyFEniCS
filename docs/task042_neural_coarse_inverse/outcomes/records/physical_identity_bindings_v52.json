@@ -1,0 +1,670 @@
+{
+  "runs": [
+    {
+      "role": "SETUP",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "input_sha256": "ea556e41c7ad11aa4d384d817963160e114fbddb359a198e377ad5a0f3f1d0b1",
+      "resolved_sha256": "c260059cd00b93bf3acc36b7745b8843457efea02b5d60e30bbe2e58920e7e73",
+      "physical_sha256": "0317f61c9cbedf34d984182a381e8f47142dca251c0a8f3cb36840888b99b336",
+      "CPU": 2,
+      "rank_cpus": [
+        2
+      ],
+      "MPI_size": 1,
+      "environment_mode": "fe",
+      "physical": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 160,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              -0.25925925925925924,
+              0.0,
+              1.037037037037037,
+              2.074074074074074,
+              3.1111111111111107,
+              4.148148148148148,
+              5.185185185185185,
+              6.222222222222222,
+              6.481481481481481,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 4,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "NOTCH",
+          "notch_active": true,
+          "cell_count": 160,
+          "splits": [
+            1,
+            1,
+            2
+          ],
+          "grid": "1x1x2"
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 6,
+          "volume_form": "complete Ckappa trial/test",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "expected_FE_independent": 104832,
+          "expected_trace": 32832,
+          "expected_internal": 72000,
+          "condensed_rows": 33364,
+          "unknown": "TOTAL_ENVELOPE",
+          "representation": "E=exp(i*kappa.x)*u",
+          "MPC": "unit envelope x/y"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "role": "H",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "input_sha256": "4bb522c1f99f3cda7c08a5073447a0382e12b286e392ae9504c1186fffc678eb",
+      "resolved_sha256": "3dc202f9e16354a6921b785960d7586fbb9477903518e6eb5ff410e896e8b2c0",
+      "physical_sha256": "f477fbbcbc5b29f97b56fc79afd864d034622d21fea10f6772fcb209c13ae477",
+      "CPU": 5,
+      "rank_cpus": [
+        5
+      ],
+      "MPI_size": 1,
+      "environment_mode": "fe",
+      "physical": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 320,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              -0.38888888888888884,
+              -0.25925925925925924,
+              -0.12962962962962965,
+              0.0,
+              0.5185185185185185,
+              1.037037037037037,
+              1.5555555555555554,
+              2.074074074074074,
+              2.5925925925925926,
+              3.1111111111111107,
+              3.6296296296296293,
+              4.148148148148148,
+              4.666666666666666,
+              5.185185185185185,
+              5.703703703703704,
+              6.222222222222222,
+              6.351851851851852,
+              6.481481481481481,
+              6.611111111111111,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 8,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "NOTCH",
+          "notch_active": true,
+          "cell_count": 320,
+          "splits": [
+            1,
+            1,
+            4
+          ],
+          "grid": "1x1x4"
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 5,
+          "volume_form": "complete Ckappa trial/test",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "expected_FE_independent": 120800,
+          "expected_trace": 44000,
+          "expected_internal": 76800,
+          "condensed_rows": 44532,
+          "unknown": "TOTAL_ENVELOPE",
+          "representation": "E=exp(i*kappa.x)*u",
+          "MPC": "unit envelope x/y"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "role": "P",
+      "source_sha": "138a1681a870fdd2e3d754365fc06d1dcabbe8dd",
+      "input_sha256": "780cdcff33e83414e8b2c2c2df477a77ff8e97ed902ac29408511d5f7b981f38",
+      "resolved_sha256": "e14d912a174c3f9d50f3d9aa0f299bb86d790eacf6c9ca30cb8f4d3aa8880546",
+      "physical_sha256": "0317f61c9cbedf34d984182a381e8f47142dca251c0a8f3cb36840888b99b336",
+      "CPU": 1,
+      "rank_cpus": [
+        1
+      ],
+      "MPI_size": 1,
+      "environment_mode": "fe",
+      "physical": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 160,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              -0.25925925925925924,
+              0.0,
+              1.037037037037037,
+              2.074074074074074,
+              3.1111111111111107,
+              4.148148148148148,
+              5.185185185185185,
+              6.222222222222222,
+              6.481481481481481,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 4,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "NOTCH",
+          "notch_active": true,
+          "cell_count": 160,
+          "splits": [
+            1,
+            1,
+            2
+          ],
+          "grid": "1x1x2"
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 6,
+          "volume_form": "complete Ckappa trial/test",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "expected_FE_independent": 104832,
+          "expected_trace": 32832,
+          "expected_internal": 72000,
+          "condensed_rows": 33364,
+          "unknown": "TOTAL_ENVELOPE",
+          "representation": "E=exp(i*kappa.x)*u",
+          "MPC": "unit envelope x/y"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "role": "HP",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "input_sha256": "71b5506e07aeb1e6822c8916bcefc4fd02903fe455a73dcbfb4776d3693c3214",
+      "resolved_sha256": "42c571ad8a888c5c8f54843d7513495ee264e6cea453ea29bc739824b924c41a",
+      "physical_sha256": "72acd85940d23430c7a2dbbd328609936f04d1288a2beea17db0ccf7dc53119d",
+      "CPU": 0,
+      "rank_cpus": [
+        0
+      ],
+      "MPI_size": 1,
+      "environment_mode": "fe",
+      "physical": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 320,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              -0.38888888888888884,
+              -0.25925925925925924,
+              -0.12962962962962965,
+              0.0,
+              0.5185185185185185,
+              1.037037037037037,
+              1.5555555555555554,
+              2.074074074074074,
+              2.5925925925925926,
+              3.1111111111111107,
+              3.6296296296296293,
+              4.148148148148148,
+              4.666666666666666,
+              5.185185185185185,
+              5.703703703703704,
+              6.222222222222222,
+              6.351851851851852,
+              6.481481481481481,
+              6.611111111111111,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 8,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "NOTCH",
+          "notch_active": true,
+          "cell_count": 320,
+          "splits": [
+            1,
+            1,
+            4
+          ],
+          "grid": "1x1x4"
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 6,
+          "volume_form": "complete Ckappa trial/test",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "expected_FE_independent": 208512,
+          "expected_trace": 64512,
+          "expected_internal": 144000,
+          "condensed_rows": 65044,
+          "unknown": "TOTAL_ENVELOPE",
+          "representation": "E=exp(i*kappa.x)*u",
+          "MPC": "unit envelope x/y"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "input_sha256": "2d2291d26bc33522ce4eb420d9ee7666efd50d2c6ace22e9aed03e1d7d173b76",
+      "resolved_sha256": "ef1b8ab0629c1b0fcde82cff0b0a6c0b77656cb9007cb51a6b21595186df3586",
+      "physical_sha256": "0317f61c9cbedf34d984182a381e8f47142dca251c0a8f3cb36840888b99b336",
+      "CPU": 1,
+      "rank_cpus": [
+        1
+      ],
+      "MPI_size": 1,
+      "environment_mode": "fe",
+      "physical": {
+        "geometry": {
+          "scale_fraction": "7/135",
+          "cells": 160,
+          "axes_nm": {
+            "x": [
+              0.0,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.5925925925925926
+            ],
+            "y": [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            "z": [
+              -0.5185185185185185,
+              -0.25925925925925924,
+              0.0,
+              1.037037037037037,
+              2.074074074074074,
+              3.1111111111111107,
+              4.148148148148148,
+              5.185185185185185,
+              6.222222222222222,
+              6.481481481481481,
+              6.7407407407407405
+            ]
+          },
+          "notch_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ],
+          "notch_expected_changed_cells": 4,
+          "notch_rule": "actual center in box and original Si grating; do not repeat along y",
+          "physical_case": "NOTCH",
+          "notch_active": true,
+          "cell_count": 160,
+          "splits": [
+            1,
+            1,
+            2
+          ],
+          "grid": "1x1x2"
+        },
+        "materials": {
+          "canonical_table": "input/materials/si_optical_constants_v1.json",
+          "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "Si_n": [
+            0.999885140474,
+            4.32477054e-06
+          ],
+          "epsilon": "n*n",
+          "mu_r": [
+            1.0,
+            0.0
+          ]
+        },
+        "incidence": {
+          "wavelength_nm": 0.7,
+          "grazing_deg": 1.0,
+          "azimuth_deg": 5.0,
+          "polarization": "s",
+          "amplitude": [
+            1.0,
+            0.0
+          ]
+        },
+        "discretization": {
+          "degree": 6,
+          "volume_form": "complete Ckappa trial/test",
+          "surface_quadrature_degree": 47,
+          "independent_surface_reference_q": 63,
+          "expected_FE_independent": 104832,
+          "expected_trace": 32832,
+          "expected_internal": 72000,
+          "condensed_rows": 33364,
+          "unknown": "TOTAL_ENVELOPE",
+          "representation": "E=exp(i*kappa.x)*u",
+          "MPC": "unit envelope x/y"
+        },
+        "boundary": {
+          "Floquet": "xy complex high order canonical moments",
+          "manual_m": [
+            -9,
+            9
+          ],
+          "manual_n": [
+            -3,
+            3
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "complete_modes": 532,
+          "all_q": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    }
+  ],
+  "canonical_material_path": "input/materials/si_optical_constants_v1.json"
+}

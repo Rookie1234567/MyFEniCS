@@ -1,0 +1,242 @@
+{
+  "routes": [
+    {
+      "role": "SETUP",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "H",
+      "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1",
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 1243.73177315481,
+          "RSS_bytes": 4917592064,
+          "clock": {
+            "start_utc": "2026-10-05T11:29:57.715299+00:00",
+            "start_monotonic": 1124792.576188262,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+            "first_proc_uptime_seconds": 1124792.57,
+            "first_work_record": {
+              "start_utc": "2026-10-05T11:30:02.998528+00:00",
+              "start_monotonic": 1124797.859417262,
+              "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+              "heavy_limit_seconds": 22500,
+              "total_limit_seconds": 25200,
+              "scientific_loaded_limit_seconds": 18000,
+              "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+            },
+            "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+            "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+            "closed": false,
+            "observed_utc": "2026-10-05T12:08:54.316745+00:00",
+            "observed_monotonic": 1127129.17761176,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2336.6014461517334,
+            "heavy_remaining_seconds": 20163.398553848267,
+            "total_remaining_seconds": 22863.398553848267
+          },
+          "sha256": "06e26bd18075f21153b63881061fc2bee291e48dd3c197617c48f42a0784d692"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 1255.7405044739135,
+          "RSS_bytes": 2227445760,
+          "clock": {
+            "start_utc": "2026-10-05T11:29:57.715299+00:00",
+            "start_monotonic": 1124792.576188262,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+            "first_proc_uptime_seconds": 1124792.57,
+            "first_work_record": {
+              "start_utc": "2026-10-05T11:30:02.998528+00:00",
+              "start_monotonic": 1124797.859417262,
+              "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+              "heavy_limit_seconds": 22500,
+              "total_limit_seconds": 25200,
+              "scientific_loaded_limit_seconds": 18000,
+              "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+            },
+            "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+            "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+            "closed": false,
+            "observed_utc": "2026-10-05T12:09:06.325480+00:00",
+            "observed_monotonic": 1127141.18634607,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2348.610180616379,
+            "heavy_remaining_seconds": 20151.38981938362,
+            "total_remaining_seconds": 22851.38981938362
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 1255.9049002837855,
+          "RSS_bytes": 1534521344,
+          "clock": {
+            "start_utc": "2026-10-05T11:29:57.715299+00:00",
+            "start_monotonic": 1124792.576188262,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+            "first_proc_uptime_seconds": 1124792.57,
+            "first_work_record": {
+              "start_utc": "2026-10-05T11:30:02.998528+00:00",
+              "start_monotonic": 1124797.859417262,
+              "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+              "heavy_limit_seconds": 22500,
+              "total_limit_seconds": 25200,
+              "scientific_loaded_limit_seconds": 18000,
+              "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+            },
+            "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+            "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+            "closed": false,
+            "observed_utc": "2026-10-05T12:09:06.489900+00:00",
+            "observed_monotonic": 1127141.350766947,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2348.774601459503,
+            "heavy_remaining_seconds": 20151.225398540497,
+            "total_remaining_seconds": 22851.225398540497
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "P",
+      "source_sha": "138a1681a870fdd2e3d754365fc06d1dcabbe8dd",
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 3374.187932154862,
+          "RSS_bytes": 6164684800,
+          "clock": {
+            "start_utc": "2026-10-05T11:29:57.715299+00:00",
+            "start_monotonic": 1124792.576188262,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+            "first_proc_uptime_seconds": 1124792.57,
+            "first_work_record": {
+              "start_utc": "2026-10-05T11:30:02.998528+00:00",
+              "start_monotonic": 1124797.859417262,
+              "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+              "heavy_limit_seconds": 22500,
+              "total_limit_seconds": 25200,
+              "scientific_loaded_limit_seconds": 18000,
+              "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+            },
+            "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+            "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+            "closed": false,
+            "observed_utc": "2026-10-05T13:26:52.872191+00:00",
+            "observed_monotonic": 1131807.733057512,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 7015.156891822815,
+            "heavy_remaining_seconds": 15484.843108177185,
+            "total_remaining_seconds": 18184.843108177185
+          },
+          "sha256": "98b5a8f7068ea3d5ec411a6f37272f3804958437accdebc09d0a2fb1cdce92dd"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 3393.559283684008,
+          "RSS_bytes": 3337867264,
+          "clock": {
+            "start_utc": "2026-10-05T11:29:57.715299+00:00",
+            "start_monotonic": 1124792.576188262,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+            "first_proc_uptime_seconds": 1124792.57,
+            "first_work_record": {
+              "start_utc": "2026-10-05T11:30:02.998528+00:00",
+              "start_monotonic": 1124797.859417262,
+              "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+              "heavy_limit_seconds": 22500,
+              "total_limit_seconds": 25200,
+              "scientific_loaded_limit_seconds": 18000,
+              "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+            },
+            "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+            "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+            "closed": false,
+            "observed_utc": "2026-10-05T13:27:12.243536+00:00",
+            "observed_monotonic": 1131827.104402301,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 7034.528236627579,
+            "heavy_remaining_seconds": 15465.471763372421,
+            "total_remaining_seconds": 18165.47176337242
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 3393.8804132528603,
+          "RSS_bytes": 2582044672,
+          "clock": {
+            "start_utc": "2026-10-05T11:29:57.715299+00:00",
+            "start_monotonic": 1124792.576188262,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+            "first_proc_uptime_seconds": 1124792.57,
+            "first_work_record": {
+              "start_utc": "2026-10-05T11:30:02.998528+00:00",
+              "start_monotonic": 1124797.859417262,
+              "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+              "heavy_limit_seconds": 22500,
+              "total_limit_seconds": 25200,
+              "scientific_loaded_limit_seconds": 18000,
+              "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+            },
+            "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+            "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+            "closed": false,
+            "observed_utc": "2026-10-05T13:27:12.564682+00:00",
+            "observed_monotonic": 1131827.425549314,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 7034.84938287735,
+            "heavy_remaining_seconds": 15465.15061712265,
+            "total_remaining_seconds": 18165.15061712265
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "HP",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "6230cd12286fb823dabc4fac04a424922d860995",
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    }
+  ]
+}

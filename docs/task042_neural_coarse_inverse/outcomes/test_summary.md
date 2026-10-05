@@ -1,3 +1,12 @@
+## Task042 V52：固定相位NOTCH p/h完整分辨对照
+
+结论 `FLAT_PASS_NOTCH_NOT_QUALIFIED`；完整方程与物理场分别验收，无NN训练。
+
+10项三轴/p6/容量/非嵌套积分/828模式/计费定点测试通过；后续1项保存模式live-scope接线及坏功率反例通过，公式未改。相关Ruff/compile、7个one-run真实validate、自有后代超时清场通过。唯一q63及保存数组/全532独立checker通过其方程和操作门，三组场增量门全部FAIL。最终一次15项文档合同与实际字节结构验收见[测试](records/tests_v52.json)。没有全库pytest或CI通过声明。
+
+
+[执行回应](../response_v52.md)；[完整场/功率/容量](phase_notch_hp_accuracy_v52.md)；[科学门](records/hp_accuracy_checks_v52.json)；[费用](records/resource_costs_final_v52.json)。
+
 # V51最小相关测试与完整物理审核
 
 | 层级 | 实际验证／边界 | 证据 |

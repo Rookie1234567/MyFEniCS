@@ -1,0 +1,154 @@
+{
+  "status": "FROZEN_QUEUE_CLOSED_TO_FURTHER_SOLVES",
+  "records": {
+    "decision.json": {
+      "path": "tmp/task042/v52/decision.json",
+      "sha256": "64e79cacc45f33619c9cdeb4ba0159f13fbaa2df93c993cb990301e5dcfc86df"
+    },
+    "scientific_queue_frozen.json": {
+      "path": "tmp/task042/v52/scientific_queue_frozen.json",
+      "sha256": "58de45357ba0db08eabd0a1bf1e14cb1716e75419d4bbf6babc4cac88d585bdc"
+    },
+    "minimum_result_cost.json": {
+      "path": "tmp/task042/v52/minimum_result_cost.json",
+      "sha256": "f2373fa3f43f26471d91545991ef39df9f9e34decd452b8a8047718a34d8d37d"
+    },
+    "transverse_time_forecast.json": {
+      "path": "tmp/task042/v52/transverse_time_forecast.json",
+      "sha256": "79df3cb05ba5966fcb7d7d35dcf291d14c92b06cfa8849510b0d55b92b353e01"
+    },
+    "transverse_selection.json": {
+      "path": "tmp/task042/v52/transverse_selection.json",
+      "sha256": "04c02b81e2144c7941ed24c9d14b8d19b53693213c2afc1b7cbb1c07e055d2e6"
+    }
+  },
+  "decision": {
+    "verdict": "FLAT_PASS_NOTCH_NOT_QUALIFIED",
+    "not_run": {
+      "HP_numeric_solve": "CAPACITY_BLOCKED: live tree +2*6948 decimalMB +2GiB = 22783656448B >16GiB; numeric0/solve0",
+      "T": "BUDGET_PLANNING_NOT_ADMITTED: remaining 3736.391077s after1200s final-audit reserve; calibrated T raw-kernel+one common-field comparison alone 5077.992729s, other construction/factor/output costs additional",
+      "M": "NOT_ADMITTED_NO_CROSSCHECKED_FIXED_532_ANCHOR; original three comparisons allFAIL and HP has no returned field"
+    },
+    "next_pilot": "保持本轮同几何 NOTCH Z4/p6、320cell、65044凝聚行及全部532模式，取得这一个完整物理解并补H→HP和P→HP两组场审核。现场两倍symbolic规划为21.218934GiB，超过本轮16GiB；只有新的资源合同明确覆盖该规划及宿主/邻任务余量后才准numeric，不能仅因本次采样峰6.707GiB就放行。未保存完整类tensor/Schur科学包，不宣称可免费复用本次昂贵准备；该pilot重新构造费用及共同场审核需完整预留。本轮不启动它、不改门，不自动转NN、Z8或p7。",
+    "conditional_T_spec": [
+      2,
+      1,
+      2
+    ],
+    "conditional_T_time": {
+      "kind": "predicted_not_run; same unrounded geometry refinement, measured cost calibration",
+      "axis": "x",
+      "splits": [
+        2,
+        1,
+        2
+      ],
+      "cells": 320,
+      "parents": {
+        "H": {
+          "saved_array_sha256": "fd337b7ccc4174e96649a89bd1b8e8931eadf5d95c0aa9a5f9ffb7740b7b3e66",
+          "actual_raw_classes": 38,
+          "cells": 320
+        },
+        "P": {
+          "saved_array_sha256": "4a2b310045a754e17c0162e6621d5cdf4d0e5ed170948e6a850f53e1ab83d27f",
+          "actual_raw_classes": 26,
+          "cells": 160
+        }
+      },
+      "predicted_raw_geometry_classes": 32,
+      "native_oriented_classes": "unknown until actual native preflight",
+      "P_class_kernel_seconds": 2809.8207256768364,
+      "T_class_kernel_forecast_seconds": 3458.2408931407217,
+      "reference_320_vs_160_H_P_pair_seconds": 1619.7518359383103,
+      "measured_H_P_timer_slots": [
+        {
+          "name": "non_nested_common_physical_integrals_q23_end",
+          "seconds": 385.0090133561753
+        },
+        {
+          "name": "non_nested_common_physical_integrals_q31_end",
+          "seconds": 1234.742822582135
+        }
+      ],
+      "events_sha256": "26d687b0dfaabd61a894873b611d20987f0d24fba7d97abc890a1a9b92d17266",
+      "paired_field_forecast_basis": "H_P common geometry320 cells/p5-p6; T_P would be320 cells/p6-p6, not a guaranteed time bound",
+      "comparison_parent_arrays": [
+        "fd337b7ccc4174e96649a89bd1b8e8931eadf5d95c0aa9a5f9ffb7740b7b3e66",
+        "4a2b310045a754e17c0162e6621d5cdf4d0e5ed170948e6a850f53e1ab83d27f"
+      ],
+      "excluded_unmeasured_costs": [
+        "new boundary qualification",
+        "MPC/assembly/symbolic/numeric",
+        "recovery/output",
+        "final independent audit"
+      ],
+      "not_a_capacity_admission": true,
+      "not_an_accuracy_or_resource_gate": true,
+      "new_FE_objects": 0,
+      "new_lu": 0
+    },
+    "T_budget_remaining_seconds": 3736.3910772669406,
+    "T_calibrated_partial_pipeline_forecast_seconds": 5077.992729079032,
+    "capacity_gate_not_changed": true,
+    "thresholds_not_changed": true,
+    "scientific_status": "NUMERICAL_ACCURACY_NOT_REACHED",
+    "new_solved": {
+      "H": {
+        "array_sha256": "fd337b7ccc4174e96649a89bd1b8e8931eadf5d95c0aa9a5f9ffb7740b7b3e66",
+        "source_sha": "001b3495f4d542ed636ae477e8313ddaff3daab1"
+      },
+      "P": {
+        "array_sha256": "4a2b310045a754e17c0162e6621d5cdf4d0e5ed170948e6a850f53e1ab83d27f",
+        "source_sha": "138a1681a870fdd2e3d754365fc06d1dcabbe8dd"
+      }
+    },
+    "HP_symbolic_capacity": {
+      "symbolic_estimate_mb": 6948,
+      "numeric_memory_allocation_cap_mb": 13896,
+      "current_whole_tree_rss_bytes": 6740172800,
+      "factor_workspace_estimate_times_two_bytes": 13896000000,
+      "future_workspace_reserve_bytes": 2147483648,
+      "planned_simultaneous_bytes": 22783656448,
+      "limit_bytes": 17179869184,
+      "admitted": false,
+      "estimate_units": "decimal MB",
+      "classification": "symbolic prediction plus bounded allocation, not measured peak"
+    },
+    "clock": {
+      "start_utc": "2026-10-05T11:29:57.715299+00:00",
+      "start_monotonic": 1124792.576188262,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 22500,
+      "total_limit_seconds": 25200,
+      "scientific_loaded_limit_seconds": 18000,
+      "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+      "first_proc_uptime_seconds": 1124792.57,
+      "first_work_record": {
+        "start_utc": "2026-10-05T11:30:02.998528+00:00",
+        "start_monotonic": 1124797.859417262,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+      },
+      "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+      "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+      "closed": false,
+      "observed_utc": "2026-10-05T15:33:25.879692+00:00",
+      "observed_monotonic": 1139400.740559036,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 14608.164392709732,
+      "heavy_remaining_seconds": 7891.835607290268,
+      "total_remaining_seconds": 10591.835607290268
+    },
+    "NN_training": 0,
+    "NN20": false,
+    "target_qualified": false,
+    "raw_failures_preserved": true
+  },
+  "formal_solver_replays_after_freeze": 0,
+  "final_VERIFY_has_no_new_factor_or_solve": true
+}
