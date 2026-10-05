@@ -3299,3 +3299,11 @@ clean实现357748671d1e8106027c0ee680cfdedb874837ec，最终49/49定向检查（
 18个明确manifest/ledger路径和3个checkpoint路径均缺原件；P0整体PARTIAL_NOT_NATIVE_QUALIFIED，P1/P2未运行、局部/全局factor和solve0。包准备好了，但真实全32060精度、原H/物理RHS、局部恢复及全域MPC仍无本批证书。旧主线q30/q60最坏5.70590933、旧p4恢复通过、旧p6计时异常未运行原样保留，未重造历史。连续14400s窗包括阅读、实现、失败、等待和交付，旧所有费用保留、项目精确累计UNKNOWN。
 
 FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED，M3600较好/Mfinal退化、D0成本否决/D1未运行不变。原50×25×140nm、Si17/120nm、λ.7完整3D、decimal2e12B/172800s及原门未达成。交可由主控复用的包和准确缺项，不改变其他分支，不自动续跑或merge master。[Response](task042extra_feinn_5nm/response_v25.md)、[W1专题](task042extra_feinn_5nm/outcomes/w1_receiver_v25.md)、[可消费包](../benchmarks/cases/w1_receiver/README.md)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v25.json)。
+
+## 2026-10-05 Task42extra V26：确定性输入恢复接线，原生资源前置拒绝
+
+冻结W1模式文件在本机无法取得，Review V25 §8明确许可从原c354afa源码一次重现，避免重复等待不存在的下载入口。本轮把恢复生成、新来源凭据和q60消费者接进现有durable/one-run，必须原36244923B/完整SHA/32060顺序与固定Git物理正文相同；旧动态ledger不伪造，A92项复用。新增16个纯逻辑测试、Ruff/compileall通过，43-file/1054179B导入闭包逐原Git blob核对；这是接线资格而非恢复成功。
+
+两次外层资源盘点有候选CPU，固定核内层均拒绝，原生worker/模式生成0；一次实测新窗口重新准入已耗尽。真实R、B0/B1、数值checker未运行，q60/跨ABI准确性UNKNOWN，源dat路径修正的严格工程池计数限定和全部初始失败保留。新增轻树峰93003776B、ownswap0；正式launcher树峰未采样，不能宣称完整资源资格。唯一R/B10800s窗包含开发/失败/等待/交付，R停止观察1358.198787s，旧A2361.839628s、旧V252846.101466s、旧失联3284s及真实日历间隔另保留，不重置费用。
+
+交付是明确可审阅的opt-in接收实现，数值链关闭，需先获得固定核准入链的可核归因与新的资源/修复范围，不能自动第三次准入。主线承担旧数组/p6恢复，本支不重复B2、dot后端或传统PC。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED、M3600较好/Mfinal退化、D0否决/D1未运行保持；原50×25×140nm/Si17/120nm/λ0.7完整3D、decimal2e12B/172800s及原门仍未达成。[回执](task042extra_feinn_5nm/response_v26.md)、[专题](task042extra_feinn_5nm/outcomes/w1_input_recovery_v26.md)、[完整账](task042extra_feinn_5nm/outcomes/records/resource_costs_v26.json)。

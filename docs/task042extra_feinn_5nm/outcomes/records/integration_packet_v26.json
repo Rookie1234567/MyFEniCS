@@ -1,0 +1,122 @@
+{
+  "schema": "w1-RB-integration-packet.v26",
+  "status": "IMPLEMENTED_PURE_DELTA_QUALIFIED_NATIVE_NOT_RUN",
+  "consumer": "mainline W1 representative-face boundary components only",
+  "review": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v25.md",
+    "bytes": 46800,
+    "sha256": "472628ce34ccfbe7a46e9a62f740c272f48458650dd57190f64a087345944c71"
+  },
+  "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "actual_import_dependency_manifest": {
+    "path": "benchmarks/cases/w1_receiver/recovery_dependencies.json",
+    "bytes": 9980,
+    "sha256": "cccbcbaa3973f16ff53437db370a38f5187d1f19888789cac38a54a54b06a6ea"
+  },
+  "dependency_files": 43,
+  "dependency_bytes": 1054179,
+  "input_origin": "bitwise_reproduced_v26",
+  "expected_manifest_bytes": 36244923,
+  "expected_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "expected_mode_count": 32060,
+  "expected_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "recovered_manifest": "NOT_GENERATED",
+  "reproduced_receipt": "NOT_GENERATED",
+  "historical_ledger_recovered": false,
+  "requirements": [
+    "exact one original generator call after native admission; mismatch stops B",
+    "new receipt validates full Git identity/source/cleared supervision; never extend historical whitelist",
+    "R_B_inputs sealed once; B consumes original immutable R deadline",
+    "q60 all32060, all unique actual facet frequencies/ell0..6 with fixedDecimal80/110",
+    "native B0 precedes B1; independent saved checker follows, no B2 in this package"
+  ],
+  "all_frequency_coverage": "IMPLEMENTED_NOT_MEASURED_ON_MANIFEST",
+  "representative_facet": [
+    100,
+    1
+  ],
+  "x_segments": [
+    90,
+    46,
+    46,
+    90
+  ],
+  "coordinate_convention": "main_centered_nm",
+  "ledger_translation_nm": [
+    25,
+    12.5,
+    0
+  ],
+  "whole_target_MPC_field_RHS": "NOT_QUALIFIED",
+  "fresh_W1_ABI": "NOT_RUN",
+  "existing_native_prefix_not_modified": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210",
+  "source_files": [
+    {
+      "path": "src/io/w1_reproduced_input.py",
+      "bytes": 5677,
+      "sha256": "e754f865210bceda8686d1af02bce37bdac7c33f07d632ff577297d7c6b7e573"
+    },
+    {
+      "path": "src/runners/w1_input_recovery.py",
+      "bytes": 6117,
+      "sha256": "33717caae77dbbc5377764184b2d21243662ad7f29130a6fadf50d4e30ee3029"
+    },
+    {
+      "path": "src/io/finite_json.py",
+      "bytes": 1743,
+      "sha256": "2eb5e65f2493d24310924eb16ac84f9b93b7a4394c71ae9018a27969c9ae3de2"
+    },
+    {
+      "path": "src/io/w1_evidence.py",
+      "bytes": 11015,
+      "sha256": "b572e9115d621d07def1fe046c4c0a5a9e398a2ac50281ad41bd8a58cc970990"
+    },
+    {
+      "path": "src/solvers/w1_saved_equations.py",
+      "bytes": 12554,
+      "sha256": "2e4e8786a573d04001a4409e0ffc08e8e4aeeb82dc554a3e736e77db7373fdf5"
+    },
+    {
+      "path": "src/solvers/w1_local_export_patch.py",
+      "bytes": 3378,
+      "sha256": "7b130808a73511596342e802ac8b14e0382f3c527556b2b6a50cb02322a61ccd"
+    },
+    {
+      "path": "src/io/w1_receiver_contract.py",
+      "bytes": 10009,
+      "sha256": "9e69b2803e3357488e8bef5de01b9b6f68fc612cf0618f76f26a06a3e0144700"
+    },
+    {
+      "path": "src/runners/w1_component_receiver.py",
+      "bytes": 22066,
+      "sha256": "5f30bcecac35be33b60bbb1eb8f09e59758ba9030ae820d24861d7f0bd917a50"
+    },
+    {
+      "path": "src/runners/w1_component_payload.py",
+      "bytes": 36982,
+      "sha256": "28d10ab92bf376c595c31faeae20147019772fca8f5ff176b3a6f8b91b7bf63b"
+    },
+    {
+      "path": "src/solvers/w1_boundary_components.py",
+      "bytes": 17892,
+      "sha256": "26657863018585acf743480177b960cd7174fdce8a0590fc94dce268bef28289"
+    },
+    {
+      "path": "src/solvers/analytic_face_ports.py",
+      "bytes": 9568,
+      "sha256": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6"
+    },
+    {
+      "path": "src/solvers/interval_facet_moments.py",
+      "bytes": 4652,
+      "sha256": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed"
+    },
+    {
+      "path": "benchmarks/portable_facet_oracle.py",
+      "bytes": 5414,
+      "sha256": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f"
+    }
+  ],
+  "production_default_changed": false,
+  "reexecution": "NOT_AUTOMATIC_NEW_RESOURCE_AND_REPAIR_AUTHORITY_REQUIRED_AFTER_TWO_REFUSALS"
+}

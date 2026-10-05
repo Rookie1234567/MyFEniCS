@@ -1,0 +1,41 @@
+{
+  "schema": "w1-RB-saved-receipt-check.v26",
+  "scope": "stdlib saved receipts and original Git blobs; not numerical checker or FE",
+  "script": {
+    "path": "tmp/task42extra/w1_receiver/v26/build_RB_records.py",
+    "bytes": 18336,
+    "sha256": "a24b28ad0022f8de74906b1d845bc9dc5dd2efb413f3eb15b55d875c86cb1d78"
+  },
+  "checked_receiver_files": 13,
+  "checked_frozen_source_files": 43,
+  "frozen_source_bytes": 1054179,
+  "final_JUnit_recomputed": {
+    "tests": 16,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "old_A_receipt_byte_preserved": true,
+  "new_native_worker_or_generator_records_absent": true,
+  "old_B_clock_absent": true,
+  "R_input_binding_not_sealed": true,
+  "terminal_start_identities_cleared": true,
+  "status": "SAVED_METADATA_CONSISTENT_NATIVE_UNKNOWN",
+  "B1_checker": "NOT_RUN_NO_NUMERICAL_RAW",
+  "factor_solve_FE_calls": 0,
+  "delivery_check": {
+    "path": "tmp/task42extra/w1_receiver/v26/delivery_document_check.json",
+    "bytes": 1246,
+    "sha256": "ec6ce51073d715caf3e7d1f04bbaeb963588f72e6ea6b169ed9cabaa0c0918fa"
+  },
+  "delivery_check_summary": {
+    "path": "tmp/task42extra/w1_receiver/v26/delivery_light_check_fixture_fixed/summary.json",
+    "bytes": 3556,
+    "sha256": "1be41b56a95144c53b40dc427e033c24616896e20853527398c7a67a929ba6e2"
+  },
+  "old_initial_document_check_failed_source": {
+    "path": "tmp/task42extra/w1_receiver/v26/check_RB_delivery_initial.py",
+    "bytes": 5015,
+    "sha256": "d79ef57fe11a2e011e2452e0ff37e2e7c7e6f2b6e046ae9989db62e06837f463"
+  }
+}

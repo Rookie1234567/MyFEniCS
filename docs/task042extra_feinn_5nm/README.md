@@ -1,5 +1,19 @@
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
+## 当前：Response V26 — R接线资格完成，原生恢复在资源门前停止
+
+Review V25最新§8已授权一次确定性输入恢复；本轮新增实际R stage、独立新来源凭据、原窗继承和全频率覆盖，16项增量测试通过，旧92项A不重跑。两次内层固定核准入拒绝，原生worker/模式生成0，R逐字节恢复UNKNOWN、B0/B1未运行。不是缺远程review，也不是输入hash或q60数学失败。
+
+| 当前项 / measured、implemented、not_run | 结果及证据 |
+| --- | --- |
+| R与来源逻辑 | clean实现9ec41386…；43冻结依赖/1,054,179B；[最小合同](outcomes/records/integration_packet_v26.json) |
+| 增量资格 | 16/16、Ruff/compileall；最后2.656706s/同时树峰90,886,144B、2GiB/ownswap0；[测试](outcomes/records/targeted_tests_v26.json) |
+| 实际R/B0/B1 | 两次资源拒绝均在worker前；一次实测新窗口重新准入已耗尽；[运行](outcomes/records/run_index_v26.json) |
+| 真实缺项与流程边界 | 没有新manifest/receipt/数值raw；固定核归因UNKNOWN；另有dat路径修正的严格修复池限定；[回执](response_v26.md)、[修复](outcomes/records/repair_log_v26.json) |
+| 神经与完整目标 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；原50×25×140nm/Si17/120nm/λ0.7、decimal2e12B/172800s原门未达成 |
+
+[专题](outcomes/w1_input_recovery_v26.md)、[原窗和全部费用](outcomes/records/resource_costs_v26.json)、[Gate](outcomes/records/gate_decisions_v26.json)。旧M3600较好、Mfinal退化、D0成本否决/D1未运行、所有失败/UNKNOWN/费用保持；本窗数值关闭，不能自动第三次准入或运行旧dat。以下全部历史原文保留，旧“当前”不是新授权。
+
 ## 当前：Review V24 → Response V25，W1接入已实现，数值前置未闭合
 
 本轮实质工作是把固定q60、原manifest/ledger、坐标相位、冻结数学来源和保存checker接到同一个W1入口，避免消费者暗用旧q30或其他目录。29项新增W1及20项接收安全回归、Ruff/compileall通过，clean实现为`357748671d1e8106027c0ee680cfdedb874837ec`；真实native控制被空闲物理核准入拒绝，原件也没有取得。不是只更新导航，也不是W1数学通过。

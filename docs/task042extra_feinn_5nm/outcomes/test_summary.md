@@ -296,3 +296,11 @@ P0最初workflow接线和compact负控字段失败保留，修复测试后最多
 实际原数学worker一次，独立checker总三次数值尝试（两次EMFILE/末次955门及4负控通过）与一次数值前CPU拒绝独立计费；原raw不覆盖。纯数组逐成员readback通过，6.97152s/105771008B/own swap0；没有新FE/factor/solve。stage原采样及source/hash见[运行](records/run_index_v24.json)、[原门](records/independent_checker_v24.json)、[readback](records/durable_readback_v24.json)。
 
 初始优先级/IO/终端亲和性缺口限定保留；W0同80组件不能替原尺寸散射有效解。新关键页[GitHub呈现记录](records/render_check_v24.json)独立记录实际范围/失败，旧V23已验收视觉按原收据复用，不重复批量渲染。
+
+## V26：R接线增量资格与资源拒绝
+
+新src/test/test_w1_input_recovery.py的16个独立fixture最后全部通过，Ruff/compileall及公开run_case --validate-only通过；source9ec41386完整SHA见[索引](records/run_index_v26.json)。旧A的92项JUnit、受测source和receipt按hash复用，不重执行。新fixture只核schema/来源/正文/失败监督/窗口与全频率枚举，执行frozen zvalue不构造库存，不导入FE跑积分，不能当跨ABI输入重现或物理资格。
+
+初始JSON整数资源键、输出目录、缺冻结模块/Mapping及未使用导入lint失败均保留；四个受监督增量资格2.533773/2.688902/2.259993/2.656706s，最后16/16且Ruff通过；最大采样同时树峰93,003,776B、hard2GiB/ownswap0/清场。重新准入dat曾复用output_root，重复保护拒绝后仅修dat根并定向断言全部路径同根，另列严格修复轮限定；没有因此重复worker或生成器。
+
+两次R内层资源拒绝使ABI、native方向/MPC、完整q60/Decimal覆盖及数值保存checker全部未运行。关闭后只核saved receipt/JUnit/current source和43个Git原blob，不重producer、A/full pytest、昂贵FE、参考或NN。新页本地parser与旧正文保留检查另记；实际GitHub视觉NOT_RUN，旧review有限呈现按原审计复用。[测试](records/targeted_tests_v26.json)、[metadata checker](records/independent_checker_v26.json)、[修复](records/repair_log_v26.json)、[呈现](records/render_check_v26.json)。

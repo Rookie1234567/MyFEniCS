@@ -291,3 +291,9 @@ README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧�
 clean实现357748671d1e8106027c0ee680cfdedb874837ec新增src/io/w1_receiver_contract、src/solvers/w1_boundary_components、src/runners/w1_component_payload及w1_component_receiver；scripts两个入口只增加显式W1 schema分支，ordinary default不改。数学调用冻结主线19文件闭包与本支既有区间矩，不复制W1数值算法，不调用旧runner默认目录或旧q30。增加29个pure fixture和11个串行dat、最小dependencies.json及接收README。
 
 本次只在任务README/summary前置新结果并保存历史全文，在progress/model末尾追加本任务条目；新增response_v25、一个W1专题及输入/运行/Gate/资源/修复/测试/接收/选择性分组/呈现compact记录。源代码资格为49相关fixture/Ruff/compileall，native资源拒绝及原件缺失使实际P0/P1/P2未资格化；大数组和完整观察日志留ignored。旧权威、旧数值、其他分支/worktree均不改，依赖组见[六类分组](records/selective_merge_manifest_v25.json)，没有生产合入授权。
+
+## V26：R新来源接收、原窗继承及真实拒绝交付
+
+实现9ec41386新增src/io/w1_reproduced_input和src/runners/w1_input_recovery；在现有W1 IO/evidence/receiver/payload中加入显式input_recovery及bitwise_reproduced_v26分支。沿用同一durable/one-run，不复制求解器；冻结c354afa真实导入闭包扩为43文件，原19-file manifest不改。旧ledger白名单、数学源码、普通默认、原task/review不改。新增4个R/B dat、4个资源重新准入dat与16项pure测试；bc824b64的dat根错误由8675c955修正，全部失败保留，严格修复池流程限定不隐藏。
+
+本轮增加Response V26、专题及run/来源/测试/成本/repair/Gate/接收/分组/呈现compact；README/summary只前置当前条目，progress/model/test只追加本任务内容。原生worker0、模式生成0、B0/B1/checker未运行，不提升生产或NN资格。大日志、原资格、资源盘点与受监督轨迹留ignored；[六依赖组](records/selective_merge_manifest_v26.json)、[源文件hash](records/run_index_v26.json)明确收口边界，未修改其他分支或合并master。

@@ -1,0 +1,115 @@
+{
+  "schema": "w1-RB-cost.v26",
+  "window": {
+    "schema": "task42extra.w1-receiver-RB-window.v26",
+    "budget_seconds": 10800,
+    "recovery_and_wiring_budget_seconds": 1800,
+    "numerical_and_checker_budget_seconds": 7200,
+    "delivery_reserve_seconds": 1800,
+    "old_windows_not_reset": true,
+    "origin_monotonic": 1085431.654522026,
+    "T0_utc": "2026-10-05T00:33:56.793657+00:00",
+    "deadline_monotonic": 1096231.654522026,
+    "deadline_utc": "2026-10-05T03:33:56.793657+00:00",
+    "earlier_reading_preparation_allowance_seconds": 300.0,
+    "review_head": "045b8d991a78d4e06962439e4e4ec1ac9668633e",
+    "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "old_A_wall_seconds": 2361.839628,
+    "engineering_repair_pool_remaining": 1,
+    "input_binding_file": "tmp/task42extra/w1_receiver/v26/R_B_inputs.json",
+    "external_wait_not_claimed_within_14400s": true
+  },
+  "window_binding": {
+    "path": "tmp/task42extra/w1_receiver/v26/R_B_window.json",
+    "bytes": 810,
+    "sha256": "156f0efe58c2d9446139de38184d1a3b95c5da79c28b2f727235863b2fd2d81c"
+  },
+  "snapshot_utc": "2026-10-05T01:00:28.713350+00:00",
+  "continuous_RB_elapsed_at_snapshot_seconds": 1591.9192365021445,
+  "actual_R_stop_at_saved_observation_seconds": 1358.1987866819836,
+  "total_RB_budget_seconds": 10800,
+  "R_wiring_limit_seconds": 1800,
+  "numeric_checker_limit_seconds": 7200,
+  "tail_reserve_seconds": 1800,
+  "nested_test_seconds_not_added_again": 10.139372782316059,
+  "test_sampled_simultaneous_tree_peak_bytes": 93003776,
+  "all_supervised_tests_swap_bytes": 0,
+  "numeric_worker_checker_seconds": 0,
+  "launcher_charge_upper_bounds": {
+    "window_sha256": "156f0efe58c2d9446139de38184d1a3b95c5da79c28b2f727235863b2fd2d81c",
+    "entries": [
+      {
+        "stage": "input_recovery",
+        "output": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v26_rb/input_recovery",
+        "origin_monotonic": 1086581.103497586,
+        "elapsed_seconds": 85.96317823510617,
+        "classification": "RESOURCE_ADMISSION_REFUSED_BEFORE_WORKER",
+        "closure": "conservative upper bound to observed cleared boundary",
+        "worker_started": false,
+        "generation_calls": 0
+      },
+      {
+        "stage": "input_recovery",
+        "output": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/v26_rb_readmit/input_recovery",
+        "origin_monotonic": 1086722.14077242,
+        "elapsed_seconds": 67.70914221997373,
+        "classification": "RESOURCE_ADMISSION_REFUSED_BEFORE_WORKER",
+        "closure": "conservative upper bound to observed cleared boundary",
+        "worker_started": false,
+        "generation_calls": 0
+      }
+    ]
+  },
+  "launcher_cost_note": "bounds include actual observation/cleanup delay and are nested in parent wall; not measured worker durations",
+  "native_stage_peak_bytes": "NOT_RETAINED_BEFORE_WATCHDOG",
+  "native_formal_2GiB_cap_qualification": "UNKNOWN_NOT_EXECUTED",
+  "old_A_seconds": 2361.839628,
+  "old_V25_seconds": 2846.101466,
+  "old_lost_seconds": 3284,
+  "A_close_to_R_T0_calendar_gap_seconds": 17634.954029,
+  "calendar_gap_note": "real wall interval includes external wait and independent stage/input reviews; no claim of free calendar time or continuous14400s/48h; earlier review reading unmeasured",
+  "project_exact_cumulative": "UNKNOWN",
+  "all_history_costs_preserved": true,
+  "delivery_tail": "final ignored R_B_delivery_receipt.json after exact push/fetch/cleanup/notification",
+  "continuous_RB_elapsed_at_delivery_checks_seconds": 2008.6709095339756,
+  "delivery_light_checks": [
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.8909966489300132,
+      "sampled_process_tree_rss_peak_bytes": 68374528,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/v26/delivery_light_check/summary.json",
+        "bytes": 3560,
+        "sha256": "1db10a3ab73641e721c6200ad48917a9f53edb6965062e986499024ce2a49943"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/v26/delivery_light_check/supervision/worker.log",
+        "bytes": 360,
+        "sha256": "9a813b497a98a90ca7c0d3afc074389da054622b0a8fd055900c350925990755"
+      }
+    },
+    {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.8327515558339655,
+      "sampled_process_tree_rss_peak_bytes": 58540032,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/v26/delivery_light_check_fixture_fixed/summary.json",
+        "bytes": 3556,
+        "sha256": "1be41b56a95144c53b40dc427e033c24616896e20853527398c7a67a929ba6e2"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/v26/delivery_light_check_fixture_fixed/supervision/worker.log",
+        "bytes": 1136,
+        "sha256": "df0b0ca55ec621ff0d024336582026c5fb43c65ba5390eaf9c56c26faebde714"
+      }
+    }
+  ]
+}

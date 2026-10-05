@@ -1,0 +1,203 @@
+{
+  "schema": "w1-RB-delta-tests.v26",
+  "scope": "PURE_DELTA_ONLY_NO_NATIVE_PHYSICS",
+  "source_sha": "9ec41386a0ab8c17ae2447507648ab2b039feeae",
+  "test_source": {
+    "path": "src/test/test_w1_input_recovery.py",
+    "bytes": 10397,
+    "sha256": "fcf745d3c1b9e50fde93e310aba24a5e1a1b748a44930b5a7b050b4e87810937"
+  },
+  "inherited_A": {
+    "path": "tmp/task42extra/w1_receiver/v26/A_qualification.json",
+    "bytes": 2798,
+    "sha256": "9683928cb830291232f2d0416a996a110b52616219407fc0f81aaa676a773648"
+  },
+  "inherited_92_reexecuted": false,
+  "delta_qualification": {
+    "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualification.json",
+    "bytes": 3244,
+    "sha256": "232f5d9b97705c9b113ac3920d50c37b7d333c8198d23c16ea7339269fbb6af2"
+  },
+  "runs": [
+    {
+      "name": "RB_delta_checks_repair_1",
+      "scope": "new pure input/receipt/clock/frequency logic only",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_repair_1/summary.json",
+        "bytes": 3577,
+        "sha256": "4c83a60d547e2724faa5c3afd826e7901834990a235f2bee3e77552cf776406d"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_repair_1/junit.xml",
+        "bytes": 4165,
+        "sha256": "a43be4a68e75e1497860eec91ac4b089ac2e0fe9a2114785e06dd2ed10d5a28d"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_repair_1/supervision/worker.log",
+        "bytes": 2210,
+        "sha256": "63cfa79c513b53c6387f4effe0635ffdf94fc543b5b990205082e702890c6f8e"
+      },
+      "command": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_repair_1/command.json",
+        "bytes": 1013,
+        "sha256": "b857959c7a4bfa2b0e6a5169ee398744621ae9f9fbac61d06b305499bb01109e"
+      },
+      "admission": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_repair_1/admission.json",
+        "bytes": 263464,
+        "sha256": "758d5e22a7abae36c965bdd6dcd431249bef724ca594f0e1c153694ae7d1826c"
+      },
+      "counts": {
+        "tests": 16,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.5337726338766515,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 93003776,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    {
+      "name": "RB_delta_checks_final",
+      "scope": "new pure input/receipt/clock/frequency logic only",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_final/summary.json",
+        "bytes": 3574,
+        "sha256": "6050be520a9179418197159becea530568853bf5ed3e53091fc8080273fc2040"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_final/junit.xml",
+        "bytes": 4669,
+        "sha256": "4cabbb31b53e3f1cf9444708ff58d631c7871e476946e727766af106384db78a"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_final/supervision/worker.log",
+        "bytes": 2755,
+        "sha256": "97bc25302d8767fcabfd02167198eed7f65c34d48876fcda2ae66224e5cb5db5"
+      },
+      "command": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_final/command.json",
+        "bytes": 1010,
+        "sha256": "f765c68b482fa4813647a74af9efa0cccbd9a24c18abe2e3e1be817271a64761"
+      },
+      "admission": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_checks_final/admission.json",
+        "bytes": 271495,
+        "sha256": "95d1e8cfc17e10f384f3d4e70746aaa9b6bc2d88de2f5ab8310a91aea3ce0071"
+      },
+      "counts": {
+        "tests": 16,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.688901702174917,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 91066368,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    {
+      "name": "RB_delta_qualified",
+      "scope": "new pure input/receipt/clock/frequency logic only",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified/summary.json",
+        "bytes": 3576,
+        "sha256": "3b6b3cf6901ca13101ff62864adc69e234bb698f4019a69b33c9d1eb0f7b5abe"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified/junit.xml",
+        "bytes": 2416,
+        "sha256": "22fbab03573b234be7fda220c77570d31f6be3156397572a6ba91713c31cd151"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified/supervision/worker.log",
+        "bytes": 718,
+        "sha256": "3257d42391651f914ce4a5e1c94ddd8fbeffe150e55bcf4be3e97edb88c90d82"
+      },
+      "command": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified/command.json",
+        "bytes": 1007,
+        "sha256": "af206ec423baf85d165ac49eedbff435806ce41a5b74a008b36946dc4d53d99f"
+      },
+      "admission": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified/admission.json",
+        "bytes": 185071,
+        "sha256": "f0e891110efa0aa595aa733b42e3ab82e57e15247be9827ae57437fab7fde307"
+      },
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.2599928171839565,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 90591232,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    {
+      "name": "RB_delta_qualified_final",
+      "scope": "new pure input/receipt/clock/frequency logic only",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified_final/summary.json",
+        "bytes": 3573,
+        "sha256": "8b2780ef9fe54d885d9f74c75daa64160c51e9681fb8b3198cc68161619f9962"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified_final/junit.xml",
+        "bytes": 2416,
+        "sha256": "1456e015f72d9c4f5442d854a8466cea7cfbcad501d78df0e8ab69b0133a559c"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified_final/supervision/worker.log",
+        "bytes": 2303,
+        "sha256": "9bd08d5fc8d7ae675e379378ec8c4705f982605469bda0e8a875b5ace4f837c1"
+      },
+      "command": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified_final/command.json",
+        "bytes": 1013,
+        "sha256": "95c82c5096b16d12262f581c790a952f8c85fe49323902613ec10ac2c328da49"
+      },
+      "admission": {
+        "path": "tmp/task42extra/w1_receiver/v26/RB_delta_qualified_final/admission.json",
+        "bytes": 185210,
+        "sha256": "52546632bf4b9d70a8156f4e7416ad2f2751bcdf11bbfa5aa9e0cada427c5951"
+      },
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.656705629080534,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 90886144,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    }
+  ],
+  "final_Ruff": "PASS",
+  "final_compileall": "PASS",
+  "R_dat_validate_only": "PASS",
+  "readmission_four_dat_paths": "PASS_SCHEMA_AND_ALL_PATHS_SHARE_EXPLICIT_OUTPUT_ROOT",
+  "new_unique_test_count": 16,
+  "stub_scope": "small receipt/supervision fixtures; the frequency test executes exact frozen zvalue only; no Basix/FE/mode generator execution",
+  "full_pytest": "NOT_RUN",
+  "CI": "NOT_CLAIMED"
+}

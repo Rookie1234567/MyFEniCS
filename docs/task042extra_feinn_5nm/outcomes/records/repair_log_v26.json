@@ -1,0 +1,95 @@
+{
+  "schema": "w1-RB-repair-log.v26",
+  "events": [
+    {
+      "kind": "engineering_round",
+      "round": 1,
+      "failure": "JSON_OBJECT_KEYS_MUST_BE_STRINGS before supervised test start",
+      "hypothesis": "resource CPU maps have integer keys; science writer deliberately rejects them",
+      "change": "only normalize admission metadata via ordinary JSON; load shared evidence helper relative to module file",
+      "test": "final 16 targeted tests/Ruff/compile and real launch passed metadata writing",
+      "pool_remaining": 0,
+      "record": {
+        "path": "tmp/task42extra/w1_receiver/v26/repair_RB_round1.json",
+        "bytes": 629,
+        "sha256": "1c768417c4c7df06b366185394224470bd44cf8f5e83c0856aba99a83d12d862"
+      }
+    },
+    {
+      "kind": "initial_test_path",
+      "failure": "first repair wrapper accidentally reused existing output directory; FileExistsError",
+      "change": "distinct immutable test directory; old directory preserved",
+      "native_starts": 0
+    },
+    {
+      "kind": "initial_fixture",
+      "failure": "frequency fixture could not import frozen directional_boundary in pure current package",
+      "change": "execute exact frozen zvalue AST with required Mapping global in fixture",
+      "results": [
+        "15pass/1fail",
+        "15pass/1fail",
+        "16pass"
+      ],
+      "scope": "fixture wiring only; no native numerical retry"
+    },
+    {
+      "kind": "initial_lint",
+      "failure": "16 pytest passed but Ruff F401 unused src.solvers import",
+      "change": "remove unused import, correct five-helper comment",
+      "result": "final supervised qualification all passed"
+    },
+    {
+      "kind": "resource_refusal",
+      "failure": "first pinned inner CPU audit rejects after broad prelaunch passes",
+      "change": "none to thresholds or neighbor processes",
+      "native_starts": 0
+    },
+    {
+      "kind": "resource_readmission",
+      "evidence": {
+        "path": "tmp/task42extra/w1_receiver/v26/resource_readmission_observation.json",
+        "bytes": 209044,
+        "sha256": "cb1d236edb12e8bb9e3c0577f354f749f00264b32ca30536e0f0156775bc609e"
+      },
+      "change": "one actual changed broad window, independent dat/output directory, same deadline",
+      "result": "second pinned inner admission also refuses",
+      "native_starts": 0
+    },
+    {
+      "kind": "initial_readmission_path",
+      "failure": "output_root still used first namespace; W1_ALREADY_LAUNCHED_RECONNECT",
+      "change": "correct dat output_root and assert manifest/ledger/all prerequisites have same root",
+      "source_before": "bc824b64f8960e82a422e298275f71ebc288bf9f",
+      "source_after": "8675c9551e3cf9bfa5e8b881bd72a87344d9cc08",
+      "numerical_retry": false,
+      "before_resource_audit_and_worker": true
+    },
+    {
+      "kind": "initial_document_fixture",
+      "failure": "asserted full old README must be one contiguous block, incorrectly rejects navigation inserted after identical title",
+      "change": "require exact old title and contiguous byte-identical historical body; preserve original failed checker source/log",
+      "initial_source": {
+        "path": "tmp/task42extra/w1_receiver/v26/check_RB_delivery_initial.py",
+        "bytes": 5015,
+        "sha256": "d79ef57fe11a2e011e2452e0ff37e2e7c7e6f2b6e046ae9989db62e06837f463"
+      },
+      "final_source": {
+        "path": "tmp/task42extra/w1_receiver/v26/check_RB_delivery.py",
+        "bytes": 5420,
+        "sha256": "aa4162ba6d78e1b6e09cc6e33dec3c2a46a9e492e569bd4becc6b95bdc93cf43"
+      },
+      "result": "8 changed scopes,7tables,58local links,77receipts,56protected files pass",
+      "native_or_numerical_retry": false
+    }
+  ],
+  "formal_shared_rounds_remaining": 0,
+  "formal_A_round_retained": 1,
+  "scope_note": "initial fixture/lint/explicit dat-path errors are preserved separately from formal numerical replays; no native worker/generation ran",
+  "no_additional_resource_readmission": true,
+  "no_hash_candidate_retry": true,
+  "strict_independent_engineering_fix_chains": 2,
+  "remaining_authorized_formal_rounds_at_start": 1,
+  "strict_repair_pool_compliance": "FAIL_IF_DAT_ROOT_CORRECTION_COUNTED_INDEPENDENTLY",
+  "extra_initial_dat_fix_preserved_not_silently_exempted": true,
+  "whole_contract_PASS_claimed": false
+}

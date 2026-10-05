@@ -1,0 +1,36 @@
+{
+  "schema": "w1-RB-gates.v26",
+  "derived_stages": {
+    "A": "A_PURE_LOGIC_ACCEPTED_REUSED_NOT_RERUN",
+    "R_logic": "PURE_DELTA_QUALIFIED",
+    "R_actual": "NOT_RUN_RESOURCE_ADMISSION_REFUSED_BEFORE_GENERATION",
+    "R_manifest_bitwise_match": "UNKNOWN_NOT_GENERATED",
+    "R_receipt_native_consumer": "NOT_RUN",
+    "B0": "NOT_RUN_R_INPUT_AND_RESOURCE_PRECONDITIONS",
+    "B1": "NOT_RUN_R_B0_PRECONDITIONS",
+    "B1_saved_checker": "NOT_RUN_NO_NUMERICAL_RAW",
+    "B2": "NOT_AUTHORIZED_THIS_PACKAGE_MAINLINE_OWNS_RECOVERY",
+    "whole_target": "FULL_TARGET_NOT_QUALIFIED"
+  },
+  "source_and_delta_gate": true,
+  "native_input_gate": false,
+  "native_control_gate": false,
+  "q60_candidate_accuracy": "UNKNOWN_NOT_RUN",
+  "numeric_native_coverage": 0,
+  "old_q30_q60_max_original_relative": 5.7059093327,
+  "old_numeric_negative_preserved": true,
+  "R_bitwise_failure_claimed": false,
+  "resource_stop_record": {
+    "path": "tmp/task42extra/w1_receiver/v26/R_B_resource_stop.json",
+    "bytes": 1317,
+    "sha256": "fed0b1b0f1add30b14caea8f11defeba95a71d6246609b7061411e6b34280df4"
+  },
+  "residual_field_power_accuracy_gates_relaxed": false,
+  "NN_increment": false,
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "M3600_better_Mfinal_degeneration": "PRESERVED",
+  "D0": "COST_VETO_CONFIRMED",
+  "D1": "NOT_RUN_COST_VETO"
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "w1-RB-render.v26",
+  "unmodified_Review_V25_8": "REUSE_REVIEW_SEAL_FINITE_VISUAL_SCOPE_NOT_FULL_PAGE",
+  "review_audit": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v25_input_recovery_audit.json",
+    "bytes": 64258,
+    "sha256": "f3637287c13340481a33c9bec7d38e1dc1acec4561dd170cef99b1a4b283f15a"
+  },
+  "new_pages_visual": "NOT_RUN_RESOURCE_CHAIN_CLOSED",
+  "new_pages_local_structure": "PASS_CHANGED_SCOPE_FENCES_LINKS_TABLES_HISTORY",
+  "browser_started": false,
+  "visual_pass_claimed": false,
+  "new_display_math_blocks": 0,
+  "old_visual_failures_and_scope_limits_preserved": true,
+  "new_pages_local_check": {
+    "pages": 8,
+    "tables": 7,
+    "local_links": 58,
+    "bound_receipt_occurrences": 77
+  }
+}

@@ -2166,3 +2166,17 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 原尺寸物理结果/神经 | E/H/curl/R/T/A/全部复模式NOT_RUN；NO_VERIFIED_NN_INCREMENT | FULL_TARGET_NOT_QUALIFIED，不能称条件数或求解收益 |
 
 原先q30/q60最坏5.70590933及主线p6计时未运行保留；初始12GB轻监督配置缺口/修复/拒绝费用不删，连续墙钟与嵌套阶段分开计。FEINN_MAIN_SOLVER_ON_HOLD、M3600较好/Mfinal退化、D0成本否决/D1未运行、旧UNKNOWN和全部成本保持；无production/merge批准。原50×25×140nm、Si17/120nm、λ0.7完整3D、decimal2e12B/172800s与原精度门仍未达到。[回执](task042extra_feinn_5nm/response_v25.md)、[专题](task042extra_feinn_5nm/outcomes/w1_receiver_v25.md)、[原始缺项/运行](task042extra_feinn_5nm/outcomes/records/run_index_v25.json)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v25.json)。
+
+## 3.44.24 Task42extra V26：W1确定性输入恢复的接线资格和资源停止
+
+本条不是新模型或散射场。原50×25×140nm/Si17/120nm/λ0.7完整3D及32060外模式冻结，新增原源码一次输入恢复及独立来源验收；原ledger及旧数值不改。clean实现9ec41386a0ab8c17ae2447507648ab2b039feeae，数学c354afa449fb80cfb5012e7d2ff66a3e3e64e088，实际最后launcher source8675c9551e3cf9bfa5e8b881bd72a87344d9cc08；尚无原生数值source。
+
+| 数据身份 / 范围 | 实际数值、单位和原门 | 状态 |
+| --- | --- | --- |
+| pure接线 / measured fixture | 16/16、Ruff/compileall；最后2.656706s/同时树峰90886144B，2GiB/ownswap0 | 旧A92复用；非FE、非逐字节恢复 |
+| 冻结导入 / metadata checked | 43文件/1054179B；原36244923B/SHA52d7…尚未生成，32060顺序未实测 | 输入重现UNKNOWN |
+| R资源 / controlled refusal | 两次固定核内层拒绝，native worker0、mode generation0；一次实测重新准入耗尽 | 不把宽域有候选等同固定核通过，不放宽门 |
+| B0/B1/B2 / not_run | q60原门和物理RHS未判定；B2由主线承担，local/global factor/solve/NN均0 | 没有新的H/curl/E/复通道/R/T/A/A_volume |
+| 原完整终点 / not_qualified | decimal2e12B/172800s原精度门保持；M3600较好/Mfinal退化、全部失败/UNKNOWN/费用保留 | FULL_TARGET_NOT_QUALIFIED / NO_VERIFIED_NN_INCREMENT |
+
+初始JSON/fixture/lint及重新准入dat错误、严格修复池限定均真实保留；正式R树峰NOT_RETAINED，不用轻测试峰补造原生资格。FEINN_MAIN_SOLVER_ON_HOLD、D0成本否决/D1未运行不变，无production/master合并授权。[Response V26](task042extra_feinn_5nm/response_v26.md)、[source/run](task042extra_feinn_5nm/outcomes/records/run_index_v26.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v26.json)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v26.json)。

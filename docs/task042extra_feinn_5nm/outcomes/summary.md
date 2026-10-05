@@ -1,3 +1,18 @@
+# 当前：Review V25 §8 → Response V26，R输入接线完成、资源阻塞
+
+新增一次确定性输入恢复入口，要求原文件逐字节相同后才进入q60组件；16项增量fixture、Ruff、compileall通过，已接受92项A按hash复用。实际两次launcher在固定核内层审计拒绝，**原生worker和生成次数0，R/B0/B1及数值checker未运行**。这是部分实现交付，不能称找回原件、q60全模式资格或完整解。
+
+| 固定对象 / 数据身份 | 实际结果、单位与门 | 证据 |
+| --- | --- | --- |
+| clean实现 / implemented | 9ec41386a0ab8c17ae2447507648ab2b039feeae；原数学c354afa、43文件/1,054,179B | [run/source](records/run_index_v26.json)、[包](records/integration_packet_v26.json) |
+| 增量逻辑 / measured fixture | 16/16；最后2.656706s、同时树峰90,886,144B、hard2GiB/ownswap0；不重跑A | [测试](records/targeted_tests_v26.json) |
+| 期待原输入 / UNKNOWN | 36,244,923B/SHA52d7ec80…、32060/SHA03c1965c…尚未生成和核验 | [Gate](records/gate_decisions_v26.json) |
+| R资源 / controlled refusal | 两次外层有候选、固定核内层拒绝；一次实测重新准入已用尽；失效原分数未保存、归因UNKNOWN | [费用/缺失口径](records/resource_costs_v26.json)、[修复限定](records/repair_log_v26.json) |
+| B0/B1/B2 / not_run | native/32060 q60/checker0；B2本包不授权，主线承担；factor/solve/NN0 | [保存收据核对](records/independent_checker_v26.json) |
+| 原完整目标与神经 / not_qualified | 原50×25×140nm、Si17/120nm、λ0.7、decimal2e12B整机/172800s未达成；全部原精度门保持 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED |
+
+[Response V26](../response_v26.md)、[专题](w1_input_recovery_v26.md)、[分组边界](records/selective_merge_manifest_v26.json)。旧中期较好/Mfinal退化、D0否决/D1未运行、q30/q60负结果、FAIL/UNKNOWN与全部成本均保留；新页实际GitHub视觉NOT_RUN，不把旧有限PASS移植。[呈现](records/render_check_v26.json)。本窗数值已关闭，一次交棒后停止；下方全部历史原文保留，旧“当前/下一步”不是新运行授权。
+
 # 当前：Review V24 → Response V25，W1接收包与真实缺项
 
 新入口统一实际输入和固定q60，避免worker/checker读取不同目录或暗用旧积分阶次。实现及49项纯数据/安全测试完成，真实native控制在启动前被CPU资源门拒绝，原manifest/ledger和checkpoint仍缺。**P0整体PARTIAL，P1/P2未运行；没有新q60物理资格、场、全局求解或NN收益。**

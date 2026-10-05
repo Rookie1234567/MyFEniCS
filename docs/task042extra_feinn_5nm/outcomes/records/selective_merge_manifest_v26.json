@@ -1,0 +1,62 @@
+{
+  "schema": "w1-RB-selective-groups.v26",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "decision": "NO_PROMOTION_NO_FRESH_PDE"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/w1_component_receiver.py",
+        "src/runners/w1_input_recovery.py"
+      ],
+      "decision": "opt-in receiver only; resource chain refused, native runtime not qualified"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/io/w1_reproduced_input.py",
+        "src/io/w1_evidence.py",
+        "src/io/w1_receiver_contract.py",
+        "src/test/test_w1_input_recovery.py"
+      ],
+      "decision": "16 pure delta fixtures; inherited92 not rerun; no native component qualification"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v26.md",
+        "docs/task042extra_feinn_5nm/outcomes/w1_input_recovery_v26.md"
+      ],
+      "decision": "preserve truthful partial/not_run/negative/cost records"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/runners/w1_component_payload.py",
+        "benchmarks/cases/w1_receiver/recovery_dependencies.json",
+        "input/task042extra_feinn_5nm/v26_rb*.dat"
+      ],
+      "decision": "actual input and numerical raw absent; exact hash branch not production default"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "tmp/task42extra",
+        "benchmarks/artifacts/task42extra/w1_receiver"
+      ],
+      "decision": "ignored logs/qualifications/admission caches/large artifacts, no merge authority"
+    }
+  ],
+  "suggested_review_order": [
+    "pure IO/schema and tests",
+    "opt-in orchestration",
+    "input ABI/native gates when separately authorized"
+  ],
+  "mathematical_source_unchanged": true,
+  "ordinary_solver_default_unchanged": true,
+  "fresh_PDE_evidence": "NOT_RUN",
+  "merge_master_allowed": false
+}
