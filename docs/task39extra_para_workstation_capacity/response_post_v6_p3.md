@@ -23,7 +23,7 @@
 
 5 nm草案的自动完整同离散比较仍由现有profile映射进入旧的`compare_retained_5nm_output`，其旧5 nm同物理全场/600模式见证路径与独立已合格V6 F5性能记录分开。比较项和阈值照Review V6 §4，不把V6 F5写成当前runner的直接自动pair gate。runtime必须记录真实boundary-fitted cells；输入名义`[13,7,35]`不能代替同离散参考的3780实际cell数。
 
-正式完整5 nm唯一尝试绑定clean运行source `2b0a7c1d6e5a20c5d0323469cd018deeb73898c2`，现已按上节记录为中断。没有启动2 nm full/P2或0.7 nm模型，没有再做p4逆研究，也没有改默认或V6历史结果。
+正式完整5 nm唯一p3尝试绑定clean运行source `2b0a7c1d6e5a20c5d0323469cd018deeb73898c2`，现已按上节记录为中断。本轮追加p3范围没有启动2 nm p3完整场、没有重跑或续接既有V6 q4 P2限域pilot，也没有启动0.7 nm模型；已有V6 q4 P2仍由原记录单独描述。没有再做p4逆研究，也没有改默认或V6历史结果。
 
 ## 唯一5 nm p3完整场终态
 
@@ -34,3 +34,31 @@ watchdog的`USER_CONTROLLED_STOP`只表明父进程接收SIGINT/SIGTERM的处理
 与既有q4 F5只比较相同i0→i120的`solve_seconds`窗口，再除以120：p3 `52.973319714 s/step`、q4 `79.389986392 s/step`，观察值比`1.49868x`。该口径包含窗口中的监控和输出，但不含i120回调后A6检查；两场不是配对控制，也不等于总time-to-solution。相同step120的原A6是p3 `0.0489090873604`、q4 `1.06532658799e-6`。较低单步时间没有弥补p3的收敛退化，因此本run未取得数值或物理资格。
 
 watchdog summary报告93536样本、RSS峰`18428985344 B`、tree swap峰0、PSS disabled、hard RSS线`1300000000000 B`、无时限和后代清场。约995 MB资源日志未全扫；仅核首尾样本并与summary交叉，末样本距clock_end `0.046385312 s`，全程样本可读性仍unknown。全机pswpin增10页/pswpout增0页的归因unknown。终态和匹配窗口的主审回执hash见[终态compact](outcomes/records/p3_full5nm_terminal_compact_v1.json)。
+
+## 原13.5 nm p3 anchor 回归：保存场对照已接受（2026-10-05）
+
+按追加授权，本轮在原13.5 nm/990-cell/80-mode模型上完成唯一p3 anchor：run `20261004T235056.532239Z`，source `a1a1e78a74a5497d7929a67f1de686965f30a066`，input `629b76c7ad6b187081ce10fb15c440e48eacf219eedfb7eb400d64c9f1243b8f`，physical `255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0`，resolved `ad46d0c168805006e0b9c9a14fdefb9cb7ec6cb097e2c73910762600184ddd59`，80-mode SHA `d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb`。实际粗算子degree为3/A3；run自然exit0，361步，原A6 `9.454573485808941e-7`，独立输出门通过。candidate classification及reference authority均保持`BALANCED_OUTPUT_AUTHORITY_LIMITED` / `REFERENCE_AUTHORITY_LIMITED`。
+
+| 同离散保存场对照 | measured差异 | 原限值 / 结果 |
+|---|---:|---|
+| 全场FE L2、scaled-curl | `6.0856e-10`、`6.1301e-10` | 各`1e-4`；PASS |
+| 同坐标E/H、80-mode幅值 | `6.56e-10`、`6.11e-10`、`5.23e-10` | 各`1e-4`；PASS |
+| 每通道R/T功率最大差；总R/T/A/A_volume最大差 | `3.11e-11`；`4.89e-10` | `1e-6` / `1e-5`；PASS |
+
+与V5工作站保存场的比较状态是`NUMERICAL_PAIR_PASS`，由主审receipt `3c6dc11b5db883a659e0d354ee4b49f57b509572e49a19f3e406571fbfb2af41`接受为**原13.5 nm模型回归**。这是保存数组比较，不提升reference authority，不表示“p3核心新迁移成功”，也不外推5/2/0.7 nm。
+
+旧→新工程计时：setup `5295.217→431.617 s`（12.27x）、KSP API `5521.324→5076.041 s`（1.09x）、workflow `10997.373→5709.358 s`（1.93x），两场均361步。准确A3 numeric前后的budget→numeric完成marker区间为`6.575→7.866 s`，没有变快；该区间不是独立MUMPS API计时。p6 build `4702.709→29.773 s`、A3 build（旧兼容字段名`p4_build`）`125.699→3.220 s`。新场实测raw geometry仍为96类；旧工作站V5实际记录raw tensor classes也为96，round12的12组是从保存geometry推导。新场tensor evaluations/groups为96→12，组键round12但代表坐标不舍入，属于显式近似分组。oriented Schur/LU类保持139→139，不能把tensor组变少说成实际几何类减少。父子计时重叠且两run非受控AB，不能将差异归因到单一优化。
+
+本场资源审计17924样本，RSS峰`5294153728 B`、task swap0、PSS关闭、后代清场；global pswpin +1/out0页归因unknown。资源日志审计执行“一次JSON解析加一次顺序读取末行”，不是严格单遍文件I/O。比较子进程watchdog exit0、133.698 s、419样本、RSS峰`784523264 B`且清场。
+
+### M0迁移链与当前入口差异
+
+本轮原始问题是核实task39extra既有p3方案的迁移，并据证据评判0.7 nm。donor closure source为`3804ede8acfd120d0d8d312415ec5e7a2c296cd7`，V25 Q3源为`cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32`（13.5 nm、p6/h7.5、990 cells、80 modes、361步、A6 `9.46014e-7`）。该路线此前已经在工作站source `6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d`上完成同模型361步，A6 `9.467909430661342e-7`。所以当前a1a1e78a74a5497d7929a67f1de686965f30a066 run是V6显式入口的anchor回归，不是首次迁移或“新p3核心迁移成功”。
+
+M0核对的核心流程仍是BAL_H按C→A→H→A→C、随后`zc+s-t`；粗解为准确A3/MUMPS因子。donor V25 默认安装`InexactBalanceLedger`，首次及每32次PC调用做额外`A(z)`与`PH(q-Az)`诊断，并按`1e-8` fail-closed 分类；通过时不改返回向量。成功的6d989工作站V5和当前V6未安装该ledger，所以差异是诊断/失败分类工作，不是已证实的通过向量变化。外层restart仍由`setGMRESRestart(32)`固定，input `outer_restart=0`不表示无restart。P/PH保持同一transfer与伴随关系；新V6 p3仅显式启用canonical共享边/面P63 trace映射。几何历史分三段：donor cad282 将 widths round12并用舍入width重写非零canonical坐标；6d989工作站V5显式使用`raw_unrounded`；当前V6 p3只将round12用于group key，代表坐标保持未舍入。本场raw geometry仍实测96类，tensor evaluations/groups 96→12，oriented Schur/LU 139→139；12是近似分组数，不是raw几何类数或精确等价。H6优化属于已有reference-metric/direct-natural路线；未发现BAL_H数学次序改变，单场H6 timing不能隔离归因。各阶段源码行与blob hash见[anchor compact](outcomes/records/p3_anchor_13p5nm_saved_field_pair_v1.json)。
+
+### 0.7 nm容量/精度证据与缺口
+
+既有planner按100×50×280轴得到1,400,000 cells和32,060 modes；周期拓扑公式派生p3/p4保留骨架加ports为63,122,060 / 117,792,060行，p6外层背景为277,592,060行。约65个p6维度complex128数组的`288,695,742,400 B`只是条件向量payload，不是RSS。P2控制中backend原始INFOG[22]=916713 MB；按cell比例推到约23.621 TB是敏感情景，单位/bytes换算与精确factor fill仍unknown，不能叫预测或下界。0.7 nm没有FE网格/全局矩阵/factor/PDE；材料模型和网格离散精度没有资格化，factor fill、setup/numeric wall time、收敛步数与0.7 nm field accuracy均unknown，48 h和2 TB目标仍`NOT_ESTABLISHED`。原planner record SHA `93d9c0cc8e479af528afc16d6a1165e26de49c433739440108c6ad35751bf25d`，planner script SHA `ac1b27c03e47ad77cf041ff0d6b414578bc0a76c78040b09fa4c58a90c8820a7`，production planner module SHA `042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e`，external-mode inventory SHA `806acae28c8efbe32c11d38ccfe79fc55e84ed2c11e27012fca58f2db105fa74`；mode manifest SHA、R48 review和其余公式见[anchor compact](outcomes/records/p3_anchor_13p5nm_saved_field_pair_v1.json)及[R48 plan](outcomes/records/v6_0p7nm_48h_capacity_plan.json)。
+
+保存场对照和归档阶段没有新运行PDE、因子或性能实验；本节之前的13.5 nm anchor 是本轮已批准并完成的一次完整场run。5 nm p3中断负结果照旧保留，不晋级2 nm/0.7 nm。

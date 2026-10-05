@@ -484,9 +484,41 @@
       "watchdog_sample_count": 93536,
       "resource_full_parseability": "UNKNOWN_NOT_FULLY_PARSED",
       "main_terminal_review_sha256": "90c29817e2854e102fea3d78253ad948e337862635eda008020b2bf04b060774"
+    },
+    {
+      "stage": "P3_13P5_ANCHOR_SAVED_FIELD_PAIR",
+      "attempt": 1,
+      "run_id": "20261004T235056.532239Z",
+      "record": "p3_anchor_13p5nm_saved_field_pair_v1.json",
+      "status": "ORIGINAL_13P5NM_MODEL_REGRESSION_ACCEPTED_REFERENCE_AUTHORITY_LIMITED",
+      "source_sha": "a1a1e78a74a5497d7929a67f1de686965f30a066",
+      "input_sha256": "629b76c7ad6b187081ce10fb15c440e48eacf219eedfb7eb400d64c9f1243b8f",
+      "physical_model_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+      "resolved_config_sha256": "ad46d0c168805006e0b9c9a14fdefb9cb7ec6cb097e2c73910762600184ddd59",
+      "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+      "actual_cells": 990,
+      "modes": 80,
+      "fine_degree": 6,
+      "coarse_degree": 3,
+      "coarse_operator": "A3",
+      "completed_outer_iterations": 361,
+      "original_A6_relative": 9.454573485808941e-07,
+      "full_workflow_monotonic_seconds": 5709.358387177112,
+      "same_clock_setup_seconds": 431.6173229611013,
+      "ksp_api_seconds": 5076.041082,
+      "saved_field_pair_status": "NUMERICAL_PAIR_PASS",
+      "saved_field_pair_sha256": "adeba73f08e51e4795afd1b1f9b0c2ea115d1f4be9a2d134f7cb6744b49e011d",
+      "main_acceptance_sha256": "3c6dc11b5db883a659e0d354ee4b49f57b509572e49a19f3e406571fbfb2af41",
+      "tree_rss_peak_bytes": 5294153728,
+      "tree_swap_peak_bytes": 0,
+      "watchdog_sample_count": 17924,
+      "descendants_cleared": true,
+      "geometry_raw_classes": 96,
+      "tensor_evaluations_or_groups_old_to_new": "96 to 12",
+      "oriented_schur_lu_classes_old_to_new": "139 to 139"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "P3_5NM_TERMINAL_ARCHIVE_REVIEW; no restart, continuation, 2nm/P2, or 0.7nm run without a new explicit decision"
+  "next_gate": "P3_13P5_ANCHOR_ACCEPTED_FOR_ORIGINAL_MODEL_ONLY; 5nm p3 remains interrupted, 2nm p3 and 0.7nm remain not run; no further calculation without an explicit decision"
 }

@@ -2873,3 +2873,13 @@ P2在2 nm Si、p6/h1.5 q4、54332 cells与3904 modes上自然exit0并按既定�
 | 最终状态 | P2 `NOT_SOLVER_QUALIFICATION`；R48 `TARGET_0P7NM_48H_NOT_ESTABLISHED` | 没有0.7 nm精度PDE或新低内存p4逆实验；Z限于文档与元数据收口 |
 
 Henke硅表行的线性插值与项目复折射率约定只提供容量规划的派生材料值，不是CXRO直接结果或精度证明。48小时预算为setup/solve/recovery-output-cleanup `43200/115200/14400 s`；假设256/512/1024完整步时，预算对应450/225/112.5 s/步。P2残差不用于外推总步数。此次文档diff不改source、input、review、数值Gate或邻任务；GitHub richText/表格检查留待实际docs-only push SHA后按该SHA核验。
+
+## Task39extra_para V6后追加：task39extra p3迁移核对与13.5 nm anchor（2026-10-05）
+
+用户要求核对task39extra中已收敛的p3路线是否迁移到工作站，并评估0.7 nm。M0确认donor closure `3804ede8acfd120d0d8d312415ec5e7a2c296cd7`、V25 Q3 source `cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32` 的13.5 nm模型（p6/h7.5、990 cells、80 modes、361步）已在工作站source `6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d`运行成功，原A6为`9.467909430661342e-7`。因此本轮`a1a1e78a74a5497d7929a67f1de686965f30a066`不是首次迁移，而是新V6显式p3 profile入口和原模型完整场回归。
+
+V25 donor BAL_H含默认`InexactBalanceLedger`，首次及每32次PC调用额外检查`A(z)`和`PH(q-Az)`并以`1e-8` fail-closed分类；通过时不改变返回向量。工作站V5与当前V6不装该ledger。数学路径仍按C→A→H→A→C再`zc+s-t`，实际粗算子A3与单个准确MUMPS因子；restart仍为32，输入`outer_restart=0`不代表关闭重启。几何策略也分三段：donor round12宽度并重写canonical坐标；工作站显式raw_unrounded；当前V6只round12 group key、代表坐标未舍入。anchor实测raw geometry仍96类，tensor evaluations/groups 96→12、oriented Schur/LU 139→139。
+
+原13.5 nm anchor以source `a1a1e78a74a5497d7929a67f1de686965f30a066`完成361步，原A6 `9.454573485808941e-7`；同物理保存场的FE/EH/modal/R/T/A对照过数值阈值，但authority保持`REFERENCE_AUTHORITY_LIMITED`。旧→新setup/KSP/workflow为12.27x/1.09x/1.93x工程对照，非受控因果比较；A3 numeric区间未见加速。watchdog树RSS峰`5294153728 B`、17,924样本全可读、task swap0、PSS disabled、后代清场；global pswpin增加1页、归因unknown，资源读取为一遍解析加一遍取末行顺序IO。
+
+0.7 nm只有planner元数据：100×50×280轴、1,400,000 cells、32,060 modes；派生p3/p4 retained+ports 63,122,060/117,792,060行，约65个p6 complex128向量情景288,695,742,400 B。没有0.7 FE网格、矩阵、factor或PDE，材料/网格精度、factor fill、收敛、48 h及2 TB均未资格化。完整身份与证据见[p3 anchor compact](task39extra_para_workstation_capacity/outcomes/records/p3_anchor_13p5nm_saved_field_pair_v1.json)和[本任务S3结果](task39extra_para_workstation_capacity/outcomes/p3_mid_order_s3.md)。

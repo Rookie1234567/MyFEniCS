@@ -1,0 +1,426 @@
+{
+  "0p7nm_metadata_assessment": {
+    "P2_control_and_factor_boundary": {
+      "P2_MUMPS_INFOG22_raw": "916713 MB as reported by backend; byte conversion and exact factor-fill decoding unknown",
+      "P2_cells": 54332,
+      "P2_condensed_p4_stored_NNZ": 2070391064,
+      "P2_modes": 3904,
+      "linear_per_cell_sensitivity": "about 23.621 TB if scaling the backend-reported 916.713 GB by the cell ratio; sensitivity only, not measurement, lower bound, or prediction"
+    },
+    "accepted_R48_metadata_review_sha256": "c7429a289b862fcf3cea361eca6818c1b3236258d295e46a2604ad3872f9375a",
+    "candidate_planner_scope": {
+      "axes": [
+        100,
+        50,
+        280
+      ],
+      "axis_spacing_nm": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "cells": 1400000,
+      "external_modes": 32060,
+      "modes_per_side": 16030
+    },
+    "complete_external_mode_inventory_sha256": "806acae28c8efbe32c11d38ccfe79fc55e84ed2c11e27012fca58f2db105fa74",
+    "conditional_vector_payload": {
+      "basis": "65 complex128 arrays at the derived p6 retained-plus-port dimension",
+      "bytes": 288695742400,
+      "classification": "derived conditional payload, not measured allocation, RSS, lower bound, or forecast"
+    },
+    "derived_retained_rows_including_ports": {
+      "p3": {
+        "ports": 32060,
+        "retained_plus_ports": 63122060,
+        "skeleton_rows": 63090000
+      },
+      "p4": {
+        "ports": 32060,
+        "retained_plus_ports": 117792060,
+        "skeleton_rows": 117760000
+      },
+      "p6_outer_context": {
+        "ports": 32060,
+        "retained_plus_ports": 277592060,
+        "skeleton_rows": 277560000
+      }
+    },
+    "mode_manifest_sha256": "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb",
+    "planner_record_sha256": "93d9c0cc8e479af528afc16d6a1165e26de49c433739440108c6ad35751bf25d",
+    "planner_script_sha256": "ac1b27c03e47ad77cf041ff0d6b414578bc0a76c78040b09fa4c58a90c8820a7",
+    "production_planner_module_sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+    "source_record": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_0p7nm_48h_capacity_plan.json",
+    "status": "TARGET_0P7NM_48H_NOT_ESTABLISHED",
+    "unknown_or_not_run": {
+      "0p7_48h_wall_time_and_2TB_capacity": "not established",
+      "0p7_FE_mesh_matrix_and_factor": "not created/not run",
+      "0p7_material_and_mesh_accuracy": "not qualified; planner geometry/mode metadata is not an FE accuracy or material-model validation",
+      "0p7_convergence_and_total_iterations": "unknown; no PDE field was solved",
+      "0p7_factor_fill_memory_and_symbolic_numeric_time": "unknown; no factorization was run"
+    }
+  },
+  "candidate": {
+    "actual_cells": 990,
+    "canonical_packet_sha256": "5729b6fc4b1aab6dbb1afc7bb01439645a850cc45044cc80de7935579494f691",
+    "checker_classification": "BALANCED_OUTPUT_AUTHORITY_LIMITED",
+    "coarse_degree": 3,
+    "coarse_operator": "A3",
+    "factor_calls_symbolic_numeric_solve": [
+      1,
+      1,
+      724
+    ],
+    "fine_degree": 6,
+    "independent_output_gates_passed": true,
+    "input_sha256": "629b76c7ad6b187081ce10fb15c440e48eacf219eedfb7eb400d64c9f1243b8f",
+    "mode_count": 80,
+    "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+    "execution_and_takeover": {
+      "run_manifest_sha256": "420581b64a62143ca0a9146df23d4887595b6da6b844cf96183cc1bebfe5f5b9",
+      "source_sha": "a1a1e78a74a5497d7929a67f1de686965f30a066",
+      "takeover_receipt": {
+        "path": "tmp/p3_main_review/p3_anchor_running_main_takeover_20261004T235056Z_v1.json",
+        "sha256": "11f9bf4740c9f1600de005289661c15a7f9d9e82bbb22a3b9fd6c32a1f697f0a",
+        "manifest_snapshot_sha256_at_capture": "6c304467a567c40410ad0cfd025341d4141cfbe20b13d1316e43a4c45d1a35e5",
+        "manifest_snapshot_scope": "manifest bytes read at takeover; manifest may change at terminal"
+      },
+      "mpi_ranks": 1,
+      "math_thread_environment": {
+        "OMP_NUM_THREADS": 1,
+        "OPENBLAS_NUM_THREADS": 1,
+        "MKL_NUM_THREADS": 1,
+        "BLIS_NUM_THREADS": 1,
+        "NUMEXPR_NUM_THREADS": 1
+      },
+      "process_identity_at_takeover": {
+        "root": {"pid": 2002396, "start_ticks": 108285002, "ppid": 1276332, "cpu_affinity": [9]},
+        "mpi": {"pid": 2002422, "start_ticks": 108285142, "ppid": 2002396, "cpu_affinity": [24]},
+        "worker": {"pid": 2002431, "start_ticks": 108285173, "ppid": 2002422, "cpu_affinity": [24]}
+      },
+      "numa": {
+        "manifest_worker_command": "numactl --interleave=0,1",
+        "takeover_observed_mems_allowed_list": "0-1"
+      },
+      "abi": {
+        "qualified_stack": "PORD64 overlay",
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int64",
+        "actual_unique_libpetsc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6"
+      },
+      "watchdog_contract": {
+        "rss_stop_policy": "measured_tree_rss_only_v3",
+        "tree_rss_hard_limit_bytes": 1300000000000,
+        "tree_rss_warning_bytes": 1170000000000,
+        "pss_sampling": "disabled_by_profile",
+        "uss_sampling": "not_sampled",
+        "swap_policy": "observe_only",
+        "time_limit_mode": "none"
+      }
+    },
+    "original_A6_limit": 1e-06,
+    "original_A6_relative": 9.454573485808941e-07,
+    "outer_iterations": 361,
+    "physical_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+    "reference_authority": "REFERENCE_AUTHORITY_LIMITED",
+    "residual_arrays_sha256": "7eec4d95941ef500a12f34bcee6d83a1425aaec146dcfce7a6390f20db754c98",
+    "resolved_sha256": "ad46d0c168805006e0b9c9a14fdefb9cb7ec6cb097e2c73910762600184ddd59",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_13p5nm_p6h7p5_q3_anchor__full3d_iterative__mpi1__Mna/20261004T235056.532239Z",
+    "run_id": "v6_interleave_13p5nm_p6h7p5_q3_anchor",
+    "solution_sha256": "a805808be75a2f34079e23fa340acedc15ab4ec00b977fa3324cf4b3fab3f006",
+    "source_sha": "a1a1e78a74a5497d7929a67f1de686965f30a066",
+    "terminal_evidence_sha256": {
+      "checker": "e3c1202ee096d18cb8d814a71231b5213da4e653ebfcb40b857b2249d44367b3",
+      "physical_intermediate_summary": "8efa4ec605e16e9e7c1e13869d90cc9f314da8a661c86a1df0c088b2af0c9f4c",
+      "run_manifest": "420581b64a62143ca0a9146df23d4887595b6da6b844cf96183cc1bebfe5f5b9",
+      "run_summary": "cf6f0e9b06550d095c38df572c7c3cc3030c6068f0a8314342eaabf5d74d1b3b"
+    },
+    "wavelength_nm": 13.5,
+    "worker_exit": 0,
+    "workflow_seconds": 5709.358387177112
+  },
+  "candidate_resource_audit": {
+    "PSS": "DISABLED_BY_PROFILE",
+    "audit_schema": "p3_anchor_resource_full_audit_v1",
+    "descendants_cleared": true,
+    "global_pswpin_delta_pages": 1,
+    "global_pswpout_delta_pages": 0,
+    "global_swap_attribution": "unknown",
+    "last_sample_to_watchdog_end_seconds": 0.04431333,
+    "max_sample_gap_seconds": 0.597258429042995,
+    "parse_errors": 0,
+    "read_method": "one JSON parse pass plus one additional sequential read to recover the final raw sample line; not strict single-pass file I/O",
+    "resources_sha256": "e8d8c704fd5d5cbdf96c798ff3dd77c5ae1ec74271b65f81222a22f69bb51d1f",
+    "sample_count": 17924,
+    "tree_RSS_peak_bytes": 5294153728,
+    "tree_swap_peak_bytes": 0,
+    "unreadable_records": 0,
+    "warning_records": 0
+  },
+  "compact_construction_note": "An initial local compact object assembly raised NameError before any file was written. This tracked record was built from existing hash-bound comparison, resource, timing, migration-lineage and R48 metadata records; no computation or planner was rerun.",
+  "ignored_evidence": {
+    "comparison_json": {
+      "bytes": 10696,
+      "path": "tmp/p3_main_review/p3_anchor_postrun_comparison_20261005_v1.json",
+      "sha256": "adeba73f08e51e4795afd1b1f9b0c2ea115d1f4be9a2d134f7cb6744b49e011d"
+    },
+    "comparison_script_sha256": "903bf8e2ba6fe9b13334e993e2759eec4d871ae7d872bdafd220c48c4a995c79",
+    "full_resource_audit": {
+      "bytes": 1771,
+      "path": "tmp/p3_main_review/p3_anchor_resource_full_audit_20261005_v1.json",
+      "sha256": "5b4a16d5125bd1b6cc1e013288820e16b87bea14f2e31a6ab745e3383e14df53"
+    },
+    "postrun_review_compact": {
+      "bytes": 7299,
+      "path": "tmp/p3_main_review/p3_anchor_postrun_review_compact_20261005_v1.json",
+      "sha256": "e9764c9a068298100b4d56af52fef8a1bf6d85505b24cb914f1ecb115d70381b"
+    },
+    "same_model_timing_read": {
+      "bytes": 4903,
+      "path": "tmp/p3_main_review/p3_anchor_same_model_performance_main_read_20261005_v1.json",
+      "sha256": "d32a76a43e475f3092cf0894ae96409cb2cababef10883278bb29cfc79578d32"
+    },
+    "watchdog_summary": {
+      "bytes": 1918,
+      "path": "tmp/p3_main_review/p3_anchor_postrun_watchdog_20261005_v1/summary.json",
+      "sha256": "ea6ff121da85a24d92eb6f050b01ecccd2cbdeff3d27909cae0467733c6b2d25"
+    }
+  },
+  "main_reviews": {
+    "natural_terminal": {
+      "bytes": 2371,
+      "path": "tmp/p3_main_review/p3_anchor_natural_terminal_main_review_20261005_v1.json",
+      "sha256": "4f6de77bd6cfa83239fb0c524aa8f35fcdec1094227522a8df799ca1c3d3fcad"
+    },
+    "saved_field_pair_acceptance": {
+      "bytes": 2063,
+      "decision": "ACCEPT_ORIGINAL_13P5_MODEL_REGRESSION",
+      "path": "tmp/p3_main_review/p3_anchor_saved_field_pair_main_acceptance_20261005_v1.json",
+      "sha256": "3c6dc11b5db883a659e0d354ee4b49f57b509572e49a19f3e406571fbfb2af41"
+    }
+  },
+  "migration_context_and_route_audit": {
+    "M0_route_differences": {
+      "BAL_H": "same C, A, H, A, C order followed by zc+s-t; no ordering change found",
+      "InexactBalanceLedger": "Donor V25 installs the default BAL_H ledger, checked on the first and every 32nd PC application. It performs extra A(z) and PH(q-Az) diagnostic work and applies the 1e-8 fail-closed classification; on a passing call it does not alter the returned vector. The 6d989 workstation V5 and current V6 route construct BAL_H without this ledger. This is a diagnostic/failure-classification difference, not evidence of a changed successful BAL_H vector.",
+      "inexact_balance_ledger_evidence": {
+        "donor_source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+        "dispatch": "src/runners/physical_dual_cell_condensed_lowmem_v20.py:1423-1457; src/runners/physical_p4_schur_v14.py:7461-7466,7664-7677",
+        "ledger_install": {
+          "path": "src/solvers/physical_interface_balanced.py",
+          "git_blob_sha1": "90bc57f38f336a43b0a5bfb721cb3e12cce7a358",
+          "lines": "111-118"
+        },
+        "ledger_check": {
+          "path": "src/solvers/physical_inexact_balance.py",
+          "git_blob_sha1": "258b1bc8101d5b7f8a5848d3294be0b76ae587b9",
+          "lines": "103-140"
+        },
+        "vector_finish_and_return": {
+          "path": "src/solvers/physical_balanced_coupling.py",
+          "git_blob_sha1": "c6bb7523bbfc64f48cd271ce5877c8fe90f7cc87",
+          "lines": "137-176,246-255",
+          "passing_call_formula": "z=zc+s-C(A(s)); no ledger correction term is applied to the returned vector"
+        },
+        "workstation_V5_without_ledger": {
+          "source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+          "path": "src/runners/physical_retained_condensed_v20.py",
+          "git_blob_sha1": "0dc29fc19a79826dd0899b0a2f364557b67f4587",
+          "lines": "620-694"
+        },
+        "current_V6_without_ledger": "current anchor constructs BAL_H without inexact_ledger; see run-source-bound profile/runtime blobs and candidate source SHA"
+      },
+      "H6": "reference-metric/direct-natural H6 path is part of the existing optimized route; M0 found no change to the BAL_H mathematical sequence. The H6 diagonal timing difference is observational, not isolated causal evidence.",
+      "P_and_PH": "P/PH retain the same candidate transfer and adjoint pairing; explicit canonical shared-entity P63 map applies only to the V6 p3 profile, replacing the 432 fine trace rows per local map; not a default-wide change",
+      "coarse_solve": "exact A3 coarse operator with one exact MUMPS factor; no recursive or approximate inverse route",
+      "geometry_and_tensor_grouping": "Donor V25 cad282 rounded widths to 12 decimals and rewrote nonzero canonical coordinates; the successful 6d989 workstation V5 route explicitly selected raw_unrounded; current V6 p3 rounds only the tensor-group key and leaves representative coordinates unrounded. The current mesh has 96 measured raw geometry classes, tensor evaluations/groups 96 to 12, and oriented Schur/LU classes 139 to 139. This is explicit approximate grouping, not an exact geometry equivalence or a reduction of raw geometry classes.",
+      "geometry_policy_evidence": {
+        "donor_V25_cad282": {
+          "source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+          "path": "src/solvers/hcurl_assembly_time_condensation.py",
+          "git_blob_sha1": "e294f30ee189639299fe6c793a264cd173b31507",
+          "lines": "917-920",
+          "behavior": "round widths to 12 decimals and rewrite canonical nonzero coordinates using rounded widths"
+        },
+        "successful_workstation_V5_6d989": {
+          "source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+          "policy": "raw_unrounded",
+          "recorded_actual_raw_tensor_classes": 96,
+          "round12_group_count_is_derived": true,
+          "derived_round12_group_count": 12,
+          "profile_path": "src/io/native_capacity_profile.py",
+          "profile_git_blob_sha1": "3703d71883f73184c191890fa2af5d9f0aabdf31",
+          "profile_lines": "303-314",
+          "runtime_path": "src/runners/physical_retained_condensed_v20.py",
+          "runtime_git_blob_sha1": "0dc29fc19a79826dd0899b0a2f364557b67f4587",
+          "runtime_lines": "267,288"
+        },
+        "current_V6_P3_anchor": {
+          "source_sha": "a1a1e78a74a5497d7929a67f1de686965f30a066",
+          "policy": "rounded_12_representative",
+          "profile_git_blob_sha1": "211c3085fe3475ae02500a4389913a6577f6e60f",
+          "runtime_selector_git_blob_sha1": "8f7dcafca1180587889f0944fa2ad0f902cadbe5",
+          "condensation_git_blob_sha1": "e3d56f7e97a344c47e504031601a96641b4985e5",
+          "behavior": "round only the grouping key; keep selected representative coordinates unrounded",
+          "measured_raw_geometry_classes": 96,
+          "tensor_evaluations_or_groups_old_to_new": "96 to 12",
+          "oriented_schur_or_lu_classes_old_to_new": "139 to 139"
+        }
+      },
+      "outer_restart": "input outer_restart=0 does not disable restarts; runtime still calls setGMRESRestart(32), matching the fixed restart-32 route"
+    },
+    "lineage": {
+      "V25_model": "13.5nm, p6/h7.5 fine, p3 coarse, 990 cells, 80 modes, 361 steps, original A6 9.46014e-7",
+      "already_migrated_workstation_run": "v5_node1_13p5nm_p6h7p5_q3/20260923T190511.676461Z; same model, 361 steps, original A6 9.467909430661342e-7; accepted comparison baseline",
+      "already_migrated_workstation_source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d",
+      "current_anchor_source_sha": "a1a1e78a74a5497d7929a67f1de686965f30a066",
+      "interpretation": "The p3 route had already migrated successfully to the workstation under source 6d989. This V6 opt-in anchor is a same-model regression and entry/implementation check, not the first migration or a claim that the core was newly migrated.",
+      "successful_V25_Q3_source_sha": "cad282e25ed53cad1f9e4a5a70c14f3dd40e6d32",
+      "task39extra_donor_closure_source_sha": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7"
+    },
+    "question": "Review the existing task39extra p3 route migration and evaluate evidence relevant to 0.7nm."
+  },
+  "negative_and_unrun_boundaries": {
+    "0p7nm_convergence_48h_2TB": "planner-only evidence: 1400000 cells, 32060 modes, derived p3/p4 row counts and 288695742400 B conditional 65-vector payload; no 0.7nm matrix/factor/PDE, factor fill, convergence iteration count, 48h wall time, or 2TB capacity qualification",
+    "2nm_p3_full_field": "not run; only the prior 18-cell component is accepted.",
+    "5nm_p3_full_run": "interrupted after outer 544; last completed original A6 at step 536 was 0.0038091382027435404 > 1e-6; remains not qualified and is not rewritten by this original-model anchor.",
+    "new_core_migration_success_claim": false
+  },
+  "postrun_comparison_watchdog": {
+    "PSS": "DISABLED_BY_PROFILE",
+    "classification": "COMPLETED",
+    "descendants_cleared": true,
+    "elapsed_seconds": 133.69772270997055,
+    "remaining_child_pids": [],
+    "samples": 419,
+    "tree_RSS_peak_bytes": 784523264,
+    "tree_swap_peak_bytes": 0
+  },
+  "record_classification": "ORIGINAL_13P5NM_MODEL_REGRESSION_ACCEPTED_REFERENCE_AUTHORITY_LIMITED",
+  "reference": {
+    "canonical_packet_sha256": "7fa74a73522f9f943f70b5eefd03f04c0e0bb187a005f7e56c0cbccfc33d0cab",
+    "checker_classification": "BALANCED_OUTPUT_AUTHORITY_LIMITED",
+    "input_sha256": "6773b6882c29b91590da7d9da85909fe97f71e574488b671ec44c8167f2a722a",
+    "mode_count": 80,
+    "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+    "original_A6_relative": 9.467909430661342e-07,
+    "physical_sha256": "255837330af27827d15ef43dfb01876187589a3b5e129f1d0882e24b955484c0",
+    "reference_authority": "REFERENCE_AUTHORITY_LIMITED",
+    "resolved_sha256": "e261bc280300b293c991345019f66e706e0d9ee22f320d7973a4a93ef0d7ace8",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_13p5nm_p6h7p5_q3__full3d_iterative__mpi1__Mna/20260923T190511.676461Z",
+    "run_id": "v5_node1_13p5nm_p6h7p5_q3",
+    "source_sha": "6d989b4b9cbca12fcc35455d7ff381e66ef7ca6d"
+  },
+  "same_model_engineering_timing": {
+    "A3_build_seconds_old_new_legacy_p4_field": [
+      125.69922416799818,
+      3.2200202711392194
+    ],
+    "H6_diagonal_seconds_old_new": [
+      86.72585101499863,
+      1.9163010059855878
+    ],
+    "KSP_API_ratio_old_over_new": 1.0877225151951944,
+    "KSP_API_seconds_old_new": [
+      5521.324172707988,
+      5076.041081780102
+    ],
+    "budget_to_numeric_complete_interval_seconds_old_new": [
+      6.574996875002398,
+      7.8655972820706666
+    ],
+    "candidate_run": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_13p5nm_p6h7p5_q3_anchor__full3d_iterative__mpi1__Mna/20261004T235056.532239Z",
+    "comparison_baseline_run": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_13p5nm_p6h7p5_q3__full3d_iterative__mpi1__Mna/20260923T190511.676461Z",
+    "geometry_and_tensor_groups": {
+      "interpretation": "explicit approximate tensor grouping; actual raw geometry remains 96 classes and is not reduced to 12; not an exact-geometry equivalence claim",
+      "new_actual_raw_geometry_class_count": 96,
+      "new_geometry_identity_policy": "rounded_12_representative",
+      "new_group_key": "coordinates rounded to 12 decimal places",
+      "new_tensor_group_count": 12,
+      "old_actual_raw_geometry_class_count": "unknown_not_recorded",
+      "old_geometry_identity_policy": "raw_unrounded",
+      "old_tensor_evaluation_or_class_count": 96,
+      "oriented_schur_lu_class_count_old_new": [
+        139,
+        139
+      ],
+      "representative_coordinates": "not rounded"
+    },
+    "interpretation": [
+      "Unpaired engineering comparison, not controlled AB attribution.",
+      "The budget-to-numeric-complete interval was longer in the candidate; it is not an isolated MUMPS API timer and does not show numeric/LU speedup.",
+      "Parent/child timer scopes overlap and must not be added.",
+      "Same outer-iteration count does not qualify shorter wavelengths."
+    ],
+    "iterations_old_new": [
+      361,
+      361
+    ],
+    "oriented_Schur_class_counts_old_new": [
+      139,
+      139
+    ],
+    "p6_build_seconds_old_new": [
+      4702.708650405999,
+      29.77258710679598
+    ],
+    "setup_ratio_old_over_new": 12.268314094386392,
+    "setup_seconds_old_new": [
+      5295.216886665003,
+      431.6173229611013
+    ],
+    "workflow_ratio_old_over_new": 1.9262011736906308,
+    "workflow_seconds_old_new": [
+      10997.372826400999,
+      5709.358387177112
+    ]
+  },
+  "saved_field_comparison": {
+    "all_80_mode_amplitude_relative": 5.231350370497671e-10,
+    "all_80_mode_power_max_absolute": 3.110810740947212e-11,
+    "automatic_release": false,
+    "comparison_only_qualification": "comparison only; does not upgrade legacy reference authority or replace candidate native A3/A6 gates",
+    "full_FE_L2_relative": 6.0856024243862e-10,
+    "full_FE_scaled_curl_relative": 6.130099555116099e-10,
+    "independent_indices_equal_metric_mass_indices": true,
+    "independent_rows": 644760,
+    "limits": {
+      "R_T_A_Avolume_absolute": 1e-05,
+      "complex_modal_amplitude_relative": 0.0001,
+      "full_fe_L2_relative": 0.0001,
+      "full_fe_scaled_curl_relative": 0.0001,
+      "original_A6_true_relative_residual": 1e-06,
+      "per_channel_R_T_absolute": 1e-06,
+      "selected_EH_relative": 0.0001
+    },
+    "ordered_canonical_key_inventory_sha256": "c2a441e05eae28e8aea333569cb886be243b3742e06d2d21fbab6ab3e2f2270f",
+    "per_channel_RT_max_absolute": 3.110810740947212e-11,
+    "reference_authority": "REFERENCE_AUTHORITY_LIMITED",
+    "selected_EH_relative": {
+      "E_V_per_m": 6.564121552349124e-10,
+      "H_A_per_m": 6.105154389624942e-10
+    },
+    "status": "NUMERICAL_PAIR_PASS",
+    "storage_rows": 667152,
+    "total_observables_absolute_differences": {
+      "A": 5.144751291652483e-11,
+      "A_volume": 4.890425842063451e-10,
+      "R": 1.965444473839284e-11,
+      "T": 3.17929519516591e-11
+    },
+    "total_observables_candidate": {
+      "A": 0.6218856512491885,
+      "A_volume": 0.6218856294971408,
+      "R": 0.3650975453291909,
+      "T": 0.013016803421620643
+    },
+    "total_observables_reference": {
+      "A": 0.621885651197741,
+      "A_volume": 0.6218856290080982,
+      "R": 0.36509754534884536,
+      "T": 0.013016803453413595
+    }
+  },
+  "schema": "task39extra.p3.anchor.saved_field_pair_compact.v1",
+  "scope": "V6 closeout後追加的唯一原13.5nm/990-cell/80-mode p6/p3 anchor回归；不是新的Review版本，不外推短波资格。"
+}
