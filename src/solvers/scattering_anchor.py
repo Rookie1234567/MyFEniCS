@@ -263,11 +263,22 @@ def audit_original(bundle, rhs, solution, port, journal):
 
 def reference(case,degree,folder,journal):
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    capacity=None
+    if degree==5:
+        from .scattering_anchor_reporting import p5_capacity
+        parents=stage('VERIFY_P4')['pairs']
+        if len(parents)!=2 or {p['case'] for p in parents}!={'REGULAR','NOTCH'}:
+            raise ValueError('p5 requires both frozen complete p4 parents')
+        for p in parents:
+            if not all(p[k] for k in ('reference_equation_pass','reference_direct_internal_target_pass','reference_energy_pass','FINITE_OBSERVABLE_PASS')):
+                raise ValueError('p5 independent p4 parent gate failed')
+        if case!='NOTCH':raise ValueError('only one same-mesh NOTCH p5 increment authorized')
+        capacity=p5_capacity();journal.event('p5_capacity_before_allocation',**capacity)
     cfg,setup,geometry=make_setup(case,degree,journal)
     bundle=rhs=system=inverse=solution=factor=None
     try:
         bundle,rhs,rf=build_bundle(cfg,setup,journal)
-        system,inverse=condense(bundle,journal)
+        system,inverse=condense(bundle,journal,expected=(32865,11600,19200) if degree==5 else None)
         factor=DirectFactor(system.matrix,journal);inverse.factor=factor
         with journal.measured('solve_and_minimal_internal_recovery'):
             solution=inverse.apply(rhs)
@@ -291,7 +302,7 @@ def reference(case,degree,folder,journal):
         system.matrix.destroy();system.matrix=None;gc.collect();journal.event('condensed_matrix_released')
         output=outputs(bundle,solution,port,folder,journal)
         return {'status':'COMPLETED','case':case,'degree':degree,'engine':'FULL3D_ASSEMBLY_TIME_EXACT_REFERENCE',
-                'arrays':arrays,'original_audit':norms,'fixed_refinements':refinements,'output':output,
+                'arrays':arrays,'original_audit':norms,'fixed_refinements':refinements,'output':output,'capacity':capacity,
                 'dimensions':{'native':system.full_rows,'trace':system.active_rows,'internal':system.active_interior_rows,'ports':532},
                 'RHS':rf,'timings':journal.timings,'calls':journal.calls,'cold_N1':'process/numerical preparation cold; OS/JIT cache state recorded',
                 'equation_pass':max(norms['true'],norms['native'],norms['augmented'],norms['port'])<=1e-6 and norms['identity']<=1e-10 and norms['slave_zero']}
@@ -423,16 +434,8 @@ def verify(folder,journal):
 
 
 def cost_report(folder,journal):
-    rows=[]
-    for name in ('REFERENCE_REGULAR','REFERENCE_NOTCH','ENGINE_REGULAR','ENGINE_NOTCH','REFERENCE_NOTCH_P5'):
-        try:r=stage(name)
-        except FileNotFoundError:rows.append({'stage':name,'status':'not_run'});continue
-        rows.append({'stage':name,'timings':r['timings'],'calls':r['calls'],'arrays':r['arrays'],
-                     'equation_pass':r['equation_pass'],'training_seconds':0,'process_numerical_preparation_cold':True,
-                     'OS_cache_flushed':False,'full_deployment_unknown':[]})
-    return {'status':'COMPLETED','routes':rows,'research_ledger':window.ledger(),
-            'NN_NOT_TRAINED_THIS_BATCH':True,'TARGET_NOT_QUALIFIED':True,
-            'opportunity':'rank actual inclusive coldN1 phases after full observable qualification; no automatic new training'}
+    from .scattering_anchor_reporting import cost_report as report
+    return report(folder,journal)
 
 
 def execute(role,folder,state):

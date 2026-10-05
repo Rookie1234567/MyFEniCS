@@ -160,5 +160,49 @@ class AnchorTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(),before)
             self.assertTrue(np.array_equal(np.load(path)['z'],np.arange(12)))
 
+    def test_nested_costs_are_disjoint_and_bad_timeline_rejected(self):
+        from src.solvers.scattering_anchor_reporting import disjoint_timings,p5_capacity
+        events=[{'event':n,'elapsed_s':t} for n,t in [('parent_begin',0),('child_begin',1),('child_end',3),('parent_end',5)]]
+        costs=disjoint_timings(events)
+        self.assertEqual(costs['exclusive_seconds'],{'child':2.,'parent':3.})
+        self.assertEqual(costs['root_measured_seconds'],5.)
+        with self.assertRaisesRegex(ValueError,'non-paired'):disjoint_timings([{'event':'bad_end','elapsed_s':1}])
+        with self.assertRaisesRegex(ValueError,'incomplete'):disjoint_timings(events[:-1])
+        self.assertEqual(p5_capacity()['condensed_rows'],12132)
+        self.assertLess(p5_capacity()['planned_peak_bytes'],8*2**30)
+
+    def test_actual_split_recovery_nonzero_internal_and40port(self):
+        from src.solvers.scattering_anchor_checks import native_recovery_action_split_check
+        rng=np.random.default_rng(4905);V=rng.normal(size=(7,7))+1j*rng.normal(size=(7,7))+8*np.eye(7)
+        C=rng.normal(size=(7,40))+1j*rng.normal(size=(7,40));u0=rng.normal(size=7)+1j*rng.normal(size=7)
+        alpha=rng.normal(size=40)+1j*rng.normal(size=40);ba=C@alpha;f=V@u0+ba
+        class Vec:
+            def __init__(self,a):self.array=np.array(a,complex)
+            def duplicate(self):return Vec(np.zeros_like(self.array))
+            def copy(self):return Vec(self.array)
+            def set(self,x):self.array[:]=x
+            def destroy(self):pass
+        cells=[np.array([0,2,3]),np.array([1,3,4]),np.array([5,4,6])]
+        # Interior local position0 is private; trace DOFs are shared.
+        mesh=SimpleNamespace(topology=SimpleNamespace(index_map=lambda dim:SimpleNamespace(size_local=3)))
+        space=SimpleNamespace(mesh=mesh,element=SimpleNamespace(basix_element=SimpleNamespace(entity_dofs=[[],[],[],[[0]]])),
+                              dofmap=SimpleNamespace(cell_dofs=lambda c:cells[c]))
+        bundle={'degree':4,'setup':{'spaces':{4:space},'floquets':{4:SimpleNamespace(mpc=SimpleNamespace(slaves=np.array([],int)))}}}
+        calls=[]
+        def apply(v):calls.append(v.array.copy());return Vec(V@v.array)
+        bundle['volume_action']=SimpleNamespace(apply=apply)
+        j=SimpleNamespace(calls={});vectors={'coupling_action':ba,'volume_action':V@u0}
+        restore=lambda mpc,u:SimpleNamespace(x=SimpleNamespace(array=u.array.copy()))
+        with patch('src.solvers.fullspace_same_mesh_hcurl_pmg_physical.restore_p0_full_field',restore):
+            _,facts,arrays=native_recovery_action_split_check(bundle,Vec(u0),Vec(f),alpha,vectors,j)
+            self.assertLess(facts['operation_scaled_interior'],1e-14)
+            self.assertGreater(facts['internal_rhs_norm'],0)
+            self.assertEqual(j.calls['volume_only'],2)
+            np.testing.assert_array_equal(arrays['interior_rows'],[0,1,5])
+            bad={**vectors,'volume_action':vectors['volume_action']+1}
+            with self.assertRaisesRegex(ValueError,'split volume identity'):
+                native_recovery_action_split_check(bundle,Vec(u0),Vec(f),alpha,bad,j)
+        self.assertEqual(len(calls),4)
+
 
 if __name__=='__main__':unittest.main()

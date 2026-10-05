@@ -91,6 +91,44 @@ def mode_comparison(reference,candidate):
     return arrays
 
 
+def native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal):
+    """Independent original volume action on private interior/trace parts.
+
+    Interior DOFs belong to one cell. The two original form actions provide
+    the same Vii*ui and Vit*ut without constructing a dense tensor merely to
+    multiply it by one vector. The earlier tensor oracle remains unchanged.
+    """
+    from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+    V=bundle['setup']['spaces'][bundle['degree']];mesh=V.mesh
+    ip=np.asarray(V.element.basix_element.entity_dofs[3][0])
+    bycell=[V.dofmap.cell_dofs(c)[ip] for c in range(mesh.topology.index_map(3).size_local)]
+    interior=np.concatenate(bycell)
+    if len(np.unique(interior))!=len(interior):raise ValueError('interior rows are not one-cell-owned')
+    ui=u.duplicate();ut=u.copy()
+    try:
+        ui.set(0);ui.array[interior]=u.array[interior];ut.array[interior]=0
+        vi=bundle['volume_action'].apply(ui).array.copy()
+        vt=bundle['volume_action'].apply(ut).array.copy()
+        journal.calls['volume_only']=journal.calls.get('volume_only',0)+2
+    finally:ui.destroy();ut.destroy()
+    ba=vectors['coupling_action'];residual=rhs.array-vi-vt-ba
+    rows=np.array([(np.linalg.norm(residual[d]),sum(np.linalg.norm(v[d]) for v in (rhs.array,vi,vt,ba))) for d in bycell])
+    identity=np.linalg.norm(vi+vt-vectors['volume_action'])/max(np.linalg.norm(vi)+np.linalg.norm(vt),1e-30)
+    E=restore_p0_full_field(bundle['setup']['floquets'][bundle['degree']],u)
+    slaves=np.asarray(bundle['setup']['floquets'][bundle['degree']].mpc.slaves)
+    independent=np.setdiff1d(np.arange(len(u.array)),slaves)
+    facts={'operation_scaled_interior':float(np.linalg.norm(rows[:,0])/max(np.linalg.norm(rows[:,1]),1e-30)),
+           'max_cell_operation_scaled':float(np.max(rows[:,0]/np.maximum(rows[:,1],1e-30))),
+           'master_storage_max_abs':float(np.max(np.abs(E.x.array[independent]-u.array[independent]),initial=0)),
+           'slave_storage_zero':bool(np.all(u.array[slaves]==0)),
+           'split_action_identity_operation_scale':float(identity),
+           'internal_rhs_norm':float(np.linalg.norm(rhs.array[interior])),
+           'basis':'independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action'}
+    if identity>1e-10 or not all(np.isfinite(v) for v in facts.values() if isinstance(v,(float,int))):
+        raise ValueError('original split volume identity is not trusted')
+    return E,facts,{'interior_only_volume_action':vi,'trace_only_volume_action':vt,'interior_rows':interior}
+
+
 def verify(folder,journal):
     from petsc4py import PETSc
     from dolfinx import fem
