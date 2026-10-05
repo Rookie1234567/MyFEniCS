@@ -5115,6 +5115,73 @@ def _task041_execute_same_g_modal_metric_pair(
     pair["status"] = "pair_executed_not_formal_qualification"
     return pair
 
+def _task041_gather_primal_route_plan_release_snapshot(
+    side_inverses: Mapping[str, Any], comm: MPI.Intracomm
+) -> dict[str, Any] | None:
+    """Gather one rank-local route-plan snapshot per side at release time."""
+
+    rank = int(comm.rank)
+    local_sides: dict[str, dict[str, Any]] = {}
+    for side in ("bottom", "top"):
+        inverse = side_inverses.get(side)
+        if inverse is None:
+            local_sides[side] = {
+                "side": side,
+                "rank": rank,
+                "status": "not_created",
+                "captured": False,
+            }
+            continue
+        try:
+            snapshot = inverse.primal_route_plan_snapshot()
+            if not isinstance(snapshot, Mapping):
+                raise TypeError("route-plan snapshot is not a mapping")
+            local_sides[side] = {"side": side, **dict(snapshot)}
+        except Exception as exc:  # noqa: BLE001 - preserve cleanup on snapshot errors
+            local_sides[side] = {
+                "side": side,
+                "rank": rank,
+                "status": "snapshot_error",
+                "captured": None,
+                "error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc)[:240],
+                },
+            }
+    local_record = {"rank": rank, "sides": local_sides}
+    try:
+        gathered = comm.gather(local_record, root=0)
+    except Exception as exc:  # noqa: BLE001 - diagnostics must not skip destruction
+        if rank != 0:
+            return None
+        return {
+            "schema": "task041.primal_route_plan_release_inventory.v1",
+            "status": "gather_error",
+            "mpi_size": int(comm.size),
+            "rank_records": [],
+            "error": {
+                "type": type(exc).__name__,
+                "message": str(exc)[:240],
+            },
+        }
+    if rank != 0:
+        return None
+    records = sorted(gathered or [], key=lambda record: int(record.get("rank", -1)))
+    complete = len(records) == int(comm.size) and all(
+        detail.get("status") != "snapshot_error"
+        for record in records
+        for detail in record.get("sides", {}).values()
+    )
+    return {
+        "schema": "task041.primal_route_plan_release_inventory.v1",
+        "status": "measured" if complete else "partial",
+        "mpi_size": int(comm.size),
+        "gather_count": 1,
+        "rank_record_count": len(records),
+        "rank_records": records,
+    }
+
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -5154,6 +5221,7 @@ def _run_task041_balh_candidate_setup(
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
+    reuse_primal_route_plan: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair: Mapping[str, Any] | None = None,
@@ -5203,6 +5271,12 @@ def _run_task041_balh_candidate_setup(
     if not isinstance(fixed_h6_modal_gmres_research, bool):
         raise Task041ModePrepError(
             "fixed_h6_modal_gmres_research must be a boolean"
+        )
+    if not isinstance(reuse_primal_route_plan, bool):
+        raise Task041ModePrepError("reuse_primal_route_plan must be a boolean")
+    if reuse_primal_route_plan and not fixed_h6_modal_gmres_research:
+        raise Task041ModePrepError(
+            "primal route-plan reuse requires the fixed-H6 modal research path"
         )
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
@@ -5391,6 +5465,8 @@ def _run_task041_balh_candidate_setup(
     operator = None
     operator_context = None
     released = False
+    primal_route_plan_snapshot_attempted = False
+    primal_route_plan_release_snapshot: dict[str, Any] | None = None
     side_diagnostics_before: dict[str, dict[str, Any]] = {}
     side_diagnostics_after: dict[str, dict[str, Any]] = {}
     admission_audits: dict[str, Any] = {}
@@ -5899,6 +5975,7 @@ def _run_task041_balh_candidate_setup(
             ),
             p4_inverse_backend=selected_backend,
             support_policy=selected_support_policy,
+            reuse_primal_route_plan=reuse_primal_route_plan,
             **(
                 {"volume_action_context_factory": physical_action_context_factory}
                 if physical_action_context_factory is not None
@@ -7341,10 +7418,27 @@ def _run_task041_balh_candidate_setup(
         )
         return summary
 
+    def capture_primal_route_plan_release_snapshot() -> (
+        dict[str, Any] | None
+    ):
+        nonlocal primal_route_plan_snapshot_attempted
+        nonlocal primal_route_plan_release_snapshot
+        if not reuse_primal_route_plan:
+            return None
+        if not primal_route_plan_snapshot_attempted:
+            primal_route_plan_snapshot_attempted = True
+            primal_route_plan_release_snapshot = (
+                _task041_gather_primal_route_plan_release_snapshot(
+                    side_inverses, comm
+                )
+            )
+        return primal_route_plan_release_snapshot
+
     def release_before_recovery() -> Mapping[str, Any]:
         nonlocal context, operator_context, operator, released
         nonlocal global_source, global_source_before
         nonlocal global_action_before, global_rhs_before
+        route_plan_snapshot = capture_primal_route_plan_release_snapshot()
         context_status = "not_created"
         operator_context_status = "not_created"
         operator_status = "not_created"
@@ -7431,7 +7525,7 @@ def _run_task041_balh_candidate_setup(
                 for diagnostics in side_diagnostics_after.values()
             )
         )
-        return {
+        release_snapshot = {
             "factor_count_after_cleanup": factor_counts,
             "factor_cleanup_pass": factor_cleanup_pass,
             "actions_destroyed": objects_destroyed,
@@ -7466,6 +7560,9 @@ def _run_task041_balh_candidate_setup(
                 for side, diagnostics in side_diagnostics_after.items()
             },
         }
+        if reuse_primal_route_plan:
+            release_snapshot["primal_route_plan_inventory"] = route_plan_snapshot
+        return release_snapshot
 
     def admit_side(side: str) -> Mapping[str, Any]:
         inverse = side_inverses[side]
@@ -13365,6 +13462,15 @@ def _run_task041_balh_candidate_setup(
                     ),
                 }
             )
+        if reuse_primal_route_plan:
+            result["candidate_inventory"]["primal_route_plan_reuse"] = {
+                "enabled": True,
+                "capture_point": "release_before_recovery_before_side_destroy",
+                "release_snapshot_ref": (
+                    "/full_formal/release_before_recovery/"
+                    "primal_route_plan_inventory"
+                ),
+            }
         if rank_numa_evidence is not None:
             result["rank_numa_evidence"] = list(rank_numa_evidence)
         return result
@@ -13378,6 +13484,17 @@ def _run_task041_balh_candidate_setup(
                 failure_evidence[side] = last_apply
         if not released:
             release_before_recovery()
+        if (
+            reuse_primal_route_plan
+            and comm.rank == 0
+            and isinstance(primal_route_plan_release_snapshot, Mapping)
+        ):
+            failure_evidence["primal_route_plan_inventory"] = (
+                primal_route_plan_release_snapshot
+            )
+            failure_evidence["primal_route_plan_inventory_ref"] = (
+                "release_before_recovery.primal_route_plan_inventory"
+            )
         raise
 
 
@@ -13408,6 +13525,7 @@ def run_task041_consumer(
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
     fixed_h6_modal_gmres_research: bool = False,
+    reuse_primal_route_plan: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair_request: Mapping[str, Any] | None = None,
@@ -13443,6 +13561,12 @@ def run_task041_consumer(
     if not isinstance(fixed_h6_modal_gmres_research, bool):
         raise Task041ModePrepError(
             "fixed_h6_modal_gmres_research must be a boolean"
+        )
+    if not isinstance(reuse_primal_route_plan, bool):
+        raise Task041ModePrepError("reuse_primal_route_plan must be a boolean")
+    if reuse_primal_route_plan and not fixed_h6_modal_gmres_research:
+        raise Task041ModePrepError(
+            "primal route-plan reuse requires the fixed-H6 modal research path"
         )
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
@@ -14893,6 +15017,7 @@ def run_task041_consumer(
                 fixed_h6_modal_gmres_research=(
                     fixed_h6_modal_gmres_research
                 ),
+                reuse_primal_route_plan=reuse_primal_route_plan,
                 complex_qr_research=complex_qr_research,
                 capture_modal_solve_trace=capture_modal_solve_trace,
                 same_g_modal_metric_pair=same_g_modal_metric_pair,
@@ -15582,6 +15707,7 @@ def run_task041_consumer(
             failure_classes = {
                 str(audit.get("failure_classification"))
                 for audit in candidate_failure_evidence.values()
+                if isinstance(audit, Mapping)
             }
             if (
                 not preserve_candidate_failure

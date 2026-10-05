@@ -1153,6 +1153,7 @@ def _install_stub_side_builders(monkeypatch, captured):
         *,
         optimization_profile=None,
         support_policy=SUPPORT_POLICY_LEGACY,
+        reuse_primal_route_plan=False,
     ):
         transfer = _IdentityTransfer(
             default_variant=(
@@ -1161,9 +1162,18 @@ def _install_stub_side_builders(monkeypatch, captured):
                 else "legacy"
             )
         )
+        transfer._reuse_primal_route_plan = reuse_primal_route_plan
+        transfer.comm = SimpleNamespace(
+            rank=int(captured.get("route_snapshot_rank", 0)),
+            size=int(captured.get("route_snapshot_comm_size", 1)),
+        )
+        transfer._primal_route_plan = captured.get("route_plan")
         captured["transfer"] = transfer
         captured["optimization_profile"] = optimization_profile
         captured["support_policy"] = support_policy
+        captured.setdefault("reuse_primal_route_plan_calls", []).append(
+            reuse_primal_route_plan
+        )
         return transfer
 
     def fake_h6(_side_system, *, lifecycle_callback=None):
@@ -1287,11 +1297,109 @@ def test_side_inverse_builder_selects_explicit_cell_condensed_backend(monkeypatc
         assert "condensed_p4" in captured
         assert "p4" not in captured
         assert captured["condensed_p4_callback"] is None
+        assert captured["reuse_primal_route_plan_calls"] == [False]
     finally:
         if inverse is not None:
             inverse.destroy()
         b.destroy()
         operator.destroy()
+
+
+@pytest.mark.parametrize("reuse_primal_route_plan", [False, True])
+def test_side_inverse_builder_forwards_primal_route_plan_to_single_transfer(
+    monkeypatch, reuse_primal_route_plan
+):
+    captured = {}
+    side_system, operator, _operator_context, b = _builder_side_system()
+    _install_stub_side_builders(monkeypatch, captured)
+    inverse = None
+    try:
+        inverse = side_inverse_module.build_side_balanced_inverse(
+            side_system,
+            reuse_primal_route_plan=reuse_primal_route_plan,
+        )
+        assert captured["reuse_primal_route_plan_calls"] == [
+            reuse_primal_route_plan
+        ]
+        assert captured["transfer"]._reuse_primal_route_plan is (
+            reuse_primal_route_plan
+        )
+        snapshot = inverse.primal_route_plan_snapshot()
+        if reuse_primal_route_plan:
+            assert snapshot["status"] == "not_captured_yet"
+            assert snapshot["N_r"] is None
+            assert snapshot["M_r"] is None
+            assert snapshot["persistent_index_payload_bytes_local"] is None
+        else:
+            assert snapshot["status"] == "disabled"
+            assert snapshot["captured"] is False
+    finally:
+        if inverse is not None:
+            inverse.destroy()
+        b.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_route_plan_snapshot_is_local_and_released(monkeypatch):
+    captured = {
+        "route_snapshot_rank": 2,
+        "route_snapshot_comm_size": 4,
+        "route_plan": None,
+    }
+    route_plan = SimpleNamespace(
+        candidate_ids=np.arange(3, dtype=np.uint64),
+        send_order=np.arange(3, dtype=np.int64),
+        recv_order=np.arange(2, dtype=np.int64),
+        recv_ids=np.arange(2, dtype=np.uint64),
+        source_ranks=np.arange(2, dtype=np.int32),
+        send_counts=np.arange(4, dtype=np.int32),
+        send_displacements=np.arange(4, dtype=np.int32),
+        recv_counts=np.arange(4, dtype=np.int32),
+        recv_displacements=np.arange(4, dtype=np.int32),
+    )
+    side_system, operator, _operator_context, b = _builder_side_system()
+    _install_stub_side_builders(monkeypatch, captured)
+    inverse = None
+    try:
+        inverse = side_inverse_module.build_side_balanced_inverse(
+            side_system,
+            reuse_primal_route_plan=True,
+        )
+        before_capture = inverse.primal_route_plan_snapshot()
+        assert before_capture["status"] == "not_captured_yet"
+        assert before_capture["persistent_index_payload_bytes_local"] is None
+        captured["route_plan"] = route_plan
+        captured["transfer"]._primal_route_plan = route_plan
+        snapshot = inverse.primal_route_plan_snapshot()
+        assert snapshot["status"] == "captured"
+        assert snapshot["rank"] == 2
+        assert snapshot["communicator_size"] == 4
+        assert snapshot["N_r"] == 3
+        assert snapshot["M_r"] == 2
+        assert snapshot["persistent_index_payload_bytes_local"] == 152
+        assert snapshot["payload_formula_bytes_local"] == 152
+        assert snapshot["payload_formula_matches"] is True
+        assert captured["transfer"]._primal_route_plan is captured[
+            "route_plan"
+        ]
+        inverse.destroy()
+        destroyed = inverse.primal_route_plan_snapshot()
+        assert destroyed["status"] == "destroyed"
+        assert destroyed["captured"] is None
+        assert destroyed["persistent_index_payload_bytes_local"] is None
+    finally:
+        if inverse is not None and not inverse._destroyed:
+            inverse.destroy()
+        b.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_route_plan_requires_strict_bool_before_building():
+    with pytest.raises(TypeError, match="reuse_primal_route_plan must be a boolean"):
+        side_inverse_module.build_side_balanced_inverse(
+            None,
+            reuse_primal_route_plan=1,
+        )
 
 
 def test_side_inverse_builder_forwards_fused_physical_factory_only_when_selected(

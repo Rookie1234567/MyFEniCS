@@ -191,6 +191,102 @@ def _live_gmres_restart(ksp: PETSc.KSP) -> int:
     return int(restart.value)
 
 
+def _owner_transfer_primal_route_plan_snapshot(
+    owner_transfer: Any,
+) -> dict[str, Any]:
+    """Return local byte/count facts without copying or communicating arrays."""
+
+    comm = getattr(owner_transfer, "comm", None)
+    rank = getattr(comm, "rank", None)
+    comm_size = getattr(comm, "size", None)
+    enabled = bool(getattr(owner_transfer, "_reuse_primal_route_plan", False))
+    if not enabled:
+        return {
+            "status": "disabled",
+            "enabled": False,
+            "captured": False,
+            "rank": None if rank is None else int(rank),
+            "communicator_size": None if comm_size is None else int(comm_size),
+            "N_r": None,
+            "M_r": None,
+            "array_nbytes_local": None,
+            "persistent_index_payload_bytes_local": None,
+            "payload_formula_bytes_local": None,
+            "payload_formula": "16*N_r + 20*M_r + 16*P",
+        }
+    plan = getattr(owner_transfer, "_primal_route_plan", None)
+    if plan is None:
+        return {
+            "status": "not_captured_yet",
+            "enabled": True,
+            "captured": False,
+            "rank": None if rank is None else int(rank),
+            "communicator_size": None if comm_size is None else int(comm_size),
+            "N_r": None,
+            "M_r": None,
+            "array_nbytes_local": None,
+            "persistent_index_payload_bytes_local": None,
+            "payload_formula_bytes_local": None,
+            "payload_formula": "16*N_r + 20*M_r + 16*P",
+        }
+
+    array_names = (
+        "candidate_ids",
+        "send_order",
+        "recv_order",
+        "recv_ids",
+        "source_ranks",
+        "send_counts",
+        "send_displacements",
+        "recv_counts",
+        "recv_displacements",
+    )
+    array_nbytes: dict[str, int | None] = {}
+    for name in array_names:
+        value = getattr(plan, name, None)
+        raw_nbytes = getattr(value, "nbytes", None)
+        array_nbytes[name] = (
+            int(raw_nbytes)
+            if isinstance(raw_nbytes, (int, np.integer))
+            and not isinstance(raw_nbytes, (bool, np.bool_))
+            else None
+        )
+    send_order = getattr(plan, "send_order", None)
+    recv_order = getattr(plan, "recv_order", None)
+    N_r = getattr(send_order, "size", None)
+    M_r = getattr(recv_order, "size", None)
+    N_r = int(N_r) if isinstance(N_r, (int, np.integer)) else None
+    M_r = int(M_r) if isinstance(M_r, (int, np.integer)) else None
+    payload_bytes = (
+        sum(int(value) for value in array_nbytes.values())
+        if all(value is not None for value in array_nbytes.values())
+        else None
+    )
+    formula_bytes = (
+        16 * N_r + 20 * M_r + 16 * int(comm_size)
+        if N_r is not None and M_r is not None and comm_size is not None
+        else None
+    )
+    return {
+        "status": "captured" if payload_bytes is not None else "captured_size_unknown",
+        "enabled": True,
+        "captured": True,
+        "rank": None if rank is None else int(rank),
+        "communicator_size": None if comm_size is None else int(comm_size),
+        "N_r": N_r,
+        "M_r": M_r,
+        "array_nbytes_local": array_nbytes,
+        "persistent_index_payload_bytes_local": payload_bytes,
+        "payload_formula_bytes_local": formula_bytes,
+        "payload_formula_matches": (
+            None
+            if payload_bytes is None or formula_bytes is None
+            else payload_bytes == formula_bytes
+        ),
+        "payload_formula": "16*N_r + 20*M_r + 16*P",
+    }
+
+
 def _owner_transfer_inventory(owner_transfer: Any) -> dict[str, Any]:
     local_map = owner_transfer.local_transfer.matrix
     return {
@@ -630,6 +726,9 @@ class SideBalancedInverse:
         self._p4_inverse_backend = p4_inverse_backend
         self._physical_action_backend = physical_action_backend
         self._owner_transfer: Any | None = owner_transfer
+        self._reuse_primal_route_plan_enabled = bool(
+            getattr(owner_transfer, "_reuse_primal_route_plan", False)
+        )
         self._h6: Any | None = h6
         self._checkpoint_callback = checkpoint_callback or (lambda: None)
         self._audit_callback = audit_callback
@@ -2740,6 +2839,25 @@ class SideBalancedInverse:
             "ksp_destroyed": not bool(nested_ksp_live),
         }
 
+    def primal_route_plan_snapshot(self) -> dict[str, Any]:
+        """Report only this rank's persistent route-index payload, if live."""
+
+        if self._destroyed or self._owner_transfer is None:
+            return {
+                "status": "destroyed",
+                "enabled": self._reuse_primal_route_plan_enabled,
+                "captured": None,
+                "rank": int(self._comm.rank),
+                "communicator_size": int(self._comm.size),
+                "N_r": None,
+                "M_r": None,
+                "array_nbytes_local": None,
+                "persistent_index_payload_bytes_local": None,
+                "payload_formula_bytes_local": None,
+                "payload_formula": "16*N_r + 20*M_r + 16*P",
+            }
+        return _owner_transfer_primal_route_plan_snapshot(self._owner_transfer)
+
     def destroy(self) -> None:
         if self._destroyed:
             return
@@ -2810,9 +2928,12 @@ def build_side_balanced_inverse(
     p4_inverse_backend: str = "full",
     support_policy: str = "legacy",
     volume_action_context_factory: Callable[..., Any] | None = None,
+    reuse_primal_route_plan: bool = False,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
+    if not isinstance(reuse_primal_route_plan, bool):
+        raise TypeError("reuse_primal_route_plan must be a boolean")
     _validate_ksp_pair(max_it, rtol)
     if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
         raise ValueError(
@@ -2907,6 +3028,7 @@ def build_side_balanced_inverse(
             p4_factor.physical_action.floquet_data,
             optimization_profile=performance_profile,
             support_policy=support_policy,
+            reuse_primal_route_plan=reuse_primal_route_plan,
         )
         if lifecycle_callback is None:
             emit("transfer_ready")

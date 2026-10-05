@@ -2201,7 +2201,29 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
         )
+    assert captured["reuse_primal_route_plan"] is False
     assert captured["fixed_h6_modal_gmres_research"] is False
+
+    captured.clear()
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="route-plan reuse requires the fixed-H6 modal research path",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_route_without_fixed_h6_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            reuse_primal_route_plan=True,
+        )
+    assert captured == {}
 
     captured.clear()
     resource_policy_marker_limits_seen.clear()
@@ -2219,8 +2241,10 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
             fixed_h6_modal_gmres_research=True,
+            reuse_primal_route_plan=True,
         )
     assert captured["fixed_h6_modal_gmres_research"] is True
+    assert captured["reuse_primal_route_plan"] is True
     assert captured["use_anderson_modal_inner"] is False
     assert captured["complex_qr_research"] is False
     assert captured["capture_modal_solve_trace"] is False
@@ -2254,6 +2278,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
             fixed_h6_modal_gmres_research=True,
+            reuse_primal_route_plan=True,
         )
     assert captured == {}
 
@@ -2469,6 +2494,15 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         rank = 0
         size = 8
 
+        def __init__(self):
+            self.gather_calls = 0
+            self.gather_records = []
+
+        def gather(self, value, root=0):
+            self.gather_calls += 1
+            self.gather_records.append((value, root))
+            return [value] if self.rank == root else None
+
     source_sha = "c" * 40
     input_path = (
         REPOSITORY_ROOT
@@ -2644,6 +2678,40 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
     failure = RuntimeError("modal inner solve did not converge")
     invoke_failure_runner = {"enabled": True}
 
+    class FakeRoutePlanSnapshot:
+        def __init__(self, snapshot=None, error=None):
+            self.snapshot = snapshot
+            self.error = error
+
+        def primal_route_plan_snapshot(self):
+            if self.error is not None:
+                raise self.error
+            return self.snapshot
+
+    captured_route_plan_snapshot = {
+        "status": "captured",
+        "enabled": True,
+        "captured": True,
+        "rank": 0,
+        "communicator_size": 8,
+        "N_r": 1,
+        "M_r": 0,
+        "persistent_index_payload_bytes_local": 144,
+        "payload_formula_bytes_local": 144,
+        "payload_formula_matches": True,
+        "payload_formula": "16*N_r + 20*M_r + 16*P",
+    }
+    not_captured_route_plan_snapshot = {
+        **captured_route_plan_snapshot,
+        "status": "not_captured_yet",
+        "captured": False,
+        "N_r": None,
+        "M_r": None,
+        "persistent_index_payload_bytes_local": None,
+        "payload_formula_bytes_local": None,
+        "payload_formula_matches": None,
+    }
+
     def fake_setup_builder(**_kwargs):
         return SimpleNamespace(
             qep_release={"qep_calls": 0, "consumer_qep_required": False},
@@ -2686,11 +2754,45 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             modal_route == "anderson"
         )
         if modal_route.startswith("fixed_h6"):
+            assert kwargs["reuse_primal_route_plan"] is True
             assert kwargs["task041_resource_policy"] == (
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             )
+        else:
+            assert kwargs["reuse_primal_route_plan"] is False
         if not invoke_failure_runner["enabled"]:
             raise AssertionError("unexpected candidate setup invocation")
+
+        release_callback = base_release
+        if kwargs["reuse_primal_route_plan"]:
+            route_sides = {
+                "bottom": FakeRoutePlanSnapshot(captured_route_plan_snapshot),
+                "top": (
+                    FakeRoutePlanSnapshot(
+                        error=RuntimeError("injected local snapshot failure")
+                    )
+                    if modal_route == "fixed_h6_budget_failure"
+                    else FakeRoutePlanSnapshot(not_captured_route_plan_snapshot)
+                ),
+            }
+
+            def release_with_route_plan_snapshot():
+                route_snapshot = worker._task041_gather_primal_route_plan_release_snapshot(
+                    route_sides, kwargs["comm"]
+                )
+                events.append("primal_route_plan_snapshot")
+                release = dict(base_release())
+                release["primal_route_plan_inventory"] = route_snapshot
+                if kwargs["comm"].rank == 0:
+                    kwargs["failure_evidence"]["primal_route_plan_inventory"] = (
+                        route_snapshot
+                    )
+                    kwargs["failure_evidence"][
+                        "primal_route_plan_inventory_ref"
+                    ] = "release_before_recovery.primal_route_plan_inventory"
+                return release
+
+            release_callback = release_with_route_plan_snapshot
         return kwargs["full_formal_runner"](
             setup=args[0],
             layout=args[1],
@@ -2698,7 +2800,7 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             context=fake_context,
             comm=kwargs["comm"],
             marker_callback=kwargs["marker_callback"],
-            release_before_recovery=base_release,
+            release_before_recovery=release_callback,
         )
 
     def record_cleanup(*_args, **_kwargs):
@@ -2741,6 +2843,7 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
     )
     monkeypatch.setattr(worker, "_run_task041_balh_candidate_setup", run_candidate_setup)
 
+    comm = FakeComm()
     with pytest.raises(RuntimeError, match="modal inner solve did not converge") as raised:
         worker.run_task041_consumer(
             input_path=input_path,
@@ -2750,9 +2853,10 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             run_directory=tmp_path / "modal_inner_failure_run",
             source_sha=source_sha,
             candidate=True,
-            comm=FakeComm(),
+            comm=comm,
             use_anderson_modal_inner=(modal_route == "anderson"),
             fixed_h6_modal_gmres_research=modal_route.startswith("fixed_h6"),
+            reuse_primal_route_plan=modal_route.startswith("fixed_h6"),
             complex_qr_research=(modal_route == "anderson"),
             capture_modal_solve_trace=(modal_route == "anderson"),
             task041_resource_policy=(
@@ -2771,12 +2875,14 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         ]
         if modal_route == "anderson"
         else [
+            "primal_route_plan_snapshot",
             "context_release",
             "formal_failure",
             "consumer_cleanup",
             "consumer_summary",
         ]
     )
+    assert comm.gather_calls == (0 if modal_route == "anderson" else 1)
     assert modal_s_evaluations == last_solve.get(
         "total_matmult_calls", last_solve.get("s_evaluation_count")
     )
@@ -2830,6 +2936,35 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         assert summary["failure_evidence"]["side_rhs_audits"][
             "modal_inner_solver"
         ] == evidence
+        route_inventory = release_records[0]["primal_route_plan_inventory"]
+        assert route_inventory["status"] == "partial"
+        assert route_inventory["gather_count"] == 1
+        assert route_inventory["rank_record_count"] == 1
+        assert set(route_inventory["rank_records"][0]["sides"]) == {
+            "bottom",
+            "top",
+        }
+        assert route_inventory["rank_records"][0]["sides"][
+            "bottom"
+        ]["status"] == "captured"
+        assert comm.gather_records[0][1] == 0
+        assert summary["failure_evidence"]["side_rhs_audits"][
+            "primal_route_plan_inventory"
+        ] == route_inventory
+        assert summary["failure_evidence"]["side_rhs_audits"][
+            "primal_route_plan_inventory_ref"
+        ] == "release_before_recovery.primal_route_plan_inventory"
+        if modal_route == "fixed_h6_budget_failure":
+            assert route_inventory["rank_records"][0]["sides"][
+                "top"
+            ]["status"] == "snapshot_error"
+            assert route_inventory["rank_records"][0]["sides"][
+                "top"
+            ]["error"]["type"] == "RuntimeError"
+        else:
+            assert route_inventory["rank_records"][0]["sides"][
+                "top"
+            ]["status"] == "not_captured_yet"
         if modal_route == "fixed_h6_budget_failure":
             assert evidence["last_solve"]["status"] == "budget_exhausted"
             assert evidence["last_solve"]["ksp_reason"] == 0
@@ -9688,3 +9823,132 @@ def test_task041_same_g_modal_pair_mpi2_collectives_finish_after_protocol_errors
         raise AssertionError(
             f"rank-zero g rejection did not converge on both ranks: {reference_errors}"
         )
+
+
+def test_task041_primal_route_plan_release_snapshot_mpi2_gathers_rank_local_errors():
+    from benchmarks import task041_exact_side_workflow as worker
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("route-plan release snapshot communication check requires two ranks")
+    rank = int(comm.rank)
+    local_errors = []
+
+    class CountingGatherComm:
+        def __init__(self):
+            self.rank, self.size = rank, int(comm.size)
+            self.gather_calls = 0
+            self.roots = []
+
+        def gather(self, value, root):
+            self.gather_calls += 1
+            self.roots.append(root)
+            return comm.gather(value, root=root)
+
+    class Snapshot:
+        def __init__(self, values=None, error=None):
+            self.values = values
+            self.error = error
+
+        def primal_route_plan_snapshot(self):
+            if self.error is not None:
+                raise self.error
+            return dict(self.values)
+
+    def route_values(snapshot_rank, side, phase, uncaptured=False):
+        identity = 100 * snapshot_rank + (10 if side == "bottom" else 20) + phase
+        return {
+            "rank": snapshot_rank,
+            "communicator_size": 2,
+            "status": "not_captured_yet" if uncaptured else "captured",
+            "enabled": True,
+            "captured": not uncaptured,
+            "N_r": None if uncaptured else 1000 + identity,
+            "M_r": None if uncaptured else 2000 + identity,
+            "persistent_index_payload_bytes_local": None if uncaptured else 3000 + identity,
+        }
+
+    def rank_record(snapshot_rank, phase, *, fail_bottom=False, uncaptured_top=False):
+        sides = {}
+        for side in ("bottom", "top"):
+            if fail_bottom and snapshot_rank == 1 and side == "bottom":
+                sides[side] = {
+                    "side": side,
+                    "rank": 1,
+                    "status": "snapshot_error",
+                    "captured": None,
+                    "error": {
+                        "type": "RuntimeError",
+                        "message": "rank 1 bottom snapshot failed",
+                    },
+                }
+            else:
+                uncaptured = uncaptured_top and snapshot_rank == 1 and side == "top"
+                sides[side] = {
+                    "side": side,
+                    **route_values(snapshot_rank, side, phase, uncaptured),
+                }
+        return {"rank": snapshot_rank, "sides": sides}
+
+    def verify_result(result, proxy, status, phase, *, fail_bottom=False, uncaptured_top=False):
+        if proxy.gather_calls != 1 or proxy.roots != [0]:
+            local_errors.append(f"{phase}: expected exactly one gather to root 0")
+        expected = None
+        if rank == 0:
+            expected = {
+                "schema": "task041.primal_route_plan_release_inventory.v1",
+                "status": status,
+                "mpi_size": 2,
+                "gather_count": 1,
+                "rank_record_count": 2,
+                "rank_records": [
+                    rank_record(r, phase, fail_bottom=fail_bottom, uncaptured_top=uncaptured_top)
+                    for r in range(2)
+                ],
+            }
+        if result != expected:
+            local_errors.append(f"{phase}: gathered result differs from expected rank snapshots")
+
+    def finish_collective(phase):
+        reports = comm.allgather(
+            {"rank": rank, "phase": phase, "complete": True, "errors": list(local_errors)}
+        )
+        if [item.get("rank") for item in reports] != [0, 1] or any(
+            item.get("phase") != phase or not item.get("complete") for item in reports
+        ):
+            local_errors.append(f"{phase}: completion allgather did not include both ranks")
+        local_errors.extend(
+            f"{phase} rank {item.get('rank')}: {message}"
+            for item in reports
+            for message in item.get("errors", [])
+        )
+
+    proxy_a = CountingGatherComm()
+    result_a = worker._task041_gather_primal_route_plan_release_snapshot(
+        {
+            side: Snapshot(
+                route_values(rank, side, 0, uncaptured=(rank == 1 and side == "top"))
+            )
+            for side in ("bottom", "top")
+        },
+        proxy_a,
+    )
+    verify_result(result_a, proxy_a, "measured", 0, uncaptured_top=True)
+    finish_collective("A")
+
+    proxy_b = CountingGatherComm()
+    result_b = worker._task041_gather_primal_route_plan_release_snapshot(
+        {
+            side: Snapshot(
+                route_values(rank, side, 1),
+                error=RuntimeError("rank 1 bottom snapshot failed")
+                if rank == 1 and side == "bottom"
+                else None,
+            )
+            for side in ("bottom", "top")
+        },
+        proxy_b,
+    )
+    verify_result(result_b, proxy_b, "partial", 1, fail_bottom=True)
+    finish_collective("B")
+    assert not local_errors, "\n".join(local_errors)
