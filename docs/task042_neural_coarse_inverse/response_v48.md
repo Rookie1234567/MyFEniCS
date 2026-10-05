@@ -18,3 +18,7 @@
 两组32目标trace最多107.826GB，即使全省也仅2TB峰5.39%；完整引擎C、r、bank实际份额和目标解码成本仍unknown。本有限NN更大更慢，关闭本冻结codec；唯一下一建议是代表性匹配引擎证明另一20%可核算学习空间后集中立新合同，不微调本路线。没有授新前向解或目标资格。
 
 [独立checker](outcomes/records/lossless_checker_v48.json) · [模型](outcomes/records/model_training_v48.json) · [必要条件](outcomes/records/conditional_cost_bounds_v48.json) · [raw/source/数组索引](outcomes/records/delivery_index_v48.json) · [测试](outcomes/records/tests_v48.json)。旧task/review/response/raw和closed保持。GitHub视觉NOT_VERIFIED，local tests不是CI。结束closed/清场/释放锁、仅push本分支，实时报完整HEAD/remote及clean/upstream0/0后，队列execution-review-handoff-20261005-v48一次交回并停止；无merge。
+
+最终结算：38次监督、249样本，整树采样峰365150208B，ownswap/GPU0，最大实际采样间隔1.02457537199s；新已知有载下界218.747402798850s，含180s保守尾部扣费的账单395.945545315975s。P2/P3/P4监督合计23.965740360/69.565212163/6.498780314s，probe39.355026203s；最终ledger closed、active null、后代清场/锁释放。历史加本轮已知下界88875.500085371970s，未知冷/人工/Git/IO不补造。归档481原始版本（含闭合后纯文档验收及费用版本），所有旧版本保留。
+
+180s尾部保守扣费内已实测metadata及末次纯文档测试2.801857483s，已计入上述已知下界；其余尾部费用unknown，不声称180s全部实测。

@@ -1,0 +1,31 @@
+{
+  "window": {
+    "start_utc": "2026-10-05T00:15:02.759409342+00:00",
+    "start_monotonic": 1084297.62,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "review_commit": "e73baa45f59c0fcfc12ee1c00614c6933568f27e",
+    "first_clock_resolution": "shell uptime centiseconds; UTC nanoseconds",
+    "observed_utc": "2026-10-05T00:45:24.322260+00:00",
+    "observed_monotonic": 1086119.183126963,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 1821.5631269628648,
+    "heavy_remaining_seconds": 80978.43687303714,
+    "total_remaining_seconds": 84578.43687303714
+  },
+  "ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/ledger.json",
+    "sha256": "460ff65552841dd97d07b3794becce514675549041069cacbdc194ca5e6c65da",
+    "closed": true,
+    "active": null
+  },
+  "actors": [],
+  "own_lock": "acquired/released",
+  "counts": {
+    "actions": 0,
+    "B_actions": 0
+  },
+  "resource_safety": "all own descendants cleared, swap0, no neighbor modified"
+}

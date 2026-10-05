@@ -1,0 +1,170 @@
+{
+  "status": "PASSED_LOCAL",
+  "source": {
+    "source_sha": "b897df39278262d4e92566fe3ee70e729916863b",
+    "implementation_hashes": {
+      "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "src/runners/port_preparation.py": "921525d72d430c3d77e0bcc7ccc5cbb84ee02086cdd9e68ff6a601eb1f155e99",
+      "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+      "benchmarks/subreaper_watchdog.py": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+      "src/solvers/neural_decision_scope.py": "2efd39d1f0bffcd81f226229d0de6795e8748c53863eb147190d0204ff54d5e4",
+      "src/solvers/trace_selection_scope.py": "5aec5f1293d26de8b12b488a8d2676839a9ff9560d403dd749fc71508f7f57d8",
+      "src/solvers/vector_storage_scope.py": "0ed79e787978a48475a63bab58627e180987f3ff833759c77f17b2a98af9030f",
+      "src/solvers/lossless_vector_bank.py": "cb4b3b4f96f9257f6cb8652f31cbe5fe7422b9451bb245604d161ca9124c9c1f",
+      "src/solvers/causal_storage_predictor.py": "19b9ba711daa7f01932cf3a575b81ba41f410ee0d5e55a6ef0c8e9cf70e6e801",
+      "src/solvers/vector_storage_study.py": "c11135d4b58603e37873950deddf977085ace89ebf71ec08609adf2a31a34180",
+      "src/solvers/bound_array_identity.py": "ccdee83709e6ecfa2bb800ae3f4234669e2807e6dcf0b10019a4f0f645c1b5ff",
+      "benchmarks/check_vector_bank.py": "7fc723a63bf01fca8da7739e5382a010e5157f040c2c6823eef7b7aefda7e8b1",
+      "benchmarks/qualify_vector_storage.py": "2a68b99a3f158c1895d59f52d7012c00e37e4811f773cec256fdd5a367e9bc8e",
+      "benchmarks/collect_vector_bank.py": "5efe990594d85c1a79279688b5b8b9ebb7160d81a53030efd7d7ba7e5c3e8866",
+      "benchmarks/check_vector_storage_documents.py": "36df2311416f16c00111289dfcc00a268fb8acbb11af67951af5a14015833cdd",
+      "src/test/test_lossless_vector_bank.py": "ac2f59b6c0d778d41ff5894a1119a5900965c556f88ebe43d269c31288e9ca84",
+      "input/task042_neural_coarse_inverse/vector_storage_v48.json": "b07f9e68fd25044cc730996da072ac8d8234d40db10e1707910c53be926aed44"
+    },
+    "clean": true
+  },
+  "checked": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v45.md",
+      "sha256": "06297f1967f62acb4c6d972b3945a7f10e02a53e9ed68ab140a6dd414502078f",
+      "tables": [
+        {
+          "line": 17,
+          "columns": 2
+        },
+        {
+          "line": 45,
+          "columns": 5
+        },
+        {
+          "line": 83,
+          "columns": 2
+        },
+        {
+          "line": 136,
+          "columns": 2
+        },
+        {
+          "line": 193,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v47.md",
+        "outcomes/trace_subspace_selection_v47.md",
+        "outcomes/records/delivery_index_v47.json",
+        "outcomes/records/run_index_v47.json",
+        "outcomes/records/raw_evidence_index_v47.json",
+        "outcomes/records/array_inventory_v47.json",
+        "outcomes/records/tests_v47.json",
+        "outcomes/records/review_v45_independent_checks.json",
+        "outcomes/records/review_v45_metadata_audit.py.gz",
+        "outcomes/records/review_v45_repository_index.gz",
+        "outcomes/records/review_v45_documentation_checks.json",
+        "outcomes/records/oracle_comparison_v47.json",
+        "outcomes/records/saved_witness_checker_v47.json",
+        "outcomes/records/omission_localization_v47.json",
+        "outcomes/records/capacity_readiness_v47.json",
+        "outcomes/records/array_inventory_v45.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v48.md",
+      "sha256": "99b1f5b8c3385b65f9a0f2baa4bc645b906a4856cc0dc61d4ed52c63a2ce3a32",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "review_report_v45.md",
+        "outcomes/lossless_vector_storage_v48.md",
+        "outcomes/records/resource_costs_final_v48.json",
+        "outcomes/records/run_index_v48.json",
+        "outcomes/records/source_snapshot_correction_v48.json",
+        "outcomes/records/lossless_checker_v48.json",
+        "outcomes/records/model_training_v48.json",
+        "outcomes/records/conditional_cost_bounds_v48.json",
+        "outcomes/records/delivery_index_v48.json",
+        "outcomes/records/tests_v48.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md",
+      "sha256": "6fcda6fcf527135bc306084f86548e124d53b4a696d20ee830fd12197661eeec",
+      "tables": [
+        {
+          "line": 17,
+          "columns": 6
+        },
+        {
+          "line": 30,
+          "columns": 6
+        }
+      ],
+      "links": [
+        "records/candidate_comparison_v48.json",
+        "records/model_training_v48.json",
+        "records/lossless_checker_v48.json",
+        "records/prediction_bit_diagnostics_v48.json",
+        "records/capacity_and_lifecycle_v48.json",
+        "records/resource_costs_final_v48.json",
+        "records/conditional_cost_bounds_v48.json",
+        "records/source_snapshot_correction_v48.json",
+        "records/run_index_v48.json",
+        "records/array_and_bank_inventory_v48.json",
+        "records/raw_evidence_index_v48.json",
+        "records/tests_v48.json",
+        "records/selective_merge_manifest_v48.json"
+      ]
+    }
+  ],
+  "history_suffixes": [
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/development_progress.md",
+    "docs/development_model_registry.md"
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_26_documentation_contract"
+      ],
+      "returncode": 0,
+      "seconds": 0.18656097305938601
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_lossless_vector_bank"
+      ],
+      "returncode": 0,
+      "seconds": 0.3265294779557735
+    },
+    {
+      "command": [
+        "git",
+        "-c",
+        "gc.auto=0",
+        "-c",
+        "maintenance.auto=false",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "seconds": 0.023588513024151325
+    }
+  ],
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN",
+  "new_scientific_array_reads": 0
+}

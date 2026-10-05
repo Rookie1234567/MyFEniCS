@@ -75,3 +75,7 @@ CHECK不只相信status：从上游heldout canonical与公开migration原字节�
 ## 证据与边界
 
 [候选](records/candidate_comparison_v48.json) · [真训练](records/model_training_v48.json) · [独立checker](records/lossless_checker_v48.json) · [位诊断](records/prediction_bit_diagnostics_v48.json) · [容量/寿命](records/capacity_and_lifecycle_v48.json) · [完整成本](records/resource_costs_final_v48.json) · [冷费用必要条件](records/conditional_cost_bounds_v48.json) · [source勘误](records/source_snapshot_correction_v48.json) · [run/source](records/run_index_v48.json) · [数组/bank](records/array_and_bank_inventory_v48.json) · [raw](records/raw_evidence_index_v48.json) · [测试](records/tests_v48.json) · [selective](records/selective_merge_manifest_v48.json)。大数组/模型/码流留ignored artifact，不上production默认。GitHub精确页Cache miss，视觉NOT_VERIFIED；本地合同不冒充CI。
+
+最终结算：38次监督、249样本，整树采样峰365150208B，ownswap/GPU0，最大实际采样间隔1.02457537199s；新已知有载下界218.747402798850s，含180s保守尾部扣费的账单395.945545315975s。P2/P3/P4监督合计23.965740360/69.565212163/6.498780314s，probe39.355026203s；最终ledger closed、active null、后代清场/锁释放。历史加本轮已知下界88875.500085371970s，未知冷/人工/Git/IO不补造。归档481原始版本（含闭合后纯文档验收及费用版本），所有旧版本保留。
+
+180s尾部保守扣费内已实测metadata及末次纯文档测试2.801857483s，已计入上述已知下界；其余尾部费用unknown，不声称180s全部实测。

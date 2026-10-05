@@ -1,5 +1,5 @@
 {
-  "status": "PASSED_LOCAL_FINAL_DOCS_PENDING",
+  "status": "PASSED_LOCAL",
   "focused_receipts": [
     {
       "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_001/tests.json",
@@ -23,5 +23,30 @@
   "real_independent_route_family_checks": 20,
   "CI": "NOT_RUN",
   "final_doc_tests": 15,
-  "final_document_check_pending": true
+  "final_document_check_pending": false,
+  "final_document_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_metadata_docs_001/documentation_checks.json",
+    "sha256": "e38eba3ad94f9fb2908c684e440cb2d072cdd297f77aa7e2aa93f38bf18d6cb9"
+  },
+  "final_focused_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v48/aux_pre_005/tests.json",
+    "sha256": "bec9d9aa3bf958053a1f5bc13bba0daab8c88853e6fc43c13d142f0f6b082465"
+  },
+  "final_15_docs_and_10_codec_tests": true,
+  "final_compile_Ruff": true,
+  "post_final_metadata_15_docs": {
+    "classification": "POST_CLOSED_METADATA_TEST_ONLY",
+    "numerical_scope_reopened": false,
+    "returncode": 0,
+    "elapsed_seconds": 0.18883104994893074,
+    "actual_stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.066s\n\nOK\n",
+    "launch_HEAD": "b897df39278262d4e92566fe3ee70e729916863b",
+    "source_scope": "HEAD + final V48 document hash snapshot, no scientific arrays/FE/model invocation",
+    "tests": 15,
+    "docs": {
+      "docs/task042_neural_coarse_inverse/response_v48.md": "c66bd7cca3533feb80b6ba41b3b5f47e1da99dfc31d03fd7a0b24a916652f1c0",
+      "docs/task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md": "c325037498166d260c9c3fd348e477342fa9e4797f311e4f0c4e27dfccd9dafb"
+    },
+    "charged_within_conservative_180_tail": true
+  }
 }

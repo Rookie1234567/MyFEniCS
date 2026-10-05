@@ -1,0 +1,12 @@
+{
+  "classification": "METADATA_FINAL_SETTLEMENT",
+  "launch_HEAD": "b897df39278262d4e92566fe3ee70e729916863b",
+  "scientific_source_unchanged": true,
+  "old_review_task_response_unchanged": true,
+  "source_dirty_scope": "new V48 docs/compact settlement only",
+  "ledger_closed": true,
+  "upstream_verification": "exact final remote HEAD verified externally after push; pre-push manifest asserts no remote state",
+  "qualification": "FINITE_LOSSLESS_STORAGE_COMPONENT_ONLY",
+  "NN20": false,
+  "actual_settlement_utc": "2026-10-05T00:45:24.365470+00:00"
+}

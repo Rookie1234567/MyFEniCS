@@ -1,0 +1,20 @@
+{
+  "classification": "POST_CLOSED_METADATA_TEST_ONLY",
+  "numerical_scope_reopened": false,
+  "returncode": 0,
+  "elapsed_seconds": 0.18883104994893074,
+  "actual_stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.066s\n\nOK\n",
+  "launch_HEAD": "b897df39278262d4e92566fe3ee70e729916863b",
+  "source_scope": "HEAD + final V48 document hash snapshot, no scientific arrays/FE/model invocation",
+  "tests": 15,
+  "docs": {
+    "docs/task042_neural_coarse_inverse/response_v48.md": "c66bd7cca3533feb80b6ba41b3b5f47e1da99dfc31d03fd7a0b24a916652f1c0",
+    "docs/task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md": "c325037498166d260c9c3fd348e477342fa9e4797f311e4f0c4e27dfccd9dafb"
+  },
+  "charged_within_conservative_180_tail": true,
+  "editorial_final_hashes": {
+    "docs/task042_neural_coarse_inverse/response_v48.md": "cd2bf0b256188bd65fd1e465d0c1eb989714cf18aada78e2ecfe4438f4fd5b97",
+    "docs/task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md": "3ebc5c336f7a09a9d94b81e2855b481c8e6acb280e4653a54e4088cd00451f66"
+  },
+  "after_test_delta": "only add actually measured0.18883105s inside existing tail reserve and update raw-count; test inputs/numerical core/tables/links unchanged"
+}
