@@ -1,0 +1,674 @@
+{
+  "schema": "task40extra.review_v9_w1_closeout.v1",
+  "review": "V9",
+  "status": "REFERENCE_NOT_QUALIFIED",
+  "attribution_status": "TIME_STOP",
+  "source_head": "50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8",
+  "source_worktree_attribution_start": "clean",
+  "scope": "V9确实进行了新高精度保存数组归因；触发TIME_STOP后，收口不新增归因或FE计算。",
+  "decision": {
+    "meaning": "参考门在预算停止前未能完整资格化；这不是Maxwell PDE求解失败。",
+    "fe_worker_started_in_v9": false,
+    "p6_started": false,
+    "production_runner_rerun": false,
+    "official_r_t_a_generated": false,
+    "historical_p4_local_passes_reclassified": false
+  },
+  "frozen_window": {
+    "window_seconds": 14400,
+    "t0_utc": "2026-10-04T23:31:43Z",
+    "t0_monotonic_ns": null,
+    "t0_boottime_ns": null,
+    "t0_boot_id": null,
+    "missing_t0_clocks": "T0的UTC已知；同一瞬间的monotonic、boottime与boot ID未记录。",
+    "work_cutoff_utc": "2026-10-05T03:21:43Z",
+    "deadline_utc": "2026-10-05T03:31:43Z",
+    "window_refreshed": false,
+    "evidence": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w9_window.json",
+      "sha256": "905f89a3f5d0f2bbda0f7693a69d12849d0f374a7099a996633572856ef33fca"
+    }
+  },
+  "stage_cost": {
+    "limit_seconds": 3600.0,
+    "known_conservative_cost_lower_bound_seconds": 3617.121945417,
+    "minimum_excess_over_limit_seconds": 17.121945417,
+    "full_accumulated_charge": "UNKNOWN_NOT_SETTLED",
+    "measurement_semantics": "该下界是clock_end到较晚三钟样本这一已知区间的max(UTC, monotonic, boottime)，足以触发TIME_STOP；不是从T0逐区间累计的完整CONSERVATIVE_REALTIME收费，也不等于完整总费用。",
+    "known_endpoint_deltas_seconds": {
+      "utc_realtime": 3617.121945417,
+      "monotonic": 3296.706236768,
+      "boottime": 3296.706236127
+    },
+    "segment_start": {
+      "utc_ns": 1791158134413983126,
+      "monotonic": 750395.992885828,
+      "boottime": 750395.992886761
+    },
+    "segment_end": {
+      "utc_ns": 1791161751535928543,
+      "monotonic": 753692.699122596,
+      "boottime": 753692.699122888
+    },
+    "completion_clock_sample": "UNKNOWN; V2 artifact mtime 2026-10-05T00:54:38.944557Z is realtime metadata, not a monotonic/boottime completion sample.",
+    "preserved_superseded_record": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/offline_attribution_scope_final_v1.json",
+      "prior_mono_boot_only_remaining_seconds": 303.293763232,
+      "treatment": "原文件不改写；其漏计UTC的remaining仅对停止判定被新三钟端点审计取代。"
+    },
+    "historical_debits_preserved": {
+      "older_w0_worker_subtotal_seconds": 200.87894401792437,
+      "v6_settled_seconds": 5428.582333962078,
+      "v8_w1_known_supervised_phase_sum_seconds": 40.69645031413529,
+      "v8_w1_total_charge": "UNKNOWN_NOT_SETTLED"
+    },
+    "no_parent_child_double_count": true,
+    "cleanup_duration": "UNKNOWN_NOT_MEASURED"
+  },
+  "reference_diagnostics": {
+    "old_w1_raw": {
+      "sha256": "a475bba1618abd74981622a66e127b2fd88b43f52a2339f5087115ed9b1a82f8",
+      "members": 104,
+      "bytes": 38026664,
+      "rewritten": false
+    },
+    "mode_count": 32060,
+    "unindexed_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "indexed_key_sha256": "08d7464c448a75bd5f41986f726ae0f97484cc050891dcfaaa24efc5f2900899",
+    "ordered_physics_sha256": "44c7bdc584b8e85c21b7249cd2207fe035a5b13e6a1c67d3d61a8418c9a6c3b8",
+    "identity_scope": "本地原始清单身份桥；dot完整raw不在本地，本轮没有跨来源逐值比较。",
+    "q30_independent_saved_projection": {
+      "max_relative_recovered_error": 5.705909332719913,
+      "limit": 1E-10,
+      "worst_key": [
+        "top",
+        -67,
+        -34,
+        "s"
+      ],
+      "status": "DIAGNOSTIC_EXCEEDS_THRESHOLD_REFERENCE_OVERALL_NOT_QUALIFIED",
+      "classification_note": "诊断超限，参考整体尚未资格化"
+    },
+    "q30_q60_historical_negative": {
+      "max_relative_difference": 5.705909332721303,
+      "worst_key": [
+        "top",
+        -67,
+        -34,
+        "s"
+      ],
+      "status": "PRESERVED_UNCHANGED"
+    },
+    "q60_independent_saved_projection_diagnostic": {
+      "max_relative_recovered_error": 4.033933451217359E-12,
+      "max_component_delta_over_original_H": 1.777813639563366E-12,
+      "limit": 1E-10,
+      "worst_key": [
+        "top",
+        -73,
+        35,
+        "s"
+      ],
+      "status": "LIMITED_DIAGNOSTIC_PASS_NOT_FULL_V9_QUALIFICATION",
+      "scope": "沿用原H和q60分母，对既存代表面保存投影的逐模式标量诊断；不能单独证明完整作用门。"
+    },
+    "fixed_precision_witness": {
+      "key": [
+        "top",
+        -67,
+        -34,
+        "s"
+      ],
+      "precision_pair_dps": [
+        80,
+        100
+      ],
+      "relative_difference": "3.20594231241e-81",
+      "normalization_scale": "max(1, norm(ref100))",
+      "status": "PASS_FOR_THIS_WITNESS_ONLY",
+      "formal_saved_q60_apply_scale_gate": false
+    },
+    "v2_gates_not_accepted": [
+      {
+        "gate": "actual_zero_y_frequency_witness",
+        "status": "MISSING",
+        "detail": "旧runner每侧取首mode，分别为[top,-142,-5,s]与[bottom,-142,-5,s]；V2三个直接见证的n分别为-34、-35、35。没有实际n=0 key见证。"
+      },
+      {
+        "gate": "full_action_error_denominator",
+        "status": "INVALID_FOR_FORMAL_GATE",
+        "detail": "V2的relative_to_reference分母是新参考作用范数；合同要求使用冻结的saved q60_apply范数。"
+      },
+      {
+        "gate": "complex128_global_error_bound",
+        "status": "INCOMPLETE",
+        "detail": "gamma_256只覆盖所列收缩项，未界定系数构造/求解、相位、模态投影及H除法、scatter累加；离网格抽样不是全局误差界。"
+      },
+      {
+        "gate": "exact_completion_clocks",
+        "status": "MISSING",
+        "detail": "raw/report/log完成时没有同时保存monotonic、boottime与UTC样本。"
+      }
+    ],
+    "v2_report_gate_complete_field": "历史JSON原样保留；不接受为V9正式完成门。",
+    "v2_partial_diagnostics": {
+      "full_action_relative_to_reference_reported": 9.063390130105788E-15,
+      "full_action_status": "NOT_FORMAL; denominator used norm(new reference action), not norm(saved q60_apply)",
+      "mixed_axis_max_recovered_relative": {
+        "reference_x_q60_y": 4.0304722351205935E-12,
+        "q60_x_reference_y": 5.2629207067387376E-15
+      },
+      "three_actual_key_witnesses": [
+        {
+          "key": [
+            "top",
+            -67,
+            -34,
+            "s"
+          ],
+          "mode_index": 8576,
+          "direct100_vs_ref80_relative": 5.399430567775377E-15
+        },
+        {
+          "key": [
+            "top",
+            -85,
+            -35,
+            "s"
+          ],
+          "mode_index": 6018,
+          "direct100_vs_ref80_relative": 1.089658522225014E-15
+        },
+        {
+          "key": [
+            "top",
+            -85,
+            35,
+            "s"
+          ],
+          "mode_index": 6158,
+          "direct100_vs_ref80_relative": 1.4315906573677344E-15
+        }
+      ],
+      "gamma_256_reported_max_recovered_relative_bound": 3.2109590505539284E-13,
+      "gamma_256_scope": "只估计所列收缩项；不是完整complex128误差界。",
+      "all_values_are_limited_diagnostics": true
+    },
+    "v2_raw_artifact": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_raw_v2.npz",
+      "size_bytes": 2084777,
+      "sha256": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289"
+    },
+    "v2_report_snapshot": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_snapshot.json",
+      "sha256": "659f83559e47915c97126682d7f00c1d62f3bed7067f41f0ff923f2e6000cf22",
+      "byte_identical_to_ignored_source": true
+    },
+    "v2_provenance_snapshot": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_provenance_snapshot.json",
+      "sha256": "8eac046b8c62cde9aaa7259e703a0be45e631c18befac01be88355e358c776ca",
+      "byte_identical_to_ignored_source": true
+    }
+  },
+  "clock_and_resource_evidence": {
+    "static_cap_conflict_attempt": {
+      "service_runtime_seconds": 0.046,
+      "failure": "physical-pressure policy拒绝冻结tree_cap_bytes",
+      "watchdog_started": false,
+      "worker_started": false,
+      "fe_started": false,
+      "evidence_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/clock_probe_v9/clock_probe_attempt1_startup_failure.json",
+      "evidence_sha256": "69def930bd38f31d64c1557c0c50838584a9b4f9020a47d9db2cddd55ff05f77"
+    },
+    "observe_only_clock_attempt": {
+      "policy": "observe_only",
+      "time_gate_enforced": false,
+      "monotonic_elapsed_seconds": 61.16182155,
+      "conservative_realtime_elapsed_seconds": 67.385541298,
+      "utc_positive_excess_seconds": 6.223630655,
+      "fe_started": false,
+      "evidence_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/clock_probe_v9/clock_parent_result.json",
+      "evidence_sha256": "abbb54cdfe1914ce0e747d1cc5589a95f5592b6a2de7a2a783523408961ee82b"
+    },
+    "enforced_clock_attempt": {
+      "policy": "enforce",
+      "monotonic_elapsed_seconds": 61.390156223,
+      "conservative_realtime_elapsed_seconds": 67.689522192,
+      "utc_positive_excess_seconds": 6.299251148,
+      "time_gate_limit_seconds": 90.0,
+      "process_tree_rss_peak_bytes": 33574912,
+      "process_tree_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "resource_scope": "仅clock service进程树；不能代表归因阶段、整窗峰值或宿主全局资源。",
+      "fe_started": false,
+      "descendants_cleared": true,
+      "evidence_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/clock_probe_v9_enforced/clock_parent_result.json",
+      "evidence_sha256": "0d7d0ed697422d4888b673f8b87012b96311e51cafeacb3cacef1c324eb1c111"
+    },
+    "attribution_process_tree_rss_peak_bytes": null,
+    "attribution_process_tree_swap_peak_bytes": null,
+    "full_window_process_tree_peak_bytes": null,
+    "unmeasured_resource_values": "UNKNOWN_NOT_SAMPLED; clock-phase RSS/swap are not reused as attribution or full-window measurements."
+  },
+  "incremental_events": [
+    {
+      "event": "准备命令ENOENT/参数错误的修正",
+      "classification": "PREPARATION_ERROR_AND_CORRECTION",
+      "elapsed_seconds": null,
+      "worker_or_fe_started": false,
+      "accounting": "UNKNOWN_NOT_MEASURED; event存在，不记0。"
+    },
+    {
+      "event": "qualified activation参数与分析脚本import path修正",
+      "classification": "PREPARATION_ERROR_AND_CORRECTION",
+      "elapsed_seconds": null,
+      "worker_or_fe_started": false,
+      "accounting": "各次准备区间没有独立三钟样本；完整归因耗时仍UNKNOWN。"
+    },
+    {
+      "event": "首次保存数组checker输出目录不存在",
+      "classification": "READ_ONLY_CHECKER_DID_NOT_PERSIST",
+      "elapsed_seconds": 1.223,
+      "worker_or_fe_started": false,
+      "accounting": "记录的是checker命令elapsed，不与监督service或端点区间相加。",
+      "evidence_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/saved_recheck_v1/attempt1_output_dir_missing.json",
+      "evidence_sha256": "926c592abb5121010134a3598c13be5e48a62aa08bd0b7c5c07f6c258579c283"
+    },
+    {
+      "event": "分析脚本从ignored目录首次缺少仓库import path，修正后读取原保存数组",
+      "classification": "ANALYSIS_ENTRYPOINT_ERROR_AND_REPAIR",
+      "failed_command_wall_seconds": 0.389,
+      "corrected_command_wall_seconds": 2.433,
+      "worker_or_fe_started": false,
+      "accounting": "是命令墙钟回执，不是完整stage charge；没有T0三钟或相邻累计样本。"
+    },
+    {
+      "event": "mpmath 1.3.0安装到既有资格化prefix",
+      "classification": "RESEARCH_DEPENDENCY_INSTALL_NO_DEPS",
+      "elapsed_seconds": null,
+      "worker_or_fe_started": false,
+      "details": "同一prefix从本地wheel离线安装；FE/MPI/PETSc/SLEPc/DOLFINx ABI没有换栈。",
+      "wheel_sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"
+    },
+    {
+      "event": "负实轴球Bessel分支修复及解析矩helper定向测试",
+      "classification": "RESEARCH_ONLY_HELPER_REPAIR_AND_TEST",
+      "repair_elapsed_seconds": null,
+      "test_elapsed_seconds": 4.29,
+      "test_result": "6 passed",
+      "worker_or_fe_started": false,
+      "accounting": "修复区间无独立样本；测试耗时只报告一次，不从阶段端点下界再次扣加。"
+    },
+    {
+      "event": "V2收缩einsum维度修复",
+      "classification": "OFFLINE_ANALYZER_REPAIR",
+      "repair_elapsed_seconds": null,
+      "worker_or_fe_started": false,
+      "accounting": "没有独立起止时钟；原脚本的最终字节快照与hash另列。"
+    },
+    {
+      "event": "UTC漏计发现与停止判定校正",
+      "classification": "READ_ONLY_ACCOUNTING_CORRECTION",
+      "elapsed_seconds": null,
+      "worker_or_fe_started": false,
+      "accounting": "旧mono/boot-only scope文件原样保留；按clock_end至最新三钟样本算出的max只用作已知下界与stop信号。"
+    },
+    {
+      "event": "V2分析结束、readback与cleanup",
+      "classification": "CLOSEOUT_INTERVALS_UNRESOLVED",
+      "elapsed_seconds": null,
+      "worker_or_fe_started": false,
+      "accounting": "readback/cleanup无独立三钟段；artifact mtime不代替完成时钟；不填0。"
+    },
+    {
+      "event": "收尾metadata预检误用qualification marker",
+      "classification": "PREPARATION_ASSERTION_ERROR_AFTER_STOP",
+      "elapsed_seconds": null,
+      "observed_exec_wall_seconds": 4.7,
+      "raw_touched": false,
+      "accounting": "单调收费未知，不并入归因下界。"
+    },
+    {
+      "event": "只读NPY头目录检查使用不存在的NumPy私有接口",
+      "classification": "METADATA_CHECK_IMPLEMENTATION_ERROR_AFTER_STOP",
+      "elapsed_seconds": null,
+      "observed_exec_wall_seconds": 3.4,
+      "raw_modified": false,
+      "accounting": "该尝试完成fsync/hash/CRC后退出；不包含积分、残差或数组值读取。"
+    },
+    {
+      "event": "V2 raw元数据持久性与ZIP/NPY目录核验",
+      "classification": "CLOSEOUT_METADATA_ONLY",
+      "elapsed_seconds": 0.018965019,
+      "worker_or_fe_started": false,
+      "accounting": "三钟量自收口子阶段独立列示；不回填3600秒归因费用。"
+    }
+  ],
+  "test_summary": {
+    "source_head": "50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8",
+    "command": "source scripts/task40_fresh_c1/activate_local_wsl_complex.sh <qualified-prefix> <abi-receipt> <jit-cache> && python -m pytest -q src/test/test_task40_w1_moment_reference.py",
+    "result": "6 passed in 4.29 s",
+    "scope": "独立矩helper定向测试；不是本次closeout新跑的测试，不含FE/PDE。",
+    "full_repository_pytest": "NOT_RUN",
+    "mpi4": "NOT_RUN",
+    "ruff": "NOT_RUN",
+    "ci": "NOT_CLAIMED"
+  },
+  "research_evidence_snapshots": [
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_saved_array_attribution_snapshot.py",
+      "sha256": "c89106b1a18001d8620e9801fe682e4b01d27c3161d18e9628145bd065892227",
+      "source_ignored_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/analyze_saved_w1_moment_reference.py",
+      "byte_identical_to_source": true,
+      "executed_during_closeout": false
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_snapshot.py",
+      "sha256": "09658b952814d53be534581482227d75bd219fb3e349e051ddcfc8c291390ae3",
+      "source_ignored_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/analyze_w1_reference_completion_v2.py",
+      "byte_identical_to_source": true,
+      "executed_during_closeout": false
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_local_identity_bridge_snapshot.json",
+      "sha256": "14cf1f19686178835af0a1dd65750f0ec3cb581120fdfe7d3ec7d4227caabaa5",
+      "source_ignored_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/local_identity_bridge_v1.json",
+      "byte_identical_to_source": true,
+      "executed_during_closeout": false
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_snapshot.json",
+      "sha256": "659f83559e47915c97126682d7f00c1d62f3bed7067f41f0ff923f2e6000cf22",
+      "source_ignored_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_v2.json",
+      "byte_identical_to_source": true,
+      "executed_during_closeout": false
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_provenance_snapshot.json",
+      "sha256": "8eac046b8c62cde9aaa7259e703a0be45e631c18befac01be88355e358c776ca",
+      "source_ignored_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_v2_provenance.json",
+      "byte_identical_to_source": true,
+      "executed_during_closeout": false
+    }
+  ],
+  "manifest_dependency_groups": {
+    "production_numerical_core": "无production default变更；本轮未改变Maxwell方程、FE离散、runner或求解器资格。",
+    "research_only": "src/solvers/task40_w1_moment_reference.py及其定向测试；分析快照只用于审计，未升级为production路径。",
+    "compact_evidence_docs": "本response、summary/test_summary增量、run_index和本closeout record；附两个原样分析脚本及本地identity bridge字节快照。",
+    "fresh_pde_evidence": "NONE; p6未运行，未生成官方R/T/A。"
+  },
+  "evidence_artifacts": [
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w9_window.json",
+      "sha256": "905f89a3f5d0f2bbda0f7693a69d12849d0f374a7099a996633572856ef33fca",
+      "role": "固定T0/deadline；T0单调/boot元数据unknown"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/abi_after_mpmath_install.json",
+      "sha256": "3c0a972c28b3062b2e675daeb24efdaba52e0190d5d8763c68ba5007ed351a9a",
+      "role": "qualified prefix import-only ABI receipt；FE/JIT未运行"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/mpmath_install_record_1_3_0.json",
+      "sha256": "6ac99e22b9ec7bdd676866050df7bbef8b9fbe1b886d17a40a6e33ef95500ec8",
+      "role": "同prefix离线wheel安装记录"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/clock_probe_v9/clock_probe_attempt1_startup_failure.json",
+      "sha256": "69def930bd38f31d64c1557c0c50838584a9b4f9020a47d9db2cddd55ff05f77",
+      "role": "watchdog static cap conflict；worker未启动"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/clock_probe_v9/clock_parent_result.json",
+      "sha256": "abbb54cdfe1914ce0e747d1cc5589a95f5592b6a2de7a2a783523408961ee82b",
+      "role": "observe-only clock probe"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/clock_probe_v9_enforced/clock_parent_result.json",
+      "sha256": "0d7d0ed697422d4888b673f8b87012b96311e51cafeacb3cacef1c324eb1c111",
+      "role": "enforced clock-only probe and phase-scoped RSS/swap"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/saved_recheck_v1/attempt1_output_dir_missing.json",
+      "sha256": "926c592abb5121010134a3598c13be5e48a62aa08bd0b7c5c07f6c258579c283",
+      "role": "checker computed but persistence failed; no FE"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/offline_attribution_scope_final_v1.json",
+      "sha256": "80d69dc33bae18ec75cf3a6cc36ed89fd0edd5d2b76897a0ac2b7488394ed015",
+      "role": "preserved mono/boot-only scope snapshot; UTC omission is corrected only for stop decision"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/offline_attribution_stop_v1.json",
+      "sha256": "18df36f01d981139d374229525a75198d1d0f88e289d4d7c755e63532e3f5e55",
+      "role": "read-only stop audit and unclosed gates"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_mpmath_saved_attribution_v1.json",
+      "sha256": "ffc0a614eac0db7aae226adc8a6db611eafd5eb98472d0da993b16474ebf872f",
+      "role": "q30 negative and limited q60 saved-projection diagnostics"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_mpmath_saved_attribution_provenance_v1.json",
+      "sha256": "18fff297e5073e2a5dd6d7da220bdb11e39fae6bf1b57760ec949eb3992b5682",
+      "role": "source/input/ABI identity binding for saved-array analysis"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_raw_v2.npz",
+      "sha256": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289",
+      "role": "V2 diagnostic raw; preserved, not accepted as formal gate"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_v2.json",
+      "sha256": "659f83559e47915c97126682d7f00c1d62f3bed7067f41f0ff923f2e6000cf22",
+      "role": "V2 report; gate_complete field not accepted for V9"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_v2_provenance.json",
+      "sha256": "8eac046b8c62cde9aaa7259e703a0be45e631c18befac01be88355e358c776ca",
+      "role": "V2 source/input/ABI binding; says q60 not fully qualified"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz",
+      "sha256": "a475bba1618abd74981622a66e127b2fd88b43f52a2339f5087115ed9b1a82f8",
+      "role": "original 104-member W1 negative raw; unchanged"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+      "sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "role": "32,060-mode local manifest identity"
+    },
+    {
+      "path": "src/solvers/task40_w1_moment_reference.py",
+      "sha256": "c4b7291b20c878c3b7af92875739058e8074cb07cce9c1fb13c9fbb705dad20e",
+      "role": "research-only analytic moment helper source"
+    },
+    {
+      "path": "src/test/test_task40_w1_moment_reference.py",
+      "sha256": "f4acf23f4bea76da101a63a2c2b34926b803d92058b4385f07ba0837b99d2be2",
+      "role": "targeted helper test source"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_local_identity_bridge_snapshot.json",
+      "sha256": "14cf1f19686178835af0a1dd65750f0ec3cb581120fdfe7d3ec7d4227caabaa5",
+      "role": "byte-identical local identity bridge snapshot"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/offline_attribution_scope_corrected_v1.json",
+      "sha256": "00fd36cea01c3dc6d40ce8ff69775fcb53872837d567564c4f423168fef759da",
+      "role": "preserved intermediate scope correction record"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/offline_attribution_window_preserved_before_scope_correction_v1.json",
+      "sha256": "c4989226f722da063b2891e706e70f8d028b2a461ba984847b6465d9889965aa",
+      "role": "immutable pre-correction window snapshot"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/mpmath_wheel_1_3_0/mpmath-1.3.0-py3-none-any.whl",
+      "sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c",
+      "role": "offline research dependency wheel"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_snapshot.json",
+      "sha256": "659f83559e47915c97126682d7f00c1d62f3bed7067f41f0ff923f2e6000cf22",
+      "role": "byte-identical V2 report snapshot"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_reference_completion_v2_provenance_snapshot.json",
+      "sha256": "8eac046b8c62cde9aaa7259e703a0be45e631c18befac01be88355e358c776ca",
+      "role": "byte-identical V2 provenance snapshot"
+    }
+  ],
+  "lineage": {
+    "v9_source_entry_base": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+    "reviewed_mainline_baseline": "8c1a0ce23bd53cf92fffbed7a2daccd58cbf49a5",
+    "old_w1_raw_producer": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "analysis_consumer_source": "50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8",
+    "dot_readonly_baseline": "7580f5a48407a5c984aaf9311dc3733060d79f08",
+    "dot_modified_or_executed_by_this_closeout": false
+  },
+  "target_scale_and_other_work": {
+    "original_size_model": "完整三维50×25×140 nm，λ0=0.7 nm，保留缺口能力",
+    "whole_machine_memory_limit_bytes_decimal": 2000000000000,
+    "swap_allowed": false,
+    "end_to_end_limit_seconds": 172800,
+    "qualification_status": "NO_GO",
+    "new_scale_admission_for_AUTO_or_full_q_backend": "NONE",
+    "dot_status": "仅引用只读基准；未执行、未修改、未承接dot资格。"
+  },
+  "metadata_persistence_check": {
+    "status": "PASS_METADATA_DURABILITY_AND_LAYOUT_ONLY",
+    "occurred_after_attribution_time_stop": true,
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_raw_v2.npz",
+    "size_bytes": 2084777,
+    "method": "qualified ABI下只读open+fsync、重新打开分块SHA256、ZIP成员CRC、逐成员NPY头部角色/shape/dtype目录；没有载入数组值。",
+    "sha256_after_fsync_and_reopen": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289",
+    "zip_member_count": 10,
+    "zip_crc_test_bad_member": null,
+    "npy_header_directory": [
+      {
+        "member": "q60_apply_saved.npy",
+        "shape": [
+          156672
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "q60_components_saved.npy",
+        "shape": [
+          32060,
+          2
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "q60_x_reference_y.npy",
+        "shape": [
+          32060,
+          2
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "reference_action_80.npy",
+        "shape": [
+          156672
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "reference_components_80.npy",
+        "shape": [
+          32060,
+          2
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "reference_x_q60_y.npy",
+        "shape": [
+          32060,
+          2
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "witness_direct_100.npy",
+        "shape": [
+          3,
+          2
+        ],
+        "dtype": "<c16"
+      },
+      {
+        "member": "witness_keys.npy",
+        "shape": [
+          3,
+          4
+        ],
+        "dtype": "<U16"
+      },
+      {
+        "member": "witness_mode_index.npy",
+        "shape": [
+          3
+        ],
+        "dtype": "<i4"
+      },
+      {
+        "member": "witness_reference_80.npy",
+        "shape": [
+          3,
+          2
+        ],
+        "dtype": "<c16"
+      }
+    ],
+    "array_values_loaded": false,
+    "numerical_checker_run": false,
+    "clock_start": {
+      "monotonic": 755580.367508511,
+      "boottime": 755580.367508818,
+      "utc_ns": 1791163821506995913,
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+    },
+    "clock_end": {
+      "monotonic": 755580.38647353,
+      "boottime": 755580.386473907,
+      "utc_ns": 1791163821525960810,
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+    },
+    "elapsed_seconds": {
+      "monotonic": 0.018965019,
+      "boottime": 0.018965089,
+      "utc": 0.018964897
+    },
+    "accounting": "收口metadata成本；不是新增3600秒归因工作，仍属于冻结14400秒总窗。T0同刻monotonic/boottime缺失，因此完整总charge继续unknown。"
+  },
+  "post_stop_closeout_costs": {
+    "failed_metadata_preflight_assertion": {
+      "event": "收尾脚本断言了错误的WSL marker；Task40既有activation实际使用_MYFENICS_CLOUD_QUALIFIED_ACTIVATION=1。",
+      "raw_touched": false,
+      "observed_exec_wall_seconds": 4.7,
+      "monotonic_charge": "UNKNOWN"
+    },
+    "failed_metadata_header_api_attempt": {
+      "event": "NumPy版本没有私有_read_array_header接口；该尝试已完成只读fsync/hash/ZIP CRC后在NPY头部API退出，未写raw。",
+      "observed_exec_wall_seconds": 3.4,
+      "monotonic_charge": "UNKNOWN"
+    },
+    "successful_metadata_check_monotonic_seconds": 0.018965019,
+    "remaining_response/index/diff-check elapsed": "UNKNOWN_NOT_SEPARATELY_TIMED"
+  },
+  "closeout_static_checks": {
+    "qualified_task40_local_wsl2_abi_preflight": "PASS; complex128/int32; MPI1; existing qualified prefix",
+    "compileall": "PASS for src/solvers/task40_w1_moment_reference.py and src/test/test_task40_w1_moment_reference.py",
+    "ruff": "NOT_AVAILABLE; not installed",
+    "six_targeted_numeric_helper_tests_rerun": false,
+    "documentation_contract_tests_rerun": false,
+    "metadata_persistence_check": "PASS_METADATA_DURABILITY_AND_LAYOUT_ONLY"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "full_action": {
+    "relative_q60_to_q30": 0.008663088994999783,
+    "relative_to_reference": 9.063390130105788e-15
+  },
+  "gate_complete": true,
+  "mixed_axis_max_recovered_relative": {
+    "q60_x_reference_y": 5.2629207067387376e-15,
+    "reference_x_q60_y": 4.0304722351205935e-12
+  },
+  "mode_count": 32060,
+  "mpmath_dps": 80,
+  "new_raw_npz": "w1_reference_completion_raw_v2.npz",
+  "new_raw_npz_sha256": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289",
+  "p6_started": false,
+  "q60_scalar_reference_max": 4.033933451217359e-12,
+  "q60_scalar_reference_pass": true,
+  "representation_offgrid_max_abs": {
+    "bottom": 1.5987211554602254e-14,
+    "top": 7.105427357601002e-15
+  },
+  "roundoff_bound": {
+    "max_recovered_relative_bound": 3.2109590505539284e-13,
+    "pass_below_1e-12": true
+  },
+  "schema": "task40extra.w1_reference_completion.v2",
+  "scope": "offline saved-array reference diagnostics; no PDE, no production runner",
+  "three_actual_key_witnesses": [
+    {
+      "direct100_vs_ref80_relative": 5.399430567775377e-15,
+      "key": [
+        "top",
+        -67,
+        -34,
+        "s"
+      ],
+      "mode_index": 8576
+    },
+    {
+      "direct100_vs_ref80_relative": 1.089658522225014e-15,
+      "key": [
+        "top",
+        -85,
+        -35,
+        "s"
+      ],
+      "mode_index": 6018
+    },
+    {
+      "direct100_vs_ref80_relative": 1.4315906573677344e-15,
+      "key": [
+        "top",
+        -85,
+        35,
+        "s"
+      ],
+      "mode_index": 6158
+    }
+  ]
+}

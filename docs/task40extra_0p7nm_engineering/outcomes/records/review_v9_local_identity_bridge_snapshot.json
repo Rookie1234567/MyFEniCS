@@ -1,0 +1,38 @@
+{
+  "cross_source_value_comparison": "NOT_RUN; dot full raw not present in local worktree",
+  "data_status": "local_original_manifest_only; dot raw not locally available",
+  "fields_covered": [
+    "mode_index",
+    "side",
+    "m",
+    "n",
+    "polarization",
+    "k_vector(all components)",
+    "e_vector(all components)",
+    "traction_vector(all components)",
+    "projection_denominator"
+  ],
+  "indexed_key_encoding": "compact JSON UTF-8 of ordered [mode_index,side,m,n,polarization], ensure_ascii=true",
+  "indexed_key_sha256": "08d7464c448a75bd5f41986f726ae0f97484cc050891dcfaaa24efc5f2900899",
+  "manifest_bytes": 36244923,
+  "manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+  "manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "mode_index_contiguous_zero_based": true,
+  "ordered_physics_sha256": "44c7bdc584b8e85c21b7249cd2207fe035a5b13e6a1c67d3d61a8418c9a6c3b8",
+  "ordered_row_count": 32060,
+  "physical_vectors_finite": true,
+  "physics_encoding": "compact JSON of ordered key/index, k/e/traction real+imag float.hex pairs, and projection denominator float.hex",
+  "polarization_counts": {
+    "p": 16030,
+    "s": 16030
+  },
+  "schema": "task40extra.review_v9_local_mode_identity_bridge.v1",
+  "side_counts": {
+    "bottom": 16030,
+    "top": 16030
+  },
+  "source_commit": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+  "unindexed_key_encoding": "compact JSON UTF-8 of ordered [side,m,n,polarization], ensure_ascii=true",
+  "unindexed_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "unique_unindexed_keys": 32060
+}

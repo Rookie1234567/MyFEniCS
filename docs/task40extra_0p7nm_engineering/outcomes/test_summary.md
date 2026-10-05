@@ -1,4 +1,18 @@
-# Task40extra 当前测试摘要：Review V6 closeout
+# Task40extra 当前测试摘要：Review V9收尾增量（早期阶段记录保留）
+
+| 检查 | 命令 / 记录 | 结果与边界 |
+|---|---|---|
+| W1解析矩helper定向测试（V9 source `50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8`） | Task40资格化本机activation后运行`python -m pytest -q src/test/test_task40_w1_moment_reference.py` | `6 passed in 4.29 s`；只测独立高精度矩helper；不含FE/PDE。此为已有回执，V9文档收尾未重跑 |
+| 收尾文档/记录检查 | 最终修改后`git diff --check`、JSON解析、原样快照SHA核对 | PASS：git diff --check、JSON解析、hash-bound证据、原样快照cmp及旧run-index字段保持核对；不是pytest或科学Gate |
+| V2 raw持久性/ZIP/NPY头部目录 | qualified ABI下只读fsync、重开SHA、10成员CRC和shape/dtype目录 | PASS；无数组值、积分、残差、FE或PDE读取/计算 |
+| helper静态检查 | qualified ABI preflight；对已提交helper与test执行compileall；检测ruff可用性 | ABI preflight及compileall PASS；Ruff `NOT_AVAILABLE`，未安装；未重跑6项数值测试 |
+| 全仓pytest / MPI4 / Ruff / CI / 新PDE | 本轮无此类执行 | `NOT_RUN`；不声称CI通过 |
+
+V9所列负实轴球Bessel分支、分析脚本维度修正、依赖安装和命令修复不混称为测试通过；耗时不完整的阶段保留`UNKNOWN`。clock-only RSS/swap不能作为测试或归因阶段资源结果。
+
+---
+
+## Review V6 closeout（V9之前历史测试记录）
 
 | 检查 | 命令 / 证据 | 结果与边界 |
 |---|---|---|

@@ -1,0 +1,23 @@
+{
+  "analysis_script_sha256": "09658b952814d53be534581482227d75bd219fb3e349e051ddcfc8c291390ae3",
+  "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "moment_module_sha256": "c4b7291b20c878c3b7af92875739058e8074cb07cce9c1fb13c9fbb705dad20e",
+  "moment_test_sha256": "f4acf23f4bea76da101a63a2c2b34926b803d92058b4385f07ba0837b99d2be2",
+  "mpmath_version": "1.3.0",
+  "mpmath_wheel_sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c",
+  "new_raw_npz_sha256": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289",
+  "old_raw_npz_sha256": "a475bba1618abd74981622a66e127b2fd88b43f52a2339f5087115ed9b1a82f8",
+  "producer_w1_head": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "qualification": {
+    "activation": "1",
+    "integer": "<class 'numpy.int32'>",
+    "mpi_size": 1,
+    "scalar": "<class 'numpy.complex128'>",
+    "scope": "imports_only_C1_FE_JIT_NOT_RUN"
+  },
+  "report_sha256": "659f83559e47915c97126682d7f00c1d62f3bed7067f41f0ff923f2e6000cf22",
+  "schema": "task40extra.w1_reference_completion_provenance.v2",
+  "scope": "All gates reported are limited to the frozen saved boundary arrays; q60 is not declared fully qualified and no PDE/p6 action is authorized by this record.",
+  "source_head": "50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8",
+  "source_worktree": "clean"
+}

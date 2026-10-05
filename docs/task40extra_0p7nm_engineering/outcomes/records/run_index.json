@@ -2012,5 +2012,47 @@
       "status": "W1_BOUNDARY_NUMERICAL_GATE_FAILED_TIMEBASE_CONTROLLED_STOP_CHECKPOINT_CHECK_COMPLETE",
       "timebase_stop": "TIMEBASE_INCONSISTENCY"
     }
+  },
+  "review_v9_progress": {
+    "status": "REFERENCE_NOT_QUALIFIED_TIME_STOP",
+    "source_sha": "50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8",
+    "source_entry_base": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+    "reviewed_mainline_baseline": "8c1a0ce23bd53cf92fffbed7a2daccd58cbf49a5",
+    "old_w1_raw_producer": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "dot_readonly_baseline": "7580f5a48407a5c984aaf9311dc3733060d79f08",
+    "response": "docs/task40extra_0p7nm_engineering/response_v9.md",
+    "response_sha256": "ddc973d1fe3b968510b4aa92902efe2cb4fe7bb0932c59eafc28e6451dbbf9e9",
+    "closeout_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_w1_closeout_v1.json",
+    "closeout_record_sha256": "f048cb73c0f4fea64bd635c259c6714495dfda8dee96ba772bce151268b2b4e4",
+    "summary": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+    "summary_sha256": "0bfed79caae9d5a839caf074cd1e51d270793cae89a9e5a10edbd8d580b61904",
+    "test_summary": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+    "test_summary_sha256": "e2cdffd17bc9a9cb4116a81d1642dd1e2e943f712b783b08de8d383a469eb96e",
+    "fixed_t0_utc": "2026-10-04T23:31:43Z",
+    "t0_monotonic_boottime_boot_id": "UNKNOWN",
+    "fixed_deadline_utc": "2026-10-05T03:31:43Z",
+    "attribution_known_conservative_cost_lower_bound_seconds": 3617.121945417,
+    "attribution_full_accumulated_charge": "UNKNOWN_NOT_SETTLED",
+    "p6": "NOT_RUN",
+    "fe_worker_started": false,
+    "production_runner_rerun": false,
+    "official_r_t_a": "NOT_GENERATED",
+    "original_size_target_status": "NO_GO",
+    "dot_executed_or_modified": false,
+    "v2_raw": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_raw_v2.npz",
+      "size_bytes": 2084777,
+      "sha256": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289"
+    },
+    "research_snapshot_hashes": {
+      "saved_array_attribution_script": "c89106b1a18001d8620e9801fe682e4b01d27c3161d18e9628145bd065892227",
+      "reference_completion_v2_script": "09658b952814d53be534581482227d75bd219fb3e349e051ddcfc8c291390ae3",
+      "reference_completion_v2_report": "659f83559e47915c97126682d7f00c1d62f3bed7067f41f0ff923f2e6000cf22",
+      "reference_completion_v2_provenance": "8eac046b8c62cde9aaa7259e703a0be45e631c18befac01be88355e358c776ca",
+      "local_identity_bridge": "14cf1f19686178835af0a1dd65750f0ec3cb581120fdfe7d3ec7d4227caabaa5"
+    },
+    "pre_v9_run_index_sha256": "9c8955dd9f8ef835f827dcc12962d96cc386bd4b5d98b63e868da0699a83f8c2",
+    "pre_v9_review_v8_progress_canonical_sha256": "f1fe2aecbc582b7b6d9c5056be16360f77cb13ae26cec55d847e2f24120d5178",
+    "commit_or_push_by_executor": false
   }
 }
