@@ -20,6 +20,6 @@ A_qualification_path = "tmp/task42extra/w1_receiver/v28/P0_qualification.json"
 [prerequisite_paths]
 input_contract_checks = "benchmarks/artifacts/task42extra/w1_receiver/v28/input_contract_checks"
 manifest_qualify = "benchmarks/artifacts/task42extra/w1_receiver/v28/manifest_qualify"
-control = "benchmarks/artifacts/task42extra/w1_receiver/v28/control"
+control = "benchmarks/artifacts/task42extra/w1_receiver/v28/control_retry1/control"
 boundary = "benchmarks/artifacts/task42extra/w1_receiver/v28/subdivided/boundary"
 boundary_check = "benchmarks/artifacts/task42extra/w1_receiver/v28/subdivided/boundary_check"
