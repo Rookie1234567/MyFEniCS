@@ -1,0 +1,52 @@
+{
+  "affected_run": "V47 aux_ANALYSIS_constraints",
+  "correct_classification": "launch HEAD + uncommitted working-tree hash snapshot",
+  "launch_HEAD": "e7a0b1d2e580d2a7750d4c5f27102b4947b82b45",
+  "later_matching_commit": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61",
+  "changes": [
+    {
+      "run": "/home/fenics/Projects/NN-Lab/tmp/task042/v47/aux_ANALYSIS_constraints",
+      "launch_HEAD": "e7a0b1d2e580d2a7750d4c5f27102b4947b82b45",
+      "path": "src/solvers/trace_selection_scope.py",
+      "recorded_sha256": "5aec5f1293d26de8b12b488a8d2676839a9ff9560d403dd749fc71508f7f57d8",
+      "matches_final_code": true,
+      "final_code": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61"
+    },
+    {
+      "run": "/home/fenics/Projects/NN-Lab/tmp/task042/v47/aux_ANALYSIS_constraints",
+      "launch_HEAD": "e7a0b1d2e580d2a7750d4c5f27102b4947b82b45",
+      "path": "src/solvers/trace_selection_study.py",
+      "recorded_sha256": "0fde7b7bcb3e240125841816e6a8c5459b09ea078b15d94c28dca47e922630e4",
+      "matches_final_code": true,
+      "final_code": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61"
+    },
+    {
+      "run": "/home/fenics/Projects/NN-Lab/tmp/task042/v47/aux_ANALYSIS_constraints",
+      "launch_HEAD": "e7a0b1d2e580d2a7750d4c5f27102b4947b82b45",
+      "path": "benchmarks/check_trace_selection.py",
+      "recorded_sha256": "5c8b95e8d15b54a59864812a705dda4027a55e8fff63a01301a93d6a7efef439",
+      "matches_final_code": true,
+      "final_code": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61"
+    },
+    {
+      "run": "/home/fenics/Projects/NN-Lab/tmp/task042/v47/aux_ANALYSIS_constraints",
+      "launch_HEAD": "e7a0b1d2e580d2a7750d4c5f27102b4947b82b45",
+      "path": "benchmarks/collect_trace_selection.py",
+      "recorded_sha256": "8d5b5792ff85eee7cc48c2dfa69d0264d2a60e2806f593a4ac3b5ddb441459d2",
+      "matches_final_code": true,
+      "final_code": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61"
+    },
+    {
+      "run": "/home/fenics/Projects/NN-Lab/tmp/task042/v47/aux_ANALYSIS_constraints",
+      "launch_HEAD": "e7a0b1d2e580d2a7750d4c5f27102b4947b82b45",
+      "path": "src/test/test_trace_selection.py",
+      "recorded_sha256": "1d4f2c3ee22a41309abf5ddc9153a390f3de14a40b8c8448613670b82852df46",
+      "matches_final_code": true,
+      "final_code": "4d914a3886f9a56595fcc8593e1b496c6c6d9f61"
+    }
+  ],
+  "old_manifest_unchanged": true,
+  "formal_9c167a54_four_stages_unaffected": true,
+  "FE_or_old_A_replay": false,
+  "new_guard": "dirty or same HEAD mismatched hashes rejected before scientific array access; verify committed blobs too"
+}

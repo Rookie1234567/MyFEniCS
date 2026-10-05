@@ -1,0 +1,129 @@
+{
+  "schema": "task042.lossless-vector-bank.v48-v1",
+  "review_commit": "e73baa45f59c0fcfc12ee1c00614c6933568f27e",
+  "data": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v47/task042_v47_data_20261004T231614458921Z/result.json",
+    "sha256": "8e140e48ac6977012dda8924d8d5179c2273a30e1f825f603945dc18046b371b"
+  },
+  "graph": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_setup_20261004T134304643860Z/result.json",
+    "sha256": "92966b2a3c1522e0530999de7991763a691cb6f9dbcd84a590afd6525f031caa"
+  },
+  "migration": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/prefix_heldout.npz",
+    "sha256": "37535eaef0eb9bd33552e0be0e5f730c0e44917dbf1925cf4a39c42f0b5844bd",
+    "aliases": {},
+    "members": {
+      "rhs": {
+        "shape": [
+          8,
+          45000
+        ],
+        "dtype": "<c16",
+        "sha256": "06bdaf71df05bfa84eaa33e8efdd3b24115c8e6405a3b59494bbc40663b4aa0d"
+      },
+      "prefix": {
+        "shape": [
+          8,
+          45000
+        ],
+        "dtype": "<c16",
+        "sha256": "b790f740675b5960e1a97058978bc32c59952d510b2766db5ea98722f13de518"
+      },
+      "residual": {
+        "shape": [
+          8,
+          45000
+        ],
+        "dtype": "<c16",
+        "sha256": "20e04dd454c5ee5b1e38131237505f02f371b11f84707f1a586dc76035a2c72b"
+      }
+    }
+  },
+  "migration_members": [
+    "prefix",
+    "residual"
+  ],
+  "backend": {
+    "name": "zstd",
+    "library": "/usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5",
+    "sha256": "0a2128bc10841fb29e76d08d945864dfb0b6a66da5df6df5d8299197439e54bb",
+    "version": "1.5.5",
+    "levels": [
+      3,
+      19
+    ],
+    "threads": 1,
+    "ctypes_api": "single-thread ZSTD_compress/ZSTD_decompress"
+  },
+  "traditional": [
+    "RAW",
+    "BYTE:3",
+    "BYTE:19",
+    "SHUFFLE:3",
+    "SHUFFLE:19",
+    "PREV",
+    "FCM",
+    "DFCM"
+  ],
+  "training": {
+    "seed": 428001,
+    "NN_architecture": [
+      12,
+      32,
+      32,
+      2
+    ],
+    "LIN_architecture": [
+      12,
+      2
+    ],
+    "updates": 256,
+    "lr": 0.001,
+    "batch_positions": 4096,
+    "sampling": "update u reads problem u%16, starts at 4096*(u//16), cyclic entity/moment positions",
+    "checkpoints": [
+      0,
+      64,
+      128,
+      256
+    ],
+    "selection": "actual full validation code bytes, ties earlier"
+  },
+  "features": [
+    "previous4 complex normalized (8 real)",
+    "kind-1",
+    "axis/2",
+    "moment/(entity_size-1)",
+    "entity_size/60"
+  ],
+  "normalization": "max(1e-30,max complex abs previous4), first raw, zero previous raw",
+  "block_max_entities": 256,
+  "A_AH_B": 0,
+  "new_storage_bytes": 1073741824,
+  "task_storage_bytes": 25769803776,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 268435456,
+  "loaded_seconds": 3600,
+  "P2_seconds": 1800,
+  "P3_seconds": 900,
+  "P4_seconds": 180,
+  "probe_seconds": 90,
+  "tail_reserve_seconds": 180,
+  "rss_warning_bytes": 1610612736,
+  "rss_hard_bytes": 2147483648,
+  "model_parameter_cap": 10000,
+  "consumer": "2 complete ordered vdot/axpy traversals ascending then descending; 256-complex axpy chunks",
+  "forbidden_new": {
+    "FE": 0,
+    "JIT": 0,
+    "mesh": 0,
+    "LU": 0,
+    "global_QR": 0,
+    "Krylov": 0,
+    "MPI": 0,
+    "GPU": 0,
+    "target_allocation": 0
+  },
+  "timing_repeats_gate": "NN complete bank object <=0.8 every completed correct traditional, heldout and migration both; otherwise once only"
+}

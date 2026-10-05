@@ -29,6 +29,11 @@ from src.solvers.port_preparation_window import implementation_hashes, window
 
 
 def storage_limits(namespace):
+    if namespace == "v48":
+        from src.solvers.vector_storage_scope import plan_record
+
+        plan = plan_record()
+        return {k: plan[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes", "evidence_reserve_bytes")}
     if namespace == "v47":
         from src.solvers.trace_selection_scope import plan_record
 
@@ -78,7 +83,7 @@ def storage_limits(namespace):
 class PreparationHealth:
     def __init__(self, folder, neighbors, namespace, *, limits=None):
         self.limits = storage_limits(namespace) if limits is None else limits
-        if namespace in ("v45", "v46", "v47") and self.limits != storage_limits(namespace):
+        if namespace in ("v45", "v46", "v47", "v48") and self.limits != storage_limits(namespace):
             raise ValueError("live guard must use the identical frozen plan")
         self.shared = SharedHealth(
             folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"]
@@ -99,6 +104,7 @@ class PreparationHealth:
             "v45",
             "v46",
             "v47",
+            "v48",
         ):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
@@ -140,6 +146,10 @@ FE_ROLES = (
 
 
 def context(namespace):
+    if namespace == "v48":
+        from src.solvers import vector_storage_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v47":
         from src.solvers import trace_selection_scope as scope
 
@@ -200,7 +210,7 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     limit, task_limit, free_limit = (
         limits[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes")
     )
-    if namespace in ("v45", "v46", "v47"):
+    if namespace in ("v45", "v46", "v47", "v48"):
         reserve = max(reserve, limits["evidence_reserve_bytes"])
     new_reserve = 0 if namespace == "v46" else reserve
     if (
@@ -280,6 +290,8 @@ def launch(
     started = time.monotonic()
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
+    if namespace == "v48" and subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
+        raise RuntimeError("V48 all producers/checkers/analysis require committed clean source")
     is_fe = role in FE_ROLES or (namespace == "v40" and specification is not None)
     if namespace == "v41":
         from src.solvers.native_entity_scope import NATIVE
@@ -409,7 +421,7 @@ def launch(
             "cpu": baseline["cpu"],
             "rank_cpus": cpus,
             "MPI_size": ranks,
-            "planned_bytes": int(1.8 * 2**30) if namespace == "v47" else 6 * 2**30 if is_fe else 2 * 2**30,
+            "planned_bytes": int(1.8 * 2**30) if namespace in ("v47", "v48") else 6 * 2**30 if is_fe else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
             "storage_limits": limits,
@@ -451,7 +463,7 @@ def launch(
             timebase_guard=True,
             hard_stop_immediate=True,
             rss_hard_limit_bytes=(2 if namespace == "v47" else 8 if is_fe else 2) * 2**30,
-            rss_warning_bytes=int(1.5 * 2**30) if namespace == "v47" else (6 if is_fe else 1) * 2**30,
+            rss_warning_bytes=int(1.5 * 2**30) if namespace in ("v47", "v48") else (6 if is_fe else 1) * 2**30,
             memory_envelope_provider=shared_envelope,
             include_pss=False,
             source_state=state,
