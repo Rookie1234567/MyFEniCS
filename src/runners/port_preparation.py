@@ -430,8 +430,9 @@ def launch(
             "rank_cpus": cpus,
             "MPI_size": ranks,
             "planned_bytes": 8*2**30 if namespace == "v49" and is_fe else int(1.8 * 2**30) if namespace in ("v47", "v48") else 6 * 2**30 if is_fe else 2 * 2**30,
-            "new_volume_action_count": 0,
-            "new_factor_count": 0,
+            "new_volume_action_count": None if namespace == "v49" else 0,
+            "new_factor_count": None if namespace == "v49" else 0,
+            "numeric_object_inventory_status": "actual stage inventory in result/events; launcher unknown" if namespace == "v49" else "historical scope inventory",
             "storage_limits": limits,
         }
         if specification is not None:

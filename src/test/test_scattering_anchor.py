@@ -97,6 +97,12 @@ class AnchorTests(unittest.TestCase):
             bad={**record,'members':{'z':{**record['members']['z'],'sha256':'0'*64}}}
             with self.assertRaisesRegex(ValueError,'member identity'):checked_arrays(bad)
 
+    def test_numeric_writer_normalizes_small_lists_but_rejects_objects(self):
+        with tempfile.TemporaryDirectory() as t:
+            path=Path(t)/'state.npz';record=save_arrays(path,H=[1.,2.])
+            self.assertEqual(record['members']['H']['shape'],[2])
+            with self.assertRaisesRegex(TypeError,'Python objects'):save_arrays(path,data=[{'bad':1}])
+
     def test_save_arrays_failure_retains_completed_vector(self):
         with tempfile.TemporaryDirectory() as t:
             path=Path(t)/'packet.npz';save_arrays(path,z=np.arange(12,dtype=np.complex128))

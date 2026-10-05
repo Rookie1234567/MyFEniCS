@@ -36,6 +36,8 @@ def array_hash(a):
 
 
 def save_arrays(path, **arrays):
+    arrays={k:np.asarray(v) for k,v in arrays.items()}
+    if any(v.dtype.hasobject for v in arrays.values()):raise TypeError('scientific arrays cannot contain Python objects')
     path = Path(path)
     temp = path.with_suffix('.partial.npz')
     with temp.open('wb') as out:
@@ -68,6 +70,26 @@ class Journal:
         finally:
             self.timings[name] = self.timings.get(name,0.)+time.perf_counter()-start
             self.event(name+'_end', seconds=self.timings[name])
+
+    def owners(self,name,objects):
+        # Count unique visible NumPy backing owners, never copy opaque LU.
+        seen=set();owners={}
+        def visit(x):
+            if id(x) in seen:return
+            seen.add(id(x))
+            if isinstance(x,np.ndarray):
+                root=x
+                while isinstance(root.base,np.ndarray):root=root.base
+                owners[(root.__array_interface__['data'][0],root.nbytes)]=root.nbytes
+            elif isinstance(x,dict) or hasattr(x,'items'):
+                for v in x.values():visit(v)
+            elif isinstance(x,(list,tuple)):
+                for v in x:visit(v)
+            elif hasattr(x,'__dict__') and type(x).__module__.startswith(('src.solvers','scipy.sparse')):
+                for v in vars(x).values():visit(v)
+        visit(objects)
+        self.event('object_owner_snapshot',name=name,unique_visible_numpy_owner_bytes=sum(owners.values()),
+                   unique_owner_count=len(owners),opaque_factor_MPI_CFFI_PETSc_bytes='unknown; included in tree RSS')
 
     def allocation(self, name, facts):
         added = int(facts.get('matrix_payload_bytes',0))+int(facts.get('workspace_bytes',0))
@@ -142,6 +164,7 @@ def build_bundle(cfg,setup,journal):
     with journal.measured('physical_RHS'):
         rhs,rf=build_physical_rhs(bundle)
     if len(bundle['modes'])!=532:raise ValueError('all532aliases required')
+    journal.owners('physical_carrier',bundle['dtn_action'].carrier)
     journal.event('physical_objects_ready', mode_sha256=bundle['mode_sha256'], surface_q=bundle['dtn_quadrature_degree'],rhs_norm=rhs.norm())
     return bundle,rhs,rf
 
@@ -178,6 +201,7 @@ def condense(bundle,journal,expected=None):
     if expected is not None and (system.full_rows,system.active_rows,system.active_interior_rows)!=expected:
         raise ValueError('frozen full native/trace/interior dimensions differ')
     if degree==4 and system.active_rows+port_count>10000:raise MemoryError('finite p4 authority row capacity')
+    journal.owners('condensed_local_caches',system)
     journal.event('condensed_objects_ready',rows=system.active_rows+port_count,nnz=int(system.matrix.getInfo()['nz_used']),
                   cell_classes=len(system.interior_lu_by_class),independent_FE=system.active_rows+system.active_interior_rows)
     return system,inverse
@@ -377,6 +401,7 @@ def engine(case,folder,journal):
         journal.calls['A']+=action.calls
         pc_calls=pc.calls;pc.destroy();pc=None;journal.event('all4q_local_factors_released')
         output=outputs(target_bundle,solution,port,folder,journal)
+        write_json(folder/'returned_state_complete.json',{'arrays':arrays,'audit_pending':False,'original_audit':norms})
         return {'status':'COMPLETED','case':case,'degree':4,'engine':'TWO_CELL_ALL4Q_RIGHT_FGMRES32',
                 'construction_adapter':'local newABI fresh two40 exact volume and transported original532 carrier; no full80 condensed matrix',
                 'all_q':[0,1,2,3],'inverse_checks':witness,'PC_calls':pc_calls,
