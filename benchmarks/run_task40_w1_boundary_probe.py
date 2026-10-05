@@ -592,6 +592,24 @@ def run(output: Path, mode_path: Path = MODE_PATH) -> dict:
     return report
 
 
+def _v10_local_case_pass(case: dict) -> bool:
+    return bool(
+        case["local_recovery_equation_relative"] <= 1e-11
+        and case["known_interior_solution_relative"] <= 1e-11
+        and case["local_original_trace_equation_relative"] <= 1e-10
+        and case["local_reduced_trace_equation_relative"] <= 1e-10
+        and case["local_trace_elimination_identity_relative"] <= 1e-10
+        and case["local_port_equation_relative"] <= 1e-10
+        and case["local_reduced_port_equation_relative"] <= 1e-10
+        and case["local_port_elimination_identity_relative"] <= 1e-10
+        and case["nonzero_internal_rhs_norm"] > 0
+        and case["nonzero_full_port_rhs_norm"] > 0
+        and case["nonzero_trace_rhs_norm"] > 0
+        and case["analytic_full_row_crosscheck"]["status"] == "PASS"
+        and case["small_key_native_carrier_witness"]["full_dof_direct_q30_gate_pass"]
+    )
+
+
 def run_v10_saved_array_extension(
     output: Path,
     mode_path: Path = MODE_PATH,
@@ -913,23 +931,6 @@ def run_v10_saved_array_extension(
     i, j = selected_face
     local_cases = []
 
-    def local_case_pass(case: dict) -> bool:
-        return bool(
-            case["local_recovery_equation_relative"] <= 1e-11
-            and case["known_interior_solution_relative"] <= 1e-11
-            and case["local_original_trace_equation_relative"] <= 1e-10
-            and case["local_reduced_trace_equation_relative"] <= 1e-10
-            and case["local_trace_elimination_identity_relative"] <= 1e-10
-            and case["local_port_equation_relative"] <= 1e-10
-            and case["local_reduced_port_equation_relative"] <= 1e-10
-            and case["local_port_elimination_identity_relative"] <= 1e-10
-            and case["nonzero_internal_rhs_norm"] > 0
-            and case["nonzero_full_port_rhs_norm"] > 0
-            and case["nonzero_trace_rhs_norm"] > 0
-            and case["analytic_full_row_crosscheck"]["status"] == "PASS"
-            and case["small_key_native_carrier_witness"]["full_dof_direct_q30_gate_pass"]
-        )
-
     for side in ("top", "bottom"):
         z_bounds = (120.0, 130.0) if side == "top" else (-10.0, 0.0)
         bounds = (
@@ -978,7 +979,7 @@ def run_v10_saved_array_extension(
         p4_result.update({
             "degree": 4,
             "side": side,
-            "case_status": "PASS" if local_case_pass(p4_result) else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
+            "case_status": "PASS" if _v10_local_case_pass(p4_result) else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
             "volume_source": "saved W1 raw p4 tensor; no volume reassembly",
             "boundary_quadrature_degree": 60,
         })
@@ -1035,7 +1036,7 @@ def run_v10_saved_array_extension(
         p6_result.update({
             "degree": 6,
             "side": side,
-            "case_status": "PASS" if local_case_pass(p6_result) else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
+            "case_status": "PASS" if _v10_local_case_pass(p6_result) else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
             "volume_source": "new one-cell p6 physical volume tensor, assembled once",
             "boundary_quadrature_degree": 60,
         })
@@ -1091,6 +1092,330 @@ def run_v10_saved_array_extension(
     return report
 
 
+def _v10_verify_parent_producer_snapshot(parent_report: dict, parent_output: Path) -> dict:
+    watchdog_path = parent_output / "watchdog" / "summary.json"
+    if not watchdog_path.is_file():
+        raise ValueError("bottom continuation requires the parent watchdog source receipt")
+    watchdog = json.loads(watchdog_path.read_text(encoding="utf-8"))
+    source = watchdog.get("source_state", {})
+    producer_sha = str(source.get("source_sha", ""))
+    if (
+        source.get("branch") != "task40extra_0p7nm_engineering"
+        or source.get("clean") is not True
+        or len(producer_sha) != 40
+    ):
+        raise ValueError("parent producer source identity is incomplete or unclean")
+    checks = {}
+    for relative, expected in parent_report.get("source_files_sha256", {}).items():
+        try:
+            blob = subprocess.run(
+                ["git", "show", f"{producer_sha}:{relative}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout
+            actual = _sha256_bytes(blob)
+        except subprocess.CalledProcessError:
+            actual = None
+        checks[relative] = {
+            "report_sha256": expected,
+            "producer_git_snapshot_sha256": actual,
+            "pass": actual == expected,
+        }
+    if not checks or not all(item["pass"] for item in checks.values()):
+        raise ValueError("parent report source hashes do not match its frozen Git snapshot")
+    return {"source_sha": producer_sha, "source_hash_checks": checks}
+
+
+def run_v10_bottom_continuation(
+    output: Path,
+    parent_output: Path,
+    mode_path: Path = MODE_PATH,
+    raw_path: Path = SAVED_W1_RAW,
+    reference_path: Path = SAVED_W9_REFERENCE,
+) -> dict:
+    """Resume only bottom p4/p6 from a hash-bound V10 parent checkpoint."""
+    started = time.monotonic()
+    output = Path(output).resolve()
+    parent_output = Path(parent_output).resolve()
+    if not output.is_relative_to(ROOT) or not parent_output.is_relative_to(ROOT):
+        raise ValueError("V10 continuation input and output must remain inside the repository")
+    if output == parent_output:
+        raise ValueError("bottom continuation output must be distinct from its parent checkpoint")
+    if output.exists() and any(output.iterdir()):
+        raise ValueError("bottom continuation output directory must be new and empty")
+    if _file_sha256(raw_path) != SAVED_W1_RAW_SHA256:
+        raise ValueError("saved W1 raw archive SHA mismatch")
+    if _file_sha256(reference_path) != SAVED_W9_REFERENCE_SHA256:
+        raise ValueError("saved V9 reference archive SHA mismatch")
+
+    parent_report_path = parent_output / "w1_v10_a_extension_report.json"
+    if not parent_report_path.is_file():
+        raise ValueError("parent V10 extension report is missing")
+    parent_report_sha = _file_sha256(parent_report_path)
+    parent_report = json.loads(parent_report_path.read_text(encoding="utf-8"))
+    if parent_report.get("schema") != "task40extra.review_v10_w1_a_saved_array_extension.v1":
+        raise ValueError("unsupported parent V10 extension report schema")
+    parent_source = _v10_verify_parent_producer_snapshot(parent_report, parent_output)
+    if parent_report.get("q60_finite_witness", {}).get("status") != "PASS_FINITE_WITNESSES":
+        raise ValueError("bottom continuation requires the parent finite q60 witness gate")
+    parent_cases = list(parent_report.get("local_cases", []))
+    parent_case_by_key = {
+        (int(case.get("degree", -1)), str(case.get("side", ""))): case
+        for case in parent_cases
+    }
+    if (
+        parent_report.get("completed_local_objects") != ["p4_top", "p6_top"]
+        or parent_case_by_key.get((4, "top"), {}).get("case_status") != "PASS"
+        or parent_case_by_key.get((6, "top"), {}).get("case_status")
+        != "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE"
+        or float(parent_case_by_key[(6, "top")]["known_interior_solution_relative"]) <= 1e-11
+    ):
+        raise ValueError("parent checkpoint is not the reviewed top-p6 controlled-negative case")
+
+    arrays_meta = parent_report.get("arrays", {})
+    parent_arrays_path = (ROOT / arrays_meta.get("path", "")).resolve()
+    if (
+        not parent_arrays_path.is_file()
+        or _file_sha256(parent_arrays_path) != arrays_meta.get("file_sha256")
+        or parent_arrays_path.stat().st_size != arrays_meta.get("file_bytes")
+    ):
+        raise ValueError("parent V10 array archive identity mismatch")
+    with np.load(parent_arrays_path, allow_pickle=False) as archive:
+        witness_arrays = {key: archive[key] for key in archive.files}
+    if _numeric_hashes(witness_arrays) != arrays_meta.get("member_numeric_sha256"):
+        raise ValueError("parent V10 numeric array member hashes mismatch")
+
+    modes, inventory = _load_modes(mode_path)
+    if len(modes) != 32060 or inventory != parent_report.get("input_inventory"):
+        raise ValueError("parent frozen full mode inventory identity differs")
+    with np.load(raw_path, allow_pickle=False) as archive:
+        saved = {key: archive[key] for key in archive.files}
+    with np.load(reference_path, allow_pickle=False) as archive:
+        reference = {key: archive[key] for key in archive.files}
+    if (
+        _sha256_bytes(np.ascontiguousarray(saved["q60_apply"]).tobytes())
+        != SAVED_Q60_APPLY_SHA256
+        or _sha256_bytes(np.ascontiguousarray(saved["q60_components"]).tobytes())
+        != SAVED_Q60_COMPONENTS_SHA256
+        or not np.array_equal(saved["q60_apply"], reference["q60_apply_saved"])
+        or not np.array_equal(saved["q60_components"], reference["q60_components_saved"])
+    ):
+        raise ValueError("saved W1/V9 q60 frozen reference identity changed")
+    if (
+        witness_arrays.get("generic_alpha", np.empty(0)).shape != (32060,)
+        or witness_arrays.get("generic_trace", np.empty(0)).shape != (156672,)
+    ):
+        raise ValueError("parent saved q60 witness arrays have unexpected shapes")
+    required_parent_arrays = (
+        "generic_alpha", "generic_trace", "generic_q60_apply",
+        "p4_q60_top_local_native_tensor", "p6_q60_top_local_native_tensor",
+    )
+    if any(name not in witness_arrays for name in required_parent_arrays):
+        raise ValueError("parent top/q60 checkpoint is missing required saved arrays")
+
+    x = np.asarray(saved["surface_x_axis_nm"], dtype=np.float64)
+    y = np.asarray(saved["surface_y_axis_nm"], dtype=np.float64)
+    phases = tuple(complex(value) for value in saved["floquet_phases"])
+    selected_face = tuple(int(value) for value in saved["representative_face_indices"][0])
+    if selected_face != (100, 1) or (len(x) - 1, len(y) - 1) != (272, 4):
+        raise ValueError("parent representative panel or frozen axes changed")
+    face_i, face_j = selected_face
+    bounds = (
+        (float(x[face_i]), float(x[face_i + 1])),
+        (float(y[face_j]), float(y[face_j + 1])),
+        (-10.0, 0.0),
+    )
+    faces = [("top", *selected_face), ("bottom", *selected_face)]
+    config = SimulationConfig3D(
+        case_name="task40_v10_w1_saved_array_extension",
+        geometry_kind="rectangular_block_grating",
+        lambda0=0.7,
+        n_air=1.0 + 0.0j,
+        mu_r=1.0 + 0.0j,
+        n_substrate=SILICON_INDEX,
+        n_grating=SILICON_INDEX,
+        stage4_boundary_model="dtn_port",
+    )
+    local_layouts = {
+        degree: BoundaryLayout(x, y, FacetPolynomial(_make_element(degree)), phases)
+        for degree in (4, 6)
+    }
+    local_cases = json.loads(json.dumps(parent_cases))
+    parent_lineage = {
+        "parent_output_directory": str(parent_output.relative_to(ROOT)),
+        "parent_report_path": str(parent_report_path.relative_to(ROOT)),
+        "parent_report_sha256": parent_report_sha,
+        "parent_arrays_path": str(parent_arrays_path.relative_to(ROOT)),
+        "parent_arrays_sha256": arrays_meta["file_sha256"],
+        "parent_arrays_member_count": arrays_meta["member_count"],
+        "parent_producer_source_sha": parent_source["source_sha"],
+        "parent_source_hash_checks": parent_source["source_hash_checks"],
+        "reused_q60_finite_witness": True,
+        "reused_parent_arrays_without_numeric_recomputation": True,
+        "reused_top_local_objects": ["p4_top", "p6_top"],
+        "objects_to_compute": ["p4_bottom", "p6_bottom"],
+    }
+
+    output.mkdir(parents=True, exist_ok=True)
+
+    def write_checkpoint(stage: str, *, p6_started: bool) -> dict:
+        arrays_info = _atomic_npz(output / "w1_v10_a_extension_arrays.npz", witness_arrays)
+        non_failed = [case for case in local_cases if case.get("case_status") != "FAILED_LOCAL_PROBE"]
+        all_local_pass = bool(
+            len(non_failed) == 4
+            and all(case.get("case_status") == "PASS" and _v10_local_case_pass(case)
+                    for case in non_failed)
+        )
+        report = {
+            "schema": "task40extra.review_v10_w1_a_saved_array_extension.v1",
+            "status": "PASS_FINITE_A_COMPONENTS" if all_local_pass else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
+            "checkpoint_stage": stage,
+            "started_monotonic": started,
+            "elapsed_monotonic_seconds": time.monotonic() - started,
+            "saved_w1_raw": parent_report["saved_w1_raw"],
+            "saved_v9_reference": parent_report["saved_v9_reference"],
+            "input_inventory": parent_report["input_inventory"],
+            "floquet_bridge": parent_report["floquet_bridge"],
+            "q60_finite_witness": parent_report["q60_finite_witness"],
+            "local_cases": local_cases,
+            "completed_local_objects": [
+                f"p{case['degree']}_{case['side']}" for case in local_cases
+                if case.get("case_status") != "FAILED_LOCAL_PROBE"
+            ],
+            "all_local_equation_gates_pass": all_local_pass,
+            "p4_volume_reused": True,
+            "p6_volume_build_count": sum(
+                int(case.get("degree") == 6) for case in local_cases
+                if case.get("case_status") != "FAILED_LOCAL_PROBE"
+            ),
+            "p6_side_inventory": [
+                f"{case['side']}/{'air' if case['side'] == 'top' else 'Si'}"
+                for case in local_cases if int(case.get("degree", -1)) == 6
+            ],
+            "p6_boundary_quadrature_degree": 60,
+            "mode_batch": 64,
+            "dense_mode_square_materialized": False,
+            "arrays": arrays_info,
+            "source_files_sha256": _source_file_hashes(),
+            "official_results": False,
+            "global_target_mpc_mapping": "NOT_RUN",
+            "parent_lineage": parent_lineage,
+            "continuation": {
+                "kind": "bottom_only_from_hash_bound_parent",
+                "q60_finite_witness_recomputed": False,
+                "top_local_objects_recomputed": False,
+                "bottom_p4_checkpointed": any(
+                    int(c.get("degree", -1)) == 4 and c.get("side") == "bottom"
+                    for c in local_cases
+                ),
+                "bottom_p6_started": p6_started,
+                "numeric_negative_does_not_skip_independent_bottom_object": True,
+            },
+        }
+        _atomic_json(output / "w1_v10_a_extension_report.json", report)
+        return report
+
+    write_checkpoint("BOTTOM_CONTINUATION_STARTED", p6_started=False)
+    bottom_saved_volume = {
+        "tensor": saved["p4_bottom_local_native_tensor"],
+        "coordinates": saved["p4_bottom_local_cell_coordinates"],
+        "cell_info": saved["p4_bottom_local_cell_orientation"],
+        "interior_positions": saved["p4_bottom_interior_positions"],
+        "trace_positions": saved["p4_bottom_trace_positions"],
+    }
+    try:
+        p4_result = stream_boundary_correction(
+            modes=modes,
+            side="bottom",
+            degree=4,
+            bounds=bounds,
+            config=config,
+            material_tag=config.tags.substrate,
+            mode_alpha=saved["p4_bottom_mode_alpha"],
+            trace_values=saved["p4_bottom_trace_values"],
+            known_interior_solution=saved["p4_bottom_known_interior_solution"],
+            boundary_layout=local_layouts[4],
+            face_i=face_i,
+            face_j=face_j,
+            boundary_quadrature_degree=60,
+            batch_modes=64,
+            saved_local_volume=bottom_saved_volume,
+            verify_analytic_full_rows=True,
+        )
+    except Exception as exc:
+        local_cases.append({
+            "degree": 4, "side": "bottom", "case_status": "FAILED_LOCAL_PROBE",
+            "error_type": type(exc).__name__, "error": str(exc),
+            "volume_source": "saved W1 raw p4 tensor; no volume reassembly",
+            "boundary_quadrature_degree": 60,
+            "mode_count_full_ordered": len(modes),
+        })
+        return write_checkpoint("CONTROLLED_NEGATIVE_BOTTOM_P4_OBJECT", p6_started=False)
+    for key, value in p4_result.pop("arrays").items():
+        witness_arrays[f"p4_q60_bottom_{key}"] = value
+    p4_result.update({
+        "degree": 4,
+        "side": "bottom",
+        "case_status": "PASS" if _v10_local_case_pass(p4_result) else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
+        "volume_source": "saved W1 raw p4 tensor; no volume reassembly",
+        "boundary_quadrature_degree": 60,
+    })
+    local_cases.append(p4_result)
+    write_checkpoint("BOTTOM_P4_CHECKPOINTED", p6_started=False)
+
+    n_i, n_t = 450, 432
+    local_row_i = np.arange(n_i, dtype=np.float64)
+    local_row_t = np.arange(n_t, dtype=np.float64)
+    try:
+        p6_result = stream_boundary_correction(
+            modes=modes,
+            side="bottom",
+            degree=6,
+            bounds=bounds,
+            config=config,
+            material_tag=config.tags.substrate,
+            mode_alpha=witness_arrays["generic_alpha"],
+            trace_values=np.asarray(
+                (1.0 + 1e-4 * local_row_t)
+                + 1j * (0.25 + 2e-4 * local_row_t[::-1]),
+                dtype=np.complex128,
+            ) / math.sqrt(n_t),
+            known_interior_solution=np.asarray(
+                (1.0 + 1e-3 * local_row_i)
+                + 1j * (0.5 + 5e-4 * local_row_i[::-1]),
+                dtype=np.complex128,
+            ) / math.sqrt(n_i),
+            boundary_layout=local_layouts[6],
+            face_i=face_i,
+            face_j=face_j,
+            boundary_quadrature_degree=60,
+            batch_modes=64,
+            verify_analytic_full_rows=True,
+        )
+    except Exception as exc:
+        local_cases.append({
+            "degree": 6, "side": "bottom", "case_status": "FAILED_LOCAL_PROBE",
+            "error_type": type(exc).__name__, "error": str(exc),
+            "volume_source": "new one-cell p6 physical volume tensor, assembled once",
+            "boundary_quadrature_degree": 60,
+            "mode_count_full_ordered": len(modes),
+        })
+        return write_checkpoint("CONTROLLED_NEGATIVE_BOTTOM_P6_OBJECT", p6_started=True)
+    for key, value in p6_result.pop("arrays").items():
+        witness_arrays[f"p6_q60_bottom_{key}"] = value
+    p6_result.update({
+        "degree": 6,
+        "side": "bottom",
+        "case_status": "PASS" if _v10_local_case_pass(p6_result) else "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
+        "volume_source": "new one-cell p6 physical volume tensor, assembled once",
+        "boundary_quadrature_degree": 60,
+    })
+    local_cases.append(p6_result)
+    # A numerical gate failure on top/p4-bottom must not suppress independent p6-bottom.
+    return write_checkpoint("BOTTOM_CONTINUATION_COMPLETE", p6_started=True)
+
+
 def _make_element(degree: int = 6):
     import basix.ufl
 
@@ -1106,9 +1431,33 @@ def main() -> int:
         action="store_true",
         help="reuse the hash-bound W1/V9 arrays, qualify q60, then run p4-reuse and p6 top/bottom",
     )
+    parser.add_argument(
+        "--v10-a-resume-bottom-from",
+        type=Path,
+        help="reuse a hash-bound V10 parent checkpoint and compute only bottom p4/p6 objects",
+    )
     parser.add_argument("--saved-w1-raw", type=Path, default=SAVED_W1_RAW)
     parser.add_argument("--saved-w9-reference", type=Path, default=SAVED_W9_REFERENCE)
     args = parser.parse_args()
+    if args.v10_a_resume_bottom_from is not None:
+        if args.v10_a_saved_array_extension:
+            parser.error("choose either a fresh V10 extension or a bottom-only checkpoint continuation")
+        report = run_v10_bottom_continuation(
+            args.output,
+            args.v10_a_resume_bottom_from,
+            args.modes,
+            args.saved_w1_raw,
+            args.saved_w9_reference,
+        )
+        print(json.dumps({
+            "status": report["status"],
+            "checkpoint_stage": report["checkpoint_stage"],
+            "completed_local_objects": report["completed_local_objects"],
+            "all_local_equation_gates_pass": report["all_local_equation_gates_pass"],
+            "elapsed_monotonic_seconds": report["elapsed_monotonic_seconds"],
+            "report": str(args.output / "w1_v10_a_extension_report.json"),
+        }, indent=2))
+        return 0
     if args.v10_a_saved_array_extension:
         report = run_v10_saved_array_extension(
             args.output, args.modes, args.saved_w1_raw, args.saved_w9_reference

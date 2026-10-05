@@ -175,7 +175,12 @@ def _direct_witness_check(arrays: dict[str, np.ndarray], prefix: str) -> dict:
 
 
 def _v10_local_algebra_check(
-    arrays: dict[str, np.ndarray], prefix: str, case: dict, expected_modes: int
+    arrays: dict[str, np.ndarray],
+    prefix: str,
+    case: dict,
+    *,
+    full_input_count: int,
+    active_side_count: int,
 ) -> dict:
     """Recompute the compact local equations and verify streamed B/D row coverage."""
     A = _need(arrays, prefix + "local_native_tensor")
@@ -228,8 +233,8 @@ def _v10_local_algebra_check(
     row_check = case.get("analytic_full_row_crosscheck", {})
     row_gate = bool(
         row_check.get("status") == "PASS"
-        and row_check.get("verified_mode_count") == expected_modes
-        and row_check.get("expected_mode_count") == expected_modes
+        and row_check.get("verified_mode_count") == active_side_count
+        and row_check.get("expected_mode_count") == active_side_count
         and max(
             float(row_check.get("B_full_native_rows_max_relative", float("inf"))),
             float(row_check.get("D_full_native_rows_max_relative", float("inf"))),
@@ -246,7 +251,9 @@ def _v10_local_algebra_check(
         and state_relative <= 1e-11
         and trace_relative <= 1e-10
         and port_relative <= 1e-10
-        and len(alpha) == expected_modes
+        and len(alpha) == full_input_count
+        and int(case.get("mode_count_full_ordered", full_input_count))
+        == full_input_count
         and np.linalg.norm(fi) > 0
         and np.linalg.norm(ft) > 0
         and np.linalg.norm(port_rhs) > 0
@@ -401,7 +408,180 @@ def _recompute_v10_full_BD_rows(
     }
 
 
-def check_v10_saved_array_extension(output: Path, report_path: Path | None = None) -> dict:
+def _recompute_v10_local_cases(
+    arrays: dict[str, np.ndarray],
+    modes: list[dict],
+    cases: list[dict],
+    *,
+    full_input_count: int,
+    active_side_count: int,
+) -> list[dict]:
+    """Recompute every saved local object, including controlled negatives."""
+    local_results = []
+    for case in cases:
+        degree, side = int(case["degree"]), str(case["side"])
+        case_status = str(case.get("case_status", ""))
+        if case_status == "FAILED_LOCAL_PROBE":
+            local_results.append({
+                "degree": degree,
+                "side": side,
+                "recomputed": {
+                    "pass": False,
+                    "producer_case_status": case_status,
+                    "classification": case_status,
+                    "error": case.get("error"),
+                },
+            })
+            continue
+        prefix = f"p{degree}_q60_{side}_"
+        recomputed = _v10_local_algebra_check(
+            arrays,
+            prefix,
+            case,
+            full_input_count=full_input_count,
+            active_side_count=active_side_count,
+        )
+        full_rows = _recompute_v10_full_BD_rows(
+            arrays, prefix, modes, degree=degree, side=side
+        )
+        local_gate_pass = bool(recomputed["pass"])
+        rows_pass = bool(full_rows["pass"])
+        recomputed["full_native_row_recomputation"] = full_rows
+        recomputed["producer_case_status"] = case_status
+        recomputed["case_status_agrees_with_recomputed_local_gate"] = (
+            (case_status == "PASS") == local_gate_pass
+        )
+        recomputed["pass"] = bool(
+            local_gate_pass and rows_pass and case_status == "PASS"
+        )
+        local_results.append({
+            "degree": degree,
+            "side": side,
+            "recomputed": recomputed,
+        })
+    return local_results
+
+
+def _v10_producer_source_sha(output: Path) -> tuple[str, str]:
+    """Bind historical report hashes to the producer's frozen Git snapshot."""
+    summary_path = output / "watchdog" / "summary.json"
+    if summary_path.is_file():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        source_state = summary.get("source_state", {})
+        source_sha = str(source_state.get("source_sha", ""))
+        if (
+            source_state.get("clean") is not True
+            or source_state.get("branch") != "task40extra_0p7nm_engineering"
+            or len(source_sha) != 40
+        ):
+            raise ValueError("V10 producer watchdog source identity is incomplete or unclean")
+        return source_sha, "watchdog_summary_source_state"
+    source_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    return source_sha, "current_git_head_fallback_no_watchdog_summary"
+
+
+def _v10_git_snapshot_file_sha256(source_sha: str, relative_path: str) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{source_sha}:{relative_path}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError:
+        return None
+    return hashlib.sha256(result.stdout).hexdigest()
+
+
+def _v10_current_checker_identity() -> dict[str, str]:
+    """Identify the checker revision separately from the historical producer."""
+    checker_source_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    return {
+        "checker_source_sha": checker_source_sha,
+        "checker_file_sha256": _file_sha256(Path(__file__).resolve()),
+    }
+
+
+def _v10_verify_parent_lineage(report: dict, arrays: dict[str, np.ndarray]) -> dict | None:
+    lineage = report.get("parent_lineage")
+    if not isinstance(lineage, dict):
+        return None
+    report_path = (ROOT / lineage.get("parent_report_path", "")).resolve()
+    arrays_path = (ROOT / lineage.get("parent_arrays_path", "")).resolve()
+    if not report_path.is_relative_to(ROOT) or not arrays_path.is_relative_to(ROOT):
+        raise ValueError("V10 continuation parent lineage path escapes the repository")
+    parent_report_sha = _file_sha256(report_path) if report_path.is_file() else None
+    parent_arrays_sha = _file_sha256(arrays_path) if arrays_path.is_file() else None
+    parent_ok = bool(
+        parent_report_sha == lineage.get("parent_report_sha256")
+        and parent_arrays_sha == lineage.get("parent_arrays_sha256")
+    )
+    parent_report = (
+        json.loads(report_path.read_text(encoding="utf-8")) if parent_report_sha else {}
+    )
+    parent_array_reuse = False
+    reused_member_count = 0
+    if parent_arrays_sha:
+        parent_meta = parent_report.get("arrays", {})
+        with np.load(arrays_path, allow_pickle=False) as archive:
+            parent_arrays = {key: archive[key] for key in archive.files}
+        parent_hashes_ok = (
+            _numeric_hashes(parent_arrays) == parent_meta.get("member_numeric_sha256")
+            and len(parent_arrays) == lineage.get("parent_arrays_member_count")
+        )
+        parent_array_reuse = bool(
+            parent_hashes_ok
+            and all(key in arrays and np.array_equal(value, arrays[key])
+                    for key, value in parent_arrays.items())
+        )
+        reused_member_count = len(parent_arrays) if parent_array_reuse else 0
+    producer_sha = str(lineage.get("parent_producer_source_sha", ""))
+    parent_source_checks = {}
+    for relative, expected in parent_report.get("source_files_sha256", {}).items():
+        actual = _v10_git_snapshot_file_sha256(producer_sha, relative)
+        parent_source_checks[relative] = {
+            "report_sha256": expected,
+            "producer_git_snapshot_sha256": actual,
+            "pass": actual == expected,
+        }
+    source_pass = bool(parent_source_checks) and all(
+        item["pass"] for item in parent_source_checks.values()
+    )
+    q60_reused = bool(
+        parent_report.get("q60_finite_witness") == report.get("q60_finite_witness")
+        and lineage.get("reused_q60_finite_witness") is True
+    )
+    return {
+        "parent_report_sha256": parent_report_sha,
+        "parent_arrays_sha256": parent_arrays_sha,
+        "parent_report_and_archive_hashes_pass": parent_ok,
+        "parent_arrays_numeric_members_reused_exactly": parent_array_reuse,
+        "parent_arrays_reused_member_count": reused_member_count,
+        "parent_producer_source_sha": producer_sha,
+        "parent_source_hash_check": parent_source_checks,
+        "parent_source_hashes_match_git_snapshot": source_pass,
+        "q60_witness_reused_without_change": q60_reused,
+        "pass": bool(parent_ok and parent_array_reuse and source_pass and q60_reused),
+    }
+
+
+def check_v10_saved_array_extension(
+    output: Path,
+    report_path: Path | None = None,
+    checker_output_path: Path | None = None,
+) -> dict:
     """Independent V10 checker for the saved-array q60 and local-object extension."""
     from src.solvers.directional_boundary import (
         BoundaryLayout, DirectionalBoundaryAction, FacetPolynomial,
@@ -568,28 +748,27 @@ def check_v10_saved_array_extension(output: Path, report_path: Path | None = Non
         error = float(np.linalg.norm(candidate_components[index] - direct) / scale)
         direct_panel_checks.append({"mode_index": index, "relative": error})
 
-    local_results = []
-    for case in report.get("local_cases", []):
-        degree, side = int(case["degree"]), str(case["side"])
-        if case.get("case_status") != "PASS":
-            local_results.append({
-                "degree": degree, "side": side,
-                "recomputed": {"pass": False, "classification": case.get("case_status")},
-            })
-            continue
-        prefix = f"p{degree}_q60_{side}_"
-        expected = 16030
-        recomputed = _v10_local_algebra_check(arrays, prefix, case, expected)
-        full_rows = _recompute_v10_full_BD_rows(
-            arrays, prefix, modes, degree=degree, side=side
-        )
-        recomputed["full_native_row_recomputation"] = full_rows
-        recomputed["pass"] = bool(recomputed["pass"] and full_rows["pass"])
-        local_results.append({"degree": degree, "side": side, "recomputed": recomputed})
+    local_results = _recompute_v10_local_cases(
+        arrays,
+        modes,
+        report.get("local_cases", []),
+        full_input_count=len(modes),
+        active_side_count=16030,
+    )
+    producer_source_sha, source_identity = _v10_producer_source_sha(output)
+    source_hash_provenance = {}
+    for relative, expected in report.get("source_files_sha256", {}).items():
+        snapshot_sha = _v10_git_snapshot_file_sha256(producer_source_sha, relative)
+        source_hash_provenance[relative] = {
+            "report_sha256": expected,
+            "producer_git_snapshot_sha256": snapshot_sha,
+            "pass": snapshot_sha == expected,
+        }
     source_hash_check = {
-        relative: _file_sha256(ROOT / relative) == expected
-        for relative, expected in report.get("source_files_sha256", {}).items()
+        relative: item["pass"]
+        for relative, item in source_hash_provenance.items()
     }
+    parent_lineage_check = _v10_verify_parent_lineage(report, arrays)
     complete = len(local_results) == 4
     independent_reference_max = max(
         (item["scipy_analytic_relative"] for item in moment_checks),
@@ -611,6 +790,7 @@ def check_v10_saved_array_extension(output: Path, report_path: Path | None = Non
         and panel_max <= 1e-10
         and all(row["recomputed"]["pass"] for row in local_results)
         and all(source_hash_check.values())
+        and (parent_lineage_check is None or parent_lineage_check["pass"])
         and report.get("status") == "PASS_FINITE_A_COMPONENTS"
         and complete
     )
@@ -618,6 +798,7 @@ def check_v10_saved_array_extension(output: Path, report_path: Path | None = Non
         "schema": "task40extra.review_v10_w1_a_saved_array_checker.v1",
         "status": "SAVED_ARRAYS_CHECK_PASS" if pass_all else "SAVED_ARRAYS_PARTIAL_OR_CONTROLLED_NEGATIVE",
         "pass": pass_all,
+        **_v10_current_checker_identity(),
         "report_sha256": _file_sha256(report_path),
         "arrays_file_sha256": arrays_meta["file_sha256"],
         "input_identity_recomputed": identity,
@@ -627,15 +808,31 @@ def check_v10_saved_array_extension(output: Path, report_path: Path | None = Non
         "independent_reference_cross_error_max": independent_reference_max,
         "candidate_cross_error_max": max(candidate_moment_max, panel_max),
         "local_case_recomputations": local_results,
+        "producer_source_sha": producer_source_sha,
+        "source_identity": source_identity,
         "source_hash_check": source_hash_check,
+        "source_hash_provenance": source_hash_provenance,
+        "parent_lineage_recomputed": parent_lineage_check,
         "p4_volume_reused": report.get("p4_volume_reused") is True,
         "global_target_mpc_mapping": "NOT_RUN",
     }
-    _atomic_json(output / "w1_v10_a_extension_checker.json", result)
+    checker_output_path = (
+        Path(checker_output_path).resolve()
+        if checker_output_path is not None
+        else output / "w1_v10_a_extension_checker.json"
+    )
+    if not checker_output_path.is_relative_to(ROOT):
+        raise ValueError("V10 checker output must remain inside the repository artifact tree")
+    result["checker_path"] = str(checker_output_path)
+    _atomic_json(checker_output_path, result)
     return result
 
 
-def check(output: Path, report_path: Path | None = None) -> dict:
+def check(
+    output: Path,
+    report_path: Path | None = None,
+    checker_output_path: Path | None = None,
+) -> dict:
     output = Path(output).resolve()
     if report_path is None and (output / "w1_v10_a_extension_report.json").is_file():
         report_path = output / "w1_v10_a_extension_report.json"
@@ -644,7 +841,9 @@ def check(output: Path, report_path: Path | None = None) -> dict:
         report_path = output / "w1_boundary_probe_progress.json"
     report = json.loads(report_path.read_text(encoding="utf-8"))
     if report.get("schema") == "task40extra.review_v10_w1_a_saved_array_extension.v1":
-        return check_v10_saved_array_extension(output, report_path)
+        return check_v10_saved_array_extension(output, report_path, checker_output_path)
+    if checker_output_path is not None:
+        raise ValueError("--checker-output is supported only for the V10 saved-array checker")
     raw_meta = report.get("raw")
     if not isinstance(raw_meta, dict) or raw_meta.get("reopened_after_fsync") is not True:
         raise ValueError("saved raw array fsync/readback evidence is absent")
@@ -905,12 +1104,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--report", type=Path)
+    parser.add_argument(
+        "--checker-output",
+        type=Path,
+        help="write a checker result to a new path without replacing the default saved checker",
+    )
     args = parser.parse_args()
-    result = check(args.output, args.report)
+    result = check(args.output, args.report, args.checker_output)
     print(json.dumps({
         "status": result["status"],
         "pass": result["pass"],
-        "report": str(args.output / "w1_boundary_probe_checker.json"),
+        "report": result.get(
+            "checker_path", str(args.output / "w1_boundary_probe_checker.json")
+        ),
     }, indent=2))
     # A controlled numerical negative is still a successfully completed
     # checker. Its scientific classification is carried in the saved JSON.

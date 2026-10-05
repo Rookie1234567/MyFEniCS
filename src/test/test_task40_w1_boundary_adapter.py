@@ -1,5 +1,9 @@
 """Task40's narrow regression for the Task042 boundary component reuse."""
 
+import hashlib
+import json
+from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import numpy as np
@@ -22,8 +26,11 @@ from src.solvers.task40_w1_local_probe import (
 )
 from src.solvers import task40_w1_local_probe
 from src.solvers.task40_w1_moment_reference import AnalyticMomentBoundaryReference
+from benchmarks import check_task40_w1_boundary_probe as v10_checker
+from benchmarks import run_task40_w1_boundary_probe as v10_runner
 from benchmarks.check_task40_w1_boundary_probe import (
     _recompute_v10_full_BD_rows,
+    _recompute_v10_local_cases,
     _v10_local_algebra_check,
 )
 
@@ -250,11 +257,11 @@ def test_v10_checker_recomputes_local_equations_and_uses_full_row_gate_only():
     bt = np.asarray([0.1 + 0.3j])
     fi = A[:1, :1] @ xi0 + A[:1, 1:] @ xt + bi
     ft = A[1:, :1] @ xi0 + A[1:, 1:] @ xt + bt
-    alpha = np.asarray([1 + 0.1j, 0.3 - 0.2j])
-    port_rhs = np.asarray([0.2 + 0.1j, -0.1 + 0.3j])
-    internal_b = np.asarray([0.2 + 0.0j, 0.1 + 0.0j])
-    internal_f = np.asarray([0.1 + 0.0j, 0.05 + 0.0j])
-    internal_trace = np.asarray([0.05 + 0.0j, 0.02 + 0.0j])
+    alpha = np.asarray([1 + 0.1j, 0.3 - 0.2j, -0.2 + 0.4j, 0.8 + 0.2j])
+    port_rhs = np.asarray([0.2 + 0.1j, -0.1 + 0.3j, 0.05j, -0.07 + 0.04j])
+    internal_b = np.asarray([0.2 + 0.0j, 0.1 + 0.0j, 0.04j, 0.03 - 0.01j])
+    internal_f = np.asarray([0.1 + 0.0j, 0.05 + 0.0j, -0.02j, 0.01 + 0.02j])
+    internal_trace = np.asarray([0.05 + 0.0j, 0.02 + 0.0j, 0.01j, -0.01 + 0.01j])
     internal_x = -internal_b + internal_f - internal_trace
     arrays = {
         prefix + "local_native_tensor": A,
@@ -273,9 +280,11 @@ def test_v10_checker_recomputes_local_equations_and_uses_full_row_gate_only():
         prefix + "port_internal_rhs_correction": internal_f,
         prefix + "port_internal_recovered_correction": internal_x,
         prefix + "port_internal_trace_correction": internal_trace,
-        prefix + "port_trace_action": np.asarray([0.3 - 0.2j, 0.1 + 0.05j]),
+        prefix + "port_trace_action": np.asarray(
+            [0.3 - 0.2j, 0.1 + 0.05j, -0.12 + 0.04j, 0.02 + 0.03j]
+        ),
     }
-    case = {"analytic_full_row_crosscheck": {
+    case = {"mode_count_full_ordered": 4, "analytic_full_row_crosscheck": {
         "status": "PASS", "verified_mode_count": 2, "expected_mode_count": 2,
         "B_full_native_rows_max_relative": 0.0,
         "D_full_native_rows_max_relative": 0.0,
@@ -284,8 +293,299 @@ def test_v10_checker_recomputes_local_equations_and_uses_full_row_gate_only():
         "small_nonzero_rows_clipped": False,
         "ordered_full_row_pair_digest_sha256": "0" * 64,
     }}
-    checked = _v10_local_algebra_check(arrays, prefix, case, expected_modes=2)
+    checked = _v10_local_algebra_check(
+        arrays, prefix, case, full_input_count=4, active_side_count=2
+    )
     assert checked["pass"] is True
+
+
+def test_v10_checker_recomputes_saved_controlled_negative_local_case(monkeypatch):
+    observed = {}
+
+    def local_check(arrays, prefix, case, *, full_input_count, active_side_count):
+        observed["local"] = (prefix, full_input_count, active_side_count, case["case_status"])
+        return {"pass": False, "known_state_recomputed_relative": 2.2e-11}
+
+    def row_check(arrays, prefix, modes, *, degree, side):
+        observed["rows"] = (prefix, degree, side)
+        return {"pass": True, "mode_count": 16030}
+
+    monkeypatch.setattr(v10_checker, "_v10_local_algebra_check", local_check)
+    monkeypatch.setattr(v10_checker, "_recompute_v10_full_BD_rows", row_check)
+    result = _recompute_v10_local_cases(
+        {},
+        [],
+        [{"degree": 6, "side": "top", "case_status": "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE"}],
+        full_input_count=32060,
+        active_side_count=16030,
+    )
+
+    assert observed["local"] == (
+        "p6_q60_top_", 32060, 16030, "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE"
+    )
+    assert observed["rows"] == ("p6_q60_top_", 6, "top")
+    assert result[0]["recomputed"]["known_state_recomputed_relative"] == 2.2e-11
+    assert result[0]["recomputed"]["case_status_agrees_with_recomputed_local_gate"] is True
+    assert result[0]["recomputed"]["pass"] is False
+
+
+def test_v10_checker_identity_separates_head_from_checker_file_hash():
+    identity = v10_checker._v10_current_checker_identity()
+    expected_head = v10_checker.subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=v10_checker.ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    expected_file_hash = hashlib.sha256(
+        Path(v10_checker.__file__).resolve().read_bytes()
+    ).hexdigest()
+
+    assert identity == {
+        "checker_source_sha": expected_head,
+        "checker_file_sha256": expected_file_hash,
+    }
+
+
+def test_v10_bottom_resume_cli_dispatches_parent_without_fresh_extension(monkeypatch, tmp_path, capsys):
+    observed = {}
+    output = tmp_path / "bottom-resume"
+    parent = tmp_path / "parent"
+    expected = {
+        "status": "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE",
+        "checkpoint_stage": "BOTTOM_CONTINUATION_COMPLETE",
+        "completed_local_objects": ["p4_top", "p6_top", "p4_bottom", "p6_bottom"],
+        "all_local_equation_gates_pass": False,
+        "elapsed_monotonic_seconds": 1.25,
+    }
+
+    def fake_resume(out, parent_out, *args):
+        observed["paths"] = (Path(out), Path(parent_out))
+        return expected
+
+    monkeypatch.setattr(v10_runner, "run_v10_bottom_continuation", fake_resume)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_task40_w1_boundary_probe.py",
+            "--output", str(output),
+            "--v10-a-resume-bottom-from", str(parent),
+        ],
+    )
+
+    assert v10_runner.main() == 0
+    assert observed["paths"] == (output, parent)
+    assert json.loads(capsys.readouterr().out)["completed_local_objects"] == expected[
+        "completed_local_objects"
+    ]
+
+
+def test_v10_bottom_continuation_reuses_parent_and_runs_only_independent_bottom_objects(
+    monkeypatch, tmp_path
+):
+    root = tmp_path.resolve()
+    parent = root / "parent"
+    (parent / "watchdog").mkdir(parents=True)
+    output = root / "bottom-resume"
+    parent_arrays_path = parent / "parent_arrays.npz"
+    parent_arrays_path.write_bytes(b"parent archive fixture")
+    raw_path, reference_path = root / "w1_raw.npz", root / "v9_reference.npz"
+    raw_path.write_bytes(b"frozen raw fixture")
+    reference_path.write_bytes(b"frozen reference fixture")
+    q60_apply = np.ones(156672, dtype=np.complex128)
+    q60_components = np.ones((32060, 2), dtype=np.complex128)
+    raw_arrays = {
+        "q60_apply": q60_apply,
+        "q60_components": q60_components,
+        "surface_x_axis_nm": np.arange(273, dtype=np.float64),
+        "surface_y_axis_nm": np.arange(5, dtype=np.float64),
+        "floquet_phases": np.asarray([1.0 + 0j, 1.0 + 0j]),
+        "representative_face_indices": np.asarray([[100, 1]], dtype=np.int64),
+        "p4_bottom_local_native_tensor": np.eye(2, dtype=np.complex128),
+        "p4_bottom_local_cell_coordinates": np.zeros((8, 3), dtype=np.float64),
+        "p4_bottom_local_cell_orientation": np.asarray([0], dtype=np.int32),
+        "p4_bottom_interior_positions": np.asarray([0], dtype=np.int64),
+        "p4_bottom_trace_positions": np.asarray([1], dtype=np.int64),
+        "p4_bottom_mode_alpha": np.ones(32060, dtype=np.complex128),
+        "p4_bottom_trace_values": np.ones(1, dtype=np.complex128),
+        "p4_bottom_known_interior_solution": np.ones(1, dtype=np.complex128),
+    }
+    reference_arrays = {
+        "q60_apply_saved": q60_apply,
+        "q60_components_saved": q60_components,
+    }
+    parent_arrays = {
+        "generic_alpha": np.ones(32060, dtype=np.complex128),
+        "generic_trace": np.ones(156672, dtype=np.complex128),
+        "generic_q60_apply": np.ones(156672, dtype=np.complex128),
+        "p4_q60_top_local_native_tensor": np.eye(2, dtype=np.complex128),
+        "p6_q60_top_local_native_tensor": np.eye(2, dtype=np.complex128),
+    }
+    _sha = lambda value: hashlib.sha256(value).hexdigest()
+    raw_sha, reference_sha = _sha(raw_path.read_bytes()), _sha(reference_path.read_bytes())
+    q60_apply_sha = _sha(np.ascontiguousarray(q60_apply).tobytes())
+    q60_components_sha = _sha(np.ascontiguousarray(q60_components).tobytes())
+    producer_blob = b"frozen producer source fixture"
+    producer_source_sha = "a" * 40
+    inventory = {"ordered_key_count": 32060}
+    q60_witness = {"status": "PASS_FINITE_WITNESSES", "witness_identity": "parent-q60"}
+
+    def local_case(degree, side, status, state_relative):
+        return {
+            "degree": degree,
+            "side": side,
+            "case_status": status,
+            "mode_count_full_ordered": 32060,
+            "local_recovery_equation_relative": 0.0,
+            "known_interior_solution_relative": state_relative,
+            "local_original_trace_equation_relative": 0.0,
+            "local_reduced_trace_equation_relative": 0.0,
+            "local_trace_elimination_identity_relative": 0.0,
+            "local_port_equation_relative": 0.0,
+            "local_reduced_port_equation_relative": 0.0,
+            "local_port_elimination_identity_relative": 0.0,
+            "nonzero_internal_rhs_norm": 1.0,
+            "nonzero_full_port_rhs_norm": 1.0,
+            "nonzero_trace_rhs_norm": 1.0,
+            "analytic_full_row_crosscheck": {"status": "PASS"},
+            "small_key_native_carrier_witness": {"full_dof_direct_q30_gate_pass": True},
+        }
+
+    source_sha = _sha(producer_blob)
+    parent_report = {
+        "schema": "task40extra.review_v10_w1_a_saved_array_extension.v1",
+        "completed_local_objects": ["p4_top", "p6_top"],
+        "local_cases": [
+            local_case(4, "top", "PASS", 0.0),
+            local_case(6, "top", "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE", 2.2e-11),
+        ],
+        "q60_finite_witness": q60_witness,
+        "input_inventory": inventory,
+        "floquet_bridge": {"phase": "frozen"},
+        "saved_w1_raw": {"path": "raw.npz", "sha256": raw_sha},
+        "saved_v9_reference": {"path": "reference.npz", "sha256": reference_sha},
+        "p4_volume_reused": True,
+        "p6_volume_build_count": 1,
+        "source_files_sha256": {"src/test/source_fixture.py": source_sha},
+    }
+    parent_arrays_meta = {
+        "path": str(parent_arrays_path.relative_to(root)),
+        "file_sha256": _sha(parent_arrays_path.read_bytes()),
+        "file_bytes": parent_arrays_path.stat().st_size,
+        "member_count": len(parent_arrays),
+        "member_numeric_sha256": v10_runner._numeric_hashes(parent_arrays),
+    }
+    parent_report["arrays"] = parent_arrays_meta
+    parent_report_path = parent / "w1_v10_a_extension_report.json"
+    parent_report_path.write_text(json.dumps(parent_report))
+    (parent / "watchdog" / "summary.json").write_text(json.dumps({
+        "source_state": {
+            "branch": "task40extra_0p7nm_engineering",
+            "source_sha": producer_source_sha,
+            "clean": True,
+        }
+    }))
+
+    class FakeArchive:
+        def __init__(self, arrays):
+            self._arrays = arrays
+            self.files = list(arrays)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def __getitem__(self, name):
+            return self._arrays[name]
+
+    archive_map = {
+        parent_arrays_path.resolve(): parent_arrays,
+        raw_path.resolve(): raw_arrays,
+        reference_path.resolve(): reference_arrays,
+    }
+
+    def fake_load(path, allow_pickle=False):
+        assert allow_pickle is False
+        return FakeArchive(archive_map[Path(path).resolve()])
+
+    monkeypatch.setattr(v10_runner, "ROOT", root)
+    monkeypatch.setattr(v10_runner.np, "load", fake_load)
+    monkeypatch.setattr(v10_runner, "SAVED_W1_RAW_SHA256", raw_sha)
+    monkeypatch.setattr(v10_runner, "SAVED_W9_REFERENCE_SHA256", reference_sha)
+    monkeypatch.setattr(v10_runner, "SAVED_Q60_APPLY_SHA256", q60_apply_sha)
+    monkeypatch.setattr(v10_runner, "SAVED_Q60_COMPONENTS_SHA256", q60_components_sha)
+    monkeypatch.setattr(v10_runner, "_load_modes", lambda _path: ([{}] * 32060, inventory))
+    monkeypatch.setattr(
+        v10_runner.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(stdout=producer_blob),
+    )
+    monkeypatch.setattr(v10_runner, "SimulationConfig3D", lambda **_kwargs: SimpleNamespace(
+        tags=SimpleNamespace(substrate="substrate")
+    ))
+    monkeypatch.setattr(v10_runner, "FacetPolynomial", lambda _element: object())
+    monkeypatch.setattr(v10_runner, "BoundaryLayout", lambda *_args: object())
+    monkeypatch.setattr(v10_runner, "_make_element", lambda _degree: object())
+    monkeypatch.setattr(v10_runner, "_source_file_hashes", lambda: {"current.py": "b" * 64})
+    checkpoint_reports = []
+    checkpoint_arrays = []
+
+    def fake_atomic_npz(path, arrays):
+        checkpoint_arrays.append(dict(arrays))
+        return {
+            "path": str(Path(path).relative_to(root)),
+            "file_sha256": "c" * 64,
+            "file_bytes": 10,
+            "member_count": len(arrays),
+            "member_numeric_sha256": v10_runner._numeric_hashes(arrays),
+            "reopened_after_fsync": True,
+        }
+
+    monkeypatch.setattr(v10_runner, "_atomic_npz", fake_atomic_npz)
+    monkeypatch.setattr(v10_runner, "_atomic_json", lambda _path, data: checkpoint_reports.append(data))
+    calls = []
+
+    def fake_stream(**kwargs):
+        degree, side = kwargs["degree"], kwargs["side"]
+        calls.append((degree, side))
+        case = local_case(
+            degree,
+            side,
+            "PASS",
+            2.2e-11 if degree == 4 else 0.0,
+        )
+        case["arrays"] = {"fixture_bottom_object": np.asarray([degree], dtype=np.int64)}
+        return case
+
+    monkeypatch.setattr(v10_runner, "stream_boundary_correction", fake_stream)
+    result = v10_runner.run_v10_bottom_continuation(
+        output,
+        parent,
+        mode_path=root / "mode.json",
+        raw_path=raw_path,
+        reference_path=reference_path,
+    )
+
+    assert calls == [(4, "bottom"), (6, "bottom")]
+    assert result["completed_local_objects"] == ["p4_top", "p6_top", "p4_bottom", "p6_bottom"]
+    assert result["local_cases"][1]["case_status"] == "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE"
+    assert result["local_cases"][2]["case_status"] == "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE"
+    assert result["local_cases"][3]["case_status"] == "PASS"
+    assert result["status"] == "CONTROLLED_NEGATIVE_LOCAL_EQUATION_GATE"
+    assert result["parent_lineage"]["parent_producer_source_sha"] == producer_source_sha
+    assert result["continuation"]["q60_finite_witness_recomputed"] is False
+    assert result["continuation"]["top_local_objects_recomputed"] is False
+    assert [item["checkpoint_stage"] for item in checkpoint_reports] == [
+        "BOTTOM_CONTINUATION_STARTED", "BOTTOM_P4_CHECKPOINTED", "BOTTOM_CONTINUATION_COMPLETE"
+    ]
+    assert "p6_q60_top_local_native_tensor" in checkpoint_arrays[-1]
+    assert "p4_q60_bottom_fixture_bottom_object" in checkpoint_arrays[-1]
+    assert "p6_q60_bottom_fixture_bottom_object" in checkpoint_arrays[-1]
+    assert _sha(parent_report_path.read_bytes()) == result["parent_lineage"]["parent_report_sha256"]
 
 
 @pytest.mark.parametrize("degree", [4, 6])
