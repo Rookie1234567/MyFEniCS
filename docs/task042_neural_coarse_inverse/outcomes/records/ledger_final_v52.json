@@ -1,5 +1,8 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+  "closed": true,
+  "active": null,
+  "path": "tmp/task042/v52/ledger.json",
+  "sha256": "cf8b95878c8df78b5d539113c8973e110eb3c312177ca4d546672579a6c78541",
+  "run_count": 11,
+  "reason": "FLAT_PASS_NOTCH_NOT_QUALIFIED"
 }

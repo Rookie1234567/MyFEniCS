@@ -1,5 +1,234 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "a70a7ac8855ac575085550bd1e1ad5789be55bdc75ad43e2592d9ee32cc6bee0",
+      "tables": [],
+      "links": [
+        "response_v52.md",
+        "outcomes/phase_notch_hp_accuracy_v52.md",
+        "review_report_v50.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "42b0a1ebc4b0bba26ef451aaafe912ebdc9d879e1c1ceb92d9cd47d5ab0aa726",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 9
+        },
+        {
+          "line": 11,
+          "columns": 9
+        }
+      ],
+      "links": [
+        "../response_v52.md",
+        "phase_notch_hp_accuracy_v52.md",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_final_v52.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "25d6b5eb7a058dbef410fad4a4ec4106c126ed2846fdc621ff4602772d230ead",
+      "tables": [],
+      "links": [
+        "records/tests_v52.json",
+        "../response_v52.md",
+        "phase_notch_hp_accuracy_v52.md",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_final_v52.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "f31e6c293489c999d2f442c6cc6cbfe3a0d06dfc3b0b1dd441c4e3120d9bb961",
+      "tables": [],
+      "links": [
+        "records/selective_merge_manifest_v52.json",
+        "../response_v52.md",
+        "phase_notch_hp_accuracy_v52.md",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_final_v52.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "7ba31d3d62c745eeba780883225bbefc4441a05b2fa577973db529c10d033415",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v52.md",
+        "task042_neural_coarse_inverse/outcomes/phase_notch_hp_accuracy_v52.md"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "6e93afa6e1a713510e0361c11da55170b679ddda3fbc1c2b907efa1c1df16527",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 9
+        },
+        {
+          "line": 11,
+          "columns": 9
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/response_v52.md",
+        "task042_neural_coarse_inverse/outcomes/phase_notch_hp_accuracy_v52.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v50.md",
+      "sha256": "8c407cb290fb2f34b260e2090453982f47f110e0bdd6ebe9730c6f55b923de8f",
+      "tables": [
+        {
+          "line": 40,
+          "columns": 3
+        },
+        {
+          "line": 78,
+          "columns": 6
+        },
+        {
+          "line": 125,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v51.md",
+        "outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "outcomes/records/phase_accuracy_checks_v51.json",
+        "outcomes/records/run_index_v51.json",
+        "outcomes/records/physical_error_regions_v51.json",
+        "outcomes/records/resource_costs_final_v51.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v52.md",
+      "sha256": "1dae747b8fb582df67da7d56970f528f098bb67a436a9849fe7a06c7e9572fb7",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 9
+        },
+        {
+          "line": 11,
+          "columns": 9
+        },
+        {
+          "line": 19,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "review_report_v50.md",
+        "outcomes/phase_notch_hp_accuracy_v52.md",
+        "outcomes/records/hp_accuracy_checks_v52.json",
+        "outcomes/records/physical_error_regions_v52.json",
+        "outcomes/records/resource_costs_final_v52.json",
+        "outcomes/records/run_index_v52.json",
+        "outcomes/records/repair_journal_v52.json",
+        "outcomes/records/tests_v52.json",
+        "outcomes/records/delivery_index_v52.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/phase_notch_hp_accuracy_v52.md",
+      "sha256": "6272182d30abe833296c406408d767ae0870991ab5f6e49fb417c2c2b119c179",
+      "tables": [
+        {
+          "line": 11,
+          "columns": 9
+        },
+        {
+          "line": 19,
+          "columns": 9
+        },
+        {
+          "line": 28,
+          "columns": 10
+        },
+        {
+          "line": 35,
+          "columns": 6
+        },
+        {
+          "line": 45,
+          "columns": 9
+        },
+        {
+          "line": 57,
+          "columns": 5
+        },
+        {
+          "line": 69,
+          "columns": 2
+        },
+        {
+          "line": 81,
+          "columns": 7
+        },
+        {
+          "line": 89,
+          "columns": 8
+        },
+        {
+          "line": 104,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "records/modal_power_recalculation_v52.json",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_v52.json",
+        "records/repair_journal_v52.json",
+        "records/resource_costs_final_v52.json",
+        "records/run_index_v52.json",
+        "records/source_bindings_v52.json",
+        "records/array_inventory_v52.json",
+        "records/raw_archive_index_v52.json",
+        "records/physical_identity_bindings_v52.json",
+        "records/object_lifetimes_v52.json",
+        "records/physical_error_regions_v52.json",
+        "records/delivery_index_v52.json",
+        "records/next_scale_capacity_v52.json",
+        "records/necessary_NN_cost_conditions_v52.json",
+        "records/tests_v52.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "05468d7b063a09e724e895fde4cad1d2509f96a387a9cee4b32b2de76719dda2"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "a50539891c7f1a3bc68209ddd70d6eb1a5c7a5924ba4835d646d9fd963f5561b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "5f379c129235d4ddfe43e876f29afcfbac2e19faeda7e7f6f1770e71d01b9188"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "c1aeaf63a7cd39b9b8fd6dfcdc0986648751fc9fc2283655dc185c4e225dd5d5"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "680567e0f4a550730254967c1fa5ccebf5fb5c1d9ae185afb27b3cecf0ce6762"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "29abead5d1b1e913d496615d42f50f314806c67370a3aba0def39cf6265fb669"
+    }
+  ],
+  "test_seconds": 0.23375987587496638,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN"
 }

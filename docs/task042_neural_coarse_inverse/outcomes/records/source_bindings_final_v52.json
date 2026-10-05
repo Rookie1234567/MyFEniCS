@@ -1,5 +1,41 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+  "parent": "source_bindings_v52.json",
+  "parent_sha256": "ffd4e7df4abb7170a58501def3c69547110fefe6252f03271613967559fe5926",
+  "extra_source_closures": [
+    {
+      "source_sha": "e937d315d49587dd03c3dbc9da2308bdc7add195",
+      "manifest": "tmp/task042/v52/aux_post_modal01/run_manifest.json",
+      "manifest_sha256": "3a1bdd298daa53aadb4cde694cf6b07672d88807516d93537573306c8dc26ee0",
+      "verified_file_count": 116
+    },
+    {
+      "source_sha": "042142faa3516517186f8011cfff8d16ea09e077",
+      "manifest": "tmp/task042/v52/aux_post_docs01/run_manifest.json",
+      "manifest_sha256": "df7ecf6f54ea49ba3667fd1ced5af9f200291893aba6d429ed47f79d9bde14cd",
+      "verified_file_count": 116
+    }
+  ],
+  "new_distinct_archive_bytes": [
+    {
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "07b031e7b9a642c12ab6f24e1a423dff9bb932d37102e7d9c81e449871d744de",
+      "archived": "benchmarks/artifacts/task042/v52/source_archive/07b031e7b9a642c12ab6f24e1a423dff9bb932d37102e7d9c81e449871d744de"
+    },
+    {
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "f36aee8257f5fb7fa47d828b459694166a5cb9310e9e2475033047b8dd437cd9",
+      "archived": "benchmarks/artifacts/task042/v52/source_archive/f36aee8257f5fb7fa47d828b459694166a5cb9310e9e2475033047b8dd437cd9"
+    },
+    {
+      "path": "src/test/test_phase_notch_hp.py",
+      "sha256": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4",
+      "archived": "benchmarks/artifacts/task042/v52/source_archive/6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4"
+    }
+  ],
+  "document_check_source": "042142faa3516517186f8011cfff8d16ea09e077",
+  "document_HEAD_not_scientific_source": true,
+  "metadata_helper": {
+    "path": "tmp/task042/v52/edit/finalize.py",
+    "sha256": "40823240e3fe354825df1fd903fd27e580b801503a8aaef102ee1fb2eec6e001"
+  }
 }

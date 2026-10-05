@@ -1,5 +1,29 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+  "start_utc": "2026-10-05T11:29:57.715299+00:00",
+  "start_monotonic": 1124792.576188262,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "heavy_limit_seconds": 22500,
+  "total_limit_seconds": 25200,
+  "scientific_loaded_limit_seconds": 18000,
+  "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8",
+  "first_proc_uptime_seconds": 1124792.57,
+  "first_work_record": {
+    "start_utc": "2026-10-05T11:30:02.998528+00:00",
+    "start_monotonic": 1124797.859417262,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "f89b4585c1e19e6e08f051dcbf65ec7643302ea8"
+  },
+  "first_record_correction": "earliest actual read predates metadata write by 5.283229s; window shortened, never refreshed",
+  "intake_HEAD": "31a444d64b16d5078deeca01c9c3b661e6affc96",
+  "closed": true,
+  "observed_utc": "2026-10-05T15:52:47.654767+00:00",
+  "observed_monotonic": 1140562.515634053,
+  "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "monotonic_same_boot": true,
+  "elapsed_seconds": 15769.93946814537,
+  "heavy_remaining_seconds": 6730.0605318546295,
+  "total_remaining_seconds": 9430.06053185463
 }

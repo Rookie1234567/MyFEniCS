@@ -351,7 +351,13 @@
     },
     "scientific_actions": 0
   },
-  "final_documentation": "pending once final bytes are committed",
+  "final_documentation": {
+    "source_sha": "042142faa3516517186f8011cfff8d16ea09e077",
+    "record": "documentation_checks_v52.json",
+    "test_seconds": 0.23375987587496638,
+    "local_status": "PASSED_LOCAL",
+    "CI": "NOT_RUN"
+  },
   "later_targeted_metadata_only_test": {
     "status": "PASSED_LOCAL_TARGETED",
     "command": "qualified activation; one HPTests saved-modal scope test + related Ruff/compile",
