@@ -23,7 +23,10 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
 from src.solvers.physical_balanced_h6 import H6_DEGREE, FixedH6
-from src.solvers.physical_balanced_side_inverse import FixedH6ActiveTraceAction
+from src.solvers.physical_balanced_side_inverse import (
+    FixedH6ActiveTraceAction,
+    SideBalancedInverse,
+)
 from src.test.test_241_task037b_hybrid_action_modal_schur import (
     _destroy_fixture,
     _gather_matrix,
@@ -31,7 +34,12 @@ from src.test.test_241_task037b_hybrid_action_modal_schur import (
     _matrix_from_dense,
     _tiny_fixture,
 )
-from src.test.test_349_task041_balh_side_inverse import _build_fixture
+from src.test.test_349_task041_balh_side_inverse import (
+    _build_fixture,
+    _FullAction,
+    _IdentityP4,
+    _IdentityTransfer,
+)
 
 pytestmark = pytest.mark.skipif(
     MPI.COMM_WORLD.size not in (1, 2),
@@ -110,6 +118,41 @@ def _side_block_fixture() -> dict[str, object]:
         "coupling": tiny["coupling"],
         "layout": layout,
     }
+
+
+def _fixed_h6_side_block_fixture() -> dict[str, object]:
+    """Use real FixedH6 recurrences behind the existing tiny side inverses."""
+
+    fixture = _side_block_fixture()
+    for side in ("bottom", "top"):
+        old_inverse = fixture[f"{side}_inverse"]
+        old_inverse.destroy()
+        h6_bundle = _tiny_fixed_h6_bundle(side)
+        side_system = fixture[side]
+        side_system.static_condensation.condensed = h6_bundle["condensed"]
+        full_action = _FullAction(int(h6_bundle["h6_matrix"].getSize()[0]))
+        p4_factor = _IdentityP4(int(h6_bundle["h6_matrix"].getSize()[0]))
+        transfer = _IdentityTransfer()
+        inverse = SideBalancedInverse(
+            side_system,
+            full_action,
+            p4_factor,
+            transfer,
+            h6_bundle["h6"],
+        )
+        fixture[f"{side}_inverse"] = inverse
+        fixture[f"{side}_owned"].update(
+            {
+                "full_action": full_action,
+                "p4_factor": p4_factor,
+                "transfer": transfer,
+                "h6": h6_bundle["h6"],
+            }
+        )
+        # The modal bridge borrows the same H6 and condensed map from the
+        # SideBalancedInverse; its separate active test operator is unused.
+        h6_bundle["active_operator"].destroy()
+    return fixture
 
 
 def _pack(
@@ -1378,6 +1421,274 @@ def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
         for vector in (rhs, action_before, action_after):
             if vector is not None:
                 vector.destroy()
+        if original_action is not None:
+            original_action.destroy()
+        if original_context is not None:
+            original_context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None:
+    fixture = _fixed_h6_side_block_fixture()
+    original_action = original_context = context = result = rhs = None
+    action_before = action_after = None
+    try:
+        layout = fixture["layout"]
+        coupling = fixture["coupling"]
+        columns, roles, contract_sha = _sample_contract()
+        rhs = layout.pack(
+            fixture["bottom"].b,
+            fixture["top"].b,
+            internal_modal_rhs_correction(coupling),
+        )
+        rhs_before = _gather_vector(rhs)
+        original_action, original_context = create_hybrid_assembled_block_action(
+            fixture["bottom"], fixture["top"], coupling
+        )
+        action_before = original_action.createVecLeft()
+        action_after = original_action.createVecLeft()
+        original_action.mult(rhs, action_before)
+        action_values = _gather_vector(action_before)
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            layout,
+            fixture["bottom"],
+            fixture["top"],
+            coupling,
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+            sampled_columns=columns,
+            sampled_column_roles=roles,
+            sampled_column_contract_sha256=contract_sha,
+            fixed_h6_modal_gmres_research=True,
+        )
+        initial = context.inventory
+        assert context.requires_right_fgmres is True
+        assert context.modal_schur is None
+        assert context.modal_constraint.shape == (layout.modal_count,) * 2
+        assert initial["preconditioner_identity"] == (
+            "fixed_h6_modal_gmres_research"
+        )
+        assert initial["modal_schur_materialized"] is False
+        assert initial["modal_schur_column_count"] == 0
+        assert initial["modal_schur"] is None
+        assert initial["modal_schur_condition"] == "not_measured"
+        assert initial["early_sample_gate"]["status"] == "passed"
+
+        result = block_ldu.solve_hybrid_block_ldu_iterative(
+            original_action,
+            rhs,
+            context,
+            config=block_ldu.HybridBlockLduIterativeConfig(
+                restart=20,
+                max_it=80,
+                threshold=5.0e-9,
+                ksp_type="fgmres",
+            ),
+        )
+        original_action.mult(rhs, action_after)
+        assert _relative_or_absolute(_gather_vector(action_after), action_values) <= 1e-12
+        assert _relative_or_absolute(_gather_vector(rhs), rhs_before) <= 1e-12
+        assert result.postsolve_audit["pass"] is True
+        assert result.postsolve_audit["ksp_type"] == "fgmres"
+        for key in (
+            "reported_relative_residual",
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        ):
+            value = float(result.postsolve_audit[key])
+            assert np.isfinite(value) and 0.0 <= value <= 5e-9
+
+        inventory = result.inventory
+        inner = inventory["modal_inner_solver"]
+        last = inner["last_solve"]
+        assert last["status"] == "converged"
+        assert last["raw_residual_pass"] is True
+        assert last["final_relative_residual"] <= 1.0e-3
+        assert last["solver_matmult_calls"] <= 9
+        assert last["total_matmult_calls"] <= 10
+        assert inner["constraint_lu_factorizations"] == 1
+        assert inner["owner_constraint_lu_factorizations"] == 1
+        assert inner["solve_count"] == inventory["pc_apply_count"]
+        side_counts = inventory["fixed_h6_pc_side_apply_counts"]
+        for side in ("bottom", "top"):
+            assert side_counts[side]["first"] == inventory["pc_apply_count"]
+            assert side_counts[side]["delta"] == inventory["pc_apply_count"]
+            assert inner["fixed_h6_modal_apply_calls"][side] == (
+                inner["cumulative_total_matmult_calls"]
+            )
+        assert result.release["borrowed_side_actions_retained"] is True
+        result.destroy()
+        assert context.inventory["fixed_h6_modal_solver"]["destroyed"] is True
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+        assert fixture["bottom_inverse"]._h6._destroyed is False
+        assert fixture["top_inverse"]._h6._destroyed is False
+    finally:
+        if result is not None and not result._destroyed:
+            result.destroy()
+        if context is not None and not context._destroyed:
+            context.destroy()
+        for vector in (rhs, action_before, action_after):
+            if vector is not None:
+                vector.destroy()
+        if original_action is not None:
+            original_action.destroy()
+        if original_context is not None:
+            original_context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_fixed_h6_modal_gmres_options_and_constructor_cleanup(
+    monkeypatch,
+) -> None:
+    fixture = _fixed_h6_side_block_fixture()
+    original_factory = SideBalancedInverse.create_fixed_h6_active_trace_action
+    created_adapters: list[FixedH6ActiveTraceAction] = []
+
+    def capture_adapter(owner: SideBalancedInverse) -> FixedH6ActiveTraceAction:
+        adapter = original_factory(owner)
+        created_adapters.append(adapter)
+        return adapter
+
+    def fail_constructor(*_args, **_kwargs):
+        raise RuntimeError("injected fixed-H6 modal construction failure")
+
+    monkeypatch.setattr(
+        SideBalancedInverse,
+        "create_fixed_h6_active_trace_action",
+        capture_adapter,
+    )
+    monkeypatch.setattr(block_ldu, "_FixedH6ModalKrylovSystem", fail_constructor)
+    try:
+        columns, roles, contract_sha = _sample_contract()
+        for option in (
+            "use_anderson_modal_inner",
+            "complex_qr_research",
+            "raw_metric_mixing",
+            "capture_modal_solve_trace",
+        ):
+            with pytest.raises(ValueError, match="mutually exclusive"):
+                block_ldu.create_side_balh_block_ldu_preconditioner(
+                    fixture["layout"],
+                    fixture["bottom"],
+                    fixture["top"],
+                    fixture["coupling"],
+                    fixture["bottom_inverse"],
+                    fixture["top_inverse"],
+                    sampled_columns=columns,
+                    sampled_column_roles=roles,
+                    sampled_column_contract_sha256=contract_sha,
+                    fixed_h6_modal_gmres_research=True,
+                    **{option: True},
+                )
+        with pytest.raises(RuntimeError, match="injected fixed-H6 modal construction failure"):
+            block_ldu.create_side_balh_block_ldu_preconditioner(
+                fixture["layout"],
+                fixture["bottom"],
+                fixture["top"],
+                fixture["coupling"],
+                fixture["bottom_inverse"],
+                fixture["top_inverse"],
+                sampled_columns=columns,
+                sampled_column_roles=roles,
+                sampled_column_contract_sha256=contract_sha,
+                fixed_h6_modal_gmres_research=True,
+            )
+        assert len(created_adapters) == 2
+        assert all(adapter.audit["destroyed"] for adapter in created_adapters)
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+        fixture["bottom_inverse"].destroy()
+        with pytest.raises(RuntimeError, match="destroyed side inverse"):
+            fixture["bottom_inverse"].create_fixed_h6_active_trace_action()
+    finally:
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_fixed_h6_modal_inner_error_propagates_without_fallback(
+    monkeypatch,
+) -> None:
+    """Exercise synchronized KSP Mat failure cleanup, not numerical quality."""
+
+    fixture = _fixed_h6_side_block_fixture()
+    original_action = original_context = context = rhs = None
+
+    def reject_full_schur(*_args, **_kwargs):
+        raise AssertionError("fixed-H6 failure must not fall back to full Schur")
+
+    monkeypatch.setattr(block_ldu, "build_hybrid_action_modal_schur", reject_full_schur)
+    try:
+        columns, roles, contract_sha = _sample_contract()
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+            sampled_columns=columns,
+            sampled_column_roles=roles,
+            sampled_column_contract_sha256=contract_sha,
+            fixed_h6_modal_gmres_research=True,
+        )
+        rhs = fixture["layout"].pack(
+            fixture["bottom"].b,
+            fixture["top"].b,
+            internal_modal_rhs_correction(fixture["coupling"]),
+        )
+        original_action, original_context = create_hybrid_assembled_block_action(
+            fixture["bottom"], fixture["top"], fixture["coupling"]
+        )
+        modal_bundle = context.action_modal_schur_system
+
+        def nonfinite_modal_action(_modal: np.ndarray) -> np.ndarray:
+            return np.full(
+                context.modal_count,
+                np.nan,
+                dtype=np.complex128,
+            )
+
+        monkeypatch.setattr(modal_bundle._solver._modal_action, "apply", nonfinite_modal_action)
+        with pytest.raises(RuntimeError, match="Fixed-H6 modal KSP failed"):
+            block_ldu.solve_hybrid_block_ldu_iterative(
+                original_action,
+                rhs,
+                context,
+                config=block_ldu.HybridBlockLduIterativeConfig(
+                    restart=20,
+                    max_it=80,
+                    threshold=5.0e-9,
+                    ksp_type="fgmres",
+                ),
+            )
+        assert context._destroyed is True
+        failed = context.inventory
+        assert failed["pc_apply_count"] == 0
+        assert failed["fixed_h6_pc_side_apply_counts"]["bottom"] == {
+            "first": 1,
+            "delta": 0,
+        }
+        assert failed["fixed_h6_pc_side_apply_counts"]["top"] == {
+            "first": 1,
+            "delta": 0,
+        }
+        solver_diagnostics = failed["fixed_h6_modal_solver"]
+        assert solver_diagnostics["destroyed"] is True
+        assert solver_diagnostics["last_solve"]["status"] == "ksp_callback_failed"
+        assert solver_diagnostics["last_solve"]["solver_matmult_calls"] == 1
+        assert solver_diagnostics["last_solve"]["final_residual_status"] == (
+            "not_evaluated"
+        )
+        assert solver_diagnostics["last_solve"]["final_residual_evaluated"] is False
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if context is not None and not context._destroyed:
+            context.destroy()
+        if rhs is not None:
+            rhs.destroy()
         if original_action is not None:
             original_action.destroy()
         if original_context is not None:

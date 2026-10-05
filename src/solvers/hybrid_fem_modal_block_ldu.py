@@ -584,12 +584,14 @@ class _FixedH6ModalConstraintPcContext:
 
 
 class _FixedH6ModalKrylovSystem:
-    """Standalone fixed-H6 modal solve; deliberately not connected to a PC."""
+    """Bounded fixed-H6 modal solve used only by its explicit research branch."""
 
     rtol = 1.0e-3
     max_it = 8
     solver_matmult_limit = 9
     total_matmult_limit = 10
+    modal_schur = None
+    requires_right_fgmres = True
 
     def __init__(
         self,
@@ -625,6 +627,13 @@ class _FixedH6ModalKrylovSystem:
         self._mat_preflight_failure: str | None = None
         self._destroyed = False
         self._last_solve: dict[str, Any] | None = None
+        self._solve_count = 0
+        self._not_converged_count = 0
+        self._cumulative_solver_matmult_calls = 0
+        self._cumulative_total_matmult_calls = 0
+        self._cumulative_constraint_lu_solve_attempts = 0
+        self._cumulative_constraint_lu_solve_successes = 0
+        self.modal_constraint_local_bytes = 0
         self._matrix = self._ksp = None
         self._rhs = self._solution = self._image = self._residual = None
 
@@ -733,6 +742,9 @@ class _FixedH6ModalKrylovSystem:
                 "Fixed-H6 modal action construction failed; "
                 + "; ".join(construction_failures)
             )
+        self.modal_constraint_local_bytes = int(
+            self._modal_action.modal_constraint.nbytes
+        )
 
         factor_result = None
         if self._comm.rank == self._modal_owner:
@@ -781,6 +793,59 @@ class _FixedH6ModalKrylovSystem:
         except BaseException:
             self.destroy()
             raise
+
+    @property
+    def modal_constraint(self) -> np.ndarray | None:
+        if self._destroyed or self._modal_action is None:
+            return None
+        return self._modal_action.modal_constraint
+
+    @property
+    def constraint_lu_factorizations(self) -> int:
+        return int(self._constraint_lu_factorizations_owner)
+
+    def solve(self, rhs: np.ndarray) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("Fixed-H6 modal system has been destroyed")
+        actions = (("bottom", self._bottom_action), ("top", self._top_action))
+        before = {
+            side: int(action.audit["apply_count"])
+            for side, action in actions
+        }
+        try:
+            return self._solve_once(rhs)
+        finally:
+            self._solve_count += 1
+            self._cumulative_solver_matmult_calls += int(
+                self._solver_matmult_calls
+            )
+            self._cumulative_total_matmult_calls += int(self._total_matmult_calls)
+            self._cumulative_constraint_lu_solve_attempts += int(
+                self._constraint_lu_solve_attempts
+            )
+            self._cumulative_constraint_lu_solve_successes += int(
+                self._constraint_lu_solve_successes
+            )
+            if self._last_solve is not None:
+                self._last_solve["fixed_h6_side_action_apply_calls"] = {
+                    side: int(action.audit["apply_count"]) - before[side]
+                    for side, action in actions
+                }
+                self._last_solve["fixed_h6_side_action_count_scope"] = (
+                    "per_rank_replicated; do_not_sum_across_ranks"
+                )
+                self._last_solve["cumulative_solve_count"] = self._solve_count
+                self._last_solve["cumulative_solver_matmult_calls"] = (
+                    self._cumulative_solver_matmult_calls
+                )
+                self._last_solve["cumulative_total_matmult_calls"] = (
+                    self._cumulative_total_matmult_calls
+                )
+                if self._last_solve.get("status") not in {
+                    "converged",
+                    "zero_rhs_exact",
+                }:
+                    self._not_converged_count += 1
 
     def _raise_collective_error(self, local_error: str | None, stage: str) -> None:
         errors = self._comm.allgather(local_error)
@@ -973,7 +1038,7 @@ class _FixedH6ModalKrylovSystem:
         )
         return relative, finite and (residual_norm == 0.0 if rhs_norm == 0.0 else True)
 
-    def solve(self, rhs: np.ndarray) -> np.ndarray:
+    def _solve_once(self, rhs: np.ndarray) -> np.ndarray:
         self._reset_attempt()
         local_error = None
         values = None
@@ -1225,6 +1290,10 @@ class _FixedH6ModalKrylovSystem:
         return {
             "method": "fixed_h6_modal_gmres_research",
             "operator": "C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+            "operator_fixed_condition": (
+                "side adapters, H6 runtime matrices, condensed maps, and modal "
+                "coupling remain frozen for the modal solver lifetime"
+            ),
             "rtol": self.rtol,
             "restart": self.max_it,
             "max_it": self.max_it,
@@ -1233,6 +1302,30 @@ class _FixedH6ModalKrylovSystem:
             "modal_owner": self._modal_owner,
             "solver_matmult_calls": self._solver_matmult_calls,
             "total_matmult_calls": self._total_matmult_calls,
+            "solve_count": self._solve_count,
+            "s_evaluation_count": self._cumulative_total_matmult_calls,
+            "not_converged_count": self._not_converged_count,
+            "cumulative_solver_matmult_calls": (
+                self._cumulative_solver_matmult_calls
+            ),
+            "cumulative_total_matmult_calls": (
+                self._cumulative_total_matmult_calls
+            ),
+            "cumulative_constraint_lu_solve_attempts": (
+                self._cumulative_constraint_lu_solve_attempts
+            ),
+            "cumulative_constraint_lu_solve_successes": (
+                self._cumulative_constraint_lu_solve_successes
+            ),
+            "modal_schur_materialized": False,
+            "modal_schur_column_count": 0,
+            "modal_schur_condition": "not_measured",
+            "modal_constraint_local_bytes": self.modal_constraint_local_bytes,
+            "modal_constraint_condition": float(self.constraint_condition),
+            "constraint_lu_factorizations": int(
+                self._constraint_lu_factorizations_owner
+            ),
+            "constraint_lu_owner_rank": int(self._modal_owner),
             "blocked_matmult_attempts": self._blocked_matmult_attempts,
             "local_constraint_lu_factorizations": self._constraint_lu_factorizations_local,
             "owner_constraint_lu_factorizations": self._constraint_lu_factorizations_owner,
@@ -1279,6 +1372,95 @@ class _FixedH6ModalKrylovSystem:
         self._bottom_action = None
         self._top_action = None
         self._constraint_lu = self._constraint_pivots = None
+
+
+class _FixedH6ModalGmresResearchBundle:
+    """Own one fixed-H6 modal solver and its two borrowed-side adapters."""
+
+    modal_schur = None
+    requires_right_fgmres = True
+
+    def __init__(
+        self,
+        solver: _FixedH6ModalKrylovSystem,
+        bottom_action: Any,
+        top_action: Any,
+    ) -> None:
+        self._solver: _FixedH6ModalKrylovSystem | None = solver
+        self._side_actions: tuple[Any, Any] = (bottom_action, top_action)
+        self.modal_count = int(solver.modal_count)
+        self.mode_count = int(solver.mode_count)
+        self.modal_constraint_local_bytes = int(solver.modal_constraint_local_bytes)
+        self._destroyed = False
+
+    @property
+    def modal_constraint(self) -> np.ndarray | None:
+        if self._destroyed or self._solver is None:
+            return None
+        return self._solver.modal_constraint
+
+    @property
+    def constraint_condition(self) -> float:
+        if self._solver is None:
+            return float("nan")
+        return float(self._solver.constraint_condition)
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        solver = {} if self._solver is None else self._solver.diagnostics
+        actions = {
+            side: dict(action.audit)
+            for side, action in zip(
+                ("bottom", "top"), self._side_actions, strict=True
+            )
+        }
+        return {
+            **solver,
+            "method": "fixed_h6_modal_gmres_research",
+            "fixed_h6_actions": actions,
+            "fixed_h6_action_count_scope": (
+                "per-rank replicated; do_not_sum_across_ranks"
+            ),
+            "fixed_h6_modal_apply_calls": {
+                side: int(action["apply_count"])
+                for side, action in actions.items()
+            },
+            "fixed_h6_modal_matrix_mult_calls": {
+                side: int(action["matrix_mult_count"])
+                for side, action in actions.items()
+            },
+            "modal_schur_materialized": False,
+            "modal_schur_column_count": 0,
+            "modal_schur_condition": "not_measured",
+            "destroyed": self._destroyed,
+        }
+
+    def solve(self, rhs: np.ndarray) -> np.ndarray:
+        if self._destroyed or self._solver is None:
+            raise RuntimeError("Fixed-H6 modal research bundle was destroyed")
+        return self._solver.solve(rhs)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        error: Exception | None = None
+        # Keep the destroyed solver's bounded scalar diagnostics readable to
+        # the caller's existing exception/failure-evidence boundary.
+        solver = self._solver
+        if solver is not None:
+            try:
+                solver.destroy()
+            except Exception as exc:  # noqa: BLE001 - release owned adapters below
+                error = exc
+        for action in reversed(self._side_actions):
+            try:
+                action.destroy()
+            except Exception as exc:  # noqa: BLE001 - try both owned adapters
+                if error is None:
+                    error = exc
+        if error is not None:
+            raise error
 
 
 def solve_action_modal_schur_anderson(
@@ -3458,7 +3640,9 @@ class HybridBlockLduPreconditioner:
         bottom_action: Any,
         top_action: Any,
         action_modal_schur_system: (
-            HybridActionModalSchurSystem | HybridActionModalSchurAndersonSystem
+            HybridActionModalSchurSystem
+            | HybridActionModalSchurAndersonSystem
+            | _FixedH6ModalGmresResearchBundle
         ),
         research_inventory: dict[str, Any] | None = None,
         dynamic_side_inventory: bool = False,
@@ -3474,6 +3658,16 @@ class HybridBlockLduPreconditioner:
             None if research_inventory is None else dict(research_inventory)
         )
         self._dynamic_side_inventory = bool(dynamic_side_inventory)
+        self._fixed_h6_pc_side_apply_counts = (
+            {
+                side: {"first": 0, "delta": 0}
+                for side in ("bottom", "top")
+            }
+            if isinstance(
+                action_modal_schur_system, _FixedH6ModalGmresResearchBundle
+            )
+            else None
+        )
         self.modal_schur = getattr(action_modal_schur_system, "modal_schur", None)
         self.modal_count = int(action_modal_schur_system.modal_count)
         self.defer_action_modal_schur_release = False
@@ -3553,6 +3747,10 @@ class HybridBlockLduPreconditioner:
         on_demand_modal = isinstance(
             self.action_modal_schur_system, HybridActionModalSchurAndersonSystem
         )
+        fixed_h6_modal = isinstance(
+            self.action_modal_schur_system, _FixedH6ModalGmresResearchBundle
+        )
+        nonmaterialized_modal = on_demand_modal or fixed_h6_modal
         system_diagnostics = self.action_modal_schur_system.diagnostics
         result = {
             "global_A_materialized": False,
@@ -3572,14 +3770,19 @@ class HybridBlockLduPreconditioner:
             "modal_block_name": (
                 "on_demand_nonlinear_modal_inner"
                 if on_demand_modal
+                else "fixed_h6_surrogate_on_demand_modal_gmres"
+                if fixed_h6_modal
                 else "approximate_action_schur"
             ),
             "modal_block_condition": (
                 None
-                if on_demand_modal
+                if nonmaterialized_modal
                 else float(self.action_modal_schur_system.condition)
             ),
-            "modal_schur": None if on_demand_modal else system_diagnostics,
+            "modal_block_condition_status": (
+                "not_measured" if fixed_h6_modal else "measured" if not on_demand_modal else None
+            ),
+            "modal_schur": None if nonmaterialized_modal else system_diagnostics,
             "action_modal_schur_released": bool(self._action_modal_schur_released),
             "destroyed": bool(self._destroyed),
         }
@@ -3596,6 +3799,36 @@ class HybridBlockLduPreconditioner:
                     "modal_constraint_local_bytes": int(
                         self.action_modal_schur_system.modal_constraint_local_bytes
                     ),
+                }
+            )
+        if fixed_h6_modal:
+            result.update(
+                {
+                    "modal_count": int(self.modal_count),
+                    "modal_schur_scope": "not_materialized",
+                    "modal_schur_materialized": False,
+                    "modal_schur_column_count": 0,
+                    "modal_schur_storage_bytes": 0,
+                    "modal_schur_condition": "not_measured",
+                    "modal_inner_solver": system_diagnostics,
+                    "fixed_h6_modal_solver": system_diagnostics,
+                    "modal_constraint_condition": float(
+                        self.action_modal_schur_system.constraint_condition
+                    ),
+                    "modal_constraint_local_bytes": int(
+                        self.action_modal_schur_system.modal_constraint_local_bytes
+                    ),
+                    "fixed_h6_pc_side_apply_counts": {
+                        side: dict(counts)
+                        for side, counts in self._fixed_h6_pc_side_apply_counts.items()
+                    },
+                    "fixed_h6_pc_side_apply_count_scope": (
+                        "successful direct side apply calls; per-rank replicated"
+                    ),
+                    "side_h6_callback_counts": {
+                        "bottom": int(bottom.get("counts", {}).get("H6", 0)),
+                        "top": int(top.get("counts", {}).get("H6", 0)),
+                    },
                 }
             )
         if self._research_inventory is not None:
@@ -3713,7 +3946,11 @@ class HybridBlockLduPreconditioner:
         started = time.perf_counter()
         modal = self._source_parts(source)
         self.bottom_action.apply(self._bottom_rhs, self._bottom_first)
+        if self._fixed_h6_pc_side_apply_counts is not None:
+            self._fixed_h6_pc_side_apply_counts["bottom"]["first"] += 1
         self.top_action.apply(self._top_rhs, self._top_first)
+        if self._fixed_h6_pc_side_apply_counts is not None:
+            self._fixed_h6_pc_side_apply_counts["top"]["first"] += 1
         self.coupling.bottom.projection.mult(
             self._bottom_first, self._bottom_projection
         )
@@ -3728,7 +3965,11 @@ class HybridBlockLduPreconditioner:
         self._modal_solution[:] = self.action_modal_schur_system.solve(self._modal_rhs)
         self._apply_modal_tractions(self._modal_solution)
         self.bottom_action.apply(self._bottom_coupling, self._bottom_delta)
+        if self._fixed_h6_pc_side_apply_counts is not None:
+            self._fixed_h6_pc_side_apply_counts["bottom"]["delta"] += 1
         self.top_action.apply(self._top_coupling, self._top_delta)
+        if self._fixed_h6_pc_side_apply_counts is not None:
+            self._fixed_h6_pc_side_apply_counts["top"]["delta"] += 1
         self._bottom_first.axpy(PETSc.ScalarType(-1.0), self._bottom_delta)
         self._top_first.axpy(PETSc.ScalarType(-1.0), self._top_delta)
         target_local = target.getArray()
@@ -3927,14 +4168,15 @@ def create_side_balh_block_ldu_preconditioner(
     complex_qr_research: bool = False,
     raw_metric_mixing: bool = False,
     capture_modal_solve_trace: bool = False,
+    fixed_h6_modal_gmres_research: bool = False,
 ) -> HybridBlockLduPreconditioner:
-    """Build the sampled Schur or an opt-in BAL_H modal inner solve.
+    """Build the sampled Schur or one explicitly selected BAL_H research path.
 
     The side inverses are nonlinear finite-response operators from the H1e
     candidate path.  The default sampled response columns define only an
-    approximate preconditioner Schur. The opt-in Anderson branch avoids
-    Schur-column construction and requires right FGMRES. The caller owns both
-    side inverses and all side systems.
+    approximate preconditioner Schur. The Anderson and fixed-H6 research
+    branches require right FGMRES and remain mutually exclusive. The caller
+    owns both side inverses and all side systems.
     """
 
     from .physical_balanced_side_inverse import SideBalancedInverse
@@ -3977,6 +4219,21 @@ def create_side_balh_block_ldu_preconditioner(
     if not isinstance(capture_modal_solve_trace, (bool, np.bool_)):
         raise TypeError("Modal solve trace capture must be an explicit boolean.")
     capture_modal_solve_trace = bool(capture_modal_solve_trace)
+    if not isinstance(fixed_h6_modal_gmres_research, (bool, np.bool_)):
+        raise TypeError("Fixed-H6 modal GMRES research must be an explicit boolean.")
+    fixed_h6_modal_gmres_research = bool(fixed_h6_modal_gmres_research)
+    if fixed_h6_modal_gmres_research and any(
+        (
+            use_anderson_modal_inner,
+            complex_qr_research,
+            raw_metric_mixing,
+            capture_modal_solve_trace,
+        )
+    ):
+        raise ValueError(
+            "Fixed-H6 modal GMRES research is mutually exclusive with all "
+            "Anderson modal-inner options."
+        )
     if complex_qr_research and not use_anderson_modal_inner:
         raise ValueError(
             "Complex QR research requires the on-demand Anderson modal inner."
@@ -4002,6 +4259,8 @@ def create_side_balh_block_ldu_preconditioner(
     modal_schur = None
     modal_system = None
     modal_action = None
+    fixed_h6_solver = None
+    fixed_h6_adapters: list[Any] = []
     try:
         if use_anderson_modal_inner:
             modal_action = HybridActionModalSchurApply(
@@ -4045,6 +4304,93 @@ def create_side_balh_block_ldu_preconditioner(
                     "reason": "modal_schur_lu_not_constructed",
                 },
                 "early_sample_gate": early_sample_gate,
+            }
+        elif fixed_h6_modal_gmres_research:
+            original_side_actions = {
+                "bottom": bottom_side_inverse,
+                "top": top_side_inverse,
+            }
+            side_counts_before = {
+                side: _action_diagnostics(action).get("apply_count")
+                for side, action in original_side_actions.items()
+            }
+            modal_action = HybridActionModalSchurApply(
+                coupling,
+                bottom_side_inverse,
+                top_side_inverse,
+            )
+            try:
+                early_sample_gate = _check_on_demand_modal_sample_repeat(
+                    modal_action,
+                    sampled_columns=sampled_columns,
+                    sampled_column_roles=sampled_column_roles,
+                    sampled_column_contract_sha256=(
+                        sampled_column_contract_sha256
+                    ),
+                    marker_callback=marker_callback,
+                )
+            finally:
+                modal_action.destroy()
+                modal_action = None
+            side_counts_after = {
+                side: _action_diagnostics(action).get("apply_count")
+                for side, action in original_side_actions.items()
+            }
+            early_sample_gate["original_side_apply_count_delta"] = {
+                side: (
+                    None
+                    if side_counts_before[side] is None
+                    or side_counts_after[side] is None
+                    else int(side_counts_after[side]) - int(side_counts_before[side])
+                )
+                for side in ("bottom", "top")
+            }
+            early_sample_gate["original_side_apply_count_scope"] = (
+                "reported per side from the borrowed SideBalancedInverse"
+            )
+
+            fixed_h6_adapters.append(
+                bottom_side_inverse.create_fixed_h6_active_trace_action()
+            )
+            fixed_h6_adapters.append(
+                top_side_inverse.create_fixed_h6_active_trace_action()
+            )
+            fixed_h6_solver = _FixedH6ModalKrylovSystem(
+                coupling,
+                fixed_h6_adapters[0],
+                fixed_h6_adapters[1],
+                modal_owner=layout.modal_owner,
+            )
+            modal_system = _FixedH6ModalGmresResearchBundle(
+                fixed_h6_solver,
+                fixed_h6_adapters[0],
+                fixed_h6_adapters[1],
+            )
+            research_inventory = {
+                "research_only": True,
+                "preconditioner_identity": "fixed_h6_modal_gmres_research",
+                "modal_block_name": "fixed_h6_surrogate_on_demand_modal_gmres",
+                "modal_schur_scope": "not_materialized",
+                "modal_block_condition_status": "not_measured",
+                "not_original_global_operator": True,
+                "not_original_reduced_operator": True,
+                "borrowed_side_actions": True,
+                "global_direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+                "p6_factor_count": 0,
+                "modal_schur_materialized": False,
+                "modal_schur_column_count": 0,
+                "modal_schur_condition": "not_measured",
+                "full_vs_sample": {
+                    "status": "not_applicable",
+                    "reason": "full_modal_schur_not_materialized",
+                },
+                "schur_lu_repeat": {
+                    "status": "not_applicable",
+                    "reason": "modal_schur_lu_not_constructed",
+                },
+                "early_sample_gate": early_sample_gate,
+                "side_apply_counts_before_fixed_h6_branch": side_counts_before,
             }
         else:
             modal_schur = build_hybrid_action_modal_schur(
@@ -4092,6 +4438,11 @@ def create_side_balh_block_ldu_preconditioner(
             modal_schur.destroy()
         elif modal_action is not None:
             modal_action.destroy()
+        elif fixed_h6_solver is not None:
+            fixed_h6_solver.destroy()
+        for action in reversed(fixed_h6_adapters):
+            if not action.audit["destroyed"]:
+                action.destroy()
         raise
 
 
@@ -4400,7 +4751,7 @@ def solve_hybrid_block_ldu_iterative(
         raise RuntimeError("Cannot solve with a destroyed block-LDU context.")
     if context.requires_right_fgmres and str(config.ksp_type).lower() != "fgmres":
         raise ValueError(
-            "The on-demand nonlinear modal inner requires right-preconditioned FGMRES."
+            "The selected modal inner requires right-preconditioned FGMRES."
         )
     solution = operator.createVecRight()
     monitor_solution = operator.createVecRight()

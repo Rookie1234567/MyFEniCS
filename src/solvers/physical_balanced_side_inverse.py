@@ -764,6 +764,30 @@ class SideBalancedInverse:
             raise RuntimeError("BAL_H side inverse has been destroyed")
         return self._operator
 
+    def create_fixed_h6_active_trace_action(self) -> FixedH6ActiveTraceAction:
+        """Create a borrowed fixed-H6 modal surrogate for this live side.
+
+        The returned adapter owns only its work vectors.  This inverse retains
+        ownership of the H6 action and condensed map and must outlive it.
+        """
+
+        if (
+            self._destroyed
+            or self._operator is None
+            or self._condensed is None
+            or self._h6 is None
+        ):
+            raise RuntimeError(
+                "Cannot create a fixed-H6 trace action from a destroyed side inverse"
+            )
+        if not isinstance(self._h6, FixedH6):
+            raise TypeError("Fixed-H6 modal research requires a FixedH6 side action")
+        return FixedH6ActiveTraceAction(
+            self._operator,
+            self._condensed,
+            self._h6,
+        )
+
     @contextmanager
     def variant_context(self, variant: str):
         """Temporarily select a transfer variant for one complete side apply."""
