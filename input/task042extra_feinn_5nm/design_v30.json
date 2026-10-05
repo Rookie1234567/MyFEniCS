@@ -176,8 +176,9 @@
     "benchmark_previously_seen": true,
     "production_initialization_allowed": false,
     "common_comparison_seconds": 64800,
-    "moment_kernel": "qualified tensor contraction; original full point-value mapping for every accepted column",
-    "amplitude_gradient_objective": "unprojected amplitude seed witness of ||r-P A c_seed||^2, then exact tiny SVD"
+    "moment_kernel": "original oriented sparse full moment maps; every accepted column independently uses original point-value mapping",
+    "amplitude_gradient_objective": "unprojected amplitude seed witness of ||r-P A c_seed||^2, then exact tiny SVD",
+    "common_work_node_semantics": "each route freezes nearest committed state at 64800 seconds if necessary; this is a soft comparison node, not final termination; continuation uses the same original 48h deadline"
   },
   "resources": {
     "numerical_rss_warn_gib": 12,

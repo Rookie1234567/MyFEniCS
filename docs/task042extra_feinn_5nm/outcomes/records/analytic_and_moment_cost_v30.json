@@ -1,0 +1,236 @@
+{
+  "tensor_pairing": {
+    "passed": true,
+    "witnesses": [
+      {
+        "forward_relative": 2.7111685394044377e-15,
+        "real_q_VJP_relative": 4.226882582614383e-15,
+        "complex_p_VJP_relative": 2.8756114149576058e-15,
+        "families": {
+          "edge": 1.7622555862398527e-15,
+          "face": 1.7433381339473328e-15,
+          "interior": 3.573803197492108e-15
+        }
+      },
+      {
+        "forward_relative": 2.5785445332031924e-15,
+        "real_q_VJP_relative": 3.730183265998603e-15,
+        "complex_p_VJP_relative": 5.015324553105681e-15,
+        "families": {
+          "edge": 9.50632235235979e-16,
+          "face": 1.4715949092327596e-15,
+          "interior": 3.4490841634522526e-15
+        }
+      },
+      {
+        "forward_relative": 2.1255020423161816e-15,
+        "real_q_VJP_relative": 2.0429002815670226e-15,
+        "complex_p_VJP_relative": 1.884121202237299e-15,
+        "families": {
+          "edge": 1.7480862925088156e-15,
+          "face": 1.2844196768157743e-15,
+          "interior": 2.6898143486734107e-15
+        }
+      }
+    ],
+    "density_pair_relative": 3.635654824824347e-15,
+    "maximum_window_coordinate_defect_nm": 3.6985572893855014e-15,
+    "original_seconds": {
+      "forward": 0.9589223456569016,
+      "vjp": 1.3952687510754913
+    },
+    "factorized_seconds": {
+      "forward": 1.9685683259740472,
+      "vjp": 3.903246710076928,
+      "cache_build": 0.1619681380689144
+    },
+    "reference_loaded": false,
+    "source_sha": "2b800046deea355d0350a0ececf8adb625a7c82c",
+    "input_sha256": "1d2e0cb8b8078b4c0ce381be3271778d0bccb3e69db113e67568dc2be50af051",
+    "design_sha256": "17df21af7f86293753b9b58bd3a491c1ec7fa3989bb8a8e33436ec7a857a21f6",
+    "worker_elapsed_seconds": 10.168625042075291,
+    "route_elapsed_seconds": 74.49805740313604,
+    "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+    "full_size_0p7_target_qualified": false,
+    "source_stage": "completed qualification; tensor kernel correct but not chosen for training",
+    "performance_claim": "only the three pairing witnesses; not an independent neural/control speed benchmark"
+  },
+  "calibrations": {
+    "v30_wave_calibration_5nm": {
+      "wavelength_nm": 5.0,
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "5.0",
+        "nominal_wavelength_nm": "5",
+        "source_wavelength_nm": "5",
+        "delta": "0.00603145547",
+        "beta": "0.00435380777",
+        "n_decimal": [
+          "0.99396854453",
+          "0.00435380777"
+        ],
+        "epsilon_decimal": [
+          "0.9879545118729884805480",
+          "0.0086550959446206099962"
+        ],
+        "source_kind": "repository_input/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "exact registered wavelength",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.99396854453,
+          0.00435380777
+        ],
+        "epsilon_loaded": [
+          0.9879545118729887,
+          0.00865509594462061
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "cells": 384,
+      "degree": 3,
+      "h_nm": 1.25,
+      "fields": {
+        "air_plane": {
+          "raw_exponential_representation_error": 1.9014887940096254e-16,
+          "raw_function_identity": "one exact real-wave neuron without localization",
+          "restricted_real_q_flat_interface_representation_qualified": null,
+          "raw_interface_assembly": "independent Fresnel s; continuous E, derivative follows medium",
+          "finite_element_L2_relative": 0.0019618711987017074,
+          "finite_element_H_scaled_curl_relative": 0.011846678571841206,
+          "FE_interpolation_accuracy_1e_4": false,
+          "interpretation": "diagnostic only; this is not the nonseparable M5 solve"
+        },
+        "flat_interface": {
+          "raw_exponential_representation_error": null,
+          "raw_function_identity": "known piecewise complex-beta Fresnel function; not the restricted real-q trained network",
+          "restricted_real_q_flat_interface_representation_qualified": false,
+          "raw_interface_assembly": "independent Fresnel s; continuous E, derivative follows medium",
+          "finite_element_L2_relative": 0.0019618711995636746,
+          "finite_element_H_scaled_curl_relative": 0.011817592617361952,
+          "FE_interpolation_accuracy_1e_4": false,
+          "interpretation": "diagnostic only; this is not the nonseparable M5 solve"
+        }
+      },
+      "reference_solve_count": 0,
+      "analytic_only": true,
+      "nonseparable_M5_numerical_gate": false,
+      "geometry_scaling": 1.0,
+      "reduced_0p7_pilot": false,
+      "interpretation": "unscaled analytic discretization audit; p3 same-discrete M5 solver qualification is separate from continuum interpolation accuracy",
+      "source_sha": "2b800046deea355d0350a0ececf8adb625a7c82c",
+      "input_sha256": "88266c4854dfa075815d5df595b1a7c8024e7d0439c4b02fbb0f47eec35b12df",
+      "design_sha256": "17df21af7f86293753b9b58bd3a491c1ec7fa3989bb8a8e33436ec7a857a21f6",
+      "worker_elapsed_seconds": 76.06344774295576,
+      "route_elapsed_seconds": 140.3034140469972,
+      "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "full_size_0p7_target_qualified": false
+    },
+    "v30_wave_calibration_0p7nm": {
+      "wavelength_nm": 0.7,
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "0.7",
+        "nominal_wavelength_nm": "0.7",
+        "source_wavelength_nm": "0.699999988",
+        "delta": "0.000114859526",
+        "beta": "4.32477054E-06",
+        "n_decimal": [
+          "0.999885140474",
+          "0.00000432477054"
+        ],
+        "epsilon_decimal": [
+          "0.9997702941220070727210241084",
+          "0.00000864854759781143367192"
+        ],
+        "source_kind": "user_supplied/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.999885140474,
+          4.32477054e-06
+        ],
+        "epsilon_loaded": [
+          0.9997702941220071,
+          8.648547597811433e-06
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "cells": 384,
+      "degree": 3,
+      "h_nm": 1.25,
+      "fields": {
+        "air_plane": {
+          "raw_exponential_representation_error": 1.344194946826287e-15,
+          "raw_function_identity": "one exact real-wave neuron without localization",
+          "restricted_real_q_flat_interface_representation_qualified": null,
+          "raw_interface_assembly": "independent Fresnel s; continuous E, derivative follows medium",
+          "finite_element_L2_relative": 1.0330634698542107,
+          "finite_element_H_scaled_curl_relative": 0.9530356850755876,
+          "FE_interpolation_accuracy_1e_4": false,
+          "interpretation": "diagnostic only; this is not the nonseparable M5 solve"
+        },
+        "flat_interface": {
+          "raw_exponential_representation_error": null,
+          "raw_function_identity": "known piecewise complex-beta Fresnel function; not the restricted real-q trained network",
+          "restricted_real_q_flat_interface_representation_qualified": false,
+          "raw_interface_assembly": "independent Fresnel s; continuous E, derivative follows medium",
+          "finite_element_L2_relative": 1.0330634698684955,
+          "finite_element_H_scaled_curl_relative": 0.953028000674477,
+          "FE_interpolation_accuracy_1e_4": false,
+          "interpretation": "diagnostic only; this is not the nonseparable M5 solve"
+        }
+      },
+      "reference_solve_count": 0,
+      "analytic_only": true,
+      "nonseparable_M5_numerical_gate": false,
+      "geometry_scaling": 1.0,
+      "reduced_0p7_pilot": false,
+      "interpretation": "unscaled analytic discretization audit; p3 same-discrete M5 solver qualification is separate from continuum interpolation accuracy",
+      "source_sha": "2b800046deea355d0350a0ececf8adb625a7c82c",
+      "input_sha256": "748bb4ec50d9870f6b18bf491cd35ace5cebca2055594c432d515650dcc2fb88",
+      "design_sha256": "17df21af7f86293753b9b58bd3a491c1ec7fa3989bb8a8e33436ec7a857a21f6",
+      "worker_elapsed_seconds": 29.497963633853942,
+      "route_elapsed_seconds": 93.70992376189679,
+      "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+      "full_size_0p7_target_qualified": false
+    }
+  },
+  "same_p3_solver_goal_retained": true,
+  "continuous_discretization_qualified": false,
+  "unscaled_0p7_geometry_not_used_for_training": true
+}

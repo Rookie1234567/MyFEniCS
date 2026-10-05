@@ -14,8 +14,7 @@ from time import monotonic
 import numpy as np
 from scipy.optimize import minimize
 
-from src.solvers.neural_wave_moments import Patch
-from src.solvers.neural_wave_factorized import FactorizedWaveMoments
+from src.solvers.neural_wave_moments import Patch, WaveMoments
 from src.solvers.neural_wave_subspace import WaveSubspace, optimal_amplitudes
 
 
@@ -259,7 +258,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     bytes_plan = 2 * 16 * n * capacity + 3 * 16 * capacity**2 + 2 * 2**30
     if bytes_plan > 12 * 2**30:
         raise ValueError("AUTHORIZED_CAPACITY_PLANNING_LINE_EXCEEDED")
-    moments = FactorizedWaveMoments(packet, batch=8)
+    moments = WaveMoments(packet, batch=8)
     space = WaveSubspace(action, capacity)
     store = BasisStore(Path(artifact) / "basis", binding)
     rng = np.random.default_rng(strategy["seed"])
@@ -284,6 +283,26 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     history = Path(artifact) / "basis_growth.jsonl"
     stop = None
     while space.m < capacity:
+        comparison = Path(artifact) / "common_comparison_boundary.json"
+        if (
+            not comparison.exists()
+            and monotonic() - binding["route_origin_monotonic"]
+            >= strategy["common_comparison_seconds"]
+        ):
+            # This is a persisted work node to give the other route its common
+            # budget, not numerical completion or a review/handoff boundary.
+            atomic_json(
+                comparison,
+                dict(
+                    columns=space.m,
+                    native_relative=float(np.linalg.norm(space.r) / action.bnorm),
+                    elapsed_seconds=monotonic() - binding["route_origin_monotonic"],
+                    source_sha=binding["source_sha"],
+                    continuation_allowed_within_original_campaign=True,
+                ),
+            )
+            stop = "COMMON_COST_WORK_NODE_FROZEN_NOT_FINAL"
+            break
         if monotonic() > deadline - 600:
             stop = "CAMPAIGN_OR_ROUTE_BUDGET_SAVE_RESERVE"
             break
@@ -449,7 +468,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 except TimeoutError:
                     stop = "MODULE_INTERRUPTED_AT_SAVE_RESERVE"
                     break
-            # Optimization uses the qualified contraction; the accepted field
+            # Optimization uses the qualified sparse maps; the accepted field
             # always uses the original complete point-value matrix and geometry.
             from src.solvers.neural_wave_reconstruction import pointwise_moments
 
@@ -481,6 +500,10 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 amplitude_norm=float(np.linalg.norm(best[1])),
                 elapsed_seconds=monotonic() - binding["route_origin_monotonic"],
             )
+            if event["accepted"]:
+                event["predicted_actual_decrease_load_scaled_absolute"] = (
+                    abs(best[0] - event["actual_energy_decrease"]) / action.bnorm**2
+                )
             if event["accepted"]:
                 model = dict(patch=patch, q=q, p=best[1])
                 stagnant = (

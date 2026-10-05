@@ -2,4 +2,4 @@ schema_version = 1
 
 [neural_wave]
 stage = "v30_wave_calibration_5nm"
-design_sha256 = "17df21af7f86293753b9b58bd3a491c1ec7fa3989bb8a8e33436ec7a857a21f6"
+design_sha256 = "df336d93f6f7b2ab2cb600fe70f224b1e8e056ac5552c589a0391ff5a4a11b37"
