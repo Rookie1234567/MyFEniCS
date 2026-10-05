@@ -98,6 +98,7 @@ def build_same_mesh_physical_action(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
+    surface_assembler_factory: Any = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -144,7 +145,8 @@ def build_same_mesh_physical_action(
         raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
     qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
-    assemblers = _surface_assemblers(
+    assembler_factory = _surface_assemblers if surface_assembler_factory is None else surface_assembler_factory
+    assemblers = assembler_factory(
         function_space,
         setup["mesh_data"],
         cfg,

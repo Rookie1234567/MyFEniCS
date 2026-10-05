@@ -36,6 +36,20 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if b'[task042_v50]' in args.input_path.read_bytes():
+            from src.io.scattering_accuracy import load_scattering_accuracy
+            specification = load_scattering_accuracy(args.input_path)
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('V50 requires one explicit stage')
+            if args.validate_only or args.dry_run:
+                print(json.dumps(dict(status='valid', stage=specification.derived['stage'],
+                    input_sha256=specification.input_sha256, physical_sha256=specification.physical_model_sha256)))
+                return 0
+            from src.runners.port_preparation import launch
+            result = launch(specification)
+            print(json.dumps(dict(directory=result['directory'], classification=result['classification'],
+                seconds=result['elapsed_seconds'], exit_code=result['leader_exit_code'])))
+            return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 3
         if b'[task042_v49]' in args.input_path.read_bytes():
             from src.io.scattering_anchor import load_scattering_anchor
             specification = load_scattering_anchor(args.input_path)

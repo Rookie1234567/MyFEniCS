@@ -909,6 +909,7 @@ def _global_raw_tensor_cache(
     ],
     *,
     select_lexicographic_representative: bool = False,
+    raw_tensor_provider: Callable | None = None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each tensor-cache class once globally, then broadcast it.
 
@@ -1011,13 +1012,17 @@ def _global_raw_tensor_cache(
                 raise RuntimeError(f"unknown raw tensor policy {policy!r}")
             compiled_form, kernels, dimension = policy_forms[policy]
             kernel_started = perf_counter()
-            locally_evaluated[key] = _tabulate_raw_tensor_class(
+            tabulator = _tabulate_raw_tensor_class if raw_tensor_provider is None else raw_tensor_provider
+            locally_evaluated[key] = tabulator(
                 compiled_form,
                 kernels,
                 global_coordinates[key],
                 tag=int(key[1]),
                 dimension=int(dimension),
             )
+            tensor = locally_evaluated[key]
+            if tensor.shape != (int(dimension), int(dimension)) or tensor.dtype != np.complex128 or not np.isfinite(tensor).all():
+                raise ValueError("explicit raw tensor provider shape/dtype/finite gate")
             local_kernel_seconds += perf_counter() - kernel_started
             local_evaluations += 1
     except Exception as error:
@@ -1208,6 +1213,7 @@ def build_unconstrained_assembly_time_condensation(
     geometry_identity_policy: str = "rounded_12",
     share_identity_cache: bool = False,
     class_checkpoint: Callable | None = None,
+    raw_tensor_provider: Callable | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1226,6 +1232,8 @@ def build_unconstrained_assembly_time_condensation(
         raise TypeError("assembly-time condensation requires complex128")
     if class_checkpoint is not None and not callable(class_checkpoint):
         raise TypeError("explicit class checkpoint must be callable")
+    if raw_tensor_provider is not None and not callable(raw_tensor_provider):
+        raise TypeError("explicit raw tensor provider must be callable")
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
     representative_tensor_groups = (
@@ -1440,6 +1448,7 @@ def build_unconstrained_assembly_time_condensation(
             local_class_coordinates,
             policy_forms,
             select_lexicographic_representative=representative_tensor_groups,
+            raw_tensor_provider=raw_tensor_provider,
         )
     except Exception:
         if condensed is not None:

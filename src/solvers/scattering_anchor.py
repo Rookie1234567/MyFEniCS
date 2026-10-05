@@ -49,15 +49,17 @@ def save_arrays(path, **arrays):
 
 
 class Journal:
-    def __init__(self, folder):
+    def __init__(self, folder, *, window_scope=None, planning_limit_bytes=8*2**30):
         self.folder = Path(folder); self.began = time.perf_counter()
+        self.window = window if window_scope is None else window_scope
+        self.planning_limit_bytes = planning_limit_bytes
         self.timings = {}; self.lifetimes = []; self.calls = {"A":0, "AH":0, "factor":0}
 
     def event(self, name, **data):
-        window.require_live()
+        self.window.require_live()
         row = {"event":name, "elapsed_s":time.perf_counter()-self.began,
                "RSS_bytes":int(next(l.split()[1] for l in Path('/proc/self/status').read_text().splitlines() if l.startswith('VmRSS:')))*1024,
-               "clock":window.snapshot(), **data}
+               "clock":self.window.snapshot(), **data}
         with (self.folder/'events.jsonl').open('a') as out:
             out.write(json.dumps(_json_metadata(row),allow_nan=False)+'\n');out.flush()
         print(name, round(row['elapsed_s'],3), flush=True)
@@ -95,8 +97,8 @@ class Journal:
         added = int(facts.get('matrix_payload_bytes',0))+int(facts.get('workspace_bytes',0))
         rss = int(next(l.split()[1] for l in Path('/proc/self/status').read_text().splitlines() if l.startswith('VmRSS:')))*1024
         self.event('allocation_'+name, planned_new_bytes=added)
-        if rss+added > 8*2**30:
-            raise MemoryError('finite anchor planned simultaneous allocation exceeds8GiB')
+        if rss+added > self.planning_limit_bytes:
+            raise MemoryError('finite anchor planned simultaneous allocation exceeds declared budget')
 
 
 def configuration(case, degree=4):
@@ -179,7 +181,7 @@ def boundary_support(bundle):
     return tuple(groups),byrow
 
 
-def condense(bundle,journal,expected=None):
+def condense(bundle,journal,expected=None,*,raw_tensor_provider=None):
     from dolfinx import fem
     from .hcurl_assembly_time_condensation import build_unconstrained_assembly_time_condensation
     from .p4_cell_condensed_inverse import assemble_condensed_ports,P4CellCondensedInverse
@@ -193,7 +195,8 @@ def condense(bundle,journal,expected=None):
             appended_support_group_by_row=rowgroups,dense_appended_block=True,
             sum_duplicate_cell_integrals=True,strict_local_checks=True,defer_final_assembly=True,
             geometry_identity_policy='raw_unrounded',share_identity_cache=True,
-            retain_local_schur_for_matrix_free=True,retain_local_original_for_native_audit=True)
+            retain_local_schur_for_matrix_free=True,retain_local_original_for_native_audit=True,
+            raw_tensor_provider=raw_tensor_provider)
         del compiled
         terms=assemble_condensed_ports(system,bundle['dtn_action'].carrier)
         inverse=P4CellCondensedInverse(system,None,port_terms=terms,owns_condensed=True,owns_factor=False)
