@@ -1,6 +1,230 @@
 {
-  "status": "NOT_RUN_PENDING_FINAL_COMMITTED_BYTES",
-  "reason": "created link target before clean documentation check; no test pass claimed",
+  "status": "PASSED_LOCAL",
+  "checked_actual_delivery_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v48.md",
+      "sha256": "c964439999d9516a1f38cd8b79325675b39e91cc377d330100d092658f304959",
+      "tables": [
+        {
+          "line": 17,
+          "columns": 2
+        },
+        {
+          "line": 30,
+          "columns": 2
+        },
+        {
+          "line": 44,
+          "columns": 4
+        },
+        {
+          "line": 60,
+          "columns": 3
+        },
+        {
+          "line": 75,
+          "columns": 5
+        },
+        {
+          "line": 86,
+          "columns": 5
+        },
+        {
+          "line": 108,
+          "columns": 2
+        },
+        {
+          "line": 192,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v49.md",
+        "outcomes/complete_scattering_engine_anchor_v49.md",
+        "outcomes/records/delivery_index_v49.json",
+        "outcomes/records/raw_archive_index_v49.json",
+        "outcomes/records/post_settlement_archive_v49.json",
+        "outcomes/records/source_bindings_v49.json",
+        "outcomes/records/array_inventory_v49.json",
+        "outcomes/records/review_v48_independent_checks.json",
+        "outcomes/records/review_v48_metadata_audit.py.gz",
+        "outcomes/records/review_v48_repository_index.gz",
+        "outcomes/records/review_v48_documentation_checks.json",
+        "outcomes/records/p_increment_v49.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v50.md",
+      "sha256": "33d76b8c1d34bd584ecd71b6db6c4aab9d9c3a334a44f6f092ae52d165040972",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 3
+        },
+        {
+          "line": 22,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "review_report_v48.md",
+        "outcomes/complete_physics_accuracy_cost_v50.md",
+        "outcomes/records/resource_costs_final_v50.json",
+        "outcomes/records/delivery_index_v50.json",
+        "outcomes/records/resource_costs_final_v50.json",
+        "outcomes/records/documentation_checks_v50.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/complete_physics_accuracy_cost_v50.md",
+      "sha256": "e926a97005dbc68ed3133768b5823006f38bf462c4dc1a9d3ee803a4ba797d03",
+      "tables": [
+        {
+          "line": 9,
+          "columns": 2
+        },
+        {
+          "line": 29,
+          "columns": 5
+        },
+        {
+          "line": 36,
+          "columns": 3
+        },
+        {
+          "line": 54,
+          "columns": 3
+        },
+        {
+          "line": 70,
+          "columns": 3
+        },
+        {
+          "line": 85,
+          "columns": 4
+        },
+        {
+          "line": 100,
+          "columns": 6
+        },
+        {
+          "line": 111,
+          "columns": 4
+        },
+        {
+          "line": 120,
+          "columns": 3
+        },
+        {
+          "line": 132,
+          "columns": 3
+        },
+        {
+          "line": 145,
+          "columns": 3
+        },
+        {
+          "line": 156,
+          "columns": 3
+        },
+        {
+          "line": 171,
+          "columns": 3
+        },
+        {
+          "line": 186,
+          "columns": 3
+        },
+        {
+          "line": 210,
+          "columns": 5
+        },
+        {
+          "line": 223,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "../review_report_v48.md",
+        "records/boundary_independent_checks_v50.json.gz",
+        "records/opportunity_decision_v50.json.gz",
+        "records/saved_field_attribution_v50.json",
+        "records/saved_field_equation_rechecks_v50.json",
+        "records/representation_screen_v50.json.gz",
+        "records/cold_n1_costs_v50.json",
+        "records/object_lifetimes_v50.json",
+        "records/resource_costs_final_v50.json",
+        "records/source_bindings_v50.json.gz",
+        "records/array_inventory_v50.json",
+        "records/array_headers_v50.json.gz",
+        "records/run_index_v50.json",
+        "records/physical_identity_bindings_v50.json",
+        "records/raw_archive_index_v50.json.gz",
+        "records/delivery_index_v50.json",
+        "records/repair_journal_v50.json",
+        "records/changed_files_v50.json"
+      ]
+    }
+  ],
+  "old_history_suffixes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 83392,
+      "sha256": "21dbf3a697ad8ee9c7f69caab5e8171af43d662d9076b4affe328ee1a05e872c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 132074,
+      "sha256": "7fca12081a40ef008c1cbe1eb9b0c10f8956fea34e628aab6c6e9e5f3d601b1c"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 259022,
+      "sha256": "dd4e96cfa18066a627e971f318febe4e94dabb7fec1a1bd2a7145bd4b542e6b7"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 292875,
+      "sha256": "45756cc28f7f7bc4ca617edb0272914f1eb771d763e796c5ed2a6c2186c145a3"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_26_documentation_contract"
+      ],
+      "returncode": 0,
+      "seconds": 0.21602171496488154
+    },
+    {
+      "command": [
+        "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+        "check",
+        "--select",
+        "E9,F63,F7,F82",
+        "benchmarks/collect_scattering_accuracy.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.010978918988257647
+    },
+    {
+      "command": [
+        "git",
+        "-c",
+        "gc.auto=0",
+        "-c",
+        "maintenance.auto=false",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "seconds": 0.02996757603250444
+    }
+  ],
   "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
   "CI": "NOT_RUN"
 }

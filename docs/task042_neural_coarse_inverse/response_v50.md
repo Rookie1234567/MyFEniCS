@@ -28,7 +28,7 @@
 
 这两条成功时间不是免费fresh冷N=1：FLAT复用身份完整的失败准备tensor，NOTCH控制复用已付费的全类资格；两条都新建矩阵和全部因子，OS/JIT缓存未清空。808.156467s失败准备、全部资格／重放和293.329448s独立VERIFY保留在[费用账](outcomes/records/resource_costs_final_v50.json)中。缓存、q和小项保留规则已变化，shared-workstation负载也未配平，性能结论INCONCLUSIVE。没有将750s kernel callback笼统称LU或不可避免的生产费用。
 
-原体积FFCx独立oracle一直保留；求解返回先保存最小完整系数，再释放有限全局p5因子及凝聚矩阵、恢复／输出／审核。FLAT有29类局部LU，NOTCH有30类，分别存在一个有限全局p5 MUMPS因子；不是factor-free，不重开全局p4生产PC。源、input/resolved、材料／几何／mode／数组／生命周期与1151组源版本见[证据索引](outcomes/records/delivery_index_v50.json)。VERIFY source为`e82b713ec9bc86b124ef9f623a981664ffe93ce2`；COST及最终相关测试source为`f2173db00b8116a00f7b87e78b9e585ed83b38fa`，最终文档HEAD另报。
+原体积FFCx独立oracle一直保留；求解返回先保存最小完整系数，再释放有限全局p5因子及凝聚矩阵、恢复／输出／审核。FLAT有29类局部LU，NOTCH有30类，分别存在一个有限全局p5 MUMPS因子；不是factor-free，不重开全局p4生产PC。源、input/resolved、材料／几何／mode／数组／生命周期见[证据索引](outcomes/records/delivery_index_v50.json)；初次归档1151组源版本，结算后的完整库存另列，不把快照当最终值。VERIFY source为`e82b713ec9bc86b124ef9f623a981664ffe93ce2`；COST及最终相关测试source为`f2173db00b8116a00f7b87e78b9e585ed83b38fa`，最终文档HEAD另报。
 
 从2026-10-05T05:10:55.885225580Z冻结7h；heavy-stop11:25:55.885225Z、截止12:10:55.885225Z没有刷新。每次上下文恢复／新stage／提交前实际重读UTC、monotonic、boot与合同。MPI1、数学／CPU1、GPU0、ownswap0，独立缓存、自有锁、实时核／SMT和原PSI保护保持。配置采样周期0.5s；实际全库存最大间隔16.948009s发生在最早qual01，修复全历史库存重复计量后正式科学阶段仍有最大3.826928s间隔。资源数值只授采样进程树口径，非连续cgroup硬峰；没有把这个限制藏成“绝对零干扰”。未触资源停机，邻任务可比阶段不可得，不作无争用性能结论。
 

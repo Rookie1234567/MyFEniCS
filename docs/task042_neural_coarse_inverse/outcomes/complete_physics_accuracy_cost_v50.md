@@ -230,7 +230,7 @@ GRAM_CONTROL以相同raw几何／材料／basis构造六Gram，全部17raw／5or
 | COST／最终focused／collector | `f2173db00b8116a00f7b87e78b9e585ed83b38fa` |
 | 文档／交付HEAD | 最终Git报告；不代替上述任何运行源 |
 
-source manifest与Git blob逐版本核对1151组；raw初次归档618条，结算尾部另补，不能把早期快照当最终库存。100个科学NPZ、521实际成员、1197627632B数值payload；完整包hash和逐成员父receipt/headers分开，未伪称所有header都有新member hash。详细[source](records/source_bindings_v50.json.gz)、[数组](records/array_inventory_v50.json)、[headers](records/array_headers_v50.json.gz)、[run index](records/run_index_v50.json)、[物理/输入绑定](records/physical_identity_bindings_v50.json)、[raw](records/raw_archive_index_v50.json.gz)及[delivery](records/delivery_index_v50.json)可重算。
+source manifest与Git blob初次逐版本核对1151组；raw初次归档618条，结算尾部另补，不能把早期快照当最终库存。100个科学NPZ、521实际成员、1197627632B数值payload；完整包hash和逐成员父receipt/headers分开，未伪称所有header都有新member hash。详细[初次source](records/source_bindings_v50.json.gz)、[结算source](records/source_bindings_final_v50.json.gz)、[数组](records/array_inventory_v50.json)、[headers](records/array_headers_v50.json.gz)、[run index](records/run_index_v50.json)、[物理/输入绑定](records/physical_identity_bindings_v50.json)、[初次raw](records/raw_archive_index_v50.json.gz)、[结算raw](records/post_settlement_archive_v50.json.gz)及[delivery](records/delivery_index_v50.json)可重算。
 
 普通bug同轮修复：全历史存储每tick统计、边界下游小项截断接线、自身中断留下的JIT marker、formal launcher费用reader、实际FFCx元数据API。API错误后从完整身份checkpoint继续，不重算已合法返回场。第一份raw/class资格、失败日志、时间和旧source全部保留。没有把普通不收敛当bug扫参数。修复journal另有[preserved记录](records/repair_journal_v50.json)。旧successful resolved_config里的继承说明文本仍写旧表面规则，而实际显式degree47及factory为q47；最新loader已修正说明，旧字节不动，新identity记录明确勘误。实际form_data与稳定Basix元素身份在独立VERIFY另补，不让内存地址repr成为“元素hash”。
 
