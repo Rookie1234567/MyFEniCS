@@ -1,5 +1,17 @@
-# Task40extra 当前测试摘要：Review V9收尾增量（早期阶段记录保留）
+# Task40extra 当前测试摘要：Review V10文档收口与版本分列测试（V9及更早记录保留）
 
+## Review V10 证据、工程修复与文档收口
+
+| 检查集合 / source | 命令或证据 | 结果与边界 |
+|---|---|---|
+| 原始 A 定向测试，Git source `45a388fa12afb69a29afaa0240a72018a0069967` | V10 原 A 测试记录 | 44 passed，按该次原A源回执；保留为旧源测试结果 |
+| A checker相关测试，Git source `b2c5ae94ebec1394e4b659dd6b8aef26866b5b38` | Task40 qualified activation下既有记录 | 30 passed in 2.96 s；不与其他source的fixtures合并 |
+| A V2输出目录守卫fixtures，冻结source `a4ac46a8d796f9c101a0b4b9364bf01e9101dd50` | V2 runner fixture既有记录 | 3 passed in 0.52 s；与前两组分开，不求和宣称统一覆盖 |
+| V10 ABI preflight（最终文档收口） | V10 §4.2 qualified activation；解析`runtime_prefix`下解释器与petsc4py/slepc4py/dolfinx/mpi4py | PASS；Linux；PETSc complex128/int32；全部模块来自同一runtime_prefix。较早一次探针错误地要求root/.venv，断言失败只反映路径条件不适用于Task40，不是ABI环境失败；随后按真实runtime_prefix resolve重跑通过 |
+| V10文档合同测试 | `python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py` | 24 passed，134 subtests passed in 0.17 s；文档/registry/retrospective contracts only，无PDE |
+| V10数值 / 全仓范围 | 本次收口 | 本次未追加FE/PDE或数值测试；此前V10的A边界与B0运行及负结果按Response/records登记。全仓pytest、MPI4、Ruff、CI未运行 |
+
+上述测试属于不同源与fixture集合，不能相加为一个“通过总数”。定向测试不证明official R/T/A或目标尺度能力。
 | 检查 | 命令 / 记录 | 结果与边界 |
 |---|---|---|
 | W1解析矩helper定向测试（V9 source `50f29a285d25b20ba0c4d34e6d6b9e2d8ce46de8`） | Task40资格化本机activation后运行`python -m pytest -q src/test/test_task40_w1_moment_reference.py` | `6 passed in 4.29 s`；只测独立高精度矩helper；不含FE/PDE。此为已有回执，V9文档收尾未重跑 |

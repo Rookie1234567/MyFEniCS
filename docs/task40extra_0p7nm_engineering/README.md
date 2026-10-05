@@ -29,6 +29,15 @@
 
 | 文件 | 内容 |
 |---|---|
+| [Response V10](response_v10.md) | A边界恢复误差、B0 p6逆算子与物理能量门、成本和限制的逐项回应 |
+| [Integrated p6](outcomes/review_v10_integrated_p6.md) | 用同一套边界解释串联B0 p6组件、线性残差、能量门与A证据 |
+| [Review V10 manifest](outcomes/records/review_v10_manifest.json) | V10证据导航、固定窗口与结论边界 |
+| [Review V10 boundary](outcomes/records/review_v10_boundary.json) | A旧checker误判保留、V1重检和V2上下边界结果 |
+| [Review V10 p6 inverse](outcomes/records/review_v10_p6_inverse.json) | B0四q逆算子分量及regular reference残差 |
+| [Review V10 physical comparison](outcomes/records/review_v10_physical_comparison.json) | p4 control、p6 target residual和energy-gate结果 |
+| [Review V10 cost and repairs](outcomes/records/review_v10_cost_and_repairs.json) | 已知资源/阶段时间、工程失败与unknown成本 |
+| [结果总结](outcomes/summary.md) | V10两级账与V9及更早历史结果 |
+| [测试摘要](outcomes/test_summary.md) | 各source版本分列的V10定向与文档测试 |
 | [Response V1](response_v1.md) | 原始 N0–N6 回答与 attempt4 失败分类（历史） |
 | [Response V2](response_v2.md) | R0–R5 收口，含 G0/G1 与 same-discrete direct reference |
 | [Identity recovery](outcomes/identity_recovery_v1.md) | 根因、精确几何修复、strict fresh runs 与 direct 对照 |

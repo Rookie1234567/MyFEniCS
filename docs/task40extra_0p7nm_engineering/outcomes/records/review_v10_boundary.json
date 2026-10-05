@@ -1,170 +1,192 @@
 {
-  "campaign": {
-    "campaign_seconds": 86400,
-    "deadline_utc": "2026-10-06T02:22:47.493693330Z",
-    "initial_exact_monotonic": "NOT_CAPTURED",
-    "t0_utc": "2026-10-05T02:22:47.493693330Z",
-    "window_refreshed": false
+  "schema": "task40extra.review_v10_boundary.v1",
+  "classification": "SAVED_ARRAYS_PARTIAL_OR_CONTROLLED_NEGATIVE",
+  "a_original": {
+    "run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z",
+    "git_source_sha": "45a388fa12afb69a29afaa0240a72018a0069967",
+    "saved_numeric_arrays": 88,
+    "npz_bytes": 46608954,
+    "old_checker_preserved": true,
+    "old_checker_note": "曾因32060/16030通道数混淆把p4 top标为FAIL；原始FAIL记录不改写。",
+    "original_worker_p4_top_pass": true,
+    "old_checker_p4_top_false_negative_due_mode_count_confusion": true,
+    "old_checker_result_preserved": true,
+    "worker_elapsed_seconds": 57.269548677955754,
+    "watchdog_elapsed_seconds": 71.49506455799565,
+    "watchdog_tree_rss_peak_bytes": 762998784,
+    "watchdog_cgroup_peak_bytes": 916602880,
+    "watchdog_swap_peak_bytes": 0
   },
-  "frozen_scale_recheck": {
-    "denominator": "norm(saved q60_apply)",
-    "full_action_gate_pass": true,
-    "gate_threshold": 1e-10,
-    "max_key": [
-      "top",
-      -71,
-      35,
-      "s"
-    ],
-    "max_mode_index": 8146,
-    "max_per_mode_relative": 4.033862838988283e-12,
-    "n0_max_per_mode_relative": 3.3410810842083564e-15,
-    "q60_component_scale": "norm(saved q60_components)/abs(original H)",
-    "reference_action_delta_norm": 4.63925895833072e-11,
-    "relative_action_error": 9.063390130105725e-15,
-    "saved_action_norm": 5118.679535729753,
-    "scalar_gate_pass": true,
-    "zero_scale_modes": 0
+  "v1_recheck": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/w1_v10_a_extension_checker_recheck_v1.json",
+    "sha256": "9626b1500e0b2c6eebadcb2dca31ae88b0438848391a67d549b9f29c7aba63c5",
+    "p4_top_recomputed_pass": true,
+    "p6_top_recomputed_pass": false,
+    "q60_finite_saved_action_and_per_mode_pass": true,
+    "q60_finite_witness_classes": 5,
+    "q60_true_n0_witness_pass": true,
+    "q30_worst_relative_error": 5.705909332721303,
+    "q30_limit": 1e-10,
+    "q30_negative_automatically_vetoes_q60": false,
+    "q60_analytic_direct_moment_comparison": "PASS; included within the five finite witness classes, no separate count asserted"
   },
-  "historical_negative_preserved": {
-    "reported_max_relative": 5.705909332721303,
-    "status": "FAIL_Q30_PRESERVED",
-    "worst_key": [
-      "top",
-      -67,
-      -34,
-      "s"
-    ]
+  "v2_bottom_continuation": {
+    "status": "BOTTOM_CONTINUATION_COMPLETE",
+    "git_source_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
+    "numeric_members": 166,
+    "npz_bytes": 73103486,
+    "npz_sha256": "6cca157f3fc5e689ffb409d48564dae94cdb6f1d915ef641141880285bd29c20",
+    "p4_top_forward_recovery_relative_error": 4.071005827429115e-13,
+    "p4_bottom_forward_recovery_relative_error": 3.318404914520256e-13,
+    "p6_top_forward_recovery_relative_error": 2.202932653970648e-11,
+    "p6_bottom_forward_recovery_relative_error": 2.42442721473547e-11,
+    "known_interior_solution_forward_recovery_limit": 1e-11,
+    "original_equation_residual_limit": 1e-10,
+    "metric_note": "p6 top/bottom超限量是已知内部场恢复前向误差，不是原方程残差；原方程残差门通过。"
   },
-  "independent_moment_witnesses": [
-    {
-      "analytic80_vs_direct100_x_relative": 0.0,
-      "analytic80_vs_direct100_y_relative": 0.0,
-      "direct_precision_dps": 100,
-      "implementation": "segmented mpmath quad over [0,.2,.4,.6,.8,1]",
-      "k_x": "(0.5551436135565133+0j)",
-      "k_y": "(-8.545132017764239+0j)",
-      "key": [
-        "top",
-        -67,
-        -34,
-        "s"
-      ],
-      "mode_index": 8576
-    },
-    {
-      "analytic80_vs_direct100_x_relative": 0.0,
-      "analytic80_vs_direct100_y_relative": 6.394032421564708e-108,
-      "direct_precision_dps": 100,
-      "implementation": "segmented mpmath quad over [0,.2,.4,.6,.8,1]",
-      "k_x": "(8.97461192517716+0j)",
-      "k_y": "0j",
-      "key": [
-        "top",
-        0,
-        0,
-        "s"
-      ],
-      "mode_index": 16028
-    },
-    {
-      "analytic80_vs_direct100_x_relative": 0.0,
-      "analytic80_vs_direct100_y_relative": 0.0,
-      "direct_precision_dps": 100,
-      "implementation": "segmented mpmath quad over [0,.2,.4,.6,.8,1]",
-      "k_x": "(-1.7068030970281374+0j)",
-      "k_y": "(-8.79645943005142+0j)",
-      "key": [
-        "top",
-        -85,
-        -35,
-        "s"
-      ],
-      "mode_index": 6018
-    },
-    {
-      "analytic80_vs_direct100_x_relative": 0.0,
-      "analytic80_vs_direct100_y_relative": 6.394032421564708e-108,
-      "direct_precision_dps": 100,
-      "implementation": "segmented mpmath quad over [0,.2,.4,.6,.8,1]",
-      "k_x": "(-8.869634347212868+0j)",
-      "k_y": "0j",
-      "key": [
-        "top",
-        -142,
-        0,
-        "s"
-      ],
-      "mode_index": 10
-    }
-  ],
-  "inputs": {
-    "mode_count": 32060,
-    "ordered_mode_identity_verified": true,
-    "ordered_mode_manifest": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
-    "ordered_mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
-    "saved_80digit_reference_npz": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/w1_reference_completion_raw_v2.npz",
-    "saved_80digit_reference_npz_sha256": "d83151f8db3b186e9dc5366c56b052243b01d690fe58a83d66208e7bf37b4289",
-    "saved_denominators_sha256": "ac17901e444d2241becd698889c5406086ee8e3c74825a93c5171716d82dd4cf",
-    "saved_q60_apply_sha256": "af07712b8525df426f223d3a3669c2861d4861657e71e088bf4077660566a7de",
-    "saved_q60_components_sha256": "4975bae7c26ccc8806b14dc59a271af1a586e9407cdc9dd1229aa0105c58e208",
-    "saved_raw_npz": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz",
-    "saved_raw_npz_sha256": "a475bba1618abd74981622a66e127b2fd88b43f52a2339f5087115ed9b1a82f8",
-    "saved_trace_dtype": "complex128",
-    "saved_trace_nonzero_count": 156672,
-    "saved_trace_sha256": "8a0fa71481eb41cf1855dc4889dfe4e2af11003c1ade269cd77be2ced82f1310",
-    "saved_trace_shape": [
-      156672
-    ]
-  },
-  "n0_saved_field_witness": {
-    "count": 572,
-    "floquet_phases": [
-      "(-0.8692301774091008+0.49440762401215377j)",
-      "(1+0j)"
-    ],
-    "k_vector": [
-      "(-8.869634347212868+0j)",
-      "0j",
-      "(1.377601444289294+0j)"
-    ],
-    "key": [
-      "top",
-      -142,
-      0,
-      "s"
-    ],
-    "ky_is_exact_zero": true,
-    "mode_index": 10,
-    "reference80_components": [
-      "(-2.273362970457332-28.068999663043858j)",
-      "(-0.24919464650051715+0.9492607627315401j)"
-    ],
-    "saved_q60_components": [
-      "(-2.2733629704573524-28.06899966304394j)",
-      "(-0.24919464650051776+0.9492607627315427j)"
-    ],
-    "scalar_error_over_frozen_scale": 9.317575992333552e-17,
-    "trace_nonzero_count": 156672,
-    "trace_norm": 395.8181400592954,
-    "trace_shape": [
-      156672
-    ]
+  "engineering_failure_then_repair": {
+    "v1_failure_class": "RUNNER_OUTPUT_DIRECTORY_PRECONDITION_ENGINEERING_BUG",
+    "v1_exact_error": "bottom continuation output directory must be new and empty",
+    "bottom_numerical_work_started": false,
+    "v1_elapsed_seconds": 22.413856058,
+    "v1_tree_rss_peak_bytes": 716390400,
+    "v1_cgroup_peak_bytes": 742473728,
+    "v1_swap_peak_bytes": 0,
+    "v2_watchdog_seconds": 83.07080606103409,
+    "v2_tree_rss_peak_bytes": 744566784,
+    "v2_cgroup_peak_bytes": 928624640,
+    "v2_swap_peak_bytes": 0,
+    "v2_sample_count": 322,
+    "descendants_cleared": true
   },
   "qualification_boundary": {
-    "affected_full_B_D_rows_crosschecked": false,
-    "complete_float_path_error_bound_proven": false,
-    "finite_empirical_facet_status": "NOT_QUALIFIED",
-    "generic_complex_input_checked": false,
-    "independent_direct_moments_checked_for_old_worst_max_x_max_y_and_true_n0": true,
-    "nonzero_port_input_checked": false,
-    "overall_reference_status": "REFERENCE_NOT_QUALIFIED",
-    "saved_q60_scalar_and_action_gates_pass": true
+    "current_a_negative_reason": "p6 known-interior-field forward recovery gate only",
+    "complete_B_D_rows": "covered",
+    "generic_complex_input": "covered",
+    "nonzero_port_rhs": "covered",
+    "full_floating_point_theorem": "boundary limitation, not a V10 precondition",
+    "q_semantics": "A q60 means boundary quadrature resolution; B0 four q values mean y-periodic phase branches; they are different metrics."
   },
-  "recheck_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_frozen_action_n0_recheck_v1.json",
-  "recheck_record_sha256": "7da5ac8c62dfa4d55556572b676bc1f4fdfedaf086d930a8c93024cf621c5895",
-  "schema": "task40extra.review_v10_boundary.v1",
-  "scope": "V10 finite saved-array correction only; no PDE, no original-size solver qualification",
-  "source_at_recheck": "d15554af7da49040565dab015dc09a16c1b18dde",
-  "status": "PARTIAL_W1_SAVED_ARRAY_RECHECK_PASS__FULL_A_QUALIFICATION_INCOMPLETE"
+  "provenance": {
+    "review_base_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
+    "final_frozen_source_git_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
+    "abi_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+    },
+    "ordered_modes": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/task40v10_b0_control_ordered_mode_manifest.json",
+      "sha256": "afc439d8969463d3c3d46076382ec30c7a8fe3c9b1150955dc2d228a483e7f6b",
+      "identity_note": "532 ordered top+bottom port channels; common frozen identity used for B0 p4/p6."
+    },
+    "p6_final_a6_pre_post_release_files": {
+      "pre_release": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.json",
+          "sha256": "9bc2ecbf9067b280c73a199af8c56eb73673c945b469a8afd809f40a3c8cb288"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.npz",
+          "sha256": "5b3cd82e4b6395d53472fab73392e1979c51cc56f865f90f2377b65671e68798"
+        }
+      ],
+      "post_release": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.json",
+          "sha256": "5049c2ae89708039bb3134fe7130c6799a64da3b335c01d9db8ac0601697ca8d"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.npz",
+          "sha256": "5ac264cf592cb8bfb8b3d7551781b2cf6fd90725c63a84a9b64c332e382d949f"
+        }
+      ]
+    },
+    "run_source_git_shas": {
+      "A_original": "45a388fa12afb69a29afaa0240a72018a0069967",
+      "A_V2": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50"
+    },
+    "primary_raw_report_checker_watchdog_and_arrays": [
+      {
+        "role": "a_original_report",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/w1_v10_a_extension_report.json",
+        "sha256": "9c2f0dd7c322366a34a152d27a64b0c2f01eed5361043fbe1ab2674e242d4b5a"
+      },
+      {
+        "role": "a_original_checker",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/w1_v10_a_extension_checker.json",
+        "sha256": "b41a2cd1c9dcbb53be919913bfb73d07321901117d4313accb225adc7168d8b4"
+      },
+      {
+        "role": "a_original_watchdog",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/watchdog/summary.json",
+        "sha256": "0dccbd1b004d558ee9dfe395d332f3061660c65b8f04aa86bc45271b416a15c5"
+      },
+      {
+        "role": "a_original_npz",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/w1_v10_a_extension_arrays.npz",
+        "sha256": "d0c65c2df42f979c54fdc38f4423db79c2bf97891da6efe317cfd08718a03392"
+      },
+      {
+        "role": "a_v1_recheck",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/w1_v10_a_extension_checker_recheck_v1.json",
+        "sha256": "9626b1500e0b2c6eebadcb2dca31ae88b0438848391a67d549b9f29c7aba63c5"
+      },
+      {
+        "role": "a_v2_report",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_bottom_continuation_v2_20261005T195949Z/w1_v10_a_extension_report.json",
+        "sha256": "5e3e78cbec7f46311a8af3c93ed81e767982ff5ab08b2e5562f246ed58329b94"
+      },
+      {
+        "role": "a_v2_checker",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_bottom_continuation_v2_20261005T195949Z/w1_v10_a_extension_checker.json",
+        "sha256": "5c439d8e6addea46c22c571bfac40be9ca69d690cc55ac85eb9d809ddf7eb248"
+      },
+      {
+        "role": "a_v2_watchdog",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_bottom_continuation_v2_20261005T195949Z/watchdog/summary.json",
+        "sha256": "403eca885b8afae9c69a1dd21a4c84780d89e31bd552a72bb230003fc4ea0466"
+      },
+      {
+        "role": "a_v2_npz",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_bottom_continuation_v2_20261005T195949Z/w1_v10_a_extension_arrays.npz",
+        "sha256": "6cca157f3fc5e689ffb409d48564dae94cdb6f1d915ef641141880285bd29c20"
+      }
+    ]
+  },
+  "a_representative_boundary_coverage": {
+    "complete_B_D_rows_witness_count": 32060,
+    "complete_B_D_rows_witness": "PASS",
+    "generic_complex_input": "covered",
+    "nonzero_port_rhs": "covered",
+    "p6_over_limit_metric": "known-interior-field forward recovery relative error",
+    "original_equation_residual_gate": "PASS at <=1e-10",
+    "scope_note": "A代表边界链，不是B0全局逆算子B/D逐行资格。"
+  },
+  "historical_q60_reference": {
+    "source_record": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v10_boundary.json",
+      "at_git_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
+      "git_blob_oid": "7420124f261d8bc638254d7fedc2db4501987e9b",
+      "sha256": "1c619be21ec6ef0c757916fdeac0fa7a5863718beb0c3fd8f4068d3173895cec",
+      "preservation": "pre-rewrite historical compact; source of frozen q60/n0 values below"
+    },
+    "additional_historical_entry": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_w1_closeout_v1.json",
+      "at_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
+      "git_blob_oid": "206f15056512d73a32d4585a57c3e851da2e5bca",
+      "sha256": "f048cb73c0f4fea64bd635c259c6714495dfda8dee96ba772bce151268b2b4e4",
+      "preservation": "earlier immutable V9 campaign record"
+    },
+    "denominator_definition": "norm(saved q60_apply)",
+    "frozen_denominator_saved_q60_apply": 5118.679535729753,
+    "saved_action_norm": 5118.679535729753,
+    "relative_action_error": 9.063390130105725e-15,
+    "n0_max_per_mode_relative": 3.3410810842083564e-15,
+    "n0_finite_witness": "PASS",
+    "old_q30_worst_relative_error": 5.705909332721303,
+    "old_q30_limit": 1e-10,
+    "q60_finite_witness_classes": 5,
+    "historical_full_action_gate_pass": true,
+    "note": "冻结分母、n=0与q60 action证据按旧compact原样保留；旧q30负结果不自动否决q60；本轮未重算checker。"
+  }
 }

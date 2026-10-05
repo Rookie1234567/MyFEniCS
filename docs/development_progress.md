@@ -1,4 +1,18 @@
-# Task40extra 当前进展：Review V8 W0组件核验闭合；W1边界门负结果并受控停止（原尺寸未实现）
+# Task40extra 当前进展：Review V10 B0 p6残差通过、物理能量门失败；目标仍未资格化
+
+V10完成了A边界V1/V2复核及B0 p6真实三维小模型的逆算子分量检查、物理解和保存输出恢复。B0模型为80 cells、两单元三维void、y方向四个q相位；p6只用于预条件器背景填回缺口，target与RHS不变。四个完整p6准确LU同时保留，为缺口target修正方向，并恢复36,000个内部未知量，成本是额外factor内存与setup。三步true residual `1.6089774391665316e-8`通过`1e-6`，但energy closure `6.581916436299018e-5`高于`1e-5`，所以没有official R/T/A，C依Review V10 §5为`HELD_NOT_RUN`。
+
+A方面，旧checker因32,060/16,030通道数混淆误将p4 top判为FAIL，原记录保留；V1 frozen-scale recheck纠正该项为PASS，p6 top仍FAIL，V2补齐bottom。p4上下恢复前向误差均低于`1e-11`；p6两侧分别`2.202932653970648e-11`与`2.42442721473547e-11`，超限的是已知场恢复前向误差，不是原方程残差。q60五类有限见证通过；旧q30结果不自动否决q60。A当前不资格化仅因p6恢复门。
+
+B0逆算子component checks覆盖通用RHS、36,000内部行、全模态端口RHS和物理规则RHS，所列残差门通过；这不取代物理energy gate。A代表边界链另有完整32,060个B/D行、generic complex和nonzero port RHS见证PASS，不是B0全局B/D逐行资格。A q60指积分分辨率，B0四个q指y周期相位，意义不同。p4 control求同一p6 target、只改preconditioner，control residual失败，不能作成功速度对照。
+
+50×25×140 nm目标仍`NO_GO`/未资格化；只知本任务证据未满足门槛，不表示数学上不可能。C/Gx560、完整15,232-cell、自动全尺寸及原尺寸A链global MPC/target-scale mapping未运行，B0小模型已有native/MPC身份。资源中setup/factor分阶段及factor allocated/used库存仍unknown；released inventory 0不代表并发factor memory。campaign seq25175的A程序末快照为`63514.15687973229 s`；seq25176提交前收口快照为`67613.8129036653 s`，收据`benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/supervisor_v10_precommit_closeout_receipt.json` SHA-256 `f813029a331c50e2079e6f63cb64301c2315c352c543a6f19137f881c5c4aa9d`。待执行的commit/push仍在同一campaign窗口计费；两者都不是最终结算，账本不重置，且campaign charge不是FE时间。
+
+证据入口：[Response V10](task40extra_0p7nm_engineering/response_v10.md)、[integrated p6](task40extra_0p7nm_engineering/outcomes/review_v10_integrated_p6.md)、[两级结果总览](task40extra_0p7nm_engineering/outcomes/summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
+---
+
+# Task40extra 历史进展：Review V8 W0组件核验闭合；W1边界门负结果并受控停止（原尺寸未实现）
 
 Task40仍缺原尺寸0.7 nm器件的有限元精度和容量证明。此前V8首个W0 worker在进入FE setup前因冻结模式库存身份不匹配而停止；这次续作复用已存在的attempt4 worker输出，只补独立保存数据检查和持久性闭环，不更换物理模型，也不把组件测试冒充PDE。
 

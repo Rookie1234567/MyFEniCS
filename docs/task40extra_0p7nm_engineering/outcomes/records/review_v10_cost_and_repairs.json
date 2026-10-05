@@ -1,16 +1,13 @@
 {
-  "schema": "task40extra.review_v10_manifest.v1",
-  "status": "EVIDENCE_RECONCILED_NOT_PRODUCTION_QUALIFIED",
-  "campaign": {
-    "t0_utc": "2026-10-05T02:22:47.493693330Z",
-    "fixed_deadline_utc": "2026-10-06T02:22:47.493693330Z",
-    "window_sha256": "0052698cbfd8034c82f1c471b1f2ed29a2cb2e5f7601d317166f251e0c7e794a",
-    "a_program_end_budget_snapshot": {
-      "event_seq": 25175,
-      "conservative_policy_charge_seconds": 63514.15687973229
-    },
-    "accounting_status": "PRECOMMIT_SNAPSHOT_RECORDED_NOT_FINAL_CLOSEOUT",
-    "note": "seq 25175 is the A-program-end budget snapshot; seq 25176 is the later precommit closeout snapshot. Documentation, cleanup, and pending commit/push remain in the same ledger; do not reset it. Both are conservative campaign policy charge, not FE/PDE runtime. V9 old total remains UNKNOWN_NOT_SETTLED.",
+  "schema": "task40extra.review_v10_cost_and_repairs.v1",
+  "accounting": {
+    "campaign_window_sha256": "0052698cbfd8034c82f1c471b1f2ed29a2cb2e5f7601d317166f251e0c7e794a",
+    "snapshot_event_seq": 25175,
+    "snapshot_scope": "A program end budget snapshot, not final closeout",
+    "conservative_policy_charge_seconds_at_snapshot": 63514.15687973229,
+    "old_v9_total_expense": "UNKNOWN_NOT_SETTLED",
+    "ledger_policy": "seq25175 A-program snapshot remains historical; seq25176 is precommit closeout only. Documentation, cleanup, and pending commit/push accrue in the same campaign window; no reset. Policy charge is not FE/PDE time. V9 total remains UNKNOWN_NOT_SETTLED.",
+    "review_base_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
     "precommit_closeout_snapshot": {
       "event_seq": 25176,
       "cumulative_policy_charge_seconds": 67613.8129036653,
@@ -21,29 +18,113 @@
       "is_fe_or_pde_runtime": false
     }
   },
-  "source_identity": {
-    "final_frozen_git_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
-    "a_original_git_sha": "45a388fa12afb69a29afaa0240a72018a0069967",
-    "b0_p4_git_sha": "cd9716dd3cb950c72b70487e7aa537d3b7381581",
-    "b0_p6_git_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50",
-    "p6_output_recovery_git_sha": "f9a64e025e0656f5863bcc5367602a74f1806520",
-    "hash_semantics": "40位Git source SHA不是SHA-256；输入、模型和artifact hash另按SHA-256记录。"
+  "measured_work": [
+    {
+      "name": "p4 control full worker",
+      "seconds": 1646.287435148959,
+      "tree_rss_peak_bytes": 2377383936,
+      "cgroup_peak_bytes": null,
+      "swap_peak_bytes": 0,
+      "classification": "same p6 target; different preconditioner; residual gate failed"
+    },
+    {
+      "name": "p4 control KSP",
+      "seconds": 1519.454145885,
+      "tree_rss_peak_bytes": null,
+      "cgroup_peak_bytes": null,
+      "swap_peak_bytes": null,
+      "classification": "residual gate failed"
+    },
+    {
+      "name": "p6 B0 worker full workflow",
+      "seconds": 1051.6991222669603,
+      "tree_rss_peak_bytes": 3713953792,
+      "cgroup_peak_bytes": 4101464064,
+      "swap_peak_bytes": 0,
+      "classification": "solve done; output worker failed on missing pyvista"
+    },
+    {
+      "name": "p6 pure ksp_solve_phase",
+      "seconds": 4.899454752,
+      "tree_rss_peak_bytes": null,
+      "cgroup_peak_bytes": null,
+      "swap_peak_bytes": null
+    },
+    {
+      "name": "p6 parent solve phase incl peripheral actions",
+      "seconds": 6.441171838,
+      "tree_rss_peak_bytes": null,
+      "cgroup_peak_bytes": null,
+      "swap_peak_bytes": null
+    },
+    {
+      "name": "saved output recovery",
+      "seconds": 33.43133413302712,
+      "tree_rss_peak_bytes": 1193611264,
+      "cgroup_peak_bytes": null,
+      "swap_peak_bytes": 0
+    },
+    {
+      "name": "A V1 bottom continuation directory guard failure",
+      "seconds": 22.413856058,
+      "tree_rss_peak_bytes": 716390400,
+      "cgroup_peak_bytes": 742473728,
+      "swap_peak_bytes": 0,
+      "classification": "engineering failure; bottom numerical work not started"
+    },
+    {
+      "name": "A V2 bottom continuation watchdog",
+      "seconds": 83.07080606103409,
+      "tree_rss_peak_bytes": 744566784,
+      "cgroup_peak_bytes": 928624640,
+      "swap_peak_bytes": 0
+    },
+    {
+      "name": "A original W1 watchdog",
+      "seconds": 71.49506455799565,
+      "tree_rss_peak_bytes": 762998784,
+      "cgroup_peak_bytes": 916602880,
+      "swap_peak_bytes": 0,
+      "classification": "watchdog supervisor wall; worker elapsed is reported separately"
+    },
+    {
+      "name": "A original W1 worker",
+      "seconds": 57.269548677955754,
+      "tree_rss_peak_bytes": null,
+      "cgroup_peak_bytes": null,
+      "swap_peak_bytes": null,
+      "classification": "worker elapsed; do not label watchdog wall as worker time"
+    }
+  ],
+  "known_recovery_subphases_seconds": {
+    "restore": 7.318348325,
+    "native_build": 3.301424436,
+    "operator_rebuild": 3.401562392,
+    "output": 20.304540596,
+    "native": 0.463208863,
+    "checker": 0.018299836,
+    "watchdog": 33.39782799198292,
+    "note": "子阶段不与全流程或彼此相加。"
   },
-  "scope_decision": {
-    "A": "有限q60及p4边界门通过；p6已知内部场恢复前向误差超限，完整A不资格化。",
-    "B0_p6_inverse_component": "component checks pass；不等于整个物理模型资格化。",
-    "B0_p6_physical_candidate": "true residual门通过；能量闭合门失败，official_result=false，无official R/T/A。",
-    "C": "HELD_NOT_RUN under Review V10 §5",
-    "target_50x25x140_nm": "NO_GO / NOT_QUALIFIED，不表示数学上不可能。",
-    "not_run_scope": "C/Gx560 and original-size A-chain global MPC/target-scale mapping are not run; B0 small model has native/MPC identity. C and target-scale end-to-end qualification remain held/not run.",
-    "q_semantics": "A q60 quadrature resolution and B0 four y-phase branches are different measures."
+  "older_engineering_prefix_attempts_seconds": [
+    1198.994,
+    1029.516,
+    1093.389
+  ],
+  "phase_attribution_for_older_attempts": null,
+  "factor_memory": {
+    "allocated_bytes": null,
+    "used_peak_bytes": null,
+    "setup_seconds": null,
+    "factor_seconds": null,
+    "unknown_means": "not measured; not zero; not inferable by parent-child subtraction"
   },
-  "records": {
-    "boundary": "outcomes/records/review_v10_boundary.json",
-    "p6_inverse": "outcomes/records/review_v10_p6_inverse.json",
-    "physical_comparison": "outcomes/records/review_v10_physical_comparison.json",
-    "cost_and_repairs": "outcomes/records/review_v10_cost_and_repairs.json",
-    "integrated_p6_report": "outcomes/review_v10_integrated_p6.md"
+  "inventory_caveat": "release-time used/peak=0 is post-release inventory only and does not describe live simultaneous factor memory across four q branches.",
+  "resource_semantics": {
+    "process_tree_rss": "simultaneous process-tree RSS peak",
+    "cgroup_peak": "cgroup memory peak",
+    "factor_inventory": "factor allocated/used inventory; separate quantity",
+    "swap": "job task swap peak; separate from RSS and cgroup"
   },
   "provenance": {
     "review_base_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
@@ -102,11 +183,6 @@
         "sha256": "0dccbd1b004d558ee9dfe395d332f3061660c65b8f04aa86bc45271b416a15c5"
       },
       {
-        "role": "a_v1_recheck",
-        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_20261005T185348Z/w1_v10_a_extension_checker_recheck_v1.json",
-        "sha256": "9626b1500e0b2c6eebadcb2dca31ae88b0438848391a67d549b9f29c7aba63c5"
-      },
-      {
         "role": "a_v2_report",
         "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/w1_v10_a_bottom_continuation_v2_20261005T195949Z/w1_v10_a_extension_report.json",
         "sha256": "5e3e78cbec7f46311a8af3c93ed81e767982ff5ab08b2e5562f246ed58329b94"
@@ -142,26 +218,6 @@
         "sha256": "8bb525f4773fc0e21263816273a0d216cd186a15ff23169ece8895ced463fa0e"
       },
       {
-        "role": "p6_regular_generic_checker",
-        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_generic_full_independent.json",
-        "sha256": "d6272f8e0e330206d3e18b606f3502abb329a09e9762335ac20ab6cadb59709b"
-      },
-      {
-        "role": "p6_regular_interior_checker",
-        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_interior_only_all_36000.json",
-        "sha256": "fc8dfbc8df72df649c52b9a0bcc51042f9922ad0259ba68ab135add0f2bcc509"
-      },
-      {
-        "role": "p6_regular_port_checker",
-        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_nonzero_all_mode_port_rhs.json",
-        "sha256": "b888ecd429be7ed795ebe5673f1b97c3c92d83dfa1dee5a79f2fecb575e5ada3"
-      },
-      {
-        "role": "p6_regular_physical_rhs_checker",
-        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_physical_regular_incident_rhs.json",
-        "sha256": "f02c1976f6bc044edbb3dc04178f57e1bbde6b503fc607bd6bc507f3f5285f92"
-      },
-      {
         "role": "p6_watchdog",
         "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/watchdog/summary.json",
         "sha256": "dbb56658a8895b2a97c16ccac84da4acc887041a56f09789410f85a6da3701b1"
@@ -178,33 +234,28 @@
       }
     ]
   },
-  "historical_q60_record": {
-    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_w1_closeout_v1.json",
-    "git_blob_oid_at_review_base": "206f15056512d73a32d4585a57c3e851da2e5bca",
-    "sha256_at_review_base": "f048cb73c0f4fea64bd635c259c6714495dfda8dee96ba772bce151268b2b4e4",
-    "status": "immutable historical source; do not rewrite while preserving old q60 evidence"
-  },
   "review_base_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
-  "historical_q60_records": [
+  "older_engineering_prefix_attempts": [
     {
-      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v10_boundary.json",
-      "at_git_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
-      "git_blob_oid": "7420124f261d8bc638254d7fedc2db4501987e9b",
-      "sha256": "1c619be21ec6ef0c757916fdeac0fa7a5863718beb0c3fd8f4068d3173895cec",
-      "preservation": "pre-rewrite historical compact; source of frozen q60/n0 values below"
+      "seconds": 1198.994425458,
+      "known_stop_reason": "old incorrect 1e-11 gate and missing independent interior witness",
+      "phase_subclocks": null
     },
     {
-      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v9_w1_closeout_v1.json",
-      "at_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
-      "git_blob_oid": "206f15056512d73a32d4585a57c3e851da2e5bca",
-      "sha256": "f048cb73c0f4fea64bd635c259c6714495dfda8dee96ba772bce151268b2b4e4",
-      "preservation": "earlier immutable V9 campaign record"
+      "seconds": 1029.516402189,
+      "known_stop_reason": "sector_action_vectors parameter missing",
+      "phase_subclocks": null
+    },
+    {
+      "seconds": 1093.389170074,
+      "known_stop_reason": "MappingProxy serialization failure",
+      "phase_subclocks": null
     }
   ],
-  "historical_q60_values": {
-    "saved_q60_apply_denominator": 5118.679535729753,
-    "relative_action_error": 9.063390130105725e-15,
-    "n0_max_per_mode_relative": 3.3410810842083564e-15,
-    "old_q30_worst_relative_error": 5.705909332721303
+  "older_preserved_costs": {
+    "W0_worker_seconds": 200.87894401792437,
+    "V9_known_conservative_lower_bound_seconds": 3617.121945417,
+    "V9_total_expense": "UNKNOWN_NOT_SETTLED",
+    "relationship": "分别保留，不与本V10 campaign快照混合，也不将已知下界替代未知总额。"
   }
 }

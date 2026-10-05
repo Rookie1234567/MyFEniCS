@@ -1,0 +1,190 @@
+{
+  "schema": "task40extra.review_v10_physical_comparison.v1",
+  "comparison_status": "B0_P6_SOLVE_RESIDUAL_PASS_PHYSICAL_ENERGY_GATE_FAIL",
+  "model": {
+    "mesh_cells": [
+      4,
+      4,
+      5
+    ],
+    "cell_count": 80,
+    "p": 6,
+    "geometry": "true 3D two-cell void",
+    "q_branches": 4,
+    "ordered_port_channels": 532,
+    "top_channels": 266,
+    "bottom_channels": 266
+  },
+  "p4_control": {
+    "git_source_sha": "cd9716dd3cb950c72b70487e7aa537d3b7381581",
+    "same_p6_target": true,
+    "difference": "preconditioner only",
+    "iterations": 2048,
+    "ksp_reason": -3,
+    "a6_true_residual": 0.966131083707469,
+    "a6_residual_limit": 1e-06,
+    "ksp_solve_seconds": 1519.454145885,
+    "matched_performance_comparison_qualified": false
+  },
+  "p6_candidate": {
+    "git_source_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50",
+    "input_path": "input/task40extra_0p7nm_engineering/b0_p6_y_orbit_reference_v10.dat",
+    "input_sha256": "2f7e9cf51a3d1ecc73e5cb6f670bac32f769584bda11d778dbeaee5be6562780",
+    "physical_model_sha256": "250c26f25d85c0ff68abb0454a6c7640bf8d3af3e6f96bbf599a8cf7c925ae73",
+    "iterations": 3,
+    "ksp_reason": 2,
+    "explicit_true_residual": 1.6089774391665316e-08,
+    "post_release_native_a6_witness": 1.6089791915820923e-08,
+    "linear_residual_limit": 1e-06,
+    "linear_residual_gate": "PASS",
+    "pure_ksp_solve_phase_seconds": 4.899454752,
+    "parent_solve_phase_seconds_including_peripheral_actions": 6.441171838,
+    "worker_full_workflow_seconds": 1051.6991222669603,
+    "watchdog_seconds": 1051.4738388709957,
+    "worker_exit_code": 4,
+    "worker_exit_reason": "ModuleNotFoundError: No module named pyvista during output phase; solve had completed",
+    "process_tree_rss_peak_bytes": 3713953792,
+    "cgroup_memory_peak_bytes": 4101464064,
+    "task_swap_peak_bytes": 0,
+    "factor_allocated_bytes": null,
+    "factor_used_peak_bytes": null,
+    "setup_and_factor_subphase_seconds": null,
+    "unknowns_note": "null代表未知，不能写作0；释放后inventory used/peak=0不是并发factor内存。",
+    "runtime_profile": "local_wsl2_authorized",
+    "mpi_ranks": 1,
+    "petsc_scalar_type_run_record": null,
+    "petsc_int_type_run_record": null,
+    "abi_note": "V10 run manifest confirms qualified activation and runtime_prefix; exact scalar/int values were not extracted from that run receipt and remain null here. The current lightweight documentation preflight is separately recorded in test_summary."
+  },
+  "saved_output_recovery": {
+    "git_source_sha": "f9a64e025e0656f5863bcc5367602a74f1806520",
+    "report_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T170211.416028Z/postprocess_recovery_record.json",
+    "report_sha256": "69cd7094b43c1cd02d6117bad1e04504fcdae67e2e3b5afcff5140ef7ef04c57",
+    "official_result": false,
+    "energy_closure_absolute": 6.581916436299018e-05,
+    "energy_closure_limit": 1e-05,
+    "absorption_consistency_absolute": 6.581916436306369e-05,
+    "diagnostic_only": {
+      "R": 0.984273608092677,
+      "T": 0.014174698896746551,
+      "A_balance": 0.0015516930105763937,
+      "A_volume": 0.00148587384621333
+    },
+    "recovery_workflow_seconds": 33.43133413302712,
+    "watchdog_seconds": 33.39782799198292,
+    "tree_rss_peak_bytes": 1193611264,
+    "cgroup_memory_peak_bytes": null,
+    "task_swap_peak_bytes": 0
+  },
+  "decision": {
+    "C": "HELD_NOT_RUN under Review V10 §5",
+    "target_50x25x140_nm": "NO_GO_NOT_QUALIFIED_NOT_A_MATHEMATICAL_IMPOSSIBILITY"
+  },
+  "provenance": {
+    "review_base_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
+    "final_frozen_source_git_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
+    "abi_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+    },
+    "ordered_modes": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/task40v10_b0_control_ordered_mode_manifest.json",
+      "sha256": "afc439d8969463d3c3d46076382ec30c7a8fe3c9b1150955dc2d228a483e7f6b",
+      "identity_note": "532 ordered top+bottom port channels; common frozen identity used for B0 p4/p6."
+    },
+    "p6_final_a6_pre_post_release_files": {
+      "pre_release": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.json",
+          "sha256": "9bc2ecbf9067b280c73a199af8c56eb73673c945b469a8afd809f40a3c8cb288"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.npz",
+          "sha256": "5b3cd82e4b6395d53472fab73392e1979c51cc56f865f90f2377b65671e68798"
+        }
+      ],
+      "post_release": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.json",
+          "sha256": "5049c2ae89708039bb3134fe7130c6799a64da3b335c01d9db8ac0601697ca8d"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.npz",
+          "sha256": "5ac264cf592cb8bfb8b3d7551781b2cf6fd90725c63a84a9b64c332e382d949f"
+        }
+      ]
+    },
+    "run_source_git_shas": {
+      "B0_p4": "cd9716dd3cb950c72b70487e7aa537d3b7381581",
+      "B0_p6": "c439ed40768de4745131b43fc0312bb8be8d9d50",
+      "p6_recovery": "f9a64e025e0656f5863bcc5367602a74f1806520"
+    },
+    "primary_raw_report_checker_watchdog_and_arrays": [
+      {
+        "role": "p4_report",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/task40_v10_b0_p4_control_summary.json",
+        "sha256": "759eef4de9f4914feec7f85583147c95fd239287c5b5fe70e6db3628c09569da"
+      },
+      {
+        "role": "p4_checker",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/task40v10_b0_control_numeric_observation.json",
+        "sha256": "919cdc0806e273d12831b4e0f28e20e9e58804441241ba2ee895d39c8c36e19f"
+      },
+      {
+        "role": "p4_watchdog",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/watchdog/summary.json",
+        "sha256": "321fc99f884c3e97e6df7d3d258dbf5cfe7383bef4f1f598797f7a02c4521fcd"
+      },
+      {
+        "role": "p4_run_summary",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/run_summary.json",
+        "sha256": "4485b4f89f0456faa2bc3672b5bf39b19b9626054b4874ef774cf96f930de300"
+      },
+      {
+        "role": "p6_report",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/task40_v10_p6_candidate_summary.json",
+        "sha256": "8bb525f4773fc0e21263816273a0d216cd186a15ff23169ece8895ced463fa0e"
+      },
+      {
+        "role": "p6_watchdog",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/watchdog/summary.json",
+        "sha256": "dbb56658a8895b2a97c16ccac84da4acc887041a56f09789410f85a6da3701b1"
+      },
+      {
+        "role": "p6_pre_json",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.json",
+        "sha256": "9bc2ecbf9067b280c73a199af8c56eb73673c945b469a8afd809f40a3c8cb288"
+      },
+      {
+        "role": "p6_pre_npz",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.npz",
+        "sha256": "5b3cd82e4b6395d53472fab73392e1979c51cc56f865f90f2377b65671e68798"
+      },
+      {
+        "role": "p6_post_json",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.json",
+        "sha256": "5049c2ae89708039bb3134fe7130c6799a64da3b335c01d9db8ac0601697ca8d"
+      },
+      {
+        "role": "p6_post_npz",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.npz",
+        "sha256": "5ac264cf592cb8bfb8b3d7551781b2cf6fd90725c63a84a9b64c332e382d949f"
+      },
+      {
+        "role": "p6_inventory",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_inventory.json",
+        "sha256": "af7424d2fe05e678aae95e9679dfdee7c95e3bd7db63b956a25c246de2b464f5"
+      },
+      {
+        "role": "recovery_checker",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T170211.416028Z/postprocess_recovery_record.json",
+        "sha256": "69cd7094b43c1cd02d6117bad1e04504fcdae67e2e3b5afcff5140ef7ef04c57"
+      },
+      {
+        "role": "recovery_watchdog",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T170211.416028Z/watchdog/summary.json",
+        "sha256": "bca5ba285bbeef25ec46015801691cb27647f0b7d336a265ecf0902cc61a341d"
+      }
+    ]
+  }
+}

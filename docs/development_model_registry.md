@@ -1,4 +1,19 @@
-# Task40extra 当前模型登记：Review V6 Gx784 保存场配对验证
+# Task40extra 当前模型登记：Review V10 B0 p6真实三维候选（energy gate未通过）
+
+B0 p6在80-cell真实三维两单元void上求解。四个y相位分支的完整p6准确LU只作为preconditioner背景修正，target/RHS保持不变；factor同时保留并恢复36,000个内部未知量，增加setup和factor内存。残差通过属于线性系统，不替代物理energy closure。
+
+| 模型 / 阶段 | source 与身份 | 数值结果与资源 | 资格边界 |
+|---|---|---|---|
+| B0 p6 inverse component | Git source `c439ed40768de4745131b43fc0312bb8be8d9d50`；80 cells（4×4×5），真实3D两单元void，p6，4个y相位q；全端口532（top/bottom各266），内部/trace行36,000/16,992；输入SHA256 `2f7e9cf51a3d1ecc73e5cb6f670bac32f769584bda11d778dbeaee5be6562780`，physical SHA256 `250c26f25d85c0ff68abb0454a6c7640bf8d3af3e6f96bbf599a8cf7c925ae73` | q真残差最大`7.493923678060789e-12`；regular reference原方程残差`1.465060265308628e-11`；所列全端口/内部行逆算子分量门通过；A代表类32,060个B/D行、generic complex输入和nonzero port RHS见证另属A边界链，不是B0全局B/D逐行资格 | 组件级pass；regular reference residual不是缺口target的A6 residual；不证明energy gate或production资格 |
+| B0 p6 physical target | 同上；MPI1；input与physical身份见上 | 3步；显式true residual`1.6089774391665316e-8`；post-release native A6 witness`1.6089791915820923e-8`；限值`1e-6`；纯KSP `4.899454752 s`，父solve `6.441171838 s`；worker全流程`1051.699122267 s`；tree RSS/cgroup peak `3,713,953,792 / 4,101,464,064 B` | solver残差pass但能量闭合`6.581916436299018e-5 > 1e-5`；无official R/T/A；worker因输出缺pyvista exit 4，恢复记录独立保留energy failure |
+| B0 p4 preconditioner control | Git source `cd9716dd3cb950c72b70487e7aa537d3b7381581`；同一个p6 target，只改preconditioner | 2048迭代；A6 residual`0.966131083707469 > 1e-6`；KSP-only`1519.454145885 s` | 未通过残差门；不是成功的匹配性能对照 |
+| 原尺寸目标 / C | 原始50×25×140 nm目标；C及Gx560未运行 | official R/T/A、DoF/NNZ、target-scale资源均unknown/not_run | `NO_GO`/未资格化；不是数学不可计算结论。B0小模型已有native/MPC身份，原尺寸A链global MPC/target-scale mapping未运行 |
+
+A链q60是表面积分分辨率，B0四个q是周期相位分支。p4/p6局部边界及A保存场证据见[Response V10](task40extra_0p7nm_engineering/response_v10.md)和[boundary record](task40extra_0p7nm_engineering/outcomes/records/review_v10_boundary.json)；完整分层见[summary](task40extra_0p7nm_engineering/outcomes/summary.md)与[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。Factor allocated/used与setup/factor细分仍unknown；inventory释放后0不得当作峰值。
+
+---
+
+# Task40extra 历史模型登记：Review V6 Gx784 保存场配对验证
 
 | 模型 / 阶段 | source 与身份 | 数值结果与资源 | 资格边界 |
 |---|---|---|---|

@@ -1,6 +1,59 @@
-# Task40extra 结果总览：Review V9参考未资格化；归因阶段达到费用停止线（V8及更早历史保留）
+# Task40extra 结果总览：Review V10 B0物理解未通过能量门；V9及更早历史保留
 
-## Review V9：W1保存数组参考审计与时间停止
+## Review V10 综合结果
+
+B0 是 80-cell、真实三维两单元 void 的周期小模型。p6 预条件方法只在预条件背景填回缺口，用 y 方向四个相位分支的完整 p6 准确 LU 为不变的缺口 target 与 RHS 提供修正方向；四个 factor 同时保留，完整恢复36,000个内部未知量，因此增加setup与内存成本。三步残差通过仍不等于物理能量通过。A 的 q60 表示边界积分分辨率；B0 的四个 q 表示 y 周期相位分支，两者不是同一指标。
+
+### 一级账：模型、方法和物理/数值结果
+
+| 对象 | 模型与方法 | 可比结果及物理量 | 状态与原因 |
+|---|---|---|---|
+| A有限边界 / p4、p6局部恢复 | 保存场重检与V2上下边界续算；q60为积分分辨率 | q60五类有限见证通过，冻结saved_q60_apply分母为`5118.679535729753`、relative action error `9.063390130105725e-15`、n0最大逐模相对值`3.3410810842083564e-15`；历史Git blob/path入口保留在`records/review_v9_w1_closeout_v1.json`。p4 top/bottom已知场前向恢复误差`4.071005827429115e-13` / `3.318404914520256e-13`；p6为`2.202932653970648e-11` / `2.42442721473547e-11`；限值`1e-11` | p4 PASS；p6为受控负结果。p6超限量是已知内部场恢复前向误差，不是方程残差；原方程残差门`≤1e-10`通过。A当前不资格化仅因p6恢复门。A代表边界链的完整32,060个B/D行、generic complex输入、nonzero port RHS见证已覆盖；不代表B0全局逆算子的B/D逐行资格。旧q30失败不自动否决q60 |
+| B0 p6逆算子组件 | 4×4×5 cells，真实三维两单元缺口，p6，4个y相位q | 全端口532（top/bottom各266）；存储/独立行55,950/52,992；内部/trace行36,000/16,992；每q增广trace+port行为4324、4400、4400、4400；q真残差最大`7.493923678060789e-12` | B0所列RHS/行集合检查通过（不包含A代表边界的B/D逐行资格）；regular reference抽样原方程残差`1.465060265308628e-11≤1e-10`。不是缺口target残差，也不构成物理模型资格 |
+| B0 p6物理候选 | 同80-cell模型；全p6准确LU仅作预条件器背景；MPI 1 | 3步；显式target真残差`1.6089774391665316e-8`；post-release native A6 witness `1.6089791915820923e-8`；求解限值`1e-6` | 数值残差PASS；能量闭合`6.581916436299018e-5>1e-5`，因此`official_result=false`，无official R/T/A |
+| B0 p4控制 | 求同一个p6 target，只改变preconditioner | 2048步，KSP reason `-3`，A6真残差`0.966131083707469>1e-6` | 控制不通过；不是成功速度对照，不支持宣称p6更快 |
+| C及目标尺度 | C/Gx560、完整15,232-cell、自动全尺寸与原尺寸A链global MPC/target-scale mapping | 未产生official R/T/A或目标容量证据 | `HELD_NOT_RUN` / `NO_GO_NOT_QUALIFIED`；不表示其它实现或资源条件下数学上不可能。B0小模型已有native/MPC身份 |
+| Campaign账本 | 原固定窗口SHA `0052698cbfd8034c82f1c471b1f2ed29a2cb2e5f7601d317166f251e0c7e794a` | seq25175 A程序末快照`63514.15687973229 s`；seq25176提交前收口快照`67613.8129036653 s`；收据`benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/supervisor_v10_precommit_closeout_receipt.json` SHA-256 `f813029a331c50e2079e6f63cb64301c2315c352c543a6f19137f881c5c4aa9d` | commit/push仍待执行并在同一窗口继续计费；两者均非最终结算且不重置账本。V9总费用仍`UNKNOWN_NOT_SETTLED`，已知下界`≥3617.121945417 s`单独保留；policy charge不是FE时间 |
+
+B0 p6保存场只有诊断量，不是official R/T/A：R=`0.984273608092677`、T=`0.014174698896746551`、A_balance=`0.0015516930105763937`、A_volume=`0.00148587384621333`。R00_s/R00_p/R00_total、DoF和NNZ未由本轮证据确定，记为unknown；不得将R诊断值冒充R00或官方量。运行使用MPI1；此处PETSc scalar/int身份的紧凑记录为unknown/null。
+
+### 二级账：资源构成、阶段时间与修复成本
+
+| 工作/阶段 | 已知时间 | 进程树RSS峰 | cgroup峰 | swap | 归属与限制 |
+|---|---:|---:|---:|---:|---|
+| p4控制全worker | 1646.287435149 s | 2,377,383,936 B | unknown | 0 B | 同一p6 target、仅preconditioner不同；残差门失败 |
+| p4控制KSP phase | 1519.454145885 s | unknown | unknown | unknown | full worker中的KSP阶段 |
+| p6 B0全worker流程 | 1051.699122267 s | 3,713,953,792 B | 4,101,464,064 B | 0 B | solve已完成；输出阶段缺`pyvista`导致worker exit 4 |
+| p6纯`ksp_solve_phase` | 4.899454752 s | unknown | unknown | unknown | 纯KSP计时 |
+| p6父级solve phase | 6.441171838 s | unknown | unknown | unknown | 含外围动作，不是纯KSP |
+| p6父级solve phase | 6.441171838 s | unknown | unknown | unknown | 含外围动作，不称纯KSP |
+| 保存输出恢复全流程 | 33.431334133 s | 1,193,611,264 B | unknown | 0 B | 不含新PDE求解 |
+| A原始W1 worker | 57.269548678 s | unknown | unknown | unknown | worker elapsed |
+| A原始W1 watchdog | 71.495064558 s | 762,998,784 B | 916,602,880 B | 0 B | supervisor wall，非worker elapsed |
+| A V1底部目录守卫失败 | 22.413856058 s | 716,390,400 B | 742,473,728 B | 0 B | 工程失败，底部数值工作未开始 |
+| A V2底部续算watchdog | 83.070806061 s | 744,566,784 B | 928,624,640 B | 0 B | 322次采样，后代清理 |
+| 更早工程前缀尝试 | 1198.994425458 / 1029.516402189 / 1093.389170074 s | unknown | unknown | unknown | 原因依次为旧错误1e-11 gate并缺独立内部见证、缺sector_action_vectors参数、MappingProxy序列化失败；子阶段时钟unknown |
+
+恢复子阶段restore/native build/operator rebuild/output/native/checker分别为7.318348325/3.301424436/3.401562392/20.304540596/0.463208863/0.018299836 s，watchdog为33.397827992 s；子阶段不与全流程或彼此相加。factor allocated/used、setup及factor阶段时间均unknown/null，不从父子耗时差推导。释放后inventory `used/peak=0`只表示采样时对象已释放，不代表四个q的实时并发factor内存。tree RSS、cgroup peak、factor库存和swap为不同资源口径。
+
+W0旧worker `200.87894401792437 s`保留为历史成本，与上述V10 A程序预算快照、V9已知下界及未知总额分开。
+
+### 选择性合并分组与下一步
+
+| 依赖组 | V10内容及数值行为 | 依赖 / 测试 / fresh evidence | 合入顺序与边界 |
+|---|---|---|---|
+| production numerical/core | 未将p6候选提升为production default；official物理结果未产生 | 依赖能量门修复和完整目标资格；当前fresh B0结果是能量负结果 | 暂不合入为production方法；先修能量闭合并由新审查授权新anchor |
+| reusable runner/watchdog | bottom continuation输出目录守卫修复；不改变物理方程 | 依赖V2 runner；a4源码输出目录fixture 3项通过 | 可先审查工程修复；需保留V1失败证据与V2续算产物 |
+| checker/benchmark | A冻结尺度重检、底部续算独立checker及B0 p6恢复检查 | 依赖保存场、原checker、V1 recheck和V2产物；30项b2测试单独记账 | 在文档/compact之后审阅；不得覆盖旧checker的p4 top误判原件 |
+| compact evidence/docs | Response V10、综合p6报告、两级summary、5份compact、test summary与run index | 依赖上述raw/report和source/input identity；定向文档合同待本地运行 | 最后收拢，路径和hash写入run index；不将诊断值称official |
+| research-only | B0四q全p6准确LU预条件候选和本地cost记录 | 依赖p6 component/inverse与物理恢复记录；no official energy pass | 保持研究证据，不能设为production default |
+| do-not-merge | 未资格化的全尺寸路径、C/Gx560运行结论、释放后0 factor inventory、任何伪official R/T/A | 证据均为not_run、unknown或energy-gate failure | 不合入为通过结论；master/default不由本summary改变 |
+
+最终源、运行输入与诊断/负结果索引见[Response V10](../response_v10.md)、[Integrated p6](review_v10_integrated_p6.md)及`records/review_v10_*.json`。
+
+---
+
+## Review V9历史：W1保存数组参考审计与时间停止
 
 W1检查的是代表表面上有限元切向场与32,060个外部模式之间的边界作用。q30和q60是表面积分的两种分辨率；高精度解析矩提供独立比较，用来判断原离散积分是否可信。本轮只审计既存数组，没有生成新网格或解Maxwell PDE。
 

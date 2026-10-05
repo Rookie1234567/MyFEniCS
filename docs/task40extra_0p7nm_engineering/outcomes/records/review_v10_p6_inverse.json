@@ -1,0 +1,134 @@
+{
+  "schema": "task40extra.review_v10_p6_inverse.v1",
+  "classification": "COMPONENT_CHECKS_PASS_NOT_WHOLE_MODEL_QUALIFICATION",
+  "model": {
+    "mesh_cells": [
+      4,
+      4,
+      5
+    ],
+    "cell_count": 80,
+    "geometry": "true 3D two-cell void",
+    "p": 6,
+    "periodic_direction": "y",
+    "q_branches": 4,
+    "all_four_q_branches_required": true,
+    "ordered_port_channels": 532,
+    "top_channels": 266,
+    "bottom_channels": 266,
+    "stored_rows": 55950,
+    "independent_rows": 52992,
+    "interior_rows": 36000,
+    "trace_rows": 16992,
+    "q_augmented_trace_plus_port_rows": [
+      4324,
+      4400,
+      4400,
+      4400
+    ],
+    "row_note": "532是top+bottom全端口通道数，不是顺序方程数；q行数是增广trace+port行。"
+  },
+  "identity": {
+    "git_source_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50",
+    "input_path": "input/task40extra_0p7nm_engineering/b0_p6_y_orbit_reference_v10.dat",
+    "input_sha256": "2f7e9cf51a3d1ecc73e5cb6f670bac32f769584bda11d778dbeaee5be6562780",
+    "physical_model_sha256": "250c26f25d85c0ff68abb0454a6c7640bf8d3af3e6f96bbf599a8cf7c925ae73"
+  },
+  "covered_rhs_and_rows": {
+    "generic_rhs": "PASS",
+    "all_36000_interior_rows": "PASS",
+    "all_mode_port_rhs": "PASS",
+    "physical_regular_rhs": "PASS"
+  },
+  "residuals": {
+    "maximum_q_true_residual": 7.493923678060789e-12,
+    "q_true_residual_limit": 1e-10,
+    "original_equation_residual_limit": 1e-10,
+    "maximum_sampled_regular_reference_equation_residual": 1.465060265308628e-11,
+    "regular_reference_equation_residual_limit": 1e-10,
+    "residual_scope_note": "This regular-reference equation residual is not the B0 void-target native A6 residual (1.6089791915820923e-8)."
+  },
+  "interpretation": "逆算子分量在列出的RHS与行集合上通过；该结果不证明物理能量闭合或production model资格。",
+  "method_explanation": "Only the preconditioner background fills back the void. A full accurate p6 LU for each of four y-phase branches supplies correction directions to the unchanged true 3D void target and unchanged RHS. All four factors are kept simultaneously and all 36,000 interior unknowns are recovered; this costs extra setup and memory. Three-step residual pass is not physical energy pass.",
+  "q_semantics": "A-boundary q60 is quadrature resolution; B0 four q values are y-periodic phase branches.",
+  "provenance": {
+    "review_base_git_sha": "d15554af7da49040565dab015dc09a16c1b18dde",
+    "final_frozen_source_git_sha": "a4ac46a8d796f9c101a0b4b9364bf01e9101dd50",
+    "abi_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json",
+      "sha256": "ac3a1120d8061fc91c818150177977e619de2fccb27fed1262cea45d90268426"
+    },
+    "ordered_modes": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p4_balh_control_v10__full3d_iterative__mpi1__Mna/20261005T111547.761516Z/task40v10_b0_control_ordered_mode_manifest.json",
+      "sha256": "afc439d8969463d3c3d46076382ec30c7a8fe3c9b1150955dc2d228a483e7f6b",
+      "identity_note": "532 ordered top+bottom port channels; common frozen identity used for B0 p4/p6."
+    },
+    "p6_final_a6_pre_post_release_files": {
+      "pre_release": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.json",
+          "sha256": "9bc2ecbf9067b280c73a199af8c56eb73673c945b469a8afd809f40a3c8cb288"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_pre_release.npz",
+          "sha256": "5b3cd82e4b6395d53472fab73392e1979c51cc56f865f90f2377b65671e68798"
+        }
+      ],
+      "post_release": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.json",
+          "sha256": "5049c2ae89708039bb3134fe7130c6799a64da3b335c01d9db8ac0601697ca8d"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_candidate_final_A6_post_release.npz",
+          "sha256": "5ac264cf592cb8bfb8b3d7551781b2cf6fd90725c63a84a9b64c332e382d949f"
+        }
+      ]
+    },
+    "run_source_git_shas": {
+      "B0_p6": "c439ed40768de4745131b43fc0312bb8be8d9d50"
+    },
+    "primary_raw_report_checker_watchdog_and_arrays": [
+      {
+        "role": "p6_report",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/task40_v10_p6_candidate_summary.json",
+        "sha256": "8bb525f4773fc0e21263816273a0d216cd186a15ff23169ece8895ced463fa0e"
+      },
+      {
+        "role": "p6_regular_generic_checker",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_generic_full_independent.json",
+        "sha256": "d6272f8e0e330206d3e18b606f3502abb329a09e9762335ac20ab6cadb59709b"
+      },
+      {
+        "role": "p6_regular_interior_checker",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_interior_only_all_36000.json",
+        "sha256": "fc8dfbc8df72df649c52b9a0bcc51042f9922ad0259ba68ab135add0f2bcc509"
+      },
+      {
+        "role": "p6_regular_port_checker",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_nonzero_all_mode_port_rhs.json",
+        "sha256": "b888ecd429be7ed795ebe5673f1b97c3c92d83dfa1dee5a79f2fecb575e5ada3"
+      },
+      {
+        "role": "p6_regular_physical_rhs_checker",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/v10_regular_inverse_physical_regular_incident_rhs.json",
+        "sha256": "f02c1976f6bc044edbb3dc04178f57e1bbde6b503fc607bd6bc507f3f5285f92"
+      },
+      {
+        "role": "p6_watchdog",
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/watchdog/summary.json",
+        "sha256": "dbb56658a8895b2a97c16ccac84da4acc887041a56f09789410f85a6da3701b1"
+      }
+    ]
+  },
+  "scope_separation": {
+    "A_representative_boundary_chain": {
+      "complete_B_D_rows_witness_count": 32060,
+      "complete_B_D_rows_witness": "PASS",
+      "generic_complex_input": "covered",
+      "nonzero_port_rhs": "covered",
+      "note": "这些是A代表边界链证据，不是B0全局逆算子的独立B/D逐行资格。"
+    },
+    "B0_global_inverse_B_D_rowwise_qualification": "NOT_CLAIMED"
+  }
+}
