@@ -1,0 +1,75 @@
+{
+  "schema": "task42extra.versioned-input-boundary-design.v28",
+  "authority": "ec05cb2ece095d54073563b02ab0da30f2795310:docs/task042extra_feinn_5nm/review_report_v27.md",
+  "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+  "input_origin": "independently_validated_v28",
+  "schema_dispatch": "explicit schema2; original schema1 bytes/hash/ledger/default unchanged",
+  "candidate_sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e",
+  "candidate_bytes": 36263033,
+  "new_generation_count": 0,
+  "historical_bitwise_reproduction": false,
+  "equivalent_to_historical_numeric_manifest": "UNKNOWN",
+  "historical_ledger_recovered": false,
+  "physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+  "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "scientific_input": "independent stdlib scalar key enumeration and Maxwell k/E/h/traction/H/power; not build_dynamic_mode_inventory or _mode_identity",
+  "input_near_zero_rule": "full physical reference norm, floor 1e-12 times named natural operation scale only for scalar exact/near-zero fields; transversality uses norm(k)*norm(E), all numerators/denominators saved",
+  "boundary_reference_definition": "input/task042extra_feinn_5nm/w1_reference_definition_v28.json",
+  "all_modes": 32060,
+  "groups": {
+    "top/s": 8015,
+    "top/p": 8015,
+    "bottom/s": 8015,
+    "bottom/p": 8015
+  },
+  "facets": [
+    [
+      "top",
+      100,
+      1
+    ],
+    [
+      "bottom",
+      100,
+      1
+    ]
+  ],
+  "partition": {
+    "x": [
+      90,
+      46,
+      46,
+      90
+    ],
+    "y": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "complete_native_columns": {
+    "p4": 300,
+    "p6": 882
+  },
+  "quadrature_degree": 60,
+  "baseline_profile": "q60_native",
+  "conditional_only_profile": "q60_phase_subdivision_v28",
+  "subdivision_rule": "only after independently diagnosed oscillatory resolution failure: smallest power of two per axis giving phase span <=4pi, same global native basis and physical Piola/Jacobian/phase",
+  "moment_reference": "reuse bound V23 Decimal80/110 for exactly identical binary frequencies; fixed Decimal80 power series vs Decimal110 Gauss64 for missing entries; analytical moments separately paired, all actual +/- frequencies ell0..6 <=56rad",
+  "generic_seed": 4212801,
+  "component_relative_limit": 1e-10,
+  "moment_absolute_limit": 1e-12,
+  "chunk_limit_modes": 64,
+  "storage": "existing atomic NPZ, opt-in lossless compressed chunks; reopened arrays exactly equal; complete chunk index required",
+  "consumer": "separate pure process with -I -B, actual clean directory byte copy; saved array checker only, no producer/quadrature/FE calls; final main ready marker after cleared consumer supervision",
+  "resource": "CPU-only/MPI1/math1, current audited physical core, pure/control/checker2GiB warn1.75, local boundary16GiB warn12, ownswap/OOC0; unchanged system and384GiB neighbor reserve and PSI60s",
+  "batch": "immutable 28800s continuous window incl preparation/failure/wait/code/tests/numerics/checker/publish; >=3600s final reserve, <=24 actual inner+outer samples and <=900s admission/PSI foreground wait",
+  "scope_limits": [
+    "FEINN_MAIN_SOLVER_ON_HOLD",
+    "NO_VERIFIED_NN_INCREMENT",
+    "FULL_TARGET_NOT_QUALIFIED",
+    "NO_B2_W2_OR_GLOBAL_SOLVE"
+  ],
+  "historical_evidence": "all old better/final degraded/failure/UNKNOWN/cost unchanged; old92A/39 reused by dependency with29 new targeted PURE tests, no native qualification inferred from fixtures"
+}

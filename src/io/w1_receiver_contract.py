@@ -64,6 +64,14 @@ def load_w1(path):
     if not raw.startswith(b"w1_receiver_schema = "):
         return None
     spec = tomllib.loads(raw.decode())
+    if spec.get("w1_receiver_schema") == 2:
+        import importlib.util
+
+        location = Path(__file__).with_name("w1_versioned_input.py")
+        module_spec = importlib.util.spec_from_file_location("_w1_versioned", location)
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        return module.load(path, raw)
     if not FIELDS <= set(spec) or set(spec) - FIELDS - OPTIONAL_FIELDS:
         raise ValueError("W1_EXPLICIT_FIELDS_REQUIRED")
     if (
@@ -129,6 +137,14 @@ def load_w1(path):
 
 def validate_originals(spec):
     """One binding shared by worker/checker, including the selected ledger."""
+    if spec.get("w1_receiver_schema") == 2:
+        import importlib.util
+
+        location = Path(__file__).with_name("w1_versioned_input.py")
+        module_spec = importlib.util.spec_from_file_location("_w1_versioned", location)
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        return module.validate_inputs(spec)
     missing = [
         spec[k] for k in ("manifest_path", "ledger_path") if not Path(spec[k]).is_file()
     ]
@@ -255,6 +271,14 @@ def validate_inventory(
 
 
 def require_same_binding(binding, spec, *, consumer):
+    if spec.get("w1_receiver_schema") == 2:
+        keys = tuple(binding["contract"])
+        if binding["contract"] != {k: spec[k] for k in keys}:
+            raise ValueError("W28_CONSUMER_INSTANCE_BINDING:" + consumer)
+        actual = validate_originals(spec)
+        if not actual["received"] or actual != binding["original_inputs"]:
+            raise ValueError("W28_CONSUMER_UNQUALIFIED_OR_CHANGED:" + consumer)
+        return actual
     expected = {
         k: spec[k]
         for k in (

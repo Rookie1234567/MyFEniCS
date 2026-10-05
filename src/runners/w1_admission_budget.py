@@ -11,7 +11,8 @@ from src.io.finite_json import atomic_json
 def update_budget(window_path, event=None):
     path = Path(window_path)
     window = json.loads(path.read_text())
-    if window.get("schema") != "task42extra.w1-receiver-P0RB-window.v27":
+    v28 = window.get("schema") == "task42extra.w1-v28-batch-window.v1"
+    if window.get("schema") != "task42extra.w1-receiver-P0RB-window.v27" and not v28:
         return None
     ledger = path.parent / "resource_samples.json"
     with (path.parent / "resource_samples.lock").open("a+") as lock:
@@ -24,7 +25,7 @@ def update_budget(window_path, event=None):
         count = sum(e["kind"] == "admission" for e in value["events"])
         waited = sum(e.get("elapsed_seconds", 0) for e in value["events"])
         if event is None:
-            if count >= 12 or waited >= 300:
+            if count >= (24 if v28 else 12) or waited >= (900 if v28 else 300):
                 raise TimeoutError("W1_SHARED_RESOURCE_SAMPLES_OR_WAIT_EXHAUSTED")
         else:
             value["events"].append(event)
@@ -82,7 +83,9 @@ def stable(spec, directory, hard):
     from src.runners.feinn_resources import stable_window
 
     value = update_budget(spec["window_path"])
-    if value and value.get("foreground_wait_seconds", 0) > 240:
+    window = json.loads(Path(spec["window_path"]).read_text())
+    cap = 900 if window.get("schema") == "task42extra.w1-v28-batch-window.v1" else 300
+    if value and value.get("foreground_wait_seconds", 0) > cap - 60:
         raise TimeoutError("W1_PSI_STABLE_WINDOW_WOULD_EXCEED_SHARED_WAIT")
     started = time.monotonic()
     try:

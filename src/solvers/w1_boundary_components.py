@@ -211,7 +211,7 @@ def incident_boundary_packet(polynomial, side, modes, J, origin, oracle, q=60):
     }
 
 
-def probe_actions(layout, modes, q, *, action_factory=None):
+def probe_actions(layout, modes, q, *, action_factory=None, seed=None):
     """Real frozen action, adjoint and modal-load API with explicit q60."""
     consumers(q)
     if action_factory is None:
@@ -226,6 +226,13 @@ def probe_actions(layout, modes, q, *, action_factory=None):
     alpha = np.asarray(
         np.exp(0.07j * np.arange(len(modes))) / np.sqrt(len(modes)), np.complex128
     )
+    if seed is not None:
+        rng = np.random.default_rng(seed)
+        trace = rng.normal(size=layout.rows) + 1j * rng.normal(size=layout.rows)
+        dual = rng.normal(size=layout.rows) + 1j * rng.normal(size=layout.rows)
+        alpha = (
+            rng.normal(size=len(modes)) + 1j * rng.normal(size=len(modes))
+        ) / np.sqrt(len(modes))
     result = {
         "trace": trace,
         "dual": dual,

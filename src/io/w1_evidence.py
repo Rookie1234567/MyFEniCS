@@ -194,6 +194,60 @@ def validate_A(path, receiver_files):
 
     path = Path(path)
     value = json.loads(path.read_text())
+    if value.get("schema") == "w1-P0-delta-qualification.v28":
+        if (
+            value.get("scope") != "PURE_LOGIC_DELTA_ONLY"
+            or value.get("receiver_files") != receiver_files
+        ):
+            raise ValueError("W28_A_TESTED_SOURCE")
+        inherited_path = check_file(
+            value["inherited_qualification"],
+            Path(__file__).resolve().parents[2] / "tmp/task42extra/w1_receiver/v27",
+        )
+        inherited = json.loads(inherited_path.read_text())
+        validate_A(inherited_path, inherited["receiver_files"])
+        changed = {
+            k: v
+            for k, v in receiver_files.items()
+            if inherited["receiver_files"].get(k) != v
+        }
+        if value.get("changed_receiver_files") != changed:
+            raise ValueError("W28_DELTA_COVERAGE")
+        summary = json.loads(
+            check_file(
+                value["supervision"], Path(__file__).resolve().parents[2]
+            ).read_text()
+        )
+        junit = ET.parse(
+            check_file(value["junit"], Path(__file__).resolve().parents[2])
+        ).getroot()
+        if (
+            summary.get("classification") != "COMPLETED"
+            or summary.get("leader_exit_code") != 0
+            or summary.get("descendants_cleared") is not True
+            or summary.get("remaining_child_pids") != []
+            or summary.get("sampled_process_tree_swap_peak_bytes") != 0
+            or summary.get("rss_hard_limit_bytes") != 2 * 2**30
+        ):
+            raise ValueError("W28_A_CLEARED_SUPERVISION")
+        tests = list(junit.iter("testcase"))
+        required = {
+            "test_schema2_is_explicit_and_schema1_strict",
+            "test_bad_contents_updated_hash",
+            "test_actual_versioned_writer_seal_reopen_consumer",
+            "test_marker_last_failure",
+            "test_failed_supervision_updated_receipt_refused",
+            "test_fixed_profile_full_global_coordinates",
+            "test_saved_numeric_damage_not_status",
+            "test_batch_window_no_reset_and_caps",
+        }
+        if not required <= {t.get("name", "").split("[")[0] for t in tests} or any(
+            list(t.iter(k)) for t in tests for k in ("failure", "error", "skipped")
+        ):
+            raise ValueError("W28_A_REQUIRED_COUNTEREXAMPLES")
+        for row in value["test_source_files"]:
+            check_file(row, Path(__file__).resolve().parents[2])
+        return value
     if value.get("schema") in {
         "w1-RB-delta-qualification.v1",
         "w1-P0-delta-qualification.v27",

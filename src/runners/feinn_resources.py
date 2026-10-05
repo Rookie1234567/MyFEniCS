@@ -103,8 +103,22 @@ def stable_window(directory, hard=16 * 2**30, *, seconds=60):
 
 
 class Health:
-    def __init__(self, directory, hard, neighbors):
+    def __init__(
+        self,
+        directory,
+        hard,
+        neighbors,
+        *,
+        artifact_root=None,
+        artifact_cap_bytes=20 * 2**30,
+    ):
         self.directory, self.hard, self.neighbors = directory, hard, neighbors
+        self.artifact_root = (
+            ARTIFACTS if artifact_root is None else Path(artifact_root).resolve()
+        )
+        if not self.artifact_root.is_relative_to(ARTIFACTS) or artifact_cap_bytes <= 0:
+            raise ValueError("TASK_OWN_ARTIFACT_SCOPE_REQUIRED")
+        self.artifact_cap_bytes = artifact_cap_bytes
         self.last, self.pressure_count, self.result = 0.0, 0, {}
 
     def __call__(self):
@@ -114,7 +128,7 @@ class Health:
         psi = pressure()
         disk = shutil.disk_usage(ROOT).free
         artifact_bytes = sum(
-            p.stat().st_size for p in ARTIFACTS.rglob("*") if p.is_file()
+            p.stat().st_size for p in self.artifact_root.rglob("*") if p.is_file()
         )
         bad = psi["some"]["avg10"] >= 1 or psi["full"]["avg10"] >= 0.1
         self.pressure_count = self.pressure_count + 1 if bad else 0
@@ -122,7 +136,7 @@ class Health:
         reason = None
         if self.pressure_count >= 3 or env["launch_cap_bytes"] < self.hard:
             reason = "RESOURCE_WINDOW_UNAVAILABLE"
-        if disk < 50 * 2**30 or artifact_bytes > 20 * 2**30:
+        if disk < 50 * 2**30 or artifact_bytes > self.artifact_cap_bytes:
             reason = "STORAGE_CONTROLLED_STOP"
         samples = []
         for neighbor in self.neighbors:

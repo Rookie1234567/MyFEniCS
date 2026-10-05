@@ -26,6 +26,12 @@ from src.runners.fresh_component_receiver import (
 from src.runners.frozen_source_snapshot import materialize
 
 RECEIVER_FILES = [
+    "src/common/w1_mode_validation.py",
+    "src/io/w1_versioned_input.py",
+    "src/runners/w1_versioned_payload.py",
+    "src/solvers/w1_facet_profile.py",
+    "src/solvers/w1_saved_boundary.py",
+    "src/io/w1_boundary_bundle.py",
     "src/io/w1_recovery_commit.py",
     "src/runners/w1_admission_scope.py",
     "src/runners/w1_admission_budget.py",
@@ -67,6 +73,31 @@ def charged_seconds(entries, now):
 
 
 def remaining(window, *, now=None, utc_now=None):
+    if window.get("schema") == "task42extra.w1-v28-batch-window.v1":
+        if (
+            window.get("budget_seconds") != 28800
+            or window.get("delivery_reserve_seconds") != 3600
+            or window.get("resource_samples_limit") != 24
+            or window.get("foreground_wait_limit_seconds") != 900
+            or window.get("old_windows_not_reset") is not True
+        ):
+            raise ValueError("W28_FIXED_BATCH_WINDOW")
+        now = time.monotonic() if now is None else now
+        utc_now = (
+            datetime.datetime.now(datetime.timezone.utc) if utc_now is None else utc_now
+        )
+        left = window["deadline_monotonic"] - now
+        utc_left = (
+            datetime.datetime.fromisoformat(window["deadline_utc"]) - utc_now
+        ).total_seconds()
+        if abs(left - utc_left) > 5:
+            raise RuntimeError("TIMEBASE_INCONSISTENCY")
+        if (
+            abs(window["deadline_monotonic"] - window["origin_monotonic"] - 28800)
+            > 0.01
+        ):
+            raise ValueError("W28_EXACT_28800S_WINDOW")
+        return min(left, utc_left)
     budget = (
         10800
         if window.get("schema")
@@ -125,6 +156,10 @@ def remaining(window, *, now=None, utc_now=None):
 
 
 def prerequisite(stage, output, spec=None):
+    if spec and spec.get("w1_receiver_schema") == 2:
+        from src.runners.w1_versioned_payload import prerequisite_v28
+
+        return prerequisite_v28(stage, spec, RECEIVER_FILES)
     if stage in {"control", "input_recovery"}:
         return
     if spec is None:
@@ -222,6 +257,46 @@ def native_command(bundle, run, binding):
     return ["/bin/bash", "-c", command]
 
 
+def payload_command(bundle, run, binding, spec):
+    if spec.get("w1_receiver_schema") != 2 or spec["stage"] in {"control", "boundary"}:
+        return native_command(bundle, run, binding)
+    command = (
+        "source scripts/activate_task42extra.sh pure && exec python -B "
+        + shlex.quote(str(ROOT / "src/runners/w1_component_payload.py"))
+        + " --frozen-source "
+        + shlex.quote(str(bundle))
+        + " --binding "
+        + shlex.quote(str(binding))
+    )
+    return ["/bin/bash", "-c", command]
+
+
+def contract_fields(spec):
+    if spec.get("w1_receiver_schema") == 2:
+        from src.io.w1_versioned_input import CONTRACT_KEYS
+
+        return {k: spec[k] for k in CONTRACT_KEYS}
+    return {
+        k: spec[k]
+        for k in (
+            "manifest_path",
+            "ledger_path",
+            "math_commit",
+            "quadrature_degree",
+            "output_root",
+            "input_sha256",
+            "coordinate_convention",
+            "ledger_translation_nm",
+        )
+    }
+
+
+def hard_limit(spec):
+    if spec.get("w1_receiver_schema") == 2:
+        return (16 if spec["stage"] == "boundary" else 2) * 2**30
+    return (2 if spec["stage"] in {"control", "input_recovery"} else 16) * 2**30
+
+
 def launch_w1(spec):
     """Preserve errors and setup charges even before the watchdog starts."""
     try:
@@ -261,6 +336,19 @@ def launch_w1(spec):
 
 def compute_stage_deadline(window, origin, numeric_used, stage, *, now=None):
     now = time.monotonic() if now is None else now
+    if window.get("schema") == "task42extra.w1-v28-batch-window.v1":
+        cap = {
+            "input_contract_checks": 1800,
+            "manifest_qualify": 3600,
+            "control": 900,
+            "boundary": 10800,
+            "boundary_check": 3600,
+            "bundle_consume": 3600,
+        }[stage]
+        deadline = min(origin + cap, window["deadline_monotonic"] - 3600)
+        if deadline - now <= 150:
+            raise TimeoutError("W28_SHARED_OR_SAVE_BUDGET_INSUFFICIENT")
+        return deadline
     cap = 900 if stage in {"input_recovery", "control"} else 7200
     deadline = min(
         origin + cap, window["deadline_monotonic"] - 1800, origin + 7200 - numeric_used
@@ -284,11 +372,13 @@ def _launch_w1(spec):
         raise ValueError("W1_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
     if "A_qualification_path" not in spec:
         raise ValueError("W1_A_QUALIFICATION_REQUIRED")
-    validate_A(
-        spec["A_qualification_path"], {p: digest(ROOT / p) for p in RECEIVER_FILES}
-    )
+    if spec["stage"] != "input_contract_checks":
+        validate_A(
+            spec["A_qualification_path"], {p: digest(ROOT / p) for p in RECEIVER_FILES}
+        )
     window = json.loads(Path(spec["window_path"]).read_text())
-    if remaining(window) <= 1950:
+    reserve = 3600 if spec.get("w1_receiver_schema") == 2 else 1800
+    if remaining(window) <= reserve + 150:
         raise TimeoutError("W1_DELIVERY_SAVE_RESERVE")
     output = Path(spec["output_root"])
     output.mkdir(parents=True, exist_ok=True)
@@ -311,7 +401,12 @@ def _launch_w1(spec):
         for folder in ("tmp", "jit"):
             (run / folder).mkdir()
         original = validate_originals(spec)
-        if not original["received"] and stage not in {"control", "input_recovery"}:
+        if not original["received"] and stage not in {
+            "control",
+            "input_recovery",
+            "input_contract_checks",
+            "manifest_qualify",
+        }:
             result = {
                 "component_status": original["status"],
                 "original_inputs": original,
@@ -339,7 +434,7 @@ def _launch_w1(spec):
         charge = {"stage": stage, "output": str(run), "origin_monotonic": origin}
         charges["entries"].append(charge)
         atomic_json(charge_path, charges)
-        hard = 2 * 2**30 if stage in {"control", "input_recovery"} else 16 * 2**30
+        hard = hard_limit(spec)
         priority = set_own_low_priority()
         terminal = json.loads(
             (
@@ -347,7 +442,10 @@ def _launch_w1(spec):
             ).read_text()
         )
         scope = terminal.get("allowed_scope")
-        if window["schema"] == "task42extra.w1-receiver-P0RB-window.v27":
+        if window["schema"] in {
+            "task42extra.w1-receiver-P0RB-window.v27",
+            "task42extra.w1-v28-batch-window.v1",
+        }:
             previous = json.loads((durable / "prelaunch_admission.json").read_text())
             if (
                 scope is None
@@ -382,19 +480,7 @@ def _launch_w1(spec):
         source_sha = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip()
-        contract = {
-            k: spec[k]
-            for k in (
-                "manifest_path",
-                "ledger_path",
-                "math_commit",
-                "quadrature_degree",
-                "output_root",
-                "input_sha256",
-                "coordinate_convention",
-                "ledger_translation_nm",
-            )
-        }
+        contract = contract_fields(spec)
         binding = {
             "schema": "task42extra.w1-binding.v1",
             "spec": spec,
@@ -415,13 +501,19 @@ def _launch_w1(spec):
             "new_clone_or_worktree": False,
         }
         atomic_json(run / "binding.json", binding)
-        health = Health(run, hard, facts["neighbor_processes"])
+        artifact_options = {}
+        if spec.get("w1_receiver_schema") == 2:
+            artifact_options = dict(
+                artifact_root=ROOT / "benchmarks/artifacts/task42extra/w1_receiver/v28",
+                artifact_cap_bytes=16 * 2**30,
+            )
+        health = Health(run, hard, facts["neighbor_processes"], **artifact_options)
 
         def guarded_health():
             value = dict(health())
             try:
                 if (
-                    remaining(window) <= 1800
+                    remaining(window) <= reserve
                     or time.monotonic() >= stage_deadline - 150
                 ):
                     value["stop_reason"] = "W1_DELIVERY_SAVE_RESERVE"
@@ -434,12 +526,20 @@ def _launch_w1(spec):
                 )
                 if p.is_file()
             )
-            if new_bytes > 8 * 2**30:
+            if spec.get("w1_receiver_schema") == 2:
+                new_bytes = sum(
+                    p.stat().st_size
+                    for p in (
+                        output.parent if output.name.startswith("v28_") else output
+                    ).rglob("*")
+                    if p.is_file()
+                )
+            if new_bytes > (16 if spec.get("w1_receiver_schema") == 2 else 8) * 2**30:
                 value["stop_reason"] = "W1_NEW_ARTIFACT_CAP_8GIB"
             return value
 
         summary = supervise(
-            native_command(bundle, run, run / "binding.json"),
+            payload_command(bundle, run, run / "binding.json", spec),
             run / "supervision",
             wall_seconds=stage_deadline - time.monotonic(),
             interval=0.25,
@@ -449,9 +549,7 @@ def _launch_w1(spec):
                 "PHYSICAL_WATCHDOG_PARENT_PID": str(os.getpid()),
             },
             rss_hard_limit_bytes=hard,
-            rss_warning_bytes=(
-                1879048192 if stage in {"control", "input_recovery"} else 12 * 2**30
-            ),
+            rss_warning_bytes=(1879048192 if hard == 2 * 2**30 else 12 * 2**30),
             memory_envelope_provider=lambda: envelope(hard),
             health_check=guarded_health,
             stop_on_global_swap=False,
@@ -498,6 +596,14 @@ def _launch_w1(spec):
         charge["classification"] = result["receiver_classification"]
         charge["cleared"] = result["cleared"]
         atomic_json(charge_path, charges)
+        if (
+            spec.get("w1_receiver_schema") == 2
+            and result["receiver_classification"] == "COMPLETED"
+            and result["cleared"]
+        ):
+            from src.runners.w1_versioned_payload import commit_stage
+
+            commit_stage(run, spec, result, RECEIVER_FILES)
         return result
 
 
@@ -512,16 +618,22 @@ def durable_w1(spec, *, launch_origin=None):
     if "A_qualification_path" not in spec:
         raise ValueError("W1_A_QUALIFICATION_REQUIRED")
     if "A_qualification_path" in spec:
-        if not original["received"] and spec["stage"] != "input_recovery":
+        if not original["received"] and spec["stage"] not in {
+            "input_recovery",
+            "input_contract_checks",
+            "manifest_qualify",
+        }:
             return {
                 "scope": "B_NOT_STARTED_INPUT_UNAVAILABLE",
                 "socket": None,
                 "session": None,
                 "output": None,
             }
-        validate_A(
-            spec["A_qualification_path"], {p: digest(ROOT / p) for p in RECEIVER_FILES}
-        )
+        if spec["stage"] != "input_contract_checks":
+            validate_A(
+                spec["A_qualification_path"],
+                {p: digest(ROOT / p) for p in RECEIVER_FILES},
+            )
         prepare_B_window(spec, original, launch_origin=launch_origin)
     remaining(json.loads(Path(spec["window_path"]).read_text()))
     namespace = "w1-receiver-" + Path(spec["output_root"]).name + "-" + spec["stage"]
@@ -529,7 +641,7 @@ def durable_w1(spec, *, launch_origin=None):
     if (directory / "launch.json").exists():
         raise ValueError("W1_ALREADY_LAUNCHED_RECONNECT")
     set_own_low_priority()
-    hard = 2 * 2**30 if spec["stage"] in {"control", "input_recovery"} else 16 * 2**30
+    hard = hard_limit(spec)
     directory.mkdir(parents=True, exist_ok=True)
     facts = admit(spec, directory, hard)
     scope = capture_scope(facts)
@@ -577,6 +689,10 @@ def prepare_B_window(spec, original, *, launch_origin=None):
     if path.exists():
         old = json.loads(path.read_text())
         remaining(old)
+        if spec.get("w1_receiver_schema") == 2:
+            if old.get("schema") != "task42extra.w1-v28-batch-window.v1":
+                raise ValueError("W28_WINDOW_INSTANCE")
+            return
         if old.get("schema") == "task42extra.w1-receiver-P0RB-window.v27":
             completion = json.loads((path.parent / "P0_complete.json").read_text())
             if (

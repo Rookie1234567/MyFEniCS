@@ -30,12 +30,13 @@ def atomic_json(path, value):
     return module.atomic_json(path, value)
 
 
-def atomic_arrays(path, arrays):
+def atomic_arrays(path, arrays, *, compressed=False):
     import numpy as np
 
     temporary = path.with_suffix(".tmp")
     with temporary.open("wb") as out:
-        np.savez(out, **arrays)
+        writer = np.savez_compressed if compressed else np.savez
+        writer(out, **arrays)
         out.flush()
         os.fsync(out.fileno())
     os.replace(temporary, path)
@@ -800,6 +801,11 @@ def main(argv=None):
     origin = time.monotonic()
     root = Path(__file__).resolve().parents[2]
     binding = json.loads(args.binding.read_text())
+    if binding["spec"].get("w1_receiver_schema") == 2:
+        driver = load_file("_w28_driver", root / "src/runners/w1_versioned_payload.py")
+        return driver.run_payload(
+            root, args.frozen_source, binding, sys.modules[__name__]
+        )
     if binding["stage"] == "input_recovery":
         contract = load_file("_w1_contract", root / "src/io/w1_receiver_contract.py")
         for name, expected in binding["receiver_files"].items():

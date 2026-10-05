@@ -1,0 +1,14 @@
+{
+  "schema": "w1-new-instance-reference-definition.v28",
+  "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+  "reference": "Fixed Decimal110 moments, bound V23 reuse for identical binary frequencies; missing frequencies checked by Decimal80 power series against fixed Decimal110 Gauss64; analytical interval moments independently paired",
+  "native_coefficients": "Complete original Basix N1E face polynomial, all local columns, original Piola and orientation; no amplitude pruning",
+  "relative_denominator": "Euclidean norm of the full independent reference array or scalar magnitude, with numpy.finfo(float).tiny only for exactly zero reference; explicit near-zero flag",
+  "numerator": "Euclidean norm of actual minus independent reference, identical shape",
+  "one_dimensional_absolute_limit": 1e-12,
+  "component_action_relative_limit": 1e-10,
+  "not_historical_file_denominators": true,
+  "profiles_share_reference": ["q60_native", "q60_phase_subdivision_v28"],
+  "generic_witness_seed": 4212801,
+  "maximum_chunk_modes": 64
+}

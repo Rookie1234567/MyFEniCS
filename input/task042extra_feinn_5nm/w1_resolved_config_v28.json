@@ -1,0 +1,81 @@
+{
+  "schema": "w1-resolved-physical-config.v28",
+  "physical_identity": {
+    "scope": "original_size_external_port_and_mode_inventory_only; internal grating/notch geometry does not enter the external-mode calculation",
+    "geometry": {
+      "period_x_nm": 50.0,
+      "period_y_nm": 25.0,
+      "z_min_nm": -10.0,
+      "z_max_nm": 130.0,
+      "grating_height_nm": 120.0,
+      "grating_width_x_nm": 17.0,
+      "grating_width_y_nm": 25.0,
+      "air_void_box_nm": [
+        25.0,
+        33.49999999999999,
+        6.25,
+        18.75,
+        39.99999999999999,
+        79.99999999999999
+      ]
+    },
+    "wavelength_nm": 0.7,
+    "materials": {
+      "top_external_medium": {
+        "label": "air/vacuum",
+        "refractive_index": [
+          1.0,
+          0.0
+        ],
+        "relative_permeability": [
+          1.0,
+          0.0
+        ]
+      },
+      "bottom_external_medium": {
+        "label": "Si substrate",
+        "refractive_index": [
+          0.9998851703688496,
+          4.3236152269189515e-06
+        ],
+        "relative_permeability": [
+          1.0,
+          0.0
+        ]
+      }
+    },
+    "incidence": {
+      "theta_from_positive_z_deg": 89.0,
+      "grazing_angle_deg": 1.0,
+      "azimuth_deg": 0.0,
+      "polarization": "s",
+      "electric_amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "ports": {
+      "top": {
+        "side": "top",
+        "reference_plane_z_nm": 130.0,
+        "external_material": "air/vacuum"
+      },
+      "bottom": {
+        "side": "bottom",
+        "reference_plane_z_nm": -10.0,
+        "external_material": "Si substrate"
+      },
+      "order_policy": "auto_propagating",
+      "maximum_abs_m": null,
+      "maximum_abs_n": null
+    }
+  },
+  "diffraction_rayleigh_tolerance": 1e-06,
+  "time_convention": "exp(-i omega t)",
+  "coordinate_bridge_nm": [
+    25,
+    12.5,
+    0
+  ],
+  "schema1_unchanged": true
+}
