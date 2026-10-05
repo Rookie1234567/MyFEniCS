@@ -1,6 +1,10 @@
+from types import SimpleNamespace
+
 import numpy as np
+import pytest
 from petsc4py import PETSc
 
+from src.runners import task40_v10_worker
 from src.runners.task40_v10_worker import (
     _assign_vector_storage,
     _regular_inverse_gate_facts,
@@ -79,3 +83,95 @@ def test_regular_inverse_gate_failures_are_reported_independently():
             inputs["recovery"][recovery_key] = value
         facts = _regular_inverse_gate_facts(**inputs)
         assert facts["failed_gates"] == [expected_failure]
+
+
+def test_regular_inverse_passes_sector_action_map_and_petsc_to_recovery(
+    monkeypatch,
+):
+    class _ReachedRecovery(Exception):
+        pass
+
+    captured = {}
+    sector_action_vectors = {
+        0: {"full_storage": np.zeros(3)},
+        1: {"full_storage": np.zeros(3)},
+    }
+
+    class _Inverse:
+        def apply_augmented(self, _rhs, *, port_rhs):
+            return np.zeros(2, dtype=np.complex128), np.zeros(532, dtype=np.complex128)
+
+    class _PhysicalAction:
+        def apply(self, _source, target):
+            target.set(0.0)
+
+    class _DtnAction:
+        carrier = SimpleNamespace(
+            entries=tuple(SimpleNamespace(normalization_h=1.0) for _ in range(532))
+        )
+
+        def recover_auxiliary(self, _solution):
+            return np.zeros(532, dtype=np.complex128)
+
+    def sector_forward(*_args, **_kwargs):
+        return np.zeros(2, dtype=np.complex128), sector_action_vectors, {}
+
+    def recovery(
+        reference_arg,
+        _solution,
+        _alpha,
+        _fe_rhs,
+        _port_rhs,
+        local_action_vectors,
+        petsc,
+        *,
+        allocation_gate,
+        operation_relative,
+    ):
+        captured.update(
+            reference=reference_arg,
+            local_action_vectors=local_action_vectors,
+            petsc=petsc,
+            allocation_gate=allocation_gate,
+            operation_relative=operation_relative,
+        )
+        raise _ReachedRecovery
+
+    monkeypatch.setattr(
+        task40_v10_worker,
+        "_runtime_interior_rows",
+        lambda _ref: np.empty(0, dtype=np.int64),
+    )
+    monkeypatch.setattr(task40_v10_worker, "_sector_native_forward_action", sector_forward)
+    monkeypatch.setattr(task40_v10_worker, "_regular_local_recovery_facts", recovery)
+    runtime = SimpleNamespace(sample=lambda _label: None)
+    layout = SimpleNamespace(independent=np.array([0, 1], dtype=np.int64), full_rows=3)
+    reference = {
+        "inverse": _Inverse(),
+        "full_layout": layout,
+        "global_bundle": {
+            "modes": tuple(range(532)),
+            "physical_action": _PhysicalAction(),
+            "dtn_action": _DtnAction(),
+        },
+    }
+    physical_rhs = PETSc.Vec().createSeq(3, comm=PETSc.COMM_SELF)
+    physical_rhs.set(0.0)
+    allocation_gate = lambda _label, _facts: None
+    try:
+        with pytest.raises(_ReachedRecovery):
+            task40_v10_worker._verify_regular_inverse(
+                runtime,
+                reference,
+                physical_rhs,
+                {},
+                allocation_gate=allocation_gate,
+            )
+    finally:
+        physical_rhs.destroy()
+
+    assert captured["reference"] is reference
+    assert captured["local_action_vectors"] is sector_action_vectors
+    assert captured["petsc"] is PETSc
+    assert captured["allocation_gate"] is allocation_gate
+    assert callable(captured["operation_relative"])

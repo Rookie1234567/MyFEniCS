@@ -937,6 +937,7 @@ def _verify_regular_inverse(
                 alpha,
                 fe_rhs,
                 g_rhs,
+                sector_action_vectors,
                 PETSc,
                 allocation_gate=allocation_gate,
                 operation_relative=_operation_relative,
