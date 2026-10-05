@@ -403,7 +403,7 @@
       "scope": "review only; no execution R/B started",
       "earlier_reading_seconds": "NOT_MEASURED"
     },
-    "elapsed_since_start_record_seconds": 1500.3929146530572,
+    "elapsed_since_start_record_seconds": 1699.198319270974,
     "earlier_reading_seconds": "NOT_MEASURED",
     "whole_project_cost": "UNKNOWN",
     "read_metadata_tree_peak": "NOT_MEASURED",
@@ -594,6 +594,37 @@
       "path": "tmp/task42extra/review_v25_input/document_check_final.json",
       "bytes": 476,
       "sha256": "0048aec4e7b6e2582ff57880f43cd835bdc091f19ce3bbbb40aeeed7d9daae6e"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_3bd126fb/render_records.json",
+      "bytes": 6042,
+      "sha256": "b6dc6af91f6326041b313f764e9d34ebd6ab11bc4ccaaac742a9f9554c759dda"
+    },
+    {
+      "path": "tmp/task42extra/checks/review_v25_input_peer_render_20261005T003302822849Z/summary.json",
+      "bytes": 2075,
+      "sha256": "7458a474c03941c0d962b6dd5326aad42df8aba531a0d20e449eb46be4f227bb"
+    },
+    {
+      "path": "tmp/task42extra/review_v25_input/render_urls_final.json",
+      "bytes": 211,
+      "sha256": "9f3c52282260e5e710dc75297c0e4365de5b026ad909a49ea5ae59a2b0e77290"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_3bd126fb/00_scope_00.png",
+      "bytes": 719950,
+      "sha256": "49831d06dc6b88dba178a95b82a20eeda0d83053780d5448d050e97bbb795c01"
+    },
+    {
+      "path": "tmp/task42extra/render/review_v25_input_3bd126fb/00_scope_01.png",
+      "bytes": 575184,
+      "sha256": "d984a407d3b38763b8912ea115d6a7096d57489be620f76680c2007a7cc43607"
+    },
+    {
+      "commit": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/target_AUTO_identity_v1/library_readback_receipt.json",
+      "bytes": 2063,
+      "sha256": "bbce568cce16ab1b4c79abb05f0198cabe9f84eed6a1dd6f09d2eb6f4409f5be"
     }
   ],
   "authoring_events": [
@@ -607,6 +638,13 @@
       "numerical_effect": false,
       "first_attempt_retained": "tmp/task42extra/review_v25_input/check_review_attempt1.py",
       "repair": "anchor heading count to line start; second supervised check PASS"
+    },
+    {
+      "event": "First metadata seal iterated the render record mapping rather than records list; TypeError before audit write. Subsequent Git found nothing to commit.",
+      "repair": "Use records list; preserve same browser/raw/doc bytes; corrected hash/size check passed.",
+      "numerical_effect": false,
+      "new_browser_or_numerical_replay": false,
+      "time": "Included in continuous review clock; no standalone measured duration"
     }
   ],
   "find_inputs.py": "\"\"\"Finite read-only search for the declared W1 originals; no regeneration.\"\"\"\nimport datetime\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport time\nimport zipfile\n\nSTART = time.monotonic()\nROOTS = [Path(p) for p in (\n    '/home/fenics/Projects', '/tmp', '/mnt', '/media',\n    '/home/fenics/Downloads', '/home/shenjh/Projects', '/mnt/data',\n)]\nSKIP = {'.git', 'node_modules', '__pycache__', 'pycache', 'site-packages',\n        '.cache', 'xdg', 'prefix', 'pord64-overlay', 'snap-private-tmp'}\nNAMES = {'original_size_auto_mode_manifest.json', 'target_ledger.json',\n         'w1_boundary_probe_arrays.npz', 'original_physical_manifest.json',\n         'target_AUTO_complete_inventory.zip'}\nSIZES = {36244923, 38026664, 36263033}\nresult = {'utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),\n          'roots': [], 'candidates': [], 'archives': [], 'errors': [],\n          'metadata_file_count': 0, 'excluded_directory_names': sorted(SKIP),\n          'no_symlink_recursion': True, 'no_generation': True}\nseen = set()\nfor base in ROOTS:\n    result['roots'].append({'path': str(base), 'exists': base.exists()})\n    if not base.is_dir():\n        continue\n    for directory, dirs, files in os.walk(base, followlinks=False,\n            onerror=lambda exc: result['errors'].append(str(exc))):\n        dirs[:] = [d for d in dirs if d not in SKIP and not d.startswith(('.venv', 'systemd-private-'))]\n        for name in files:\n            if time.monotonic() - START > 120 or result['metadata_file_count'] >= 500000:\n                result['bounded_stop'] = True\n                break\n            path = Path(directory) / name\n            try:\n                st = path.stat()\n            except OSError as exc:\n                result['errors'].append(str(exc)); continue\n            identity = (st.st_dev, st.st_ino)\n            if identity in seen:\n                continue\n            seen.add(identity)\n            result['metadata_file_count'] += 1\n            if name in NAMES or st.st_size in SIZES:\n                h = hashlib.sha256()\n                with path.open('rb') as stream:\n                    for block in iter(lambda: stream.read(1048576), b''):\n                        h.update(block)\n                result['candidates'].append({'path': str(path), 'bytes': st.st_size, 'sha256': h.hexdigest()})\n            if name.endswith('.zip') and any(token in name.lower() for token in ('target', 'auto', 'w1', 'task40', 'ledger', 'inventory')):\n                try:\n                    with zipfile.ZipFile(path) as archive:\n                        matches = [dict(name=i.filename, bytes=i.file_size) for i in archive.infolist()\n                                   if Path(i.filename).name in NAMES or i.file_size in SIZES]\n                    result['archives'].append({'path': str(path), 'matches': matches})\n                except (OSError, zipfile.BadZipFile) as exc:\n                    result['errors'].append(str(exc))\n        if result.get('bounded_stop'):\n            break\n    if result.get('bounded_stop'):\n        break\nresult['seconds'] = time.monotonic() - START\nresult['scope_limit'] = 'Absence within accessible declared/project/temp/download scopes; not proof of deletion on another host or Library.'\nPath(__file__).with_name('input_search.json').write_text(json.dumps(result, indent=2) + '\\n')\nprint(json.dumps(result, indent=2))\n",
@@ -1188,8 +1226,30 @@
     }
   ],
   "render": {
-    "status": "PENDING_DELTA_RENDER_AFTER_PUBLICATION",
-    "scope": "Only changed dot paragraph and source-location reference; unchanged table/other §8 text reuse prior actual rendered evidence."
+    "status": "PASS_FINITE_CHANGED_PARAGRAPHS_WITH_UNCHANGED_TABLE_REUSE",
+    "publication_commit": "3bd126fbb21bc2570a8f2132648a2c16c793e415",
+    "report_sha256": "472628ce34ccfbe7a46e9a62f740c272f48458650dd57190f64a087345944c71",
+    "pages": 1,
+    "fresh_screenshots_actually_viewed": 2,
+    "new_math_blocks": 0,
+    "scope": "Complete latest dot paragraph and cross-branch scope/budget; exact remote original location and Library limitations; both actual GitHub screenshots viewed.",
+    "unchanged_complete_new_table": {
+      "publication_commit": "e5585cb8d28f6eb0ae5a0cda939f624f75419779",
+      "source_bytes_sha256": "adb119faa0fb5914a2d1c564614da240c3674f7dd90390504f0c3cf581a3f9dc",
+      "source_bytes_identical": true,
+      "previous_screenshot": "tmp/task42extra/render/review_v25_input_e5585cb8/00_scope_02.png",
+      "right_column_fully_viewed": true
+    },
+    "limitation": "Finite changed-section coverage, not whole-page PASS; execution code fence horizontal view and historical section7 limitations unchanged.",
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 16.091331956209615,
+      "sampled_process_tree_rss_peak_bytes": 1587490816,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "source_record": "tmp/task42extra/render/review_v25_input_3bd126fb/render_records.json"
   },
   "document_check_final": {
     "status": "PASS_LOCAL_DOCUMENT_AND_HISTORY_INTEGRITY",
@@ -1209,5 +1269,10 @@
     "B_window_absent": true,
     "numerical_or_generator_or_A_test_calls": 0,
     "monotonic": 1085291.76186093
+  },
+  "final_binding_check": {
+    "status": "PASS",
+    "binding_entries": 40,
+    "scope": "Every recorded local artifact and pinned Git blob checked for size and SHA256; report unchanged since rendered publication; old full table exact source reuse."
   }
 }
