@@ -159,8 +159,21 @@ class TwoCellInverse:
     def qualify(self,folder):
         from .scattering_anchor import relative,save_arrays
         from petsc4py import PETSc
-        rng=np.random.default_rng(49003);b=rng.standard_normal(15872)+1j*rng.standard_normal(15872)
-        g=rng.standard_normal(532)+1j*rng.standard_normal(532)
+        rng=np.random.default_rng(49003)
+        manufactured=rng.standard_normal(15872)+1j*rng.standard_normal(15872)
+        h=np.array([e.normalization_h for e in self.original['dtn_action'].carrier.entries])
+        # All modes retained. Unit normalized port coordinates have bounded
+        # physical boundary amplitude, unlike unit raw g on tiny evanescent H.
+        manufactured_alpha=(rng.standard_normal(532)+1j*rng.standard_normal(532))/np.sqrt(h)
+        v0=PETSc.Vec().createSeq(self.layout.full_rows,comm=PETSc.COMM_SELF);v0.set(0);v0.array[self.layout.independent]=manufactured
+        try:
+            volume0=self.original['volume_action'].apply(v0).array.copy();coupling0=np.zeros_like(volume0);p0=[]
+            for entry,alpha0 in zip(self.original['dtn_action'].carrier.entries,manufactured_alpha,strict=True):
+                np.add.at(coupling0,entry.coupling_rows,entry.coupling_values*alpha0)
+                p0.append(np.dot(entry.projection_values,v0.array[entry.projection_rows]))
+            b=(volume0+coupling0)[self.layout.independent]
+            g=-np.array(p0)+h*manufactured_alpha
+        finally:v0.destroy()
         action=FullOriginalAction(self.original['physical_action'],self.layout)
         try:
             u,alpha=self.apply_augmented(b,g)
@@ -173,11 +186,14 @@ class TwoCellInverse:
             finally:v.destroy()
             x=self.apply_array(b);defect=relative(action.apply(x)-b,b)
             arrays=save_arrays(folder/'all4q_witness.npz',FE_rhs=b,port_rhs=g,u=u,port=alpha,
-                              augmented_residual=residual,port_residual=port_residual,eliminated_u=x)
+                              augmented_residual=residual,port_residual=port_residual,eliminated_u=x,
+                              manufactured_u=manufactured,manufactured_port=manufactured_alpha,port_H=h)
             norms={'original_FE':relative(residual,b),'original_port':relative(port_residual,g+np.asarray(p)),
-                   'eliminated_inverse':defect}
+                   'eliminated_inverse':defect,'manufactured_FE_solution':relative(u-manufactured,manufactured),
+                   'normalized_port_solution':relative(np.sqrt(h)*(alpha-manufactured_alpha),np.sqrt(h)*manufactured_alpha)}
+            self.journal.event('all4q_manufactured_actual_norms',norms=norms,port_H_min=float(h.min()),port_H_max=float(h.max()))
             self.journal.calls['A']+=action.calls
-            if max(norms.values())>1e-10:raise ValueError('all4q real native nonzero interior/port inverse qualification')
+            if not all(np.isfinite(v) for v in norms.values()) or max(norms.values())>1e-10:raise ValueError('all4q real native nonzero interior/port inverse qualification')
             return {'norms':norms,'arrays':arrays,'branches':self.checks,'all_q':[0,1,2,3],
                     'native_full_rows':17204,'complete_independent':15872,'two_local_FE_rows':7936}
         finally:action.close()

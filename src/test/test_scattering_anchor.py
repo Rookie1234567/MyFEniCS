@@ -9,7 +9,7 @@ from unittest.mock import patch
 import numpy as np
 
 from src.io.scattering_anchor import load_scattering_anchor
-from src.solvers.scattering_anchor import configuration, small_condensation_witness, save_arrays
+from src.solvers.scattering_anchor import configuration, small_condensation_witness, save_arrays, relative
 from src.solvers.scattering_anchor_scope import ROOT, STAGES, plan_record
 
 
@@ -81,6 +81,21 @@ class AnchorTests(unittest.TestCase):
         eta=np.exp(1j*(c.ky.real*c.period_y+2*np.pi)/4);p=PhaseConfiguration(local,eta**2)
         self.assertEqual(p.ky,c.ky);self.assertEqual(p.floquet_phase_y,eta**2)
         self.assertGreater(abs(p.floquet_phase_y-local.floquet_phase_y),.1)
+
+    def test_large_finite_complex_norm_preserves_denominator(self):
+        reference=np.array([1e190+2e190j,-3e190+1e190j])
+        self.assertAlmostEqual(relative(.25*reference,reference),.25)
+        self.assertEqual(relative(np.zeros(2),reference),0)
+
+    def test_independent_frozen_member_checker_rejects_inventory_and_hash(self):
+        from src.solvers.scattering_anchor_checks import checked_arrays
+        with tempfile.TemporaryDirectory() as t:
+            p=Path(t)/'state.npz';a=np.array([1+2j,3-1j]);record=save_arrays(p,z=a)
+            np.testing.assert_array_equal(checked_arrays(record)['z'],a)
+            bad={**record,'members':{}}
+            with self.assertRaisesRegex(ValueError,'inventory'):checked_arrays(bad)
+            bad={**record,'members':{'z':{**record['members']['z'],'sha256':'0'*64}}}
+            with self.assertRaisesRegex(ValueError,'member identity'):checked_arrays(bad)
 
     def test_save_arrays_failure_retains_completed_vector(self):
         with tempfile.TemporaryDirectory() as t:

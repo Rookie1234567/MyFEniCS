@@ -15,7 +15,7 @@ def main():
     for name in hashes:
         if name.endswith('.py'):compile((ROOT/name).read_bytes(),name,'exec')
     paths=['src/io/scattering_anchor.py','src/solvers/scattering_anchor.py','src/solvers/scattering_anchor_scope.py',
-           'src/solvers/scattering_y_orbit_reuse.py','src/solvers/scattering_anchor_two_cell.py','src/test/test_scattering_anchor.py','benchmarks/qualify_scattering_anchor.py',
+           'src/solvers/scattering_y_orbit_reuse.py','src/solvers/scattering_anchor_two_cell.py','src/solvers/scattering_anchor_checks.py','src/test/test_scattering_anchor.py','benchmarks/qualify_scattering_anchor.py',
            'src/runners/port_preparation.py','scripts/run_case.py']
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_scattering_anchor'],
               ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]

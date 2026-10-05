@@ -23,7 +23,11 @@ from .scattering_anchor_scope import ROOT, ARTIFACT, plan_record, stage, window
 
 
 def relative(delta, reference):
-    return float(np.linalg.norm(delta) / max(np.linalg.norm(reference), 1e-30))
+    # Scale both operands before squaring, so finite large auxiliary units do
+    # not manufacture an infinite norm. This changes no physical denominator.
+    delta=np.asarray(delta);reference=np.asarray(reference)
+    scale=max(float(np.max(np.abs(delta),initial=0)),float(np.max(np.abs(reference),initial=0)),1e-30)
+    return float(np.linalg.norm(delta/scale)/max(np.linalg.norm(reference/scale),1e-30/scale))
 
 
 def array_hash(a):
@@ -389,33 +393,8 @@ def engine(case,folder,journal):
 
 
 def verify(folder,journal):
-    """Only this post-freeze process opens reference scientific arrays."""
-    # The verified same-mesh fields are saved in identical complete DG order;
-    # selected points and all original mode keys are also compared independently.
-    rows=[]
-    for case in ('REGULAR','NOTCH'):
-        ref=stage('REFERENCE_'+case);candidate=stage('ENGINE_'+case)
-        for packet in (ref,candidate):
-            for item in (packet['arrays'],packet['output']['fields']):
-                if hashlib.sha256(Path(item['path']).read_bytes()).hexdigest()!=item['sha256']:raise ValueError('frozen state bytes/hash')
-        with np.load(ref['output']['fields']['path']) as r,np.load(candidate['output']['fields']['path']) as c:
-            fields={name:relative(c[name]-r[name],r[name]) for name in r.files if name not in ('field_coordinates','selected_points')}
-            if not np.array_equal(r['field_coordinates'],c['field_coordinates']) or not np.array_equal(r['selected_points'],c['selected_points']):raise ValueError('canonical same-mesh DG point inventory')
-        with np.load(ref['arrays']['path']) as r,np.load(candidate['arrays']['path']) as c:
-            channels=relative(c['port']-r['port'],r['port'])
-            coefficients=relative(c['u_storage']-r['u_storage'],r['u_storage'])
-        rp=ref['output']['port_metrics'];cp=candidate['output']['port_metrics']
-        # Original approved metrics are preserved; exact keys are checked,
-        # no conservation normalization or phase adjustment is made here.
-        keys=[k for k in ('R_total','T_total','A_total','R','T','A') if k in rp and isinstance(rp[k],(int,float))]
-        powers={k:abs(cp[k]-rp[k]) for k in keys}
-        rows.append({'case':case,'fields':fields,'complex_channels':channels,'coefficients':coefficients,
-                     'power_differences':powers,'candidate_equation_pass':candidate['equation_pass'],
-                     'same_discrete_field_pass':max([channels,*fields.values()])<=1e-4,
-                     'reference_original_audit':ref['original_audit'],'candidate_original_audit':candidate['original_audit']})
-    write_json(folder/'pair_checks.json',rows)
-    return {'status':'COMPLETED','pairs':rows,'reference_read_after_candidates_frozen':True,
-            'TARGET_NOT_QUALIFIED':True,'NN_NOT_TRAINED_THIS_BATCH':True}
+    from .scattering_anchor_checks import verify as physical_verify
+    return physical_verify(folder,journal)
 
 
 def cost_report(folder,journal):
