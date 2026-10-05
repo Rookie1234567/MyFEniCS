@@ -120,7 +120,7 @@ class GramProvider:
         from .hcurl_assembly_time_condensation import _tabulate_raw_tensor_class
         began=time.perf_counter()
         original=_tabulate_raw_tensor_class(form,kernels,coordinates,tag=tag,dimension=dimension)
-        widths=tuple(np.ptp(coordinates,axis=0)[:3]);g=self.factory.tensor(tag=tag,widths=widths)
+        widths=tuple(np.ptp(np.asarray(coordinates).reshape(-1,3),axis=0));g=self.factory.tensor(tag=tag,widths=widths)
         m=self.factory.mass_tensor(tag=tag,widths=widths);c=g-m
         components={k:_tabulate_raw_tensor_class(f,self.kernels[k],coordinates,tag=tag,dimension=dimension) for k,f in self.forms.items()}
         # Operation-scale denominators retain curl and mass before cancellation.
@@ -133,8 +133,10 @@ class GramProvider:
             oriented.append(dict(permutation=info,operation_scaled=float(np.linalg.norm(T@(g-original)@T.T)/max(scale,1e-300))))
         good=max(*checks.values(),*(r['operation_scaled'] for r in oriented))<=1e-10
         self.failed|=not good
-        receipt=save_arrays(self.folder/f'raw_class_{len(self.rows):03d}.npz',coordinates=coordinates,original=original,gram=g,
-            curl_original=components['curl'],mass_original=components['material_mass'],curl_gram=c,mass_gram=m)
+        if not (self.folder/'reference_grams.npz').exists():
+            save_arrays(self.folder/'reference_grams.npz',mass=np.asarray(self.factory.mass_components),curl=np.asarray(self.factory.curl_components))
+        receipt=save_arrays(self.folder/f'raw_class_{len(self.rows):03d}.npz',coordinates=coordinates,original=original,
+            curl_original=components['curl'],mass_original=components['material_mass'])
         self.rows.append(dict(index=len(self.rows),tag=tag,widths=widths,checks=checks,oriented=oriented,pass_gate=good,arrays=receipt))
         self.elapsed+=time.perf_counter()-began
         write_json(self.folder/'tensor_checks.json',self.report())
@@ -145,6 +147,55 @@ class GramProvider:
         return dict(all_actual_classes=self.rows,pass_gate=not self.failed,seconds=self.elapsed,
             factory=dict(self.factory.audit),requested_gram=self.use_gram,
             failed_class_fallback='original FFCx tensor; no approximate class merge')
+
+
+def saved_equation_attribution(folder,journal):
+    """Old fields with independently verified boundary, no factor/re-solve."""
+    from .scattering_anchor_scope import stage as old_stage
+    from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    from .hcurl_assembly_time_condensation import _cell_integral_kernels,_canonical_axis_aligned_coordinates
+    from dolfinx import fem
+    rows=[]
+    for degree in (4,5):
+        parent=old_stage('REFERENCE_NOTCH' if degree==4 else 'REFERENCE_NOTCH_P5')
+        old=checked_arrays(parent['arrays']);cfg,setup,geometry=make_setup('NOTCH',degree,'ORIGINAL',journal)
+        for k in ('geometry_x','geometry_dofmap','cell_tags','cell_centers'):
+            if not np.array_equal(old[k],geometry[k]):raise ValueError('old/new frozen geometry '+k)
+        bundle,rhs,_=build_bundle(cfg,setup,journal);u=rhs.duplicate();u.array[:]=old['u_storage']
+        try:
+            port=bundle['dtn_action'].recover_auxiliary(u)
+            norms,vectors=audit_original(bundle,rhs,u,port,journal)
+            qualified=save_arrays(folder/f'p{degree}_saved_field_q47_audit.npz',rhs=rhs.array.copy(),port=port,**vectors)
+            from .scattering_accuracy_boundary import carrier
+            c63,src63,_,_,_=carrier(setup['spaces'][degree],setup['floquets'][degree].mpc,cfg,63)
+            from .fullspace_dtn_action import FullspaceDtnAction
+            action=FullspaceDtnAction(c63,comm=setup['mesh'].comm)
+            base=rhs.duplicate();new_rhs=rhs.duplicate();dtn=rhs.duplicate()
+            try:
+                base.array[:]=src63.incident_traction();action.compose_physical_rhs(base,bundle['incident_projections'],new_rhs)
+                action.apply(u,dtn);r63=new_rhs.array-vectors['volume_action']-dtn.array
+                den63=new_rhs.array.copy();port63=action.recover_auxiliary(u)
+                v63=save_arrays(folder/f'p{degree}_saved_field_q63_audit.npz',rhs=den63,port=port63,residual=r63)
+            finally:base.destroy();new_rhs.destroy();dtn.destroy();action.destroy()
+            journal.calls['A']+=1
+            tensor_dir=folder/f'p{degree}_all_actual_classes';tensor_dir.mkdir()
+            provider=GramProvider(bundle,tensor_dir,journal)
+            form=fem.form(bundle['volume_action'].bilinear_form);kernels=_cell_integral_kernels(form,sum_duplicate_cell_integrals=True)
+            mesh=setup['mesh'];seen=set();assignment=[]
+            with journal.measured(f'p{degree}_all_actual_raw_oriented_curl_mass'):
+                for cell,tag in enumerate(geometry['cell_tags']):
+                    coordinates,widths=_canonical_axis_aligned_coordinates(mesh,cell,tolerance=1e-12,geometry_identity_policy='raw_unrounded')
+                    key=(int(tag),*widths);assignment.append(key)
+                    if key in seen:continue
+                    provider(form,kernels,coordinates,tag=int(tag),dimension=setup['spaces'][degree].element.space_dimension);seen.add(key)
+            rows.append(dict(degree=degree,parent_source=parent['source_sha'],parent_npz_hash=parent['arrays']['sha256'],
+                old_q=23 if degree==4 else 25,new_q47_audit=norms,new_q63_true=relative(r63,den63),
+                old_native_true=parent['original_audit']['true'],rhs_change_relative=relative(old['rhs']-rhs.array,rhs.array),
+                q47_q63_residual_difference=relative(vectors['residual']-r63,rhs.array),arrays47=qualified,arrays63=v63,
+                tensor_checks=provider.report(),actual_cell_class_assignment=assignment,original_volume_form_audit=dict(bundle['volume_action'].audit)))
+            journal.event('saved_field_new_boundary_audit_saved',degree=degree,rho=norms['true'],tensor_classes=len(seen))
+        finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
+    return rows
 
 
 def analytic_comparison(bundle,u,geometry,folder,journal):
@@ -282,7 +333,9 @@ def execute(role,folder,state):
         return boundary_stage(folder,journal,make_setup)
     if role=='ATTRIBUTION':
         from .scattering_accuracy_fields import saved_attribution
-        return saved_attribution(folder,journal,make_setup)
+        r=saved_attribution(folder,journal,make_setup)
+        r['saved_original_equation_rechecks']=saved_equation_attribution(folder,journal)
+        return r
     if role=='SCREEN':
         from .scattering_accuracy_fields import representation_screen
         return representation_screen(folder,journal,make_setup)

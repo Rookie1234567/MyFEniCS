@@ -157,9 +157,10 @@ def saved_attribution(folder,journal,make_setup):
                            p4_total2=0.,p5_total2=0.,p4_analytic_scattered2=0.,p5_analytic_scattered2=0.,analytic_background2=0.,
                            FE4_background_error2=0.,FE5_background_error2=0.) for name in ('E','H','curl')} for group in groups}
     evaluators=[CellEvaluator(f.function_space,31) for f in functions]
-    point_arrays={k:[] for k in ('physical_points','weights','total4','total5','analytic_E','analytic_H','FE_background4','FE_background5')}
+    per_cell=[];field_keys=None
     with journal.measured('saved_p4_p5_analytic_background_region_integrals'):
         for c in range(len(geo['cell_centers'])):
+            cell_integrals=[]
             points,w,v4=evaluators[0].cell(functions[0],c,cfg.k0);points5,w5,v5=evaluators[1].cell(functions[1],c,cfg.k0)
             if not np.allclose(points,points5,rtol=0,atol=1e-14) or not np.allclose(w,w5,rtol=1e-14,atol=0):raise ValueError('common physical quadrature')
             _,_,bg4=evaluators[0].cell(backgrounds[0],c,cfg.k0);_,_,bg5=evaluators[1].cell(backgrounds[1],c,cfg.k0)
@@ -171,14 +172,19 @@ def saved_attribution(folder,journal,make_setup):
                     cross=float(-2*np.real(np.sum(w[:,None]*np.conj(dt)*db))),p4_total2=sq(v4[name]),p5_total2=sq(v5[name]),
                     p4_analytic_scattered2=sq(v4[name]-known[name]),p5_analytic_scattered2=sq(v5[name]-known[name]),
                     analytic_background2=sq(known[name]),FE4_background_error2=sq(bg4[name]-known[name]),FE5_background_error2=sq(bg5[name]-known[name]))
+                field_keys=list(values);cell_integrals.append(list(values.values()))
                 for g,mask in groups.items():
                     if mask[c]:
                         for k,value in values.items():sums[g][name][k]+=value
+            per_cell.append(cell_integrals)
             # Complete per-cell integral values are retained, not a giant
             # duplicated point×basis atlas. Selected arrays already exist.
     maxidentity=max(abs(s['old_scattered_delta2']-(s['total_delta2']+s['FE_background_delta2']+s['cross']))/max(s['old_scattered_delta2'],1e-30) for v in sums.values() for s in v.values())
     if maxidentity>1e-10:raise ValueError('full complex cross-term identity')
+    arrays=save_arrays(folder/'regional_cross_terms.npz',per_cell_integrals=np.asarray(per_cell),
+        cell_centers=geo['cell_centers'],partition_masks=np.asarray(list(parts.values())),x_strip_masks=np.asarray(list(stripes.values())),
+        overlapping_neighborhood=near)
     return dict(status='COMPLETED',parents=[dict(source_sha=p['source_sha'],npz_sha256=p['arrays']['sha256']) for p in parents],
                 quadrature=31,region_counts={g:int(mask.sum()) for g,mask in groups.items()},integrals=sums,
-                cross_identity_max_relative=maxidentity,common_analytic_background=True,
+                cross_identity_max_relative=maxidentity,common_analytic_background=True,arrays=arrays,integral_member_keys=field_keys,
                 overlapping_region_excluded_from_partition_sum=True,timings=journal.timings,calls=journal.calls)
