@@ -15,6 +15,6 @@ systemd-run --user --unit="$unit" --service-type=exec \
     --property="StandardOutput=append:$log_dir/$unit.log" \
     --property="StandardError=append:$log_dir/$unit.log" \
     /usr/bin/bash -lc \
-    'set -e; cd -- "$1"; shift; source scripts/activate_myfenics_wsl.sh; exec python scripts/run_case.py "$@"' \
+    'set -e; cd -- "$1"; shift; args=("$@"); use_v10=0; for arg in "${args[@]}"; do if [[ "$arg" == "--task40-v10-campaign-window" ]]; then use_v10=1; fi; done; if (( use_v10 )); then source scripts/task40_fresh_c1/activate_local_wsl_complex.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/abi_receipt.json benchmarks/artifacts/task40extra_0p7nm_engineering/local_w9_wsl/window_qualification_jit; else source scripts/activate_myfenics_wsl.sh; fi; exec python scripts/run_case.py "${args[@]}"' \
     myfenics-case "$repo_root" "$@"
 printf 'Unit: %s.service\nLog: %s/%s.log\n' "$unit" "$log_dir" "$unit"

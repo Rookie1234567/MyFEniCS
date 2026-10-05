@@ -1195,6 +1195,122 @@ class P6CellCondensedAction:
             self._matrix.setUp()
         return self._matrix
 
+    def iter_reduced_contributions(self, *, allocation_gate: Callable[[str, Mapping[str, Any]], None]):
+        """Yield the complete cached reduced matrix as one bounded block at a time.
+
+        This is the assembly seam for exact quotient solvers. It emits the
+        same Schur, trace/port, and direct-carrier terms as ``_apply_array``;
+        consumers must finish their projection and release each yielded block
+        before requesting the next one. No full reduced matrix is constructed.
+        """
+        from .static_local_schur_action import iter_owned_constrained_schur_contributions
+
+        if not callable(allocation_gate):
+            raise ValueError("fresh whole-tree contribution allocation gate required")
+        if self._destroyed or getattr(self.condensed, "_destroyed", False):
+            raise RuntimeError("p6 contribution owner has been destroyed")
+        if self.condensed.comm.Get_size() != 1 or self.port_coupling_mode != "cached":
+            raise ValueError("reduced contributions require MPI1 cached port terms")
+        trace_rows = int(self.condensed.active_rows)
+        total_rows = self.reduced_size
+        port_count = int(self.condensed.appended_rows)
+        index_bytes = np.dtype(PETSc.IntType).itemsize
+        if total_rows <= 0 or total_rows > int(np.iinfo(PETSc.IntType).max):
+            raise OverflowError("reduced matrix row range exceeds PETSc.IntType")
+
+        def gate(label: str, payload: int = 0, workspace: int = 0) -> None:
+            if self._destroyed or getattr(self.condensed, "_destroyed", False):
+                raise RuntimeError("contribution owner destroyed during iteration")
+            allocation_gate("p6_reduced_contribution/" + label, {
+                "matrix_payload_bytes": int(payload),
+                "workspace_bytes": int(workspace),
+                "allocation_semantics": "additional_objects_to_current_resident_RSS",
+                "consumer_must_release_before_next": True,
+                "global_q_factor_count": 0,
+                "PETSc_index_itemsize_bytes": index_bytes,
+            })
+
+        def checked(rows: Any, columns: Any, block: Any, label: str):
+            rows = np.asarray(rows)
+            columns = np.asarray(columns)
+            block = np.asarray(block)
+            for indices in (rows, columns):
+                if (indices.ndim != 1 or indices.dtype.kind not in "iu"
+                        or (indices.size and (int(indices.min()) < 0 or int(indices.max()) >= total_rows))
+                        or len(np.unique(indices)) != len(indices)):
+                    raise ValueError("invalid p6 reduced contribution indices")
+            if (block.shape != (len(rows), len(columns))
+                    or block.dtype != np.dtype(np.complex128)
+                    or not np.isfinite(block).all()):
+                raise ValueError("invalid finite complex128 p6 reduced contribution block")
+            row_view, column_view, block_view = rows.view(), columns.view(), block.view()
+            row_view.setflags(write=False)
+            column_view.setflags(write=False)
+            block_view.setflags(write=False)
+            return row_view, column_view, block_view, label
+
+        # Hhat is a bounded small port square; it includes the original H and
+        # every cached Di*XiB correction exactly once for both H layouts.
+        gate("ports/Hhat", 16 * port_count * port_count, 16 * port_count * port_count)
+        ports = np.arange(trace_rows, total_rows, dtype=PETSc.IntType)
+        hhat = self._materialize_Hhat()
+        yield checked(ports, ports, hhat, "ports/Hhat")
+        del ports, hhat
+
+        for cell_index, cell in enumerate(self._cells):
+            active_count = len(cell.active_ids)
+            local_trace_count = len(cell.original_trace)
+            expansion_bytes = sum(array.nbytes for array in (
+                cell.expansion.data, cell.expansion.indices, cell.expansion.indptr
+            ))
+            gate(
+                f"volume/cell/{cell_index}",
+                16 * active_count * active_count + active_count * index_bytes,
+                2 * expansion_bytes + cell.expansion.nnz * 224
+                + 16 * (active_count * local_trace_count + 2 * active_count * active_count)
+                + active_count * active_count,
+            )
+            _index, active_ids, schur = next(
+                iter_owned_constrained_schur_contributions(self.condensed, (cell_index,))
+            )
+            if not np.array_equal(active_ids, cell.active_ids):
+                raise ValueError("inherited p6 Schur and carrier active-row order differs")
+            yield checked(active_ids, active_ids, schur, f"volume/cell/{cell_index}")
+            del active_ids, schur
+
+            port_indices = np.asarray(cell.ports, dtype=PETSc.IntType)
+            if not len(port_indices):
+                continue
+            if cell.Bhat is None or cell.Dhat is None:
+                raise ValueError("cached p6 trace/port formulas are unavailable")
+            global_ports = trace_rows + port_indices
+            gate(f"cell/C_hat/{cell_index}", index_bytes * len(global_ports)
+                 + 16 * active_count * len(global_ports),
+                 expansion_bytes + active_count * len(global_ports) * 16)
+            c_hat = np.asarray(cell.expansion.conjugate().T @ cell.Bhat, dtype=np.complex128)
+            yield checked(cell.active_ids, global_ports, c_hat, f"cell/C_hat/{cell_index}")
+            del c_hat
+            gate(f"cell/-D_hat/{cell_index}", 16 * len(global_ports) * active_count,
+                 expansion_bytes + 16 * len(global_ports) * active_count)
+            d_hat = -np.asarray(cell.expansion.T @ cell.Dhat.T, dtype=np.complex128).T
+            yield checked(global_ports, cell.active_ids, d_hat, f"cell/-D_hat/{cell_index}")
+            del d_hat, global_ports
+
+        for port, (rows, values) in sorted(self._direct_B_active.items()):
+            label = f"direct/C/port/{port}"
+            gate(label, index_bytes, len(rows) * 16)
+            port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+            block = np.asarray(values, dtype=np.complex128).reshape(-1, 1)
+            yield checked(rows, port_id, block, label)
+            del port_id, block
+        for port, (columns, values) in sorted(self._direct_D_active.items()):
+            label = f"direct/-D/port/{port}"
+            gate(label, index_bytes + values.nbytes, len(columns) * 16)
+            port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+            block = -np.asarray(values, dtype=np.complex128).reshape(1, -1)
+            yield checked(port_id, columns, block, label)
+            del port_id, block
+
     def original_hp_solve(self, rhs: Any) -> np.ndarray:
         """Solve with the original ``H_p`` (never with ``Hhat``)."""
 

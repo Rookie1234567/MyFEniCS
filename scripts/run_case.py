@@ -95,6 +95,10 @@ def _parser() -> argparse.ArgumentParser:
         help='reviewed V14/V16/V17/V18 timing policy; observe_only keeps finite timing evidence without deadline termination',
     )
     parser.add_argument(
+        '--task40-v10-campaign-window', type=Path, metavar='CAMPAIGN_WINDOW_JSON',
+        help='required fixed 24-hour campaign window for the Task40 V10 B0 control/candidate',
+    )
+    parser.add_argument(
         '--v24-p4-prefix-target',
         type=int,
         choices=(3,),
@@ -126,6 +130,29 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        from src.geometry.task40_nonseparable_plan import (
+            TASK40_B0_CONTROL_RUN_ID,
+            TASK40_B0_P6_CANDIDATE_RUN_ID,
+            TASK40_B0_P4_CONTROL_PROFILE,
+        )
+        from src.io.physical_intermediate_profile import TASK40_V10_P6_REFERENCE_PROFILE
+
+        v10_identity = (
+            specification.identity.get('run_id') == TASK40_B0_CONTROL_RUN_ID
+            and specification.solver.get('preconditioner') == TASK40_B0_P4_CONTROL_PROFILE
+        ) or (
+            specification.identity.get('run_id') == TASK40_B0_P6_CANDIDATE_RUN_ID
+            and specification.solver.get('preconditioner') == TASK40_V10_P6_REFERENCE_PROFILE
+        )
+        if args.task40_v10_campaign_window is not None and not v10_identity:
+            raise InputError('--task40-v10-campaign-window is restricted to the frozen B0 V10 identities')
+        if v10_identity and not args.task40_v10_campaign_window and not (
+            args.validate_only or args.dry_run
+        ):
+            raise InputError('Task40 V10 B0 launches require --task40-v10-campaign-window')
+        if args.task40_v10_campaign_window is not None and (args.validate_only or args.dry_run):
+            from src.runners.task40_v10_campaign import load_fixed_campaign_window
+            load_fixed_campaign_window(args.task40_v10_campaign_window)
         if args.task40_reference_from is not None:
             if args.dry_run:
                 raise InputError('--task40-reference-from cannot be combined with --dry-run')
@@ -396,6 +423,7 @@ def main(argv: list[str] | None = None) -> int:
                 specification,
                 v14_time_policy=args.v14_time_policy,
                 v24_p4_prefix_target=args.v24_p4_prefix_target,
+                task40_v10_campaign_window=args.task40_v10_campaign_window,
             )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

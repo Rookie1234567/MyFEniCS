@@ -403,63 +403,144 @@ class _V14Runtime:
         self.workspace_entries: dict[str, int] = {}
         self.workspace_live_bytes = 0
         self.workspace_peak_bytes = 0
-        parent_ledger = os.environ.get("PHYSICAL_WATCHDOG_SHARED_LEDGER_PATH")
-        if parent_ledger is None:
-            raise RuntimeError(
-                "V14 worker requires the parent-owned shared workflow ledger"
-            )
-        self._ledger_path = Path(parent_ledger)
-        self._stage_attempt_index = int(
-            os.environ.get("PHYSICAL_WATCHDOG_SHARED_ATTEMPT_INDEX", "-1")
-        )
-        if self._stage_attempt_index < 0:
-            raise RuntimeError("V14 parent ledger attempt index is missing")
-        shared_ledger = json.loads(self._ledger_path.read_text(encoding="utf-8"))
-        if shared_ledger.get("batch_identity") != self.batch_identity:
-            raise RuntimeError("parent ledger batch identity changed")
-        attempts = list(
-            shared_ledger.get("stages", {}).get(self.stage, {}).get("attempts", [])
-        )
-        if not 0 <= self._stage_attempt_index < len(attempts):
-            raise RuntimeError("V14 parent ledger attempt is missing")
-        attempt = attempts[self._stage_attempt_index]
-        if attempt.get("source_sha") != self.source_sha:
-            raise RuntimeError("V14 parent ledger source SHA differs from worker")
-        if attempt.get("status") not in {"RESERVED", "RUNNING"}:
-            raise RuntimeError("V14 parent ledger attempt is not live")
-        try:
-            self.shared_budget = read_v14_effective_budget(shared_ledger)
-        except ValueError as exc:
-            raise RuntimeError(f"V14 shared ledger budget is invalid: {exc}") from exc
-        self.shared_attempt = dict(attempt)
-        try:
-            self.time_policy = normalize_v14_time_policy(
-                attempt.get("time_policy")
-            )
-        except ValueError as exc:
-            raise RuntimeError(f"V14 parent time policy is invalid: {exc}") from exc
-        self.time_policy_facts = v14_time_policy_facts(self.time_policy)
-        self.infrastructure_recovery = (
-            attempt.get("recovery_id") == "V15_Q0_EIO_ONCE"
-        )
-        workflow_clock_start = attempt.get("workflow_clock_start")
-        reserved_seconds = attempt.get("reserved_seconds")
-        workflow_clock_source = "parent_attempt.workflow_clock_start"
-        if not isinstance(workflow_clock_start, Mapping):
-            raise RuntimeError("V14 parent workflow clock start is missing")
-        if (
-            not isinstance(reserved_seconds, (int, float))
-            or not np.isfinite(float(reserved_seconds))
-            or float(reserved_seconds) <= 0.0
-        ):
-            raise RuntimeError("V14 parent workflow reservation is invalid")
-        self.workflow_clock_start = dict(workflow_clock_start)
-        self.workflow_reserved_seconds = float(reserved_seconds)
-        self.workflow_clock_source = workflow_clock_source
         from .workflow_timebase import ClockBudget, CONSERVATIVE_REALTIME
 
+        campaign_path = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW")
+        self.campaign_context = None
+        if campaign_path is not None:
+            allowed_campaign_worker = {
+                (
+                    "B0_CONTROL",
+                    "task40_review_v10_b0_full_p4_balh_control",
+                    "task40extra_v10_p4_balh_control_v1",
+                ),
+                (
+                    "B0_CANDIDATE",
+                    "review_v10_b0_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v10_p6_y_orbit_reference_v1",
+                ),
+            }
+            worker_identity = (
+                self.stage,
+                str(contract.get("scope", "")),
+                str(contract.get("identity", "")),
+            )
+            if worker_identity not in allowed_campaign_worker:
+                raise RuntimeError(
+                    "the fixed Task40 V10 campaign runtime rejected this exact stage/profile/scope"
+                )
+            from src.runners.task40_v10_campaign import (
+                load_fixed_campaign_window,
+                read_campaign_state,
+                time_namespace_identity,
+            )
+
+            window = load_fixed_campaign_window(campaign_path)
+            expected_sha = os.environ.get("TASK40_V10_CAMPAIGN_WINDOW_SHA256")
+            accounting_path = os.environ.get("TASK40_V10_CAMPAIGN_ACCOUNTING")
+            if not expected_sha or window.sha256 != expected_sha or not accounting_path:
+                raise RuntimeError("V10 worker campaign window/account identity is incomplete")
+            state = read_campaign_state(
+                window,
+                accounting_path,
+                namespace_identity=time_namespace_identity(),
+            )
+            remaining = float(state["remaining_numerical_seconds"])
+            if remaining <= 0.0:
+                raise V14ResourceStop(
+                    "Task40 V10 campaign closeout reserve has been reached"
+                )
+            self._ledger_path = None
+            self._stage_attempt_index = 0
+            self.time_policy = V14_TIME_POLICY_ENFORCE
+            self.time_policy_facts = v14_time_policy_facts(self.time_policy)
+            self.infrastructure_recovery = False
+            self.workflow_clock_start = dict(state["sample"])
+            self.workflow_reserved_seconds = remaining
+            self.workflow_clock_source = "task40_v10_fixed_campaign_read_only_projection"
+            self.shared_attempt = {
+                "status": "RUNNING",
+                "source_sha": self.source_sha,
+                "time_policy": self.time_policy,
+                "reserved_seconds": remaining,
+                "workflow_clock_start": self.workflow_clock_start,
+                "recovery_id": None,
+            }
+            self.shared_budget = {
+                "schema": "task40extra.review_v10_campaign_worker_view.v1",
+                "batch_identity": self.batch_identity,
+                "total_budget_seconds": window.total_seconds,
+                "remaining_numerical_seconds_at_worker_entry": remaining,
+                "campaign_window_sha256": window.sha256,
+                "accounting_path": str(state["path"]),
+                "writer_while_worker_active": "subreaper_watchdog_only",
+                "worker_access": "read_only_projection",
+            }
+            self.campaign_context = {
+                "window_path": str(window.path),
+                "window_sha256": window.sha256,
+                "accounting_path": str(state["path"]),
+                "remaining_numerical_seconds": remaining,
+                "read_only": True,
+            }
+            clock_start = self.workflow_clock_start
+        else:
+            parent_ledger = os.environ.get("PHYSICAL_WATCHDOG_SHARED_LEDGER_PATH")
+            if parent_ledger is None:
+                raise RuntimeError(
+                    "V14 worker requires the parent-owned shared workflow ledger"
+                )
+            self._ledger_path = Path(parent_ledger)
+            self._stage_attempt_index = int(
+                os.environ.get("PHYSICAL_WATCHDOG_SHARED_ATTEMPT_INDEX", "-1")
+            )
+            if self._stage_attempt_index < 0:
+                raise RuntimeError("V14 parent ledger attempt index is missing")
+            shared_ledger = json.loads(self._ledger_path.read_text(encoding="utf-8"))
+            if shared_ledger.get("batch_identity") != self.batch_identity:
+                raise RuntimeError("parent ledger batch identity changed")
+            attempts = list(
+                shared_ledger.get("stages", {}).get(self.stage, {}).get("attempts", [])
+            )
+            if not 0 <= self._stage_attempt_index < len(attempts):
+                raise RuntimeError("V14 parent ledger attempt is missing")
+            attempt = attempts[self._stage_attempt_index]
+            if attempt.get("source_sha") != self.source_sha:
+                raise RuntimeError("V14 parent ledger source SHA differs from worker")
+            if attempt.get("status") not in {"RESERVED", "RUNNING"}:
+                raise RuntimeError("V14 parent ledger attempt is not live")
+            try:
+                self.shared_budget = read_v14_effective_budget(shared_ledger)
+            except ValueError as exc:
+                raise RuntimeError(f"V14 shared ledger budget is invalid: {exc}") from exc
+            self.shared_attempt = dict(attempt)
+            try:
+                self.time_policy = normalize_v14_time_policy(
+                    attempt.get("time_policy")
+                )
+            except ValueError as exc:
+                raise RuntimeError(f"V14 parent time policy is invalid: {exc}") from exc
+            self.time_policy_facts = v14_time_policy_facts(self.time_policy)
+            self.infrastructure_recovery = (
+                attempt.get("recovery_id") == "V15_Q0_EIO_ONCE"
+            )
+            workflow_clock_start = attempt.get("workflow_clock_start")
+            reserved_seconds = attempt.get("reserved_seconds")
+            workflow_clock_source = "parent_attempt.workflow_clock_start"
+            if not isinstance(workflow_clock_start, Mapping):
+                raise RuntimeError("V14 parent workflow clock start is missing")
+            if (
+                not isinstance(reserved_seconds, (int, float))
+                or not np.isfinite(float(reserved_seconds))
+                or float(reserved_seconds) <= 0.0
+            ):
+                raise RuntimeError("V14 parent workflow reservation is invalid")
+            self.workflow_clock_start = dict(workflow_clock_start)
+            self.workflow_reserved_seconds = float(reserved_seconds)
+            self.workflow_clock_source = workflow_clock_source
+            clock_start = self.workflow_clock_start
         self._workflow_clock = ClockBudget(
-            self.workflow_clock_start, policy=CONSERVATIVE_REALTIME
+            clock_start, policy=CONSERVATIVE_REALTIME
         )
         self.phase_path.parent.mkdir(parents=True, exist_ok=True)
         self.set_phase(self._phase)
@@ -778,8 +859,16 @@ class _V14Runtime:
         self._phase_record["solve_subphase"] = "between_pc"
         self._pc_clock = None
         _write_json(self.phase_path, self._phase_record)
-        soft_limit = float(self.contract["resources"]["pc_soft_seconds"])
-        hard_limit = float(self.contract["resources"]["pc_hard_seconds"])
+        campaign_bound = isinstance(self.campaign_context, Mapping)
+        if campaign_bound:
+            # V10 has one fixed campaign deadline.  Retain per-PC duration
+            # observations, but never import the inherited 25/30-second
+            # stop from an older profile into this single-window run.
+            soft_limit = float(self.workflow_reserved_seconds)
+            hard_limit = float(self.workflow_reserved_seconds)
+        else:
+            soft_limit = float(self.contract["resources"]["pc_soft_seconds"])
+            hard_limit = float(self.contract["resources"]["pc_hard_seconds"])
         soft_time = v14_time_gate_facts(
             interval["budget_seconds"], soft_limit, self.time_policy, inclusive=True
         )
@@ -792,6 +881,11 @@ class _V14Runtime:
             "clock_interval": interval,
             "soft_limit_seconds": soft_limit,
             "hard_limit_seconds": hard_limit,
+            "pc_limit_source": (
+                "fixed_v10_campaign_remaining_at_worker_entry"
+                if campaign_bound
+                else "profile_pc_soft_hard_limits"
+            ),
             **self.time_policy_facts,
             "soft_time_gate": soft_time,
             "hard_time_gate": hard_time,
@@ -7103,6 +7197,7 @@ def _v14_q4_q5_fullspace(
         SETUP_EFFICIENCY_PROFILE,
         WORKINGSET_SETUP_PROFILE,
         FUSED_KERNEL_PROFILE,
+        TASK40_V10_P4_CONTROL_PROFILE,
     )
     from .workflow_timebase import (
         CONSERVATIVE_REALTIME,
@@ -7112,6 +7207,12 @@ def _v14_q4_q5_fullspace(
     )
 
     stage = str(stage)
+    profile_identity = str(resolved_payload.get("solver", {}).get("preconditioner", ""))
+    v10_b0_control_stage = (
+        profile_identity == TASK40_V10_P4_CONTROL_PROFILE and stage == "B0_CONTROL"
+    )
+    if profile_identity == TASK40_V10_P4_CONTROL_PROFILE and not v10_b0_control_stage:
+        raise ValueError("Task40 V10 p4 control profile is restricted to B0_CONTROL")
     v25_coarse_stage = (
         str(resolved_payload.get("solver", {}).get("preconditioner", ""))
         == COARSE_DEGREE_SPEED_PROFILE
@@ -7132,9 +7233,8 @@ def _v14_q4_q5_fullspace(
         and stage == "Q4_ORIGINAL"
     )
     v29_a4_tensor_stage = (
-        str(resolved_payload.get("solver", {}).get("preconditioner", ""))
-        in A4_TENSOR_H6_PROFILES
-        and stage == "Q4_ORIGINAL"
+        (profile_identity in A4_TENSOR_H6_PROFILES and stage == "Q4_ORIGINAL")
+        or v10_b0_control_stage
     )
     if pc_a4_action_factory is not None and not v29_a4_tensor_stage:
         raise ValueError("the complete p4 A4 candidate is reserved for reviewed V29-derived Q4 profiles")
@@ -7145,24 +7245,27 @@ def _v14_q4_q5_fullspace(
         or v28_fused_kernel_stage
         or v29_a4_tensor_stage
     )
-    if stage not in {
+    allowed_stages = {
         "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL", "Q5_NOTCH",
         "U4_ORIGINAL", "U5_NOTCH",
         "U4_EXACT_FALLBACK", "X2_ORIGINAL", "Y3_ORIGINAL",
         "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
-    }:
+    }
+    if v10_b0_control_stage:
+        allowed_stages.add("B0_CONTROL")
+    if stage not in allowed_stages:
         raise ValueError(f"unsupported fresh p6 stage {stage!r}")
     retained_stage = stage in {
         "X2_ORIGINAL", "Y3_ORIGINAL",
         "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
-    } or (retained_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
+    } or (retained_coarse_stage and stage in {"B0_CONTROL", "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if retained_stage != (outer_adapter_factory is not None):
         raise ValueError("only retained-space original stages use the outer adapter")
     release_stages = {
         "Y3_ORIGINAL", "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"
     }
     if retained_coarse_stage:
-        release_stages.update({"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
+        release_stages.update({"B0_CONTROL", "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if release_after_final_residual and stage not in release_stages:
         raise ValueError("post-KSP release is not enabled for this stage")
     if reference_mode not in {"required", "authority_limited"}:
@@ -7170,13 +7273,13 @@ def _v14_q4_q5_fullspace(
     if stage == "Z2_NOTCH_H10" and reference_mode != "required":
         raise ValueError("Z2_NOTCH_H10 must use the matched-reference branch")
     if (
-            retained_coarse_stage and stage in {"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"}
+            retained_coarse_stage and stage in {"B0_CONTROL", "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"}
     ) or stage in {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}:
         if reference_mode != "authority_limited":
             raise ValueError(f"{stage} must use the authority-limited branch")
     authority_limited_stages = {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}
     if retained_coarse_stage:
-        authority_limited_stages.update({"Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
+        authority_limited_stages.update({"B0_CONTROL", "Q4_ORIGINAL", "Q3_ORIGINAL", "Q2_ORIGINAL"})
     if reference_mode == "authority_limited" and stage not in authority_limited_stages:
         raise ValueError("authority-limited reference mode is reserved for V21 Z3/Z4")
     notch = (

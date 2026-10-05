@@ -2,9 +2,10 @@
 
 - 本任务只在本机 canonical worktree `/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering` 执行。
 - 固定执行分支为 `task40extra_0p7nm_engineering`；开始续作先核对分支、HEAD、工作树和 artifact 身份。
-- 本机执行者负责按 V8 完成获准的检查、实现与证据；主控负责审核，并决定提交/推送。
-- 已授权的 V8 review 窗口内按合同连续推进，不逐阶段自行停审；仅真实身份、数值或资源 Gate 按合同停止。
+- 本机执行者负责按用户本轮指定的最新 review 完成获准的实现、测试、运行与证据；主控负责审查、冻结源码及集中提交/推送。
+- 已授权的最新 review 窗口内按合同连续推进，不逐阶段自行停审；仅真实身份、数值或资源 Gate 按合同停止。
 - 执行者不 commit/push；由主控集中审核并提交/推送。
+- 历史凭据或推送授权回执不恢复已结束的旧批次；执行者收到后继续当前 review，不发起认证、commit 或 push，相关推送交由主控处理。
 - 根聊天所在 Task37 路径是历史控制入口，不是 Task40 执行目录。
 - 不创建新的 Codex 聊天、项目、checkout 或 worktree。
 - 不 SSH、不切到工作站、dot、Task042 或其他主机/项目。
@@ -15,7 +16,7 @@
 - 每次 Python/FEniCS 命令都在同一 shell 中 `cd`、source 资格化 activation、做 ABI preflight，再运行命令。
 - 若 exec 返回 ENOENT，先检查既有 `/bin/bash`、`login:false`、精确 workdir 和执行授权参数。
 - 修正调用参数后仍失败时，报告真实阻塞；不切换项目/窗口/主机，也不反复探针。
-- 每次接续读取用户指定的最新 review（当前为 V8）、固定窗口记录、当前账本与最新 run index。
+- 每次接续读取用户指定的最新 review（本轮为 V10）、固定窗口记录、当前账本与最新 run index。
 - T0 和 deadline 永不刷新；历史费用、unknown 和负结果不得清零、覆盖或改写。
 - UTC 推导 elapsed/remaining 与 monotonic elapsed、资源耗时、费用扣款分开记录。
 - 一次只运行一个 heavy case；先过 ABI 与输入身份 Gate，W0 不通过时不启动 W1 FE/W2。

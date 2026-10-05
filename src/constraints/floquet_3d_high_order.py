@@ -753,7 +753,8 @@ def _nonzero_terms(
 
 
 def build_high_order_constraint_data(
-    V, mesh_data, cfg: SimulationConfig3D
+    V, mesh_data, cfg: SimulationConfig3D, *,
+    phase_override: tuple[complex, complex] | None = None,
 ) -> HighOrderFloquetConstraintData:
     """Build phase-materialized qualified sparse local Floquet MPC arrays.
 
@@ -788,10 +789,20 @@ def build_high_order_constraint_data(
     comm = V.mesh.comm
     comm.barrier()
     started = time.perf_counter()
+    if phase_override is None:
+        phase_x, phase_y = complex(cfg.floquet_phase_x), complex(cfg.floquet_phase_y)
+    else:
+        if (not isinstance(phase_override, tuple) or len(phase_override) != 2):
+            raise ValueError("phase_override must be an explicit (phase_x, phase_y) tuple")
+        phase_x, phase_y = map(complex, phase_override)
+        if (not np.isfinite((phase_x, phase_y)).all()
+                or abs(abs(phase_x) - 1.0) > 1.0e-12
+                or abs(abs(phase_y) - 1.0) > 1.0e-12):
+            raise ValueError("explicit Floquet phase override must be finite and unit modulus")
     phase_by_kind = {
-        "x": complex(cfg.floquet_phase_x),
-        "y": complex(cfg.floquet_phase_y),
-        "corner": complex(cfg.floquet_phase_x) * complex(cfg.floquet_phase_y),
+        "x": phase_x,
+        "y": phase_y,
+        "corner": phase_x * phase_y,
     }
     local_maps: dict[int, tuple[int, np.ndarray, np.ndarray, np.ndarray, bool]] = {}
     local_owned_rows = 0

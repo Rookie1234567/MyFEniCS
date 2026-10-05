@@ -601,6 +601,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p6_trace_projection_layout_v31",
                 "task40extra_0p7nm_p6trace_p4_v1",
                 "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
+                "task40extra_v10_p6_y_orbit_reference_v1",
+                "task40extra_v10_p4_balh_control_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1026,6 +1028,75 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     validate_v21_input("Z3_ORIGINAL_H7P5", geometry, discretization)
                 except (OSError, TypeError, ValueError, KeyError) as exc:
                     raise _error("geometry/discretization", str(exc)) from exc
+            elif preconditioner == "task40extra_v10_p6_y_orbit_reference_v1":
+                from src.geometry.task40_nonseparable_plan import (
+                    TASK40_B0_P6_CANDIDATE_RUN_ID,
+                    TASK40_COMPARISON_GROUP,
+                    validate_task40_input,
+                )
+
+                if (
+                    config.get("run_id") != TASK40_B0_P6_CANDIDATE_RUN_ID
+                    or config.get("comparison_group") != TASK40_COMPARISON_GROUP
+                ):
+                    raise _error("identity", "V10 p6 profile requires the frozen B0 candidate identity")
+                if solver.get("stage") != "B0_CANDIDATE":
+                    raise _error("solver.stage", "V10 p6 profile requires B0_CANDIDATE")
+                for section, key, actual, expected in (
+                    ("solver", "linear_solver", solver.get("linear_solver"), "iterative"),
+                    ("solver", "ksp_type", solver.get("ksp_type"), "fgmres"),
+                    ("solver", "restart", solver.get("restart"), 32),
+                    ("solver", "max_iterations", solver.get("max_iterations"), 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("solver", "memory_policy", solver.get("memory_policy"), "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"),
+                    ("solver", "physical_operator_backend", solver.get("physical_operator_backend"), "isotropic_sum_factorized_n1e_v26"),
+                    ("solver", "h6_backend_rule", solver.get("h6_backend_rule"), "direct_selected_backend_same_apply_and_power10"),
+                    ("solver", "thread_contract", solver.get("thread_contract"), "mpi1_omp1_blas1_v26"),
+                    ("execution", "mpi_size", execution.get("mpi_size"), 1),
+                    ("execution", "timeout_seconds", execution.get("timeout_seconds"), 86400),
+                    ("execution", "require_zero_swap", execution.get("require_zero_swap"), True),
+                    ("execution", "memory_limit_gb", execution.get("memory_limit_gb"), 16.0),
+                    ("discretization", "nedelec_degree", discretization.get("nedelec_degree"), 6),
+                ):
+                    if actual != expected:
+                        raise _error(f"{section}.{key}", f"V10 p6 candidate fixes {key}={expected}")
+                try:
+                    validate_task40_input(config)
+                except (TypeError, ValueError, KeyError) as exc:
+                    raise _error("Task40 V10 B0 physical identity", str(exc)) from exc
+            elif preconditioner == "task40extra_v10_p4_balh_control_v1":
+                from src.geometry.task40_nonseparable_plan import (
+                    TASK40_B0_CONTROL_RUN_ID,
+                    TASK40_COMPARISON_GROUP,
+                    validate_task40_input,
+                )
+
+                if (
+                    config.get("run_id") != TASK40_B0_CONTROL_RUN_ID
+                    or config.get("comparison_group") != TASK40_COMPARISON_GROUP
+                ):
+                    raise _error("identity", "V10 p4 profile requires the frozen B0 control identity")
+                if solver.get("stage") != "B0_CONTROL":
+                    raise _error("solver.stage", "V10 p4 profile requires B0_CONTROL")
+                for section, key, actual, expected in (
+                    ("solver", "linear_solver", solver.get("linear_solver"), "iterative"),
+                    ("solver", "ksp_type", solver.get("ksp_type"), "fgmres"),
+                    ("solver", "restart", solver.get("restart"), 32),
+                    ("solver", "max_iterations", solver.get("max_iterations"), 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("solver", "coarse_degree", solver.get("coarse_degree"), 4),
+                    ("execution", "mpi_size", execution.get("mpi_size"), 1),
+                    ("execution", "timeout_seconds", execution.get("timeout_seconds"), 86400),
+                    ("execution", "require_zero_swap", execution.get("require_zero_swap"), True),
+                    ("execution", "memory_limit_gb", execution.get("memory_limit_gb"), 16.0),
+                    ("discretization", "nedelec_degree", discretization.get("nedelec_degree"), 6),
+                ):
+                    if actual != expected:
+                        raise _error(f"{section}.{key}", f"V10 p4 control fixes {key}={expected}")
+                try:
+                    validate_task40_input(config)
+                except (TypeError, ValueError, KeyError) as exc:
+                    raise _error("Task40 V10 B0 physical identity", str(exc)) from exc
             elif preconditioner in {
                 "task40extra_0p7nm_p6trace_p4_v1",
                 "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
@@ -1407,6 +1478,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             task40_0p7nm = preconditioner in {
                 "task40extra_0p7nm_p6trace_p4_v1",
                 "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
+                "task40extra_v10_p6_y_orbit_reference_v1",
+                "task40extra_v10_p4_balh_control_v1",
             }
             if task40_0p7nm:
                 if not isclose(

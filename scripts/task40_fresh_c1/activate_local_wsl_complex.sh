@@ -7,3 +7,4 @@ if [[ $# -ne 3 ]]; then
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/activate_native_complex.sh" "$1" "$2" "$3" local_wsl2_authorized
+export _MYFENICS_WSL_QUALIFIED_ACTIVATION=1

@@ -1187,18 +1187,21 @@ def _v22_capacity_callbacks(
 
 
 def _resolve_v20_worker_time_contract(resolved_payload, runtime, *, profile, stage):
-    """Resolve V20's legacy observation policy or the exact Task40 V5 clock.
+    """Resolve V20's legacy, Task40 V5, or fixed Task40 V10 clock.
 
     Historical V20 workers keep their observation-only PC and stage clocks.
-    The one exception is the fully identified Gx784 Review V5 input, whose
-    parent-owned shared ledger enforces the reviewed 48-hour workflow limit.
+    Task40 V5 uses its parent-owned shared ledger, while Task40 V10 B0_CONTROL
+    reads the watchdog-owned fixed campaign projection without the V14 ledger.
     """
 
     from src.geometry.task40_nonseparable_plan import (
+        TASK40_B0_CONTROL_RUN_ID,
         TASK40_COMPARISON_GROUP,
         TASK40_GX784_RUN_ID,
         TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+        TASK40_B0_P4_CONTROL_PROFILE,
     )
+    from .task40_v10_campaign import CAMPAIGN_SECONDS, CLOSEOUT_RESERVE_SECONDS
     from .physical_v14_budget import (
         V14_TIME_POLICY_ENFORCE,
         V14_TIME_POLICY_OBSERVE_ONLY,
@@ -1214,6 +1217,88 @@ def _resolve_v20_worker_time_contract(resolved_payload, runtime, *, profile, sta
     attempt_policy = normalize_v14_time_policy(attempt.get("time_policy"))
     if attempt_policy != policy:
         raise ValueError("V20 worker time policy differs from its parent ledger attempt")
+
+    if run_id == TASK40_B0_CONTROL_RUN_ID:
+        campaign = getattr(runtime, "campaign_context", None)
+        shared = getattr(runtime, "shared_budget", {})
+        reserved = float(attempt.get("reserved_seconds", -1.0))
+        runtime_reserved = float(
+            getattr(runtime, "workflow_reserved_seconds", -1.0)
+        )
+        timeout = execution.get("timeout_seconds") if isinstance(execution, Mapping) else None
+        backend_ok = (
+            solver.get("physical_operator_backend")
+            == "isotropic_sum_factorized_n1e_v26"
+            and solver.get("h6_backend_rule")
+            == "direct_selected_backend_same_apply_and_power10"
+        ) if isinstance(solver, Mapping) else False
+        if (
+            not isinstance(solver, Mapping)
+            or not isinstance(method, Mapping)
+            or not isinstance(execution, Mapping)
+            or profile != TASK40_B0_P4_CONTROL_PROFILE
+            or solver.get("preconditioner") != TASK40_B0_P4_CONTROL_PROFILE
+            or solver.get("stage") != "B0_CONTROL"
+            or stage != "B0_CONTROL"
+            or method.get("kind") != "full3d_iterative"
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or timeout != CAMPAIGN_SECONDS
+            or execution.get("mpi_size") != 1
+            or execution.get("require_zero_swap") is not True
+            or solver.get("ksp_type") != "fgmres"
+            or solver.get("restart") != 32
+            or solver.get("max_iterations") != 2048
+            or solver.get("coarse_degree") != 4
+            or not backend_ok
+            or policy != V14_TIME_POLICY_ENFORCE
+            or getattr(runtime, "_ledger_path", None) is not None
+            or not isinstance(campaign, Mapping)
+            or campaign.get("read_only") is not True
+            or not campaign.get("window_path")
+            or not campaign.get("accounting_path")
+            or not isinstance(campaign.get("window_sha256"), str)
+            or len(campaign["window_sha256"]) != 64
+            or shared.get("schema")
+            != "task40extra.review_v10_campaign_worker_view.v1"
+            or shared.get("writer_while_worker_active") != "subreaper_watchdog_only"
+            or shared.get("worker_access") != "read_only_projection"
+            or float(shared.get("total_budget_seconds", -1.0)) != CAMPAIGN_SECONDS
+            or not np.isfinite(reserved)
+            or not np.isfinite(runtime_reserved)
+            or not 0.0 < reserved <= CAMPAIGN_SECONDS - CLOSEOUT_RESERVE_SECONDS
+            or abs(reserved - runtime_reserved) > 1.0e-9
+        ):
+            raise ValueError(
+                "Task40 V10 B0_CONTROL requires its exact p4 BAL_H input and "
+                "watchdog-owned read-only fixed campaign projection"
+            )
+        resources = runtime.contract["resources"]
+        stage_budget = resources.get("stage_budgets", {}).get(stage)
+        if (
+            runtime.contract.get("identity") != TASK40_B0_P4_CONTROL_PROFILE
+            or runtime.contract.get("scope")
+            != "task40_review_v10_b0_full_p4_balh_control"
+            or not isinstance(stage_budget, Mapping)
+            or float(stage_budget.get("workflow_seconds", -1.0))
+            != CAMPAIGN_SECONDS
+            or float(stage_budget.get("solve_seconds", -1.0)) != CAMPAIGN_SECONDS
+            or float(resources.get("campaign_closeout_reserve_seconds", -1.0))
+            != CLOSEOUT_RESERVE_SECONDS
+        ):
+            raise ValueError("Task40 V10 B0_CONTROL base resource contract changed")
+        runtime.task40_v10_campaign_clock = True
+        return {
+            "authorization": "task40_review_v10_b0_p4_watchdog_campaign_projection",
+            "effective_time_policy": V14_TIME_POLICY_ENFORCE,
+            "campaign_window_path": campaign["window_path"],
+            "campaign_window_sha256": campaign["window_sha256"],
+            "campaign_accounting_path": campaign["accounting_path"],
+            "campaign_seconds": CAMPAIGN_SECONDS,
+            "closeout_reserve_seconds": CLOSEOUT_RESERVE_SECONDS,
+            "worker_reserved_seconds": reserved,
+            "campaign_accounting_writer": "subreaper_watchdog_only",
+            "worker_accounting_access": "read_only_projection",
+        }
 
     if run_id == TASK40_GX784_RUN_ID:
         budget = float(TASK40_GX784_WORKFLOW_BUDGET_SECONDS)

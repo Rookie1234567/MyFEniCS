@@ -200,7 +200,7 @@ def loaded_surface_kernel_identity(ufl_form, compiled_form, code, semantic_const
     })
 
 def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_assemblers,
-                                 *, quotient_context=None):
+                                 *, quotient_context=None, phase_override=None):
     """Bind actual discrete inputs/source; initially MPI1 only, no big tables.
 
     Degree/rule and compiler/Basix ABI bind the same current default facet
@@ -243,8 +243,25 @@ def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_as
                     Path(__file__).with_name("fresh_c1_manifest_identity.py"),
                     Path(__file__).parent.parent/"common"/"modes_3d.py",
                     Path(__file__).parent.parent/"common"/"config_3d.py"]
+    if phase_override is None:
+        actual_phase_x, actual_phase_y = complex(cfg.floquet_phase_x), complex(cfg.floquet_phase_y)
+    else:
+        if not isinstance(phase_override, tuple) or len(phase_override) != 2:
+            raise ValueError("phase_override must be an explicit (phase_x, phase_y) tuple")
+        actual_phase_x, actual_phase_y = map(complex, phase_override)
+        if (not np.isfinite((actual_phase_x, actual_phase_y)).all()
+                or abs(abs(actual_phase_x) - 1.0) > 1.0e-12
+                or abs(abs(actual_phase_y) - 1.0) > 1.0e-12):
+            raise ValueError("boundary-plane phase override must be finite and unit modulus")
     payload = {
         "schema": "task40extra.dtn-plane-discrete-context.v1",
+        "actual_floquet_phases": {
+            "x": [actual_phase_x.real, actual_phase_x.imag],
+            "y": [actual_phase_y.real, actual_phase_y.imag],
+            "corner": [(actual_phase_x * actual_phase_y).real,
+                       (actual_phase_x * actual_phase_y).imag],
+            "source": "explicit_research_phase_override" if phase_override is not None else "configuration",
+        },
         "source_sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths},
         "mesh": mesh_payload, "cell_dofmap_sha256": dofs_digest.hexdigest(),
         "orientation": _array_signature(mesh.topology.get_cell_permutation_info()),

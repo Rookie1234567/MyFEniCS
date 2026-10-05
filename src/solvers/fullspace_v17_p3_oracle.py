@@ -14,6 +14,7 @@ import ctypes
 import ctypes.util
 import hashlib
 import os
+import re
 from typing import Any
 
 import numpy as np
@@ -77,7 +78,13 @@ def _relative(left: Any, right: Any) -> float:
 
 
 class _MatFactorInfo(ctypes.Structure):
-    """PETSc 3.19 ``MatFactorInfo`` in header order (eleven PetscReal)."""
+    """PETSc ``MatFactorInfo`` header layout with a 3.19-compatible prefix.
+
+    PETSc 3.25 appends ``factoronhost`` and ``solveonhost`` PetscBool fields
+    after the eleven PetscReal fields.  The trailing fields are one-byte C
+    bools in that build; keeping them in the superset is safe for older PETSc
+    releases that consume only the original prefix.
+    """
 
     _fields_ = [
         ("diagonal_fill", ctypes.c_double),
@@ -91,6 +98,8 @@ class _MatFactorInfo(ctypes.Structure):
         ("zeropivot", ctypes.c_double),
         ("shifttype", ctypes.c_double),
         ("shiftamount", ctypes.c_double),
+        ("factoronhost", ctypes.c_bool),
+        ("solveonhost", ctypes.c_bool),
     ]
 
 
@@ -107,59 +116,88 @@ def _petsc_error(code: int, operation: str) -> None:
 
 
 def _load_petsc_api() -> ctypes.CDLL:
-    names = []
-    found = ctypes.util.find_library("petsc_complex")
-    if found:
-        names.append(found)
-    names.extend(("libpetsc_complex.so.3.19", "libpetsc_complex.so"))
-    for name in names:
-        try:
-            library = ctypes.CDLL(name)
-        except OSError:
-            continue
-        void = ctypes.c_void_p
-        library.MatGetFactor.argtypes = [void, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(void)]
-        library.MatGetFactor.restype = ctypes.c_int
-        library.MatFactorInfoInitialize.argtypes = [ctypes.POINTER(_MatFactorInfo)]
-        library.MatFactorInfoInitialize.restype = ctypes.c_int
-        library.MatFactorGetPreferredOrdering.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)]
-        library.MatFactorGetPreferredOrdering.restype = ctypes.c_int
-        library.MatLUFactorSymbolic.argtypes = [void, void, void, void, ctypes.POINTER(_MatFactorInfo)]
-        library.MatLUFactorSymbolic.restype = ctypes.c_int
-        library.MatLUFactorNumeric.argtypes = [void, void, ctypes.POINTER(_MatFactorInfo)]
-        library.MatLUFactorNumeric.restype = ctypes.c_int
-        library.MatSolve.argtypes = [void, void, void]
-        library.MatSolve.restype = ctypes.c_int
-        transpose = getattr(library, "MatSolveTranspose", None)
-        if transpose is not None:
-            transpose.argtypes = [void, void, void]
-            transpose.restype = ctypes.c_int
-        library.MatDestroy.argtypes = [ctypes.POINTER(void)]
-        library.MatDestroy.restype = ctypes.c_int
-        library.ISDestroy.argtypes = [ctypes.POINTER(void)]
-        library.ISDestroy.restype = ctypes.c_int
-        library.MatMumpsGetInfog.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_int)]
-        library.MatMumpsGetInfog.restype = ctypes.c_int
-        library.MatMumpsGetRinfog.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
-        library.MatMumpsGetRinfog.restype = ctypes.c_int
-        for name, pointer in (
-            ("MatMumpsGetInfo", ctypes.POINTER(ctypes.c_int)),
-            ("MatMumpsGetRinfo", ctypes.POINTER(ctypes.c_double)),
-            ("MatMumpsGetIcntl", ctypes.POINTER(ctypes.c_int)),
-            ("MatMumpsGetCntl", ctypes.POINTER(ctypes.c_double)),
-        ):
-            function = getattr(library, name, None)
-            if function is not None:
-                function.argtypes = [void, ctypes.c_int, pointer]
-                function.restype = ctypes.c_int
-        library.MatMumpsSetIcntl.argtypes = [void, ctypes.c_int, ctypes.c_int]
-        library.MatMumpsSetIcntl.restype = ctypes.c_int
-        set_cntl = getattr(library, "MatMumpsSetCntl", None)
-        if set_cntl is not None:
-            set_cntl.argtypes = [void, ctypes.c_int, ctypes.c_double]
-            set_cntl.restype = ctypes.c_int
-        return library
-    raise RuntimeError("qualified PETSc complex library was not found")
+    """Bind PETSc C calls through the PETSc extension already loaded by petsc4py.
+
+    ``find_library('petsc_complex')`` can resolve an unrelated system SONAME
+    when a qualified runtime lives under its own prefix.  Calling a PETSc C
+    function from that other library with handles created by petsc4py is an
+    ABI violation, so this loader never searches or falls back to a system
+    PETSc library.
+    """
+    from petsc4py import PETSc
+
+    module_path = os.path.realpath(os.fspath(PETSc.__file__))
+    if not os.path.isfile(module_path):
+        raise RuntimeError(f"petsc4py PETSc extension is unavailable: {module_path}")
+    try:
+        library = ctypes.CDLL(module_path)
+    except OSError as exc:
+        raise RuntimeError(
+            f"cannot bind PETSc C API from the loaded petsc4py extension {module_path}"
+        ) from exc
+
+    version_function = getattr(library, "PetscGetVersion", None)
+    if version_function is None:
+        raise RuntimeError("loaded petsc4py extension does not export PetscGetVersion")
+    version_function.argtypes = [ctypes.c_char_p, ctypes.c_size_t]
+    version_function.restype = ctypes.c_int
+    version_buffer = ctypes.create_string_buffer(512)
+    _petsc_error(
+        version_function(version_buffer, len(version_buffer)), "PetscGetVersion"
+    )
+    version_text = version_buffer.value.decode("ascii", errors="replace")
+    match = re.search(r"\bVersion\s+(\d+)\.(\d+)\.(\d+)\b", version_text)
+    if match is None:
+        raise RuntimeError(f"loaded PETSc API returned an unrecognized version: {version_text!r}")
+    loaded_version = tuple(int(part) for part in match.groups())
+    petsc4py_version = tuple(int(part) for part in PETSc.Sys.getVersion())
+    if loaded_version != petsc4py_version:
+        raise RuntimeError(
+            "PETSc C API version does not match petsc4py: "
+            f"C API {loaded_version}, petsc4py {petsc4py_version}"
+        )
+
+    void = ctypes.c_void_p
+    required_signatures = {
+        "MatGetFactor": ([void, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(void)], ctypes.c_int),
+        "MatFactorInfoInitialize": ([ctypes.POINTER(_MatFactorInfo)], ctypes.c_int),
+        "MatFactorGetPreferredOrdering": ([void, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)], ctypes.c_int),
+        "MatLUFactorSymbolic": ([void, void, void, void, ctypes.POINTER(_MatFactorInfo)], ctypes.c_int),
+        "MatLUFactorNumeric": ([void, void, ctypes.POINTER(_MatFactorInfo)], ctypes.c_int),
+        "MatSolve": ([void, void, void], ctypes.c_int),
+        "MatDestroy": ([ctypes.POINTER(void)], ctypes.c_int),
+        "ISDestroy": ([ctypes.POINTER(void)], ctypes.c_int),
+        "MatMumpsGetInfog": ([void, ctypes.c_int, ctypes.POINTER(ctypes.c_int)], ctypes.c_int),
+        "MatMumpsGetRinfog": ([void, ctypes.c_int, ctypes.POINTER(ctypes.c_double)], ctypes.c_int),
+        "MatMumpsSetIcntl": ([void, ctypes.c_int, ctypes.c_int], ctypes.c_int),
+    }
+    for name, (argtypes, restype) in required_signatures.items():
+        function = getattr(library, name, None)
+        if function is None:
+            raise RuntimeError(f"loaded PETSc C API is missing required symbol {name}")
+        function.argtypes = argtypes
+        function.restype = restype
+    transpose = getattr(library, "MatSolveTranspose", None)
+    if transpose is not None:
+        transpose.argtypes = [void, void, void]
+        transpose.restype = ctypes.c_int
+    for name, pointer in (
+        ("MatMumpsGetInfo", ctypes.POINTER(ctypes.c_int)),
+        ("MatMumpsGetRinfo", ctypes.POINTER(ctypes.c_double)),
+        ("MatMumpsGetIcntl", ctypes.POINTER(ctypes.c_int)),
+        ("MatMumpsGetCntl", ctypes.POINTER(ctypes.c_double)),
+    ):
+        function = getattr(library, name, None)
+        if function is not None:
+            function.argtypes = [void, ctypes.c_int, pointer]
+            function.restype = ctypes.c_int
+    set_cntl = getattr(library, "MatMumpsSetCntl", None)
+    if set_cntl is not None:
+        set_cntl.argtypes = [void, ctypes.c_int, ctypes.c_double]
+        set_cntl.restype = ctypes.c_int
+    library._task40_petsc_api_binding_path = module_path
+    library._task40_petsc_api_runtime_version = loaded_version
+    return library
 
 
 class _MumpsFactor:
@@ -365,13 +403,16 @@ class _MumpsFactor:
         """
 
         petsc_name = getattr(self._api, "_name", None)
-        petsc_soname = ctypes.util.find_library("petsc_complex")
-        petsc_path = petsc_name if petsc_name and os.path.isabs(petsc_name) else None
+        petsc_path = getattr(self._api, "_task40_petsc_api_binding_path", None)
         mumps_soname = ctypes.util.find_library("zmumps")
         return {
             "petsc_library_identifier": petsc_name,
-            "petsc_library_soname": petsc_soname,
+            "petsc_library_soname": None,
             "petsc_library_path": petsc_path,
+            "petsc_api_binding_object": petsc_path,
+            "petsc_runtime_version": list(
+                getattr(self._api, "_task40_petsc_api_runtime_version", ())
+            ) or None,
             "mumps_library_soname": mumps_soname,
             "mumps_version_public_api": "not_exposed",
             "local_mumps_control_boundary": {

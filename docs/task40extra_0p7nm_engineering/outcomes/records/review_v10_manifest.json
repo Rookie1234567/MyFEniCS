@@ -1,0 +1,32 @@
+{
+  "branch": "task40extra_0p7nm_engineering",
+  "campaign_id": "task40extra_v10_integrated_p6_engineering",
+  "campaign_window": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w10_wsl/campaign_window.json",
+  "deadline_utc": "2026-10-06T02:22:47.493693330Z",
+  "master_write_authorized": false,
+  "no_p6_solve_yet": true,
+  "records": {
+    "boundary": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v10_boundary.json",
+      "sha256": "1c619be21ec6ef0c757916fdeac0fa7a5863718beb0c3fd8f4068d3173895cec",
+      "status": "PARTIAL_W1_SAVED_ARRAY_RECHECK_PASS__FULL_A_QUALIFICATION_INCOMPLETE"
+    },
+    "cost_and_repairs": {
+      "status": "IN_PROGRESS",
+      "v0_v9_history_preserved": true
+    },
+    "p6_inverse": {
+      "status": "NOT_STARTED"
+    },
+    "physical_comparison": {
+      "status": "NOT_STARTED"
+    }
+  },
+  "repository": "Rookie1234567/MyFEniCS",
+  "schema": "task40extra.review_v10_manifest.v1",
+  "source_at_entry": "5cbcb507584bb52a3f15f321ebfde9d1c9ef5b72",
+  "source_after_review_pull": "d15554af7da49040565dab015dc09a16c1b18dde",
+  "status": "IN_PROGRESS",
+  "t0_utc": "2026-10-05T02:22:47.493693330Z",
+  "workstation_or_dot_writes_authorized": false
+}

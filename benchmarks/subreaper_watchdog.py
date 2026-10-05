@@ -18,7 +18,12 @@ import signal
 import subprocess
 import time
 
-from benchmarks.task034_wsl_resources import current_cgroup_path, vmstat_swap_pages, wsl_memory_snapshot
+from benchmarks.task034_wsl_resources import (
+    cgroup_snapshot,
+    current_cgroup_path,
+    vmstat_swap_pages,
+    wsl_memory_snapshot,
+)
 from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 from src.runners.workflow_timebase import (TimebaseInconsistency, budget_elapsed,
     clock_info, clock_sample, ClockBudget, STRICT, POLICY_VERSION)
@@ -203,8 +208,13 @@ def runtime_tree_cap(start_cap_bytes: int, process_tree_rss_bytes: int,
         - int(envelope['reserve_bytes'])
     )
     if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY:
-        # V23 must not turn the startup sample into a permanent ceiling.
-        return current_capacity
+        # V23 keeps a live available-memory limit; a caller may additionally
+        # impose a fixed absolute RSS ceiling for a separately reviewed campaign.
+        return (
+            min(current_capacity, int(explicit_tree_cap_bytes))
+            if explicit_tree_cap_bytes is not None
+            else current_capacity
+        )
     limits = [int(start_cap_bytes), current_capacity]
     if explicit_tree_cap_bytes is not None:
         limits.append(int(explicit_tree_cap_bytes))
@@ -225,7 +235,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               time_policy: str = V14_TIME_POLICY_ENFORCE,
               memory_policy: str = LEGACY_MEMORY_POLICY,
               pss_sampling_policy: str = 'sampled',
-              external_guard=None) -> dict:
+              allow_physical_pressure_tree_cap: bool = False,
+              external_guard=None,
+              campaign_window_path: Path | None = None,
+              campaign_window_sha256: str | None = None,
+              campaign_accounting_path: Path | None = None,
+              require_job_cgroup_zero_swap: bool = False) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     try:
         time_policy = normalize_v14_time_policy(time_policy)
@@ -251,13 +266,26 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise ValueError('solve_seconds must be finite and positive when supplied')
     if tree_cap_bytes is not None and int(tree_cap_bytes) <= 0:
         raise ValueError('tree_cap_bytes must be positive when supplied')
-    if memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY and tree_cap_bytes is not None:
+    if (
+        memory_policy == PHYSICAL_MEMORY_PRESSURE_POLICY
+        and tree_cap_bytes is not None
+        and not allow_physical_pressure_tree_cap
+    ):
         raise ValueError(
-            'physical memory pressure policy cannot receive a frozen tree_cap_bytes'
+            'physical memory pressure policy requires explicit authorization '
+            'before receiving a fixed tree_cap_bytes'
+        )
+    if allow_physical_pressure_tree_cap and memory_policy != PHYSICAL_MEMORY_PRESSURE_POLICY:
+        raise ValueError(
+            'fixed Task40 V10 tree cap authorization requires physical memory pressure policy'
         )
     if allow_swap_observation and stop_on_global_swap:
         raise ValueError(
             'swap observation-only mode cannot enforce the global swap gate'
+        )
+    if require_job_cgroup_zero_swap and allow_swap_observation:
+        raise ValueError(
+            'Task40 job cgroup zero-swap enforcement cannot be disabled by observation mode'
         )
     if external_guard is not None and not callable(external_guard):
         raise TypeError('external_guard must be callable when supplied')
@@ -268,6 +296,58 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                          'guarded clocks and immediate hard stopping')
     if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):
         raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')
+    campaign = None
+    campaign_account = None
+    campaign_start_record = None
+    if campaign_window_path is not None:
+        from src.runners.task40_v10_campaign import (
+            CampaignAccount,
+            load_fixed_campaign_window,
+        )
+
+        campaign = load_fixed_campaign_window(campaign_window_path)
+        if campaign_window_sha256 != campaign.sha256:
+            raise ValueError('campaign window hash differs from the run_case launch contract')
+        if not timebase_guard or timebase_policy != 'conservative_realtime':
+            raise ValueError('Task40 V10 requires the existing conservative-realtime watchdog guard')
+        if time_policy != V14_TIME_POLICY_ENFORCE:
+            raise ValueError('Task40 V10 campaign time must be enforced')
+        campaign_account = CampaignAccount(campaign, campaign_accounting_path)
+        campaign_start_record = campaign_account.record_sample(
+            label='watchdog_start'
+        )
+        now_utc_ns = int(campaign_start_record['sample']['utc_ns'])
+        utc_remaining = (
+            campaign.deadline_utc_ns
+            - int(campaign.closeout_seconds * 1e9)
+            - now_utc_ns
+        ) / 1e9
+        budget_remaining = (
+            campaign.cutoff_seconds
+            - float(campaign_start_record['cumulative_charged_seconds'])
+        )
+        wall_seconds = min(float(wall_seconds), utc_remaining, budget_remaining)
+        if not math.isfinite(wall_seconds) or wall_seconds <= 0.0:
+            raise TimebaseInconsistency(
+                'Task40 V10 campaign has no numerical time remaining before closeout'
+            )
+    job_cgroup_start = (
+        cgroup_snapshot(os.getpid()) if require_job_cgroup_zero_swap else None
+    )
+    if require_job_cgroup_zero_swap and (
+        not isinstance(job_cgroup_start, dict)
+        or job_cgroup_start.get('dedicated_job_cgroup') is not True
+        or job_cgroup_start.get('readable') is not True
+        or not isinstance(job_cgroup_start.get('swap_current_bytes'), int)
+        or isinstance(job_cgroup_start.get('swap_current_bytes'), bool)
+    ):
+        raise RuntimeError(
+            'Task40 requires a readable dedicated service cgroup with swap.current authority'
+        )
+    if require_job_cgroup_zero_swap and job_cgroup_start['swap_current_bytes'] != 0:
+        raise RuntimeError(
+            'Task40 service cgroup has nonzero memory.swap.current before worker launch'
+        )
     libc = ctypes.CDLL(None, use_errno=True)
     # PR_SET_CHILD_SUBREAPER; Linux-only, intentionally no platform fallback.
     if libc.prctl(36, 1, 0, 0, 0) != 0:
@@ -305,6 +385,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     observed = set()
     observed_child_identities: set[tuple[int, int]] = set()
     sampled_child_identities: set[tuple[int, int]] = set()
+    job_cgroup_swap_sample_count = 0
+    job_cgroup_swap_peak_bytes = 0
     process_tree_all_status_readable = True
     process_tree_all_identity_complete = True
     process_tree_identity_sample_count = 0
@@ -321,6 +403,19 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     if timebase_guard:
         summary.update(clock_info=clock_info(), clock_start=clock_start,
                        timebase_policy=timebase_policy, timebase_policy_version=POLICY_VERSION)
+    if campaign is not None:
+        summary['task40_v10_campaign'] = {
+            'window_path': str(campaign.path),
+            'window_sha256': campaign.sha256,
+            'accounting_path': str(campaign_account.path),
+            't0_utc_ns': campaign.t0_utc_ns,
+            'deadline_utc_ns': campaign.deadline_utc_ns,
+            'campaign_seconds': campaign.total_seconds,
+            'numerical_cutoff_seconds': campaign.cutoff_seconds,
+            'closeout_reserve_seconds': campaign.closeout_seconds,
+            'watchdog_start_accounting': campaign_start_record,
+            'first_exact_monotonic_at_t0': 'NOT_CAPTURED',
+        }
     summary.update(
         v14_time_policy_facts(time_policy),
         memory_policy=memory_policy,
@@ -333,6 +428,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         ),
         process_tree_swap_gate_enforced=not allow_swap_observation,
         global_swap_gate_enforced=bool(stop_on_global_swap),
+        job_cgroup_swap_gate_enforced=bool(require_job_cgroup_zero_swap),
+        job_cgroup_swap_start_bytes=(
+            None if job_cgroup_start is None
+            else int(job_cgroup_start['swap_current_bytes'])
+        ),
         time_reference_seconds={
             'workflow': float(wall_seconds),
             'solve': None if solve_seconds is None else float(solve_seconds),
@@ -376,6 +476,19 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     os.getpid(), 'workflow', exit_code,
                     pss_sampling_policy=pss_sampling_policy,
                 )
+                job_cgroup = (
+                    cgroup_snapshot(os.getpid())
+                    if require_job_cgroup_zero_swap
+                    else None
+                )
+                if job_cgroup is not None:
+                    job_cgroup_swap_sample_count += 1
+                    cgroup_swap = job_cgroup.get('swap_current_bytes')
+                    if isinstance(cgroup_swap, int) and not isinstance(cgroup_swap, bool):
+                        job_cgroup_swap_peak_bytes = max(
+                            job_cgroup_swap_peak_bytes, cgroup_swap
+                        )
+                    sample['job_cgroup'] = job_cgroup
                 process_tree_all_status_readable = (
                     process_tree_all_status_readable
                     and sample.get('all_status_readable') is True
@@ -407,11 +520,27 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 pc_observed = None
                 deadline_elapsed = elapsed
                 if timebase_guard:
-                    clock_now = clock_sample()
+                    clock_now = clock_sample(include_boot_id=campaign_account is not None)
                     sample.update(parent_clock=clock_now, parent_clock_start=clock_start)
                     try:
                         sample['workflow_clock_interval'] = clock_budget.update(clock_now)
                         deadline_elapsed = sample['workflow_clock_interval']['budget_seconds']
+                        if campaign_account is not None:
+                            campaign_row = campaign_account.record_sample(
+                                label='watchdog_sample'
+                            )
+                            sample['task40_v10_campaign_accounting'] = campaign_row
+                            campaign_clock = campaign_row['sample']
+                            utc_cutoff = (
+                                campaign.deadline_utc_ns
+                                - int(campaign.closeout_seconds * 1e9)
+                            )
+                            if (
+                                campaign_row['cumulative_charged_seconds']
+                                >= campaign.cutoff_seconds
+                                or int(campaign_clock['utc_ns']) >= utc_cutoff
+                            ):
+                                deadline_elapsed = max(deadline_elapsed, wall_seconds)
                         if phase.get('clock_error'):
                             raise TimebaseInconsistency(phase['clock_error'])
                         if phase.get('phase') == 'solve':
@@ -467,6 +596,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         cap,
                         int(sample['rss_bytes']),
                         current,
+                        explicit_tree_cap_bytes=tree_cap_bytes,
                         memory_policy=memory_policy,
                     )
                 elif tree_cap_bytes is not None:
@@ -495,6 +625,20 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         if time_policy == V14_TIME_POLICY_ENFORCE
                         and (deadline_elapsed >= wall_seconds or solve_expired) else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
+                if require_job_cgroup_zero_swap and (
+                    not isinstance(job_cgroup, dict)
+                    or job_cgroup.get('dedicated_job_cgroup') is not True
+                    or job_cgroup.get('readable') is not True
+                    or not isinstance(job_cgroup.get('swap_current_bytes'), int)
+                    or isinstance(job_cgroup.get('swap_current_bytes'), bool)
+                ):
+                    reason = 'MONITORING_FAILED'
+                elif (
+                    require_job_cgroup_zero_swap
+                    and job_cgroup['swap_current_bytes'] != 0
+                    and reason not in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED')
+                ):
+                    reason = 'RESOURCE_CONTROLLED_STOP'
                 if stop_on_global_swap or allow_swap_observation:
                     current_swap = vmstat_swap_pages()
                     sample['global_swap_pages'] = current_swap
@@ -662,10 +806,34 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 'active_pc': pc_time_exceeded,
             },
         })
+        if require_job_cgroup_zero_swap:
+            final_job_cgroup = cgroup_snapshot(os.getpid())
+            summary['job_cgroup_swap'] = {
+                'gate_enforced': True,
+                'start_swap_current_bytes': int(
+                    job_cgroup_start['swap_current_bytes']
+                ),
+                'peak_swap_current_bytes': job_cgroup_swap_peak_bytes,
+                'sample_count': job_cgroup_swap_sample_count,
+                'end': final_job_cgroup,
+                'passed': bool(
+                    job_cgroup_swap_sample_count > 0
+                    and job_cgroup_swap_peak_bytes == 0
+                    and isinstance(final_job_cgroup, dict)
+                    and final_job_cgroup.get('dedicated_job_cgroup') is True
+                    and final_job_cgroup.get('readable') is True
+                    and final_job_cgroup.get('swap_current_bytes') == 0
+                ),
+            }
         if timebase_guard:
-            summary['clock_end'] = clock_sample()
+            summary['clock_end'] = clock_sample(include_boot_id=campaign_account is not None)
             try:
                 summary['workflow_clock_interval'] = clock_budget.update(summary['clock_end'])
+                if campaign_account is not None:
+                    campaign_end = campaign_account.record_sample(
+                        label='watchdog_end'
+                    )
+                    summary['task40_v10_campaign']['watchdog_end_accounting'] = campaign_end
                 if (time_policy == V14_TIME_POLICY_ENFORCE
                         and clock_budget.seconds >= wall_seconds and
                         summary['classification'] == 'COMPLETED'):

@@ -18,7 +18,10 @@ from .physical_recursive_profile import (
     macro_v11_profile_facts,
     macro_v10_profile_facts,
 )
-from src.geometry.task40_nonseparable_plan import TASK40_REFERENCE_METRIC_PROFILE
+from src.geometry.task40_nonseparable_plan import (
+    TASK40_B0_P4_CONTROL_PROFILE,
+    TASK40_REFERENCE_METRIC_PROFILE,
+)
 
 SCHUR_PROFILE = "physical_p4_schur_v14"
 P4_BLR_PROFILE = "physical_p4_blr_bal_h_v16"
@@ -46,6 +49,8 @@ WORKSTATION_GUIDED_LOCAL_V30_PROFILE = (
 PROJECTION_LAYOUT_V31_PROFILE = "physical_p6_trace_projection_layout_v31"
 TASK40_0P7NM_PROFILE = "task40extra_0p7nm_p6trace_p4_v1"
 TASK40_PROFILES = (TASK40_0P7NM_PROFILE, TASK40_REFERENCE_METRIC_PROFILE)
+TASK40_V10_P6_REFERENCE_PROFILE = "task40extra_v10_p6_y_orbit_reference_v1"
+TASK40_V10_P4_CONTROL_PROFILE = TASK40_B0_P4_CONTROL_PROFILE
 A4_TENSOR_H6_PROFILES = (
     A4_TENSOR_H6_PROFILE,
     WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
@@ -82,7 +87,10 @@ P4_BLR_TRADEOFF_THRESHOLDS = {
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+TASK40_PROFILES = (*TASK40_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
+A4_TENSOR_H6_PROFILES = (*A4_TENSOR_H6_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
+FUSED_KERNEL_PROFILES = (*FUSED_KERNEL_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -97,6 +105,121 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == TASK40_V10_P4_CONTROL_PROFILE:
+        facts = profile_facts(TASK40_0P7NM_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="task40_review_v10_b0_full_p4_balh_control",
+            qualification=(
+                "one independent full p4 BAL_H solve on the exact B0 two-cell-gap "
+                "target; reuses the qualified Task40 p4/H6 path and full-A4 checks"
+            ),
+        )
+        facts["resources"].update(
+            workflow_seconds=86400,
+            solve_seconds=86400,
+            pc_soft_seconds=86400,
+            pc_hard_seconds=86400,
+            pc_limit_policy="fixed_v10_campaign_remaining_at_worker_entry",
+            qualified_jit_cache_source=(
+                "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+                "local_w9_wsl/window_qualification_jit"
+            ),
+            qualified_jit_cache_origin=(
+                "Task40 Review V9 qualified local WSL JIT cache"
+            ),
+            qualified_jit_expected_compiler_event_count=11,
+            stage_budgets={
+                "B0_CONTROL": {
+                    "workflow_seconds": 86400,
+                    "solve_seconds": 86400,
+                }
+            },
+            require_zero_swap=True,
+            campaign_window_required=True,
+            campaign_closeout_reserve_seconds=600,
+            process_tree_rss_cap_bytes=16 * 1024**3,
+            watchdog_memory_policy=PHYSICAL_MEMORY_POLICY_V23,
+            pss_sampling_policy="disabled_by_profile",
+            independent_task_ledger=False,
+        )
+        facts["gates"].update(
+            task40_geometry_identity_by_mesh={
+                **facts["gates"].get("task40_geometry_identity_by_mesh", {}),
+                "B0": "task40extra_nonseparable_0p7nm_v1",
+            },
+            task40_zero_swap_required=True,
+            b0_cell_shape=[4, 4, 5],
+            b0_cells=80,
+            manual_modes=[9, 3],
+            target_a6_backend="isotropic_sum_factorized_n1e_v26",
+            full_a4_checks_per_p4_state=True,
+            p4_refinements_max=2,
+            finite_best_state_continues_outer=True,
+        )
+        facts["coarse_degree_by_stage"] = {"B0_CONTROL": 4}
+        facts["route_selection"].update(
+            p4_preconditioner="balanced_h6_exact_v5",
+            target_a6_backend="isotropic_sum_factorized_n1e_v26",
+            p4_full_a4_each_state=True,
+            p4_global_matrix=False,
+            p4_global_factor=False,
+        )
+        return facts
+    if identity == TASK40_V10_P6_REFERENCE_PROFILE:
+        return {
+            "identity": identity,
+            "scope": "review_v10_b0_full_p6_y_orbit_reference_inverse",
+            "backend": {
+                "reference_operator": "full_p6_regular_two_cell_native_trace_and_port",
+                "q_factorization": "four_simultaneously_live_exact_MUMPS_factors",
+                "outer_operator": "original_full_p6_A6_with_target_notch_and_DtN",
+                "outer_preconditioner": "complete_two_cell_FE_plus_internal_port_inverse",
+            },
+            "outer": {
+                "ksp_type": "right_fgmres",
+                "restart": 32,
+                "max_iterations": 2048,
+                "zero_start": True,
+                "final_judgment": "fresh_full_original_A6_true_residual",
+            },
+            "gates": {
+                "global_cells": 80,
+                "global_cell_axes": [4, 4, 5],
+                "nedelec_degree": 6,
+                "global_floquet_q_branches": 4,
+                "all_internal_dofs_retained": True,
+                "all_original_modes_retained": 532,
+                "regular_reference_equation_relative_residual": 1e-10,
+                "original_A6_relative_residual": 1e-6,
+                "port_closure_relative_residual": 1e-8,
+                "internal_and_mapping_identity_relative_residual": 1e-10,
+            },
+            "resources": {
+                "workflow_seconds": 86400,
+                "solve_seconds": 86400,
+                "pc_soft_seconds": 86400,
+                "pc_hard_seconds": 86400,
+                "pc_limit_policy": "fixed_v10_campaign_remaining_at_worker_entry",
+                "watchdog_memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+                "pss_sampling_policy": "disabled_by_profile",
+                "qualified_jit_cache_source": (
+                    "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+                    "local_w9_wsl/window_qualification_jit"
+                ),
+                "qualified_jit_cache_origin": "Task40 Review V9 qualified local WSL JIT cache",
+                "qualified_jit_expected_compiler_event_count": 11,
+                "require_zero_swap": True,
+                "campaign_window_required": True,
+                "campaign_closeout_reserve_seconds": 600,
+                "process_tree_rss_cap_bytes": 16 * 1024**3,
+            },
+            "qualification": (
+                "opt-in B0 candidate only; build one regular full-p6 reference, "
+                "retain all four factors, then use that same live inverse on the "
+                "real two-cell nonseparable target RHS; no wider-geometry claim"
+            ),
+        }
     if identity == A4_TENSOR_H6_PROFILE:
         facts = profile_facts(FUSED_KERNEL_PROFILE)
         facts.update(

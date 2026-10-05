@@ -37,6 +37,91 @@ def run_full3d_iterative(
     method = resolved_payload.get("method", {})
     if not isinstance(method, Mapping) or method.get("kind") != "full3d_iterative":
         raise ValueError("full3d_iterative adapter received a mismatched method")
+    solver = resolved_payload.get("solver", {})
+    stage = str(solver.get("stage", ""))
+    profile = str(solver.get("preconditioner", ""))
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_B0_CONTROL_RUN_ID,
+        TASK40_B0_P6_CANDIDATE_RUN_ID,
+        TASK40_COMPARISON_GROUP,
+    )
+    from src.io.physical_intermediate_profile import (
+        PHYSICAL_MEMORY_POLICY_V23,
+        TASK40_V10_P4_CONTROL_PROFILE,
+        TASK40_V10_P6_REFERENCE_PROFILE,
+    )
+
+    if profile == TASK40_V10_P6_REFERENCE_PROFILE:
+        if (
+            resolved_payload.get("run_id") != TASK40_B0_P6_CANDIDATE_RUN_ID
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != "B0_CANDIDATE"
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            )
+            != TASK40_V10_P6_REFERENCE_PROFILE
+        ):
+            raise ValueError("Task40 V10 p6 route requires the exact B0 candidate identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+        )
+
+    if profile == TASK40_V10_P4_CONTROL_PROFILE:
+        if (
+            resolved_payload.get("run_id") != TASK40_B0_CONTROL_RUN_ID
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != "B0_CONTROL"
+            or int(solver.get("coarse_degree", -1)) != 4
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            )
+            != TASK40_V10_P4_CONTROL_PROFILE
+        ):
+            raise ValueError("Task40 V10 p4 route requires the exact B0 control identity")
+        from .physical_dual_cell_condensed_lowmem_v20 import (
+            _run_physical_dual_cell_condensed_lowmem,
+        )
+
+        return _run_physical_dual_cell_condensed_lowmem(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=TASK40_V10_P4_CONTROL_PROFILE,
+            coarse_degree=4,
+            allowed_stages=("B0_CONTROL",),
+            batch_identity=TASK40_B0_CONTROL_RUN_ID,
+            evidence_prefix="task40v10_b0_control",
+            summary_schema="task40extra.review_v10_b0_p4_control.worker_summary.v1",
+            summary_filename="task40_v10_b0_p4_control_summary.json",
+            derive_live_space_identity=True,
+            rhs_identity_policy="case_bound_physical_rhs",
+            restore_summary_schema=True,
+            reuse_qualified_jit=True,
+            write_ordered_mode_manifest=True,
+            write_geometry_audit=True,
+            write_rectangular_air_void_audit=True,
+            save_complete_field_packet=True,
+            capacity_trial=True,
+            capacity_policy=PHYSICAL_MEMORY_POLICY_V23,
+            reference_mode_by_stage={"B0_CONTROL": "authority_limited"},
+            predecessor_by_stage={
+                "B0_CONTROL": {
+                    "task40_v10_profile": TASK40_V10_P4_CONTROL_PROFILE,
+                    "case_bound": True,
+                    "fresh_p4_balh_control": True,
+                    "coarse_degree": 4,
+                    "full_a4_checks_per_p4_state": True,
+                    "maximum_refinements": 2,
+                }
+            },
+            notch_by_stage={"B0_CONTROL": False},
+            require_zero_swap=True,
+        )
+
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_schur_v14":
         from .physical_p4_schur_v14 import run_physical_p4_schur_v14
 

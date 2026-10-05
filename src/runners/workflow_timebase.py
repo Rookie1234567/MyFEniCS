@@ -11,11 +11,15 @@ class TimebaseInconsistency(RuntimeError):
     pass
 
 
-def clock_sample():
-    return dict(monotonic=time.monotonic(),
-                boottime=time.clock_gettime(time.CLOCK_BOOTTIME)
-                if hasattr(time, 'CLOCK_BOOTTIME') else None,
-                utc_ns=time.time_ns())
+def clock_sample(*, include_boot_id=False):
+    sample = dict(monotonic=time.monotonic(),
+                  boottime=time.clock_gettime(time.CLOCK_BOOTTIME)
+                  if hasattr(time, 'CLOCK_BOOTTIME') else None,
+                  utc_ns=time.time_ns())
+    if include_boot_id:
+        with open('/proc/sys/kernel/random/boot_id', encoding='ascii') as stream:
+            sample['boot_id'] = stream.read().strip()
+    return sample
 
 
 def clock_info():

@@ -184,6 +184,7 @@ def _build_same_mesh_levels(
     degrees: tuple[int, ...],
     *,
     include_positive_coefficients: bool = True,
+    research_phase_override: tuple[complex, complex] | None = None,
 ) -> dict[str, Any]:
     """Build one physical mesh and the requested same-mesh N1curl levels."""
 
@@ -229,7 +230,8 @@ def _build_same_mesh_levels(
         )
         spaces[degree] = space
         floquets[degree] = build_double_floquet_mpc(
-            space, mesh_data, _same_mesh_level_config(cfg, degree)
+            space, mesh_data, _same_mesh_level_config(cfg, degree),
+            phase_override=research_phase_override,
         )
     levels = {
         "mesh": mesh,

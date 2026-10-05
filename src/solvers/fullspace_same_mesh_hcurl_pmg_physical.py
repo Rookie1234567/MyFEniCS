@@ -108,6 +108,7 @@ def build_same_mesh_physical_action(
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
+    research_phase_override: tuple[complex, complex] | None = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -179,7 +180,8 @@ def build_same_mesh_physical_action(
     try:
         if dtn_phase_gauge == BOUNDARY_PLANE:
             assembly_context = build_gauge_assembly_context(
-                function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers
+                function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers,
+                phase_override=research_phase_override,
             )
         carrier = build_fullspace_dtn_carrier_from_surface(
             modes, assemblers, floquet.mpc, cfg,
@@ -241,6 +243,10 @@ def build_same_mesh_physical_action(
             "dtn_quadrature_degree": int(qdegree),
             "volume_quadrature_metadata": volume_quadrature_metadata,
             "incident_projections": incident_projections,
+            "research_phase_override": (
+                None if research_phase_override is None
+                else tuple(map(complex, research_phase_override))
+            ),
         }
     except Exception:
         if physical_action is not None:

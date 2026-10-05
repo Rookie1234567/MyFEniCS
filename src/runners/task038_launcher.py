@@ -5528,6 +5528,7 @@ def launch_specification(
     pc_profile: dict | None = None,
     v14_time_policy: str = V14_TIME_POLICY_ENFORCE,
     v24_p4_prefix_target: int | None = None,
+    task40_v10_campaign_window: str | Path | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -5535,6 +5536,47 @@ def launch_specification(
         v14_time_policy = normalize_v14_time_policy(v14_time_policy)
     except ValueError as exc:
         raise InputError(str(exc)) from exc
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_B0_CONTROL_RUN_ID,
+        TASK40_B0_P6_CANDIDATE_RUN_ID,
+        TASK40_B0_P4_CONTROL_PROFILE,
+    )
+    from src.io.physical_intermediate_profile import TASK40_V10_P6_REFERENCE_PROFILE
+
+    run_id = str(specification.identity.get("run_id", ""))
+    preconditioner = str(specification.solver.get("preconditioner", ""))
+    task40_v10_profile = (
+        run_id == TASK40_B0_CONTROL_RUN_ID
+        and preconditioner == TASK40_B0_P4_CONTROL_PROFILE
+    ) or (
+        run_id == TASK40_B0_P6_CANDIDATE_RUN_ID
+        and preconditioner == TASK40_V10_P6_REFERENCE_PROFILE
+    )
+    if task40_v10_campaign_window is not None and not task40_v10_profile:
+        raise InputError("Task40 V10 campaign window is restricted to the frozen B0 inputs")
+    if task40_v10_profile and task40_v10_campaign_window is None:
+        raise InputError("Task40 V10 B0 launch requires its fixed campaign window")
+    campaign_window = None
+    campaign_accounting_path = None
+    campaign_start_state = None
+    if task40_v10_profile:
+        from .task40_v10_campaign import (
+            CAMPAIGN_ACCOUNTING_NAME,
+            load_fixed_campaign_window,
+        )
+
+        try:
+            campaign_window = load_fixed_campaign_window(task40_v10_campaign_window)
+            campaign_accounting_path = (
+                campaign_window.path.parent / CAMPAIGN_ACCOUNTING_NAME
+            )
+            campaign_start_state = campaign_window.observe(
+                label="launcher_entered_task40_v10"
+            )
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise InputError(f"Task40 V10 fixed campaign admission failed: {exc}") from exc
+        if campaign_start_state["remaining_numerical_seconds"] <= 0.0:
+            raise InputError("Task40 V10 campaign has no numerical time before closeout reserve")
     from .workflow_timebase import ClockBudget, clock_sample, CONSERVATIVE_REALTIME
     full_clock=ClockBudget(clock_sample(),policy=CONSERVATIVE_REALTIME)
     workflow_started = monotonic()
@@ -5594,6 +5636,7 @@ def launch_specification(
     )
     task40_0p7nm_profile = (
         specification.solver.get('preconditioner') in TASK40_PROFILES
+        and not task40_v10_profile
     )
     setup_efficiency_profile = (
         setup_efficiency_v26_profile
@@ -5628,7 +5671,7 @@ def launch_specification(
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         PROJECTION_LAYOUT_V31_PROFILE,
         *TASK40_PROFILES,
-    }
+    } and not task40_v10_profile
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
     v28_authorized_performance_repeat = None
@@ -5818,6 +5861,12 @@ def launch_specification(
         if cell_stage_budget is not None
         else physical_resources.get('solve_seconds', 3600)
     )
+    if task40_v10_profile:
+        admitted_campaign_seconds = float(
+            campaign_start_state["remaining_numerical_seconds"]
+        )
+        workflow_limit = min(float(workflow_limit), admitted_campaign_seconds)
+        solve_limit = min(float(solve_limit), admitted_campaign_seconds)
     v14_lease = None
     authority = None
     run_directory = None
@@ -6006,6 +6055,13 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
+    elif task40_v10_profile and physical_candidate:
+        if not _is_v28_user_service_cgroup(current_cgroup_path()):
+            raise InputError(
+                "Task40 V10 formal launch requires the existing supervised "
+                "myfenics-case-*.service cgroup"
+            )
+        run_directory = _timestamp_directory(specification, timestamp)
     try:
         physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                            if physical_candidate else None)
@@ -6024,6 +6080,20 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
+        if task40_v10_profile:
+            manifest["task40_v10_campaign"] = {
+                "window_path": str(campaign_window.path),
+                "window_sha256": campaign_window.sha256,
+                "t0_utc_ns": campaign_window.t0_utc_ns,
+                "deadline_utc_ns": campaign_window.deadline_utc_ns,
+                "campaign_seconds": campaign_window.total_seconds,
+                "closeout_reserve_seconds": campaign_window.closeout_seconds,
+                "accounting_path": str(campaign_accounting_path),
+                "accounting_writer_while_worker_active": "subreaper_watchdog_only",
+                "worker_accounting_access": "read_only_projection",
+                "launcher_entry_observation": campaign_start_state,
+            }
+            _write_json(run_directory / "run_manifest.json", manifest)
         if coarse_degree_v25_profile or setup_efficiency_profile:
             manifest.update(
                 {
@@ -6204,6 +6274,68 @@ def launch_specification(
                             watchdog_kwargs['active_pc_seconds'] = float(
                                 physical_resources['pc_hard_seconds']
                             )
+                    if task40_v10_profile:
+                        jit_source = Path(
+                            str(physical_resources["qualified_jit_cache_source"])
+                        )
+                        if not jit_source.is_absolute():
+                            jit_source = (
+                                Path(__file__).resolve().parents[2] / jit_source
+                            ).resolve()
+                        watchdog_kwargs.update(
+                            stop_on_global_swap=False,
+                            allow_swap_observation=False,
+                            grace_seconds=30,
+                            hard_stop_immediate=True,
+                            timebase_guard=True,
+                            timebase_policy="conservative_realtime",
+                            time_policy=V14_TIME_POLICY_ENFORCE,
+                            memory_policy=str(
+                                physical_resources["watchdog_memory_policy"]
+                            ),
+                            pss_sampling_policy=str(
+                                physical_resources["pss_sampling_policy"]
+                            ),
+                            tree_cap_bytes=int(
+                                physical_resources["process_tree_rss_cap_bytes"]
+                            ),
+                            allow_physical_pressure_tree_cap=True,
+                            require_job_cgroup_zero_swap=True,
+                        )
+                        watchdog_environment = dict(
+                            watchdog_kwargs.get("worker_environment", {})
+                        )
+                        watchdog_environment.update(
+                            {
+                                "TASK40_V10_CAMPAIGN_WINDOW": str(campaign_window.path),
+                                "TASK40_V10_CAMPAIGN_WINDOW_SHA256": campaign_window.sha256,
+                                "TASK40_V10_CAMPAIGN_ACCOUNTING": str(
+                                    campaign_accounting_path
+                                ),
+                                "PHYSICAL_WATCHDOG_MEMORY_POLICY": str(
+                                    physical_resources["watchdog_memory_policy"]
+                                ),
+                                "PHYSICAL_WATCHDOG_PSS_POLICY": str(
+                                    physical_resources["pss_sampling_policy"]
+                                ),
+                                "PHYSICAL_QUALIFIED_JIT_CACHE_SOURCE": str(jit_source),
+                                "PHYSICAL_QUALIFIED_JIT_CACHE_ORIGIN": str(
+                                    physical_resources["qualified_jit_cache_origin"]
+                                ),
+                                "PHYSICAL_QUALIFIED_JIT_EXPECTED_COMPILER_EVENTS": str(
+                                    physical_resources[
+                                        "qualified_jit_expected_compiler_event_count"
+                                    ]
+                                ),
+                                "XDG_CACHE_HOME": str(jit_source),
+                            }
+                        )
+                        watchdog_kwargs["worker_environment"] = watchdog_environment
+                        watchdog_kwargs.update(
+                            campaign_window_path=campaign_window.path,
+                            campaign_window_sha256=campaign_window.sha256,
+                            campaign_accounting_path=campaign_accounting_path,
+                        )
                     if v14_lease is not None:
                         watchdog_environment = dict(
                             watchdog_kwargs.get('worker_environment', {})
@@ -6223,8 +6355,23 @@ def launch_specification(
                             'TASK39EXTRA_V24_P4_PREFIX_TARGET'
                         ] = str(v24_p4_prefix_target)
                         watchdog_kwargs['worker_environment'] = watchdog_environment
+                    if task40_v10_profile:
+                        campaign_start_state = campaign_window.observe(
+                            label="launcher_pre_worker"
+                        )
+                        admitted_campaign_seconds = float(
+                            campaign_start_state["remaining_numerical_seconds"]
+                        )
+                        if admitted_campaign_seconds <= 0.0:
+                            raise InputError(
+                                "Task40 V10 campaign has no time left before the closeout reserve"
+                            )
+                        workflow_limit = min(float(workflow_limit), admitted_campaign_seconds)
+                        solve_limit = min(float(solve_limit), admitted_campaign_seconds)
                     wall_budget = (
-                        min(
+                        float(campaign_start_state["remaining_numerical_seconds"])
+                        if task40_v10_profile
+                        else min(
                             workflow_limit - (monotonic() - workflow_started),
                             pc_profile['deadline_monotonic'] - monotonic(),
                         )
@@ -6270,8 +6417,11 @@ def launch_specification(
                             else min(
                                 solve_limit,
                                 wall_budget
-                                if v14_lease is not None
-                                and v14_time_policy == V14_TIME_POLICY_ENFORCE
+                                if task40_v10_profile
+                                or (
+                                    v14_lease is not None
+                                    and v14_time_policy == V14_TIME_POLICY_ENFORCE
+                                )
                                 else solve_limit,
                             )
                         ),
@@ -6284,6 +6434,23 @@ def launch_specification(
                     result = {'exit_status': authority['leader_exit_code'],
                         'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                         'resource_authority': authority}
+                    if task40_v10_profile:
+                        try:
+                            campaign_post_state = campaign_window.observe(
+                                label="launcher_after_watchdog"
+                            )
+                            result["task40_v10_campaign"] = {
+                                "window_path": str(campaign_window.path),
+                                "window_sha256": campaign_window.sha256,
+                                "accounting_path": str(campaign_accounting_path),
+                                "launcher_post_watchdog_observation": campaign_post_state,
+                            }
+                        except (OSError, ValueError, RuntimeError) as exc:
+                            result["result_classification"] = "EVIDENCE_INCOMPLETE"
+                            result["task40_v10_campaign_error"] = {
+                                "type": type(exc).__name__,
+                                "message": str(exc),
+                            }
                     if v6_tail_reserve > 0.0:
                         result["v6_deadline_tail_reserve_seconds"] = v6_tail_reserve
                         result["v6_watchdog_wall_seconds"] = watchdog_wall_seconds
@@ -6305,6 +6472,30 @@ def launch_specification(
                             and result['result_classification'] == 'worker_exit0'
                         ):
                             result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+                    elif task40_v10_profile:
+                        cgroup_swap = authority.get("job_cgroup_swap", {})
+                        v10_swap_pass = bool(
+                            authority.get("process_tree_swap_gate_enforced") is True
+                            and authority.get("sampled_process_tree_swap_peak_bytes") == 0
+                            and authority.get("job_cgroup_swap_gate_enforced") is True
+                            and cgroup_swap.get("passed") is True
+                        )
+                        result["swap_policy"] = "require_zero_task_and_dedicated_cgroup_swap"
+                        result["swap_gate_enforced"] = bool(
+                            authority.get("process_tree_swap_gate_enforced") is True
+                            and authority.get("job_cgroup_swap_gate_enforced") is True
+                        )
+                        result["job_swap_qualification"] = (
+                            "qualified_zero" if v10_swap_pass else "UNRESOLVED"
+                        )
+                        result["global_swap_activity"] = authority.get(
+                            "global_swap_activity"
+                        )
+                        if (
+                            not v10_swap_pass
+                            and result["result_classification"] == "worker_exit0"
+                        ):
+                            result["result_classification"] = "EVIDENCE_INCOMPLETE"
                     else:
                         zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
                         result['swap_policy'] = (
@@ -6341,6 +6532,10 @@ def launch_specification(
                         'global_swap_gate_enforced': authority.get(
                             'global_swap_gate_enforced', not effective_swap_observe
                         ),
+                        'job_cgroup_swap_gate_enforced': authority.get(
+                            'job_cgroup_swap_gate_enforced', False
+                        ),
+                        'job_cgroup_swap': authority.get('job_cgroup_swap'),
                         **(
                             {'task40_swap_qualification': result.get('task40_swap_qualification')}
                             if task40_0p7nm_profile
@@ -6407,8 +6602,17 @@ def launch_specification(
         end_time = _now()
         if physical_candidate:
             result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
-            result['full_workflow_time_exceeded'] = bool(
-                result['full_workflow_monotonic_seconds'] > workflow_limit
+            result['full_workflow_time_exceeded'] = (
+                bool(
+                    float(
+                        result.get("task40_v10_campaign", {})
+                        .get("launcher_post_watchdog_observation", {})
+                        .get("remaining_numerical_seconds", 1.0)
+                    )
+                    <= 0.0
+                )
+                if task40_v10_profile
+                else bool(result['full_workflow_monotonic_seconds'] > workflow_limit)
             )
             if schur_v14 or blr_profile or cell_condensed_profile:
                 result['time_observations'].update(

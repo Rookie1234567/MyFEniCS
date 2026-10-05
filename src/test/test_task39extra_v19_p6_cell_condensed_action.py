@@ -106,6 +106,21 @@ def _problem() -> tuple[_FakeCondensed, dict[str, np.ndarray], P6CellCondensedAc
     return condensed, block, action
 
 
+def test_reduced_contribution_iterator_matches_cached_action() -> None:
+    _condensed, _block, action = _problem()
+    n = action.reduced_size
+    assembled = np.zeros((n, n), dtype=np.complex128)
+    gates = []
+    for rows, columns, values, _label in action.iter_reduced_contributions(
+        allocation_gate=lambda name, facts: gates.append((name, facts))
+    ):
+        assembled[np.ix_(rows, columns)] += values
+    rhs = _matrix(np.random.default_rng(39191), n, 1)[:, 0]
+    np.testing.assert_allclose(assembled @ rhs, action.apply(rhs), rtol=2e-12, atol=2e-12)
+    assert len(gates) == 4
+    assert all(facts["consumer_must_release_before_next"] for _name, facts in gates)
+
+
 def test_nonhermitian_local_condensation_and_recovery_match_dense_blocks() -> None:
     rng = np.random.default_rng(19)
     ni, nt, np_ = 3, 2, 2
