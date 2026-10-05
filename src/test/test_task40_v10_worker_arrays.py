@@ -1,13 +1,17 @@
-from types import SimpleNamespace
+import json
+from types import MappingProxyType, SimpleNamespace
 
 import numpy as np
 import pytest
 from petsc4py import PETSc
 
 from src.runners import task40_v10_worker
+from src.runners.physical_p4_schur_v14 import _V14Runtime, _write_json
 from src.runners.task40_v10_worker import (
     _assign_vector_storage,
+    _packet_array_bytes,
     _regular_inverse_gate_facts,
+    _save_packet,
 )
 
 
@@ -175,3 +179,80 @@ def test_regular_inverse_passes_sector_action_map_and_petsc_to_recovery(
     assert captured["petsc"] is PETSc
     assert captured["allocation_gate"] is allocation_gate
     assert callable(captured["operation_relative"])
+
+
+def test_candidate_identity_packet_marker_and_summary_accept_readonly_audits(
+    tmp_path,
+):
+    matrix = np.arange(6, dtype=np.complex128).reshape(2, 3)
+    payload = MappingProxyType(
+        {
+            "schema": "task40extra.review_v10_b0_candidate_identity.v1",
+            "target_backend": MappingProxyType(
+                {
+                    "audit": MappingProxyType(
+                        {
+                            "schema": "physical-action-audit.v1",
+                            "components": ("curl", "material_mass"),
+                            "matrix": matrix,
+                        }
+                    )
+                }
+            ),
+            "target_mesh": MappingProxyType(
+                {
+                    "air_void_audit": MappingProxyType(
+                        {"status": "PASS", "checked_cells": 12}
+                    )
+                }
+            ),
+        }
+    )
+    assert _packet_array_bytes(payload) == matrix.nbytes
+
+    runtime = object.__new__(_V14Runtime)
+    runtime.directory = tmp_path
+    runtime.stage = "B0_CANDIDATE"
+    runtime.events_path = tmp_path / "v10_candidate_events.jsonl"
+    runtime._pc_clock = object()
+    runtime.reserve_workspace = lambda _label, _amount: None
+    runtime.release_workspace = lambda _label: None
+
+    packet = _save_packet(runtime, "v10_candidate_operator_identity", payload)
+    packet_path = tmp_path / "v10_candidate_operator_identity.json"
+    packet_record = json.loads(packet_path.read_text(encoding="utf-8"))
+    audit_record = packet_record["target_backend"]["audit"]
+    assert audit_record["components"] == ["curl", "material_mass"]
+    assert audit_record["schema"] == "physical-action-audit.v1"
+    assert packet_record["target_mesh"]["air_void_audit"] == {
+        "status": "PASS",
+        "checked_cells": 12,
+    }
+    assert packet == packet_record
+    with np.load(packet_record["arrays"]["path"], allow_pickle=False) as arrays:
+        np.testing.assert_array_equal(
+            arrays[audit_record["matrix"]["array_key"]], matrix
+        )
+
+    runtime.marker("v10_candidate_operator_identity", payload)
+    marker_rows = [
+        json.loads(line)
+        for line in runtime.events_path.read_text(encoding="utf-8").splitlines()
+    ]
+    identity_marker = next(
+        row for row in marker_rows if row["event"] == "v10_candidate_operator_identity"
+    )
+    marker_audit = identity_marker["facts"]["target_backend"]["audit"]
+    assert marker_audit["components"] == ["curl", "material_mass"]
+    assert marker_audit["matrix"]["shape"] == [2, 3]
+    assert marker_audit["matrix"]["dtype"] == "complex128"
+    assert marker_audit["matrix"]["sha256"]
+
+    summary_path = tmp_path / "task40_v10_p6_candidate_summary.json"
+    _write_json(summary_path, {"candidate_identity": payload})
+    summary_record = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary_audit = summary_record["candidate_identity"]["target_backend"]["audit"]
+    assert summary_audit["components"] == ["curl", "material_mass"]
+    assert summary_audit["matrix"]["shape"] == [2, 3]
+    assert summary_audit["matrix"]["dtype"] == "complex128"
+    assert summary_audit["matrix"]["sha256"]

@@ -79,7 +79,14 @@ def verify_v10_regular_internal_witness(packet_json: str | Path) -> dict[str, An
 
     recomputed = effective_rhs - saved_action
     scale = float(record["full_internal_recovery_operation_scale"])
-    recorded_limit = float(record["full_internal_recovery_limit"])
+    limits = record.get("limits")
+    if not isinstance(limits, Mapping) or "full_internal_recovery" not in limits:
+        raise ValueError("V10 regular witness is missing limits.full_internal_recovery")
+    recorded_limit = float(limits["full_internal_recovery"])
+    if "full_internal_recovery_limit" in record:
+        duplicate_limit = float(record["full_internal_recovery_limit"])
+        if not np.isfinite(duplicate_limit) or duplicate_limit != recorded_limit:
+            raise ValueError("V10 regular internal recovery limit fields conflict")
     stored_relative = float(record["full_internal_recovery_relative"])
     if not np.isfinite(scale) or scale < 0.0:
         raise ValueError("V10 regular internal operation scale is invalid")

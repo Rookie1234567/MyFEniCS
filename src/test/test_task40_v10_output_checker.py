@@ -107,7 +107,7 @@ def _regular_internal_payload(
         "full_internal_twist_indices": np.repeat(np.array([0, 1], dtype=np.int8), count // 2),
         "full_internal_recovery_rows": count,
         "full_internal_recovery_operation_scale": operation_scale,
-        "full_internal_recovery_limit": limit,
+        "limits": {"full_internal_recovery": limit},
         "full_internal_recovery_relative": stored_relative,
     }
 
@@ -148,3 +148,23 @@ def test_regular_internal_checker_rejects_relaxed_limit(tmp_path):
 
     with pytest.raises(ValueError, match="fixed 1e-11 contract"):
         verify_v10_regular_internal_witness(tmp_path / "relaxed_regular_internal.json")
+
+
+def test_regular_internal_checker_rejects_missing_recorded_limit(tmp_path):
+    payload = _regular_internal_payload()
+    payload["limits"].clear()
+    save_packet(tmp_path, "missing_regular_internal_limit", payload)
+
+    with pytest.raises(ValueError, match="missing limits.full_internal_recovery"):
+        verify_v10_regular_internal_witness(tmp_path / "missing_regular_internal_limit.json")
+
+
+def test_regular_internal_checker_rejects_conflicting_duplicate_limit(tmp_path):
+    payload = _regular_internal_payload()
+    payload["full_internal_recovery_limit"] = 1.0e-12
+    save_packet(tmp_path, "conflicting_regular_internal_limit", payload)
+
+    with pytest.raises(ValueError, match="limit fields conflict"):
+        verify_v10_regular_internal_witness(
+            tmp_path / "conflicting_regular_internal_limit.json"
+        )

@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+from collections.abc import Mapping
 from pathlib import Path
 import signal
 import sys
@@ -28,7 +29,8 @@ def save_packet(directory,name,facts):
         if isinstance(value,np.ndarray):
             key='array_'+str(len(arrays));arrays[key]=value
             return dict(array_key=key,shape=list(value.shape),dtype=str(value.dtype))
-        if isinstance(value,dict):return {k:compact(v) for k,v in value.items()}
+        if isinstance(value, Mapping):
+            return {key: compact(item) for key, item in value.items()}
         if isinstance(value,(list,tuple)):return [compact(v) for v in value]
         return value
     try:
