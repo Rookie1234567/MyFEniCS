@@ -189,6 +189,49 @@ class _FixedReduction:
         return self.value
 
 
+class _CountingRouteComm:
+    def __init__(self, comm):
+        self.comm = comm
+        self.counts = {
+            "route_preflight_allgather": 0,
+            "count_alltoall": 0,
+            "id_alltoallv": 0,
+            "value_alltoallv": 0,
+        }
+
+    def __getattr__(self, name):
+        return getattr(self.comm, name)
+
+    @property
+    def rank(self):
+        return int(self.comm.rank)
+
+    @property
+    def size(self):
+        return int(self.comm.size)
+
+    def allreduce(self, value, op=None):
+        return self.comm.allreduce(value, op=op)
+
+    def allgather(self, value):
+        self.counts["route_preflight_allgather"] += 1
+        return self.comm.allgather(value)
+
+    def Alltoall(self, sendbuf, recvbuf):
+        self.counts["count_alltoall"] += 1
+        return self.comm.Alltoall(sendbuf, recvbuf)
+
+    def Alltoallv(self, sendbuf, recvbuf):
+        kind = np.asarray(sendbuf[0]).dtype
+        if kind == np.dtype(np.uint64):
+            self.counts["id_alltoallv"] += 1
+        elif kind == np.dtype(np.complex128):
+            self.counts["value_alltoallv"] += 1
+        else:
+            raise AssertionError(f"unexpected same-mesh packet dtype {kind}")
+        return self.comm.Alltoallv(sendbuf, recvbuf)
+
+
 @pytest.fixture(scope="module")
 def small_fe_fixture():
     comm = MPI.COMM_WORLD
@@ -307,12 +350,23 @@ def test_task041_h1b_j_and_jh_are_owned_trace_only(small_fe_fixture) -> None:
 
 
 @pytest.mark.parametrize(
-    "optimization_profile",
-    (None, "task041_schur_speed_v2"),
-    ids=("legacy", "task041_schur_speed_v2"),
+    ("optimization_profile", "reuse_primal_route_plan"),
+    (
+        (None, False),
+        ("task041_schur_speed_v2", False),
+        (None, True),
+        ("task041_schur_speed_v2", True),
+    ),
+    ids=(
+        "legacy_route_disabled",
+        "task041_schur_speed_v2_route_disabled",
+        "legacy_route_reuse",
+        "task041_schur_speed_v2_route_reuse",
+    ),
 )
 def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
     optimization_profile: str | None,
+    reuse_primal_route_plan: bool,
 ) -> None:
     if MPI.COMM_WORLD.size != 2:
         pytest.skip("empty-owner check uses a two-rank one-cell partition")
@@ -343,7 +397,18 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
         coarse_space,
         coarse_floquet,
         optimization_profile=optimization_profile,
+        reuse_primal_route_plan=reuse_primal_route_plan,
     )
+    reference_owner = None
+    if reuse_primal_route_plan:
+        reference_owner = build_same_mesh_hcurl_owner_transfer(
+            fine_space,
+            fine_floquet,
+            coarse_space,
+            coarse_floquet,
+            local_transfer=owner.local_transfer,
+            optimization_profile=optimization_profile,
+        )
     ranges = _owner_ranges(fine_space.dofmap.index_map, MPI.COMM_WORLD)
     assert any(first == last for first, last in ranges)
     global_rows = int(fine_space.dofmap.index_map.size_global)
@@ -368,8 +433,10 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
             )
         ]
     )
+    coarse_second = coarse.duplicate()
     outputs = []
     coarse_before = None
+    coarse_second_before = None
     fine_probe_before = None
     coarse_difference = None
     fine_difference = None
@@ -384,6 +451,9 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
             coarse,
             expected_comm_size=2,
         )
+        route_comm = _CountingRouteComm(MPI.COMM_WORLD)
+        if reuse_primal_route_plan:
+            owner.comm = route_comm
         coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
         fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
         _fill_algebraic_vector(coarse, coarse_slaves, 0.75)
@@ -391,6 +461,97 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
         coarse.copy(coarse_before)
         fine_output = owner.apply_primal(coarse)
         outputs.append(fine_output)
+        if reuse_primal_route_plan:
+            plan = owner._primal_route_plan
+            plan_ready_states = MPI.COMM_WORLD.allgather(plan is not None)
+            assert all(plan_ready_states)
+            assert plan is not None
+            empty_senders = MPI.COMM_WORLD.allreduce(
+                int(plan.candidate_ids.size == 0), op=MPI.SUM
+            )
+            empty_receivers = MPI.COMM_WORLD.allreduce(
+                int(plan.recv_ids.size == 0), op=MPI.SUM
+            )
+            assert empty_senders > 0
+            assert empty_receivers > 0
+            captured_state = owner.last_apply_facts["primal_route_plan_state"]
+            captured_preflight = owner.last_apply_facts[
+                "primal_route_plan_preflight"
+            ]
+            captured_reports = MPI.COMM_WORLD.allgather(
+                (captured_state, captured_preflight)
+            )
+            assert all(
+                report
+                == (
+                    "captured",
+                    {
+                        "status": "passed",
+                        "collective": "allgather_plan_readiness_and_local_validation",
+                        "collective_count": 1,
+                        "participants": 2,
+                    },
+                )
+                for report in captured_reports
+            )
+
+            _fill_algebraic_vector(coarse_second, coarse_slaves, -1.875)
+            coarse_second_before = coarse_second.duplicate()
+            coarse_second.copy(coarse_second_before)
+            second_output = owner.apply_primal(coarse_second)
+            outputs.append(second_output)
+            reference_output = reference_owner.apply_primal(coarse_second)
+            outputs.append(reference_output)
+            second_matches_reference = bool(
+                np.allclose(
+                    second_output.getArray(readonly=True),
+                    reference_output.getArray(readonly=True),
+                    atol=1.0e-11,
+                    rtol=1.0e-11,
+                )
+            )
+            second_input_unchanged = bool(
+                np.array_equal(
+                    coarse_second.getArray(readonly=True),
+                    coarse_second_before.getArray(readonly=True),
+                )
+            )
+            coarse_norm = coarse.norm()
+            coarse_second_norm = coarse_second.norm()
+            rhs_difference = coarse.duplicate()
+            coarse.copy(rhs_difference)
+            rhs_difference.axpy(
+                PETSc.ScalarType(-1.0), coarse_second
+            )
+            rhs_difference_norm = rhs_difference.norm()
+            rhs_difference.destroy()
+            second_state = owner.last_apply_facts["primal_route_plan_state"]
+            second_counts = dict(route_comm.counts)
+            second_reports = MPI.COMM_WORLD.allgather(
+                (
+                    second_matches_reference,
+                    second_input_unchanged,
+                    coarse_norm > 0.0,
+                    coarse_second_norm > 0.0,
+                    rhs_difference_norm > 0.0,
+                    second_state,
+                    second_counts,
+                )
+            )
+            expected_second_counts = {
+                "route_preflight_allgather": 2,
+                "count_alltoall": 1,
+                "id_alltoallv": 1,
+                "value_alltoallv": 2,
+            }
+            assert all(
+                report[:6]
+                == (True, True, True, True, True, "reused")
+                and report[6] == expected_second_counts
+                for report in second_reports
+            )
+        else:
+            assert owner._primal_route_plan is None
         _fill_algebraic_vector(fine_probe, fine_slaves, -0.5)
         fine_probe_before = fine_probe.duplicate()
         fine_probe.copy(fine_probe_before)
@@ -418,10 +579,15 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
         assert fine_output.norm() > 0.0
         assert coarse_output.norm() > 0.0
 
-        dot_lhs = fine_output.dot(fine_probe)
-        dot_rhs = coarse.dot(coarse_output)
+        dot_source = coarse_second if reuse_primal_route_plan else coarse
+        dot_primal = outputs[1] if reuse_primal_route_plan else fine_output
+        dot_lhs = dot_primal.dot(fine_probe)
+        dot_rhs = dot_source.dot(coarse_output)
         dot_scale = max(abs(dot_lhs), abs(dot_rhs), np.finfo(float).tiny)
-        assert abs(dot_lhs - dot_rhs) / dot_scale <= 1.0e-10
+        dot_checks = MPI.COMM_WORLD.allgather(
+            abs(dot_lhs - dot_rhs) / dot_scale <= 1.0e-10
+        )
+        assert all(dot_checks)
 
         coarse_difference = coarse.duplicate()
         coarse.copy(coarse_difference)
@@ -436,8 +602,11 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
             vector.destroy()
         coarse.destroy()
         fine_probe.destroy()
+        if coarse_second_before is not None:
+            coarse_second_before.destroy()
         if coarse_before is not None:
             coarse_before.destroy()
+        coarse_second.destroy()
         if fine_probe_before is not None:
             fine_probe_before.destroy()
         if coarse_difference is not None:
@@ -445,6 +614,8 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh(
         if fine_difference is not None:
             fine_difference.destroy()
         owner.destroy()
+        if reference_owner is not None:
+            reference_owner.destroy()
 
 
 @pytest.mark.skipif(
@@ -1676,3 +1847,493 @@ def test_task041_h1b_mpi8_remote_master_ghost_uses_finalized_oracle() -> None:
         if owner is not None:
             owner.destroy()
         del owner, fine_floquet, coarse_floquet, fine_space, coarse_space, box
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size == 8,
+    reason="the primal route-plan oracle is serial/MPI2-only",
+)
+def test_task041_h1b_primal_route_plan_matches_legacy_with_alternation(
+    small_fe_fixture,
+    monkeypatch,
+) -> None:
+    data = small_fe_fixture
+    fine_space = data["fine_space"]
+    coarse_space = data["coarse_space"]
+    local_transfer = data["owner"].local_transfer
+    common = {
+        "local_transfer": local_transfer,
+        "optimization_profile": None,
+    }
+    legacy = build_same_mesh_hcurl_owner_transfer(
+        fine_space,
+        data["fine_floquet"],
+        coarse_space,
+        data["coarse_floquet"],
+        **common,
+    )
+    legacy_route_comm = _CountingRouteComm(MPI.COMM_WORLD)
+    legacy.comm = legacy_route_comm
+    cached = build_same_mesh_hcurl_owner_transfer(
+        fine_space,
+        data["fine_floquet"],
+        coarse_space,
+        data["coarse_floquet"],
+        reuse_primal_route_plan=True,
+        **common,
+    )
+    route_comm = _CountingRouteComm(MPI.COMM_WORLD)
+    cached.comm = route_comm
+
+    # Reverse each cached record's local row order before its first apply.  The
+    # paired indices/matrix view keep the same map while forcing recv_order to
+    # be non-identity on the real tiny bridge.
+    for record in cached._records:
+        record["fine_global"] = record["fine_global"][::-1]
+        record["fine_local"] = record["fine_local"][::-1]
+        record["authority"] = record["authority"][::-1]
+        record["matrix"] = record["matrix"][::-1, :]
+
+    coarse_a = create_vector(
+        [(coarse_space.dofmap.index_map, int(coarse_space.dofmap.index_map_bs))]
+    )
+    coarse_b = coarse_a.duplicate()
+    fine_a = create_vector(
+        [(fine_space.dofmap.index_map, int(fine_space.dofmap.index_map_bs))]
+    )
+    fine_b = fine_a.duplicate()
+    vectors = [coarse_a, coarse_b, fine_a, fine_b]
+    outputs = []
+    route_p_values = []
+    route_ph_values = []
+    failed_first = None
+    try:
+        _fill_algebraic_vector(coarse_a, legacy._coarse_slaves, 2.25)
+        _fill_algebraic_vector(coarse_b, legacy._coarse_slaves, -1.5)
+        _fill_algebraic_vector(fine_a, legacy._fine_slaves, 3.125)
+        _fill_algebraic_vector(fine_b, legacy._fine_slaves, -0.875)
+        inputs_before = {
+            id(vector): np.asarray(
+                vector.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            for vector in vectors
+        }
+
+        for source in (coarse_a, coarse_b, coarse_a):
+            expected = legacy.apply_primal(source)
+            actual = cached.apply_primal(source)
+            outputs.extend((expected, actual))
+            expected_values = np.asarray(
+                expected.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            actual_values = np.asarray(
+                actual.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            local_p_checks = (
+                bool(
+                    np.allclose(
+                        actual_values,
+                        expected_values,
+                        atol=1.0e-11,
+                        rtol=1.0e-11,
+                    )
+                ),
+                bool(
+                    np.array_equal(
+                        source.getArray(readonly=True),
+                        inputs_before[id(source)],
+                    )
+                ),
+            )
+            p_checks_by_rank = MPI.COMM_WORLD.allgather(local_p_checks)
+            assert all(check == (True, True) for check in p_checks_by_rank)
+            route_p_values.append(actual_values)
+        legacy_preflight_counts = MPI.COMM_WORLD.allgather(
+            legacy_route_comm.counts["route_preflight_allgather"]
+        )
+        assert all(count == 0 for count in legacy_preflight_counts)
+
+        plan = cached._primal_route_plan
+        plan_ready_states = MPI.COMM_WORLD.allgather(plan is not None)
+        assert all(plan_ready_states)
+        assert plan is not None
+        local_nontrivial_receive_order = not np.array_equal(
+            plan.recv_order,
+            np.arange(plan.recv_order.size, dtype=np.int64),
+        )
+        assert MPI.COMM_WORLD.allreduce(
+            int(local_nontrivial_receive_order), op=MPI.MAX
+        ) == 1
+        last_route_facts = (
+            cached.last_apply_facts["primal_route_plan_state"],
+            cached.last_apply_facts["primal_route_plan_preflight"],
+        )
+        route_facts_by_rank = MPI.COMM_WORLD.allgather(last_route_facts)
+        assert all(
+            facts
+            == (
+                "reused",
+                {
+                    "status": "passed",
+                    "collective": "allgather_plan_readiness_and_local_validation",
+                    "collective_count": 1,
+                    "participants": int(MPI.COMM_WORLD.size),
+                },
+            )
+            for facts in route_facts_by_rank
+        )
+        initial_route_counts = MPI.COMM_WORLD.allgather(dict(route_comm.counts))
+        expected_initial_route_counts = {
+            "route_preflight_allgather": 3,
+            "count_alltoall": 1,
+            "id_alltoallv": 1,
+            "value_alltoallv": 3,
+        }
+        assert all(
+            counts == expected_initial_route_counts
+            for counts in initial_route_counts
+        )
+        repeated_p_checks = MPI.COMM_WORLD.allgather(
+            bool(
+                np.allclose(
+                    route_p_values[0],
+                    route_p_values[2],
+                    atol=1.0e-12,
+                    rtol=1.0e-12,
+                )
+            )
+        )
+        assert all(repeated_p_checks)
+
+        for source in (fine_a, fine_b, fine_a):
+            expected = legacy.apply_adjoint(source)
+            actual = cached.apply_adjoint(source)
+            outputs.extend((expected, actual))
+            expected_values = np.asarray(
+                expected.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            actual_values = np.asarray(
+                actual.getArray(readonly=True), dtype=np.complex128
+            ).copy()
+            local_ph_checks = (
+                bool(
+                    np.allclose(
+                        actual_values,
+                        expected_values,
+                        atol=1.0e-11,
+                        rtol=1.0e-11,
+                    )
+                ),
+                bool(
+                    np.array_equal(
+                        source.getArray(readonly=True),
+                        inputs_before[id(source)],
+                    )
+                ),
+            )
+            ph_checks_by_rank = MPI.COMM_WORLD.allgather(local_ph_checks)
+            assert all(check == (True, True) for check in ph_checks_by_rank)
+            route_ph_values.append(actual_values)
+
+        lhs = outputs[1].dot(fine_a)
+        rhs = coarse_a.dot(outputs[7])
+        scale = max(abs(lhs), abs(rhs), np.finfo(float).tiny)
+        dot_relative = abs(lhs - rhs) / scale
+        repeated_ph_match = bool(
+            np.allclose(
+                route_ph_values[0],
+                route_ph_values[2],
+                atol=1.0e-12,
+                rtol=1.0e-12,
+            )
+        )
+        adjoint_checks_by_rank = MPI.COMM_WORLD.allgather(
+            (
+                dot_relative <= 1.0e-10,
+                repeated_ph_match,
+                dict(route_comm.counts),
+            )
+        )
+        expected_after_adjoint_counts = {
+            "route_preflight_allgather": 3,
+            "count_alltoall": 1,
+            "id_alltoallv": 1,
+            "value_alltoallv": 3,
+        }
+        assert all(
+            checks[:2] == (True, True)
+            and checks[2] == expected_after_adjoint_counts
+            for checks in adjoint_checks_by_rank
+        )
+
+        original_values_packet = cached._candidate_values_packet
+        before_invalid_length = dict(route_comm.counts)
+        invalid_rank = 1 if MPI.COMM_WORLD.size > 1 else 0
+
+        def invalid_dynamic_values_length():
+            values = original_values_packet()
+            if MPI.COMM_WORLD.rank == invalid_rank:
+                return np.concatenate(
+                    (values, np.asarray((1.0 + 0.5j,), dtype=np.complex128))
+                )
+            return values
+
+        monkeypatch.setattr(
+            cached, "_candidate_values_packet", invalid_dynamic_values_length
+        )
+        try:
+            cached.apply_primal(coarse_a)
+        except (RuntimeError, ValueError) as exc:
+            invalid_length_error = str(exc)
+        else:
+            invalid_length_error = None
+        invalid_length_errors = MPI.COMM_WORLD.allgather(invalid_length_error)
+        invalid_length_progress = MPI.COMM_WORLD.allgather("after_values_size_reject")
+        invalid_length_statuses = MPI.COMM_WORLD.allgather(
+            cached._last_primal_route_preflight["status"]
+        )
+        invalid_length_counts = MPI.COMM_WORLD.allgather(
+            dict(route_comm.counts)
+        )
+        invalid_length_inputs_unchanged = MPI.COMM_WORLD.allgather(
+            bool(
+                np.array_equal(
+                    coarse_a.getArray(readonly=True),
+                    inputs_before[id(coarse_a)],
+                )
+            )
+        )
+        assert invalid_length_errors[0] is not None
+        assert all(error == invalid_length_errors[0] for error in invalid_length_errors)
+        assert all(
+            error
+            == "same-mesh primal route preflight rejected: "
+            "local_binding_or_values_shape_mismatch"
+            for error in invalid_length_errors
+        )
+        assert all(value == "after_values_size_reject" for value in invalid_length_progress)
+        assert all(
+            status == "local_binding_or_values_shape_mismatch"
+            for status in invalid_length_statuses
+        )
+        assert all(
+            counts
+            == {
+                **before_invalid_length,
+                "route_preflight_allgather": (
+                    before_invalid_length["route_preflight_allgather"] + 1
+                ),
+            }
+            for counts in invalid_length_counts
+        )
+        assert all(invalid_length_inputs_unchanged)
+        monkeypatch.setattr(cached, "_candidate_values_packet", original_values_packet)
+
+        if MPI.COMM_WORLD.size > 1:
+            saved_plan = cached._primal_route_plan
+            if MPI.COMM_WORLD.rank == 1:
+                cached._primal_route_plan = None
+            try:
+                cached.apply_primal(coarse_a)
+            except (RuntimeError, ValueError) as exc:
+                readiness_error = str(exc)
+            else:
+                readiness_error = None
+            readiness_errors = MPI.COMM_WORLD.allgather(readiness_error)
+            readiness_progress = MPI.COMM_WORLD.allgather("after_plan_state_reject")
+            readiness_statuses = MPI.COMM_WORLD.allgather(
+                cached._last_primal_route_preflight["status"]
+            )
+            readiness_counts = MPI.COMM_WORLD.allgather(
+                dict(route_comm.counts)
+            )
+            cached._primal_route_plan = saved_plan
+            assert readiness_errors[0] is not None
+            assert all(error == readiness_errors[0] for error in readiness_errors)
+            assert all(
+                error
+                == "same-mesh primal route preflight rejected: "
+                "plan_readiness_mismatch"
+                for error in readiness_errors
+            )
+            assert all(value == "after_plan_state_reject" for value in readiness_progress)
+            assert all(
+                status == "plan_readiness_mismatch"
+                for status in readiness_statuses
+            )
+            expected_readiness_counts = {
+                "route_preflight_allgather": 5,
+                "count_alltoall": 1,
+                "id_alltoallv": 1,
+                "value_alltoallv": 3,
+            }
+            assert all(
+                counts == expected_readiness_counts for counts in readiness_counts
+            )
+
+        after_preflight_counts = MPI.COMM_WORLD.allgather(dict(route_comm.counts))
+        expected_after_preflight_counts = {
+            "route_preflight_allgather": (4 if MPI.COMM_WORLD.size == 1 else 5),
+            "count_alltoall": 1,
+            "id_alltoallv": 1,
+            "value_alltoallv": 3,
+        }
+        assert all(
+            counts == expected_after_preflight_counts
+            for counts in after_preflight_counts
+        )
+
+        _unique, inverse, counts = np.unique(
+            plan.candidate_ids, return_inverse=True, return_counts=True
+        )
+        if np.any(counts > 1):
+            duplicate_group = int(np.flatnonzero(counts > 1)[0])
+            duplicate_position = int(
+                np.flatnonzero(inverse == duplicate_group)[-1]
+            )
+        else:
+            duplicate_position = None
+        duplicate_ranks = MPI.COMM_WORLD.allreduce(
+            int(duplicate_position is not None), op=MPI.MAX
+        )
+        assert duplicate_ranks == 1
+        original_values_packet = cached._candidate_values_packet
+
+        def mismatched_duplicate_values():
+            values = original_values_packet()
+            if duplicate_position is not None:
+                values[duplicate_position] += 1.0e-4 + 2.0e-4j
+            return values
+
+        monkeypatch.setattr(
+            cached, "_candidate_values_packet", mismatched_duplicate_values
+        )
+        try:
+            cached.apply_primal(coarse_a)
+        except (RuntimeError, ValueError) as exc:
+            cached_duplicate_error = str(exc)
+        else:
+            cached_duplicate_error = None
+        cached_duplicate_errors = MPI.COMM_WORLD.allgather(cached_duplicate_error)
+        cached_duplicate_progress = MPI.COMM_WORLD.allgather(
+            "after_cached_duplicate_reject"
+        )
+        cached_duplicate_counts = MPI.COMM_WORLD.allgather(
+            dict(route_comm.counts)
+        )
+        cached_duplicate_inputs_unchanged = MPI.COMM_WORLD.allgather(
+            bool(
+                np.array_equal(
+                    coarse_a.getArray(readonly=True),
+                    inputs_before[id(coarse_a)],
+                )
+            )
+        )
+        cached_duplicate_plan_states = MPI.COMM_WORLD.allgather(
+            cached._primal_route_plan is plan
+        )
+        assert cached_duplicate_errors[0] is not None
+        assert all(error == cached_duplicate_errors[0] for error in cached_duplicate_errors)
+        assert "same-mesh owner row candidates disagree" in cached_duplicate_errors[0]
+        assert all(
+            value == "after_cached_duplicate_reject"
+            for value in cached_duplicate_progress
+        )
+        expected_cached_duplicate_counts = {
+            "route_preflight_allgather": (5 if MPI.COMM_WORLD.size == 1 else 6),
+            "count_alltoall": 1,
+            "id_alltoallv": 1,
+            "value_alltoallv": 4,
+        }
+        assert all(
+            counts == expected_cached_duplicate_counts
+            for counts in cached_duplicate_counts
+        )
+        assert all(cached_duplicate_inputs_unchanged)
+        assert all(cached_duplicate_plan_states)
+        legacy_plan_states = MPI.COMM_WORLD.allgather(
+            legacy._primal_route_plan is None
+        )
+        assert all(legacy_plan_states)
+
+        failed_first = build_same_mesh_hcurl_owner_transfer(
+            fine_space,
+            data["fine_floquet"],
+            coarse_space,
+            data["coarse_floquet"],
+            local_transfer=local_transfer,
+            reuse_primal_route_plan=True,
+        )
+        for record in failed_first._records:
+            record["fine_global"] = record["fine_global"][::-1]
+            record["fine_local"] = record["fine_local"][::-1]
+            record["authority"] = record["authority"][::-1]
+            record["matrix"] = record["matrix"][::-1, :]
+        failed_comm = _CountingRouteComm(MPI.COMM_WORLD)
+        failed_first.comm = failed_comm
+        failed_ids = failed_first._candidate_ids_packet()
+        _failed_unique, failed_inverse, failed_counts = np.unique(
+            failed_ids, return_inverse=True, return_counts=True
+        )
+        if np.any(failed_counts > 1):
+            failed_group = int(np.flatnonzero(failed_counts > 1)[0])
+            failed_position = int(
+                np.flatnonzero(failed_inverse == failed_group)[-1]
+            )
+        else:
+            failed_position = None
+        assert MPI.COMM_WORLD.allreduce(
+            int(failed_position is not None), op=MPI.MAX
+        ) == 1
+        failed_values_packet = failed_first._candidate_values_packet
+
+        def first_route_duplicate_values():
+            values = failed_values_packet()
+            if failed_position is not None:
+                values[failed_position] += 1.0e-4 + 2.0e-4j
+            return values
+
+        monkeypatch.setattr(
+            failed_first,
+            "_candidate_values_packet",
+            first_route_duplicate_values,
+        )
+        try:
+            failed_first.apply_primal(coarse_a)
+        except (RuntimeError, ValueError) as exc:
+            first_route_error = str(exc)
+        else:
+            first_route_error = None
+        first_route_errors = MPI.COMM_WORLD.allgather(first_route_error)
+        first_route_progress = MPI.COMM_WORLD.allgather(
+            "after_first_duplicate_reject"
+        )
+        first_route_plans = MPI.COMM_WORLD.allgather(
+            failed_first._primal_route_plan is None
+        )
+        first_route_counts = MPI.COMM_WORLD.allgather(dict(failed_comm.counts))
+        assert first_route_errors[0] is not None
+        assert all(error == first_route_errors[0] for error in first_route_errors)
+        assert "same-mesh owner row candidates disagree" in first_route_errors[0]
+        assert all(
+            value == "after_first_duplicate_reject" for value in first_route_progress
+        )
+        assert all(first_route_plans)
+        expected_first_route_counts = {
+            "route_preflight_allgather": 1,
+            "count_alltoall": 1,
+            "id_alltoallv": 1,
+            "value_alltoallv": 1,
+        }
+        assert all(counts == expected_first_route_counts for counts in first_route_counts)
+    finally:
+        if failed_first is not None:
+            failed_first.destroy()
+        for vector in outputs:
+            vector.destroy()
+        for vector in vectors:
+            vector.destroy()
+        legacy.destroy()
+        cached.destroy()
+    assert cached._primal_route_plan is None
+    assert local_transfer.audit["global_transfer_matrix"] is False

@@ -410,21 +410,97 @@ def _owner_ranks(
     return owners
 
 
+@dataclass(frozen=True, slots=True)
+class _PrimalRouteBinding:
+    transfer_identity: int
+    records_identity: int
+    communicator_identity: int
+    communicator_size: int
+    fine_ranges: tuple[tuple[int, int], ...]
+    coarse_ranges: tuple[tuple[int, int], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _PrimalRoutePlan:
+    candidate_ids: np.ndarray
+    send_order: np.ndarray
+    recv_order: np.ndarray
+    recv_ids: np.ndarray
+    source_ranks: np.ndarray
+    send_counts: np.ndarray
+    send_displacements: np.ndarray
+    recv_counts: np.ndarray
+    recv_displacements: np.ndarray
+    binding: _PrimalRouteBinding
+
+
 def _alltoallv_candidates(
-    ids: np.ndarray,
+    ids: np.ndarray | None,
     values: np.ndarray,
     ranges: tuple[tuple[int, int], ...],
     comm: Any,
     *,
     timing: MutableMapping[str, float] | None = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    route_plan: _PrimalRoutePlan | None = None,
+    route_binding: _PrimalRouteBinding | None = None,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    _PrimalRoutePlan | None,
+]:
+    if route_plan is not None:
+        # The opt-in caller has collectively validated readiness, binding,
+        # layout, and packet shape before entering this exchange.
+        values = np.ascontiguousarray(values, dtype=np.complex128)
+        route_started = perf_counter()
+        send_values = np.ascontiguousarray(
+            values[route_plan.send_order], dtype=np.complex128
+        )
+        _add_timing(
+            timing,
+            "route_sort_index_seconds",
+            perf_counter() - route_started,
+        )
+        recv_values = np.empty(route_plan.recv_order.size, dtype=np.complex128)
+        exchange_started = perf_counter()
+        try:
+            comm.Alltoallv(
+                [
+                    send_values,
+                    (route_plan.send_counts, route_plan.send_displacements),
+                    MPI.C_DOUBLE_COMPLEX,
+                ],
+                [
+                    recv_values,
+                    (route_plan.recv_counts, route_plan.recv_displacements),
+                    MPI.C_DOUBLE_COMPLEX,
+                ],
+            )
+        finally:
+            _add_timing(
+                timing,
+                "mpi_exchange_seconds",
+                perf_counter() - exchange_started,
+            )
+        route_started = perf_counter()
+        ordered_values = recv_values[route_plan.recv_order]
+        _add_timing(
+            timing,
+            "route_sort_index_seconds",
+            perf_counter() - route_started,
+        )
+        return route_plan.recv_ids, ordered_values, route_plan.source_ranks, None
+
+    if ids is None:
+        raise ValueError("the first primal route requires candidate ids")
     ids = np.ascontiguousarray(ids, dtype=np.uint64)
     values = np.ascontiguousarray(values, dtype=np.complex128)
     if ids.ndim != 1 or values.ndim != 1 or ids.size != values.size:
         raise ValueError("owner candidate packet shape is not closed")
     route_started = perf_counter()
     destinations = _owner_ranks(ids, ranges)
-    order = np.argsort(destinations, kind="stable")
+    order = np.argsort(destinations, kind="stable").astype(np.int64, copy=False)
     send_ids = np.ascontiguousarray(ids[order], dtype=np.uint64)
     send_values = np.ascontiguousarray(values[order], dtype=np.complex128)
     send_counts = np.bincount(
@@ -480,19 +556,48 @@ def _alltoallv_candidates(
     source_ranks = np.repeat(
         np.arange(int(comm.size), dtype=np.int32), recv_counts.astype(np.int64)
     )
-    order = np.lexsort(
+    recv_order = np.lexsort(
         (
             np.arange(recv_size, dtype=np.int64),
             source_ranks,
             recv_ids,
         )
-    )
+    ).astype(np.int64, copy=False)
     _add_timing(
         timing,
         "route_sort_index_seconds",
         perf_counter() - route_started,
     )
-    return recv_ids[order], recv_values[order], source_ranks[order]
+    ordered_ids = recv_ids[recv_order]
+    ordered_values = recv_values[recv_order]
+    ordered_sources = source_ranks[recv_order]
+    candidate_route = None
+    if route_binding is not None:
+        for array in (
+            ids,
+            order,
+            recv_order,
+            ordered_ids,
+            ordered_sources,
+            send_counts,
+            send_displacements,
+            recv_counts,
+            recv_displacements,
+        ):
+            array.setflags(write=False)
+        candidate_route = _PrimalRoutePlan(
+            candidate_ids=ids,
+            send_order=order,
+            recv_order=recv_order,
+            recv_ids=ordered_ids,
+            source_ranks=ordered_sources,
+            send_counts=send_counts,
+            send_displacements=send_displacements,
+            recv_counts=recv_counts,
+            recv_displacements=recv_displacements,
+            binding=route_binding,
+        )
+    return ordered_ids, ordered_values, ordered_sources, candidate_route
 
 
 def _resolve_owner_candidates(
@@ -820,6 +925,7 @@ class SameMeshHcurlOwnerTransfer:
         *,
         optimization_profile: str | None = None,
         support_policy: str = SUPPORT_POLICY_LEGACY,
+        reuse_primal_route_plan: bool = False,
     ) -> None:
         support_policy = _normalize_support_policy(support_policy)
         pair = (
@@ -879,6 +985,15 @@ class SameMeshHcurlOwnerTransfer:
             if optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
             else "legacy"
         )
+        if not isinstance(reuse_primal_route_plan, bool):
+            raise TypeError("reuse_primal_route_plan must be a boolean")
+        self._reuse_primal_route_plan = reuse_primal_route_plan
+        self._primal_route_plan: _PrimalRoutePlan | None = None
+        self._last_primal_route_preflight: dict[str, object] = {
+            "status": "not_used",
+            "collective": "none",
+            "collective_count": 0,
+        }
         self._variant_context_active = False
         self._apply_in_progress = False
         self._destroyed = False
@@ -999,6 +1114,7 @@ class SameMeshHcurlOwnerTransfer:
                 "fine_owned_cells": owned_cell_count,
                 "algebraic_slave_storage": "owned fine/coarse slaves zero",
                 "optimization_profile": optimization_profile,
+                "reuse_primal_route_plan": reuse_primal_route_plan,
                 "support_policy": support_policy,
                 "default_execution_variant": self._execution_variant,
                 "owner_resolution": (
@@ -1138,21 +1254,65 @@ class SameMeshHcurlOwnerTransfer:
         self._finalize_primal(field, floquet)
 
     def _candidate_packet(self) -> tuple[np.ndarray, np.ndarray]:
+        return self._candidate_ids_packet(), self._candidate_values_packet()
+
+    def _candidate_ids_packet(self) -> np.ndarray:
         if not self._records:
-            return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.complex128)
-        ids = []
+            return np.empty(0, dtype=np.uint64)
+        return np.concatenate(
+            [record["fine_global"] for record in self._records]
+        ).astype(np.uint64, copy=False)
+
+    def _candidate_values_packet(self) -> np.ndarray:
+        if not self._records:
+            return np.empty(0, dtype=np.complex128)
         values = []
         for record in self._records:
             local_values = np.asarray(
                 self._coarse_work.x.array[record["coarse_local"]],
                 dtype=np.complex128,
             )
-            ids.append(record["fine_global"])
             values.append(record["matrix"] @ local_values)
-        return (
-            np.concatenate(ids).astype(np.uint64, copy=False),
-            np.concatenate(values).astype(np.complex128, copy=False),
+        return np.concatenate(values).astype(np.complex128, copy=False)
+
+    def _current_primal_route_binding(self) -> _PrimalRouteBinding:
+        return _PrimalRouteBinding(
+            transfer_identity=id(self),
+            records_identity=id(self._records),
+            communicator_identity=id(self.comm),
+            communicator_size=int(self.comm.size),
+            fine_ranges=self.fine_ranges,
+            coarse_ranges=self.coarse_ranges,
         )
+
+    def _agree_primal_route_preflight(
+        self,
+        *,
+        plan_ready: bool,
+        local_valid: bool,
+    ) -> str:
+        states = self.comm.allgather((int(plan_ready), int(local_valid)))
+        ready_states = {int(state[0]) for state in states}
+        all_valid = len(states) == int(self.comm.size) and all(
+            int(state[1]) == 1 for state in states
+        )
+        if len(ready_states) != 1:
+            status = "plan_readiness_mismatch"
+        elif not all_valid:
+            status = "local_binding_or_values_shape_mismatch"
+        else:
+            status = "passed"
+        self._last_primal_route_preflight = {
+            "status": status,
+            "collective": "allgather_plan_readiness_and_local_validation",
+            "collective_count": 1,
+            "participants": int(self.comm.size),
+        }
+        if status != "passed":
+            raise RuntimeError(
+                f"same-mesh primal route preflight rejected: {status}"
+            )
+        return "reused" if next(iter(ready_states)) else "capturing"
 
     def _diagnostic_resolve_candidates(
         self,
@@ -1301,22 +1461,108 @@ class SameMeshHcurlOwnerTransfer:
             self._prepare_primal(source, self._coarse_work, self.coarse_floquet)
         finally:
             _add_timing(timing, "ghost_mpc_prepare_seconds", perf_counter() - started)
-        started = perf_counter()
-        try:
-            candidate_ids, candidate_values = self._candidate_packet()
-        finally:
-            _add_timing(
-                timing,
-                "local_candidate_generation_seconds",
-                perf_counter() - started,
+        candidate_route = None
+        if not self._reuse_primal_route_plan:
+            route_state = "disabled"
+            started = perf_counter()
+            try:
+                candidate_ids, candidate_values = self._candidate_packet()
+            finally:
+                _add_timing(
+                    timing,
+                    "local_candidate_generation_seconds",
+                    perf_counter() - started,
+                )
+            received_ids, received_values, source_ranks, _ = (
+                _alltoallv_candidates(
+                    candidate_ids,
+                    candidate_values,
+                    self.fine_ranges,
+                    self.comm,
+                    timing=timing,
+                )
             )
-        received_ids, received_values, source_ranks = _alltoallv_candidates(
-            candidate_ids,
-            candidate_values,
-            self.fine_ranges,
-            self.comm,
-            timing=timing,
-        )
+        else:
+            route_binding = self._current_primal_route_binding()
+            route_plan = self._primal_route_plan
+            plan_ready = route_plan is not None
+            started = perf_counter()
+            try:
+                if plan_ready:
+                    candidate_ids = route_plan.candidate_ids
+                    candidate_values = self._candidate_values_packet()
+                else:
+                    candidate_ids, candidate_values = self._candidate_packet()
+            finally:
+                _add_timing(
+                    timing,
+                    "local_candidate_generation_seconds",
+                    perf_counter() - started,
+                )
+            local_valid = (
+                candidate_ids.ndim == 1
+                and candidate_values.ndim == 1
+                and candidate_ids.size == candidate_values.size
+                and len(self.fine_ranges) == int(self.comm.size)
+                and len(self.coarse_ranges) == int(self.comm.size)
+            )
+            if plan_ready:
+                local_valid = bool(
+                    local_valid
+                    and route_binding == route_plan.binding
+                    and tuple(self.fine_ranges) == route_plan.binding.fine_ranges
+                    and int(self.comm.size)
+                    == route_plan.binding.communicator_size
+                    and candidate_values.size == route_plan.send_order.size
+                    and route_plan.candidate_ids.size
+                    == route_plan.send_order.size
+                    and route_plan.send_counts.shape == (int(self.comm.size),)
+                    and route_plan.send_displacements.shape
+                    == (int(self.comm.size),)
+                    and route_plan.recv_counts.shape == (int(self.comm.size),)
+                    and route_plan.recv_displacements.shape
+                    == (int(self.comm.size),)
+                    and route_plan.recv_order.size == route_plan.recv_ids.size
+                    and route_plan.recv_order.size
+                    == route_plan.source_ranks.size
+                    and int(np.sum(route_plan.send_counts, dtype=np.int64))
+                    == route_plan.send_order.size
+                    and int(np.sum(route_plan.recv_counts, dtype=np.int64))
+                    == route_plan.recv_order.size
+                )
+            route_state = self._agree_primal_route_preflight(
+                plan_ready=plan_ready,
+                local_valid=bool(local_valid),
+            )
+            if route_plan is None:
+                (
+                    received_ids,
+                    received_values,
+                    source_ranks,
+                    candidate_route,
+                ) = _alltoallv_candidates(
+                    candidate_ids,
+                    candidate_values,
+                    self.fine_ranges,
+                    self.comm,
+                    timing=timing,
+                    route_binding=route_binding,
+                )
+            else:
+                (
+                    received_ids,
+                    received_values,
+                    source_ranks,
+                    _,
+                ) = _alltoallv_candidates(
+                    None,
+                    candidate_values,
+                    self.fine_ranges,
+                    self.comm,
+                    timing=timing,
+                    route_plan=route_plan,
+                    route_binding=route_binding,
+                )
         started = perf_counter()
         try:
             resolver = (
@@ -1369,6 +1615,8 @@ class SameMeshHcurlOwnerTransfer:
             self._fine_work.x.petsc_vec.copy(target)
         finally:
             _add_timing(timing, "ghost_mpc_check_seconds", perf_counter() - started)
+        if candidate_route is not None:
+            route_state = "captured"
         self._last_apply_facts = {
             "operation": "primal",
             "finite": finite,
@@ -1390,9 +1638,15 @@ class SameMeshHcurlOwnerTransfer:
                 if self._variant_context_active
                 else "profile_default"
             ),
+            "primal_route_plan_state": route_state,
+            "primal_route_plan_preflight": dict(
+                self._last_primal_route_preflight
+            ),
         }
         if timing is not None:
             self._last_apply_facts["timing"] = dict(timing)
+        if candidate_route is not None:
+            self._primal_route_plan = candidate_route
 
     def apply_primal(
         self,
@@ -1570,6 +1824,7 @@ class SameMeshHcurlOwnerTransfer:
         self._coarse_work = None
         self._fine_work = None
         self._records = ()
+        self._primal_route_plan = None
         self._dual_reduction_work = np.empty(0, dtype=np.complex128)
         self.local_transfer = None
         self.coarse_floquet = None
@@ -1588,8 +1843,20 @@ def build_same_mesh_hcurl_owner_transfer(
     local_transfer: SameMeshHcurlTransfer | None = None,
     optimization_profile: str | None = None,
     support_policy: str = SUPPORT_POLICY_LEGACY,
+    reuse_primal_route_plan: bool = False,
 ) -> SameMeshHcurlOwnerTransfer:
-    """Build one owner-local same-mesh adapter without a global matrix."""
+    """Build an owner-local adapter without a global matrix.
+
+    ``reuse_primal_route_plan`` is an explicit research opt-in.  It captures
+    the first fully successful primal exchange and reuses only its static
+    packet routing on later primal applies; candidate values and all owner,
+    duplicate-row, and MPC checks remain per-apply. Each opted-in primal
+    apply also performs one all-rank readiness/layout preflight before route
+    collectives, so inconsistent local plan state is rejected collectively.
+    The transfer records' internal layout must remain frozen in place while
+    the plan is live; its binding uses object identity and does not hash record
+    contents on every apply.
+    """
 
     pair = (
         int(fine_space.element.basix_element.degree),
@@ -1613,6 +1880,7 @@ def build_same_mesh_hcurl_owner_transfer(
         local_transfer,
         optimization_profile=optimization_profile,
         support_policy=support_policy,
+        reuse_primal_route_plan=reuse_primal_route_plan,
     )
 
 
