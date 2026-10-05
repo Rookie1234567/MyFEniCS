@@ -22,6 +22,10 @@ ROOT=Path(__file__).resolve().parent
 def verify(require_ready=True):
     manifest_path=ROOT/'package_manifest.json'
     value=json.loads(manifest_path.read_text())
+    if value['instance_id']!='W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28' or value['numerical_API_commit']!='c354afa449fb80cfb5012e7d2ff66a3e3e64e088':
+        raise ValueError('PACKAGE_INSTANCE_AND_API_IDENTITY')
+    if hashlib.sha256((ROOT/'input/mode_manifest.json').read_bytes()).hexdigest()!='7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e':
+        raise ValueError('PACKAGE_QUALIFIED_MODE_IDENTITY')
     if require_ready:
         ready=json.loads((ROOT/'READY_FOR_MAIN_OPT_IN_NOT_REMOTE_INGESTED.json').read_text())
         if ready['package_manifest_sha256']!=hashlib.sha256(manifest_path.read_bytes()).hexdigest():
@@ -381,15 +385,14 @@ def run_surface_payload(root, snapshot, binding, helpers):
         loader = bundle / "consumer.py"
         loader.write_text(PACKAGE_LOADER)
         copied.append(loader)
-        for name in [
-            "v29_surface_contract_checks.dat",
-            "v29_surface_p4.dat",
-            "v29_surface_p6.dat",
-            "v29_surface_check.dat",
-            "v29_surface_handoff.dat",
-        ]:
-            path = root / "input/task042extra_feinn_5nm" / name
-            destination = bundle / "provenance" / name
+        dat_paths = {Path(spec["path"])}
+        qualification=json.loads(Path(spec["A_qualification_path"]).read_text())
+        p0_run=Path(qualification["supervision"]["path"]).parent
+        for directory in [p0_run, *[Path(spec["prerequisite_paths"][s]) for s in ("surface_p4","surface_p6","surface_check")]]:
+            stage_binding=json.loads((directory/"binding.json").read_text())
+            dat_paths.add(Path(stage_binding["spec"]["path"]))
+        for path in sorted(dat_paths):
+            destination = bundle / "provenance" / path.name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, destination)
             copied.append(destination)

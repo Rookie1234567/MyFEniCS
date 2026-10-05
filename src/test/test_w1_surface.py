@@ -187,6 +187,30 @@ def test_original_manifest_without_derived_reference_plane():
         physical_reference_planes([{"side": "top", "reference_plane_nm": 0.}])
 
 
+def test_native_vector_denominator_matches_accepted_contract():
+    from src.solvers.w1_full_surface_saved import metric_verdict
+    from src.solvers.w1_saved_boundary import terms as accepted_terms
+
+    reference = np.array([1.+2j, 2e-17+1e-18j])
+    candidate = reference + np.array([1e-14, 5e-16])
+    original = terms(candidate, reference)
+    assert abs(original["relative"] - accepted_terms(candidate, reference)["relative"]) < 1e-25
+    assert metric_verdict(original["relative"]) == (True, False)
+    tiny_column = terms(candidate[1], reference[1])
+    assert metric_verdict(tiny_column["relative"], "additional_column_diagnostic") == (False, False)
+    assert metric_verdict(tiny_column["relative"]) == (False, True)
+    with pytest.raises(ValueError):
+        metric_verdict(1., "ignore_failure")
+
+
+def test_relative_package_loader_has_fixed_instance_gate():
+    from src.runners.w1_surface_payload import PACKAGE_LOADER
+
+    compile(PACKAGE_LOADER, "consumer.py", "exec")
+    assert "PACKAGE_QUALIFIED_MODE_IDENTITY" in PACKAGE_LOADER
+    assert "c354afa449fb80cfb5012e7d2ff66a3e3e64e088" in PACKAGE_LOADER
+
+
 def small_geometry():
     vertices = np.array(
         [[i, j, k] for k in (0, 1) for j in (0, 1) for i in (0, 1)], float

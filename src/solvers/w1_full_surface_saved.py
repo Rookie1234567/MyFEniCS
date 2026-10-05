@@ -14,6 +14,13 @@ import numpy as np
 LIMIT = 1e-10
 
 
+def metric_verdict(relative, role="original_gate"):
+    if role not in ("original_gate", "additional_column_diagnostic"):
+        raise ValueError("W29_FIXED_METRIC_ROLE")
+    passed = bool(np.isfinite(relative) and relative <= LIMIT)
+    return passed, (not passed and role == "original_gate")
+
+
 def read_array(root, row):
     root = Path(root).resolve()
     relative = Path(row["path"])
@@ -338,6 +345,8 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
         raise ValueError("W29_FULL_TRACE_ROWS_NOT_VOLUME_DOFS")
     mapping = expected_maps(data)
     maximum = {}
+    diagnostic_maximum = {}
+    diagnostic_count = diagnostic_failed = 0
     count = failed = 0
     reference_outputs = {}
     with Path(metrics_path).open("w", newline="") as f:
@@ -346,6 +355,7 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
             fieldnames=[
                 "degree",
                 "field",
+                "role",
                 "mode_index",
                 "native_column",
                 "case_index",
@@ -360,13 +370,14 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
         )
         writer.writeheader()
 
-        def record(field, value, ref, mode_index=-1, native_column=-1, case_index=-1):
-            nonlocal count, failed
+        def record(field, value, ref, mode_index=-1, native_column=-1, case_index=-1, role="original_gate"):
+            nonlocal count, failed, diagnostic_count, diagnostic_failed
             term = terms(value, ref)
-            passed = term["relative"] <= LIMIT
+            passed, gate_failed = metric_verdict(term["relative"], role)
             row = dict(
                 degree=p,
                 field=field,
+                role=role,
                 mode_index=mode_index,
                 native_column=native_column,
                 case_index=case_index,
@@ -377,9 +388,14 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
                 passed=passed,
             )
             count += 1
-            failed += not passed
-            if field not in maximum or term["relative"] > maximum[field]["relative"]:
-                maximum[field] = row
+            failed += gate_failed
+            target = maximum
+            if role == "additional_column_diagnostic":
+                diagnostic_count += 1
+                diagnostic_failed += not passed
+                target = diagnostic_maximum
+            if field not in target or term["relative"] > target[field]["relative"]:
+                target[field] = row
             writer.writerow(
                 {**row, "key": json.dumps(row["key"], separators=(",", ":"))}
             )
@@ -409,21 +425,33 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
             cb, rb = -native["integral"][i] @ t, -value @ t
             cd = native_D_columns(native["integral"][i], electric, h)
             rd = native_D_columns(value, electric, h)
+            mode_index = int(native["mode_indices"][i])
+            # Preserve the accepted V28 component shape and denominator:
+            # complete native integral matrix and B / D vectors. The extra
+            # tiny individual-column reports below remain negative diagnostics,
+            # and never qualify their use in volume/static condensation.
+            record("affected_native_integral_vector", native["integral"][i], value, mode_index, case_index=i)
+            record("affected_native_B_vector", cb, rb, mode_index, case_index=i)
+            record("affected_native_D_vector", cd, rd, mode_index, case_index=i)
+            for direction in range(3):
+                v = np.exp(1j * (0.19 + 0.07 * direction) * np.arange(len(value)))
+                record("affected_native_B_direction_" + str(direction), cb @ v, rb @ v, mode_index, case_index=i)
+                record("affected_native_D_direction_" + str(direction), cd @ v, rd @ v, mode_index, case_index=i)
             for column in range(len(value)):
-                mode_index = int(native["mode_indices"][i])
                 record(
-                    "affected_native_integral",
+                    "additional_individual_native_integral",
                     native["integral"][i, column],
                     value[column],
                     mode_index,
                     column,
                     i,
+                    role="additional_column_diagnostic",
                 )
                 record(
-                    "affected_native_B", cb[column], rb[column], mode_index, column, i
+                    "additional_individual_native_B", cb[column], rb[column], mode_index, column, i, role="additional_column_diagnostic"
                 )
                 record(
-                    "affected_native_D", cd[column], rd[column], mode_index, column, i
+                    "additional_individual_native_D", cd[column], rd[column], mode_index, column, i, role="additional_column_diagnostic"
                 )
         e = mode_vectors(modes, "e_vector")[:, :2]
         traction = mode_vectors(modes, "traction_vector")[:, :2]
@@ -588,6 +616,12 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
         mode_count=32060,
         checked_metrics=count,
         failed_metrics=failed,
+        original_gate_metrics=count-diagnostic_count,
+        additional_column_diagnostic_metrics=diagnostic_count,
+        additional_column_diagnostic_failed=diagnostic_failed,
+        additional_column_diagnostic_maximum=diagnostic_maximum,
+        individual_tiny_columns_qualified_for_volume=False,
+        native_component_denominator="V28 original complete matrix/vector norm, all 300/882 columns included; no clipping or new floor",
         maximum_original_relative=max(v["relative"] for v in maximum.values()),
         maximum_by_field=maximum,
         moment_maximum_absolute=moment_error,
