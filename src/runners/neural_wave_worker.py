@@ -78,6 +78,12 @@ def require_checks():
     record = json.loads(file.read_text())
     if not record["implementation_qualified"]:
         raise ValueError("NEW_WAVE_IMPLEMENTATION_NOT_QUALIFIED")
+    design = json.loads(DESIGN.read_text())
+    if any(
+        record["actual_" + name + "_sha256"] != design["files"][key]["sha256"]
+        for name, key in [("native", "native"), ("moments", "moments_q30")]
+    ):
+        raise ValueError("PREVIOUS_FULL_MAPPING_INPUT_IDENTITY_CHANGED")
     return record
 
 
@@ -264,19 +270,52 @@ def main():
             from src.solvers.neural_wave_qualification import qualify
 
             result = qualify(design["model"], action, packet, artifact, marker)
+        elif spec["role"] == "fast_checks":
+            require_checks()
+            from src.solvers.neural_wave_factorized import compare_factorized
+            from src.solvers.neural_wave_greedy import patch_inventory
+
+            patches = [
+                patch_inventory(design["model"]["geometry"], level)[
+                    len(patch_inventory(design["model"]["geometry"], level)) // 2
+                ]
+                for level in range(3)
+            ]
+            result = compare_factorized(packet, patches)
+            marker("complete_tensor_moment_pair", result)
         elif spec["role"] == "calibration":
             from src.solvers.neural_wave_qualification import analytic_calibration
 
+            if (
+                digest(ARTIFACTS / "v30_wave_checks/moments_q60.npz")
+                != manifest["qualifying_moments_q60_sha256"]
+            ):
+                raise ValueError("HEALTHY_HIGH_MOMENT_PACKET_HASH_CHANGED")
+
+            with np.load(
+                ARTIFACTS / "v30_wave_checks/moments_q60.npz", allow_pickle=False
+            ) as arrays:
+                high = {key: np.array(arrays[key]) for key in arrays.files}
             result = analytic_calibration(
                 design["model"],
                 0.7 if "0p7" in spec["stage"] else 5.0,
                 artifact,
                 marker,
+                frozen_high=high,
             )
         elif spec["role"] == "verify":
             result = verify(design, action, packet, artifact, marker)
         else:
             require_checks()
+            fast = json.loads(
+                (ARTIFACTS / "v30_wave_fast_checks/result.json").read_text()
+            )
+            if (
+                not fast["passed"]
+                or fast["actual_moments_sha256"]
+                != design["files"]["moments_q30"]["sha256"]
+            ):
+                raise ValueError("TENSOR_MOMENT_KERNEL_NOT_QUALIFIED")
             for dependency in (
                 "v30_wave_calibration_5nm",
                 "v30_wave_calibration_0p7nm",

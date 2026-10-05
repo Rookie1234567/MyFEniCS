@@ -13,6 +13,7 @@ WINDOW = ROOT / "tmp/task42extra/v30/batch_window.json"
 ARTIFACTS = ROOT / "benchmarks/artifacts/task42extra/v30"
 STAGES = {
     "v30_wave_checks": ("fe", 7200, "checks"),
+    "v30_wave_fast_checks": ("ml", 1800, "fast_checks"),
     "v30_wave_calibration_5nm": ("fe", 1800, "calibration"),
     "v30_wave_calibration_0p7nm": ("fe", 1800, "calibration"),
     "v30_m5_fixed_wave": ("ml", 172800, "FIXED_WAVE_GREEDY_CONTROL"),

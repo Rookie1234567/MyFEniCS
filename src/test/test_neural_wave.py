@@ -71,6 +71,133 @@ def direct(packet, patch, q, p):
     return c
 
 
+def tensor_fixture():
+    """Independent weighted polynomial densities on all 12/6/1 entities."""
+    from itertools import product
+
+    rng = np.random.default_rng(4213004)
+    t, w = np.polynomial.legendre.leggauss(4)
+    t, w = (t + 1) / 2, w / 2
+    points, blocks = [], []
+    next_row = 0
+    for code in product((-1, 0, 1), repeat=3):
+        axes = np.flatnonzero(np.array(code) == -1)
+        d = len(axes)
+        if not d:
+            continue
+        idx = np.array(list(product(range(4), repeat=d)))
+        pts = np.tile(code, (len(idx), 1)).astype(float)
+        pts[:, axes] = t[idx]
+        weight = np.prod(w[idx], axis=1)
+        powers = np.array(list(product(range(4), repeat=d)))
+        table = np.ones((len(idx), len(powers)))
+        for j, axis in enumerate(axes):
+            table *= np.polynomial.legendre.legvander(2 * pts[:, axis] - 1, 3)[
+                :, powers[:, j]
+            ]
+        count = (3, 12, 36)[d - 1]
+        coefficient = rng.normal(size=(count, 3, len(powers)))
+        block = np.zeros((144, 3, len(idx)))
+        block[next_row : next_row + count] = (coefficient @ table.T) * weight
+        next_row += count
+        points.append(pts)
+        blocks.append(block)
+    assert next_row == 144
+    points = np.vstack(points)
+    interpolation = np.concatenate(blocks, axis=2).reshape(144, -1)
+    perm = np.arange(144)[::-1]
+    transform = np.eye(144)[perm]
+    transform[::3] *= -1
+    packet = dict(
+        reference_points=points,
+        interpolation=interpolation,
+        origins=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
+        jacobians=np.array(
+            [
+                np.diag([1.0, 1.3, 0.7]),
+                [[0.0, 1.0, 0.0], [1.3, 0.0, 0.0], [0.0, 0.0, -0.7]],
+            ]
+        ),
+        transforms=np.array([np.eye(144), transform]),
+        orientation_ids=np.array([0, 1]),
+        owner_rows=np.arange(288).reshape(2, 144),
+        active_rows=288,
+        quadrature_degree=7,
+    )
+    return rng, packet
+
+
+def test_factorized_all_entity_moments_and_real_adjoint():
+    from src.solvers.neural_wave_factorized import FactorizedWaveMoments
+
+    rng, packet = tensor_fixture()
+    patch = Patch((0.8, 0.5, 0.2), (2.0, 1.8, 1.5))
+    q = rng.normal(size=(2, 3))
+    p = rng.normal(size=(2, 3)) + 1j * rng.normal(size=(2, 3))
+    g = rng.normal(size=288) + 1j * rng.normal(size=288)
+    original, fast = WaveMoments(packet), FactorizedWaveMoments(packet)
+    np.testing.assert_allclose(
+        fast.forward(patch, q, p), direct(packet, patch, q, p), rtol=1e-10, atol=1e-11
+    )
+    expected, actual = original.vjp(patch, q, p, g), fast.vjp(patch, q, p, g)
+    for e, a in zip(expected, actual, strict=True):
+        np.testing.assert_allclose(a, e, rtol=1e-10, atol=1e-11)
+    np.testing.assert_allclose(
+        fast.forward(patch, q, p),
+        FactorizedWaveMoments(packet, 1).forward(patch, q, p),
+        rtol=0,
+        atol=0,
+    )
+    theta, v = pack(q, p), rng.normal(size=18)
+    v /= np.linalg.norm(v)
+    step = 1e-5
+    finite = np.vdot(
+        g,
+        fast.forward(patch, *unpack(theta + step * v))
+        - fast.forward(patch, *unpack(theta - step * v)),
+    ).real / (2 * step)
+    assert abs(finite - pack(*actual) @ v) <= 1e-7 * max(1, abs(finite))
+    assert fast.density_pair_relative < 1e-12
+    assert fast.maximum_window_coordinate_defect_nm == 0
+
+
+def test_original_pointwise_accepted_map():
+    from src.solvers.neural_wave_reconstruction import pointwise_moments
+
+    rng, packet, _ = fixture()
+    patch = Patch((0.8, 0.5, 0.3), (2.0, 1.0, 1.0))
+    q = rng.normal(size=(2, 3))
+    p = rng.normal(size=(2, 3)) + 1j * rng.normal(size=(2, 3))
+    actual = pointwise_moments(
+        packet,
+        lambda x: patch.window(x)[:, None]
+        * (np.exp(1j * (x - patch.center) @ q.T) @ p),
+    )
+    np.testing.assert_allclose(
+        actual, direct(packet, patch, q, p), rtol=1e-12, atol=1e-12
+    )
+    supported = pointwise_moments(
+        packet,
+        lambda x: patch.window(x)[:, None]
+        * (np.exp(1j * (x - patch.center) @ q.T) @ p),
+        zero_outside_patch=patch,
+    )
+    np.testing.assert_array_equal(supported, actual)
+
+
+def test_factorization_rejects_unproved_geometry_and_density():
+    from src.solvers.neural_wave_factorized import FactorizedWaveMoments
+
+    _, packet = tensor_fixture()
+    packet["jacobians"][0, 0, 1] = 0.1
+    with pytest.raises(ValueError, match="Cartesian geometry proof failed"):
+        FactorizedWaveMoments(packet)
+    _, packet = tensor_fixture()
+    packet["interpolation"][0, 0] += 1
+    with pytest.raises(ValueError, match="polynomial density compression failed"):
+        FactorizedWaveMoments(packet, degree=2)
+
+
 def test_full_complex_forward_and_real_vjp():
     rng, packet, _ = fixture()
     patch = Patch((0.8, 0.5, 0.3), (2.0, 1.0, 1.0))

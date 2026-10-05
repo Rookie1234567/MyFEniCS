@@ -14,7 +14,8 @@ from time import monotonic
 import numpy as np
 from scipy.optimize import minimize
 
-from src.solvers.neural_wave_moments import Patch, WaveMoments, score_and_cotangent
+from src.solvers.neural_wave_moments import Patch
+from src.solvers.neural_wave_factorized import FactorizedWaveMoments
 from src.solvers.neural_wave_subspace import WaveSubspace, optimal_amplitudes
 
 
@@ -154,6 +155,10 @@ class BasisStore:
             )
         )
         state = self.directory / f"state_{i:05d}.npz"
+        if state.exists():
+            state = (
+                self.directory / f"state_{i:05d}_recovery_{int(monotonic() * 1e6)}.npz"
+            )
         atomic_npz(state, c=subspace.c, r=subspace.r, a=subspace.a)
         current = self.directory / "committed.json"
         if current.exists():
@@ -254,7 +259,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     bytes_plan = 2 * 16 * n * capacity + 3 * 16 * capacity**2 + 2 * 2**30
     if bytes_plan > 12 * 2**30:
         raise ValueError("AUTHORIZED_CAPACITY_PLANNING_LINE_EXCEEDED")
-    moments = WaveMoments(packet, batch=8)
+    moments = FactorizedWaveMoments(packet, batch=8)
     space = WaveSubspace(action, capacity)
     store = BasisStore(Path(artifact) / "basis", binding)
     rng = np.random.default_rng(strategy["seed"])
@@ -371,9 +376,11 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 )
                 seed_c = moments.forward(patch, q, p_seed)
                 seed_z = space.project(action.apply(seed_c))
-                _, gz = score_and_cotangent(seed_z, space.r)
                 _, gp = moments.vjp(
-                    patch, q, p_seed, action.apply(space.project(gz), adjoint=True)
+                    patch,
+                    q,
+                    p_seed,
+                    2 * action.apply(space.project(seed_z - space.r), adjoint=True),
                 )
                 amplitude_learning = dict(
                     initial_seed_real=p_seed.real.tolist(),
@@ -381,6 +388,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     initial_gradient_norm=float(np.linalg.norm(gp) / action.bnorm**2),
                     update_norm=float(np.linalg.norm(initial_p - p_seed)),
                     method="tiny amplitude SVD then variable projection",
+                    gradient_objective="||r-P A c_seed||^2 / ||f||^2 before the exact tiny amplitude solve",
                 )
 
                 def objective(flat):
@@ -441,7 +449,26 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 except TimeoutError:
                     stop = "MODULE_INTERRUPTED_AT_SAVE_RESERVE"
                     break
-            event = space.add(best[2])
+            # Optimization uses the qualified contraction; the accepted field
+            # always uses the original complete point-value matrix and geometry.
+            from src.solvers.neural_wave_reconstruction import pointwise_moments
+
+            actual_column = pointwise_moments(
+                packet,
+                lambda x: patch.window(x)[:, None]
+                * (np.exp(1j * (x - np.array(patch.center)) @ q.T) @ best[1]),
+                zero_outside_patch=patch,
+            )
+            mapping_pair = float(
+                np.linalg.norm(actual_column - best[2])
+                / max(np.linalg.norm(actual_column), 1e-30)
+            )
+            event = (
+                space.add(actual_column)
+                if mapping_pair <= 1e-10
+                else dict(accepted=False, reason="TENSOR_FULL_MAPPING_PAIR_FAILED")
+            )
+            event["tensor_full_mapping_relative"] = mapping_pair
             event.update(
                 module=iteration,
                 route=binding["route"],
@@ -506,6 +533,15 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             stagnant = 0
     if stop is None:
         stop = "AUTHORIZED_COLUMN_CAPACITY_EXHAUSTED"
+    for name in ("final_state.npz", "result.json"):
+        old = Path(artifact) / name
+        if old.exists():
+            os.replace(
+                old,
+                old.with_name(
+                    old.stem + f"_previous_{int(monotonic() * 1e6)}" + old.suffix
+                ),
+            )
     atomic_npz(Path(artifact) / "final_state.npz", c=space.c, r=space.r, a=space.a)
     result = dict(
         status=stop,

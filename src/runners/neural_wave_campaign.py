@@ -136,6 +136,7 @@ def launch(spec):
         if spec["role"]
         in (
             "checks",
+            "fast_checks",
             "calibration",
             "verify",
             "LEARNED_WAVE_GREEDY",
@@ -176,6 +177,9 @@ def launch(spec):
                     path: digest(ROOT / path)
                     for path in (
                         "src/solvers/neural_wave_moments.py",
+                        "src/solvers/neural_wave_factorized.py",
+                        "src/solvers/neural_wave_qualification.py",
+                        "src/solvers/neural_wave_reconstruction.py",
                         "src/solvers/neural_wave_subspace.py",
                         "src/solvers/neural_wave_greedy.py",
                         "src/runners/neural_wave_campaign.py",
@@ -200,6 +204,11 @@ def launch(spec):
                 artifact=str(artifact.relative_to(ROOT)),
                 input_sha256=spec["input_sha256"],
                 design_sha256=digest(DESIGN),
+                qualifying_moments_q60_sha256=(
+                    digest(ARTIFACTS / "v30_wave_checks/moments_q60.npz")
+                    if (ARTIFACTS / "v30_wave_checks/moments_q60.npz").exists()
+                    else None
+                ),
                 material_table_sha256=digest(
                     ROOT / "input/materials/si_optical_constants_v1.json"
                 ),

@@ -15,6 +15,28 @@ from src.solvers.neural_wave_greedy import sha
 from src.solvers.neural_wave_moments import Patch
 
 
+def pointwise_moments(packet, field, *, zero_outside_patch=None):
+    """All original moments, with exact-zero CSR and full original geometry."""
+    interpolation = sparse.csr_matrix(packet["interpolation"])
+    c = np.zeros(int(packet["active_rows"]), np.complex128)
+    for cell, jac in enumerate(packet["jacobians"]):
+        x = packet["origins"][cell] + packet["reference_points"] @ jac.T
+        if zero_outside_patch is not None:
+            center, radius = (
+                np.array(zero_outside_patch.center),
+                np.array(zero_outside_patch.radius),
+            )
+            # Exact support test at all original integral points, without an
+            # amplitude threshold or removing any nonzero moment.
+            if np.any((x.min(0) >= center + radius) | (x.max(0) <= center - radius)):
+                continue
+        local = interpolation @ (field(x) @ jac).T.ravel()
+        local = packet["transforms"][packet["orientation_ids"][cell]] @ local
+        rows = packet["owner_rows"][cell]
+        c[rows[rows >= 0]] = local[rows >= 0]
+    return c
+
+
 def rebuild(directory, packet, marker=lambda *_: None):
     directory = Path(directory)
     boundary = json.loads((directory / "committed.json").read_text())

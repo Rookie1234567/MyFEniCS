@@ -22,3 +22,5 @@
 每个接受块先写出完整参数、列变换、U/Q/R、c/r、RNG、source和预算，flush/fsync、原子替换并重开，再发布committed审核。SIGKILL不保证finally；可恢复保证是上一成功落盘的完整边界。trial与committed分离。
 
 最终原50×25×140nm、λ0.7nm完整三维、decimal2e12B整机及172800秒完整冷流程仍未达成。旧FEINN暂停不被改写为成功；新机制由本轮独立判定。
+
+S0原M5已实测通过全矩/原方向/MPC/复数VJP资格：三个支持尺度的完整映射与独立FE配对约1e-15，非零实方向差分最坏约2.65e-7。S0 actual source 为96d9618c4d14177d58e7a4ea39008e8744e2a944，原q60见证只读复用。随后加入等价张量收缩，以减少重复积分费用；所有多项式密度系数保留，不按幅值截断，接受列仍用原完整点值映射生成。两条路线共用该优化，缓存收益不算神经增量。13项最终定向测试通过，真实张量配对、校准和求解随后串行进行；证据见[implementation_qualification_v30.json](records/implementation_qualification_v30.json)。

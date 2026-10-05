@@ -175,7 +175,9 @@
     "pde_only_solve": true,
     "benchmark_previously_seen": true,
     "production_initialization_allowed": false,
-    "common_comparison_seconds": 64800
+    "common_comparison_seconds": 64800,
+    "moment_kernel": "qualified tensor contraction; original full point-value mapping for every accepted column",
+    "amplitude_gradient_objective": "unprojected amplitude seed witness of ||r-P A c_seed||^2, then exact tiny SVD"
   },
   "resources": {
     "numerical_rss_warn_gib": 12,

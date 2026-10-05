@@ -196,19 +196,34 @@ def qualify(model, action, packet, artifact, marker):
     )
 
 
-def analytic_calibration(model, wavelength, artifact, marker):
+def analytic_calibration(model, wavelength, artifact, marker, *, frozen_high=None):
     """Air plane and physical flat-interface fields; no PDE solve or labels."""
     import basix
     import ufl
     from dolfinx import fem
     from src.common.optical_material_table import load_si_optical_constants
-    from src.solvers.neural_trace import moment_packet_values
+    from src.solvers.neural_wave_reconstruction import pointwise_moments
 
     config = deepcopy(model)
     config["wavelength_nm"] = wavelength
     material = load_si_optical_constants(wavelength)
     config["materials"]["si_n"] = [material.n.real, material.n.imag]
-    cfg, data, space, floquet, packet, witness, _ = build_moment_witness(config, 60)
+    if frozen_high is None:
+        cfg, data, space, floquet, packet, _, _ = build_moment_witness(config, 60)
+    else:
+        from src.solvers.feinn_fem import physical_config
+        from src.solvers.feinn_interpolation import full_space
+        from src.constraints.floquet_3d import build_double_floquet_mpc
+
+        cfg, _ = physical_config(config)
+        _, data, space, _, _, _, _ = full_space(config)
+        floquet = build_double_floquet_mpc(space, data, cfg)
+        packet = frozen_high
+        masters = np.setdiff1d(
+            np.arange(space.dofmap.index_map.size_local), floquet.mpc.slaves
+        )
+        if not np.array_equal(packet["master_native_rows"], masters):
+            raise ValueError("CALIBRATION_PHASE_CHANGED_MASTER_ORDER")
     k0 = cfg.k0
     beta = k0 * np.sin(np.deg2rad(1.0))
     kx = k0 * np.cos(np.deg2rad(1.0))
@@ -246,7 +261,7 @@ def analytic_calibration(model, wavelength, artifact, marker):
             )
             return E, curl
 
-        c = moment_packet_values(packet, lambda x: fields(x)[0])
+        c = pointwise_moments(packet, lambda x: fields(x)[0])
         E = fem.Function(floquet.mpc.function_space)
         E.x.array[:] = 0
         E.x.array[packet["master_native_rows"]] = c
@@ -262,6 +277,14 @@ def analytic_calibration(model, wavelength, artifact, marker):
             .reshape(actual.shape)
         )
         rawE, rawCurl = fields(points.reshape(-1, 3))
+        sample = points.reshape(-1, 3)
+        if name == "air_plane":
+            # A separate single-neuron evaluation, rather than a claimed zero.
+            wave = np.zeros_like(rawE)
+            wave[:, 1] = np.exp(1j * (sample @ np.array([kx, 0.0, -beta])))
+            raw_pair = relative(wave, rawE)
+        else:
+            raw_pair = None
         rawE, rawCurl = rawE.reshape(actual.shape), rawCurl.reshape(actual.shape)
 
         def norm(v):
@@ -272,7 +295,15 @@ def analytic_calibration(model, wavelength, artifact, marker):
             norm(curl - rawCurl) / norm(rawCurl),
         )
         rows[name] = dict(
-            raw_exponential_representation_error=0.0,
+            raw_exponential_representation_error=raw_pair,
+            raw_function_identity=(
+                "one exact real-wave neuron without localization"
+                if name == "air_plane"
+                else "known piecewise complex-beta Fresnel function; not the restricted real-q trained network"
+            ),
+            restricted_real_q_flat_interface_representation_qualified=False
+            if name == "flat_interface"
+            else None,
             raw_interface_assembly="independent Fresnel s; continuous E, derivative follows medium",
             finite_element_L2_relative=errorE,
             finite_element_H_scaled_curl_relative=errorCurl,
@@ -293,4 +324,7 @@ def analytic_calibration(model, wavelength, artifact, marker):
         reference_solve_count=0,
         analytic_only=True,
         nonseparable_M5_numerical_gate=False,
+        geometry_scaling=1.0,
+        reduced_0p7_pilot=False,
+        interpretation="unscaled analytic discretization audit; p3 same-discrete M5 solver qualification is separate from continuum interpolation accuracy",
     )
