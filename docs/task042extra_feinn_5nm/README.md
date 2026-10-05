@@ -1,6 +1,6 @@
 # 当前 V30：本支只做神经求解研究
 
-[Review V29](review_report_v29.md)授权局部复指数神经元和累计神经子空间，连续推进至原M5联合数值Gate或明确硬失败。真实连续方向学习已完整保存770列，native0.4570360713；全矩/梯度、两波长解析校准和等价原作用/投影已实测。当前完整边界保全后资格化独立候选的有界分批筛选，随后续同一空间；控制及独立完整场验收串行推进。训练不读参考、无全局Gram/Maxwell因子；固定控制获得相同能力。尚未求准M5，没有可验证NN净收益。[专题](outcomes/neural_wave_galerkin_v30.md)、[770列保全与费用](outcomes/records/engineering_pause_3_v30.json)、[投影原配对](outcomes/records/projection_qualification_v30.json)。下方全部旧正文是历史，不授权续做W0/W1。
+[Review V29](review_report_v29.md)授权局部复指数神经元和累计神经子空间，连续推进至原M5联合数值Gate或明确硬失败。真实连续方向学习已完整保存770列，native0.4570360713；全矩/梯度、两波长解析校准和等价原作用/投影已实测。原保存态的有界独立候选分批筛选已真实资格化，四宽度均准入，随后从770列续同一空间；控制及独立完整场验收串行推进。训练不读参考、无全局Gram/Maxwell因子；固定控制获得相同能力。尚未求准M5，没有可验证NN净收益。[专题](outcomes/neural_wave_galerkin_v30.md)、[770列保全与费用](outcomes/records/engineering_pause_3_v30.json)、[投影原配对](outcomes/records/projection_qualification_v30.json)。下方全部旧正文是历史，不授权续做W0/W1。
 
 # 当前 V29：原尺寸完整口面固定见证通过，本机主线 API 包已消费
 

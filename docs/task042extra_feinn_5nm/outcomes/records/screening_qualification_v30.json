@@ -1,0 +1,312 @@
+{
+  "schema": "neural-wave.bounded-proposal-qualification.compact.v1",
+  "classification": "COMPLETE_NATIVE_PROPOSAL_EQUIVALENCE_PASS_NOT_NN_GAIN",
+  "source_sha": "532b64dbc34ab64db791af9abb0d927991c0da32",
+  "selected_bounded_screening_widths": [
+    1,
+    2,
+    4,
+    8
+  ],
+  "reference_loaded": false,
+  "bound_numerical_chain_sha256": {
+    "src/solvers/neural_wave_greedy.py": "f9d4584e2fcc98fb3e30049cb88c0d9b04b0900fb178f2dafe06221986d19977",
+    "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+    "src/solvers/neural_wave_moments.py": "3364d07b3a5bc24a69c8c53cb735bb95871a17d98875922051a3bf9d02e768df",
+    "src/solvers/neural_wave_local_action.py": "367835d5fe719d08a850d75b676196e07c55017d30cf8e4002d876278ddc6971",
+    "src/solvers/neural_wave_projection.py": "ecb4266a7eafc41e8e1a695913d7fdcda4b139fe59a964abbb612867897a0cbe",
+    "src/solvers/neural_wave_reconstruction.py": "74b9476b633f3ac171e37fd6a4a9242afd1ae80f235ff546de159a095a61c345",
+    "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+    "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98"
+  },
+  "actual_attempt_elapsed_seconds": 260.3203403800726,
+  "supervisor_elapsed_seconds": 196.32429736107588,
+  "payload_elapsed_seconds": 192.06828424381092,
+  "resources": {
+    "sampled_process_tree_rss_peak_bytes": 1489125376,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true
+  },
+  "bound_complete_boundary_sha256": "011546c15f49101f215d2e1781c475094cabeb3e3623e6d1b35fcc45f8380cf2",
+  "files": {
+    "benchmarks/artifacts/task42extra/v30/v30_wave_screening_checks/result.json": "d4b89e6779c466a7de0cc78fa1ad9505c36ee4bbc055400ece003c7e2e266418",
+    "benchmarks/artifacts/task42extra/v30/v30_wave_screening_checks/qualification_input_boundary.json": "011546c15f49101f215d2e1781c475094cabeb3e3623e6d1b35fcc45f8380cf2",
+    "tmp/task42extra/v30/durable/v30_wave_screening_checks_attempt1/run_manifest.json": "c360b7c1c6fd3256e540c6fe92823888feec7c08776ad2cc94e2d24c90f6be9c",
+    "tmp/task42extra/v30/durable/v30_wave_screening_checks_attempt1/run_summary.json": "ab41072a2991be533cfaa61c0bf3a271f9732997291744590c6cea483db77bfe",
+    "tmp/task42extra/v30/durable/v30_wave_screening_checks_attempt1/supervised/summary.json": "bbf76b6ee8895c790a409ce2d3b8240f9135502576f8cd12d948e35fa8210781",
+    "tmp/task42extra/v30/durable/v30_wave_screening_checks_attempt1/abi.json": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+  },
+  "checks": [
+    {
+      "saved_state": {
+        "columns": 64,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00063.npz",
+        "state_sha256": "82c3a0ddb1e304af28f57e6ebfc6be6de515abfe8ac0850c4d19c632a2143aae",
+        "basis_prefix_chunks_sha256": "7ca99b9f04c045a8eebd7c83f9409f2607901f482754d564d3a9e1ba4a75df47",
+        "native_relative": 0.6608412129200603
+      },
+      "module_width": 1,
+      "patch_level": 0,
+      "candidate_count": 14,
+      "candidate_pair_max": {
+        "proposal_parameters_relative": 0.0,
+        "score_relative": 2.0917860807433542e-15,
+        "full_coefficient_relative": 1.7044245436545803e-15,
+        "amplitude_relative": 1.6717136453593601e-15
+      },
+      "selected_pairs": {
+        "selected_parameters_relative": 0.0,
+        "selected_full_coefficient_relative": 5.197711362094444e-16,
+        "selected_score_relative": 4.2315820617509705e-16,
+        "complete_original_real_gradient_relative": 2.5070352422144946e-15
+      },
+      "accepted_step_pair": {
+        "both_accepted": true,
+        "full_committed_coefficient_relative": 2.7776157202316836e-17,
+        "full_true_residual_relative": 1.3756634740712517e-15
+      },
+      "finite_differences": [
+        {
+          "step": 0.0001,
+          "analytic": -7.616233327220979e-05,
+          "finite_difference": -7.616233269335033e-05,
+          "relative": 7.600337748339099e-09
+        },
+        {
+          "step": 1e-05,
+          "analytic": -7.616233327220979e-05,
+          "finite_difference": -7.616233320733727e-05,
+          "relative": 8.517664299342265e-10
+        },
+        {
+          "step": 1e-06,
+          "analytic": -7.616233327220979e-05,
+          "finite_difference": -7.616233400631698e-05,
+          "relative": 9.638717208530911e-09
+        }
+      ],
+      "costs": {
+        "saved_prefix_Q_product_setup_s": 0.01763697899878025,
+        "saved_prefix_Q_product_setup_scope": "one startup after loading the saved prefix; shared existing accepted-basis cache thereafter",
+        "sequential_complete_proposal_s": [
+          2.532205477822572,
+          2.5232061811257154,
+          2.5080503751523793
+        ],
+        "batched_complete_proposal_s": [
+          1.4828323828987777,
+          1.4450891308952123,
+          1.4213188451249152
+        ],
+        "complete_proposal_ratio_including_setup_release": 1.739030591535466,
+        "ratio_with_one_saved_prefix_startup_charged_to_each_variant": 1.736045788891895
+      }
+    },
+    {
+      "saved_state": {
+        "columns": 256,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00255.npz",
+        "state_sha256": "cb7f0b5c26b456f27317d7126dedeb06bdcf41de429d1c6b58b5eb682b223cf2",
+        "basis_prefix_chunks_sha256": "ff71f65ad2dc43e2ce1b4338c9866bd945dcdda0705710277a535caaeb6d1e86",
+        "native_relative": 0.5535684168680776
+      },
+      "module_width": 2,
+      "patch_level": 1,
+      "candidate_count": 14,
+      "candidate_pair_max": {
+        "proposal_parameters_relative": 0.0,
+        "score_relative": 1.5664933245754593e-15,
+        "full_coefficient_relative": 1.23137040729064e-15,
+        "amplitude_relative": 1.1342929199275968e-15
+      },
+      "selected_pairs": {
+        "selected_parameters_relative": 0.0,
+        "selected_full_coefficient_relative": 8.306987041892127e-16,
+        "selected_score_relative": 1.2469629928892254e-16,
+        "complete_original_real_gradient_relative": 2.856145271143503e-15
+      },
+      "accepted_step_pair": {
+        "both_accepted": true,
+        "full_committed_coefficient_relative": 3.8099006044719523e-16,
+        "full_true_residual_relative": 1.1786193528044445e-14
+      },
+      "finite_differences": [
+        {
+          "step": 0.0001,
+          "analytic": -0.00015358380247651517,
+          "finite_difference": -0.0001535838016156669,
+          "relative": 5.605071915337944e-09
+        },
+        {
+          "step": 1e-05,
+          "analytic": -0.00015358380247651517,
+          "finite_difference": -0.0001535838027842372,
+          "relative": 2.003609907004612e-09
+        },
+        {
+          "step": 1e-06,
+          "analytic": -0.00015358380247651517,
+          "finite_difference": -0.00015358380117427815,
+          "relative": 8.47899972072284e-09
+        }
+      ],
+      "costs": {
+        "saved_prefix_Q_product_setup_s": 0.33310971898026764,
+        "saved_prefix_Q_product_setup_scope": "one startup after loading the saved prefix; shared existing accepted-basis cache thereafter",
+        "sequential_complete_proposal_s": [
+          3.3753339138347656,
+          3.441474860999733,
+          3.4344124239869416
+        ],
+        "batched_complete_proposal_s": [
+          1.8829313369933516,
+          2.0164504828862846,
+          1.903291824972257
+        ],
+        "complete_proposal_ratio_including_setup_release": 1.7666375581739426,
+        "ratio_with_one_saved_prefix_startup_charged_to_each_variant": 1.725017050013833
+      }
+    },
+    {
+      "saved_state": {
+        "columns": 770,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00769.npz",
+        "state_sha256": "05a9f58fe193d999f0b4dd219620baea48e4e16cb4594d1a482aa8ed62e9c89f",
+        "basis_prefix_chunks_sha256": "7e5df78e9161ea3dbaf88f28ce06b7ee0b29f16ae17ad1760a76334dab292fa5",
+        "native_relative": 0.45703607130804935
+      },
+      "module_width": 4,
+      "patch_level": 2,
+      "candidate_count": 14,
+      "candidate_pair_max": {
+        "proposal_parameters_relative": 0.0,
+        "score_relative": 1.0232076744669936e-14,
+        "full_coefficient_relative": 1.0529821921898152e-14,
+        "amplitude_relative": 1.5525639311325165e-14
+      },
+      "selected_pairs": {
+        "selected_parameters_relative": 0.0,
+        "selected_full_coefficient_relative": 6.506818886712368e-15,
+        "selected_score_relative": 2.3108882649516936e-15,
+        "complete_original_real_gradient_relative": 3.811354632534388e-14
+      },
+      "accepted_step_pair": {
+        "both_accepted": true,
+        "full_committed_coefficient_relative": 1.1994221606578931e-15,
+        "full_true_residual_relative": 6.813752560839287e-14
+      },
+      "finite_differences": [
+        {
+          "step": 0.0001,
+          "analytic": -0.0008123327246549729,
+          "finite_difference": -0.0008123325584536103,
+          "relative": 2.045976451815762e-07
+        },
+        {
+          "step": 1e-05,
+          "analytic": -0.0008123327246549729,
+          "finite_difference": -0.0008123327207134869,
+          "relative": 4.8520586538264935e-09
+        },
+        {
+          "step": 1e-06,
+          "analytic": -0.0008123327246549729,
+          "finite_difference": -0.0008123327459848448,
+          "relative": 2.625755586243725e-08
+        }
+      ],
+      "costs": {
+        "saved_prefix_Q_product_setup_s": 2.387730442918837,
+        "saved_prefix_Q_product_setup_scope": "one startup after loading the saved prefix; shared existing accepted-basis cache thereafter",
+        "sequential_complete_proposal_s": [
+          5.756630916148424,
+          5.8218480800278485,
+          5.769493657862768
+        ],
+        "batched_complete_proposal_s": [
+          3.0292185810394585,
+          2.9452670621685684,
+          2.894016542006284
+        ],
+        "complete_proposal_ratio_including_setup_release": 1.9561333235009875,
+        "ratio_with_one_saved_prefix_startup_charged_to_each_variant": 1.7533133641562855
+      }
+    },
+    {
+      "saved_state": {
+        "columns": 770,
+        "state_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/state_00769.npz",
+        "state_sha256": "05a9f58fe193d999f0b4dd219620baea48e4e16cb4594d1a482aa8ed62e9c89f",
+        "basis_prefix_chunks_sha256": "7e5df78e9161ea3dbaf88f28ce06b7ee0b29f16ae17ad1760a76334dab292fa5",
+        "native_relative": 0.45703607130804935
+      },
+      "module_width": 8,
+      "patch_level": 2,
+      "candidate_count": 14,
+      "candidate_pair_max": {
+        "proposal_parameters_relative": 0.0,
+        "score_relative": 1.9152623889429737e-14,
+        "full_coefficient_relative": 5.881832327435847e-14,
+        "amplitude_relative": 2.2275984821968685e-14
+      },
+      "selected_pairs": {
+        "selected_parameters_relative": 0.0,
+        "selected_full_coefficient_relative": 4.797296427008025e-14,
+        "selected_score_relative": 1.9152623889429737e-14,
+        "complete_original_real_gradient_relative": 9.048019284167056e-13
+      },
+      "accepted_step_pair": {
+        "both_accepted": true,
+        "full_committed_coefficient_relative": 1.0526937625921187e-15,
+        "full_true_residual_relative": 6.48543793772861e-14
+      },
+      "finite_differences": [
+        {
+          "step": 0.0001,
+          "analytic": -2.300072242823193e-05,
+          "finite_difference": -2.3000722706846594e-05,
+          "relative": 1.2113300502024927e-08
+        },
+        {
+          "step": 1e-05,
+          "analytic": -2.300072242823193e-05,
+          "finite_difference": -2.3000721184085293e-05,
+          "relative": 5.40916330815174e-08
+        },
+        {
+          "step": 1e-06,
+          "analytic": -2.300072242823193e-05,
+          "finite_difference": -2.3000733792264886e-05,
+          "relative": 4.940728705484901e-07
+        }
+      ],
+      "costs": {
+        "saved_prefix_Q_product_setup_s": 2.3110292670316994,
+        "saved_prefix_Q_product_setup_scope": "one startup after loading the saved prefix; shared existing accepted-basis cache thereafter",
+        "sequential_complete_proposal_s": [
+          7.335395125905052,
+          7.374495020136237,
+          7.33471191697754
+        ],
+        "batched_complete_proposal_s": [
+          4.978030891856179,
+          4.948748866096139,
+          4.8383292311336845
+        ],
+        "complete_proposal_ratio_including_setup_release": 1.4930199349909063,
+        "ratio_with_one_saved_prefix_startup_charged_to_each_variant": 1.4262962131572618
+      }
+    }
+  ],
+  "qualification_primitive_action_counts": {
+    "A": 5420,
+    "AH": 8,
+    "audit": 0,
+    "port_solve": 5429
+  },
+  "scope": "same 8 seeds and 6 axis refinements, complete moment/A/AH, amplitude rank, real gradient and actual accepted c/r paired against original independent full operations on saved64/256/770 prefixes; fresh cache setup/release and one saved-prefix startup recorded; not full case cost ratio"
+}
