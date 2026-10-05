@@ -27,6 +27,7 @@ from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
 )
+from src.solvers.physical_balanced_coupling import PhysicalBalancedCoupling
 from src.solvers.physical_balanced_same_mesh_transfer import (
     ROW_CONSISTENCY_LIMIT,
     SUPPORT_POLICY_ENTITY_CLOSURE,
@@ -707,6 +708,147 @@ def test_task041_h1b_same_mesh_p_and_ph_conjugacy_and_alternation(
         q1.destroy()
         q2.destroy()
         fine_probe.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size not in (1, 2),
+    reason="the focused BAL_H transfer reuse check is serial/MPI2-only",
+)
+def test_task041_h1b_bal_h_transfer_dual_reuse_preserves_coupling_algebra(
+    small_fe_fixture,
+) -> None:
+    data = small_fe_fixture
+    owner = data["owner"]
+    fine_space = data["fine_space"]
+    fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
+    sources = [
+        create_vector(
+            [(fine_space.dofmap.index_map, int(fine_space.dofmap.index_map_bs))]
+        )
+        for _ in range(2)
+    ]
+    _fill_algebraic_vector(sources[0], fine_slaves, 1.75)
+    _fill_algebraic_vector(sources[1], fine_slaves, -2.25)
+    originals = [
+        np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+        for source in sources
+    ]
+    assert any(np.imag(value).any() for value in originals)
+
+    def make_case(reuse: bool):
+        counts = {"P": 0, "Q_PH": 0, "audit_PH": 0, "q_handoff": []}
+        action_state = {"source": None, "calls": 0}
+
+        def action(value: PETSc.Vec) -> PETSc.Vec:
+            result = value.duplicate()
+            if action_state["calls"] == 0:
+                action_state["source"].copy(result)
+            else:
+                result.set(PETSc.ScalarType(0.0))
+            result.assemble()
+            action_state["calls"] += 1
+            return result
+
+        def coarse(value: PETSc.Vec, *, return_leading_dual: bool = False):
+            counts["q_handoff"].append(return_leading_dual)
+            dual = owner.apply_adjoint(value)
+            counts["Q_PH"] += 1
+            result = owner.apply_primal(dual)
+            counts["P"] += 1
+            if return_leading_dual:
+                return result, dual
+            dual.destroy()
+            return result
+
+        def restriction(value: PETSc.Vec) -> PETSc.Vec:
+            counts["audit_PH"] += 1
+            return owner.apply_adjoint(value)
+
+        coupling = PhysicalBalancedCoupling(
+            action,
+            coarse,
+            lambda value: _zero_like(value),
+            restriction,
+            reuse_leading_ph=reuse,
+        )
+        return coupling, counts, action_state
+
+    def _zero_like(value: PETSc.Vec) -> PETSc.Vec:
+        result = value.duplicate()
+        result.set(PETSc.ScalarType(0.0))
+        result.assemble()
+        return result
+
+    legacy, legacy_counts, legacy_action = make_case(False)
+    reused, reused_counts, reused_action = make_case(True)
+    try:
+        for index in (0, 1, 0):
+            source = sources[index]
+            legacy_action["source"] = source
+            legacy_action["calls"] = 0
+            reused_action["source"] = source
+            reused_action["calls"] = 0
+            legacy_before = dict(legacy_counts)
+            reused_before = dict(reused_counts)
+            legacy_output = legacy.apply(source)
+            legacy_facts = legacy.last_apply_facts
+            reused_output = reused.apply(source)
+            reused_facts = reused.last_apply_facts
+            try:
+                legacy_values = np.asarray(
+                    legacy_output.getArray(readonly=True), dtype=np.complex128
+                ).copy()
+                reused_values = np.asarray(
+                    reused_output.getArray(readonly=True), dtype=np.complex128
+                ).copy()
+                np.testing.assert_allclose(
+                    reused_values,
+                    legacy_values,
+                    rtol=1.0e-12,
+                    atol=1.0e-12,
+                )
+                assert legacy_facts["initial"]["balance"] == reused_facts[
+                    "initial"
+                ]["balance"]
+                assert legacy_facts["counts"] == {
+                    "Q": 2,
+                    "H6": 1,
+                    "A6": 2,
+                    "PH_audit": 2,
+                }
+                assert reused_facts["counts"] == {
+                    "Q": 2,
+                    "H6": 1,
+                    "A6": 2,
+                    "PH_audit": 2,
+                    "PH_audit_transfer": 1,
+                    "PH_audit_leading_reused": 1,
+                }
+                assert legacy_facts["status"] == reused_facts["status"]
+                assert legacy_facts["live_after_cleanup"] == 0
+                assert reused_facts["live_after_cleanup"] == 0
+            finally:
+                legacy_output.destroy()
+                reused_output.destroy()
+            legacy_delta = {
+                name: legacy_counts[name] - legacy_before[name]
+                for name in ("P", "Q_PH", "audit_PH")
+            }
+            reused_delta = {
+                name: reused_counts[name] - reused_before[name]
+                for name in ("P", "Q_PH", "audit_PH")
+            }
+            assert legacy_delta == {"P": 2, "Q_PH": 2, "audit_PH": 2}
+            assert reused_delta == {"P": 2, "Q_PH": 2, "audit_PH": 1}
+            assert legacy_counts["q_handoff"][-2:] == [False, False]
+            assert reused_counts["q_handoff"][-2:] == [True, False]
+            np.testing.assert_array_equal(
+                source.getArray(readonly=True), originals[index]
+            )
+        assert legacy.apply_count == reused.apply_count == 3
+    finally:
+        for source in sources:
+            source.destroy()
 
 
 @pytest.mark.parametrize(

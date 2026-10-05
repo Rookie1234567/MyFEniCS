@@ -9,10 +9,10 @@ the input and the action objects remain borrowed.
 from __future__ import annotations
 
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
-
 
 BALANCED_ROUTE = "BAL_H"
 BALANCE_LIMIT = 1.0e-8
@@ -82,6 +82,37 @@ class _OwnedVectors:
         _norm(value)
         return value
 
+    def take_pair(
+        self,
+        first: Any,
+        second: Any,
+        *,
+        borrowed: tuple[Any, ...] = (),
+    ) -> tuple[Any, Any]:
+        values = (first, second)
+        borrowed_ids = {id(value) for value in borrowed}
+        seen: set[int] = set()
+        invalid = False
+        fresh: list[Any] = []
+        for value in values:
+            key = id(value)
+            if (
+                value is None
+                or key in borrowed_ids
+                or key in self._values
+                or key in seen
+            ):
+                invalid = True
+                continue
+            seen.add(key)
+            fresh.append(value)
+        for value in fresh:
+            self._values[id(value)] = value
+        self.peak = max(self.peak, len(self._values))
+        if invalid:
+            raise TypeError("BAL_H first Q must return two fresh owned vectors")
+        return first, second
+
     def copy(self, value: Any) -> Any:
         return self.take(_copy(value))
 
@@ -112,6 +143,12 @@ class PhysicalBalancedCoupling:
     The callbacks must return fresh caller-owned vectors.  The returned ``z``
     remains owned by the caller; all other vectors created by ``apply`` are
     released before it returns or raises.
+
+    The opt-in ``reuse_leading_ph`` protocol is scoped to one apply: its first
+    Q callback returns the same source's leading dual with the coarse output,
+    and the balance audit consumes that dual once.  It is valid only while the
+    transfer/layout is unchanged and Q's P4 action leaves its input dual
+    untouched.  The second Q call keeps the ordinary single-vector protocol.
     """
 
     route = BALANCED_ROUTE
@@ -119,17 +156,21 @@ class PhysicalBalancedCoupling:
     def __init__(
         self,
         action: Callable[[Any], Any],
-        coarse: Callable[[Any], Any],
+        coarse: Callable[..., Any],
         smoother: Callable[[Any], Any],
         restriction: Callable[[Any], Any],
         *,
         checkpoint: Callable[[], None] | None = None,
+        reuse_leading_ph: bool = False,
     ) -> None:
+        if not isinstance(reuse_leading_ph, bool):
+            raise TypeError("reuse_leading_ph must be a boolean")
         self.A = action
         self.Q = coarse
         self.H6 = smoother
         self.PH = restriction
         self.checkpoint = checkpoint or (lambda: None)
+        self._reuse_leading_ph = reuse_leading_ph
         self.apply_count = 0
         self.attempted = 0
         self.last_apply_facts: dict[str, Any] = {}
@@ -138,6 +179,11 @@ class PhysicalBalancedCoupling:
         vectors = _OwnedVectors()
         self.attempted += 1
         counts = {"Q": 0, "H6": 0, "A6": 0, "PH_audit": 0}
+        if self._reuse_leading_ph:
+            counts.update(
+                PH_audit_transfer=0,
+                PH_audit_leading_reused=0,
+            )
         operation_seconds = {name: 0.0 for name in ("Q", "H6", "A6")}
         facts: dict[str, Any] = {
             "route": self.route,
@@ -163,10 +209,40 @@ class PhysicalBalancedCoupling:
                 )
             return vectors.take(result)
 
-        def balance(residual: Any, leading: Any) -> dict[str, float]:
-            counts["PH_audit"] += 2
-            leading_dual = self.PH(leading)
+        def call_first_q(value: Any) -> tuple[Any, Any]:
+            self.checkpoint()
+            counts["Q"] += 1
+            started = time.perf_counter()
             try:
+                result = self.Q(value, return_leading_dual=True)
+            finally:
+                operation_seconds["Q"] += time.perf_counter() - started
+            if not isinstance(result, tuple) or len(result) != 2:
+                raise TypeError(
+                    "BAL_H first Q must return (coarse_output, leading_dual)"
+                )
+            coarse_output, leading_dual = vectors.take_pair(
+                result[0],
+                result[1],
+                borrowed=(value, source),
+            )
+            _norm(coarse_output)
+            return coarse_output, leading_dual
+
+        def balance(
+            residual: Any,
+            leading: Any,
+            reused_leading_dual: Any | None = None,
+        ) -> dict[str, float]:
+            counts["PH_audit"] += 2
+            if self._reuse_leading_ph:
+                leading_dual = reused_leading_dual
+                counts["PH_audit_leading_reused"] += 1
+            else:
+                leading_dual = self.PH(leading)
+            try:
+                if self._reuse_leading_ph:
+                    counts["PH_audit_transfer"] += 1
                 residual_dual = self.PH(residual)
                 try:
                     numerator = _norm(residual_dual)
@@ -188,11 +264,18 @@ class PhysicalBalancedCoupling:
                 finally:
                     _destroy(residual_dual)
             finally:
-                _destroy(leading_dual)
+                if self._reuse_leading_ph and leading_dual is not None:
+                    vectors.drop(leading_dual)
+                elif not self._reuse_leading_ph:
+                    _destroy(leading_dual)
 
         try:
             _norm(source)
-            zc = call("Q", self.Q, source)
+            first_leading_dual = None
+            if self._reuse_leading_ph:
+                zc, first_leading_dual = call_first_q(source)
+            else:
+                zc = call("Q", self.Q, source)
             azc = call("A6", self.A, zc)
             rc = vectors.copy(source)
             _axpy(rc, -1.0, azc)
@@ -201,7 +284,11 @@ class PhysicalBalancedCoupling:
                 "zc_norm": _norm(zc),
                 "Azc_norm": _norm(azc),
                 "rc_norm": _norm(rc),
-                "balance": balance(rc, source),
+                "balance": balance(
+                    rc,
+                    source,
+                    reused_leading_dual=first_leading_dual,
+                ),
             }
             vectors.drop(azc)
 

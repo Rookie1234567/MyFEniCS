@@ -1033,6 +1033,7 @@ def _build_fixture(
     record_iteration_history: bool = False,
     p4_inverse_backend: str = "full",
     diagnostic_callback=None,
+    reuse_leading_ph_dual: bool = False,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(size, 2.0)
     condensed = _IdentityCondensed(size)
@@ -1058,6 +1059,7 @@ def _build_fixture(
         detailed_timing=detailed_timing,
         record_iteration_history=record_iteration_history,
         p4_inverse_backend=p4_inverse_backend,
+        reuse_leading_ph_dual=reuse_leading_ph_dual,
     )
     return inverse, {
         "operator": operator,
@@ -1922,6 +1924,154 @@ def test_side_inverse_diagnostic_callback_failure_destroys_borrowed_vecs():
         assert tracked[0].destroyed is True
         assert p4_factor.apply_count == 0
     finally:
+        source.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_real_q_handoff_survives_and_cleans_finally_tail_error(
+    monkeypatch,
+):
+    class TrackedVec:
+        def __init__(self, vector):
+            self.vector = vector
+            self.destroy_count = 0
+
+        def destroy(self):
+            self.destroy_count += 1
+            if self.destroy_count == 1:
+                self.vector.destroy()
+
+        def __getattr__(self, name):
+            return getattr(self.vector, name)
+
+    default_inverse, default_owned = _build_fixture(
+        p4_factor=_CellCondensedP4(2),
+        p4_inverse_backend="cell_condensed",
+    )
+    default_operator = default_owned["operator"]
+    default_source = _new_vector(
+        default_operator, np.asarray([0.75 + 0.25j, -0.5 + 0.875j])
+    )
+    default_result = None
+    try:
+        assert default_inverse._reuse_leading_ph_dual is False
+        default_result = default_inverse._apply_q_callback(default_source)
+        assert not isinstance(default_result, tuple)
+    finally:
+        if default_result is not None:
+            default_result.destroy()
+        default_source.destroy()
+        default_inverse.destroy()
+        default_operator.destroy()
+
+    factor = _CellCondensedP4(2)
+    inverse, owned = _build_fixture(
+        p4_factor=factor,
+        p4_inverse_backend="cell_condensed",
+        detailed_timing=True,
+        reuse_leading_ph_dual=True,
+    )
+    operator = owned["operator"]
+    transfer = owned["transfer"]
+    source = _new_vector(
+        operator, np.asarray([1.0 + 0.5j, -0.25 + 0.75j])
+    )
+    source_before = _gather_dense_vector(source)
+    leading_duals: list[TrackedVec] = []
+    coarse_outputs: list[TrackedVec] = []
+    p4_work_vectors: list[TrackedVec] = []
+    p4_inputs: list[object] = []
+    p4_input_values: list[tuple[np.ndarray, np.ndarray]] = []
+
+    for method_name, tracked in (
+        ("apply_adjoint", leading_duals),
+        ("apply_primal", coarse_outputs),
+    ):
+        original_method = getattr(transfer, method_name)
+
+        def track_transfer_result(
+            vector, *, timing=None, _original=original_method, _tracked=tracked
+        ):
+            result = _original(vector, timing=timing)
+            wrapped = TrackedVec(result)
+            _tracked.append(wrapped)
+            return wrapped
+
+        setattr(transfer, method_name, track_transfer_result)
+
+    original_p4_apply = factor.apply
+
+    def track_p4_input(vector, **kwargs):
+        before = _gather_dense_vector(vector)
+        p4_inputs.append(vector)
+        result = original_p4_apply(vector, **kwargs)
+        after = _gather_dense_vector(vector)
+        p4_input_values.append((before, after))
+        wrapped = TrackedVec(result)
+        p4_work_vectors.append(wrapped)
+        return wrapped
+
+    monkeypatch.setattr(factor, "apply", track_p4_input)
+    original_record_timing = inverse._add_rhs_detail_seconds
+    tail_failure = {"raised": False, "live_at_raise": None}
+
+    # q_factor_solve_seconds is recorded by the real implementation's outer
+    # finally, after P returned and the local handoff state holds both outputs.
+    def fail_at_real_q_finally(name, elapsed):
+        original_record_timing(name, elapsed)
+        if name == "q_factor_solve_seconds" and not tail_failure["raised"]:
+            tail_failure["raised"] = True
+            tail_failure["live_at_raise"] = (
+                leading_duals[-1].destroy_count,
+                coarse_outputs[-1].destroy_count,
+                p4_work_vectors[-1].destroy_count,
+            )
+            raise RuntimeError("injected Q finally timing failure")
+
+    monkeypatch.setattr(inverse, "_add_rhs_detail_seconds", fail_at_real_q_finally)
+    returned_vectors: list[TrackedVec] = []
+    try:
+        assert inverse._reuse_leading_ph_dual is True
+        with pytest.raises(RuntimeError, match="Q finally timing failure"):
+            inverse._apply_q_callback(source, return_leading_dual=True)
+
+        assert tail_failure["raised"] is True
+        assert tail_failure["live_at_raise"] == (0, 0, 1)
+        assert len(leading_duals) == len(coarse_outputs) == len(p4_work_vectors) == 1
+        assert p4_inputs[0] is leading_duals[0]
+        assert p4_work_vectors[0].destroy_count == 1
+        assert leading_duals[0].destroy_count == 1
+        assert coarse_outputs[0].destroy_count == 1
+        np.testing.assert_array_equal(p4_input_values[0][0], p4_input_values[0][1])
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+
+        pair = inverse._apply_q_callback(source, return_leading_dual=True)
+        assert isinstance(pair, tuple) and len(pair) == 2
+        returned_vectors.extend(pair)
+        assert pair[0] is coarse_outputs[1]
+        assert pair[1] is leading_duals[1]
+        assert p4_inputs[1] is leading_duals[1]
+        assert p4_work_vectors[1].destroy_count == 1
+        assert all(vector.destroy_count == 0 for vector in pair)
+        assert pair[0].norm() > 0.0 and pair[1].norm() > 0.0
+        np.testing.assert_array_equal(p4_input_values[1][0], p4_input_values[1][1])
+
+        second_q = inverse._apply_q_callback(source)
+        assert not isinstance(second_q, tuple)
+        returned_vectors.append(second_q)
+        assert second_q is coarse_outputs[2]
+        assert leading_duals[2].destroy_count == 1
+        assert p4_inputs[2] is leading_duals[2]
+        assert p4_work_vectors[2].destroy_count == 1
+        assert second_q.norm() > 0.0
+        assert transfer.primal_apply_count == 3
+        np.testing.assert_array_equal(p4_input_values[2][0], p4_input_values[2][1])
+        np.testing.assert_array_equal(_gather_dense_vector(source), source_before)
+    finally:
+        for vector in returned_vectors:
+            if vector.destroy_count == 0:
+                vector.destroy()
         source.destroy()
         inverse.destroy()
         operator.destroy()

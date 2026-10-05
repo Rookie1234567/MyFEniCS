@@ -10,6 +10,7 @@ from src.solvers.physical_balanced_coupling import (
     BalancedConstraintRejected,
     PhysicalBalancedCoupling,
 )
+from src.solvers.physical_balanced_side_inverse import SideBalancedInverse
 
 
 class _TrackedVector:
@@ -17,16 +18,16 @@ class _TrackedVector:
         self.values = np.asarray(values, dtype=np.complex128).copy()
         self.destroyed = False
 
-    def duplicate(self) -> "_TrackedVector":
+    def duplicate(self) -> _TrackedVector:
         return _TrackedVector(self.values)
 
-    def copy(self, target: "_TrackedVector") -> None:
+    def copy(self, target: _TrackedVector) -> None:
         target.values[:] = self.values
 
     def norm(self) -> float:
         return float(np.linalg.norm(self.values))
 
-    def axpy(self, alpha: complex, source: "_TrackedVector") -> None:
+    def axpy(self, alpha: complex, source: _TrackedVector) -> None:
         self.values[:] += alpha * source.values
 
     def destroy(self) -> None:
@@ -155,3 +156,204 @@ def test_bal_h_releases_first_dual_when_second_ph_raises() -> None:
     assert source.destroyed is False
     np.testing.assert_array_equal(source.values, original)
     assert coupling.last_apply_facts["live_after_cleanup"] == 0
+
+
+def _tracked_balanced_callbacks(*, reuse: bool, fail: str | None = None):
+    a, p, _coarse, smoother = _operator_fixture()
+    ph_matrix = p.conj().T
+    p4_map = p @ np.linalg.inv(ph_matrix @ a @ p)
+    created: list[_TrackedVector] = []
+    counts = {"Q_PH": 0, "audit_PH": 0}
+    failure = {"kind": fail}
+
+    def vector(values: np.ndarray) -> _TrackedVector:
+        result = _TrackedVector(values)
+        created.append(result)
+        return result
+
+    def action(value: _TrackedVector) -> _TrackedVector:
+        if failure["kind"] == "A6":
+            failure["kind"] = None
+            raise RuntimeError("injected A6 failure after first Q")
+        return vector(a @ value.values)
+
+    def q(value: _TrackedVector, *, return_leading_dual: bool = False):
+        counts["Q_PH"] += 1
+        dual = ph_matrix @ value.values
+        result = vector(p4_map @ dual)
+        if return_leading_dual:
+            return result, vector(dual)
+        return result
+
+    def smoother_action(value: _TrackedVector) -> _TrackedVector:
+        return vector(smoother @ value.values)
+
+    def restriction(value: _TrackedVector) -> _TrackedVector:
+        counts["audit_PH"] += 1
+        if failure["kind"] == "PH_residual":
+            failure["kind"] = None
+            raise RuntimeError("injected residual PH failure")
+        return vector(ph_matrix @ value.values)
+
+    checkpoint_count = {"value": 0}
+
+    def checkpoint() -> None:
+        checkpoint_count["value"] += 1
+        if failure["kind"] == "checkpoint" and checkpoint_count["value"] == 2:
+            failure["kind"] = None
+            raise RuntimeError("injected checkpoint after first Q")
+
+    return (
+        PhysicalBalancedCoupling(
+            action,
+            q,
+            smoother_action,
+            restriction,
+            checkpoint=checkpoint,
+            reuse_leading_ph=reuse,
+        ),
+        counts,
+        created,
+    )
+
+
+def test_bal_h_first_q_dual_reuse_matches_complex_ab_a_and_counts_ph() -> None:
+    a, p, _coarse, smoother = _operator_fixture()
+    ph = p.conj().T
+    coarse = p @ np.linalg.inv(ph @ a @ p) @ ph
+    inputs = (
+        np.arange(9, dtype=np.complex128) + 0.25j,
+        np.linspace(-0.8, 1.2, 9).astype(np.complex128) - 0.35j,
+        np.arange(9, dtype=np.complex128) + 0.25j,
+    )
+    originals = tuple(value.copy() for value in inputs)
+    call_shapes = {"legacy": [], "reuse": []}
+    call_counts = {
+        "legacy": {"Q_PH": 0, "audit_PH": 0},
+        "reuse": {"Q_PH": 0, "audit_PH": 0},
+    }
+
+    def make_case(name: str, *, reuse: bool) -> PhysicalBalancedCoupling:
+        def q(value: np.ndarray, *, return_leading_dual: bool = False):
+            call_shapes[name].append(return_leading_dual)
+            call_counts[name]["Q_PH"] += 1
+            dual = ph @ value
+            result = coarse @ value
+            if return_leading_dual:
+                return result.copy(), dual.copy()
+            return result.copy()
+
+        def restriction(value: np.ndarray) -> np.ndarray:
+            call_counts[name]["audit_PH"] += 1
+            return (ph @ value).copy()
+
+        return PhysicalBalancedCoupling(
+            lambda value: a @ value,
+            q,
+            lambda value: smoother @ value,
+            restriction,
+            reuse_leading_ph=reuse,
+        )
+
+    legacy = make_case("legacy", reuse=False)
+    reused = make_case("reuse", reuse=True)
+    identity = np.eye(a.shape[0], dtype=np.complex128)
+    expected_operator = (
+        coarse + (identity - coarse @ a) @ smoother @ (identity - a @ coarse)
+    )
+    for source, original in zip(inputs, originals, strict=True):
+        legacy_output = legacy.apply(source)
+        legacy_facts = legacy.last_apply_facts
+        reused_output = reused.apply(source)
+        reused_facts = reused.last_apply_facts
+        np.testing.assert_allclose(legacy_output, expected_operator @ source)
+        np.testing.assert_allclose(reused_output, legacy_output, rtol=1e-12, atol=1e-12)
+        np.testing.assert_array_equal(source, original)
+        assert legacy_facts["initial"]["balance"] == reused_facts["initial"]["balance"]
+        assert legacy_facts["counts"] == {
+            "Q": 2,
+            "H6": 1,
+            "A6": 2,
+            "PH_audit": 2,
+        }
+        assert reused_facts["counts"] == {
+            "Q": 2,
+            "H6": 1,
+            "A6": 2,
+            "PH_audit": 2,
+            "PH_audit_transfer": 1,
+            "PH_audit_leading_reused": 1,
+        }
+        assert legacy_facts["live_after_cleanup"] == 0
+        assert reused_facts["live_after_cleanup"] == 0
+
+    assert call_shapes["legacy"] == [False] * 6
+    assert call_shapes["reuse"] == [True, False] * 3
+    assert [sum(call_counts[name].values()) for name in ("legacy", "reuse")] == [12, 9]
+
+
+@pytest.mark.parametrize("failure_kind", ("A6", "checkpoint", "PH_residual"))
+def test_bal_h_reused_first_dual_is_released_after_failure_and_retry(
+    failure_kind: str,
+) -> None:
+    source = _TrackedVector(np.arange(9, dtype=np.complex128) + 0.4j)
+    original = source.values.copy()
+    coupling, _counts, created = _tracked_balanced_callbacks(
+        reuse=True,
+        fail=failure_kind,
+    )
+    with pytest.raises(RuntimeError, match="injected"):
+        coupling.apply(source)
+    failed_vectors = list(created)
+    assert failed_vectors
+    assert all(vector.destroyed for vector in failed_vectors)
+    assert source.destroyed is False
+    np.testing.assert_array_equal(source.values, original)
+    assert coupling.last_apply_facts["live_after_cleanup"] == 0
+
+    result = coupling.apply(source)
+    assert coupling.last_apply_facts["status"] == "BALANCED_ACTION_COMPLETED"
+    assert coupling.last_apply_facts["live_after_cleanup"] == 0
+    assert all(vector.destroyed for vector in created if vector is not result)
+    assert result.destroyed is False
+    result.destroy()
+
+
+def test_bal_h_q_handoff_wrapper_releases_pair_when_impl_raises() -> None:
+    class _QOwner:
+        _reuse_leading_ph_dual = True
+
+        def __init__(self) -> None:
+            self.fail = True
+            self.created: list[_TrackedVector] = []
+
+        def _apply_q_callback_impl(self, source, *, handoff_state):
+            output = _TrackedVector(source.values + 1.0 + 0.5j)
+            dual = _TrackedVector(source.values - 0.25j)
+            self.created.extend((output, dual))
+            handoff_state["coarse_output"] = output
+            handoff_state["leading_dual"] = dual
+            if self.fail:
+                self.fail = False
+                raise RuntimeError("injected Q tail diagnostic failure")
+            return output
+
+    owner = _QOwner()
+    source = _TrackedVector(np.asarray([1.0 + 2.0j, -0.5 + 0.75j]))
+    with pytest.raises(RuntimeError, match="Q tail diagnostic"):
+        SideBalancedInverse._apply_q_callback(
+            owner,
+            source,
+            return_leading_dual=True,
+        )
+    assert all(vector.destroyed for vector in owner.created)
+    pair = SideBalancedInverse._apply_q_callback(
+        owner,
+        source,
+        return_leading_dual=True,
+    )
+    assert isinstance(pair, tuple) and len(pair) == 2
+    assert all(not vector.destroyed for vector in pair)
+    assert owner.created[-2:] == list(pair)
+    for vector in pair:
+        vector.destroy()

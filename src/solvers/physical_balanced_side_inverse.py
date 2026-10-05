@@ -680,6 +680,10 @@ class SideBalancedInverse:
     ``apply`` returns through the caller-provided target Vec.  The internal
     callbacks used by BAL_H always return fresh owned Vec objects, so the
     coupling can release every temporary independently of the side input.
+    ``reuse_leading_ph_dual`` is a default-off single-apply optimization and is
+    rejected for vector diagnostics that could alter the reused RHS.  Its
+    caller must keep the borrowed transfer layout/MPC fixed; the P4 factors
+    used here consume, but do not modify, the PH-produced RHS.
     """
 
     operator_identity = "borrowed_side_A_right_fgmres_J_BAL_H_JH"
@@ -701,8 +705,15 @@ class SideBalancedInverse:
         diagnostic_callback: Callable[[Mapping[str, Any]], Any] | None = None,
         p4_inverse_backend: str = "full",
         physical_action_backend: str | None = None,
+        reuse_leading_ph_dual: bool = False,
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
+        if not isinstance(reuse_leading_ph_dual, bool):
+            raise TypeError("reuse_leading_ph_dual must be a boolean")
+        if reuse_leading_ph_dual and diagnostic_callback is not None:
+            raise ValueError(
+                "leading PH reuse is incompatible with mutable vector diagnostics"
+            )
         if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
             raise ValueError(
                 "p4_inverse_backend must be 'full' or 'cell_condensed'"
@@ -725,6 +736,7 @@ class SideBalancedInverse:
         self._p4_factor: Any | None = p4_factor
         self._p4_inverse_backend = p4_inverse_backend
         self._physical_action_backend = physical_action_backend
+        self._reuse_leading_ph_dual = reuse_leading_ph_dual
         self._owner_transfer: Any | None = owner_transfer
         self._reuse_primal_route_plan_enabled = bool(
             getattr(owner_transfer, "_reuse_primal_route_plan", False)
@@ -771,6 +783,7 @@ class SideBalancedInverse:
         self._j_count = 0
         self._jh_count = 0
         self._ph_audit_count = 0
+        self._ph_leading_reused_count = 0
         self._ph_total_count = 0
         self._p_count = 0
 
@@ -803,6 +816,9 @@ class SideBalancedInverse:
             "PH_audit": 0,
             "PH_total": 0,
         }
+        if self._reuse_leading_ph_dual:
+            self._cumulative_counts["PH_audit_leading_reused"] = 0
+            self._cumulative_counts["PH_audit_logical"] = 0
         self._pre_destroy_component_diagnostics: dict[str, Any] | None = None
 
         self._coupling = PhysicalBalancedCoupling(
@@ -811,6 +827,7 @@ class SideBalancedInverse:
             self._apply_h6_callback,
             self._apply_ph_callback,
             checkpoint=self._checkpoint,
+            reuse_leading_ph=self._reuse_leading_ph_dual,
         )
         self._pc_context = _SidePythonPcContext(self)
         self._ksp: PETSc.KSP | None = PETSc.KSP().create(operator.getComm())
@@ -852,6 +869,10 @@ class SideBalancedInverse:
         if target is not None and (int(steps) != 0 or callback is not None):
             raise ValueError(
                 "refinement target and fixed-step P4 diagnostics are mutually exclusive"
+            )
+        if self._reuse_leading_ph_dual and callback is not None:
+            raise ValueError(
+                "leading PH reuse is incompatible with mutable P4 diagnostics"
             )
         self._diagnostic_p4_correction_steps = int(steps)
         self._diagnostic_p4_correction_callback = callback
@@ -1631,7 +1652,51 @@ class SideBalancedInverse:
                 "balance_h6_seconds", perf_counter() - started
             )
 
-    def _apply_q_callback(self, source: PETSc.Vec) -> PETSc.Vec:
+    def _apply_q_callback(
+        self,
+        source: PETSc.Vec,
+        *,
+        return_leading_dual: bool = False,
+    ) -> PETSc.Vec | tuple[PETSc.Vec, PETSc.Vec]:
+        if not isinstance(return_leading_dual, bool):
+            raise TypeError("return_leading_dual must be a boolean")
+        if not return_leading_dual:
+            return self._apply_q_callback_impl(source)
+        if not self._reuse_leading_ph_dual:
+            raise RuntimeError("leading PH handoff was not enabled for this side")
+
+        handoff: dict[str, PETSc.Vec | None] = {}
+        try:
+            result = self._apply_q_callback_impl(
+                source,
+                handoff_state=handoff,
+            )
+            leading_dual = handoff.get("leading_dual")
+            if (
+                result is None
+                or result is not handoff.get("coarse_output")
+                or leading_dual is None
+            ):
+                raise RuntimeError("leading PH handoff completed without both Vecs")
+        except BaseException:
+            released: set[int] = set()
+            for vector in handoff.values():
+                if vector is not None and id(vector) not in released:
+                    released.add(id(vector))
+                    try:
+                        vector.destroy()
+                    except BaseException:  # noqa: BLE001, S110 - preserve Q callback error
+                        pass
+            raise
+        handoff.clear()
+        return result, leading_dual
+
+    def _apply_q_callback_impl(
+        self,
+        source: PETSc.Vec,
+        *,
+        handoff_state: dict[str, PETSc.Vec | None] | None = None,
+    ) -> PETSc.Vec:
         if self._owner_transfer is None or self._p4_factor is None:
             raise RuntimeError("BAL_H coarse components have been destroyed")
         call_history = (
@@ -1745,6 +1810,8 @@ class SideBalancedInverse:
                 {"timing": ph_transfer_timing} if self._detailed_timing else {}
             )
             coarse_rhs = self._owner_transfer.apply_adjoint(source, **kwargs)
+            if handoff_state is not None:
+                handoff_state["leading_dual"] = coarse_rhs
         finally:
             self._add_rhs_detail_seconds(
                 "q_ph_seconds", perf_counter() - ph_started
@@ -1876,6 +1943,8 @@ class SideBalancedInverse:
                     coarse_solution,
                     **kwargs,
                 )
+                if handoff_state is not None:
+                    handoff_state["coarse_output"] = result
                 try:
                     self._emit_diagnostic(
                         "P_output",
@@ -1888,6 +1957,8 @@ class SideBalancedInverse:
                     except BaseException:  # noqa: BLE001, S110 - preserve callback error
                         pass
                     result = None
+                    if handoff_state is not None:
+                        handoff_state["coarse_output"] = None
                     raise
             finally:
                 self._add_rhs_detail_seconds(
@@ -1902,7 +1973,12 @@ class SideBalancedInverse:
             active_error = sys.exc_info()[1]
             cleanup_error: BaseException | None = None
             for vector in (
-                coarse_rhs,
+                (
+                    None
+                    if handoff_state is not None
+                    and coarse_rhs is handoff_state.get("leading_dual")
+                    else coarse_rhs
+                ),
                 augmented_rhs,
                 augmented_solution,
                 coarse_solution,
@@ -2138,6 +2214,7 @@ class SideBalancedInverse:
         full_source = None
         full_output = None
         active_output = None
+        coupling_applied = False
         try:
             packing_started = perf_counter()
             try:
@@ -2156,6 +2233,7 @@ class SideBalancedInverse:
             if self._coupling is None:
                 raise RuntimeError("BAL_H coupling has been destroyed")
             try:
+                coupling_applied = True
                 full_output = self._coupling.apply(full_source)
             except BaseException as exc:
                 failure: dict[str, Any] = {
@@ -2187,6 +2265,15 @@ class SideBalancedInverse:
                         value = operation_seconds.get(name)
                         if isinstance(value, (int, float)) and np.isfinite(value):
                             self._rhs_operation_seconds[name] += float(value)
+                if self._reuse_leading_ph_dual and coupling_applied:
+                    counts = self._coupling.last_apply_facts.get("counts", {})
+                    reused = (
+                        counts.get("PH_audit_leading_reused", 0)
+                        if isinstance(counts, Mapping)
+                        else 0
+                    )
+                    if isinstance(reused, int) and not isinstance(reused, bool):
+                        self._ph_leading_reused_count += reused
             self._j_count += 1
             active_output = extract_full_p6_to_active_trace(
                 self._condensed,
@@ -2397,6 +2484,13 @@ class SideBalancedInverse:
             "PH_total": int(self._ph_total_count),
             "checkpoint": int(self._checkpoint_count),
         }
+        if self._reuse_leading_ph_dual:
+            snapshot["PH_audit_leading_reused"] = int(
+                self._ph_leading_reused_count
+            )
+            snapshot["PH_audit_logical"] = int(
+                self._ph_audit_count + self._ph_leading_reused_count
+            )
         self._cumulative_counts = dict(snapshot)
         return snapshot
 
@@ -2929,11 +3023,18 @@ def build_side_balanced_inverse(
     support_policy: str = "legacy",
     volume_action_context_factory: Callable[..., Any] | None = None,
     reuse_primal_route_plan: bool = False,
+    reuse_leading_ph_dual: bool = False,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
     if not isinstance(reuse_primal_route_plan, bool):
         raise TypeError("reuse_primal_route_plan must be a boolean")
+    if not isinstance(reuse_leading_ph_dual, bool):
+        raise TypeError("reuse_leading_ph_dual must be a boolean")
+    if reuse_leading_ph_dual and diagnostic_callback is not None:
+        raise ValueError(
+            "leading PH reuse is incompatible with mutable vector diagnostics"
+        )
     _validate_ksp_pair(max_it, rtol)
     if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
         raise ValueError(
@@ -3057,6 +3158,7 @@ def build_side_balanced_inverse(
             diagnostic_callback=diagnostic_callback,
             p4_inverse_backend=p4_inverse_backend,
             physical_action_backend=physical_action_backend,
+            reuse_leading_ph_dual=reuse_leading_ph_dual,
         )
         full_action = None
         p4_factor = None
