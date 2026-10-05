@@ -169,6 +169,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-output-directory", type=Path, required=True)
     parser.add_argument("--resolved-config-sha256", required=True)
     parser.add_argument("--contract-probe", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--task40-v10-postprocess-from", type=Path)
     return parser
 
 
@@ -258,6 +259,10 @@ def main(argv: list[str] | None = None) -> int:
             for error in errors:
                 print(f"Task38 worker contract error: {error}")
         return 2
+    if args.contract_probe and args.task40_v10_postprocess_from is not None:
+        if comm.rank == 0:
+            print("Task40 V10 saved-output recovery cannot be a contract probe")
+        return 2
     if args.contract_probe:
         comm.Barrier()
         if comm.rank == 0:
@@ -273,6 +278,29 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if resolved_payload is None:
         return 2
+    if args.task40_v10_postprocess_from is not None:
+        if comm.size != 1 or args.expected_method != "full3d_iterative":
+            if comm.rank == 0:
+                print("Task40 V10 saved-output recovery requires the MPI1 iterative candidate")
+            return 2
+        try:
+            from src.runners.task40_v10_saved_output_recovery import (
+                recover_task40_v10_saved_output,
+            )
+
+            result = recover_task40_v10_saved_output(
+                resolved_payload,
+                args.expected_output_directory,
+                args.task40_v10_postprocess_from,
+                source_sha=args.expected_source_sha,
+            )
+        except Exception as exc:
+            if comm.rank == 0:
+                print(f"Task40 V10 saved-output recovery failed: {exc}")
+            return 4
+        if comm.rank == 0:
+            print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+        return 0 if result.get("passed") is True else 4
     exit_status, dispatch_errors = _dispatch_resolved_payload(
         resolved_payload,
         expected_method=args.expected_method,

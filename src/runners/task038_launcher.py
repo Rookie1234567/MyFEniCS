@@ -5252,6 +5252,39 @@ def _write_text_hash(path: Path, value: str) -> None:
     path.write_text(value + "\n", encoding="ascii")
 
 
+def _task40_v10_postprocess_worker_argv(
+    argv: Any, saved_run_directory: str | Path | None
+) -> list[str]:
+    """Add the narrow saved-field option while preserving the normal argv."""
+
+    result = list(argv)
+    if saved_run_directory is not None:
+        result.extend(
+            [
+                "--task40-v10-postprocess-from",
+                str(Path(saved_run_directory).resolve()),
+            ]
+        )
+    return result
+
+
+def _validate_task40_v10_postprocess_request(
+    *,
+    candidate_identity: bool,
+    campaign_window: str | Path | None,
+    saved_run_directory: str | Path | None,
+    contract_probe: bool = False,
+) -> None:
+    if saved_run_directory is None:
+        return
+    if not candidate_identity:
+        raise InputError("Task40 V10 saved-output recovery is restricted to the frozen B0 candidate")
+    if campaign_window is None:
+        raise InputError("Task40 V10 saved-output recovery requires its fixed campaign window")
+    if contract_probe:
+        raise InputError("Task40 V10 saved-output recovery cannot be a contract probe")
+
+
 def _timestamp_directory(
     specification: RunSpecification, timestamp: str | None
 ) -> Path:
@@ -5529,6 +5562,7 @@ def launch_specification(
     v14_time_policy: str = V14_TIME_POLICY_ENFORCE,
     v24_p4_prefix_target: int | None = None,
     task40_v10_campaign_window: str | Path | None = None,
+    task40_v10_postprocess_from: str | Path | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -5556,6 +5590,15 @@ def launch_specification(
         raise InputError("Task40 V10 campaign window is restricted to the frozen B0 inputs")
     if task40_v10_profile and task40_v10_campaign_window is None:
         raise InputError("Task40 V10 B0 launch requires its fixed campaign window")
+    _validate_task40_v10_postprocess_request(
+        candidate_identity=(
+            run_id == TASK40_B0_P6_CANDIDATE_RUN_ID
+            and preconditioner == TASK40_V10_P6_REFERENCE_PROFILE
+        ),
+        campaign_window=task40_v10_campaign_window,
+        saved_run_directory=task40_v10_postprocess_from,
+        contract_probe=contract_probe,
+    )
     campaign_window = None
     campaign_accounting_path = None
     campaign_start_state = None
@@ -6163,6 +6206,20 @@ def launch_specification(
             adapter_identity=adapter,
             contract_probe=contract_probe,
         )
+        worker_argv = _task40_v10_postprocess_worker_argv(
+            plan.argv, task40_v10_postprocess_from
+        )
+        if task40_v10_postprocess_from is not None:
+            manifest.update(
+                {
+                    "execution_variant": "saved_field_postprocess_only",
+                    "saved_field_run_directory": str(
+                        Path(task40_v10_postprocess_from).resolve()
+                    ),
+                    "worker_argv": worker_argv,
+                }
+            )
+            _write_json(run_directory / "run_manifest.json", manifest)
         if not plan.adapter_available:
             result = {
                 "exit_status": None,
@@ -6408,7 +6465,7 @@ def launch_specification(
                         else max(1e-9, wall_budget)
                     )
                     authority = supervise(
-                        list(plan.argv),
+                        worker_argv,
                         run_directory / 'watchdog',
                         wall_seconds=watchdog_wall_seconds,
                         solve_seconds=(

@@ -99,6 +99,10 @@ def _parser() -> argparse.ArgumentParser:
         help='required fixed 24-hour campaign window for the Task40 V10 B0 control/candidate',
     )
     parser.add_argument(
+        '--task40-v10-postprocess-from', type=Path, metavar='FAILED_RUN_DIRECTORY',
+        help='recover candidate outputs from its preserved V10 full-field packet without rerunning the solve',
+    )
+    parser.add_argument(
         '--v24-p4-prefix-target',
         type=int,
         choices=(3,),
@@ -114,6 +118,32 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.task40_v10_postprocess_from is not None and (
+            args.validate_only
+            or args.dry_run
+            or args.physical_pc_profile is not None
+            or args.macro_v10_controls
+            or args.macro_v11_controls
+            or args.macro_v11_calibration
+            or args.macro_v12
+            or args.macro_v12_supplement
+            or args.macro_v12_stage is not None
+            or args.macro_v12_outer_restart is not None
+            or args.macro_v12_framework is not None
+            or args.macro_v12_output is not None
+            or args.p4_direction_diagnosis
+            or args.p4_direction_output is not None
+            or args.p4_direction_reuse_root is not None
+            or args.recover_v15_q0_eio_once
+            or args.task40_reference_from is not None
+            or args.profile_budget_ledger is not None
+            or args.profile_recovery_from is not None
+            or args.profile_variant != 'R0'
+            or args.profile_r0_reference is not None
+            or args.v24_p4_prefix_target is not None
+            or args.r0_evidence is not None
+        ):
+            raise InputError('--task40-v10-postprocess-from is a standalone supervised workflow')
         if args.r0_evidence is not None and not args.recover_v15_q0_eio_once:
             raise InputError('--r0-evidence requires --recover-v15-q0-eio-once')
         if args.recover_v15_q0_eio_once:
@@ -143,6 +173,17 @@ def main(argv: list[str] | None = None) -> int:
         ) or (
             specification.identity.get('run_id') == TASK40_B0_P6_CANDIDATE_RUN_ID
             and specification.solver.get('preconditioner') == TASK40_V10_P6_REFERENCE_PROFILE
+        )
+        v10_candidate_identity = (
+            specification.identity.get('run_id') == TASK40_B0_P6_CANDIDATE_RUN_ID
+            and specification.solver.get('preconditioner') == TASK40_V10_P6_REFERENCE_PROFILE
+        )
+        from src.runners.task038_launcher import _validate_task40_v10_postprocess_request
+
+        _validate_task40_v10_postprocess_request(
+            candidate_identity=v10_candidate_identity,
+            campaign_window=args.task40_v10_campaign_window,
+            saved_run_directory=args.task40_v10_postprocess_from,
         )
         if args.task40_v10_campaign_window is not None and not v10_identity:
             raise InputError('--task40-v10-campaign-window is restricted to the frozen B0 V10 identities')
@@ -424,6 +465,7 @@ def main(argv: list[str] | None = None) -> int:
                 v14_time_policy=args.v14_time_policy,
                 v24_p4_prefix_target=args.v24_p4_prefix_target,
                 task40_v10_campaign_window=args.task40_v10_campaign_window,
+                task40_v10_postprocess_from=args.task40_v10_postprocess_from,
             )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
