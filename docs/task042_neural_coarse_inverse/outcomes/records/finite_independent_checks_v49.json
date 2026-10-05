@@ -1,0 +1,29 @@
+{
+  "checks": [
+    {
+      "case": "REGULAR",
+      "reference_direct_and_recovery_pass": true,
+      "candidate_equation_pass": true,
+      "candidate_recovery_pass": true,
+      "field_and_full_complex_vector_pass": true,
+      "power_mode_energy_pass": true,
+      "FINITE_OBSERVABLE_PASS": true,
+      "comparison": "original frozen relative complete observable-vector norms, floor1e-12, no phase/normalization adjustment"
+    },
+    {
+      "case": "NOTCH",
+      "reference_direct_and_recovery_pass": true,
+      "candidate_equation_pass": true,
+      "candidate_recovery_pass": true,
+      "field_and_full_complex_vector_pass": true,
+      "power_mode_energy_pass": true,
+      "FINITE_OBSERVABLE_PASS": true,
+      "comparison": "original frozen relative complete observable-vector norms, floor1e-12, no phase/normalization adjustment"
+    }
+  ],
+  "parent": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/result.json",
+    "sha256": "fb240e389961ec3aa473f0adfba58bcb2a43e5e702cbdb87bf0c14d12e571ccb"
+  },
+  "no_new_science_actions": true
+}

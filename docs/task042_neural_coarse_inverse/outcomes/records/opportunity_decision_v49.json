@@ -1,0 +1,60 @@
+{
+  "opportunities": [
+    {
+      "case": "REGULAR",
+      "selected_non_neural_baseline": "REFERENCE_REGULAR",
+      "baseline_seconds_lower_bound": 118.67280561500229,
+      "factor_and_tail_complete_removal_optimistic_fraction": 0.015977221665899,
+      "tail_or_initialization_only_20percent_impossible_even_H0": true,
+      "one_possible_learning_object": "complete physical FE+DtN coefficient prediction that avoids condensation/factors, followed by original independent audit; distinct from closed fixed-A correction",
+      "replaceable_condensation_factor_solve_seconds_optimistic": 75.05591153702699,
+      "maximum_cold_data_teacher_training_inference_extra_check_seconds_optimistic": 51.321350414026526,
+      "same_case_full_teacher_alone_exceeds_allowance": true,
+      "strongest_traditional_control": "qualified exact Full3D with exact geometry/tensor/cache sharing and full costs; sharing improvement unmeasured here",
+      "necessary_peak_condition": "saved simultaneous bytes minus model/workspace >=0.2 measured full peak; opaque factor overlap and future model/teacher peaks unknown",
+      "NN20": "NOT_DEMONSTRATED",
+      "decision": "no automatic training; necessary time space only, not an evidence-qualified learning proposal"
+    },
+    {
+      "case": "NOTCH",
+      "selected_non_neural_baseline": "REFERENCE_NOTCH",
+      "baseline_seconds_lower_bound": 71.54798732511699,
+      "factor_and_tail_complete_removal_optimistic_fraction": 0.027873847850753267,
+      "tail_or_initialization_only_20percent_impossible_even_H0": true,
+      "one_possible_learning_object": "complete physical FE+DtN coefficient prediction that avoids condensation/factors, followed by original independent audit; distinct from closed fixed-A correction",
+      "replaceable_condensation_factor_solve_seconds_optimistic": 60.93787422589958,
+      "maximum_cold_data_teacher_training_inference_extra_check_seconds_optimistic": 46.628276760876176,
+      "same_case_full_teacher_alone_exceeds_allowance": true,
+      "strongest_traditional_control": "qualified exact Full3D with exact geometry/tensor/cache sharing and full costs; sharing improvement unmeasured here",
+      "necessary_peak_condition": "saved simultaneous bytes minus model/workspace >=0.2 measured full peak; opaque factor overlap and future model/teacher peaks unknown",
+      "NN20": "NOT_DEMONSTRATED",
+      "decision": "no automatic training; necessary time space only, not an evidence-qualified learning proposal"
+    }
+  ],
+  "best_non_neural_observed_controls": [
+    {
+      "case": "REGULAR",
+      "best_observed_time_stage": "REFERENCE_REGULAR",
+      "time_lower_bound_seconds": 118.67280561500229,
+      "best_observed_simultaneous_peak_stage": "ENGINE_REGULAR",
+      "peak_bytes": 754126848,
+      "NN_required_peak_at_most_bytes": 603301478.4,
+      "cache_load_equivalence": "INCONCLUSIVE; observed necessary controls, not uncontended speedup"
+    },
+    {
+      "case": "NOTCH",
+      "best_observed_time_stage": "REFERENCE_NOTCH",
+      "time_lower_bound_seconds": 71.54798732511699,
+      "best_observed_simultaneous_peak_stage": "ENGINE_NOTCH",
+      "peak_bytes": 775528448,
+      "NN_required_peak_at_most_bytes": 620422758.4,
+      "cache_load_equivalence": "INCONCLUSIVE; observed necessary controls, not uncontended speedup"
+    }
+  ],
+  "p_increment_accuracy_unsettled": true,
+  "NN_NOT_TRAINED_THIS_BATCH": true,
+  "NN20": "NOT_DEMONSTRATED",
+  "target_qualification": false,
+  "single_future_object_only": "complete physical FE+DtN field coefficients avoiding condensation/factors; no teacher or training authorization",
+  "prioritize_exact_sharing_for_deterministic_repeated_construction": true
+}

@@ -1,0 +1,345 @@
+{
+  "routes": [
+    {
+      "stage": "REFERENCE_REGULAR",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "events": [
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 100.63119671097957,
+          "RSS_bytes": 502448128,
+          "rows": 7764,
+          "nnz": 2960088,
+          "cell_classes": 29,
+          "independent_FE": 15872
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 102.43629540200345,
+          "RSS_bytes": 776515584,
+          "backend": "PETSc_PREONLY_LU_MUMPS",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 103.05164583097212,
+          "RSS_bytes": 522723328
+        },
+        {
+          "event": "condensed_matrix_released",
+          "elapsed_s": 103.12029239302501,
+          "RSS_bytes": 428040192
+        }
+      ],
+      "sampled_tree_peak_bytes": 852762624
+    },
+    {
+      "stage": "REFERENCE_NOTCH",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "events": [
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 62.94686763198115,
+          "RSS_bytes": 486727680,
+          "rows": 7764,
+          "nnz": 2960088,
+          "cell_classes": 30,
+          "independent_FE": 15872
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 64.77646879502572,
+          "RSS_bytes": 739221504,
+          "backend": "PETSc_PREONLY_LU_MUMPS",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 65.46226610802114,
+          "RSS_bytes": 509120512
+        },
+        {
+          "event": "condensed_matrix_released",
+          "elapsed_s": 65.49282560800202,
+          "RSS_bytes": 414437376
+        }
+      ],
+      "sampled_tree_peak_bytes": 814084096
+    },
+    {
+      "stage": "ENGINE_REGULAR",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "events": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 4.25481368182227,
+          "RSS_bytes": 257957888,
+          "owner_role": "physical_carrier",
+          "unique_visible_numpy_owner_bytes": 8782848,
+          "unique_owner_count": 2129,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 65.6147582908161,
+          "RSS_bytes": 438951936,
+          "owner_role": "condensed_local_caches",
+          "unique_visible_numpy_owner_bytes": 57974720,
+          "unique_owner_count": 9443,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 65.6151377169881,
+          "RSS_bytes": 438960128,
+          "rows": 3844,
+          "nnz": 1318914,
+          "cell_classes": 20,
+          "independent_FE": 7936
+        },
+        {
+          "event": "two_cell_matrix_released",
+          "elapsed_s": 66.84957591700368,
+          "RSS_bytes": 507555840,
+          "twist": 0,
+          "ports": 228,
+          "transport": {
+            "twist_index": 0,
+            "global_q_branches": [
+              0,
+              2
+            ],
+            "eta": [
+              0.9680437937386909,
+              0.2507812062416221
+            ],
+            "tau": [
+              0.8742175731919941,
+              0.4855343805770098
+            ],
+            "K": 2,
+            "global_matrices_created": false,
+            "all_internal_channels_retained": true,
+            "raw_native_unitarity_assumed": false,
+            "physical_dimension_reduced": false
+          }
+        },
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 128.38958600885235,
+          "RSS_bytes": 600096768,
+          "owner_role": "condensed_local_caches",
+          "unique_visible_numpy_owner_bytes": 57974720,
+          "unique_owner_count": 9443,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 128.3899583229795,
+          "RSS_bytes": 600096768,
+          "rows": 3920,
+          "nnz": 1333152,
+          "cell_classes": 20,
+          "independent_FE": 7936
+        },
+        {
+          "event": "two_cell_matrix_released",
+          "elapsed_s": 129.59660403686576,
+          "RSS_bytes": 677052416,
+          "twist": 1,
+          "ports": 304,
+          "transport": {
+            "twist_index": 1,
+            "global_q_branches": [
+              1,
+              3
+            ],
+            "eta": [
+              -0.250781206241622,
+              0.9680437937386909
+            ],
+            "tau": [
+              -0.8742175731919941,
+              -0.4855343805770096
+            ],
+            "K": 2,
+            "global_matrices_created": false,
+            "all_internal_channels_retained": true,
+            "raw_native_unitarity_assumed": false,
+            "physical_dimension_reduced": false
+          }
+        },
+        {
+          "event": "all4q_local_factors_released",
+          "elapsed_s": 131.68242035689764,
+          "RSS_bytes": 539111424
+        }
+      ],
+      "sampled_tree_peak_bytes": 754126848
+    },
+    {
+      "stage": "ENGINE_NOTCH",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "events": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 4.069810623070225,
+          "RSS_bytes": 258244608,
+          "owner_role": "physical_carrier",
+          "unique_visible_numpy_owner_bytes": 8782848,
+          "unique_owner_count": 2129,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 64.9888412039727,
+          "RSS_bytes": 438964224,
+          "owner_role": "condensed_local_caches",
+          "unique_visible_numpy_owner_bytes": 57974720,
+          "unique_owner_count": 9443,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 64.98925797594711,
+          "RSS_bytes": 438968320,
+          "rows": 3844,
+          "nnz": 1318914,
+          "cell_classes": 20,
+          "independent_FE": 7936
+        },
+        {
+          "event": "two_cell_matrix_released",
+          "elapsed_s": 66.13182005099952,
+          "RSS_bytes": 497340416,
+          "twist": 0,
+          "ports": 228,
+          "transport": {
+            "twist_index": 0,
+            "global_q_branches": [
+              0,
+              2
+            ],
+            "eta": [
+              0.9680437937386909,
+              0.2507812062416221
+            ],
+            "tau": [
+              0.8742175731919941,
+              0.4855343805770098
+            ],
+            "K": 2,
+            "global_matrices_created": false,
+            "all_internal_channels_retained": true,
+            "raw_native_unitarity_assumed": false,
+            "physical_dimension_reduced": false
+          }
+        },
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 127.24761475506239,
+          "RSS_bytes": 597204992,
+          "owner_role": "condensed_local_caches",
+          "unique_visible_numpy_owner_bytes": 57974720,
+          "unique_owner_count": 9443,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 127.24801093293354,
+          "RSS_bytes": 597204992,
+          "rows": 3920,
+          "nnz": 1333152,
+          "cell_classes": 20,
+          "independent_FE": 7936
+        },
+        {
+          "event": "two_cell_matrix_released",
+          "elapsed_s": 128.47611353290267,
+          "RSS_bytes": 670416896,
+          "twist": 1,
+          "ports": 304,
+          "transport": {
+            "twist_index": 1,
+            "global_q_branches": [
+              1,
+              3
+            ],
+            "eta": [
+              -0.250781206241622,
+              0.9680437937386909
+            ],
+            "tau": [
+              -0.8742175731919941,
+              -0.4855343805770096
+            ],
+            "K": 2,
+            "global_matrices_created": false,
+            "all_internal_channels_retained": true,
+            "raw_native_unitarity_assumed": false,
+            "physical_dimension_reduced": false
+          }
+        },
+        {
+          "event": "all4q_local_factors_released",
+          "elapsed_s": 131.81948975590058,
+          "RSS_bytes": 529698816
+        }
+      ],
+      "sampled_tree_peak_bytes": 775528448
+    },
+    {
+      "stage": "REFERENCE_NOTCH_P5",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "events": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 58.61604490480386,
+          "RSS_bytes": 425148416,
+          "owner_role": "physical_carrier",
+          "unique_visible_numpy_owner_bytes": 13707272,
+          "unique_owner_count": 2129,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 426.17309597088024,
+          "RSS_bytes": 982417408,
+          "owner_role": "condensed_local_caches",
+          "unique_visible_numpy_owner_bytes": 281301280,
+          "unique_owner_count": 27673,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "condensed_objects_ready",
+          "elapsed_s": 426.17354057892226,
+          "RSS_bytes": 982417408,
+          "rows": 12132,
+          "nnz": 7046902,
+          "cell_classes": 30,
+          "independent_FE": 30800
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 432.75470841582865,
+          "RSS_bytes": 1666662400,
+          "backend": "PETSc_PREONLY_LU_MUMPS",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 434.26256393198855,
+          "RSS_bytes": 1010085888
+        },
+        {
+          "event": "condensed_matrix_released",
+          "elapsed_s": 434.31294161779806,
+          "RSS_bytes": 806486016
+        }
+      ],
+      "sampled_tree_peak_bytes": 1840844800
+    }
+  ],
+  "visible_owner_bytes_are_lower_bounds_not_RSS": true,
+  "opaque_factor_workspace_bytes": "unknown; included in independently sampled RSS"
+}

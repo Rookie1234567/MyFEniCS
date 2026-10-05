@@ -1,0 +1,177 @@
+{
+  "baseline": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/io/scattering_anchor.py",
+        "src/solvers/scattering_anchor.py",
+        "src/solvers/scattering_anchor_checks.py",
+        "src/solvers/scattering_anchor_reporting.py",
+        "src/solvers/scattering_anchor_scope.py",
+        "src/solvers/scattering_anchor_two_cell.py",
+        "src/solvers/scattering_y_orbit_reuse.py"
+      ],
+      "numerical_behavior": "new finite Task042 opt-in Maxwell/DtN adapter, independent checks and p increment; ordinary defaults unchanged",
+      "dependencies": [
+        "input canonical material + descriptor",
+        "src/solvers FE public closure",
+        "qualified activation + complex PETSc ABI",
+        "own resource/deadline watchdog"
+      ],
+      "tests": [
+        "tests_v49.json",
+        "documentation_checks_v49.json"
+      ],
+      "fresh_PDE_evidence": [
+        "VERIFY_P4.json",
+        "COST.json"
+      ],
+      "recommendation": "NOT_PRODUCTION_DEFAULT; finite paired qualification only"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py"
+      ],
+      "numerical_behavior": "new V49 namespace/deadline/source/storage admission; existing watchdog retained",
+      "dependencies": [
+        "input canonical material + descriptor",
+        "src/solvers FE public closure",
+        "qualified activation + complex PETSc ABI",
+        "own resource/deadline watchdog"
+      ],
+      "tests": [
+        "tests_v49.json",
+        "documentation_checks_v49.json"
+      ],
+      "fresh_PDE_evidence": [
+        "VERIFY_P4.json",
+        "COST.json"
+      ],
+      "recommendation": "review shared guards separately before opt-in core"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_scattering_anchor.py",
+        "benchmarks/qualify_scattering_anchor.py",
+        "src/test/test_scattering_anchor.py"
+      ],
+      "numerical_behavior": "pure original metrics recomputation, real schema and cleanup fixtures; no replacement solver",
+      "dependencies": [
+        "input canonical material + descriptor",
+        "src/solvers FE public closure",
+        "qualified activation + complex PETSc ABI",
+        "own resource/deadline watchdog"
+      ],
+      "tests": [
+        "tests_v49.json",
+        "documentation_checks_v49.json"
+      ],
+      "fresh_PDE_evidence": [
+        "VERIFY_P4.json",
+        "COST.json"
+      ],
+      "recommendation": "checker first, paired fresh p4 evidence required"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042_neural_coarse_inverse/README.md",
+        "docs/task042_neural_coarse_inverse/outcomes/complete_scattering_engine_anchor_v49.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/cold_n1_costs_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/complete_physical_results_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/engine_source_manifest_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/finite_independent_checks_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/object_lifetimes_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/opportunity_decision_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/p_increment_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/physical_cases_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/physical_identity_bindings_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/post_settlement_archive_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v49.jsonl",
+        "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_snapshot_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/tests_v49.json",
+        "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "docs/task042_neural_coarse_inverse/response_v49.md"
+      ],
+      "numerical_behavior": "finite p4 scientific positives, p5 precision negative, all failures/costs retained",
+      "dependencies": [
+        "input canonical material + descriptor",
+        "src/solvers FE public closure",
+        "qualified activation + complex PETSc ABI",
+        "own resource/deadline watchdog"
+      ],
+      "tests": [
+        "tests_v49.json",
+        "documentation_checks_v49.json"
+      ],
+      "fresh_PDE_evidence": [
+        "VERIFY_P4.json",
+        "COST.json"
+      ],
+      "recommendation": "documents may remain research evidence; no merge approval"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/scattering_anchor_v49.json",
+        "input/task042_neural_coarse_inverse/v49_accuracy_cost_report.dat",
+        "input/task042_neural_coarse_inverse/v49_engine_notch.dat",
+        "input/task042_neural_coarse_inverse/v49_engine_preflight.dat",
+        "input/task042_neural_coarse_inverse/v49_engine_regular.dat",
+        "input/task042_neural_coarse_inverse/v49_reference_notch.dat",
+        "input/task042_neural_coarse_inverse/v49_reference_notch_p5.dat",
+        "input/task042_neural_coarse_inverse/v49_reference_regular.dat",
+        "input/task042_neural_coarse_inverse/v49_verify_p4.dat"
+      ],
+      "numerical_behavior": "fixed finite80case descriptors and8 one-run dat",
+      "dependencies": [
+        "input canonical material + descriptor",
+        "src/solvers FE public closure",
+        "qualified activation + complex PETSc ABI",
+        "own resource/deadline watchdog"
+      ],
+      "tests": [
+        "tests_v49.json",
+        "documentation_checks_v49.json"
+      ],
+      "fresh_PDE_evidence": [
+        "VERIFY_P4.json",
+        "COST.json"
+      ],
+      "recommendation": "no production exposure or target-scale claims"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [],
+      "numerical_behavior": "ignored mesh/field/matrix/cache/factor/raw; other branch material not changed",
+      "dependencies": [
+        "input canonical material + descriptor",
+        "src/solvers FE public closure",
+        "qualified activation + complex PETSc ABI",
+        "own resource/deadline watchdog"
+      ],
+      "tests": [
+        "tests_v49.json",
+        "documentation_checks_v49.json"
+      ],
+      "fresh_PDE_evidence": [
+        "VERIFY_P4.json",
+        "COST.json"
+      ],
+      "recommendation": "no large-array/factor import; no branch merge"
+    }
+  ],
+  "not_merge_approved": true
+}

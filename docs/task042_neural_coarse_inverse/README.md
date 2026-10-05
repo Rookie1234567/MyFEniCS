@@ -1,3 +1,20 @@
+# Task042 V49最新交付：完整有限散射链通过，p增量精度未收敛
+
+从真实物理dat到完整三维Maxwell/DtN、内部恢复、E/H/curl、532复端口和功率的执行链已经完成。REGULAR及真实两cell NOTCH的p4直接/全四q结构引擎各自原方程与同离散观测量通过；NOTCH唯一p5对照的总E/H差2.95319/2.81472，不能宣称离散精度或原尺寸资格。本轮未训练NN，准备/凝聚成本是主要瓶颈；尾部逆/初始化即使免费也不足20%完整时间。
+
+| 完成项 | 实际结果 | 边界 |
+|---|---|---|
+| p4两个完整物理case | 原rho 9.11e-13/8.04e-12；完整532端口、1/3外步 | 同p4完整2/2，通过不等于连续真解 |
+| NOTCH p5 | 自身原rho2.58e-12；总E/curl与p4差2.95/2.81 | 离散精度未收敛，未追加p/mesh扫描 |
+| 完整数值冷成本 | 直接118.673/71.548s；结构137.522/138.236s | shared-workstation、OS/JIT cache不等价，早期启动unknown |
+| 原尺寸0.7nm/2TB48h/NN20 | 有限完整基线就绪，神经训练0 | 三项均未资格；旧路线关闭与负结果保持 |
+
+[正式合同](review_report_v47.md) · [response](response_v49.md) · [完整结果](outcomes/complete_scattering_engine_anchor_v49.md) · [执行/数组/source索引](outcomes/records/delivery_index_v49.json) · [最终费用](outcomes/records/resource_costs_final_v49.json)
+
+普通数值默认不变。全部有限全局直接/四q因子如实登记；新数值核在src/solvers，八个one-run dat已真实validate并执行。结束后closed、清场、push本分支，原队列一次交回并停止；不得依据此导航重开closed窗口。以下完整历史逐字保留。
+
+<!-- V49-LATEST-END -->
+
 # 当前审阅入口：Review V46 / V48神经无损存储候选关闭
 
 [Review V46](review_report_v46.md)已独立审阅V48交付`6c3dadb21aa0edfa7498e5865cf955766882f58a`：接受有限逐位／实际消费与真实训练证据；NN在线规划为RAW的2.02713／1.53632倍，码流也输给shuffle19，按实际成本门关闭本冻结codec。consumer会短暂同时保留两条解码向量，严格单workspace不授；此复用限制不改变有限正确性和成本负结果。原尺寸0.7nm完整解、2TB／48h、NN20仍未获得。

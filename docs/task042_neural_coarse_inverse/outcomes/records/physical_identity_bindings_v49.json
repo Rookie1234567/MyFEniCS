@@ -1,0 +1,134 @@
+{
+  "cases": [
+    {
+      "case": "REGULAR",
+      "new_per_case_descriptor_sha256": "7c0e9e5c073faf9fc5bec6fc57e8372d9c86bc40d4457ed784409089f6e2e2fd",
+      "immutable_original_manifest_sha256_scope": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "parent_npz_sha256": "69171ebdcd7e147b08a551191e4553322584adcb72755222de32dd6814806fcb",
+      "changed_cell_ids": [],
+      "changed_cell_centers_nm": [],
+      "material_cell_counts": {
+        "1": 40,
+        "2": 16,
+        "3": 24
+      },
+      "original_member_hashes": {
+        "geometry_x": {
+          "shape": [
+            150,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "ce603db6b766c6f61c48a96e05370c09a10a5ab48f32ac66ae8f3fcd03866f6d"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            80,
+            8
+          ],
+          "dtype": "int32",
+          "sha256": "6446079296200f51e63f0fc8c64a2674545d6539be185ae474436ff4f6f1bf01"
+        },
+        "cell_centers": {
+          "shape": [
+            80,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "3709a6f9362b49b20f9efff6b9226e51560f49ef9f45d77bb6fbaa035c90ba11"
+        },
+        "cell_tags": {
+          "shape": [
+            80
+          ],
+          "dtype": "int32",
+          "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+        },
+        "regular_tags": {
+          "shape": [
+            80
+          ],
+          "dtype": "int32",
+          "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+        }
+      }
+    },
+    {
+      "case": "NOTCH",
+      "new_per_case_descriptor_sha256": "6b6963869d274b4f779626a11b93636a2a4257dd2b2990aa4f59b2686f97ad52",
+      "immutable_original_manifest_sha256_scope": "a576113bded82fdcd35ce0049b4b3ef51c27e0db7594234aab866285779543a1",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "parent_npz_sha256": "85b10569bde61c7698c2d53934fc0259afa3afb523087ee5fa751a166805dce5",
+      "changed_cell_ids": [
+        38,
+        52
+      ],
+      "changed_cell_centers_nm": [
+        [
+          1.5166666666666666,
+          0.48611111111111105,
+          3.111111111111111
+        ],
+        [
+          1.5166666666666666,
+          0.8101851851851852,
+          3.111111111111111
+        ]
+      ],
+      "material_cell_counts": {
+        "1": 42,
+        "2": 16,
+        "3": 22
+      },
+      "original_member_hashes": {
+        "geometry_x": {
+          "shape": [
+            150,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "ce603db6b766c6f61c48a96e05370c09a10a5ab48f32ac66ae8f3fcd03866f6d"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            80,
+            8
+          ],
+          "dtype": "int32",
+          "sha256": "6446079296200f51e63f0fc8c64a2674545d6539be185ae474436ff4f6f1bf01"
+        },
+        "cell_centers": {
+          "shape": [
+            80,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "3709a6f9362b49b20f9efff6b9226e51560f49ef9f45d77bb6fbaa035c90ba11"
+        },
+        "cell_tags": {
+          "shape": [
+            80
+          ],
+          "dtype": "int32",
+          "sha256": "5d93ad29a5d6f71e33316df547fd5ceb8e476efe1939732e5653a22abba91de7"
+        },
+        "regular_tags": {
+          "shape": [
+            80
+          ],
+          "dtype": "int32",
+          "sha256": "38289de3247dee1754df33174d614a0029302531a9706f7407f0536e982b5f4a"
+        }
+      }
+    }
+  ],
+  "tag_roles": {
+    "air": 1,
+    "substrate": 2,
+    "Si_block": 3
+  },
+  "errata": "early e184 reference manifests bound the full two-case inventory hash; independently audited arrays now bind actual per-case descriptors. Earlier 0 volume/factor counters were placeholders, not measured zeros.",
+  "historical_raw_not_rewritten": true,
+  "independent_geometry_RHS_field_pairing": "VERIFY_P4 exact geometry/material ordering and original RHS checks"
+}

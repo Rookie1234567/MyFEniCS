@@ -1,0 +1,69 @@
+{
+  "family": "V49_COMPLETE_SCATTERING_ENGINE_ANCHOR",
+  "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "worktree": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "complete_science_frozen": true,
+  "source_records": "source_bindings_v49.json",
+  "scientific_stage_pointers": {
+    "ENGINE_REGULAR": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T030919475064Z/result.json",
+      "sha256": "553f030c4bad16188f7c5a0b54e5197174038943a8d0d909f61975441bb42788"
+    },
+    "REFERENCE_NOTCH": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_reference_notch_20261005T024226716124Z/result.json",
+      "sha256": "708d522bc2eb0d755929b2ecd5ab7d12b3f5969dd5a4e55cfa1e8bd17f6a7d9b"
+    },
+    "VERIFY_P4": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/result.json",
+      "sha256": "fb240e389961ec3aa473f0adfba58bcb2a43e5e702cbdb87bf0c14d12e571ccb"
+    },
+    "COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_accuracy_cost_report_20261005T040552399628Z/result.json",
+      "sha256": "f171b42522f5f3f27f9345dba015aa5de2e32debd2d7633e3824669b30916ca0"
+    },
+    "ENGINE_NOTCH": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_engine_notch_20261005T031205654041Z/result.json",
+      "sha256": "0c28b70eef28a8c62bec2f38f599392b85a4e1609fa1faf4784131b114b4d6ef"
+    },
+    "REFERENCE_NOTCH_P5": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_reference_notch_p5_20261005T035027359896Z/result.json",
+      "sha256": "41d0eae275bb8e04d5ced7184dada80a09a1d1a3281871d668f36b6d03411aca"
+    },
+    "REFERENCE_REGULAR": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_reference_regular_20261005T023830942849Z/result.json",
+      "sha256": "760534a43a1a6a41ebf79716880f2cda63ad795fff3deed5974866b21ac81bd5"
+    },
+    "PREFLIGHT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_engine_preflight_20261005T023603192961Z/result.json",
+      "sha256": "ff96ef45758f2fd6751c2bf3d3d1ec91c215afe33f6c5347f60968387b43ab74"
+    }
+  },
+  "compact_records": [
+    "array_inventory_v49.json",
+    "changed_files_v49.json",
+    "cold_n1_costs_v49.json",
+    "complete_physical_results_v49.json",
+    "documentation_checks_v49.json",
+    "engine_source_manifest_v49.json",
+    "finite_independent_checks_v49.json",
+    "object_lifetimes_v49.json",
+    "opportunity_decision_v49.json",
+    "p_increment_v49.json",
+    "physical_cases_v49.json",
+    "physical_identity_bindings_v49.json",
+    "post_settlement_archive_v49.json",
+    "raw_archive_index_v49.json",
+    "repair_journal_v49.jsonl",
+    "resource_costs_final_v49.json",
+    "resource_costs_snapshot_v49.json",
+    "run_index_v49.json",
+    "source_bindings_v49.json",
+    "tests_v49.json"
+  ],
+  "mutable_final_fees_and_documentation_records_are_settled_after_document_tests": true,
+  "new_NEURAL_TRAINING": 0,
+  "TARGET_NOT_QUALIFIED": true,
+  "final_delivery_git_receipt": "delivery_git_v49.json"
+}

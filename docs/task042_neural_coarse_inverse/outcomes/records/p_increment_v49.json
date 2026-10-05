@@ -1,0 +1,179 @@
+{
+  "result": {
+    "status": "measured",
+    "degree_pair": [
+      4,
+      5
+    ],
+    "same_geometry_same_80mesh": true,
+    "actual_operator_identity": {
+      "degree": 5,
+      "physical_contract_sha256": "dcffc8784c0c3c1620c95084384ffa027f9d233b54e5ff5429bd1bb0185720a7",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "mode_sha256": "9206da3bcf687c4cbf9dbfad48a22456f4a75f5cf3c537331fcdf71a9f79b5a2",
+      "parent_state_sha256": "bd1a17eb248ba4c364eb9831e281b399eea80351354947a971bf676aba9a7c74"
+    },
+    "p5_original_audit": {
+      "true": 2.5759033957755938e-12,
+      "native": 2.5759033957755938e-12,
+      "augmented": 1.8387295404896088e-12,
+      "port": 2.429158526306038e-14,
+      "identity": 1.293040696315811e-16,
+      "slave_zero": true
+    },
+    "p5_recovery": {
+      "operation_scaled_interior": 1.333832972184882e-15,
+      "max_cell_operation_scaled": 2.1321597856282437e-15,
+      "master_storage_max_abs": 0.0,
+      "slave_storage_zero": true,
+      "split_action_identity_operation_scale": 7.25059502393541e-16,
+      "internal_rhs_norm": 9.41213864909168e-14,
+      "basis": "independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action"
+    },
+    "independent_arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_accuracy_cost_report_20261005T040552399628Z/P5_original_independent_audit.npz",
+      "sha256": "b63ae30cbb15ebf59248487f8d6a7c21bb6281e05408502fe3f9e553f2c5b70a",
+      "members": {
+        "residual": {
+          "shape": [
+            32865
+          ],
+          "dtype": "complex128",
+          "sha256": "89119a078495a7e5c5213182b83c290c60dcd0d344ee981fa580cc930789586e"
+        },
+        "volume_action": {
+          "shape": [
+            32865
+          ],
+          "dtype": "complex128",
+          "sha256": "af7b162f604b37672d0e5d1a161551ae8943afe8c60c3389c02883358fa76b60"
+        },
+        "coupling_action": {
+          "shape": [
+            32865
+          ],
+          "dtype": "complex128",
+          "sha256": "d3b60dbd1f52ee31ba718759ff3d6139b457f3095e0dff4960b5a98c13af3399"
+        },
+        "augmented_residual": {
+          "shape": [
+            32865
+          ],
+          "dtype": "complex128",
+          "sha256": "19d10b80c28c6e2af11a23ed9b6675911f3fcb2a8150759bebdd0dbc42583e95"
+        },
+        "port_residual": {
+          "shape": [
+            532
+          ],
+          "dtype": "complex128",
+          "sha256": "95161a5969b5ee4479a5830a7752210ada830ba33320fb551ed99c1c7c1bfbc3"
+        },
+        "projected": {
+          "shape": [
+            532
+          ],
+          "dtype": "complex128",
+          "sha256": "295b48dec704db36b7826a96b6e22d09c4158f5c47edfa29fe51e43d5f49c627"
+        },
+        "H": {
+          "shape": [
+            532
+          ],
+          "dtype": "float64",
+          "sha256": "4daa73464d401e817dbe629743cf60c2ad2c91a3098af8be9e8bddfaa1e5063e"
+        },
+        "interior_only_volume_action": {
+          "shape": [
+            32865
+          ],
+          "dtype": "complex128",
+          "sha256": "3904caa7a49ab8e3ef239079491640106ddcaac29e695c27644a3f0578de28f9"
+        },
+        "trace_only_volume_action": {
+          "shape": [
+            32865
+          ],
+          "dtype": "complex128",
+          "sha256": "dd130fd7dc9e8763aaad4bcfda919dd3221e54051a2c524e80af084a0e351c2f"
+        },
+        "interior_rows": {
+          "shape": [
+            19200
+          ],
+          "dtype": "int32",
+          "sha256": "8e96cf27fff6c8174b6a2b4fe0714e3b204133a93bcbdc1b9a64f1b410fc3d44"
+        }
+      }
+    },
+    "p5_equation_pass": true,
+    "p5_direct_internal_target_pass": true,
+    "p5_recovery_pass": true,
+    "p5_energy_pass": true,
+    "fields": {
+      "E_total": {
+        "reference_L2": 0.11337589424112537,
+        "difference_L2": 0.33482059446216383,
+        "mixed_relative": 2.953190329419362
+      },
+      "scaled_curl_total": {
+        "reference_L2": 0.12024311764960689,
+        "difference_L2": 0.3384505645384068,
+        "mixed_relative": 2.814718805983265
+      },
+      "H_total": {
+        "reference_L2": 0.12024311764960689,
+        "difference_L2": 0.3384505645384068,
+        "mixed_relative": 2.814718805983265
+      },
+      "E_scattered": {
+        "reference_L2": 5.367980079988659,
+        "difference_L2": 1.0362582669599363,
+        "mixed_relative": 0.19304435775069526
+      },
+      "scaled_curl_scattered": {
+        "reference_L2": 5.547915410274681,
+        "difference_L2": 1.5970261612332335,
+        "mixed_relative": 0.28786058242264434
+      },
+      "H_scattered": {
+        "reference_L2": 5.547915410274681,
+        "difference_L2": 1.5970261612332335,
+        "mixed_relative": 0.28786058242264434
+      }
+    },
+    "selected": {
+      "selected_E_total": 2.7197294592065777,
+      "selected_E_scattered": 0.12728591203839063,
+      "selected_H_total": 2.958931674997667,
+      "selected_H_scattered": 0.3191492333745552,
+      "selected_curl_total": 2.958931674997667,
+      "selected_curl_scattered": 0.3191492333745553
+    },
+    "power_absolute_differences": {
+      "R_total": 0.0009279755898051745,
+      "T_total": 0.0009582776082732511,
+      "A_balance": 3.0302018468076605e-05,
+      "A_volume": 3.0301224936048588e-05
+    },
+    "all_modes": {
+      "auxiliary_amplitude_total_projection_relative": 1.8068058388671842,
+      "auxiliary_amplitude_total_projection_max_absolute": 1.6047100012591333e+25,
+      "outgoing_amplitude_relative": 1.8068058388671842,
+      "outgoing_amplitude_max_absolute": 1.6047100012591333e+25,
+      "outgoing_amplitude_at_boundary_relative": 0.19577957745678798,
+      "outgoing_amplitude_at_boundary_max_absolute": 0.19471717514283104,
+      "mode_power_max_absolute": 0.0019218731627359542,
+      "mode_count": 532
+    },
+    "reference_energy_absolute": 4.239629314284343e-09,
+    "candidate_energy_absolute": 5.033161221135174e-09,
+    "no_continuum_convergence_claim": true
+  },
+  "parent": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_accuracy_cost_report_20261005T040552399628Z/result.json",
+    "sha256": "f171b42522f5f3f27f9345dba015aa5de2e32debd2d7633e3824669b30916ca0"
+  },
+  "cross_degree_scattered_definition": "each degree uses its own original FE-interpolated layered background; differences include background representation error. Total E/curl give an unambiguous nonconvergence signal.",
+  "continuum_convergence": false
+}

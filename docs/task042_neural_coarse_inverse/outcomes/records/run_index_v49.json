@@ -1,0 +1,183 @@
+{
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused01",
+      "source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_preflight_20261005T023603192961Z",
+      "source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "REFERENCE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_regular_20261005T023628436965Z",
+      "source_sha": "883a0cf981f36c066f870ab260747ccf6c956347",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused02",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "REFERENCE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_regular_20261005T023830942849Z",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "REFERENCE_NOTCH",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_notch_20261005T024226716124Z",
+      "source_sha": "e184c386a7187bd39d485de369071cb80badea55",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused03",
+      "source_sha": "decca10b261af30540b7d57fdcef3aaac6a5812d",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T024732634825Z",
+      "source_sha": "decca10b261af30540b7d57fdcef3aaac6a5812d",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused04",
+      "source_sha": "239ffb308e235d4046a274ab82617aaa4f334d27",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T025418954954Z",
+      "source_sha": "239ffb308e235d4046a274ab82617aaa4f334d27",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused05",
+      "source_sha": "3d379b8dcad5182ffa7c51a73e05ba2479a8a9b3",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T030002106817Z",
+      "source_sha": "3d379b8dcad5182ffa7c51a73e05ba2479a8a9b3",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused06",
+      "source_sha": "88c9f1047eb8c6afe1dfc47a78bf1ea9f139ef7e",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T030638197121Z",
+      "source_sha": "88c9f1047eb8c6afe1dfc47a78bf1ea9f139ef7e",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused07",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ENGINE_REGULAR",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_regular_20261005T030919475064Z",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ENGINE_NOTCH",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_engine_notch_20261005T031205654041Z",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "VERIFY_P4",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_verify_p4_20261005T031516308560Z",
+      "source_sha": "5a21673150dc3cc2b282e6f9f0f319722b51d128",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused08",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "REFERENCE_NOTCH_P5",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_reference_notch_p5_20261005T035027359896Z",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_accuracy_cost_report_20261005T040011674378Z",
+      "source_sha": "1bbcffc14ede9e11742e6ad6db89339c6f793923",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused09",
+      "source_sha": "06d4fe2c40d40c301b9566d6fa4ba198a31ff468",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v49_accuracy_cost_report_20261005T040552399628Z",
+      "source_sha": "06d4fe2c40d40c301b9566d6fa4ba198a31ff468",
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/aux_pre_focused10",
+      "source_sha": "81d5f7057efea3c4c22fef43afaec67c55ade323",
+      "classification": "COMPLETED"
+    }
+  ],
+  "complete_stage_pointers": {
+    "ENGINE_REGULAR": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_engine_regular_20261005T030919475064Z/result.json",
+      "sha256": "553f030c4bad16188f7c5a0b54e5197174038943a8d0d909f61975441bb42788"
+    },
+    "REFERENCE_NOTCH": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_reference_notch_20261005T024226716124Z/result.json",
+      "sha256": "708d522bc2eb0d755929b2ecd5ab7d12b3f5969dd5a4e55cfa1e8bd17f6a7d9b"
+    },
+    "VERIFY_P4": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_verify_p4_20261005T031516308560Z/result.json",
+      "sha256": "fb240e389961ec3aa473f0adfba58bcb2a43e5e702cbdb87bf0c14d12e571ccb"
+    },
+    "COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_accuracy_cost_report_20261005T040552399628Z/result.json",
+      "sha256": "f171b42522f5f3f27f9345dba015aa5de2e32debd2d7633e3824669b30916ca0"
+    },
+    "ENGINE_NOTCH": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_engine_notch_20261005T031205654041Z/result.json",
+      "sha256": "0c28b70eef28a8c62bec2f38f599392b85a4e1609fa1faf4784131b114b4d6ef"
+    },
+    "REFERENCE_NOTCH_P5": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_reference_notch_p5_20261005T035027359896Z/result.json",
+      "sha256": "41d0eae275bb8e04d5ced7184dada80a09a1d1a3281871d668f36b6d03411aca"
+    },
+    "REFERENCE_REGULAR": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_reference_regular_20261005T023830942849Z/result.json",
+      "sha256": "760534a43a1a6a41ebf79716880f2cda63ad795fff3deed5974866b21ac81bd5"
+    },
+    "PREFLIGHT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v49/task042_v49_engine_preflight_20261005T023603192961Z/result.json",
+      "sha256": "ff96ef45758f2fd6751c2bf3d3d1ec91c215afe33f6c5347f60968387b43ab74"
+    }
+  },
+  "minimum_package": "/home/fenics/Projects/NN-Lab/tmp/task042/v49/minimum_result_cost_package.json"
+}

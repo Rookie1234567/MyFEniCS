@@ -1,0 +1,28 @@
+{
+  "status": "PENDING_FINAL_ACTUAL_BYTES",
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "exact_render_attempt": {
+    "clock": {
+      "start_utc": "2026-10-05T02:22:52.968771+00:00",
+      "start_monotonic": 1091967.829659756,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "total_limit_seconds": 25200,
+      "heavy_limit_seconds": 22500,
+      "review_commit": "0b0e6b236aa1a7205f453841a0a41e209656ed98",
+      "paired_probe_utc": "2026-10-05T02:22:53.079232+00:00",
+      "paired_probe_monotonic": 1091967.940120756,
+      "derived_first_monotonic_offset_seconds": 0.110461,
+      "observed_utc": "2026-10-05T04:23:04.265343+00:00",
+      "observed_monotonic": 1099179.126211253,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 7211.296572446823,
+      "heavy_remaining_seconds": 15288.703427553177,
+      "total_remaining_seconds": 17988.703427553177
+    },
+    "exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/0b0e6b236aa1a7205f453841a0a41e209656ed98/docs/task042_neural_coarse_inverse/review_report_v47.md",
+    "tool_result": "Cache miss",
+    "visual_status": "NOT_VERIFIED",
+    "no_visual_screenshot_obtained": true
+  }
+}

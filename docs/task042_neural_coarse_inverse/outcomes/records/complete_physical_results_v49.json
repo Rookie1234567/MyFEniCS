@@ -1,0 +1,747 @@
+{
+  "p4": [
+    {
+      "case": "REGULAR",
+      "reference_audit": {
+        "true": 1.776046125875458e-12,
+        "native": 1.776046125875458e-12,
+        "augmented": 1.5046530712941761e-12,
+        "port": 9.976038112979064e-14,
+        "identity": 1.5313062182315342e-16,
+        "slave_zero": true
+      },
+      "reference_recovery": {
+        "operation_scaled_interior": 1.2406626208730719e-15,
+        "max_cell_operation_scaled": 3.630377735549295e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "basis": "original uncondensed oriented native cell tensor; no inverse/condensed residual reused"
+      },
+      "reference_energy_absolute": 4.238983719595524e-09,
+      "reference_energy_pass": true,
+      "reference_equation_pass": true,
+      "reference_direct_internal_target_pass": true,
+      "candidate_audit": {
+        "true": 9.112582337275872e-13,
+        "native": 9.112582337275872e-13,
+        "augmented": 9.112582100539202e-13,
+        "port": 4.098041891555941e-18,
+        "identity": 5.3023560761655314e-17,
+        "slave_zero": true
+      },
+      "candidate_recovery": {
+        "operation_scaled_interior": 1.3311251439441036e-15,
+        "max_cell_operation_scaled": 3.3860780861709437e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "basis": "original uncondensed oriented native cell tensor; no inverse/condensed residual reused"
+      },
+      "fields": {
+        "E_total": {
+          "reference_L2": 0.11337600752470726,
+          "difference_L2": 2.2921268452088643e-13,
+          "mixed_relative": 2.0217036172396147e-12
+        },
+        "scaled_curl_total": {
+          "reference_L2": 0.12024320228625517,
+          "difference_L2": 2.2913562389545415e-13,
+          "mixed_relative": 1.9056014771626414e-12
+        },
+        "H_total": {
+          "reference_L2": 0.12024320228625517,
+          "difference_L2": 2.2913562389545415e-13,
+          "mixed_relative": 1.9056014771626414e-12
+        },
+        "E_scattered": {
+          "reference_L2": 5.367980076247297,
+          "difference_L2": 2.2921930452293055e-13,
+          "mixed_relative": 4.270122117948984e-14
+        },
+        "scaled_curl_scattered": {
+          "reference_L2": 5.54791540653157,
+          "difference_L2": 2.2913662791758723e-13,
+          "mixed_relative": 4.130139180706041e-14
+        },
+        "H_scattered": {
+          "reference_L2": 5.54791540653157,
+          "difference_L2": 2.2913662791758723e-13,
+          "mixed_relative": 4.130139180706041e-14
+        }
+      },
+      "selected": {
+        "selected_E_total": 1.50102400298729e-12,
+        "selected_E_scattered": 4.3057650528997484e-14,
+        "selected_H_total": 1.4870368984931333e-12,
+        "selected_H_scattered": 4.748683511655563e-14,
+        "selected_curl_total": 1.4870388357233017e-12,
+        "selected_curl_scattered": 4.749241051468912e-14
+      },
+      "all_modes": {
+        "auxiliary_amplitude_total_projection_relative": 1.7391402422555883e-12,
+        "auxiliary_amplitude_total_projection_max_absolute": 13826333159536.332,
+        "outgoing_amplitude_relative": 1.7391402422555883e-12,
+        "outgoing_amplitude_max_absolute": 13826333159536.332,
+        "outgoing_amplitude_at_boundary_relative": 7.553748928387493e-14,
+        "outgoing_amplitude_at_boundary_max_absolute": 5.1810380311254994e-14,
+        "mode_power_max_absolute": 1.2212453270876722e-15,
+        "mode_count": 532
+      },
+      "power_differences": {
+        "R_total": 1.5543122344752192e-15,
+        "T_total": 5.850354922731782e-16,
+        "A_balance": 2.1393477267483973e-15,
+        "A_volume": 4.69468011015696e-19
+      },
+      "candidate_energy_absolute": 4.238981610171777e-09,
+      "equation_pass": true,
+      "recovery_pass": true,
+      "same_discrete_field_pass": true,
+      "FINITE_OBSERVABLE_PASS": true
+    },
+    {
+      "case": "NOTCH",
+      "reference_audit": {
+        "true": 1.5678417159614912e-12,
+        "native": 1.5678417159614912e-12,
+        "augmented": 1.3270569342377522e-12,
+        "port": 1.2315103962463163e-13,
+        "identity": 1.4192943413392263e-16,
+        "slave_zero": true
+      },
+      "reference_recovery": {
+        "operation_scaled_interior": 1.230448968164858e-15,
+        "max_cell_operation_scaled": 3.233771909581082e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "basis": "original uncondensed oriented native cell tensor; no inverse/condensed residual reused"
+      },
+      "reference_energy_absolute": 4.239629314284343e-09,
+      "reference_energy_pass": true,
+      "reference_equation_pass": true,
+      "reference_direct_internal_target_pass": true,
+      "candidate_audit": {
+        "true": 8.03862329552053e-12,
+        "native": 8.03862329552053e-12,
+        "augmented": 8.038623292836027e-12,
+        "port": 1.3075170660334684e-16,
+        "identity": 5.0274887011092024e-17,
+        "slave_zero": true
+      },
+      "candidate_recovery": {
+        "operation_scaled_interior": 7.123906498412691e-14,
+        "max_cell_operation_scaled": 2.2728382230625257e-12,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "basis": "original uncondensed oriented native cell tensor; no inverse/condensed residual reused"
+      },
+      "fields": {
+        "E_total": {
+          "reference_L2": 0.11337589424112537,
+          "difference_L2": 9.129405155599336e-13,
+          "mixed_relative": 8.052333537659351e-12
+        },
+        "scaled_curl_total": {
+          "reference_L2": 0.12024311764960689,
+          "difference_L2": 9.13432715226947e-13,
+          "mixed_relative": 7.59654883441001e-12
+        },
+        "H_total": {
+          "reference_L2": 0.12024311764960689,
+          "difference_L2": 9.13432715226947e-13,
+          "mixed_relative": 7.59654883441001e-12
+        },
+        "E_scattered": {
+          "reference_L2": 5.367980079988659,
+          "difference_L2": 9.129443316259574e-13,
+          "mixed_relative": 1.7007222791852953e-13
+        },
+        "scaled_curl_scattered": {
+          "reference_L2": 5.547915410274681,
+          "difference_L2": 9.13458655547283e-13,
+          "mixed_relative": 1.6464898759191015e-13
+        },
+        "H_scattered": {
+          "reference_L2": 5.547915410274681,
+          "difference_L2": 9.13458655547283e-13,
+          "mixed_relative": 1.6464898759191015e-13
+        }
+      },
+      "selected": {
+        "selected_E_total": 5.874444440597318e-12,
+        "selected_E_scattered": 1.6848352020699193e-13,
+        "selected_H_total": 5.785668484837192e-12,
+        "selected_H_scattered": 1.8487527382396052e-13,
+        "selected_curl_total": 5.785665686215046e-12,
+        "selected_curl_scattered": 1.8487849969162587e-13
+      },
+      "all_modes": {
+        "auxiliary_amplitude_total_projection_relative": 3.610348630670397e-12,
+        "auxiliary_amplitude_total_projection_max_absolute": 22032456869635.727,
+        "outgoing_amplitude_relative": 3.610348630670397e-12,
+        "outgoing_amplitude_max_absolute": 22032456869635.727,
+        "outgoing_amplitude_at_boundary_relative": 2.607672782190028e-13,
+        "outgoing_amplitude_at_boundary_max_absolute": 1.771049975004148e-13,
+        "mode_power_max_absolute": 6.5503158452884236e-15,
+        "mode_count": 532
+      },
+      "power_differences": {
+        "R_total": 1.7763568394002505e-15,
+        "T_total": 4.786318910654508e-15,
+        "A_balance": 6.562675750054758e-15,
+        "A_volume": 1.841873143804476e-18
+      },
+      "candidate_energy_absolute": 4.239635864600189e-09,
+      "equation_pass": true,
+      "recovery_pass": true,
+      "same_discrete_field_pass": true,
+      "FINITE_OBSERVABLE_PASS": true
+    }
+  ],
+  "powers": [
+    {
+      "stage": "REFERENCE_REGULAR",
+      "port": {
+        "R_total": 0.998869472978714,
+        "R00_total": 0.9977052023041708,
+        "R00_s": 0.9976959100367884,
+        "R00_p": 9.29226738245089e-06,
+        "R00_by_polarization": {
+          "s": 0.9976959100367884,
+          "p": 9.29226738245089e-06
+        },
+        "T_total": 0.0011294030383417703,
+        "R_plus_T": 0.9999988760170557,
+        "A_balance": 1.1239829442505258e-06,
+        "R_total_dtn_port_modal": 0.998869472978714,
+        "T_total_dtn_port_modal": 0.0011294030383417703,
+        "R_plus_T_dtn_port_modal": 0.9999988760170557,
+        "A_balance_dtn_port_modal": 1.1239829442505258e-06,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 24,
+            "volume_nm3": 7.109891784788889,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 2.9498768123413455e-08,
+            "A_volume": 1.0058657053911418e-06
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 3.339678670686468e-09,
+            "A_volume": 1.1387825511274524e-07
+          }
+        },
+        "A_grating": 1.0058657053911418e-06,
+        "A_substrate": 1.1387825511274524e-07,
+        "A_volume_grating": 1.0058657053911418e-06,
+        "A_volume_substrate": 1.1387825511274524e-07,
+        "A_volume_total": 1.119743960503887e-06,
+        "A_port_balance_minus_A_volume_total": 4.238983746638745e-09,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -4.238983719595524e-09
+      }
+    },
+    {
+      "stage": "REFERENCE_NOTCH",
+      "port": {
+        "R_total": 0.9988694766198649,
+        "R00_total": 0.9977052504899342,
+        "R00_s": 0.9976959582029264,
+        "R00_p": 9.292287007728995e-06,
+        "R00_by_polarization": {
+          "s": 0.9976959582029264,
+          "p": 9.292287007728995e-06
+        },
+        "T_total": 0.0011294290685096942,
+        "R_plus_T": 0.9999989056883746,
+        "A_balance": 1.094311625390301e-06,
+        "R_total_dtn_port_modal": 0.9988694766198649,
+        "T_total_dtn_port_modal": 0.0011294290685096942,
+        "R_plus_T_dtn_port_modal": 0.9999989056883746,
+        "A_balance_dtn_port_modal": 1.094311625390301e-06,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 22,
+            "volume_nm3": 6.517400802723149,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 2.862848154409987e-08,
+            "A_volume": 9.761901806257907e-07
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 3.3397830848840957e-09,
+            "A_volume": 1.1388181548720258e-07
+          }
+        },
+        "A_grating": 9.761901806257907e-07,
+        "A_substrate": 1.1388181548720258e-07,
+        "A_volume_grating": 9.761901806257907e-07,
+        "A_volume_substrate": 1.1388181548720258e-07,
+        "A_volume_total": 1.0900719961129934e-06,
+        "A_port_balance_minus_A_volume_total": 4.2396292773075435e-09,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -4.239629314284343e-09
+      }
+    },
+    {
+      "stage": "ENGINE_REGULAR",
+      "port": {
+        "R_total": 0.9988694729787155,
+        "R00_total": 0.997705202304172,
+        "R00_s": 0.9976959100367896,
+        "R00_p": 9.292267382436731e-06,
+        "R00_by_polarization": {
+          "s": 0.9976959100367896,
+          "p": 9.292267382436731e-06
+        },
+        "T_total": 0.0011294030383423553,
+        "R_plus_T": 0.9999988760170578,
+        "A_balance": 1.123982942111178e-06,
+        "R_total_dtn_port_modal": 0.9988694729787155,
+        "T_total_dtn_port_modal": 0.0011294030383423553,
+        "R_plus_T_dtn_port_modal": 0.9999988760170578,
+        "A_balance_dtn_port_modal": 1.123982942111178e-06,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 24,
+            "volume_nm3": 7.109891784788889,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 2.9498768123424516e-08,
+            "A_volume": 1.005865705391519e-06
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 3.3396786706891786e-09,
+            "A_volume": 1.1387825511283767e-07
+          }
+        },
+        "A_grating": 1.005865705391519e-06,
+        "A_substrate": 1.1387825511283767e-07,
+        "A_volume_grating": 1.005865705391519e-06,
+        "A_volume_substrate": 1.1387825511283767e-07,
+        "A_volume_total": 1.1197439605043565e-06,
+        "A_port_balance_minus_A_volume_total": 4.23898160682155e-09,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -4.238981610171777e-09
+      }
+    },
+    {
+      "stage": "ENGINE_NOTCH",
+      "port": {
+        "R_total": 0.9988694766198631,
+        "R00_total": 0.9977052504899276,
+        "R00_s": 0.9976959582029199,
+        "R00_p": 9.29228700776395e-06,
+        "R00_by_polarization": {
+          "s": 0.9976959582029199,
+          "p": 9.29228700776395e-06
+        },
+        "T_total": 0.0011294290685049078,
+        "R_plus_T": 0.999998905688368,
+        "A_balance": 1.0943116319529766e-06,
+        "R_total_dtn_port_modal": 0.9988694766198631,
+        "T_total_dtn_port_modal": 0.0011294290685049078,
+        "R_plus_T_dtn_port_modal": 0.999998905688368,
+        "A_balance_dtn_port_modal": 1.0943116319529766e-06,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 22,
+            "volume_nm3": 6.517400802723149,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 2.8628481544058478e-08,
+            "A_volume": 9.761901806243794e-07
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 3.339783084871472e-09,
+            "A_volume": 1.1388181548677214e-07
+          }
+        },
+        "A_grating": 9.761901806243794e-07,
+        "A_substrate": 1.1388181548677214e-07,
+        "A_volume_grating": 9.761901806243794e-07,
+        "A_volume_substrate": 1.1388181548677214e-07,
+        "A_volume_total": 1.0900719961111515e-06,
+        "A_port_balance_minus_A_volume_total": 4.239635841825167e-09,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -4.239635864600189e-09
+      }
+    },
+    {
+      "stage": "REFERENCE_NOTCH_P5",
+      "port": {
+        "R_total": 0.9997974522096701,
+        "R00_total": 0.999627061482082,
+        "R00_s": 0.9996178313656624,
+        "R00_p": 9.230116419600161e-06,
+        "R00_by_polarization": {
+          "s": 0.9996178313656624,
+          "p": 9.230116419600161e-06
+        },
+        "T_total": 0.0001711514602364431,
+        "R_plus_T": 0.9999686036699066,
+        "A_balance": 3.1396330093466906e-05,
+        "R_total_dtn_port_modal": 0.9997974522096701,
+        "T_total_dtn_port_modal": 0.0001711514602364431,
+        "R_plus_T_dtn_port_modal": 0.9999686036699066,
+        "A_balance_dtn_port_modal": 3.1396330093466906e-05,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 6.7407407407407405,
+        "dtn_port_bottom_reference_z": -0.5185185185185185,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.029326746070880844,
+        "stage4_dtn_order_policy": "manual",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 532,
+        "dtn_port_top_mode_count": 266,
+        "dtn_port_bottom_mode_count": 266,
+        "dtn_port_propagating_mode_count": 84,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.029326746070880844,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 22,
+            "volume_nm3": 6.517400802723149,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 9.201201569750423e-07,
+            "A_volume": 3.1374778325258846e-05
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 16,
+            "volume_nm3": 1.7426205354874753,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 4.844369900812151e-10,
+            "A_volume": 1.6518606902735214e-08
+          }
+        },
+        "A_grating": 3.1374778325258846e-05,
+        "A_substrate": 1.6518606902735214e-08,
+        "A_volume_grating": 3.1374778325258846e-05,
+        "A_volume_substrate": 1.6518606902735214e-08,
+        "A_volume_total": 3.139129693216158e-05,
+        "A_port_balance_minus_A_volume_total": 5.033161305323473e-09,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -5.033161221135174e-09
+      }
+    }
+  ],
+  "equation_qualification": "COMPLETE_FINITE_EQUATION_PASS",
+  "observable_qualification": "FINITE_OBSERVABLE_PASS according to independently recomputed frozen criteria",
+  "p_increment": "MEASURED_NOT_CONVERGED",
+  "TARGET_NOT_QUALIFIED": true,
+  "NN_NOT_TRAINED_THIS_BATCH": true
+}

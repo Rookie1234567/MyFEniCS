@@ -9,7 +9,11 @@ import json
 import os
 import shutil
 import subprocess
+import sys
+import re
+import time
 from pathlib import Path
+from urllib.parse import unquote
 import numpy as np
 
 from src.runners.task042_shared import write_json
@@ -137,4 +141,58 @@ def collect():
     print(json.dumps({'records':len(list(out.glob('*.json'))),'raw_files':len(items),'raw_unique_bytes':sum(p.stat().st_size for p in archive.iterdir()),'new_FE_A_AH_factor_training':0}),flush=True)
 
 
-if __name__=='__main__':collect()
+def documents():
+    """Validate actual final Markdown bytes and immutable old history tails."""
+    window.guard_worker_parent()
+    folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY'])
+    task=ROOT/'docs/task042_neural_coarse_inverse'
+    protected=[]
+    for name in ('docs/task042_neural_coarse_inverse/README.md',
+                 'docs/task042_neural_coarse_inverse/outcomes/summary.md',
+                 'docs/development_progress.md','docs/development_model_registry.md'):
+        old=subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false','show',
+                                     '0b0e6b236aa1a7205f453841a0a41e209656ed98:'+name],cwd=ROOT)
+        body=(ROOT/name).read_bytes()
+        if not body.endswith(old):raise ValueError('old navigation history changed '+name)
+        protected.append({'path':name,'old_bytes':len(old),'old_sha256':hashlib.sha256(old).hexdigest()})
+    checked=[]
+    for path in (task/'review_report_v47.md',task/'response_v49.md',task/'outcomes/complete_scattering_engine_anchor_v49.md'):
+        width=None;inside=False;tables=[];links=[]
+        for number,line in enumerate(path.read_text().splitlines(),1):
+            if line.startswith('```'):inside=not inside;continue
+            if inside:continue
+            if line.startswith('|'):
+                columns=len(re.split(r'(?<!\\)\|',line))-2
+                if width is None:tables.append({'line':number,'columns':columns});width=columns
+                if width!=columns:raise ValueError('table width '+str(path)+':'+str(number))
+            else:width=None
+            for target in re.findall(r'\]\(([^)]+)\)',line):
+                if target.startswith(('http','app:','#')):continue
+                target=unquote(target.split('#')[0])
+                if not (path.parent/target).exists():raise ValueError('missing local link '+target)
+                links.append(target)
+        if inside:raise ValueError('unclosed Markdown fence')
+        checked.append({'path':str(path.relative_to(ROOT)),'sha256':digest(path),'tables':tables,'links':links})
+    from src.solvers.scattering_anchor_scope import implementation_hashes
+    hashes=implementation_hashes()
+    for name in hashes:
+        if name.endswith('.py'):compile((ROOT/name).read_bytes(),name,'exec')
+    commands=[[sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],
+              ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82','benchmarks/collect_scattering_anchor.py'],
+              ['git','-c','gc.auto=0','-c','maintenance.auto=false','diff','--check']]
+    rows=[]
+    for i,command in enumerate(commands):
+        begin=time.perf_counter();r=subprocess.run(command,cwd=ROOT,capture_output=True,text=True,check=False)
+        (folder/f'command{i}.stdout').write_text(r.stdout);(folder/f'command{i}.stderr').write_text(r.stderr)
+        rows.append({'command':command,'returncode':r.returncode,'seconds':time.perf_counter()-begin})
+        if r.returncode:raise RuntimeError('final local documentation/source checks failed')
+    write_json(folder/'documentation_checks.json',{'status':'PASSED_LOCAL','checked_actual_delivery_bytes':checked,
+        'old_history_suffixes':protected,'commands':rows,'implementation_hashes':hashes,
+        'GitHub_visual':'NOT_VERIFIED_CACHE_MISS','CI':'NOT_RUN','new_FE_A_AH_factor_training':0})
+    print(json.dumps({'status':'PASSED_LOCAL','documentation_tests':15,'checked_final_documents':len(checked)}),flush=True)
+
+
+if __name__=='__main__':
+    if sys.argv[1:]==['--docs']:documents()
+    elif not sys.argv[1:]:collect()
+    else:raise ValueError('unknown compact collector arguments')
