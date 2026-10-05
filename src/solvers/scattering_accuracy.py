@@ -204,7 +204,10 @@ def volume_form_identity(bundle):
         compiled=fem.form(form)
         result[name]=dict(UFL_signature=form.signature(),FFCx_integrals=groups,
             ufcx_signature=compiled.module.ffi.string(compiled.ufcx_form.signature).decode())
-    return dict(components=result,ffcx_version=ffcx.__version__,element=str(bundle['setup']['spaces'][bundle['degree']].element.basix_element),
+    el=bundle['setup']['spaces'][bundle['degree']].element.basix_element
+    identity=dict(degree=el.degree,dimension=el.dim,cell=el.cell_type.name,family=el.family.name,
+        value_shape=list(el.value_shape),map_type=el.map_type.name,discontinuous=el.discontinuous)
+    return dict(components=result,ffcx_version=ffcx.__version__,element=identity,
         polynomial_reason='axis-aligned affine geometry; constant isotropic material; tensor Nedelec polynomial products; actual FFCx degrees above',
         exclusions='incident exponential and Fourier boundary are not polynomial and use independent q47/q63')
 
@@ -284,6 +287,8 @@ def analytic_comparison(bundle,u,geometry,folder,journal):
 
 
 def solve(role,folder,journal):
+    if (window.TMP/'scientific_queue_frozen.json').exists():
+        raise RuntimeError('V50 scientific solve queue already frozen')
     from .scattering_accuracy_checks import check_boundary
     boundary_gate=check_boundary(stage('BOUNDARY'));write_json(folder/'boundary_dependency_check.json',boundary_gate)
     if not boundary_gate['pass_gate']:return dict(status='NOT_RUN_BOUNDARY_GATE',role=role,boundary_gate=boundary_gate)
@@ -356,8 +361,15 @@ def solve(role,folder,journal):
 
 def verify(folder,journal):
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    import json,hashlib
+    from .scattering_accuracy_scope import ARTIFACT
+    frozen=json.loads((window.TMP/'scientific_queue_frozen.json').read_text())
+    for role,item in frozen['completed_solves'].items():
+        pointer=json.loads((ARTIFACT/(role+'.json')).read_text())
+        if pointer!=item['pointer'] or hashlib.sha256(Path(pointer['path']).read_bytes()).hexdigest()!=pointer['sha256']:
+            raise ValueError('post-freeze parent changed '+role)
     rows=[]
-    for role in SOLVES:
+    for role in frozen['completed_solves']:
         try:r=stage(role)
         except FileNotFoundError:continue
         if r['status']!='COMPLETED':continue
@@ -365,9 +377,12 @@ def verify(folder,journal):
         # Independently integrated q63 surface plus untouched original volume.
         bundle,rhs,_=build_bundle(cfg,setup,journal,q=63);u=rhs.duplicate()
         try:
+            write_json(folder/(role+'_actual_volume_forms.json'),volume_form_identity(bundle))
             v=checked_arrays(r['arrays'])
             for k in ('geometry_x','geometry_dofmap','cell_tags','cell_centers'):
                 if not np.array_equal(geometry[k],v[k]):raise ValueError('frozen/live geometry '+k)
+            if bundle['mode_sha256']!=r['mode_sha256'] or not np.array_equal(v['slaves'],setup['floquets'][r['degree']].mpc.slaves):
+                raise ValueError('frozen/live complete mode/MPC order')
             rhs_diff=relative(v['rhs']-rhs.array,rhs.array);u.array[:]=v['u_storage']
             closed_port=np.asarray(bundle['dtn_action'].recover_auxiliary(u));port=v['port']
             port_reclose_relative=relative(port-closed_port,closed_port)

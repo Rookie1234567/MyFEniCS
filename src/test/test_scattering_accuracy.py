@@ -23,6 +23,7 @@ class AccuracyTests(unittest.TestCase):
             self.assertEqual(s.derived['preparation_scope'],'v50')
             self.assertEqual(s.execution['terminate_memory_gib'],24)
             self.assertEqual(s.boundary,load_scattering_accuracy(paths[0]).boundary)
+            self.assertEqual(s.discretization['surface_quadrature_rule'],'fixed degree47 production; independent degree63 Basix2D')
 
     def test_invalid_inventory_rejected(self):
         with tempfile.TemporaryDirectory() as t:
@@ -161,11 +162,23 @@ class AccuracyTests(unittest.TestCase):
         u=ufl.TrialFunction(space);v=ufl.TestFunction(space)
         form=ufl.inner(ufl.curl(u),ufl.curl(v))*ufl.dx(metadata={'quadrature_degree':10})
         compiled=SimpleNamespace(module=SimpleNamespace(ffi=SimpleNamespace(string=lambda x:x)),ufcx_form=SimpleNamespace(signature=b'test-signature'))
+        el=SimpleNamespace(degree=5,dim=540,cell_type=SimpleNamespace(name='hexahedron'),family=SimpleNamespace(name='N1E'),
+            value_shape=(3,),map_type=SimpleNamespace(name='covariantPiola'),discontinuous=False)
         bundle=dict(volume_action=SimpleNamespace(component_actions={'curl':SimpleNamespace(_bilinear_form=form)}),
-            setup={'spaces':{5:SimpleNamespace(element=SimpleNamespace(basix_element='symbolic-p5'))}},degree=5)
+            setup={'spaces':{5:SimpleNamespace(element=SimpleNamespace(basix_element=el))}},degree=5)
         with patch('dolfinx.fem.form',return_value=compiled):record=volume_form_identity(bundle)
         self.assertEqual(record['components']['curl']['FFCx_integrals'][0]['metadata']['quadrature_degree'],10)
         self.assertEqual(record['components']['curl']['ufcx_signature'],'test-signature')
+        self.assertEqual(record['element']['dimension'],540)
+
+    def test_frozen_queue_cannot_restart_a_complete_solve(self):
+        from unittest.mock import patch
+        from src.solvers.scattering_accuracy import solve
+        with tempfile.TemporaryDirectory() as t:
+            (Path(t)/'scientific_queue_frozen.json').write_text('{}')
+            with patch('src.solvers.scattering_accuracy.window',SimpleNamespace(TMP=Path(t))):
+                with self.assertRaisesRegex(RuntimeError,'queue already frozen'):
+                    solve('FLAT_P5',Path(t),None)
 
 
 if __name__=='__main__':unittest.main()

@@ -65,6 +65,7 @@ def collect():
         if r is None or r['status']!='COMPLETED':continue
         ad=Path(r['arrays']['path']).parent;rd=ROOT/'results/task042'/ad.name
         summary=json.loads((rd/'run_summary.json').read_text());manifest=json.loads((rd/'run_manifest.json').read_text())
+        resolved=json.loads((rd/'resolved_config.json').read_text())
         events=[json.loads(x) for x in (ad/'events.jsonl').read_text().splitlines()];timing=disjoint_timings(events)
         costs.append(dict(stage=role,source=r['source_sha'],worker_wall_seconds=r['elapsed_worker_seconds'],
             complete_dat_launch_measured_lower_seconds=summary['launch_wall_seconds'],
@@ -72,11 +73,16 @@ def collect():
             **timing,build_audit=r['build_audit'],boundary=r['boundary'],tensor_checks_seconds=r['tensor_checks']['seconds'],
             additional_complete_VERIFY_cost='charged separately; attribution/qualification/setup/failed attempts remain research costs',
             numerical_objects_cold=True,OS_JIT_cache='not cleared; source namespace and inventory recorded',
+            raw_tensor_checkpoint_reused=r['tensor_checks'].get('failed_prepare_checkpoint_reuse'),
+            qualification_reference_cost='all independent original class checks and failed prepares retained in research ledger; reused tensors are not a free cold setup',
             performance='INCONCLUSIVE due changed q, clipping semantics, shared load and unequal cache/qualification work'))
         lifetimes.append(dict(stage=role,events=events,unique_owners_are_visible_numpy_lower_bounds_not_RSS=True,
             opaque_factor_workspaces='unknown, included in sampled tree RSS'))
         identities.append(dict(stage=role,physical_contract_sha256=r['physical_contract_sha256'],input_sha256=r['input_sha256'],
-            physical_model=manifest.get('physical_model'),mode_sha256=r['mode_sha256'],case=r['case'],degree=r['degree'],grid=r['grid'],
+            physical_model={k:resolved[k] for k in ('geometry','materials','incidence','discretization','boundary')},
+            resolved_file_sha256=digest(rd/'resolved_config.json'),mode_sha256=r['mode_sha256'],case=r['case'],degree=r['degree'],grid=r['grid'],
+            applied_surface_rule='fixed q47 complete inventory; separate q63 verification',
+            historical_resolved_rule_erratum='inherited descriptive max(10,2p+...) label superseded by explicit47 and numerical factory; original resolved bytes preserved',
             arrays=r['arrays'],returned_arrays=r['returned_arrays'],source_sha=r['source_sha'],capacity=r['capacity']))
     store(out,'cold_n1_costs_v50',dict(routes=costs,unknown_preactivation_and_historical_fine_phases_not_zero=True))
     store(out,'object_lifetimes_v50',dict(routes=lifetimes))

@@ -27,7 +27,8 @@ def load_scattering_accuracy(path):
     physical['geometry'].update(physical_case=case,notch_active=case=='NOTCH',grid=grid,
         flat_air_above_interface=case=='FLAT',cell_count=160 if grid=='X2' else 80)
     physical['discretization'].update(degree=degree,surface_quadrature_degree=47,
-        independent_surface_reference_q=63,volume_form='original FFCx curlcurl-minus-complex-mass')
+        independent_surface_reference_q=63,surface_quadrature_rule='fixed degree47 production; independent degree63 Basix2D',
+        volume_form='original FFCx curlcurl-minus-complex-mass')
     for key in list(physical['discretization']):
         if key.startswith('expected_'):del physical['discretization'][key]
     return RunSpecification(identity={'model_id':'task042_v50_complete_accuracy','run_id':item['run_id'],'batch':p['batch']},
