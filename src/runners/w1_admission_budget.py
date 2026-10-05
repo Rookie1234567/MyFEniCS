@@ -11,7 +11,10 @@ from src.io.finite_json import atomic_json
 def update_budget(window_path, event=None, *, before_admission=False):
     path = Path(window_path)
     window = json.loads(path.read_text())
-    v28 = window.get("schema") == "task42extra.w1-v28-batch-window.v1"
+    v28 = window.get("schema") in {
+        "task42extra.w1-v28-batch-window.v1",
+        "task42extra.w1-v29-batch-window.v1",
+    }
     if window.get("schema") != "task42extra.w1-receiver-P0RB-window.v27" and not v28:
         return None
     ledger = path.parent / "resource_samples.json"
@@ -55,6 +58,13 @@ def admit(spec, directory, hard, *, inner=False, scope=None):
             hard, compensate_self=inner, candidate_scope=scope, observation_sink=save
         )
         facts = json.loads(json.dumps(facts))
+        if (
+            json.loads(Path(spec["window_path"]).read_text()).get("schema")
+            == "task42extra.w1-v29-batch-window.v1"
+        ):
+            from src.runners.w1_start_freshness import capture_grant
+
+            facts["worker_start_grant"] = capture_grant(spec, facts)
         save(facts)
         return facts
     except Exception as error:
@@ -86,7 +96,12 @@ def stable(spec, directory, hard):
 
     value = update_budget(spec["window_path"])
     window = json.loads(Path(spec["window_path"]).read_text())
-    cap = 900 if window.get("schema") == "task42extra.w1-v28-batch-window.v1" else 300
+    cap = (
+        900
+        if window.get("schema")
+        in {"task42extra.w1-v28-batch-window.v1", "task42extra.w1-v29-batch-window.v1"}
+        else 300
+    )
     if value and value.get("foreground_wait_seconds", 0) > cap - 60:
         raise TimeoutError("W1_PSI_STABLE_WINDOW_WOULD_EXCEED_SHARED_WAIT")
     started = time.monotonic()

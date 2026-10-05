@@ -802,6 +802,15 @@ def main(argv=None):
     origin = time.monotonic()
     root = Path(__file__).resolve().parents[2]
     binding = json.loads(args.binding.read_text())
+    if binding["spec"].get("component") == "original_size_full_surface_w1":
+        fresh = load_file("_w29_start", root / "src/runners/w1_start_freshness.py")
+        fresh.verify_binding_start(binding, binding["run_path"], atomic_json)
+        driver = load_file(
+            "_w29_surface_driver", root / "src/runners/w1_surface_payload.py"
+        )
+        return driver.run_surface_payload(
+            root, args.frozen_source, binding, sys.modules[__name__]
+        )
     if binding["spec"].get("w1_receiver_schema") == 2:
         driver = load_file("_w28_driver", root / "src/runners/w1_versioned_payload.py")
         return driver.run_payload(

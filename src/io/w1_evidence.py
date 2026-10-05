@@ -194,6 +194,10 @@ def validate_A(path, receiver_files):
 
     path = Path(path)
     value = json.loads(path.read_text())
+    if value.get("schema") == "w1-P0-delta-qualification.v29":
+        from src.io.w1_surface_contract import validate_qualification
+
+        return validate_qualification(path, receiver_files)
     if value.get("schema") == "w1-P0-delta-qualification.v28":
         if (
             value.get("scope") != "PURE_LOGIC_DELTA_ONLY"

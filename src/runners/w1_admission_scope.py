@@ -11,7 +11,22 @@ def body_sha(value):
 
 
 def cpuset_cpus():
-    from benchmarks.task034_wsl_resources import current_cgroup_path
+    # A child can verify its cpuset before importing the frozen FE namespace.
+    # Load the same stdlib-only reader by file, without pinning a current
+    # ``benchmarks`` package ahead of the numerical snapshot.
+    import importlib.util
+    import sys
+
+    name = "_w1_cpuset_resource_reader"
+    if name not in sys.modules:
+        location = (
+            Path(__file__).resolve().parents[2] / "benchmarks/task034_wsl_resources.py"
+        )
+        spec = importlib.util.spec_from_file_location(name, location)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    current_cgroup_path = sys.modules[name].current_cgroup_path
 
     path = current_cgroup_path()
     if path is None:

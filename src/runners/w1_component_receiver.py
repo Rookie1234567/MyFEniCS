@@ -63,6 +63,22 @@ RECEIVER_FILES = [
     "benchmarks/portable_facet_oracle.py",
 ]
 
+SURFACE_RECEIVER_FILES = RECEIVER_FILES + [
+    "src/runners/w1_start_freshness.py",
+    "src/io/w1_surface_contract.py",
+    "src/runners/w1_surface_payload.py",
+    "src/solvers/w1_full_surface_action.py",
+    "src/solvers/w1_full_surface_saved.py",
+]
+
+
+def receiver_files_for(spec):
+    return (
+        SURFACE_RECEIVER_FILES
+        if spec.get("component") == "original_size_full_surface_w1"
+        else RECEIVER_FILES
+    )
+
 
 def charged_seconds(entries, now):
     """Unfinished charges stay conservative; another namespace is not free."""
@@ -73,7 +89,10 @@ def charged_seconds(entries, now):
 
 
 def remaining(window, *, now=None, utc_now=None):
-    if window.get("schema") == "task42extra.w1-v28-batch-window.v1":
+    if window.get("schema") in {
+        "task42extra.w1-v28-batch-window.v1",
+        "task42extra.w1-v29-batch-window.v1",
+    }:
         if (
             window.get("budget_seconds") != 28800
             or window.get("delivery_reserve_seconds") != 3600
@@ -156,6 +175,10 @@ def remaining(window, *, now=None, utc_now=None):
 
 
 def prerequisite(stage, output, spec=None):
+    if spec and spec.get("component") == "original_size_full_surface_w1":
+        from src.runners.w1_surface_payload import prerequisite_surface
+
+        return prerequisite_surface(spec, SURFACE_RECEIVER_FILES)
     if spec and spec.get("w1_receiver_schema") == 2:
         from src.runners.w1_versioned_payload import prerequisite_v28
 
@@ -258,7 +281,12 @@ def native_command(bundle, run, binding):
 
 
 def payload_command(bundle, run, binding, spec):
-    if spec.get("w1_receiver_schema") != 2 or spec["stage"] in {"control", "boundary"}:
+    if spec.get("w1_receiver_schema") != 2 or spec["stage"] in {
+        "control",
+        "boundary",
+        "surface_p4",
+        "surface_p6",
+    }:
         return native_command(bundle, run, binding)
     command = (
         "source scripts/activate_task42extra.sh pure && exec python -B "
@@ -275,7 +303,12 @@ def contract_fields(spec):
     if spec.get("w1_receiver_schema") == 2:
         from src.io.w1_versioned_input import CONTRACT_KEYS
 
-        return {k: spec[k] for k in CONTRACT_KEYS}
+        keys = CONTRACT_KEYS
+        if spec.get("component") == "original_size_full_surface_w1":
+            from src.io.w1_surface_contract import EXTRA_FIELDS
+
+            keys = keys + tuple(sorted(EXTRA_FIELDS)) + ("component",)
+        return {k: spec[k] for k in keys}
     return {
         k: spec[k]
         for k in (
@@ -293,7 +326,12 @@ def contract_fields(spec):
 
 def hard_limit(spec):
     if spec.get("w1_receiver_schema") == 2:
-        return (16 if spec["stage"] == "boundary" else 2) * 2**30
+        return (
+            16
+            if spec["stage"]
+            in {"boundary", "surface_p4", "surface_p6", "surface_check"}
+            else 2
+        ) * 2**30
     return (2 if spec["stage"] in {"control", "input_recovery"} else 16) * 2**30
 
 
@@ -336,6 +374,18 @@ def launch_w1(spec):
 
 def compute_stage_deadline(window, origin, numeric_used, stage, *, now=None):
     now = time.monotonic() if now is None else now
+    if window.get("schema") == "task42extra.w1-v29-batch-window.v1":
+        cap = {
+            "input_contract_checks": 1800,
+            "surface_p4": 5400,
+            "surface_p6": 5400,
+            "surface_check": 10800,
+            "surface_handoff": 3600,
+        }[stage]
+        deadline = min(origin + cap, window["deadline_monotonic"] - 3600)
+        if deadline - now <= 150:
+            raise TimeoutError("W29_SHARED_OR_SAVE_BUDGET_INSUFFICIENT")
+        return deadline
     if window.get("schema") == "task42extra.w1-v28-batch-window.v1":
         cap = {
             "input_contract_checks": 1800,
@@ -368,13 +418,14 @@ def _launch_w1(spec):
     from src.runners.feinn_resources import Health, envelope
     from src.runners.w1_admission_budget import admit, stable
 
+    receiver_files = receiver_files_for(spec)
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("W1_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
     if "A_qualification_path" not in spec:
         raise ValueError("W1_A_QUALIFICATION_REQUIRED")
     if spec["stage"] != "input_contract_checks":
         validate_A(
-            spec["A_qualification_path"], {p: digest(ROOT / p) for p in RECEIVER_FILES}
+            spec["A_qualification_path"], {p: digest(ROOT / p) for p in receiver_files}
         )
     window = json.loads(Path(spec["window_path"]).read_text())
     reserve = 3600 if spec.get("w1_receiver_schema") == 2 else 1800
@@ -445,6 +496,7 @@ def _launch_w1(spec):
         if window["schema"] in {
             "task42extra.w1-receiver-P0RB-window.v27",
             "task42extra.w1-v28-batch-window.v1",
+            "task42extra.w1-v29-batch-window.v1",
         }:
             previous = json.loads((durable / "prelaunch_admission.json").read_text())
             if (
@@ -455,14 +507,16 @@ def _launch_w1(spec):
                 raise ValueError("W1_INNER_ALLOWED_SCOPE_BINDING")
         # Validate this live server/pane/socket before widening only the search.
         bind_own_terminal_core(terminal, min(os.sched_getaffinity(0)))
-        facts = admit(spec, run, hard, inner=True, scope=scope)
-        os.sched_setaffinity(0, {facts["cpu"]})
-        terminal_policy = bind_own_terminal_core(terminal, facts["cpu"])
-        atomic_json(run / "admission.json", facts)
-        atomic_json(
-            run / "process_policy.json",
-            {"launcher": priority, "terminal": terminal_policy},
-        )
+        v29 = window["schema"] == "task42extra.w1-v29-batch-window.v1"
+        if not v29:
+            facts = admit(spec, run, hard, inner=True, scope=scope)
+            os.sched_setaffinity(0, {facts["cpu"]})
+            terminal_policy = bind_own_terminal_core(terminal, facts["cpu"])
+            atomic_json(run / "admission.json", facts)
+            atomic_json(
+                run / "process_policy.json",
+                {"launcher": priority, "terminal": terminal_policy},
+            )
         stable(spec, run, hard)
         manifest_path = Path(spec["source_manifest_path"])
         manifest = json.loads(manifest_path.read_text())
@@ -488,7 +542,7 @@ def _launch_w1(spec):
             "original_inputs": original,
             "receiver_source_sha": source_sha,
             "math_source_sha": MATH_COMMIT,
-            "receiver_files": {p: digest(ROOT / p) for p in RECEIVER_FILES},
+            "receiver_files": {p: digest(ROOT / p) for p in receiver_files},
             "contract_source_manifest_path": str(manifest_path),
             "source_manifest_sha256": digest(manifest_path),
             "window": window,
@@ -500,11 +554,31 @@ def _launch_w1(spec):
             "old_main_window_reset": False,
             "new_clone_or_worktree": False,
         }
+        if v29:
+            # All development, PSI observation, source materialization and
+            # binding setup precede this final actual CPU observation.
+            facts = admit(spec, run, hard, inner=True, scope=scope)
+            os.sched_setaffinity(0, {facts["cpu"]})
+            terminal_policy = bind_own_terminal_core(terminal, facts["cpu"])
+            atomic_json(run / "admission.json", facts)
+            atomic_json(
+                run / "process_policy.json",
+                {"launcher": priority, "terminal": terminal_policy},
+            )
+            binding["worker_start_grant"] = facts["worker_start_grant"]
+            from src.runners.w1_start_freshness import validate_grant
+
+            atomic_json(
+                run / "launcher_start_freshness.json",
+                validate_grant(binding["worker_start_grant"], spec, source_sha),
+            )
         atomic_json(run / "binding.json", binding)
         artifact_options = {}
         if spec.get("w1_receiver_schema") == 2:
             artifact_options = dict(
-                artifact_root=ROOT / "benchmarks/artifacts/task42extra/w1_receiver/v28",
+                artifact_root=ROOT
+                / "benchmarks/artifacts/task42extra/w1_receiver"
+                / ("v29" if v29 else "v28"),
                 artifact_cap_bytes=16 * 2**30,
             )
         health = Health(run, hard, facts["neighbor_processes"], **artifact_options)
@@ -601,9 +675,14 @@ def _launch_w1(spec):
             and result["receiver_classification"] == "COMPLETED"
             and result["cleared"]
         ):
-            from src.runners.w1_versioned_payload import commit_stage
+            if spec.get("component") == "original_size_full_surface_w1":
+                from src.runners.w1_surface_payload import commit_surface
 
-            commit_stage(run, spec, result, RECEIVER_FILES)
+                commit_surface(run, spec, result, receiver_files)
+            else:
+                from src.runners.w1_versioned_payload import commit_stage
+
+                commit_stage(run, spec, result, RECEIVER_FILES)
         return result
 
 
@@ -612,6 +691,7 @@ def durable_w1(spec, *, launch_origin=None):
     from src.runners.w1_admission_budget import admit
     from src.runners.w1_admission_scope import capture_scope
 
+    receiver_files = receiver_files_for(spec)
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("W1_DURABLE_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
     original = validate_originals(spec)
@@ -632,7 +712,7 @@ def durable_w1(spec, *, launch_origin=None):
         if spec["stage"] != "input_contract_checks":
             validate_A(
                 spec["A_qualification_path"],
-                {p: digest(ROOT / p) for p in RECEIVER_FILES},
+                {p: digest(ROOT / p) for p in receiver_files},
             )
         prepare_B_window(spec, original, launch_origin=launch_origin)
     remaining(json.loads(Path(spec["window_path"]).read_text()))
@@ -690,7 +770,12 @@ def prepare_B_window(spec, original, *, launch_origin=None):
         old = json.loads(path.read_text())
         remaining(old)
         if spec.get("w1_receiver_schema") == 2:
-            if old.get("schema") != "task42extra.w1-v28-batch-window.v1":
+            expected = (
+                "task42extra.w1-v29-batch-window.v1"
+                if spec.get("component") == "original_size_full_surface_w1"
+                else "task42extra.w1-v28-batch-window.v1"
+            )
+            if old.get("schema") != expected:
                 raise ValueError("W28_WINDOW_INSTANCE")
             return
         if old.get("schema") == "task42extra.w1-receiver-P0RB-window.v27":

@@ -1,0 +1,44 @@
+{
+  "schema": "task42extra.full-surface-design.v29",
+  "authority": "review_report_v28.md",
+  "review_seal": "02a4fb840a9c0cf613c3f4607dfa807b18acfb65",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "instance_id": "W1_0P7_FULL_32060_NATIVE_V27_REQUALIFIED_V28",
+  "manifest_sha256": "7dd07d7145c70759f53465b6ec11237a89effdf7d68a0df6423768858639c56e",
+  "math_source": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "reviewed_V28_boundary_index_sha256": "9ed0ca56cc66fe6690a2786ad520dc3c049c5bfd5704fc0d686dad7ce560248f",
+  "scope": {
+    "facets": 2176,
+    "x_counts": [90, 46, 46, 90],
+    "y_count": 4,
+    "reference_planes_nm": [-10.0, 130.0],
+    "p4_trace_rows_derived": 69632,
+    "p6_trace_rows_derived": 156672,
+    "mode_count": 32060,
+    "native_columns": {"4": 300, "6": 882},
+    "row_scope": "boundary trace only, not volume FE DoFs"
+  },
+  "actual_API": "FacetPolynomial / BoundaryLayout / DirectionalBoundaryAction(face_inventory=None)",
+  "witnesses": {"generic_seed": 4212801, "seam_corner_seed": 4212901},
+  "candidate_profile": "q60_native",
+  "references": {
+    "one_dimensional": "reuse exact binary64 V28 Decimal80/110 moments; qualify only missing full-width frequencies ell0..6",
+    "contractions": "saved Decimal110 moments, independent y-before-x extended arithmetic; no candidate apply/recover/scatter",
+    "mapping": "independent physical periodic edge/face keys, direction and corner representatives",
+    "native_columns": "all native columns at every exact width, incident and maximum tangential frequencies, both sides and coordinate systems",
+    "denominator": "norm of independent reference or scalar complex modulus; binary64 tiny only for zero, no fitted floor",
+    "relative_gate": 1e-10,
+    "moment_absolute_gate": 1e-12
+  },
+  "startup": "60s unchanged PSI window and setup precede a new actual CPU observation; actual parent and child require matching boot/process/cpuset/dat/window/source and age <=15s",
+  "budget": {"continuous_seconds": 28800, "resource_samples_max": 24, "foreground_wait_max_seconds": 900, "delivery_reserve_seconds": 3600, "final_reserve_seconds": 1800},
+  "label_boundaries": {
+    "NN_training": false,
+    "Maxwell_Gram_factor_or_solve": false,
+    "remote_main_ingested": false,
+    "full_target_qualified": false,
+    "historical_bitwise_reproduction": false,
+    "equivalent_to_historical_numeric_manifest": "UNKNOWN"
+  },
+  "handoff": "one minimal relative-path opt-in package; actual main classes called in P1, independent checker and ready consumer reopen in P2/P3; main volume/internal binding remains separate"
+}

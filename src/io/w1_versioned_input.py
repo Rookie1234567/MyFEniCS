@@ -70,14 +70,26 @@ def local_module(name, path):
 
 def load(path, raw):
     d = tomllib.loads(raw.decode())
-    if set(d) != FIELDS:
+    surface = d.get("component") == "original_size_full_surface_w1"
+    stages, fields = STAGES, FIELDS
+    if surface:
+        from src.io.w1_surface_contract import (
+            EXTRA_FIELDS,
+            SURFACE_STAGES,
+            validate_surface_fields,
+        )
+
+        stages, fields = SURFACE_STAGES, FIELDS | EXTRA_FIELDS
+        validate_surface_fields(d)
+    if set(d) != fields:
         raise ValueError("W28_EXPLICIT_SCHEMA2_FIELDS")
     if (
         d["w1_receiver_schema"] != 2
         or d["instance_id"] != INSTANCE
         or d["input_origin"] != ORIGIN
-        or d["component"] != "original_size_boundary_w1"
-        or d["stage"] not in STAGES
+        or d["component"]
+        != ("original_size_full_surface_w1" if surface else "original_size_boundary_w1")
+        or d["stage"] not in stages
         or d["math_commit"] != "c354afa449fb80cfb5012e7d2ff66a3e3e64e088"
         or type(d["quadrature_degree"]) is not int
         or d["quadrature_degree"] != 60
@@ -88,7 +100,7 @@ def load(path, raw):
     ):
         raise ValueError("W28_FIXED_INSTANCE_PHYSICS_PROFILE")
     owned = ROOT / "benchmarks/artifacts/task42extra/w1_receiver"
-    for k in (
+    path_fields = (
         "manifest_path",
         "ledger_path",
         "physical_config_path",
@@ -96,7 +108,8 @@ def load(path, raw):
         "window_path",
         "source_manifest_path",
         "A_qualification_path",
-    ):
+    ) + (("v28_reference_root",) if surface else ())
+    for k in path_fields:
         if not isinstance(d[k], str) or not d[k]:
             raise ValueError("W28_EXPLICIT_PATH")
         d[k] = str((ROOT / d[k]).resolve())
@@ -105,9 +118,14 @@ def load(path, raw):
         for k in ("manifest_path", "ledger_path", "output_root")
     ):
         raise ValueError("W28_OWN_ARTIFACT_SCOPE")
+    if surface and (
+        not Path(d["v28_reference_root"]).is_relative_to(owned)
+        or Path(d["v28_reference_root"]).is_symlink()
+    ):
+        raise ValueError("W29_INHERITED_REFERENCE_OWN_SCOPE")
     if (
         not isinstance(d["prerequisite_paths"], dict)
-        or set(d["prerequisite_paths"]) - STAGES
+        or set(d["prerequisite_paths"]) - stages
     ):
         raise ValueError("W28_PREREQUISITE_STAGE")
     d["prerequisite_paths"] = {
