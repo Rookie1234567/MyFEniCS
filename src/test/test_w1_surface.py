@@ -179,6 +179,14 @@ def test_native_D_complex_polarization_conjugate():
     assert not np.allclose(integral.conj() @ electric / 1250, expected)
 
 
+def test_original_manifest_without_derived_reference_plane():
+    from src.solvers.w1_full_surface_saved import physical_reference_planes
+
+    assert np.array_equal(physical_reference_planes([{"side": "top"}, {"side": "bottom"}]), [130., -10.])
+    with pytest.raises(ValueError):
+        physical_reference_planes([{"side": "top", "reference_plane_nm": 0.}])
+
+
 def small_geometry():
     vertices = np.array(
         [[i, j, k] for k in (0, 1) for j in (0, 1) for i in (0, 1)], float

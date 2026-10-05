@@ -187,6 +187,19 @@ def mode_vectors(modes, field):
     )
 
 
+def physical_reference_planes(modes):
+    """Original manifest has no derived reference_plane_nm field."""
+    planes = []
+    for mode in modes:
+        if mode["side"] not in ("top", "bottom"):
+            raise ValueError("W29_PHYSICAL_REFERENCE_SIDE")
+        plane = 130.0 if mode["side"] == "top" else -10.0
+        if "reference_plane_nm" in mode and mode["reference_plane_nm"] != plane:
+            raise ValueError("W29_PHYSICAL_REFERENCE_PLANE_MISMATCH")
+        planes.append(plane)
+    return np.array(planes)
+
+
 def reference_tables(data, modes, reference, *, ledger=False):
     p = int(data["degree"])
     k = mode_vectors(modes, "k_vector")
@@ -225,7 +238,7 @@ def reference_tables(data, modes, reference, *, ledger=False):
         zphase = np.exp(
             -1j
             * k[ids, 2].conj()
-            * np.array([modes[i]["reference_plane_nm"] for i in ids])
+            * physical_reference_planes([modes[i] for i in ids])
         )
         tables[side] = (ids, *values, *indices, zphase)
     return tables
@@ -424,7 +437,7 @@ def check_surface(producer, modes, metrics_path, save_reference, *, guard=lambda
             * np.sum(abs(e) ** 2, axis=1)
             * abs(
                 np.exp(
-                    1j * k[:, 2] * np.array([m["reference_plane_nm"] for m in modes])
+                1j * k[:, 2] * physical_reference_planes(modes)
                 )
             )
             ** 2
