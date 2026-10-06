@@ -1,0 +1,136 @@
+{
+  "rows": [
+    {
+      "cells": 320,
+      "degree": 6,
+      "native": 220200,
+      "trace": 64512,
+      "internal": 144000,
+      "independent": 208512,
+      "condensed_rows": 65044,
+      "modes": 532,
+      "name": "A_identity",
+      "representation": "same fixed-phase Nedelec envelope; no new mesh/dofmap allocated",
+      "complete_independent_vector_bytes": 3336192,
+      "native_vector_bytes": 3523200,
+      "C_D_value_payload_scenario_bytes": [
+        19611648,
+        240242688
+      ],
+      "C_D_interval_basis": "ideal tangential layout vs full boundary-cell support; neither drops floating entries",
+      "native_rows_index_upper_bytes": 120121344,
+      "local_without_exact_class_dedup_upper_bytes": 11948912640,
+      "dense_condensed_value_upper_bytes": 67691550976,
+      "factor_fill": "unknown",
+      "factor_workspace": "unknown",
+      "numeric_RSS": "unknown; payload not simultaneous RSS admission",
+      "iterations": "unknown",
+      "end_to_end_48h": "unknown",
+      "mode_accuracy": "unknown; explicit capacity design not qualified AUTO",
+      "status": "topology formula checked against measured V53 inventory"
+    },
+    {
+      "cells": 160,
+      "degree": 7,
+      "native": 174174,
+      "trace": 45248,
+      "internal": 120960,
+      "independent": 166208,
+      "condensed_rows": 45780,
+      "modes": 532,
+      "name": "B_identity",
+      "representation": "same fixed-phase Nedelec envelope; no new mesh/dofmap allocated",
+      "complete_independent_vector_bytes": 2659328,
+      "native_vector_bytes": 2786784,
+      "C_D_value_payload_scenario_bytes": [
+        26693632,
+        366084096
+      ],
+      "C_D_interval_basis": "ideal tangential layout vs full boundary-cell support; neither drops floating entries",
+      "native_rows_index_upper_bytes": 183042048,
+      "local_without_exact_class_dedup_upper_bytes": 13872660480,
+      "dense_condensed_value_upper_bytes": 33532934400,
+      "factor_fill": "unknown",
+      "factor_workspace": "unknown",
+      "numeric_RSS": "unknown; payload not simultaneous RSS admission",
+      "iterations": "unknown",
+      "end_to_end_48h": "unknown",
+      "mode_accuracy": "unknown; explicit capacity design not qualified AUTO",
+      "status": "topology formula checked against measured V53 inventory"
+    },
+    {
+      "cells": 320,
+      "degree": 7,
+      "native": 346724,
+      "trace": 88928,
+      "internal": 241920,
+      "independent": 330848,
+      "condensed_rows": 89460,
+      "modes": 532,
+      "name": "richer_Z4p7_unrun",
+      "representation": "same fixed-phase Nedelec envelope; no new mesh/dofmap allocated",
+      "complete_independent_vector_bytes": 5293568,
+      "native_vector_bytes": 5547584,
+      "C_D_value_payload_scenario_bytes": [
+        26693632,
+        366084096
+      ],
+      "C_D_interval_basis": "ideal tangential layout vs full boundary-cell support; neither drops floating entries",
+      "native_rows_index_upper_bytes": 183042048,
+      "local_without_exact_class_dedup_upper_bytes": 27745320960,
+      "dense_condensed_value_upper_bytes": 128049465600,
+      "factor_fill": "unknown",
+      "factor_workspace": "unknown",
+      "numeric_RSS": "unknown; payload not simultaneous RSS admission",
+      "iterations": "unknown",
+      "end_to_end_48h": "unknown",
+      "mode_accuracy": "unknown; explicit capacity design not qualified AUTO",
+      "status": "predicted_not_run"
+    },
+    {
+      "cells": 2560,
+      "degree": 7,
+      "native": 2703624,
+      "trace": 705152,
+      "internal": 1935360,
+      "independent": 2640512,
+      "condensed_rows": 707076,
+      "modes": 1924,
+      "name": "next_linear_scale2_p7_unrun",
+      "representation": "same fixed-phase Nedelec envelope; no new mesh/dofmap allocated",
+      "complete_independent_vector_bytes": 42248192,
+      "native_vector_bytes": 43257984,
+      "C_D_value_payload_scenario_bytes": [
+        386154496,
+        5295833088
+      ],
+      "C_D_interval_basis": "ideal tangential layout vs full boundary-cell support; neither drops floating entries",
+      "native_rows_index_upper_bytes": 2647916544,
+      "local_without_exact_class_dedup_upper_bytes": 221962567680,
+      "dense_condensed_value_upper_bytes": 7999303516416,
+      "factor_fill": "unknown",
+      "factor_workspace": "unknown",
+      "numeric_RSS": "unknown; payload not simultaneous RSS admission",
+      "iterations": "unknown",
+      "end_to_end_48h": "unknown",
+      "mode_accuracy": "unknown; explicit capacity design not qualified AUTO",
+      "status": "predicted_not_run"
+    }
+  ],
+  "measured_finite_calibration": [
+    {
+      "role": "A",
+      "actual_cold_chain_lower": 4543.819512405898,
+      "sampled_tree_peak": 12694609920,
+      "disjoint_prepare_seconds": 3762.2319808139
+    },
+    {
+      "role": "B",
+      "actual_cold_chain_lower": 10396.572926383,
+      "sampled_tree_peak": 14436585472,
+      "disjoint_prepare_seconds": 9336.358001437038
+    }
+  ],
+  "prepare_prediction_interval": "unknown: p/cell/mode/class counts differ; actual class timings supplied, no unjustified target extrapolation",
+  "new_FE_objects": 0
+}

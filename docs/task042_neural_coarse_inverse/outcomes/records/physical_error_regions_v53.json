@@ -1,0 +1,616 @@
+{
+  "comparisons": {
+    "H_A": {
+      "counts": {
+        "air_excluding_notch": 160,
+        "notch_air": 8,
+        "substrate": 64,
+        "Si_block": 88
+      },
+      "fields": {
+        "E_total": {
+          "air_excluding_notch": {
+            "error_squared": 1.3444192805854092e-07,
+            "fraction": 0.3674909705561134
+          },
+          "notch_air": {
+            "error_squared": 2.999680532034399e-08,
+            "fraction": 0.08199491973929399
+          },
+          "substrate": {
+            "error_squared": 1.6775472505480793e-08,
+            "fraction": 0.045855000457090574
+          },
+          "Si_block": {
+            "error_squared": 1.846231583782009e-07,
+            "fraction": 0.5046591092475026
+          }
+        },
+        "H_total": {
+          "air_excluding_notch": {
+            "error_squared": 1.6693633688978485e-07,
+            "fraction": 0.4210712972170217
+          },
+          "notch_air": {
+            "error_squared": 3.0585065385795664e-08,
+            "fraction": 0.07714613485239634
+          },
+          "substrate": {
+            "error_squared": 1.647757809938365e-08,
+            "fraction": 0.04156216264576981
+          },
+          "Si_block": {
+            "error_squared": 1.8245724448081186e-07,
+            "fraction": 0.4602204052848122
+          }
+        },
+        "curl_total": {
+          "air_excluding_notch": {
+            "error_squared": 1.3449760043013507e-05,
+            "fraction": 0.4210712972170212
+          },
+          "notch_air": {
+            "error_squared": 2.4641836403204393e-06,
+            "fraction": 0.0771461348523961
+          },
+          "substrate": {
+            "error_squared": 1.327568794522207e-06,
+            "fraction": 0.041562162645769764
+          },
+          "Si_block": {
+            "error_squared": 1.4700251617456822e-05,
+            "fraction": 0.4602204052848128
+          }
+        },
+        "E_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 1.3444192805854087e-07,
+            "fraction": 0.36749097055611335
+          },
+          "notch_air": {
+            "error_squared": 2.9996805320343984e-08,
+            "fraction": 0.08199491973929399
+          },
+          "substrate": {
+            "error_squared": 1.677547250548079e-08,
+            "fraction": 0.045855000457090574
+          },
+          "Si_block": {
+            "error_squared": 1.846231583782009e-07,
+            "fraction": 0.5046591092475027
+          }
+        },
+        "H_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 1.6693633688978485e-07,
+            "fraction": 0.42107129721702163
+          },
+          "notch_air": {
+            "error_squared": 3.058506538579566e-08,
+            "fraction": 0.07714613485239631
+          },
+          "substrate": {
+            "error_squared": 1.6477578099383648e-08,
+            "fraction": 0.0415621626457698
+          },
+          "Si_block": {
+            "error_squared": 1.8245724448081184e-07,
+            "fraction": 0.460220405284812
+          }
+        },
+        "curl_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 1.3449760043013509e-05,
+            "fraction": 0.42107129721702125
+          },
+          "notch_air": {
+            "error_squared": 2.4641836403204398e-06,
+            "fraction": 0.07714613485239612
+          },
+          "substrate": {
+            "error_squared": 1.327568794522208e-06,
+            "fraction": 0.0415621626457698
+          },
+          "Si_block": {
+            "error_squared": 1.470025161745682e-05,
+            "fraction": 0.46022040528481273
+          }
+        }
+      },
+      "component_squared": [
+        [
+          2.4801565642125728e-08,
+          3.396718949958627e-07,
+          1.3639036245781583e-09
+        ],
+        [
+          1.786965920855854e-08,
+          1.0397355578598443e-09,
+          3.7754683008935777e-07
+        ],
+        [
+          1.4397262626184191e-06,
+          8.376962153324574e-08,
+          3.0418268211161298e-05
+        ],
+        [
+          2.4801565642125728e-08,
+          3.396718949958625e-07,
+          1.3639036245781583e-09
+        ],
+        [
+          1.7869659208558544e-08,
+          1.0397355578598443e-09,
+          3.7754683008935767e-07
+        ],
+        [
+          1.4397262626184191e-06,
+          8.376962153324574e-08,
+          3.0418268211161294e-05
+        ]
+      ],
+      "quadrature_operation_recalculated": 2.071092321030758e-15,
+      "full_cross_terms": true,
+      "source_array_sha256": "df8f5fd8d6158a66976aece85e63c3497678bd584e73a6315747978f64c9c201"
+    },
+    "A_B": {
+      "counts": {
+        "air_excluding_notch": 160,
+        "notch_air": 8,
+        "substrate": 64,
+        "Si_block": 88
+      },
+      "fields": {
+        "E_total": {
+          "air_excluding_notch": {
+            "error_squared": 0.0005165722698289379,
+            "fraction": 0.538353196484124
+          },
+          "notch_air": {
+            "error_squared": 6.0944163660156585e-05,
+            "fraction": 0.06351383384238124
+          },
+          "substrate": {
+            "error_squared": 3.8381891388773035e-06,
+            "fraction": 0.004000023834631108
+          },
+          "Si_block": {
+            "error_squared": 0.00037818694451153276,
+            "fraction": 0.39413294583886377
+          }
+        },
+        "H_total": {
+          "air_excluding_notch": {
+            "error_squared": 0.0005162580394402654,
+            "fraction": 0.5390302813033961
+          },
+          "notch_air": {
+            "error_squared": 6.02625214173311e-05,
+            "fraction": 0.06292071288004505
+          },
+          "substrate": {
+            "error_squared": 4.086269160674536e-06,
+            "fraction": 0.00426651528283783
+          },
+          "Si_block": {
+            "error_squared": 0.00037714648616265595,
+            "fraction": 0.3937824905337213
+          }
+        },
+        "curl_total": {
+          "air_excluding_notch": {
+            "error_squared": 0.04159398055638701,
+            "fraction": 0.5390302813033959
+          },
+          "notch_air": {
+            "error_squared": 0.004855242829397819,
+            "fraction": 0.06292071288004501
+          },
+          "substrate": {
+            "error_squared": 0.0003292233476916663,
+            "fraction": 0.004266515282837827
+          },
+          "Si_block": {
+            "error_squared": 0.030386013221929273,
+            "fraction": 0.393782490533721
+          }
+        },
+        "E_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 0.0005165722698289378,
+            "fraction": 0.5383531964841239
+          },
+          "notch_air": {
+            "error_squared": 6.0944163660156585e-05,
+            "fraction": 0.06351383384238124
+          },
+          "substrate": {
+            "error_squared": 3.8381891388773035e-06,
+            "fraction": 0.004000023834631108
+          },
+          "Si_block": {
+            "error_squared": 0.00037818694451153276,
+            "fraction": 0.39413294583886377
+          }
+        },
+        "H_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 0.0005162580394402653,
+            "fraction": 0.539030281303396
+          },
+          "notch_air": {
+            "error_squared": 6.02625214173311e-05,
+            "fraction": 0.06292071288004505
+          },
+          "substrate": {
+            "error_squared": 4.086269160674536e-06,
+            "fraction": 0.00426651528283783
+          },
+          "Si_block": {
+            "error_squared": 0.00037714648616265595,
+            "fraction": 0.3937824905337213
+          }
+        },
+        "curl_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 0.04159398055638701,
+            "fraction": 0.5390302813033959
+          },
+          "notch_air": {
+            "error_squared": 0.004855242829397819,
+            "fraction": 0.06292071288004501
+          },
+          "substrate": {
+            "error_squared": 0.0003292233476916663,
+            "fraction": 0.004266515282837827
+          },
+          "Si_block": {
+            "error_squared": 0.030386013221929273,
+            "fraction": 0.393782490533721
+          }
+        }
+      },
+      "component_squared": [
+        [
+          7.235300758950197e-06,
+          0.0009519849593767423,
+          3.213070038124194e-07
+        ],
+        [
+          2.0305424890599138e-06,
+          4.542787976507216e-07,
+          0.0009552684948942163
+        ],
+        [
+          0.00016359715172754825,
+          3.660042465808281e-05,
+          0.07696426237902013
+        ],
+        [
+          7.235300758950197e-06,
+          0.0009519849593767423,
+          3.213070038124194e-07
+        ],
+        [
+          2.0305424890599138e-06,
+          4.542787976507216e-07,
+          0.0009552684948942163
+        ],
+        [
+          0.00016359715172754825,
+          3.660042465808281e-05,
+          0.07696426237902013
+        ]
+      ],
+      "quadrature_operation_recalculated": 1.9691109629026874e-15,
+      "full_cross_terms": true,
+      "source_array_sha256": "4f92d39a4769defa2db81507345bdd743b649188753fa438d6b5861991f856d7"
+    },
+    "P_B": {
+      "counts": {
+        "air_excluding_notch": 80,
+        "notch_air": 4,
+        "substrate": 32,
+        "Si_block": 44
+      },
+      "fields": {
+        "E_total": {
+          "air_excluding_notch": {
+            "error_squared": 0.0005165729909168046,
+            "fraction": 0.5383533010548981
+          },
+          "notch_air": {
+            "error_squared": 6.09433728479107e-05,
+            "fraction": 0.06351293336467943
+          },
+          "substrate": {
+            "error_squared": 3.838364386052007e-06,
+            "fraction": 0.004000201664077039
+          },
+          "Si_block": {
+            "error_squared": 0.0003781879920379725,
+            "fraction": 0.39413356391634513
+          }
+        },
+        "H_total": {
+          "air_excluding_notch": {
+            "error_squared": 0.000516259214010942,
+            "fraction": 0.5390306997769215
+          },
+          "notch_air": {
+            "error_squared": 6.0262365706849765e-05,
+            "fraction": 0.06292045599497526
+          },
+          "substrate": {
+            "error_squared": 4.086423785674754e-06,
+            "fraction": 0.00426667033342408
+          },
+          "Si_block": {
+            "error_squared": 0.00037714674817319394,
+            "fraction": 0.3937821738946791
+          }
+        },
+        "curl_total": {
+          "air_excluding_notch": {
+            "error_squared": 0.041594075189431236,
+            "fraction": 0.5390306997769216
+          },
+          "notch_air": {
+            "error_squared": 0.004855230284084742,
+            "fraction": 0.06292045599497527
+          },
+          "substrate": {
+            "error_squared": 0.00032923580554948404,
+            "fraction": 0.004266670333424081
+          },
+          "Si_block": {
+            "error_squared": 0.030386034331646494,
+            "fraction": 0.39378217389467923
+          }
+        },
+        "E_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 0.0005165729909168046,
+            "fraction": 0.5383533010548981
+          },
+          "notch_air": {
+            "error_squared": 6.0943372847910684e-05,
+            "fraction": 0.06351293336467942
+          },
+          "substrate": {
+            "error_squared": 3.838364386052007e-06,
+            "fraction": 0.004000201664077039
+          },
+          "Si_block": {
+            "error_squared": 0.0003781879920379725,
+            "fraction": 0.39413356391634513
+          }
+        },
+        "H_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 0.000516259214010942,
+            "fraction": 0.5390306997769215
+          },
+          "notch_air": {
+            "error_squared": 6.0262365706849765e-05,
+            "fraction": 0.06292045599497526
+          },
+          "substrate": {
+            "error_squared": 4.086423785674754e-06,
+            "fraction": 0.00426667033342408
+          },
+          "Si_block": {
+            "error_squared": 0.00037714674817319394,
+            "fraction": 0.3937821738946791
+          }
+        },
+        "curl_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 0.041594075189431236,
+            "fraction": 0.5390306997769216
+          },
+          "notch_air": {
+            "error_squared": 0.004855230284084742,
+            "fraction": 0.06292045599497527
+          },
+          "substrate": {
+            "error_squared": 0.00032923580554948404,
+            "fraction": 0.004266670333424081
+          },
+          "Si_block": {
+            "error_squared": 0.030386034331646494,
+            "fraction": 0.39378217389467923
+          }
+        }
+      },
+      "component_squared": [
+        [
+          7.235305851974479e-06,
+          0.0009519861013742726,
+          3.213129624923021e-07
+        ],
+        [
+          2.031675978248539e-06,
+          4.5427829919821104e-07,
+          0.0009552687973992137
+        ],
+        [
+          0.0001636884749102801,
+          3.6600384498661665e-05,
+          0.07696428675130301
+        ],
+        [
+          7.2353058519744785e-06,
+          0.0009519861013742726,
+          3.213129624923021e-07
+        ],
+        [
+          2.031675978248539e-06,
+          4.5427829919821104e-07,
+          0.0009552687973992137
+        ],
+        [
+          0.0001636884749102801,
+          3.6600384498661665e-05,
+          0.07696428675130301
+        ]
+      ],
+      "quadrature_operation_recalculated": 1.5315307489243131e-15,
+      "full_cross_terms": true,
+      "source_array_sha256": "51d1ef43afddfad1ecf661acab7a568d04d9c2cbf393bd56ac4a1ac3549ce28f"
+    },
+    "P_A": {
+      "counts": {
+        "air_excluding_notch": 160,
+        "notch_air": 8,
+        "substrate": 64,
+        "Si_block": 88
+      },
+      "fields": {
+        "E_total": {
+          "air_excluding_notch": {
+            "error_squared": 5.619899310738804e-10,
+            "fraction": 0.6505692519488794
+          },
+          "notch_air": {
+            "error_squared": 2.6101627732754968e-11,
+            "fraction": 0.030215695139410203
+          },
+          "substrate": {
+            "error_squared": 6.647272375921085e-11,
+            "fraction": 0.0769499732644662
+          },
+          "Si_block": {
+            "error_squared": 2.0927908136559378e-10,
+            "fraction": 0.24226507964724436
+          }
+        },
+        "H_total": {
+          "air_excluding_notch": {
+            "error_squared": 7.937885713137699e-10,
+            "fraction": 0.6593239509793103
+          },
+          "notch_air": {
+            "error_squared": 4.220944468154509e-11,
+            "fraction": 0.035059332978325766
+          },
+          "substrate": {
+            "error_squared": 6.640512830713635e-11,
+            "fraction": 0.05515636422969205
+          },
+          "Si_block": {
+            "error_squared": 3.015400313318267e-10,
+            "fraction": 0.2504603518126719
+          }
+        },
+        "curl_total": {
+          "air_excluding_notch": {
+            "error_squared": 6.395411573038955e-08,
+            "fraction": 0.6593239509793075
+          },
+          "notch_air": {
+            "error_squared": 3.4007389469103572e-09,
+            "fraction": 0.03505933297832635
+          },
+          "substrate": {
+            "error_squared": 5.3501416048573456e-09,
+            "fraction": 0.055156364229693215
+          },
+          "Si_block": {
+            "error_squared": 2.429453730887513e-08,
+            "fraction": 0.25046035181267257
+          }
+        },
+        "E_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 5.619899310738798e-10,
+            "fraction": 0.6505692519488786
+          },
+          "notch_air": {
+            "error_squared": 2.610162773275497e-11,
+            "fraction": 0.030215695139410203
+          },
+          "substrate": {
+            "error_squared": 6.64727237592109e-11,
+            "fraction": 0.07694997326446626
+          },
+          "Si_block": {
+            "error_squared": 2.0927908136559437e-10,
+            "fraction": 0.242265079647245
+          }
+        },
+        "H_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 7.937885713137699e-10,
+            "fraction": 0.6593239509793107
+          },
+          "notch_air": {
+            "error_squared": 4.220944468154504e-11,
+            "fraction": 0.035059332978325745
+          },
+          "substrate": {
+            "error_squared": 6.640512830713624e-11,
+            "fraction": 0.055156364229692
+          },
+          "Si_block": {
+            "error_squared": 3.015400313318268e-10,
+            "fraction": 0.2504603518126722
+          }
+        },
+        "curl_scattered": {
+          "air_excluding_notch": {
+            "error_squared": 6.395411573038953e-08,
+            "fraction": 0.6593239509793072
+          },
+          "notch_air": {
+            "error_squared": 3.4007389469103614e-09,
+            "fraction": 0.035059332978326384
+          },
+          "substrate": {
+            "error_squared": 5.350141604857347e-09,
+            "fraction": 0.055156364229693215
+          },
+          "Si_block": {
+            "error_squared": 2.4294537308875125e-08,
+            "fraction": 0.25046035181267245
+          }
+        }
+      },
+      "component_squared": [
+        [
+          8.213336010143974e-12,
+          8.394866473486217e-10,
+          1.6143380572673586e-11
+        ],
+        [
+          1.0968473145344689e-09,
+          9.452138384713465e-12,
+          9.764372271509456e-11
+        ],
+        [
+          8.837101292124448e-08,
+          7.615417681752958e-10,
+          7.866978901612594e-09
+        ],
+        [
+          8.213336010143953e-12,
+          8.394866473486224e-10,
+          1.6143380572673586e-11
+        ],
+        [
+          1.096847314534469e-09,
+          9.452138384713465e-12,
+          9.76437227150941e-11
+        ],
+        [
+          8.837101292124448e-08,
+          7.615417681752958e-10,
+          7.866978901612597e-09
+        ]
+      ],
+      "quadrature_operation_recalculated": 2.071092321030758e-15,
+      "full_cross_terms": true,
+      "source_array_sha256": "f258306a55ebe69acd61574b57eb70611c16be3a19f2e253ebe0c3ac67de7d01"
+    }
+  }
+}

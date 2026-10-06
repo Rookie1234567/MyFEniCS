@@ -1,0 +1,263 @@
+{
+  "rows": [
+    {
+      "pair": "H_A",
+      "changed_resolution": "p5→p6, Z4 fixed",
+      "max_full_field_increment": 0.0007021770088314181,
+      "selected_max": 0.0005873418678040794,
+      "complex_mode_increment": 6.437462500034776e-05,
+      "complete_increment_pass": false,
+      "interpretation": "旧Z4/p5→p6仍FAIL，解释低阶不足，不作为继续B的门。",
+      "quadrature_operation": 2.071092321030758e-15
+    },
+    {
+      "pair": "A_B",
+      "changed_resolution": "Z4/p6 vs Z2/p7",
+      "max_full_field_increment": 0.03449623102098577,
+      "selected_max": 0.027452129012368032,
+      "complex_mode_increment": 0.0009438804164881759,
+      "complete_increment_pass": false,
+      "interpretation": "更丰富的两个端点仍不一致，且差值与P_B接近；固定532交叉锚点未闭合。",
+      "quadrature_operation": 1.9691109629026874e-15
+    },
+    {
+      "pair": "P_B",
+      "changed_resolution": "p6→p7, Z2 fixed",
+      "max_full_field_increment": 0.034496251747467156,
+      "selected_max": 0.02745091748276829,
+      "complex_mode_increment": 0.0009440884403431978,
+      "complete_increment_pass": false,
+      "interpretation": "同Z2提高p后完整场变化约3.45%，原方程仍通过；不能断言p7更好、更差或唯一根因。",
+      "quadrature_operation": 1.5315307489243131e-15
+    },
+    {
+      "pair": "P_A",
+      "changed_resolution": "z subdivision, p6 fixed",
+      "max_full_field_increment": 3.8694744150931386e-05,
+      "selected_max": 4.773034799449049e-05,
+      "complex_mode_increment": 6.573700128486012e-06,
+      "complete_increment_pass": true,
+      "interpretation": "固定p6沿z加密的完整增量通过，只表明这一方向在本父级上变化小；不是连续误差界。",
+      "quadrature_operation": 2.071092321030758e-15
+    }
+  ],
+  "components": [
+    {
+      "pair": "H_A",
+      "field": "E_scattered",
+      "component_error_squared": [
+        2.4801565642125728e-08,
+        3.396718949958625e-07,
+        1.3639036245781583e-09
+      ],
+      "component_fractions": [
+        0.0677939654745744,
+        0.9284778652408927,
+        0.003728169284532857
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.36749097055611335,
+        "notch_air": 0.08199491973929399,
+        "substrate": 0.045855000457090574,
+        "Si_block": 0.5046591092475027
+      }
+    },
+    {
+      "pair": "H_A",
+      "field": "H_scattered",
+      "component_error_squared": [
+        1.7869659208558544e-08,
+        1.0397355578598443e-09,
+        3.7754683008935767e-07
+      ],
+      "component_fractions": [
+        0.045073473660450704,
+        0.0026225734209068914,
+        0.9523039529186423
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.42107129721702163,
+        "notch_air": 0.07714613485239631,
+        "substrate": 0.0415621626457698,
+        "Si_block": 0.460220405284812
+      }
+    },
+    {
+      "pair": "A_B",
+      "field": "E_scattered",
+      "component_error_squared": [
+        7.235300758950197e-06,
+        0.0009519849593767423,
+        3.213070038124194e-07
+      ],
+      "component_fractions": [
+        0.0075403724098367046,
+        0.992124772889944,
+        0.00033485470021926163
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.5383531964841239,
+        "notch_air": 0.06351383384238124,
+        "substrate": 0.004000023834631108,
+        "Si_block": 0.39413294583886377
+      }
+    },
+    {
+      "pair": "A_B",
+      "field": "H_scattered",
+      "component_error_squared": [
+        2.0305424890599138e-06,
+        4.542787976507216e-07,
+        0.0009552684948942163
+      ],
+      "component_fractions": [
+        0.0021201101105624664,
+        0.00047431712318384174,
+        0.9974055727662537
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.539030281303396,
+        "notch_air": 0.06292071288004505,
+        "substrate": 0.00426651528283783,
+        "Si_block": 0.3937824905337213
+      }
+    },
+    {
+      "pair": "P_B",
+      "field": "E_scattered",
+      "component_error_squared": [
+        7.2353058519744785e-06,
+        0.0009519861013742726,
+        3.213129624923021e-07
+      ],
+      "component_fractions": [
+        0.007540368656594376,
+        0.9921247708356534,
+        0.00033486050775217253
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.5383533010548981,
+        "notch_air": 0.06351293336467942,
+        "substrate": 0.004000201664077039,
+        "Si_block": 0.39413356391634513
+      }
+    },
+    {
+      "pair": "P_B",
+      "field": "H_scattered",
+      "component_error_squared": [
+        2.031675978248539e-06,
+        4.5427829919821104e-07,
+        0.0009552687973992137
+      ],
+      "component_fractions": [
+        0.0021212904187547545,
+        0.000474315891832376,
+        0.9974043936894128
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.5390306997769215,
+        "notch_air": 0.06292045599497526,
+        "substrate": 0.00426667033342408,
+        "Si_block": 0.3937821738946791
+      }
+    },
+    {
+      "pair": "P_A",
+      "field": "E_scattered",
+      "component_error_squared": [
+        8.213336010143953e-12,
+        8.394866473486224e-10,
+        1.6143380572673586e-11
+      ],
+      "component_fractions": [
+        0.00950789964139357,
+        0.9718042441491157,
+        0.018687856209490806
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.6505692519488786,
+        "notch_air": 0.030215695139410203,
+        "substrate": 0.07694997326446626,
+        "Si_block": 0.242265079647245
+      }
+    },
+    {
+      "pair": "P_A",
+      "field": "H_scattered",
+      "component_error_squared": [
+        1.096847314534469e-09,
+        9.452138384713465e-12,
+        9.76437227150941e-11
+      ],
+      "component_fractions": [
+        0.9110457509397103,
+        0.00785098381386129,
+        0.08110326524642843
+      ],
+      "physical_components": [
+        "x",
+        "y",
+        "z"
+      ],
+      "not_a_mesh_axis_error_estimator": true,
+      "region_fractions": {
+        "air_excluding_notch": 0.6593239509793107,
+        "notch_air": 0.035059332978325745,
+        "substrate": 0.055156364229692,
+        "Si_block": 0.2504603518126722
+      }
+    }
+  ],
+  "full_basis_cross_terms_retained": true,
+  "unknown_causes": [
+    "continuous exact solution and which endpoint is closer",
+    "whether conditioning amplifies algebraic error",
+    "whether further z/p changes reconcile endpoints"
+  ],
+  "no_new_FE_evaluations": true,
+  "no_new_spectrum_or_condition_estimate": true,
+  "no_unique_root_cause_claim": true
+}

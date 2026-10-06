@@ -1,0 +1,13 @@
+{
+  "frozen_queue_sha256": "75ec2bcf9bccd498a8a217c7a8daa6ae2d48ab88bd9561e21403986f026954b6",
+  "original_decision_status": "decision was frozen before mandatory VERIFY; historical pending field is not rewritten",
+  "verification_completed": true,
+  "independent_array_checker_completed": true,
+  "complete_modal_checker_completed": true,
+  "equation_recovery_and_direct_target_pass": true,
+  "modal_pass": true,
+  "final_verdict": "HP_ACCURACY_NOT_CLOSED",
+  "continuum": false,
+  "target": false,
+  "NN20": false
+}

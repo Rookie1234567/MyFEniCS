@@ -1,0 +1,34 @@
+{
+  "rows": [
+    {
+      "role": "A",
+      "cold_N1_dat_chain_lower_seconds": 4543.819512405898,
+      "denominator_scope": "actual dat includes required research cross-resolution comparisons; this ratio is not a pure production-forward timing bound",
+      "pure_forward_cold_N1": "unknown as a separate executed complete benchmark; disjoint component times retained, not subtracted and advertised as a new timing",
+      "removing_entire_factor_solve_tail_optimistic_fraction": 0.021099677786309803,
+      "NN_time_necessary_condition": "fV-H >= 0.2*T_B against best fully qualified same-correctness complete baseline",
+      "NN_peak_necessary_condition": "simultaneously removed bytes minus all model/data/activation/workspace >=0.2 complete baseline peak; other cost compliant",
+      "strongest_complete_accuracy_traditional_baseline": "unknown until all physical gates; equation pass alone is insufficient",
+      "NN20": "NOT_DEMONSTRATED",
+      "NN_training": 0,
+      "no_learning_object_automatically_admitted": true,
+      "unknown_historical_fees_retained": true
+    },
+    {
+      "role": "B",
+      "cold_N1_dat_chain_lower_seconds": 10396.572926383,
+      "denominator_scope": "actual dat includes required research cross-resolution comparisons; this ratio is not a pure production-forward timing bound",
+      "pure_forward_cold_N1": "unknown as a separate executed complete benchmark; disjoint component times retained, not subtracted and advertised as a new timing",
+      "removing_entire_factor_solve_tail_optimistic_fraction": 0.011672839809641308,
+      "NN_time_necessary_condition": "fV-H >= 0.2*T_B against best fully qualified same-correctness complete baseline",
+      "NN_peak_necessary_condition": "simultaneously removed bytes minus all model/data/activation/workspace >=0.2 complete baseline peak; other cost compliant",
+      "strongest_complete_accuracy_traditional_baseline": "unknown until all physical gates; equation pass alone is insufficient",
+      "NN20": "NOT_DEMONSTRATED",
+      "NN_training": 0,
+      "no_learning_object_automatically_admitted": true,
+      "unknown_historical_fees_retained": true
+    }
+  ],
+  "not_a_training_contract": true,
+  "finite_costs_not_target_scale_proof": true
+}

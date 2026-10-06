@@ -1,3 +1,11 @@
+## Task042 V53：相位 hp 完整解与前向准确性
+
+结论 `HP_ACCURACY_NOT_CLOSED`；本轮无NN训练，完整方程与场增量分别验收。
+
+7项预算/p7/缓存/collector定点回归、相关Ruff/compile、5个one-run schema及独立后代超时清场通过；真实SETUP旧H/P少量子单元和p7复数native配对通过。最终独立保存数组/模式与15项文档合同见[测试](records/tests_v53.json)。未运行全库pytest，无CI声明；科学FAIL单独保留。
+
+[回应](../response_v53.md)；[完整物理](phase_hp_completion_v53.md)；[科学门](records/hp_accuracy_checks_v53.json)；[最终费用](records/resource_costs_final_v53.json)。
+
 ## Task042 V52：固定相位NOTCH p/h完整分辨对照
 
 结论 `FLAT_PASS_NOTCH_NOT_QUALIFIED`；完整方程与物理场分别验收，无NN训练。

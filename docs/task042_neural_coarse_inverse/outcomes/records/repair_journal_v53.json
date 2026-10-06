@@ -1,0 +1,158 @@
+{
+  "rows": [
+    {
+      "root": "synthetic watchdog parent has PETSc singleton MPI helper",
+      "failure": "aux_pre_01",
+      "solution": "fresh dedicated non-FE supervisor; public supervisor gate unchanged",
+      "formal_solve_replay": 0
+    },
+    {
+      "root": "public Floquet dispatcher lacks explicit degree7 finite authority",
+      "failure": "SETUP preflight01",
+      "solution": "keyword finite_authority_degree7 only for V53 B; default remains degree<=6; exact existing Basix entity kernel extended to7",
+      "new_solve_replay": 0
+    },
+    {
+      "kind": "postprocessing storage/fixture/tool path repair",
+      "attempt": "collect01",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "classification": "MONITORING_FAILED",
+      "charged_supervised_seconds": 32.36474260687828,
+      "exception": {
+        "exception_stage": "resource_sample",
+        "exception_type": "FileNotFoundError",
+        "exception_message": "[Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_collect01/records/.physical_identity_bindings_v53.jsonkkujmcei'"
+      },
+      "receipt_path": "tmp/task042/v53/aux_post_collect01",
+      "raw_summary_sha256": "5752fbcf43c31171bf70c9cb41cd83e707bdef581ef16affa0b33f8d910408c8",
+      "scientific_replay": false,
+      "returned_A_B_untouched": true
+    },
+    {
+      "kind": "postprocessing storage/fixture/tool path repair",
+      "attempt": "storage01",
+      "source_sha": "3981710a9ae05670a8d62f4c870ddc379c3ce537",
+      "classification": "WORKER_FAILED",
+      "charged_supervised_seconds": 3.224863807205111,
+      "exception": {
+        "exception_stage": null,
+        "exception_type": null,
+        "exception_message": null
+      },
+      "receipt_path": "tmp/task042/v53/aux_post_storage01",
+      "raw_summary_sha256": "51c623c81677495e28579f8037161128879d634f2f320981be22fcb1b439605f",
+      "scientific_replay": false,
+      "returned_A_B_untouched": true
+    },
+    {
+      "kind": "postprocessing storage/fixture/tool path repair",
+      "attempt": "storage03",
+      "source_sha": "da8fc62f488ccf0461e70d57f0337666d20769fd",
+      "classification": "WORKER_FAILED",
+      "charged_supervised_seconds": 3.230694236001,
+      "exception": {
+        "exception_stage": null,
+        "exception_type": null,
+        "exception_message": null
+      },
+      "receipt_path": "tmp/task042/v53/aux_post_storage03",
+      "raw_summary_sha256": "a3bb1ea587cfe71c4a13317288065ffa0b07d7b004fb097c0c5a390efcced505",
+      "scientific_replay": false,
+      "returned_A_B_untouched": true
+    },
+    {
+      "kind": "postprocessing storage/fixture/tool path repair",
+      "attempt": "storage04",
+      "source_sha": "c583860ee82a8d85aba7a21eb71c33d43050a456",
+      "classification": "COMPLETED",
+      "charged_supervised_seconds": 3.944843015866354,
+      "exception": {
+        "exception_stage": null,
+        "exception_type": null,
+        "exception_message": null
+      },
+      "receipt_path": "tmp/task042/v53/aux_post_storage04",
+      "raw_summary_sha256": "1b29b5658e13617eaa6d59b42264fbe5bd09c9bf2fecd40d0450bd47f4cb253b",
+      "scientific_replay": false,
+      "returned_A_B_untouched": true
+    }
+  ],
+  "failed_sources_and_fees_preserved": true,
+  "returned_solutions_not_recomputed_for_metadata": true,
+  "bounded_CPU_cooldown": {
+    "recorded_UTC": "2026-10-06T05:53:52.770324+00:00",
+    "recorded_monotonic": 1191027.631215586,
+    "next_probe_monotonic": 1191079.301333203,
+    "minimum_interval_seconds": 120,
+    "maximum_observation_seconds": 600,
+    "attempt": 1,
+    "reason": "RuntimeError('No audited unoccupied physical core; do not overlap a busy worker/SMT sibling')",
+    "no_worker_launched": true,
+    "no_neighbor_modifications": true,
+    "budget_not_refreshed": true,
+    "recheck_UTC": "2026-10-06T05:55:25.744214+00:00",
+    "recheck_monotonic": 1191120.605155373,
+    "actual_interval_since_rejection": 161.30382247501984
+  },
+  "actual_root": "inventory_paths is_file→resolve→stat races with atomic writer rename; only FileNotFoundError handled, PermissionError and escape errors still raise",
+  "regression": "legacy between-reads rename fails; fixed reader, permission error and out-of-worktree negative all tested",
+  "final_targeted_receipt": {
+    "status": "PASSED_LOCAL",
+    "rows": [
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "unittest",
+          "-v",
+          "src.test.test_phase_hp_completion.CompletionTests.test_storage_inventory_atomic_rename_preserves_hard_errors",
+          "src.test.test_phase_hp_completion.CompletionTests.test_actual_incremental_collector_namespace_writer"
+        ],
+        "returncode": 0,
+        "seconds": 0.9268636931665242
+      },
+      {
+        "command": [
+          "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+          "check",
+          "--select",
+          "E9,F63,F7,F82",
+          "src/runners/diagnostic_storage.py",
+          "src/solvers/phase_hp_completion_scope.py",
+          "src/test/test_phase_hp_completion.py"
+        ],
+        "returncode": 0,
+        "seconds": 0.008479584008455276
+      },
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "compileall",
+          "-q",
+          "src/runners/diagnostic_storage.py",
+          "src/solvers/phase_hp_completion_scope.py",
+          "src/test/test_phase_hp_completion.py"
+        ],
+        "returncode": 0,
+        "seconds": 0.06577288499101996
+      }
+    ],
+    "elapsed_seconds": 1.0011654139962047,
+    "hashes": {
+      "src/runners/diagnostic_storage.py": "7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7",
+      "src/solvers/phase_hp_completion_scope.py": "f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948",
+      "src/test/test_phase_hp_completion.py": "242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe"
+    },
+    "reused_scientific_qualification": "eec0e75313c91d3daf4d22e72cf04167e58f31f9; unchanged mathematical files",
+    "new_FE_actions": 0,
+    "new_solve_count": 0,
+    "unchanged_resource_thresholds": true
+  },
+  "rejected_admission": {
+    "path": "tmp/task042/v53/aux_post_storage02/admission.json",
+    "no_worker_launched": true
+  },
+  "followup_fixture_error": "first strengthened fixture assumed resolve did not stat; changed injection to resolve boundary, retained failure",
+  "followup_tool_error": "python -m ruff unavailable in FE venv; reused already qualified Ruff executable, no install"
+}

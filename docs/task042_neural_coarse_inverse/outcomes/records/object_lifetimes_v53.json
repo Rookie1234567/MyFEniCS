@@ -1,0 +1,188 @@
+{
+  "routes": [
+    {
+      "role": "SETUP",
+      "source_sha": "3f909b1642d6ffa74e8eb87b93834672f49c2918",
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "SETUP",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "A",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 4107.876566288993,
+          "RSS_bytes": 10298327040,
+          "clock": {
+            "start_utc": "2026-10-06T00:58:18.734593+00:00",
+            "start_monotonic": 1173293.595494451,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+            "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+            "first_work_start_never_refreshed": true,
+            "observed_utc": "2026-10-06T02:30:16.922479+00:00",
+            "observed_monotonic": 1178811.783346022,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 5518.187886476517,
+            "heavy_remaining_seconds": 16981.812113523483,
+            "total_remaining_seconds": 19681.812113523483
+          },
+          "sha256": "66876428be1eab09fb0fb5f599e7552f88c5f11e78d03d201cbc06dda6d34a6f"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 4140.0627493490465,
+          "RSS_bytes": 4842766336,
+          "clock": {
+            "start_utc": "2026-10-06T00:58:18.734593+00:00",
+            "start_monotonic": 1173293.595494451,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+            "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+            "first_work_start_never_refreshed": true,
+            "observed_utc": "2026-10-06T02:30:49.108663+00:00",
+            "observed_monotonic": 1178843.969530108,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 5550.37407040596,
+            "heavy_remaining_seconds": 16949.62592959404,
+            "total_remaining_seconds": 19649.62592959404
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 4140.571681641042,
+          "RSS_bytes": 3450925056,
+          "clock": {
+            "start_utc": "2026-10-06T00:58:18.734593+00:00",
+            "start_monotonic": 1173293.595494451,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+            "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+            "first_work_start_never_refreshed": true,
+            "observed_utc": "2026-10-06T02:30:49.617624+00:00",
+            "observed_monotonic": 1178844.478490305,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 5550.883030653,
+            "heavy_remaining_seconds": 16949.116969347,
+            "total_remaining_seconds": 19649.116969347
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "B",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 9873.736574556911,
+          "RSS_bytes": 12113219584,
+          "clock": {
+            "start_utc": "2026-10-06T00:58:18.734593+00:00",
+            "start_monotonic": 1173293.595494451,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+            "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+            "first_work_start_never_refreshed": true,
+            "observed_utc": "2026-10-06T05:22:44.713782+00:00",
+            "observed_monotonic": 1189159.574648385,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 15865.979188919067,
+            "heavy_remaining_seconds": 6634.020811080933,
+            "total_remaining_seconds": 9334.020811080933
+          },
+          "sha256": "7334ad2a51105ee9dd70efe7b1ac363143f3e84f93ea8de9115851ff5899c7ce"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 9910.623645826941,
+          "RSS_bytes": 6691905536,
+          "clock": {
+            "start_utc": "2026-10-06T00:58:18.734593+00:00",
+            "start_monotonic": 1173293.595494451,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+            "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+            "first_work_start_never_refreshed": true,
+            "observed_utc": "2026-10-06T05:23:21.600873+00:00",
+            "observed_monotonic": 1189196.461739318,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 15902.86627984047,
+            "heavy_remaining_seconds": 6597.133720159531,
+            "total_remaining_seconds": 9297.13372015953
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 9910.846262464998,
+          "RSS_bytes": 5344677888,
+          "clock": {
+            "start_utc": "2026-10-06T00:58:18.734593+00:00",
+            "start_monotonic": 1173293.595494451,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+            "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+            "first_work_start_never_refreshed": true,
+            "observed_utc": "2026-10-06T05:23:21.823458+00:00",
+            "observed_monotonic": 1189196.684325014,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 15903.088865280151,
+            "heavy_remaining_seconds": 6596.911134719849,
+            "total_remaining_seconds": 9296.911134719849
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    }
+  ]
+}

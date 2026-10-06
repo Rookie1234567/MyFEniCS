@@ -1,0 +1,109 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "paths": [
+        "src/io/phase_notch_hp.py",
+        "src/solvers/phase_evaluation_cache.py",
+        "src/solvers/phase_explicit_accuracy.py",
+        "src/solvers/phase_explicit_accuracy_capacity.py",
+        "src/solvers/phase_hp_completion.py",
+        "src/solvers/phase_hp_completion_scope.py",
+        "src/solvers/phase_notch_hp.py",
+        "src/solvers/phase_notch_hp_capacity.py",
+        "src/solvers/phase_notch_hp_fields.py",
+        "src/solvers/phase_tensor_checkpoint.py"
+      ],
+      "behavior": "opt-in same original phase Maxwell equation; p6/p7 finite hp, explicit 32/40/48 GiB, exact cached evaluation, raw tensor checkpoints",
+      "dependencies": [
+        "qualified V51/V52 phase core"
+      ],
+      "tests": [
+        "focused p7/capacity/exact-cache/collector tests",
+        "fresh complete A/B; M not_run by scientific gate"
+      ],
+      "production_default_changed": false,
+      "production_qualification": false,
+      "suggested_order": 1
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "paths": [
+        "src/runners/diagnostic_storage.py",
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "isolated V53 namespace, real resolved case and charged deadline; unchanged neighbor processes",
+      "dependencies": [
+        "existing subreaper_watchdog",
+        "group1"
+      ],
+      "tests": [
+        "final source qualifier, descendant timeout witness"
+      ],
+      "suggested_order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "paths": [
+        "benchmarks/collect_phase_hp_completion.py",
+        "benchmarks/collect_phase_notch_hp.py",
+        "benchmarks/qualify_phase_hp_completion.py",
+        "src/test/test_phase_hp_completion.py"
+      ],
+      "behavior": "saved raw equation/field/power/region identities and all-sample resource recalculation",
+      "dependencies": [
+        "groups1-2"
+      ],
+      "tests": [
+        "targeted inventory and incomplete timeline negative fixtures"
+      ],
+      "suggested_order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "paths": [
+        "response_v53.md",
+        "outcomes/phase_hp_completion_v53.md",
+        "V53 compact records",
+        "six short historical-suffix navigation prefixes"
+      ],
+      "dependencies": [
+        "groups1-3"
+      ],
+      "tests": [
+        "15 documentation contracts and actual final bytes/links/tables"
+      ],
+      "suggested_order": 4
+    },
+    {
+      "group": "research-only",
+      "paths": [
+        "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json",
+        "input/task042_neural_coarse_inverse/v53_capacity_resume_preflight.dat",
+        "input/task042_neural_coarse_inverse/v53_notch_modes828.dat",
+        "input/task042_neural_coarse_inverse/v53_notch_z2_p7.dat",
+        "input/task042_neural_coarse_inverse/v53_notch_z4_p6.dat",
+        "input/task042_neural_coarse_inverse/v53_verify_cost.dat"
+      ],
+      "behavior": "five one-run entries and frozen finite authority hp queue, conditional stages not automatically runnable",
+      "dependencies": [
+        "groups1-4"
+      ],
+      "tests": [
+        "five real schema/stage dispatch checks"
+      ],
+      "suggested_order": 5
+    },
+    {
+      "group": "do-not-merge",
+      "paths": [
+        "ignored scientific arrays, factors, JIT, raw timelines",
+        "unqualified target-scale predictions"
+      ],
+      "reason": "large arrays stay ignored; no target/continuum/NN20 or production default qualification",
+      "suggested_order": null
+    }
+  ],
+  "merge_approval": false,
+  "no_actual_merge": true
+}
