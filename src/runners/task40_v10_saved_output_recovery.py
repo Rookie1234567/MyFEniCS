@@ -33,6 +33,176 @@ _PORT_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 _ENERGY_LIMIT = 1.0e-5
 
+_SAVED_ASSEMBLY_SOURCE_SHA256 = {
+    "dtn_boundary_phase_gauge.py": (
+        "5af5e37e1e55ba511e1b3cca2d000cc4ff93f866b52841e9dc24cb69d52c58f4"
+    ),
+    "dtn_port_3d.py": "0724e3f5c5fd71ac1aa87d2bc27e4761ea05eb1da09b9ee997e71d36182e98f6",
+    "fullspace_dtn_action.py": "5e846956a89620d3dc67f6d934bdd44f60e01515589045d81f975246da970784",
+    "fullspace_same_mesh_hcurl_pmg_physical.py": (
+        "0160c220f294027baa66e485a2e6f40c8f693881db5b1b888244cdf1d5082aac"
+    ),
+    "dtn_boundary_plane_qualification.py": (
+        "08adf9eb4061489337fd55709fbe4761f679b910dd96299b9ac17836c7dd5f42"
+    ),
+    "fresh_c1_manifest_identity.py": (
+        "5186cc28176b6143c6c4c827a3015209cc18b6f096a3055ccb25750b2826e761"
+    ),
+    "modes_3d.py": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+    "config_3d.py": "c4cf27346824767a1a5f6dbde396fd61391a29d6cdf66b66603fa369eefcc92e",
+}
+_FROZEN_CURRENT_ASSEMBLY_SOURCE_SHA256 = {
+    "dtn_boundary_phase_gauge.py": (
+        "5af5e37e1e55ba511e1b3cca2d000cc4ff93f866b52841e9dc24cb69d52c58f4"
+    ),
+    "dtn_port_3d.py": "db6b49b4d9eb850dc06f71c320c33c92876ccd5945d039723d30a27c3b873434",
+    "fullspace_dtn_action.py": "5e846956a89620d3dc67f6d934bdd44f60e01515589045d81f975246da970784",
+    "fullspace_same_mesh_hcurl_pmg_physical.py": (
+        "0096aa1d7927802c19f460824ca3fee799a2c61e853699a3308a615676f4120f"
+    ),
+    "dtn_boundary_plane_qualification.py": (
+        "08adf9eb4061489337fd55709fbe4761f679b910dd96299b9ac17836c7dd5f42"
+    ),
+    "fresh_c1_manifest_identity.py": (
+        "5186cc28176b6143c6c4c827a3015209cc18b6f096a3055ccb25750b2826e761"
+    ),
+    "modes_3d.py": "ba58ffd3ceccff21ddf968ad73573344b3856e1dbede78044bd9ba6921cc1383",
+    "config_3d.py": "c4cf27346824767a1a5f6dbde396fd61391a29d6cdf66b66603fa369eefcc92e",
+}
+_REVIEWED_CHANGED_ASSEMBLY_SOURCES = tuple(
+    sorted(
+        name
+        for name, saved_sha in _SAVED_ASSEMBLY_SOURCE_SHA256.items()
+        if _FROZEN_CURRENT_ASSEMBLY_SOURCE_SHA256.get(name) != saved_sha
+    )
+)
+
+
+def _canonical_identity_bytes(value: Any) -> bytes:
+    from src.solvers.fullspace_dtn_action import _canonical_json_bytes
+
+    return _canonical_json_bytes(value)
+
+
+def _saved_carrier_identity_recheck(
+    *,
+    assembly_context: Any,
+    mode_manifest_bytes: bytes | str,
+    carrier_context_sha256: str | None,
+    carrier_manifest_sha256: str | None,
+    ordered_mode_count: int,
+    ordered_mode_sha256: str | None,
+    bundle_mode_sha256: str | None,
+    carrier_payload_sha256: str | None,
+    mpc_sha256: str | None,
+    saved_packet_mpc_sha256: str | None,
+    expected_saved_assembly_sha256: str = _CARRIER_ASSEMBLY_SHA256,
+) -> dict[str, Any]:
+    """Rebind only the reviewed source hashes, then replay the saved manifest guard."""
+
+    expected_changed = list(_REVIEWED_CHANGED_ASSEMBLY_SOURCES)
+    if not isinstance(assembly_context, Mapping):
+        raise ValueError("rebuilt carrier has no complete assembly context")
+    source_sha256 = assembly_context.get("source_sha256")
+    if not isinstance(source_sha256, Mapping):
+        raise ValueError("rebuilt carrier assembly context has no source hash map")
+    raw_manifest = (
+        mode_manifest_bytes.encode("utf-8")
+        if isinstance(mode_manifest_bytes, str)
+        else bytes(mode_manifest_bytes)
+    )
+    manifest = json.loads(raw_manifest)
+    if not isinstance(manifest, Mapping) or not isinstance(manifest.get("modes"), list):
+        raise ValueError("rebuilt carrier mode manifest is not a complete JSON object")
+    manifest_rows = manifest["modes"]
+    if any(
+        not isinstance(row, dict) or "assembly_context_sha256" not in row
+        for row in manifest_rows
+    ):
+        raise ValueError("rebuilt carrier mode manifest has a missing assembly-context identity")
+
+    current_context_bytes = _canonical_identity_bytes(assembly_context)
+    current_context_sha = hashlib.sha256(current_context_bytes).hexdigest()
+    current_manifest_sha = hashlib.sha256(raw_manifest).hexdigest()
+    replayed_context = json.loads(current_context_bytes)
+    replayed_context["source_sha256"] = dict(_SAVED_ASSEMBLY_SOURCE_SHA256)
+    replayed_context_sha = hashlib.sha256(
+        _canonical_identity_bytes(replayed_context)
+    ).hexdigest()
+    modes_bind_current_context = all(
+        row.get("assembly_context_sha256") == current_context_sha for row in manifest_rows
+    )
+    for row in manifest_rows:
+        row["assembly_context_sha256"] = replayed_context_sha
+    replayed_manifest_sha = hashlib.sha256(_canonical_identity_bytes(manifest)).hexdigest()
+
+    expected = {
+        "ordered_mode_count": _MODE_COUNT,
+        "ordered_mode_sha256": _MODE_SHA256,
+        "carrier_payload_sha256": _CARRIER_PAYLOAD_SHA256,
+        "mpc_sha256": _MPC_SHA256,
+        "saved_packet_mpc_sha256": _MPC_SHA256,
+        "saved_carrier_assembly_sha256": expected_saved_assembly_sha256,
+        "saved_source_sha256": dict(_SAVED_ASSEMBLY_SOURCE_SHA256),
+        "frozen_current_source_sha256": dict(_FROZEN_CURRENT_ASSEMBLY_SOURCE_SHA256),
+        "reviewed_changed_source_names": expected_changed,
+    }
+    actual = {
+        "ordered_mode_count": int(ordered_mode_count),
+        "ordered_mode_sha256": ordered_mode_sha256,
+        "bundle_mode_sha256": bundle_mode_sha256,
+        "carrier_payload_sha256": carrier_payload_sha256,
+        "mpc_sha256": mpc_sha256,
+        "saved_packet_mpc_sha256": saved_packet_mpc_sha256,
+        "carrier_context_sha256": carrier_context_sha256,
+        "current_context_sha256": current_context_sha,
+        "carrier_manifest_sha256": carrier_manifest_sha256,
+        "manifest_sha256_from_bytes": current_manifest_sha,
+        "rebuilt_saved_context_sha256": replayed_context_sha,
+        "rebuilt_saved_manifest_sha256": replayed_manifest_sha,
+        "source_sha256": dict(source_sha256),
+    }
+    checks = {
+        "reviewed_source_hash_delta_is_two_files": expected_changed == [
+            "dtn_port_3d.py",
+            "fullspace_same_mesh_hcurl_pmg_physical.py",
+        ],
+        "source_sha256_matches_frozen_review": dict(source_sha256)
+        == _FROZEN_CURRENT_ASSEMBLY_SOURCE_SHA256,
+        "carrier_context_sha_matches_current_context": carrier_context_sha256
+        == current_context_sha,
+        "carrier_manifest_sha_matches_manifest_bytes": carrier_manifest_sha256
+        == current_manifest_sha,
+        "manifest_schema_and_profile_valid": (
+            manifest.get("schema") == "fullspace-dtn.mode-manifest.v1"
+            and manifest.get("profile") == "full3d_scalable_v1"
+        ),
+        "manifest_mode_count_matches_frozen_count": (
+            len(manifest_rows) == _MODE_COUNT and manifest.get("mode_count") == len(manifest_rows)
+        ),
+        "all_manifest_modes_bind_current_context": modes_bind_current_context,
+        "rebuilt_saved_manifest_matches_frozen_sha": (
+            replayed_manifest_sha == expected_saved_assembly_sha256
+        ),
+        "ordered_mode_count_matches_saved_packet": int(ordered_mode_count) == _MODE_COUNT,
+        "ordered_mode_sha_matches_saved_packet": ordered_mode_sha256 == _MODE_SHA256,
+        "bundle_mode_sha_matches_saved_packet": bundle_mode_sha256 == _MODE_SHA256,
+        "carrier_payload_sha_matches_saved_packet": (
+            carrier_payload_sha256 == _CARRIER_PAYLOAD_SHA256
+        ),
+        "rebuilt_mpc_sha_matches_frozen_and_saved": (
+            mpc_sha256 == _MPC_SHA256 and saved_packet_mpc_sha256 == _MPC_SHA256
+            and mpc_sha256 == saved_packet_mpc_sha256
+        ),
+    }
+    return {
+        "schema": "task40extra.v10.saved-carrier-source-rebind-check.v1",
+        "passed": all(checks.values()),
+        "expected": expected,
+        "actual": actual,
+        "checks": checks,
+    }
+
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -394,22 +564,35 @@ def recover_task40_v10_saved_output(
         independent = np.asarray(mapping["independent_indices"], dtype=np.int64)
         slaves = np.asarray(mapping["slaves"], dtype=np.int64)
         all_rows = np.arange(_STORAGE_ROWS, dtype=np.int64)
-        if (
-            len(modes) != _MODE_COUNT
-            or mode_sha != _MODE_SHA256
-            or bundle.get("mode_sha256") != _MODE_SHA256
-            or bundle["dtn_action"].carrier.mode_manifest_sha256 != _CARRIER_ASSEMBLY_SHA256
-            or _carrier_payload_identity(bundle["dtn_action"].carrier) != _CARRIER_PAYLOAD_SHA256
-        ):
-            raise ValueError("rebuilt p6 mode/carrier identity differs from the saved B0 packet")
         mpc_sha = _hash_arrays({
             "slaves": np.asarray(mapping["slaves"]),
             "masters": np.asarray(mapping["masters"]),
             "coefficients": np.asarray(mapping["coefficients"]),
             "offsets": np.asarray(mapping["offsets"]),
         })
-        if mpc_sha != _MPC_SHA256 or old_identity["target_mpc"]["sha256"] != mpc_sha:
-            raise ValueError("rebuilt finalized MPC payload differs from the saved target")
+        carrier = bundle["dtn_action"].carrier
+        carrier_identity = _saved_carrier_identity_recheck(
+            assembly_context=getattr(carrier, "assembly_context", None),
+            mode_manifest_bytes=getattr(carrier, "mode_manifest_bytes", b""),
+            carrier_context_sha256=getattr(carrier, "assembly_context_sha256", None),
+            carrier_manifest_sha256=getattr(carrier, "mode_manifest_sha256", None),
+            ordered_mode_count=len(modes),
+            ordered_mode_sha256=mode_sha,
+            bundle_mode_sha256=bundle.get("mode_sha256"),
+            carrier_payload_sha256=_carrier_payload_identity(carrier),
+            mpc_sha256=mpc_sha,
+            saved_packet_mpc_sha256=old_identity["target_mpc"].get("sha256"),
+        )
+        carrier_identity_path = output_dir / "v10_saved_output_carrier_identity_recheck.json"
+        _write_json(carrier_identity_path, carrier_identity)
+        if not carrier_identity["passed"]:
+            failed_checks = sorted(
+                name for name, passed in carrier_identity["checks"].items() if not passed
+            )
+            raise ValueError(
+                "rebuilt p6 mode/carrier identity differs from the saved B0 packet; "
+                f"failed_checks={failed_checks}; receipt={carrier_identity_path.name}"
+            )
         if (
             independent.size + slaves.size != _STORAGE_ROWS
             or np.intersect1d(independent, slaves).size

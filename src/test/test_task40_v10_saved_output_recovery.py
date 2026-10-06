@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import copy
+import hashlib
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,7 +16,75 @@ from src.runners.task038_launcher import (
     _task40_v10_postprocess_worker_argv,
     _validate_task40_v10_postprocess_request,
 )
-from src.runners.task40_v10_saved_output_recovery import _saved_scalar_gate_checks
+from src.runners.task40_v10_saved_output_recovery import (
+    _CARRIER_PAYLOAD_SHA256,
+    _FROZEN_CURRENT_ASSEMBLY_SOURCE_SHA256,
+    _MODE_COUNT,
+    _MODE_SHA256,
+    _MPC_SHA256,
+    _SAVED_ASSEMBLY_SOURCE_SHA256,
+    _canonical_identity_bytes,
+    _saved_carrier_identity_recheck,
+    _saved_scalar_gate_checks,
+)
+
+
+def _saved_carrier_identity_fixture():
+    context = {
+        "schema": "task40extra.dtn-plane-discrete-context.v1",
+        "source_sha256": dict(_FROZEN_CURRENT_ASSEMBLY_SOURCE_SHA256),
+        "mesh": {"geometry_x_sha256": "mesh-fixed"},
+        "MPC": {"sha256": "mpc-fixed"},
+        "gauss": {"degree": 17, "rule": "fixed-test-rule"},
+        "ABI": {"scalar": "complex128", "integer": "int32"},
+    }
+    current_context_sha = hashlib.sha256(_canonical_identity_bytes(context)).hexdigest()
+    rows = [
+        {
+            "mode_index": index,
+            "assembly_context_sha256": current_context_sha,
+            "physical_mode_fixture": [index, "unchanged"],
+        }
+        for index in range(_MODE_COUNT)
+    ]
+    manifest = {
+        "schema": "fullspace-dtn.mode-manifest.v1",
+        "profile": "full3d_scalable_v1",
+        "mode_count": _MODE_COUNT,
+        "modes": rows,
+    }
+    raw_manifest = _canonical_identity_bytes(manifest)
+    saved_context = copy.deepcopy(context)
+    saved_context["source_sha256"] = dict(_SAVED_ASSEMBLY_SOURCE_SHA256)
+    saved_context_sha = hashlib.sha256(_canonical_identity_bytes(saved_context)).hexdigest()
+    saved_manifest = copy.deepcopy(manifest)
+    for row in saved_manifest["modes"]:
+        row["assembly_context_sha256"] = saved_context_sha
+    expected_saved_sha = hashlib.sha256(_canonical_identity_bytes(saved_manifest)).hexdigest()
+    return {
+        "assembly_context": context,
+        "mode_manifest_bytes": raw_manifest,
+        "carrier_context_sha256": current_context_sha,
+        "carrier_manifest_sha256": hashlib.sha256(raw_manifest).hexdigest(),
+        "ordered_mode_count": _MODE_COUNT,
+        "ordered_mode_sha256": _MODE_SHA256,
+        "bundle_mode_sha256": _MODE_SHA256,
+        "carrier_payload_sha256": _CARRIER_PAYLOAD_SHA256,
+        "mpc_sha256": _MPC_SHA256,
+        "saved_packet_mpc_sha256": _MPC_SHA256,
+        "expected_saved_assembly_sha256": expected_saved_sha,
+    }
+
+
+def _refresh_current_context_and_manifest_hashes(inputs):
+    context_sha = hashlib.sha256(_canonical_identity_bytes(inputs["assembly_context"])).hexdigest()
+    manifest = json.loads(inputs["mode_manifest_bytes"])
+    for row in manifest["modes"]:
+        row["assembly_context_sha256"] = context_sha
+    raw_manifest = _canonical_identity_bytes(manifest)
+    inputs["carrier_context_sha256"] = context_sha
+    inputs["mode_manifest_bytes"] = raw_manifest
+    inputs["carrier_manifest_sha256"] = hashlib.sha256(raw_manifest).hexdigest()
 
 
 def test_run_case_accepts_saved_output_and_campaign_arguments():
@@ -54,6 +125,65 @@ def test_saved_scalar_gates_reject_nan():
     assert all(_saved_scalar_gate_checks(packet).values())
     packet["actual_port_residual_relative"] = float("nan")
     assert not _saved_scalar_gate_checks(packet)["port"]
+
+
+def test_saved_carrier_rebind_replays_only_the_reviewed_source_hashes():
+    result = _saved_carrier_identity_recheck(**_saved_carrier_identity_fixture())
+
+    assert result["passed"]
+    assert all(result["checks"].values())
+    assert result["actual"]["rebuilt_saved_manifest_sha256"] == result["expected"][
+        "saved_carrier_assembly_sha256"
+    ]
+    assert result["actual"]["source_sha256"] == result["expected"][
+        "frozen_current_source_sha256"
+    ]
+
+
+def test_saved_carrier_rebind_rejects_an_unreviewed_source_change():
+    inputs = _saved_carrier_identity_fixture()
+    inputs["assembly_context"]["source_sha256"]["dtn_boundary_phase_gauge.py"] = "f" * 64
+    _refresh_current_context_and_manifest_hashes(inputs)
+
+    result = _saved_carrier_identity_recheck(**inputs)
+
+    assert not result["passed"]
+    assert not result["checks"]["source_sha256_matches_frozen_review"]
+    assert result["checks"]["rebuilt_saved_manifest_matches_frozen_sha"]
+
+
+def test_saved_carrier_rebind_rejects_non_source_discrete_context_change():
+    inputs = _saved_carrier_identity_fixture()
+    inputs["assembly_context"]["mesh"]["geometry_x_sha256"] = "changed-mesh"
+    _refresh_current_context_and_manifest_hashes(inputs)
+
+    result = _saved_carrier_identity_recheck(**inputs)
+
+    assert not result["passed"]
+    assert result["checks"]["source_sha256_matches_frozen_review"]
+    assert not result["checks"]["rebuilt_saved_manifest_matches_frozen_sha"]
+
+
+@pytest.mark.parametrize(
+    ("field", "wrong_sha"),
+    [
+        ("carrier_payload_sha256", "0" * 64),
+        ("mpc_sha256", "1" * 64),
+        ("saved_packet_mpc_sha256", "2" * 64),
+    ],
+)
+def test_saved_carrier_rebind_keeps_payload_and_mpc_guards_strict(field, wrong_sha):
+    inputs = _saved_carrier_identity_fixture()
+    inputs[field] = wrong_sha
+
+    result = _saved_carrier_identity_recheck(**inputs)
+
+    assert not result["passed"]
+    assert result["checks"]["rebuilt_saved_manifest_matches_frozen_sha"]
+    if field == "carrier_payload_sha256":
+        assert not result["checks"]["carrier_payload_sha_matches_saved_packet"]
+    else:
+        assert not result["checks"]["rebuilt_mpc_sha_matches_frozen_and_saved"]
 
 
 def test_saved_output_entry_rejects_wrong_candidate_campaign_and_probe():
