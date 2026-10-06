@@ -1,0 +1,191 @@
+{
+  "schema": "task40extra.review_v12.cost_and_repairs.v1",
+  "source_sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+  "campaign": {
+    "name": "task40extra_v12_shared_p6_transforms",
+    "window_sha256": "6e026de83e9746c0f9b31ddbba458e89a8f4363bb23949a1e7418589486a37ee",
+    "t0_utc": "2026-10-06T10:41:59.302385792Z",
+    "deadline_utc": "2026-10-07T10:41:59.302385792Z",
+    "window_seconds": 86400,
+    "closeout_reserve_seconds": 600,
+    "accounting_writer": "watchdog_only",
+    "latest_saved_settlement_scope": "after Gx560 formal worker terminal; subsequent saved-witness recheck and documentation closeout are not separately settled in the compact ledger receipt",
+    "charged_seconds_after_Gx560_worker": 14657.55424115569,
+    "numerical_seconds_remaining_after_Gx560_worker": 71142.4457588443,
+    "latest_main_owned_observation": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_r6_precommit_campaign_observation.json",
+      "sha256": "67c1065bfbdd27f42e5e40cbc5ce9302e0d422e82c23a16096d23cd79120994a",
+      "cumulative_charged_seconds": 17395.54872271069,
+      "numerical_seconds_remaining": 68404.4512772893,
+      "scope": "covers R6 work through the main-owned observation timestamp, not the final documentation/Git closeout"
+    },
+    "documentation_and_Git_after_latest_observation_seconds": null,
+    "post_observation_charge_status": "to be included in the same original window and settled by the main/watchdog owner; no manual ledger write"
+  },
+  "measured_run_costs": {
+    "B0_initial_NameError_attempt": {
+      "source_sha_prefix": "696383d",
+      "run_directory_basename": "20261006T120744.861717Z",
+      "worker_workflow_monotonic_seconds": 1107.2371964480262,
+      "watchdog_policy_elapsed_seconds": 1207.4370952185634,
+      "clock_scope_note": "worker and watchdog policy clocks are distinct",
+      "process_tree_rss_peak_bytes": 2749452288,
+      "cgroup_memory_peak_bytes": 3135488000,
+      "task_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "classification": "initial B0 NameError failure; preserved separately from the later fresh B0 solve"
+    },
+    "B0_fresh_worker": {
+      "run_id": "task40extra_0p7nm_b0_p6_y_orbit_candidate_v10",
+      "source_sha": "c08c135f0e60198475525cd1c761cb0ba686d948",
+      "full_workflow_monotonic_seconds": 1068.5331719600363,
+      "watchdog_elapsed_seconds": 1068.4872141820379,
+      "ksp_solve_monotonic_seconds": 4.583265167,
+      "solver_terminal_snapshot_elapsed_seconds": 6.211585616,
+      "tree_rss_peak_bytes": 2796560384,
+      "cgroup_memory_peak_bytes": 3199516672,
+      "task_swap_peak_bytes": 0,
+      "pss": "DISABLED_BY_PROFILE",
+      "status": "full fresh solve; worker exit 4 at the output gate; not an official result"
+    },
+    "B0_saved_output_offline_revalidation": {
+      "monotonic_seconds": 1.1005468510556966,
+      "status": "PASS using saved files; no FE/factor/KSP/PDE work"
+    },
+    "Gx560_formal_worker": {
+      "full_workflow_monotonic_seconds": 2089.322796093067,
+      "watchdog_elapsed_seconds": 2088.7774883890525,
+      "conservative_realtime_time_gate_observation_seconds": 2320.81170631922,
+      "time_gate_limit_seconds": 73463.28417918264,
+      "reference_pc_builder_constructor_seconds": 29.169038816937245,
+      "constructor_timer_scope": "src/solvers/task40_v10_p6_mumps.py constructor perf-counter after input matrices exist; CSR/four-q factor-builder and probes, not the complete setup",
+      "four_q_symbolic_seconds_derived_sum": 0.9924213480,
+      "four_q_numeric_seconds_derived_sum": 18.0969815000,
+      "transform_bank_builder_seconds": 0.06642541708424687,
+      "bank_builder_overlap_with_constructor_timer": "unknown",
+      "KSP_seconds": null,
+      "KSP_status": "NOT_RUN",
+      "complete_base_preparation_and_entity_tensor_build_seconds": null,
+      "complete_setup_seconds": null,
+      "final_recovery_output_seconds": null,
+      "incremental_saved_witness_recheck_seconds": null
+    }
+  },
+  "engineering_and_test_receipts": [
+    {
+      "repair": "B0 worker NameError repair",
+      "test_command": "python -m pytest -q src/test/test_task40_v10_worker_arrays.py",
+      "result": "8 passed in 0.43 s",
+      "ruff": "unavailable in the qualified environment",
+      "record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/repair_ready_v12_b0_nameerror.json"
+    },
+    {
+      "repair": "B0 output per-side channel-count scope",
+      "test_command": "python -m pytest -q src/test/test_task40_v10_output_gate.py src/test/test_task40_v10_output_checker.py src/test/test_task40_v10_saved_output_recovery.py",
+      "result": "26 passed in 0.65 s; 6 independent regression cases passed in 0.07 s",
+      "record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_b0_output_count_repair_audit.json"
+    },
+    {
+      "repair": "p6 shared transform bank and algebra qualification",
+      "test_status": "15 passed, 1 skipped; receipt is hash-bound through source_ready_v12.json.verification in the source-freeze audit",
+      "test_files": [
+        "src/test/test_task40_v12_p6_transform_bank.py",
+        "src/test/test_task40_v12_transform_bank_algebra.py",
+        "src/test/test_task40_v11_p6_grid_contract.py"
+      ],
+      "record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_pre_b0_source_freeze_audit.json"
+    },
+    {
+      "repair": "V12 formal wrapper qualification",
+      "result": "PASS",
+      "boundary": "wrapper identity/preflight receipt; not a solver or physical result",
+      "record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/source_ready_v12.json"
+    },
+    {
+      "repair": "legacy V10 closeout-reserve SKIP",
+      "result": "SKIP; immutable V10 campaign window had reached closeout reserve; not an input-expiry condition, separate from the V12 qualification",
+      "status": "not counted as a V12 qualification failure or pass"
+    },
+    {
+      "repair": "saved Gx560 witness raw-array recomputation",
+      "result": "three original inverse gates reproduced; no new solver work and no single-cause attribution",
+      "elapsed_seconds": null,
+      "record": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_saved_witness_independent_recheck_v12.json"
+    },
+    {
+      "repair": "V12 final documentation/model-registry contract suite",
+      "test_command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py",
+      "source_sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+      "result": "24 passed, 134 subtests passed",
+      "scope": "documentation/model-registry/retrospective contracts only; no FE/MPI/PDE",
+      "record": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md"
+    }
+  ],
+  "cost_scope_rules": [
+    "Workflow monotonic, watchdog elapsed, conservative realtime gate observation, solver clock and KSP-only are distinct scopes; do not add them or infer a missing setup clock by subtraction.",
+    "Per-q symbolic/numeric values are subphase counters, not additive extras on top of a timer whose inclusion boundary is not independently recorded.",
+    "V10/V11, W0, earlier V12 repair attempts, their historical unknowns, and prior charges remain in the existing ledger and summaries; this record does not reset or reassign them.",
+    "The Gx560 numerical witness failure is not a resource/time stop; no Gx560 replay or Gx784 attempt was authorized after it."
+  ],
+  "B0": {
+    "initial_nameerror_attempt": {
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261006T120744.861717Z",
+      "classification": "NAMEERROR_BEFORE_NUMERICAL_SOLVE",
+      "worker_workflow_monotonic_seconds": 1107.2371964480262,
+      "watchdog_policy_seconds": 1207.4370952185634,
+      "process_tree_rss_bytes": 2749452288,
+      "cgroup_memory_peak_bytes": 3135488000,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "repair_test": "8 passed in 0.43 s",
+      "source_sha": "696383d39b60143a2881b753f19659c05bf6769d"
+    },
+    "fresh_reference": {
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261006T125643.219625Z",
+      "workflow_monotonic_seconds": 1068.5331719600363,
+      "watchdog_elapsed_seconds": 1068.4872141820379,
+      "KSP_seconds": 4.583265167,
+      "solver_terminal_snapshot_seconds": 6.211585616,
+      "process_tree_rss_peak_bytes": 2796560384,
+      "cgroup_memory_peak_bytes": 3199516672,
+      "swap_peak_bytes": 0,
+      "official_result": false,
+      "worker_exit": 4
+    },
+    "saved_output_offline_revalidation_seconds": 1.1005468510556966
+  },
+  "Gx560": {
+    "workflow_monotonic_seconds": 2089.322796093067,
+    "watchdog_elapsed_seconds": 2088.7774883890525,
+    "conservative_realtime_policy_observation_seconds": 2320.81170631922,
+    "policy_gate_limit_seconds": 73463.28417918264,
+    "process_tree_rss_peak_bytes": 10181664768,
+    "cgroup_memory_peak_bytes": 10708639744,
+    "post_cleanup_cgroup_current_bytes": 884416512,
+    "task_swap_peak_bytes": 0,
+    "cgroup_swap_peak_bytes": 0,
+    "MUMPS_builder_constructor_seconds": 29.169038816937245,
+    "MUMPS_builder_timer_scope": "src/solvers/task40_v10_p6_mumps.py constructor perf_counter (lines 208-611); input matrices already exist; covers CSR/four-q factor-builder and probes, not global/sector entity or physical local tensor build",
+    "four_q_symbolic_seconds_sum_rounded": 0.992421,
+    "four_q_numeric_seconds_sum_rounded": 18.096982,
+    "transform_bank_builder_seconds": 0.06642541708424687,
+    "bank_builder_overlap_with_constructor_timer": "unknown",
+    "complete_setup_seconds": "unknown",
+    "KSP": "NOT_RUN"
+  },
+  "Gx784": {
+    "status": "INPUT_FROZEN_BUT_NOT_RUN",
+    "input_path": "input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_y_orbit_v12.dat",
+    "input_sha256": "56d9b05bf157a213d608da93e42fdd1dad6377aa9fad96cdd962d3f6086abdd5",
+    "input_format_validation": "PASS",
+    "reason": "Gx560 required inverse gates failed; no Gx784 worker launched"
+  },
+  "campaign_observation": {
+    "record_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_r6_precommit_campaign_observation.json",
+    "record_sha256": "67c1065bfbdd27f42e5e40cbc5ce9302e0d422e82c23a16096d23cd79120994a",
+    "cumulative_policy_charge_seconds": 17395.54872271069,
+    "derived_numerical_remaining_seconds": 68404.4512772893,
+    "final_settlement": false,
+    "scope": "through observation timestamp; docs/tests/Git closeout afterward remains chargeable in the same original campaign window"
+  }
+}

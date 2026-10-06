@@ -1,3 +1,21 @@
+# Task40extra V12 测试与文档检查摘要
+
+## Review V12 已有资格与收口验证
+
+| 检查 | source / 输入 / 回执身份 | 结果与边界 |
+|---|---|---|
+| p6 transform bank 和 algebra qualification | `src/test/test_task40_v12_p6_transform_bank.py`、`src/test/test_task40_v12_transform_bank_algebra.py`、`src/test/test_task40_v11_p6_grid_contract.py`；source-freeze audit `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_pre_b0_source_freeze_audit.json` SHA256 `b52c64aeb84a492cfc771732f1fabe089b1ab9edf31abb573409cdf5bd86eff6`；通过 `source_ready_v12.json.verification` 绑定 | `15 passed, 1 skipped`；组件/代数资格，不是 Gx560 solver 或 PDE pass；原始收据不重跑 |
+| V12 formal wrapper readiness | `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/source_ready_v12.json` SHA256 `7fb32e68dadefeba4ab71cf35dfedae8893f70026cc1abad54baebffd882593f` | `PASS`；只证明 wrapper identity/preflight readiness，不证明完整求解 |
+| B0 worker NameError repair | `src/test/test_task40_v10_worker_arrays.py`；repair receipt `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/repair_ready_v12_b0_nameerror.json` SHA256 `6a2895f976a36d7a0c5fa556cd3101a846690b55b1ddc249d6002577b4551415` | `8 passed in 0.43 s`；R0 修复回归；Ruff 在 qualified environment 中不可用 |
+| B0 saved-output output-scope repair | `src/test/test_task40_v10_output_gate.py`、`src/test/test_task40_v10_output_checker.py`、`src/test/test_task40_v10_saved_output_recovery.py`；source `6d2c54389fe885ecf24d474a8782166ff31f9154`；audit `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_b0_output_count_repair_audit.json` SHA256 `55f65c2379140f7211ea899fa40b0366daf38f7fc22c235794a0e7546694b097` | `26 passed in 0.65 s`，其中6项独立回归在0.07 s；覆盖通道计数/保存输出，不是 fresh PDE |
+| Gx560 saved-witness raw-array recomputation | `gx560_saved_witness_independent_recheck_v12.json` SHA256 `a0f3c986c348e26a7171d2fe9692396647b7be55a286dcf4c6df81a019cd1264`；输入 NPZ SHA256 `99bcd1010b9fbea28cf759217f5dec4dea50422beb47a83b6940056785f0358c` | 三个原 inverse Gate 失败值重现；无 FE assembly、factor、KSP、PDE 或单一根因归因 |
+| 历史 V10 closeout-reserve SKIP | 既有 V10 测试记录 | `SKIP`；不可变 V10 campaign 窗口已达到 closeout reserve，与 V12 qualification 的 `15 passed, 1 skipped` 分开，不计作 V12 pass/fail |
+| V12 final doc/model-registry contracts | `python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py`；qualified Task40 activation；冻结 source `6d2c54389fe885ecf24d474a8782166ff31f9154` | `24 passed, 134 subtests passed`；仅文档/模型注册/回顾合同，不含 FE/MPI/PDE |
+
+本轮不重跑已绑定 source/input/artifact 的资格测试、B0/Gx560 worker、独立 checker或原始数组。Full repository pytest、MPI4、Ruff与CI均未运行。
+
+---
+
 # Task40extra V11 测试摘要
 
 | 检查 | source / 命令 | 结果与边界 |

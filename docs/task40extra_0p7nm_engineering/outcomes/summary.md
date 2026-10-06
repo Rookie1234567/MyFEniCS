@@ -1,8 +1,54 @@
-# Task40extra Review V11 结果总览：保存场复核与组件动作通过，Gx560 停在数值因子化前
+# Task40extra Review V12 结果总览：共享变换实测，Gx560参考逆 Gate 失败
 
-## V11 当前结果
+本节是当前状态；下方 V11、V10及更早结果保留为历史。V12冻结source为`6d2c54389fe885ecf24d474a8782166ff31f9154`。p6单元内部共享变换实际进入Gx560并减少了named-view重复指向独立backing的字节账；Gx560完整regular-inverse witness有三项阈值失败，worker在进入Full3D FGMRES前退出。资源/time gate通过；R5 Gx784、官方Gx560 R/T/A和原尺寸路线均未运行/未资格化。
 
-本节是当前状态；下方 V10 与更早内容均为历史。S1–S2 的正结果来自既有保存数据，S5 是两个代表面的边界分块动作，均不是新的 PDE。主数值交付 Gx560 在四 q 符号分析后因资源 Gate 受控停止，Gx784 未运行；50×25×140 nm 目标仍为 `NO_GO / NOT_QUALIFIED`。
+## V12模型和证据状态
+
+| 模型 | 网格/方法/输入 | 数值或物理结果 | 时间/内存 | 状态和边界 |
+|---|---|---|---|---|
+| B0 首次启动尝试 | source `696383d39b60143a2881b753f19659c05bf6769d`；run 目录 `20261006T120744.861717Z`；NameError 在数值求解前终止 | 没有 PDE 数值结果 | worker workflow monotonic `1107.2371964480262 s`；watchdog policy `1207.4370952185634 s`；tree/cgroup峰=`2,749,452,288 / 3,135,488,000 B`；swap0 | 启动修复的独立负结果；后代已清理。worker 与 watchdog 时钟范围不同，不相加；对应修复测试8 passed |
+| B0 fresh reference | 80 cells、p6、532 modes（每侧266）、四q、原两单元缺口；输入SHA `d4d72a4288aa0313432f7bea668543c60a2716144ce9c8333b2c271367d8f73e`；worker source `c08c135f0e60198475525cd1c761cb0ba686d948` | A6 true residual `1.6089774391665316e-8`，solver/residual通过；worker在物理输出门exit4，official=false。`6d2c543`离线保存场复核得到R/T/A_balance/A_volume=`0.9842736080926772 / 0.014240518143988908 / 0.001485873763333926 / 0.00148587384621333`，能量差`8.287925901129256e-11` | workflow/watchdog/KSP=`1068.533 / 1068.487 / 4.583` s；tree/cgroup RSS峰=`2,796,560,384 / 3,199,516,672 B`；swap0 | fresh求解和offline saved-output revalidation是两层证据；保留原exit4和official=false。完整FE系数/MPC身份byte-equal，E/H/curl零差是代数推导，本轮无新积分 |
+| Gx560 V12 | 10×4×14、560 cells、p6、340 modes、四q、原非可分缺口；输入SHA `50c8691446cbc24533ee31ae945c75806c29a0a06d002287723f814372ba44a9`；source `6d2c54389fe885ecf24d474a8782166ff31f9154` | 原参考方程`2.0058682739535859e-10 > 1e-10`；两局部原方程合并`1.4183642641040464e-10 > 1e-10`；alpha/port closure`1.1770163447864681e-11 > 1e-11`。q探针、内部恢复、扇区动作及port equation各自通过 | workflow/watchdog/policy observation=`2089.323 / 2088.777 / 2320.812` s；tree峰`10,181,664,768 B`；cgroup峰`10,708,639,744 B`；task/cgroup swap0 | `WORKER_FAILED`, exit4，派生分类`REGULAR_P6_INVERSE_GATE_FAILED`；不是资源/time stop。KSP、最终A6、官方R/T/A和同离散p4场均`NOT_RUN` |
+| Gx784 V12条件阶梯 | 14×4×14、784 cells、p6、340 modes；输入 `input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_y_orbit_v12.dat`，SHA256 `56d9b05bf157a213d608da93e42fdd1dad6377aa9fad96cdd962d3f6086abdd5`，格式校验通过 | 无本轮残差或物理结果 | 无本轮资源读数 | `INPUT_FROZEN_BUT_NOT_RUN`；Gx560 Gate未通过，因此未启动 |
+| 原尺寸目标 | 约15,232 cells / 32,060 full-AUTO modes；50×25×140 nm、0.7 nm目标 | 没有目标级四q factor共存、Full3D迭代、输出与目标精度证据 | 2 TB / 48 h未知、未资格化 | `NO_GO / NOT_QUALIFIED`；不是数学不可行证明 |
+
+## 四q因子、共享存储与资源
+
+Gx560的四个p6 q矩阵rows/NNZ分别为28,508/15,451,743、28,508/15,479,361、28,576/15,581,290、28,508/15,479,361。每个numeric factor probe residual都低于`1e-10`；q因子在销毁前同一快照同时live。raw INFOG19/22合计4,641/4,076 decimal MB；加1 MB/项解码后allocated/used保守上界为`4,645,000,000 / 4,080,000,000 B`。同一四因子快照tree RSS为`10,021,572,608 B`；整场tree/cgroup峰分开报告，不能相加。factor INFOG条目数不是byte数。
+
+预symbolic bank event实测6个状态、1个basis、1个matrix template、6次builder调用、1,120次matrix请求、1,114次cache hit、builder`0.066425 s`；一个3,240,000-byte matrix backing供1,121个视图共享，范围只覆盖cell-interior。整个named-allocation inventory logical view bytes含alias为3,843,915,904 B，unique backing owners为215,115,904 B；差值3,628,800,000 B是inventory字节账，不是测得的RSS节省。owner总数15,047含全局/局部、edge/face和索引等所有对象，不能读作bank大模板数量。bank-ready时inverse build/request为0，不外推成整场inverse计数。设计来源为 dot 冻结 source `15713d3e09b63f65511c7b7f61fa043fdb23dca5`、blob `ff40105bd9139a856b09987596c961458f84ab0e`、原文件 SHA256 `9ece954f962dc6bab18a02f6b48b53998219fba3f611647a44404757f219b66f`；这是 p4 bank source 到 p6 cell-interior 的适配沿革，不是84-row压缩资格或本轮对 dot 的访问。
+
+| 阶段/量 | 实测或派生值 | 口径 |
+|---|---:|---|
+| MUMPS reference-PC builder constructor | `29.169 s` | 输入矩阵已存在后的CSR/四q factor-builder及probe计时，不是全setup |
+| 四q symbolic / numeric timer和 | `0.992421 / 18.096982 s` | per-q子阶段，不与总计时重复相加 |
+| 全局/sector实体与物理局部张量构建 | `unknown` | 未有独立完整计时 |
+| Gx560 worker workflow / watchdog / policy gate | `2089.323 / 2088.777 / 2320.812 s` | 三种时间范围不同，不相加 |
+| Gx560 tree/cgroup peak | `10,181,664,768 / 10,708,639,744 B` | 不同内存口径，不相加；PSS禁用 |
+| 原尺寸全q fill、冷JIT、outer iteration、输出内存/时间 | `unknown / NOT_RUN` | 不线性外推 |
+
+每个q raw INFOG、CSR SHA、factor entries、探针残差、per-q tree RSS和销毁前live snapshot详见[formal results](records/review_v12_formal_results.json)与[memory lifecycle](records/review_v12_memory_lifecycle.json)。
+
+## 选择性合并与下一步
+
+| 分组 | V12建议 | 限制 |
+|---|---|---|
+| production numerical/core | 本轮不建议把Gx560 bank/regular inverse路径设为生产默认 | Gx560 required reference-inverse gates失败；source仅研究profile实际证据 |
+| reusable runner/watchdog | 沿用当前已有运行器和进程树/时间/资源Gate | 本轮未验证新runner；Gx560不是resource stop |
+| checker/benchmark | 保留B0输出范围回归与独立saved-output checker证据 | 离线saved-field pass不能改写原fresh worker exit4 |
+| compact evidence/docs | 本轮新增V12 response、结果/成本/transfer记录 | 由主控审核后集中提交；执行者未Git写入 |
+| research-only | 共享p6内部变换、局部恢复与四q参考逆完整残差修正候选 | 下一唯一建议为一次完整reference residual correction，尚未授权/执行，耗时和临时内存`unknown` |
+| do-not-merge / do-not-claim | Gx560完整solver pass、Gx784、全尺寸AUTO/2TB/48h、84-row压缩或dot资格 | 均未通过或未运行 |
+
+详细解释及转交边界见[Response V12](../response_v12.md)、[工程收口报告](review_v12_shared_transform_engineering.md)、[原尺寸 readiness](v12_transfer_and_target_readiness.md)、[test summary](test_summary.md)与[run index](records/run_index.json)。主控在 R6 precommit observation 中记录累计 campaign charge `17395.54872271069 s`、numerical remaining `68404.4512772893 s`，证据 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_r6_precommit_campaign_observation.json`（SHA256 `67c1065bfbdd27f42e5e40cbc5ce9302e0d422e82c23a16096d23cd79120994a`）。该观察覆盖到自己的时间戳；之后的文档/测试/Git收尾仍在原窗口中，由主控推送后写最终 terminal receipt，不将该观察冒充最终结算。
+
+---
+
+# 历史：Task40extra Review V11 保存场复核与组件动作通过，Gx560 停在数值因子化前
+
+## Review V11 历史结果
+
+本节记录V12之前的状态；下方 V10 与更早内容仍为历史。S1–S2 的正结果来自既有保存数据，S5 是两个代表面的边界分块动作，均不是新的 PDE。V11的Gx560在四q symbolic后因资源Gate受控停止；V12正式R4已在本文件上方更新为四q numeric完成、但reference-inverse Gate失败。旧V11停止原因与原始数值保留。
 
 | 阶段 | 模型 / 方法 | 结果 | 状态与范围 |
 |---|---|---|---|

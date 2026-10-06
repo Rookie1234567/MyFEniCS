@@ -1,0 +1,265 @@
+{
+  "schema": "task40extra.review_v12.selective_manifest.v1",
+  "status": "CLOSEOUT_READY",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+  "run_index_path": "docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json",
+  "scope": "V12 documentation, compact evidence and handoff; no source modification, new PDE, commit, push or master merge by the execution agent",
+  "inputs": {
+    "B0": {
+      "path": "input/task40extra_0p7nm_engineering/b0_p6_y_orbit_reference_v12.dat",
+      "sha256": "d4d72a4288aa0313432f7bea668543c60a2716144ce9c8333b2c271367d8f73e",
+      "physical_model_sha256": "250c26f25d85c0ff68abb0454a6c7640bf8d3af3e6f96bbf599a8cf7c925ae73e"
+    },
+    "Gx560": {
+      "path": "input/task40extra_0p7nm_engineering/nonseparable_gx560_p6_y_orbit_v12.dat",
+      "sha256": "50c8691446cbc24533ee31ae945c75806c29a0a06d002287723f814372ba44a9",
+      "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "resolved_config_sha256": "91f3d052957f088dc0e48cdfe610b58e5495d4487634022f595e729e9cd6be70"
+    },
+    "Gx784": {
+      "path": "input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_y_orbit_v12.dat",
+      "sha256": "56d9b05bf157a213d608da93e42fdd1dad6377aa9fad96cdd962d3f6086abdd5",
+      "format_validation": "PASS",
+      "status": "INPUT_FROZEN_BUT_NOT_RUN"
+    }
+  },
+  "formal_outcomes": {
+    "B0_initial_worker_attempt": {
+      "source_sha": "696383d39b60143a2881b753f19659c05bf6769d",
+      "classification": "NAMEERROR_BEFORE_NUMERICAL_SOLVE",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261006T120744.861717Z"
+    },
+    "B0_fresh": {
+      "source_sha": "c08c135f0e60198475525cd1c761cb0ba686d948",
+      "classification": "B0_CANDIDATE_PHYSICAL_OUTPUT_GATE_FAIL",
+      "worker_exit": 4,
+      "official_result": false,
+      "A6_true_residual": 1.6089774391665316E-8,
+      "saved_output_revalidation": "PASS on saved files; original worker exit4 and official_result=false retained"
+    },
+    "Gx560": {
+      "classification": "REGULAR_P6_INVERSE_GATE_FAILED",
+      "worker_exit": 4,
+      "official_result": false,
+      "failed_gates": {
+        "full_regular_equation": {
+          "measured": 2.0058682739535859E-10,
+          "limit": 1E-10
+        },
+        "two_local_original_equations_combined_relative": {
+          "measured": 1.4183642641040464E-10,
+          "limit": 1E-10
+        },
+        "alpha_port_closure": {
+          "measured": 1.1770163447864681E-11,
+          "limit": 1E-11
+        }
+      },
+      "outer_FGMRES_final_A6_and_official_R_T_A": "NOT_RUN",
+      "failure_v1_preserved": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_failure_closeout_v12.json",
+      "failure_v2": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_failure_closeout_v2.json",
+        "sha256": "38d5086bc89fec4a2eb52a43d548a5daed3c4928ad77816da479737f28137441"
+      }
+    },
+    "target_50x25x140_nm": "NO_GO / NOT_QUALIFIED; not a mathematical infeasibility claim"
+  },
+  "evidence_refs": {
+    "Gx560_saved_array_recheck": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_saved_witness_independent_recheck_v12.json",
+      "sha256": "a0f3c986c348e26a7171d2fe9692396647b7be55a286dcf4c6df81a019cd1264",
+      "input_npz_sha256": "99bcd1010b9fbea28cf759217f5dec4dea50422beb47a83b6940056785f0358c"
+    },
+    "B0_saved_output_revalidation": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/saved_output_revalidation_v12_6d2c543/SAVED_OUTPUT_SCOPE_REVALIDATED_v2.json",
+      "sha256": "b8d4d7823454cebd0638f8999c519a5eae4f0925b8f07df73449855370fb8f94"
+    },
+    "bank_provenance": {
+      "dot_source_sha": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+      "dot_blob_oid": "ff40105bd9139a856b09987596c961458f84ab0e",
+      "original_file_sha256": "9ece954f962dc6bab18a02f6b48b53998219fba3f611647a44404757f219b66f",
+      "scope": "p4 bank source adapted to p6 cell-interior; not 84-row qualification; no dot access"
+    },
+    "campaign_observation": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_r6_precommit_campaign_observation.json",
+      "sha256": "67c1065bfbdd27f42e5e40cbc5ce9302e0d422e82c23a16096d23cd79120994a",
+      "cumulative_policy_charge_seconds": 17395.54872271069,
+      "derived_numerical_remaining_seconds": 68404.4512772893,
+      "final_settlement": false
+    }
+  },
+  "test_evidence": [
+    {
+      "scope": "transform bank/algebra qualification",
+      "result": "15 passed, 1 skipped",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_pre_b0_source_freeze_audit.json",
+      "receipt_sha256": "b52c64aeb84a492cfc771732f1fabe089b1ab9edf31abb573409cdf5bd86eff6",
+      "test_files": [
+        "src/test/test_task40_v12_p6_transform_bank.py",
+        "src/test/test_task40_v12_transform_bank_algebra.py",
+        "src/test/test_task40_v11_p6_grid_contract.py"
+      ]
+    },
+    {
+      "scope": "V12 wrapper readiness",
+      "result": "PASS; wrapper/preflight identity only",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/source_ready_v12.json",
+      "receipt_sha256": "7fb32e68dadefeba4ab71cf35dfedae8893f70026cc1abad54baebffd882593f"
+    },
+    {
+      "scope": "B0 worker NameError repair",
+      "result": "8 passed in 0.43 s",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/repair_ready_v12_b0_nameerror.json",
+      "receipt_sha256": "6a2895f976a36d7a0c5fa556cd3101a846690b55b1ddc249d6002577b4551415"
+    },
+    {
+      "scope": "B0 output channel-count repair",
+      "result": "26 passed in 0.65 s; six independent regressions passed in 0.07 s",
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/main_v12_b0_output_count_repair_audit.json",
+      "receipt_sha256": "55f65c2379140f7211ea899fa40b0366daf38f7fc22c235794a0e7546694b097"
+    },
+    {
+      "scope": "documentation/model-registry/retrospective contracts",
+      "result": "24 passed, 134 subtests passed",
+      "test_summary": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+      "source_sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+      "test_files_sha256": {
+        "src/test/test_26_documentation_contract.py": "5a61766388f16937be4fd2c1638581e25f87347eea596442b40e55e5a62e936a",
+        "src/test/test_development_model_registry_contract.py": "a3d15d404269fae3ad31266dc3682d40ec59cd639177d1d638e213b6bd92d3df",
+        "src/test/test_29_task_retrospective_contract.py": "fe4a77eda4818ffc9a424c5ab8fb1042ce4903eef82d847d5c0268948e9e6c45"
+      }
+    }
+  ],
+  "selective_merge_groups": {
+    "production_numerical_core": {
+      "files": [
+        "src/solvers/y_orbit_transform_bank.py",
+        "src/solvers/p6_cell_condensed_action.py",
+        "src/solvers/task40_v10_p6_yorbit.py",
+        "src/solvers/task40_v10_p6_mumps.py"
+      ],
+      "numerical_behavior_changed": true,
+      "tests": "transform bank/algebra qualification: 15 passed, 1 skipped",
+      "fresh_pde_evidence": "Gx560 reached four-q numeric probes but failed three complete reference-inverse gates; no outer solve",
+      "recommendation": "hold from production default; preserve explicit research-profile behavior until new review and fresh numerical qualification"
+    },
+    "reusable_runner_watchdog": {
+      "files": [
+        "src/runners/task40_v10_worker.py",
+        "src/runners/task40_v10_saved_output_recovery.py",
+        "src/solvers/task40_v10_output_gate.py"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": "worker-array repair 8 passed; output/recovery suite 26 passed",
+      "fresh_pde_evidence": "B0 fresh A6 residual passed, but original worker exited 4 at the physical output gate; saved-output check did not rewrite official_result=false",
+      "recommendation": "review engineering output-scope fixes before any broader reuse"
+    },
+    "checker_benchmark": {
+      "files": [
+        "src/solvers/task40_v10_output_checker.py",
+        "src/test/test_task40_v10_output_checker.py"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": "included in the 26-pass output/recovery suite; Gx560 saved-array gates independently recomputed",
+      "fresh_pde_evidence": "offline saved arrays only; no fresh Gx560 solve or official result",
+      "recommendation": "retain as checker evidence; do not use offline pass to promote failed worker"
+    },
+    "compact_evidence_docs": {
+      "files": [
+        "docs/task40extra_0p7nm_engineering/response_v12.md",
+        "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+        "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+        "docs/task40extra_0p7nm_engineering/outcomes/review_v12_shared_transform_engineering.md",
+        "docs/task40extra_0p7nm_engineering/outcomes/v12_transfer_and_target_readiness.md",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_formal_results.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_transform_bank.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_memory_lifecycle.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_cost_and_repairs.json",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json",
+        "docs/development_progress.md",
+        "docs/development_model_registry.md"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": "24 passed, 134 subtests passed in documentation/model-registry/retrospective contracts",
+      "fresh_pde_evidence": "the documents preserve B0/Gx560 negative boundaries and Gx784 input-frozen-not-run state",
+      "recommendation": "review and commit after the source/dependency groups are selected"
+    },
+    "research_only": {
+      "files": [
+        "src/solvers/y_orbit_transform_bank.py",
+        "src/solvers/p6_cell_condensed_action.py",
+        "src/solvers/task40_v10_p6_mumps.py"
+      ],
+      "numerical_behavior_changed": true,
+      "tests": "15 passed, 1 skipped; Gx560 live bank event observed",
+      "fresh_pde_evidence": "Gx560 inverse witness failed; no FGMRES or official R/T/A",
+      "recommendation": "keep opt-in and research-only; a single complete augmented residual correction is a proposal requiring a new review"
+    },
+    "do_not_merge_or_claim": {
+      "files": [
+        "input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_y_orbit_v12.dat",
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_failure_closeout_v2.json"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": "input-format validation only for Gx784; closeout records are evidence",
+      "fresh_pde_evidence": "Gx784 not run; full target 50x25x140 nm remains NO_GO / NOT_QUALIFIED",
+      "recommendation": "do not present as a passed run or production qualification"
+    }
+  },
+  "file_hashes": [
+    {
+      "path": "docs/task40extra_0p7nm_engineering/response_v12.md",
+      "sha256": "4b7194f65f7fa373df94439c7c9c441addde9d9f75cf90f3484ed5bf43ea4407"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+      "sha256": "ebdad758dfab05c23dbaaf2eba5206b7432a63739df35a897fb0e6ba2c642ff0"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+      "sha256": "9cf6d155ad02e4f21de14f1499c4ec4370b79df2701450aa4b54006ea3a8a493"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/review_v12_shared_transform_engineering.md",
+      "sha256": "21cb82ba626ce01be690563eda1eb10bd50f2cb23ad8f63acbe12167d7788600"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/v12_transfer_and_target_readiness.md",
+      "sha256": "ab720832d1cbe10037e9b6ab8a0a1e670a7bc20d85f6d707520d1d2299b99cc7"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "b30fdf7dbb345a85cc447e0e5f92651eb5ec5e7085a5a934ee081d5fe0530682"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "55658a318daa65312d5644370202eff6ab815fea36619454d8ecc4d5e1033b66"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_formal_results.json",
+      "sha256": "e13949b0d9b960f86027a44379fab1724673a133d06ae3baba7d5317d13050be"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_transform_bank.json",
+      "sha256": "284f12b2db1211eae46b1d5c70370c217d36dc1a537de52e429511c254de981e"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_memory_lifecycle.json",
+      "sha256": "9b15e4f0ccf543a24fb915efccda9f9056f9af07a5d687b8a09c69f75a54308d"
+    },
+    {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v12_cost_and_repairs.json",
+      "sha256": "300403f10e6351729ab142529a7ca3101a2d0f9dacccda43f3a24fa8c9bb3884"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_failure_closeout_v2.json",
+      "sha256": "38d5086bc89fec4a2eb52a43d548a5daed3c4928ad77816da479737f28137441"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/gx560_saved_witness_independent_recheck_v12.json",
+      "sha256": "a0f3c986c348e26a7171d2fe9692396647b7be55a286dcf4c6df81a019cd1264"
+    }
+  ],
+  "cycle_exclusion": "This manifest excludes its own SHA and the run_index SHA; the run index binds this manifest after creation, and closeout_ready binds the final run_index hash."
+}

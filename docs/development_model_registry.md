@@ -1,4 +1,19 @@
-# Task40extra 当前组件状态：Review V11 保存场复核、局部候选与Gx560受控停止
+# Task40extra 当前模型状态：Review V12 共享变换路径的数值 Gate 负结果
+
+本节登记当前研究状态，不新增 official Maxwell pass。p6 cell-interior 共享变换 bank 已进入 Gx560 reference path，但完整参考逆 Gate 未通过；ordinary default 保持不变。B0 保存场离线复核与 fresh worker、Gx560 inverse witness 与外层 PDE solve 分开登记。
+
+| 模型 / 阶段 | source 与输入身份 | 结果 | 当前资格边界 |
+|---|---|---|---|
+| B0 V12 fresh reference | worker source `c08c135f0e60198475525cd1c761cb0ba686d948`；80 cells/p6/532 modes/4 q；input SHA256 `d4d72a4288aa0313432f7bea668543c60a2716144ce9c8333b2c271367d8f73e` | A6 residual `1.6089774391665316e-8` pass；worker physical output Gate exit4，`official_result=false`；saved-output revalidation R/T/A closure PASS | saved-field result is independently reviewable but does not rewrite the worker exit4; no official result |
+| Gx560 V12 p6 shared-transform reference | source `6d2c54389fe885ecf24d474a8782166ff31f9154`；10×4×14/560 cells/p6/340 modes/4 q；input SHA256 `50c8691446cbc24533ee31ae945c75806c29a0a06d002287723f814372ba44a9` | factor probes pass; complete reference witness fails global regular equation `2.0058682739535859e-10>1e-10`, combined local equations `1.4183642641040464e-10>1e-10`, alpha/port closure `1.1770163447864681e-11>1e-11` | `REGULAR_P6_INVERSE_GATE_FAILED`; no FGMRES, final A6, official R/T/A, or matched p4 comparison; research-only |
+| Gx784 V12 conditional target | 14×4×14/784 cells/p6/340 modes；input `input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_y_orbit_v12.dat` SHA256 `56d9b05bf157a213d608da93e42fdd1dad6377aa9fad96cdd962d3f6086abdd5`；input format validation PASS | No residual, physical result, time, or memory measured | `INPUT_FROZEN_BUT_NOT_RUN` because Gx560 gates failed; not a missing input |
+| 50×25×140 nm target | 0.7 nm target; ~15,232 cells/full-AUTO 32,060 modes | no target-scale q-fill, complete outer solve, output or accuracy evidence | `NO_GO / NOT_QUALIFIED`; not a mathematical infeasibility result |
+
+bank-ready event证明一块 p6 cell-interior 450×450 complex128 backing 被多个视图共享；alias inventory difference 不等于 RSS saving。设计来源是 dot 冻结 p4 bank 源适配记录，不代表本轮读取或修改 dot，且不资格化 84-row 压缩。Gx560 数值证据、资源/时间口径、来源记录与下一次 correction 的精确定义见 [Response V12](task40extra_0p7nm_engineering/response_v12.md)、[engineering closeout](task40extra_0p7nm_engineering/outcomes/review_v12_shared_transform_engineering.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)和[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。ordinary default与master未改变。
+
+---
+
+# Task40extra 历史组件状态：Review V11 保存场复核、局部候选与Gx560受控停止
 
 本节更新Task40当前证据状态，不新增一个已求解的PDE模型。S1复核的是已保存的B0场；S2是两个局部p6块；S5是两个代表面的边界动作。Gx560在四 q symbolic 阶段后资源受控停止，没有 numeric factor、KSP或场；Gx784未运行。ordinary default未改。
 

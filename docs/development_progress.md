@@ -1,4 +1,12 @@
-# Task40extra 当前进展：Review V11 保存场输出复核与组件检查通过，Gx560在数值阶段前受控停止
+# Task40extra Review V12 当前进展：共享变换进入 Gx560，参考逆 Gate 失败后收口
+
+V12 在冻结源码 `6d2c54389fe885ecf24d474a8782166ff31f9154` 上完成。p6 cell-interior 变换 bank 在 Gx560 正式路径实际建立，共用矩阵 backing 的分配证据已记录；这不是进程 RSS 节省测量，也没有把研究路径升为 ordinary default。B0 首个 worker 在数值求解前因 NameError 失败并经定向修复测试，之后 fresh solve 的 A6 residual 通过但 worker 在物理输出门 exit 4、`official_result=false`；离线保存场复核通过，仍保留原 worker 分类。Gx560 四 q 因子探针通过，但完整参考逆见证有三项严格 Gate 失败，未进入 Full3D FGMRES。Gx784 输入已冻结并校验（SHA256 `56d9b05bf157a213d608da93e42fdd1dad6377aa9fad96cdd962d3f6086abdd5`），因 Gx560 Gate 失败而 `INPUT_FROZEN_BUT_NOT_RUN`。原尺寸目标仍 `NO_GO / NOT_QUALIFIED`。
+
+主控 R6 precommit observation 记录累计 charge `17395.54872271069 s`、numerical remaining `68404.4512772893 s`；这是截至该观察时间的窗口快照，不是最终结算，后续文档/测试/Git尾段由主控在同一窗口记账。当前证据入口：[Response V12](task40extra_0p7nm_engineering/response_v12.md)、[结果总览](task40extra_0p7nm_engineering/outcomes/summary.md)、[V12工程报告](task40extra_0p7nm_engineering/outcomes/review_v12_shared_transform_engineering.md)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。下一候选仅是后续 review 可授权的一次全量增广参考残差修正；当前不重放算例、不改 ordinary default，也不合并 master。
+
+---
+
+# Task40extra 历史进展：Review V11 保存场输出复核与组件检查通过，Gx560在数值阶段前受控停止
 
 V11 的结果覆盖 S0–S6。B0 原始 p6 解的 true residual 通过，但原输出能量闭合负结果保持历史记录；本轮对同一已保存场改用端口平面坐标计算功率，独立重核532个模式后，能量闭合为`8.287925901129256e-11`，体吸收一致性差`8.287940407754324e-11`。这修复并确认了输出链，不是重新运行 PDE。两个原尺寸局部 p6 块的 forward error 为`5.35e-14 / 5.14e-14`，局部方程误差低于`7e-16`；它们仍是局部 repair candidate，q60 全行重检和全目标体积 MPC 未运行。
 

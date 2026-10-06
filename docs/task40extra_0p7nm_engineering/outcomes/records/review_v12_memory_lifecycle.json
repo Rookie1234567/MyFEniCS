@@ -1,0 +1,116 @@
+{
+  "schema": "task40extra.review_v12.memory_lifecycle_closeout.v1",
+  "source_sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+  "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1",
+  "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1__full3d_iterative__mpi1__Mna/20261006T140736.000513Z",
+  "peak_memory": {
+    "process_tree_rss_peak_bytes": 10181664768,
+    "cgroup_memory_peak_bytes": 10708639744,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "task_swap_peak_bytes": 0,
+    "cgroup_swap_peak_bytes": 0,
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "post_cleanup_cgroup_memory_current_bytes": 884416512,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "exact_process_tree_rss_at_all_q_inventory_checkpoint_bytes": 10021572608,
+    "all_q_inventory_source_sha256": "c9a977ea68e72ed682c0295914cafffb07a0f6594f71ce69b697580ec932f592"
+  },
+  "all_q_factor_inventory_before_destroy": {
+    "source_record": "task40_v12_p6_all_q_live_before_destroy.json",
+    "source_record_sha256": "c9a977ea68e72ed682c0295914cafffb07a0f6594f71ce69b697580ec932f592",
+    "all_four_factors_live_simultaneously": true,
+    "inventory_captured_before_first_destroy": true,
+    "sum_raw_INFOG19_allocated_decimal_MB": 4641,
+    "sum_raw_INFOG22_used_decimal_MB": 4076,
+    "sum_decoded_INFOG19_allocated_conservative_upper_bytes": 4645000000,
+    "sum_decoded_INFOG22_used_conservative_upper_bytes": 4080000000,
+    "factor_fill_bytes": "not measured; INFOG(9) is an entry count, not bytes"
+  },
+  "per_q_numeric_checkpoint": [
+    {
+      "q": 0,
+      "process_tree_rss_bytes": 7467511808,
+      "raw_INFOG19_allocated_decimal_MB": 1157,
+      "raw_INFOG22_used_decimal_MB": 1016,
+      "decoded_INFOG19_allocated_conservative_upper_bytes": 1158000000,
+      "decoded_INFOG22_used_conservative_upper_bytes": 1017000000
+    },
+    {
+      "q": 1,
+      "process_tree_rss_bytes": 8210989056,
+      "raw_INFOG19_allocated_decimal_MB": 1150,
+      "raw_INFOG22_used_decimal_MB": 1010,
+      "decoded_INFOG19_allocated_conservative_upper_bytes": 1151000000,
+      "decoded_INFOG22_used_conservative_upper_bytes": 1011000000
+    },
+    {
+      "q": 2,
+      "process_tree_rss_bytes": 8961937408,
+      "raw_INFOG19_allocated_decimal_MB": 1169,
+      "raw_INFOG22_used_decimal_MB": 1027,
+      "decoded_INFOG19_allocated_conservative_upper_bytes": 1170000000,
+      "decoded_INFOG22_used_conservative_upper_bytes": 1028000000
+    },
+    {
+      "q": 3,
+      "process_tree_rss_bytes": 9696276480,
+      "raw_INFOG19_allocated_decimal_MB": 1165,
+      "raw_INFOG22_used_decimal_MB": 1023,
+      "decoded_INFOG19_allocated_conservative_upper_bytes": 1166000000,
+      "decoded_INFOG22_used_conservative_upper_bytes": 1024000000
+    }
+  ],
+  "stage_cost_seconds": {
+    "base_preparation_and_global_or_local_entity_tensor_build_seconds": null,
+    "base_preparation_scope_status": "unknown; no separate timer in the compact closeout",
+    "reference_pc_builder_constructor_seconds": {
+      "value": 29.169038816937245,
+      "scope": "MUMPS reference-PC builder-constructor perf-counter after input matrices exist; covers CSR/four-q factor-builder and probes, not global/sector entities or physical local tensor construction"
+    },
+    "transform_bank_builder_seconds": {
+      "value": 0.06642541708424687,
+      "scope": "bank readiness event; exact overlap with the reference-PC constructor timer is unknown"
+    },
+    "four_q_symbolic_seconds_sum": {
+      "value": 0.9924213480,
+      "scope": "derived sum of four per-q symbolic records; subphase values are not additive with enclosing timers"
+    },
+    "four_q_numeric_seconds_sum": {
+      "value": 18.0969815000,
+      "scope": "derived sum of four per-q numeric records; subphase values are not additive with enclosing timers"
+    },
+    "recovered_field_ffcx_apply_count": 2,
+    "recovered_field_ffcx_apply_seconds": 3.1918007329804823,
+    "workflow_monotonic_seconds": 2089.322796093067,
+    "watchdog_elapsed_seconds": 2088.7774883890525,
+    "conservative_realtime_time_gate_observation_seconds": 2320.81170631922,
+    "time_gate_limit_seconds": 73463.28417918264,
+    "ksp_seconds": null,
+    "ksp_status": "NOT_RUN",
+    "final_recovery_output_seconds": null,
+    "final_recovery_output_status": "NOT_RUN",
+    "independent_saved_witness_recheck_seconds": null,
+    "cleanup_elapsed_seconds": null,
+    "cleanup_seconds_status": "not separately measured"
+  },
+  "historical_same_case_boundary": {
+    "review": "V11 Gx560 stopped before numeric factorization",
+    "pre_numeric_process_tree_rss_bytes": 10295283712,
+    "historical_process_tree_peak_bytes": 10418892800,
+    "historical_cgroup_peak_bytes": 10930950144,
+    "historical_projected_gate_bytes": 15205944640,
+    "historical_effective_finite_cap_bytes": 13462286336,
+    "comparison_rule": "Different phase and gate. Do not attribute the cross-run RSS difference to the bank as a measured saving."
+  },
+  "scope_notes": [
+    "MUMPS INFOG(19)/(22) allocated/used upper estimates are factor-internal statistics, not process RSS.",
+    "Process-tree RSS and cgroup memory peak are separate scopes and are not added.",
+    "All-q factor inventory is pre-destruction. Post-cleanup cgroup current is not a zero-factor snapshot.",
+    "The bank logical-view versus backing-owner byte difference is recorded separately in review_v12_transform_bank.json; it is not measured RSS saving.",
+    "No resource or time stop occurred; the worker stopped on a numerical witness gate."
+  ]
+}

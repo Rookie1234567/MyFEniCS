@@ -1,0 +1,67 @@
+{
+  "schema": "task40extra.review_v12.transform_bank_closeout.v1",
+  "source_sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+  "formal_run_id": "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1",
+  "formal_input_sha256": "50c8691446cbc24533ee31ae945c75806c29a0a06d002287723f814372ba44a9",
+  "formal_physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+  "raw_event": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1__full3d_iterative__mpi1__Mna/20261006T140736.000513Z/v11_p6_grid_events.jsonl",
+    "sha256": "6bc438270cd9f0903bdc0bc02d0101bf5a22232f02c5fb887e610c822cc92066",
+    "event": "task40_v12_transform_bank_ready",
+    "stage": "all_spaces_collected_pre_symbolic",
+    "inventory_scope": "named numerical backing allocations; not RSS"
+  },
+  "bank": {
+    "sharing_scope": "p6 internal cell block only; edge and face paths remain legacy",
+    "actual_state_count": 6,
+    "basis_count": 1,
+    "matrix_template_count": 1,
+    "matrix_builder_calls": 6,
+    "matrix_builder_seconds": 0.06642541708424687,
+    "matrix_requests": 1120,
+    "matrix_cache_hits": 1114,
+    "unique_matrix_backing_bytes": 3240000,
+    "matrix_backing_owner_id": "owner-000001",
+    "matrix_views_on_shared_owner": 1121,
+    "inverse_builds_at_this_event": 0,
+    "inverse_requests_at_this_event": 0,
+    "inverse_later_lifecycle_status": "not independently inventoried in this closeout; zero at bank-ready is not an end-of-run claim",
+    "future_inverse_reserve": {
+      "unique_inverse_template_count": 1,
+      "unique_inverse_payload_bytes": 3240000,
+      "single_inverse_workspace_bytes": 9720000,
+      "status": "reserved estimate; not allocated at this event"
+    }
+  },
+  "whole_named_inventory": {
+    "owner_count_including_non_bank_global_local_index_edge_face_objects": 15047,
+    "view_count": 16167,
+    "logical_view_bytes_including_aliases": 3843915904,
+    "unique_backing_owner_bytes": 215115904,
+    "derived_alias_inventory_difference_bytes": 3628800000,
+    "interpretation": "Named-allocation inventory arithmetic only. The derived difference is not measured process RSS savings and does not identify all owners as bank matrices."
+  },
+  "whole_process_memory": {
+    "process_tree_rss_peak_bytes": 10181664768,
+    "cgroup_memory_peak_bytes": 10708639744,
+    "pss": "DISABLED_BY_PROFILE",
+    "task_swap_peak_bytes": 0,
+    "cgroup_swap_peak_bytes": 0,
+    "post_cleanup_cgroup_memory_current_bytes": 884416512,
+    "descendants_cleared": true,
+    "interpretation": "Measured whole-run lifecycle; not a paired old/new bank memory experiment."
+  },
+  "qualification_boundary": {
+    "bank_ready_preceded_symbolic": true,
+    "Gx560_full_regular_inverse_gates_passed": false,
+    "Gx560_FGMRES_or_physical_outputs_reached": false,
+    "production_default_changed": false,
+    "status": "engineering evidence only; Gx560 numerical witness failed"
+  },
+  "dot_source_provenance": {
+    "source_sha": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+    "git_blob_oid": "ff40105bd9139a856b09987596c961458f84ab0e",
+    "original_file_sha256": "9ece954f962dc6bab18a02f6b48b53998219fba3f611647a44404757f219b66f",
+    "interpretation": "p4 bank source adapted to p6 cell-interior; not 84-row qualification and no dot access during this task"
+  }
+}
