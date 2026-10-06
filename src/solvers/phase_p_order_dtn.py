@@ -10,6 +10,18 @@ from .phase_notch_hp import solve_case,compare_saved,verify_cost
 from .phase_evaluation_cache import cached_evaluator_factory
 
 
+def residual_inventory_identity(old_rhs,new_rhs,old_r,new_r,old_volume,new_volume,old_boundary,new_boundary):
+    """Use assembled original terms, not the small difference as a scale."""
+    load_delta=new_rhs-old_rhs;volume_delta=new_volume-old_volume;boundary_delta=new_boundary-old_boundary
+    action_delta=volume_delta+boundary_delta;defect=(new_r-old_r)-(load_delta-action_delta)
+    denominator=sum(np.linalg.norm(v) for v in (old_rhs,new_rhs,old_volume,new_volume,old_boundary,new_boundary))
+    result_denominator=sum(np.linalg.norm(v) for v in (old_r,new_r,load_delta,action_delta))
+    return dict(load_delta=load_delta,volume_delta=volume_delta,boundary_delta=boundary_delta,
+        action_delta=action_delta,identity_defect=defect),dict(operation=float(np.linalg.norm(defect)/max(denominator,1e-30)),
+        numerator=float(np.linalg.norm(defect)),denominator=float(denominator),
+        result_scale_diagnostic=float(np.linalg.norm(defect)/max(result_denominator,1e-30)),result_denominator=float(result_denominator))
+
+
 def project_with_residual_identity(parent,bundle,rhs,geometry,folder,journal):
     from .phase_notch_hp_modes import project_saved_parent
     from petsc4py import PETSc
@@ -21,24 +33,28 @@ def project_with_residual_identity(parent,bundle,rhs,geometry,folder,journal):
             bundle['physical_action'].apply(src,out);journal.calls['A']+=1
             volume=bundle['volume_action'].apply(src).array.copy()
             bundle['dtn_action'].apply(src,dtn)
-            new_r=rhs.array-out.array;old_r=old['residual'];load_delta=rhs.array-old['rhs']
-            old_boundary=old['coupling_action'];boundary_delta=dtn.array-old_boundary
-            volume_delta=volume-old['volume_action']
-            action_delta=volume_delta+boundary_delta
-            defect=(new_r-old_r)-(load_delta-action_delta)
-            scale=max(np.linalg.norm(new_r)+np.linalg.norm(old_r)+np.linalg.norm(load_delta)+np.linalg.norm(action_delta),1e-30)
-            operation=float(np.linalg.norm(defect)/scale)
-            volume_operation=relative(volume_delta,old['volume_action'])
+            # Old native residual closes the port exactly. Its saved explicit
+            # auxiliary coefficients have a small, separately audited defect.
+            # Reconstruct the same CLOSED old boundary, pairing physical keys.
+            payload=json.loads(__import__('pathlib').Path(parent['output']['fields']['path']).with_name('port_power.json').read_text())
+            keys=lambda r:(r['side'],r['m'],r['n'],r['polarization'])
+            entries={keys(e.mode_identity):e for e in bundle['dtn_action'].carrier.entries}
+            old_boundary=np.zeros_like(volume)
+            for i,row in enumerate(payload['orders']):
+                e=entries[keys(row)];np.add.at(old_boundary,e.coupling_rows,e.coupling_values*old['projected'][i]/old['H'][i])
+            new_r=rhs.array-out.array;old_r=old['residual']
+            terms,metrics=residual_inventory_identity(old['rhs'],rhs.array,old_r,new_r,old['volume_action'],volume,old_boundary,dtn.array)
+            volume_operation=relative(terms['volume_delta'],old['volume_action'])
             witness=save_arrays(folder/'old_field_changed_inventory_residual.npz',
-                new_residual=new_r,old_residual=old_r,load_delta=load_delta,boundary_delta=boundary_delta,
-                volume_delta=volume_delta,action_delta=action_delta,identity_defect=defect,
+                new_residual=new_r,old_residual=old_r,**terms,old_closed_boundary=old_boundary,new_closed_boundary=dtn.array.copy(),
+                old_explicit_auxiliary_boundary=old['coupling_action'],old_volume=old['volume_action'],new_volume=volume,
                 rhs_new=rhs.array.copy(),rhs_old=old['rhs'],u_unchanged=src.array.copy())
-        if operation>1e-10 or volume_operation>1e-10:raise ValueError('mode-only original volume/residual identity')
-        projected['finite_mode_projection']['residual_identity']=dict(operation=operation,numerator=float(np.linalg.norm(defect)),
-            denominator=float(scale),volume_operation=volume_operation,arrays=witness,
+        if metrics['operation']>1e-10 or volume_operation>1e-10:raise ValueError('mode-only original volume/residual identity')
+        projected['finite_mode_projection']['residual_identity']=dict(**metrics,volume_operation=volume_operation,arrays=witness,
             new_rho=float(np.linalg.norm(new_r)/max(np.linalg.norm(rhs.array),1e-30)),
-            load_delta_norm=float(np.linalg.norm(load_delta)),boundary_delta_norm=float(np.linalg.norm(boundary_delta)),
-            complex_cross_load_action=[float(np.vdot(load_delta,action_delta).real),float(np.vdot(load_delta,action_delta).imag)],
+            load_delta_norm=float(np.linalg.norm(terms['load_delta'])),boundary_delta_norm=float(np.linalg.norm(terms['boundary_delta'])),
+            old_closed_auxiliary_defect_norm=float(np.linalg.norm(old_boundary-old['coupling_action'])),
+            complex_cross_load_action=[float(np.vdot(terms['load_delta'],terms['action_delta']).real),float(np.vdot(terms['load_delta'],terms['action_delta']).imag)],
             qualification='OFFLINE_UNCHANGED_FIELD_NEW_BOUNDARY_DIAGNOSTIC; not a new solve')
         return projected
     finally:src.destroy();out.destroy();dtn.destroy()
@@ -66,7 +82,8 @@ def execute(role,folder,state):
     journal.source_state=state
     if state.get('memory_budget')!=p['memory_budget']:raise ValueError('V54 live numerical memory contract')
     if role=='D':
-        from .phase_p_order_consistency import diagnose
+        from .phase_p_order_consistency import diagnose,recheck_saved_operation_scale
+        if state.get('postprocessing_resume'):return recheck_saved_operation_scale(folder,journal,scope,state)
         return diagnose(folder,journal,scope)
     if role in scope.SOLVES:
         result=solve_case(role,folder,journal,scope=scope)

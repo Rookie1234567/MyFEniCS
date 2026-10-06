@@ -325,6 +325,12 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
+    if namespace=='v54' and role=='D':
+        fix=plan.get('diagnosed_p_order_scale_recheck',{});path=Path(fix.get('evidence_path','/not_present'))
+        return (previous.get('classification')=='CROSS_P_CONSISTENCY_NOT_ESTABLISHED' and previous.get('same_p_paths_trusted') is True
+            and fix.get('source_sha')==previous.get('source_sha') and path.is_file()
+            and hashlib.sha256(path.read_bytes()).hexdigest()==fix.get('evidence_sha256')
+            and fix.get('root_cause')=='operation_result_denominator')
     if namespace in ('v50', 'v51', 'v52', 'v53', 'v54') and role == 'BOUNDARY':
         fix=plan.get('diagnosed_boundary_inventory_repair',{})
         path=Path(fix.get('evidence_path','/not_present'))

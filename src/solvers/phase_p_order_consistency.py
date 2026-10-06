@@ -108,7 +108,8 @@ def diagnose(folder,journal,scope):
         if not equal:raise ValueError('cross p physical geometry/material differs: '+key)
     if parent['P']['mode_sha256']!=parent['B']['mode_sha256']:raise ValueError('cross p mode inventory')
     if not np.array_equal(checked_arrays(parent['P']['arrays'])['kappa'],checked_arrays(parent['B']['arrays'])['kappa']):raise ValueError('cross p kappa')
-    cfg=b[0];kappa=np.array([cfg.kx,cfg.ky,0]);old=PhaseEvaluator(b[3].function_space,3,kappa);new=CachedPhaseEvaluator(b[3].function_space,3,kappa)
+    from .fixed_phase_fem import carrier
+    cfg=b[0];kappa=carrier(cfg);old=PhaseEvaluator(b[3].function_space,3,kappa);new=CachedPhaseEvaluator(b[3].function_space,3,kappa)
     from .scattering_accuracy_fields import cell_regions
     parts,_,_=cell_regions(b[2],cfg);cells=set(int(np.flatnonzero(mask)[0]) for mask in parts.values() if np.any(mask))
     cells.update(map(int,np.unique(old.permutations,return_index=True)[1]))
@@ -188,6 +189,55 @@ def diagnose(folder,journal,scope):
             parent_hashes={r:parent[r]['arrays']['sha256'] for r in parent},identity=identity,saved_evaluation=saved_eval,
             embedding=witnesses,raw_directions=raw_rows,raw_reader=reader.record(),raw_classes=len(raw_rows),new_complete_solves=0,new_factor_count=0,
             notes='full uncondensed body, exact closed all532 DtN; no condensation/transfer commutation assumed',timings=journal.timings,calls=journal.calls)
+    finally:
+        for value in rhs.values():value.destroy()
+        for bundle in bundles.values():destroy_same_mesh_physical_action(bundle)
+
+
+def recheck_saved_operation_scale(folder,journal,scope,state):
+    """Supplement saved witnesses with true component scales; no raw replay."""
+    from .phase_notch_hp import restore_record
+    from .phase_explicit_accuracy import build_bundle
+    from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    resume=scope.window.TMP/'D_post_resume.json';binding=json.loads(resume.read_text())
+    if hashlib.sha256(resume.read_bytes()).hexdigest()!=state['postprocessing_resume']['sha256']:raise ValueError('D scale supplement resolved identity')
+    path=Path(binding['path'])
+    if hashlib.sha256(path.read_bytes()).hexdigest()!=binding['sha256']:raise ValueError('D original witness changed')
+    previous=json.loads(path.read_text())
+    if previous['role']!='D' or not previous['same_p_paths_trusted']:raise ValueError('D original equation evidence not qualified')
+    restored={r:restore_record(scope.parent(r),journal,scope=scope) for r in ('P','B')}
+    embedding=FullBodyEmbedding(restored['P'][1]['floquets'][6],restored['B'][1]['floquets'][7]);bundles={};rhs={};rows=[]
+    try:
+        for role,row in restored.items():bundles[role],rhs[role]=build_bundle(row[0],row[1],journal)
+        for row in previous['embedding']:
+            saved=checked_arrays(row['arrays']);components={};scales=[]
+            with journal.measured('saved_embedding_component_scale_'+row['label']):
+                for role,name in (('P','u'),('B','Ju')):
+                    src=rhs[role].duplicate();src.array[:]=saved[name];dtn=src.duplicate()
+                    try:
+                        for key,action in bundles[role]['volume_action'].component_actions.items():components[role+'_'+key]=action.apply(src).array.copy()
+                        bundles[role]['dtn_action'].apply(src,dtn);components[role+'_DtN']=dtn.array.copy();journal.calls['A']+=1
+                    finally:src.destroy();dtn.destroy()
+                total6=sum(components['P_'+k] for k in ('curl','material_mass','DtN'))
+                total7=sum(components['B_'+k] for k in ('curl','material_mass','DtN'))
+                pulled={k:embedding.adjoint(components['B_'+k]) for k in ('curl','material_mass','DtN')}
+                scales=[np.linalg.norm(v) for k,v in components.items() if k.startswith('P_')]+[np.linalg.norm(v) for v in pulled.values()]
+                denominator=float(sum(scales));numerator=float(np.linalg.norm(saved['action6']-saved['dual_action7']))
+                reproduction=max(np.linalg.norm(total6-saved['action6']),np.linalg.norm(embedding.adjoint(total7-saved['action7'])))/max(denominator,1e-30)
+                operation=numerator/max(denominator,1e-30)
+                receipt=save_arrays(folder/(row['label']+'_components.npz'),**components,**{'dual_B_'+k:v for k,v in pulled.items()})
+            item={**row,'historical_result_scale_operation':row['operator_operation'],'historical_pass_gate':row['pass_gate'],
+                'operator_operation':operation,'operator_numerator':numerator,'operator_denominator':denominator,
+                'component_norms':scales,'component_arrays':receipt,'reproduction_operation':float(reproduction)}
+            item['pass_gate']=max(item['physical_max'],item['dual_operation'],item['shared_operation'],item['load_operation'],operation,reproduction)<=1e-10 and item['physical_max']<=1e-11
+            rows.append(item);write_json(folder/'embedding_scale_progress.json',dict(rows=rows))
+        passed=all(r['pass_gate'] for r in rows)
+        return dict(status='COMPLETED',role='D',pass_gate=passed,same_p_paths_trusted=True,
+            classification='CROSS_P_WITNESSES_PASS' if passed else 'CROSS_P_CONSISTENCY_NOT_ESTABLISHED',
+            original_D_evidence=binding,embedding=rows,raw_classes=previous['raw_classes'],raw_replayed=False,
+            saved_evaluation=previous['saved_evaluation'],parent_hashes=previous['parent_hashes'],
+            new_complete_solves=0,new_factor_count=0,timings=journal.timings,calls=journal.calls,
+            scale='assembled Ckappa-curl, material mass and all532 DtN; both sides; old result denominator retained')
     finally:
         for value in rhs.values():value.destroy()
         for bundle in bundles.values():destroy_same_mesh_physical_action(bundle)

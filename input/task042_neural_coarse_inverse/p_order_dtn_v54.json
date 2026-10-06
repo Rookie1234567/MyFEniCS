@@ -325,5 +325,11 @@
       "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
       "plan_path": "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json"
     }
+  },
+  "diagnosed_p_order_scale_recheck": {
+    "source_sha": "d011934de5aaa27375882e647332acf7ca74f12a",
+    "evidence_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v54/task042_v54_p_order_consistency_20261006T081232627765Z/result.json",
+    "evidence_sha256": "c424441a64aa255c10184f9453d2f467b3efe7ca6a84d69a3fed5bb975b409c2",
+    "root_cause": "operation_result_denominator"
   }
 }

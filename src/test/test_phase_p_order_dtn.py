@@ -12,6 +12,16 @@ from src.io.phase_notch_hp import descriptor,load_phase_notch_hp
 
 
 class SeparationTests(unittest.TestCase):
+    def test_closed_residual_inventory_operation_scale(self):
+        from src.solvers.phase_p_order_dtn import residual_inventory_identity
+        old_rhs=np.array([1+2j,3-4j]);old_volume=np.array([1e5+3j,-2e5+4j]);old_boundary=old_rhs-old_volume
+        new_rhs=old_rhs+np.array([.03j,.01]);new_volume=old_volume.copy();new_boundary=old_boundary+np.array([.02,.05j])
+        old_r=old_rhs-old_volume-old_boundary;new_r=new_rhs-new_volume-new_boundary
+        terms,metrics=residual_inventory_identity(old_rhs,new_rhs,old_r,new_r,old_volume,new_volume,old_boundary,new_boundary)
+        self.assertLess(metrics['operation'],1e-10);self.assertGreater(metrics['denominator'],1e5)
+        wrong,_=residual_inventory_identity(old_rhs,new_rhs,old_r,new_r,old_volume,new_volume,old_boundary+10,new_boundary)
+        self.assertGreater(np.linalg.norm(wrong['identity_defect'])/metrics['denominator'],1e-10)
+        self.assertGreater(np.linalg.norm(terms['load_delta']),0)
     def test_explicit_inventory_unknown_rejected(self):
         self.assertEqual([finite_mode_ranges(n) for n in (532,828,1188)],[(9,3),(11,4),(13,5)])
         for n in (40,829,0,None):
