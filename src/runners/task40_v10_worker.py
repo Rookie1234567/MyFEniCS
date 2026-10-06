@@ -31,6 +31,22 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _single_side_diffraction_order_count_passed(
+    output: Mapping[str, Any], total_port_mode_count: int
+) -> bool:
+    """Compare the one-face diffraction count with the two-face port inventory.
+
+    Field postprocessing counts each spatial/polarization order once, while the
+    DtN profile counts those orders on both the top and bottom ports.
+    """
+    total_count = int(total_port_mode_count)
+    return bool(
+        total_count > 0
+        and total_count % 2 == 0
+        and output.get("diffraction_channel_count") == total_count // 2
+    )
+
+
 def _v12_memory_admission_bounds(
     *,
     live_rss_bytes: int,
@@ -2582,7 +2598,9 @@ def run_task40_v10_p6_reference_worker(
         output_pass = bool(
             output.get("electric_finite") is True
             and output.get("auxiliary_finite") is True
-            and output.get("diffraction_channel_count") == periodic_profile.mode_count
+            and _single_side_diffraction_order_count_passed(
+                output, periodic_profile.mode_count
+            )
             and np.isfinite(list(power.values())).all()
             and energy_error <= 1.0e-5
             and absorption_error <= 1.0e-5
