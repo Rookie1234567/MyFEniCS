@@ -35,23 +35,40 @@ def common_boxes(first,second):
     return boxes,a,b
 
 
-def common_difference(first,second,cfg,journal,folder,*,q,selected_points,evaluator_factory=None):
+def common_difference(first,second,cfg,journal,folder,*,q,selected_points,evaluator_factory=None,progress_identity=None):
     from .fixed_phase_fem import carrier
     factory=PhaseEvaluator if evaluator_factory is None else evaluator_factory
     k=carrier(cfg);a=factory(first.function_space,q,k);b=factory(second.function_space,q,k)
     ba,bb=mesh_bounds(first.function_space),mesh_bounds(second.function_space)
     boxes,pa,pb=common_boxes(ba,bb);names=('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')
     sums=np.zeros((6,3));per=[];components=[]
+    if progress_identity is not None:
+        from src.postprocessing.phase_volume_quadrature import checked_block,array_hash
+        from src.runners.task042_shared import write_json
+        progress=dict(progress_identity,q=q,point_sha256=array_hash(a.points),weight_sha256=array_hash(a.weights),
+            boxes_sha256=array_hash(boxes),parents_sha256=array_hash(np.column_stack((pa,pb))))
+        blocks=folder/f'common_q{q}_blocks';blocks.mkdir(parents=True,exist_ok=True)
     with journal.measured('non_nested_common_physical_integrals_q'+str(q)):
-        for box,i,j in zip(boxes,pa,pb,strict=True):
+        for index,(box,i,j) in enumerate(zip(boxes,pa,pb,strict=True)):
+            if progress_identity is not None:
+                path=blocks/f'cell_{index:06d}.json';identity=dict(progress,index=index)
+                if path.exists():
+                    saved=checked_block(path,identity);cell=saved['integrals'];parts=saved['component_error_squared']
+                    per.append(cell);components.append(parts);sums+=cell;continue
             size=box[1]-box[0];points=a.points*size+box[0];w=a.weights*np.prod(size)
-            va=a.at(first,int(i),points,cfg.k0);vb=b.at(second,int(j),points,cfg.k0);bg=analytic(cfg,points)
-            cell=[];parts=[]
-            for name in names:
-                key=name.split('_')[0];x=va[key];y=vb[key]
-                if name.endswith('scattered'):x=x-bg[key];y=y-bg[key]
-                triple=[np.sum(w[:,None]*np.abs(y-x)**2),np.sum(w[:,None]*np.abs(y)**2),np.sum(w[:,None]*np.abs(bg[key])**2)]
-                cell.append(triple);parts.append(np.sum(w[:,None]*np.abs(y-x)**2,axis=0))
+            cell=np.zeros((6,3));parts=np.zeros((6,3));step=len(points) if progress_identity is None else 256
+            for offset in range(0,len(points),step):
+                pp=points[offset:offset+step];ww=w[offset:offset+step]
+                va=a.at(first,int(i),pp,cfg.k0);vb=b.at(second,int(j),pp,cfg.k0);bg=analytic(cfg,pp)
+                for k,name in enumerate(names):
+                    key=name.split('_')[0];x=va[key];y=vb[key]
+                    if name.endswith('scattered'):x=x-bg[key];y=y-bg[key]
+                    cell[k]+=[np.sum(ww[:,None]*np.abs(y-x)**2),np.sum(ww[:,None]*np.abs(y)**2),np.sum(ww[:,None]*np.abs(bg[key])**2)]
+                    parts[k]+=np.sum(ww[:,None]*np.abs(y-x)**2,axis=0)
+            if progress_identity is not None:
+                receipt=save_arrays(path.with_suffix('.npz'),integrals=cell,component_error_squared=parts)
+                write_json(path,dict(identity=identity,arrays=receipt))
+                if index%8==0:journal.event('common_physical_block_committed',q=q,index=index,common_subcells=len(boxes))
             per.append(cell);components.append(parts);sums+=cell
         pp=np.asarray(selected_points,float);ia=parents_at(ba,pp,interior=False);ib=parents_at(bb,pp,interior=False)
         values=[{key:np.zeros((len(pp),3),complex) for key in ('E','H','curl')} for _ in (0,1)]

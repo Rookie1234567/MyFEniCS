@@ -5,8 +5,8 @@ from .scattering_anchor import relative, save_arrays
 
 
 class PhaseEvaluator(CellEvaluator):
-    def __init__(self, space, q, kappa):
-        super().__init__(space,q)
+    def __init__(self, space, q, kappa, *, quadrature_tables=True):
+        super().__init__(space,q,quadrature_tables=quadrature_tables)
         self.kappa=np.asarray(kappa,float)
 
     def physical(self, points, envelope, curl, k0, mu=1):
@@ -95,7 +95,7 @@ def common_physical_difference(coarse,fine,cfg,journal,folder,*,q=23):
     return dict(fields=rows,selected=select,arrays=arrays,q=q,full_cross_terms=True,pass_gate=max([r['relative'] for r in rows.values()]+list(select.values()))<=1e-4)
 
 
-def physical_output(bundle,u,port,geometry,folder,journal):
+def physical_output(bundle,u,port,geometry,folder,journal,*,volume_backend=None):
     from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
     from .dtn_port_3d import _port_power_metrics,_write_port_outputs
     from src.common.modes_3d import incident_power_3d
@@ -117,7 +117,13 @@ def physical_output(bundle,u,port,geometry,folder,journal):
         pm=_port_power_metrics(cfg,list(bundle['modes']),port,list(bundle['incident_projections']))
         _write_port_outputs(folder,cfg,list(bundle['modes']),port,list(bundle['incident_projections']),pm,bundle['setup']['mesh'].comm)
         # |g|=1: this is exactly |physical E|^2, no polynomial projection.
-        vm=compute_volume_absorption_3d(bundle['setup']['mesh_data'],cfg,env,folder,incident_power=incident_power_3d(cfg),port_metrics=pm)
+        if volume_backend is None:
+            vm=compute_volume_absorption_3d(bundle['setup']['mesh_data'],cfg,env,folder,incident_power=incident_power_3d(cfg),port_metrics=pm)
+        elif volume_backend=='direct_phase_quadrature':
+            from src.postprocessing.phase_volume_quadrature import phase_volume_absorption
+            vm=phase_volume_absorption(bundle['setup']['mesh_data'],cfg,env,bundle['kappa'],folder,
+                incident_power=incident_power_3d(cfg),port_metrics=pm,journal=journal)
+        else:raise ValueError('unknown explicit phase volume backend')
     return dict(fields=fields,port_metrics=pm,volume_metrics=vm,mode_manifest_sha256=bundle['mode_sha256'],
         full_field_representation='authoritative full native envelope + original geometry/space/MPC + kappa; E=g*u and curl=g*(curlu+i*kappa cross u)',
         sampled_fields_are_not_authority=True,background='same analytic layered physical background',

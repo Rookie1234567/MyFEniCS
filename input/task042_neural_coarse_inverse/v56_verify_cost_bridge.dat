@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v56]
+stage = "VERIFY_COST"
+run_id = "task042_v56_verify_cost_bridge"

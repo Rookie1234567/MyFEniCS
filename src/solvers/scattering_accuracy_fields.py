@@ -18,14 +18,15 @@ def analytic(cfg,points):
 
 
 class CellEvaluator:
-    def __init__(self,space,q):
+    def __init__(self,space,q,*,quadrature_tables=True):
         import basix
         self.space=space;self.mesh=space.mesh
         self.points,self.weights=basix.make_quadrature(basix.CellType.hexahedron,q)
-        tab=space.element.basix_element.tabulate(1,self.points)
-        self.values=tab[0]
-        self.curls=np.stack((tab[2,:,:,2]-tab[3,:,:,1],tab[3,:,:,0]-tab[1,:,:,2],tab[1,:,:,1]-tab[2,:,:,0]),axis=2)
-        del tab
+        if quadrature_tables:
+            tab=space.element.basix_element.tabulate(1,self.points)
+            self.values=tab[0]
+            self.curls=np.stack((tab[2,:,:,2]-tab[3,:,:,1],tab[3,:,:,0]-tab[1,:,:,2],tab[1,:,:,1]-tab[2,:,:,0]),axis=2)
+            del tab
         ref=basix.cell.geometry(basix.CellType.hexahedron);fit=np.column_stack((ref,np.ones(8)))
         self.mesh.topology.create_entity_permutations();self.permutations=self.mesh.topology.get_cell_permutation_info()
         self.geometry=[];self.transforms={}

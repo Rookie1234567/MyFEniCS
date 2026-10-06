@@ -65,8 +65,8 @@ class ExactTabulations:
 
 
 class CachedPhaseEvaluator(PhaseEvaluator):
-    def __init__(self,space,q,kappa,*,cache=None):
-        super().__init__(space,q,kappa)
+    def __init__(self,space,q,kappa,*,cache=None,quadrature_tables=True):
+        super().__init__(space,q,kappa,quadrature_tables=quadrature_tables)
         self.cache=ExactTabulations() if cache is None else cache
         self.element=space.element.basix_element
         self.basis_coefficients=self.element.coefficient_matrix
@@ -97,8 +97,8 @@ class CachedPhaseEvaluator(PhaseEvaluator):
         return self.physical(points,e,curl,k0)
 
 
-def cached_evaluator_factory():
-    cache=ExactTabulations()
-    def factory(space,q,kappa):return CachedPhaseEvaluator(space,q,kappa,cache=cache)
+def cached_evaluator_factory(*,limit_bytes=1024*2**20,quadrature_tables=True):
+    cache=ExactTabulations(limit_bytes)
+    def factory(space,q,kappa):return CachedPhaseEvaluator(space,q,kappa,cache=cache,quadrature_tables=quadrature_tables)
     factory.cache=cache
     return factory

@@ -38,7 +38,7 @@ def configured_setup(spec,journal,*,scope=None):
         diffraction_order_max_m=m,diffraction_order_max_n=n)
     geo={**base,'notch_expected_changed_cells':2*int(np.prod(spec['splits']))}
     cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo,
-        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55') and spec['degree']==7)
+        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55','v56') and spec['degree']==7)
     return cfg,setup,geometry
 
 
@@ -146,7 +146,8 @@ def solve_case(role,folder,journal,*,scope=None):
 
 def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,folder,journal,cap,boundary,build_audit,norms,vectors,*,scope=None):
     _,recovery,rv=native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal)
-    rec=save_arrays(folder/'recovery.npz',**rv);output=physical_output(bundle,u,port,geo,folder,journal)
+    options={} if scope is None or not hasattr(scope,'physical_output_options') else scope.physical_output_options()
+    rec=save_arrays(folder/'recovery.npz',**rv);output=physical_output(bundle,u,port,geo,folder,journal,**options)
     projected=None
     if scope is not None and hasattr(scope,'project_mode_parent'):
         projected=scope.project_mode_parent(role,bundle,rhs,geo,folder,journal)
