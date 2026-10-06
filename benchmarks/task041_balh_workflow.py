@@ -869,6 +869,42 @@ def task041_fixed_h6_modal_gmres_binding(
     }
 
 
+def task041_fixed_h6_packet_source_binding(
+    fixed_h6_binding: Mapping[str, Any] | None,
+    *,
+    producer_packet_root: str | Path | None,
+    legacy_native_packet_descriptor: str | Path | None,
+) -> dict[str, str] | None:
+    """Bind the one allowed fixed-H6 packet source, without validating shards."""
+
+    if fixed_h6_binding is None:
+        return None
+    if not isinstance(fixed_h6_binding, Mapping) or fixed_h6_binding.get(
+        "method"
+    ) != "fixed_h6_modal_gmres_research":
+        raise ValueError("fixed-H6 packet source requires its registered binding")
+    producer_source = producer_packet_root is not None
+    legacy_source = legacy_native_packet_descriptor is not None
+    if producer_source == legacy_source:
+        raise ValueError(
+            "fixed-H6 research requires exactly one producer root or legacy descriptor"
+        )
+    if producer_source:
+        return None
+    if fixed_h6_binding.get("model_id") != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID:
+        raise ValueError(
+            "fixed-H6 legacy-native packets are limited to the registered 5 nm case"
+        )
+    descriptor = Path(legacy_native_packet_descriptor).resolve()
+    if not descriptor.is_file():
+        raise ValueError("fixed-H6 legacy packet descriptor is missing")
+    return {
+        "source_type": "legacy_native_packet_descriptor",
+        "descriptor_path": str(descriptor),
+        "descriptor_sha256": hashlib.sha256(descriptor.read_bytes()).hexdigest(),
+    }
+
+
 def task041_balh_membind_node(model_id: str) -> str | None:
     """Return the rank-executable NUMA node binding for explicit V6 cases."""
 
@@ -2076,6 +2112,7 @@ __all__ = [
     "task041_balh_time_stop_override_record",
     "task041_balh_transfer_optimization_profile",
     "task041_fixed_h6_modal_gmres_binding",
+    "task041_fixed_h6_packet_source_binding",
     "task041_parse_expected_rank_cpus",
     "task041_schur_speed_v2_contract",
     "validate_balh_producer_packet",

@@ -636,6 +636,12 @@ class _FixedH6ModalKrylovSystem:
         self._cumulative_total_matmult_calls = 0
         self._cumulative_constraint_lu_solve_attempts = 0
         self._cumulative_constraint_lu_solve_successes = 0
+        self._cumulative_owner_constraint_lu_solve_attempts = 0
+        self._cumulative_owner_constraint_lu_solve_successes = 0
+        self._cumulative_owner_constraint_lu_solve_counts_complete = True
+        self._owner_constraint_lu_solve_counts_authoritative = False
+        self._owner_constraint_lu_solve_attempts_this_solve: int | None = None
+        self._owner_constraint_lu_solve_successes_this_solve: int | None = None
         self.modal_constraint_local_bytes = 0
         self._matrix = self._ksp = None
         self._rhs = self._solution = self._image = self._residual = None
@@ -829,6 +835,35 @@ class _FixedH6ModalKrylovSystem:
             self._cumulative_constraint_lu_solve_successes += int(
                 self._constraint_lu_solve_successes
             )
+            owner_counts_authoritative = bool(
+                self._owner_constraint_lu_solve_counts_authoritative
+                and type(self._owner_constraint_lu_solve_attempts_this_solve) is int
+                and self._owner_constraint_lu_solve_attempts_this_solve >= 0
+                and type(self._owner_constraint_lu_solve_successes_this_solve) is int
+                and self._owner_constraint_lu_solve_successes_this_solve >= 0
+            )
+            if owner_counts_authoritative:
+                self._cumulative_owner_constraint_lu_solve_attempts += (
+                    self._owner_constraint_lu_solve_attempts_this_solve
+                )
+                self._cumulative_owner_constraint_lu_solve_successes += (
+                    self._owner_constraint_lu_solve_successes_this_solve
+                )
+            else:
+                self._cumulative_owner_constraint_lu_solve_counts_complete = False
+            zero_rhs_without_ksp = (
+                self._last_solve is not None
+                and self._last_solve.get("ksp_status") == "not_run_zero_rhs"
+            )
+            owner_solve_count_scope = (
+                "owner_counts_unknown_without_post_KSP_broadcast"
+            )
+            if owner_counts_authoritative:
+                owner_solve_count_scope = (
+                    "zero_rhs_no_ksp_no_owner_lu_calls"
+                    if zero_rhs_without_ksp
+                    else "owner_authoritative_per_solve_broadcasts"
+                )
             if self._last_solve is not None:
                 self._last_solve["fixed_h6_side_action_apply_calls"] = {
                     side: int(action.audit["apply_count"]) - before[side]
@@ -843,6 +878,36 @@ class _FixedH6ModalKrylovSystem:
                 )
                 self._last_solve["cumulative_total_matmult_calls"] = (
                     self._cumulative_total_matmult_calls
+                )
+                self._last_solve[
+                    "owner_constraint_lu_solve_counts_authoritative"
+                ] = owner_counts_authoritative
+                self._last_solve[
+                    "owner_constraint_lu_solve_counts_scope"
+                ] = owner_solve_count_scope
+                self._last_solve[
+                    "cumulative_constraint_lu_solve_count_scope"
+                ] = "rank_local_cumulative; do_not_sum_across_ranks"
+                self._last_solve[
+                    "cumulative_owner_constraint_lu_solve_attempts"
+                ] = (
+                    self._cumulative_owner_constraint_lu_solve_attempts
+                    if self._cumulative_owner_constraint_lu_solve_counts_complete
+                    else None
+                )
+                self._last_solve[
+                    "cumulative_owner_constraint_lu_solve_successes"
+                ] = (
+                    self._cumulative_owner_constraint_lu_solve_successes
+                    if self._cumulative_owner_constraint_lu_solve_counts_complete
+                    else None
+                )
+                self._last_solve[
+                    "cumulative_owner_constraint_lu_solve_status"
+                ] = (
+                    "complete"
+                    if self._cumulative_owner_constraint_lu_solve_counts_complete
+                    else "unknown_missing_per_solve_owner_broadcast"
                 )
                 if self._last_solve.get("status") not in {
                     "converged",
@@ -984,12 +1049,12 @@ class _FixedH6ModalKrylovSystem:
         self._blocked_matmult_attempts = 0
         self._constraint_lu_solve_attempts = 0
         self._constraint_lu_solve_successes = 0
+        self._owner_constraint_lu_solve_attempts_this_solve = None
+        self._owner_constraint_lu_solve_successes_this_solve = None
+        self._owner_constraint_lu_solve_counts_authoritative = False
         self._budget_exhausted = False
         self._pc_failure_error = None
         self._mat_preflight_failure = None
-        # Match the existing BAL_H KSP lifecycle: clear the prior callback
-        # failure before each new solve, then latch SUBPC_ERROR on a new one.
-        self._ksp.getPC().setFailedReason(PETSc.PC.FailedReason.NOERROR)
         self._last_solve = {
             "status": "running",
             "ksp_reason": None,
@@ -1000,12 +1065,16 @@ class _FixedH6ModalKrylovSystem:
             "final_residual_status": "not_evaluated",
             "local_constraint_lu_solve_attempts": 0,
             "local_constraint_lu_solve_successes": 0,
-            "owner_constraint_lu_solve_attempts": 0,
-            "owner_constraint_lu_solve_successes": 0,
+            "owner_constraint_lu_solve_attempts": None,
+            "owner_constraint_lu_solve_successes": None,
+            "owner_constraint_lu_solve_counts_authoritative": False,
             "constraint_lu_solve_count_scope": (
-                "owner_authoritative_replicated_report_after_KSP_return"
+                "not_yet_obtained_for_this_solve"
             ),
         }
+        # Match the existing BAL_H KSP lifecycle: clear the prior callback
+        # failure before each new solve, then latch SUBPC_ERROR on a new one.
+        self._ksp.getPC().setFailedReason(PETSc.PC.FailedReason.NOERROR)
 
     def _final_residual(self, rhs_norm: float) -> tuple[float | None, bool]:
         if self._budget_exhausted or self._total_matmult_calls >= self.total_matmult_limit:
@@ -1069,6 +1138,19 @@ class _FixedH6ModalKrylovSystem:
         initial_solution_norm = float(self._solution.norm())
         self._last_solve["initial_solution_norm"] = initial_solution_norm
         if rhs_norm == 0.0:
+            self._owner_constraint_lu_solve_attempts_this_solve = 0
+            self._owner_constraint_lu_solve_successes_this_solve = 0
+            self._owner_constraint_lu_solve_counts_authoritative = True
+            self._last_solve.update(
+                ksp_reason=None,
+                ksp_status="not_run_zero_rhs",
+                owner_constraint_lu_solve_attempts=0,
+                owner_constraint_lu_solve_successes=0,
+                owner_constraint_lu_solve_counts_authoritative=True,
+                constraint_lu_solve_count_scope=(
+                    "zero_rhs_no_ksp_no_owner_lu_calls"
+                ),
+            )
             relative, finite = self._final_residual(rhs_norm)
             passed = bool(finite and relative is None and not self._budget_exhausted)
             status = (
@@ -1096,8 +1178,9 @@ class _FixedH6ModalKrylovSystem:
                 local_constraint_lu_solve_successes=0,
                 owner_constraint_lu_solve_attempts=0,
                 owner_constraint_lu_solve_successes=0,
+                owner_constraint_lu_solve_counts_authoritative=True,
                 constraint_lu_solve_count_scope=(
-                    "owner_authoritative_replicated_report"
+                    "zero_rhs_no_ksp_no_owner_lu_calls"
                 ),
             )
             if not passed:
@@ -1170,6 +1253,7 @@ class _FixedH6ModalKrylovSystem:
                     if self._comm.rank == self._modal_owner
                     else None
                 ),
+                owner_constraint_lu_solve_counts_authoritative=False,
                 constraint_lu_solve_count_scope=(
                     "owner_value_unavailable_without_post_callback_collective"
                 ),
@@ -1199,6 +1283,13 @@ class _FixedH6ModalKrylovSystem:
                 root=self._modal_owner,
             )
         )
+        self._owner_constraint_lu_solve_attempts_this_solve = (
+            owner_lu_solve_attempts
+        )
+        self._owner_constraint_lu_solve_successes_this_solve = (
+            owner_lu_solve_successes
+        )
+        self._owner_constraint_lu_solve_counts_authoritative = True
         if self._pc_failure_error is not None:
             status = "budget_exhausted" if self._budget_exhausted else "pc_apply_failed"
             not_evaluated_reason = (
@@ -1229,6 +1320,7 @@ class _FixedH6ModalKrylovSystem:
                 local_constraint_lu_solve_successes=self._constraint_lu_solve_successes,
                 owner_constraint_lu_solve_attempts=owner_lu_solve_attempts,
                 owner_constraint_lu_solve_successes=owner_lu_solve_successes,
+                owner_constraint_lu_solve_counts_authoritative=True,
                 constraint_lu_solve_count_scope=(
                     "owner_authoritative_replicated_report"
                 ),
@@ -1262,6 +1354,7 @@ class _FixedH6ModalKrylovSystem:
             local_constraint_lu_solve_successes=self._constraint_lu_solve_successes,
             owner_constraint_lu_solve_attempts=owner_lu_solve_attempts,
             owner_constraint_lu_solve_successes=owner_lu_solve_successes,
+            owner_constraint_lu_solve_counts_authoritative=True,
             constraint_lu_solve_count_scope="owner_authoritative_replicated_report",
             budget_used_solver_matmult_calls=self._solver_matmult_calls,
             budget_used_total_matmult_calls=self._total_matmult_calls,
@@ -1290,6 +1383,9 @@ class _FixedH6ModalKrylovSystem:
                 "constraint_lu_solve_count_scope",
                 "rank_local_attempt/success counters; no owner aggregate recorded",
             )
+        )
+        owner_lu_cumulative_complete = bool(
+            self._cumulative_owner_constraint_lu_solve_counts_complete
         )
         return {
             "method": "fixed_h6_modal_gmres_research",
@@ -1322,6 +1418,27 @@ class _FixedH6ModalKrylovSystem:
             ),
             "cumulative_constraint_lu_solve_successes": (
                 self._cumulative_constraint_lu_solve_successes
+            ),
+            "cumulative_constraint_lu_solve_count_scope": (
+                "rank_local_cumulative; do_not_sum_across_ranks"
+            ),
+            "cumulative_owner_constraint_lu_solve_attempts": (
+                self._cumulative_owner_constraint_lu_solve_attempts
+                if owner_lu_cumulative_complete
+                else None
+            ),
+            "cumulative_owner_constraint_lu_solve_successes": (
+                self._cumulative_owner_constraint_lu_solve_successes
+                if owner_lu_cumulative_complete
+                else None
+            ),
+            "cumulative_owner_constraint_lu_solve_status": (
+                "complete"
+                if owner_lu_cumulative_complete
+                else "unknown_missing_per_solve_owner_broadcast"
+            ),
+            "cumulative_owner_constraint_lu_solve_count_scope": (
+                "owner_authoritative_per_solve_broadcasts; replicated; do_not_sum_across_ranks"
             ),
             "modal_schur_materialized": False,
             "modal_schur_column_count": 0,
@@ -3918,6 +4035,21 @@ class HybridBlockLduPreconditioner:
                 ),
                 "gmres_c_lu_solve_attempts": system_diagnostics.get(
                     "cumulative_constraint_lu_solve_attempts"
+                ),
+                "gmres_c_lu_solve_count_scope": system_diagnostics.get(
+                    "cumulative_constraint_lu_solve_count_scope"
+                ),
+                "gmres_c_lu_owner_solve_attempts": system_diagnostics.get(
+                    "cumulative_owner_constraint_lu_solve_attempts"
+                ),
+                "gmres_c_lu_owner_solve_successes": system_diagnostics.get(
+                    "cumulative_owner_constraint_lu_solve_successes"
+                ),
+                "gmres_c_lu_owner_solve_status": system_diagnostics.get(
+                    "cumulative_owner_constraint_lu_solve_status"
+                ),
+                "gmres_c_lu_owner_solve_count_scope": system_diagnostics.get(
+                    "cumulative_owner_constraint_lu_solve_count_scope"
                 ),
             }
         if self._research_inventory is not None:

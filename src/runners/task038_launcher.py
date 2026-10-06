@@ -3698,11 +3698,13 @@ def launch_specification(
     if not isinstance(fixed_h6_modal_gmres_research, bool):
         raise InputError("fixed_h6_modal_gmres_research must be a boolean")
     fixed_h6_binding = None
+    packet_source_binding = None
     model_id = str(specification.identity.get("model_id", ""))
     if fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
         try:
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
+                task041_fixed_h6_packet_source_binding,
             )
 
             registered_case = task041_balh_case(model_id)
@@ -3727,12 +3729,31 @@ def launch_specification(
             )
         except (TypeError, ValueError) as exc:
             raise InputError(str(exc)) from exc
+        try:
+            packet_source_binding = task041_fixed_h6_packet_source_binding(
+                fixed_h6_binding,
+                producer_packet_root=producer_packet_root,
+                legacy_native_packet_descriptor=legacy_native_packet_descriptor,
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise InputError(str(exc)) from exc
+        if legacy_native_packet_descriptor is not None:
+            from benchmarks.task041_legacy_native_packet import (
+                task041_legacy_native_profile,
+            )
+
+            if not task041_legacy_native_profile(specification):
+                raise InputError(
+                    "fixed-H6 legacy-native packets require the registered 5 nm profile"
+                )
     if fixed_h6_binding is not None and (
         not task041_public_route
         or expected_rank_cpus is None
         or model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS
-        or producer_packet_root is None
-        or legacy_native_packet_descriptor is not None
+        or (
+            producer_packet_root is None
+            and packet_source_binding is None
+        )
         or disable_time_stop
         or performance_profile is not None
         or task041_rhs_probe_manifest is not None
@@ -3981,6 +4002,27 @@ def launch_specification(
                 "--task041-supervision-record must be an absolute path"
             )
         supervision_record_path = supervision_record_path.resolve()
+    if packet_source_binding is not None:
+        if supervision_record_path is None:
+            raise InputError(
+                "fixed-H6 legacy-native packets require the service supervision record"
+            )
+        try:
+            supervision_payload = json.loads(
+                supervision_record_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError) as exc:
+            raise InputError(
+                "cannot read the fixed-H6 legacy packet supervision binding"
+            ) from exc
+        if (
+            not isinstance(supervision_payload, Mapping)
+            or supervision_payload.get("packet_source_binding")
+            != packet_source_binding
+        ):
+            raise InputError(
+                "service supervision record does not bind the selected legacy packet descriptor"
+            )
     if producer_packet_root is not None and (
         not task041_public_route
         or str(specification.identity.get("model_id", ""))
@@ -4067,6 +4109,9 @@ def launch_specification(
         manifest["post_start_document_allowlist"] = sorted(
             TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
         )
+        _write_json(run_directory / "run_manifest.json", manifest)
+    if packet_source_binding is not None:
+        manifest["packet_source_binding"] = packet_source_binding
         _write_json(run_directory / "run_manifest.json", manifest)
     if task041_side_setup_schedule is not None:
         manifest["side_setup_schedule"] = task041_side_setup_schedule

@@ -139,6 +139,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise InputError(str(exc)) from exc
         expected_rank_cpus = None
         fixed_h6_binding = None
+        packet_source_binding = None
         if args.task041_expected_rank_cpus is not None:
             from benchmarks.task041_balh_workflow import (
                 task041_parse_expected_rank_cpus,
@@ -153,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.task041_fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
             from benchmarks.task041_balh_workflow import (
                 task041_fixed_h6_modal_gmres_binding,
+                task041_fixed_h6_packet_source_binding,
             )
 
             try:
@@ -180,10 +182,31 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except (TypeError, ValueError) as exc:
                 raise InputError(str(exc)) from exc
+            try:
+                packet_source_binding = task041_fixed_h6_packet_source_binding(
+                    fixed_h6_binding,
+                    producer_packet_root=args.producer_packet_root,
+                    legacy_native_packet_descriptor=(
+                        args.legacy_native_packet_descriptor
+                    ),
+                )
+            except (OSError, TypeError, ValueError) as exc:
+                raise InputError(str(exc)) from exc
+            if args.legacy_native_packet_descriptor is not None:
+                from benchmarks.task041_legacy_native_packet import (
+                    task041_legacy_native_profile,
+                )
+
+                if not task041_legacy_native_profile(specification):
+                    raise InputError(
+                        "fixed-H6 legacy-native packets require the registered 5 nm profile"
+                    )
         if fixed_h6_binding is not None and (
             expected_rank_cpus is None
-            or args.producer_packet_root is None
-            or args.legacy_native_packet_descriptor is not None
+            or (
+                args.producer_packet_root is None
+                and packet_source_binding is None
+            )
             or args.task041_balh_candidate_disable_time_stop
             or args.task041_performance_profile is not None
             or args.task041_rhs_probe is not None

@@ -239,6 +239,7 @@ def _load_task041_supervision_record(
     scope: str,
     representative_rhs_probe: Mapping[str, Any] | None,
     expected_fixed_h6_binding: Mapping[str, Any] | None = None,
+    expected_packet_source_binding: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
 ) -> dict[str, Any]:
@@ -293,6 +294,16 @@ def _load_task041_supervision_record(
             classification="task041_identity_failure",
             stage="supervision_record",
         )
+    if expected_packet_source_binding is not None:
+        expected["packet_source_binding"] = dict(
+            expected_packet_source_binding
+        )
+    elif "packet_source_binding" in payload:
+        raise Task041SupervisorError(
+            "supervision record has an unexpected packet source binding",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
     if isinstance(payload.get("parent_pid"), bool) or not isinstance(
         payload.get("parent_pid"), int
     ):
@@ -339,6 +350,11 @@ def _load_task041_supervision_record(
             if expected_fixed_h6_binding is not None
             else None
         ),
+        "packet_source_binding": (
+            dict(expected_packet_source_binding)
+            if expected_packet_source_binding is not None
+            else None
+        ),
         "post_start_document_allowlist": expected_post_start_document_allowlist,
         "parent_pid": parent_pid,
         "invocation_id": expected["invocation_id"],
@@ -346,6 +362,54 @@ def _load_task041_supervision_record(
         "outer_owner": "service_finalizer",
         "ledger_owner": "service_finalizer",
     }
+
+
+def _validate_task041_fixed_h6_legacy_packet(
+    descriptor_path: str | Path,
+    specification: Any,
+    source_sha: str,
+    *,
+    expected_source_binding: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Use the original full validator, then bind its descriptor result."""
+
+    from benchmarks.task041_legacy_native_packet import (
+        validate_task041_legacy_native_packet,
+    )
+
+    packet = validate_task041_legacy_native_packet(
+        descriptor_path, specification, source_sha
+    )
+    from benchmarks.task041_legacy_native_packet import (
+        TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+    )
+
+    descriptor = packet.get("descriptor")
+    legacy_binding = packet.get("legacy_binding")
+    observed = (
+        {
+            "source_type": "legacy_native_packet_descriptor",
+            "descriptor_path": descriptor.get("path"),
+            "descriptor_sha256": descriptor.get("sha256"),
+        }
+        if isinstance(descriptor, Mapping)
+        else None
+    )
+    if (
+        observed != dict(expected_source_binding)
+        or packet.get("packet_origin") != TASK041_LEGACY_NATIVE_PACKET_ORIGIN
+        or Path(str(packet.get("legacy_native_binding", ""))).resolve()
+        != Path(str(expected_source_binding.get("descriptor_path", ""))).resolve()
+        or not isinstance(legacy_binding, Mapping)
+        or legacy_binding.get("origin") != TASK041_LEGACY_NATIVE_PACKET_ORIGIN
+        or legacy_binding.get("pass") is not True
+    ):
+        raise Task041SupervisorError(
+            "validated legacy packet binding does not match its frozen origin/path/SHA",
+            classification="task041_identity_failure",
+            stage="producer_reuse_contract",
+        )
+    return packet
 
 
 def _copy_file_bounded(source: Path, destination: Path) -> None:
@@ -9121,6 +9185,7 @@ def run_task041_public_supervisor(
     compute_wall_phase_used_seconds = 0.0
     compute_wall_enforced_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     supervision_binding: dict[str, Any] | None = None
+    packet_source_binding: dict[str, Any] | None = None
     expected_diagnostic_output = False
     expected_diagnostic_model_id: str | None = None
     resource_policy_binding: dict[str, Any] | None = None
@@ -9181,10 +9246,32 @@ def run_task041_public_supervisor(
                     stage="fixed_h6_research",
                 ) from exc
         if fixed_h6_binding is not None:
+            try:
+                from benchmarks.task041_balh_workflow import (
+                    task041_fixed_h6_packet_source_binding,
+                )
+
+                packet_source_binding = (
+                    task041_fixed_h6_packet_source_binding(
+                        fixed_h6_binding,
+                        producer_packet_root=producer_packet_root,
+                        legacy_native_packet_descriptor=(
+                            legacy_native_packet_descriptor
+                        ),
+                    )
+                )
+            except (OSError, TypeError, ValueError) as exc:
+                raise Task041SupervisorError(
+                    str(exc),
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                ) from exc
             if (
                 expected_rank_cpus is None
-                or producer_packet_root is None
-                or legacy_native_packet_descriptor is not None
+                or (
+                    producer_packet_root is None
+                    and packet_source_binding is None
+                )
                 or disable_time_stop
                 or performance_profile is not None
                 or task041_rhs_probe_manifest is not None
@@ -9200,10 +9287,38 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="fixed_h6_research",
                 )
+            if packet_source_binding is not None:
+                from benchmarks.task041_legacy_native_packet import (
+                    task041_legacy_native_profile,
+                )
+
+                if (
+                    not task041_legacy_native_profile(specification)
+                    or task041_supervision_record is None
+                ):
+                    raise Task041SupervisorError(
+                        "fixed-H6 legacy-native reuse requires the registered 5 nm service route",
+                        classification="task041_identity_failure",
+                        stage="fixed_h6_research",
+                    )
             run_manifest = _read_json(root / "run_manifest.json")
             if run_manifest.get("fixed_h6_modal_gmres_research") != fixed_h6_binding:
                 raise Task041SupervisorError(
                     "run manifest does not bind the fixed-H6 research scope and rank map",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
+            if packet_source_binding is not None:
+                if run_manifest.get("packet_source_binding") != packet_source_binding:
+                    raise Task041SupervisorError(
+                        "run manifest does not bind the selected legacy descriptor path/SHA",
+                        classification="task041_identity_failure",
+                        stage="fixed_h6_research",
+                    )
+                result["packet_source_binding"] = dict(packet_source_binding)
+            elif "packet_source_binding" in run_manifest:
+                raise Task041SupervisorError(
+                    "producer-root fixed-H6 run manifest has an unexpected legacy packet binding",
                     classification="task041_identity_failure",
                     stage="fixed_h6_research",
                 )
@@ -9632,6 +9747,7 @@ def run_task041_public_supervisor(
                     else None
                 ),
                 expected_fixed_h6_binding=fixed_h6_binding,
+                expected_packet_source_binding=packet_source_binding,
                 side_setup_schedule=supervision_contract.get(
                     "side_setup_schedule"
                 ),
@@ -10034,15 +10150,23 @@ def run_task041_public_supervisor(
             producer_root = Path(producer_packet_root).resolve()
         producer_command_module = _task041_builders()
         if legacy_native:
-            from benchmarks.task041_legacy_native_packet import (
-                validate_task041_legacy_native_packet,
-            )
+            if packet_source_binding is not None:
+                packet = _validate_task041_fixed_h6_legacy_packet(
+                    legacy_native_packet_descriptor,
+                    specification,
+                    source_sha,
+                    expected_source_binding=packet_source_binding,
+                )
+            else:
+                from benchmarks.task041_legacy_native_packet import (
+                    validate_task041_legacy_native_packet,
+                )
 
-            packet = validate_task041_legacy_native_packet(
-                legacy_native_packet_descriptor,
-                specification,
-                source_sha,
-            )
+                packet = validate_task041_legacy_native_packet(
+                    legacy_native_packet_descriptor,
+                    specification,
+                    source_sha,
+                )
             producer_root = Path(packet["producer_root"]).resolve()
             producer_command = None
         elif balh:

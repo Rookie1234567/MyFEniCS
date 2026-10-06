@@ -395,6 +395,10 @@ def _destroy_fixed_h6_modal_krylov_components(
 def test_fixed_h6_modal_gmres_matches_dense_solve_and_borrows_adapters() -> None:
     fixture, bundles, dense_operator = _fixed_h6_modal_krylov_components()
     system = None
+    owner_cumulative_attempts = 0
+    owner_cumulative_successes = 0
+    local_cumulative_attempts = 0
+    local_cumulative_successes = 0
     try:
         system = block_ldu._FixedH6ModalKrylovSystem(
             fixture["coupling"],
@@ -465,9 +469,49 @@ def test_fixed_h6_modal_gmres_matches_dense_solve_and_borrows_adapters() -> None
                 else 0
             )
             assert owner_attempts == owner_successes
+            owner_cumulative_attempts += owner_attempts
+            owner_cumulative_successes += owner_successes
+            local_cumulative_attempts += solve[
+                "local_constraint_lu_solve_attempts"
+            ]
+            local_cumulative_successes += solve[
+                "local_constraint_lu_solve_successes"
+            ]
             assert solve["constraint_lu_solve_count_scope"] == (
                 "owner_authoritative_replicated_report"
             )
+            assert solve["owner_constraint_lu_solve_counts_authoritative"] is True
+            assert solve["cumulative_owner_constraint_lu_solve_attempts"] == (
+                owner_cumulative_attempts
+            )
+            assert solve["cumulative_owner_constraint_lu_solve_successes"] == (
+                owner_cumulative_successes
+            )
+            assert solve["cumulative_owner_constraint_lu_solve_status"] == "complete"
+            cumulative = system.diagnostics
+            assert cumulative["cumulative_constraint_lu_solve_attempts"] == (
+                local_cumulative_attempts
+            )
+            assert cumulative["cumulative_constraint_lu_solve_successes"] == (
+                local_cumulative_successes
+            )
+            assert cumulative["cumulative_constraint_lu_solve_count_scope"] == (
+                "rank_local_cumulative; do_not_sum_across_ranks"
+            )
+            rank_counts = MPI.COMM_WORLD.allgather(
+                (
+                    cumulative["cumulative_constraint_lu_solve_attempts"],
+                    cumulative["cumulative_owner_constraint_lu_solve_attempts"],
+                    cumulative["cumulative_owner_constraint_lu_solve_successes"],
+                )
+            )
+            assert all(
+                (record[1], record[2])
+                == (owner_cumulative_attempts, owner_cumulative_successes)
+                for record in rank_counts
+            )
+            if MPI.COMM_WORLD.rank != MPI.COMM_WORLD.size - 1:
+                assert cumulative["cumulative_constraint_lu_solve_attempts"] == 0
             assert [
                 bundle["adapter"].audit["apply_count"] - before
                 for bundle, before in zip(bundles, side_applies_before, strict=True)
@@ -491,12 +535,48 @@ def test_fixed_h6_modal_gmres_matches_dense_solve_and_borrows_adapters() -> None
         assert zero_solve["total_matmult_calls"] == 1
         assert zero_solve["owner_constraint_lu_solve_attempts"] == 0
         assert zero_solve["owner_constraint_lu_solve_successes"] == 0
+        assert zero_solve["owner_constraint_lu_solve_counts_authoritative"] is True
+        assert zero_solve["owner_constraint_lu_solve_counts_scope"] == (
+            "zero_rhs_no_ksp_no_owner_lu_calls"
+        )
+        assert zero_solve["cumulative_owner_constraint_lu_solve_attempts"] == (
+            owner_cumulative_attempts
+        )
+        assert zero_solve["cumulative_owner_constraint_lu_solve_successes"] == (
+            owner_cumulative_successes
+        )
+        assert zero_solve["cumulative_owner_constraint_lu_solve_status"] == "complete"
+        after_zero = system.diagnostics
+        assert after_zero["cumulative_constraint_lu_solve_attempts"] == (
+            local_cumulative_attempts
+        )
+        assert after_zero["cumulative_constraint_lu_solve_successes"] == (
+            local_cumulative_successes
+        )
+        replicated_owner_totals = MPI.COMM_WORLD.allgather(
+            (
+                after_zero["cumulative_owner_constraint_lu_solve_attempts"],
+                after_zero["cumulative_owner_constraint_lu_solve_successes"],
+            )
+        )
+        assert len(set(replicated_owner_totals)) == 1
         assert [
             bundle["adapter"].audit["apply_count"] - before
             for bundle, before in zip(bundles, zero_applies_before, strict=True)
         ] == [1, 1]
 
         system.destroy()
+        destroyed_diagnostics = system.diagnostics
+        assert destroyed_diagnostics["destroyed"] is True
+        assert destroyed_diagnostics[
+            "cumulative_owner_constraint_lu_solve_attempts"
+        ] == owner_cumulative_attempts
+        assert destroyed_diagnostics[
+            "cumulative_owner_constraint_lu_solve_successes"
+        ] == owner_cumulative_successes
+        assert destroyed_diagnostics[
+            "cumulative_constraint_lu_solve_attempts"
+        ] == local_cumulative_attempts
         system = None
         for bundle in bundles:
             adapter = bundle["adapter"]
@@ -542,6 +622,91 @@ def test_fixed_h6_modal_gmres_synchronizes_preflight_pc_and_budget_failures() ->
             bundles[1]["adapter"],
             modal_owner=owner,
         )
+        rhs = np.asarray(
+            [0.31 + 0.27j, -0.18 + 0.42j, 0.53 - 0.36j, -0.24 - 0.11j],
+            dtype=np.complex128,
+        )
+        system.solve(rhs)
+        successful = system.diagnostics
+        successful_owner_attempts = successful[
+            "cumulative_owner_constraint_lu_solve_attempts"
+        ]
+        successful_owner_successes = successful[
+            "cumulative_owner_constraint_lu_solve_successes"
+        ]
+        assert successful_owner_attempts > 0
+        assert successful_owner_successes == successful_owner_attempts
+
+        real_ksp = system._ksp
+
+        class RaiseAfterKspReturn:
+            def __init__(self, ksp):
+                self._ksp = ksp
+
+            def __getattr__(self, name):
+                return getattr(self._ksp, name)
+
+            def solve(self, *args):
+                self._ksp.solve(*args)
+                raise RuntimeError("injected after KSP return before owner-count broadcast")
+
+        system._ksp = RaiseAfterKspReturn(real_ksp)
+        try:
+            with pytest.raises(
+                RuntimeError,
+                match="injected after KSP return before owner-count broadcast",
+            ):
+                system.solve(rhs)
+        finally:
+            system._ksp = real_ksp
+        missing_broadcast = system.diagnostics
+        incomplete_solve = missing_broadcast["last_solve"]
+        assert incomplete_solve["owner_constraint_lu_solve_counts_authoritative"] is False
+        assert incomplete_solve["constraint_lu_solve_count_scope"] == (
+            "owner_value_unavailable_without_post_callback_collective"
+        )
+        assert missing_broadcast[
+            "cumulative_owner_constraint_lu_solve_attempts"
+        ] is None
+        assert missing_broadcast[
+            "cumulative_owner_constraint_lu_solve_successes"
+        ] is None
+        assert missing_broadcast[
+            "cumulative_owner_constraint_lu_solve_status"
+        ] == "unknown_missing_per_solve_owner_broadcast"
+        if MPI.COMM_WORLD.rank != owner:
+            assert incomplete_solve["owner_constraint_lu_solve_attempts"] is None
+            assert incomplete_solve["owner_constraint_lu_solve_successes"] is None
+        missing_states = MPI.COMM_WORLD.allgather(
+            (
+                missing_broadcast[
+                    "cumulative_owner_constraint_lu_solve_attempts"
+                ],
+                missing_broadcast[
+                    "cumulative_owner_constraint_lu_solve_successes"
+                ],
+                missing_broadcast[
+                    "cumulative_owner_constraint_lu_solve_status"
+                ],
+            )
+        )
+        assert len(set(missing_states)) == 1
+
+        system.solve(rhs)
+        after_later_success = system.diagnostics
+        assert after_later_success["last_solve"][
+            "owner_constraint_lu_solve_counts_authoritative"
+        ] is True
+        assert after_later_success[
+            "cumulative_owner_constraint_lu_solve_attempts"
+        ] is None
+        assert after_later_success[
+            "cumulative_owner_constraint_lu_solve_successes"
+        ] is None
+        assert after_later_success[
+            "cumulative_owner_constraint_lu_solve_status"
+        ] == "unknown_missing_per_solve_owner_broadcast"
+
         system._reset_attempt()
         wrong_local_size = system.modal_count - 1 if MPI.COMM_WORLD.rank == owner else 0
         wrong_global_size = system.modal_count - 1
@@ -615,10 +780,6 @@ def test_fixed_h6_modal_gmres_synchronizes_preflight_pc_and_budget_failures() ->
         saved_lu = system._constraint_lu
         if MPI.COMM_WORLD.rank == owner:
             system._constraint_lu = None
-        rhs = np.asarray(
-            [0.31 + 0.27j, -0.18 + 0.42j, 0.53 - 0.36j, -0.24 - 0.11j],
-            dtype=np.complex128,
-        )
         try:
             with pytest.raises(RuntimeError):
                 system.solve(rhs)
@@ -652,6 +813,14 @@ def test_fixed_h6_modal_gmres_synchronizes_preflight_pc_and_budget_failures() ->
             1 if MPI.COMM_WORLD.rank == owner else 0
         )
         assert solve["local_constraint_lu_solve_successes"] == 0
+        assert solve["cumulative_constraint_lu_solve_count_scope"] == (
+            "rank_local_cumulative; do_not_sum_across_ranks"
+        )
+        assert snapshot["cumulative_owner_constraint_lu_solve_attempts"] is None
+        assert snapshot["cumulative_owner_constraint_lu_solve_successes"] is None
+        assert snapshot["cumulative_owner_constraint_lu_solve_status"] == (
+            "unknown_missing_per_solve_owner_broadcast"
+        )
         if solve["constraint_lu_solve_count_scope"] == (
             "owner_authoritative_replicated_report"
         ):

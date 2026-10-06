@@ -36,6 +36,7 @@ from benchmarks.task041_balh_workflow import (
     task041_schur_speed_v2_contract,
 )
 from src.io.input_validation import (
+    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_MPI_SIZE,
     task041_balh_case,
     task041_balh_phase_limits_for_model,
@@ -146,16 +147,78 @@ def _fixed_h6_service_binding(
         "--task041-p4-response-correction-steps",
         "--task041-p4-backend-pair-side",
         "--task041-balh-candidate-disable-time-stop",
-        "--legacy-native-packet-descriptor",
     )
+    producer_positions = [
+        i for i, value in enumerate(command) if value == "--producer-packet-root"
+    ]
+    legacy_positions = [
+        i
+        for i, value in enumerate(command)
+        if value == "--legacy-native-packet-descriptor"
+    ]
     if (
         any(flag in command for flag in incompatible_flags)
-        or command.count("--producer-packet-root") != 1
+        or (len(producer_positions), len(legacy_positions)) not in {(1, 0), (0, 1)}
     ):
         raise Task041ServiceError(
-            "fixed-H6 service is limited to a reused registered candidate packet without other diagnostics"
+            "fixed-H6 service requires exactly one registered packet source without other diagnostics"
+        )
+    if legacy_positions and str(config.get("model_id")) != (
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    ):
+        raise Task041ServiceError(
+            "fixed-H6 legacy-native packet reuse is limited to the registered 5 nm case"
         )
     return binding
+
+
+def _fixed_h6_packet_source_binding(
+    config: Mapping[str, Any],
+    *,
+    command: list[str],
+    fixed_h6_binding: Mapping[str, Any] | None,
+) -> dict[str, str] | None:
+    configured = config.get("packet_source_binding")
+    if fixed_h6_binding is None:
+        if "packet_source_binding" in config:
+            raise Task041ServiceError(
+                "packet_source_binding requires the fixed-H6 service route"
+            )
+        return None
+
+    def option_value(flag: str) -> str | None:
+        positions = [i for i, value in enumerate(command) if value == flag]
+        if not positions:
+            return None
+        if len(positions) != 1 or positions[0] + 1 >= len(command):
+            raise Task041ServiceError(f"fixed-H6 command has an invalid {flag}")
+        return command[positions[0] + 1]
+
+    from benchmarks.task041_balh_workflow import (
+        task041_fixed_h6_packet_source_binding,
+    )
+
+    try:
+        actual = task041_fixed_h6_packet_source_binding(
+            fixed_h6_binding,
+            producer_packet_root=option_value("--producer-packet-root"),
+            legacy_native_packet_descriptor=option_value(
+                "--legacy-native-packet-descriptor"
+            ),
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise Task041ServiceError(str(exc)) from exc
+    if actual is None:
+        if "packet_source_binding" in config:
+            raise Task041ServiceError(
+                "producer-root fixed-H6 service must not declare a legacy packet source binding"
+            )
+        return None
+    if not isinstance(configured, Mapping) or dict(configured) != actual:
+        raise Task041ServiceError(
+            "fixed-H6 service packet source path/SHA does not match its public command"
+        )
+    return actual
 
 
 def _service_contract(
@@ -189,6 +252,11 @@ def _service_contract(
         command=command,
         p4_refinement_target_tolerance=p4_refinement_target_tolerance,
         task041_resource_policy=task041_resource_policy,
+    )
+    packet_source_binding = _fixed_h6_packet_source_binding(
+        config,
+        command=command,
+        fixed_h6_binding=fixed_h6_binding,
     )
     if resource_policy_binding is not None and (
         case_contract is None
@@ -290,6 +358,8 @@ def _service_contract(
             resolved_contract["post_start_document_allowlist"] = sorted(
                 supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
             )
+        if packet_source_binding is not None:
+            resolved_contract["packet_source_binding"] = packet_source_binding
         return resolved_contract
     contract = task041_schur_speed_v2_contract(
         model_id,
@@ -873,6 +943,11 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
             else {}
         ),
         **(
+            {"packet_source_binding": dict(contract["packet_source_binding"])}
+            if isinstance(contract.get("packet_source_binding"), Mapping)
+            else {}
+        ),
+        **(
             {
                 "post_start_document_allowlist": list(
                     contract["post_start_document_allowlist"]
@@ -1293,6 +1368,13 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         ):
             raise Task041ServiceError(
                 "default service launch must not declare fixed-H6 identity"
+            )
+        packet_source_binding = contract.get("packet_source_binding")
+        if isinstance(packet_source_binding, Mapping):
+            expected["packet_source_binding"] = dict(packet_source_binding)
+        elif "packet_source_binding" in launch:
+            raise Task041ServiceError(
+                "service launch declares an unexpected packet source binding"
             )
         if contract.get("compute_wall_unlimited") is True:
             expected["contract_kind"] = contract["contract_kind"]

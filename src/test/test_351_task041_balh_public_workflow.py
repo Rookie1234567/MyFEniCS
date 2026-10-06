@@ -58,6 +58,7 @@ from benchmarks.task041_exact_side_workflow import (
     _task041_top_causal_pc_indices,
     _task041_worker_time_stop_enforced,
     _Task041TopCausalPacketCapture,
+    run_task041_consumer,
 )
 from benchmarks.task041_rank_numa import (
     append_stage_jsonl,
@@ -1006,29 +1007,51 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
 
 
 @pytest.mark.parametrize(
-    ("input_name", "model_id", "p4_target"),
+    ("input_name", "model_id", "p4_target", "packet_source"),
     (
         (
             "13p5nm_p6h10_m120_mpi8_cell_condensed.dat",
             TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
             None,
+            "producer_root",
         ),
         (
             "5nm_p6h4_m480_mpi8_cell_condensed.dat",
             TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
             5.0e-13,
+            "legacy_descriptor",
+        ),
+        (
+            "5nm_p6h4_m480_mpi8_cell_condensed.dat",
+            TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+            5.0e-13,
+            "producer_root",
         ),
         (
             "2nm_p6h1p5_m1200_mpi8_cell_condensed.dat",
             TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
             5.0e-13,
+            "producer_root",
         ),
     ),
-    ids=("13p5nm-no-p4-target", "5nm-target", "2nm-target"),
+    ids=(
+        "13p5nm-new-profile",
+        "5nm-legacy-native",
+        "5nm-new-profile",
+        "2nm-new-profile",
+    ),
 )
 def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
-    input_name, model_id, p4_target, tmp_path: Path, monkeypatch
+    input_name, model_id, p4_target, packet_source, tmp_path: Path, monkeypatch
 ):
+    from benchmarks.task041_balh_workflow import (
+        task041_fixed_h6_modal_gmres_binding,
+        task041_fixed_h6_packet_source_binding,
+    )
+    from benchmarks.task041_legacy_native_packet import (
+        TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+    )
+
     input_path = REPOSITORY_ROOT / "input/official/task041/side_balh" / input_name
     specification = _specification(input_path)
     assert specification.identity["model_id"] == model_id
@@ -1039,17 +1062,41 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     rank_cpus = (12, 10, 17, 11, 16, 13, 15, 14)
     cpu_argument = ",".join(str(cpu) for cpu in rank_cpus)
     resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    descriptor = None
+    source_binding = None
+    if packet_source == "legacy_descriptor":
+        descriptor = tmp_path / "legacy_packet_descriptor.json"
+        descriptor.write_text('{"fixture": "descriptor bytes only"}\n')
+    fixed_binding = task041_fixed_h6_modal_gmres_binding(
+        model_id,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=int(specification.method["requested_modes_per_direction"]),
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=p4_target,
+        task041_resource_policy=resource_policy,
+        expected_rank_cpus=rank_cpus,
+    )
+    if descriptor is not None:
+        source_binding = task041_fixed_h6_packet_source_binding(
+            fixed_binding,
+            producer_packet_root=None,
+            legacy_native_packet_descriptor=descriptor,
+        )
     real_launch_specification = launcher.launch_specification
     public_args = [
         str(input_path),
-        "--producer-packet-root",
-        str(tmp_path / "producer"),
         "--task041-resource-policy",
         resource_policy,
         "--task041-fixed-h6-modal-gmres-research",
         "--task041-expected-rank-cpus",
         cpu_argument,
     ]
+    if descriptor is None:
+        public_args.extend(["--producer-packet-root", str(tmp_path / "producer")])
+    else:
+        public_args.extend(["--legacy-native-packet-descriptor", str(descriptor)])
     if p4_target is not None:
         public_args.extend(
             ["--task041-p4-refinement-target-tolerance", "5e-13"]
@@ -1071,6 +1118,12 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert captured["expected_rank_cpus"] == rank_cpus
     assert captured["task041_resource_policy"] == resource_policy
     assert captured["task041_p4_refinement_target_tolerance"] == p4_target
+    if descriptor is None:
+        assert captured["producer_packet_root"] == tmp_path / "producer"
+        assert captured["legacy_native_packet_descriptor"] is None
+    else:
+        assert captured["producer_packet_root"] is None
+        assert captured["legacy_native_packet_descriptor"] == descriptor
 
     launcher_root = tmp_path / f"launcher_{model_id}"
     launcher_root.mkdir()
@@ -1091,15 +1144,24 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     monkeypatch.setattr(
         launcher, "_timestamp_directory", lambda *_args: launcher_root
     )
-    launched = launcher.launch_specification(
-        specification,
-        source_sha="f" * 40,
-        producer_packet_root=tmp_path / "producer",
-        task041_resource_policy=resource_policy,
-        task041_p4_refinement_target_tolerance=p4_target,
-        fixed_h6_modal_gmres_research=True,
-        expected_rank_cpus=rank_cpus,
-    )
+    launcher_kwargs = {
+        "source_sha": "f" * 40,
+        "task041_resource_policy": resource_policy,
+        "task041_p4_refinement_target_tolerance": p4_target,
+        "fixed_h6_modal_gmres_research": True,
+        "expected_rank_cpus": rank_cpus,
+    }
+    if descriptor is None:
+        launcher_kwargs["producer_packet_root"] = tmp_path / "producer"
+    else:
+        supervision_record = tmp_path / "service_launch_manifest.json"
+        supervision_record.write_text(
+            json.dumps({"packet_source_binding": source_binding}, sort_keys=True)
+            + "\n"
+        )
+        launcher_kwargs["legacy_native_packet_descriptor"] = descriptor
+        launcher_kwargs["task041_supervision_record"] = supervision_record.resolve()
+    launched = launcher.launch_specification(specification, **launcher_kwargs)
     assert launched["result_classification"] == "worker_exit0"
     assert launcher_supervisor_call["fixed_h6_modal_gmres_research"] is True
     assert launcher_supervisor_call["expected_rank_cpus"] == rank_cpus
@@ -1115,6 +1177,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert launch_manifest["post_start_document_allowlist"] == sorted(
         supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
     )
+    if source_binding is None:
+        assert "packet_source_binding" not in launch_manifest
+    else:
+        assert launch_manifest["packet_source_binding"] == source_binding
 
     worker_command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
@@ -1129,6 +1195,14 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         task041_resource_policy=resource_policy,
         fixed_h6_modal_gmres_research=True,
         expected_rank_cpus=rank_cpus,
+        **(
+            {
+                "packet_origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+                "legacy_native_binding": descriptor,
+            }
+            if descriptor is not None
+            else {}
+        ),
     )
     assert worker_command[:8] == [
         "mpiexec",
@@ -1147,6 +1221,12 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert parsed_worker.task041_fixed_h6_modal_gmres_research is True
     assert parsed_worker.task041_expected_rank_cpus == cpu_argument
     assert parsed_worker.task041_p4_refinement_target_tolerance == p4_target
+    if descriptor is None:
+        assert "--packet-origin" not in worker_command
+        assert "--legacy-native-binding" not in worker_command
+    else:
+        assert parsed_worker.packet_origin == TASK041_LEGACY_NATIVE_PACKET_ORIGIN
+        assert Path(parsed_worker.legacy_native_binding) == descriptor
 
     default_worker_command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
@@ -1188,14 +1268,20 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         "fixed_h6_modal_gmres_research": True,
         "expected_rank_cpus": list(rank_cpus),
     }
-    service_contract = service._service_contract(
-        service_config,
-        side_setup_schedule=None,
-        comparison_mode=None,
-        p4_refinement_target_tolerance=p4_target,
-        p4_backend_pair_side=None,
-        task041_resource_policy=resource_policy,
-    )
+    if source_binding is not None:
+        service_config["packet_source_binding"] = source_binding
+
+    def resolve_service_contract(config=service_config, target=p4_target):
+        return service._service_contract(
+            config,
+            side_setup_schedule=None,
+            comparison_mode=None,
+            p4_refinement_target_tolerance=target,
+            p4_backend_pair_side=None,
+            task041_resource_policy=resource_policy,
+        )
+
+    service_contract = resolve_service_contract()
     fixed_binding = service_contract["fixed_h6_modal_gmres_research"]
     assert fixed_binding["method"] == "fixed_h6_modal_gmres_research"
     assert fixed_binding["expected_rank_cpus"] == list(rank_cpus)
@@ -1203,6 +1289,10 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert service_contract["post_start_document_allowlist"] == sorted(
         supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
     )
+    if source_binding is None:
+        assert "packet_source_binding" not in service_contract
+    else:
+        assert service_contract["packet_source_binding"] == source_binding
 
     mismatched_service_config = dict(service_config)
     mismatched_service_config["expected_rank_cpus"] = list(range(8))
@@ -1214,6 +1304,234 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             p4_refinement_target_tolerance=p4_target,
             p4_backend_pair_side=None,
             task041_resource_policy=resource_policy,
+        )
+
+    if source_binding is not None:
+        wrong_hash = copy.deepcopy(service_config)
+        wrong_hash["packet_source_binding"]["descriptor_sha256"] = "0" * 64
+        with pytest.raises(service.Task041ServiceError, match="path/SHA"):
+            resolve_service_contract(wrong_hash)
+
+        wrong_path = copy.deepcopy(service_config)
+        other_descriptor = tmp_path / "other_legacy_descriptor.json"
+        other_descriptor.write_text('{"fixture": "other descriptor"}\n')
+        descriptor_flag = wrong_path["public_command"].index(
+            "--legacy-native-packet-descriptor"
+        )
+        wrong_path["public_command"][descriptor_flag + 1] = str(other_descriptor)
+        with pytest.raises(service.Task041ServiceError, match="path/SHA"):
+            resolve_service_contract(wrong_path)
+
+        missing_source = copy.deepcopy(service_config)
+        missing_source.pop("packet_source_binding")
+        with pytest.raises(service.Task041ServiceError, match="path/SHA"):
+            resolve_service_contract(missing_source)
+
+        no_packet_source = copy.deepcopy(service_config)
+        descriptor_flag = no_packet_source["public_command"].index(
+            "--legacy-native-packet-descriptor"
+        )
+        del no_packet_source["public_command"][descriptor_flag : descriptor_flag + 2]
+        with pytest.raises(service.Task041ServiceError, match="exactly one"):
+            resolve_service_contract(no_packet_source)
+
+        both_packet_sources = copy.deepcopy(service_config)
+        both_packet_sources["public_command"].extend(
+            ["--producer-packet-root", str(tmp_path / "producer")]
+        )
+        with pytest.raises(service.Task041ServiceError, match="exactly one"):
+            resolve_service_contract(both_packet_sources)
+
+        wrong_model = copy.deepcopy(service_config)
+        wrong_model["model_id"] = TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+        with pytest.raises(service.Task041ServiceError, match="5 nm"):
+            resolve_service_contract(wrong_model, target=None)
+
+        with pytest.raises(service.Task041ServiceError, match="5e-13"):
+            resolve_service_contract(service_config, target=None)
+
+
+def test_task041_fixed_h6_supervision_and_validator_bind_legacy_descriptor(
+    tmp_path: Path, monkeypatch
+):
+    from benchmarks import task041_legacy_native_packet
+    from benchmarks.task041_balh_workflow import (
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        task041_fixed_h6_modal_gmres_binding,
+        task041_fixed_h6_packet_source_binding,
+    )
+    from benchmarks.task041_legacy_native_packet import (
+        TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+    )
+
+    input_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
+    )
+    specification = _specification(input_path)
+    model_id = str(specification.identity["model_id"])
+    descriptor_path = tmp_path / "legacy_descriptor.json"
+    descriptor_path.write_text('{"descriptor": true}\n')
+    rank_cpus = (10, 11, 12, 13, 14, 15, 16, 17)
+    fixed_binding = task041_fixed_h6_modal_gmres_binding(
+        model_id,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=480,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        expected_rank_cpus=rank_cpus,
+    )
+    source_binding = task041_fixed_h6_packet_source_binding(
+        fixed_binding,
+        producer_packet_root=None,
+        legacy_native_packet_descriptor=descriptor_path,
+    )
+    assert source_binding is not None
+    registered = task041_balh_service_contract(model_id)
+    invocation_id = "fixed-h6-w5-legacy-source-test"
+    ledger_path = (tmp_path / "ledger.json").resolve()
+    monkeypatch.setenv("INVOCATION_ID", invocation_id)
+    payload = {
+        "profile_id": registered["profile_id"],
+        "model_id": model_id,
+        "source_sha": "d" * 40,
+        "scope": registered["scope"],
+        "ledger_owner": "service_finalizer",
+        "parent_pid": os.getppid(),
+        "invocation_id": invocation_id,
+        "representative_rhs_probe": None,
+        "ledger_path": str(ledger_path),
+        "fixed_h6_modal_gmres_research": fixed_binding,
+        "packet_source_binding": source_binding,
+        "post_start_document_allowlist": sorted(
+            supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+        ),
+    }
+    record_path = tmp_path / "service_launch_manifest.json"
+    record_path.write_text(json.dumps(payload, sort_keys=True) + "\n")
+    loaded = supervisor._load_task041_supervision_record(
+        record_path,
+        profile_id=payload["profile_id"],
+        model_id=model_id,
+        source_sha=payload["source_sha"],
+        scope=payload["scope"],
+        representative_rhs_probe=None,
+        expected_fixed_h6_binding=fixed_binding,
+        expected_packet_source_binding=source_binding,
+    )
+    assert loaded["packet_source_binding"] == source_binding
+
+    for field, value in (
+        ("descriptor_path", str(tmp_path / "other.json")),
+        ("descriptor_sha256", "0" * 64),
+    ):
+        bad_record = copy.deepcopy(payload)
+        bad_record["packet_source_binding"][field] = value
+        record_path.write_text(json.dumps(bad_record, sort_keys=True) + "\n")
+        with pytest.raises(supervisor.Task041SupervisorError, match="packet_source_binding"):
+            supervisor._load_task041_supervision_record(
+                record_path,
+                profile_id=payload["profile_id"],
+                model_id=model_id,
+                source_sha=payload["source_sha"],
+                scope=payload["scope"],
+                representative_rhs_probe=None,
+                expected_fixed_h6_binding=fixed_binding,
+                expected_packet_source_binding=source_binding,
+            )
+
+    calls: list[tuple[Path, object, str]] = []
+    validated_packet = {
+        "descriptor": {
+            "path": source_binding["descriptor_path"],
+            "sha256": source_binding["descriptor_sha256"],
+            "bytes": descriptor_path.stat().st_size,
+        },
+        "packet_origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+        "legacy_native_binding": source_binding["descriptor_path"],
+        "legacy_binding": {
+            "origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+            "pass": True,
+        },
+        "producer_resource_qualified": False,
+    }
+
+    def fake_full_validator(path, observed_specification, source_sha):
+        calls.append((Path(path).resolve(), observed_specification, source_sha))
+        return copy.deepcopy(validated_packet)
+
+    monkeypatch.setattr(
+        task041_legacy_native_packet,
+        "validate_task041_legacy_native_packet",
+        fake_full_validator,
+    )
+    returned = supervisor._validate_task041_fixed_h6_legacy_packet(
+        descriptor_path,
+        specification,
+        payload["source_sha"],
+        expected_source_binding=source_binding,
+    )
+    assert calls == [(descriptor_path.resolve(), specification, payload["source_sha"])]
+    assert returned["legacy_binding"] == validated_packet["legacy_binding"]
+    assert returned["producer_resource_qualified"] is False
+
+    wrong_validator_packet = copy.deepcopy(validated_packet)
+    wrong_validator_packet["descriptor"]["path"] = "mismatch"
+    monkeypatch.setattr(
+        task041_legacy_native_packet,
+        "validate_task041_legacy_native_packet",
+        lambda *_args: wrong_validator_packet,
+    )
+    with pytest.raises(supervisor.Task041SupervisorError, match="path/SHA"):
+        supervisor._validate_task041_fixed_h6_legacy_packet(
+            descriptor_path,
+            specification,
+            payload["source_sha"],
+            expected_source_binding=source_binding,
+        )
+
+    with pytest.raises(Task041ModePrepError, match="supplied together"):
+        run_task041_consumer(
+            input_path=input_path,
+            packet_manifest=tmp_path / "manifest.json",
+            packet_identity=tmp_path / "identity.json",
+            packet_manifest_sha256="a" * 64,
+            run_directory=tmp_path / "worker",
+            source_sha="b" * 40,
+            packet_origin=TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+        )
+    with pytest.raises(Task041ModePrepError, match="unsupported Task041 packet origin"):
+        run_task041_consumer(
+            input_path=input_path,
+            packet_manifest=tmp_path / "manifest.json",
+            packet_identity=tmp_path / "identity.json",
+            packet_manifest_sha256="a" * 64,
+            run_directory=tmp_path / "worker",
+            source_sha="b" * 40,
+            packet_origin="legacy",
+            legacy_native_binding=descriptor_path,
+        )
+    with pytest.raises(Task041ModePrepError, match="registered 5 nm"):
+        run_task041_consumer(
+            input_path=(
+                REPOSITORY_ROOT
+                / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_cell_condensed.dat"
+            ),
+            packet_manifest=tmp_path / "manifest.json",
+            packet_identity=tmp_path / "identity.json",
+            packet_manifest_sha256="a" * 64,
+            run_directory=tmp_path / "worker",
+            source_sha="b" * 40,
+            packet_origin=TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+            legacy_native_binding=descriptor_path,
+            candidate=True,
+            comm=SimpleNamespace(size=8, rank=0),
+            task041_resource_policy=TASK041_V8_SWAP_OBSERVE_CONTINUE,
+            fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=rank_cpus,
         )
 
 
@@ -2405,6 +2723,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
 ):
     from benchmarks import run_task037b_hybrid_iterative as recovery
     from benchmarks import task041_exact_side_workflow as worker
+    from benchmarks import task041_legacy_native_packet as legacy_packet
     from benchmarks import task041_rank_numa
     from src.solvers import hybrid_fem_modal_augmented_direct as layout_module
     from src.solvers.physical_balanced_fused_volume import (
@@ -2777,6 +3096,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["use_anderson_modal_inner"] is True
     assert captured["complex_qr_research"] is True
     assert captured["capture_modal_solve_trace"] is False
+
     assert captured["p4_inverse_backend"] == "cell_condensed"
     assert captured["p4_refinement_target_tolerance"] is None
     assert captured["p4_response_correction_steps"] == 0
@@ -3250,6 +3570,174 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         ((0, None), {"refinement_target_tolerance": 5.0e-13})
     ]
     assert run_target_configuration(None) == []
+
+
+    legacy_origin = legacy_packet.TASK041_LEGACY_NATIVE_PACKET_ORIGIN
+    legacy_descriptor = tmp_path / "worker_5nm_legacy_descriptor.json"
+    legacy_descriptor.write_text('{"fixture": "descriptor bytes only"}\n')
+    legacy_rank_cpus = tuple(range(10, 18))
+    legacy_identity = json.loads(
+        formal_cell_condensed_identity_path.read_text(encoding="utf-8")
+    )
+    legacy_binder_calls = []
+
+    def real_shape_binder(identity, observed_specification, observed_source_sha, path):
+        descriptor_path = Path(path).resolve()
+        legacy_binder_calls.append(
+            (
+                dict(identity),
+                observed_specification.identity["model_id"],
+                observed_source_sha,
+                descriptor_path,
+            )
+        )
+        external_keys = identity["external_keys"]
+        return {
+            "schema": "task041.side_balh.legacy_native_binding.v1",
+            "origin": legacy_origin,
+            "pass": True,
+            "producer_identity": dict(identity),
+            "consumer_identity": dict(identity),
+            "physical_equivalence": {"pass": True},
+            "external_keys": {
+                "producer": external_keys,
+                "consumer": external_keys,
+                "pass": True,
+            },
+            "descriptor": {
+                "path": str(descriptor_path),
+                "sha256": hashlib.sha256(descriptor_path.read_bytes()).hexdigest(),
+                "bytes": descriptor_path.stat().st_size,
+            },
+        }
+
+    monkeypatch.setattr(
+        legacy_packet,
+        "bind_task041_legacy_native_consumer",
+        real_shape_binder,
+    )
+    qualified_rank_maps.clear()
+    captured.clear()
+    resource_policy_marker_limits_seen.clear()
+    monkeypatch.setattr(
+        worker,
+        "_task041_rank_numa_observed_backend",
+        lambda **_kwargs: "cell_condensed",
+    )
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_5nm_fixed_h6_legacy_success",
+            source_sha=source_sha,
+            candidate=True,
+            comm=RankNumaComm(legacy_rank_cpus),
+            packet_origin=legacy_origin,
+            legacy_native_binding=legacy_descriptor,
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=legacy_rank_cpus,
+        )
+    assert legacy_binder_calls == [
+        (
+            legacy_identity,
+            TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+            source_sha,
+            legacy_descriptor.resolve(),
+        )
+    ]
+    assert captured["fixed_h6_modal_gmres_research"] is True
+    assert captured["expected_rank_cpus"] == legacy_rank_cpus
+    assert captured["p4_refinement_target_tolerance"] == 5.0e-13
+    assert captured["p4_inverse_backend"] == "cell_condensed"
+    assert captured["use_anderson_modal_inner"] is False
+    assert captured["complex_qr_research"] is False
+    assert captured["capture_modal_solve_trace"] is False
+    assert qualified_rank_maps[-2:] == [
+        (legacy_rank_cpus, "startup"),
+        (legacy_rank_cpus, "candidate_setup_probe"),
+    ]
+
+
+    captured.clear()
+    qualified_rank_maps.clear()
+    legacy_binder_calls.clear()
+    good_binder = real_shape_binder
+
+    def mismatched_binder(identity, observed_specification, observed_source_sha, path):
+        binding = good_binder(
+            identity, observed_specification, observed_source_sha, path
+        )
+        binding["descriptor"]["sha256"] = "0" * 64
+        return binding
+
+    monkeypatch.setattr(
+        legacy_packet,
+        "bind_task041_legacy_native_consumer",
+        mismatched_binder,
+    )
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="worker legacy binder returned a descriptor",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_5nm_fixed_h6_legacy_bad_binder",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            packet_origin=legacy_origin,
+            legacy_native_binding=legacy_descriptor,
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=legacy_rank_cpus,
+        )
+    assert captured == {}
+    assert len(legacy_binder_calls) == 1
+
+    monkeypatch.setattr(
+        legacy_packet,
+        "bind_task041_legacy_native_consumer",
+        good_binder,
+    )
+    monkeypatch.setattr(
+        worker,
+        "_task041_rank_numa_observed_backend",
+        lambda **_kwargs: None,
+    )
+    captured.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_5nm_legacy_default_route",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            packet_origin=legacy_origin,
+            legacy_native_binding=legacy_descriptor,
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+    assert captured["fixed_h6_modal_gmres_research"] is False
+    assert captured["expected_rank_cpus"] == default_rank_cpus
+    assert captured["p4_refinement_target_tolerance"] == 5.0e-13
+    assert "packet_source_binding" not in captured
 
 
 @pytest.mark.parametrize(

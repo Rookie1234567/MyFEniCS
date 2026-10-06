@@ -13795,7 +13795,11 @@ def run_task041_consumer(
         raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
     if not _valid_sha(packet_manifest_sha256, 64):
         raise Task041ModePrepError("packet manifest SHA must be a lowercase SHA256")
-    legacy_native = packet_origin == "task039.v4.h4.legacy_native"
+    from benchmarks.task041_legacy_native_packet import (
+        TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+    )
+
+    legacy_native = packet_origin == TASK041_LEGACY_NATIVE_PACKET_ORIGIN
     if (packet_origin is None) != (legacy_native_binding is None):
         raise Task041ModePrepError(
             "legacy packet origin and binding must be supplied together"
@@ -13811,6 +13815,7 @@ def run_task041_consumer(
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
         task041_balh_formal_physical_volume_context_factory,
         task041_fixed_h6_modal_gmres_binding,
+        task041_fixed_h6_packet_source_binding,
         task041_p4_refinement_target_binding,
     )
 
@@ -13840,6 +13845,24 @@ def run_task041_consumer(
         )
     except (TypeError, ValueError) as exc:
         raise Task041ModePrepError(str(exc)) from exc
+    fixed_h6_packet_source_binding = None
+    if fixed_h6_binding is not None and legacy_native:
+        try:
+            fixed_h6_packet_source_binding = (
+                task041_fixed_h6_packet_source_binding(
+                    fixed_h6_binding,
+                    producer_packet_root=None,
+                    legacy_native_packet_descriptor=legacy_native_binding,
+                )
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise Task041ModePrepError(str(exc)) from exc
+    if fixed_h6_binding is not None and bool(legacy_native) != (
+        fixed_h6_packet_source_binding is not None
+    ):
+        raise Task041ModePrepError(
+            "fixed-H6 legacy packet origin and descriptor binding do not match the registered 5 nm route"
+        )
     if fixed_h6_binding is not None:
         if expected_rank_cpus is None:
             raise Task041ModePrepError(
@@ -13889,8 +13912,7 @@ def run_task041_consumer(
         or not contract.get("balh")
         or p4_response_correction_steps != 0
         or p4_backend_pair_side is not None
-        or packet_origin is not None
-        or legacy_native_binding is not None
+        or (packet_origin is not None and not legacy_native)
         or performance_profile is not None
         or task041_rhs_probe_manifest is not None
         or side_setup_schedule is not None
@@ -14284,6 +14306,11 @@ def run_task041_consumer(
         **(
             {"fixed_h6_modal_gmres_research": fixed_h6_binding}
             if fixed_h6_binding is not None
+            else {}
+        ),
+        **(
+            {"packet_source_binding": dict(fixed_h6_packet_source_binding)}
+            if fixed_h6_packet_source_binding is not None
             else {}
         ),
         "status": "IMPLEMENTATION_FAILURE",
@@ -14689,6 +14716,21 @@ def run_task041_consumer(
                     source_sha,
                     legacy_native_binding,
                 )
+                if fixed_h6_packet_source_binding is not None:
+                    descriptor = consumer_binding.get("descriptor")
+                    observed_source = (
+                        {
+                            "source_type": "legacy_native_packet_descriptor",
+                            "descriptor_path": descriptor.get("path"),
+                            "descriptor_sha256": descriptor.get("sha256"),
+                        }
+                        if isinstance(descriptor, Mapping)
+                        else None
+                    )
+                    if observed_source != fixed_h6_packet_source_binding:
+                        raise Task041ModePrepError(
+                            "worker legacy binder returned a descriptor different from the fixed-H6 source binding"
+                        )
             else:
                 consumer_binding = task041_balh_consumer_identity_binding(
                     packet_identity, specification, source_sha
