@@ -1432,10 +1432,13 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
     fixture = _fixed_h6_side_block_fixture()
     original_action = original_context = context = result = rhs = None
     action_before = action_after = None
+    original_side_applies_before = {
+        side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+        for side in ("bottom", "top")
+    }
     try:
         layout = fixture["layout"]
         coupling = fixture["coupling"]
-        columns, roles, contract_sha = _sample_contract()
         rhs = layout.pack(
             fixture["bottom"].b,
             fixture["top"].b,
@@ -1456,9 +1459,9 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
             coupling,
             fixture["bottom_inverse"],
             fixture["top_inverse"],
-            sampled_columns=columns,
-            sampled_column_roles=roles,
-            sampled_column_contract_sha256=contract_sha,
+            sampled_columns=None,
+            sampled_column_roles=None,
+            sampled_column_contract_sha256=None,
             fixed_h6_modal_gmres_research=True,
         )
         initial = context.inventory
@@ -1472,7 +1475,90 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
         assert initial["modal_schur_column_count"] == 0
         assert initial["modal_schur"] is None
         assert initial["modal_schur_condition"] == "not_measured"
-        assert initial["early_sample_gate"]["status"] == "passed"
+        gate = initial["early_sample_gate"]
+        assert gate["status"] == "passed"
+        assert gate["pass"] is True
+        assert gate["mode"] == "fixed_h6_modal_feedback_complex_repeat_linearity"
+        assert gate["requested_s_h_actions"] == 8
+        assert gate["relative_limit"] == 1.0e-10
+        assert gate["absolute_limit"] == 1.0e-10
+        assert gate["input_definition"]["alpha"] == [0.5, 0.75]
+        assert gate["input_definition"]["epsilon"] == 1.0e-12
+        assert gate["input_definition"]["x_norm"] == pytest.approx(1.0)
+        assert gate["input_definition"]["y_norm"] == pytest.approx(1.0)
+        assert gate["input_definition"]["x_sha256"]
+        assert gate["input_definition"]["y_sha256"]
+        assert gate["metric_formulas"] == {
+            "zero_absolute": "||F(0)||",
+            "repeat_x": "||F(x)_1-F(x)_2||/max(||F(x)_1||,||F(x)_2||)",
+            "complex_homogeneity": (
+                "||F(alpha*x)-alpha*F(x)||/"
+                "max(||F(alpha*x)||,|alpha|*||F(x)||)"
+            ),
+            "repeat_y": "||F(y)_1-F(y)_2||/max(||F(y)_1||,||F(y)_2||)",
+            "additivity": (
+                "||F(x+y)-F(x)-F(y)||/"
+                "max(||F(x+y)||,||F(x)||+||F(y)||)"
+            ),
+            "near_zero_absolute": "||F(epsilon*x)-epsilon*F(x)||",
+        }
+        assert all(
+            all(support)
+            for support in gate["input_definition"][
+                "positive_negative_block_support"
+            ].values()
+        )
+        assert gate["constraint_lu_factorizations_owner"] == 1
+        assert gate["constraint_lu_solve_attempts_at_owner_during_gate"] == 0
+        assert gate["gmres_solver_and_final_check_budget_unchanged"] == {
+            "solver_matmult_limit": 9,
+            "total_matmult_limit_including_final": 10,
+        }
+        assert len(gate["rank_results"]) == MPI.COMM_WORLD.size
+        json.dumps(gate, allow_nan=False)
+        local_metrics = gate["rank_results"][MPI.COMM_WORLD.rank]["metrics"]
+        assert local_metrics["zero_absolute"]["branch"] == "absolute_zero_input"
+        assert local_metrics["zero_absolute"]["absolute_error"] <= 1.0e-10
+        for metric_name in (
+            "repeat_x",
+            "complex_homogeneity",
+            "repeat_y",
+            "additivity",
+        ):
+            metric = local_metrics[metric_name]
+            assert metric["status"] == "evaluated"
+            assert metric["pass"] is True
+            if metric["denominator"] is not None and metric["denominator"] > 0.0:
+                assert metric["branch"] == "relative"
+                assert metric["relative_error"] <= 1.0e-10
+            else:
+                assert metric["branch"] == "absolute_zero_denominator"
+                assert metric["absolute_error"] <= 1.0e-10
+        near_zero = local_metrics["near_zero_absolute"]
+        assert near_zero["branch"] == "absolute_near_zero_input"
+        assert near_zero["denominator"] is None
+        assert near_zero["input_norm"] == pytest.approx(1.0e-12)
+        assert near_zero["output_norm"] is not None
+        assert near_zero["reference_norm"] is not None
+        assert near_zero["absolute_error"] <= 1.0e-10
+        for row in gate["rank_results"]:
+            assert row["operator_action_attempts"] == 8
+            assert row["operator_action_completions"] == 8
+            assert row["modal_constraint_matvec_calls"] == 8
+            assert row["constraint_lu_solve_attempts"] == 0
+            assert all(row["input_unchanged_by_action"].values())
+            for side in ("bottom", "top"):
+                side_counts = row["fixed_h6_side_counts"][side]
+                assert side_counts["fixed_h6_apply_calls"] == 8
+                assert side_counts["fixed_h6_h6_degree"] == H6_DEGREE
+                assert side_counts["expected_matrix_mult_calls_from_degree"] == 16
+                assert side_counts["fixed_h6_matrix_mult_calls"] == 16
+                assert side_counts["matrix_mult_matches_h6_degree"] is True
+        original_side_applies_after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert original_side_applies_after == original_side_applies_before
 
         result = block_ldu.solve_hybrid_block_ldu_iterative(
             original_action,
@@ -1512,11 +1598,33 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
         assert inner["owner_constraint_lu_factorizations"] == 1
         assert inner["solve_count"] == inventory["pc_apply_count"]
         side_counts = inventory["fixed_h6_pc_side_apply_counts"]
+        whole_run_work = inventory["fixed_h6_whole_run_work"]
+        assert whole_run_work["setup_gate_s_h_actions"] == 8
+        assert whole_run_work["gmres_solver_and_final_check_s_h_actions"] == (
+            inner["cumulative_total_matmult_calls"]
+        )
+        assert whole_run_work["total_s_h_actions_including_setup_gate"] == (
+            8 + inner["cumulative_total_matmult_calls"]
+        )
+        assert whole_run_work["total_c_matvec_calls_including_setup_gate"] == (
+            8 + inner["cumulative_total_matmult_calls"]
+        )
         for side in ("bottom", "top"):
             assert side_counts[side]["first"] == inventory["pc_apply_count"]
             assert side_counts[side]["delta"] == inventory["pc_apply_count"]
+            gate_side = gate["rank_results"][MPI.COMM_WORLD.rank][
+                "fixed_h6_side_counts"
+            ][side]
+            assert whole_run_work["setup_gate_h6_calls_by_side"][side] == gate_side
+            assert whole_run_work["total_h6_apply_calls_by_side"][side] == (
+                inner["fixed_h6_modal_apply_calls"][side]
+            )
+            assert whole_run_work["total_h6_matrix_mult_calls_by_side"][side] == (
+                inner["fixed_h6_modal_matrix_mult_calls"][side]
+            )
             assert inner["fixed_h6_modal_apply_calls"][side] == (
-                inner["cumulative_total_matmult_calls"]
+                gate_side["fixed_h6_apply_calls"]
+                + inner["cumulative_total_matmult_calls"]
             )
         assert result.release["borrowed_side_actions_retained"] is True
         result.destroy()
@@ -1538,6 +1646,240 @@ def test_side_balh_fixed_h6_modal_gmres_factory_keeps_true_outer_gates() -> None
         if original_context is not None:
             original_context.destroy()
         _destroy_side_block_fixture(fixture)
+
+
+@pytest.mark.parametrize(
+    "fault",
+    ("repeat_drift", "conjugate_antilinear", "nonlinear", "nonfinite"),
+)
+def test_side_balh_fixed_h6_feedback_gate_rejects_invalid_outputs_and_cleans_up(
+    fault: str, monkeypatch
+) -> None:
+    fixture = _fixed_h6_side_block_fixture()
+    comm = MPI.COMM_WORLD
+    rank = int(comm.rank)
+    size = int(comm.size)
+    original_factory = SideBalancedInverse.create_fixed_h6_active_trace_action
+    original_apply = block_ldu.HybridActionModalSchurApply.apply
+    created_adapters: list[FixedH6ActiveTraceAction] = []
+    side_counts_before = {
+        side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+        for side in ("bottom", "top")
+    }
+    events: list[tuple[str, dict[str, object]]] = []
+    calls = 0
+    local_errors: list[str] = []
+    caught_gate_message: str | None = None
+    cleanup_completed = False
+
+    def check(condition: bool, description: str) -> None:
+        if fault == "nonfinite":
+            if not condition:
+                local_errors.append(description)
+        else:
+            assert condition, description
+
+    def capture_adapter(owner: SideBalancedInverse) -> FixedH6ActiveTraceAction:
+        adapter = original_factory(owner)
+        created_adapters.append(adapter)
+        return adapter
+
+    def corrupted_apply(
+        action: block_ldu.HybridActionModalSchurApply, values: np.ndarray
+    ) -> np.ndarray:
+        nonlocal calls
+        calls += 1
+        output = np.asarray(original_apply(action, values), dtype=np.complex128).copy()
+        if fault == "repeat_drift" and calls == 3:
+            output[0] += 0.25 - 0.125j
+        elif fault == "conjugate_antilinear":
+            output = np.conjugate(output)
+        elif fault == "nonlinear":
+            output[0] += 0.2 * float(np.vdot(values, values).real) * (1.0 + 0.25j)
+        elif fault == "nonfinite" and rank == size - 1:
+            output[0] = np.nan + 0.0j
+        return output
+
+    monkeypatch.setattr(
+        SideBalancedInverse,
+        "create_fixed_h6_active_trace_action",
+        capture_adapter,
+    )
+    monkeypatch.setattr(block_ldu.HybridActionModalSchurApply, "apply", corrupted_apply)
+    try:
+        def create_candidate():
+            return block_ldu.create_side_balh_block_ldu_preconditioner(
+                fixture["layout"],
+                fixture["bottom"],
+                fixture["top"],
+                fixture["coupling"],
+                fixture["bottom_inverse"],
+                fixture["top_inverse"],
+                sampled_columns=None,
+                sampled_column_roles=None,
+                sampled_column_contract_sha256=None,
+                marker_callback=lambda event, detail: events.append(
+                    (event, dict(detail))
+                ),
+                fixed_h6_modal_gmres_research=True,
+            )
+
+        if fault == "nonfinite":
+            unexpected_candidate = None
+            try:
+                unexpected_candidate = create_candidate()
+            except ValueError as exc:
+                caught_gate_message = str(exc)
+            if unexpected_candidate is not None:
+                destroy = getattr(unexpected_candidate, "destroy", None)
+                if callable(destroy):
+                    destroy()
+            check(
+                caught_gate_message is not None
+                and "Fixed-H6 modal feedback repeat/linearity Gate failed"
+                in caught_gate_message,
+                "all ranks must catch the fixed-H6 feedback gate failure",
+            )
+        else:
+            with pytest.raises(
+                ValueError,
+                match="Fixed-H6 modal feedback repeat/linearity Gate failed",
+            ):
+                create_candidate()
+
+        check(calls == 8, "the gate must perform eight requested S_H actions")
+        ready = [detail for event, detail in events if event == "modal_sample_ready"]
+        check(len(ready) == 1, "the gate must emit one modal_sample_ready marker")
+        failed_gate = ready[0].get("early_sample_gate", {}) if ready else {}
+        check(ready[0].get("status") == "failed" if ready else False,
+              "the marker must report failed status")
+        check(ready[0].get("pass") is False if ready else False,
+              "the marker must report global failure")
+        check(failed_gate.get("requested_s_h_actions") == 8,
+              "the gate must record eight requested S_H actions")
+        rank_results = failed_gate.get("rank_results", [])
+        check(len(rank_results) == size,
+              "the gate must retain one local result per communicator rank")
+        check(
+            [row.get("rank") for row in rank_results] == list(range(size)),
+            "rank-local gate results must be ordered by rank",
+        )
+        check(failed_gate.get("pass") is False,
+              "the global gate must fail when one rank has a nonfinite output")
+        try:
+            json.dumps(failed_gate, allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            check(False, f"gate diagnostics must be strict-JSON serializable: {exc}")
+        for row in rank_results:
+            check(row.get("operator_action_attempts") == 8,
+                  "each rank must record eight action attempts")
+            check(row.get("operator_action_completions") == 8,
+                  "each rank must record eight completed actions")
+            check(row.get("modal_constraint_matvec_calls") == 8,
+                  "each rank must record eight constraint matvecs")
+            unchanged = row.get("input_unchanged_by_action", {})
+            check(bool(unchanged) and all(unchanged.values()),
+                  "each rank must retain the input-unchanged checks")
+            for side in ("bottom", "top"):
+                side_counts = row.get("fixed_h6_side_counts", {}).get(side, {})
+                check(side_counts.get("fixed_h6_apply_calls") == 8,
+                      f"{side} must record eight H6 applies per rank")
+                check(side_counts.get("fixed_h6_matrix_mult_calls") == 16,
+                      f"{side} must record sixteen H6 matrix multiplies per rank")
+                check(side_counts.get("matrix_mult_matches_h6_degree") is True,
+                      f"{side} matrix multiplies must match the recorded H6 degree")
+        if fault == "nonfinite":
+            for row in rank_results:
+                local_pass = row.get("pass")
+                metrics = row.get("metrics", {})
+                is_bad_rank = row.get("rank") == size - 1
+                check(
+                    local_pass is (not is_bad_rank),
+                    "only the last rank should fail its local finite-output gate",
+                )
+                check(bool(metrics), "each rank must retain its local gate metrics")
+                if is_bad_rank:
+                    check(
+                        any(
+                            metric.get("finite") is False
+                            for metric in metrics.values()
+                            if isinstance(metric, dict)
+                        ),
+                        "the corrupted rank's own metrics must identify nonfinite output",
+                    )
+                else:
+                    check(
+                        all(
+                            metric.get("finite") is True
+                            and metric.get("pass") is True
+                            for metric in metrics.values()
+                            if isinstance(metric, dict)
+                        ),
+                        "the uncorrupted rank's local metrics must pass",
+                    )
+        else:
+            failed_metrics = failed_gate["metrics"]
+            if fault == "repeat_drift":
+                check(failed_metrics["repeat_x"]["pass"] is False,
+                      "repeat drift must fail the repeated-x metric")
+            elif fault == "conjugate_antilinear":
+                check(failed_metrics["complex_homogeneity"]["pass"] is False,
+                      "conjugate mapping must fail complex homogeneity")
+            elif fault == "nonlinear":
+                check(
+                    failed_metrics["complex_homogeneity"]["pass"] is False
+                    or failed_metrics["additivity"]["pass"] is False,
+                    "nonlinear mapping must fail homogeneity or additivity",
+                )
+        check(len(created_adapters) == 2,
+              "both borrowed-side adapters must be constructed")
+        check(
+            all(adapter.audit["destroyed"] for adapter in created_adapters),
+            "both constructed adapters must be destroyed on gate failure",
+        )
+        check(fixture["bottom_inverse"].diagnostics["destroyed"] is False,
+              "the borrowed bottom inverse must remain alive")
+        check(fixture["top_inverse"].diagnostics["destroyed"] is False,
+              "the borrowed top inverse must remain alive")
+        check(fixture["bottom_inverse"]._h6._destroyed is False,
+              "the borrowed bottom H6 action must remain alive")
+        check(fixture["top_inverse"]._h6._destroyed is False,
+              "the borrowed top H6 action must remain alive")
+        check(
+            {
+                side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+                for side in ("bottom", "top")
+            }
+            == side_counts_before,
+            "the feedback gate must not call the original adaptive side inverse",
+        )
+    finally:
+        _destroy_side_block_fixture(fixture)
+        cleanup_completed = True
+
+    if fault == "nonfinite":
+        completion_records = comm.allgather(
+            {
+                "rank": rank,
+                "caught_gate_message": caught_gate_message,
+                "local_errors": list(local_errors),
+                "cleanup_completed": cleanup_completed,
+                "adapters_destroyed": all(
+                    adapter.audit["destroyed"] for adapter in created_adapters
+                ),
+            }
+        )
+        # All ranks reach this point only after fixture cleanup and the real allgather.
+        assert [record["rank"] for record in completion_records] == list(range(size))
+        assert all(record["cleanup_completed"] for record in completion_records)
+        assert all(record["adapters_destroyed"] for record in completion_records)
+        assert all(not record["local_errors"] for record in completion_records), (
+            completion_records
+        )
+        messages = {record["caught_gate_message"] for record in completion_records}
+        assert len(messages) == 1
+        assert next(iter(messages)) is not None
+        assert "Fixed-H6 modal feedback repeat/linearity Gate failed" in next(iter(messages))
 
 
 def test_side_balh_fixed_h6_modal_gmres_options_and_constructor_cleanup(

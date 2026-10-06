@@ -1,5 +1,15 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V9 H0：最新只读状态（2026-10-06）
+
+| 模型/阶段 | 当前事实 | 资格边界与证据 |
+|---|---|---|
+| W 5 nm，p6/h4、M480、MPI8×1 cell-condensed，两场历史consumer | 两场均1920/1920 formal response，各自五项真实残差、恢复和物理门通过。共同markers边界显示10月3日modal/Schur段较9月28日多约12092.900 s、outer段少约288.119 s | 两场源码不同且`performance_not_isolated`；只作阶段描述，不能归因到单一算法。详细数值/分段/identity见[H0 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md) |
+| W 5 nm 时间目标 | 最新public-to-finalizer wall `202124.563261555 s`（56.146 h） | 大于48 h目标；marker总区间与public wall口径不同，monitor独占wall unknown |
+| 13.5 nm Si fixed-H6研究锚点 | 37 outer、264 `S_H`，五项outer真残差通过；只持久化最后inner的独立raw终检 | 研究锚点，不是W/0.7资格，也不证明其余36个inner各自通过 |
+| W 2 nm | producer已使用PEP/TOAR，requested2400/侧、正负收敛2422/2423；formal consumer `0/4800`，`ncv/mpd`未记录 | 已有TOAR，不提出迁移；consumer/容量资格未完成 |
+| W 0.7 nm | CXRO数据点、NIST纯W密度19.3000 g/cm³、CIAAW Ar(W)=183.84(1)可作为追溯来源线索 | 源字节hash、转换/插值合同、完整W外部keys及hp/M资格未封存；2 TB与48 h未资格化 |
+
 ## Task041 V8：5 nm 完整 consumer 终态
 
 | 模型/阶段 | 当前状态 | 资格边界与证据 |

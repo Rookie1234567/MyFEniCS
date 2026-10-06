@@ -1,5 +1,9 @@
 # Task041 V8：5 nm 正式 consumer 终态与 2 nm 后续
 
+## Review V9 H0最新状态（2026-10-06；不改写V8运行记录）
+
+后续H0只读对照了9月28日与10月3日两场5 nm记录：两场各自的1920项formal response、五项真实残差及恢复/物理门均通过；10月3日public-to-finalizer wall为`202124.563261555 s`（56.146 h），因此48 h目标未达到。共同`markers.jsonl`边界下的分段wall、全量P4和side工作计数见[Review V9 H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)及[hash-bound record](records/task041_v9_h0_readonly.json)。两场源码不同且均`performance_not_isolated`，阶段差仅作描述；H0没有重跑consumer、checker、测试、MPI、QEP或FE。下文继续保留V8各次运行原身份和历史分类。
+
 5 nm cell-condensed 路线先消去单元内部自由度，再恢复完整场并检查原方程；内部目标 `5e-13` 最多追加两次同因子修正，原物理残差门不变。
 
 ## 最新正式运行：5 nm A6 consumer 已完成（2026-10-03）

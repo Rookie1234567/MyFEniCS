@@ -1,4 +1,18 @@
 # Test and evidence summary
+
+## Review V9 H1 fixed-H6反馈门（2026-10-06）
+
+| attempt | ABI /执行范围 | pytest结果 | parent wall | 证据与边界 |
+|---|---|---|---:|---|
+| Initial serial `task041_v9_fixed_h6_feedback_gate_serial_20261006T031434Z` | H1五selector组；core `64ef9439...`、当时test350 `9472cdd4ad868a4c64bf43d39333e7b28776a7019d9eeefaccbbace215640f1d` | 8 passed | 5.002211689017713 s | [stdout](../../../results/task041_v9_fixed_h6_feedback_gate_serial_20261006T031434Z/serial_pytest.stdout.log)、[attempt](../../../results/task041_v9_fixed_h6_feedback_gate_serial_20261006T031434Z/serial_pytest_attempt.json)、[compact](../../../results/task041_v9_fixed_h6_feedback_gate_serial_20261006T031434Z/serial_compact.json)；独立attempt，原V5条目不重复计费 |
+| Serial `task041_v9_fixed_h6_feedback_nonfinite_serial_20261006T032822Z` | fresh native ABI，CPU12/node0、membind0、六线程含BLIS=1；只跑test350非有限坏输出参数 | 1 passed | 5.001762014115229 s | [stdout](../../../results/task041_v9_fixed_h6_feedback_nonfinite_serial_20261006T032822Z/serial_pytest.stdout.log)、[attempt](../../../results/task041_v9_fixed_h6_feedback_nonfinite_serial_20261006T032822Z/serial_pytest_attempt.json)、[compact](../../../results/task041_v9_fixed_h6_feedback_nonfinite_serial_20261006T032822Z/serial_test_compact.json) |
+| MPI2 `task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z` | fresh双rank ABI；rank0 CPU12、rank1 CPU13，membind0，六线程含BLIS=1；test350五selector | rank0与rank1各8 passed，无warning | 5.001988966949284 s | [stdout](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/mpi2_pytest.stdout.log)、[attempt](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/mpi2_pytest_attempt.json)、[compact](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/mpi2_test_compact.json) |
+
+core/test SHA分别为`64ef9439ee2d527049877edfa88ce8e848e4370600f1a8b9ee41d4684709dea3`和`941606bba844cdeabad3c44bedfe86c2578df7370690621c0a6611bbc32482a6`。最后rank在真实原反馈作用完成后注入非有限值；两rank都按门拒绝、清理后再完成allgather。该节点不证明任意rank-local底层异常安全。V5两attempt各一条，父wall共`10.003750981064513 s`；ledger 124项/SHA `60ee77b84661f91944ceffb22e9ab544178d607403f20696b5ffcd875f32fe67`，append receipt见[此处](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/v5_ledger_append_receipt.json)。ABI/static/rank-local pytest时间未计；此阶段无FE、无性能或0.7 nm资格。
+## 2026-10-06：Review V9 H0 文档与只读审查
+
+本阶段只读取既有5 nm marker/side audit、13.5 nm研究锚点、2 nm producer和0.7 nm材料/容量来源，并更新H0文档及hash-bound JSON。没有运行pytest、ABI、MPI、QEP、FE或checker；因此本节不新增测试通过数，也不把历史测试结果转为V9资格。详见[H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)、[machine record](records/task041_v9_h0_readonly.json)和[Response V11](../response_v11.md)。
+
 ## 2026-09-23：Review V6 F3c4 收口
 
 F3c4 两个轻量 mock 模块最终 `99 passed`, `rc=0`，父侧 wall 约 `11.40 s`；第一次失败的 cap 断言与历史 RHS-manifest fixture 记录保留，后续只修测试期望/fixture，production validator 未改。四次 5 nm fixed-eight service 尝试不是 pytest 通过：前三次分别是 release 诊断接线错误、condensed factor 接口错误、旧 RSS cap 停止；cap64 第四次有 16 个响应但 2/8 top 配对超过 `e_x/e_A <=1e-8`。见 [V6 outcome](transfer_fix_5nm_24h_v6.md) 与 [machine record](records/task041_v6_transfer_5nm_24h.json)。本轮不运行 full repository pytest、PDE、QEP、F3a 或新 ABI。

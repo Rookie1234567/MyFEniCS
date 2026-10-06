@@ -500,6 +500,7 @@ class HybridActionModalSchurApply:
     top_action: Any
     modal_constraint: np.ndarray = field(init=False, repr=False)
     _destroyed: bool = field(default=False, init=False, repr=False)
+    _modal_constraint_matvec_count: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.mode_count = int(self.coupling.mode_count_per_direction)
@@ -544,6 +545,7 @@ class HybridActionModalSchurApply:
         if values.shape != (self.modal_count,):
             raise ValueError("Modal Schur input has the wrong shape.")
         result = np.asarray(self.modal_constraint @ values, dtype=np.complex128)
+        self._modal_constraint_matvec_count += 1
         self._subtract_side_response("bottom", values, result)
         self._subtract_side_response("top", values, result)
         return result
@@ -620,6 +622,7 @@ class _FixedH6ModalKrylovSystem:
         self._constraint_lu_factorizations_local = 0
         self._constraint_lu_factorizations_owner = 0
         self._solver_matmult_calls = self._total_matmult_calls = 0
+        self._modal_constraint_matvec_calls_at_destroy = 0
         self._blocked_matmult_attempts = 0
         self._budget_exhausted = False
         self._in_final_check = False
@@ -1279,6 +1282,7 @@ class _FixedH6ModalKrylovSystem:
     @property
     def diagnostics(self) -> dict[str, Any]:
         last_solve = self._last_solve
+        modal_action = self._modal_action
         lu_solve_scope = (
             "rank_local_counter; owner aggregate unavailable before a completed solve"
             if last_solve is None
@@ -1300,6 +1304,8 @@ class _FixedH6ModalKrylovSystem:
             "solver_matmult_limit": self.solver_matmult_limit,
             "total_matmult_limit_including_final": self.total_matmult_limit,
             "modal_owner": self._modal_owner,
+            "rank": int(self._comm.rank),
+            "rank_count": int(self._comm.size),
             "solver_matmult_calls": self._solver_matmult_calls,
             "total_matmult_calls": self._total_matmult_calls,
             "solve_count": self._solve_count,
@@ -1321,6 +1327,14 @@ class _FixedH6ModalKrylovSystem:
             "modal_schur_column_count": 0,
             "modal_schur_condition": "not_measured",
             "modal_constraint_local_bytes": self.modal_constraint_local_bytes,
+            "modal_constraint_matvec_calls_total": (
+                self._modal_constraint_matvec_calls_at_destroy
+                if modal_action is None
+                else int(modal_action._modal_constraint_matvec_count)
+            ),
+            "modal_constraint_matvec_count_scope": (
+                "rank-local action counter; do_not_sum_across_ranks"
+            ),
             "modal_constraint_condition": float(self.constraint_condition),
             "constraint_lu_factorizations": int(
                 self._constraint_lu_factorizations_owner
@@ -1366,6 +1380,9 @@ class _FixedH6ModalKrylovSystem:
         if matrix is not None:
             matrix.destroy()
         if self._modal_action is not None:
+            self._modal_constraint_matvec_calls_at_destroy = int(
+                self._modal_action._modal_constraint_matvec_count
+            )
             self._modal_action.destroy()
             self._modal_action = None
         # Side adapters and their FixedH6/layout objects are borrowed.
@@ -3831,6 +3848,78 @@ class HybridBlockLduPreconditioner:
                     },
                 }
             )
+            local_rank = system_diagnostics.get("rank")
+            if not isinstance(local_rank, int) or isinstance(local_rank, bool):
+                local_rank = int(
+                    _action_operator(self.bottom_action).getComm().tompi4py().rank
+                )
+            early_gate = (
+                self._research_inventory.get("early_sample_gate", {})
+                if self._research_inventory is not None
+                else {}
+            )
+            gate_rows = early_gate.get("rank_results", [])
+            gate_row = next(
+                (
+                    row
+                    for row in gate_rows
+                    if row.get("rank") == local_rank
+                ),
+                None,
+            )
+            setup_s_h = (
+                None
+                if gate_row is None
+                else gate_row.get("operator_action_completions")
+            )
+            solver_s_h = system_diagnostics.get("cumulative_total_matmult_calls")
+
+            def valid_counts(value: Any) -> int | None:
+                if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                    return value
+                return None
+
+            setup_s_h = valid_counts(setup_s_h)
+            solver_s_h = valid_counts(solver_s_h)
+            total_s_h = (
+                None
+                if setup_s_h is None or solver_s_h is None
+                else setup_s_h + solver_s_h
+            )
+            result["fixed_h6_whole_run_work"] = {
+                "rank": local_rank,
+                "count_scope": "rank-local; do_not_sum_across_ranks",
+                "setup_gate_s_h_actions": setup_s_h,
+                "gmres_solver_and_final_check_s_h_actions": solver_s_h,
+                "total_s_h_actions_including_setup_gate": total_s_h,
+                "setup_gate_c_matvec_calls": (
+                    None
+                    if gate_row is None
+                    else valid_counts(
+                        gate_row.get("modal_constraint_matvec_calls")
+                    )
+                ),
+                "total_c_matvec_calls_including_setup_gate": valid_counts(
+                    system_diagnostics.get("modal_constraint_matvec_calls_total")
+                ),
+                "setup_gate_h6_calls_by_side": (
+                    None
+                    if gate_row is None
+                    else gate_row.get("fixed_h6_side_counts")
+                ),
+                "total_h6_apply_calls_by_side": system_diagnostics.get(
+                    "fixed_h6_modal_apply_calls"
+                ),
+                "total_h6_matrix_mult_calls_by_side": system_diagnostics.get(
+                    "fixed_h6_modal_matrix_mult_calls"
+                ),
+                "owner_c_lu_factorizations": system_diagnostics.get(
+                    "constraint_lu_factorizations"
+                ),
+                "gmres_c_lu_solve_attempts": system_diagnostics.get(
+                    "cumulative_constraint_lu_solve_attempts"
+                ),
+            }
         if self._research_inventory is not None:
             result.update(self._research_inventory)
         if self._dynamic_side_inventory:
@@ -4152,6 +4241,507 @@ def _check_on_demand_modal_sample_repeat(
     return diagnostics
 
 
+_FIXED_H6_FEEDBACK_GATE_TOLERANCE = 1.0e-10
+_FIXED_H6_FEEDBACK_GATE_ALPHA = 0.5 + 0.75j
+_FIXED_H6_FEEDBACK_GATE_EPSILON = 1.0e-12
+
+
+def _fixed_h6_gate_norm(
+    values: np.ndarray | None, modal_count: int
+) -> tuple[float | None, str | None]:
+    if values is None:
+        return None, "dependent_output_unavailable"
+    vector = np.asarray(values, dtype=np.complex128)
+    if vector.shape != (modal_count,):
+        return None, "shape_mismatch"
+    if not np.all(np.isfinite(vector)):
+        return None, "nonfinite_vector"
+    norm = float(np.linalg.norm(vector))
+    return (norm, None) if np.isfinite(norm) else (None, "nonfinite_norm")
+
+
+def _fixed_h6_gate_metric(
+    actual: np.ndarray | None,
+    reference: np.ndarray | None,
+    modal_count: int,
+    *,
+    relative_denominator: str | None = None,
+    reference_norm_scale: float | None = None,
+    reference_norm_parts: tuple[float | None, ...] = (),
+    absolute_branch: str | None = None,
+    input_norm: float | None = None,
+) -> dict[str, Any]:
+    actual_norm, actual_error = _fixed_h6_gate_norm(actual, modal_count)
+    reference_norm, reference_error = _fixed_h6_gate_norm(reference, modal_count)
+    errors = [error for error in (actual_error, reference_error) if error is not None]
+    numerator = None
+    denominator = None
+    measured: float | None = None
+    branch = "not_evaluated"
+    if not errors:
+        difference = np.asarray(actual - reference, dtype=np.complex128)
+        if np.all(np.isfinite(difference)):
+            candidate_numerator = float(np.linalg.norm(difference))
+            if np.isfinite(candidate_numerator):
+                numerator = candidate_numerator
+            else:
+                errors.append("nonfinite_difference_norm")
+        else:
+            errors.append("nonfinite_difference_norm")
+    if not errors and absolute_branch is not None:
+        measured = float(numerator)
+        branch = absolute_branch
+    elif not errors:
+        if relative_denominator == "pair":
+            denominator = max(float(actual_norm), float(reference_norm))
+        elif relative_denominator == "scaled_reference":
+            if reference_norm_scale is None or not np.isfinite(reference_norm_scale):
+                errors.append("nonfinite_scaled_reference_norm")
+            else:
+                denominator = max(float(actual_norm), float(reference_norm_scale))
+        elif relative_denominator == "reference_sum":
+            if len(reference_norm_parts) != 2 or not all(
+                part is not None and np.isfinite(part) for part in reference_norm_parts
+            ):
+                errors.append("nonfinite_reference_norm_sum")
+            else:
+                denominator = max(
+                    float(actual_norm), sum(float(part) for part in reference_norm_parts)
+                )
+        else:
+            errors.append("unknown_relative_denominator")
+        if not errors:
+            if not np.isfinite(denominator):
+                denominator = None
+                errors.append("nonfinite_denominator")
+            elif denominator > 0.0:
+                candidate_measure = float(numerator / denominator)
+                if np.isfinite(candidate_measure):
+                    measured = candidate_measure
+                    branch = "relative"
+                else:
+                    errors.append("nonfinite_error_metric")
+            else:
+                measured = float(numerator)
+                branch = "absolute_zero_denominator"
+    finite = bool(not errors and measured is not None and np.isfinite(measured))
+    if not finite and not errors:
+        errors.append("nonfinite_error_metric")
+    if errors:
+        branch = "not_evaluated_invalid_intermediate"
+    metric_pass = bool(
+        finite
+        and measured is not None
+        and measured <= _FIXED_H6_FEEDBACK_GATE_TOLERANCE
+    )
+    return {
+        "status": "evaluated" if finite else "not_evaluated",
+        "numerator": numerator,
+        "denominator": denominator,
+        "branch": branch if finite else (branch or "nonfinite_or_invalid_intermediate"),
+        "relative_error": measured if finite and branch == "relative" else None,
+        "absolute_error": numerator,
+        "measured_error": measured if finite else None,
+        "actual_norm": actual_norm,
+        "reference_norm": reference_norm,
+        "input_norm": input_norm,
+        "finite": finite,
+        "errors": errors,
+        "limit": _FIXED_H6_FEEDBACK_GATE_TOLERANCE,
+        "pass": metric_pass,
+    }
+
+
+def _check_fixed_h6_modal_feedback_repeat_linearity(
+    modal_solver: _FixedH6ModalKrylovSystem,
+    *,
+    original_side_actions: Mapping[str, Any],
+    original_side_apply_counts_before: Mapping[str, int | None],
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
+) -> dict[str, Any]:
+    """Check the same fixed H6 feedback on bounded complex mixed vectors."""
+
+    modal_action = modal_solver._modal_action
+    if modal_action is None:
+        raise RuntimeError("Fixed-H6 modal action is unavailable for its gate")
+    modal_count = int(modal_solver.modal_count)
+    mode_count = int(modal_solver.mode_count)
+    k = np.arange(1, modal_count + 1, dtype=np.float64)
+    x_raw = k + 1j * k[::-1]
+    x_norm = float(np.linalg.norm(x_raw))
+    x = np.asarray(x_raw / x_norm, dtype=np.complex128)
+    y_raw = k[::-1] + 1j * (k + 0.5)
+    y_orthogonal = y_raw - np.vdot(x, y_raw) * x
+    y_norm = float(np.linalg.norm(y_orthogonal))
+    y = np.asarray(y_orthogonal / y_norm, dtype=np.complex128)
+    alpha, epsilon = _FIXED_H6_FEEDBACK_GATE_ALPHA, _FIXED_H6_FEEDBACK_GATE_EPSILON
+    inputs = {
+        "zero": np.zeros(modal_count, dtype=np.complex128),
+        "x": x,
+        "x_repeat": x,
+        "alpha_x": alpha * x,
+        "y": y,
+        "y_repeat": y,
+        "x_plus_y": x + y,
+        "near_zero_x": epsilon * x,
+    }
+    input_norms = {name: float(np.linalg.norm(value)) for name, value in inputs.items()}
+    input_hashes = {
+        name: hashlib.sha256(np.ascontiguousarray(value).tobytes()).hexdigest()
+        for name, value in inputs.items()
+    }
+    block_support = {
+        name: [
+            bool(np.linalg.norm(value[:mode_count]) > 0.0),
+            bool(np.linalg.norm(value[mode_count:]) > 0.0),
+        ]
+        for name, value in (("x", x), ("y", y))
+    }
+    xy_inner_product_abs = float(abs(np.vdot(x, y)))
+    input_definition = {
+        "formula": (
+            "k=1..modal_count; x=normalize(k+i*reverse(k)); "
+            "y=normalize(reverse(k)+i*(k+0.5)-vdot(x,y_raw)*x)"
+        ),
+        "modal_count": modal_count,
+        "mode_count_per_direction": mode_count,
+        "x_norm": input_norms["x"],
+        "y_norm": input_norms["y"],
+        "x_sha256": input_hashes["x"],
+        "y_sha256": input_hashes["y"],
+        "x_y_inner_product_abs": xy_inner_product_abs,
+        "x_y_noncollinear": bool(np.isfinite(xy_inner_product_abs) and xy_inner_product_abs < 1.0e-12),
+        "x_y_complex": bool(np.any(x.imag != 0.0) and np.any(y.imag != 0.0)),
+        "positive_negative_block_support": block_support,
+        "alpha": [float(alpha.real), float(alpha.imag)],
+        "epsilon": epsilon,
+        "epsilon_x_norm": input_norms["near_zero_x"],
+    }
+    local_input_error = None
+    if (
+        x_norm == 0.0
+        or y_norm == 0.0
+        or not all(np.all(np.isfinite(value)) for value in inputs.values())
+        or not all(np.isfinite(value) for value in input_norms.values())
+        or not all(all(support) for support in block_support.values())
+        or not np.isfinite(xy_inner_product_abs)
+        or xy_inner_product_abs >= 1.0e-12
+        or not input_definition["x_y_complex"]
+    ):
+        local_input_error = "gate_inputs_are_nonfinite_or_not_mixed"
+    started = time.perf_counter()
+    if marker_callback is not None:
+        marker_callback(
+            "modal_sample_begin",
+            {
+                "side": "both",
+                "stage": "fixed_h6_modal_feedback_repeat_linearity",
+                "mode": "complex_repeat_homogeneity_additivity_and_near_zero",
+                "input_definition": input_definition,
+                "maximum_s_h_actions": len(inputs),
+                "limit": _FIXED_H6_FEEDBACK_GATE_TOLERANCE,
+            },
+        )
+
+    comm = modal_solver._comm
+    input_records = comm.allgather((local_input_error, input_hashes))
+    input_errors = [
+        f"rank {rank}: {error}"
+        for rank, (error, _hashes) in enumerate(input_records)
+        if error is not None
+    ]
+    hash_sets = [
+        tuple(sorted(hashes.items()))
+        for error, hashes in input_records
+        if error is None
+    ]
+    if hash_sets and any(value != hash_sets[0] for value in hash_sets[1:]):
+        input_errors.append("deterministic gate inputs differ across ranks")
+    if input_errors:
+        elapsed = float(time.perf_counter() - started)
+        rank_results = [
+            {
+                "rank": rank,
+                "pass": False,
+                "input_hashes": hashes,
+                "operator_action_attempts": 0,
+                "operator_action_completions": 0,
+                "modal_constraint_matvec_calls": 0,
+                "constraint_lu_solve_attempts": 0,
+                "fixed_h6_side_counts": None,
+                "input_unchanged_by_action": {},
+                "original_side_apply_count_delta": None,
+                "setup_wall_seconds": elapsed,
+                "errors": [error] if error is not None else input_errors,
+            }
+            for rank, (error, hashes) in enumerate(input_records)
+        ]
+        failed_gate = {
+            "status": "failed",
+            "pass": False,
+            "mode": "fixed_h6_modal_feedback_complex_repeat_linearity",
+            "requested_s_h_actions": len(inputs),
+            "input_definition": input_definition,
+            "rank_results": rank_results,
+            "rank_count": int(comm.size),
+            "rank_action_counts_scope": "per-rank local; do_not_sum_across_ranks",
+            "input_preflight_allgathers": 1,
+            "result_consensus_allgathers": 0,
+            "full_schur_materialized": False,
+            "fallback_used": False,
+        }
+        if marker_callback is not None:
+            marker_callback(
+                "modal_sample_ready",
+                {
+                    "side": "both",
+                    "stage": "fixed_h6_modal_feedback_repeat_linearity",
+                    "status": "failed",
+                    "pass": False,
+                    "early_sample_gate": failed_gate,
+                },
+            )
+        raise ValueError(
+            "Fixed-H6 modal feedback gate input preflight failed; "
+            + "; ".join(input_errors)
+        )
+
+    side_before = {
+        side: dict(action.audit)
+        for side, action in zip(
+            ("bottom", "top"), (modal_solver._bottom_action, modal_solver._top_action), strict=True
+        )
+    }
+    constraint_before = int(modal_action._modal_constraint_matvec_count)
+    lu_attempts_before = int(modal_solver._constraint_lu_solve_attempts)
+    outputs: dict[str, np.ndarray | None] = {}
+    output_norms: dict[str, float | None] = {}
+    output_errors: dict[str, str | None] = {}
+    input_unchanged_by_action: dict[str, bool] = {}
+    metrics: dict[str, dict[str, Any]] = {}
+    attempts = completions = 0
+
+    for name, values in inputs.items():
+        attempts += 1
+        result = np.asarray(modal_action.apply(values), dtype=np.complex128)
+        completions += 1
+        norm, error = _fixed_h6_gate_norm(result, modal_count)
+        input_unchanged = (
+            hashlib.sha256(np.ascontiguousarray(values).tobytes()).hexdigest()
+            == input_hashes[name]
+        )
+        input_unchanged_by_action[name] = input_unchanged
+        if error is None and not input_unchanged:
+            error = "input_mutated_during_action"
+        output_norms[name] = norm
+        output_errors[name] = error
+        outputs[name] = result if error is None else None
+        if name == "zero":
+            metrics["zero_absolute"] = _fixed_h6_gate_metric(
+                outputs[name], np.zeros(modal_count, dtype=np.complex128), modal_count,
+                absolute_branch="absolute_zero_input", input_norm=input_norms[name],
+            )
+        elif name == "x_repeat":
+            metrics["repeat_x"] = _fixed_h6_gate_metric(
+                outputs[name], outputs.get("x"), modal_count, relative_denominator="pair"
+            )
+        elif name == "alpha_x":
+            fx_norm = output_norms.get("x")
+            metrics["complex_homogeneity"] = _fixed_h6_gate_metric(
+                outputs[name], None if outputs.get("x") is None else alpha * outputs["x"], modal_count,
+                relative_denominator="scaled_reference",
+                reference_norm_scale=None if fx_norm is None else abs(alpha) * fx_norm,
+            )
+        elif name == "y_repeat":
+            metrics["repeat_y"] = _fixed_h6_gate_metric(
+                outputs[name], outputs.get("y"), modal_count, relative_denominator="pair"
+            )
+        elif name == "x_plus_y":
+            fx, fy = outputs.get("x"), outputs.get("y")
+            metrics["additivity"] = _fixed_h6_gate_metric(
+                outputs[name], None if fx is None or fy is None else fx + fy, modal_count,
+                relative_denominator="reference_sum",
+                reference_norm_parts=(output_norms.get("x"), output_norms.get("y")),
+            )
+        elif name == "near_zero_x":
+            fx = outputs.get("x")
+            metrics["near_zero_absolute"] = _fixed_h6_gate_metric(
+                outputs[name], None if fx is None else epsilon * fx, modal_count,
+                absolute_branch="absolute_near_zero_input",
+                input_norm=input_norms[name],
+            )
+            metrics["near_zero_absolute"].update(
+                {
+                    "output_norm": output_norms.get(name),
+                }
+            )
+
+    side_counts = {}
+    for side, action in zip(
+        ("bottom", "top"), (modal_solver._bottom_action, modal_solver._top_action), strict=True
+    ):
+        audit = action.audit
+        apply_calls = int(audit["apply_count"]) - int(side_before[side]["apply_count"])
+        matrix_mult_calls = int(audit["matrix_mult_count"]) - int(
+            side_before[side]["matrix_mult_count"]
+        )
+        h6_degree = audit.get("h6_degree")
+        degree_valid = (
+            isinstance(h6_degree, int)
+            and not isinstance(h6_degree, bool)
+            and h6_degree > 1
+        )
+        expected_matrix_mult_calls = (
+            (h6_degree - 1) * apply_calls if degree_valid else None
+        )
+        side_counts[side] = {
+            "fixed_h6_apply_calls": apply_calls,
+            "fixed_h6_h6_degree": h6_degree if degree_valid else None,
+            "fixed_h6_matrix_mult_calls": matrix_mult_calls,
+            "expected_matrix_mult_calls_from_degree": expected_matrix_mult_calls,
+            "matrix_mult_matches_h6_degree": bool(
+                expected_matrix_mult_calls is not None
+                and matrix_mult_calls == expected_matrix_mult_calls
+            ),
+        }
+    original_after = {
+        side: _action_apply_count(action) for side, action in original_side_actions.items()
+    }
+    original_delta = {
+        side: (
+            None
+            if original_side_apply_counts_before.get(side) is None
+            or original_after[side] is None
+            else int(original_after[side]) - int(original_side_apply_counts_before[side])
+        )
+        for side in ("bottom", "top")
+    }
+    c_matvecs = int(modal_action._modal_constraint_matvec_count) - constraint_before
+    c_lu_attempts = int(modal_solver._constraint_lu_solve_attempts) - lu_attempts_before
+    local_pass = bool(
+        attempts == len(inputs)
+        and completions == len(inputs)
+        and len(metrics) == 6
+        and all(error is None for error in output_errors.values())
+        and all(input_unchanged_by_action.values())
+        and all(metric["pass"] for metric in metrics.values())
+        and all(value == 0 for value in original_delta.values())
+        and c_matvecs == completions
+        and c_lu_attempts == 0
+        and all(
+            row["fixed_h6_apply_calls"] == completions
+            and row["matrix_mult_matches_h6_degree"]
+            for row in side_counts.values()
+        )
+    )
+    local_result = {
+        "rank": int(comm.rank),
+        "pass": local_pass,
+        "input_hashes": input_hashes,
+        "operator_action_attempts": attempts,
+        "operator_action_completions": completions,
+        "modal_constraint_matvec_calls": c_matvecs,
+        "constraint_lu_solve_attempts": c_lu_attempts,
+        "fixed_h6_side_counts": side_counts,
+        "input_unchanged_by_action": input_unchanged_by_action,
+        "original_side_apply_count_delta": original_delta,
+        "output_norms": output_norms,
+        "output_errors": output_errors,
+        "metrics": metrics,
+        "setup_wall_seconds": float(time.perf_counter() - started),
+    }
+    rank_results = comm.allgather(local_result)
+    gathered_input_hashes = [
+        tuple(sorted(row["input_hashes"].items())) for row in rank_results
+    ]
+    global_pass = bool(
+        [row.get("rank") for row in rank_results] == list(range(comm.size))
+        and all(row.get("pass") is True for row in rank_results)
+        and len(set(gathered_input_hashes)) == 1
+    )
+    metric_formulas = {
+        "zero_absolute": "||F(0)||",
+        "repeat_x": "||F(x)_1-F(x)_2||/max(||F(x)_1||,||F(x)_2||)",
+        "complex_homogeneity": (
+            "||F(alpha*x)-alpha*F(x)||/"
+            "max(||F(alpha*x)||,|alpha|*||F(x)||)"
+        ),
+        "repeat_y": "||F(y)_1-F(y)_2||/max(||F(y)_1||,||F(y)_2||)",
+        "additivity": (
+            "||F(x+y)-F(x)-F(y)||/"
+            "max(||F(x+y)||,||F(x)||+||F(y)||)"
+        ),
+        "near_zero_absolute": "||F(epsilon*x)-epsilon*F(x)||",
+    }
+    for row in rank_results:
+        for name, formula in metric_formulas.items():
+            if name in row["metrics"]:
+                row["metrics"][name]["formula"] = formula
+    wall_values = [float(row["setup_wall_seconds"]) for row in rank_results]
+    diagnostics = {
+        "status": "passed" if global_pass else "failed",
+        "pass": global_pass,
+        "mode": "fixed_h6_modal_feedback_complex_repeat_linearity",
+        "operator": "S_H=C-PbJbH6bJb^H Tb-PtJtH6tJt^H Tt",
+        "requested_s_h_actions": len(inputs),
+        "operator_actions_maximum": len(inputs),
+        "relative_limit": _FIXED_H6_FEEDBACK_GATE_TOLERANCE,
+        "absolute_limit": _FIXED_H6_FEEDBACK_GATE_TOLERANCE,
+        "input_definition": input_definition,
+        "metric_formulas": metric_formulas,
+        "metrics": rank_results[0]["metrics"],
+        "rank_results": rank_results,
+        "rank_count": int(comm.size),
+        "rank_action_counts_scope": "per-rank local; do_not_sum_across_ranks",
+        "input_preflight_allgathers": 1,
+        "result_consensus_allgathers": 1,
+        "max_rank_setup_wall_seconds": max(wall_values),
+        "constraint_lu_factorizations_owner": int(
+            modal_solver._constraint_lu_factorizations_owner
+        ),
+        "constraint_lu_solve_attempts_by_rank": {
+            str(row["rank"]): row["constraint_lu_solve_attempts"] for row in rank_results
+        },
+        "constraint_lu_solve_attempts_at_owner_during_gate": next(
+            row["constraint_lu_solve_attempts"]
+            for row in rank_results
+            if row["rank"] == modal_solver._modal_owner
+        ),
+        "gmres_solver_and_final_check_budget_unchanged": {
+            "solver_matmult_limit": int(modal_solver.solver_matmult_limit),
+            "total_matmult_limit_including_final": int(modal_solver.total_matmult_limit),
+        },
+        "original_side_apply_count_scope": (
+            "per-side rank-local SideBalancedInverse; fixed-H6 gate must not call it"
+        ),
+        "full_schur_materialized": False,
+        "fallback_used": False,
+    }
+    if marker_callback is not None:
+        marker_callback(
+            "modal_sample_ready",
+            {
+                "side": "both",
+                "stage": "fixed_h6_modal_feedback_repeat_linearity",
+                "status": diagnostics["status"],
+                "pass": global_pass,
+                "early_sample_gate": diagnostics,
+            },
+        )
+    if not global_pass:
+        failures = [
+            f"rank {row.get('rank')}: pass={row.get('pass')} "
+            f"attempts={row.get('operator_action_attempts')} "
+            f"completions={row.get('operator_action_completions')}"
+            for row in rank_results
+            if row.get("pass") is not True
+        ]
+        raise ValueError(
+            "Fixed-H6 modal feedback repeat/linearity Gate failed; "
+            + "; ".join(failures)
+        )
+    return diagnostics
+
 def create_side_balh_block_ldu_preconditioner(
     layout: HybridAugmentedLayout,
     bottom_system: Any,
@@ -4246,7 +4836,7 @@ def create_side_balh_block_ldu_preconditioner(
         raise ValueError(
             "Modal solve trace capture requires complex QR modal inner research."
         )
-    if not use_anderson_modal_inner and not all(
+    if not use_anderson_modal_inner and not fixed_h6_modal_gmres_research and not all(
         value is not None
         for value in (
             sampled_columns,
@@ -4314,41 +4904,6 @@ def create_side_balh_block_ldu_preconditioner(
                 side: _action_diagnostics(action).get("apply_count")
                 for side, action in original_side_actions.items()
             }
-            modal_action = HybridActionModalSchurApply(
-                coupling,
-                bottom_side_inverse,
-                top_side_inverse,
-            )
-            try:
-                early_sample_gate = _check_on_demand_modal_sample_repeat(
-                    modal_action,
-                    sampled_columns=sampled_columns,
-                    sampled_column_roles=sampled_column_roles,
-                    sampled_column_contract_sha256=(
-                        sampled_column_contract_sha256
-                    ),
-                    marker_callback=marker_callback,
-                )
-            finally:
-                modal_action.destroy()
-                modal_action = None
-            side_counts_after = {
-                side: _action_diagnostics(action).get("apply_count")
-                for side, action in original_side_actions.items()
-            }
-            early_sample_gate["original_side_apply_count_delta"] = {
-                side: (
-                    None
-                    if side_counts_before[side] is None
-                    or side_counts_after[side] is None
-                    else int(side_counts_after[side]) - int(side_counts_before[side])
-                )
-                for side in ("bottom", "top")
-            }
-            early_sample_gate["original_side_apply_count_scope"] = (
-                "reported per side from the borrowed SideBalancedInverse"
-            )
-
             fixed_h6_adapters.append(
                 bottom_side_inverse.create_fixed_h6_active_trace_action()
             )
@@ -4360,6 +4915,12 @@ def create_side_balh_block_ldu_preconditioner(
                 fixed_h6_adapters[0],
                 fixed_h6_adapters[1],
                 modal_owner=layout.modal_owner,
+            )
+            early_sample_gate = _check_fixed_h6_modal_feedback_repeat_linearity(
+                fixed_h6_solver,
+                original_side_actions=original_side_actions,
+                original_side_apply_counts_before=side_counts_before,
+                marker_callback=marker_callback,
             )
             modal_system = _FixedH6ModalGmresResearchBundle(
                 fixed_h6_solver,
@@ -4390,6 +4951,7 @@ def create_side_balh_block_ldu_preconditioner(
                     "reason": "modal_schur_lu_not_constructed",
                 },
                 "early_sample_gate": early_sample_gate,
+                "setup_gate_included_in_whole_run_work": True,
                 "side_apply_counts_before_fixed_h6_branch": side_counts_before,
             }
         else:

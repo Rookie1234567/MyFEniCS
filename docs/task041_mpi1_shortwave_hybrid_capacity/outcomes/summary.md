@@ -1,5 +1,31 @@
 # Task041 outcomes summary
 
+## Task041 Review V9 H0：当前短波长审查状态（2026-10-06）
+
+H0只读对照了两场W 5 nm、p6/h4、M480、MPI8×1的完整consumer，并审查现有2 nm和0.7 nm证据；没有运行数值代码、测试、MPI、QEP或FE。两场各完成1920/1920正式响应并通过各自的五项真实残差和恢复/物理门，但最新场public-to-finalizer为`202124.563261555 s`（56.146 h），超过48 h目标；两场均`performance_not_isolated`，不能据此宣称优化收益。
+
+| H0项目 | 关键事实 | 状态与证据 |
+|---|---|---|
+| 共同阶段wall | 从两份`consumer/markers.jsonl`相邻`stage`边界重算；较新场marker区间`202108.376 s`，public-to-finalizer为`202124.563 s`，范围不同；monitor独占wall无marker | 分段与原始身份见[H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)和[机器记录](records/task041_v9_h0_readonly.json)，monitor=`unknown` |
+| Side/P4工作量 | 两场内部KSP迭代合计均30296；较新场P4 backsolve和refinement各多8686次，不能从计数直接换算秒数 | 详见H0 outcome的全量分组；逐RHS MPI.MAX和嵌套时间不相加成wall |
+| 13.5 nm锚点 | 最新Si研究场37 outer/264 `S_H`，五项真实残差过门；只存有最后inner独立raw终检值 | 可作数学未变部分的接线锚点，不是W 5/0.7 nm或性能资格 |
+| H1 / 2 nm / 0.7 nm | H1 fixed-H6反馈门组件serial/MPI2 tiny测试通过，但public单`.dat`接线与W 5 nm FE尚未运行；2 nm已有PEP/TOAR但旧consumer formal响应为0/4800；0.7 nm仍缺封存W材料输入、完整W外部keys和合格网格/容量证据 | 组件测试不等于FE；2 TB与48 h均`not_qualified`；H2–H4未完成 |
+
+最小后续接线审查、5 nm相邻marker分段、1980行/场的side audit工作量、H3材料来源及全部身份限制见[Task041 V9 H0报告](hybrid_0p7nm_2tb_48h_v9.md)。以下V8及更早条目保留为各自阶段的历史记录。
+
+## Task041 Review V9 H1：fixed-H6反馈门组件验证（2026-10-06）
+
+固定H6反馈门先检查同一固定作用对复数输入的重复性和线性，避免把不固定的反馈冒充线性模态算子；正式外层算子、RHS、P4和最终验收门不因此改变。core SHA `64ef9439ee2d527049877edfa88ce8e848e4370600f1a8b9ee41d4684709dea3`，test350 SHA `941606bba844cdeabad3c44bedfe86c2578df7370690621c0a6611bbc32482a6`。
+
+| 验证 | 实测 | 结论与边界 |
+|---|---|---|
+| Serial非有限输出节点 | 1 passed；最后rank在原反馈作用完成后产生非有限输出，cleanup后allgather完成；父wall 5.001762014115229 s | 只验证单rank注入下组件门失败路径与清理 |
+| MPI2五selector组 | rank0/rank1各8 passed，无RuntimeWarning；最后rank坏输出被全rank一致拒绝且后续collective完成；父wall 5.001988966949284 s | 不泛化到任意rank-local底层异常，也不等于MPI8 packet或FE |
+| 工作量合同 | setup repeat/linearity门8次`S_H`，每侧8次H6 apply和16次实际H6矩阵乘，8次C作用；GMRES原9+1预算未改 | setup门和每次求解分列；不据tiny计数估算5 nm成本或提速 |
+| 账本 | V5增加两条唯一pytest attempt；新增10.003750981064513 s；ledger 124条，SHA `60ee77b84661f91944ceffb22e9ab544178d607403f20696b5ffcd875f32fe67` | ABI/static/rank-local时间排除；见[receipt](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/v5_ledger_append_receipt.json) |
+
+生产代码仍是显式研究分支，普通默认未改变。public `scripts/run_case.py`单.dat接线、13.5 anchor复用、W 5 nm真实consumer、H2–H4均未完成；这批tiny测试不构成数值、容量或48 h资格。
+
 ## Task041 V8 5 nm 完整 consumer 终态
 
 运行源码 SHA `d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f`；结束 HEAD `499c25de74c30ed0bdee17180f5315765f35efbe` 与之不同，差异仅为运行中获准的五条文档路径。registered W 5 nm `cell_condensed` consumer完成1920/1920正式响应，RTA/EH/衍射、五项 true residual、恢复和物理门通过：`R/T/A/A_volume=0.7331842733877258/0.00022009869572838214/0.2665956279165458/0.2665962726230213`，五残差最大`6.221702926229589e-11`，closure `6.447064755388254e-7`。24 h目标未达到；worker自然exit0，但public/finalizer因严格结束SHA检查以exit3/failed保留，数值通过不覆盖该历史。authority/tree RSS峰`43,858,726,912/43,153,915,904 B`；cgroup `memory.peak=43,867,639,808 B`是历史计数器峰，不是采样current峰；job/cgroup swap峰0，global swap/pswp按V8仅观察。consumer worker wall `189,308.766050059 s`，public至finalizer `189,323.841971047 s`；旧`53.239672 h` worker基线同口径比较约改善`1.23%`，跨worker/public口径约`1.22%`仅是粗比。完整细节见[终态outcome](formal_5nm_2nm_v8.md)及[机器record](records/task041_v8_formal_5nm_2nm.json)。
