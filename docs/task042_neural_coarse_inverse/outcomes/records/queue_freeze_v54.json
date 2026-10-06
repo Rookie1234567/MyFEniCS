@@ -1,0 +1,50 @@
+{
+  "completed_solves": {
+    "R7": {
+      "array_sha256": "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+      "source_sha": "65484196065491b4714068b7472aa34f815ae299",
+      "pointer_sha256": "33f5f5685b34049105c1af393f56ad8eb1eb59c91272f5edcc6ddcf22507bc3b",
+      "equation_pass": true,
+      "direct_target_pass": true
+    },
+    "R6": {
+      "array_sha256": "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b",
+      "source_sha": "65484196065491b4714068b7472aa34f815ae299",
+      "pointer_sha256": "3fd248acbeddb78d2ebd2e6b1483ff8f7afe2c9d294f47f3d1c561cac812e0f0",
+      "equation_pass": true,
+      "direct_target_pass": true
+    },
+    "C": {
+      "array_sha256": "b3cb249a0ff8fe1d2296c3862ed73ff163771ee815a2c7de5a496c9592b9d17c",
+      "source_sha": "20bcd089ac440372516df4cb122a85e5726426bf",
+      "pointer_sha256": "ceedb549bacd66dbfa32eb25c9dd86ec28971ada428b2ce00828728eb6281103",
+      "equation_pass": true,
+      "direct_target_pass": true
+    }
+  },
+  "clock": {
+    "start_utc": "2026-10-06T07:58:28+00:00",
+    "start_monotonic": 1198502.8608781009,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+    "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+    "closed": false,
+    "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+    "first_work_start_never_refreshed": true,
+    "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+    "observed_utc": "2026-10-06T11:22:11.924476+00:00",
+    "observed_monotonic": 1210726.785342603,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12223.92447566986,
+    "heavy_remaining_seconds": 10276.07552433014,
+    "total_remaining_seconds": 12976.07552433014
+  },
+  "decision_sha256": "4d5dd763a1bc3cb28e868370df1a89fe086970b9b2f09c2fb999eb5114f7ee36",
+  "queue_exited": true,
+  "complete_solve_count": 3,
+  "no_reference_or_new_solver_selection": true
+}

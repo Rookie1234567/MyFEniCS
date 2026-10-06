@@ -1,3 +1,13 @@
+## Task042 V54 有限准确性库存
+
+| 模型 | 原actor原方程 | 完整分辨／交付资格 |
+| --- | --- | --- |
+| Z2/p7/828，160hex/46076行 | true1.92427e-11 | 532→828增量FAIL；新独立VERIFY未运行 |
+| Z2/p6/828，160hex/33660行 | true1.18713e-11 | 532→828增量PASS；新独立VERIFY未运行 |
+| Z2/p7/1188，160hex/46436行 | true1.92314e-11 | 828→1188增量PASS；新独立VERIFY未运行 |
+
+全部存在有限exact直接因子，非生产factor-free；同828跨p FAIL，NN训练0/NN20未资格。成本/峰与hash见[专题](task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md)。历史原文保留。
+
 ## Task042 V53：相位 hp 完整解与前向准确性
 
 结论 `HP_ACCURACY_NOT_CLOSED`；本轮无NN训练，完整方程与场增量分别验收。

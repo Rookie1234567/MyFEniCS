@@ -1,0 +1,91 @@
+{
+  "old": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/hp_accuracy_checks_v53.json",
+    "sha256": "18c42108cab9acf8dbb402831f8b60af64d60a3a69509bc32fceda067207e17e",
+    "pair": "P_B",
+    "reference": "B_p7_532",
+    "fields": {
+      "E_total": {
+        "difference_L2": 0.030976486569472984,
+        "reference_L2": 6.243052596481733,
+        "relative": 0.004961753259443907,
+        "incident_scaled": 0.005211312303561503
+      },
+      "H_total": {
+        "difference_L2": 0.0309476130206622,
+        "reference_L2": 6.242484646445893,
+        "relative": 0.004957579357168618,
+        "incident_scaled": 0.005206821626492134
+      },
+      "curl_total": {
+        "difference_L2": 0.27778512489100626,
+        "reference_L2": 56.032411158347124,
+        "relative": 0.004957579357168619,
+        "incident_scaled": 0.005206821626492133
+      },
+      "E_scattered": {
+        "difference_L2": 0.030976486569472984,
+        "reference_L2": 0.897966735523589,
+        "relative": 0.034496251747467156,
+        "incident_scaled": 0.005211312303561503
+      },
+      "H_scattered": {
+        "difference_L2": 0.0309476130206622,
+        "reference_L2": 0.8978720055673481,
+        "relative": 0.03446773351743715,
+        "incident_scaled": 0.005206821626492134
+      },
+      "curl_scattered": {
+        "difference_L2": 0.27778512489100626,
+        "reference_L2": 8.059280275869472,
+        "relative": 0.03446773351743714,
+        "incident_scaled": 0.005206821626492133
+      }
+    }
+  },
+  "new": {
+    "path": "benchmarks/artifacts/task042/v54/comparisons/R7_R6.json",
+    "sha256": "0f924b126f8b8613eedc244d0bde1a5cc786cbae9000c0ec3c6d55221968483d",
+    "pair": "R7_R6",
+    "reference": "R6_p6_828",
+    "fields": {
+      "E_total": {
+        "difference_L2": 0.030610477422207384,
+        "reference_L2": 6.242917424279674,
+        "relative": 0.004903232790355113,
+        "incident_scaled": 0.005149736954527537
+      },
+      "H_total": {
+        "difference_L2": 0.03058114079868528,
+        "reference_L2": 6.242349670003367,
+        "relative": 0.00489897913691669,
+        "incident_scaled": 0.00514516402822683
+      },
+      "curl_total": {
+        "difference_L2": 0.2744956779186995,
+        "reference_L2": 56.03119961263212,
+        "relative": 0.004898979136916694,
+        "incident_scaled": 0.005145164028226833
+      },
+      "E_scattered": {
+        "difference_L2": 0.030610477422207384,
+        "reference_L2": 0.8968016824548749,
+        "relative": 0.034132939334385826,
+        "incident_scaled": 0.005149736954527537
+      },
+      "H_scattered": {
+        "difference_L2": 0.03058114079868528,
+        "reference_L2": 0.8967079604856655,
+        "relative": 0.03410379091775013,
+        "incident_scaled": 0.00514516402822683
+      },
+      "curl_scattered": {
+        "difference_L2": 0.2744956779186995,
+        "reference_L2": 8.048831831649293,
+        "relative": 0.034103790917750156,
+        "incident_scaled": 0.005145164028226833
+      }
+    }
+  },
+  "interpretation": "Preserve original different reference norms. Absolute L2 and analytic-incident scales alone allow direct descriptive comparison; no Gate rescaling."
+}

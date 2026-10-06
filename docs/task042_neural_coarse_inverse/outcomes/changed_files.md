@@ -1,3 +1,7 @@
+## V54 变更
+
+新增薄V54 scope/one-run队列、完整p6→p7诊断、窄raw只读provider及显式532/828/1188库存；复用原相位/凝聚/监督，不改变原物理/精度/普通默认。新增独立保存数组checker与相关targeted测试、compact结果和本批导航。[依赖组](records/dependency_groups_v54.json)区分研究数值核、runner、checker、docs及do-not-merge；未授merge许可。
+
 ## Task042 V53：相位 hp 完整解与前向准确性
 
 结论 `HP_ACCURACY_NOT_CLOSED`；本轮无NN训练，完整方程与场增量分别验收。

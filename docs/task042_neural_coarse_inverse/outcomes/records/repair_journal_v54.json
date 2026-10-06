@@ -1,0 +1,69 @@
+{
+  "repairs": [
+    {
+      "root": "Basix public wrapper versus native C++ element",
+      "failed_source": "112cf7b6672b4600cdbb2a7bb57cebe7dd399fff",
+      "evidence": "results/task042/task042_v54_p_order_consistency_20261006T081020430092Z/supervision/worker.log",
+      "sha256": "960ad955734edc9673d536c588aabd58200c2f4daf267bbad8c5c6ed022b1eaa",
+      "minimal_fix": "wrap native element for public interpolation operator",
+      "replay": "affected D; no factor or solve had run",
+      "fixed_source": "d011934de5aaa27375882e647332acf7ca74f12a"
+    },
+    {
+      "root": "operation scale and exact closed residual interpretation",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v54/task042_v54_p_order_consistency_20261006T081232627765Z/result.json",
+        "sha256": "c424441a64aa255c10184f9453d2f467b3efe7ca6a84d69a3fed5bb975b409c2"
+      },
+      "failed_source": "d011934de5aaa27375882e647332acf7ca74f12a",
+      "minimal_fix": "D only adds curl/mass/DtN scale to saved directions; mode identity uses closed old port rather than imperfect auxiliary; no original equation change",
+      "replay": "D bounded component supplement only; no raw class or solve replay",
+      "fixed_source": "65484196065491b4714068b7472aa34f815ae299"
+    },
+    {
+      "root": "1188 complete carrier incorrectly rejected by legacy inventory guard",
+      "evidence": {
+        "root_cause": "fixed finite carrier inventory guard omitted conditional1188",
+        "failed_run": "task042_v54_notch_z2_p7_m1188_20261006T101829831949Z",
+        "failure_source": "65484196065491b4714068b7472aa34f815ae299",
+        "failure_supervised_seconds": 637.5992656929884,
+        "evidence_preserved": true,
+        "complete_solve_returned": false,
+        "numeric_factor_built": false,
+        "repair_source": "20bcd089",
+        "repair": [
+          "explicit1188 guard and early count check",
+          "V54 atomic per-q carrier before derived pairing",
+          "real carrier_pair1188 target and negative inventory fixtures"
+        ],
+        "replay": "same C inventory physical zero initial; old remaining allowance includes failure; no D/R7/R6 replay",
+        "static_checker_compile_failure": {
+          "message": "f-string: single } is not allowed",
+          "location": "benchmarks/check_phase_p_order_dtn.py:51",
+          "source": "uncommitted working snapshot",
+          "duration_lower_seconds": 0.187200577,
+          "scientific_actions": 0,
+          "repair": "closing delimiter only"
+        }
+      },
+      "fixed_source": "20bcd089ac440372516df4cb122a85e5726426bf",
+      "minimal_fix": "explicit 532/828/1188 inventories and unknown rejection, atomic per-q packet before pairing",
+      "replay": "affected C from no returned solve; original failed 637.5992657 s and all q work retained"
+    },
+    {
+      "root": "final audit metadata and surface cache lifecycle",
+      "fixed_source": "2d44df382caac16ac1022e9756bf278bb716a8e1",
+      "minimal_fix": "actual finite modes, basis properties callback and one retained complete q63 packet within auxiliary memory",
+      "affected_replay": "12 focused tests only; no repeated solve"
+    },
+    {
+      "root": "resource denial classification and saved audit semantics",
+      "fixed_source": "1e08c27b2b5ff3ed69dd1fea86256367309b24e2",
+      "minimal_fix": "saved original q47 volume + saved q63 boundary audit separated from new FE VERIFY; thirteen targeted tests",
+      "actual_full_saved_audit": "not_run: auxiliary CPU/SMT admission denied",
+      "resource_rejection_is_not_bug": true
+    }
+  ],
+  "repair_budget_seconds": 7200,
+  "cost_semantics": "failed/replayed science paid in full charged ledger; editing/classification-only unknown intervals remain in total elapsed, never zero"
+}

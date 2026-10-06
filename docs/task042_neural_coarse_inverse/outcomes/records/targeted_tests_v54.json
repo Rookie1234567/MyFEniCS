@@ -1,0 +1,119 @@
+{
+  "status": "PASSED",
+  "source_sha": "1e08c27b2b5ff3ed69dd1fea86256367309b24e2",
+  "receipt": {
+    "path": "tmp/task042/v54/aux_QUALIFY_source06/tests.json",
+    "sha256": "913820658280249cc8fc4dbe4e5464150dbaff0a910c810090756ce86129d81e"
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_phase_p_order_dtn"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+        "check",
+        "--select",
+        "E9,F63,F7,F82",
+        "src/solvers/phase_p_order_dtn_scope.py",
+        "src/solvers/phase_p_order_dtn.py",
+        "src/solvers/phase_p_order_consistency.py",
+        "src/solvers/phase_raw_tensor_reader.py",
+        "src/solvers/phase_notch_hp.py",
+        "src/solvers/phase_notch_hp_modes.py",
+        "src/solvers/phase_tensor_checkpoint.py",
+        "src/io/phase_notch_hp.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "src/test/test_phase_p_order_dtn.py",
+        "benchmarks/collect_phase_p_order_dtn.py",
+        "benchmarks/check_phase_p_order_dtn.py",
+        "src/solvers/scattering_accuracy_boundary.py",
+        "src/solvers/phase_explicit_accuracy.py",
+        "benchmarks/collect_phase_notch_hp.py",
+        "benchmarks/collect_phase_explicit_accuracy.py"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v54_notch_z2_p6_m828.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v54_notch_z2_p7_m1188.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v54_notch_z2_p7_m828.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v54_p_order_component_scale.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v54_p_order_consistency.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v54_verify_cost.dat",
+        "--validate-only"
+      ],
+      "returncode": 0
+    }
+  ],
+  "ABI": {
+    "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "scalar": "<class 'numpy.complex128'>",
+    "integer": "<class 'numpy.int64'>",
+    "paths": {
+      "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+      "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+    }
+  },
+  "unittest_stderr": {
+    "path": "tmp/task042/v54/aux_QUALIFY_source06/command0.stderr",
+    "sha256": "9407975638a8f4d8ca2292a882ba0b12d88df592ed858b3e7d33df87c85c864e"
+  },
+  "test_count": 13,
+  "full_repository_pytest": "not_run per V52 targeted scope",
+  "CI": "not_claimed"
+}

@@ -1,0 +1,66 @@
+{
+  "merge_approved": false,
+  "production_numerical_core": {
+    "status": "not_promoted",
+    "reason": "有限authority新场满足原式不等于完整p/h/m准确性或目标规模生产资格；普通默认保持。"
+  },
+  "research_numerical_core": {
+    "paths": [
+      "src/solvers/phase_raw_tensor_reader.py",
+      "src/solvers/phase_p_order_consistency.py",
+      "src/solvers/phase_p_order_dtn.py",
+      "src/solvers/phase_p_order_dtn_scope.py"
+    ],
+    "dependencies": [
+      "src/solvers/phase_notch_hp.py",
+      "src/solvers/phase_notch_hp_modes.py",
+      "src/solvers/phase_tensor_checkpoint.py",
+      "src/solvers/phase_hp_completion.py",
+      "src/solvers/phase_explicit_accuracy.py"
+    ],
+    "numerical_behavior": "显式V54 opt-in有限模式库存与raw只读准备复用；p桥接为有界诊断，不用作PC或重写生产方程。",
+    "tests": "source1e08c27b相关13测试与真实D/R7/R6/C；最后新FE VERIFY NOT_RUN资源门",
+    "suggested_order": 1
+  },
+  "reusable_runner_watchdog": {
+    "paths": [
+      "src/runners/port_preparation.py",
+      "scripts/run_case.py",
+      "src/io/phase_notch_hp.py"
+    ],
+    "numerical_behavior": "仅注册V54 one-run及显式32/40/48GiB预算，复用整树监督；不新增裸runner。",
+    "tests": "实际dat validate、resolved/launcher/factor预算与closed隔离targeted回归",
+    "suggested_order": 2
+  },
+  "checker_benchmark": {
+    "paths": [
+      "benchmarks/qualify_phase_p_order_dtn.py",
+      "benchmarks/collect_phase_p_order_dtn.py",
+      "benchmarks/check_phase_p_order_dtn.py",
+      "src/test/test_phase_p_order_dtn.py"
+    ],
+    "numerical_behavior": "只读已保存数组重算结论，无新求解；拒绝库存缺项、错作用项和共享残差offset。",
+    "tests": "最终定点测试、Ruff、compile、真实冻结数组独立消费",
+    "suggested_order": 3
+  },
+  "compact_evidence_docs": {
+    "paths": [
+      "docs/task042_neural_coarse_inverse/response_v54.md",
+      "docs/task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md",
+      "docs/task042_neural_coarse_inverse/outcomes/records/*_v54.json"
+    ],
+    "dependencies": [
+      "原review_report_v52.md与只读父SHA",
+      "ignored V54原始数据及最终manifest"
+    ],
+    "tests": "一次最终字节文档合同与表格/链接检查；GitHub视觉NOT_VERIFIED",
+    "suggested_order": 4
+  },
+  "do_not_merge": [
+    "ignored大数组/矩阵/因子/FFCx缓存",
+    "未资格化研究路径作为普通默认",
+    "旧失败的重写",
+    "dot或隔壁分支实验"
+  ],
+  "note": "研究依赖组最终记录；没有merge许可，未资格路径不进入普通默认。"
+}

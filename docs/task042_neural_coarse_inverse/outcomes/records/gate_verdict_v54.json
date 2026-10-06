@@ -1,0 +1,18 @@
+{
+  "actor_measured_verdict": "P_SENSITIVITY_PERSISTS",
+  "same_p_modes": {
+    "p6_532_to828": "PASS",
+    "p7_532_to828": "FAIL",
+    "p7_828_to1188": "PASS"
+  },
+  "cross_p_828": "FAIL",
+  "old_p6_532_h": "PASS_REUSED_NOT_INHERITED",
+  "complete_p_h_M_anchor": false,
+  "actor_original_equations": 3,
+  "independent_final_VERIFICATION": "NOT_RUN_RESOURCE_GATE",
+  "new_parent_fields_not_corrected_to_reference": true,
+  "phase_or_normalization_fitting": false,
+  "NN_training": 0,
+  "NN20": false,
+  "target_qualified": false
+}

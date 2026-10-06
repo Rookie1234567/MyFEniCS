@@ -1,0 +1,575 @@
+{
+  "routes": [
+    {
+      "role": "D",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_p_order_consistency_20261006T081020430092Z/events.jsonl",
+        "sha256": "5864b9a53f1564a549696c1c8545dd3114ced9649a77c4d61bfef4b2abe0d169"
+      },
+      "release_events": [
+        {
+          "event": "saved_p7_full_Ckappa_direct_cached_pair_begin",
+          "elapsed_s": 6.995995846809819,
+          "RSS_bytes": 408530944,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:10:45.922414+00:00",
+            "observed_monotonic": 1199240.783281161,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 737.9224143028259,
+            "heavy_remaining_seconds": 21762.077585697174,
+            "total_remaining_seconds": 24462.077585697174
+          }
+        },
+        {
+          "event": "saved_p7_full_Ckappa_direct_cached_pair_end",
+          "elapsed_s": 8.250897691817954,
+          "RSS_bytes": 561156096,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:10:47.177337+00:00",
+            "observed_monotonic": 1199242.038204003,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 739.1773371696472,
+            "heavy_remaining_seconds": 21760.822662830353,
+            "total_remaining_seconds": 24460.822662830353
+          },
+          "seconds": 1.2546764819417149
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "D",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_p_order_consistency_20261006T081232627765Z/events.jsonl",
+        "sha256": "788c1328e87444aa08e888b596a2120ab6153d170538024896a4960e1ba40208"
+      },
+      "release_events": [
+        {
+          "event": "saved_p7_full_Ckappa_direct_cached_pair_begin",
+          "elapsed_s": 14.662972649093717,
+          "RSS_bytes": 408498176,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:13:05.705450+00:00",
+            "observed_monotonic": 1199380.566317074,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 877.705450296402,
+            "heavy_remaining_seconds": 21622.294549703598,
+            "total_remaining_seconds": 24322.294549703598
+          }
+        },
+        {
+          "event": "saved_p7_full_Ckappa_direct_cached_pair_end",
+          "elapsed_s": 16.0264386550989,
+          "RSS_bytes": 561123328,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:13:07.068936+00:00",
+            "observed_monotonic": 1199381.929802577,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 879.0689358711243,
+            "heavy_remaining_seconds": 21620.931064128876,
+            "total_remaining_seconds": 24320.931064128876
+          },
+          "seconds": 1.366250179009512
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "D",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_p_order_component_scale_20261006T082900029553Z/events.jsonl",
+        "sha256": "76597e07106f741c992859d2340ab6e5d5e5f60b36f2fe9ab2a34840307003f5"
+      },
+      "release_events": [
+        {
+          "event": "saved_embedding_component_scale_COMPLEX_0_begin",
+          "elapsed_s": 89.72111200494692,
+          "RSS_bytes": 1847353344,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:30:47.691010+00:00",
+            "observed_monotonic": 1200442.551876289,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 1939.6910095214844,
+            "heavy_remaining_seconds": 20560.308990478516,
+            "total_remaining_seconds": 23260.308990478516
+          }
+        },
+        {
+          "event": "saved_embedding_component_scale_COMPLEX_0_end",
+          "elapsed_s": 110.49692992982455,
+          "RSS_bytes": 2060759040,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:31:08.466853+00:00",
+            "observed_monotonic": 1200463.327720157,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 1960.4668533802032,
+            "heavy_remaining_seconds": 20539.533146619797,
+            "total_remaining_seconds": 23239.533146619797
+          },
+          "seconds": 20.77572220005095
+        },
+        {
+          "event": "saved_embedding_component_scale_COMPLEX_1_begin",
+          "elapsed_s": 110.57759585394524,
+          "RSS_bytes": 2060759040,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:31:08.547497+00:00",
+            "observed_monotonic": 1200463.408364002,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 1960.5474972724915,
+            "heavy_remaining_seconds": 20539.45250272751,
+            "total_remaining_seconds": 23239.45250272751
+          }
+        },
+        {
+          "event": "saved_embedding_component_scale_COMPLEX_1_end",
+          "elapsed_s": 131.53963680379093,
+          "RSS_bytes": 2070654976,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:31:29.509513+00:00",
+            "observed_monotonic": 1200484.37037979,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 1981.5095129013062,
+            "heavy_remaining_seconds": 20518.490487098694,
+            "total_remaining_seconds": 23218.490487098694
+          },
+          "seconds": 20.962020723847672
+        },
+        {
+          "event": "saved_embedding_component_scale_SAVED_P_begin",
+          "elapsed_s": 131.69900204986334,
+          "RSS_bytes": 2070654976,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:31:29.668908+00:00",
+            "observed_monotonic": 1200484.529774648,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 1981.6689081192017,
+            "heavy_remaining_seconds": 20518.3310918808,
+            "total_remaining_seconds": 23218.3310918808
+          }
+        },
+        {
+          "event": "saved_embedding_component_scale_SAVED_P_end",
+          "elapsed_s": 152.76001180289313,
+          "RSS_bytes": 2072424448,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:31:50.729927+00:00",
+            "observed_monotonic": 1200505.590793728,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2002.7299268245697,
+            "heavy_remaining_seconds": 20497.27007317543,
+            "total_remaining_seconds": 23197.27007317543
+          },
+          "seconds": 21.06098073394969
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "R7",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_notch_z2_p7_m828_20261006T083249322552Z/events.jsonl",
+        "sha256": "63dc02e1445595e0154bf694c69df5e7730abb063ed4e3a6a37c6107c893b8af"
+      },
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 901.1351992681157,
+          "RSS_bytes": 12671741952,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:48:08.196693+00:00",
+            "observed_monotonic": 1201483.057560038,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2980.1966931819916,
+            "heavy_remaining_seconds": 19519.80330681801,
+            "total_remaining_seconds": 22219.80330681801
+          },
+          "sha256": "9384193bffad8668226fab87a9a6c1d889923ae7b5f23d56ae1e4f95e210a560"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 940.1330479490571,
+          "RSS_bytes": 6938615808,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:48:47.194526+00:00",
+            "observed_monotonic": 1201522.055393161,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 3019.1945264339447,
+            "heavy_remaining_seconds": 19480.805473566055,
+            "total_remaining_seconds": 22180.805473566055
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 940.5979734759312,
+          "RSS_bytes": 5497507840,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T08:48:47.659467+00:00",
+            "observed_monotonic": 1201522.520334022,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 3019.6594672203064,
+            "heavy_remaining_seconds": 19480.340532779694,
+            "total_remaining_seconds": 22180.340532779694
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "R6",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_notch_z2_p6_m828_20261006T085359294096Z/events.jsonl",
+        "sha256": "cb595496a622b4c8f9d691c132f42cf3a3da5313bb57fd638c7a090656f72772"
+      },
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 4327.288606509101,
+          "RSS_bytes": 6579818496,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T10:06:24.571941+00:00",
+            "observed_monotonic": 1206179.432807542,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 7676.571940660477,
+            "heavy_remaining_seconds": 14823.428059339523,
+            "total_remaining_seconds": 17523.428059339523
+          },
+          "sha256": "4040507772d208ce6793d34c769e85b16d813aae99a3ecafdfafcd8f5b2cb68d"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 4366.114645214984,
+          "RSS_bytes": 3546685440,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T10:07:03.398078+00:00",
+            "observed_monotonic": 1206218.258944716,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 7715.398077964783,
+            "heavy_remaining_seconds": 14784.601922035217,
+            "total_remaining_seconds": 17484.601922035217
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 4366.577467777999,
+          "RSS_bytes": 2719985664,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T10:07:03.860798+00:00",
+            "observed_monotonic": 1206218.721664722,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 7715.86079788208,
+            "heavy_remaining_seconds": 14784.13920211792,
+            "total_remaining_seconds": 17484.13920211792
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "C",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_notch_z2_p7_m1188_20261006T101829831949Z/events.jsonl",
+        "sha256": "91f3bb736b2c6cf5fd4641478e34cf213af989e5f88676fb3c5a9bdaa7736920"
+      },
+      "release_events": [],
+      "live_object_payload_not_RSS": true
+    },
+    {
+      "role": "C",
+      "events": {
+        "path": "benchmarks/artifacts/task042/v54/task042_v54_notch_z2_p7_m1188_20261006T103753855100Z/events.jsonl",
+        "sha256": "701d92a489904a4a5ee02b138457c4faa026b5585e50aa76218fe3f22c2ef91a"
+      },
+      "release_events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 1999.963592407992,
+          "RSS_bytes": 13737168896,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T11:11:32.676421+00:00",
+            "observed_monotonic": 1210087.537287492,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 11584.67642068863,
+            "heavy_remaining_seconds": 10915.32357931137,
+            "total_remaining_seconds": 13615.32357931137
+          },
+          "sha256": "d389255430ddb53c1b933676574ee90398536d8b303cffba85c363f1cc9c7909"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 2090.3148320049513,
+          "RSS_bytes": 7002222592,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T11:13:03.027565+00:00",
+            "observed_monotonic": 1210177.88843241,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 11675.027565479279,
+            "heavy_remaining_seconds": 10824.972434520721,
+            "total_remaining_seconds": 13524.972434520721
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 2090.547357220901,
+          "RSS_bytes": 5440544768,
+          "clock": {
+            "start_utc": "2026-10-06T07:58:28+00:00",
+            "start_monotonic": 1198502.8608781009,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+            "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+            "closed": false,
+            "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+            "first_work_start_never_refreshed": true,
+            "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+            "observed_utc": "2026-10-06T11:13:03.260051+00:00",
+            "observed_monotonic": 1210178.120918121,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 11675.260051488876,
+            "heavy_remaining_seconds": 10824.739948511124,
+            "total_remaining_seconds": 13524.739948511124
+          }
+        }
+      ],
+      "live_object_payload_not_RSS": true
+    }
+  ]
+}

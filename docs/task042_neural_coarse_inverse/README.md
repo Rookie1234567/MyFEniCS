@@ -1,3 +1,7 @@
+## 当前结果：V54_P_ORDER_AND_DTN_SEPARATION
+
+[Response V54](response_v54.md) · [专题结果](outcomes/p_order_dtn_separation_v54.md) · [完整费用](outcomes/records/resource_costs_final_v54.json)。三新解；p6模式增量与p7相邻828→1188通过，828跨p scattered E约3.413%未过1e-4。最后VERIFY/checker CPU门拒绝，完整交付审核未通过；NN训练0，原尺寸未资格。历史完整保留。
+
 ## Task042 V53：相位 hp 完整解与前向准确性
 
 结论 `HP_ACCURACY_NOT_CLOSED`；本轮无NN训练，完整方程与场增量分别验收。

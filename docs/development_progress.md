@@ -1,3 +1,7 @@
+## Task042 V54：p／DtN分离的完整有限解
+
+三份新0.7nm NOTCH完整有限方程解完成；p6模式增量、p7的828→1188通过，但同828跨p散射场约3.41%未过1e-4。原actor残差约1e-11，最后独立VERIFY/checker CPU准入拒绝，资格未闭合。raw准备严格复用，失败与完整费用保留，无NN训练/收益。[Response V54](task042_neural_coarse_inverse/response_v54.md)。不授原尺寸/2TB48h/NN20。
+
 ## Task042 V53：相位 hp 完整解与前向准确性
 
 结论 `HP_ACCURACY_NOT_CLOSED`；本轮无NN训练，完整方程与场增量分别验收。
