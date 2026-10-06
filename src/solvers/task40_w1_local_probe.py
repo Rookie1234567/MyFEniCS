@@ -18,6 +18,239 @@ from .common_3d_forms import _build_physical_volume_terms
 from .task40_w1_moment_reference import legendre_exponential_moments
 
 
+def _local_norm(values: np.ndarray) -> float:
+    magnitude = np.abs(np.asarray(values))
+    return float(np.sqrt(np.sum(magnitude * magnitude, dtype=np.longdouble)))
+
+
+def _local_residual(
+    matrix: np.ndarray, solution: np.ndarray, rhs: np.ndarray
+) -> tuple[np.ndarray, float, str]:
+    if np.finfo(np.longdouble).eps < np.finfo(np.float64).eps:
+        wide = np.clongdouble
+        matrix_wide = np.asarray(matrix, dtype=wide)
+        solution_wide = np.asarray(solution, dtype=wide)
+        rhs_wide = np.asarray(rhs, dtype=wide)
+        product = matrix_wide @ solution_wide
+        residual = rhs_wide - product
+        method = "numpy.clongdouble raw-matrix product"
+    else:
+        product = matrix @ solution
+        residual = rhs - product
+        method = "complex128 raw-matrix product"
+    scale = max(_local_norm(product), _local_norm(rhs), np.finfo(float).tiny)
+    residual_rel = _local_norm(residual) / scale
+    if not np.isfinite(residual).all() or not np.isfinite(residual_rel):
+        raise FloatingPointError("local raw-matrix residual became non-finite")
+    return residual, residual_rel, method
+
+
+def solve_local_rhs(
+    raw_matrix: np.ndarray,
+    factor: Any,
+    rhs: np.ndarray,
+    *,
+    max_corrections: int = 3,
+    reference_solution: np.ndarray | None = None,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Solve a bounded local block with its existing LU and residual corrections.
+
+    The raw complex128 matrix is retained for residual evaluation.  The supplied
+    factor is reused for the initial solve and every correction; this helper
+    never factors or overwrites the matrix.
+    """
+    from scipy.linalg import lu_solve
+
+    matrix = np.asarray(raw_matrix, dtype=np.complex128)
+    right_hand_side = np.asarray(rhs, dtype=np.complex128)
+    if (
+        matrix.ndim != 2
+        or matrix.shape[0] != matrix.shape[1]
+        or right_hand_side.ndim not in (1, 2)
+        or right_hand_side.shape[0] != matrix.shape[0]
+    ):
+        raise ValueError("local solve requires a square matrix and a vector or block RHS")
+    if not 0 <= max_corrections <= 3:
+        raise ValueError("local solve correction budget must be between zero and three")
+    if not np.isfinite(matrix).all() or not np.isfinite(right_hand_side).all():
+        raise ValueError("local solve matrix and RHS must be finite")
+    reference = None if reference_solution is None else np.asarray(
+        reference_solution, dtype=np.complex128
+    )
+    if reference is not None and reference.shape != right_hand_side.shape:
+        raise ValueError("local solve reference solution shape differs from RHS")
+    if reference is not None and not np.isfinite(reference).all():
+        raise ValueError("local solve reference solution must be finite")
+
+    solution = np.asarray(lu_solve(factor, right_hand_side), dtype=np.complex128)
+    initial_solution = solution.copy()
+    lu_solve_call_count = 1
+    if not np.isfinite(solution).all():
+        raise FloatingPointError("initial local LU solution became non-finite")
+    residual, residual_rel, residual_method = _local_residual(
+        matrix, solution, right_hand_side
+    )
+    history = [residual_rel]
+    attempts: list[dict[str, Any]] = []
+    stop_reason = "zero_residual" if not np.any(residual) else "max_corrections"
+    for iteration in range(1, max_corrections + 1):
+        if not np.any(residual):
+            stop_reason = "zero_residual"
+            break
+        correction = np.asarray(
+            lu_solve(factor, np.asarray(residual, dtype=np.complex128)),
+            dtype=np.complex128,
+        )
+        lu_solve_call_count += 1
+        if not np.isfinite(correction).all():
+            raise FloatingPointError("local residual correction became non-finite")
+        candidate = solution + correction
+        if not np.isfinite(candidate).all():
+            raise FloatingPointError("corrected local solution became non-finite")
+        candidate_residual, candidate_rel, _ = _local_residual(
+            matrix, candidate, right_hand_side
+        )
+        accepted = bool(np.isfinite(candidate_rel) and candidate_rel < residual_rel)
+        attempt: dict[str, Any] = {
+            "iteration": iteration,
+            "relative_residual_before": float(residual_rel),
+            "relative_residual_after": float(candidate_rel),
+            "relative_solution_update": float(
+                _local_norm(correction)
+                / max(_local_norm(candidate), np.finfo(float).tiny)
+            ),
+            "accepted": accepted,
+        }
+        if reference is not None:
+            attempt["forward_relative_after"] = float(
+                _local_norm(candidate - reference)
+                / max(_local_norm(reference), np.finfo(float).tiny)
+            )
+        attempts.append(attempt)
+        if not accepted:
+            stop_reason = "residual_stagnation"
+            break
+        solution = candidate
+        residual = candidate_residual
+        residual_rel = candidate_rel
+        history.append(float(residual_rel))
+    final_forward_rel = None
+    initial_forward_rel = None
+    if reference is not None:
+        initial_forward_rel = float(
+            _local_norm(initial_solution - reference)
+            / max(_local_norm(reference), np.finfo(float).tiny)
+        )
+        final_forward_rel = float(
+            _local_norm(solution - reference)
+            / max(_local_norm(reference), np.finfo(float).tiny)
+        )
+    wide_accumulator = residual_method.startswith("numpy.clongdouble")
+    real_precision = np.finfo(np.longdouble if wide_accumulator else np.float64)
+    return solution, {
+        "factor_reused": True,
+        "refactor_count": 0,
+        "lu_solve_call_count": lu_solve_call_count,
+        "residual_accumulator": residual_method,
+        "residual_accumulator_receipt": {
+            "dtype": np.dtype(
+                np.clongdouble if wide_accumulator else np.complex128
+            ).name,
+            "itemsize_bytes": int(
+                np.dtype(np.clongdouble if wide_accumulator else np.complex128).itemsize
+            ),
+            "real_epsilon": float(real_precision.eps),
+            "real_mantissa_bits": int(real_precision.nmant),
+        },
+        "initial_relative_residual": float(history[0]),
+        "relative_residual_history": history,
+        "correction_attempts": attempts,
+        "accepted_corrections": int(sum(item["accepted"] for item in attempts)),
+        "final_relative_residual": float(residual_rel),
+        "stop_reason": stop_reason,
+        "initial_forward_relative": initial_forward_rel,
+        "final_forward_relative": final_forward_rel,
+    }
+
+
+def _local_rhs_roundoff_facts(
+    Vii: np.ndarray,
+    Vit: np.ndarray,
+    xi0: np.ndarray,
+    xt: np.ndarray,
+    Bi_alpha: np.ndarray,
+    fi: np.ndarray,
+    recovery_rhs: np.ndarray,
+) -> dict[str, Any]:
+    if np.finfo(np.longdouble).eps >= np.finfo(np.float64).eps:
+        return {
+            "status": "NOT_AVAILABLE_NO_WIDER_ACCUMULATOR",
+            "residual_accumulator": "complex128",
+        }
+    wide = np.clongdouble
+    Vii_wide = np.asarray(Vii, dtype=wide)
+    Vit_wide = np.asarray(Vit, dtype=wide)
+    xi0_wide = np.asarray(xi0, dtype=wide)
+    xt_wide = np.asarray(xt, dtype=wide)
+    Bi_wide = np.asarray(Bi_alpha, dtype=wide)
+    fi_wide = np.asarray(fi, dtype=wide)
+    recovery_rhs_wide = np.asarray(recovery_rhs, dtype=wide)
+    Axi0_wide = Vii_wide @ xi0_wide
+    Vitxt_wide = Vit_wide @ xt_wide
+    manufactured_wide = Axi0_wide + Vitxt_wide + Bi_wide
+    subtract_wide = fi_wide - Vitxt_wide - Bi_wide
+    manufacture_scale = max(
+        _local_norm(Axi0_wide), _local_norm(Vitxt_wide), _local_norm(Bi_wide),
+        _local_norm(fi_wide), np.finfo(float).tiny,
+    )
+    subtract_scale = max(
+        _local_norm(subtract_wide), _local_norm(Axi0_wide), np.finfo(float).tiny
+    )
+    ideal_scale = max(_local_norm(Axi0_wide), np.finfo(float).tiny)
+    return {
+        "status": "MEASURED",
+        "residual_accumulator": "numpy.clongdouble raw products; complex128 inputs",
+        "residual_accumulator_receipt": {
+            "dtype": np.dtype(np.clongdouble).name,
+            "itemsize_bytes": int(np.dtype(np.clongdouble).itemsize),
+            "real_epsilon": float(np.finfo(np.longdouble).eps),
+            "real_mantissa_bits": int(np.finfo(np.longdouble).nmant),
+        },
+        "manufacture_roundoff_relative": float(
+            _local_norm(fi_wide - manufactured_wide) / manufacture_scale
+        ),
+        "recovery_rhs_subtraction_roundoff_relative": float(
+            _local_norm(recovery_rhs_wide - subtract_wide) / subtract_scale
+        ),
+        "recovery_rhs_vs_Vii_xi0_relative": float(
+            _local_norm(recovery_rhs_wide - Axi0_wide) / ideal_scale
+        ),
+    }
+
+
+def _local_condition_1_estimate(
+    raw_matrix: np.ndarray, factor: Any
+) -> float | None:
+    from scipy.linalg.lapack import get_lapack_funcs
+
+    lu = factor[0] if isinstance(factor, tuple) else factor
+    gecon = get_lapack_funcs("gecon", (raw_matrix,))
+    reciprocal_condition, info = gecon(
+        lu, float(np.linalg.norm(raw_matrix, ord=1)), norm="1"
+    )
+    if info != 0 or reciprocal_condition <= 0 or not np.isfinite(reciprocal_condition):
+        return None
+    return float(1.0 / reciprocal_condition)
+
+
+def _local_entry_scale_spread(matrix: np.ndarray, axis: int) -> float | None:
+    maxima = np.max(np.abs(matrix), axis=axis)
+    nonzero = maxima[maxima > 0]
+    if not len(nonzero):
+        return None
+    return float(np.max(nonzero) / np.min(nonzero))
+
+
 def _local_tensor(
     degree: int,
     bounds: tuple[tuple[float, float], tuple[float, float], tuple[float, float]],
@@ -610,15 +843,34 @@ def stream_boundary_correction(
             f"tiny_nonzero_D={analytic_D_tiny_interior_nonzero}"
         )
 
-    from scipy.linalg import lu_solve
-
     # Manufacture compatible loads from one known nonzero native state.
     # This makes the full interior/trace/port residuals meaningful gates.
     fi = Vii @ xi0 + Vit @ xt + Bi_alpha
-    solve_b_alpha = lu_solve(local["factor"], Bi_alpha)
-    solve_fi = lu_solve(local["factor"], fi)
-    xi = lu_solve(local["factor"], fi - Vit @ xt - Bi_alpha)
-    solve_vit_trace = lu_solve(local["factor"], Vit @ xt)
+    vit_trace_rhs = Vit @ xt
+    recovery_rhs = fi - vit_trace_rhs - Bi_alpha
+    solve_b_alpha, solve_b_alpha_facts = solve_local_rhs(
+        Vii, local["factor"], Bi_alpha
+    )
+    solve_fi, solve_fi_facts = solve_local_rhs(Vii, local["factor"], fi)
+    xi, solve_recovery_facts = solve_local_rhs(
+        Vii,
+        local["factor"],
+        recovery_rhs,
+        reference_solution=xi0,
+    )
+    solve_vit_trace, solve_vit_trace_facts = solve_local_rhs(
+        Vii, local["factor"], vit_trace_rhs
+    )
+    solve_vit, solve_vit_facts = solve_local_rhs(Vii, local["factor"], Vit)
+    recovery_rhs_facts = _local_rhs_roundoff_facts(
+        Vii, Vit, xi0, xt, Bi_alpha, fi, recovery_rhs
+    )
+    condition_1_estimate = _local_condition_1_estimate(Vii, local["factor"])
+    local_scale_facts = {
+        "row_abs_max_spread": _local_entry_scale_spread(Vii, axis=1),
+        "column_abs_max_spread": _local_entry_scale_spread(Vii, axis=0),
+        "row_column_scaling_applied": False,
+    }
     qhat_alpha = alpha.copy()  # original Hp is the implicit identity
     affine_internal_rhs = np.zeros(nmode, dtype=np.complex128)
     rhs_p = np.zeros(nmode, dtype=np.complex128)
@@ -654,7 +906,7 @@ def stream_boundary_correction(
     affine_internal_rhs = rhs_p + Di_solve_f
     port_lhs = alpha - rhs_p - Di_xi - Dt_trace
     ft = Vti @ xi0 + Vtt @ xt + Bt_alpha
-    S_V = Vtt - Vti @ lu_solve(local["factor"], Vit)
+    S_V = Vtt - Vti @ solve_vit
     Bhat_alpha = Bt_alpha - Vti @ solve_b_alpha
     original_trace_lhs = Vti @ xi + Vtt @ xt + Bt_alpha - ft
     reduced_trace_lhs = S_V @ xt + Bhat_alpha - (ft - Vti @ solve_fi)
@@ -856,6 +1108,19 @@ def stream_boundary_correction(
         "local_port_equation_relative": original_port_residual_rel,
         "local_reduced_port_equation_relative": reduced_port_residual_rel,
         "local_port_elimination_identity_relative": port_residual_rel,
+        "local_recovery_numerics": {
+            "factor_scope": "existing one-cell Vii LU reused; no refactor in solve helper",
+            "factor_condition_1_estimate": condition_1_estimate,
+            "local_scale": local_scale_facts,
+            "rhs_roundoff": recovery_rhs_facts,
+            "same_factor_solve_facts": {
+                "Bi_alpha": solve_b_alpha_facts,
+                "fi": solve_fi_facts,
+                "recovery_rhs": solve_recovery_facts,
+                "Vit_xt": solve_vit_trace_facts,
+                "Vit_block": solve_vit_facts,
+            },
+        },
         "original_Hhat_gate": "matrix-free vector actions only; no 32060-square allocation",
         "seconds": float(perf_counter() - began),
         "arrays": {
@@ -867,6 +1132,7 @@ def stream_boundary_correction(
             "port_trace_action": Dt_trace,
             "recovered_interior": xi,
             "interior_rhs": fi,
+            "recovery_solve_rhs": recovery_rhs,
             "port_rhs": rhs_p,
             "mode_alpha": alpha,
             "known_interior_solution": xi0,
