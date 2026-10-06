@@ -36,6 +36,28 @@ class ExactTabulations:
             self.entries[key]=value;self.bytes+=size;self.peak_bytes=max(self.peak_bytes,self.bytes)
         return value
 
+    def polynomial(self,element,ref):
+        """Exact Basix polyset tables, before its fixed nodal basis matrix.
+
+        Contracting the nodal basis matrix with this cell's coefficients first
+        is the same multiplication with a different association. This avoids
+        constructing all dim*3 basis values at every physical point; it is not
+        interpolation or projection into another FE space.
+        """
+        import basix
+        p=np.ascontiguousarray(ref)
+        key=(element,p.dtype.str,p.shape,hashlib.sha256(p.tobytes()).digest(),1,'polyset')
+        if key in self.entries:
+            self.hits+=1;value=self.entries.pop(key);self.entries[key]=value;return value[0]
+        self.misses+=1
+        tab=basix.polynomials.tabulate_polynomial_set(element.cell_type,element.polyset_type,element.embedded_superdegree,1,p)
+        size=tab.nbytes
+        if size<=self.limit_bytes:
+            while self.bytes+size>self.limit_bytes:
+                _,old=self.entries.popitem(last=False);self.bytes-=sum(a.nbytes for a in old)
+            tab.setflags(write=False);self.entries[key]=(tab,);self.bytes+=size;self.peak_bytes=max(self.peak_bytes,self.bytes)
+        return tab
+
     def record(self):
         return dict(hits=self.hits,misses=self.misses,resident_table_bytes=self.bytes,
             peak_resident_table_bytes=self.peak_bytes,limit_bytes=self.limit_bytes,
@@ -47,22 +69,26 @@ class CachedPhaseEvaluator(PhaseEvaluator):
         super().__init__(space,q,kappa)
         self.cache=ExactTabulations() if cache is None else cache
         self.element=space.element.basix_element
+        self.basis_coefficients=self.element.coefficient_matrix
         self.inverse=[np.linalg.inv(J) for J,_,_ in self.geometry]
         self.coefficients={}
 
     def at(self,function,c,points,k0):
         J,o,det=self.geometry[c];inv=self.inverse[c]
-        ref=(points-o)@inv.T;values,curls=self.cache.get(self.element,ref)
+        ref=(points-o)@inv.T;poly=self.cache.polynomial(self.element,ref)
         info=int(self.permutations[c]);dim=self.space.element.space_dimension
         if info not in self.transforms:
             T=np.eye(dim);self.space.element.T_apply(T.ravel(),self.permutations[c:c+1],dim);self.transforms[info]=T
         raw=function.x.array[self.space.dofmap.cell_dofs(c)]
         key=(id(function),c);saved=self.coefficients.get(key)
         if saved is None or not np.array_equal(raw,saved[0]):
-            saved=(raw.copy(),self.transforms[info].T@raw);self.coefficients[key]=saved
-        coef=saved[1]
-        e=np.einsum('qjc,j->qc',values,coef)@inv
-        curl=np.einsum('qjc,j->qc',curls,coef)@J.T/det
+            coef=self.transforms[info].T@raw
+            expansion=(self.basis_coefficients.T@coef).reshape(3,poly.shape[1])
+            saved=(raw.copy(),coef,expansion);self.coefficients[key]=saved
+        reference=np.einsum('dpq,cp->dqc',poly,saved[2])
+        e=reference[0]@inv
+        curls=np.column_stack((reference[2,:,2]-reference[3,:,1],reference[3,:,0]-reference[1,:,2],reference[1,:,1]-reference[2,:,0]))
+        curl=curls@J.T/det
         if len(self.eval_checks)<4:
             witness=np.unique([0,len(points)//2,len(points)-1])
             native=function.eval(points[witness],np.full(len(witness),c,np.int32))

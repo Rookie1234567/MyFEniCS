@@ -67,6 +67,17 @@ class CompletionTests(unittest.TestCase):
         cache.get(e,changed);self.assertEqual(cache.hits,1);self.assertEqual(cache.misses,2)
         cache.get(Element(),p);self.assertEqual(cache.misses,3);self.assertLessEqual(cache.bytes,400)
 
+    def test_p7_full_basis_coefficient_contraction(self):
+        import basix
+        e=basix.create_element(basix.ElementFamily.N1E,basix.CellType.hexahedron,7,basix.LagrangeVariant.legendre)
+        points=np.array([[.13,.41,.73],[.21,.36,.51]])
+        rng=np.random.default_rng(5307);coefficient=rng.normal(size=e.dim)+1j*rng.normal(size=e.dim)
+        poly=ExactTabulations().polynomial(e,points)
+        expanded=(e.coefficient_matrix.T@coefficient).reshape(3,poly.shape[1])
+        actual=np.einsum('dpq,cp->dqc',poly,expanded)
+        original=np.einsum('dqjc,j->dqc',e.tabulate(1,points),coefficient)
+        self.assertLess(np.linalg.norm(actual-original)/np.linalg.norm(original),1e-11)
+
     def test_factor_constructor_uses_declared_limit(self):
         from src.solvers.phase_explicit_accuracy_capacity import AnalyzedDirectFactor
         class J:
