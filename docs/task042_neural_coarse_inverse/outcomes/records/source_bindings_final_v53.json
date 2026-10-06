@@ -1,5 +1,19 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "bc509db93ed905b945bab7cb21a5f6bbaaa23288"
+  "parent": "source_bindings_v53.json",
+  "parent_sha256": "cb592be12ae989720dfd5f8ee9cc4bd09356ae3f736133aa4dc656614c2db9b7",
+  "extra_source_closures": [
+    {
+      "source_sha": "54f9b90e5dc6ca84ded438559a05ecd291491dbd",
+      "manifest": "tmp/task042/v53/aux_post_docs01/run_manifest.json",
+      "manifest_sha256": "5125834bde09d980e60b283c84773d22e6097602e71979dac99b9299760a1799",
+      "verified_file_count": 125
+    }
+  ],
+  "new_distinct_archive_bytes": [],
+  "document_check_source": "54f9b90e5dc6ca84ded438559a05ecd291491dbd",
+  "document_HEAD_not_scientific_source": true,
+  "metadata_helper": {
+    "path": "tmp/task042/v53/edit/finalize.py",
+    "sha256": "5d324b694fa6cfad80765b0ea5ff21e2ae13c144069c843254af7ca11da2eb22"
+  }
 }

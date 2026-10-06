@@ -1,5 +1,8 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "bc509db93ed905b945bab7cb21a5f6bbaaa23288"
+  "closed": true,
+  "active": null,
+  "path": "tmp/task042/v53/ledger.json",
+  "sha256": "5c788effb0790397fcc098f3b4c1d773d5d46fbe3534ac6e99d15bd867766317",
+  "run_count": 16,
+  "reason": "HP_ACCURACY_NOT_CLOSED"
 }

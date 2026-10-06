@@ -360,7 +360,13 @@
     },
     "scientific_actions": 0
   },
-  "final_documentation": "pending once final bytes are committed",
+  "final_documentation": {
+    "source_sha": "54f9b90e5dc6ca84ded438559a05ecd291491dbd",
+    "record": "documentation_checks_v53.json",
+    "test_seconds": 0.24694522889330983,
+    "local_status": "PASSED_LOCAL",
+    "CI": "NOT_RUN"
+  },
   "later_targeted_metadata_only_tests": "recorded independently if a metadata dependency changes",
   "later_modal_all532_record": "modal_power_recalculation_v53.json",
   "scientific_source": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",

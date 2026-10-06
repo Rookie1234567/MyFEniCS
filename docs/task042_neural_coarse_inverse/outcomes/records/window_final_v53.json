@@ -1,5 +1,20 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "bc509db93ed905b945bab7cb21a5f6bbaaa23288"
+  "start_utc": "2026-10-06T00:58:18.734593+00:00",
+  "start_monotonic": 1173293.595494451,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "heavy_limit_seconds": 22500,
+  "total_limit_seconds": 25200,
+  "scientific_loaded_limit_seconds": 18000,
+  "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+  "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+  "closed": true,
+  "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+  "first_work_start_never_refreshed": true,
+  "observed_utc": "2026-10-06T06:07:48.488596+00:00",
+  "observed_monotonic": 1191863.349463548,
+  "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "monotonic_same_boot": true,
+  "elapsed_seconds": 18569.75400352478,
+  "heavy_remaining_seconds": 3930.2459964752197,
+  "total_remaining_seconds": 6630.24599647522
 }

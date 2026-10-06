@@ -1,5 +1,503 @@
 {
-  "status": "PENDING_FINAL_SETTLEMENT",
-  "not_a_pass_claim": true,
-  "review_sha": "bc509db93ed905b945bab7cb21a5f6bbaaa23288"
+  "runs": [
+    {
+      "role": "pre",
+      "source_sha": "b6bc15a0b44cc92ea9afe87d3f6a26900ea128d6",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_pre_01",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 6.7541804779320955,
+      "peak_bytes": 237232128,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 23.481236811960116,
+      "resources": {
+        "sample_count": 8,
+        "actual_max_sample_gap_seconds": 1.0916876690462232,
+        "sampled_tree_peak_bytes": 237232128,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 1,
+      "summary_sha256": "60fa77fe7f3afbe772e6f5cafc3fa50b643de384de10b3e93f14be04bb3bd7f7"
+    },
+    {
+      "role": "pre",
+      "source_sha": "3f909b1642d6ffa74e8eb87b93834672f49c2918",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_pre_02",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 9.419840598944575,
+      "peak_bytes": 225554432,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 26.200406685005873,
+      "resources": {
+        "sample_count": 11,
+        "actual_max_sample_gap_seconds": 1.0882121010217816,
+        "sampled_tree_peak_bytes": 225554432,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 1,
+      "summary_sha256": "a03565cc0b031b2eb6c8d2515f55df3980892ee6751ea78c8e4a2dfef067001f"
+    },
+    {
+      "role": "SETUP",
+      "source_sha": "3f909b1642d6ffa74e8eb87b93834672f49c2918",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v53_capacity_resume_preflight_20261006T011325481070Z",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 9.95380767993629,
+      "peak_bytes": 632180736,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 27.19086939212866,
+      "resources": {
+        "sample_count": 11,
+        "actual_max_sample_gap_seconds": 1.1361198259983212,
+        "sampled_tree_peak_bytes": 632180736,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 1,
+      "summary_sha256": "7ba081c05f62e33a1ed485402b51ef0b682eff4297d22b78ad2b0356055962b5"
+    },
+    {
+      "role": "pre",
+      "source_sha": "8963c539c40e083e8bd767e6bd16aeb4dff8ae0f",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_pre_03",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 17.508261716924608,
+      "peak_bytes": 523591680,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 34.90431368188001,
+      "resources": {
+        "sample_count": 19,
+        "actual_max_sample_gap_seconds": 1.3212063580285758,
+        "sampled_tree_peak_bytes": 523591680,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 6,
+      "summary_sha256": "2016fa2ba65fd96b96ed2c8a13484a9466bfb098c013e87dd567104ac4a19781"
+    },
+    {
+      "role": "pre",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_pre_04",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 13.31227214098908,
+      "peak_bytes": 475123712,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 30.05171028105542,
+      "resources": {
+        "sample_count": 13,
+        "actual_max_sample_gap_seconds": 1.377648748923093,
+        "sampled_tree_peak_bytes": 475123712,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 15,
+      "summary_sha256": "722c8489cd0835aeaf116084515b57dc97a853a022038600ce85275001817ff9"
+    },
+    {
+      "role": "SETUP",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v53_capacity_resume_preflight_20261006T012032492724Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 13.025468057021499,
+      "peak_bytes": 750620672,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 29.7286473819986,
+      "resources": {
+        "sample_count": 12,
+        "actual_max_sample_gap_seconds": 1.4237136230804026,
+        "sampled_tree_peak_bytes": 750620672,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 2,
+      "summary_sha256": "77b9a059b13531207cee0127d498eb7451b1a9eb861be1d3eef3a3db3732f498"
+    },
+    {
+      "role": "A",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v53_notch_z4_p6_20261006T012131753864Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 4526.791782932822,
+      "peak_bytes": 12694609920,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 4543.819512405898,
+      "resources": {
+        "sample_count": 3660,
+        "actual_max_sample_gap_seconds": 1.5427842200733721,
+        "sampled_tree_peak_bytes": 12694609920,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 1,
+      "summary_sha256": "fe26bdaa6b15fee89df5b2f083e0dcc1863734150a102703621df084638a2900"
+    },
+    {
+      "role": "B",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v53_notch_z2_p7_20261006T023753707700Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 10379.576918836916,
+      "peak_bytes": 14436585472,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 10396.572926383,
+      "resources": {
+        "sample_count": 7839,
+        "actual_max_sample_gap_seconds": 1.7612771480344236,
+        "sampled_tree_peak_bytes": 14436585472,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 1,
+      "summary_sha256": "2d468a9d6ca1aeb67858e9aae9afe557e10fa1c1e1da2dcaddb9b6be3107ac54"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v53_verify_cost_20261006T053145242280Z",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 841.582940035034,
+      "peak_bytes": 2355933184,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 858.7763914901298,
+      "resources": {
+        "sample_count": 549,
+        "actual_max_sample_gap_seconds": 1.9730418310500681,
+        "sampled_tree_peak_bytes": 2355933184,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 19,
+      "summary_sha256": "f85a83b9fb603b413ce176b670dc4bf6f28c2e153e1dd6b6265fdc823a9ca6ab"
+    },
+    {
+      "role": "post",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_collect01",
+      "classification": "MONITORING_FAILED",
+      "elapsed_seconds": 32.36474260687828,
+      "peak_bytes": 861560832,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 49.39556280220859,
+      "resources": {
+        "sample_count": 20,
+        "actual_max_sample_gap_seconds": 1.8120238000992686,
+        "sampled_tree_peak_bytes": 861560832,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 6,
+      "summary_sha256": "5752fbcf43c31171bf70c9cb41cd83e707bdef581ef16affa0b33f8d910408c8"
+    },
+    {
+      "role": "post",
+      "source_sha": "3981710a9ae05670a8d62f4c870ddc379c3ce537",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_storage01",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 3.224863807205111,
+      "peak_bytes": 89178112,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 20.600375509122387,
+      "resources": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 1.521895106881857,
+        "sampled_tree_peak_bytes": 89178112,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 29,
+      "summary_sha256": "51c623c81677495e28579f8037161128879d634f2f320981be22fcb1b439605f"
+    },
+    {
+      "role": "post",
+      "source_sha": "da8fc62f488ccf0461e70d57f0337666d20769fd",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_storage03",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 3.230694236001,
+      "peak_bytes": 89100288,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 21.573451980017126,
+      "resources": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 1.5171809990424663,
+        "sampled_tree_peak_bytes": 89100288,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 39,
+      "summary_sha256": "a3bb1ea587cfe71c4a13317288065ffa0b07d7b004fb097c0c5a390efcced505"
+    },
+    {
+      "role": "post",
+      "source_sha": "c583860ee82a8d85aba7a21eb71c33d43050a456",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_storage04",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 3.944843015866354,
+      "peak_bytes": 77254656,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 22.173045783070847,
+      "resources": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 2.0837862039916217,
+        "sampled_tree_peak_bytes": 77254656,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 0,
+      "summary_sha256": "1b29b5658e13617eaa6d59b42264fbe5bd09c9bf2fecd40d0450bd47f4cb253b"
+    },
+    {
+      "role": "post",
+      "source_sha": "c583860ee82a8d85aba7a21eb71c33d43050a456",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_collect02",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 31.12950942083262,
+      "peak_bytes": 830287872,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 49.35103265801445,
+      "resources": {
+        "sample_count": 19,
+        "actual_max_sample_gap_seconds": 2.223378554917872,
+        "sampled_tree_peak_bytes": 830287872,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 38,
+      "summary_sha256": "e2cab77fd346743c8196d702ed9715ac1b0070d26f4aeadb359cef3056c1b520"
+    },
+    {
+      "role": "post",
+      "source_sha": "c583860ee82a8d85aba7a21eb71c33d43050a456",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_modal01",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 4.115119596943259,
+      "peak_bytes": 85647360,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 22.551804380025715,
+      "resources": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 2.117333290167153,
+        "sampled_tree_peak_bytes": 85647360,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 0,
+      "summary_sha256": "6f2b6faa25e4226900c357bb18877c339bca559c720175f44f892a1c37697079"
+    },
+    {
+      "role": "post",
+      "source_sha": "54f9b90e5dc6ca84ded438559a05ecd291491dbd",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/aux_post_docs01",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 3.4191249581053853,
+      "peak_bytes": 89391104,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "launch_wall_seconds": 21.75209443201311,
+      "resources": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 1.5647045751102269,
+        "sampled_tree_peak_bytes": 89391104,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "cpu": 37,
+      "summary_sha256": "005826c236dab3864c4e67bbd785aadf09ffb3f3450bd5cf8e122ef850205ba5"
+    }
+  ],
+  "known_prior_lower_seconds": 112957.71750760387,
+  "new_charged_loaded_lower_seconds": 16205.215272578773,
+  "research_known_loaded_lower_seconds": 129162.93278018264,
+  "boot_window": {
+    "start_utc": "2026-10-06T00:58:18.734593+00:00",
+    "start_monotonic": 1173293.595494451,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "bc509db93ed905b945bab7cb21a5f6bbaaa23288",
+    "intake_HEAD": "287f00ee1d05abb94933c1f7e5613247bbfc62b4",
+    "closed": true,
+    "freeze_written_utc": "2026-10-06T00:58:39.895216+00:00",
+    "first_work_start_never_refreshed": true,
+    "observed_utc": "2026-10-06T06:08:07.698991+00:00",
+    "observed_monotonic": 1191882.559857674,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 18588.964397907257,
+    "heavy_remaining_seconds": 3911.035602092743,
+    "total_remaining_seconds": 6611.035602092743
+  },
+  "probe_seconds": 22.86678660614416,
+  "launcher_overhead_seconds": 257.18968464783393,
+  "metadata_receipt": {
+    "seconds": 6.443055108552013,
+    "evidence": "/home/fenics/Projects/NN-Lab/tmp/task042/v53/prepare_check01",
+    "scope": "actual preparation check; implementation wall separately in immutable total",
+    "fixture_repair": "mock lacked reserve_bytes; temporary harness read cpu instead of saved selected_cpu; fresh audit reused after repair",
+    "additional_metadata": [
+      {
+        "kind": "literal elapsed_s + journal reserved-key targeted reader fixes",
+        "failed_read_seconds_lower": 0.528679767,
+        "failure_records": [
+          "metadata_calibration_initial.stderr",
+          "metadata_calibration_journal.stderr"
+        ],
+        "source_changed": false,
+        "scientific_replay": false
+      },
+      {
+        "kind": "pure final helper syntax check; no FE/array import or scientific replay",
+        "seconds": 0.012775215087458491,
+        "files": [
+          {
+            "path": "tmp/task042/v53/edit/calibrate.py",
+            "sha256": "25f1642c06164499cc140782ea1e9222c9271c15dde266b385e74ef6995317e5",
+            "syntax": "PASSED"
+          },
+          {
+            "path": "tmp/task042/v53/edit/delivery_analysis.py",
+            "sha256": "6007f438e476d67db678738651ef39cdcc2a5e77e6de0f700e9286b459851bef",
+            "syntax": "PASSED"
+          },
+          {
+            "path": "tmp/task042/v53/edit/finalize.py",
+            "sha256": "d5e479c95895f0a12e650d75f63e44a9b0add65ebce0ec6092c912b1bf3e5c53",
+            "syntax": "PASSED"
+          },
+          {
+            "path": "tmp/task042/v53/edit/write_reports.py",
+            "sha256": "4a931501e67e253e0af04dc360cae854aa4c233cddf87db4e7be3292f704cc11",
+            "syntax": "PASSED"
+          }
+        ]
+      },
+      {
+        "kind": "frozen decision/settlement helper syntax, no invocation of science",
+        "seconds": 0.007968635996803641,
+        "files": {
+          "tmp/task042/v53/edit/queue_decision.py": "2901a8a8f1af4301f26b01827ef582f8c0f67680f95e366f551d92065d337292",
+          "tmp/task042/v53/edit/finalize.py": "d85f095aa64b63cef96ce84c3e3cf6ef4eb39ced27ee837eae405663e72b970f"
+        }
+      },
+      {
+        "kind": "read actual new A matrix inventory keys only",
+        "seconds": 0.007833716925233603,
+        "science_replay": false
+      },
+      {
+        "kind": "final two pure delivery helpers AST check",
+        "seconds": 0.006806984078139067,
+        "no_scientific_actions": true
+      },
+      {
+        "kind": "V53 queue decide",
+        "seconds": 0.034194845939055085,
+        "helper_sha256": "2901a8a8f1af4301f26b01827ef582f8c0f67680f95e366f551d92065d337292",
+        "no_scientific_actions": true
+      },
+      {
+        "kind": "V53 queue freeze",
+        "seconds": 0.021681792102754116,
+        "helper_sha256": "2901a8a8f1af4301f26b01827ef582f8c0f67680f95e366f551d92065d337292",
+        "no_scientific_actions": true
+      },
+      {
+        "kind": "three final helper AST and copy completed independent collector/modal compact records",
+        "seconds": 0.016247815918177366,
+        "helpers": [
+          {
+            "path": "tmp/task042/v53/edit/delivery_analysis.py",
+            "sha256": "3d3fd682a8bd19007cabbe5fcaa6a8ca8419f9f57dbc53387855fa7f83559674"
+          },
+          {
+            "path": "tmp/task042/v53/edit/finalize.py",
+            "sha256": "5d71540ec8c0575ff33837b9b3be53bfaa3b82829bf8310f71529c7688173625"
+          },
+          {
+            "path": "tmp/task042/v53/edit/write_reports.py",
+            "sha256": "a6e3df55eb5801ae868155fc84f7e01b38bdf1510f1f3ea5106346188ab4919f"
+          }
+        ]
+      },
+      {
+        "kind": "pure saved-cost/capacity arithmetic",
+        "seconds": 0.00809760601259768,
+        "helper_sha256": "3d3fd682a8bd19007cabbe5fcaa6a8ca8419f9f57dbc53387855fa7f83559674"
+      },
+      {
+        "kind": "prepare supplemental final evidence placeholders",
+        "seconds": 0.011208435986191034,
+        "helper_sha256": "5d71540ec8c0575ff33837b9b3be53bfaa3b82829bf8310f71529c7688173625",
+        "source_kind": "ignored pure metadata helper, no scientific action"
+      },
+      {
+        "kind": "final Chinese V53 documents from saved metadata only",
+        "seconds": 0.053602858912199736,
+        "helper_sha256": "a6e3df55eb5801ae868155fc84f7e01b38bdf1510f1f3ea5106346188ab4919f"
+      },
+      {
+        "kind": "final Chinese V53 documents from saved metadata only",
+        "seconds": 0.05102589004673064,
+        "helper_sha256": "a72d709eabec1d3cbfd245fb283226608c5b1195458399a761c71c2ca1087c23"
+      },
+      {
+        "kind": "final settlement helper targeted AST after manifest wording fix",
+        "seconds": 0.005970821948722005,
+        "helper_sha256": "5d324b694fa6cfad80765b0ea5ff21e2ae13c144069c843254af7ca11da2eb22"
+      },
+      {
+        "kind": "prepare supplemental final evidence placeholders",
+        "seconds": 0.013330283807590604,
+        "helper_sha256": "5d324b694fa6cfad80765b0ea5ff21e2ae13c144069c843254af7ca11da2eb22",
+        "source_kind": "ignored pure metadata helper, no scientific action"
+      }
+    ]
+  },
+  "final_suffix_write_commit_push_seconds": "unknown; included in total elapsed, not silently zero",
+  "peak_simultaneous_sampled_tree_bytes": 14436585472,
+  "own_swap_peak_bytes": 0,
+  "actual_max_sample_gap_seconds": 2.223378554917872,
+  "requested_sample_interval_seconds": 0.5,
+  "memory_scope": "sampled simultaneous own process tree; not continuous cgroup hard peak",
+  "MPI": 1,
+  "mathematical_threads": 1,
+  "DataLoader": 0,
+  "GPU": false,
+  "OOC": false,
+  "shared_workstation": true,
+  "no_contention_speed": "INCONCLUSIVE",
+  "historical_unknowns_retained": true,
+  "storage": {
+    "new_bytes": 5026815213,
+    "task_artifact_bytes": 39686863628,
+    "free_bytes": 3288432558080,
+    "reserve_bytes": 268435456
+  },
+  "own_cleanup": {
+    "utc": "2026-10-06T06:07:48.486537+00:00",
+    "own_actor_pids": [],
+    "own_lock_acquired_and_released": true,
+    "all_supervised_descendants_cleared": true,
+    "neighbors_not_modified": true,
+    "no_background_work": true,
+    "notifications_sent": false
+  },
+  "all_numeric_work_frozen_before_VERIFY": true
 }
