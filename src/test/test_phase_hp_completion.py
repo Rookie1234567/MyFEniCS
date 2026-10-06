@@ -21,13 +21,20 @@ class CompletionTests(unittest.TestCase):
             original=Path.stat;renames=[]
             def rename_during_stat(path,*args,**kwargs):
                 if path==temporary and not renames:
+                    info=original(path,*args,**kwargs)
                     renames.append(True);temporary.replace(final)
-                    raise FileNotFoundError(str(temporary))
+                    return info
                 return original(path,*args,**kwargs)
             with patch.object(Path,'stat',rename_during_stat):
                 sampled=inventory_paths((root,),root)
             self.assertEqual(len(renames),1)
             self.assertEqual(sampled['files']['kept'],4)
+            self.assertEqual(sampled['bytes'],13)
+            # The previous is_file()->stat() chain fails with this exact
+            # between-the-two-reads rename, rather than an arbitrary OSError.
+            final.replace(temporary);renames.clear()
+            with patch.object(Path,'stat',rename_during_stat),self.assertRaises(FileNotFoundError):
+                if temporary.is_file():temporary.resolve().stat()
             settled=inventory_paths((root,final),root)
             self.assertEqual(settled['bytes'],13);self.assertEqual(settled['file_count'],2)
             def denied(path,*args,**kwargs):
