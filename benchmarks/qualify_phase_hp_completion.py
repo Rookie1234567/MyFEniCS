@@ -31,8 +31,15 @@ def main():
         if r.returncode:
             write_json(folder/'tests.json',dict(status='FAILED',commands=rows,implementation_hashes=hashes,abi=abi))
             raise RuntimeError('focused qualification failed; preserve and minimally repair')
-    from benchmarks.subreaper_watchdog import supervise
-    result=supervise([sys.executable,'-c','import subprocess,time;subprocess.Popen(["sleep","20"]);time.sleep(20)'],folder/'watchdog_test',wall_seconds=1,interval=.1,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=128*2**20,include_pss=False)
+    # PETSc/MPI's singleton helper is a legitimate child of this ABI probe.
+    # Exercise cleanup in a fresh dedicated supervisor, never include or kill
+    # that helper as part of the synthetic timeout test.
+    witness=folder/'watchdog_test'
+    code='from pathlib import Path;import sys;from benchmarks.subreaper_watchdog import supervise;supervise([sys.executable,"-c",\'import subprocess,time;subprocess.Popen(["sleep","20"]);time.sleep(20)\'],Path(sys.argv[1]),wall_seconds=1,interval=.1,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=128*2**20,include_pss=False)'
+    r=subprocess.run([sys.executable,'-c',code,str(witness)],capture_output=True,text=True)
+    (folder/'watchdog.stdout').write_text(r.stdout);(folder/'watchdog.stderr').write_text(r.stderr)
+    if r.returncode:raise RuntimeError('independent synthetic watchdog failed')
+    result=json.loads((witness/'summary.json').read_text())
     if not result['descendants_cleared'] or result['classification']=='COMPLETED':raise RuntimeError('deadline cleanup failed')
     write_json(folder/'tests.json',dict(status='PASSED',commands=rows,implementation_hashes=hashes,watchdog_test=result,abi=abi,scientific_actions=0))
     print(json.dumps(dict(status='V53_QUALIFICATION_PASSED',commands=len(rows))))
