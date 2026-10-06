@@ -72,7 +72,9 @@ def solve_case(role,folder,journal,*,scope=None):
     mem=p.get('memory_budget',dict(planning_gib=16,sampled_stop_gib=24,extra_cache_workspace_gib=0))
     if not spec['splits']:raise RuntimeError('conditional geometry is not selected')
     resume=live.TMP/(role+'_post_resume.json')
-    if resume.exists():return audit_saved_return(role,folder,journal,json.loads(resume.read_text()),scope=scope)
+    if resume.exists():
+        record=scope.postprocessing_record(role) if scope is not None and hasattr(scope,'postprocessing_record') else json.loads(resume.read_text())
+        return audit_saved_return(role,folder,journal,record,scope=scope)
     cfg,setup,geo=configured_setup(spec,journal,scope=scope)
     cap=assembly_capacity(setup,cfg,journal,spec,planning_limit_bytes=mem['planning_gib']*2**30,
         sampled_stop_bytes=mem['sampled_stop_gib']*2**30,extra_workspace_bytes=mem['extra_cache_workspace_gib']*2**30,
@@ -192,6 +194,12 @@ def audit_saved_return(role,folder,journal,record,*,scope=None):
         r=postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,v['port'],record['arrays'],record['returned_arrays'],
             folder,journal,record['capacity'],record['boundary'],record['build_audit'],norms,vectors,scope=scope)
         r.update(postprocessing_resume=True,solve_source_sha=record['source']['source_sha'],new_complete_solves=0,new_factor_count=0)
+        if 'raw_tensor_manifest_receipt' in record:
+            receipt=record['raw_tensor_manifest_receipt'];path=Path(receipt['path'])
+            if hashlib.sha256(path.read_bytes()).hexdigest()!=receipt['sha256']:raise ValueError('returned raw manifest changed')
+            r['raw_tensor_checkpoint']=json.loads(path.read_text())
+            r['raw_tensor_manifest_receipt']=receipt
+        r['fixed_refinements']=record.get('fixed_refinements',[])
         return r
     finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
 

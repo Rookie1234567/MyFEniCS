@@ -14,6 +14,30 @@ from src.io.phase_notch_hp import descriptor,load_phase_notch_hp
 
 
 class SpatialTests(unittest.TestCase):
+    def test_saved_return_budget_keeps_old_cost_and_audit_reserve(self):
+        with tempfile.TemporaryDirectory() as d:
+            tmp=Path(d);(tmp/'H7_post_resume.json').write_text('{}')
+            w=scope.ResolutionWindow(tmp,label='fixture',total=18000,component=18000,auxiliary=18000,probe=120,reserve=180,bootstrap=0)
+            run=tmp/'run';run.mkdir();(run/'run_summary.json').write_text(json.dumps(dict(launch_wall_seconds=13627)))
+            with patch.object(w,'require_ready'),patch.object(w,'ledger',return_value=dict(runs=[dict(role='H7',folder=str(run),elapsed_seconds=13608)])),patch.object(w,'charged_wall',return_value=15000),patch.object(w,'snapshot',return_value=dict(heavy_remaining_seconds=6000)),patch.object(scope,'postprocessing_record') as check:
+                self.assertEqual(w.remaining('H7'),2100);check.assert_called_once_with('H7')
+                with patch.object(w,'charged_wall',return_value=17200):self.assertLess(w.remaining('H7'),0)
+
+    def test_saved_return_identity_rejects_replaced_vector_and_manifest(self):
+        with tempfile.TemporaryDirectory() as d:
+            tmp=Path(d);artifact=tmp/'art';artifact.mkdir();raw=artifact/'raw_tensor';raw.mkdir()
+            manifest=raw/'manifest.json';manifest.write_text('{}')
+            original=dict(arrays=dict(sha256='frozen-vector'),case_spec=dict(degree=7),source=dict(source_sha='frozen-source'))
+            saved=artifact/'minimal_scientific_state.json';saved.write_text(json.dumps(original))
+            r=original|dict(minimal_state_receipt=dict(path=str(saved),sha256=hashlib.sha256(saved.read_bytes()).hexdigest()),raw_tensor_manifest_receipt=dict(path=str(manifest),sha256=hashlib.sha256(manifest.read_bytes()).hexdigest()))
+            resume=tmp/'H7_post_resume.json';resume.write_text(json.dumps(r))
+            with patch.object(scope,'ARTIFACT',artifact),patch.object(scope.window,'TMP',tmp),patch.object(scope,'case_spec',return_value=original['case_spec']):
+                self.assertEqual(scope.postprocessing_record('H7')['arrays'],original['arrays'])
+                r=r|dict(arrays=dict(sha256='changed'));resume.write_text(json.dumps(r))
+                with self.assertRaisesRegex(ValueError,'scientific identity'):scope.postprocessing_record('H7')
+                resume.write_text(json.dumps(original|{k:v for k,v in r.items() if k.endswith('receipt')}));manifest.write_text('{"changed":true}')
+                with self.assertRaisesRegex(ValueError,'raw manifest identity'):scope.postprocessing_record('H7')
+
     def test_tangential_not_normal_or_discrete_H(self):
         a=np.array([[1+2j,3-1j,5j],[2j,-4+3j,2.]])
         b=a.copy();b[:,0]+=100

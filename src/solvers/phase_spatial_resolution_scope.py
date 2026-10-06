@@ -15,11 +15,30 @@ SOLVES=('H7','T6')
 class ResolutionWindow(AccuracyWindow):
     def remaining(self,role):
         self.require_ready();p=plan_record();reserve=3000 if role in SOLVES else 180
+        if role in SOLVES and (self.TMP/(role+'_post_resume.json')).exists():
+            postprocessing_record(role)
+            # The solve allocation has ended; consume its saved return within
+            # the same cumulative case cap, leaving a separate original audit.
+            reserve=900
         used=sum(json.loads((Path(r['folder'])/'run_summary.json').read_text())['launch_wall_seconds']
             if (Path(r['folder'])/'run_summary.json').exists() else r['elapsed_seconds']
             for r in self.ledger()['runs'] if r['role']==role)
         return min(p['case_wall_seconds'].get(role,900)-used,self.total-self.charged_wall()-reserve,
             self.snapshot()['heavy_remaining_seconds']-reserve)
+
+
+def postprocessing_record(role):
+    r=json.loads((window.TMP/(role+'_post_resume.json')).read_text())
+    receipt=r['minimal_state_receipt'];path=Path(receipt['path']).resolve()
+    if not path.is_relative_to(ARTIFACT) or hashlib.sha256(path.read_bytes()).hexdigest()!=receipt['sha256']:
+        raise ValueError('V55 saved return identity')
+    original=json.loads(path.read_text())
+    if r['arrays']!=original['arrays'] or r['case_spec']!=case_spec(role) or r['source']!=original['source']:
+        raise ValueError('V55 saved return scientific identity')
+    raw=r['raw_tensor_manifest_receipt'];manifest=Path(raw['path']).resolve()
+    if manifest!=path.parent/'raw_tensor/manifest.json' or hashlib.sha256(manifest.read_bytes()).hexdigest()!=raw['sha256']:
+        raise ValueError('V55 saved raw manifest identity')
+    return r
 
 
 window=ResolutionWindow(ROOT/'tmp/task042/v55',label='V55',total=18000,
