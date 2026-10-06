@@ -45,6 +45,17 @@ class CompletionTests(unittest.TestCase):
         import basix
         e=basix.create_element(basix.ElementFamily.N1E,basix.CellType.hexahedron,7,basix.LagrangeVariant.legendre)
         self.assertEqual(e.dim,1344);self.assertEqual(len(e.entity_dofs[3][0]),756)
+        from src.constraints.floquet_3d import _qualified_constraint_mode
+        with self.assertRaises(NotImplementedError):_qualified_constraint_mode(7,fixed_target_high_order=True)
+        self.assertEqual(_qualified_constraint_mode(7,fixed_target_high_order=True,finite_authority_degree7=True),'topological_trace_p7')
+        from src.constraints.high_order_floquet_trace import high_order_trace_layout,edge_coefficient_transform,face_basis_transform
+        layout=high_order_trace_layout(7);self.assertEqual(layout.cell_interior_dofs,756)
+        edge=edge_coefficient_transform(7,reversed_orientation=True)
+        self.assertLess(np.linalg.norm(edge@edge-np.eye(7)),1e-11)
+        for flag in (1,2):
+            transform=face_basis_transform(7,flag)
+            power=2 if flag==1 else 4
+            self.assertLess(np.linalg.norm(np.linalg.matrix_power(transform,power)-np.eye(84)),1e-11)
 
     def test_exact_points_and_lru_capacity(self):
         class Element:

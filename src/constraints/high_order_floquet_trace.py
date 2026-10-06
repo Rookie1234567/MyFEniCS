@@ -50,16 +50,19 @@ class TetrahedralTraceLayout:
 
 @lru_cache(maxsize=6)
 def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
-    """Read and cross-check the p1--p6 Basix entity layout.
+    """Read and cross-check p1--p7 Basix entity layout building blocks.
+
+    Degree seven is consumed only by an explicit finite-authority dispatcher;
+    this low-level layout does not qualify the ordinary public p7 solver.
 
     Formulas are checks, not the source of the production layout.  The actual
     entity sizes come from the Basix element shipped in the qualified image.
     """
 
     degree = int(degree)
-    if degree not in {1, 2, 3, 4, 5, 6}:
+    if degree not in {1, 2, 3, 4, 5, 6, 7}:
         raise ValueError(
-            f"Task033/Task035b qualifies hexa N1curl degrees 1--6, got {degree}."
+            f"Hexa N1curl entity kernel supports degrees 1--7, got {degree}."
         )
     hexa = element("N1curl", "hexahedron", degree).basix_element
     quadrilateral = element("N1curl", "quadrilateral", degree).basix_element

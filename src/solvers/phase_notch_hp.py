@@ -36,7 +36,8 @@ def configured_setup(spec,journal,*,scope=None):
         diffraction_order_max_m=11 if spec['complete_modes']==828 else 9,
         diffraction_order_max_n=4 if spec['complete_modes']==828 else 3)
     geo={**base,'notch_expected_changed_cells':2*int(np.prod(spec['splits']))}
-    cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo)
+    cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo,
+        finite_authority_degree7=scope is not None and scope.NAMESPACE=='v53' and spec['degree']==7)
     return cfg,setup,geometry
 
 
