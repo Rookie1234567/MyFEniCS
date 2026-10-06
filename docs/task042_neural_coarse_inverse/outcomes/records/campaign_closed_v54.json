@@ -1,0 +1,38 @@
+{
+  "clock": {
+    "start_utc": "2026-10-06T07:58:28+00:00",
+    "start_monotonic": 1198502.8608781009,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
+    "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
+    "closed": true,
+    "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
+    "first_work_start_never_refreshed": true,
+    "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
+    "observed_utc": "2026-10-06T11:41:58.889527+00:00",
+    "observed_monotonic": 1211913.750393992,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 13410.889526844025,
+    "heavy_remaining_seconds": 9089.110473155975,
+    "total_remaining_seconds": 11789.110473155975,
+    "closed_reason": "scientific queue completed; final FE and saved-array audits resource-rejected, no second cooling episode",
+    "closed_utc": "2026-10-06T11:41:58.889527+00:00",
+    "closed_monotonic": 1211913.750393992
+  },
+  "ledger_closed": true,
+  "active": null,
+  "remaining_own_descendants": [],
+  "own_lock_acquired_and_released": true,
+  "scientific_sources": {
+    "R7": "65484196065491b4714068b7472aa34f815ae299",
+    "R6": "65484196065491b4714068b7472aa34f815ae299",
+    "C": "20bcd089ac440372516df4cb122a85e5726426bf"
+  },
+  "document_HEAD_separate": true,
+  "remote_proof": "final post-push receipt in tmp/task042/v54/delivery_after_push.json; actual values returned to user",
+  "new_numerical_queue_forbidden": true
+}

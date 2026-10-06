@@ -65,5 +65,14 @@
     }
   ],
   "repair_budget_seconds": 7200,
-  "cost_semantics": "failed/replayed science paid in full charged ledger; editing/classification-only unknown intervals remain in total elapsed, never zero"
+  "cost_semantics": "failed/replayed science paid in full charged ledger; editing/classification-only unknown intervals remain in total elapsed, never zero",
+  "metadata_close_issue": {
+    "evidence_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/close_delivery.stderr",
+    "sha256": "9f685d3fdb365e6e72740db25c62c1185c2004a2e2c8493057395e20fd17aa12",
+    "root": "metadata controller requested nonexistent STATE attribute",
+    "minimal_fix": "read existing window.json by explicit scope path; resume only close footer",
+    "scientific_replay": 0,
+    "failed_controller_cost": "unknown; included in elapsed",
+    "source_of_formal_calculations_unchanged": true
+  }
 }

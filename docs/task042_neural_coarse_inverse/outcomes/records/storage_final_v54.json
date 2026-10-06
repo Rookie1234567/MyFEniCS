@@ -1,0 +1,23 @@
+{
+  "measured": {
+    "new_bytes": 6094635440,
+    "task_artifact_bytes": 45782569349,
+    "free_bytes": 3279669825536,
+    "reserve_bytes": 268435456
+  },
+  "limits": {
+    "planning_gib": 32,
+    "warning_gib": 40,
+    "sampled_stop_gib": 48,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "storage_limits": {
+    "new_storage_bytes": 10737418240,
+    "task_storage_bytes": 73014444032,
+    "free_bytes": 53687091200,
+    "evidence_reserve_bytes": 268435456
+  },
+  "counted_by_unique_inode_and_paths": true,
+  "not_object_RSS": true
+}

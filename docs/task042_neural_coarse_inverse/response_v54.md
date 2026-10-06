@@ -1,4 +1,4 @@
-# Response V54：p升阶与DtN模式分離的执行结果
+# Response V54：p升阶与DtN模式分离的执行结果
 
 R7、R6和条件C三份完整有限方程解已实际完成。p6的532→828与p7的828→1188完整增量通过；p7的532→828及828下跨p不通过，跨p scattered E约3.413%。最终新FE VERIFY和独立保存数组checker在CPU/SMT准入拒绝，均没有启动worker；交付为`PARTIAL_FINAL_AUDIT_RESOURCE_GATE`。没有网络训练或神经收益。
 
@@ -20,3 +20,5 @@ C的1188库存bug同轮修复继续，旧637.599s失败保留；唯一资源epis
 唯一下一完整pilot是补齐已冻结解独立验算后，固定828模式Z4/p7的h对照；derived89756行超本批80000，需要新容量合同，本轮未运行。完整p/h/M、原尺寸0.7nm、2TB48h、NN20均未资格。
 
 详细方法、完整原残差/场/功率、准备和numeric容量、逐阶段费用及失败证据见[专题结果](outcomes/p_order_dtn_separation_v54.md)、[run index](outcomes/records/run_index_v54.json)、[门分类](outcomes/records/gate_verdict_v54.json)、[测试](outcomes/records/targeted_tests_v54.json)、[资源拒绝](outcomes/records/admission_refusals_v54.json)、[原始版本索引](outcomes/records/raw_archive_index_final_v54.json)。GitHub视觉`NOT_VERIFIED`。最终提交、push和交付receipt另绑定精确HEAD；完成后暂停，不通知隔壁、不merge、不自动开新窗口。
+
+15项文档合同和Review V52／新表格链接本地通过；最终字节单独核对，GitHub视觉仍NOT_VERIFIED。收费保守下界至少10665s，累计保守下界至少139828s（最终详细金额以费用JSON为准）；unknown未填0。[最终关闭](outcomes/records/campaign_closed_v54.json)／[存储](outcomes/records/storage_final_v54.json)／[文档](outcomes/records/documentation_checks_v54.json)。

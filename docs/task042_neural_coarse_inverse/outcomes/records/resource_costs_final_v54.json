@@ -5,6 +5,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_QUALIFY_source01",
       "source_sha": "112cf7b6672b4600cdbb2a7bb57cebe7dd399fff",
       "classification": "COMPLETED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 5.801490843994543,
       "cold_N1_dat_launch_lower_seconds": 23.964020592859015,
       "timings": {},
@@ -26,6 +27,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_p_order_consistency_20261006T081020430092Z",
       "source_sha": "112cf7b6672b4600cdbb2a7bb57cebe7dd399fff",
       "classification": "WORKER_FAILED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 12.081570245092735,
       "cold_N1_dat_launch_lower_seconds": 30.250785276992247,
       "timings": {
@@ -59,6 +61,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_QUALIFY_source02",
       "source_sha": "d011934de5aaa27375882e647332acf7ca74f12a",
       "classification": "COMPLETED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 5.91722521209158,
       "cold_N1_dat_launch_lower_seconds": 23.987742509925738,
       "timings": {},
@@ -80,6 +83,11 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_p_order_consistency_20261006T081232627765Z",
       "source_sha": "d011934de5aaa27375882e647332acf7ca74f12a",
       "classification": "COMPLETED",
+      "actual_calls": {
+        "A": 6,
+        "AH": 0,
+        "factor": 0
+      },
       "supervised_wall_seconds": 766.9727662289515,
       "cold_N1_dat_launch_lower_seconds": 785.0390568610746,
       "timings": {
@@ -177,6 +185,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_QUALIFY_source03",
       "source_sha": "65484196065491b4714068b7472aa34f815ae299",
       "classification": "COMPLETED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 6.478173417039216,
       "cold_N1_dat_launch_lower_seconds": 23.743364229099825,
       "timings": {},
@@ -198,6 +207,11 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_p_order_component_scale_20261006T082900029553Z",
       "source_sha": "65484196065491b4714068b7472aa34f815ae299",
       "classification": "COMPLETED",
+      "actual_calls": {
+        "A": 6,
+        "AH": 0,
+        "factor": 0
+      },
       "supervised_wall_seconds": 155.3385631220881,
       "cold_N1_dat_launch_lower_seconds": 173.03480232693255,
       "timings": {
@@ -239,6 +253,13 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_notch_z2_p7_m828_20261006T083249322552Z",
       "source_sha": "65484196065491b4714068b7472aa34f815ae299",
       "classification": "COMPLETED",
+      "actual_calls": {
+        "A": 5,
+        "AH": 2,
+        "factor": 2,
+        "volume_only": 2,
+        "port_recovery": 1
+      },
       "supervised_wall_seconds": 1205.0463575609028,
       "cold_N1_dat_launch_lower_seconds": 1222.5131634820718,
       "timings": {
@@ -302,6 +323,13 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_notch_z2_p6_m828_20261006T085359294096Z",
       "source_sha": "65484196065491b4714068b7472aa34f815ae299",
       "classification": "COMPLETED",
+      "actual_calls": {
+        "A": 5,
+        "AH": 2,
+        "factor": 2,
+        "volume_only": 2,
+        "port_recovery": 1
+      },
       "supervised_wall_seconds": 4989.455031096935,
       "cold_N1_dat_launch_lower_seconds": 5007.166626361897,
       "timings": {
@@ -417,6 +445,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_notch_z2_p7_m1188_20261006T101829831949Z",
       "source_sha": "65484196065491b4714068b7472aa34f815ae299",
       "classification": "WORKER_FAILED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 637.5992656929884,
       "cold_N1_dat_launch_lower_seconds": 656.0322010880336,
       "timings": {
@@ -452,6 +481,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_QUALIFY_source04",
       "source_sha": "20bcd089ac440372516df4cb122a85e5726426bf",
       "classification": "COMPLETED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 6.690222644014284,
       "cold_N1_dat_launch_lower_seconds": 25.22695926995948,
       "timings": {},
@@ -473,6 +503,13 @@
       "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v54_notch_z2_p7_m1188_20261006T103753855100Z",
       "source_sha": "20bcd089ac440372516df4cb122a85e5726426bf",
       "classification": "COMPLETED",
+      "actual_calls": {
+        "A": 5,
+        "AH": 2,
+        "factor": 2,
+        "volume_only": 2,
+        "port_recovery": 1
+      },
       "supervised_wall_seconds": 2588.8442430468276,
       "cold_N1_dat_launch_lower_seconds": 2607.212316311896,
       "timings": {
@@ -536,6 +573,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_QUALIFY_source05",
       "source_sha": "2d44df382caac16ac1022e9756bf278bb716a8e1",
       "classification": "COMPLETED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 9.332002707989886,
       "cold_N1_dat_launch_lower_seconds": 27.72466919803992,
       "timings": {},
@@ -557,6 +595,7 @@
       "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_QUALIFY_source06",
       "source_sha": "1e08c27b2b5ff3ed69dd1fea86256367309b24e2",
       "classification": "COMPLETED",
+      "actual_calls": "unknown",
       "supervised_wall_seconds": 10.653454970102757,
       "cold_N1_dat_launch_lower_seconds": 28.23316513095051,
       "timings": {},
@@ -572,11 +611,33 @@
       "shared_workstation": true,
       "cost_scope": "incremental run with all setup/audit/save; not fresh parent preparation",
       "factor_cache": "numeric factor cold per complete case; OS/JIT cache not cleared"
+    },
+    {
+      "role": "DOCS",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_DOCS_final01",
+      "source_sha": "9a3ce763b17b0dfe96ca0bd4cfd6b767aed346c8",
+      "classification": "COMPLETED",
+      "actual_calls": "unknown",
+      "supervised_wall_seconds": 4.4034369639121,
+      "cold_N1_dat_launch_lower_seconds": 22.904682530090213,
+      "timings": {},
+      "peak_bytes": 76308480,
+      "swap_bytes": 0,
+      "resources": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 2.335428878897801,
+        "sampled_tree_peak_bytes": 76308480,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "shared_workstation": true,
+      "cost_scope": "incremental run with all setup/audit/save; not fresh parent preparation",
+      "factor_cache": "numeric factor cold per complete case; OS/JIT cache not cleared"
     }
   ],
-  "settled_charged_seconds": 10642.351949031017,
+  "settled_charged_seconds": 10665.548669555243,
   "additional_measured_lower": {
-    "seconds": 3.535904142308824,
+    "seconds": 3.8279421364439954,
     "items": [
       {
         "label": "C_admission_controller_JSON_only",
@@ -607,6 +668,31 @@
         "label": "final_metadata_notes_lower",
         "seconds": 0.007214447017759085,
         "scope": "metadata-only controller; no array replay or numerical actor"
+      },
+      {
+        "label": "write_delivery_metadata_lower",
+        "seconds": 0.11772866104729474,
+        "scope": "metadata-only, no array replay"
+      },
+      {
+        "label": "close_delivery_resume_metadata_lower",
+        "seconds": 0.006211979081854224,
+        "scope": "only existing own close checkpoint, no numeric replay; failed prefix unknown"
+      },
+      {
+        "label": "final_bytes_metadata_lower",
+        "seconds": 0.0931620670016855,
+        "scope": "only JSON/text format/link/hash; no scientific array decompression"
+      },
+      {
+        "label": "last_cost_text_metadata_lower",
+        "seconds": 0.008092405973002315,
+        "scope": "numeric text and final document hashes only"
+      },
+      {
+        "label": "polish_identity_metadata_lower",
+        "seconds": 0.0668428810313344,
+        "scope": "text/hash/old frozen identity JSON only"
       }
     ],
     "records": [
@@ -620,12 +706,14 @@
     ]
   },
   "historical_loaded_known_lower_seconds": 129162.93278018264,
-  "cumulative_known_lower_seconds": 139805.28472921366,
+  "cumulative_known_lower_seconds": 139828.48144973788,
   "full_fresh_N1_seconds": "unknown: exact required upstream raw preparation and OS/JIT state have not all been measured together",
   "unknown_costs": [
     "unmeasured controller edits/reads",
     "historical unknown suffix",
-    "fresh end-to-end N1"
+    "fresh end-to-end N1",
+    "rejected admission pre-probe launch suffix not instrumented",
+    "failed metadata-close prefix"
   ],
   "unknown_costs_are_not_zero": true,
   "clock": {
@@ -637,17 +725,20 @@
     "scientific_loaded_limit_seconds": 18000,
     "review_commit": "bcc059f63478b468dff29a8a70d69a5710f2ca4d",
     "intake_HEAD": "e3419c0a9f0606c7159c063f4c9f7e588525f4d1",
-    "closed": false,
+    "closed": true,
     "freeze_written_utc": "2026-10-06T07:58:59.598807+00:00",
     "first_work_start_never_refreshed": true,
     "start_precision": "first tool UTC second; monotonic derived conservatively from current same-boot clocks, not a refreshed start",
-    "observed_utc": "2026-10-06T11:33:55.173569+00:00",
-    "observed_monotonic": 1211430.034436418,
+    "closed_utc": "2026-10-06T11:41:58.889527+00:00",
+    "closed_monotonic": 1211913.750393992,
+    "closed_reason": "scientific queue completed; final FE and saved-array audits resource-rejected, no second cooling episode",
+    "observed_utc": "2026-10-06T11:48:56.091960+00:00",
+    "observed_monotonic": 1212330.952827898,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 12927.173568964005,
-    "heavy_remaining_seconds": 9572.826431035995,
-    "total_remaining_seconds": 12272.826431035995
+    "elapsed_seconds": 13828.09195971489,
+    "heavy_remaining_seconds": 8671.90804028511,
+    "total_remaining_seconds": 11371.90804028511
   },
   "max_sampled_tree_peak_bytes": 16395132928,
   "actual_max_sample_gap_seconds": 2.4224683488719165,

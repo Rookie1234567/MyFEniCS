@@ -1190,5 +1190,24 @@
     "scope": "saved metadata only; no FE/JIT/A/AH/factor/solve launched",
     "duration_lower_seconds": 0.035949149867519736
   },
-  "live_basis_properties": "not_run: fresh FE VERIFY did not start; exact Basix element hash and full mathematical form signature are in raw class records"
+  "live_basis_properties": "not_run: fresh FE VERIFY did not start; exact Basix element hash and full mathematical form signature are in raw class records",
+  "D_actual_operator_models": [
+    {
+      "parent": "P",
+      "degree": 6,
+      "complete_modes": 532,
+      "mode_sha256": "9206da3bcf687c4cbf9dbfad48a22456f4a75f5cf3c537331fcdf71a9f79b5a2",
+      "array_sha256": "4a2b310045a754e17c0162e6621d5cdf4d0e5ed170948e6a850f53e1ab83d27f",
+      "source_sha": "138a1681a870fdd2e3d754365fc06d1dcabbe8dd"
+    },
+    {
+      "parent": "B",
+      "degree": 7,
+      "complete_modes": 532,
+      "mode_sha256": "9206da3bcf687c4cbf9dbfad48a22456f4a75f5cf3c537331fcdf71a9f79b5a2",
+      "array_sha256": "cade1c97b8242c34dc76a4109b9ab2b0d836f0702a3e1265b4b521011664e0cc",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9"
+    }
+  ],
+  "D_input_envelope_note": "D resolved scope envelope is not a physical new 828 solve; actual complete uncondensed comparisons restore frozen 532 P/B independently. No D factor/solve."
 }

@@ -1,0 +1,326 @@
+{
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "0bab45231dcd57de9ff81bce1fa423c19d7c045ecdb05a6927b72ecefaa620da",
+      "tables": [],
+      "links": [
+        "response_v54.md",
+        "outcomes/p_order_dtn_separation_v54.md",
+        "outcomes/records/resource_costs_final_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "31ec976e9de0d31ebb27294bc957ba1cc6511d882fcf39ad05e10da27162efcd",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "p_order_dtn_separation_v54.md",
+        "../response_v54.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "7ca6760206b0fb9ed2c0296f732aaad180944851e78a9f260dbfb9480e1e15e6",
+      "tables": [],
+      "links": [
+        "records/targeted_tests_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "26df11336cf615f8692bd4f79f4f4ef93be08e4400b2b199f045dfea360eacb2",
+      "tables": [],
+      "links": [
+        "records/dependency_groups_v54.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "c2015cf7855382e43d4374f875d79c034caa9ccefe6563402e8b1017da78c945",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v54.md"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "092cea221cd1a3385c37352c573976344af8eddabe428d6de8921af4bf97cfd3",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v52.md",
+      "sha256": "7d0ede403dc3dfa37cf92e926d04af148594a0d5d067123cff2c76b98feb892c",
+      "tables": [
+        {
+          "line": 42,
+          "columns": 3
+        },
+        {
+          "line": 99,
+          "columns": 3
+        },
+        {
+          "line": 131,
+          "columns": 2
+        },
+        {
+          "line": 141,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v53.md",
+        "outcomes/phase_hp_completion_v53.md",
+        "outcomes/records/hp_accuracy_checks_v53.json",
+        "outcomes/records/resource_costs_final_v53.json",
+        "outcomes/records/repair_journal_v53.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v54.md",
+      "sha256": "ee15e7293c69dd2ba21f1e4596becfd2445fa91b657a91926675cb9be56ad327",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 10
+        }
+      ],
+      "links": [
+        "outcomes/records/resource_costs_final_v54.json",
+        "outcomes/p_order_dtn_separation_v54.md",
+        "outcomes/records/run_index_v54.json",
+        "outcomes/records/gate_verdict_v54.json",
+        "outcomes/records/targeted_tests_v54.json",
+        "outcomes/records/admission_refusals_v54.json",
+        "outcomes/records/raw_archive_index_final_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md",
+      "sha256": "26236ca96651f1604aae6f1a952a913714a0e5bf10daedf904c77c1736e0dae8",
+      "tables": [
+        {
+          "line": 9,
+          "columns": 2
+        },
+        {
+          "line": 35,
+          "columns": 11
+        },
+        {
+          "line": 44,
+          "columns": 8
+        },
+        {
+          "line": 57,
+          "columns": 10
+        },
+        {
+          "line": 73,
+          "columns": 10
+        },
+        {
+          "line": 80,
+          "columns": 7
+        },
+        {
+          "line": 91,
+          "columns": 7
+        },
+        {
+          "line": 100,
+          "columns": 7
+        },
+        {
+          "line": 109,
+          "columns": 7
+        },
+        {
+          "line": 118,
+          "columns": 7
+        }
+      ],
+      "links": [
+        "records/physical_identity_bindings_v54.json",
+        "records/p_order_dtn_diagnostics_v54.json",
+        "records/repair_journal_v54.json",
+        "records/cross_p_norm_comparison_v54.json",
+        "records/run_index_v54.json",
+        "records/mode_inventory_change_v54.json",
+        "records/object_lifetimes_v54.json",
+        "records/resource_costs_final_v54.json",
+        "records/admission_refusals_v54.json",
+        "records/not_run_v54.json",
+        "../review_report_v52.md",
+        "records/hp_accuracy_checks_v54.json",
+        "records/array_inventory_v54.json",
+        "records/source_bindings_v54.json",
+        "records/physical_identity_bindings_v54.json",
+        "records/repair_journal_v54.json",
+        "records/gate_verdict_v54.json",
+        "records/dependency_groups_v54.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "1c0aaf2fdd24f4c77480bd326efb4545bc0d051a6b5c5e1c332c5f9ad763a83c"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "bdbe27f891da7265f8724faf127ea9c0c28c6a5c2d98c2d36a4751ea2bfcff2f"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "977a13330306dd5f31a0cc5fe4becb04062510f0cf77b9d3fc5b1aaa0365b24a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "b309aa0ba2ad082b32981c95ccbcc13daee55139b371654bedbd7c9c72402aad"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "441394937869db96ae4088055a84b17ba32e06aab1a9f5439027c09b0ca25f1f"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "d3fab7f500c41ebfd021dc6788b0838ac5b5caea8ba3270abf6e57d892521758"
+    }
+  ],
+  "test_seconds": 0.5174035970121622,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "actual_source_sha": "9a3ce763b17b0dfe96ca0bd4cfd6b767aed346c8",
+  "documentation_receipt_sha256": "24aea2137efb7f406b38e32537acaf8b89a889dcfd21dd995a0f9a38c539c491",
+  "source_receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v54/aux_DOCS_final01/documentation_checks.json",
+  "final_tail_edits_require_byte_check": false,
+  "actual_final_delivery_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "0bab45231dcd57de9ff81bce1fa423c19d7c045ecdb05a6927b72ecefaa620da",
+      "tables": 0,
+      "links": [
+        "response_v54.md",
+        "outcomes/p_order_dtn_separation_v54.md",
+        "outcomes/records/resource_costs_final_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "31ec976e9de0d31ebb27294bc957ba1cc6511d882fcf39ad05e10da27162efcd",
+      "tables": 1,
+      "links": [
+        "p_order_dtn_separation_v54.md",
+        "../response_v54.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "7ca6760206b0fb9ed2c0296f732aaad180944851e78a9f260dbfb9480e1e15e6",
+      "tables": 0,
+      "links": [
+        "records/targeted_tests_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "26df11336cf615f8692bd4f79f4f4ef93be08e4400b2b199f045dfea360eacb2",
+      "tables": 0,
+      "links": [
+        "records/dependency_groups_v54.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "c2015cf7855382e43d4374f875d79c034caa9ccefe6563402e8b1017da78c945",
+      "tables": 0,
+      "links": [
+        "task042_neural_coarse_inverse/response_v54.md"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "092cea221cd1a3385c37352c573976344af8eddabe428d6de8921af4bf97cfd3",
+      "tables": 1,
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v52.md",
+      "sha256": "7d0ede403dc3dfa37cf92e926d04af148594a0d5d067123cff2c76b98feb892c",
+      "tables": 4,
+      "links": [
+        "response_v53.md",
+        "outcomes/phase_hp_completion_v53.md",
+        "outcomes/records/hp_accuracy_checks_v53.json",
+        "outcomes/records/resource_costs_final_v53.json",
+        "outcomes/records/repair_journal_v53.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v54.md",
+      "sha256": "df5b21c542e6d515bf8e13916241cb5d1ffa32b9687878edd161eb2cca6ae089",
+      "tables": 1,
+      "links": [
+        "outcomes/records/resource_costs_final_v54.json",
+        "outcomes/p_order_dtn_separation_v54.md",
+        "outcomes/records/run_index_v54.json",
+        "outcomes/records/gate_verdict_v54.json",
+        "outcomes/records/targeted_tests_v54.json",
+        "outcomes/records/admission_refusals_v54.json",
+        "outcomes/records/raw_archive_index_final_v54.json",
+        "outcomes/records/campaign_closed_v54.json",
+        "outcomes/records/storage_final_v54.json",
+        "outcomes/records/documentation_checks_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md",
+      "sha256": "8f47ba8027fd438db6e62c27a96a2aecf0d3c1e140a35312bbe57f12cf165c53",
+      "tables": 10,
+      "links": [
+        "records/physical_identity_bindings_v54.json",
+        "records/p_order_dtn_diagnostics_v54.json",
+        "records/repair_journal_v54.json",
+        "records/cross_p_norm_comparison_v54.json",
+        "records/run_index_v54.json",
+        "records/mode_inventory_change_v54.json",
+        "records/object_lifetimes_v54.json",
+        "records/resource_costs_final_v54.json",
+        "records/admission_refusals_v54.json",
+        "records/not_run_v54.json",
+        "../review_report_v52.md",
+        "records/hp_accuracy_checks_v54.json",
+        "records/array_inventory_v54.json",
+        "records/source_bindings_v54.json",
+        "records/physical_identity_bindings_v54.json",
+        "records/repair_journal_v54.json",
+        "records/gate_verdict_v54.json",
+        "records/dependency_groups_v54.json",
+        "records/documentation_checks_v54.json",
+        "records/storage_final_v54.json",
+        "records/campaign_closed_v54.json"
+      ]
+    }
+  ],
+  "final_tail_byte_check": "PASSED_METADATA_ONLY_NO_TEST_OR_PDE_REPLAY",
+  "last_numeric_text_only_edit": "cost text intentionally lower-bound integer floor; exact final amount in resource_costs_final_v54.json",
+  "last_text_edit": "plain-language condensation/scattered explanations, no table/link/fence or numerical changes"
+}
