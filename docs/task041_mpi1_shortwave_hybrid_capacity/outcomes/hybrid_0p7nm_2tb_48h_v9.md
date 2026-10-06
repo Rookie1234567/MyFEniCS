@@ -138,32 +138,32 @@ A6把体作用和DtN邻项融合，减少一段局部动作；已有microbenchma
 
 NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.pl?matno=074)，CIAAW为[钨原子量页](https://ciaaw.org/tungsten.htm)，Henke为[W光学常数文件](https://henke.lbl.gov/optical_constants/sf/w.nff)及[公式说明](https://henke.lbl.gov/optical_constants/intro.html)。来源原始字节保存在`results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/`：`w.nff` 13,801 B/SHA `dd11d29386952edd3259f2d3c4ddc88589ff6f6fb1e3ba3db43a4c589ea3ad95`、Henke公式页SHA `5dea737ff27676a17c9a076c9f9b99e40a3dfec4767fbeb549862b21b5cdfdc6`、NIST页SHA `d99569a1c84837b1f5f29e9a3862ddcc8d4acac4a52fe064cb9fd503cacfcd91`、CIAAW页SHA `b997d72d2e2cff592ce9ed5e07a490dc6ba331ea6efc5506b345bffd0ddf5454`、BIPM常数页SHA `dddeb6c0c7171df77f20c48742cb4774a5b1062d58a35d5ea75477bab31331e7`、CODATA PDF SHA `4d7e7f34b98ab2fc4df68b38247f818f6fc8bdf7f25f91abcdfbc329e22d2f32`。NIST密度19.3000 g/cm³、CIAAW原子量183.84(1)对应候选原子数密度`6.322199557658834e28 m⁻³`；0.7 nm能量为`1771.2028347600037 eV`，插值比例`0.6466608380953702`。这些来源字节及派生值便于追溯，但正式材料输入、常数使用记录和完整W外部通道仍需独立资格化。本次不变更冻结5/2 nm材料、不运行QEP或生成正式0.7 nm输入。
 
-## W5 legacy-native packet到fixed-H6的最薄兼容方案（只读规划）
+## W5 legacy-native packet到fixed-H6的最薄兼容方案（H0时点规划快照）
 
-10月3日完整W5已有数值身份，不是缺packet或缺布局。当前启动阻断是fixed-H6新profile入口要求的目录结构不同于已验证legacy-native descriptor；旧producer的公共资源证据另为`unqualified`，不能冒充资源PASS，也不应抹掉已有数值身份。
+截至H0审计时，10月3日完整W5已有数值身份，不是缺packet或缺布局；当时fixed-H6新profile入口与legacy-native descriptor目录形状不兼容。旧producer的公共资源证据另为`unqualified`，不能冒充资源PASS，也不应抹掉已有数值身份。以下保留当时的规划边界，当前实现状态见后续H1更新。
 
 | 合同 | 最薄兼容边界 |
 |---|---|
 | 适用范围 | 只给注册W5、p6/h4、M480、MPI8、`cell_condensed`、P4 target `5e-13`的fixed-H6显式研究分支增加legacy descriptor入口；13.5/2 nm新profile及普通legacy默认不变 |
 | 验证路径 | 原样复用`task041_legacy_native_profile`、`validate_task041_legacy_native_packet`和`bind_task041_legacy_native_consumer`，继续核验source/input/resolved/physical、M/MPI、600个external keys及packet manifest/shard hashes；不复制mode-prep封套、不放宽新profile validator |
-| 路由位置 | 只在`run_case.py`、`task038_launcher.py`、`task041_supervisor.py`、`task041_service.py`和`task041_exact_side_workflow.py`的fixed-H6 guard加入W5边界例外；service argv/manifest/worker传递同一descriptor身份。代码实现尚未获批 |
+| 路由位置 | H0规划范围为只在`run_case.py`、`task038_launcher.py`、`task041_supervisor.py`、`task041_service.py`和`task041_exact_side_workflow.py`的fixed-H6 guard加入W5边界例外；service argv/manifest/worker传递同一descriptor身份 |
 | 负边界 | producer root与legacy descriptor必须恰有一个；两者皆无、同时提供、错target/scope/CPU map、额外诊断都拒绝；route-plan与leading-PH继续默认false |
 | 资源解释 | `resource_qualified=false`保持历史事实；新W5 consumer必须依自己的public service门采资源，不能继承或伪造producer资源资格 |
 
-10月3日`supervisor_summary.json`已经记录`validated_legacy_native_packet`和descriptor SHA `175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86`；packet manifest、identity、600-key绑定和consumer输入身份均已在“5 nm运行身份与数值边界”部分绑定。本轮没有读取shards、重新运行validator或修改代码。若后续获批实现，最小测试应核W5 fixed-H6 descriptor接受、新profile入口不变、错scope/target/map及neither/both拒绝，以及普通legacy默认行为不变。
+10月3日`supervisor_summary.json`已经记录`validated_legacy_native_packet`和descriptor SHA `175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86`；packet manifest、identity、600-key绑定和consumer输入身份均已在“5 nm运行身份与数值边界”部分绑定。H0本身没有读取shards或重跑validator。其后提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已按该边界实现W5 fixed-H6 descriptor/binder兼容；定向测试证据见[Response V11](../response_v11.md)和[test summary](test_summary.md)。真实W5 public/service validator与FE仍尚未运行。
 
 ## 尚未执行与下一步
 
 | 阶段 | 当前状态 | 退出前必须提供 |
 |---|---|---|
 | H0 | 文档、markers分段、全量side count、13.5/2 nm/0.7 nm只读审查完成；H0 record保留其冻结时点 | 后续H1结果另列，不覆盖H0历史 |
-| H1 | fixed-H6组件测试和13.5 nm Si public/service完整回归已过；W5 V9 fixed-H6场 `not_run`，原因是legacy-native入口布局不兼容，而非数值身份缺失 | 仅为注册W5增加descriptor兼容后，复用10月3日packet进行至多一次新public回归；P4 target `5e-13`、原五门和physics/recovery不变；producer资源保持`unqualified` |
+| H1 | fixed-H6组件测试、public路由/owner-count定向测试和13.5 nm Si public/service完整回归已过；W5 fixed-H6 public/service场尚`not_run` | 提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已复用原legacy-native validator/binder增加注册W5 descriptor路由；下一步唯一W5 public/service场保持P4 target `5e-13`、原五门与physics/recovery。旧producer资源仍`unqualified`，新consumer须自采资源 |
 | H2 | `not_run` | 用已存在的合规2 nm producer packet进入同尺寸新consumer试算；Ncv/mpd与factor/workspace需实测，达到容量/残差门后才延续完整运行 |
 | H3 | `not_run` | 封存W 0.7来源字节/正耗散符号与完整keys；建立小型真实3D和相邻hp/M资格；给逐对象容量模型 |
 | H4 | `not_run` | 目标50×25 nm完整单胞，实测2 TB物理内存口径和从输入到恢复/核验/清理全过程≤48 h |
 
 目前没有依据宣称0.7 nm材料、2 TB容量或48 h目标已解决。没有新运行结果时，不复用旧的D1e、小RHS均值或local A6微基准作为新路线实测。
 
-## H1组件测试的后续状态（2026-10-06）
+## H1组件与接线测试状态（2026-10-06）
 
-fixed-H6反馈repeat/linearity门已在test350 tiny代数fixture完成serial与MPI2验证；随后13.5 nm Si public/service完整回归也通过原五项残差、recovery和physics门。组件测试核对门公式、每次作用计数及受控坏rank的拒绝/清理；13.5 nm回归验证公共`.dat`身份链和完整生命周期，但不资格化W5。下一步是只对注册W5接通已验证的legacy-native descriptor validator/binder，再进行一次W5真实consumer；H2、H3、H4状态仍分别见上表。
+fixed-H6反馈repeat/linearity门已在test350 tiny代数fixture完成serial与MPI2验证；随后13.5 nm Si public/service完整回归也通过原五项残差、recovery和physics门。九文件提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`增加注册W5 fixed-H6 legacy-native路由；合成public/service fixture和test350 owner-count节点分attempt通过，边界及warning见[test summary](test_summary.md)。这仍不资格化W5数值或资源。下一步是沿既有public/service链运行唯一真实W5 consumer，调用原完整validator/binder并保持P4、五残差、recovery/physics与finalizer合同；H2、H3、H4状态仍分别见上表。

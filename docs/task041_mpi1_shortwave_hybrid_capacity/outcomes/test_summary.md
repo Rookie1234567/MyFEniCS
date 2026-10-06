@@ -284,3 +284,17 @@ R2h v1、R2h v2 和 R2g 原 index 均保留；未重跑已绑定测试、FE/MPI�
 ## Review V7 进度快照（2026-09-24）
 
 轻量验证与真实计算分开：G2a view-lifetime 相关 serial/MPI2 组件测试通过；G1b4/G1b5 文件与微型协议测试只验证接线/协议。G2b public correction-result contract recheck 为 9 passed/rc0，父 wall `2.000488571 s`；ABI/static 不收费，read-only `_consumer_result` recheck wall `0.006336727 s` 单列。它只验证 public lifecycle contract，不是新数值运行。V5 ledger 为 42 entries、总计 `32511.335930633035 s`，仅追加该 pytest parent wall 一次；r2 原 finalizer charge 未重复。早期失败与受控停止记录保留，汇总见 [V7 outcome](causal_fix_5nm_v7.md)。
+
+## 2026-10-06：V9 W5 legacy路由与owner计数定向测试
+
+当前实现提交：`ce31f3738f469a04d23c50af0a7c7306afde3b38`，base `4d823b9f4c85d0271f572e916ea7049d6b51fabc`；test351最终SHA `b933f4b48581f70b8f03507db31f709ba2c776cfc6bc0522f4916c06a260431d`。该测试阶段使用CPU15 serial与CPU12/13 MPI2；MPI2两rank均通过原生complex128/Int32及membind0 ABI门。以下只列实际attempt，不把分批结果合称为最终源码上的单次全组通过。
+
+| Attempt | 命令范围与实际结果 | 父 wall | 原始证据 |
+|---|---|---:|---|
+| 初始serial | 六个selector启动；实际收集7项，`6 passed, 1 failed`。失败在第4 selector `test_task041_worker_forwards_top_causal_flag_to_candidate_setup`：fixture将默认CPU映射断言为`None`，实际规范化值为`(1,2,3,4,5,6,7,8)`。`-x`使其后两个test350 selector未执行 | `10.002066798973829 s` | [stdout](../../../results/task041_v9_w5_legacy_count_serial_20261006T074100Z/serial_pytest.stdout.log) SHA `0451455663b41ce138cb3612a6ceba2fa65073ff3a0ed03ec500e597a422ef63`；[attempt](../../../results/task041_v9_w5_legacy_count_serial_20261006T074100Z/serial_pytest_attempt.json) |
+| 定向serial修正后 | 只将worker fixture期望改为已定义的`default_rank_cpus`；运行worker selector及两个test350 selector，3 passed。原nonfinite-PC故障注入产生1个`RuntimeWarning`，未过滤 | `10.00147465406917 s` | [stdout](../../../results/task041_v9_w5_legacy_count_serial_retry2_20261006T075129Z/serial_pytest.stdout.log) SHA `d60f8e9d22b7c219d38ca7b845e7b39ba73cbad20b4c4f0eb4323df7d36c5624`；[compact](../../../results/task041_v9_w5_legacy_count_serial_retry2_20261006T075129Z/serial_compact.json) SHA `0414268eb680eccf42a92a88fdadb5c25078393c1b59d02ef46f5eedc19a272a` |
+| MPI2 | 两个test350 solver selector；每rank `2 passed, 1 warning`。两rank真实完成owner计数协议和受控预算/预检失败节点的后续collective；故障注入RuntimeWarning保留 | `5.00106007209979 s` | [stdout](../../../results/task041_v9_w5_legacy_count_mpi2_20261006T075409Z/mpi2_pytest.stdout.log) SHA `5e3fe8ffd03a510491dad15b38b1cbc68f91bed06429ef4b26ee5cd089935b0c`；[compact](../../../results/task041_v9_w5_legacy_count_mpi2_20261006T075409Z/mpi2_compact.json) SHA `2d8e98c1e60382bc8063b015a906aa67a2c378419a716f9aeb25f490133a181a` |
+
+一次未成功设置`BLIS_NUM_THREADS`的派生启动器在pytest前退出，保留为preflight-only/no pytest wall；没有重跑其它已通过节点。三个有pytest wall的attempt各按唯一ID入账一次，V5 ledger为130项、SHA `11679a139bbcd5f8a40a7b1758a9434df396d50c2e069fd46f115620d2a5c7f4`；ABI/static与rank-local时间未计。保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`未apply/drop。
+
+资格边界：这些是合成路由/service身份fixture及tiny fixed-H6 solver测试；不是对实际8-rank W5 worker map的MPI8验证、legacy descriptor全量shard复验、W5 FE、性能或0.7 nm/48 h通过。本轮真实W5 public/service run仍待启动。

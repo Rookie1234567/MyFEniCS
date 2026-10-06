@@ -8,7 +8,19 @@
 
 **H1当前结果与路线边界。** H1 fixed-H6组件门serial/MPI2测试通过，且唯一13.5 nm Si public/service整场已通过原五项真残差、recovery、physics与十项finalizer：37 outer、264个`S_H`，workflow wall `3181.091282263 s`；只存有最后一次inner独立raw终检值，performance=`performance_not_isolated`。这验证公共接线和完整生命周期，不等于W5、2 nm或0.7 nm资格。2 nm已有SLEPc PEP/TOAR，旧consumer formal为0/4800且`ncv/mpd`未记录；不再提出迁移TOAR。0.7 nm CXRO、NIST、CIAAW等来源字节现已归档并给出候选插值，但正式材料封套、完整W外部keys和网格/模态阶梯仍缺；2 TB与48 h尚未资格化。
 
-**W5当前阻断与下一步。** 10月3日完整W5已有legacy-native validator确认的数值/packet/layout身份，包括input/physical/resolved SHA、M480/MPI8、600 external keys和packet manifest/identity；不是缺少数值身份。fixed-H6新profile入口要求的producer目录与旧descriptor布局不兼容；旧producer公共parent/cgroup资源记录仍`unqualified`，独立保留，不伪造资源PASS。最薄下一步是仅在注册W5 fixed-H6分支复用已有legacy validator/binder，让legacy descriptor与new producer root二选一，保留物理/hash/选模核验；13.5/2 nm新profile及普通legacy默认不变。H2–H4仍未完成。逐段wall、全量计数、W5三类身份/兼容/资源边界和H3来源字节SHA见[Task041 V9 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[H0历史record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_h0_readonly.json)和[Response V11](task041_mpi1_shortwave_hybrid_capacity/response_v11.md)。
+**W5路由实现与下一步。** 10月3日完整W5已有legacy-native validator确认的数值/packet/layout身份，包括input/physical/resolved SHA、M480/MPI8、600 external keys和packet manifest/identity；不是缺少数值身份。提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已在注册W5 fixed-H6分支复用旧validator/binder，要求descriptor与new producer root二选一，保留物理/hash/选模核验；13.5/2 nm新profile及普通legacy默认不变。旧producer公共parent/cgroup资源仍`unqualified`，不伪造资源PASS，也不阻止验证过的数值packet复用。接下来唯一新W5 public/service FE尚未运行；H2–H4仍未完成。逐段wall、全量计数、W5三类身份/兼容/资源边界和H3来源字节SHA见[Task041 V9 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[H0历史record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_h0_readonly.json)和[Response V11](task041_mpi1_shortwave_hybrid_capacity/response_v11.md)。
+
+## 2026-10-06：Task041 V9 W5 legacy路由与owner计数定向测试
+
+九文件实现已提交到当前任务分支，HEAD为`ce31f3738f469a04d23c50af0a7c7306afde3b38`，普通默认未改变。测试按attempt分开记录：初始serial收集7项，6 passed、1 failed；失败是worker fixture错误地期望CPU map为`None`，生产consumer会把历史默认规范化为`(1,2,3,4,5,6,7,8)`。单行test-only修正后，定向serial三节点通过；MPI2两个test350节点每rank各2 passed。受控非有限PC路径的RuntimeWarning在两次成功attempt中原样保留。该结果只证明路由和小型求解器合同，不是W5真实packet全量验证、MPI8落核或FE结果。
+
+| Attempt | 结果 | 父 `CLOCK_MONOTONIC` wall | 证据 |
+|---|---|---:|---|
+| 初始serial | 6 passed / 1 failed；`-x`后两个test350 selector未执行 | `10.002066798973829 s` | [stdout](../results/task041_v9_w5_legacy_count_serial_20261006T074100Z/serial_pytest.stdout.log)、[attempt](../results/task041_v9_w5_legacy_count_serial_20261006T074100Z/serial_pytest_attempt.json) |
+| 定向serial修正后 | 3 passed，保留1个故障注入RuntimeWarning | `10.00147465406917 s` | [stdout](../results/task041_v9_w5_legacy_count_serial_retry2_20261006T075129Z/serial_pytest.stdout.log)、[compact](../results/task041_v9_w5_legacy_count_serial_retry2_20261006T075129Z/serial_compact.json) |
+| MPI2 | 每rank 2 passed，保留1个故障注入RuntimeWarning | `5.00106007209979 s` | [stdout](../results/task041_v9_w5_legacy_count_mpi2_20261006T075409Z/mpi2_pytest.stdout.log)、[compact](../results/task041_v9_w5_legacy_count_mpi2_20261006T075409Z/mpi2_compact.json) |
+
+三次pytest父wall各按attempt唯一计入V5；ABI/static与未启动pytest的线程preflight失败不计。V5 ledger现130项，SHA `11679a139bbcd5f8a40a7b1758a9434df396d50c2e069fd46f115620d2a5c7f4`。保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`仍原样保留。
 
 ## 2026-09-30：Task041 Review V8 5 nm 正式 consumer 终态
 

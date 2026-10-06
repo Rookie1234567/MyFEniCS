@@ -1,6 +1,6 @@
 # Task041 Response V11：Review V9 H0/H1进展记录
 
-**状态：进行中。** H0只读审计、H1 fixed-H6组件测试和一场13.5 nm Si public/service完整回归已完成。13.5 nm场通过原五项残差、恢复和物理门；它不是W 5 nm、2 nm或0.7 nm资格。Review V9的W 5 nm新路线尚未运行：10月3日已有完整5 nm数值锚点及经过legacy-native validator的packet，但当前fixed-H6入口只接收新profile目录形状。H2–H4仍未完成，0.7 nm/2 TB/48 h目标尚未达。
+**状态：进行中。** H0只读审计、H1 fixed-H6组件/路由验证和一场13.5 nm Si public/service完整回归已完成。13.5 nm场通过原五项残差、恢复和物理门；它不是W 5 nm、2 nm或0.7 nm资格。提交 `ce31f3738f469a04d23c50af0a7c7306afde3b38` 已加入严格限定的W5 fixed-H6 legacy-native descriptor路由；新的W5 public/service数值场尚未运行。10月3日旧producer的资源资格仍为 `unqualified`，但其已验证的数值packet可按原validator/binder复用。H2–H4仍未完成，0.7 nm/2 TB/48 h目标尚未达。
 
 | Review V9 H0要求 | 处理 | 证据/边界 |
 |---|---|---|
@@ -10,7 +10,7 @@
 | 13.5 nm anchor与接线链 | 记录Invocation `c0ef9dd4e7b2410182543d6c18a5e178` 的已存fixed-H6结果；说明public单`.dat`入口到factory路径、5 nm `5e-13` P4 target保留方式 | 不重跑数学未变anchor；P4精化与modal repeat/linearity是两个不同门 |
 | H1 fixed-H6反馈门组件 | fixed-H6分支以8次固定反馈作用检查复数重复/线性及近零绝对误差；serial单参数1 passed，MPI2五selector每rank 8 passed | 只资格化组件门、受控错误共识和清理fixture；未证明public单`.dat`路由或真实5 nm FE |
 | H1 13.5 nm public/service回归 | 唯一Si anchor完整走单`.dat`、MPI8 consumer、outer、recovery、physics与十项finalizer；37 outer、264个`S_H`作用，五项真残差通过 | 一次研究锚点；`performance_not_isolated`，不外推W 5/2/0.7 nm |
-| W 5 nm legacy packet复用 | 10月3日supervisor记为`validated_legacy_native_packet`，selected-mode binding的物理合同和600 external keys通过；fixed-H6当前guard排斥descriptor/binding | 数值身份存在；是入口目录形状兼容缺口。旧producer公共父/cgroup资源未资格，仍记`unqualified`，不伪造成PASS |
+| W 5 nm legacy packet复用 | 10月3日supervisor记为`validated_legacy_native_packet`，selected-mode binding的物理合同和600 external keys通过；提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`加入注册W5 fixed-H6窄路由 | 数值身份存在且旧validator/binder保持；新的W5 public/service FE尚未运行。旧producer公共父/cgroup资源仍`unqualified`，不伪造成PASS |
 | H3材料、通道与容量只读审计 | Henke/NIST/CIAAW/BIPM/CODATA来源字节已在ignored准备目录封存并记SHA；给出0.7 nm候选插值与派生材料值；2 nm已有PEP/TOAR，`ncv/mpd`未知 | 候选材料不是正式`.dat`；未生成W 0.7输入、未运行QEP或PDE |
 
 ## 主要结论
@@ -59,9 +59,9 @@ H0只读阶段没有执行测试、ABI、MPI、QEP、FE或checker。fixed-H6反�
 
 原始入口：[`consumer_summary.json`](../../../results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20261006T052732.307687Z/consumer/consumer_summary.json)，SHA `21ac7e56c45d90cbe540587bda831540d42077a32477cfae8a1daa2ba11f54d9`；[finalizer summary](../../../results/task041_v9_13p5_fixed_h6_public_service_run_20261006T044333Z/finalizer/finalizer_summary.json)，SHA `04d0b4d8c2ade9f85340a363bb38b2abd9f64be4c4a0891bf9608e8fde0682f7`。V5 ledger为127项，SHA `15d4b5dcb1ed0a867e584dc89d33a52da453575697a16a45d2aed101b5964836`；该Invocation只计一次`3181.091282263 s`。不得再计consumer、outer、rank或phase时间。
 
-## W 5 nm现有legacy-native packet与fixed-H6入口兼容缺口
+## W 5 nm现有legacy-native packet与fixed-H6窄路由
 
-本次只读检查10月3日完整5 nm运行。结论是**数值身份未缺；当前fixed-H6入口目录契约不兼容既有legacy-native文件布局；历史producer公共资源未资格化**。三者不能合并成“packet不合格”。
+本次只读检查10月3日完整5 nm运行。结论是**数值身份未缺；fixed-H6路由兼容已在提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`中按注册W5范围实现；历史producer公共资源未资格化**。三者不能合并成“packet不合格”。此提交没有运行新的W5 consumer。
 
 | 分类 | 现有证据 | 当前结论 |
 |---|---|---|
@@ -69,7 +69,19 @@ H0只读阶段没有执行测试、ABI、MPI、QEP、FE或checker。fixed-H6反�
 | legacy packet | `supervisor_summary.json`记录`producer_reuse.status=validated_legacy_native_packet`，`phase_status=inherited_not_run`；descriptor `results/task041_side_balh_component_audit/task041_h3b_legacy_native_packet_descriptor.json`，SHA `175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86` | 既有Oct3 supervisor已走legacy-native验证；当前轮未读取shards或重新运行validator |
 | producer身份 | `task039.v4.h4.mode-identity.v1`；source `b01a5932e4dfaf895e81e0424e0dd88c276fb0d3`；M480/MPI8、p6/h4；input `dd7c945c1696b4f9da3e35c295071a24b796a10d164d2a819b4abe68f72f44ca`、resolved `80ce8af49e59df65b462d71a23a29d99e07a4fd77862e57b5efed4b659919b70`、physical `8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c` | producer是Task039 direct模型；已有legacy binding逐项核物理合同，material label不同但数值字段相等 |
 | packet与keys | packet manifest SHA `306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f`，身份文件SHA `2a5cd006e87c48a89fa8166f687413ee0007346d6cf63d76c1cf9fb03ee994eb`，嵌入packet identity SHA `1e11de1d638dae427a9cf1e6dc0a3e00b26f888592cb22a3ae3428980a067b7d`；600 keys SHA `ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a` | `selected_mode_manifest.json` SHA `9db119a7890e00be36aaf6437299b450bc4df208b6a9e6fceea7902d4181fbe1`内`legacy_binding.pass=true`、physical equivalence与keys均pass |
-| 目录契约 | 现新profile validator要求producer root含`mode_prep_summary.json`、`packet_identity.json`、`selected_mode_packet/manifest.json`，父目录另有`supervisor_summary.json`和`selected_mode_manifest.json`。旧布局由descriptor引用独立packet root、identity sibling和producer root | 这是文件布局/入口兼容问题；不应复制或伪造新profile封套 |
+| 目录契约 | 新profile validator继续要求producer root及父目录的原封套；旧布局由descriptor引用独立packet root、identity sibling和producer root | W5 fixed-H6分支现窄路由到既有legacy-native validator/binder；不复制或伪造新profile封套。13.5/2 nm和普通legacy路径不因此放宽 |
 | producer资源 | Oct3 supervisor的`producer_reuse.resource.status=unqualified`、`resource_qualified=false`；只测worker tree RSS峰`10,039,554,048 B`，44,541样本，worker phase `11,447.683263 s`；public parent RSS、PSS/USS、cgroup/global swap均`not_measured` | 旧producer资源保持unqualified；不阻止复用其已验证数值packet，也不声称旧producer resource PASS。Oct3 consumer自身资源证据单独保留 |
 
-最薄后续方案（本轮不实施）：仅fixed-H6且严格注册W5 case允许`producer_packet_root`和`legacy_native_packet_descriptor`二选一；拒绝两者皆无或同时提供。保持`task041_legacy_native_profile`、`validate_task041_legacy_native_packet`和`bind_task041_legacy_native_consumer`的原物理、source/input/resolved、M/MPI、600-key、manifest与shard hash核验，不改新profile validator。只在`run_case.py`、`task038_launcher.py`、`task041_supervisor.py`、`task041_service.py`及`task041_exact_side_workflow.py`把fixed-H6 guard从“强制新producer root/拒绝legacy descriptor”收窄为这一W5例外，并让service command、manifest和worker传递同一个descriptor身份。P4 backend必须`cell_condensed`、target必须`5e-13`、MPI8、M480、p6/h4、V9 CPU map和V8资源合同全部继续匹配；无其他诊断，route-plan与leading-PH继续默认false。13.5/2 nm新profile路径及ordinary legacy默认保持原样。验证至少包含W5 descriptor接受、wrong target/map/scope拒绝、新root仍按原validator通过和默认legacy路径不变；不新增通用packet迁移框架。
+【历史规划快照；实际状态见下方已实施记录】仅fixed-H6且严格注册W5 case允许`producer_packet_root`和`legacy_native_packet_descriptor`二选一；拒绝两者皆无或同时提供。保持`task041_legacy_native_profile`、`validate_task041_legacy_native_packet`和`bind_task041_legacy_native_consumer`的原物理、source/input/resolved、M/MPI、600-key、manifest与shard hash核验，不改新profile validator。只在`run_case.py`、`task038_launcher.py`、`task041_supervisor.py`、`task041_service.py`及`task041_exact_side_workflow.py`把fixed-H6 guard从“强制新producer root/拒绝legacy descriptor”收窄为这一W5例外，并让service command、manifest和worker传递同一个descriptor身份。P4 backend必须`cell_condensed`、target必须`5e-13`、MPI8、M480、p6/h4、V9 CPU map和V8资源合同全部继续匹配；无其他诊断，route-plan与leading-PH继续默认false。13.5/2 nm新profile路径及ordinary legacy默认保持原样。验证至少包含W5 descriptor接受、wrong target/map/scope拒绝、新root仍按原validator通过和默认legacy路径不变；不新增通用packet迁移框架。
+
+## H1 W5 legacy路由与owner计数测试（2026-10-06）
+
+实现提交为`ce31f3738f469a04d23c50af0a7c7306afde3b38`，parent为`4d823b9f4c85d0271f572e916ea7049d6b51fabc`。test351最终SHA为`b933f4b48581f70b8f03507db31f709ba2c776cfc6bc0522f4916c06a260431d`；其他八个源文件SHA与提交前冻结值一致。测试按修前/修后分attempt记录，不声称最终源码上的整组selector一次全过。
+
+| Attempt | 实际执行与结果 | 父 wall | 证据 |
+|---|---|---:|---|
+| 初始serial | 六个selector按序启动；实际收集7项，6 passed后，第7项在worker路由selector中因fixture把默认CPU map错误期望为`None`而失败；`-x`后两个test350 selector未执行。失败只涉及测试期望 | `10.002066798973829 s` | [stdout](../../results/task041_v9_w5_legacy_count_serial_20261006T074100Z/serial_pytest.stdout.log) SHA `0451455663b41ce138cb3612a6ceba2fa65073ff3a0ed03ec500e597a422ef63`；[attempt](../../results/task041_v9_w5_legacy_count_serial_20261006T074100Z/serial_pytest_attempt.json) |
+| 修正后定向serial | 一行test-only断言改为比较既有`default_rank_cpus`；随后worker路由与两个test350 solver selector共3项通过，保留一个由非有限PC故障注入产生的`RuntimeWarning` | `10.00147465406917 s` | [stdout](../../results/task041_v9_w5_legacy_count_serial_retry2_20261006T075129Z/serial_pytest.stdout.log) SHA `d60f8e9d22b7c219d38ca7b845e7b39ba73cbad20b4c4f0eb4323df7d36c5624`；[compact](../../results/task041_v9_w5_legacy_count_serial_retry2_20261006T075129Z/serial_compact.json) SHA `0414268eb680eccf42a92a88fdadb5c25078393c1b59d02ef46f5eedc19a272a` |
+| MPI2 | 两个test350 solver selector；每rank `2 passed, 1 warning`，warning为同一受控非有限PC故障路径的`RuntimeWarning`，原文保留 | `5.00106007209979 s` | [stdout](../../results/task041_v9_w5_legacy_count_mpi2_20261006T075409Z/mpi2_pytest.stdout.log) SHA `5e3fe8ffd03a510491dad15b38b1cbc68f91bed06429ef4b26ee5cd089935b0c`；[compact](../../results/task041_v9_w5_legacy_count_mpi2_20261006T075409Z/mpi2_compact.json) SHA `2d8e98c1e60382bc8063b015a906aa67a2c378419a716f9aeb25f490133a181a` |
+
+第一次重试派生runner因未设置`BLIS_NUM_THREADS`在pytest前停止（无pytest wall）；没有覆写该记录。实际charged V5 entries只包括初始失败serial、修正后定向serial和MPI2三个唯一pytest attempt；ABI/static及preflight-only错误不计。最终V5 ledger为130项、SHA `11679a139bbcd5f8a40a7b1758a9434df396d50c2e069fd46f115620d2a5c7f4`。上述证据只证明测试合同，未运行真实W5 packet validator、FE或public/service场；H1 W5结果仍`not_run`。
