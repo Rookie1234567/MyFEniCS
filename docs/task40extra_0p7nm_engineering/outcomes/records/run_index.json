@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "0a15ac550a37196aa2941cc3c0a3a3d37ccf0158",
+  "current_code_sha": "223f602b84761eb99631e7a61a784c3d6c857c04",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -2245,6 +2245,163 @@
       "scope": "precommit closeout snapshot; not final settled expense",
       "commit_and_push": "remain pending and continue accruing in the same campaign window",
       "is_fe_or_pde_runtime": false
+    }
+  },
+  "review_v11_evidence_index": {
+    "status": "S6_DOCS_AND_TARGETED_CHECKS_PASS; GX560_NUMERICAL_MILESTONE_NOT_MET",
+    "active_review_sha": "ec00bd9d94ba2e6dbdab7eea407bc537e87c12fa",
+    "frozen_source_head": "223f602b84761eb99631e7a61a784c3d6c857c04",
+    "window_sha256": "1014f9ff536344d0829c1e58f1a1f25373be7b18f11bddd132e15a23558a0bd1",
+    "S1": {
+      "original_B0_parent": {
+        "run_id": "task40extra_0p7nm_b0_p6_y_orbit_candidate_v10",
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z",
+        "source_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50",
+        "classification": "historical B0 p6 solve; reused saved field"
+      },
+      "saved_field_recovery": {
+        "run_id": "task40extra_0p7nm_b0_p6_y_orbit_candidate_v10",
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261006T031704.124141Z",
+        "source_sha": "970015c1a94b5f534e82e544e24dbd637518432f",
+        "saved_field_source_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50",
+        "input_sha256": "2f7e9cf51a3d1ecc73e5cb6f670bac32f769584bda11d778dbeaee5be6562780",
+        "status": "SAVED_FIELD_PHYSICS_REVALIDATED",
+        "new_pde": false
+      },
+      "historical_failed_extension": {
+        "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261006T024823.886317Z",
+        "source_sha": "5dbcc653913cf050395d23e38dc59fed00b977a4",
+        "status": "WORKER_FAILED; old ABI fixture FAIL",
+        "superseded_by": "new saved-field recovery root above; old failure preserved"
+      }
+    },
+    "Gx560": {
+      "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1",
+      "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1__full3d_iterative__mpi1__Mna/20261006T044729.697824Z",
+      "source_sha": "9977284c47c8028751de4dbecd12b95d1912a580",
+      "input_sha256": "7f20aa9719c91c6be4d6a4b4cd00ec8b7a7610fdf53c889f88a42ece03f17d1f",
+      "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "stage": "all_q_symbolic_before_any_numeric",
+      "classification": "RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC",
+      "numeric_factor_KSP_field": "NOT_RUN"
+    },
+    "Gx784": {
+      "status": "NOT_RUN_CONDITION_NOT_MET",
+      "reason": "Gx560 did not meet its numeric-stage gate; no Gx784 run root was created"
+    },
+    "S2": {
+      "artifact_root": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s2_saved_local_recovery_v11",
+      "report": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s2_saved_local_recovery_v11/s2_local_recovery_v11.json",
+      "arrays_sha256": "d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273",
+      "analysis_parent_head": "9977284c47c8028751de4dbecd12b95d1912a580",
+      "source_file_sha256": "3c8bd3bef250a590e433247ac287cc43b9e134dfa48d7a09183cc98ad90b4ff6",
+      "test_file_sha256": "be4575083a17df3af6f1bd51e35e49ba0d70be4eaf8a0ab44641a89c9baeb21e",
+      "test_status": "26 passed",
+      "scope": "saved arrays only; no volume reassembly/global factor/fresh PDE"
+    },
+    "S5": {
+      "artifact_root": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11",
+      "source_head": "223f602b84761eb99631e7a61a784c3d6c857c04",
+      "helper_sha256": "1787f5015ff6ef3ae57d1df6eae22a9ca9723b0e0e75e1df64a9e032b1497d62",
+      "runner_sha256": "b5438f74fb2434fcbb85e8acd4035a2a2c67a84dce9b44ec9d98cf3e16edba1c",
+      "modes": 32060,
+      "native_rows_per_face": 882,
+      "checker_status": "PASS on two frozen representative faces",
+      "dot_readonly_head": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+      "migration": "no file-by-file migration from dot; no dot PASS inherited"
+    },
+    "docs": {
+      "response": "docs/task40extra_0p7nm_engineering/response_v11.md",
+      "integrated_report": "docs/task40extra_0p7nm_engineering/outcomes/review_v11_engineering.md",
+      "summary": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+      "test_summary": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+      "manifest": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_manifest.json"
+    },
+    "test_history": {
+      "implementation_no_fe_initial": "42 tests; 5 failed",
+      "diagnostic_initial": "7 tests; 3 failed",
+      "implementation_no_fe_final": "42 tests; 41 passed, 1 skipped",
+      "S5_first": "5 tests; 1 passed, 4 failed",
+      "S5_conjugation_fixed_and_timing_qualified": "5 passed; historical initial failures preserved",
+      "S1_old_ABI_fixture": "FAIL; historical extension run preserved"
+    },
+    "campaign_delivery_observation": {
+      "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/main_s6_delivery_budget_observation_v11.json",
+      "source_sha256": "cea988794ee788efc66e40e058befa78abaeacb498741edd66ded00e2214378c",
+      "sequence": 8090,
+      "cumulative_policy_charge_seconds": 28609.104986536724,
+      "derived_numerical_remaining_seconds": 57190.895013463276,
+      "final_settlement": false,
+      "window_refreshed": false
+    },
+    "target_50x25x140_nm": "NO_GO / NOT_QUALIFIED",
+    "next_unique_priority": "Investigate ownership and lifetime of the Gx560 pre-numeric 10,295,283,712 B live process-tree RSS working set; source category unknown",
+    "compact_records": {
+      "gauge_power": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_gauge_power.json",
+        "bytes": 4152,
+        "sha256": "fcab86ce348cc840c24ff61ea6d350c995dd941d18dada64965b012d63e086aa"
+      },
+      "local_recovery": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_local_recovery.json",
+        "bytes": 4015,
+        "sha256": "b91c54e03ad3b32f4258367f4ec2f99ebd1cd135501eb89508645cdd2dd16846"
+      },
+      "engineering_results": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_engineering_results.json",
+        "bytes": 19557,
+        "sha256": "c3422da56367c478f54d5402d7cf82fc68b0496789374c5ad0178bc0c9d0426f"
+      },
+      "cost_and_repairs": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_cost_and_repairs.json",
+        "bytes": 11773,
+        "sha256": "3e34040aab89c0db0ede955951d6be5eec81f33eefda550dfcb2119e5207acb5"
+      },
+      "manifest": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_manifest.json",
+        "bytes": 5733,
+        "sha256": "9ccb03194faa171becb0a96c7cb3e39c075de64672e4c0ac3c0cd5e52623dbe2"
+      }
+    },
+    "document_hashes": {
+      "response_v11.md": {
+        "path": "docs/task40extra_0p7nm_engineering/response_v11.md",
+        "sha256": "95c579aabcdb713c3208027d2cf064aa7d365b1cadee9aced61081c82fe27dbd"
+      },
+      "review_v11_engineering.md": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/review_v11_engineering.md",
+        "sha256": "5ea0816b73054e5a382ac79cdd63f610d353b997974513e0e0140f50cd16719d"
+      },
+      "summary.md": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+        "sha256": "55945cc3fd3fe5fd478c3e365ec31b52a7867ca1c4154f00f9171f3e626afb0b"
+      },
+      "test_summary.md": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+        "sha256": "9d9391a776317b66225c84ae199e77986082d191c4c5c8eab7e19bbd6234e9ce"
+      },
+      "README.md": {
+        "path": "docs/task40extra_0p7nm_engineering/README.md",
+        "sha256": "5e93103dbec279702b4b2f229346aa86a403ebaa251137c0756b8a2907998a38"
+      },
+      "development_progress.md": {
+        "path": "docs/development_progress.md",
+        "sha256": "52ece122aade93609444675d59940653a47da41ab16e1d62c51931e2f63d06e6"
+      },
+      "development_model_registry.md": {
+        "path": "docs/development_model_registry.md",
+        "sha256": "3c7c539ba22e1851babaac122d35a6899aaa480d8f03aa420e90c77faa33d0b7"
+      },
+      "test_summary": {
+        "md": {
+          "sha256": "9d9391a776317b66225c84ae199e77986082d191c4c5c8eab7e19bbd6234e9ce"
+        }
+      },
+      "development_progress": {
+        "md": {
+          "sha256": "52ece122aade93609444675d59940653a47da41ab16e1d62c51931e2f63d06e6"
+        }
+      }
     }
   }
 }

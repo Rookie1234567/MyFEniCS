@@ -1,3 +1,37 @@
+# Task40extra Review V11 结果总览：保存场复核与组件动作通过，Gx560 停在数值因子化前
+
+## V11 当前结果
+
+本节是当前状态；下方 V10 与更早内容均为历史。S1–S2 的正结果来自既有保存数据，S5 是两个代表面的边界分块动作，均不是新的 PDE。主数值交付 Gx560 在四 q 符号分析后因资源 Gate 受控停止，Gx784 未运行；50×25×140 nm 目标仍为 `NO_GO / NOT_QUALIFIED`。
+
+| 阶段 | 模型 / 方法 | 结果 | 状态与范围 |
+|---|---|---|---|
+| S0 | B0：80 cells、p6、真实两单元三维缺口、y 向四 q | true residual `1.6089774391665316e-8`、native witness `1.6089791915820923e-8`；旧能量闭合 `6.581916436299018e-5` | residual pass；旧物理负结果保留。四 q 在销毁前同时存活，逐 q MUMPS 原始审计见综合报告 |
+| S1 | 同一 B0 保存场的 gauge-aware 端口功率 | R/T=`0.9842736080926772 / 0.014240518143988908`；A_balance/A_volume=`0.001485873763333926 / 0.00148587384621333`；能量差`8.287925901129256e-11` | 独立 checker PASS；仅 saved-field 后处理，不是新 PDE |
+| S2 | 原尺寸上/下两个 p6 局部块 | forward error=`5.35e-14 / 5.14e-14`，局部原方程误差`4.77e-16 / 6.41e-16` | 局部 repair candidate；全 q60 行重检与全目标 volume MPC 未运行 |
+| S3 | B0 可选 direct reference | `NOT_RUN_AUTHORITY_LIMITED_OPTIONAL_REFERENCE` | G0 witness/map 与 B0 gauge、RHS合同不匹配；不是容量或 ABI 失败，也不是缺少用户授权 |
+| S4 | Gx560：560 cells、p6、340 modes、四 q | 四 q symbolic 完成；projected tree RSS `15,205,944,640 B` 超过 effective finite cap `13,462,286,336 B` | `RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC`；numeric、KSP、场均`NOT_RUN`。Gx784因条件未满足未运行 |
+| S5 | 上下代表面完整 882 行、32,060 模态 Bα/Dx 动作 | 两面 full checker PASS；最大 Bα/Dx差分别为 top `1.13e-13 / 3.86e-14`、bottom `1.04e-14 / 3.91e-15` | 仅两个代表面；84行替代方案未资格化；本轮主线未重跑压缩，S5使用882行；非全局MPC或PDE |
+| S6 | 资源与可推广性判断 | seq8089旧快照保留；主控交付观察 seq8090（`2026-10-06T09:14:00.836725318Z`）：累计 charge `28609.104986536724 s`、推导 numerical remaining `57190.895013463276 s` | 窗口未刷新，`final_settlement=false`；Git/测试尾段由主控在同一账本后续计入。下一项唯一优先工作是调查 Gx560 数值阶段前 `10,295,283,712 B` live RSS 的对象所有权与生命周期；目标规模尚未资格化 |
+
+### 资源数字的口径
+
+| 数据 | 测量 / 推导 | 边界 |
+|---|---:|---|
+| B0 销毁前四 q MUMPS 内部数据 | INFOG19/22逐 q为123/110、125/112、124/111、125/112 MB；四因子同时 live | MUMPS内部读数，不是 RSS；INFOG29是因子项数，不是字节 |
+| Gx560 | gate时 tree RSS `10,295,283,712 B`；全程tree peak `10,418,892,800 B`；cgroup peak `10,930,950,144 B`；swap 0 | current/projected/cap、process-tree峰和cgroup高水位分开；数值阶段未启动 |
+| S2 | 单 Python 进程 `ru_maxrss=634,454,016 B` | 不是 process-tree 或 cgroup 峰 |
+| S5 四阶段共享服务 | wall `15.182 s`、CPU `11.481 s`、共享 cgroup peak `546,459,648 B`、swap 0 | 一个 cgroup 串行承载四阶段；逐阶段 RSS另列，不能相加 |
+
+V11 最终文档与源码 HEAD `223f602b84761eb99631e7a61a784c3d6c857c04`。详细结果、选择性交接和证据边界见 [Response V11](../response_v11.md)、[综合工程报告](review_v11_engineering.md)、[test summary](test_summary.md)、[run index](records/run_index.json) 与 [V11 manifest](records/review_v11_manifest.json)。五个 hash-bound compact records：
+
+- [gauge/power](records/review_v11_gauge_power.json)
+- [local recovery](records/review_v11_local_recovery.json)
+- [engineering results](records/review_v11_engineering_results.json)
+- [cost and repairs](records/review_v11_cost_and_repairs.json)
+- [manifest](records/review_v11_manifest.json)
+
+---
 # Task40extra 结果总览：Review V10 B0物理解未通过能量门；V9及更早历史保留
 
 ## Review V10 综合结果

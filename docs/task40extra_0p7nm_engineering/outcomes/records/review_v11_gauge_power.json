@@ -1,0 +1,97 @@
+{
+  "full_target_volume_mpc": "NOT_RUN_AUTHORITY_LIMITED",
+  "historical_negative": {
+    "old_record_rewritten": false,
+    "v10_energy_closure_absolute": 6.581916436299018e-05
+  },
+  "identity": {
+    "input_sha256": "2f7e9cf51a3d1ecc73e5cb6f670bac32f769584bda11d778dbeaee5be6562780",
+    "mode_count": 532,
+    "mode_sha256": "afc439d8969463d3c3d46076382ec30c7a8fe3c9b1150955dc2d228a483e7f6b",
+    "physical_model_sha256": "250c26f25d85c0ff68abb0454a6c7640bf8d3af3e6f96bbf599a8cf7c925ae73",
+    "recovery_kind": "saved_field_postprocess_only",
+    "recovery_source_sha": "970015c1a94b5f534e82e544e24dbd637518432f",
+    "saved_field_source_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50"
+  },
+  "independent": {
+    "checks": {
+      "boundary_plane_coordinates_serialized": true,
+      "carrier_source_rebind_passed": true,
+      "complete_ordered_532_mode_inventory": true,
+      "independent_grouped_port_power_closes_with_volume_absorption": true,
+      "independent_per_mode_cross_power_matches_reported_R_T": true,
+      "independent_per_mode_power_closes_with_volume_absorption": true,
+      "physical_boundary_coefficients_match_solver_coefficients": true,
+      "recovery_packet_passed": true,
+      "source_and_scientific_input_identity": true,
+      "top_incident_subtracted_once_bottom_unchanged": true
+    },
+    "independent_grouped_R_T": {
+      "bottom": 0.014240518143988908,
+      "top": 0.9842736080926773
+    },
+    "independent_grouped_energy_closure": 8.287948105589749e-11,
+    "output_checker_status": "PASS",
+    "residuals": [
+      {
+        "backend": "sum_factorized_target_backend",
+        "limit": 1e-06,
+        "passed": true,
+        "recomputed_relative_residual": 1.6089774391665316e-08,
+        "residual_algebra_defect_relative": 0.0,
+        "stored_relative_residual": 1.6089774391665316e-08
+      },
+      {
+        "backend": "native_full_A6_witness",
+        "limit": 1e-06,
+        "passed": true,
+        "recomputed_relative_residual": 1.6089791915820923e-08,
+        "residual_algebra_defect_relative": 0.0,
+        "stored_relative_residual": 1.6089791915820923e-08
+      }
+    ],
+    "status": "PASS"
+  },
+  "records": {
+    "checker": {
+      "bytes": 17707,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/gauge_power_recheck_sourcebound_v11_970015c1/v11_independent_output_checker.json",
+      "sha256": "ac4685255aeeaed1779087f0c201142f03d3bb78dbc98df64bf45cd946258290"
+    },
+    "handoff": {
+      "bytes": 6197,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/gauge_power_recheck_sourcebound_v11_970015c1/v11_saved_recovery_handoff.json",
+      "sha256": "8b32197142f773d2bd6feebff9935a1b615df41af450c2c32316d4b6150e96de"
+    },
+    "poynting": {
+      "bytes": 57282,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/gauge_power_recheck_sourcebound_v11_970015c1/v11_independent_boundary_plane_poynting.json",
+      "sha256": "4fb0dbd93a105aa6c1f4cc174c2c8f31330709fea68ef502dfcbfb2b4e16840d"
+    },
+    "saved_recheck": {
+      "bytes": 7526,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/gauge_power_recheck/saved_mode_power_recheck.json",
+      "sha256": "f14a8b8fcb9970c7ad4b3817148fcc4aa3717ac5f96abfc16a812fd70d66c79d"
+    }
+  },
+  "result": {
+    "A_balance": 0.001485873763333926,
+    "A_volume": 0.00148587384621333,
+    "R": 0.9842736080926772,
+    "T": 0.014240518143988908,
+    "absorption_consistency_absolute": 8.287940407754324e-11,
+    "all_532_modes_passed": true,
+    "amplitude_json_sha256": "18523b98b21cbfff1228603e3e978de395c2b5b1c5247d33ae7cb2bc49aa1f5a",
+    "energy_closure_absolute": 8.287925901129256e-11,
+    "modal_npz_sha256": "a4d2d368b0119a29b7ad06a8137b2ee6c0317604e898a09c991ff85d1d483c90",
+    "output_file_count": 28
+  },
+  "schema": "task40extra.review_v11_gauge_power.v1",
+  "scope": "532-mode saved-field postprocess only; no PDE/KSP/factorization",
+  "status": "SAVED_FIELD_PHYSICS_REVALIDATED",
+  "workflow": {
+    "cgroup_swap_peak_bytes": 0,
+    "seconds": 11.256015080958605,
+    "tree_rss_peak_bytes": 716091392
+  }
+}

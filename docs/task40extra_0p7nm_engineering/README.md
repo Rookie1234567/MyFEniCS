@@ -29,6 +29,15 @@
 
 | 文件 | 内容 |
 |---|---|
+| [Response V11](response_v11.md) | S0–S6回应；保存场物理复核、Gx560资源受控停止、S6唯一后续优先级和结果边界 |
+| [V11 综合工程报告](outcomes/review_v11_engineering.md) | 结果矩阵、q 因子与资源口径、阶段成本、选择性移交和证据限制 |
+| [Review V11 manifest](outcomes/records/review_v11_manifest.json) | 固定窗口、冻结源码、五份compact身份与V11结论状态 |
+| [Review V11 gauge power](outcomes/records/review_v11_gauge_power.json) | B0已保存场的532模态功率与体吸收复核 |
+| [Review V11 local recovery](outcomes/records/review_v11_local_recovery.json) | 两个已保存局部p6块的恢复和方程checker |
+| [Review V11 engineering results](outcomes/records/review_v11_engineering_results.json) | Gx560/Gx784与S5双面882行结果及资源边界 |
+| [Review V11 cost and repairs](outcomes/records/review_v11_cost_and_repairs.json) | 已知成本、修复事件和仍为unknown的成本 |
+| [结果总结 V11 更新](outcomes/summary.md) | S0–S6表格、边界、负结果与下一步 |
+| [测试摘要 V11 更新](outcomes/test_summary.md) | 按source身份区分的既有与本轮文档检查 |
 | [Response V10](response_v10.md) | A边界恢复误差、B0 p6逆算子与物理能量门、成本和限制的逐项回应 |
 | [Integrated p6](outcomes/review_v10_integrated_p6.md) | 用同一套边界解释串联B0 p6组件、线性残差、能量门与A证据 |
 | [Review V10 manifest](outcomes/records/review_v10_manifest.json) | V10证据导航、固定窗口与结论边界 |

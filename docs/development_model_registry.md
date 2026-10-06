@@ -1,3 +1,22 @@
+# Task40extra 当前组件状态：Review V11 保存场复核、局部候选与Gx560受控停止
+
+本节更新Task40当前证据状态，不新增一个已求解的PDE模型。S1复核的是已保存的B0场；S2是两个局部p6块；S5是两个代表面的边界动作。Gx560在四 q symbolic 阶段后资源受控停止，没有 numeric factor、KSP或场；Gx784未运行。ordinary default未改。
+
+| 组件 / 对象 | source / 身份 | 结果 | 当前资格边界 |
+|---|---|---|---|
+| B0 saved-field gauge-aware output | saved field source `c439ed40768de4745131b43fc0312bb8be8d9d50`；postprocess source `970015c1a94b5f534e82e544e24dbd637518432f`；532 modes | R/T=`0.9842736080926772 / 0.014240518143988908`；energy closure`8.287925901129256e-11`；独立checker PASS | saved-field physics revalidated；非新PDE，不覆盖V10旧能量负记录 |
+| S2 local p6 recovery | arrays SHA-256 `d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273`；两面 | forward relative`5.35e-14 / 5.14e-14`；原局部方程`4.77e-16 / 6.41e-16` | 两个块为repair candidate；全 q60 行重检、完整边界MPC未运行 |
+| Gx560 q4 reference attempt | source `9977284c47c8028751de4dbecd12b95d1912a580`；10×4×14=560 cells；p6；340 modes；input SHA `7f20aa9719c91c6be4d6a4b4cd00ec8b7a7610fdf53c889f88a42ece03f17d1f` | `RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC`；current tree RSS`10,295,283,712 B`；projected`15,205,944,640 B`；cap`13,462,286,336 B` | 4 q symbolic only；numeric allocated/used/fill、KSP、field均null/NOT_RUN；非数值失败或OOM |
+| S5 full-882 B/D component | helper SHA-256 `1787f5015ff6ef3ae57d1df6eae22a9ca9723b0e0e75e1df64a9e032b1497d62`；top/bottom各16,030 modes | 两面full checker PASS；Bα最大相对差`1.13e-13 / 1.04e-14` | 两个冻结代表面；完整882行，不是全边界global MPC、全算子范数或PDE |
+| 50×25×140 nm目标 | 真空波长0.7 nm；完整三维且保留任意非可分缺口 | `NO_GO / NOT_QUALIFIED` | 没有足够证据证明精度、2 TB及48小时目标；不是数学不可能性结论 |
+
+Gx560 的INFOG16/17是符号阶段内存估计，INFOG20是因子项估计，不可登记为已实现numeric因子。各 q 的 NNZ 与单独符号阶段wall在hash-bound final admission receipt中未保留，保持unknown。Gx560 watchdog monotonic elapsed`2041.653 s`；service workflow monotonic`2041.827 s`；conservative policy charge`2244.797 s`，三者口径不同。S2峰值是单Python进程`ru_maxrss=634,454,016 B`；S5峰值`546,459,648 B`是一个串行四阶段共享cgroup的`memory.peak`；两者不能与Gx560 process-tree peak互换。
+
+后续唯一优先项是查明 Gx560 数值阶段前 `10,295,283,712 B` live process-tree RSS 工作集的对象所有权与生命周期；来源类别未知，不归因给 Python heap、FE 装配或尚未建立的 numeric factors，也不先增加预条件器实验。
+
+证据入口：[Response V11](task40extra_0p7nm_engineering/response_v11.md)、[V11综合报告](task40extra_0p7nm_engineering/outcomes/review_v11_engineering.md)、[五份compact records](task40extra_0p7nm_engineering/outcomes/records/review_v11_manifest.json)。研究用q4路径不提升ordinary default；master未合并。
+
+---
 # Task40extra 当前模型登记：Review V10 B0 p6真实三维候选（energy gate未通过）
 
 B0 p6在80-cell真实三维两单元void上求解。四个y相位分支的完整p6准确LU只作为preconditioner背景修正，target/RHS保持不变；factor同时保留并恢复36,000个内部未知量，增加setup和factor内存。残差通过属于线性系统，不替代物理energy closure。

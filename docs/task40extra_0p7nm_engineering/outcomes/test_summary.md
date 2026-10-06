@@ -1,3 +1,24 @@
+# Task40extra V11 测试摘要
+
+| 检查 | source / 命令 | 结果与边界 |
+|---|---|---|
+| S2 局部恢复定向测试 | `src/solvers/task40_w1_local_probe.py` SHA-256 `3c8bd3bef250a590e433247ac287cc43b9e134dfa48d7a09183cc98ad90b4ff6`；`src/test/test_task40_w1_local_recovery.py` SHA-256 `be4575083a17df3af6f1bd51e35e49ba0d70be4eaf8a0ab44641a89c9baeb21e`；执行父 HEAD `9977284c47c8028751de4dbecd12b95d1912a580`；随后实现冻结 `a1c5c6040cc3674418bbebd877790b1882ac010f` | `26 passed`；执行时身份与随后冻结提交分开记录，不声称在冻结提交运行；仅对应局部恢复，不是全局 PDE |
+| S1 早期扩展/旧 ABI fixture | source `5dbcc653913cf050395d23e38dc59fed00b977a4`；root `results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261006T024823.886317Z` | 旧 ABI fixture `FAIL`、worker `WORKER_FAILED`，保留历史结果；后续 qualified ABI preflight 与独立输出 checker PASS，不回写或覆盖旧失败 |
+| S1 qualified ABI 与恢复检查 | WSL Linux、PETSc complex128/int32、MPI1、线程1；source-bound V11 recovery receipt | ABI preflight PASS；保存场独立物理 checker PASS；不是 FE/PDE 重新求解 |
+| V11 implementation/no-FE targeted suite | `implementation_no_fe_qualification/targeted_pytest.xml`；42 tests | 初次 `37 passed / 5 failed`；失败保留为历史入口，不冒称全通过 |
+| V11 implementation/no-FE diagnostic suite | `implementation_no_fe_qualification/diagnostic_pytest.xml`；7 tests | 初次 `4 passed / 3 failed`；失败保留为历史诊断结果 |
+| V11 implementation/no-FE final suite | `implementation_no_fe_qualification/targeted_pytest_final.xml`；42 tests | 最终 `41 passed / 1 skipped`；与早期失败记录分列 |
+| S5 helper 定向测试 | frozen HEAD `223f602b84761eb99631e7a61a784c3d6c857c04`；现有回执 | `5 passed`；只验证组件 helper，不替代32,060模式双面结果checker |
+| S5 helper 首次 targeted run | `s5_full882_v11/s5_targeted.xml`；5 tests | 初次 `1 passed / 4 failed`；保留为修复前历史结果 |
+| S5 conjugation 修复后 / timing-qualified | `s5_targeted_after_conjfix.xml`、`s5_timing_qualified.xml`、`s5_targeted_final.xml` | 各 `5 passed`；完整行动作、共轭方向修复后的定向检查通过；不把修复前失败覆盖为通过 |
+| S5 artifact-local runner 编译 | runner SHA-256 `b5438f74fb2434fcbb85e8acd4035a2a2c67a84dce9b44ec9d98cf3e16edba1c` | `py_compile`通过；不是数值测试 |
+| S1 / S5 independent checkers | V11 hash-bound gauge-power 与 full-882 compact | PASS；S1为保存场物理复核，S5为两个代表面的边界动作；均非新 PDE |
+| V11 文档合同测试 | qualified Task40 WSL activation；`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_183_development_model_registry_markdown.py` | `21 passed, 82 subtests passed`；本地文档合同检查，不含 FE/PDE |
+| 全仓 pytest / MPI4 / Ruff / CI | 本轮 | `NOT_RUN`；不声称 CI 通过 |
+
+不同 source、回执和 fixture 范围不可相加成一个覆盖总数。Gx560 资源停止不是测试失败或求解器数值失败：符号阶段后数值因子、KSP、场均未运行。文档测试也不能证明目标规模容量或 PDE 精度。
+
+---
 # Task40extra 当前测试摘要：Review V10文档收口与版本分列测试（V9及更早记录保留）
 
 ## Review V10 证据、工程修复与文档收口

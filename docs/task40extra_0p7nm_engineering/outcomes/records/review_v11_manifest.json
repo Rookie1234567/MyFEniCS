@@ -1,0 +1,113 @@
+{
+  "S5_artifacts": {
+    "full_arrays": {
+      "bytes": 822894,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_full32060_component_arrays_v11.npz",
+      "sha256": "1850543a43f42211f3bc5f5a4756640860bb1ffcf8b9e86b02083208c57bab93"
+    },
+    "full_checker": {
+      "bytes": 1884,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_full32060_component_checker_v11.json",
+      "sha256": "a9fb109897c570297e95e6cf04e1c9b07c61efad50aaf1573b5d0439a51b14ac"
+    },
+    "full_report": {
+      "bytes": 23083,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_full32060_component_v11.json",
+      "sha256": "8c720bd52ad8ac766af35977a0dcbe041d963cf4db39be45a2ad6f137e535951"
+    },
+    "member_audit": {
+      "bytes": 1373,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/main_saved_array_identity_audit_v11.json",
+      "sha256": "3805d9ce9bfb5472d2c876e64ec3bdc4c7f036aef8b391c6291a11b8257c54bd"
+    },
+    "small_arrays": {
+      "bytes": 297368,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_small_component_arrays_v11.npz",
+      "sha256": "0826cd624556d73171ea85c26ff0ad52047afbbb5a9b32123e84f4f427e2ddd5"
+    },
+    "small_checker": {
+      "bytes": 2023,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_small_component_checker_v11.json",
+      "sha256": "7e9f2ca748345192d5f12ccf71100dcca7abda4010e7f9eaec6b1725cdab1233"
+    },
+    "small_report": {
+      "bytes": 34146,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_small_component_v11.json",
+      "sha256": "bcd908915988dbfe280088e24c70a14fa43ac0494c6a4b88f20f8ac605438c27"
+    }
+  },
+  "active_review_sha": "ec00bd9d94ba2e6dbdab7eea407bc537e87c12fa",
+  "authority": "执行者范围：S5/S6 文档与定向检查；不自行操作 Git。主控集中审查、冻结后负责 commit/push；未经最终批准与用户授权禁止合并 master。不得新增计算或目标规模行动。",
+  "branch": "task40extra_0p7nm_engineering",
+  "campaign": {
+    "deadline_utc": "2026-10-07T01:17:35.732545140Z",
+    "last_valid_sample_utc": "2026-10-06T09:14:00.836725318Z",
+    "last_valid_sequence": 8090,
+    "window": {
+      "bytes": 1444,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/campaign_window_v11.json",
+      "sha256": "1014f9ff536344d0829c1e58f1a1f25373be7b18f11bddd132e15a23558a0bd1"
+    },
+    "previous_observation": {
+      "sequence": 8089,
+      "sample_utc": "2026-10-06T07:59:59.678778633Z",
+      "cumulative_policy_charge_seconds": 24167.947039851726,
+      "derived_numerical_remaining_seconds": 61632.05296014827,
+      "final_settlement": false
+    },
+    "cumulative_policy_charge_seconds": 28609.104986536724,
+    "derived_numerical_remaining_seconds": 57190.895013463276,
+    "current_delivery_observation": {
+      "sequence": 8090,
+      "label": "main_s6_document_delivery_budget_observation_v11",
+      "source_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/main_s6_delivery_budget_observation_v11.json",
+      "source_bytes": 2944,
+      "source_sha256": "cea988794ee788efc66e40e058befa78abaeacb498741edd66ded00e2214378c",
+      "sample_utc": "2026-10-06T09:14:00.836725318Z",
+      "adjacent_conservative_realtime_charge_seconds": 4441.157946685,
+      "monotonic_elapsed_seconds": 3997.0918280479964,
+      "utc_minus_monotonic_seconds": 444.06611863700346,
+      "discrepancy_tolerance_seconds": 39.97091828225064,
+      "window_refreshed": false,
+      "final_settlement": false,
+      "next_writer": "main controller; final Git/test tail later charged in same ledger"
+    }
+  },
+  "compact_records": {
+    "cost_and_repairs": {
+      "bytes": 11773,
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_cost_and_repairs.json",
+      "sha256": "3e34040aab89c0db0ede955951d6be5eec81f33eefda550dfcb2119e5207acb5"
+    },
+    "engineering_results": {
+      "bytes": 19557,
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_engineering_results.json",
+      "sha256": "c3422da56367c478f54d5402d7cf82fc68b0496789374c5ad0178bc0c9d0426f"
+    },
+    "gauge_power": {
+      "bytes": 4152,
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_gauge_power.json",
+      "sha256": "fcab86ce348cc840c24ff61ea6d350c995dd941d18dada64965b012d63e086aa"
+    },
+    "local_recovery": {
+      "bytes": 4015,
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v11_local_recovery.json",
+      "sha256": "b91c54e03ad3b32f4258367f4ec2f99ebd1cd135501eb89508645cdd2dd16846"
+    }
+  },
+  "created_utc": "2026-10-06T08:25:01.763378+00:00",
+  "decisions": {
+    "Gx560": "RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC",
+    "Gx784": "NOT_RUN_CONDITION_NOT_MET",
+    "S1": "SAVED_FIELD_PHYSICS_REVALIDATED",
+    "S2": "TWO_SAVED_LOCAL_P6_BLOCKS_AND_PORT_EQUATIONS_PASS_REPAIR_CANDIDATE",
+    "S3": "NOT_RUN_AUTHORITY_LIMITED_OPTIONAL_REFERENCE",
+    "S5": "S5_COMPONENT_COMPLETE",
+    "full_target_volume_mpc": "NOT_RUN_AUTHORITY_LIMITED",
+    "target_50x25x140_nm": "NO_GO / NOT_QUALIFIED"
+  },
+  "frozen_source_head": "223f602b84761eb99631e7a61a784c3d6c857c04",
+  "qualification_boundary": "two representative faces only, not the whole boundary/MPC/operator norm/PDE/target scale; Review V11 §10 Gx560 numeric milestone remains unmet",
+  "schema": "task40extra.review_v11_manifest.v1",
+  "status": "S6_DOCS_AND_TARGETED_CHECKS_PASS; GX560_NUMERICAL_MILESTONE_NOT_MET"
+}

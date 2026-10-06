@@ -1,0 +1,280 @@
+{
+  "campaign_accounting": {
+    "closeout_reserve_seconds": 600,
+    "deadline_utc": "2026-10-07T01:17:35.732545140Z",
+    "last_valid_observation": {
+      "cumulative_policy_charge_seconds": 24167.947039851726,
+      "derived_numerical_remaining_seconds": 61632.05296014827,
+      "final_settlement": false,
+      "label": "watchdog_end",
+      "ledger": {
+        "bytes": 9228614,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/campaign_accounting_v10.jsonl",
+        "sha256": "27f8fb1cabd339efa3b5deb01ff544a031d5c3654e45d7f7c8d2b7771f9b06e3"
+      },
+      "next_writer": "controller single writer",
+      "sample_utc": "2026-10-06T07:59:59.678778633Z",
+      "sequence": 8089
+    },
+    "numerical_cutoff_seconds": 85800.0,
+    "window": {
+      "bytes": 1444,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/campaign_window_v11.json",
+      "sha256": "1014f9ff536344d0829c1e58f1a1f25373be7b18f11bddd132e15a23558a0bd1"
+    },
+    "window_sha256": "1014f9ff536344d0829c1e58f1a1f25373be7b18f11bddd132e15a23558a0bd1",
+    "current_delivery_observation": {
+      "source": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/main_s6_delivery_budget_observation_v11.json",
+        "bytes": 2944,
+        "sha256": "cea988794ee788efc66e40e058befa78abaeacb498741edd66ded00e2214378c"
+      },
+      "sequence": 8090,
+      "label": "main_s6_document_delivery_budget_observation_v11",
+      "sample_utc": "2026-10-06T09:14:00.836725318Z",
+      "cumulative_policy_charge_seconds": 28609.104986536724,
+      "derived_numerical_remaining_seconds": 57190.895013463276,
+      "adjacent_conservative_realtime_charge_seconds": 4441.157946685,
+      "monotonic_elapsed_seconds": 3997.0918280479964,
+      "utc_minus_monotonic_seconds": 444.06611863700346,
+      "discrepancy_tolerance_seconds": 39.97091828225064,
+      "window_refreshed": false,
+      "final_settlement": false,
+      "next_writer": "main controller; final Git/test tail later charged in same ledger"
+    }
+  },
+  "engineering_attempts": [
+    {
+      "attempt": "launch_01",
+      "classification": "PRELAUNCH_ENGINEERING_FAILURE",
+      "cpu_seconds": 0.271,
+      "error": "ModuleNotFoundError: No module named benchmarks",
+      "numerical_action": "NOT_RUN",
+      "service_memory_peak_bytes": null,
+      "service_seconds": 0.245,
+      "swap_bytes": 0,
+      "watchdog_started": false,
+      "service_memory_peak_reported": "about 1.2M, rounded status display",
+      "service_memory_peak_exactness": "unknown; prior 1,258,291 B conversion is not an exact bytes measurement"
+    },
+    {
+      "attempt": "worker_01",
+      "classification": "WORKER_ENGINEERING_FAILURE_BD_ACTION_NOT_COMPLETED",
+      "descendants_cleared": true,
+      "error": "NameError: construction is not defined",
+      "identity_coverage": "complete",
+      "numerical_gate": "NOT_EVALUATED",
+      "script_sha256": "b2c656a7351c35edeabe2f2516771d9667fe06dd3940253adb60a5a3d2e5a91a",
+      "trace": "local FE/map and trace extract/scatter ran; helper Balpha/Dx output not reached/persisted",
+      "tree_rss_peak_bytes": 453398528,
+      "tree_swap_peak_bytes": 0,
+      "watchdog_seconds": 2.8597600950160995
+    },
+    {
+      "attempt": "launch_02",
+      "classification": "PRELAUNCH_ENGINEERING_FAILURE",
+      "cpu_seconds": 0.269,
+      "error": "ValueError: Task40 V10 campaign time must be enforced",
+      "numerical_action": "NOT_RUN",
+      "service_memory_peak_bytes": null,
+      "service_seconds": 0.254,
+      "swap_bytes": 0,
+      "watchdog_started": false,
+      "service_memory_peak_reported": "about 1.2M, rounded status display",
+      "service_memory_peak_exactness": "unknown; prior 1,258,291 B conversion is not an exact bytes measurement"
+    },
+    {
+      "attempt": "gx560_launch_guard_before_supervised_service",
+      "classification": "PRELAUNCH_GUARD_FAILURE",
+      "error": "Task38 input error: Task40 V10 formal launch requires the existing supervised myfenics-case-*.service cgroup",
+      "numerical_action": "NOT_RUN",
+      "service_seconds": null,
+      "cpu_seconds": null,
+      "cost_status": "UNKNOWN_NOT_MEASURED",
+      "source_log": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/implementation_no_fe_qualification/gx560_v11_console.log",
+        "bytes": 109,
+        "sha256": "80fcf085a1177e7700e68c7f25309d083c52b88e5e093eb55832c02705d64d1c"
+      },
+      "dispatch_receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/implementation_no_fe_qualification/gx560_v11_user_service_dispatch.log",
+        "bytes": 308,
+        "sha256": "cddf8ee6a938971ad0d66e1459c04f80c4361b27eda3448eb6e884d7ae7d800f",
+        "resolved_service": "myfenics-case-20261006T044729-1861374.service"
+      }
+    }
+  ],
+  "full_target_volume_mpc": "NOT_RUN_AUTHORITY_LIMITED",
+  "schema": "task40extra.review_v11_cost_and_repairs.v1",
+  "service_log": {
+    "bytes": 1933,
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/s5_user_service_v11.log",
+    "sha256": "4954bcd61e315052277e86a25a158e2eead8dc35b037bcf9d498cb2ae341e9e0"
+  },
+  "status": "MEASURED_STAGE_COSTS; CURRENT_DELIVERY_OBSERVATION_RECORDED; FINAL_SETTLEMENT_PENDING",
+  "unknowns": [
+    "prep and py_compile intervals not separately instrumented",
+    "Gx560 numeric fill/KSP/field cost absent because stop preceded numeric",
+    "PSS disabled/null",
+    "final campaign charge awaits controller observation",
+    "Gx560 per-q matrix NNZ and separate symbolic phase durations were not retained in the final hash-bound admission receipt; remain unknown.",
+    "Initial Gx560 service-guard launch time/cost was not recorded."
+  ],
+  "workflow_costs": {
+    "PSS": "disabled/null",
+    "S1": {
+      "cgroup_swap_peak_bytes": 0,
+      "tree_rss_peak_bytes": 716091392,
+      "wall_seconds": 11.256015080958605
+    },
+    "S2": {
+      "measurement_scope": "S2 saved-array analysis after import/ABI preflight; includes manifest load, two p6 all-side modal actions, independent checks, and compressed evidence write",
+      "object_inventory_scope": "per-side retained ndarray payload listed above; not a peak-memory metric",
+      "peak_rss_scope": "single Python process; not cgroup or process-tree peak",
+      "prior_one_scaling_probe_timing": "not separately instrumented; exact method/result retained and no alternate scales were tested",
+      "process_cpu_seconds": 36.778499241999995,
+      "process_peak_rss_bytes_ru_maxrss": 634454016,
+      "wall_seconds": 33.174783402937464
+    },
+    "S5_helper_owned_array_upper_bytes": 7313968,
+    "S5_max_stage_tree_rss_bytes": 495640576,
+    "S5_npz_members": {
+      "audit": {
+        "bytes": 1373,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s5_full882_v11/main_saved_array_identity_audit_v11.json",
+        "sha256": "3805d9ce9bfb5472d2c876e64ec3bdc4c7f036aef8b391c6291a11b8257c54bd"
+      },
+      "full": 8,
+      "full_bytes": 822894,
+      "small": 62,
+      "small_bytes": 297368
+    },
+    "S5_service": {
+      "MemoryMax_bytes": 17179869184,
+      "MemorySwapMax_bytes": 0,
+      "PSS_bytes": null,
+      "cgroup_swap_peak_bytes": 0,
+      "cpu_seconds": 11.481,
+      "peak_scope": "one cgroup across four sequential stages, not per-stage",
+      "shared_cgroup_memory_peak_bytes": 546459648,
+      "unit": "myfenics-case-s5-v11-20261006T075940-1871483.service",
+      "wall_seconds": 15.182
+    },
+    "S5_stages": [
+      {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "identity_complete": true,
+        "identity_coverage": "complete",
+        "job_cgroup_swap_passed": true,
+        "stage": "small_action",
+        "status_readable": true,
+        "tree_rss_peak_bytes": 455847936,
+        "tree_swap_peak_bytes": 0,
+        "wall_seconds": 3.9055853289319202,
+        "watchdog_sha256": "378667969d43809c3c14b2dde5e2814fc369ca7650014c36c97d7b01e593e375"
+      },
+      {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "identity_complete": true,
+        "identity_coverage": "complete",
+        "job_cgroup_swap_passed": true,
+        "stage": "small_checker",
+        "status_readable": true,
+        "tree_rss_peak_bytes": 495640576,
+        "tree_swap_peak_bytes": 0,
+        "wall_seconds": 3.1352987569989637,
+        "watchdog_sha256": "fc0129d095d5c1303ffe3a18794c6088ae4ef371186806689b124d372d09f2d2"
+      },
+      {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "identity_complete": true,
+        "identity_coverage": "complete",
+        "job_cgroup_swap_passed": true,
+        "stage": "full_inventory_action",
+        "status_readable": true,
+        "tree_rss_peak_bytes": 457056256,
+        "tree_swap_peak_bytes": 0,
+        "wall_seconds": 4.93412270094268,
+        "watchdog_sha256": "5a47ef36042c0f0b7470fac8ebc0c9f30e4fe91a4053bd00f57a680e9bccd3da"
+      },
+      {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "identity_complete": true,
+        "identity_coverage": "complete",
+        "job_cgroup_swap_passed": true,
+        "stage": "full_inventory_checker",
+        "status_readable": true,
+        "tree_rss_peak_bytes": 381509632,
+        "tree_swap_peak_bytes": 0,
+        "wall_seconds": 2.8682281649671495,
+        "watchdog_sha256": "8734a2346d2495ea29e3c7b863f64057ddd9c5d2bbf9c6a6d465c0d63bbf942b"
+      }
+    ],
+    "host_global_swap": "tracked separately; not attributed"
+  },
+  "B0_four_q_before_destroy_inventory": {
+    "source_sha": "c439ed40768de4745131b43fc0312bb8be8d9d50",
+    "raw_candidate_summary": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_y_orbit_candidate_v10__full3d_iterative__mpi1__Mna/20261005T150855.959138Z/task40_v10_p6_candidate_summary.json",
+      "bytes": 6595947,
+      "sha256": "8bb525f4773fc0e21263816273a0d216cd186a15ff23169ece8895ced463fa0e"
+    },
+    "all_four_factor_objects_live_simultaneously": true,
+    "all_four_factors_retained_simultaneously": true,
+    "max_simultaneous_factors": 4,
+    "factor_fill_bytes": null,
+    "per_q": [
+      {
+        "q": 0,
+        "rows": 4324,
+        "input_nnz": 2270108,
+        "INFOG16_MB": 123,
+        "INFOG17_MB": 123,
+        "INFOG19_allocated_MB": 123,
+        "INFOG22_used_MB": 110,
+        "INFOG29_factor_entries": 3625232,
+        "numeric_seconds": 0.25584398210048676
+      },
+      {
+        "q": 1,
+        "rows": 4400,
+        "input_nnz": 2327293,
+        "INFOG16_MB": 125,
+        "INFOG17_MB": 125,
+        "INFOG19_allocated_MB": 125,
+        "INFOG22_used_MB": 112,
+        "INFOG29_factor_entries": 3676320,
+        "numeric_seconds": 0.26134260499384254
+      },
+      {
+        "q": 2,
+        "rows": 4400,
+        "input_nnz": 2304310,
+        "INFOG16_MB": 124,
+        "INFOG17_MB": 124,
+        "INFOG19_allocated_MB": 124,
+        "INFOG22_used_MB": 111,
+        "INFOG29_factor_entries": 3655050,
+        "numeric_seconds": 0.25180690607521683
+      },
+      {
+        "q": 3,
+        "rows": 4400,
+        "input_nnz": 2325342,
+        "INFOG16_MB": 125,
+        "INFOG17_MB": 125,
+        "INFOG19_allocated_MB": 125,
+        "INFOG22_used_MB": 112,
+        "INFOG29_factor_entries": 3674096,
+        "numeric_seconds": 0.26564488001167774
+      }
+    ],
+    "native_factor_entries_total": 14630698,
+    "native_factor_entries_total_status": "derived_sum_of_per_q_INFOG29",
+    "notes": "Per-q MUMPS fields are measured before destroy while all four factor objects are live; MUMPS inventory is not process-tree RSS or cgroup peak. INFOG29 is entries, not bytes."
+  }
+}

@@ -1,4 +1,15 @@
-# Task40extra 当前进展：Review V10 B0 p6残差通过、物理能量门失败；目标仍未资格化
+# Task40extra 当前进展：Review V11 保存场输出复核与组件检查通过，Gx560在数值阶段前受控停止
+
+V11 的结果覆盖 S0–S6。B0 原始 p6 解的 true residual 通过，但原输出能量闭合负结果保持历史记录；本轮对同一已保存场改用端口平面坐标计算功率，独立重核532个模式后，能量闭合为`8.287925901129256e-11`，体吸收一致性差`8.287940407754324e-11`。这修复并确认了输出链，不是重新运行 PDE。两个原尺寸局部 p6 块的 forward error 为`5.35e-14 / 5.14e-14`，局部方程误差低于`7e-16`；它们仍是局部 repair candidate，q60 全行重检和全目标体积 MPC 未运行。
+
+Gx560 是560-cell、p6、340模态的真实三维缺口案例。四 q 符号阶段后，all-q资源准入看到 tree RSS `10,295,283,712 B`，估计加入 q 符号内存后的投影`15,205,944,640 B`，高于`13,462,286,336 B` finite cap，因而在 numeric前受控停止；全程tree RSS peak为`10,418,892,800 B`，专用cgroup peak为`10,930,950,144 B`，swap 0，KSP和field都未运行。Gx784为`NOT_RUN_CONDITION_NOT_MET`。q NNZ与独立符号时长在最终 hash-bound admission receipt 中缺失，保持unknown。B0原四q销毁前因子库存、Gx560符号预测、S2单进程RSS和S5共享cgroup峰值在报告中按不同口径分列。
+
+S5使用完整882行，在top/bottom两个冻结代表面覆盖全部32,060个有序模式，full checker PASS；这不是全边界或全局 MPC。84行替代方案尚未资格化，本轮主线没有重跑压缩，S5按完整882行执行。S5四个串行阶段共享一个服务cgroup，`memory.peak=546,459,648 B`、wall`15.182 s`、CPU`11.481 s`；逐阶段 process-tree RSS另列，不相加。原尺寸50×25×140 nm、0.7 nm目标仍为`NO_GO / NOT_QUALIFIED`，代表证据尚未满足目标资源与精度门槛，不是数学不可能性判断。
+
+下一项唯一优先工作是调查 Gx560 数值阶段前 `10,295,283,712 B` live process-tree RSS 工作集的对象所有权与生命周期。来源类别仍 unknown，不归因于 Python heap、FE 装配或 numeric factors（数值因子未建立）；先不新增预条件器实验，也不原样重跑同一资源失败。执行者不操作 Git，由主控集中审查后提交/推送；未经最终批准与用户授权不合并 master。主控持有最终 campaign 预算观察的单一写入权；当前交付观察为 seq 8090，seq 8089 保留为历史快照，两者均非最终结算；后续 Git/测试尾段仍由主控记入同一账本。证据入口：[Response V11](task40extra_0p7nm_engineering/response_v11.md)、[综合工程报告](task40extra_0p7nm_engineering/outcomes/review_v11_engineering.md)、[结果总览](task40extra_0p7nm_engineering/outcomes/summary.md)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
+---
+# Task40extra 历史进展：Review V10 B0 p6残差通过、物理能量门失败；目标仍未资格化
 
 V10完成了A边界V1/V2复核及B0 p6真实三维小模型的逆算子分量检查、物理解和保存输出恢复。B0模型为80 cells、两单元三维void、y方向四个q相位；p6只用于预条件器背景填回缺口，target与RHS不变。四个完整p6准确LU同时保留，为缺口target修正方向，并恢复36,000个内部未知量，成本是额外factor内存与setup。三步true residual `1.6089774391665316e-8`通过`1e-6`，但energy closure `6.581916436299018e-5`高于`1e-5`，所以没有official R/T/A，C依Review V10 §5为`HELD_NOT_RUN`。
 

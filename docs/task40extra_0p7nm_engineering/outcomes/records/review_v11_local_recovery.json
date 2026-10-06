@@ -1,0 +1,97 @@
+{
+  "cases": [
+    {
+      "bounds_nm": [
+        [
+          -6.6521739130434785,
+          -6.467391304347826
+        ],
+        [
+          -6.25,
+          0.0
+        ],
+        [
+          120.0,
+          130.0
+        ]
+      ],
+      "forward_relative": 5.3524732442130614e-14,
+      "gate": "PASS",
+      "original_port_equation_relative": 4.779081705155244e-17,
+      "original_trace_equation_relative": 6.59090854613779e-16,
+      "raw_equation_relative": 4.771522785641244e-16,
+      "reduced_port_equation_relative": 4.8967025759446713e-17,
+      "reduced_trace_equation_relative": 2.0809666187624803e-14,
+      "same_rhs_residual_relative": 3.3937974302632456e-17,
+      "side": "top"
+    },
+    {
+      "bounds_nm": [
+        [
+          -6.6521739130434785,
+          -6.467391304347826
+        ],
+        [
+          -6.25,
+          0.0
+        ],
+        [
+          -10.0,
+          0.0
+        ]
+      ],
+      "forward_relative": 5.143310794873929e-14,
+      "gate": "PASS",
+      "original_port_equation_relative": 4.720042632159353e-17,
+      "original_trace_equation_relative": 7.126480801146581e-16,
+      "raw_equation_relative": 6.413893640082291e-16,
+      "reduced_port_equation_relative": 5.017040343772171e-17,
+      "reduced_trace_equation_relative": 1.771719192636132e-14,
+      "same_rhs_residual_relative": 3.519514686938762e-17,
+      "side": "bottom"
+    }
+  ],
+  "classification": "DERIVED_LOCAL_RECOVERY_REPAIR_CANDIDATE_WITH_RECOMPUTED_PORT_EQUATIONS",
+  "full_target_volume_mpc": "NOT_RUN_AUTHORITY_LIMITED",
+  "gate_thresholds": {
+    "known_state_forward_relative_max": 1e-11,
+    "local_original_or_reduced_equation_relative_max": 1e-10
+  },
+  "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+  "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+  "postcheck_status": "PASS",
+  "q60_full_row_recheck": "NOT_RUN; prior witness preserved",
+  "records": {
+    "arrays": {
+      "bytes": 17059798,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s2_saved_local_recovery_v11/s2_local_recovery_arrays.npz",
+      "sha256": "d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273"
+    },
+    "postcheck": {
+      "bytes": 6528,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s2_saved_local_recovery_v11/s2_postcheck_v11.json",
+      "sha256": "08994cc6737a808ce3c4d64c03809edbc65fac8296540b5d9a622111381d75f8"
+    },
+    "report": {
+      "bytes": 85981,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl/s2_saved_local_recovery_v11/s2_local_recovery_v11.json",
+      "sha256": "99f05eadb82f7a75b04d518b5a60e0b42bfc5a513771a54c9c83bd986c4c6a3c"
+    }
+  },
+  "run_head": "9977284c47c8028751de4dbecd12b95d1912a580",
+  "schema": "task40extra.review_v11_local_recovery.v1",
+  "scope": "saved arrays only; no volume reassembly/global factor/fresh PDE",
+  "source_arrays_sha256": "6cca157f3fc5e689ffb409d48564dae94cdb6f1d915ef641141880285bd29c20",
+  "source_code_sha256_at_run": "3c8bd3bef250a590e433247ac287cc43b9e134dfa48d7a09183cc98ad90b4ff6",
+  "status": "TWO_SAVED_LOCAL_P6_BLOCKS_AND_PORT_EQUATIONS_PASS_REPAIR_CANDIDATE",
+  "test_sha256_at_run": "be4575083a17df3af6f1bd51e35e49ba0d70be4eaf8a0ab44641a89c9baeb21e",
+  "timing_and_memory": {
+    "measurement_scope": "S2 saved-array analysis after import/ABI preflight; includes manifest load, two p6 all-side modal actions, independent checks, and compressed evidence write",
+    "object_inventory_scope": "per-side retained ndarray payload listed above; not a peak-memory metric",
+    "peak_rss_scope": "single Python process; not cgroup or process-tree peak",
+    "prior_one_scaling_probe_timing": "not separately instrumented; exact method/result retained and no alternate scales were tested",
+    "process_cpu_seconds": 36.778499241999995,
+    "process_peak_rss_bytes_ru_maxrss": 634454016,
+    "wall_seconds": 33.174783402937464
+  }
+}
