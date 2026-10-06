@@ -1,5 +1,201 @@
 {
-  "status": "PENDING_LOCAL_FINAL_BYTES",
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "f319f6838a983bcd32c427a9d1749c2fcbd6430e98cde4e5ec3993687d149467",
+      "tables": [],
+      "links": [
+        "response_v55.md",
+        "outcomes/spatial_resolution_audit_v55.md",
+        "outcomes/records/gate_verdict_v55.json",
+        "outcomes/records/delivery_index_v55.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "30a484e4e601edfdba0e7b5c2ac715d560220dd7070f090025af2989c6947e66",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "spatial_resolution_audit_v55.md",
+        "../response_v55.md",
+        "records/resource_costs_final_v55.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "157ee7eea854ed7c9ca02612197cb11891c5e8bc9a0fceffb640685fddeff26e",
+      "tables": [],
+      "links": [
+        "records/targeted_tests_v55.json",
+        "records/documentation_checks_v55.json",
+        "records/gate_verdict_v55.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "15c7721069a80e673f4e087483f2aad312878b9e6016dae2a3b94ef6e0540064",
+      "tables": [],
+      "links": [
+        "records/selective_merge_manifest_v55.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "e3ddd4da24a9cdeffbefe210ae9066060fc8f36ab71ee89f59ff52ae29d55596",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v55.md",
+        "task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "3681defbdbd7f70ae28a7be510030824d3ea2491ade61445723307da19c67ee8",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v53.md",
+      "sha256": "bf07e9e62cb7b766152bb4d0490170b5dc71b9d79ee0b22269712ba048bab3e1",
+      "tables": [
+        {
+          "line": 36,
+          "columns": 3
+        },
+        {
+          "line": 76,
+          "columns": 5
+        },
+        {
+          "line": 99,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v54.md",
+        "outcomes/p_order_dtn_separation_v54.md",
+        "outcomes/records/gate_verdict_v54.json",
+        "outcomes/records/hp_accuracy_checks_v54.json",
+        "outcomes/records/resource_costs_final_v54.json",
+        "outcomes/records/admission_refusals_v54.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v55.md",
+      "sha256": "2e53dab68b7148d6dd93e57eedd4b5e31ec72da25c8a49ece264767450a614cf",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "outcomes/records/resource_costs_final_v55.json",
+        "outcomes/records/documentation_checks_v55.json",
+        "outcomes/spatial_resolution_audit_v55.md",
+        "outcomes/records/gate_verdict_v55.json",
+        "outcomes/records/prior_audit_completion_v55.json",
+        "outcomes/records/partial_saved_checks_v55.json",
+        "outcomes/records/run_index_v55.json",
+        "outcomes/records/raw_archive_index_final_v55.json",
+        "outcomes/records/source_bindings_v55.json",
+        "outcomes/records/repairs_v55.json",
+        "outcomes/records/campaign_closed_v55.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md",
+      "sha256": "af77e97ad2ea1ec6392ae0e243afb65a6a9b3ea0fbe3753b5b363b246b686820",
+      "tables": [
+        {
+          "line": 11,
+          "columns": 5
+        },
+        {
+          "line": 25,
+          "columns": 6
+        },
+        {
+          "line": 39,
+          "columns": 5
+        },
+        {
+          "line": 50,
+          "columns": 6
+        },
+        {
+          "line": 67,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/physical_identity_bindings_v55.json",
+        "records/prior_audit_completion_v55.json",
+        "records/partial_saved_checks_v55.json",
+        "records/field_mode_inventory_v55.json",
+        "records/spatial_accuracy_checks_v55.json",
+        "records/transverse_decision_v55.json",
+        "records/cross_branch_reuse_v55.json",
+        "records/raw_tensor_inventory_v55.json",
+        "records/capacity_factor_v55.json",
+        "records/object_lifetimes_v55.json",
+        "records/run_index_v55.json",
+        "records/source_bindings_v55.json",
+        "records/admission_refusals_v55.json",
+        "records/cpu_exclusions_v55.csv",
+        "records/resource_costs_final_v55.json",
+        "records/campaign_closed_v55.json",
+        "records/repairs_v55.json",
+        "records/documentation_checks_v55.json",
+        "records/selective_merge_manifest_v55.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "0bab45231dcd57de9ff81bce1fa423c19d7c045ecdb05a6927b72ecefaa620da"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "31ec976e9de0d31ebb27294bc957ba1cc6511d882fcf39ad05e10da27162efcd"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "7ca6760206b0fb9ed2c0296f732aaad180944851e78a9f260dbfb9480e1e15e6"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "26df11336cf615f8692bd4f79f4f4ef93be08e4400b2b199f045dfea360eacb2"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "c2015cf7855382e43d4374f875d79c034caa9ccefe6563402e8b1017da78c945"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "092cea221cd1a3385c37352c573976344af8eddabe428d6de8921af4bf97cfd3"
+    }
+  ],
+  "test_seconds": 0.35455775493755937,
   "GitHub_visual": "NOT_VERIFIED",
-  "CI": "NOT_RUN"
+  "CI": "NOT_RUN",
+  "raw_check_receipt": {
+    "path": "tmp/task042/v55/aux_DOCS_final01/documentation_checks.json",
+    "sha256": "520f0702eb377d62a820e834727dfe57de79c90e5b11060e73bc4290e4607826"
+  },
+  "source_manifest": "tmp/task042/v55/aux_DOCS_final01/run_manifest.json"
 }

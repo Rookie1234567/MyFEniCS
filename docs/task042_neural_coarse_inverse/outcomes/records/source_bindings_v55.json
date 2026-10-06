@@ -2539,5 +2539,16 @@
       "archived": "benchmarks/artifacts/task042/v55/source_archive/cc9c8366f887ff3c4e4e48b27d0d95ff4ab847c0c26d548d1f88f0ed03f8b83e"
     }
   ],
-  "document_HEAD_is_not_run_source": true
+  "document_HEAD_is_not_run_source": true,
+  "final_documentation_source": {
+    "source_sha": "14a0c85339aa4672de123324f3eb687bae812ef1",
+    "manifest": {
+      "path": "tmp/task042/v55/aux_DOCS_final01/run_manifest.json",
+      "sha256": "75cbe7eb4f32b206afa8e85c18f06048a08fc0c743d5916c32e543c7cb64915c",
+      "bytes": 17615
+    },
+    "code_hashes_unchanged_from": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+    "verified_by": "all implementation hashes match existing archived source bytes; final DOCS ran after clean documents-only commit",
+    "full_source_rearchive_unnecessary": true
+  }
 }

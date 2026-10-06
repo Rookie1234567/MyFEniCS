@@ -1,6 +1,42 @@
 {
-  "status": "PENDING_FINAL_DOCUMENT_SETTLEMENT",
+  "status": "CLOSED",
+  "ledger": {
+    "path": "tmp/task042/v55/ledger.json",
+    "sha256": "d5dd90d6b342b5522e7711eaa35d68fde17fa9d519ffef6b5a65a025dac8bfbc",
+    "bytes": 14515
+  },
+  "window": {
+    "path": "tmp/task042/v55/window.json",
+    "sha256": "13609c6654ec5ae4ee3023d0cd9fb3e3cdadc5777f67a6b29ca5d4f6fe3cabf1",
+    "bytes": 821
+  },
+  "actual_source": [
+    "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+    "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+    "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+    "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+    "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+    "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+    "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+    "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+    "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+    "14a0c85339aa4672de123324f3eb687bae812ef1"
+  ],
   "active": null,
-  "all_scientific_actors_exited": true,
-  "FE_queue_frozen": true
+  "descendants_cleared": true,
+  "own_lock_acquired_and_released": true,
+  "no_new_FE_worker_live": true,
+  "closing_utc": "2026-10-06T17:52:17.476292+00:00",
+  "closing_monotonic": 1234132.337232118,
+  "immutable_start_utc": "2026-10-06T12:49:59.474562950+00:00",
+  "completed_physical_coefficients": 1,
+  "new_global_numeric_factors": 1,
+  "independent_parent_states": 3,
+  "new_H7_independent_saved_array_check": true,
+  "new_H7_fresh_FE_audit": false,
+  "full_notch_accuracy": false,
+  "NN20": false,
+  "no_neighbor_notification": true,
+  "no_merge": true,
+  "no_next_window": true
 }

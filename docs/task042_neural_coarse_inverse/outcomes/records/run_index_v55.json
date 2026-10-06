@@ -377,6 +377,48 @@
         "heavy_remaining_seconds": 5046.421199723147,
         "total_remaining_seconds": 7746.421199723147
       }
+    },
+    {
+      "role": "DOCS",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_DOCS_final01",
+      "source_sha": "14a0c85339aa4672de123324f3eb687bae812ef1",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 4.02917726081796,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 88317952,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "tmp/task042/v55/aux_DOCS_final01/run_manifest.json",
+        "sha256": "75cbe7eb4f32b206afa8e85c18f06048a08fc0c743d5916c32e543c7cb64915c",
+        "bytes": 17615
+      },
+      "summary": {
+        "path": "tmp/task042/v55/aux_DOCS_final01/summary.json",
+        "sha256": "731808a94cb464ca84a45adcf19849cb282acb5138e97add2e51f4a71e2e8d91",
+        "bytes": 21628
+      },
+      "cpu": 5,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T17:50:20.914839+00:00",
+        "observed_monotonic": 1234015.775706014,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 18021.445706013823,
+        "heavy_remaining_seconds": 4478.554293986177,
+        "total_remaining_seconds": 7178.554293986177
+      }
     }
   ],
   "formal_input_files": [

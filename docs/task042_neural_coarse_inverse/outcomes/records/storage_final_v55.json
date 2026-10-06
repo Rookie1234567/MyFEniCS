@@ -1,9 +1,9 @@
 {
-  "new_bytes": 4202996810,
-  "new_files": 1089,
-  "task_bytes": 50022149206,
-  "task_files": 89453,
-  "free_bytes": 3272804421632,
+  "new_bytes": 4204988157,
+  "new_files": 1120,
+  "task_bytes": 50024250609,
+  "task_files": 89489,
+  "free_bytes": 3272747933696,
   "evidence_reserve_bytes": 536870912,
   "limits": {
     "new_bytes": 17179869184,

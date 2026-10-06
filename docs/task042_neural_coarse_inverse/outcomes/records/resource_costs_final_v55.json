@@ -354,6 +354,24 @@
         "sampled_not_cgroup": true
       },
       "scope": "pure metadata/documentation; no FE/action/factor/solve"
+    },
+    {
+      "role": "DOCS",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_DOCS_final01",
+      "source_sha": "14a0c85339aa4672de123324f3eb687bae812ef1",
+      "classification": "COMPLETED",
+      "supervised_wall_seconds": 4.02917726081796,
+      "dat_launch_lower_seconds": 22.87243722192943,
+      "peak_bytes": 88317952,
+      "swap_bytes": 0,
+      "resources": {
+        "sample_count": 4,
+        "actual_max_sample_gap_seconds": 1.4872672730125487,
+        "sampled_tree_peak_bytes": 88317952,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "scope": "pure metadata/documentation; no FE/action/factor/solve"
     }
   ],
   "charged_seconds": 15389.822609259048,
@@ -392,30 +410,30 @@
     "closed": false,
     "first_work_start_never_refreshed": true,
     "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
-    "observed_utc": "2026-10-06T17:47:51.042376+00:00",
-    "observed_monotonic": 1233865.903245865,
+    "observed_utc": "2026-10-06T17:51:59.019654+00:00",
+    "observed_monotonic": 1234113.880522896,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 17871.573245864827,
-    "heavy_remaining_seconds": 4628.426754135173,
-    "total_remaining_seconds": 7328.426754135173
+    "elapsed_seconds": 18119.550522895996,
+    "heavy_remaining_seconds": 4380.4494771040045,
+    "total_remaining_seconds": 7080.4494771040045
   },
   "ledger_scope": {
     "path": "tmp/task042/v55/ledger.json",
-    "sha256": "cf29a1df755e42b4a92dbb4159b61a0f8294e70c36a3cc3616deb3e333929f58",
-    "bytes": 13099
+    "sha256": "d5dd90d6b342b5522e7711eaa35d68fde17fa9d519ffef6b5a65a025dac8bfbc",
+    "bytes": 14515
   },
-  "supervisor_seconds": 15256.104177947855,
-  "probe_seconds": 16.257811945397407,
-  "launcher_non_nested_seconds": 155.45570852560923,
-  "charged_loaded_seconds": 15427.88322070078,
-  "supplemental_known_lower_seconds": 3.024620293019515,
-  "new_research_known_lower_seconds": 15430.9078409938,
-  "cumulative_known_lower_seconds": 155259.3892907317,
+  "supervisor_seconds": 15260.133355208673,
+  "probe_seconds": 17.612601766362786,
+  "launcher_non_nested_seconds": 172.94417866575532,
+  "charged_loaded_seconds": 15450.75565792271,
+  "supplemental_known_lower_seconds": 21.21864165420103,
+  "new_research_known_lower_seconds": 15491.39739360086,
+  "cumulative_known_lower_seconds": 155319.87884333875,
   "final_other_metadata_git_delivery_seconds": "unknown outside separately saved/measured intervals; total elapsed includes them",
   "observation_elapsed_seconds": 320.3222826861311,
   "observation_accounting": "Included in total campaign elapsed; probes charged separately, do not add idle wait to simultaneous worker wall",
-  "total_campaign_elapsed_seconds": 17871.573245864827,
+  "total_campaign_elapsed_seconds": 18119.550522895996,
   "sampled_simultaneous_tree_peak_bytes": 24517603328,
   "actual_max_sample_gap_seconds": 1.903044335078448,
   "all_sampled_own_swap_zero": true,
@@ -432,5 +450,11 @@
   "wall_limit_seconds": 25200,
   "known_lower_within_limits": true,
   "memory_scope": "all new simultaneous process-tree sampled RSS; factor/backend/payload stats separate; not continuous bound",
-  "all_costs_shared_workstation": true
+  "all_costs_shared_workstation": true,
+  "final_metadata_close_known_seconds": 19.423094023950398,
+  "closed_window_receipt": {
+    "path": "tmp/task042/v55/window.json",
+    "sha256": "13609c6654ec5ae4ee3023d0cd9fb3e3cdadc5777f67a6b29ca5d4f6fe3cabf1",
+    "bytes": 821
+  }
 }
