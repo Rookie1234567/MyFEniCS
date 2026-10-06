@@ -1,0 +1,2543 @@
+{
+  "files": [
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/check_phase_p_order_dtn.py",
+      "sha256": "714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/collect_phase_hp_completion.py",
+      "sha256": "3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/collect_phase_p_order_dtn.py",
+      "sha256": "1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/collect_phase_spatial_resolution.py",
+      "sha256": "eac44f6efd91b08a65d0df0bc3c3b403bd517e2d447e15b66607d027ac903126",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/eac44f6efd91b08a65d0df0bc3c3b403bd517e2d447e15b66607d027ac903126"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/qualify_phase_explicit_accuracy.py",
+      "sha256": "2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/qualify_phase_hp_completion.py",
+      "sha256": "37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/qualify_phase_notch_hp.py",
+      "sha256": "0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/qualify_phase_p_order_dtn.py",
+      "sha256": "bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/qualify_phase_spatial_resolution.py",
+      "sha256": "5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "input/task042_neural_coarse_inverse/p_order_dtn_v54.json",
+      "sha256": "0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "input/task042_neural_coarse_inverse/phase_explicit_accuracy_v51.json",
+      "sha256": "fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json",
+      "sha256": "104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "input/task042_neural_coarse_inverse/phase_notch_hp_v52.json",
+      "sha256": "6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "input/task042_neural_coarse_inverse/spatial_resolution_v55.json",
+      "sha256": "9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "scripts/run_case.py",
+      "sha256": "8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/dyadic_hexa_broken_mesh.py",
+      "sha256": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/dyadic_hexa_refinement.py",
+      "sha256": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/exact_sequence_variable_p.py",
+      "sha256": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/fast_custom_element_ufl.py",
+      "sha256": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/fixed_trace_element_cache.py",
+      "sha256": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/hcurl_broken_cell_trace.py",
+      "sha256": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/hcurl_broken_trace_graph.py",
+      "sha256": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/hcurl_hanging_trace.py",
+      "sha256": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/hcurl_trace_constraint_graph.py",
+      "sha256": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/stage4_local_h.py",
+      "sha256": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/variable_p_degree_plan.py",
+      "sha256": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/variable_p_entity_map.py",
+      "sha256": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/variable_p_periodic_orbits.py",
+      "sha256": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/adaptivity/variable_p_transfer.py",
+      "sha256": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/config.py",
+      "sha256": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/materials.py",
+      "sha256": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/pml.py",
+      "sha256": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/pml_3d.py",
+      "sha256": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/common/units.py",
+      "sha256": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/constraints/floquet_constraint.py",
+      "sha256": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/geometry/cell_notch.py",
+      "sha256": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/geometry/mesh_builder.py",
+      "sha256": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/geometry/tetra_mesh_audit.py",
+      "sha256": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/input_loader.py",
+      "sha256": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/input_schema.py",
+      "sha256": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/input_validation.py",
+      "sha256": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/phase_explicit_accuracy.py",
+      "sha256": "00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/phase_notch_hp.py",
+      "sha256": "a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/physical_balanced_profile.py",
+      "sha256": "cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/physical_intermediate_profile.py",
+      "sha256": "ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/physical_recursive_profile.py",
+      "sha256": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/resolved_config.py",
+      "sha256": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/io/run_specification.py",
+      "sha256": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/diffraction_3d.py",
+      "sha256": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/full3d_reference.py",
+      "sha256": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/near_field_2d.py",
+      "sha256": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/postprocess.py",
+      "sha256": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/postprocess_3d.py",
+      "sha256": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/power_metrics.py",
+      "sha256": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/postprocessing/rta_3d.py",
+      "sha256": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/runners/diagnostic_storage.py",
+      "sha256": "7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/common_3d_fields.py",
+      "sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/common_3d_forms.py",
+      "sha256": "aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/common_3d_solve.py",
+      "sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/common_3d_utils.py",
+      "sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/condensed_dtn.py",
+      "sha256": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/condensed_reference_preflight.py",
+      "sha256": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_edge_geometric_mg.py",
+      "sha256": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_edge_geometric_mg_global.py",
+      "sha256": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_hx_root_cause.py",
+      "sha256": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_memory_first_foundation.py",
+      "sha256": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_native_hx.py",
+      "sha256": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_native_hx_fixture.py",
+      "sha256": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_topology.py",
+      "sha256": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_lor_transfer.py",
+      "sha256": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_mpc_action.py",
+      "sha256": "5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_physical_action.py",
+      "sha256": "c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_quadrature_diagonal.py",
+      "sha256": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg.py",
+      "sha256": "51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py",
+      "sha256": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py",
+      "sha256": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py",
+      "sha256": "d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+      "sha256": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_affine_isotropic_tensor.py",
+      "sha256": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "sha256": "29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_canonical_vector.py",
+      "sha256": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_canonical_vector_dolfinx.py",
+      "sha256": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_cell_static_condensation.py",
+      "sha256": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_fixed_trace_element.py",
+      "sha256": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_variable_p_assembly.py",
+      "sha256": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_variable_p_local.py",
+      "sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "sha256": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/mpc_form_action.py",
+      "sha256": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "sha256": "f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "sha256": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_explicit_accuracy_scope.py",
+      "sha256": "84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_hp_completion.py",
+      "sha256": "7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_hp_completion_scope.py",
+      "sha256": "f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bdc44b5fec62a049c6a10c76e5904eb938c8b816d1a73e606efd7b4f52fa2d40",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bdc44b5fec62a049c6a10c76e5904eb938c8b816d1a73e606efd7b4f52fa2d40"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_notch_hp_capacity.py",
+      "sha256": "ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_notch_hp_scope.py",
+      "sha256": "18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_p_order_consistency.py",
+      "sha256": "c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_p_order_dtn.py",
+      "sha256": "8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_p_order_dtn_scope.py",
+      "sha256": "cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_raw_tensor_reader.py",
+      "sha256": "ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_spatial_resolution.py",
+      "sha256": "c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_spatial_resolution_scope.py",
+      "sha256": "24c44915ab9b69bb07cbc4523b238a7b34be014b001ef67b38aeab91a94b45b9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/24c44915ab9b69bb07cbc4523b238a7b34be014b001ef67b38aeab91a94b45b9"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_tangential_audit.py",
+      "sha256": "3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/phase_tensor_checkpoint.py",
+      "sha256": "4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/scattering_accuracy.py",
+      "sha256": "617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/scattering_accuracy_analytic.py",
+      "sha256": "d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/solve_vector_maxwell.py",
+      "sha256": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/solvers/static_local_schur_action.py",
+      "sha256": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/test/test_phase_explicit_accuracy.py",
+      "sha256": "e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/test/test_phase_hp_completion.py",
+      "sha256": "242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/test/test_phase_notch_hp.py",
+      "sha256": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/test/test_phase_p_order_dtn.py",
+      "sha256": "148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828"
+    },
+    {
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "path": "src/test/test_phase_spatial_resolution.py",
+      "sha256": "06cf944182d8ba0ad56018b6aecd7eec43466844c0f2d9499fe835591165fea0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/06cf944182d8ba0ad56018b6aecd7eec43466844c0f2d9499fe835591165fea0"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/check_phase_p_order_dtn.py",
+      "sha256": "714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/collect_phase_hp_completion.py",
+      "sha256": "3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/collect_phase_p_order_dtn.py",
+      "sha256": "1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/collect_phase_spatial_resolution.py",
+      "sha256": "eac44f6efd91b08a65d0df0bc3c3b403bd517e2d447e15b66607d027ac903126",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/eac44f6efd91b08a65d0df0bc3c3b403bd517e2d447e15b66607d027ac903126"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/qualify_phase_explicit_accuracy.py",
+      "sha256": "2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/qualify_phase_hp_completion.py",
+      "sha256": "37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/qualify_phase_notch_hp.py",
+      "sha256": "0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/qualify_phase_p_order_dtn.py",
+      "sha256": "bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/qualify_phase_spatial_resolution.py",
+      "sha256": "5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "input/task042_neural_coarse_inverse/p_order_dtn_v54.json",
+      "sha256": "0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "input/task042_neural_coarse_inverse/phase_explicit_accuracy_v51.json",
+      "sha256": "fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json",
+      "sha256": "104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "input/task042_neural_coarse_inverse/phase_notch_hp_v52.json",
+      "sha256": "6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "input/task042_neural_coarse_inverse/spatial_resolution_v55.json",
+      "sha256": "9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "scripts/run_case.py",
+      "sha256": "8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/dyadic_hexa_broken_mesh.py",
+      "sha256": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/dyadic_hexa_refinement.py",
+      "sha256": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/exact_sequence_variable_p.py",
+      "sha256": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/fast_custom_element_ufl.py",
+      "sha256": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/fixed_trace_element_cache.py",
+      "sha256": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/hcurl_broken_cell_trace.py",
+      "sha256": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/hcurl_broken_trace_graph.py",
+      "sha256": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/hcurl_hanging_trace.py",
+      "sha256": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/hcurl_trace_constraint_graph.py",
+      "sha256": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/stage4_local_h.py",
+      "sha256": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/variable_p_degree_plan.py",
+      "sha256": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/variable_p_entity_map.py",
+      "sha256": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/variable_p_periodic_orbits.py",
+      "sha256": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/adaptivity/variable_p_transfer.py",
+      "sha256": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/config.py",
+      "sha256": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/materials.py",
+      "sha256": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/pml.py",
+      "sha256": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/pml_3d.py",
+      "sha256": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/common/units.py",
+      "sha256": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/constraints/floquet_constraint.py",
+      "sha256": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/geometry/cell_notch.py",
+      "sha256": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/geometry/mesh_builder.py",
+      "sha256": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/geometry/tetra_mesh_audit.py",
+      "sha256": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/input_loader.py",
+      "sha256": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/input_schema.py",
+      "sha256": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/input_validation.py",
+      "sha256": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/phase_explicit_accuracy.py",
+      "sha256": "00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/phase_notch_hp.py",
+      "sha256": "a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/physical_balanced_profile.py",
+      "sha256": "cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/physical_intermediate_profile.py",
+      "sha256": "ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/physical_recursive_profile.py",
+      "sha256": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/resolved_config.py",
+      "sha256": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/io/run_specification.py",
+      "sha256": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/diffraction_3d.py",
+      "sha256": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/full3d_reference.py",
+      "sha256": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/near_field_2d.py",
+      "sha256": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/postprocess.py",
+      "sha256": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/postprocess_3d.py",
+      "sha256": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/power_metrics.py",
+      "sha256": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/postprocessing/rta_3d.py",
+      "sha256": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/runners/diagnostic_storage.py",
+      "sha256": "7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/common_3d_fields.py",
+      "sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/common_3d_forms.py",
+      "sha256": "aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/common_3d_solve.py",
+      "sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/common_3d_utils.py",
+      "sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/condensed_dtn.py",
+      "sha256": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/condensed_reference_preflight.py",
+      "sha256": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_edge_geometric_mg.py",
+      "sha256": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_edge_geometric_mg_global.py",
+      "sha256": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_hx_root_cause.py",
+      "sha256": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_memory_first_foundation.py",
+      "sha256": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_native_hx.py",
+      "sha256": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_native_hx_fixture.py",
+      "sha256": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_topology.py",
+      "sha256": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_lor_transfer.py",
+      "sha256": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_mpc_action.py",
+      "sha256": "5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_physical_action.py",
+      "sha256": "c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_quadrature_diagonal.py",
+      "sha256": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg.py",
+      "sha256": "51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py",
+      "sha256": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py",
+      "sha256": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py",
+      "sha256": "d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+      "sha256": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_affine_isotropic_tensor.py",
+      "sha256": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "sha256": "29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_canonical_vector.py",
+      "sha256": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_canonical_vector_dolfinx.py",
+      "sha256": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_cell_static_condensation.py",
+      "sha256": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_fixed_trace_element.py",
+      "sha256": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_variable_p_assembly.py",
+      "sha256": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_variable_p_local.py",
+      "sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "sha256": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/mpc_form_action.py",
+      "sha256": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "sha256": "f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "sha256": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_explicit_accuracy_scope.py",
+      "sha256": "84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_hp_completion.py",
+      "sha256": "7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_hp_completion_scope.py",
+      "sha256": "f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "99b383044b157ddabc1230f49e362f9a135d685aae179e93f864e1bb825cdfd2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/99b383044b157ddabc1230f49e362f9a135d685aae179e93f864e1bb825cdfd2"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_notch_hp_capacity.py",
+      "sha256": "ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_notch_hp_scope.py",
+      "sha256": "18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_p_order_consistency.py",
+      "sha256": "c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_p_order_dtn.py",
+      "sha256": "8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_p_order_dtn_scope.py",
+      "sha256": "cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_raw_tensor_reader.py",
+      "sha256": "ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_spatial_resolution.py",
+      "sha256": "c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_spatial_resolution_scope.py",
+      "sha256": "9123607b885bf8699f11930eaf547b3c00d7eb74954a6e98f6c44a207034f41a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9123607b885bf8699f11930eaf547b3c00d7eb74954a6e98f6c44a207034f41a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_tangential_audit.py",
+      "sha256": "3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/phase_tensor_checkpoint.py",
+      "sha256": "4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/scattering_accuracy.py",
+      "sha256": "617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/scattering_accuracy_analytic.py",
+      "sha256": "d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/solve_vector_maxwell.py",
+      "sha256": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/solvers/static_local_schur_action.py",
+      "sha256": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/test/test_phase_explicit_accuracy.py",
+      "sha256": "e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/test/test_phase_hp_completion.py",
+      "sha256": "242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/test/test_phase_notch_hp.py",
+      "sha256": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/test/test_phase_p_order_dtn.py",
+      "sha256": "148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828"
+    },
+    {
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "path": "src/test/test_phase_spatial_resolution.py",
+      "sha256": "ecbf4f1ffc4b338331a5044db12313013ea0b09348da68d8df3f565081468151",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ecbf4f1ffc4b338331a5044db12313013ea0b09348da68d8df3f565081468151"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/check_phase_p_order_dtn.py",
+      "sha256": "714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/collect_phase_hp_completion.py",
+      "sha256": "3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/collect_phase_p_order_dtn.py",
+      "sha256": "1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/collect_phase_spatial_resolution.py",
+      "sha256": "c4bb46fc42b40dce162f340dcd2a0e98fd9de8fdb0e9598bc796e0f28c66e9d3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c4bb46fc42b40dce162f340dcd2a0e98fd9de8fdb0e9598bc796e0f28c66e9d3"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/qualify_phase_explicit_accuracy.py",
+      "sha256": "2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/qualify_phase_hp_completion.py",
+      "sha256": "37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/qualify_phase_notch_hp.py",
+      "sha256": "0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/qualify_phase_p_order_dtn.py",
+      "sha256": "bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/qualify_phase_spatial_resolution.py",
+      "sha256": "5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "input/task042_neural_coarse_inverse/p_order_dtn_v54.json",
+      "sha256": "0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "input/task042_neural_coarse_inverse/phase_explicit_accuracy_v51.json",
+      "sha256": "fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json",
+      "sha256": "104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "input/task042_neural_coarse_inverse/phase_notch_hp_v52.json",
+      "sha256": "6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "input/task042_neural_coarse_inverse/spatial_resolution_v55.json",
+      "sha256": "9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "scripts/run_case.py",
+      "sha256": "8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/dyadic_hexa_broken_mesh.py",
+      "sha256": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/dyadic_hexa_refinement.py",
+      "sha256": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/exact_sequence_variable_p.py",
+      "sha256": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/fast_custom_element_ufl.py",
+      "sha256": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/fixed_trace_element_cache.py",
+      "sha256": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/hcurl_broken_cell_trace.py",
+      "sha256": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/hcurl_broken_trace_graph.py",
+      "sha256": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/hcurl_hanging_trace.py",
+      "sha256": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/hcurl_trace_constraint_graph.py",
+      "sha256": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/stage4_local_h.py",
+      "sha256": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/variable_p_degree_plan.py",
+      "sha256": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/variable_p_entity_map.py",
+      "sha256": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/variable_p_periodic_orbits.py",
+      "sha256": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/adaptivity/variable_p_transfer.py",
+      "sha256": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/config.py",
+      "sha256": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/materials.py",
+      "sha256": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/pml.py",
+      "sha256": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/pml_3d.py",
+      "sha256": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/common/units.py",
+      "sha256": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/constraints/floquet_constraint.py",
+      "sha256": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/geometry/cell_notch.py",
+      "sha256": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/geometry/mesh_builder.py",
+      "sha256": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/geometry/tetra_mesh_audit.py",
+      "sha256": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/input_loader.py",
+      "sha256": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/input_schema.py",
+      "sha256": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/input_validation.py",
+      "sha256": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/phase_explicit_accuracy.py",
+      "sha256": "00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/phase_notch_hp.py",
+      "sha256": "a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/physical_balanced_profile.py",
+      "sha256": "cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/physical_intermediate_profile.py",
+      "sha256": "ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/physical_recursive_profile.py",
+      "sha256": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/resolved_config.py",
+      "sha256": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/io/run_specification.py",
+      "sha256": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/diffraction_3d.py",
+      "sha256": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/full3d_reference.py",
+      "sha256": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/near_field_2d.py",
+      "sha256": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/postprocess.py",
+      "sha256": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/postprocess_3d.py",
+      "sha256": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/power_metrics.py",
+      "sha256": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/postprocessing/rta_3d.py",
+      "sha256": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/runners/diagnostic_storage.py",
+      "sha256": "7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/common_3d_fields.py",
+      "sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/common_3d_forms.py",
+      "sha256": "aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/common_3d_solve.py",
+      "sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/common_3d_utils.py",
+      "sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/condensed_dtn.py",
+      "sha256": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/condensed_reference_preflight.py",
+      "sha256": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_edge_geometric_mg.py",
+      "sha256": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_edge_geometric_mg_global.py",
+      "sha256": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_hx_root_cause.py",
+      "sha256": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_memory_first_foundation.py",
+      "sha256": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_native_hx.py",
+      "sha256": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_native_hx_fixture.py",
+      "sha256": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_topology.py",
+      "sha256": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_lor_transfer.py",
+      "sha256": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_mpc_action.py",
+      "sha256": "5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_physical_action.py",
+      "sha256": "c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_quadrature_diagonal.py",
+      "sha256": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg.py",
+      "sha256": "51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py",
+      "sha256": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py",
+      "sha256": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py",
+      "sha256": "d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+      "sha256": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_affine_isotropic_tensor.py",
+      "sha256": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "sha256": "29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_canonical_vector.py",
+      "sha256": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_canonical_vector_dolfinx.py",
+      "sha256": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_cell_static_condensation.py",
+      "sha256": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_fixed_trace_element.py",
+      "sha256": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_variable_p_assembly.py",
+      "sha256": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_variable_p_local.py",
+      "sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "sha256": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/mpc_form_action.py",
+      "sha256": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "sha256": "f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "sha256": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_explicit_accuracy_scope.py",
+      "sha256": "84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_hp_completion.py",
+      "sha256": "7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_hp_completion_scope.py",
+      "sha256": "f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "99b383044b157ddabc1230f49e362f9a135d685aae179e93f864e1bb825cdfd2",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/99b383044b157ddabc1230f49e362f9a135d685aae179e93f864e1bb825cdfd2"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_notch_hp_capacity.py",
+      "sha256": "ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_notch_hp_scope.py",
+      "sha256": "18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_p_order_consistency.py",
+      "sha256": "c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_p_order_dtn.py",
+      "sha256": "8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_p_order_dtn_scope.py",
+      "sha256": "cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_raw_tensor_reader.py",
+      "sha256": "ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_spatial_resolution.py",
+      "sha256": "c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_spatial_resolution_scope.py",
+      "sha256": "9123607b885bf8699f11930eaf547b3c00d7eb74954a6e98f6c44a207034f41a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/9123607b885bf8699f11930eaf547b3c00d7eb74954a6e98f6c44a207034f41a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_tangential_audit.py",
+      "sha256": "3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/phase_tensor_checkpoint.py",
+      "sha256": "4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/scattering_accuracy.py",
+      "sha256": "617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/scattering_accuracy_analytic.py",
+      "sha256": "d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/solve_vector_maxwell.py",
+      "sha256": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/solvers/static_local_schur_action.py",
+      "sha256": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/test/test_phase_explicit_accuracy.py",
+      "sha256": "e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/test/test_phase_hp_completion.py",
+      "sha256": "242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/test/test_phase_notch_hp.py",
+      "sha256": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/test/test_phase_p_order_dtn.py",
+      "sha256": "148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828"
+    },
+    {
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "path": "src/test/test_phase_spatial_resolution.py",
+      "sha256": "cc9c8366f887ff3c4e4e48b27d0d95ff4ab847c0c26d548d1f88f0ed03f8b83e",
+      "archived": "benchmarks/artifacts/task042/v55/source_archive/cc9c8366f887ff3c4e4e48b27d0d95ff4ab847c0c26d548d1f88f0ed03f8b83e"
+    }
+  ],
+  "document_HEAD_is_not_run_source": true
+}

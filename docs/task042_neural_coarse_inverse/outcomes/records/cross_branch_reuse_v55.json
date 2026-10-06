@@ -1,0 +1,190 @@
+{
+  "frozen": {
+    "schema": "task042_v55_cross_branch_reuse_check_v1",
+    "utc": "2026-10-06T13:48:09.319533+00:00",
+    "operation": "READ_ONLY_GIT_SHOW_NO_CHECKOUT_NO_ACTOR_CHANGE",
+    "ref_scope": "locally_available_frozen_refs_NOT_fresh_remote_inventory",
+    "sources": [
+      {
+        "name": "task42extra_feinn_5nm_frozen",
+        "source": "8d617d4d206b08f38279320b67188db1b8ccd301",
+        "files": [
+          {
+            "path": "docs/task042extra_feinn_5nm/README.md",
+            "git_blob": "e1ad9803276846aef50d37ee29cc819b898a5f60",
+            "sha256": "ac17096b1a8986173379013d5ea6f86e69b7f77522f126ff137be7c9a8fb03c6",
+            "bytes": 19201
+          },
+          {
+            "path": "docs/task042extra_feinn_5nm/response_v29.md",
+            "git_blob": "fc04a54c4182203574a84d92847713f0b17fcaeb",
+            "sha256": "a02b8f0a8312b4d9dcbc3979df93236fc724d39af2908dd0a81cfb5b29412c9c",
+            "bytes": 8656
+          }
+        ]
+      },
+      {
+        "name": "task42extra_feinn_5nm_local",
+        "source": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+        "files": [
+          {
+            "path": "docs/task042extra_feinn_5nm/README.md",
+            "git_blob": "1d1275643f64deea63cac89a68f5903a9ad58327",
+            "sha256": "c97ebf906111731c0b56ce7db03d858e47e82f722921aeac890eed7c6e505388",
+            "bytes": 20086
+          },
+          {
+            "path": "docs/task042extra_feinn_5nm/review_report_v29.md",
+            "git_blob": "ef1821fed1fb12cf50b4ed46f2d03706157493be",
+            "sha256": "7379f1d9ed314a4432f847c67e144e978201733a27462bbe6ef7985b38698a10",
+            "bytes": 24045
+          },
+          {
+            "path": "docs/task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md",
+            "git_blob": "1641d082fd12167aec6aa7218585ac4ba78443c8",
+            "sha256": "407392c74e1d5a18dd3a7ce4d9b7e720a53e041c0c0c6fd85bb1e469ef084a00",
+            "bytes": 9892
+          }
+        ]
+      },
+      {
+        "name": "task40extra_0p7nm_engineering_local_remote_ref",
+        "source": "2a67a2423fdd8b670d907ef6f9394a17bff8f2f6",
+        "files": [
+          {
+            "path": "docs/task40extra_0p7nm_engineering/README.md",
+            "git_blob": "869dd4641554f6f6961f4a2fbf00bb20c3af1d5c",
+            "sha256": "81650478be27cd8f64bbe4d76e969374a8a3790fb7e0bb0a1e175a33987d7251",
+            "bytes": 6247
+          },
+          {
+            "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+            "git_blob": "fa8f02e3d0711d93b9532cb1a9cf2f7ce2c325bf",
+            "sha256": "63d513352bb139b3ca2130fa8599a10ac9114f8ad73b3156d8b2988618594623",
+            "bytes": 57875
+          }
+        ]
+      },
+      {
+        "name": "task40extra_dot_parallel_cloud_frozen",
+        "source": "3f4fb69b20d33d382975bb96db73b44bba583ebd",
+        "files": [
+          {
+            "path": "docs/task40extra_dot_parallel_cloud/README.md",
+            "git_blob": "f6f4d2d7861449fafbf5c0c4ef3f41d755e863fe",
+            "sha256": "0451e9daf534b6df334496370a075bdea702b3eba96a65020ddc6d3e3cbd50db",
+            "bytes": 7326
+          },
+          {
+            "path": "docs/task40extra_dot_parallel_cloud/outcomes/summary.md",
+            "git_blob": "c328378c537af140f57a4afb130344303ecc41a0",
+            "sha256": "75d164fc8db6679c9f860cf417d34a455a14e3c6323f0125d12a461dd400328c",
+            "bytes": 27729
+          }
+        ]
+      }
+    ],
+    "core_paths": [
+      "src/solvers/hcurl_assembly_time_condensation.py",
+      "src/solvers/hcurl_cell_static_condensation.py",
+      "src/solvers/phase_raw_tensor_reader.py",
+      "src/solvers/phase_tensor_checkpoint.py"
+    ],
+    "core_changed_paths": [],
+    "core_unchanged": true,
+    "current_case": {
+      "wavelength_nm": "0.7",
+      "splits": [
+        1,
+        1,
+        4
+      ],
+      "cells": 320,
+      "degree": 7,
+      "mode_count": 828,
+      "phase_representation": "fixed_gVh_full_Ckappa",
+      "role": "H7"
+    },
+    "paired_scope": [
+      {
+        "name": "sibling_V30",
+        "wavelength_nm": "5",
+        "cells": 384,
+        "degree": 3,
+        "mode_count": 40,
+        "mechanism": "learned_wave_greedy",
+        "same_case": false
+      },
+      {
+        "name": "dot_frozen_p4",
+        "cells": 80,
+        "degree": 4,
+        "mode_count": 532,
+        "mechanism": "full3d_q_reference_engine",
+        "same_case": false
+      },
+      {
+        "name": "engineering_Gx784",
+        "cells": 784,
+        "degree": 6,
+        "mode_count": 340,
+        "mechanism": "p6_with_p4_correction",
+        "same_case": false
+      }
+    ],
+    "conclusion": "No identical H7 physical/discretization/mode producer found in the read scope. Existing condensation kernels reused unchanged; exact raw keys still govern cache reuse. This is not an exhaustive remote-branch audit.",
+    "metadata_script_seconds": 0.06282688584178686,
+    "preceding_read_search_cost": "UNKNOWN_NOT_RECORDED_SEPARATELY",
+    "scientific_new_actions": 0,
+    "neighbor_source_or_worktree_modified": false
+  },
+  "latest": {
+    "utc": "2026-10-06T13:54:41.897288+00:00",
+    "source": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+    "path": "docs/task40extra_dot_parallel_cloud/outcomes/paired_boundary_support_pilot_v1_zh.md",
+    "git_blob": "586ec44d4d882662c43219ac8d10880ebcd0de70",
+    "sha256": "9eb888cc9359f54a8db45567cd91c846427995a81144b327faa6f16fef819314",
+    "current_pilot": {
+      "degree": 6,
+      "cells": 18,
+      "selected_modes": 12,
+      "physical_size_nm": [
+        50,
+        25,
+        140
+      ],
+      "theta_degree": 89,
+      "phi_degree": 0,
+      "scope": "boundary support component, no complete volume factor or physical solve"
+    },
+    "same_H7_case": false,
+    "reusable_math": "Existing independent complete-882 boundary support certificates, not a matching p7/Z4 raw volume tensor or field. V55 already uses qualified original q47/q63 full boundary. No new component replay authorized or performed.",
+    "engineering_latest_remote": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+    "engineering_latest_source_available": false,
+    "limitation": "Latest engineering object unavailable locally; no other-branch fetch or worktree operation. Earlier locally frozen README/summary checked, not a comprehensive current engineering audit.",
+    "sibling_remote": "8d617d4d206b08f38279320b67188db1b8ccd301",
+    "metadata_script_seconds": 0.010248921113088727,
+    "new_PDE_or_action_or_factor": 0
+  },
+  "remote_snapshot": {
+    "utc": "2026-10-06T13:54:06.824944+00:00",
+    "operation": "NONINTERACTIVE_LS_REMOTE_THEN_LOCAL_GIT_SHOW_NO_FETCH",
+    "items": [
+      {
+        "sha": "6d2c54389fe885ecf24d474a8782166ff31f9154",
+        "path": "docs/task40extra_0p7nm_engineering/README.md",
+        "available_in_local_shared_object_store": false
+      },
+      {
+        "sha": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+        "path": "docs/task40extra_dot_parallel_cloud/README.md",
+        "available_in_local_shared_object_store": true
+      }
+    ],
+    "sibling_remote_sha": "8d617d4d206b08f38279320b67188db1b8ccd301",
+    "current_running_HEAD_unchanged": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9"
+  },
+  "no_other_worktree_import": true,
+  "no_neighbor_notification": true,
+  "result": "No identical H7 producer found in inspected scope; engineering latest object not local, not exhaustive audit. Existing condensation/raw-provider kernels unchanged."
+}

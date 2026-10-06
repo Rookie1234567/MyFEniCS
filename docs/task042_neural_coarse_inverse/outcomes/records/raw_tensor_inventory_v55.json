@@ -1,0 +1,1936 @@
+{
+  "manifest": {
+    "path": "benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/manifest.json",
+    "sha256": "36d3a3464107f12c0b448c900affe4037c436aa5e9cb69d420e6160c527263f8",
+    "bytes": 87457
+  },
+  "producer": {
+    "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+    "stage": "V55-H7",
+    "scope": "v55",
+    "window": {
+      "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+      "start_monotonic": 1215994.33,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 22500,
+      "total_limit_seconds": 25200,
+      "scientific_loaded_limit_seconds": 18000,
+      "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+      "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+      "closed": false,
+      "first_work_start_never_refreshed": true,
+      "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+      "observed_utc": "2026-10-06T13:31:56.398616+00:00",
+      "observed_monotonic": 1218511.259483539,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 2516.929483538959,
+      "heavy_remaining_seconds": 19983.07051646104,
+      "total_remaining_seconds": 22683.07051646104
+    },
+    "implementation_hashes": {
+      "benchmarks/check_phase_p_order_dtn.py": "714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9",
+      "benchmarks/collect_phase_explicit_accuracy.py": "f8933d86e9f40de46c6d7ef37329cdef69f10362f322547bea48aa975b742a84",
+      "benchmarks/collect_phase_hp_completion.py": "3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f",
+      "benchmarks/collect_phase_notch_hp.py": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "benchmarks/collect_phase_p_order_dtn.py": "1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c",
+      "benchmarks/collect_phase_spatial_resolution.py": "eac44f6efd91b08a65d0df0bc3c3b403bd517e2d447e15b66607d027ac903126",
+      "benchmarks/qualify_phase_explicit_accuracy.py": "2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de",
+      "benchmarks/qualify_phase_hp_completion.py": "37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4",
+      "benchmarks/qualify_phase_notch_hp.py": "0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5",
+      "benchmarks/qualify_phase_p_order_dtn.py": "bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec",
+      "benchmarks/qualify_phase_spatial_resolution.py": "5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd",
+      "benchmarks/subreaper_watchdog.py": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "input/materials/si_optical_constants_v1.json": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "input/task042_neural_coarse_inverse/p_order_dtn_v54.json": "0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4",
+      "input/task042_neural_coarse_inverse/phase_explicit_accuracy_v51.json": "fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f",
+      "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json": "104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57",
+      "input/task042_neural_coarse_inverse/phase_notch_hp_v52.json": "6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a",
+      "input/task042_neural_coarse_inverse/spatial_resolution_v55.json": "9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0",
+      "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "scripts/run_case.py": "8cd069cd580670878a17db1860fdf40af64f5f8ab503705a25cd40534343bff1",
+      "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "src/adaptivity/fast_custom_element_ufl.py": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+      "src/adaptivity/fixed_trace_element_cache.py": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "src/adaptivity/stage4_local_h.py": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "src/adaptivity/variable_p_degree_plan.py": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "src/adaptivity/variable_p_periodic_orbits.py": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+      "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config.py": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+      "src/common/config_3d.py": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "src/common/materials.py": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+      "src/common/modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "src/common/optical_material_table.py": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "src/common/pml.py": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+      "src/common/pml_3d.py": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "src/common/units.py": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "src/constraints/floquet_3d.py": "1f8037931fc9e880fe736be83018ed053746978e31efbfaad71abfc80fd8edbf",
+      "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "src/constraints/floquet_constraint.py": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+      "src/constraints/high_order_floquet_trace.py": "913ac407c540ffb76bc58851123fa63f6db21695e3d2e5327b30e400b946a1e2",
+      "src/geometry/cell_notch.py": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+      "src/geometry/mesh_builder.py": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+      "src/geometry/mesh_builder_3d.py": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "src/geometry/tetra_mesh_audit.py": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+      "src/io/input_loader.py": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+      "src/io/input_schema.py": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393",
+      "src/io/input_validation.py": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15",
+      "src/io/phase_explicit_accuracy.py": "00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6",
+      "src/io/phase_notch_hp.py": "a0dc48a4bfd9548e24363aa1efe5309c77fe3268254ce6b33fbc6942b8fc515d",
+      "src/io/physical_balanced_profile.py": "cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114",
+      "src/io/physical_intermediate_profile.py": "ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c",
+      "src/io/physical_recursive_profile.py": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
+      "src/io/resolved_config.py": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+      "src/io/run_specification.py": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+      "src/postprocessing/diffraction_3d.py": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
+      "src/postprocessing/full3d_reference.py": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+      "src/postprocessing/near_field_2d.py": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+      "src/postprocessing/postprocess.py": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/power_metrics.py": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+      "src/postprocessing/rta_3d.py": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
+      "src/runners/diagnostic_storage.py": "7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7",
+      "src/runners/port_preparation.py": "6fe15d826702364c929cacddd716fdd6a1a1ac07185b8ad515adc724289addff",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/condensed_dtn.py": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+      "src/solvers/condensed_reference_preflight.py": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+      "src/solvers/dtn_port_3d.py": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "src/solvers/fixed_phase_fem.py": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "src/solvers/fullspace_dtn_action.py": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "src/solvers/fullspace_lor_edge_geometric_mg.py": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+      "src/solvers/fullspace_lor_edge_geometric_mg_global.py": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+      "src/solvers/fullspace_lor_hx_root_cause.py": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+      "src/solvers/fullspace_lor_memory_first_foundation.py": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+      "src/solvers/fullspace_lor_native_hx.py": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+      "src/solvers/fullspace_lor_native_hx_fixture.py": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+      "src/solvers/fullspace_lor_topology.py": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+      "src/solvers/fullspace_lor_transfer.py": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+      "src/solvers/fullspace_mpc_action.py": "5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82",
+      "src/solvers/fullspace_physical_action.py": "c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258",
+      "src/solvers/fullspace_quadrature_diagonal.py": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg.py": "51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py": "d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+      "src/solvers/fullspace_v17_p3_oracle.py": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "src/solvers/hcurl_affine_isotropic_tensor.py": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+      "src/solvers/hcurl_assembly_time_condensation.py": "29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5",
+      "src/solvers/hcurl_canonical_vector.py": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+      "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+      "src/solvers/hcurl_cell_static_condensation.py": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+      "src/solvers/hcurl_fixed_trace_element.py": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+      "src/solvers/hcurl_variable_p_assembly.py": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+      "src/solvers/mpc_form_action.py": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+      "src/solvers/p4_cell_condensed_inverse.py": "f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a",
+      "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+      "src/solvers/phase_evaluation_cache.py": "dbdaf89e4e21c86a2490a0bd6df9b615ab5231d2cc4d661f9c0ad1c9f0ee636d",
+      "src/solvers/phase_explicit_accuracy.py": "1020b54cbad68850c85b64dd8871d6d4daf83cceacd65e96d25ba2567562b2ce",
+      "src/solvers/phase_explicit_accuracy_capacity.py": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "src/solvers/phase_explicit_accuracy_fields.py": "64a86f652cf63c3703450714f47ac754af248e3f6b531b2749112691da1d239c",
+      "src/solvers/phase_explicit_accuracy_scope.py": "84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e",
+      "src/solvers/phase_hp_completion.py": "7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714",
+      "src/solvers/phase_hp_completion_scope.py": "f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948",
+      "src/solvers/phase_notch_hp.py": "bdc44b5fec62a049c6a10c76e5904eb938c8b816d1a73e606efd7b4f52fa2d40",
+      "src/solvers/phase_notch_hp_capacity.py": "ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788",
+      "src/solvers/phase_notch_hp_fields.py": "aa8dfa62fa710964a9c6bd78d1712b462f294d6f65392e411328ec93c0bc771e",
+      "src/solvers/phase_notch_hp_modes.py": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "src/solvers/phase_notch_hp_scope.py": "18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10",
+      "src/solvers/phase_p_order_consistency.py": "c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6",
+      "src/solvers/phase_p_order_dtn.py": "8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622",
+      "src/solvers/phase_p_order_dtn_scope.py": "cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b",
+      "src/solvers/phase_raw_tensor_reader.py": "ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd",
+      "src/solvers/phase_spatial_resolution.py": "c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53",
+      "src/solvers/phase_spatial_resolution_scope.py": "24c44915ab9b69bb07cbc4523b238a7b34be014b001ef67b38aeab91a94b45b9",
+      "src/solvers/phase_tangential_audit.py": "3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35",
+      "src/solvers/phase_tensor_checkpoint.py": "4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db",
+      "src/solvers/scattering_accuracy.py": "617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af",
+      "src/solvers/scattering_accuracy_analytic.py": "d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d",
+      "src/solvers/scattering_accuracy_boundary.py": "b2ff798163495935026b88a95151f8a5449a2cfd0181a9eb633fadd1c568ff8e",
+      "src/solvers/scattering_accuracy_fields.py": "ff3d5a72d621dc590c1860f9ae42637dafe6f884307ee84ee962fda0b69a790a",
+      "src/solvers/scattering_accuracy_scope.py": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "src/solvers/solve_vector_maxwell.py": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+      "src/solvers/static_local_schur_action.py": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+      "src/test/test_phase_explicit_accuracy.py": "e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3",
+      "src/test/test_phase_hp_completion.py": "242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe",
+      "src/test/test_phase_notch_hp.py": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4",
+      "src/test/test_phase_p_order_dtn.py": "148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828",
+      "src/test/test_phase_spatial_resolution.py": "06cf944182d8ba0ad56018b6aecd7eec43466844c0f2d9499fe835591165fea0"
+    },
+    "shared_workstation": true,
+    "environment_mode": "fe",
+    "cpu": 41,
+    "rank_cpus": [
+      41
+    ],
+    "MPI_size": 1,
+    "planned_bytes": 68719476736,
+    "new_volume_action_count": null,
+    "new_factor_count": null,
+    "numeric_object_inventory_status": "actual stage inventory in result/events; launcher unknown",
+    "storage_limits": {
+      "new_storage_bytes": 17179869184,
+      "task_storage_bytes": 90194313216,
+      "free_bytes": 53687091200,
+      "evidence_reserve_bytes": 536870912
+    },
+    "memory_budget": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "input_sha256": "5c9e5ba9541b1ff58e92041caecc5801bb8084894c46b795030edb81042e5470",
+    "physical_sha256": "b1c9bcb8de8e65025194167a6426b6a81792dae7f291a451e10b4a4fa397f65a",
+    "plan_sha256": "9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0"
+  },
+  "class_count": 38,
+  "cell_layout": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/cell_layout.npz",
+    "sha256": "677067e7e39f69a558e6fc1b38a2c03eedbdfad6da71cd3090dd8cfd0104792b",
+    "members": {
+      "cell_class_key_utf8": {
+        "shape": [
+          320
+        ],
+        "dtype": "|S64",
+        "sha256": "86b0a52953bc1659f44904cd53fdb02be3058812b51035a016e80c56bc1d3fed"
+      },
+      "cell_class_index": {
+        "shape": [
+          320
+        ],
+        "dtype": "int32",
+        "sha256": "a173647c22c0b8b422ec777d76a962b2c46c4735a84bca68220838bd06b293a8"
+      },
+      "J": {
+        "shape": [
+          320,
+          3,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "107a1522ade6547a54561a48be2224d12ce5206b6f7d992a6ce96d2136b4daec"
+      },
+      "material_tag": {
+        "shape": [
+          320
+        ],
+        "dtype": "int32",
+        "sha256": "7ec36aea243196c532184d40f5f7c8e07a16a35fa261fc7894df9ba44d928073"
+      },
+      "permutations": {
+        "shape": [
+          320
+        ],
+        "dtype": "uint32",
+        "sha256": "2ccf146b0e02ce1c12922091a920aad67035c7c7bf0a67aa199d268c3d9dba95"
+      },
+      "native_cell_dofs": {
+        "shape": [
+          320,
+          1344
+        ],
+        "dtype": "int32",
+        "sha256": "db5a61a3194fde6c7dff07db4f929eea63659f20539c109e5c45a597cd1f835e"
+      }
+    }
+  },
+  "classes": [
+    {
+      "key": "1a3d2451293272f9bec1f60818bcf6c78cac33f065a4821af85370f41eaa302b",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/1a3d2451293272f9bec1f60818bcf6c78cac33f065a4821af85370f41eaa302b.npz",
+        "sha256": "1a3bfde817847711c57415f1240f60f1024e9a1824de720436f1e1ece8173e92",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "229d06025a7e9cbb48e426423cc87276962c01d1a2ac378a89c519a04e1708bf"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "8c6fe4e153b6743abee0ad914400b7d77b3770d594f290c9b7d9c9b3b5ca3120"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "f3c33a8c49f5891f4737c3ecf54a95eb22d9abca669fe9d7df61779c1d67c643",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/f3c33a8c49f5891f4737c3ecf54a95eb22d9abca669fe9d7df61779c1d67c643.npz",
+        "sha256": "c0b221807169b06b282f2626029847d77ed17aea4c898b884b3f5da3291a23ac",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "c4425ddf4aaa5bb20028875a4811de298afd5e006f576d66fe011cf0767bdbd3"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "7fb6e4189f743d903a5d10a4e71ae10156bb6084859bb1a7e966c1c194c4b3bb"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "e2432edf837e37ab4464dd5be6b05640c4cade6e5bc75262ea9cb4606030d4b4",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/e2432edf837e37ab4464dd5be6b05640c4cade6e5bc75262ea9cb4606030d4b4.npz",
+        "sha256": "4035d7d24739c165db5d779125a4269a19351da258eec553cbb54b6aea31270e",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "2ba2424d5003db530fa4f56b928d3ce6bd4749e5ff2beb8e6541c70096d90e97"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "168d31ec22e2e50c93ab242d7a3dda75242a351eba79f9144601cfd3189a8bfa"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "fd2a28530ee2dad11f218b44da1fa25126a01c657f6a3f1d19959a9c05c1bd4c",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/fd2a28530ee2dad11f218b44da1fa25126a01c657f6a3f1d19959a9c05c1bd4c.npz",
+        "sha256": "7a4bf04f49de80219b497402d770c15b3c0e90c917ae6e360f06f6f93572126f",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "774c02839d8afe196695684a2fc46eda108c069a1ea17bad6d450c1ad57b5809"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "f5de651a8b56109ee379236865c269259289e737511970b397a4f9ec4e282537"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "93b0d636af888c1811e056e4759f51ed6b97d610b002773ec45305fc26e7940f",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/93b0d636af888c1811e056e4759f51ed6b97d610b002773ec45305fc26e7940f.npz",
+        "sha256": "a8fed85b131878e20b99dab1c3b270790fa9ef5899b2fb431bcb8f385da17366",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "1bc7026bb96683b9f44340e247232a05988704171a011a915245582d60c41b13"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "003f7742f76bcc3a0e089c69608d7df66c4ac077d82d8c20cbd776ae79bd40e3"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "9e467fe0117b4cafd93ab834162e51d41b176a81f45dc9ecc49668b46a865822",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/9e467fe0117b4cafd93ab834162e51d41b176a81f45dc9ecc49668b46a865822.npz",
+        "sha256": "34776ee2f18bcdddb2aed3935c4e36666390692711e2f129ba9e0942a3fc68f4",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "a9defef4d13a5fd3078e454265b7832a82684714bfcba773f4bfc124d74de136"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "a537759bdbad73fdd3379801281792208cfcab9e9aded50c7e4d2f13b1ec27fc"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "843c30b9139f7cada2e0a941e67e1e04f8fcc57c6a26973344ef6f66804b7ce1",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/843c30b9139f7cada2e0a941e67e1e04f8fcc57c6a26973344ef6f66804b7ce1.npz",
+        "sha256": "575853ed6decbb882805224bbf9bcb89dfaf4b9cc5cd958a57d42df108f2d14c",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "77a0e7778d08842ac42c94df14e9295c688a27209b4e83564e62095bfdae38a9"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "01cbe61031f2476f6069492c92af475dd94969f7aa64a687fe1d7ff67762daa1"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "96f1b0987979afdb984dd82262efcea6ae8d04dea50f7cedf2a1c4b141b83dd8",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/96f1b0987979afdb984dd82262efcea6ae8d04dea50f7cedf2a1c4b141b83dd8.npz",
+        "sha256": "188045f296f334941f41a759fc8f9994878749edbdf1ce5c297c35b3264c5b50",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "0f93aec9a7dd7d0114a8a72fa651f224a37773def95d14501ede2b8fe999435c"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "cf203117c05db7a86196962637afed03d7ca696b08671c5b87846aa5b40eb7ee"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "d1a2a0f74e996f744a91c76b6511f368562ed11370c2bbbfa21586e4bfa514d0",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/d1a2a0f74e996f744a91c76b6511f368562ed11370c2bbbfa21586e4bfa514d0.npz",
+        "sha256": "46b877a1a7653bbca3cb45f7023caa0d673dc31b69a5fcf2436343cd1db68679",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "6d62ba15c190623fd051ba2f1fb3fe85cb905e865826662561dac32e2a3719c7"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "2d63c17e8a7808413b7e095d9c8a31d143a1c6db83b0f554e65901447dd29a53"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "6409a8f58c3c62bff38e6e3b6286f1d7632c37b737b8e4fc94c6d15cd30e77e6",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/6409a8f58c3c62bff38e6e3b6286f1d7632c37b737b8e4fc94c6d15cd30e77e6.npz",
+        "sha256": "6691b4f450f3a93e50b6ab65b405d70a722ce97c01e6ba78dca53ea65ae1a2a4",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "6dea7741fec447a26ac744a3b571ba93f05d70bf823e4e59166bcc07420e662d"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "9ae2ee1a4724cffea2dada2c6307aebcb89959c70d4bc35fbe7e05f41b214afb"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "357bea97b3dfa59087c3550ad90fc54e78cf3f8c60a00def8bb8c68a5c6048e5",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/357bea97b3dfa59087c3550ad90fc54e78cf3f8c60a00def8bb8c68a5c6048e5.npz",
+        "sha256": "cbee07894a20d360f1bae82f60813c07454ac6180b26b8d3258d0856bed2b56f",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "70485186b44a195d50b1a2b38e2d5cbe320f5478295a6e9f72d51aef80b36f89"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "e5e45a243066c26c445cc1ac74930d22229ca8db82a6a5fd231bf793e75b88b5"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "b8349f79cfd754bcb6ac33a81e994680b5fbd05937ec56838cac26964053b47e",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/b8349f79cfd754bcb6ac33a81e994680b5fbd05937ec56838cac26964053b47e.npz",
+        "sha256": "65b3ad8505661d552fa1bb4643f1bdfc8a88d3956de18d1812318bbc3f3de380",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "4f48569bb81d078ef16b591c4a391ef37f3d19a3faa692ff9d84053ab6d089b8"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "70d7b76c0fce20031bedd6536e7878b20ce697c9b2d36bfdce6814e114ba9ceb"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "850954463752ebd600e278bd6f213705ca6b48557a3eb6ae019affebb2c266f0",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/850954463752ebd600e278bd6f213705ca6b48557a3eb6ae019affebb2c266f0.npz",
+        "sha256": "fd088f76832a8ffbf729bbdfcd1a1d0d2f5837a0be9796b020d66ce577a1af06",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "598a5c7e77ebb02973ce6b926a6dadb6fec14c0dd65e416943d418bc465c0487"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "73945fb3e14d25a44800ae02c6401a5b3f1693afcaa89f63ce0adbd27f82c358"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "ae06bf99656d854a69d01c328265d83374b7cb1429260ebd9a2b9f389dcda37a",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/ae06bf99656d854a69d01c328265d83374b7cb1429260ebd9a2b9f389dcda37a.npz",
+        "sha256": "ac7f40709e0e53be1b7ba54fc6675004875c98acad10913a1bc633633726a716",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "321d5f306db9ea1bb1944dee57a3e156eb5875446542ffaa721a62d75724aa52"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "9cd0fee16158ef6b3a68d3f95a62796f67d284299ab666b645c0ff987dd64b9b"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "c7b0d1ddb35378d6c6797106c4e4f9025ac48d2baff8df8bd4f5eb59a34d6181",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/c7b0d1ddb35378d6c6797106c4e4f9025ac48d2baff8df8bd4f5eb59a34d6181.npz",
+        "sha256": "c258e75d1ecb60ac7d3ab9d4d3fcb7bdc728cb66e34acacef03c19611bab888d",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "6a9beabf949228df913e4743e8285cee9ac355810505d61c6fe114beae86936c"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "568456d088203f23dbda434fcf641a4f0511941ad8d5969a291aff5db599e137"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "811a5f46f08f1ffb8acd701078c70c7a530243b27756b11663af25f7f54e4dac",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/811a5f46f08f1ffb8acd701078c70c7a530243b27756b11663af25f7f54e4dac.npz",
+        "sha256": "bce136c4bbb781d99ae40fbdb3998f47071b50ec3e3f1586c5302b3cda299e26",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "64893404b76f92a7ccd720a3807b63549d2111816c406fabe289c6b987e3a7fe"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "7d4e643c24d4e82344250fab149a1ac9c2893d2291c51600dbd2b3532a955110"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "e11368dae23d3eb85542f3265e5423faa65eeefb792175cd583515f9fbde3fc5",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/e11368dae23d3eb85542f3265e5423faa65eeefb792175cd583515f9fbde3fc5.npz",
+        "sha256": "b72020cefdba9cb6aff23ef16a59477cd5412856cc28dddb87b2c06a3feba118",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "c0d1ba0399301768ad003193bb3ed102619df5d8b8d31808f8e5ade6d6dadfbb"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "1809917d82dd0940f8f3badd6f287c4b84d263bfef693840639d920a928c2cd6"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "a80b599ac850d0929c3e155eaa5c5958ef90f8a0ba268f37375d320f5f6cda4b",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/a80b599ac850d0929c3e155eaa5c5958ef90f8a0ba268f37375d320f5f6cda4b.npz",
+        "sha256": "461587f0dca6577a752d0cf89e8c962ae5287e2a2aab38304f5daf801bf2e67e",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "8c6a126e653040360d55501286f7f5753c9db666fa6b558ac1791202e21943c1"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "942ad15b8406b13a95165f09a8b47ae3361550979fa5ccfb0e9e23609b39e34c"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "aee6b9f96c724722a85926106ebe9f519c0846e84c76864c6834c6c4c8542e78",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/aee6b9f96c724722a85926106ebe9f519c0846e84c76864c6834c6c4c8542e78.npz",
+        "sha256": "76ebd1a5f44d0f35234f7419e3a78dec5ced6347ce77048ee5dccaf41049d61b",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "a033307ee8471cf17a0e946c91a984c8fae4ff06a10405ce7edf6e996299b4e0"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "c6f93346072168315bcd1cbf0240d5684592411f48eb7e72c10ff2cbf7aa9a22"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "ab9ef6d4a66f7067cfb8401bd8f059b194bcfc8a812d83c9b6af48f06e6f56de",
+      "tag": 1,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/ab9ef6d4a66f7067cfb8401bd8f059b194bcfc8a812d83c9b6af48f06e6f56de.npz",
+        "sha256": "8e0a55aad45548fe91414733256cc8ec9e0d2105be4ae28d8cb55f82d3e0fd7b",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "b5ad84b368a88da162525b6fad907081e5da9402e11a1aee92b7bc44efae22f1"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "9ca2ec2d08dcd30a77a395c3fe37ff9edcbbc7f06ad6e73b367cbdb8224e66f6"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "c3febda01ce58683542da8c2be549ba531f7becd5a99832a8a15953162094181",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/c3febda01ce58683542da8c2be549ba531f7becd5a99832a8a15953162094181.npz",
+        "sha256": "8a97de30ce478bb573f448ebebf50f87a4d4936345718dcb91a4188a4dad0ca3",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "bc44fe81f49c2f16cddd0900b1bac5dfea446056087414f67aef9522c167b051"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "07f11d7f77880c6c82eefec181d77d65c77b23a6f017c8993c807fe843ce7100"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "eb02c6ca667ab125e4dcee5f3d94ec7b72404a1ea25f74a5f09c8ad8a9a4692f",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/eb02c6ca667ab125e4dcee5f3d94ec7b72404a1ea25f74a5f09c8ad8a9a4692f.npz",
+        "sha256": "caa3d62b2b5ff8b7d8bc96cbc1083020e6db3afd4d4dd62e380abe474f089218",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "4213ff5630e8e3fa477f838bdb4d4956aad05dd773c4aba06cb3e9808a3d5959"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "d8b91ee272135e52e51deabcefde99abe9a096aeed9293b55da180a554aceb4d"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "7b8024fd65a412424478d455b23d4cb7e11aab451368f35b486ae846675505b5",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/7b8024fd65a412424478d455b23d4cb7e11aab451368f35b486ae846675505b5.npz",
+        "sha256": "0c9926873bfb874a5b154d7ffcd93dba884a5cd4e1d7081d3d5e19b9dc9dd9a1",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "6365990aa512294d5ffd6c07076bc096c92114bd3b0edead5fd749cc6ecb64a7"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "5f0132d96881d0769ce5e314396d08e7b936d0f1b5c215679271d5bc3c287a0f"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "d9123067aae45808ed5043f1b6cf18267c3c2deeebd1622d9a3d21e0a63abd1d",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/d9123067aae45808ed5043f1b6cf18267c3c2deeebd1622d9a3d21e0a63abd1d.npz",
+        "sha256": "baf120017b60ce1e8fd984f195c4d074000aae4a5421674a5db6d7233a1a08b3",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "6c777d068854f4485b0589e991826e0aa9e99fa60fd598808633c3db5e4ac8d7"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "ea748fef8d4ad0bbfe8d13fa957e89fa7516a1cdf572d10832d7029927a8fde9"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "6ce48b9aabb2054a0a9afa53d8dd70eaab5fa7ce48c10d0ca7ba289d48fe4139",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/6ce48b9aabb2054a0a9afa53d8dd70eaab5fa7ce48c10d0ca7ba289d48fe4139.npz",
+        "sha256": "09261acf2e585d0ee436dd3339a0351179731acc3b8d18ff22eafaec76aefcb2",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "f5259a1f0d297dc0340dab6033f1ac4aa6338234a7b1cf7184752763d7015c68"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "15e36dd3444ee6b66040a867919c4696a5182a20541f86b44cc39ffaf44d5849"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "e67214cf17067358d12e6a323e6ca73611ff23eb8bbf1be1446a74c4029c56b7",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/e67214cf17067358d12e6a323e6ca73611ff23eb8bbf1be1446a74c4029c56b7.npz",
+        "sha256": "c9bcc8a74f97de9c5e0c6cec79d5374e936d9f04c2b7474566ea5442386284d6",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "551890697298427b10aca01fc27385ac0a32ff13a70529cee2d532583e3dccae"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "f3f399ea869715092370cffeb071aab490e7750e02cd70dcac00d92834585843"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "d891bf27849d5f5b2550e1c07944a0be50e82ef64d572c35a3ae2a71886de8a8",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/d891bf27849d5f5b2550e1c07944a0be50e82ef64d572c35a3ae2a71886de8a8.npz",
+        "sha256": "bc66b95689777d4cd5e32a13bde8aa6e59a063b8ec608346cf6f3e2b60d19e76",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "483bacbd0d427e60e4fdc8ae532d542fbf9b220166424bff6f307df80026461f"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "2ed385da6e0672d568b2d205c8bc2417701acfefd18dfe0f907cb0ea42d7d71b"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "eda67193d4d3d81529c40a8875b0575580bbdf869a5fbdacbf607ee51ae940f7",
+      "tag": 2,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/eda67193d4d3d81529c40a8875b0575580bbdf869a5fbdacbf607ee51ae940f7.npz",
+        "sha256": "8dfab703930d3ec1bd80fa07956b4eaefab5448a730b0251742c738460717480",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "9f78186e552badb41a1339c0c79c78f084cc37637a82eebde78f349e41a22379"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "ef345b2dd190ede75a066a33421312783d0703acec0010b20872f356c7563e99"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "b14fe06c6cf8e9623f6fd3d4c2e237d7251ce3fdd9e379fa6c965f9795dc364f",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/b14fe06c6cf8e9623f6fd3d4c2e237d7251ce3fdd9e379fa6c965f9795dc364f.npz",
+        "sha256": "a9782d95725a70827b98a576106ad263b89a1e4dd988504bc15e63a1edb097c1",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "a7941deadf97406a9c6a81c9607171c81c5d04814dd121a5cefb4c0024d56b88"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "168d31ec22e2e50c93ab242d7a3dda75242a351eba79f9144601cfd3189a8bfa"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "ef80e7d4a0f56c2f379563c6eeacbf3c6ee17381bc5947c3afda3e28e8023442",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/ef80e7d4a0f56c2f379563c6eeacbf3c6ee17381bc5947c3afda3e28e8023442.npz",
+        "sha256": "07f212eaba9ebe8c7a49b08b408ba3958697ff70bedb8f23a25d8d0a5bd1dc41",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "8509f37976b0b66f4f2f045301c2bf9db4742fcac3aed9b0c0ddadaf8665d7db"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "7e0ac260c665c83ff8c7b712eeca559716f9d25e07e0044986e6e91c30456836"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "88f83b1ba211a449d0b1a43a0de66c2268931a126e55803217bba1b3c2295ab9",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/88f83b1ba211a449d0b1a43a0de66c2268931a126e55803217bba1b3c2295ab9.npz",
+        "sha256": "3b52aa41db430abe8ac0dd9af44cb9585f030c5c3e31d86f09eda343b28c0e66",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "dde834465ca9b9c4d77ee1822ca95f80ededd5c820bee15a4c34d5859287da3f"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "915fe003f2bb1dfc3234eb9acf39bd9639e7f253081c3ce31195867e154b65d5"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "9fb60d3644b1f2ed01dbabf10c52a2c15a153fe50137447c9b7b98a12b191acb",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/9fb60d3644b1f2ed01dbabf10c52a2c15a153fe50137447c9b7b98a12b191acb.npz",
+        "sha256": "f6a39ae657ba4c29ea15c949697509d3a0d301b525396821697ab95f05517347",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "bfcc8287a6364f100a721014424d4d7b63ba25baf2bb275a4c1bafb80b86c28d"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "f5de651a8b56109ee379236865c269259289e737511970b397a4f9ec4e282537"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "502ff2f7bd37e771412302e191838a48002eac89ddae5767297730b91e0ad463",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/502ff2f7bd37e771412302e191838a48002eac89ddae5767297730b91e0ad463.npz",
+        "sha256": "e2d414a578a1ecbb8cc80ac91eeca136c720a040c044ff53f6ce95b8a5a85ae0",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "6cc03b47f8de33ef2ae243e51dc28e15461ed02416df99d1deb409638c68dac8"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "0c3044a37d39087f9e89fe1c0a88d62d0d6533d2a45dc79ee7b43ebd26ded747"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "a864822caed405b0ac8d23d6cc0a08f5a7ff784d0299992a9621711314e21e2b",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/a864822caed405b0ac8d23d6cc0a08f5a7ff784d0299992a9621711314e21e2b.npz",
+        "sha256": "281fbdbe379d0ad02ee1f2971cda9bc80ba8706b38bee9c6fe0d1f807767ebd1",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "7ab546c1e40328ba99c1c3816b3838a5a959aba6c834d4506cdd6435b2ca2274"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "4ac698c89b6766e2c1b4034383a3b1804607712aedf48107f88b6d3a12b4f48a"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "7907e9bb95990976dadb2b7816d4700a7b8662b370d90c70f265e1ea02db28bc",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/7907e9bb95990976dadb2b7816d4700a7b8662b370d90c70f265e1ea02db28bc.npz",
+        "sha256": "ca06daac1000e3d8ebfe7324dd9dbef99442507cc80fba55cb96293c327044bc",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "b19685fc033381c995d1772e1511563c58eaeab8696808d5a686df54dc070758"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "3b4c772f56ddeb6b2515783bb78f4a13bab76f61dd7b56e5a8a460a4655a1b3e"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "90e5d6dd2f8e65854ff355ae3caa1786cc65743a5b8e0c4c8dd365c646a3ccbc",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/90e5d6dd2f8e65854ff355ae3caa1786cc65743a5b8e0c4c8dd365c646a3ccbc.npz",
+        "sha256": "35ffd0b6217afbf38e209647f8d9393ba7325ed3b93b354505c7ac11b8e1f0d3",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "466c7d90b8711aa841aa220175eb55159af74cc0ba8009783d19c0ac0cedb529"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "978293e6d113c2fd02000d811e987365d95a54476520098968bc62ff5325bc87"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "ee132f1335ff36e313d081629623b4688785cc9d43b0188019da2a202fe94a62",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/ee132f1335ff36e313d081629623b4688785cc9d43b0188019da2a202fe94a62.npz",
+        "sha256": "33b429961d04a9066f686b845a54e5778452d8ff9e2aa42d30388ab8ff8c674c",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "ce5dfbba5536f6716f85c568b86f4f0d69dddbed8cb4daafd0be6c481e3efb2d"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "1fabf09a143c5bc7543185ae49b8734996e6152b7f9d9a189f4cac7c0d0baa3b"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    },
+    {
+      "key": "00793d773b9d9724bd9ab41681fd0a4b4c8cf4bf2d3e3502ab4f6b5a565f4643",
+      "tag": 3,
+      "dimension": 1344,
+      "degree": 7,
+      "dtype": "complex128",
+      "kappa": [
+        8.94046081729244,
+        0.7821889682108057,
+        0.0
+      ],
+      "element_hash": 16913352432823651553,
+      "form_signature": "fbff7fa446b0889b54db2453612e8615c2113ef4bca153e4ef7f3ca746d60ce6d1b1b5ca679ab84770304a3b363eb531d0c9ccf03dc007d1b3ce76d3445717e7",
+      "producer_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/raw_tensor/00793d773b9d9724bd9ab41681fd0a4b4c8cf4bf2d3e3502ab4f6b5a565f4643.npz",
+        "sha256": "b4749ff45f88d3499a68ccdd6788c6c949709f7651268e370559686c77be13a0",
+        "members": {
+          "tensor": {
+            "shape": [
+              1344,
+              1344
+            ],
+            "dtype": "complex128",
+            "sha256": "c8e55688fdb78bcad91ac1c0433fddf10702da4701eca50853c397563774fc35"
+          },
+          "coordinates": {
+            "shape": [
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "61174a763d22c6585b9cb60d6d555b9b214ffe6073598f59c4fad361a92a7715"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          }
+        }
+      },
+      "independent_reopen_bitwise": true
+    }
+  ],
+  "persistence_failures": [],
+  "stored_bytes": 1098289452,
+  "payload": "full original raw Ckappa tensor; not Schur, matrix or factor",
+  "reuse": "38 exact geometry/tag full Ckappa raw tensors saved and independently reopened; not Schur/CSR/factor",
+  "geometry_tag_hits": 0,
+  "geometry_tag_misses": 38,
+  "no_approximate_geometry_merge": true,
+  "previous_preparation_cost_retained": true
+}

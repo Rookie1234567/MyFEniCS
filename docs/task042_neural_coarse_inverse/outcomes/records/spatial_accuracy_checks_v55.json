@@ -1,0 +1,117 @@
+{
+  "scope": "Parent comparisons rechecked from saved arrays; no new common-grid H7 integral",
+  "parent_pairs": [
+    {
+      "pair": "B_R7",
+      "source_parent_array_sha256": [
+        "cade1c97b8242c34dc76a4109b9ab2b0d836f0702a3e1265b4b521011664e0cc",
+        "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74"
+      ],
+      "field_max": 0.0005441183328897143,
+      "selected_max": 0.0004473306767759166,
+      "physical_channel_relative": 9.796604089585958e-05,
+      "mode_power_max_absolute": 1.6547867456306875e-06,
+      "power": {
+        "R_total": 2.5585531378269355e-07,
+        "T_total": 4.32689457263713e-07,
+        "A_balance": 1.7683414355040838e-07,
+        "A_volume": 1.768396190350574e-07
+      },
+      "energies": [
+        2.4491519923230953e-13,
+        2.537969834293108e-13
+      ],
+      "quadrature_operation": 2.2030632403946436e-15,
+      "pass_gate": false
+    },
+    {
+      "pair": "P_R6",
+      "source_parent_array_sha256": [
+        "4a2b310045a754e17c0162e6621d5cdf4d0e5ed170948e6a850f53e1ab83d27f",
+        "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b"
+      ],
+      "field_max": 3.1838739288474994e-07,
+      "selected_max": 1.8948302518417277e-07,
+      "physical_channel_relative": 3.010988548146922e-07,
+      "mode_power_max_absolute": 1.3984457373616823e-11,
+      "power": {
+        "R_total": 6.578626532416365e-13,
+        "T_total": 1.142419492339286e-12,
+        "A_balance": 4.846123502488808e-13,
+        "A_volume": 3.757064104270569e-14
+      },
+      "energies": [
+        3.0375701953744283e-13,
+        1.3100631690576847e-13
+      ],
+      "quadrature_operation": 2.3472378558065778e-15,
+      "pass_gate": true
+    },
+    {
+      "pair": "R7_R6",
+      "source_parent_array_sha256": [
+        "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+        "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b"
+      ],
+      "field_max": 0.034132939334385826,
+      "selected_max": 0.027169397695003955,
+      "physical_channel_relative": 0.0009361452773653482,
+      "mode_power_max_absolute": 3.187214097954971e-05,
+      "power": {
+        "R_total": 1.3665405023510768e-05,
+        "T_total": 5.929763073897476e-06,
+        "A_balance": 1.9595168097352733e-05,
+        "A_volume": 1.959516848217685e-05
+      },
+      "energies": [
+        2.537969834293108e-13,
+        1.3100631690576847e-13
+      ],
+      "quadrature_operation": 2.3472378558065778e-15,
+      "pass_gate": false
+    },
+    {
+      "pair": "R7_C",
+      "source_parent_array_sha256": [
+        "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+        "b3cb249a0ff8fe1d2296c3862ed73ff163771ee815a2c7de5a496c9592b9d17c"
+      ],
+      "field_max": 8.332448141385477e-05,
+      "selected_max": 6.460485893994159e-05,
+      "physical_channel_relative": 1.876169512916754e-05,
+      "mode_power_max_absolute": 3.2101296798536794e-07,
+      "power": {
+        "R_total": 6.745271695363098e-08,
+        "T_total": 7.989622496928916e-08,
+        "A_balance": 1.2443508001780401e-08,
+        "A_volume": 1.2443602644823804e-08
+      },
+      "energies": [
+        2.537969834293108e-13,
+        4.605205106145149e-13
+      ],
+      "quadrature_operation": 1.928094113854747e-15,
+      "pass_gate": true
+    }
+  ],
+  "new_pairs": {
+    "R7_H7": {
+      "status": "not_run",
+      "reason": "H7 saved; FE reentry allocation exhausted before common-grid field comparison"
+    },
+    "R6_H7": {
+      "status": "not_run",
+      "reason": "H7 saved; FE reentry allocation exhausted before common-grid field comparison"
+    }
+  },
+  "R6_T6": {
+    "status": "not_run",
+    "reason": "T6 complete-case budget not admitted"
+  },
+  "fixed_selected_240_H7": "not_run",
+  "full_notch_accuracy": false,
+  "continuum_qualification": false,
+  "target_qualified": false,
+  "NN_training": 0,
+  "NN20": false
+}

@@ -1,0 +1,410 @@
+{
+  "runs": [
+    {
+      "role": "QUALIFY",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_QUALIFY_source01",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.812869577901438,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 214286336,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "tmp/task042/v55/aux_QUALIFY_source01/run_manifest.json",
+        "sha256": "1e58f9c05fcf465ecd94e4cba0ec76fa2d39fdb7d639bedf25aa8108b9309222",
+        "bytes": 17621
+      },
+      "summary": {
+        "path": "tmp/task042/v55/aux_QUALIFY_source01/summary.json",
+        "sha256": "9009194996ee1f2ea73705233232dbee4573f2220018131a9852eaefb4f024ec",
+        "bytes": 21686
+      },
+      "cpu": 30,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T13:02:32.306434+00:00",
+        "observed_monotonic": 1216747.167300479,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 752.8373004789464,
+        "heavy_remaining_seconds": 21747.162699521054,
+        "total_remaining_seconds": 24447.162699521054
+      }
+    },
+    {
+      "role": "Q0",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v55_prior_audit_completion_20261006T130311473027Z",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1314.4917098758742,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 4213194752,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "results/task042/task042_v55_prior_audit_completion_20261006T130311473027Z/run_manifest.json",
+        "sha256": "252c6fa964139dbaed46401296662d92ce876c67b57c29cac3ef7046564d0289",
+        "bytes": 18244
+      },
+      "summary": {
+        "path": "results/task042/task042_v55_prior_audit_completion_20261006T130311473027Z/run_summary.json",
+        "sha256": "f41d9cf5415c8c2de30bbb49428ca2912e49eabb2b9c39d6866c9c0f33e99dce",
+        "bytes": 22564
+      },
+      "cpu": 34,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T13:03:29.913122+00:00",
+        "observed_monotonic": 1216804.773988802,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 810.4439888019115,
+        "heavy_remaining_seconds": 21689.55601119809,
+        "total_remaining_seconds": 24389.55601119809
+      }
+    },
+    {
+      "role": "SETUP",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v55_resolution_preflight_20261006T132851883446Z",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 16.72904348699376,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 535826432,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "results/task042/task042_v55_resolution_preflight_20261006T132851883446Z/run_manifest.json",
+        "sha256": "20fb25f1af5471ced7094c8b53e391cb562d5db3b4e68655f912646959b4db8c",
+        "bytes": 18046
+      },
+      "summary": {
+        "path": "results/task042/task042_v55_resolution_preflight_20261006T132851883446Z/run_summary.json",
+        "sha256": "367517e83023f88c4bedce7f331b57e803bae4cc13bb4d4c7cf8b5d8198c58b7",
+        "bytes": 22142
+      },
+      "cpu": 0,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T13:29:10.076781+00:00",
+        "observed_monotonic": 1218344.937648455,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 2350.6076484548394,
+        "heavy_remaining_seconds": 20149.39235154516,
+        "total_remaining_seconds": 22849.39235154516
+      }
+    },
+    {
+      "role": "H7",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v55_notch_z4_p7_m828_20261006T133138354262Z",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "classification": "PERFORMANCE_CONTROLLED_STOP",
+      "elapsed_seconds": 13608.840716442093,
+      "exit_code": -15,
+      "descendants_cleared": true,
+      "peak_bytes": 24517603328,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "results/task042/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/run_manifest.json",
+        "sha256": "048581904d174def1d9e13ae2559f86fdfdd8bc1ef57712a29818b7a33085547",
+        "bytes": 18043
+      },
+      "summary": {
+        "path": "results/task042/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/run_summary.json",
+        "sha256": "3201ebbb3a28e6226621a0cce6ca248d1fd1a554bcf0d594c30a689cab25cb1d",
+        "bytes": 22793
+      },
+      "cpu": 41,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T13:31:56.407019+00:00",
+        "observed_monotonic": 1218511.267885832,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 2516.9378858320415,
+        "heavy_remaining_seconds": 19983.06211416796,
+        "total_remaining_seconds": 22683.06211416796
+      }
+    },
+    {
+      "role": "QUALIFY",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_QUALIFY_source02",
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.900580174056813,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 221245440,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "tmp/task042/v55/aux_QUALIFY_source02/run_manifest.json",
+        "sha256": "086b582e46a475c36a5eed4c432250b67d7fb4243dbe3ba81e1d3deb3ff7f152",
+        "bytes": 17620
+      },
+      "summary": {
+        "path": "tmp/task042/v55/aux_QUALIFY_source02/summary.json",
+        "sha256": "995f51298a18479e81e4ac1ed973fc6ad2c3145da63631cac9c21ffbcb1cacd6",
+        "bytes": 21696
+      },
+      "cpu": 30,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T17:22:56.541344+00:00",
+        "observed_monotonic": 1232371.402211101,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 16377.072211100953,
+        "heavy_remaining_seconds": 6122.927788899047,
+        "total_remaining_seconds": 8822.927788899047
+      }
+    },
+    {
+      "role": "H7",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v55_complete_h7_saved_20261006T172555770718Z",
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 260.3578948508948,
+      "exit_code": 1,
+      "descendants_cleared": true,
+      "peak_bytes": 2544611328,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "results/task042/task042_v55_complete_h7_saved_20261006T172555770718Z/run_manifest.json",
+        "sha256": "6955c445825375d2fe09cfef92ffc231d36f937daf114b5ab3075c5ed7945434",
+        "bytes": 18239
+      },
+      "summary": {
+        "path": "results/task042/task042_v55_complete_h7_saved_20261006T172555770718Z/run_summary.json",
+        "sha256": "d6936137d990b8ded6f94efb2db3460f011cfc59815154545cc2f79e974a30e9",
+        "bytes": 22358
+      },
+      "cpu": 21,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T17:26:14.382167+00:00",
+        "observed_monotonic": 1232569.243034036,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 16574.913034035824,
+        "heavy_remaining_seconds": 5925.086965964176,
+        "total_remaining_seconds": 8625.086965964176
+      }
+    },
+    {
+      "role": "QUALIFY",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_QUALIFY_source03",
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.100945364916697,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 222007296,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "tmp/task042/v55/aux_QUALIFY_source03/run_manifest.json",
+        "sha256": "5938e905f2ab47069878835edfe7f4d6d7a54d665dbeef2a2c75131738aa65eb",
+        "bytes": 17620
+      },
+      "summary": {
+        "path": "tmp/task042/v55/aux_QUALIFY_source03/summary.json",
+        "sha256": "8c4b3219e2625b4e06661d58d34fb1279d6b9b6409c2f486bffada5db2e46eb2",
+        "bytes": 21694
+      },
+      "cpu": 29,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T17:36:48.223517+00:00",
+        "observed_monotonic": 1233203.084383743,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17208.75438374281,
+        "heavy_remaining_seconds": 5291.245616257191,
+        "total_remaining_seconds": 7991.245616257191
+      }
+    },
+    {
+      "role": "SAVED",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_SAVED_final01",
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 14.216502903960645,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 1006694400,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "tmp/task042/v55/aux_SAVED_final01/run_manifest.json",
+        "sha256": "044fd599966a17906d0616e99ecc0d1a4e0f1ee42ed27c2a3724907df393ba02",
+        "bytes": 17616
+      },
+      "summary": {
+        "path": "tmp/task042/v55/aux_SAVED_final01/summary.json",
+        "sha256": "8be5cd5bb733f25eb9a0a91fd830506df02a5b26d630ff310eed24a9bcfe5390",
+        "bytes": 21637
+      },
+      "cpu": 0,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T17:38:03.562536+00:00",
+        "observed_monotonic": 1233278.423403616,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17284.09340361599,
+        "heavy_remaining_seconds": 5215.906596384011,
+        "total_remaining_seconds": 7915.906596384011
+      }
+    },
+    {
+      "role": "COLLECT",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/aux_COLLECT_final01",
+      "source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+      "classification": "COMPLETED",
+      "elapsed_seconds": 20.653915271162987,
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 708030464,
+      "swap_bytes": 0,
+      "run_manifest": {
+        "path": "tmp/task042/v55/aux_COLLECT_final01/run_manifest.json",
+        "sha256": "60741e3927d2d078abea73b7cd82bf5fb822f73733bfae9831c3d60110988c63",
+        "bytes": 17618
+      },
+      "summary": {
+        "path": "tmp/task042/v55/aux_COLLECT_final01/summary.json",
+        "sha256": "7e3aa7089afdf22666cc999641240330d04ccb12abb420a28690e75d8810ca9d",
+        "bytes": 21643
+      },
+      "cpu": 0,
+      "clock": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T17:40:53.047933+00:00",
+        "observed_monotonic": 1233447.908800277,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17453.578800276853,
+        "heavy_remaining_seconds": 5046.421199723147,
+        "total_remaining_seconds": 7746.421199723147
+      }
+    }
+  ],
+  "formal_input_files": [
+    "input/task042_neural_coarse_inverse/v55_audit_h7.dat",
+    "input/task042_neural_coarse_inverse/v55_audit_t6.dat",
+    "input/task042_neural_coarse_inverse/v55_complete_h7_saved.dat",
+    "input/task042_neural_coarse_inverse/v55_notch_transverse_p6_m828.dat",
+    "input/task042_neural_coarse_inverse/v55_notch_z4_p7_m828.dat",
+    "input/task042_neural_coarse_inverse/v55_prior_audit_completion.dat",
+    "input/task042_neural_coarse_inverse/v55_resolution_preflight.dat",
+    "input/task042_neural_coarse_inverse/v55_verify_cost.dat"
+  ],
+  "partial_saved_state": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/minimal_scientific_state.json",
+    "sha256": "e9e76087958cd77300aa8ee189c23a0eecf121224057d88c2b380bb9b1b1d1ef"
+  },
+  "completed_parent_audit": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/result.json",
+    "sha256": "bbbd8f374542656a511b01dc4d1ceb1d3daa2fa97f9faccfbe8d58cdae8eaeab"
+  },
+  "capacity_preflight": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_resolution_preflight_20261006T132851883446Z/result.json",
+    "sha256": "0ef0b3ee7a5a436b979f51caac41bbe1533ca46789589dd175c3f3fd6cfd1f43"
+  },
+  "final_stage_H7_pointer_is_not_success": true,
+  "scientific_queue_freeze": {
+    "path": "tmp/task042/v55/scientific_queue_frozen.json",
+    "sha256": "92989fa18eed113a5f772ddb8c2d7472f30f58b58431b002635cf4431a078d0a",
+    "bytes": 525
+  }
+}

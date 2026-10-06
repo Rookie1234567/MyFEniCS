@@ -1,3 +1,7 @@
+# V55局部验收
+
+8项focused回归、8入口validate、相关Ruff/compile通过；Q0实际R6/R7切向面/独立原式通过。H7独立保存向量checker通过，但缺fresh FE/体吸收/场增量，不能授准确性。[测试](records/targeted_tests_v55.json)、[文档合同](records/documentation_checks_v55.json)、[缺项](records/gate_verdict_v55.json)。GitHub视觉NOT_VERIFIED，CI未运行。历史正文保留。
+
 ## V54 定点验证
 
 最终source `1e08c27b2b5ff3ed69dd1fea86256367309b24e2`：13相关unit、相关Ruff、数值闭包compile、6个真实dat validate通过；[source/ABI/命令](records/targeted_tests_v54.json)。未跑full repository pytest或CI。D/R7/R6/C真实计算保存；最终FE与保存数组checker的准入拒绝，不能称实际checker通过。新表格/链接/文档结果见最终文档receipt，GitHub视觉NOT_VERIFIED。

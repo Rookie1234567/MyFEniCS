@@ -1,0 +1,42 @@
+{
+  "repairs": [
+    {
+      "utc": "2026-10-06T17:22:14.246624+00:00",
+      "monotonic": 1232329.107515872,
+      "original_source": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "original_stop": "PERFORMANCE_CONTROLLED_STOP",
+      "evidence": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/minimal_scientific_state.json",
+      "minimal_state_sha256": "e9e76087958cd77300aa8ee189c23a0eecf121224057d88c2b380bb9b1b1d1ef",
+      "symptom": "A complete refined physical state survived the original main-stage wall cap; the solve reserve rule rejects consumption of that saved state.",
+      "repair": "Saved-return-only budget branch preserves cumulative 16000s case cap and all prior costs, reserves 900s for independent audit, binds original vector/source/raw manifest. No assembly, factor or solve replay.",
+      "old_record_unchanged": true,
+      "sandbox_preliminary_ABI_stop_seconds": 0.268552443
+    },
+    {
+      "utc": "2026-10-06T17:31:53.325167+00:00",
+      "monotonic": 1232908.186038289,
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "root_cause": "Original bounded stop interrupted FFCx absorption compile after it created a zero-byte exclusive marker; no ready module exists.",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/formal/xdg/fenics/libffcx_forms_9322e097fd0068baf0e92849cf8cf25ebddaae9c.c",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "mtime_utc": "2026-10-06T17:18:41.268965+00:00"
+      },
+      "previous_failure": "benchmarks/artifacts/task042/v55/task042_v55_complete_h7_saved_20261006T172555770718Z/result.json",
+      "minimal_action": "Atomically move this exact Task042-owned incomplete marker to immutable evidence; leave all other caches, failed records and neighbor files unchanged.",
+      "new_factor_count": 0,
+      "new_complete_solves": 0,
+      "budget_not_reset": true
+    }
+  ],
+  "source_commits": [
+    "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+    "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+    "b7753e35150d83eb45dec28ebe1fb4e91736ae6d"
+  ],
+  "no_factor_or_solve_replay": true,
+  "final_saved_checker": "Saved original q47 vectors and independent saved q63 carrier used by existing audit implementation; fresh FE/energy/accuracy gates remain not_run",
+  "failed_sandbox_ABI_probe": "Isolated local socket denial, 0.268552443s retained; qualified native escalation later passed",
+  "all_failed_outputs_retained": true
+}

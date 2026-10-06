@@ -1,0 +1,102 @@
+{
+  "runs": [
+    {
+      "role": "Q0",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "input_sha256": "7f126f71b99bf75b575d5d90185ae9bd608cc287ccd72fd0ab8282a9112d772b",
+      "resolved_sha256": "02fde7b12cc91aa09ffb7af200406fe5039d5771c280ac1f8e6eac74513939dd",
+      "physical_sha256": "b5cf0182aa4537d17d4127e1d17f47f8fd49534b237be21fd071321e13ff7726",
+      "MPI_size": 1,
+      "cpu": 34,
+      "memory_budget": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "verification_inventory": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v55/prior_audit_inventory.json",
+        "sha256": "a70e2e4361729be210f3ab7d2d19ff55047c3dfed81f8adc50fff414c6c2bb8f"
+      }
+    },
+    {
+      "role": "SETUP",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "input_sha256": "ead8672cb7952812d106031dc1c34d8d38fbfbd4a26f82d560f4dc7140a31f78",
+      "resolved_sha256": "69b652ad86917700f306c645316fc7c485937bb76c964a0631552371f5388f7b",
+      "physical_sha256": "b1c9bcb8de8e65025194167a6426b6a81792dae7f291a451e10b4a4fa397f65a",
+      "MPI_size": 1,
+      "cpu": 0,
+      "memory_budget": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "verification_inventory": null
+    },
+    {
+      "role": "H7",
+      "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+      "input_sha256": "5c9e5ba9541b1ff58e92041caecc5801bb8084894c46b795030edb81042e5470",
+      "resolved_sha256": "b42b9a68a4199b21858fc9b9f94c3bfa1f67c7e8cc851080ea347f4a5fd69576",
+      "physical_sha256": "b1c9bcb8de8e65025194167a6426b6a81792dae7f291a451e10b4a4fa397f65a",
+      "MPI_size": 1,
+      "cpu": 41,
+      "memory_budget": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "verification_inventory": null
+    },
+    {
+      "role": "H7",
+      "source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+      "input_sha256": "15772bef29305421b9ee57bf8e447876e06285dc6c5017b65e37ced980a65179",
+      "resolved_sha256": "3a2570d0ad9330ddc20c989ce8d66408d1393a06cf89b36ff89f3e224aea9071",
+      "physical_sha256": "b1c9bcb8de8e65025194167a6426b6a81792dae7f291a451e10b4a4fa397f65a",
+      "MPI_size": 1,
+      "cpu": 21,
+      "memory_budget": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "verification_inventory": null
+    }
+  ],
+  "parents": {
+    "R6": {
+      "pointer": "benchmarks/artifacts/task042/v54/R6.json",
+      "pointer_sha256": "3fd248acbeddb78d2ebd2e6b1483ff8f7afe2c9d294f47f3d1c561cac812e0f0",
+      "namespace": "v54",
+      "array_sha256": "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b",
+      "source_sha": "65484196065491b4714068b7472aa34f815ae299",
+      "result_sha256": "7177643dc42918bfd1f48197249c1f1cf1ec59709aebba91e404c336551fe568"
+    },
+    "R7": {
+      "pointer": "benchmarks/artifacts/task042/v54/R7.json",
+      "pointer_sha256": "33f5f5685b34049105c1af393f56ad8eb1eb59c91272f5edcc6ddcf22507bc3b",
+      "namespace": "v54",
+      "array_sha256": "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+      "source_sha": "65484196065491b4714068b7472aa34f815ae299",
+      "result_sha256": "964c7f5c59766953a39978ee5428bf81056e2cbf1a8bb7cbc3fd897ed4891112"
+    },
+    "C": {
+      "pointer": "benchmarks/artifacts/task042/v54/C.json",
+      "pointer_sha256": "ceedb549bacd66dbfa32eb25c9dd86ec28971ada428b2ce00828728eb6281103",
+      "namespace": "v54",
+      "array_sha256": "b3cb249a0ff8fe1d2296c3862ed73ff163771ee815a2c7de5a496c9592b9d17c",
+      "source_sha": "20bcd089ac440372516df4cb122a85e5726426bf",
+      "result_sha256": "1d61938816d6ffe5caa911d2dea8d555075706df03fd6f6390ae44c331f1fb12"
+    }
+  },
+  "canonical_material_path": "input/materials/si_optical_constants_v1.json"
+}

@@ -1,3 +1,7 @@
+# Task042 V55：新H7实际返回，准确性仍待补审
+
+旧R6/R7/C的独立q63原式/恢复/全模式审核完成；新320hex/p7/828 H7完整返回，true4.2039e-11、采样树峰22.833GiB。后处理wall/JIT与CPU/SMT门留下体吸收/fresh审核/场增量缺项，未授准确性。38类raw核12393.27s，凝聚数学核52.74s，既有核心复用；不算NN收益。[Response V55](task042_neural_coarse_inverse/response_v55.md)、[结果与费用](task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md)。NN0，原尺寸/2TB48h/NN20未资格；旧记录保留。
+
 ## Task042 V54：p／DtN分离的完整有限解
 
 三份新0.7nm NOTCH完整有限方程解完成；p6模式增量、p7的828→1188通过，但同828跨p散射场约3.41%未过1e-4。原actor残差约1e-11，最后独立VERIFY/checker CPU准入拒绝，资格未闭合。raw准备严格复用，失败与完整费用保留，无NN训练/收益。[Response V54](task042_neural_coarse_inverse/response_v54.md)。不授原尺寸/2TB48h/NN20。

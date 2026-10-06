@@ -1,0 +1,149 @@
+{
+  "routes": [
+    {
+      "role": "Q0",
+      "events": [
+        {
+          "event": "independent_saved_array_checker_no_FE_calls_begin",
+          "elapsed_s": 1286.669198388001,
+          "RSS_bytes": 2489356288,
+          "clock": {
+            "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+            "start_monotonic": 1215994.33,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+            "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+            "closed": false,
+            "first_work_start_never_refreshed": true,
+            "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+            "observed_utc": "2026-10-06T13:24:57.064260+00:00",
+            "observed_monotonic": 1218091.92512687,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2097.5951268698554,
+            "heavy_remaining_seconds": 20402.404873130145,
+            "total_remaining_seconds": 23102.404873130145
+          }
+        },
+        {
+          "event": "independent_saved_array_checker_no_FE_calls_end",
+          "elapsed_s": 1310.0753968870267,
+          "RSS_bytes": 2523394048,
+          "clock": {
+            "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+            "start_monotonic": 1215994.33,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+            "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+            "closed": false,
+            "first_work_start_never_refreshed": true,
+            "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+            "observed_utc": "2026-10-06T13:25:20.470470+00:00",
+            "observed_monotonic": 1218115.331336952,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 2121.001336951973,
+            "heavy_remaining_seconds": 20378.998663048027,
+            "total_remaining_seconds": 23078.998663048027
+          },
+          "seconds": 23.40587644185871
+        }
+      ]
+    },
+    {
+      "role": "SETUP",
+      "events": []
+    },
+    {
+      "role": "H7",
+      "events": [
+        {
+          "event": "returned_complete_physical_state_saved",
+          "elapsed_s": 13481.447960442165,
+          "RSS_bytes": 20072099840,
+          "clock": {
+            "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+            "start_monotonic": 1215994.33,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+            "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+            "closed": false,
+            "first_work_start_never_refreshed": true,
+            "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+            "observed_utc": "2026-10-06T17:16:38.328764+00:00",
+            "observed_monotonic": 1231993.189631043,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 15998.859631042928,
+            "heavy_remaining_seconds": 6501.1403689570725,
+            "total_remaining_seconds": 9201.140368957072
+          },
+          "sha256": "28db03196512d8e701bb7e73580a6401d41d04f093c11c545a2a6106ada64d96"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 13544.5898983581,
+          "RSS_bytes": 9934229504,
+          "clock": {
+            "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+            "start_monotonic": 1215994.33,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+            "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+            "closed": false,
+            "first_work_start_never_refreshed": true,
+            "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+            "observed_utc": "2026-10-06T17:17:41.470690+00:00",
+            "observed_monotonic": 1232056.331556626,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 16062.001556625823,
+            "heavy_remaining_seconds": 6437.998443374177,
+            "total_remaining_seconds": 9137.998443374177
+          }
+        },
+        {
+          "event": "factor_and_matrix_released_original_oracle_retained",
+          "elapsed_s": 13544.995198228164,
+          "RSS_bytes": 7304863744,
+          "clock": {
+            "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+            "start_monotonic": 1215994.33,
+            "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "heavy_limit_seconds": 22500,
+            "total_limit_seconds": 25200,
+            "scientific_loaded_limit_seconds": 18000,
+            "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+            "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+            "closed": false,
+            "first_work_start_never_refreshed": true,
+            "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+            "observed_utc": "2026-10-06T17:17:41.875984+00:00",
+            "observed_monotonic": 1232056.736851076,
+            "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+            "monotonic_same_boot": true,
+            "elapsed_seconds": 16062.406851075822,
+            "heavy_remaining_seconds": 6437.5931489241775,
+            "total_remaining_seconds": 9137.593148924178
+          }
+        }
+      ]
+    },
+    {
+      "role": "H7",
+      "events": []
+    }
+  ]
+}

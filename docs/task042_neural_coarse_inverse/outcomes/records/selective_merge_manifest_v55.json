@@ -1,0 +1,80 @@
+{
+  "groups": {
+    "production numerical/core": {
+      "paths": [
+        "src/io/phase_notch_hp.py",
+        "src/solvers/phase_explicit_accuracy.py",
+        "src/solvers/phase_notch_hp.py",
+        "src/solvers/phase_notch_hp_capacity.py",
+        "src/solvers/phase_spatial_resolution.py",
+        "src/solvers/phase_spatial_resolution_scope.py",
+        "src/solvers/phase_tangential_audit.py"
+      ],
+      "behavior": "V55 explicit opt-in case/audit/budget; ordinary defaults unchanged; no production solver promotion",
+      "tests": "targeted_tests_v55.json; prior q63 audit and partial H7 original saved-vector audit",
+      "fresh_evidence": "H7 complete refined coefficient saved, final accuracy incomplete",
+      "merge_order": 1
+    },
+    "reusable runner/watchdog": {
+      "paths": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "Explicit V55 resource/namespace/stage forwarding; inherited watchdog unchanged",
+      "tests": "64/80/96 capacity and stage regressions; main controlled stop cleared descendants",
+      "merge_order": 2
+    },
+    "checker/benchmark": {
+      "paths": [
+        "benchmarks/collect_phase_explicit_accuracy.py",
+        "benchmarks/collect_phase_notch_hp.py",
+        "benchmarks/collect_phase_spatial_resolution.py",
+        "benchmarks/qualify_phase_spatial_resolution.py",
+        "src/test/test_phase_spatial_resolution.py"
+      ],
+      "behavior": "Independent prior/saved evidence only; partial classification cannot grant fresh FE gates",
+      "tests": "8 focused regressions; explicit byte mutation rejection; local documentation tests",
+      "merge_order": 3
+    },
+    "compact evidence/docs": {
+      "paths": [
+        "docs/task042_neural_coarse_inverse/response_v55.md",
+        "docs/task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v55.*"
+      ],
+      "behavior": "Record negative/partial evidence without changing authority or old results",
+      "merge_order": 4
+    },
+    "research-only": {
+      "paths": [
+        "input/task042_neural_coarse_inverse/spatial_resolution_v55.json",
+        "input/task042_neural_coarse_inverse/v55_audit_h7.dat",
+        "input/task042_neural_coarse_inverse/v55_audit_t6.dat",
+        "input/task042_neural_coarse_inverse/v55_complete_h7_saved.dat",
+        "input/task042_neural_coarse_inverse/v55_notch_transverse_p6_m828.dat",
+        "input/task042_neural_coarse_inverse/v55_notch_z4_p7_m828.dat",
+        "input/task042_neural_coarse_inverse/v55_prior_audit_completion.dat",
+        "input/task042_neural_coarse_inverse/v55_resolution_preflight.dat",
+        "input/task042_neural_coarse_inverse/v55_verify_cost.dat"
+      ],
+      "behavior": "V55 finite direct authority only; no target production qualification"
+    },
+    "do-not-merge": {
+      "paths": [
+        "tmp/task042/v55",
+        "results/task042/task042_v55_*",
+        "benchmarks/artifacts/task042/v55"
+      ],
+      "behavior": "Ignored large arrays/JIT/raw logs; preserve on disk, not Git"
+    }
+  },
+  "authority": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+  "merge_approval": false,
+  "dependencies": "Qualified phase gVh/full Ckappa + original full DtN/MPC + raw identity provider + MUMPS; not new solver or NN",
+  "core_unchanged": [
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/hcurl_cell_static_condensation.py",
+    "src/solvers/phase_raw_tensor_reader.py",
+    "src/solvers/phase_tensor_checkpoint.py"
+  ]
+}

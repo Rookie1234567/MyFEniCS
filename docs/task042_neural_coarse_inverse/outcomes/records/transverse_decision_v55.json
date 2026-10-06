@@ -1,0 +1,51 @@
+{
+  "indicator": {
+    "totals_xy": [
+      4.6944803494958905e-05,
+      2.776345981628486e-06
+    ],
+    "selected_axis": "x",
+    "splits": [
+      2,
+      1,
+      2
+    ],
+    "parent_array_sha256": "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b",
+    "q": 15,
+    "rule": "sum h_d^2 integral(|d_d u_s|^2+|d_d Henv_s|^2); layered background transverse derivatives zero; exact tie x",
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/R6_transverse_indicator.npz",
+      "sha256": "aedb870a312d774d02c6eb3b54e870535c0421dbc5f88833acb88913015e04ad",
+      "members": {
+        "per_cell_xy": {
+          "shape": [
+            160,
+            2
+          ],
+          "dtype": "float64",
+          "sha256": "9f722d033cdeaa66539e0e870b0c51040b9d217be5b4643a3cd86d885b4b60cf"
+        },
+        "totals_xy": {
+          "shape": [
+            2
+          ],
+          "dtype": "float64",
+          "sha256": "7227e680b9b4696c9e08c78787d6d4ff3eebaba4594b89349cdc8d5bbae43cc3"
+        }
+      }
+    }
+  },
+  "admission": {
+    "admitted": false,
+    "axis": "x",
+    "reason": "SCIENCE_BUDGET_INSUFFICIENT_FOR_COMPLETE_T6_PLUS_COMPARISON_AND_INDEPENDENT_AUDIT",
+    "remaining_loaded": 2952.3025931920856,
+    "predicted_missing_raw_seconds": 3024.5491403080523,
+    "predicted_missing_raw_conservative_seconds": 4695.055287323892,
+    "capacity_pass": true,
+    "no_new_T6_solve": true,
+    "main_negative_does_not_block_T6": true
+  },
+  "final_remaining_loaded_before_static_collection_seconds": 2644.555986871943,
+  "scientific_result": "not_run, capacity preflight passed; raw-only median estimate already exceeds remaining complete-case budget"
+}

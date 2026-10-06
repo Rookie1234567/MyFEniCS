@@ -1,0 +1,308 @@
+{
+  "status": "PARTIAL_SAVED_VECTOR_AUDIT",
+  "role": "H7",
+  "minimal": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/minimal_scientific_state.json",
+    "sha256": "e9e76087958cd77300aa8ee189c23a0eecf121224057d88c2b380bb9b1b1d1ef"
+  },
+  "failed_output": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_complete_h7_saved_20261006T172555770718Z/result.json",
+    "sha256": "9d7d4d9fe54bbfe8ed643ac6bcdbf53ed044b8302ad17527e0ca4c8c25b5a671"
+  },
+  "solve_source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+  "postprocessing_source_sha": "2bab0aa16901f6c4ed28a83f90cd78284e304b6e",
+  "arrays": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_notch_z4_p7_m828_20261006T133138354262Z/solution.npz",
+    "sha256": "c20cf4dc586095244e58cbddd73f0f972c6cdc737944fbffedaba2ab66115b50",
+    "members": {
+      "u_storage": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "d87be1194af2b5bd07d0f860e003cf99e699823c81b2b1b54860e8d545c1097d"
+      },
+      "port": {
+        "shape": [
+          828
+        ],
+        "dtype": "complex128",
+        "sha256": "e03c2f379348905ce7283808a24398c80110ef41bb5fc6bb2ff36ee72d538f74"
+      },
+      "rhs": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "d24d97cc0e17344fe55f5d4467e345380adc0884e335e374c9b6fe3b9a53d576"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      },
+      "slaves": {
+        "shape": [
+          15876
+        ],
+        "dtype": "int32",
+        "sha256": "87ca87d13ac3b9c79a7329637206245ac17fa2e703b7e61f857edf39f9fef22e"
+      },
+      "cell_centers": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "7689f9f9138595e4df7af71c3ef3256121695be36b9075adcc512d831ed065c7"
+      },
+      "cell_tags": {
+        "shape": [
+          320
+        ],
+        "dtype": "int32",
+        "sha256": "7ec36aea243196c532184d40f5f7c8e07a16a35fa261fc7894df9ba44d928073"
+      },
+      "regular_tags": {
+        "shape": [
+          320
+        ],
+        "dtype": "int32",
+        "sha256": "46090e9a29e2e139d7d81b9f456c51a9b2f7191a274f9dd9fd67bb45cef6711c"
+      },
+      "geometry_x": {
+        "shape": [
+          525,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "29972ec70b172973b4a98f58ec4ba65b97f09c4f7f2bda67daa84437af00f5c3"
+      },
+      "geometry_dofmap": {
+        "shape": [
+          320,
+          8
+        ],
+        "dtype": "int32",
+        "sha256": "440072b739b0665a04fe5942d2f69bb44d3aced283420e8303e2e2b2c6eb889e"
+      },
+      "residual": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "476a5e32a465202d9a3708c283bc296967f0f974d2a3dabf2f9031031f0cfa8a"
+      },
+      "volume_action": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "5a2d52a3c40ff021c4e11e4a016d9cbc61d3da542f51e9e8de351d83731dfcd6"
+      },
+      "coupling_action": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "e15018b875cd17f5e130859464aab2c09380ff5ccf5fe8c51e5ec72394ff6198"
+      },
+      "augmented_residual": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "82d823244b89ebe29ab7a00117dc6cafcf3752f5923ba7f63417187fe983eac9"
+      },
+      "port_residual": {
+        "shape": [
+          828
+        ],
+        "dtype": "complex128",
+        "sha256": "1c339b88c8a6b81808e7ab1df0d90fd9dc164f8e7c135b277dc1f1b32328a93f"
+      },
+      "projected": {
+        "shape": [
+          828
+        ],
+        "dtype": "complex128",
+        "sha256": "088b51bea4ecdd7b90e7ac983d2a77eb966f1cc80c6c2724b4b5433e31e1526c"
+      },
+      "H": {
+        "shape": [
+          828
+        ],
+        "dtype": "float64",
+        "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+      }
+    }
+  },
+  "recovery_arrays": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_complete_h7_saved_20261006T172555770718Z/recovery.npz",
+    "sha256": "5844346ab5fa6c814aa62ba6cec981d129926ab3003668357519c6666fa355a1",
+    "members": {
+      "interior_only_volume_action": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "a4c78535109d70b9df89d18ff3ffbc964515e43d877f9766af5ceac277a2ad2f"
+      },
+      "trace_only_volume_action": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "d2bd7923180a61bd7090eb4cecbe8547102f45eeba98273f9a7e40545d3bcd2a"
+      },
+      "interior_rows": {
+        "shape": [
+          241920
+        ],
+        "dtype": "int32",
+        "sha256": "310a4c0e696ceed36ef96bb0c3820bd43a5778f277459fe9a82d2d53d1b4ea55"
+      }
+    }
+  },
+  "fields": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_complete_h7_saved_20261006T172555770718Z/fields.npz",
+    "sha256": "a1d67dd9407480122ccbceed3b64445136d41b2a035b2140b94217cefa548992",
+    "members": {
+      "envelope_native_full": {
+        "shape": [
+          346724
+        ],
+        "dtype": "complex128",
+        "sha256": "575bc0e000ed1db731e1ce2253cb789125942337388d966d2f51f3e04416b76a"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      },
+      "selected_points": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "7689f9f9138595e4df7af71c3ef3256121695be36b9075adcc512d831ed065c7"
+      },
+      "selected_E_total": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "9e62e2ae3f23cbc14c66bff43d5fbbf341fa9c220f326b54c5a9daeacae7e6e1"
+      },
+      "selected_E_scattered": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "b15a19a3e64c5040ee804917c91bb85937bdebe68c4f2ed75858c26d9dffc1bb"
+      },
+      "selected_H_total": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "d38549d1c8cdede7e2b99deb05d05f59ae36bd46cd049274943d96d194df3b3b"
+      },
+      "selected_H_scattered": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "60dbbe36fd21e981b74d6a4be24fe3e8735170fe43e6b411c7de2526daa9e41a"
+      },
+      "selected_curl_total": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "b8da11227e3907c29b6d3ec81913f1c2a0317f469b76d858d05f2d1d88820f0d"
+      },
+      "selected_curl_scattered": {
+        "shape": [
+          320,
+          3
+        ],
+        "dtype": "complex128",
+        "sha256": "639ebda27ede888978a51e36ec133ed30a0f2cfd25d0147f0679a9f5fd0aadeb"
+      }
+    }
+  },
+  "saved_original_check": {
+    "recalculated": {
+      "audit": {
+        "true": 4.203912869125346e-11,
+        "native": 4.203912869125346e-11,
+        "augmented": 4.251543235969745e-11,
+        "port": 5.4766258865502465e-15,
+        "identity": 5.460358706519444e-16,
+        "slave_zero": true
+      },
+      "recovery": {
+        "operation_scaled_interior": 1.6674465854307196e-15,
+        "max_cell_operation_scaled": 2.243187259314288e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "split_action_identity_operation_scale": 2.670604577414e-15
+      },
+      "structural_defects": {
+        "port_functional": 2.4865145046232722e-15,
+        "coupling": 1.3753391503066478e-13,
+        "augmented_identity": 0.0,
+        "port_identity": 2.4865145046232722e-15
+      },
+      "pass_gate": true
+    },
+    "direct_internal_target_pass": true,
+    "original_volume_action": "saved independent uncondensed UFL q47 action and split",
+    "boundary_action": "independent saved full-inventory q63 carrier",
+    "new_FE_verify": false,
+    "parent_array_sha256": "c20cf4dc586095244e58cbddd73f0f972c6cdc737944fbffedaba2ab66115b50",
+    "recovery_array_sha256": "5844346ab5fa6c814aa62ba6cec981d129926ab3003668357519c6666fa355a1",
+    "recovered_field_array_sha256": "a1d67dd9407480122ccbceed3b64445136d41b2a035b2140b94217cefa548992",
+    "boundary_array_sha256": "1e307742008ffcd42d3a7ec01ecba1541c253c9f30d43b967cfeee9f8d3e8413"
+  },
+  "mode_count": 828,
+  "mode_power_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_complete_h7_saved_20261006T172555770718Z/port_power.json",
+  "mode_power_sha256": "ee33fb31e53983244e5ca2739d95da9d24edee1bd99a675f72d149ae216a6ff0",
+  "port_coordinate_relative": 0.0,
+  "R_total": 0.0762050392206742,
+  "T_total": 0.9056592417408208,
+  "A_balance": 0.01813571903850497,
+  "R00_s": 0.07618641355480682,
+  "R00_p": 3.1826484806399306e-14,
+  "R00_total": 0.07618641355483864,
+  "A_volume": "not_run",
+  "independent_new_FE_verify": "not_run",
+  "field_increment": "not_run",
+  "full_physics_qualified": false,
+  "new_FE_calls": 0,
+  "new_factor_count": 0,
+  "new_complete_solves": 0,
+  "scope": "recompute existing original q47 vectors and independent saved q63 carrier; not a fresh FE audit or accuracy test",
+  "checker_receipt": {
+    "path": "tmp/task042/v55/aux_SAVED_final01/partial_saved_checks_v55.json",
+    "sha256": "e1c01f06276b55c47f09681fb656dd38e1538b2b27d7900c1099ab592f93ec7b",
+    "bytes": 9577
+  },
+  "checker_source_sha": "b7753e35150d83eb45dec28ebe1fb4e91736ae6d",
+  "supervision": {
+    "path": "tmp/task042/v55/aux_SAVED_final01/summary.json",
+    "sha256": "8be5cd5bb733f25eb9a0a91fd830506df02a5b26d630ff310eed24a9bcfe5390",
+    "bytes": 21637
+  }
+}

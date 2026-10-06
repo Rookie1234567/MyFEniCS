@@ -1,3 +1,7 @@
+# V55增量改动
+
+新增薄空间分辨队列/显式父清单与物理切向审核小核；预算64/80/96及100000行全链opt-in；保存解补消费与独立partial checker。原凝聚/raw-provider数学核心未改。新输入、测试、紧凑证据及文档见[依赖分组manifest](records/selective_merge_manifest_v55.json)，ordinary default不变、无merge approval。历史正文保留。
+
 ## V54 变更
 
 新增薄V54 scope/one-run队列、完整p6→p7诊断、窄raw只读provider及显式532/828/1188库存；复用原相位/凝聚/监督，不改变原物理/精度/普通默认。新增独立保存数组checker与相关targeted测试、compact结果和本批导航。[依赖组](records/dependency_groups_v54.json)区分研究数值核、runner、checker、docs及do-not-merge；未授merge许可。

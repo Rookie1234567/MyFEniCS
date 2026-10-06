@@ -1,0 +1,737 @@
+{
+  "status": "PASSED_INDEPENDENT_PARENT_CONSUMPTION",
+  "producer": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/result.json",
+    "sha256": "bbbd8f374542656a511b01dc4d1ceb1d3daa2fa97f9faccfbe8d58cdae8eaeab"
+  },
+  "source_sha": "5e61f1acf569bf43b33bceeebcc949e1b0f1efc9",
+  "rows": [
+    {
+      "role": "R6",
+      "parent": "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b",
+      "audit": {
+        "true": 1.1912613344402871e-11,
+        "native": 1.1912613344402871e-11,
+        "augmented": 3.4714345533874836e-11,
+        "port": 1.693896089661784e-13,
+        "identity": 5.525048940494476e-16,
+        "slave_zero": true
+      },
+      "recovery": {
+        "operation_scaled_interior": 1.1643806434919453e-15,
+        "max_cell_operation_scaled": 1.5701994232759974e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "split_action_identity_operation_scale": 1.0272777903618115e-15,
+        "internal_rhs_norm": 1.2579694863832251e-13,
+        "basis": "independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action"
+      },
+      "equation_pass": true,
+      "actual_basis_identity": {
+        "element_hash": 16913352432823651554,
+        "family": "N1E",
+        "cell_type": "hexahedron",
+        "degree": 6,
+        "dimension": 882,
+        "map_type": "covariantPiola",
+        "lagrange_variant": "legendre",
+        "dpc_variant": "unset",
+        "dof_ordering": [],
+        "dtype": "float64",
+        "validated_raw_classes": 26,
+        "empty_dof_ordering_meaning": "actual Basix default order, not missing metadata",
+        "field_source": "live element properties; frozen full element hash binds original compiled basis"
+      },
+      "independent_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/R6_independent_audit.npz",
+        "sha256": "b3851b205932c4d8e83987bad89c25cd2946965cb4ba855667af93a71f77a01b",
+        "members": {
+          "u_storage": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "69394020a8e8d575ef06ded7b2f16675e9d56d9b9e2427e86df38e7c2884d577"
+          },
+          "rhs": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "27928e6006f6cf0030b6c04defda4b5ceab87fb2047372301483ba2c14cbd96b"
+          },
+          "port": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "c0579c492608b98151cde925d699d96aad639be72c644d5028aa73f7cd387be3"
+          },
+          "recovered_native_full": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "76983217c5a992f38206042db5a2aaa112bc93657f3503e571e27a378bccfdf6"
+          },
+          "residual": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "6fe855c0bdda9db9883ffbb05a45ccdefe5f8cc6d5687d60643155078227cf93"
+          },
+          "volume_action": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "b9433b3364701510f5f8072190ad8e3159b0e0ed666725f9c33ff6b7b8f3b048"
+          },
+          "coupling_action": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "dd1f73989da0cb4bc67e0b904d82b8613fbec47b920cb76e6cffe1b2a459f32a"
+          },
+          "augmented_residual": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "40f894dbb50a3dd1e3d65da94dc6d8a53c56970f94ea955dc9297c2e8a60f3b8"
+          },
+          "port_residual": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "6d5ba124a2f6693a4f70f99807d675664beb3d79689b5fe6b1c9b30aa1dd5168"
+          },
+          "projected": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "a9208e70bf016d4867355d4ab2f8a4be9421fbeb8627a6269690a3858485e535"
+          },
+          "H": {
+            "shape": [
+              828
+            ],
+            "dtype": "float64",
+            "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+          },
+          "interior_only_volume_action": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "caa5be609581a360e3302805b4b311e4d4370a006aaade9e1c24f860641e5ac0"
+          },
+          "trace_only_volume_action": {
+            "shape": [
+              110700
+            ],
+            "dtype": "complex128",
+            "sha256": "411a5b7b1336acd861eb1b8fd8125e39279802248067ce0b897eb401ab2b507b"
+          },
+          "interior_rows": {
+            "shape": [
+              72000
+            ],
+            "dtype": "int32",
+            "sha256": "edbc14045a5de6c0d85d2a70cc9eb9e1562ed4fd6bf33595a8c0bdbfeb6fa996"
+          }
+        }
+      },
+      "tangential": {
+        "pass_gate": true,
+        "overall_operation_relative": 7.384122553679413e-16,
+        "maximum_face_operation_relative": 9.310576481175115e-15,
+        "face_count": 464,
+        "internal_faces": 384,
+        "periodic_x_faces": 40,
+        "periodic_y_faces": 40,
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/R6_actual_tangential_faces.npz",
+          "sha256": "a5ee461efce29e7a54ac62efba02b8cdb88cebc12e7f0288c6c8a1e5baff54db",
+          "members": {
+            "face_pairs": {
+              "shape": [
+                464,
+                6
+              ],
+              "dtype": "int64",
+              "sha256": "69ee253a7c961e72ad5b42df58a0807bf8cce38ff25b0d2034a4160f74719bf2"
+            },
+            "face_geometry": {
+              "shape": [
+                464,
+                4,
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "1a1f46ce4a053b57e14930fe9a8aac3cf81814d3d7ed2c4cd6d1b7e5420d0db3"
+            },
+            "metrics": {
+              "shape": [
+                464,
+                5
+              ],
+              "dtype": "float64",
+              "sha256": "b4dee52715e1ed83cd61fd54140e88519140f7c720f18951184087b1ec6da53e"
+            },
+            "cell_permutations": {
+              "shape": [
+                160
+              ],
+              "dtype": "uint32",
+              "sha256": "6d09f336e98c33cff9ed09d87af54197a517374de634cc48122dca6e66735267"
+            },
+            "kappa": {
+              "shape": [
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+            },
+            "gauss_nodes": {
+              "shape": [
+                8
+              ],
+              "dtype": "float64",
+              "sha256": "9290724cf65c48bb499813a11f098996b379666a753d80b53146b0b133eeeefa"
+            },
+            "gauss_weights": {
+              "shape": [
+                8
+              ],
+              "dtype": "float64",
+              "sha256": "27154e665029a47080777a93b53b8e756eec4903882c5acf52d3ce975f0e18de"
+            }
+          }
+        },
+        "actual_native_eval_checks": [
+          2.3020193534529937e-15,
+          1.4639527616563874e-15,
+          2.0370895679444973e-15,
+          2.797471495226187e-15
+        ],
+        "seconds": 5.037640912923962,
+        "quadrature": "8x8 Gauss per face; no strong normal E or H requirement"
+      }
+    },
+    {
+      "role": "R7",
+      "parent": "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+      "audit": {
+        "true": 1.9261888677612326e-11,
+        "native": 1.9261888677612326e-11,
+        "augmented": 2.4324755188194616e-11,
+        "port": 1.472456761983927e-13,
+        "identity": 5.838011008092086e-16,
+        "slave_zero": true
+      },
+      "recovery": {
+        "operation_scaled_interior": 1.665187425476846e-15,
+        "max_cell_operation_scaled": 2.055812865432166e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "split_action_identity_operation_scale": 1.3748687093015958e-15,
+        "internal_rhs_norm": 1.7652558757067579e-13,
+        "basis": "independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action"
+      },
+      "equation_pass": true,
+      "actual_basis_identity": {
+        "element_hash": 16913352432823651553,
+        "family": "N1E",
+        "cell_type": "hexahedron",
+        "degree": 7,
+        "dimension": 1344,
+        "map_type": "covariantPiola",
+        "lagrange_variant": "legendre",
+        "dpc_variant": "unset",
+        "dof_ordering": [],
+        "dtype": "float64",
+        "validated_raw_classes": 26,
+        "empty_dof_ordering_meaning": "actual Basix default order, not missing metadata",
+        "field_source": "live element properties; frozen full element hash binds original compiled basis"
+      },
+      "independent_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/R7_independent_audit.npz",
+        "sha256": "73cdb45cbff46dc834f08ea1e23b6d7cee1b714d263ac5efc1e052f6bc09f677",
+        "members": {
+          "u_storage": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "071b96f62f952e5480fdfe1f1649253ea74e55ff6348834211a79cd653bfe401"
+          },
+          "rhs": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "13a098ac4ea8554efd848a8bc7ee3d1d90dadd6990f71232c3099e7eae31ed14"
+          },
+          "port": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "561f7758894b8a07fc56cbd5c3b929e8836179f17efc2343b7f837b5dff22642"
+          },
+          "recovered_native_full": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "c32bb8caffddcb6339c305079cef38f7d681c2565162639c81799e3d5c3c48da"
+          },
+          "residual": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "3875cb548301b2abf2932d1c11e23ea35710e1a2ad596f469c1ab20b7a82ce91"
+          },
+          "volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "ca1011717c8b4aefdd7f3540ea8333d014c7091570a066580765b8e90b0ee96f"
+          },
+          "coupling_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "2d1991392702448b4a3c29fe2067584759e5b35c1e592df3ca07f1c92aa86fcc"
+          },
+          "augmented_residual": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "6bf22f46c0a4ddbd38a763975bae776781a9f18850b0af1ecba411828570a57c"
+          },
+          "port_residual": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "7861cf194733f38bdc23bcb6927f44af82c49533549b814b2f0ac707d9b88374"
+          },
+          "projected": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "95fa00267461c251bf150d92bc823128d68231f713c54c16236176acbb8ecae2"
+          },
+          "H": {
+            "shape": [
+              828
+            ],
+            "dtype": "float64",
+            "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+          },
+          "interior_only_volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "5fc630a5b8956c4dca93b2d1efb7586f9c7b4260344f005aa3f938e081b54b0b"
+          },
+          "trace_only_volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "2f510eb40f698f5d46d7d6f6ccb9dc8482e6e733a125a390f45e6bc26ac47196"
+          },
+          "interior_rows": {
+            "shape": [
+              120960
+            ],
+            "dtype": "int32",
+            "sha256": "253dd56a98e7be60c9b53dd6fe4759bd1abca06a12067fad405ecc8c88486493"
+          }
+        }
+      },
+      "tangential": {
+        "pass_gate": true,
+        "overall_operation_relative": 9.384077007839146e-16,
+        "maximum_face_operation_relative": 9.396763299107248e-15,
+        "face_count": 464,
+        "internal_faces": 384,
+        "periodic_x_faces": 40,
+        "periodic_y_faces": 40,
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/R7_actual_tangential_faces.npz",
+          "sha256": "10c4437f26778f609cd3a73cf1dc56e46102b351721e786bf45fd9da7ad2d906",
+          "members": {
+            "face_pairs": {
+              "shape": [
+                464,
+                6
+              ],
+              "dtype": "int64",
+              "sha256": "69ee253a7c961e72ad5b42df58a0807bf8cce38ff25b0d2034a4160f74719bf2"
+            },
+            "face_geometry": {
+              "shape": [
+                464,
+                4,
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "1a1f46ce4a053b57e14930fe9a8aac3cf81814d3d7ed2c4cd6d1b7e5420d0db3"
+            },
+            "metrics": {
+              "shape": [
+                464,
+                5
+              ],
+              "dtype": "float64",
+              "sha256": "e3917264f1fee84dec7f3a972f5682d345050bfd7c4b040df96a16f77dafb3d9"
+            },
+            "cell_permutations": {
+              "shape": [
+                160
+              ],
+              "dtype": "uint32",
+              "sha256": "6d09f336e98c33cff9ed09d87af54197a517374de634cc48122dca6e66735267"
+            },
+            "kappa": {
+              "shape": [
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+            },
+            "gauss_nodes": {
+              "shape": [
+                8
+              ],
+              "dtype": "float64",
+              "sha256": "9290724cf65c48bb499813a11f098996b379666a753d80b53146b0b133eeeefa"
+            },
+            "gauss_weights": {
+              "shape": [
+                8
+              ],
+              "dtype": "float64",
+              "sha256": "27154e665029a47080777a93b53b8e756eec4903882c5acf52d3ce975f0e18de"
+            }
+          }
+        },
+        "actual_native_eval_checks": [
+          1.3235007760849811e-15,
+          1.7221946664010819e-15,
+          9.406450061301017e-16,
+          2.080949532596072e-15
+        ],
+        "seconds": 11.643226976972073,
+        "quadrature": "8x8 Gauss per face; no strong normal E or H requirement"
+      }
+    },
+    {
+      "role": "C",
+      "parent": "b3cb249a0ff8fe1d2296c3862ed73ff163771ee815a2c7de5a496c9592b9d17c",
+      "audit": {
+        "true": 1.9250122854791072e-11,
+        "native": 1.9250122854791072e-11,
+        "augmented": 3.1945945892222485e-11,
+        "port": 2.331367522821425e-13,
+        "identity": 6.108843016556183e-16,
+        "slave_zero": true
+      },
+      "recovery": {
+        "operation_scaled_interior": 1.638052383983503e-15,
+        "max_cell_operation_scaled": 2.0181624223118527e-15,
+        "master_storage_max_abs": 0.0,
+        "slave_storage_zero": true,
+        "split_action_identity_operation_scale": 1.3809190888352924e-15,
+        "internal_rhs_norm": 1.7652558757067579e-13,
+        "basis": "independent original uncondensed UFL volume action, private interior/trace split; no factor or condensed action"
+      },
+      "equation_pass": true,
+      "actual_basis_identity": {
+        "element_hash": 16913352432823651553,
+        "family": "N1E",
+        "cell_type": "hexahedron",
+        "degree": 7,
+        "dimension": 1344,
+        "map_type": "covariantPiola",
+        "lagrange_variant": "legendre",
+        "dpc_variant": "unset",
+        "dof_ordering": [],
+        "dtype": "float64",
+        "validated_raw_classes": 26,
+        "empty_dof_ordering_meaning": "actual Basix default order, not missing metadata",
+        "field_source": "live element properties; frozen full element hash binds original compiled basis"
+      },
+      "independent_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v55/task042_v55_prior_audit_completion_20261006T130311473027Z/C_independent_audit.npz",
+        "sha256": "0af55c4e40a58fc5d94874ff99bd1bef8b51729ae829e0f1fb7f3b3da42c8c7f",
+        "members": {
+          "u_storage": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "24aafb6754ef74d2fe53de048290b3d34802490fab166a228f631be9e7a9d8d9"
+          },
+          "rhs": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "13a098ac4ea8554efd848a8bc7ee3d1d90dadd6990f71232c3099e7eae31ed14"
+          },
+          "port": {
+            "shape": [
+              1188
+            ],
+            "dtype": "complex128",
+            "sha256": "3b508b0c8e51c29dea660b16f5bf9fac0255bce559327858a9f09c5d537a12e0"
+          },
+          "recovered_native_full": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "3c6e885ed46baa18948fdb8789c34729c07b6f4d3be52f8698b59362225fac41"
+          },
+          "residual": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "05e54c3e910b37d4c2c4883145869002e989d415b0934fd35c5c1a458c74a516"
+          },
+          "volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "1279cc87c5ee6096394920effa95b66ffe589cf7217beaf83abba38a56b46350"
+          },
+          "coupling_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "b6176f5fd6259f4f8df779924261df2e335cf0c1724da84cc0ef5b1f3f60011e"
+          },
+          "augmented_residual": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "8bcc9b3440ffb9afe7d4a3f6106dd2c60f787d8f0db593d83d5196d64b921649"
+          },
+          "port_residual": {
+            "shape": [
+              1188
+            ],
+            "dtype": "complex128",
+            "sha256": "fc717d643268df5f963fb80dd74dad43d969f778ce22b39911d6f20990dae0fd"
+          },
+          "projected": {
+            "shape": [
+              1188
+            ],
+            "dtype": "complex128",
+            "sha256": "0881bc60fb106e6c407328c9dc22f1a4c043191cde1b4683a7bf75bfbbd0a0dc"
+          },
+          "H": {
+            "shape": [
+              1188
+            ],
+            "dtype": "float64",
+            "sha256": "a7765d2314698d29ef7ac56c4651e5927a1dab51d8b4687a41edd0055210b91a"
+          },
+          "interior_only_volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "463259f904a5b888d093b8e4acaabf4827710923e1f3feac916f3a1ad9ae0034"
+          },
+          "trace_only_volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "48b9b23a6c369d7e8c877b7fab535f07472a5cb2e62a4619526c6de6a37ea0e0"
+          },
+          "interior_rows": {
+            "shape": [
+              120960
+            ],
+            "dtype": "int32",
+            "sha256": "253dd56a98e7be60c9b53dd6fe4759bd1abca06a12067fad405ecc8c88486493"
+          }
+        }
+      },
+      "tangential": "not_requested_for_C; R6/R7 actual p6/p7 witnesses complete"
+    }
+  ],
+  "modal": {
+    "rows": [
+      {
+        "role": "R6",
+        "parent_array_sha256": "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b",
+        "mode_json_sha256": "29955f588e5f7e7f2d395a52d68a1eb367866ee266c2a82a53a0b08595983b56",
+        "count": 828,
+        "expected_mode_count": 828,
+        "max_operation_scaled_coordinate_and_power_defect": 6.8833827526759706e-15,
+        "totals_defect": 7.438494264988549e-15,
+        "incident_power_defect": 2.255140518769849e-16,
+        "energy_from_all_actual_modes_and_volume": 1.3848991398113242e-13,
+        "recomputed_R": 0.07621870414678564,
+        "recomputed_T": 0.9056651716954576,
+        "pass_gate": true
+      },
+      {
+        "role": "R7",
+        "parent_array_sha256": "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+        "mode_json_sha256": "960c3e1d6f7da953279cca1b5d269dc79d5dcd3936973a965979733c8b8dded9",
+        "count": 828,
+        "expected_mode_count": 828,
+        "max_operation_scaled_coordinate_and_power_defect": 6.8833827526759706e-15,
+        "totals_defect": 7.549516567451064e-15,
+        "incident_power_defect": 2.255140518769849e-16,
+        "energy_from_all_actual_modes_and_volume": 2.4622318073319605e-13,
+        "recomputed_R": 0.07620503874176213,
+        "recomputed_T": 0.9056592419323837,
+        "pass_gate": true
+      },
+      {
+        "role": "C",
+        "parent_array_sha256": "b3cb249a0ff8fe1d2296c3862ed73ff163771ee815a2c7de5a496c9592b9d17c",
+        "mode_json_sha256": "cb2a4cbf1429792c1a66bf349b80e0fedc4979e0740c6dfd5ff85f19749a4f48",
+        "count": 1188,
+        "expected_mode_count": 1188,
+        "max_operation_scaled_coordinate_and_power_defect": 7.216449660063518e-15,
+        "totals_defect": 7.771561172376096e-15,
+        "incident_power_defect": 2.255140518769849e-16,
+        "energy_from_all_actual_modes_and_volume": 4.5267262160919586e-13,
+        "recomputed_R": 0.07620497128904377,
+        "recomputed_T": 0.9056593218289111,
+        "pass_gate": true
+      }
+    ],
+    "new_FE_calls": 0,
+    "original_power_function_calls": 0,
+    "complete_inventory_checked": true
+  },
+  "saved_audits": [
+    {
+      "role": "R6",
+      "recalculated": {
+        "audit": {
+          "true": 1.1912613344402871e-11,
+          "native": 1.1912613344402871e-11,
+          "augmented": 3.4714345533874836e-11,
+          "port": 1.693896089661784e-13,
+          "identity": 5.525048940485615e-16,
+          "slave_zero": true
+        },
+        "recovery": {
+          "operation_scaled_interior": 1.1643806434919453e-15,
+          "max_cell_operation_scaled": 1.5701994232759976e-15,
+          "master_storage_max_abs": 0.0,
+          "slave_storage_zero": true,
+          "split_action_identity_operation_scale": 1.0272777903618115e-15
+        },
+        "structural_defects": {
+          "port_functional": 0.0,
+          "coupling": 0.0,
+          "augmented_identity": 0.0,
+          "port_identity": 0.0
+        },
+        "pass_gate": true
+      },
+      "mode_count": 828,
+      "parent_array_sha256": "d42cc8b73ec95a50124e6c7b12747c1e44d22bbbc31c57b584b9dcb3092f033b",
+      "direct_internal_target_pass": true
+    },
+    {
+      "role": "R7",
+      "recalculated": {
+        "audit": {
+          "true": 1.9261888677612326e-11,
+          "native": 1.9261888677612326e-11,
+          "augmented": 2.4324755188194616e-11,
+          "port": 1.472456761983927e-13,
+          "identity": 5.838011008089651e-16,
+          "slave_zero": true
+        },
+        "recovery": {
+          "operation_scaled_interior": 1.665187425476846e-15,
+          "max_cell_operation_scaled": 2.0558128654321665e-15,
+          "master_storage_max_abs": 0.0,
+          "slave_storage_zero": true,
+          "split_action_identity_operation_scale": 1.3748687093015958e-15
+        },
+        "structural_defects": {
+          "port_functional": 0.0,
+          "coupling": 0.0,
+          "augmented_identity": 0.0,
+          "port_identity": 0.0
+        },
+        "pass_gate": true
+      },
+      "mode_count": 828,
+      "parent_array_sha256": "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+      "direct_internal_target_pass": true
+    },
+    {
+      "role": "C",
+      "recalculated": {
+        "audit": {
+          "true": 1.9250122854791072e-11,
+          "native": 1.9250122854791072e-11,
+          "augmented": 3.1945945892222485e-11,
+          "port": 2.331367522821425e-13,
+          "identity": 6.108843016558172e-16,
+          "slave_zero": true
+        },
+        "recovery": {
+          "operation_scaled_interior": 1.6380523839835029e-15,
+          "max_cell_operation_scaled": 2.0181624223118527e-15,
+          "master_storage_max_abs": 0.0,
+          "slave_storage_zero": true,
+          "split_action_identity_operation_scale": 1.3809190888352924e-15
+        },
+        "structural_defects": {
+          "port_functional": 0.0,
+          "coupling": 0.0,
+          "augmented_identity": 0.0,
+          "port_identity": 0.0
+        },
+        "pass_gate": true
+      },
+      "mode_count": 1188,
+      "parent_array_sha256": "b3cb249a0ff8fe1d2296c3862ed73ff163771ee815a2c7de5a496c9592b9d17c",
+      "direct_internal_target_pass": true
+    }
+  ],
+  "new_factor_count": 0,
+  "new_numeric_count": 0,
+  "new_complete_solves": 0,
+  "calls": {
+    "A": 3,
+    "AH": 0,
+    "factor": 0,
+    "volume_only": 6
+  },
+  "scope": "V55 new process q63 original uncondensed volume/recovery/basis audit; old V54 arrays read-only"
+}

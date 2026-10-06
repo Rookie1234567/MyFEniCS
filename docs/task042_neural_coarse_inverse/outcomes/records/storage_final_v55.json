@@ -1,0 +1,16 @@
+{
+  "new_bytes": 4202996810,
+  "new_files": 1089,
+  "task_bytes": 50022149206,
+  "task_files": 89453,
+  "free_bytes": 3272804421632,
+  "evidence_reserve_bytes": 536870912,
+  "limits": {
+    "new_bytes": 17179869184,
+    "task_bytes": 90194313216,
+    "free_minimum": 53687091200
+  },
+  "stat_only": true,
+  "deduplication": "normalized filename, exactly the live storage scope; no scientific file rehash",
+  "gate": true
+}

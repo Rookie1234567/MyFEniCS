@@ -1,0 +1,155 @@
+{
+  "refusals": [
+    {
+      "probe": {
+        "path": "tmp/task042/v55/probe_003.json",
+        "sha256": "f910520801e1d9ffcf7ad56e8c7f5e53b31711091a3627ad05695929465bad76",
+        "bytes": 289
+      },
+      "admission": {
+        "path": "results/task042/task042_v55_resolution_preflight_20261006T132608638712Z/admission.json",
+        "sha256": "93ef8a933580b7370dea2c81e1efcdf4546d15d449bc086ec0dc910e29366371",
+        "bytes": 254869
+      },
+      "utc": "2026-10-06T13:26:25.316391+00:00",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      },
+      "error": "RuntimeError('No audited unoccupied physical core; do not overlap a busy worker/SMT sibling')",
+      "elapsed_seconds": 1.2801087780389935,
+      "candidate_count": 0,
+      "cpu_decision_count": 48,
+      "worker_started": false
+    },
+    {
+      "probe": {
+        "path": "tmp/task042/v55/probe_007.json",
+        "sha256": "449393f90f0941504b2fb5f74a4e3dc872a52106fd892c1283b7cea01ce18f29",
+        "bytes": 286
+      },
+      "admission": {
+        "path": "results/task042/task042_v55_complete_h7_saved_20261006T172321648513Z/admission.json",
+        "sha256": "6970468aad69fcdd17f551ca9bf388cab1bae1c21317ef4297b8daa638d7c948",
+        "bytes": 261387
+      },
+      "utc": "2026-10-06T17:23:38.838084+00:00",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      },
+      "error": "RuntimeError('No audited unoccupied physical core; do not overlap a busy worker/SMT sibling')",
+      "elapsed_seconds": 1.2830120250582695,
+      "candidate_count": 0,
+      "cpu_decision_count": 48,
+      "worker_started": false
+    },
+    {
+      "probe": {
+        "path": "tmp/task042/v55/probe_009.json",
+        "sha256": "c22472673b304dae1c003a6ed548f94bbd84e98469537dbc4553b3ef4b60d1a9",
+        "bytes": 286
+      },
+      "admission": {
+        "path": "results/task042/task042_v55_complete_h7_saved_20261006T173153789704Z/admission.json",
+        "sha256": "91898f5fd2ff9e771a89aa26ee7625025b1572e91960ec530dbefe64806d7e4e",
+        "bytes": 261527
+      },
+      "utc": "2026-10-06T17:32:10.962953+00:00",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      },
+      "error": "RuntimeError('No audited unoccupied physical core; do not overlap a busy worker/SMT sibling')",
+      "elapsed_seconds": 1.3567570769228041,
+      "candidate_count": 0,
+      "cpu_decision_count": 48,
+      "worker_started": false
+    }
+  ],
+  "episodes": [
+    {
+      "episode": 1,
+      "maximum_seconds": 600,
+      "start_utc": "2026-10-06T13:26:26.572532+00:00",
+      "start_monotonic": 1218181.433420024,
+      "deadline_monotonic": 1218781.433420024,
+      "initial_admission": {
+        "path": "results/task042/task042_v55_resolution_preflight_20261006T132608638712Z/admission.json",
+        "sha256": "93ef8a933580b7370dea2c81e1efcdf4546d15d449bc086ec0dc910e29366371"
+      },
+      "first_observation": {
+        "start_utc": "2026-10-06T12:49:59.474562950+00:00",
+        "start_monotonic": 1215994.33,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 22500,
+        "total_limit_seconds": 25200,
+        "scientific_loaded_limit_seconds": 18000,
+        "review_commit": "e3b46656fd13b31a465a628f7fdeb863e32f38ed",
+        "intake_HEAD": "c9efe49ec0b2605caf3e6790bdc70c83dfc3a14f",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "start_precision": "First real UTC tool observation; /proc/uptime monotonic sampled immediately afterward to 0.01 seconds. No window refresh.",
+        "observed_utc": "2026-10-06T13:27:22.820864+00:00",
+        "observed_monotonic": 1218237.681731431,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 2243.351731430972,
+        "heavy_remaining_seconds": 20256.648268569028,
+        "total_remaining_seconds": 22956.648268569028
+      },
+      "original_gates_unchanged": true,
+      "classification": "RESOLVED_ORIGINAL_RESOURCE_GATE",
+      "heavy_actor_started": false,
+      "end_utc": "2026-10-06T13:29:09.927289+00:00",
+      "end_monotonic": 1218344.788162789,
+      "elapsed_seconds": 163.35474276496097,
+      "qualified_admission": "results/task042/task042_v55_resolution_preflight_20261006T132851883446Z/admission.json",
+      "selected_cpu": 0,
+      "note": "Second completed formal admission passed. Earlier read while receipt absent referred to first refusal, not a second rejection."
+    },
+    {
+      "episode": 2,
+      "maximum_seconds": 600,
+      "start_monotonic": 1232414.978720974,
+      "deadline_monotonic": 1233014.978720974,
+      "created_utc": "2026-10-06T17:24:28.843989+00:00",
+      "first_refusal": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v55_complete_h7_saved_20261006T172321648513Z/admission.json",
+        "sha256": "6970468aad69fcdd17f551ca9bf388cab1bae1c21317ef4297b8daa638d7c948"
+      },
+      "initial_probe_seconds": 1.2830120250582695,
+      "minimum_next_probe_monotonic": 1232534.978720974,
+      "original_gates_unchanged": true,
+      "classification": "RESOLVED_ORIGINAL_RESOURCE_GATE",
+      "no_actor_started": true,
+      "previous_episode_seconds": 163.35474276496097,
+      "end_monotonic": 1232571.946201728,
+      "end_utc": "2026-10-06T17:26:17.085341+00:00",
+      "qualified_admission": "/home/fenics/Projects/NN-Lab/results/task042/task042_v55_complete_h7_saved_20261006T172555770718Z/admission.json",
+      "selected_cpu": null,
+      "elapsed_seconds": 156.9675399211701
+    }
+  ],
+  "corrected_live_episode02_cpu": 21,
+  "correction_basis": {
+    "path": "results/task042/task042_v55_complete_h7_saved_20261006T172555770718Z/run_manifest.json",
+    "sha256": "6955c445825375d2fe09cfef92ffc231d36f937daf114b5ab3075c5ed7945434",
+    "bytes": 18239
+  },
+  "episode02_saved_selected_cpu_null_preserved": true,
+  "observation_elapsed_seconds": 320.3222826861311,
+  "next_heavy_retry_not_authorized": true,
+  "no_third_observation_episode": true,
+  "CPU_SMT_or_other_thresholds_lowered": false,
+  "unaffected_pure_saved_array_and_metadata_work": "fresh own CPU/resource admission; no FE/factor/solve, not resource-heavy bypass"
+}
