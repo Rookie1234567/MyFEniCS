@@ -162,8 +162,10 @@ def test_v11_dispatch_binds_both_grid_profiles_to_shared_worker(monkeypatch, tmp
 
     calls = []
 
-    def no_fe_worker(payload, run_directory, *, source_sha, profile_identity=None):
-        calls.append((payload, Path(run_directory), source_sha, profile_identity))
+    def no_fe_worker(payload, run_directory, *, source_sha, profile_identity=None,
+                     share_transform_bank=False):
+        calls.append((payload, Path(run_directory), source_sha, profile_identity,
+                      share_transform_bank))
         return {"route": "no_fe_shared_worker_leaf"}
 
     monkeypatch.setattr(task40_v10_worker, "run_task40_v10_p6_reference_worker", no_fe_worker)
@@ -175,6 +177,7 @@ def test_v11_dispatch_binds_both_grid_profiles_to_shared_worker(monkeypatch, tmp
         assert result["route"] == "no_fe_shared_worker_leaf"
         assert calls[-1][0]["solver"]["stage"] == "Q4_ORIGINAL"
         assert calls[-1][3] == payload["solver"]["preconditioner"]
+        assert calls[-1][4] is True
 
 
 def test_campaign_deadline_reads_active_v11_evidence_key():
@@ -244,7 +247,8 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
             profile_identity = payload["solver"]["preconditioner"]
             contract = profile_facts(profile_identity)
 
-            def no_fe_worker(resolved, directory, *, source_sha, profile_identity=None):
+            def no_fe_worker(resolved, directory, *, source_sha, profile_identity=None,
+                             share_transform_bank=False):
                 runtime = _V14Runtime(
                     directory,
                     resolved["solver"]["stage"],
@@ -266,6 +270,7 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
                     "scope": "no_finite_element_or_numeric_factorization",
                     "route": "dispatcher_to_shared_p6_worker_seam",
                     "profile_identity": profile_identity,
+                    "share_transform_bank": share_transform_bank,
                     "run_id": resolved["run_id"],
                     "authority": authority,
                     "campaign_context": runtime.campaign_context,
@@ -383,5 +388,6 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
     )
     assert worker_record["campaign_context"]["read_only"] is True
     assert worker_record["samples_readable"] is True
+    assert worker_record["share_transform_bank"] is True
     assert watchdog["job_cgroup_swap"]["passed"] is True
     assert V11_WINDOW.read_bytes() == source_window_bytes

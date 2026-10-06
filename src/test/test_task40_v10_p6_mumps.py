@@ -3,13 +3,14 @@ from __future__ import annotations
 import ctypes
 import ctypes.util
 import os
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from scipy import sparse
 
 from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
-from src.solvers.task40_v10_p6_mumps import AllQExactMumps
+from src.solvers.task40_v10_p6_mumps import AllQExactMumps, full_p6_pre_release_output_inventory
 
 
 def test_task40_v10_p6_profile_inventory_arithmetic():
@@ -32,6 +33,23 @@ def test_task40_v10_p6_profile_inventory_arithmetic():
     bad = dict(good, degree=4)
     with pytest.raises(ValueError, match="inventory mismatch"):
         p.validate_runtime_inventory(bad)
+
+
+def test_full_p6_residual_and_packet_budget_counts_only_co_resident_full_rows():
+    inventory = full_p6_pre_release_output_inventory(100)
+    assert inventory["evaluation_peak_vector_equivalents"] == 22
+    assert inventory["packet_peak_vector_equivalents"] == 22
+    assert inventory["selected_peak_vector_equivalents"] == 22
+    assert inventory["pre_release_peak_bytes"] == 100 * 22 * 16
+    assert inventory["native_residual_result_full_rows_array_names"] == [
+        "storage_solution",
+        "native_effective_rhs",
+        "native_residual",
+        "augmented_fe_residual",
+        "schur_residual_injection",
+        "derived_native_residual",
+        "native_identity_difference",
+    ]
 
 
 def test_petsc_api_binds_loaded_petsc4py_runtime_even_if_system_discovery_is_wrong(monkeypatch):
@@ -60,8 +78,27 @@ def test_all_four_exact_mumps_factors_and_repeated_solve():
     }
     before = {q: (m.data.copy(), m.indices.copy(), m.indptr.copy()) for q, m in matrices.items()}
     gates = []
+    events = []
+    bank_reserve = {
+        "future_unique_inverse_payload_bytes": 128,
+        "future_single_inverse_workspace_bytes": 384,
+        "future_unique_inverse_template_count": 1,
+    }
+    legacy_reserve = {
+        "future_legacy_inverse_count": 2,
+        "future_legacy_inverse_payload_bytes": 96,
+        "future_legacy_single_inverse_workspace_bytes": 240,
+        "future_legacy_inverse_count_by_dimension": {"1": 1, "2": 1},
+    }
+    bank = SimpleNamespace(future_inverse_reserve=lambda: bank_reserve)
+    borrower = SimpleNamespace(
+        _transform_bank=bank,
+        future_legacy_inverse_reserve=lambda: legacy_reserve,
+    )
     with AllQExactMumps(matrices, allocation_gate=lambda name, facts: gates.append((name, facts)),
-                        expected_shapes=(3, 3, 3, 3)) as factors:
+                        event=lambda name, facts: events.append((name, facts)),
+                        expected_shapes=(3, 3, 3, 3), transform_bank=bank,
+                        inverse_borrowers={"global": borrower}) as factors:
         assert factors.audit["all_four_factors_retained_simultaneously"] is True
         assert factors.audit["all_four_numeric_factors_true_residual_passed"] is True
         assert factors.audit["all_four_factor_objects_live_simultaneously"] is True
@@ -76,6 +113,27 @@ def test_all_four_exact_mumps_factors_and_repeated_solve():
     assert factors.audit["factors_live_count_current"] == 0
     assert factors.audit["max_simultaneous_factors"] == 4
     assert len(gates) == 13
+    symbolic_events = [facts for name, facts in events
+                       if name == "task40_v12_mumps_symbolic_q_complete"]
+    numeric_events = [facts for name, facts in events
+                      if name == "task40_v12_mumps_numeric_q_complete"]
+    probe_events = [facts for name, facts in events
+                    if name == "task40_v12_mumps_numeric_q_probe_complete"]
+    admitted_events = [facts for name, facts in events
+                       if name == "task40_v12_mumps_numeric_q_admitted"]
+    assert [facts["q"] for facts in symbolic_events] == [0, 1, 2, 3]
+    assert [facts["q"] for facts in numeric_events] == [0, 1, 2, 3]
+    assert [facts["q"] for facts in probe_events] == [0, 1, 2, 3]
+    assert [facts["q"] for facts in admitted_events] == [0, 1, 2, 3]
+    assert all(facts["caller_input_sha256"] and facts["factor_csr_sha256"]
+               and facts["symbolic_elapsed_seconds"] >= 0
+               and facts["raw_infog"].get("16") is not None
+               and facts["raw_infog"].get("17") is not None
+               for facts in symbolic_events)
+    assert all(facts["raw_infog"].get("19") is not None
+               and facts["raw_infog"].get("22") is not None
+               and facts["raw_infog"].get("9") is not None
+               for facts in numeric_events)
     symbolic_gates = [facts for name, facts in gates if name == "after_mumps_symbolic_before_numeric"]
     assert [facts["retained_factor_count"] for facts in symbolic_gates] == [1, 2, 3, 4]
     assert all("current_symbolic_mumps_info_raw" in facts for facts in symbolic_gates)
@@ -91,6 +149,38 @@ def test_all_four_exact_mumps_factors_and_repeated_solve():
     assert len(numeric_admission) == 1
     assert numeric_admission[0][1]["all_four_symbolic_q_completed"] is True
     assert len(numeric_admission[0][1]["q_symbolic_estimates_bytes"]) == 4
+    assert numeric_admission[0][1]["future_bank_inverse_reserve"][
+        "future_unique_inverse_payload_bytes"
+    ] == 128
+    assert numeric_admission[0][1]["future_legacy_inverse_reserves_by_collection"] == {
+        "global": legacy_reserve
+    }
+    assert numeric_admission[0][1]["future_inverse_payload_bytes"] == 224
+    assert numeric_admission[0][1]["future_inverse_single_operation_workspace_bytes"] == 384
+    assert numeric_admission[0][1]["future_retained_krylov_and_vector_bytes"] == (
+        numeric_admission[0][1]["future_krylov_basis_bytes"]
+        + numeric_admission[0][1]["future_ksp_workspace_vector_bytes"]
+    )
+    assert numeric_admission[0][1]["future_full_p6_pre_release_recovery_output_bytes"] == 0
+    assert numeric_admission[0][1]["selected_future_nonfactor_co_resident_peak_bytes"] == max(
+        numeric_admission[0][1]["future_retained_krylov_and_vector_bytes"] + 384,
+        384,
+    )
+    live_snapshots = [facts for name, facts in events
+                      if name == "task40_v12_mumps_all_q_live_before_destroy"]
+    assert len(live_snapshots) == 1
+    assert live_snapshots[0]["all_q_factors_live"] is True
+    assert live_snapshots[0]["factor_live_count"] == 4
+    assert [row["factor_input"]["q"] for row in live_snapshots[0]["factor_inventory_by_q"]] == [0, 1, 2, 3]
+    current_native = live_snapshots[0]["current_native_factor_inventory_by_q"]
+    assert sorted(current_native) == ["0", "1", "2", "3"]
+    assert all(
+        all(current_native[str(q)]["raw_infog"].get(index) is not None for index in ("9", "19", "22"))
+        for q in range(4)
+    )
+    assert "immediately before the first destroy call" in live_snapshots[0][
+        "current_native_factor_inventory_timing"
+    ]
     assert max(index for index, (name, _facts) in enumerate(gates)
                if name == "after_mumps_symbolic_before_numeric") < min(numeric_observations)
     assert all(index > numeric_admission[0][0] for index in numeric_observations)

@@ -339,3 +339,25 @@ def test_run_case_launcher_supervisor_worker_runtime_no_fe_chain(
     assert p6_result["route"] == "p6_candidate"
     assert len(candidate_calls) == 1
     assert candidate_calls[0][0][0]["solver"]["stage"] == "B0_CANDIDATE"
+    assert candidate_calls[0][1]["share_transform_bank"] is True
+
+
+def test_v12_no_fe_entry_chain_reuses_qualified_fixture(tmp_path, monkeypatch, capsys):
+    """Re-run the original no-FE entry fixture against the active V12 window/input."""
+    monkeypatch.setattr(
+        sys.modules[__name__],
+        "TASK40_V10_CAMPAIGN_WINDOW",
+        ROOT
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w12_wsl/"
+        "campaign_window_v12.json",
+    )
+    monkeypatch.setattr(
+        sys.modules[__name__],
+        "P6_INPUT",
+        ROOT
+        / "input/task40extra_0p7nm_engineering/"
+        "b0_p6_y_orbit_reference_v12.dat",
+    )
+    test_run_case_launcher_supervisor_worker_runtime_no_fe_chain(
+        tmp_path, monkeypatch, capsys
+    )

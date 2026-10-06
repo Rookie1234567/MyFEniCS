@@ -29,6 +29,34 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _v12_memory_admission_bounds(
+    *,
+    live_rss_bytes: int,
+    total_rss_cap_bytes: int,
+    incremental_headroom_bytes: int,
+    delta_bytes: int,
+    reserve_bytes: int,
+) -> dict[str, int | bool | str]:
+    """Keep absolute tree RSS and incremental system headroom as separate gates."""
+    live = int(live_rss_bytes)
+    total_cap = int(total_rss_cap_bytes)
+    headroom = int(incremental_headroom_bytes)
+    delta = int(delta_bytes)
+    reserve = int(reserve_bytes)
+    if min(live, total_cap, delta, reserve) < 0:
+        raise ValueError("memory admission quantities except available headroom must be nonnegative")
+    required_increment = delta + reserve
+    projected_rss = live + required_increment
+    return {
+        "total_rss_inequality": "R_live + Delta + reserve <= C_total",
+        "total_rss_inequality_passed": projected_rss <= total_cap,
+        "incremental_headroom_inequality": "Delta + reserve <= H_physical_or_cgroup",
+        "incremental_headroom_inequality_passed": required_increment <= headroom,
+        "projected_process_tree_rss_bytes": projected_rss,
+        "projected_incremental_capacity_bytes": required_increment,
+    }
+
+
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -1440,6 +1468,7 @@ def run_task40_v10_p6_reference_worker(
     *,
     source_sha: str,
     profile_identity: str | None = None,
+    share_transform_bank: bool = False,
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
@@ -1489,6 +1518,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_P6_PERIODIC_PROFILES,
     )
     from src.solvers.physical_retained_fgmres import run_retained_fgmres
+    from src.solvers.task40_v10_p6_mumps import full_p6_pre_release_output_inventory
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
 
     directory = Path(run_directory).resolve()
@@ -1503,6 +1533,8 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V11_P6_GX784_PROFILE,
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
+    if type(share_transform_bank) is not bool:
+        raise TypeError("V12 transform-bank selection must be an explicit boolean")
     periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
     is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
     case_label = (
@@ -1524,6 +1556,11 @@ def run_task40_v10_p6_reference_worker(
         "periodic_inventory_expectations": periodic_profile.identity(),
         "stage": stage,
         "source_sha": source_sha,
+        "v12_shared_transform_bank": {
+            "enabled": share_transform_bank,
+            "scope": "p6 cell-interior 450x450 blocks only; edges/faces use the legacy path",
+            "one_owner_shared_by_global_and_both_sectors": share_transform_bank,
+        },
         "status": "STARTED",
         "official_result": False,
         "result_classification": "INCOMPLETE",
@@ -1664,7 +1701,7 @@ def run_task40_v10_p6_reference_worker(
             )
         runtime.sample("v10_candidate_target_mesh_and_operator_complete")
 
-        def allocation_gate(label: str, facts: Mapping[str, Any]) -> None:
+        def allocation_gate(label: str, facts: Mapping[str, Any]) -> dict[str, Any]:
             amount = int(facts.get(
                 "additional_payload_bytes",
                 facts.get("matrix_payload_bytes", facts.get("workspace_bytes", 0)),
@@ -1674,31 +1711,86 @@ def run_task40_v10_p6_reference_worker(
                 f"v10_{label}", amount, workspace_bytes=workspace
             )
             future = 0
+            future_components: dict[str, int] = {}
             if label == "all_q_symbolic_before_any_numeric":
                 estimates = facts.get("q_symbolic_estimates_bytes", {})
                 if not isinstance(estimates, Mapping) or set(map(int, estimates)) != {0, 1, 2, 3}:
                     raise ValueError("all-q numeric gate requires all four actual INFOG(16/17) estimates")
-                future = int(sum(int(value) for value in estimates.values()))
-                future += int(facts.get("future_retained_krylov_and_vector_bytes", 0))
+                mumps_estimate = int(sum(int(value) for value in estimates.values()))
+                stated_ksp_vectors = int(facts.get("future_retained_krylov_and_vector_bytes", 0))
+                inverse_payload = int(facts.get("future_inverse_payload_bytes", 0))
+                inverse_workspace = int(
+                    facts.get("future_inverse_single_operation_workspace_bytes", 0)
+                )
+                full_output = int(
+                    facts.get("future_full_p6_pre_release_recovery_output_bytes", 0)
+                )
+                selected_phase = int(
+                    facts.get("selected_future_nonfactor_co_resident_peak_bytes", -1)
+                )
+                expected_phase = max(
+                    stated_ksp_vectors + inverse_workspace,
+                    full_output + inverse_workspace,
+                )
+                if selected_phase != expected_phase:
+                    raise ValueError("all-q co-resident phase peak disagrees with its KSP/full-output inventory")
+                if int(facts.get("future_inverse_payload_plus_selected_phase_bytes", -1)) != (
+                    inverse_payload + selected_phase
+                ):
+                    raise ValueError("all-q persistent inverse payload and selected phase reserve disagree")
+                phase_inventory = facts.get("pre_release_recovery_output_inventory", {})
+                if (
+                    share_transform_bank
+                    and (
+                        int(facts.get("full_storage_rows_for_future_recovery", 0)) <= 0
+                        or not isinstance(phase_inventory, Mapping)
+                        or phase_inventory.get("actual_target_and_reference_full_rows_match_required") is not True
+                    )
+                ):
+                    raise ValueError("V12 all-q gate lacks actual target/reference full-row recovery dimensions")
+                future_components = {
+                    "mumps_symbolic_estimate_sum_bytes": mumps_estimate,
+                    "persistent_pending_transform_inverse_payload_bytes": inverse_payload,
+                    "selected_maximum_co_resident_phase_bytes": selected_phase,
+                }
+                future = sum(future_components.values())
+            elif "declared_future_co_resident_bytes" in facts:
+                phase_bytes = int(facts["declared_future_co_resident_bytes"])
+                if phase_bytes < 0:
+                    raise ValueError("phase-specific co-resident reserve cannot be negative")
+                future_components = {"declared_future_co_resident_phase_bytes": phase_bytes}
+                future = phase_bytes
             headroom = 128 << 20
             live = runtime.sample(f"v10_{label}_strict_admission")
             profile_cap = int(contract["resources"]["process_tree_rss_cap_bytes"])
             cap = min(profile_cap, int(live["launch_cap_bytes"]))
-            projected = (
-                int(live["rss_bytes"]) + amount + workspace + future + headroom
+            untouched_workspace = int(checked.get("workspace_untouched_reserve_bytes", 0))
+            envelope = live.get("memory_envelope")
+            if not isinstance(envelope, Mapping):
+                raise RuntimeError("strict allocation admission has no current memory envelope")
+            incremental_headroom = int(envelope["launch_cap_bytes"])
+            bounds = _v12_memory_admission_bounds(
+                live_rss_bytes=int(live["rss_bytes"]),
+                total_rss_cap_bytes=cap,
+                incremental_headroom_bytes=incremental_headroom,
+                delta_bytes=amount + workspace + untouched_workspace + future,
+                reserve_bytes=headroom,
             )
             admission = {
-                "schema": "task40extra.review_v10_allocation_admission.v1",
+                "schema": "task40extra.review_v12_allocation_admission.v1",
                 "label": str(label),
                 "requested_additional_bytes": amount,
                 "requested_workspace_bytes": workspace,
-                "all_q_native_symbolic_estimate_bytes": future,
+                "workspace_untouched_reserve_bytes": untouched_workspace,
+                "future_all_q_and_transform_reserve_bytes": future,
+                "future_reserve_components": future_components,
                 "fixed_future_workspace_headroom_bytes": headroom,
                 "current_process_tree_rss_bytes": int(live["rss_bytes"]),
                 "profile_tree_cap_bytes": profile_cap,
                 "dynamic_launch_cap_bytes": int(live["launch_cap_bytes"]),
-                "effective_finite_cap_bytes": cap,
-                "projected_process_tree_rss_bytes": projected,
+                "effective_absolute_total_rss_cap_bytes": cap,
+                "incremental_headroom_bytes": incremental_headroom,
+                **bounds,
                 "physical_memory_envelope": live.get("memory_envelope"),
                 "generic_projection": checked,
                 "native_symbolic_facts": facts.get("current_symbolic_native_metrics"),
@@ -1710,16 +1802,39 @@ def run_task40_v10_p6_reference_worker(
                 "current_q_native_used_bytes_upper": facts.get(
                     "current_q_native_used_bytes_upper"
                 ),
+                "future_bank_inverse_reserve": facts.get("future_bank_inverse_reserve"),
+                "future_legacy_inverse_reserves_by_collection": facts.get(
+                    "future_legacy_inverse_reserves_by_collection"
+                ),
+                "future_krylov_and_ksp_workspace_bytes": facts.get(
+                    "future_retained_krylov_and_vector_bytes"
+                ),
+                "future_full_p6_pre_release_recovery_output_bytes": facts.get(
+                    "future_full_p6_pre_release_recovery_output_bytes"
+                ),
+                "full_storage_rows_for_future_recovery": facts.get(
+                    "full_storage_rows_for_future_recovery"
+                ),
+                "pre_release_recovery_output_inventory": facts.get(
+                    "pre_release_recovery_output_inventory"
+                ),
+                "selected_future_nonfactor_co_resident_phase": facts.get(
+                    "selected_future_nonfactor_co_resident_phase"
+                ),
             }
             allocation_gate_records.append(admission)
             runtime.marker("v10_strict_allocation_admission", admission)
-            if projected >= cap:
+            if not (
+                bounds["total_rss_inequality_passed"]
+                and bounds["incremental_headroom_inequality_passed"]
+            ):
                 from .physical_p4_schur_v14 import V14ResourceStop
 
-                raise V14ResourceStop(
-                    f"Task40 V10 finite all-object memory admission failed: {admission}"
-                )
-            runtime.sample(f"v10_{label}_allocation_gate")
+                raise V14ResourceStop(f"Task40 V12 two-boundary memory admission failed: {admission}")
+            completion_sample = runtime.sample(f"v10_{label}_allocation_gate")
+            admission["allocation_gate_completion_sample"] = completion_sample
+            runtime.marker("v10_strict_allocation_admission_complete", admission)
+            return admission
 
         support_groups, support_rows, _support_facts = _boundary_support(target_bundle)
         compiled_target = fem.form(
@@ -1788,6 +1903,116 @@ def run_task40_v10_p6_reference_worker(
                 )
             )
 
+        def load_numeric_checkpoint(path: Path, q: int) -> dict[str, Any]:
+            if not path.is_file():
+                raise RuntimeError(
+                    f"V12 q={q} numeric checkpoint is missing before its follow-up event: {path}"
+                )
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            if (
+                not isinstance(saved, dict)
+                or saved.get("schema") != "task40extra.review_v12_per_q_mumps_stage.v1"
+                or not isinstance(saved.get("facts"), dict)
+                or int(saved["facts"].get("q", -1)) != q
+            ):
+                raise RuntimeError(
+                    f"V12 q={q} numeric checkpoint has invalid identity or facts: {path}"
+                )
+            return saved
+
+        def reference_event(name: str, facts: Mapping[str, Any]) -> None:
+            if name == "task40_v12_mumps_symbolic_q_complete":
+                q = int(facts["q"])
+                _write_json(
+                    directory / f"task40_v12_p6_q{q}_symbolic.json",
+                    {
+                        "schema": "task40extra.review_v12_per_q_mumps_stage.v1",
+                        "event": name,
+                        "case": case_label,
+                        "source_sha": source_sha,
+                        "facts": facts,
+                    },
+                )
+                runtime.marker(name, facts)
+                return
+            if name == "task40_v12_mumps_numeric_q_complete":
+                q = int(facts["q"])
+                _write_json(
+                    directory / f"task40_v12_p6_q{q}_numeric.json",
+                    {
+                        "schema": "task40extra.review_v12_per_q_mumps_stage.v1",
+                        "event": name,
+                        "case": case_label,
+                        "source_sha": source_sha,
+                        "facts": facts,
+                    },
+                )
+                runtime.marker(name, facts)
+                return
+            if name == "task40_v12_mumps_numeric_q_probe_complete":
+                q = int(facts["q"])
+                path = directory / f"task40_v12_p6_q{q}_numeric.json"
+                probe_facts = dict(facts)
+                try:
+                    sample = runtime.sample(f"v12_mumps_q{q}_after_probe", enforce=False)
+                    probe_facts["process_tree_rss_bytes"] = int(sample["rss_bytes"])
+                    probe_facts["process_tree_rss_sample"] = sample
+                except Exception as error:
+                    probe_facts["process_tree_rss_bytes"] = None
+                    probe_facts["process_tree_rss_sample_error"] = {
+                        "type": type(error).__name__, "message": str(error)
+                    }
+                saved = load_numeric_checkpoint(path, q)
+                saved["probe"] = probe_facts
+                saved["last_event"] = name
+                _write_json(path, saved)
+                runtime.marker(name, probe_facts)
+                return
+            if name == "task40_v12_mumps_numeric_q_admitted":
+                q = int(facts["q"])
+                path = directory / f"task40_v12_p6_q{q}_numeric.json"
+                saved = load_numeric_checkpoint(path, q)
+                saved["resource_gate"] = facts
+                saved["last_event"] = name
+                saved["facts"]["process_tree_rss_bytes"] = facts.get(
+                    "process_tree_rss_bytes"
+                )
+                saved["facts"]["numeric_true_residual"] = facts.get(
+                    "numeric_true_residual"
+                )
+                saved["facts"]["native_metrics"] = facts.get("native_metrics")
+                if saved.get("probe") is not None:
+                    saved["probe"]["process_tree_rss_bytes"] = facts.get(
+                        "process_tree_rss_bytes"
+                    )
+                    saved["probe"]["native_metrics"] = facts.get("native_metrics")
+                _write_json(path, saved)
+                runtime.marker(name, facts)
+                return
+            if name == "task40_v12_mumps_all_q_live_before_destroy":
+                snapshot = dict(facts)
+                try:
+                    sample = runtime.sample("v12_all_q_live_before_destroy", enforce=False)
+                    snapshot["process_tree_rss_bytes"] = int(sample["rss_bytes"])
+                    snapshot["process_tree_rss_sample"] = sample
+                except Exception as error:
+                    snapshot["process_tree_rss_bytes"] = None
+                    snapshot["process_tree_rss_sample_error"] = {
+                        "type": type(error).__name__, "message": str(error)
+                    }
+                _write_json(
+                    directory / "task40_v12_p6_all_q_live_before_destroy.json",
+                    {
+                        "schema": "task40extra.review_v12_all_q_live_before_destroy.v1",
+                        "case": case_label,
+                        "source_sha": source_sha,
+                        "facts": snapshot,
+                    },
+                )
+                runtime.marker(name, snapshot)
+                return
+            runtime.marker(name, facts)
+
         runtime.sample("v10_candidate_target_retained_and_fast_backend_complete")
 
         reference = build_task40_v10_p6_reference_inverse(
@@ -1795,9 +2020,11 @@ def run_task40_v10_p6_reference_worker(
             axes,
             allocation_gate=allocation_gate,
             profile=periodic_profile,
-            event=runtime.marker,
+            event=reference_event,
             identity_gate=identity_gate,
             jit_options=SAME_MESH_JIT_OPTIONS,
+            share_transform_bank=share_transform_bank,
+            target_full_storage_rows=int(target_action.condensed.full_rows),
         )
         if not mode_identity:
             raise RuntimeError("regular p6 physical identity callback did not run before q factors")
@@ -2013,6 +2240,37 @@ def run_task40_v10_p6_reference_worker(
             )
             return fast, native
 
+        pre_release_full_rows = int(target_action.condensed.full_rows)
+        reference_full_rows = int(reference["full_layout"].full_rows)
+        if pre_release_full_rows != reference_full_rows:
+            raise ValueError(
+                "full p6 recovery budget needs matching target/reference rows: "
+                f"{pre_release_full_rows} != {reference_full_rows}"
+            )
+        pre_release_output_inventory = full_p6_pre_release_output_inventory(
+            pre_release_full_rows
+        )
+        allocation_gate(
+            "before_full_p6_pre_release_recovery_output_and_save",
+            {
+                "additional_payload_bytes": 0,
+                "workspace_bytes": 0,
+                "declared_future_co_resident_bytes": int(
+                    pre_release_output_inventory["pre_release_peak_bytes"]
+                ),
+                "full_storage_rows": pre_release_full_rows,
+                "full_output_inventory": pre_release_output_inventory,
+                "phase_scope": "paired full A6 residual recovery and six-array pre-release audit packet while all q factors remain live",
+            },
+        )
+        runtime.marker(
+            "v12_full_p6_pre_release_output_budget",
+            {
+                "target_full_storage_rows": pre_release_full_rows,
+                "reference_full_storage_rows": reference_full_rows,
+                "inventory": pre_release_output_inventory,
+            },
+        )
         pre_backend, pre_native = evaluate_final_full_state()
         pre_release_relative = float(pre_backend["native_residual_relative"])
         pre_native_relative = float(pre_native["native_residual_relative"])
@@ -2059,6 +2317,18 @@ def run_task40_v10_p6_reference_worker(
         inverse_input_identity = reference["factors"].verify_all_input_identities(
             stage="before_reference_factor_release"
         )
+        transform_bank_final_receipt = None
+        transform_bank = reference.get("transform_bank")
+        if transform_bank is not None:
+            named_arrays = reference["global_entities"].named_backing_arrays("global")
+            for sector_index, sector in enumerate(reference["sectors"]):
+                named_arrays.update(
+                    sector["entities"].named_backing_arrays(f"sector{sector_index}")
+                )
+            transform_bank_final_receipt = transform_bank.receipt(
+                named_arrays, stage="all_reference_checks_before_owner_release"
+            )
+            reference["transform_bank_receipt"] = transform_bank_final_receipt
         reference_audit_snapshot = {
             "schema": "task40extra.review_v10_reference_audit_snapshot.v1",
             "factor_audit_before_destroy": copy.deepcopy(reference["factors"].audit),
@@ -2070,6 +2340,10 @@ def run_task40_v10_p6_reference_worker(
             ),
             "reference_layout": copy.deepcopy(reference["full_layout"].audit),
             "inverse_input_identity": inverse_input_identity,
+            "full_storage_dimensions": copy.deepcopy(
+                reference.get("full_storage_dimensions", {})
+            ),
+            "transform_bank_final_receipt": copy.deepcopy(transform_bank_final_receipt),
         }
         pc_snapshot = pc.detach()
         summary["reference_audit_snapshot"] = reference_audit_snapshot
@@ -2086,6 +2360,33 @@ def run_task40_v10_p6_reference_worker(
         reference = None
         runtime.sample("v10_candidate_reference_factor_release_complete")
 
+        allocation_gate(
+            "before_full_p6_post_release_residual_output_and_save",
+            {
+                "additional_payload_bytes": 0,
+                "workspace_bytes": 0,
+                "declared_future_co_resident_bytes": int(
+                    pre_release_output_inventory["pre_release_peak_bytes"]
+                ),
+                "full_storage_rows": pre_release_full_rows,
+                "full_output_inventory": pre_release_output_inventory,
+                "phase_scope": (
+                    "paired post-release full A6 residual and packet; prior pre-release result arrays are already in live RSS"
+                ),
+                "pre_release_known_retained_array_equivalents_already_live": (
+                    2 * len(pre_release_output_inventory["native_residual_result_full_rows_array_names"])
+                    + int(pre_release_output_inventory["pre_release_independent_audit_copy_count"])
+                    + int(pre_release_output_inventory["final_full_solution_petsc_vector_count"])
+                ),
+            },
+        )
+        runtime.marker(
+            "v12_full_p6_post_release_output_budget",
+            {
+                "full_storage_rows": pre_release_full_rows,
+                "inventory": pre_release_output_inventory,
+            },
+        )
         post_backend, post_native = evaluate_final_full_state()
         post_release_relative = float(post_backend["native_residual_relative"])
         post_native_relative = float(post_native["native_residual_relative"])
@@ -2121,6 +2422,7 @@ def run_task40_v10_p6_reference_worker(
                 "mode_identity": mode_identity,
             },
         )
+        runtime.sample("v12_full_p6_post_release_residual_packet_complete")
         solver_residual = float(result.get("final_true_residual", np.inf))
         final_eval = dict(result.get("final_evaluation", {}))
         final_port_closure = float(final_eval.get("port_closure_relative", np.inf))
@@ -2232,6 +2534,27 @@ def run_task40_v10_p6_reference_worker(
             runtime,
             additional_bytes=1 << 30,
             label="before_p6_field_mode_and_diffraction_export",
+        )
+        official_full_field_bytes = (
+            pre_release_full_rows * 2 * np.dtype(np.complex128).itemsize
+            + int(periodic_profile.mode_count) * np.dtype(np.complex128).itemsize
+        )
+        allocation_gate(
+            "before_full_p6_official_field_and_mode_output",
+            {
+                "additional_payload_bytes": 0,
+                "workspace_bytes": 0,
+                "declared_future_co_resident_bytes": int(official_full_field_bytes),
+                "full_storage_rows": pre_release_full_rows,
+                "full_field_vector_equivalents": 2,
+                "retained_port_auxiliary_complex128_bytes": int(
+                    periodic_profile.mode_count * np.dtype(np.complex128).itemsize
+                ),
+                "phase_scope": (
+                    "known full-space DOLFINx field plus one full_rows postprocessing workspace and retained mode auxiliary; "
+                    "DG/JIT internals remain under live watchdog samples"
+                ),
+            },
         )
         runtime.sample("v10_candidate_before_official_output")
         output = recover_p0_outputs(

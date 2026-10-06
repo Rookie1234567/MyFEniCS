@@ -47,6 +47,51 @@ def _payload_bytes(csr: sparse.csr_matrix) -> int:
     return int(csr.data.nbytes + csr.indices.nbytes + csr.indptr.nbytes)
 
 
+def full_p6_pre_release_output_inventory(full_storage_rows: int) -> dict[str, object]:
+    """Bound known full-row recovery/residual arrays before factor release.
+
+    ``evaluate_native_residual`` returns seven full-storage arrays. The fast and
+    native result dictionaries coexist; a conservative eight-vector allowance
+    covers the active paired residual calculation. The audit packet then holds
+    six copied arrays, one PETSc full-solution vector, and one write staging
+    vector. These are phase alternatives, so the larger peak is selected.
+    """
+    rows = int(full_storage_rows)
+    if rows < 0:
+        raise ValueError("full-storage row count cannot be negative")
+    returned_arrays = (
+        "storage_solution",
+        "native_effective_rhs",
+        "native_residual",
+        "augmented_fe_residual",
+        "schur_residual_injection",
+        "derived_native_residual",
+        "native_identity_difference",
+    )
+    result_count = len(returned_arrays)
+    workspace_vectors = 8
+    audit_copies = 6
+    final_solution_vectors = 1
+    packet_staging_vectors = 1
+    evaluation_peak = 2 * result_count + workspace_vectors
+    packet_peak = 2 * result_count + audit_copies + final_solution_vectors + packet_staging_vectors
+    selected_peak = max(evaluation_peak, packet_peak)
+    return {
+        "full_storage_rows": rows,
+        "complex128_itemsize": np.dtype(np.complex128).itemsize,
+        "native_residual_result_full_rows_array_names": list(returned_arrays),
+        "paired_action_workspace_full_rows_vector_equivalents": workspace_vectors,
+        "pre_release_independent_audit_copy_count": audit_copies,
+        "final_full_solution_petsc_vector_count": final_solution_vectors,
+        "packet_write_staging_vector_count": packet_staging_vectors,
+        "evaluation_peak_vector_equivalents": evaluation_peak,
+        "packet_peak_vector_equivalents": packet_peak,
+        "selected_peak_vector_equivalents": selected_peak,
+        "pre_release_peak_bytes": int(rows * selected_peak * np.dtype(np.complex128).itemsize),
+        "scope": "known full_rows recovery/residual/audit-save arrays; post-release and official-output phases have separate live gates",
+    }
+
+
 def _petsc_matrix_info(matrix) -> dict[str, int | float | None]:
     try:
         raw = matrix.getInfo()
@@ -100,10 +145,14 @@ def _mumps_native_evidence(raw: Mapping[str, object], *, numeric_complete: bool)
 
 class AllQExactMumps:
     def __init__(self, matrices: Mapping[int, sparse.spmatrix], *,
-                 allocation_gate: Callable[[str, Mapping[str, object]], None],
+                 allocation_gate: Callable[[str, Mapping[str, object]], object | None],
                  event: Callable[[str, Mapping[str, object]], None] | None = None,
                  expected_shapes: Sequence[int] | None = None,
-                 profile: Task40V10P6PeriodicProfile = TASK40_V10_P6_PROFILE):
+                 profile: Task40V10P6PeriodicProfile = TASK40_V10_P6_PROFILE,
+                 transform_bank=None,
+                 inverse_borrowers: Mapping[str, object] | None = None,
+                 full_storage_rows: int | None = None,
+                 target_reference_rows_match: bool = False):
         from petsc4py import PETSc
         from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
 
@@ -112,6 +161,17 @@ class AllQExactMumps:
             raise TypeError("all-q factors require an explicit Task40 p6 periodic profile")
         self.profile = profile
         self.event = event or (lambda _name, _facts: None)
+        self.transform_bank = transform_bank
+        self.inverse_borrowers = dict(inverse_borrowers or {})
+        self.full_storage_rows = None if full_storage_rows is None else int(full_storage_rows)
+        self.target_reference_rows_match = bool(target_reference_rows_match)
+        if self.full_storage_rows is not None and self.full_storage_rows < 0:
+            raise ValueError("future full-storage row count cannot be negative")
+        for label, borrower in self.inverse_borrowers.items():
+            if not callable(getattr(borrower, "future_legacy_inverse_reserve", None)):
+                raise TypeError(f"inverse borrower {label!r} has no legacy inverse inventory")
+            if transform_bank is not None and getattr(borrower, "_transform_bank", None) is not transform_bank:
+                raise ValueError(f"inverse borrower {label!r} does not share the supplied run-local bank")
         if not callable(allocation_gate):
             raise TypeError("an active process-tree allocation gate is required")
         self.gate = allocation_gate
@@ -227,6 +287,24 @@ class AllQExactMumps:
                     )
                 estimate_bytes = int(1_000_000 * (1 + max(info16, info17)))
                 symbolic_estimates[q] = estimate_bytes
+                symbolic_native = _mumps_native_evidence(symbolic_info, numeric_complete=False)
+                self.event("task40_v12_mumps_symbolic_q_complete", {
+                    "q": q,
+                    "matrix_shape": list(csr.shape),
+                    "rows": int(csr.shape[0]),
+                    "nnz": int(csr.nnz),
+                    "caller_input_sha256": caller_hash,
+                    "factor_csr_sha256": csr_hash,
+                    "symbolic_elapsed_seconds": symbolic_seconds,
+                    "raw_mumps_info": symbolic_info,
+                    "raw_infog": symbolic_native["raw_infog"],
+                    "decoded_infog16_mb": int(info16),
+                    "decoded_infog17_mb": int(info17),
+                    "symbolic_estimate_bytes_from_infog16_17": estimate_bytes,
+                    "native_metrics": symbolic_native,
+                    "petsc_matrix_info": matrix_facts,
+                    "checkpoint_semantics": "per-q symbolic checkpoint before the next q begins",
+                })
                 symbolic_states[q] = {
                     "source": source,
                     "csr": csr,
@@ -266,13 +344,61 @@ class AllQExactMumps:
             # completed symbolic analysis and the measured per-q estimates are
             # admitted together with retained Krylov and recovery workspace.
             retained_rows = sum(self.row_counts)
-            # Right FGMRES retains V_(m+1) and Z_m; reserve additional full
-            # vectors for residual, work, solution, and checkpoint staging.
-            retained_vector_count = 2 * (32 + 1) + 6
-            future_krylov_bytes = int(
-                retained_rows
-                * retained_vector_count
-                * np.dtype(np.complex128).itemsize
+            # Right FGMRES retains V_(m+1) and Z_m. Six additional reduced
+            # vectors cover its residual/work/solution/checkpoint co-residents.
+            krylov_basis_vector_count = 2 * (32 + 1)
+            ksp_workspace_vector_count = 6
+            vector_itemsize = np.dtype(np.complex128).itemsize
+            future_krylov_basis_bytes = int(
+                retained_rows * krylov_basis_vector_count * vector_itemsize
+            )
+            future_ksp_workspace_bytes = int(
+                retained_rows * ksp_workspace_vector_count * vector_itemsize
+            )
+            future_krylov_bytes = future_krylov_basis_bytes + future_ksp_workspace_bytes
+            bank_inverse_reserve = (
+                self.transform_bank.future_inverse_reserve()
+                if self.transform_bank is not None
+                else {
+                    "future_unique_inverse_payload_bytes": 0,
+                    "future_single_inverse_workspace_bytes": 0,
+                    "future_unique_inverse_template_count": 0,
+                }
+            )
+            legacy_inverse_reserves = {
+                str(label): borrower.future_legacy_inverse_reserve()
+                for label, borrower in self.inverse_borrowers.items()
+            }
+            legacy_inverse_payload_bytes = sum(
+                int(row["future_legacy_inverse_payload_bytes"])
+                for row in legacy_inverse_reserves.values()
+            )
+            legacy_inverse_workspace_bytes = max(
+                (int(row["future_legacy_single_inverse_workspace_bytes"])
+                 for row in legacy_inverse_reserves.values()),
+                default=0,
+            )
+            future_inverse_payload_bytes = (
+                int(bank_inverse_reserve["future_unique_inverse_payload_bytes"])
+                + legacy_inverse_payload_bytes
+            )
+            future_inverse_workspace_bytes = max(
+                int(bank_inverse_reserve["future_single_inverse_workspace_bytes"]),
+                legacy_inverse_workspace_bytes,
+            )
+            full_rows = int(self.full_storage_rows or 0)
+            full_output_inventory = full_p6_pre_release_output_inventory(full_rows)
+            future_full_p6_output_bytes = int(full_output_inventory["pre_release_peak_bytes"])
+            ksp_plus_inverse_workspace = future_krylov_bytes + future_inverse_workspace_bytes
+            full_output_plus_inverse_workspace = (
+                future_full_p6_output_bytes + future_inverse_workspace_bytes
+            )
+            selected_nonfactor_phase_peak_bytes = max(
+                ksp_plus_inverse_workspace,
+                full_output_plus_inverse_workspace,
+            )
+            future_co_resident_peak_bytes = (
+                future_inverse_payload_bytes + selected_nonfactor_phase_peak_bytes
             )
             self.gate("all_q_symbolic_before_any_numeric", {
                 "q_symbolic_estimates_bytes": {
@@ -281,7 +407,31 @@ class AllQExactMumps:
                 "all_q_symbolic_estimate_sum_bytes": int(sum(symbolic_estimates.values())),
                 "all_four_symbolic_q_completed": set(symbolic_estimates) == set(range(self.nq)),
                 "future_retained_krylov_and_vector_bytes": future_krylov_bytes,
-                "retained_vector_count_upper_bound": retained_vector_count,
+                "future_krylov_basis_bytes": future_krylov_basis_bytes,
+                "future_ksp_workspace_vector_bytes": future_ksp_workspace_bytes,
+                "future_full_p6_pre_release_recovery_output_bytes": future_full_p6_output_bytes,
+                "full_storage_rows_for_future_recovery": full_rows,
+                "pre_release_recovery_output_inventory": {
+                    **full_output_inventory,
+                    "actual_target_and_reference_full_rows_match_required": self.target_reference_rows_match,
+                },
+                "future_inverse_payload_bytes": future_inverse_payload_bytes,
+                "future_inverse_single_operation_workspace_bytes": future_inverse_workspace_bytes,
+                "future_inverse_workspace_concurrency": "one sequential entity inverse; bank/legacy workspaces do not overlap",
+                "future_bank_inverse_reserve": bank_inverse_reserve,
+                "future_legacy_inverse_reserves_by_collection": legacy_inverse_reserves,
+                "future_ksp_plus_inverse_workspace_bytes": ksp_plus_inverse_workspace,
+                "future_full_output_plus_inverse_workspace_bytes": full_output_plus_inverse_workspace,
+                "selected_future_nonfactor_co_resident_phase": (
+                    "KSP_with_inverse_workspace"
+                    if ksp_plus_inverse_workspace >= full_output_plus_inverse_workspace
+                    else "pre_release_full_p6_recovery_output_with_inverse_workspace"
+                ),
+                "selected_future_nonfactor_co_resident_peak_bytes": selected_nonfactor_phase_peak_bytes,
+                "future_inverse_payload_plus_selected_phase_bytes": future_co_resident_peak_bytes,
+                "retained_vector_count_upper_bound": krylov_basis_vector_count + ksp_workspace_vector_count,
+                "krylov_basis_vector_count": krylov_basis_vector_count,
+                "ksp_workspace_vector_count": ksp_workspace_vector_count,
                 "retained_vector_inventory_rows": retained_rows,
                 "FGMRES_restart": 32,
                 "q_symbolic_mumps_info_raw_by_q": {
@@ -297,8 +447,9 @@ class AllQExactMumps:
                 "numeric_factors_to_be_retained_simultaneously": self.nq,
                 "retained_q_matrix_rows": int(retained_rows),
                 "admission_semantics": (
-                    "sum(actual_per_q_INFOG16_17_estimates)+future_Krylov_vectors+"
-                    "128MiB_against_live_RSS_and_finite_campaign_cap"
+                    "sum(actual_per_q_INFOG16_17_estimates)+pending_inverse_payloads+"
+                    "max(KSP_vectors_or_full_rows_recovery_output+one_sequential_inverse_workspace)+128MiB; "
+                    "separate post-release and official-output gates avoid summing mutually exclusive stages"
                 ),
             })
 
@@ -324,6 +475,23 @@ class AllQExactMumps:
                     raise ValueError("exact MUMPS refinement/storage controls changed")
                 numeric_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
                 native = _mumps_native_evidence(numeric_info, numeric_complete=True)
+                self.event("task40_v12_mumps_numeric_q_complete", {
+                    "q": q,
+                    "matrix_shape": list(csr.shape),
+                    "rows": int(csr.shape[0]),
+                    "nnz": int(csr.nnz),
+                    "caller_input_sha256": caller_hash,
+                    "factor_csr_sha256": csr_hash,
+                    "numeric_elapsed_seconds": numeric_seconds,
+                    "raw_mumps_info": numeric_info,
+                    "raw_infog": native["raw_infog"],
+                    "infog19_allocated_bytes_upper": native["INFOG_19_allocated_bytes_upper"],
+                    "infog22_used_bytes_upper": native["INFOG_22_used_bytes_upper"],
+                    "infog9_factor_entries": native["INFOG_9_corrected_entries_if_negative"],
+                    "infog9_raw": native["raw_infog"].get("9"),
+                    "native_metrics": native,
+                    "checkpoint_semantics": "per-q numeric INFOG checkpoint before the probe solve",
+                })
                 rhs = np.cos(.23*np.arange(n)) + 1j*np.sin(.37*np.arange(n))
                 solution = self._solve_once(q, rhs)
                 self._assert_input_identity(q, "after_probe_solve")
@@ -337,11 +505,30 @@ class AllQExactMumps:
                     "numeric_seconds": numeric_seconds,
                     "ICNTL_10": factor.get_icntl(10),
                     "ICNTL_35": factor.get_icntl(35),
+                    "process_tree_rss_bytes": None,
                 }
                 self.audit["factor_tests"].append(test)
-                if not np.isfinite(residual) or residual > 1e-10:
+                residual_passed = bool(np.isfinite(residual) and residual <= 1e-10)
+                self.event("task40_v12_mumps_numeric_q_probe_complete", {
+                    "q": q,
+                    "matrix_shape": list(csr.shape),
+                    "rows": n,
+                    "nnz": int(csr.nnz),
+                    "caller_input_sha256": caller_hash,
+                    "factor_csr_sha256": csr_hash,
+                    "numeric_elapsed_seconds": numeric_seconds,
+                    "raw_mumps_info": numeric_info,
+                    "raw_infog": native["raw_infog"],
+                    "native_metrics": native,
+                    "numeric_true_residual": residual,
+                    "numeric_true_residual_limit": 1e-10,
+                    "numeric_true_residual_passed": residual_passed,
+                    "process_tree_rss_bytes": None,
+                    "checkpoint_semantics": "probe residual checkpoint before resource-gate evaluation",
+                })
+                if not residual_passed:
                     raise ValueError(f"q={q} exact MUMPS true residual failed: {residual}")
-                self.gate("after_mumps_numeric_true_residual", {
+                numeric_admission = self.gate("after_mumps_numeric_true_residual", {
                     "q": q,
                     "current_q_symbolic_estimate_bytes": int(
                         state["symbolic_estimate_bytes"]
@@ -360,7 +547,25 @@ class AllQExactMumps:
                     "resident_numeric_mumps_facts": self._resident_factor_evidence(),
                     "numeric_true_residual": residual,
                     "numeric_true_residual_limit": 1e-10,
-                    "process_tree_rss_bytes": None,
+                    "numeric_true_residual_passed": True,
+                })
+                numeric_rss = (
+                    int(numeric_admission["current_process_tree_rss_bytes"])
+                    if isinstance(numeric_admission, Mapping)
+                    and numeric_admission.get("current_process_tree_rss_bytes") is not None
+                    else None
+                )
+                native["process_tree_rss_bytes"] = numeric_rss
+                test["process_tree_rss_bytes"] = numeric_rss
+                self.event("task40_v12_mumps_numeric_q_admitted", {
+                    "q": q,
+                    "numeric_true_residual": residual,
+                    "numeric_true_residual_limit": 1e-10,
+                    "numeric_true_residual_passed": True,
+                    "process_tree_rss_bytes": numeric_rss,
+                    "resource_admission": numeric_admission,
+                    "native_metrics": native,
+                    "resident_numeric_mumps_facts": self._resident_factor_evidence(),
                 })
                 binding = self._input_bindings[q]
                 binding["caller_input_sha256_after"] = _sparse_content_sha256(source)
@@ -382,7 +587,7 @@ class AllQExactMumps:
                     "native_factor_entries_raw_infog_9": native["raw_infog"].get("9"),
                     "native_memory_observation": native["memory_observation"],
                     "mumps_info_raw": numeric_info,
-                    "process_tree_rss_bytes": None,
+                    "process_tree_rss_bytes": numeric_rss,
                     "symbolic_mumps_info_raw": symbolic_info,
                     "symbolic_INFOG_16_mb": int(symbolic_info["infog"]["16"]),
                     "symbolic_INFOG_17_mb": int(symbolic_info["infog"]["17"]),
@@ -453,7 +658,7 @@ class AllQExactMumps:
         for q, factor in sorted(self.factors.items()):
             if q == exclude_q or factor.numeric_calls != 1:
                 continue
-            raw = factor.info(extra_indices=(22, 29), include_local=True)
+            raw = factor.info(extra_indices=(9, 19, 22, 29), include_local=True)
             result[str(q)] = _mumps_native_evidence(raw, numeric_complete=True)
         return result
 
@@ -515,6 +720,47 @@ class AllQExactMumps:
     def destroy(self) -> None:
         if self.destroyed:
             return
+        if (
+            len(self.factors) == self.nq
+            and len(self.matrices) == self.nq
+            and self.audit.get("all_four_numeric_factors_true_residual_passed") is True
+        ):
+            tests_by_q = {
+                int(row["q"]): row for row in self.audit.get("factor_tests", ())
+            }
+            inputs_by_q = {
+                int(row["q"]): row for row in self.audit.get("factor_inputs", ())
+            }
+            self.audit["pre_destroy_live_inventory"] = {
+                "factor_q_indices": sorted(map(int, self.factors)),
+                "matrix_q_indices": sorted(map(int, self.matrices)),
+                "factor_live_count": len(self.factors),
+                "all_q_factors_live": set(self.factors) == set(range(self.nq)),
+                "factor_inventory_by_q": [
+                    {
+                        "factor_input": inputs_by_q[q],
+                        "numeric_probe": tests_by_q[q],
+                    }
+                    for q in sorted(set(inputs_by_q).intersection(tests_by_q))
+                ],
+                "factor_inventory_timing": (
+                    "historical per-q input and residual-probe records captured as each q completed"
+                ),
+                "current_native_factor_inventory_by_q": self._resident_factor_evidence(),
+                "current_native_factor_inventory_timing": (
+                    "read from each still-live numeric factor immediately before the first destroy call"
+                ),
+                "destroy_not_yet_started": True,
+            }
+            try:
+                self.event(
+                    "task40_v12_mumps_all_q_live_before_destroy",
+                    self.audit["pre_destroy_live_inventory"],
+                )
+            except BaseException as exc:
+                self.audit["pre_destroy_snapshot_error"] = {
+                    "type": type(exc).__name__, "message": str(exc)
+                }
         errors = []
         for q in reversed(sorted(self.factors)):
             factor = self.factors.pop(q)

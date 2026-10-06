@@ -467,7 +467,9 @@ class _V14Runtime:
             self.infrastructure_recovery = False
             self.workflow_clock_start = dict(state["sample"])
             self.workflow_reserved_seconds = remaining
-            is_v10_campaign = str(contract.get("scope", "")).startswith("review_v10_")
+            is_v10_campaign = str(contract.get("scope", "")).startswith(
+                ("review_v10_", "task40_review_v10_")
+            )
             campaign_version = "v10" if is_v10_campaign else "v11"
             self.workflow_clock_source = (
                 f"task40_{campaign_version}_fixed_campaign_read_only_projection"

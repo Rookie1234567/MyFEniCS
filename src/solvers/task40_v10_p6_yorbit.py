@@ -69,6 +69,35 @@ class YOrbitEntities:
                 arrays[f"{role}.record.{index:06d}.inverse"] = self._inverses[key]
         return arrays
 
+    def future_legacy_inverse_reserve(self):
+        """Bound unmaterialized edge/face inverses that are outside the bank."""
+        pending = []
+        by_dimension = {1: 0, 2: 0}
+        for key, (_rows, matrix) in self.records.items():
+            dimension = int(key[1][0])
+            if key in self._template_keys:
+                if dimension != 3:
+                    raise ValueError("only cell-interior transforms may borrow the V12 bank")
+                continue
+            if dimension == 3 and self._transform_bank is not None:
+                raise ValueError("p6 cell-interior transform was not admitted to the shared bank")
+            if dimension not in (1, 2, 3):
+                raise ValueError("unknown geometric entity dimension in inverse reserve")
+            if key not in self._inverses:
+                pending.append(int(matrix.nbytes))
+                by_dimension[dimension] = by_dimension.get(dimension, 0) + 1
+        return {
+            "future_legacy_inverse_count": len(pending),
+            "future_legacy_inverse_payload_bytes": sum(pending),
+            "future_legacy_single_inverse_workspace_bytes": max(
+                (3 * payload for payload in pending), default=0
+            ),
+            "future_legacy_inverse_count_by_dimension": {
+                str(dimension): count for dimension, count in sorted(by_dimension.items())
+            },
+            "scope": "unmaterialized edge/face legacy inverses; existing inverses are already resident",
+        }
+
     def transform(self, values, *, direction):
         values = np.asarray(values,dtype=np.complex128)
         n=len(self.independent)
@@ -83,21 +112,22 @@ class YOrbitEntities:
         for orbit in range(self.ny):
             for base in self.bases:
                 rows,matrix=self.records[(orbit,base)]
-                if self._transform_bank is not None:
+                banked = self._transform_bank is not None and (orbit, base) in self._template_keys
+                if banked:
                     self.transform_key((orbit,base))
                 first,size=self.slots[base]
                 canonical=slice(orbit*self.width+first,orbit*self.width+first+size)
                 if direction in ("primal_to_canonical","dual_from_canonical","functional_from_canonical"):
                     key=(orbit,base)
                     if key not in self._inverses:
-                        if self._transform_bank is None:
+                        if not banked:
                             inverse=np.linalg.inv(matrix)
                             if np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size)>LIMITS["mapping"]:
                                 raise ValueError("original entity moment inverse failed")
                         else:
                             inverse=self._transform_bank.inverse(matrix)
                         self._inverses[key]=inverse
-                    elif (self._transform_bank is not None and
+                    elif (banked and
                           self._inverses[key] is not self._transform_bank.inverse(matrix)):
                         raise ValueError("entity inverse is not the borrowed shared template")
                     matrix=self._inverses[key]
@@ -116,8 +146,6 @@ def collect_y_orbit_entities(space, floquet, cfg, axes, *, transform_bank=None):
         _entity_coordinates, _physical_entity_transform, _topology_data,
     )
     if transform_bank is not None:
-        from src.solvers.hcurl_canonical_vector_dolfinx import _entity_canonical_order
-        from src.constraints.high_order_floquet_trace import quadrilateral_face_info
         from src.solvers.y_orbit_transform_bank import TransformKey, YOrbitTransformBank
 
         if not isinstance(transform_bank, YOrbitTransformBank) or transform_bank.mapping_limit != LIMITS["mapping"]:
@@ -169,7 +197,9 @@ def collect_y_orbit_entities(space, floquet, cfg, axes, *, transform_bank=None):
         if (orbit, base) in records:
             raise ValueError("duplicate geometric entity orbit")
         records[(orbit, base)] = (np.asarray([row_of[int(v)] for v in ids]), canonical_to_native)
-        if transform_bank is not None:
+        if template_key is not None:
+            if transform_bank is None:
+                raise ValueError("a banked entity key requires its run-local owner")
             template_keys[(orbit, base)] = transform_bank.validate_borrow(template_key, canonical_to_native)
             # These values come from actual collection data, not TransformKey.
             # Tuples retain exact float64 values without another ndarray owner.
@@ -192,38 +222,14 @@ def collect_y_orbit_entities(space, floquet, cfg, axes, *, transform_bank=None):
             positions = np.asarray(dof_layout.entity_dofs(dimension, int(local_entity[0])))
             ids = np.asarray(space.dofmap.cell_dofs(cell))[positions]
             coords = _entity_coordinates(space, dimension, entity)
-            if transform_bank is None:
-                transform, _state = _physical_entity_transform(coords, dimension, cfg.nedelec_degree, tolerance)
-            else:
-                active = [int(value) in row_of for value in ids]
-                if not any(active):
-                    continue
-                if not all(active):
-                    raise ValueError("partly eliminated entity requires an explicit MPC block map")
-                _canonical_coords, permutation = _entity_canonical_order(coords, dimension, tolerance)
-                permutation = tuple(map(int, permutation))
-                if dimension == 1:
-                    if permutation not in ((0, 1), (1, 0)):
-                        raise ValueError("unknown actual edge reversal")
-                    state = ("edge_reversal", permutation != (0, 1))
-                    semantics = ("canonical_edge", "lexicographic_xyz", "basix_coefficient_v1")
-                else:
-                    state = ("face_D4", permutation, int(quadrilateral_face_info(permutation)))
-                    semantics = ("canonical_face", "axis_aligned_reference_q1", "basix_coefficient_v1")
-                key = TransformKey(basis_identity, dimension, (len(positions), len(positions)),
-                                   tuple(range(len(positions))), state, semantics)
-
-                def physical_builder():
-                    matrix, actual_semantics = _physical_entity_transform(
-                        coords, dimension, cfg.nedelec_degree, tolerance)
-                    if tuple(actual_semantics) != semantics:
-                        raise ValueError("physical coefficient semantics changed")
-                    return matrix
-
-                transform = transform_bank.matrix(key, physical_builder)
+            # V12 shares only exact internal cell blocks. Trace transforms keep
+            # the already-qualified geometry-aware legacy construction.
+            transform, _state = _physical_entity_transform(
+                coords, dimension, cfg.nedelec_degree, tolerance
+            )
             add_entity(ids, transform, coords, dimension,
-                       template_key=None if transform_bank is None else key,
-                       source_cell=cell, source_local_entity=int(local_entity[0]), source_positions=positions)
+                       source_cell=cell, source_local_entity=int(local_entity[0]),
+                       source_positions=positions)
     interior = np.asarray(space.element.basix_element.entity_dofs[3][0], dtype=np.int32)
     cell_dim = int(space.element.space_dimension)
     interior_channels = tuple(map(int, interior)) if transform_bank is not None else None
@@ -246,8 +252,12 @@ def collect_y_orbit_entities(space, floquet, cfg, axes, *, transform_bank=None):
         else:
             key = TransformKey(basis_identity, 3, (len(interior), len(interior)),
                                interior_channels, ("cell_info", int(cell_info[cell])),
-                               ("actual_element.Tt_apply", "cell_dim_block_size", "inverse_interior_block"))
-            transform = transform_bank.matrix(key, cell_builder)
+                               ("actual_element.Tt_apply", "full_cell_dimension", cell_dim,
+                                "inverse_of_raw_to_canonical_interior_block"))
+            transform = transform_bank.matrix(
+                key, cell_builder,
+                workspace_bytes=(cell_dim * cell_dim * 8 + 4 * len(interior) * len(interior) * 16),
+            )
         cell_coordinates = _entity_coordinates(space, 3, cell)
         add_entity(np.asarray(space.dofmap.cell_dofs(cell))[interior], transform,
                    cell_coordinates, 3, template_key=None if transform_bank is None else key,
@@ -1071,6 +1081,8 @@ def build_task40_v10_p6_reference_inverse(
     event: Callable[[str, Mapping[str, Any]], None] | None = None,
     identity_gate: Callable[[Mapping[str, Any], Mapping[str, Any]], None] | None = None,
     jit_options: Mapping[str, Any] | None = None,
+    share_transform_bank: bool = False,
+    target_full_storage_rows: int | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 full-reference inverse and all four live MUMPS factors."""
     from mpi4py import MPI
@@ -1100,8 +1112,17 @@ def build_task40_v10_p6_reference_inverse(
     ):
         raise ValueError("Task40 V10 reference builder requires the qualified serial p6 profile")
 
+    transform_bank = None
+    if share_transform_bank:
+        from .y_orbit_transform_bank import YOrbitTransformBank
+
+        transform_bank = YOrbitTransformBank(
+            mapping_limit=LIMITS["mapping"], allocation_gate=allocation_gate
+        )
     global_levels = None
     global_bundle = None
+    global_entities = None
+    full_layout = None
     factors = None
     sectors = []
     owner = {
@@ -1112,6 +1133,8 @@ def build_task40_v10_p6_reference_inverse(
         "sectors": sectors,
         "factors": None,
         "inverse": None,
+        "transform_bank": transform_bank,
+        "transform_bank_receipt": None,
     }
     try:
         regular_cfg = __import__("dataclasses").replace(
@@ -1161,6 +1184,7 @@ def build_task40_v10_p6_reference_inverse(
             global_levels["floquets"][6],
             regular_cfg,
             axes,
+            transform_bank=transform_bank,
         )
         full_layout = Task40V10FullLayout(
             global_entities,
@@ -1173,6 +1197,25 @@ def build_task40_v10_p6_reference_inverse(
                 "interior_rows": profile.global_interior_rows,
             },
         )
+        if (
+            target_full_storage_rows is not None
+            and int(target_full_storage_rows) != int(full_layout.full_rows)
+        ):
+            raise ValueError(
+                "actual target and full-reference storage rows differ: "
+                f"{target_full_storage_rows} != {full_layout.full_rows}"
+            )
+        owner["full_storage_dimensions"] = {
+            "target_full_storage_rows": (
+                None if target_full_storage_rows is None else int(target_full_storage_rows)
+            ),
+            "reference_full_storage_rows": int(full_layout.full_rows),
+            "reference_independent_rows": int(len(global_entities.independent)),
+            "target_reference_rows_match": (
+                target_full_storage_rows is not None
+                and int(target_full_storage_rows) == int(full_layout.full_rows)
+            ),
+        }
         global_h = np.asarray(
             [entry.normalization_h for entry in global_bundle["dtn_action"].carrier.entries],
             dtype=np.float64,
@@ -1253,6 +1296,7 @@ def build_task40_v10_p6_reference_inverse(
                 local_levels["floquets"][6],
                 local_cfg,
                 context.local_axes,
+                transform_bank=transform_bank,
             )
             transport = TwoCellNativeTransport(
                 global_entities,
@@ -1364,6 +1408,17 @@ def build_task40_v10_p6_reference_inverse(
             del compiled
         if set(all_q_matrices) != set(range(4)):
             raise ValueError("two p6 twist sectors did not produce all four global q matrices")
+        if transform_bank is not None:
+            transform_bank.seal()
+            named_arrays = global_entities.named_backing_arrays("global")
+            for sector_index, sector in enumerate(sectors):
+                named_arrays.update(
+                    sector["entities"].named_backing_arrays(f"sector{sector_index}")
+                )
+            receipt = transform_bank.receipt(named_arrays, stage="all_spaces_collected_pre_symbolic")
+            owner["transform_bank_receipt"] = receipt
+            if event is not None:
+                event("task40_v12_transform_bank_ready", receipt)
         expected_shapes = tuple(matrix.shape[0] for _q, matrix in sorted(all_q_matrices.items()))
         if expected_shapes != profile.augmented_rows_per_q:
             raise ValueError(
@@ -1417,6 +1472,18 @@ def build_task40_v10_p6_reference_inverse(
             event=event,
             expected_shapes=expected_shapes,
             profile=profile,
+            transform_bank=transform_bank,
+            inverse_borrowers={
+                "global": global_entities,
+                **{
+                    f"sector{index}": sector["entities"]
+                    for index, sector in enumerate(sectors)
+                },
+            },
+            full_storage_rows=int(full_layout.full_rows),
+            target_reference_rows_match=bool(
+                owner["full_storage_dimensions"]["target_reference_rows_match"]
+            ),
         )
         owner["factors"] = factors
         owner["inverse"] = CompleteTwoCellInverse(
@@ -1476,6 +1543,16 @@ def build_task40_v10_p6_reference_inverse(
             except Exception:
                 pass
         _destroy_task40_v10_levels(global_levels)
+        owner.pop("inverse", None)
+        owner.pop("full_layout", None)
+        owner.pop("global_entities", None)
+        for sector in sectors:
+            sector.pop("transport", None)
+            sector.pop("entities", None)
+        global_entities = None
+        full_layout = None
+        if transform_bank is not None:
+            transform_bank.close()
         raise
 
 
@@ -1514,8 +1591,15 @@ def destroy_task40_v10_p6_reference_inverse(owner: dict[str, Any]) -> None:
         from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
         destroy_same_mesh_physical_action(global_bundle)
     _destroy_task40_v10_levels(owner.pop("global_levels", None))
+    for sector in sectors:
+        sector.pop("transport", None)
+        sector.pop("entities", None)
     owner.pop("full_layout", None)
     owner.pop("global_entities", None)
     owner.pop("sector_audits", None)
     owner.pop("q_matrix_audits", None)
+    transform_bank = owner.pop("transform_bank", None)
+    owner.pop("transform_bank_receipt", None)
+    if transform_bank is not None:
+        transform_bank.close()
     owner.clear()

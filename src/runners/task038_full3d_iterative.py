@@ -69,6 +69,7 @@ def run_full3d_iterative(
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
             profile_identity=TASK40_V10_P6_REFERENCE_PROFILE,
+            share_transform_bank=True,
         )
 
     from src.io.physical_intermediate_profile import (
@@ -98,6 +99,7 @@ def run_full3d_iterative(
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
             profile_identity=profile,
+            share_transform_bank=True,
         )
 
     if profile == TASK40_V10_P4_CONTROL_PROFILE:
