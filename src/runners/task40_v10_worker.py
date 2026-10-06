@@ -19,6 +19,8 @@ from typing import Any, Mapping
 
 import numpy as np
 
+from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
+
 
 _REFERENCE_RESIDUAL_LIMIT = 1.0e-10
 _REGULAR_ACTION_LIMIT = 1.0e-11
@@ -883,6 +885,13 @@ def _regular_inverse_gate_facts(
     }
 
 
+def _regular_inverse_checks_schema(profile: Any) -> str:
+    """Select the established regular-inverse metadata schema by profile."""
+    if profile.name == TASK40_V10_P6_PROFILE.name:
+        return "task40extra.review_v10_p6_regular_inverse_checks.v1"
+    return "task40extra.review_v11_p6_regular_inverse_checks.v1"
+
+
 def _verify_regular_inverse(
     runtime: Any,
     reference: dict[str, Any],
@@ -1212,11 +1221,7 @@ def _verify_regular_inverse(
         runtime.sample(f"v10_regular_inverse_{name}_after")
 
     return {
-        "schema": (
-            "task40extra.review_v10_p6_regular_inverse_checks.v1"
-            if profile.name == TASK40_V10_P6_PROFILE.name
-            else "task40extra.review_v11_p6_regular_inverse_checks.v1"
-        ),
+        "schema": _regular_inverse_checks_schema(profile),
         "profile": profile.identity(),
         "cases": records,
         "case_count": len(records),

@@ -13,7 +13,11 @@ from src.runners.task40_v10_worker import (
     _regular_inverse_gate_facts,
     _save_packet,
 )
-from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
+from src.solvers.task40_v10_p6_periodic_profile import (
+    TASK40_V10_P6_PROFILE,
+    TASK40_V11_P6_GX560_PROFILE,
+    TASK40_V11_P6_GX784_PROFILE,
+)
 
 
 def _regular_inverse_gate_inputs():
@@ -58,6 +62,29 @@ def test_regular_inverse_equation_gate_is_distinct_from_action_gate():
     assert facts["passed"]
     assert facts["gates"]["original_regular_equation"]
     assert facts["gates"]["independent_sector_action_consistency"]
+
+
+@pytest.mark.parametrize(
+    ("profile", "expected_schema"),
+    (
+        (
+            TASK40_V10_P6_PROFILE,
+            "task40extra.review_v10_p6_regular_inverse_checks.v1",
+        ),
+        (
+            TASK40_V11_P6_GX560_PROFILE,
+            "task40extra.review_v11_p6_regular_inverse_checks.v1",
+        ),
+        (
+            TASK40_V11_P6_GX784_PROFILE,
+            "task40extra.review_v11_p6_regular_inverse_checks.v1",
+        ),
+    ),
+)
+def test_regular_inverse_metadata_schema_preserves_b0_and_gx_profiles(
+    profile, expected_schema
+):
+    assert task40_v10_worker._regular_inverse_checks_schema(profile) == expected_schema
 
 
 def test_regular_inverse_gate_failures_are_reported_independently():
