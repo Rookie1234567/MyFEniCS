@@ -25,8 +25,9 @@ def descriptor(role,*,scope=None):
         unknown='TOTAL_ENVELOPE',representation='E=exp(i*kappa.x)*u',MPC='unit envelope x/y',
         surface_quadrature_degree=47,independent_surface_reference_q=63)
     count=spec.get('complete_modes',532)
-    physical['boundary'].update(manual_m=[-11,11] if count==828 else [-9,9],
-        manual_n=[-4,4] if count==828 else [-3,3],complete_modes=count)
+    from src.solvers.phase_notch_hp_modes import finite_mode_ranges
+    m,n=finite_mode_ranges(count)
+    physical['boundary'].update(manual_m=[-m,m],manual_n=[-n,n],complete_modes=count)
     return physical,spec
 
 

@@ -11,15 +11,21 @@ from .scattering_anchor_checks import checked_arrays
 AMPLITUDES=('auxiliary_amplitude_total_projection','outgoing_amplitude','outgoing_amplitude_at_boundary')
 
 
+def finite_mode_ranges(count):
+    """The three preregistered finite inventories; never silently downgrade."""
+    try:return {532:(9,3),828:(11,4),1188:(13,5)}[count]
+    except (KeyError,TypeError) as error:raise ValueError('unknown finite mode inventory') from error
+
+
 def keyed_modes(payload,expected):
     rows=payload['orders'];planes=payload['reference_planes']
-    if len(rows)!=expected or expected not in (532,828):raise ValueError('full finite inventory count')
+    if len(rows)!=expected:raise ValueError('full finite inventory count')
     indexed={}
     for row in rows:
         side=row['side'];key=(side,int(row['m']),int(row['n']),row['polarization'],float(planes[side+'_z']))
         if side not in ('top','bottom') or row['polarization'] not in ('s','p') or key in indexed:raise ValueError('physical mode key duplication')
         indexed[key]=row
-    m,n=(9,3) if expected==532 else (11,4)
+    m,n=finite_mode_ranges(expected)
     full={(side,i,j,pol,float(planes[side+'_z'])) for side in ('top','bottom') for i in range(-m,m+1) for j in range(-n,n+1) for pol in ('s','p')}
     if set(indexed)!=full:raise ValueError('manual complete physical mode key inventory')
     return indexed
@@ -38,11 +44,12 @@ def compare_payloads(first,second,expected):
     out.update(mode_count=expected,mode_power_max_absolute=float(np.max(np.abs(y-x))),
         pairing='side,m,n,polarization,physical reference plane; independent of auxiliary index')
     vectors.update(power_first=x,power_second=y,physical_keys_json_utf8=np.frombuffer(json.dumps(keys).encode(),np.uint8))
-    if expected==828:
-        common=np.asarray([abs(k[1])<=9 and abs(k[2])<=3 for k in keys]);added=~common
-        if common.sum()!=532 or added.sum()!=296:raise ValueError('532/296 inventory partition')
+    if expected in (828,1188):
+        old=532 if expected==828 else 828;m,n=finite_mode_ranges(old)
+        common=np.asarray([abs(k[1])<=m and abs(k[2])<=n for k in keys]);added=~common
+        if common.sum()!=old or added.sum()!=expected-old:raise ValueError('finite inventory partition')
         out['partitions']={}
-        for label,mask in (('common532',common),('added296',added)):
+        for label,mask in ((f'common{old}',common),(f'added{expected-old}',added)):
             raw=vectors['outgoing_amplitude_at_boundary_first'];candidate=vectors['outgoing_amplitude_at_boundary_second']
             out['partitions'][label]=dict(count=int(mask.sum()),physical_amplitude_relative=relative(candidate[mask]-raw[mask],raw[mask]),
                 physical_amplitude_difference_norm=float(np.linalg.norm(candidate[mask]-raw[mask])),reference_norm=float(np.linalg.norm(raw[mask])),
@@ -63,14 +70,15 @@ def project_saved_parent(parent,bundle,geometry,folder,journal):
     from petsc4py import PETSc
     from .dtn_port_3d import _port_power_metrics,_write_port_outputs
     cfg=bundle['cfg'];values=checked_arrays(parent['arrays'])
-    if len(bundle['modes'])!=828 or parent['case_spec']['complete_modes']!=532:raise ValueError('conditional finite mode projection identity')
+    new_count=len(bundle['modes']);old_count=parent['case_spec']['complete_modes']
+    if (old_count,new_count) not in ((532,828),(828,1188)):raise ValueError('conditional finite mode projection identity')
     for key in geometry:
         if not np.array_equal(geometry[key],values[key]):raise ValueError('mode projection same mesh '+key)
     if not np.array_equal(values['kappa'],bundle['kappa']):raise ValueError('mode projection physical carrier')
-    sub=Path(folder)/'parent_projected828';sub.mkdir(exist_ok=False)
+    sub=Path(folder)/f'parent_projected{new_count}';sub.mkdir(exist_ok=False)
     source=PETSc.Vec().createSeq(len(values['u_storage']),comm=PETSc.COMM_SELF);source.array[:]=values['u_storage']
     try:
-        with journal.measured('parent_actual_all828_surface_projection'):
+        with journal.measured(f'parent_actual_all{new_count}_surface_projection'):
             port=bundle['dtn_action'].recover_auxiliary(source)
             pm=_port_power_metrics(cfg,list(bundle['modes']),port,list(bundle['incident_projections']))
             _write_port_outputs(sub,cfg,list(bundle['modes']),port,list(bundle['incident_projections']),pm,bundle['setup']['mesh'].comm)
@@ -78,7 +86,7 @@ def project_saved_parent(parent,bundle,geometry,folder,journal):
     finally:source.destroy()
     receipt=save_arrays(sub/'projected_ports.npz',port=port)
     old=json.loads(Path(parent['output']['fields']['path']).with_name('port_power.json').read_text())
-    new=json.loads((sub/'port_power.json').read_text());oi=keyed_modes(old,532);ni=keyed_modes(new,828)
+    new=json.loads((sub/'port_power.json').read_text());oi=keyed_modes(old,old_count);ni=keyed_modes(new,new_count)
     x=np.asarray([complex(*oi[k]['outgoing_amplitude_at_boundary']) for k in sorted(oi)])
     y=np.asarray([complex(*ni[k]['outgoing_amplitude_at_boundary']) for k in sorted(oi)])
     defect=relative(y-x,x)
@@ -91,5 +99,6 @@ def project_saved_parent(parent,bundle,geometry,folder,journal):
     projected['mode_power_path']=str(sub/'port_power.json')
     projected['finite_mode_projection']=dict(parent_array_sha256=parent['arrays']['sha256'],arrays=receipt,
         original_published_532_unchanged=True,common532_operation_relative=defect,added296_actual_projection_norm=float(np.linalg.norm(extra)),
-        count=828,source=journal.source_state)
+        original_count=old_count,added_count=new_count-old_count,common_operation_relative=defect,
+        added_actual_projection_norm=float(np.linalg.norm(extra)),count=new_count,source=journal.source_state)
     return projected

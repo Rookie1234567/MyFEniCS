@@ -89,7 +89,7 @@ def saved_checks(states,comparisons,*,scope=None):
             full_cross_terms=True,source_array_sha256=p['arrays']['sha256'])
         if qdef>1e-10:raise ValueError('common quadrature operation gate')
         from src.solvers.phase_notch_hp import parent
-        left,right=name.split('_');first=states['M']['projected_parent828'] if right=='M' else parent(left) if left=='B0' else states[left];second=states[right]
+        left,right=name.split('_');first=states['M']['projected_parent828'] if right=='M' else states[right]['projected_parent828'] if getattr(scope,'NAMESPACE',None)=='v54' and (left,right) in (('B','R7'),('P','R6'),('R7','C')) else parent(left) if left=='B0' else states[left];second=states[right]
         payloads=[json.loads(Path(s.get('mode_power_path',Path(s['output']['fields']['path']).with_name('port_power.json'))).read_text()) for s in (first,second)]
         modal,_=compare_payloads(*payloads,len(payloads[0]['orders']))
         for k in ('outgoing_amplitude_at_boundary_relative','mode_power_max_absolute'):
@@ -116,6 +116,7 @@ def collect(*,scope=None):
     pointers={r:json.loads((ARTIFACT/(r+'.json')).read_text()) for r in STAGES if (ARTIFACT/(r+'.json')).exists()}
     states={r:stage(r) for r in pointers};costs=[];sources={};arrays=[];identities=[];lifetimes=[]
     if label=='v53':states.update({r:scope.parent(r) for r in ('H','P')})
+    if label=='v54':states.update({r:scope.parent(r) for r in ('P','B','A')})
     for run in window.ledger()['runs']:
         directory=Path(run['folder']);manifest=json.loads((directory/'run_manifest.json').read_text());summary=directory/('run_summary.json' if (directory/'run_summary.json').exists() else 'summary.json')
         s=json.loads(summary.read_text());role=run['role'];worker=ARTIFACT/directory.name

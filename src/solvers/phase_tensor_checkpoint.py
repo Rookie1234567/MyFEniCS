@@ -7,9 +7,9 @@ from .scattering_anchor import save_arrays
 
 
 class RawTensorCheckpoint:
-    def __init__(self,folder,bundle,journal):
+    def __init__(self,folder,bundle,journal,*,reader=None):
         self.folder=Path(folder);self.folder.mkdir(exist_ok=False)
-        self.bundle=bundle;self.journal=journal;self.classes=[];self.failures=[];self.bykey={}
+        self.bundle=bundle;self.journal=journal;self.classes=[];self.failures=[];self.bykey={};self.reader=reader
 
     @staticmethod
     def key(coordinates,tag):
@@ -17,9 +17,16 @@ class RawTensorCheckpoint:
 
     def __call__(self,form,kernels,coordinates,*,tag,dimension):
         from .hcurl_assembly_time_condensation import _tabulate_raw_tensor_class
+        key=self.key(coordinates,tag)
+        if self.reader is not None:
+            hit=self.reader.load(form,coordinates,tag=tag,dimension=dimension)
+            if hit is not None:
+                tensor,identity=hit
+                self.classes.append(identity);self.bykey[key]=len(self.classes)-1
+                write_json(self.folder/'manifest.json',self.record())
+                return tensor
         with self.journal.measured('raw_exact_tensor_class_'+str(len(self.classes)+len(self.failures))):
             tensor=_tabulate_raw_tensor_class(form,kernels,coordinates,tag=tag,dimension=dimension)
-        key=self.key(coordinates,tag)
         try:
             with self.journal.measured('raw_tensor_atomic_save_and_reopen'):
                 receipt=save_arrays(self.folder/(key+'.npz'),tensor=tensor,coordinates=coordinates,kappa=self.bundle['kappa'])
@@ -60,5 +67,6 @@ class RawTensorCheckpoint:
     def record(self):
         return dict(producer=self.journal.source_state,classes=self.classes,persistence_failures=self.failures,cell_layout=getattr(self,'layout',None),
             payload='full original raw Ckappa tensor; not Schur, matrix or factor',
-            stored_bytes=sum(Path(x['arrays']['path']).stat().st_size for x in self.classes),
+            stored_bytes=sum(Path(x['arrays']['path']).stat().st_size for x in self.classes if not x.get('reused_parent')),
+            readonly_reuse=None if self.reader is None else self.reader.record(),
             manifest_sha256_dependencies='per-class full producer hashes, actual basis/form, kappa, dtype and coordinates')

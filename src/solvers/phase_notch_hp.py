@@ -29,15 +29,16 @@ def configured_setup(spec,journal,*,scope=None):
         old=base['axes_nm'][key]
         axes[key]=tuple(l+(r-l)*j/factor for l,r in zip(old[:-1],old[1:]) for j in range(factor))+(old[-1],)
     cfg=old_configuration('NOTCH',spec['degree'],'ORIGINAL')
+    from .phase_notch_hp_modes import finite_mode_ranges
+    m,n=finite_mode_ranges(spec['complete_modes'])
     cfg=replace(cfg,case_name='task042_'+label+'_notch_p'+str(spec['degree'])+'_'+''.join(map(str,spec['splits']))+'_m'+str(spec['complete_modes']),
         mesh_axis_x_values=axes['x'],mesh_axis_y_values=axes['y'],mesh_axis_z_values=axes['z'],
         mesh_axis_cell_counts=tuple(len(axes[a])-1 for a in ('x','y','z')),
         mesh_plan_id='task042.'+label+'.fixed',mesh_axis_z_profile='task042.'+label+'.fixed',
-        diffraction_order_max_m=11 if spec['complete_modes']==828 else 9,
-        diffraction_order_max_n=4 if spec['complete_modes']==828 else 3)
+        diffraction_order_max_m=m,diffraction_order_max_n=n)
     geo={**base,'notch_expected_changed_cells':2*int(np.prod(spec['splits']))}
     cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo,
-        finite_authority_degree7=scope is not None and scope.NAMESPACE=='v53' and spec['degree']==7)
+        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54') and spec['degree']==7)
     return cfg,setup,geometry
 
 
@@ -86,7 +87,8 @@ def solve_case(role,folder,journal,*,scope=None):
         checkpoint=None
         if scope is not None:
             from .phase_tensor_checkpoint import RawTensorCheckpoint
-            checkpoint=RawTensorCheckpoint(folder/'raw_tensor',bundle,journal)
+            reader=scope.raw_tensor_reader(role,bundle,journal) if hasattr(scope,'raw_tensor_reader') else None
+            checkpoint=RawTensorCheckpoint(folder/'raw_tensor',bundle,journal,reader=reader)
         system,inverse=condense(bundle,journal,expected=(cap['native'],cap['trace'],cap['internal']),raw_tensor_provider=checkpoint)
         if checkpoint is not None:checkpoint.finish(setup,spec['degree'])
         write_json(folder/'build_audit.json',system.build_audit)
@@ -143,6 +145,8 @@ def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,fol
     _,recovery,rv=native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal)
     rec=save_arrays(folder/'recovery.npz',**rv);output=physical_output(bundle,u,port,geo,folder,journal)
     projected=None
+    if scope is not None and hasattr(scope,'project_mode_parent'):
+        projected=scope.project_mode_parent(role,bundle,rhs,geo,folder,journal)
     if role=='M':
         from .phase_notch_hp_modes import project_saved_parent
         live=window if scope is None else scope.window
