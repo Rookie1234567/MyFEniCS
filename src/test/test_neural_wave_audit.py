@@ -20,8 +20,8 @@ def test_one_original_window_retains_full_field_and_save_reserve():
     campaign = {"deadline_monotonic": 172800}
     for route in NAMES:
         assert stage_deadline({"role": route}, allocation, campaign) == (
-            172800 - 10800,
-            10800,
+            172800 - 5400,
+            5400,
         )
     assert stage_deadline({"role": "verify"}, allocation, campaign) == (
         172800 - 1800,

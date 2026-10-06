@@ -45,7 +45,9 @@ def stage_deadline(spec, allocation, campaign):
     # Both routes receive the same common cost node. Subsequent continuation
     # must also leave the FE rebuild/checker and final delivery within the one
     # original 48h window; this is no new window or solver success condition.
-    reserve = 10800 if training else 1800
+    # Reserve 3600s for independent reconstruction/physics plus the mandatory
+    # final 1800s publication/save margin. The original campaign never resets.
+    reserve = 5400 if training else 1800
     return min(
         allocation["deadline_monotonic"], campaign["deadline_monotonic"] - reserve
     ), reserve

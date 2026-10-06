@@ -2240,7 +2240,7 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 张量收缩见证 | 原forward/VJP2.3542s，张量5.8718s另有0.1620s建立，配对约1e-15 | 正确但更慢，正式两路线选择原稀疏完整矩；不是缓存/NN收益 |
 | 5nm解析校准 | 原空气波1.90149e-16；p3 E相对1.96187e-3、scaled-curl/H1.18467e-2 | 连续离散未资格化；固定同p3离散求解仍按Review V29评分 |
 | 未缩放0.7nm校准 | 原空气波1.34419e-15；p3 E1.03306、curl/H0.953036 | 不在此不合格空间训练；不是条件长度×0.14三维pilot |
-| 两路线及联合场/功率门 | df47bf43407c17de211ce8b80bcf027cf65a9986学习路线770列、native0.4570360713，连续q真实更新；历史512列秩512、正交缺陷2.86e-14保留；原作用/投影已配对，新有界候选分批真实资格通过后续算；固定控制/独立完整验收串行推进 | 联合Gate和同精度20%神经资源收益尚未判定；旧原始SIGINT、所有失败和费用保留 |
+| 两路线及联合场/功率门 | 共同约18h节点：e6aafc6583aeb8aeebb32a8359dab662ba14ca66神经2,563列、native0.342678708；固定控制2,160列、native0.423761124。均实际独立运行，无标签/全局Gram/Maxwell因子；原512/770状态及工程暂停保留，随后神经继续原窗 | 联合Gate未达到；完整场/功率及同精度20%神经收益待独立验收，不以残差比较授收益；[原节点/成本](task042extra_feinn_5nm/outcomes/records/common_cost_node_v30.json) |
 | 资源 | S0采样同时树峰2634264576B，swap0；其它资格/校准原值见记录；唯一172800s总窗 | 完整研发费用和案例冷时间分列；不重置旧成本 |
 
 [新机制及策略](task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md)、[S0及定向资格](task042extra_feinn_5nm/outcomes/records/implementation_qualification_v30.json)、[实际校准/负成本](task042extra_feinn_5nm/outcomes/records/analytic_and_moment_cost_v30.json)。这是进行中总账，终态在实际联合Gate或明确失败出口后补记。原50×25×140nm、λ0.7nm完整三维FE、decimal2e12B、swap/OOC0、172800s及原精度门仍未达成；FULL_TARGET_NOT_QUALIFIED，旧FEINN主求解器及旧NN贡献状态保留。

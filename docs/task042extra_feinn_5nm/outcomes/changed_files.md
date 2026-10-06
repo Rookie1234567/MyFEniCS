@@ -1,3 +1,7 @@
+# V30追加：实际网络验收与共同成本边界
+
+正式后处理改为消费独立网络点值经原完整矩生成的c；原重建核及八文件训练资格链不变。新增严格零重建小组件/12fixture仅作研究对照，性能多项更差而未启用。V30薄launcher以原唯一deadline规划5400s完整验收/发布预留，受影响计时回归通过，不改普通默认。当前导航、进度和总账更新神经2,563/控制2,160共同节点；旧770列、失败、负成本和UNKNOWN全部保留，继续同一研究批次，不交棒。[原量及source](records/common_cost_node_v30.json)、[检查](records/frozen_field_qualification_v30.json)。
+
 # V30追加：等价候选分批及完整770列保全
 
 新增src/solvers/neural_wave_screening.py与其真实保存态资格模块、相应小fixture；原greedy仅把同序候选的数值计算有界分批，原SVD/QR/完整A/接受场不变。新stage明确注册于io/worker/campaign并绑定完整数值源码链，成本负宽度留原路径，不改普通默认。README/summary/本支progress与模型总账更新真实770列/投影资格，全部旧历史不改。该优化只减少重复工作，不是NN增量、PC或新物理。[实际保全与source](records/engineering_pause_3_v30.json)、[原配对](records/projection_qualification_v30.json)、[测试](records/screening_targeted_tests_v30.json)。

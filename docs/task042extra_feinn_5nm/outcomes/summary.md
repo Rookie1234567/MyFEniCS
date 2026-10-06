@@ -2,8 +2,8 @@
 
 | 当前范围 / 实测身份 | 原结果及边界 |
 | --- | --- |
-| [Review V29](../review_report_v29.md)，本支只做神经 | S0全矩/梯度、S1解析校准完成；S2实际连续方向学习，固定控制及完整验收串行推进；联合Gate尚未达到 |
-| 完整770列 / df47bf43407c17de211ce8b80bcf027cf65a9986 | native0.4570360713，完整边界保全；方向和幅值真实学习，未读取参考；[原状态及成本](records/engineering_pause_3_v30.json) |
+| [Review V29](../review_report_v29.md)，本支只做神经 | S0全矩/梯度、S1解析校准完成；S2实际连续方向学习，两条路线均实际运行，神经从共同节点继续；完整验收串行推进，联合Gate尚未达到 |
+| 共同成本节点 / e6aafc6583aeb8aeebb32a8359dab662ba14ca66 | 神经2,563列native0.342678708、固定控制2,160列native0.423761124，均远高于1e-6；完整c/r/模型/QR保全，参考未读；[节点、原量与全部费用](records/common_cost_node_v30.json) |
 | 64/256/512无标签投影资格 / 同source | 原作用、两遍投影、完整梯度约1e-14或更低；差分约1e-9；每次完整调用含setup见证比1.42–2.38，不是NN或整案成本收益；[原配对](records/projection_qualification_v30.json) |
 | 新独立候选分批 / pure逻辑 | 20定向测试通过，实际M5完整proposal与成本资格已通过，四宽度均准入；完整场/原残差配对≤6.82e-14，不是完整求解；[测试](records/screening_targeted_tests_v30.json)、[原配对](records/screening_qualification_v30.json) |
 | 原M5联合/0.7缩小pilot/全目标 | 待完整原方程、场、功率和求积联合验收 / 条件未触发未运行 / 原尺寸0.7nm、decimal2e12B及完整172800s未资格化 |

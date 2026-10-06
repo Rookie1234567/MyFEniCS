@@ -118,7 +118,8 @@ def verify(design, action, packet, artifact, marker):
             candidate_source_sha=boundary["binding"]["source_sha"],
             committed_boundary_sha256=digest(directory / "basis/committed.json"),
         )
-        states[name] = saved
+        # Physics consumes the independently evaluated network, not producer c.
+        states[name] = c
         atomic_npz(artifact / (stage + "_rebuild.npz"), c30=c, c60=higher, saved=saved)
     # Only here, after independently frozen/reconstructed models, is the V1
     # label loaded. This function is never imported by a training stage.

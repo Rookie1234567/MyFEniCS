@@ -1,3 +1,7 @@
+# V30追加：实际网络重建与计时保全
+
+新增12纯fixture通过，全宽度1/2/4/8、完整边/面/内部及方向/owner、严格零与任意小非零、模型重建、损坏状态/覆盖、真实复数writer重开；另1条受影响原窗口计时回归、Ruff/compile通过。实际冻结两候选q30/q60各3cell点值新/原配对差为0，但多项成本更差，原独立重建仍选择。科学Gate尚待全域独立进程，未将小fixture或抽样当完整场通过。2GiB监督峰201,424,896B/40.836549s、自身swap0；轻计时跟进峰70,987,776B/2.299511s，复用本准备阶段PSI收据而不声称新增60s观察。[原绑定及全部范围](records/frozen_field_qualification_v30.json)。
+
 # V30追加：有界独立候选分批资格进行中
 
 20项受影响pure测试实际通过、零跳过，包含1/2/4/8宽度、重复/相关列、完整native接受场、无效投影、原复数梯度/QR/schema/标签隔离；实际独立60s PSI、树峰114233344B、自身swap0。健康旧35项及昂贵FE资格不重跑。新真实M5完整proposal配对随后运行，不以fixture代替物理或求解Gate。[绑定源/JUnit](records/screening_targeted_tests_v30.json)。Ruff初始F401已最小修正；Ruff/compileall/diff最终通过。后续正式source与本文件HEAD分列。
