@@ -46,7 +46,7 @@ def implementation_hashes():
         'src/solvers/phase_hp_completion_scope.py','src/solvers/phase_hp_completion.py',
         'src/solvers/phase_evaluation_cache.py','src/solvers/phase_tensor_checkpoint.py',
         'src/test/test_phase_hp_completion.py','benchmarks/qualify_phase_hp_completion.py',
-        'benchmarks/collect_phase_hp_completion.py']
+        'benchmarks/collect_phase_hp_completion.py','src/runners/diagnostic_storage.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
 
 

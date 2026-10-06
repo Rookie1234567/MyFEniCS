@@ -13,6 +13,32 @@ from src.solvers.phase_evaluation_cache import ExactTabulations
 
 
 class CompletionTests(unittest.TestCase):
+    def test_storage_inventory_atomic_rename_preserves_hard_errors(self):
+        from src.runners.diagnostic_storage import inventory_paths
+        with tempfile.TemporaryDirectory(dir=scope.window.TMP) as d:
+            root=Path(d);temporary=root/'.receipt.jsontrial';final=root/'receipt.json'
+            kept=root/'kept';kept.write_bytes(b'kept');temporary.write_bytes(b'committed')
+            original=Path.stat;renames=[]
+            def rename_during_stat(path,*args,**kwargs):
+                if path==temporary and not renames:
+                    renames.append(True);temporary.replace(final)
+                    raise FileNotFoundError(str(temporary))
+                return original(path,*args,**kwargs)
+            with patch.object(Path,'stat',rename_during_stat):
+                sampled=inventory_paths((root,),root)
+            self.assertEqual(len(renames),1)
+            self.assertEqual(sampled['files']['kept'],4)
+            settled=inventory_paths((root,final),root)
+            self.assertEqual(settled['bytes'],13);self.assertEqual(settled['file_count'],2)
+            def denied(path,*args,**kwargs):
+                if path==final:raise PermissionError('injected live inventory permission failure')
+                return original(path,*args,**kwargs)
+            with patch.object(Path,'stat',denied),self.assertRaises(PermissionError):
+                inventory_paths((root,),root)
+            inside=root/'inside';inside.mkdir()
+            with self.assertRaisesRegex(ValueError,'escapes canonical worktree'):
+                inventory_paths((final,),inside)
+
     def test_old_hp_scalar_planning_and_real_namespace(self):
         p=scope.plan_record();old=json.loads((scope.ROOT/p['old_hp_symbolic_record']).read_text())
         self.assertFalse(numeric_plan(old['tree']['rss_bytes'],old['info'])['admitted'])

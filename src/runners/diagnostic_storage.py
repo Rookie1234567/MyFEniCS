@@ -6,6 +6,7 @@ It reads no array or factor payload and does not remove historical evidence.
 import re
 import shutil
 from pathlib import Path
+from stat import S_ISREG
 
 NEW_LIMIT = 32 * 2**20
 CUMULATIVE_LIMIT = 128 * 2**20
@@ -56,12 +57,19 @@ def inventory_paths(paths, root):
         entry = Path(entry)
         candidates = entry.rglob('*') if entry.is_dir() else (entry,)
         for p in candidates:
-            if not p.is_file():
+            try:
+                canonical = p.resolve()
+                info = canonical.stat()
+            except FileNotFoundError:
+                # Atomic writers can rename a listed temporary file before
+                # stat. The next sample inventories the committed name.
+                # Permission and other I/O failures must still stop the guard.
                 continue
-            canonical = p.resolve()
+            if not S_ISREG(info.st_mode):
+                continue
             if not canonical.is_relative_to(root):
                 raise ValueError('storage scope escapes canonical worktree')
-            files[str(canonical.relative_to(root))] = canonical.stat().st_size
+            files[str(canonical.relative_to(root))] = info.st_size
     return dict(bytes=sum(files.values()), file_count=len(files),
                 files=files, deduplication='normalized absolute filename')
 
