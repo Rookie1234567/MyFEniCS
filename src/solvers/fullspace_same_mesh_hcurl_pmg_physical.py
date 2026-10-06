@@ -220,8 +220,8 @@ def build_same_mesh_physical_action(
             for mode in modes
         )
         return {
+            "dtn_phase_gauge": dtn_phase_gauge,
             **({
-                "dtn_phase_gauge": dtn_phase_gauge,
                 "physical_generator_manifest_sha256": mode_sha,
                 "assembly_mode_manifest_sha256": carrier.mode_manifest_sha256,
                 "assembly_context_sha256": carrier.assembly_context_sha256,
@@ -525,6 +525,7 @@ def recover_p0_outputs(
     from ..postprocessing.postprocess_3d import save_airbox_3d_fields
     from ..postprocessing.rta_3d import compute_volume_absorption_3d
     from .dtn_port_3d import _port_power_metrics
+    from .dtn_boundary_phase_gauge import GLOBAL_Z, validate_phase_gauge
     from ..common.modes_3d import incident_power_3d
 
     setup = bundle["setup"]
@@ -540,11 +541,13 @@ def recover_p0_outputs(
         recovered_auxiliary = bundle["dtn_action"].recover_auxiliary(solution)
         aux = np.asarray(recovered_auxiliary, dtype=np.complex128)
         del recovered_auxiliary
+        dtn_phase_gauge = validate_phase_gauge(bundle.get("dtn_phase_gauge", GLOBAL_Z))
         port_metrics = _port_power_metrics(
             bundle["cfg"],
             list(bundle["modes"]),
             aux,
             list(bundle["incident_projections"]),
+            dtn_phase_gauge=dtn_phase_gauge,
         )
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -553,7 +556,8 @@ def recover_p0_outputs(
             from .dtn_port_3d import _write_port_outputs
 
             _write_port_outputs(output_dir, bundle['cfg'], list(bundle['modes']), aux,
-                list(bundle['incident_projections']), port_metrics, setup['mesh_data'].mesh.comm)
+                list(bundle['incident_projections']), port_metrics, setup['mesh_data'].mesh.comm,
+                dtn_phase_gauge=dtn_phase_gauge)
         field_export = save_airbox_3d_fields(
             setup["mesh_data"], bundle["cfg"], field, output_dir,
             jit_options=jit_options,
@@ -576,6 +580,7 @@ def recover_p0_outputs(
             "electric_finite": bool(np.all(np.isfinite(field.x.array))),
             "auxiliary_finite": bool(np.all(np.isfinite(aux))),
             "auxiliary": aux,
+            "dtn_phase_gauge": dtn_phase_gauge,
             "port_metrics": port_metrics,
             "volume_metrics": volume_metrics,
             "diffraction_metrics": diffraction_metrics,

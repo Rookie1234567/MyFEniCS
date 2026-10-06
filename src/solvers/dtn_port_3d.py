@@ -2513,21 +2513,83 @@ def _write_port_outputs(
     incident_projections: list[complex],
     metrics: dict[str, Any],
     comm: MPI.Intracomm,
+    *,
+    dtn_phase_gauge: str = "global_z",
 ) -> None:
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        GLOBAL_Z,
+        PhaseGaugeConversionError,
+        boundary_mode_power_from_solver,
+        global_amplitudes_from_solver,
+        validate_phase_gauge,
+    )
+
+    dtn_phase_gauge = validate_phase_gauge(dtn_phase_gauge)
+    if metrics.get("dtn_phase_gauge", GLOBAL_Z) != dtn_phase_gauge:
+        raise ValueError("port output writer and power metrics use different phase gauges")
+
+    def global_optional(value: complex, mode: PortMode3D) -> tuple[complex | None, str | None]:
+        try:
+            converted = global_amplitudes_from_solver(
+                np.asarray([value], dtype=np.complex128), (mode,), cfg, dtn_phase_gauge
+            )
+        except PhaseGaugeConversionError as exc:
+            return None, exc.reason
+        return complex(converted[0]), None
+
+    def finite_or_none(value: complex) -> complex | None:
+        number = complex(value)
+        if not np.isfinite((number.real, number.imag)).all():
+            return None
+        return number
+
     rows: list[dict[str, Any]] = []
     for idx, (mode, aux_value, inc_proj) in enumerate(
         zip(modes, aux_values, incident_projections)
     ):
+        solver_total = complex(aux_value)
+        solver_incident = complex(inc_proj)
         outgoing_amplitude = _outgoing_projection(
-            complex(aux_value),
-            complex(inc_proj),
+            solver_total,
+            solver_incident,
             mode.side,
         )
         power_carrying = _mode_carries_outward_power(mode)
-        modal_power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude)
+        modal_power = boundary_mode_power_from_solver(
+            mode, cfg, outgoing_amplitude, dtn_phase_gauge
+        )
         power = modal_power / metrics["incident_power_code_units"]
         direction = "outgoing_up" if mode.side == "top" else "outgoing_down"
         medium = "air" if mode.side == "top" else "substrate"
+        legacy_global_total, total_failure = global_optional(solver_total, mode)
+        legacy_global_incident, incident_failure = global_optional(solver_incident, mode)
+        legacy_global_outgoing, outgoing_failure = global_optional(outgoing_amplitude, mode)
+        phase = _mode_boundary_phase(mode, cfg)
+        phase_finite = bool(np.isfinite((phase.real, phase.imag)).all() and phase != 0)
+        if dtn_phase_gauge == BOUNDARY_PLANE:
+            physical_boundary_total = solver_total
+            physical_boundary_incident = solver_incident
+            physical_boundary_outgoing = outgoing_amplitude
+            serialized_phase = phase if phase_finite else None
+        else:
+            physical_boundary_total = finite_or_none(solver_total * phase)
+            physical_boundary_incident = finite_or_none(solver_incident * phase)
+            physical_boundary_outgoing = finite_or_none(outgoing_amplitude * phase)
+            serialized_phase = phase
+        failures = {
+            key: reason
+            for key, reason in (
+                ("total", total_failure),
+                ("incident", incident_failure),
+                ("outgoing", outgoing_failure),
+            )
+            if reason is not None
+        }
+        global_output_representable = not failures
+        if dtn_phase_gauge == BOUNDARY_PLANE and not phase_finite:
+            failures["boundary_phase"] = "physical boundary phase is zero or nonfinite; optional global conversion is unavailable"
+            global_output_representable = False
         rows.append(
             {
                 "auxiliary_index": idx,
@@ -2548,12 +2610,22 @@ def _write_port_outputs(
                 "power_carrying": power_carrying,
                 "rayleigh_warning": mode.rayleigh_warning,
                 "refractive_index": mode.refractive_index,
-                "auxiliary_amplitude_total_projection": complex(aux_value),
-                "incident_projection": complex(inc_proj),
-                "outgoing_amplitude": outgoing_amplitude,
-                "boundary_phase": _mode_boundary_phase(mode, cfg),
-                "outgoing_amplitude_at_boundary": outgoing_amplitude
-                * _mode_boundary_phase(mode, cfg),
+                "dtn_phase_gauge": dtn_phase_gauge,
+                "solver_amplitude_coordinate": dtn_phase_gauge,
+                "physical_boundary_amplitude_coordinate": BOUNDARY_PLANE,
+                "solver_auxiliary_amplitude_total_projection": solver_total,
+                "solver_incident_projection": solver_incident,
+                "solver_outgoing_amplitude": outgoing_amplitude,
+                "physical_boundary_total_amplitude": physical_boundary_total,
+                "physical_boundary_incident_amplitude": physical_boundary_incident,
+                "physical_boundary_outgoing_amplitude": physical_boundary_outgoing,
+                "auxiliary_amplitude_total_projection": legacy_global_total,
+                "incident_projection": legacy_global_incident,
+                "outgoing_amplitude": legacy_global_outgoing,
+                "boundary_phase": serialized_phase,
+                "outgoing_amplitude_at_boundary": physical_boundary_outgoing,
+                "global_output_representable": global_output_representable,
+                "global_output_failure_reason": failures or None,
                 "modal_power_code_units": float(modal_power),
                 "power_ratio": float(power),
                 "power_source": DTN_PORT_MODAL_POWER_SOURCE,
@@ -2568,6 +2640,10 @@ def _write_port_outputs(
         "method": "port",
         "role": "primary",
         "status": "ok",
+        "dtn_phase_gauge": dtn_phase_gauge,
+        "solver_amplitude_coordinate": dtn_phase_gauge,
+        "physical_boundary_amplitude_coordinate": BOUNDARY_PLANE,
+        "legacy_amplitude_field_coordinate": GLOBAL_Z,
         "power_source": DTN_PORT_MODAL_POWER_SOURCE,
         "reference": DTN_PORT_MODAL_REFERENCE,
         "reference_planes": {
@@ -2597,6 +2673,12 @@ def _write_port_outputs(
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy,
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly,
         "modal_amplitude_convention": metrics["dtn_port_modal_amplitude_convention"],
+        "amplitude_field_semantics": {
+            "solver_*": "all solver-coordinate coefficients; top outgoing subtracts incident once",
+            "physical_boundary_*": "coefficients multiplying mode vectors on the physical finite port plane",
+            "auxiliary_amplitude_total_projection/incident_projection/outgoing_amplitude": "legacy global-z fields; null when conversion is not representable",
+            "outgoing_amplitude_at_boundary": "physical boundary-plane outgoing coefficient",
+        },
         "orders": rows,
         "note": metrics.get("dtn_port_power_metric_note"),
     }
@@ -2633,42 +2715,116 @@ def _write_port_outputs(
         )
         writer.writeheader()
         writer.writerows(csv_rows)
-    amplitudes = [
-        {
-            "auxiliary_index": idx,
-            "side": mode.side,
-            "direction": "outgoing_up" if mode.side == "top" else "outgoing_down",
-            "medium": "air" if mode.side == "top" else "substrate",
-            "m": mode.m,
-            "n": mode.n,
-            "order_m": mode.m,
-            "order_n": mode.n,
-            "polarization": mode.polarization,
-            "beta": mode.beta,
-            "kz": mode.vertical_sign * mode.beta,
-            "propagating": mode.propagating,
-            "auxiliary_amplitude_total_projection": complex(aux_values[idx]),
-            "incident_projection": complex(incident_projections[idx]),
-            "outgoing_amplitude": _outgoing_projection(
-                complex(aux_values[idx]),
-                complex(incident_projections[idx]),
-                mode.side,
-            ),
-            "boundary_phase": _mode_boundary_phase(mode, cfg),
-            "outgoing_amplitude_at_boundary": (
-                _outgoing_projection(
-                    complex(aux_values[idx]),
-                    complex(incident_projections[idx]),
-                    mode.side,
-                )
-            )
-            * _mode_boundary_phase(mode, cfg),
-        }
-        for idx, mode in enumerate(modes)
-    ]
+    amplitude_fields = (
+        "auxiliary_index",
+        "side",
+        "direction",
+        "medium",
+        "m",
+        "n",
+        "order_m",
+        "order_n",
+        "polarization",
+        "beta",
+        "kz",
+        "propagating",
+        "dtn_phase_gauge",
+        "solver_amplitude_coordinate",
+        "physical_boundary_amplitude_coordinate",
+        "solver_auxiliary_amplitude_total_projection",
+        "solver_incident_projection",
+        "solver_outgoing_amplitude",
+        "physical_boundary_total_amplitude",
+        "physical_boundary_incident_amplitude",
+        "physical_boundary_outgoing_amplitude",
+        "auxiliary_amplitude_total_projection",
+        "incident_projection",
+        "outgoing_amplitude",
+        "boundary_phase",
+        "outgoing_amplitude_at_boundary",
+        "global_output_representable",
+        "global_output_failure_reason",
+    )
+    amplitudes = [{key: row[key] for key in amplitude_fields} for row in rows]
     (out_dir / "dtn_auxiliary_amplitudes_3d.json").write_text(
         json.dumps(amplitudes, ensure_ascii=False, indent=2, default=_json_default),
         encoding="utf-8",
+    )
+    def npz_complex(values: list[complex | None]) -> np.ndarray:
+        missing = complex(float("nan"), float("nan"))
+        return np.asarray([missing if value is None else value for value in values], dtype=np.complex128)
+
+    np.savez_compressed(
+        out_dir / "dtn_port_modal_amplitudes_3d.npz",
+        schema=np.asarray("task40extra.dtn_port_modal_amplitudes.v1"),
+        dtn_phase_gauge=np.asarray(dtn_phase_gauge),
+        solver_amplitude_coordinate=np.asarray(dtn_phase_gauge),
+        physical_boundary_amplitude_coordinate=np.asarray(BOUNDARY_PLANE),
+        legacy_amplitude_field_coordinate=np.asarray(GLOBAL_Z),
+        auxiliary_index=np.arange(len(rows), dtype=np.int32),
+        side=np.asarray([row["side"] for row in rows], dtype="U6"),
+        m=np.asarray([row["m"] for row in rows], dtype=np.int32),
+        n=np.asarray([row["n"] for row in rows], dtype=np.int32),
+        polarization=np.asarray([row["polarization"] for row in rows], dtype="U1"),
+        solver_auxiliary_amplitude_total_projection=np.asarray(
+            [row["solver_auxiliary_amplitude_total_projection"] for row in rows], dtype=np.complex128
+        ),
+        solver_incident_projection=np.asarray(
+            [row["solver_incident_projection"] for row in rows], dtype=np.complex128
+        ),
+        solver_outgoing_amplitude=np.asarray(
+            [row["solver_outgoing_amplitude"] for row in rows], dtype=np.complex128
+        ),
+        physical_boundary_total_amplitude=np.asarray(
+            [row["physical_boundary_total_amplitude"] if row["physical_boundary_total_amplitude"] is not None else complex(float("nan"), float("nan")) for row in rows], dtype=np.complex128
+        ),
+        physical_boundary_incident_amplitude=np.asarray(
+            [row["physical_boundary_incident_amplitude"] if row["physical_boundary_incident_amplitude"] is not None else complex(float("nan"), float("nan")) for row in rows], dtype=np.complex128
+        ),
+        physical_boundary_outgoing_amplitude=np.asarray(
+            [row["physical_boundary_outgoing_amplitude"] if row["physical_boundary_outgoing_amplitude"] is not None else complex(float("nan"), float("nan")) for row in rows], dtype=np.complex128
+        ),
+        boundary_phase=np.asarray(
+            [row["boundary_phase"] if row["boundary_phase"] is not None else complex(float("nan"), float("nan")) for row in rows],
+            dtype=np.complex128,
+        ),
+        physical_boundary_total_representable=np.asarray(
+            [row["physical_boundary_total_amplitude"] is not None for row in rows], dtype=np.bool_
+        ),
+        physical_boundary_incident_representable=np.asarray(
+            [row["physical_boundary_incident_amplitude"] is not None for row in rows], dtype=np.bool_
+        ),
+        physical_boundary_outgoing_representable=np.asarray(
+            [row["physical_boundary_outgoing_amplitude"] is not None for row in rows], dtype=np.bool_
+        ),
+        boundary_phase_representable=np.asarray(
+            [row["boundary_phase"] is not None for row in rows], dtype=np.bool_
+        ),
+        legacy_global_total_projection=npz_complex(
+            [row["auxiliary_amplitude_total_projection"] for row in rows]
+        ),
+        legacy_global_incident_projection=npz_complex(
+            [row["incident_projection"] for row in rows]
+        ),
+        legacy_global_outgoing_amplitude=npz_complex(
+            [row["outgoing_amplitude"] for row in rows]
+        ),
+        legacy_global_total_representable=np.asarray(
+            [row["auxiliary_amplitude_total_projection"] is not None for row in rows], dtype=np.bool_
+        ),
+        legacy_global_incident_representable=np.asarray(
+            [row["incident_projection"] is not None for row in rows], dtype=np.bool_
+        ),
+        legacy_global_outgoing_representable=np.asarray(
+            [row["outgoing_amplitude"] is not None for row in rows], dtype=np.bool_
+        ),
+        global_output_representable=np.asarray(
+            [row["global_output_representable"] for row in rows], dtype=np.bool_
+        ),
+        global_output_failure_reason=np.asarray(
+            [json.dumps(row["global_output_failure_reason"], ensure_ascii=False, sort_keys=True) if row["global_output_failure_reason"] else "" for row in rows],
+            dtype=str,
+        ),
     )
 
 
@@ -2677,7 +2833,16 @@ def _port_power_metrics(
     modes: list[PortMode3D],
     aux_values: np.ndarray,
     incident_projections: list[complex],
+    *,
+    dtn_phase_gauge: str = "global_z",
 ) -> dict[str, Any]:
+    from .dtn_boundary_phase_gauge import (
+        GLOBAL_Z,
+        boundary_mode_power_from_solver,
+        validate_phase_gauge,
+    )
+
+    dtn_phase_gauge = validate_phase_gauge(dtn_phase_gauge)
     incident_power = incident_power_3d(cfg)
     rows_by_side = {"top": 0, "bottom": 0}
     R_total = 0.0
@@ -2692,7 +2857,9 @@ def _port_power_metrics(
         )
         if not _mode_carries_outward_power(mode):
             continue
-        power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / incident_power
+        power = boundary_mode_power_from_solver(
+            mode, cfg, outgoing_amplitude, dtn_phase_gauge
+        ) / incident_power
         if mode.side == "top":
             R_total += float(power)
             if mode.m == 0 and mode.n == 0:
@@ -2721,6 +2888,10 @@ def _port_power_metrics(
         "power_source": DTN_PORT_MODAL_POWER_SOURCE,
         "diffraction_total_power_source": DTN_PORT_MODAL_POWER_SOURCE,
         "dtn_port_modal_reference": DTN_PORT_MODAL_REFERENCE,
+        "dtn_phase_gauge": dtn_phase_gauge,
+        "solver_amplitude_coordinate": dtn_phase_gauge,
+        "physical_boundary_amplitude_coordinate": "boundary_plane",
+        "legacy_amplitude_field_coordinate": GLOBAL_Z,
         "dtn_port_top_reference_z": float(cfg.physical_z_max),
         "dtn_port_bottom_reference_z": float(cfg.physical_z_min),
         "dtn_port_modal_amplitude_convention": (
@@ -2728,12 +2899,27 @@ def _port_power_metrics(
             "top outgoing amplitude = a_j - incident_projection_j; "
             "bottom outgoing amplitude = a_j. Power uses boundary-plane "
             "outgoing amplitude after applying boundary_phase."
+            if dtn_phase_gauge == GLOBAL_Z
+            else "solver auxiliary coefficients use the boundary-plane gauge. "
+            "top outgoing amplitude = total minus incident exactly once in solver coordinates; "
+            "bottom outgoing amplitude = total. Power uses this finite-plane amplitude directly, "
+            "without another propagation phase."
         ),
+        "serialized_amplitude_field_semantics": {
+            "solver_*": f"coefficients in the {dtn_phase_gauge} solver coordinate",
+            "physical_boundary_*": "coefficients multiplying mode vectors at the physical port plane",
+            "auxiliary_amplitude_total_projection/incident_projection/outgoing_amplitude": "legacy global-z coordinate; null when an optional conversion is unrepresentable",
+            "outgoing_amplitude_at_boundary": "physical boundary-plane outgoing coefficient",
+        },
         "dtn_port_power_metric_note": (
             "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes "
             "on the finite top and bottom port faces. Selected modes with positive outward real-Poynting "
             "flux contribute even when a below-critical lossy mode retains propagating=false; lossless "
             "evanescent modes carry zero modal power."
+            if dtn_phase_gauge == GLOBAL_Z
+            else "Stage-4 dtn_port R/T is computed from outgoing boundary-plane amplitudes. "
+            "Selected modes with positive outward real-Poynting flux contribute even when a below-critical "
+            "lossy mode retains propagating=false; lossless evanescent modes carry zero modal power."
         ),
         "incident_power_code_units": float(incident_power),
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy,
@@ -2753,6 +2939,7 @@ def _port_power_metrics(
         "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
         "port_power_csv": "port_power.csv",
         "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json",
+        "dtn_port_modal_amplitudes_npz": "dtn_port_modal_amplitudes_3d.npz",
     }
 
 

@@ -83,7 +83,7 @@ def verify_v10_dtn_port_mode_table(
         mode_sets[side].add(key)
 
     paired_modes = len(mode_sets["top"] & mode_sets["bottom"])
-    passed = bool(
+    table_passed = bool(
         expected > 0
         and expected % 2 == 0
         and not missing_columns
@@ -95,6 +95,20 @@ def verify_v10_dtn_port_mode_table(
         and len(mode_sets["bottom"]) == expected_per_side
         and mode_sets["top"] == mode_sets["bottom"]
     )
+    npz_path = path.parent / "dtn_port_modal_amplitudes_3d.npz"
+    npz_report = None
+    if npz_path.is_file():
+        try:
+            npz_report = _verify_dtn_port_modal_amplitudes_npz(npz_path, rows)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            npz_report = {"npz_path": str(npz_path), "passed": False, "error": str(exc)}
+    elif "dtn_phase_gauge" in columns:
+        npz_report = {
+            "npz_path": str(npz_path),
+            "passed": False,
+            "error": "new gauge-aware modal CSV requires its NPZ payload",
+        }
+    passed = bool(table_passed and (npz_report is None or npz_report.get("passed") is True))
     return {
         "schema": "task40extra.review_v10_dtn_port_mode_table_check.v1",
         "csv_path": str(path),
@@ -109,7 +123,241 @@ def verify_v10_dtn_port_mode_table(
         "duplicate_mode_count_by_side": duplicate_modes,
         "malformed_row_count": malformed_rows,
         "missing_columns": missing_columns,
+        "modal_amplitudes_npz": npz_report,
         "passed": passed,
+    }
+
+
+def _verify_dtn_port_modal_amplitudes_npz(
+    npz_path: Path, csv_rows: list[Mapping[str, Any]]
+) -> dict[str, Any]:
+    """Check required solver/plane arrays and explicitly masked optional conversions."""
+    required_arrays = {
+        "dtn_phase_gauge",
+        "solver_amplitude_coordinate",
+        "physical_boundary_amplitude_coordinate",
+        "legacy_amplitude_field_coordinate",
+        "auxiliary_index",
+        "side",
+        "m",
+        "n",
+        "polarization",
+        "solver_auxiliary_amplitude_total_projection",
+        "solver_incident_projection",
+        "solver_outgoing_amplitude",
+        "physical_boundary_total_amplitude",
+        "physical_boundary_incident_amplitude",
+        "physical_boundary_outgoing_amplitude",
+        "physical_boundary_total_representable",
+        "physical_boundary_incident_representable",
+        "physical_boundary_outgoing_representable",
+        "boundary_phase",
+        "boundary_phase_representable",
+        "legacy_global_total_projection",
+        "legacy_global_incident_projection",
+        "legacy_global_outgoing_amplitude",
+        "legacy_global_total_representable",
+        "legacy_global_incident_representable",
+        "legacy_global_outgoing_representable",
+        "global_output_representable",
+        "global_output_failure_reason",
+    }
+    with np.load(npz_path, allow_pickle=False) as arrays:
+        missing = sorted(required_arrays - set(arrays.files))
+        if missing:
+            raise ValueError(f"modal amplitude NPZ is missing fields: {missing}")
+        count = len(csv_rows)
+        vector_names = required_arrays - {
+            "dtn_phase_gauge",
+            "solver_amplitude_coordinate",
+            "physical_boundary_amplitude_coordinate",
+            "legacy_amplitude_field_coordinate",
+        }
+        wrong_shapes = {
+            name: list(np.asarray(arrays[name]).shape)
+            for name in vector_names
+            if np.asarray(arrays[name]).shape != (count,)
+        }
+        if wrong_shapes:
+            raise ValueError(f"modal amplitude NPZ arrays have wrong shapes: {wrong_shapes}")
+        gauge = str(np.asarray(arrays["dtn_phase_gauge"]).item())
+        if gauge not in {"global_z", "boundary_plane"}:
+            raise ValueError("modal amplitude NPZ has an unknown solver gauge")
+        if str(np.asarray(arrays["solver_amplitude_coordinate"]).item()) != gauge:
+            raise ValueError("modal amplitude NPZ solver coordinate does not match its gauge")
+        if str(np.asarray(arrays["physical_boundary_amplitude_coordinate"]).item()) != "boundary_plane":
+            raise ValueError("modal amplitude NPZ physical boundary coordinate is not boundary_plane")
+        if str(np.asarray(arrays["legacy_amplitude_field_coordinate"]).item()) != "global_z":
+            raise ValueError("modal amplitude NPZ legacy coordinate is not global_z")
+
+        for index, row in enumerate(csv_rows):
+            if (
+                int(arrays["auxiliary_index"][index]) != index
+                or str(arrays["side"][index]) != str(row["side"])
+                or int(arrays["m"][index]) != int(row["m"])
+                or int(arrays["n"][index]) != int(row["n"])
+                or str(arrays["polarization"][index]) != str(row["polarization"])
+                or str(row.get("dtn_phase_gauge", gauge)) != gauge
+            ):
+                raise ValueError(f"modal amplitude NPZ identity differs from CSV row {index}")
+
+        csv_value_map = (
+            ("solver_auxiliary_amplitude_total_projection", "solver_auxiliary_amplitude_total_projection", None),
+            ("solver_incident_projection", "solver_incident_projection", None),
+            ("solver_outgoing_amplitude", "solver_outgoing_amplitude", None),
+            ("physical_boundary_total_amplitude", "physical_boundary_total_amplitude", "physical_boundary_total_representable"),
+            ("physical_boundary_incident_amplitude", "physical_boundary_incident_amplitude", "physical_boundary_incident_representable"),
+            ("physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_representable"),
+            ("outgoing_amplitude_at_boundary", "physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_representable"),
+            ("auxiliary_amplitude_total_projection", "legacy_global_total_projection", "legacy_global_total_representable"),
+            ("incident_projection", "legacy_global_incident_projection", "legacy_global_incident_representable"),
+            ("outgoing_amplitude", "legacy_global_outgoing_amplitude", "legacy_global_outgoing_representable"),
+            ("boundary_phase", "boundary_phase", "boundary_phase_representable"),
+        )
+        for csv_name, npz_name, mask_name in csv_value_map:
+            values = np.asarray(arrays[npz_name])
+            mask = None if mask_name is None else np.asarray(arrays[mask_name], dtype=bool)
+            for index, row in enumerate(csv_rows):
+                raw = str(row.get(csv_name, "")).strip()
+                if not raw:
+                    if mask is None or mask[index]:
+                        raise ValueError(f"CSV field {csv_name} is missing at row {index}")
+                    continue
+                parsed = complex(raw)
+                if mask is not None and not mask[index]:
+                    raise ValueError(f"CSV field {csv_name} is present despite an unrepresentable NPZ mask")
+                if parsed != complex(values[index]):
+                    raise ValueError(f"CSV field {csv_name} differs from NPZ at row {index}")
+
+        solver_names = (
+            "solver_auxiliary_amplitude_total_projection",
+            "solver_incident_projection",
+            "solver_outgoing_amplitude",
+        )
+        nonfinite_solver = [name for name in solver_names if not np.isfinite(arrays[name]).all()]
+        if nonfinite_solver:
+            raise ValueError(f"required solver-coordinate amplitudes are nonfinite: {nonfinite_solver}")
+        solver_total = np.asarray(arrays["solver_auxiliary_amplitude_total_projection"])
+        solver_incident = np.asarray(arrays["solver_incident_projection"])
+        solver_outgoing = np.asarray(arrays["solver_outgoing_amplitude"])
+        sides = np.asarray(arrays["side"]).astype(str)
+        expected_outgoing = solver_total.copy()
+        top_rows = sides == "top"
+        bottom_rows = sides == "bottom"
+        if not np.all(top_rows | bottom_rows):
+            raise ValueError("solver-coordinate amplitude NPZ contains an unknown port side")
+        expected_outgoing[top_rows] -= solver_incident[top_rows]
+        if not np.array_equal(solver_outgoing, expected_outgoing):
+            raise ValueError("top outgoing is not total-minus-incident once or bottom outgoing is not total")
+
+        boundary_fields = (
+            ("physical_boundary_total_amplitude", "physical_boundary_total_representable"),
+            ("physical_boundary_incident_amplitude", "physical_boundary_incident_representable"),
+            ("physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_representable"),
+        )
+        boundary_masks = []
+        for name, mask_name in boundary_fields:
+            values = np.asarray(arrays[name])
+            mask = np.asarray(arrays[mask_name], dtype=bool)
+            boundary_masks.append(mask)
+            if not np.isfinite(values[mask]).all():
+                raise ValueError(f"representable physical-plane array {name} is nonfinite")
+            invalid = values[~mask]
+            if invalid.size and not (np.isnan(invalid.real).all() and np.isnan(invalid.imag).all()):
+                raise ValueError(f"unrepresentable physical-plane array {name} lacks an explicit NaN placeholder")
+        if gauge == "boundary_plane":
+            if not all(mask.all() for mask in boundary_masks):
+                raise ValueError("boundary-plane solver amplitudes must retain every finite physical-plane value")
+            for solver_name, boundary_name in zip(solver_names, (name for name, _ in boundary_fields), strict=True):
+                if not np.array_equal(arrays[solver_name], arrays[boundary_name]):
+                    raise ValueError("boundary-plane physical fields differ from their solver-coordinate values")
+
+        optional_fields = (
+            ("legacy_global_total_projection", "legacy_global_total_representable"),
+            ("legacy_global_incident_projection", "legacy_global_incident_representable"),
+            ("legacy_global_outgoing_amplitude", "legacy_global_outgoing_representable"),
+        )
+        optional_masks = []
+        for name, mask_name in optional_fields:
+            values = np.asarray(arrays[name])
+            mask = np.asarray(arrays[mask_name], dtype=bool)
+            optional_masks.append(mask)
+            if not np.isfinite(values[mask]).all():
+                raise ValueError(f"representable optional global array {name} is nonfinite")
+            invalid = values[~mask]
+            if invalid.size and not (np.isnan(invalid.real).all() and np.isnan(invalid.imag).all()):
+                raise ValueError(f"unrepresentable optional global array {name} lacks an explicit NaN placeholder")
+
+        phase = np.asarray(arrays["boundary_phase"])
+        phase_mask = np.asarray(arrays["boundary_phase_representable"], dtype=bool)
+        if not np.isfinite(phase[phase_mask]).all():
+            raise ValueError("representable boundary phases contain nonfinite values")
+        invalid_phase = phase[~phase_mask]
+        if invalid_phase.size and not (np.isnan(invalid_phase.real).all() and np.isnan(invalid_phase.imag).all()):
+            raise ValueError("unrepresentable boundary phase lacks an explicit NaN placeholder")
+
+        global_mask = np.asarray(arrays["global_output_representable"], dtype=bool)
+        reason = np.asarray(arrays["global_output_failure_reason"]).astype(str)
+        expected_global_mask = np.logical_and.reduce(optional_masks)
+        if gauge == "boundary_plane":
+            expected_global_mask &= phase_mask
+        if not np.array_equal(global_mask, expected_global_mask):
+            raise ValueError("global-output status disagrees with its per-field representability masks")
+        if np.any(~global_mask & (reason == "")):
+            raise ValueError("an unrepresentable optional global output has no recorded reason")
+
+    json_path = npz_path.parent / "dtn_auxiliary_amplitudes_3d.json"
+    if not json_path.is_file():
+        raise ValueError("new gauge-aware modal CSV requires dtn_auxiliary_amplitudes_3d.json")
+    json_rows = json.loads(json_path.read_text(encoding="utf-8"))
+    if len(json_rows) != len(csv_rows):
+        raise ValueError("modal JSON and CSV row counts differ")
+    json_value_map = (
+        ("solver_auxiliary_amplitude_total_projection", "solver_auxiliary_amplitude_total_projection", None),
+        ("solver_incident_projection", "solver_incident_projection", None),
+        ("solver_outgoing_amplitude", "solver_outgoing_amplitude", None),
+        ("physical_boundary_total_amplitude", "physical_boundary_total_amplitude", "physical_boundary_total_representable"),
+        ("physical_boundary_incident_amplitude", "physical_boundary_incident_amplitude", "physical_boundary_incident_representable"),
+        ("physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_representable"),
+        ("outgoing_amplitude_at_boundary", "physical_boundary_outgoing_amplitude", "physical_boundary_outgoing_representable"),
+        ("auxiliary_amplitude_total_projection", "legacy_global_total_projection", "legacy_global_total_representable"),
+        ("incident_projection", "legacy_global_incident_projection", "legacy_global_incident_representable"),
+        ("outgoing_amplitude", "legacy_global_outgoing_amplitude", "legacy_global_outgoing_representable"),
+        ("boundary_phase", "boundary_phase", "boundary_phase_representable"),
+    )
+    with np.load(npz_path, allow_pickle=False) as arrays:
+        for index, (json_row, csv_row) in enumerate(zip(json_rows, csv_rows, strict=True)):
+            if (
+                int(json_row["auxiliary_index"]) != int(csv_row["auxiliary_index"])
+                or str(json_row["dtn_phase_gauge"]) != str(csv_row["dtn_phase_gauge"])
+                or str(json_row["side"]) != str(csv_row["side"])
+                or int(json_row["m"]) != int(csv_row["m"])
+                or int(json_row["n"]) != int(csv_row["n"])
+                or str(json_row["polarization"]) != str(csv_row["polarization"])
+            ):
+                raise ValueError(f"modal JSON identity differs from CSV row {index}")
+            for json_name, npz_name, mask_name in json_value_map:
+                value = json_row.get(json_name)
+                mask = True if mask_name is None else bool(arrays[mask_name][index])
+                if value is None:
+                    if mask:
+                        raise ValueError(f"modal JSON field {json_name} is null despite a true NPZ mask")
+                    continue
+                if not mask or len(value) != 2:
+                    raise ValueError(f"modal JSON field {json_name} conflicts with its NPZ mask")
+                parsed = complex(float(value[0]), float(value[1]))
+                if parsed != complex(arrays[npz_name][index]):
+                    raise ValueError(f"modal JSON field {json_name} differs from NPZ at row {index}")
+
+    return {
+        "npz_path": str(npz_path.resolve()),
+        "json_path": str(json_path.resolve()),
+        "mode_count": count,
+        "dtn_phase_gauge": gauge,
+        "required_solver_and_plane_fields_finite": True,
+        "optional_global_values_masked": True,
+        "json_csv_npz_values_agree": True,
+        "passed": True,
     }
 
 

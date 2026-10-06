@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +19,30 @@ def _field_grid(V_dg):
     import pyvista
 
     return pyvista.UnstructuredGrid(cells, cell_types, coords), coords
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _save_scientific_field_npz(path: Path, arrays: dict[str, np.ndarray]) -> Path:
+    """Persist required complex field samples independently of visualization."""
+    path = Path(path)
+    np.savez_compressed(path, **arrays)
+    return path
+
+
+def _optional_pyvista_module():
+    """Load only the optional viewer dependency; scientific export does not use it."""
+    try:
+        import pyvista
+    except ImportError as exc:
+        return None, getattr(exc, "name", None) or "pyvista"
+    return pyvista, None
 
 
 def _owned_cell_count(mesh) -> int:
@@ -279,84 +304,146 @@ def save_airbox_3d_fields(
             encoding="utf-8",
         )
 
-    grid, coords = _field_grid(V_dg)
-    e_num = _values(E_num_dg, grid.n_points)
-    e_sca = _values(E_sca_dg, grid.n_points) if E_sca_dg is not None else None
-    e_bg = _values(E_bg_dg, grid.n_points) if E_bg_dg is not None else None
-    e_port = _values(E_port_dg, grid.n_points) if E_port_dg is not None else None
-    e_exact = _values(E_exact_dg, grid.n_points) if E_exact_dg is not None else None
+    cells, cell_types, coords = plot.vtk_mesh(V_dg)
+    num_points = int(len(coords))
+    e_num = _values(E_num_dg, num_points)
+    e_sca = _values(E_sca_dg, num_points) if E_sca_dg is not None else None
+    e_bg = _values(E_bg_dg, num_points) if E_bg_dg is not None else None
+    e_port = _values(E_port_dg, num_points) if E_port_dg is not None else None
+    e_exact = _values(E_exact_dg, num_points) if E_exact_dg is not None else None
     e_error = e_num - e_exact if e_exact is not None else None
-    h_num = _values(H_dg, grid.n_points)
-    h_exact = _values(H_exact_dg, grid.n_points) if H_exact_dg is not None else None
+    h_num = _values(H_dg, num_points)
+    h_exact = _values(H_exact_dg, num_points) if H_exact_dg is not None else None
     h_error = h_num - h_exact if h_exact is not None else None
 
-    paraview_grid = grid.copy()
     owned_cell_count = _owned_cell_count(mesh_data.mesh)
-    owned_point_mask = _owned_point_mask(V_dg, grid.n_points)
+    owned_point_mask = _owned_point_mask(V_dg, num_points)
     postprocess_point_scope = "owned_cells_only" if comm.size > 1 else "serial_all_cells"
     local_owned_point_count = int(np.count_nonzero(owned_point_mask))
-    local_total_point_count = int(grid.n_points)
+    local_total_point_count = num_points
     global_owned_point_count = int(comm.allreduce(local_owned_point_count, op=MPI.SUM))
     global_total_point_count = int(comm.allreduce(local_total_point_count, op=MPI.SUM))
-    z_values = np.asarray(paraview_grid.points[:, 2], dtype=np.float64)
+    z_values = np.asarray(coords[:, 2], dtype=np.float64)
     z_tol = 1.0e-8 * max(cfg.domain_z_max - cfg.domain_z_min, 1.0)
     physical_point_mask_all = (z_values >= cfg.physical_z_min - z_tol) & (z_values <= cfg.physical_z_max + z_tol)
     pml_point_mask_all = ~physical_point_mask_all
     physical_point_mask = owned_point_mask & physical_point_mask_all
     pml_point_mask = owned_point_mask & pml_point_mask_all
-    # ParaView arrays use physical display units.  The solve itself is still
-    # normalized to E0=1, and cfg supplies the V/m and A/m scaling factors.
-    # E_numerical is already the total field for this writer, so the older
-    # E_V_per_m alias is not written anymore.
-    _add_complex_vector(paraview_grid, "E_tot_V_per_m", e_num)
-    if e_sca is not None:
-        _add_complex_vector(paraview_grid, "E_sca_V_per_m", e_sca)
-    if e_bg is not None:
-        _add_complex_vector(paraview_grid, "E_b_V_per_m", e_bg)
-    if e_port is not None:
-        _add_complex_vector(paraview_grid, "E_incident_port_V_per_m", e_port)
-    if e_exact is not None:
-        _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
-        _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
-    _add_complex_vector(paraview_grid, "H_A_per_m", h_num)
-    if h_exact is not None:
-        _add_abs_scalar(paraview_grid, "H_exact_abs_A_per_m", h_exact)
-        _add_abs_scalar(paraview_grid, "H_error_abs_A_per_m", h_error)
-    domain_tags = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
+    domain_tags = np.full(len(cell_types), cfg.tags.air, dtype=np.int32)
     if hasattr(mesh_data, "cell_tags"):
         indices = np.asarray(mesh_data.cell_tags.indices, dtype=np.int32)
         values = np.asarray(mesh_data.cell_tags.values, dtype=np.int32)
-        valid = indices < paraview_grid.n_cells
+        valid = indices < len(cell_types)
         domain_tags[indices[valid]] = values[valid]
-    paraview_grid.cell_data["domain_tag"] = domain_tags
-    paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
-    paraview_grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
-    paraview_grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)
-    paraview_grid.field_data["magnetic_field_unit_A_per_m"] = np.array([1.0], dtype=np.float64)
-    paraview_grid.field_data["magnetic_field_scale_A_per_m"] = np.array(
-        [cfg.magnetic_field_scale_A_per_m],
-        dtype=np.float64,
+
+    poynting = 0.5 * np.real(np.cross(e_num, np.conj(h_num)))
+    scientific_fields = {
+        "schema": np.asarray("task40extra.airbox_scientific_fields.v1"),
+        "coordinates_nm": np.asarray(coords, dtype=np.float64),
+        "vtk_cells": np.asarray(cells, dtype=np.int64),
+        "vtk_cell_types": np.asarray(cell_types, dtype=np.uint8),
+        "cell_domain_tags": domain_tags,
+        "owned_point_mask": owned_point_mask,
+        "postprocess_point_scope": np.asarray(postprocess_point_scope),
+        "mpi_rank": np.asarray([comm.rank], dtype=np.int32),
+        "mpi_size": np.asarray([comm.size], dtype=np.int32),
+        "local_owned_cell_count": np.asarray([owned_cell_count], dtype=np.int64),
+        "local_cell_count": np.asarray([len(cell_types)], dtype=np.int64),
+        "local_owned_point_count": np.asarray([local_owned_point_count], dtype=np.int64),
+        "local_point_count": np.asarray([local_total_point_count], dtype=np.int64),
+        "E_total_code": np.asarray(E_code_dg.x.array.reshape(num_points, -1)[:, :3], dtype=np.complex128),
+        "E_total_V_per_m": np.asarray(e_num, dtype=np.complex128),
+        "H_curl_A_per_m": np.asarray(h_num, dtype=np.complex128),
+        "Poynting_W_per_m2": np.asarray(poynting, dtype=np.float64),
+        "electric_field_scale_V_per_m": np.asarray([cfg.electric_field_scale_V_per_m], dtype=np.float64),
+        "magnetic_field_scale_A_per_m": np.asarray([cfg.magnetic_field_scale_A_per_m], dtype=np.float64),
+    }
+    for name, values in (
+        ("E_scattered_V_per_m", e_sca),
+        ("E_background_V_per_m", e_bg),
+        ("E_incident_port_V_per_m", e_port),
+        ("E_exact_V_per_m", e_exact),
+        ("E_error_V_per_m", e_error),
+        ("H_exact_A_per_m", h_exact),
+        ("H_error_A_per_m", h_error),
+    ):
+        if values is not None:
+            scientific_fields[name] = np.asarray(values, dtype=np.complex128)
+    scientific_name = (
+        "airbox_fields_3d_scientific.npz"
+        if comm.size == 1
+        else f"airbox_fields_3d_scientific_rank{comm.rank:04d}.npz"
     )
+    scientific_fields_path = out_dir / scientific_name
+    _save_scientific_field_npz(scientific_fields_path, scientific_fields)
 
-    paraview_cells_before_owned_filter = int(paraview_grid.n_cells)
-    paraview_owned_cell_filter_applied = False
-    if comm.size > 1 and owned_cell_count < paraview_grid.n_cells:
-        owned_cells = np.arange(owned_cell_count, dtype=np.int64)
-        paraview_grid = paraview_grid.extract_cells(owned_cells)
-        paraview_owned_cell_filter_applied = True
-    paraview_cells_written = int(paraview_grid.n_cells)
-
-    if comm.size > 1:
-        # PyVista writes one local VTU per rank.  Rank0 writes the collection
-        # file after a barrier so ParaView can open the distributed result.
-        paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
-        paraview_grid.save(out_dir / f"fields_3d_for_paraview_rank{comm.rank:04d}.vtu")
-        comm.barrier()
-        if comm.rank == 0:
-            _write_parallel_vtu_collection(out_dir, comm.size)
+    paraview_path: Path | None = None
+    visualization_status = "skipped_missing_dependency"
+    visualization_missing_dependency = None
+    pyvista, visualization_missing_dependency = _optional_pyvista_module()
+    has_pyvista = int(pyvista is not None)
+    has_pyvista_globally = int(comm.allreduce(has_pyvista, op=MPI.MIN))
+    if has_pyvista_globally:
+        if pyvista is None:
+            raise RuntimeError("PyVista availability differs across ranks after collective admission")
+        paraview_grid = pyvista.UnstructuredGrid(cells, cell_types, coords)
+        # ParaView arrays use physical display units. The solve uses normalized
+        # amplitudes; cfg supplies the V/m and A/m scales.
+        _add_complex_vector(paraview_grid, "E_tot_V_per_m", e_num)
+        if e_sca is not None:
+            _add_complex_vector(paraview_grid, "E_sca_V_per_m", e_sca)
+        if e_bg is not None:
+            _add_complex_vector(paraview_grid, "E_b_V_per_m", e_bg)
+        if e_port is not None:
+            _add_complex_vector(paraview_grid, "E_incident_port_V_per_m", e_port)
+        if e_exact is not None:
+            _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
+            _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
+        _add_complex_vector(paraview_grid, "H_A_per_m", h_num)
+        if h_exact is not None:
+            _add_abs_scalar(paraview_grid, "H_exact_abs_A_per_m", h_exact)
+            _add_abs_scalar(paraview_grid, "H_error_abs_A_per_m", h_error)
+        paraview_grid.cell_data["domain_tag"] = domain_tags
+        paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
+        paraview_grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
+        paraview_grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)
+        paraview_grid.field_data["magnetic_field_unit_A_per_m"] = np.array([1.0], dtype=np.float64)
+        paraview_grid.field_data["magnetic_field_scale_A_per_m"] = np.array(
+            [cfg.magnetic_field_scale_A_per_m],
+            dtype=np.float64,
+        )
+        if comm.size > 1 and owned_cell_count < paraview_grid.n_cells:
+            owned_cells = np.arange(owned_cell_count, dtype=np.int64)
+            paraview_grid = paraview_grid.extract_cells(owned_cells)
+        if comm.size > 1:
+            # Rank0 writes the collection after every rank has saved its local VTU.
+            paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
+            paraview_grid.save(out_dir / f"fields_3d_for_paraview_rank{comm.rank:04d}.vtu")
+            comm.barrier()
+            if comm.rank == 0:
+                _write_parallel_vtu_collection(out_dir, comm.size)
+        else:
+            paraview_grid.save(out_dir / "fields_3d_for_paraview.vtu")
+            paraview_path = out_dir / "fields_3d_for_paraview.vtu"
+        visualization_status = "written"
     else:
-        paraview_grid.save(out_dir / "fields_3d_for_paraview.vtu")
-        paraview_path = out_dir / "fields_3d_for_paraview.vtu"
+        visualization_missing_dependency = (
+            visualization_missing_dependency or "pyvista_unavailable_on_at_least_one_rank"
+        )
+
+    if visualization_status == "written":
+        paraview_cells_before_owned_filter = int(len(cell_types))
+        paraview_owned_cell_filter_applied = bool(
+            comm.size > 1 and owned_cell_count < paraview_cells_before_owned_filter
+        )
+        paraview_cells_written = (
+            owned_cell_count if paraview_owned_cell_filter_applied
+            else paraview_cells_before_owned_filter
+        )
+    else:
+        paraview_cells_before_owned_filter = None
+        paraview_owned_cell_filter_applied = None
+        paraview_cells_written = None
 
     max_e_exact = _global_max_norm(comm, e_exact, owned_point_mask) if e_exact is not None else None
     max_e_num = _global_max_norm(comm, e_num, owned_point_mask)
@@ -367,7 +454,6 @@ def save_airbox_3d_fields(
     max_h_exact = _global_max_norm(comm, h_exact, owned_point_mask) if h_exact is not None else None
     max_h_error = _global_max_norm(comm, h_error, owned_point_mask) if h_error is not None else None
 
-    poynting = 0.5 * np.real(np.cross(e_num, np.conj(h_num)))
     mean_poynting = _global_mean_vector(comm, poynting, owned_point_mask)
     direction = cfg.direction_vector
     mean_norm = float(np.linalg.norm(mean_poynting))
@@ -394,7 +480,19 @@ def save_airbox_3d_fields(
         "mean_poynting_W_per_m2": mean_poynting.tolist(),
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
-        "paraview_file": str(paraview_path),
+        "paraview_file": None if paraview_path is None else str(paraview_path),
+        "visualization_status": visualization_status,
+        "visualization_missing_dependency": visualization_missing_dependency,
+        "scientific_fields_saved": True,
+        "scientific_field_npz_file": scientific_fields_path.name,
+        "scientific_field_npz_sha256": _sha256_file(scientific_fields_path),
+        "scientific_field_npz_point_count": num_points,
+        "scientific_field_npz_cell_count": int(len(cell_types)),
+        "scientific_field_npz_mpi_rank": int(comm.rank),
+        "scientific_field_npz_mpi_size": int(comm.size),
+        "scientific_field_npz_owned_cell_count": int(owned_cell_count),
+        "scientific_field_npz_owned_point_count": local_owned_point_count,
+        "scientific_field_npz_point_scope": postprocess_point_scope,
         "postprocess_point_scope": postprocess_point_scope,
         "postprocess_local_owned_points": local_owned_point_count,
         "postprocess_local_total_points_before_owned_filter": local_total_point_count,
