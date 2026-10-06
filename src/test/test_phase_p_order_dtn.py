@@ -40,6 +40,8 @@ class SeparationTests(unittest.TestCase):
         import basix
         e=[basix.create_element(basix.ElementFamily.N1E,basix.CellType.hexahedron,p,basix.LagrangeVariant.legendre) for p in (2,3)]
         I=basix.compute_interpolation_operator(*e);rng=np.random.default_rng(5400)
+        from src.solvers.phase_p_order_consistency import interpolation_operator
+        self.assertTrue(np.array_equal(I,interpolation_operator(e[0]._e,e[1]._e)))
         u=rng.normal(size=e[0].dim)+1j*rng.normal(size=e[0].dim);v=rng.normal(size=e[1].dim)+1j*rng.normal(size=e[1].dim)
         points=np.array([[.13,.41,.73],[.23,.36,.51]])
         a=np.einsum('dqjc,j->dqc',e[0].tabulate(1,points),u);b=np.einsum('dqjc,j->dqc',e[1].tabulate(1,points),I@u)

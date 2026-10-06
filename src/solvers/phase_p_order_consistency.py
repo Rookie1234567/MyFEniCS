@@ -12,13 +12,22 @@ from .scattering_anchor import save_arrays,relative
 from .scattering_anchor_checks import checked_arrays
 
 
+def interpolation_operator(low,high):
+    """Basix public API accepts wrappers; DOLFINx exposes the C++ element."""
+    import basix
+    from basix.finite_element import FiniteElement
+    a=low if hasattr(low,'_e') else FiniteElement(low)
+    b=high if hasattr(high,'_e') else FiniteElement(high)
+    return basix.compute_interpolation_operator(a,b)
+
+
 class FullBodyEmbedding:
     def __init__(self,low,high):
         import basix
         from .target_boundary_witness import dual_maps
         self.low,self.high=low,high
         self.V6=low.mpc.function_space;self.V7=high.mpc.function_space
-        self.I=basix.compute_interpolation_operator(self.V6.element.basix_element,self.V7.element.basix_element)
+        self.I=interpolation_operator(self.V6.element.basix_element,self.V7.element.basix_element)
         for V in (self.V6,self.V7):V.mesh.topology.create_entity_permutations()
         self.p6=self.V6.mesh.topology.get_cell_permutation_info();self.p7=self.V7.mesh.topology.get_cell_permutation_info()
         self.n6=self.V6.dofmap.index_map.size_local;self.n7=self.V7.dofmap.index_map.size_local
