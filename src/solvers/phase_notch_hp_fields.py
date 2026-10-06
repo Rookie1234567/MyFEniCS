@@ -35,9 +35,10 @@ def common_boxes(first,second):
     return boxes,a,b
 
 
-def common_difference(first,second,cfg,journal,folder,*,q,selected_points):
+def common_difference(first,second,cfg,journal,folder,*,q,selected_points,evaluator_factory=None):
     from .fixed_phase_fem import carrier
-    k=carrier(cfg);a=PhaseEvaluator(first.function_space,q,k);b=PhaseEvaluator(second.function_space,q,k)
+    factory=PhaseEvaluator if evaluator_factory is None else evaluator_factory
+    k=carrier(cfg);a=factory(first.function_space,q,k);b=factory(second.function_space,q,k)
     ba,bb=mesh_bounds(first.function_space),mesh_bounds(second.function_space)
     boxes,pa,pb=common_boxes(ba,bb);names=('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')
     sums=np.zeros((6,3));per=[];components=[]
@@ -69,6 +70,7 @@ def common_difference(first,second,cfg,journal,folder,*,q,selected_points):
         common_centers=boxes.mean(axis=1),per_cell_integrals=np.asarray(per),per_cell_component_error_squared=np.asarray(components),
         selected_points=pp,selected_parent_first=ia,selected_parent_second=ib,**witness)
     return dict(fields=rows,selected=selected,arrays=arrays,q=q,common_subcells=len(boxes),
+        exact_cache=None if not hasattr(factory,'cache') else factory.cache.record(),
         independent_native_evaluation_max=[max(a.eval_checks,default=0.),max(b.eval_checks,default=0.)],
         full_cross_terms=True,geometry_pair='common actual geometric subdivision; no projection of either field',
         selected_rule='frozen V51 original and Z2 centers; canonical high side on artificial mesh faces',

@@ -19,18 +19,20 @@ from .phase_notch_hp_capacity import assembly_capacity
 from .fixed_phase_fem import carrier
 
 
-def configured_setup(spec,journal):
+def configured_setup(spec,journal,*,scope=None):
     # Exact case spec is supplied by resolved input, including conditional
     # selections. Never infer a fine mesh from an old 80-cell active template.
-    base=plan_record()['physical_descriptor']['geometry'];axes={}
+    p=plan_record() if scope is None else scope.plan_record()
+    label='v52' if scope is None else scope.NAMESPACE
+    base=p['physical_descriptor']['geometry'];axes={}
     for key,factor in zip(('x','y','z'),spec['splits'],strict=True):
         old=base['axes_nm'][key]
         axes[key]=tuple(l+(r-l)*j/factor for l,r in zip(old[:-1],old[1:]) for j in range(factor))+(old[-1],)
     cfg=old_configuration('NOTCH',spec['degree'],'ORIGINAL')
-    cfg=replace(cfg,case_name='task042_v52_notch_p'+str(spec['degree'])+'_'+''.join(map(str,spec['splits']))+'_m'+str(spec['complete_modes']),
+    cfg=replace(cfg,case_name='task042_'+label+'_notch_p'+str(spec['degree'])+'_'+''.join(map(str,spec['splits']))+'_m'+str(spec['complete_modes']),
         mesh_axis_x_values=axes['x'],mesh_axis_y_values=axes['y'],mesh_axis_z_values=axes['z'],
         mesh_axis_cell_counts=tuple(len(axes[a])-1 for a in ('x','y','z')),
-        mesh_plan_id='task042.v52.fixed',mesh_axis_z_profile='task042.v52.fixed',
+        mesh_plan_id='task042.'+label+'.fixed',mesh_axis_z_profile='task042.'+label+'.fixed',
         diffraction_order_max_m=11 if spec['complete_modes']==828 else 9,
         diffraction_order_max_n=4 if spec['complete_modes']==828 else 3)
     geo={**base,'notch_expected_changed_cells':2*int(np.prod(spec['splits']))}
@@ -58,14 +60,20 @@ def require_stage(role):
     if len(completed)>=5:raise RuntimeError('five complete solves already consumed')
 
 
-def solve_case(role,folder,journal):
+def solve_case(role,folder,journal,*,scope=None):
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
     from .scattering_accuracy import volume_form_identity
-    require_stage(role);spec=case_spec(role)
+    live=window if scope is None else scope.window
+    (require_stage if scope is None else scope.require_stage)(role)
+    spec=case_spec(role) if scope is None else scope.case_spec(role)
+    p=plan_record() if scope is None else scope.plan_record()
+    mem=p.get('memory_budget',dict(planning_gib=16,sampled_stop_gib=24,extra_cache_workspace_gib=0))
     if not spec['splits']:raise RuntimeError('conditional geometry is not selected')
-    resume=window.TMP/(role+'_post_resume.json')
-    if resume.exists():return audit_saved_return(role,folder,journal,json.loads(resume.read_text()))
-    cfg,setup,geo=configured_setup(spec,journal);cap=assembly_capacity(setup,cfg,journal,spec)
+    resume=live.TMP/(role+'_post_resume.json')
+    if resume.exists():return audit_saved_return(role,folder,journal,json.loads(resume.read_text()),scope=scope)
+    cfg,setup,geo=configured_setup(spec,journal,scope=scope)
+    cap=assembly_capacity(setup,cfg,journal,spec,planning_limit_bytes=mem['planning_gib']*2**30,
+        sampled_stop_bytes=mem['sampled_stop_gib']*2**30,extra_workspace_bytes=mem['extra_cache_workspace_gib']*2**30)
     write_json(folder/'assembly_capacity.json',cap)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',role=role,case_spec=spec,capacity=cap)
     bundle=rhs=inverse=system=u=factor=None
@@ -74,11 +82,17 @@ def solve_case(role,folder,journal):
         if not boundary['pass_gate']:return dict(status='NUMERICAL_BOUNDARY_NOT_QUALIFIED',role=role,case_spec=spec,boundary=boundary,capacity=cap)
         bundle,rhs=build_bundle(cfg,setup,journal);write_json(folder/'actual_volume_form_identity.json',volume_form_identity(bundle))
         if len(bundle['modes'])!=spec['complete_modes']:raise ValueError('actual full mode count')
-        system,inverse=condense(bundle,journal,expected=(cap['native'],cap['trace'],cap['internal']))
+        checkpoint=None
+        if scope is not None:
+            from .phase_tensor_checkpoint import RawTensorCheckpoint
+            checkpoint=RawTensorCheckpoint(folder/'raw_tensor',bundle,journal)
+        system,inverse=condense(bundle,journal,expected=(cap['native'],cap['trace'],cap['internal']),raw_tensor_provider=checkpoint)
+        if checkpoint is not None:checkpoint.finish(setup,spec['degree'])
         write_json(folder/'build_audit.json',system.build_audit)
         if system.active_rows+len(bundle['modes'])!=spec['rows']:raise ValueError('condensed actual row identity')
         try:
-            factor=CoordinateFactor(system.matrix,bundle,system.active_rows,journal,folder,symbolic_capacity=True)
+            factor=CoordinateFactor(system.matrix,bundle,system.active_rows,journal,folder,symbolic_capacity=True,
+                planning_limit_bytes=mem['planning_gib']*2**30)
         except MemoryError as error:
             path=folder/'h_symbolic_capacity.json'
             if not path.exists():raise
@@ -112,7 +126,8 @@ def solve_case(role,folder,journal):
         inverse.factor=None;factor.destroy();factor=None;system.matrix.destroy();system.matrix=None;gc.collect()
         journal.event('factor_and_matrix_released_original_oracle_retained')
         result=postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,folder,journal,
-            cap,boundary,minimal['build_audit'],norms,vectors)
+            cap,boundary,minimal['build_audit'],norms,vectors,scope=scope)
+        if checkpoint is not None:result['raw_tensor_checkpoint']=checkpoint.record()
         result['fixed_refinements']=refinements;write_json(folder/'scientific_result.json',result)
         return result
     finally:
@@ -123,14 +138,15 @@ def solve_case(role,folder,journal):
         if bundle is not None:destroy_same_mesh_physical_action(bundle)
 
 
-def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,folder,journal,cap,boundary,build_audit,norms,vectors):
+def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,folder,journal,cap,boundary,build_audit,norms,vectors,*,scope=None):
     _,recovery,rv=native_recovery_action_split_check(bundle,u,rhs,port,vectors,journal)
     rec=save_arrays(folder/'recovery.npz',**rv);output=physical_output(bundle,u,port,geo,folder,journal)
     projected=None
     if role=='M':
         from .phase_notch_hp_modes import project_saved_parent
-        selected=json.loads((window.TMP/'mode_selection.json').read_text())
-        original=stage(selected['role'])
+        live=window if scope is None else scope.window
+        selected=json.loads((live.TMP/'mode_selection.json').read_text())
+        original=stage(selected['role']) if scope is None else scope.read(selected['role'])
         if original['arrays']['sha256']!=selected['parent_array_sha256']:raise ValueError('selected finite mode parent changed')
         projected=project_saved_parent(original,bundle,geo,folder,journal)
     indicator=None
@@ -152,12 +168,13 @@ def postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,fol
         transverse_indicator=indicator,projected_parent828=projected,timings=journal.timings,calls=journal.calls,NN_training=0)
 
 
-def audit_saved_return(role,folder,journal,record):
+def audit_saved_return(role,folder,journal,record,*,scope=None):
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
-    resume=window.TMP/(role+'_post_resume.json')
+    live=window if scope is None else scope.window
+    resume=live.TMP/(role+'_post_resume.json')
     if journal.source_state.get('postprocessing_resume',{}).get('sha256')!=hashlib.sha256(resume.read_bytes()).hexdigest():
         raise ValueError('live resolved returned-state binding')
-    spec=record['case_spec'];v=checked_arrays(record['arrays']);cfg,setup,geo=configured_setup(spec,journal)
+    spec=record['case_spec'];v=checked_arrays(record['arrays']);cfg,setup,geo=configured_setup(spec,journal,scope=scope)
     for k in geo:
         if not np.array_equal(geo[k],v[k]):raise ValueError('returned geometry changed '+k)
     if not np.array_equal(v['kappa'],carrier(cfg)) or not np.array_equal(v['slaves'],setup['floquets'][spec['degree']].mpc.slaves):
@@ -167,7 +184,7 @@ def audit_saved_return(role,folder,journal,record):
         if relative(rhs.array-v['rhs'],rhs.array)>1e-13:raise ValueError('returned physical RHS changed')
         norms,vectors=audit_original(bundle,rhs,u,v['port'],journal)
         r=postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,v['port'],record['arrays'],record['returned_arrays'],
-            folder,journal,record['capacity'],record['boundary'],record['build_audit'],norms,vectors)
+            folder,journal,record['capacity'],record['boundary'],record['build_audit'],norms,vectors,scope=scope)
         r.update(postprocessing_resume=True,solve_source_sha=record['source']['source_sha'],new_complete_solves=0,new_factor_count=0)
         return r
     finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
@@ -187,10 +204,10 @@ def preflight(folder,journal):
         FLAT_analytic_reused=True,timings=journal.timings,calls=journal.calls)
 
 
-def restore_record(r,journal):
+def restore_record(r,journal,*,scope=None):
     from petsc4py import PETSc
     from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
-    if 'case_spec' in r:cfg,setup,geo=configured_setup(r['case_spec'],journal)
+    if 'case_spec' in r:cfg,setup,geo=configured_setup(r['case_spec'],journal,scope=scope)
     else:cfg,setup,geo=make_setup(r['case'],r['degree'],r['grid'],journal)
     v=checked_arrays(r['arrays'])
     for key in geo:
@@ -201,10 +218,10 @@ def restore_record(r,journal):
     return cfg,setup,geo,field
 
 
-def compare_saved(first,second,folder,journal):
+def compare_saved(first,second,folder,journal,*,scope=None,evaluator_factory=None):
     from .phase_notch_hp_fields import common_difference
     from .phase_notch_hp_modes import mode_comparison
-    a=restore_record(first,journal);b=restore_record(second,journal)
+    a=restore_record(first,journal,scope=scope);b=restore_record(second,journal,scope=scope)
     # These are the actual published V51 physical sampling points, never a
     # replacement set chosen to improve the comparison.
     points=[]
@@ -212,8 +229,8 @@ def compare_saved(first,second,folder,journal):
         from .phase_explicit_accuracy_scope import stage as previous
         r=previous(name);f=checked_arrays(r['output']['fields']);points.append(f['selected_points'])
     pp=np.unique(np.concatenate(points),axis=0)
-    low=common_difference(a[3],b[3],b[0],journal,folder,q=23,selected_points=pp)
-    r=common_difference(a[3],b[3],b[0],journal,folder,q=31,selected_points=pp)
+    low=common_difference(a[3],b[3],b[0],journal,folder,q=23,selected_points=pp,evaluator_factory=evaluator_factory)
+    r=common_difference(a[3],b[3],b[0],journal,folder,q=31,selected_points=pp,evaluator_factory=evaluator_factory)
     qdef=max(abs(low['fields'][key][n]**2-r['fields'][key][n]**2)/max(r['fields'][key]['reference_L2']**2,1e-24)
         for key in r['fields'] for n in ('reference_L2','difference_L2'))
     r.update(quadrature_pair=[23,31],quadrature_operation_scaled=qdef,q23_arrays=low['arrays'])
@@ -245,15 +262,17 @@ def compare_queue(folder,journal):
     return rows
 
 
-def verify_cost(folder,journal):
+def verify_cost(folder,journal,*,scope=None):
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
-    path=window.TMP/'scientific_queue_frozen.json'
+    live=window if scope is None else scope.window
+    read_stage=stage if scope is None else scope.stage
+    path=live.TMP/'scientific_queue_frozen.json'
     if journal.source_state.get('verification_inventory',{}).get('sha256')!=hashlib.sha256(path.read_bytes()).hexdigest():raise ValueError('actual frozen queue binding')
     frozen=json.loads(path.read_text());rows=[]
     for role,item in frozen['completed_solves'].items():
-        r=stage(role)
+        r=read_stage(role)
         if item['array_sha256']!=r['arrays']['sha256']:raise ValueError('frozen actual state changed')
-        v=checked_arrays(r['arrays']);cfg,setup,geo=configured_setup(r['case_spec'],journal)
+        v=checked_arrays(r['arrays']);cfg,setup,geo=configured_setup(r['case_spec'],journal,scope=scope)
         for key in geo:
             if not np.array_equal(geo[key],v[key]):raise ValueError('independent final geometry '+key)
         bundle,rhs=build_bundle(cfg,setup,journal,q=63);u=rhs.duplicate();u.array[:]=v['u_storage']
@@ -263,7 +282,7 @@ def verify_cost(folder,journal):
             receipt=save_arrays(folder/(role+'_independent_audit.npz'),u_storage=u.array.copy(),rhs=rhs.array.copy(),port=v['port'],recovered_native_full=field.x.array.copy(),**vectors,**rv)
             rows.append(dict(role=role,parent=r['arrays']['sha256'],audit=norms,recovery=rec,arrays=receipt,equation_pass=equation_gate(norms,rec)))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
-    return dict(status='COMPLETED',role='VERIFY_COST',rows=rows,cached_comparisons=compare_queue(folder,journal),
+    return dict(status='COMPLETED',role='VERIFY_COST',rows=rows,cached_comparisons=compare_queue(folder,journal) if scope is None else scope.cached_comparisons(),
         new_factor_count=0,new_complete_solves=0,NN_training=0,target_qualified=False,timings=journal.timings,calls=journal.calls)
 
 

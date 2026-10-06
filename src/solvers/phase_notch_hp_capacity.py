@@ -9,7 +9,8 @@ import numpy as np
 
 
 def storage_envelope(*,rows,native,cells,dimension,interior,raw_classes,oriented_classes,
-                     graph_nnz,boundary_support_sum,boundary_cells,modes):
+                     graph_nnz,boundary_support_sum,boundary_cells,modes,
+                     planning_limit_bytes=16*2**30,sampled_stop_bytes=24*2**30,extra_workspace_bytes=0):
     trace=dimension-interior
     components={
         'raw_exact_tensor_cache':raw_classes*dimension**2*16,
@@ -19,20 +20,22 @@ def storage_envelope(*,rows,native,cells,dimension,interior,raw_classes,oriented
         'boundary_pair_carriers_and_production_cache_upper':3*boundary_support_sum*(modes//2)*48,
         'interior_port_terms_XiB_and_python_contribution_maps':boundary_cells*interior*(modes//2)*(3*16+160),
         'mesh_MPC_trace_maps_preallocation_compiler_allocator_reserve':2*2**30,
+        'declared_extra_evaluation_cache_and_workspace':int(extra_workspace_bytes),
     }
     total=sum(components.values())
     return dict(assembly_components_bytes=components,planned_simultaneous_bytes=int(total),
         assembly_graph_nnz_upper=int(graph_nnz),native=native,cells=cells,
         raw_classes=int(raw_classes),oriented_classes=int(oriented_classes),rows=rows,
         boundary_support_master_sum=int(boundary_support_sum),boundary_cell_count=int(boundary_cells),
-        admitted=0<rows<=80000 and total<=16*2**30,limit_bytes=16*2**30,assembly_row_cap=80000,
+        admitted=0<rows<=80000 and total<=planning_limit_bytes,limit_bytes=planning_limit_bytes,assembly_row_cap=80000,
         status='ASSEMBLY_ONLY_PENDING_SYMBOLIC_NUMERIC_ADMISSION',
-        numeric_rule='live whole-tree RSS + 2*max(INFOG16,17)*decimal MB + 2GiB reserve <=16GiB',
+        numeric_rule=f'live whole-tree RSS + 2*max(INFOG16,17)*decimal MB + 2GiB reserve <={planning_limit_bytes}B',
         dense_bound_not_numeric_admission=True,floating_internal_port_entries_retained=True,
-        uncertainty='engineering preallocation bound, followed by live symbolic gate and sampled tree24GiB stop')
+        sampled_stop_bytes=sampled_stop_bytes,
+        uncertainty='engineering preallocation bound, followed by live symbolic gate and declared sampled tree stop')
 
 
-def assembly_capacity(setup,cfg,journal,expected):
+def assembly_capacity(setup,cfg,journal,expected,*,planning_limit_bytes=16*2**30,sampled_stop_bytes=24*2**30,extra_workspace_bytes=0):
     from .hcurl_assembly_time_condensation import _canonical_axis_aligned_coordinates
     V=setup['spaces'][cfg.nedelec_degree];mesh=setup['mesh'];nc=mesh.topology.index_map(3).size_local
     dim=V.element.space_dimension;ip=np.asarray(V.element.basix_element.entity_dofs[3][0],int)
@@ -48,7 +51,7 @@ def assembly_capacity(setup,cfg,journal,expected):
     ni=nc*len(ip);nt=n-ni-len(mpc.slaves);nm=expected['complete_modes'];rows=nt+nm
     facts=dict(native=n,independent=n-len(mpc.slaves),trace=nt,internal=ni,cells=nc,rows=rows)
     for k in ('independent','trace','internal','cells','rows'):
-        if k in expected and facts[k]!=expected[k]:raise ValueError('actual p6/three-axis topology differs: '+k)
+        if k in expected and facts[k]!=expected[k]:raise ValueError('actual degree/three-axis topology differs: '+k)
     mesh.topology.create_entity_permutations();perms=mesh.topology.get_cell_permutation_info()
     tags=setup['mesh_data'].cell_tags.values;raw=set();oriented=set();cell_rows=[];incident={}
     for c in range(nc):
@@ -70,7 +73,8 @@ def assembly_capacity(setup,cfg,journal,expected):
     graph+=(len(traces[0])+len(traces[1]))*nm+nm**2
     result=storage_envelope(rows=rows,native=n,cells=nc,dimension=dim,interior=len(ip),
         raw_classes=len(raw),oriented_classes=len(oriented),graph_nnz=graph,
-        boundary_support_sum=sum(map(len,full)),boundary_cells=len(set(boundary)),modes=nm)
+        boundary_support_sum=sum(map(len,full)),boundary_cells=len(set(boundary)),modes=nm,
+        planning_limit_bytes=planning_limit_bytes,sampled_stop_bytes=sampled_stop_bytes,extra_workspace_bytes=extra_workspace_bytes)
     result.update(facts,exact_unrounded_class_keys_sha256=hashlib.sha256(repr(sorted(oriented)).encode()).hexdigest(),
         class_identity='actual material tag + raw float64 widths + original DOF permutation; no approximate merges',
         boundary_master_support_sha256=[hashlib.sha256(x.tobytes()).hexdigest() for x in full],

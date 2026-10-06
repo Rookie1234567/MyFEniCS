@@ -106,7 +106,7 @@ def boundary_check(cfg,setup,folder,journal):
 
 class CoordinateFactor:
     """Exact diagonal port change wrapped around the existing direct backend."""
-    def __init__(self,matrix,bundle,nt,journal,folder,*,symbolic_capacity=False):
+    def __init__(self,matrix,bundle,nt,journal,folder,*,symbolic_capacity=False,planning_limit_bytes=16*2**30):
         from .dtn_port_3d import _mode_boundary_phase
         self.left,self.right=port_coordinate_scales(nt,[e.normalization_h for e in bundle['dtn_action'].carrier.entries],[_mode_boundary_phase(m,bundle['cfg']) for m in bundle['modes']])
         self.mapping=save_arrays(folder/'port_coordinate_map.npz',left=self.left,right=self.right)
@@ -114,7 +114,7 @@ class CoordinateFactor:
         try:
             if symbolic_capacity:
                 from .phase_explicit_accuracy_capacity import AnalyzedDirectFactor
-                self.factor=AnalyzedDirectFactor(scaled,journal,folder)
+                self.factor=AnalyzedDirectFactor(scaled,journal,folder,planning_limit_bytes=planning_limit_bytes)
             else:self.factor=DirectFactor(scaled,journal)
         finally:scaled.destroy();lv.destroy();rv.destroy()
 

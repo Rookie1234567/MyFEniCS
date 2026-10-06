@@ -36,8 +36,12 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v51]',b'[task042_v52]')):
-            if b'[task042_v52]' in args.input_path.read_bytes():
+        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v51]',b'[task042_v52]',b'[task042_v53]')):
+            if b'[task042_v53]' in args.input_path.read_bytes():
+                from src.io.phase_notch_hp import load_phase_notch_hp
+                from src.solvers import phase_hp_completion_scope as scope
+                specification = load_phase_notch_hp(args.input_path,scope=scope)
+            elif b'[task042_v52]' in args.input_path.read_bytes():
                 from src.io.phase_notch_hp import load_phase_notch_hp
                 specification = load_phase_notch_hp(args.input_path)
             else:

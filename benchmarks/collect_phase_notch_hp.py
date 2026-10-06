@@ -43,7 +43,7 @@ def sampling_receipt(path):
         sampled_tree_peak_bytes=peak,own_swap_peak_bytes=swap,sampled_not_cgroup=True)
 
 
-def saved_checks(states,comparisons):
+def saved_checks(states,comparisons,*,scope=None):
     from benchmarks.collect_phase_explicit_accuracy import vector_audit
     from src.solvers.scattering_anchor import relative
     from src.solvers.phase_notch_hp_modes import keyed_modes,compare_payloads
@@ -59,7 +59,8 @@ def saved_checks(states,comparisons):
         rows.append(dict(role=row['role'],recalculated=checked,mode_count=len(modes['orders']),parent_array_sha256=s['arrays']['sha256'],
             direct_internal_target_pass=max(checked['audit'][k] for k in ('true','augmented','port'))<=1e-10))
     fields=('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')
-    notch=np.asarray(plan_record()['physical_descriptor']['geometry']['notch_box_nm']).reshape(3,2)
+    plan=plan_record() if scope is None else scope.plan_record()
+    notch=np.asarray(plan['physical_descriptor']['geometry']['notch_box_nm']).reshape(3,2)
     for name,p in comparisons.items():
         a=checked_arrays(p['arrays']);b=checked_arrays(p['q23_arrays']);sums=a['per_cell_integrals'].sum(axis=0)
         if a['per_cell_integrals'].shape[1:]!=(6,3) or not np.isfinite(sums).all() or np.any(sums<0):raise ValueError('complete physical integral inventory')
@@ -106,10 +107,15 @@ def saved_checks(states,comparisons):
     return rows,regions,pair_gates
 
 
-def collect():
+def collect(*,scope=None):
+    if scope is None:
+        from src.solvers import phase_notch_hp_scope as scope
+    window,ARTIFACT,STAGES,SOLVES,stage,plan_record=scope.window,scope.ARTIFACT,scope.STAGES,scope.SOLVES,scope.stage,scope.plan_record
+    label=getattr(scope,'NAMESPACE','v52')
     window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);out=folder/'records';out.mkdir()
     pointers={r:json.loads((ARTIFACT/(r+'.json')).read_text()) for r in STAGES if (ARTIFACT/(r+'.json')).exists()}
     states={r:stage(r) for r in pointers};costs=[];sources={};arrays=[];identities=[];lifetimes=[]
+    if label=='v53':states.update({r:scope.parent(r) for r in ('H','P')})
     for run in window.ledger()['runs']:
         directory=Path(run['folder']);manifest=json.loads((directory/'run_manifest.json').read_text());summary=directory/('run_summary.json' if (directory/'run_summary.json').exists() else 'summary.json')
         s=json.loads(summary.read_text());role=run['role'];worker=ARTIFACT/directory.name
@@ -141,17 +147,17 @@ def collect():
     for p in ARTIFACT.rglob('*.npz'):
         arrays.append(dict(path=str(p.relative_to(ROOT)),bytes=p.stat().st_size,sha256=digest(p)))
     comparisons={p.stem:json.loads(p.read_text()) for p in (ARTIFACT/'comparisons').glob('*.json')}
-    independent,regions,pair_gates=saved_checks(states,comparisons)
+    independent,regions,pair_gates=saved_checks(states,comparisons,scope=scope)
     checks=dict(cases={r:{k:v.get(k) for k in ('status','case_spec','equation_pass','direct_target_pass','original_audit','recovery','capacity')}
         for r,v in states.items() if r in SOLVES},comparisons=comparisons,
         independent_audits=independent,independent_pair_gates=pair_gates,decision=json.loads((window.TMP/'decision.json').read_text()),
         NN_training=0,NN20=False,target_qualified=False)
     # Only new arrays and records; old parent identities are references.
-    write_json(out/'hp_accuracy_checks_v52.json',checks)
-    write_json(out/'physical_error_regions_v52.json',dict(comparisons=regions))
-    write_json(out/'run_index_v52.json',dict(runs=window.ledger()['runs'],pointers=pointers))
-    write_json(out/'array_inventory_v52.json',dict(files=arrays))
-    write_json(out/'resource_costs_v52.json',dict(costs=costs,charged_seconds=window.charged_wall(),clock=window.snapshot(),
+    write_json(out/('hp_accuracy_checks_'+label+'.json'),checks)
+    write_json(out/('physical_error_regions_'+label+'.json'),dict(comparisons=regions))
+    write_json(out/('run_index_'+label+'.json'),dict(runs=window.ledger()['runs'],pointers=pointers))
+    write_json(out/('array_inventory_'+label+'.json'),dict(files=arrays))
+    write_json(out/('resource_costs_'+label+'.json'),dict(costs=costs,charged_seconds=window.charged_wall(),clock=window.snapshot(),
         historical_loaded_known_lower_seconds=plan_record()['historical_loaded_known_lower_seconds'],
         historical_unmeasured_fees='unknown; never filled with zero',scope='shared-workstation measured supervised/launch bounds, not uncontended speed'))
     archive=ARTIFACT/('raw_'+folder.name);archive.mkdir();items=[];seen=set()
@@ -164,7 +170,7 @@ def collect():
             h=digest(p);target=archive/h
             if not target.exists():shutil.copyfile(p,target)
             items.append(dict(path=str(p.relative_to(ROOT)),bytes=p.stat().st_size,sha256=h,archived=str(target.relative_to(ROOT))))
-    write_json(out/'raw_archive_index_v52.json',dict(files=items))
+    write_json(out/('raw_archive_index_'+label+'.json'),dict(files=items))
     source_archive=ARTIFACT/'source_archive';source_archive.mkdir(exist_ok=True);bindings=[]
     for sha,hashes in sources.items():
         for path,h in hashes.items():
@@ -173,14 +179,17 @@ def collect():
             dest=source_archive/h
             if not dest.exists():dest.write_bytes(data)
             bindings.append(dict(source_sha=sha,path=path,sha256=h,archived=str(dest.relative_to(ROOT))))
-    write_json(out/'source_bindings_v52.json',dict(files=bindings,document_HEAD_is_not_run_source=True))
-    write_json(out/'physical_identity_bindings_v52.json',dict(runs=identities,
+    write_json(out/('source_bindings_'+label+'.json'),dict(files=bindings,document_HEAD_is_not_run_source=True))
+    write_json(out/('physical_identity_bindings_'+label+'.json'),dict(runs=identities,
         canonical_material_path='input/materials/si_optical_constants_v1.json'))
-    write_json(out/'object_lifetimes_v52.json',dict(routes=lifetimes))
-    print(json.dumps(dict(status='V52_COLLECTED',records=str(out))))
+    write_json(out/('object_lifetimes_'+label+'.json'),dict(routes=lifetimes))
+    print(json.dumps(dict(status=label.upper()+'_COLLECTED',records=str(out))))
 
 
-def documents():
+def documents(*,scope=None,review_name='review_report_v50.md',response_name='response_v52.md',outcome_name='phase_notch_hp_accuracy_v52.md'):
+    if scope is None:
+        from src.solvers import phase_notch_hp_scope as scope
+    window,plan_record=scope.window,scope.plan_record
     window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);authority=plan_record()['review_commit'];task=ROOT/'docs/task042_neural_coarse_inverse'
     targets=[];protected=[]
     for name in ('docs/task042_neural_coarse_inverse/README.md','docs/task042_neural_coarse_inverse/outcomes/summary.md',
@@ -189,7 +198,7 @@ def documents():
         old=subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false','show',authority+':'+name],cwd=ROOT);new=(ROOT/name).read_bytes()
         if not new.endswith(old):raise ValueError('historical suffix changed '+name)
         targets.append((ROOT/name,new[:-len(old)].decode()));protected.append(dict(path=name,sha256=hashlib.sha256(old).hexdigest()))
-    targets += [(p,p.read_text()) for p in (task/'review_report_v50.md',task/'response_v52.md',task/'outcomes/phase_notch_hp_accuracy_v52.md')]
+    targets += [(p,p.read_text()) for p in (task/review_name,task/response_name,task/'outcomes'/outcome_name)]
     checked=[]
     for p,body in targets:
         width=None;inside=False;tables=[];links=[]

@@ -50,7 +50,7 @@ def numeric_plan(rss_bytes,info,limit=16*2**30):
 
 class AnalyzedDirectFactor:
     """Existing ABI-qualified MUMPS lifecycle, bounded before numeric."""
-    def __init__(self,matrix,journal,folder):
+    def __init__(self,matrix,journal,folder,*,planning_limit_bytes=16*2**30):
         from .fullspace_v17_p3_oracle import _MumpsFactor
         from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
         from src.runners.task042_shared import write_json
@@ -61,7 +61,7 @@ class AnalyzedDirectFactor:
                 factor.symbolic(matrix);info=factor.info();sample=process_tree_snapshot(int(os.environ['TASK042_WATCHDOG_PARENT_PID']),'V51-h-symbolic',include_pss=False)
                 if sample['rss_bytes'] is None or sample['swap_bytes']!=0:raise MemoryError('symbolic tree RSS/swap identity unavailable')
                 if factor.symbolic_memory_settings()['icntl']['22']!=0:raise ValueError('V51 factor must remain in-core; OOC not authorized')
-                plan=numeric_plan(sample['rss_bytes'],info)
+                plan=numeric_plan(sample['rss_bytes'],info,limit=planning_limit_bytes)
                 write_json(folder/'h_symbolic_capacity.json',dict(info=info,plan=plan,tree=sample,controls=factor.symbolic_memory_settings(),ordering=factor.preferred_ordering))
                 if not plan['admitted']:raise MemoryError('h numeric capacity not admitted')
                 factor.set_memory_limit_mb(plan['numeric_memory_allocation_cap_mb'])
