@@ -1,5 +1,17 @@
 # Test and evidence summary
 
+## Review V9 CPU-map接线fixture分批验证（2026-10-05；非MPI/FE）
+
+这些serial节点检查固定rank→CPU映射怎样进入worker资格函数，不实际启动MPI8数值worker；CPU映射正确不等于完成NUMA或FE资格。
+
+| attempt | 结果 | parent wall | source / 原始证据 |
+|---|---|---:|---|
+| 首次Popen `task041_rank_numa_cpu10_serial_20261005T143024Z` | 已启动，但完成状态、退出码和wall在原执行窗口未持久捕获；不得写成未运行或0秒 | unknown / 无可核实wall | [started记录](../../../results/task041_rank_numa_cpu10_serial_20261005T143024Z/serial_pytest_attempt.started.json)及[空stdout](../../../results/task041_rank_numa_cpu10_serial_20261005T143024Z/serial_pytest.stdout.log)保留；该unknown不被后续attempt替代 |
+| 五selector retry `task041_rank_numa_cpu10_serial_retry_20261005T143847Z:pytest_retry` | 11 passed、1 failed、rc1；显式场景复用了默认场景的`qualified_rank_maps`记录，导致fixture断言失败 | 5.001876919995993 s | [stdout](../../../results/task041_rank_numa_cpu10_serial_retry_20261005T143847Z/serial_pytest.stdout.log)、[attempt](../../../results/task041_rank_numa_cpu10_serial_retry_20261005T143847Z/serial_pytest_attempt.json)、[compact](../../../results/task041_rank_numa_cpu10_serial_retry_20261005T143847Z/serial_retry_compact.json)；failed attempt已按批准billing correction唯一计账 |
+| 修正后worker路由单节点 `task041_rank_numa_cpu10_worker_single_20261005T145625Z:pytest_worker_route` | 1 passed；显式10–17场景前清空本场观察记录，默认1–8场景与显式tuple断言分开 | 5.001115021994337 s | [stdout](../../../results/task041_rank_numa_cpu10_worker_single_20261005T145625Z/serial_pytest.stdout.log)、[attempt](../../../results/task041_rank_numa_cpu10_worker_single_20261005T145625Z/serial_pytest_attempt.json)、[compact](../../../results/task041_rank_numa_cpu10_worker_single_20261005T145625Z/serial_single_compact.json)；attempt及前后source-hash文件绑定test351 SHA `548a19b9f762e1d8d39eb85d7e64966c8368dc2d51c435ecacc2c8a940b8407f`，生产两个source hash不变 |
+
+retry attempt经批准后补录V5一次；单节点attempt另按唯一ID记一次。原始attempt对单节点test351绑定SHA `548a19b9f762e1d8d39eb85d7e64966c8368dc2d51c435ecacc2c8a940b8407f`；后续审核通知另给出SHA `e7c582753871ef5b48a827fb6fbb092d134455f3ad2408bddaef05d5e9f53fa9`，但此attempt的argv、started记录、前后source hash和compact均绑定`548a19...`。本文按原始attempt记源身份，并保留通知转录差异供审阅；不把另一哈希冒充运行源。首次已启动Popen的耗时仍unknown。
+
 ## Review V9 H1 fixed-H6反馈门（2026-10-06）
 
 | attempt | ABI /执行范围 | pytest结果 | parent wall | 证据与边界 |
@@ -9,9 +21,13 @@
 | MPI2 `task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z` | fresh双rank ABI；rank0 CPU12、rank1 CPU13，membind0，六线程含BLIS=1；test350五selector | rank0与rank1各8 passed，无warning | 5.001988966949284 s | [stdout](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/mpi2_pytest.stdout.log)、[attempt](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/mpi2_pytest_attempt.json)、[compact](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/mpi2_test_compact.json) |
 
 core/test SHA分别为`64ef9439ee2d527049877edfa88ce8e848e4370600f1a8b9ee41d4684709dea3`和`941606bba844cdeabad3c44bedfe86c2578df7370690621c0a6611bbc32482a6`。最后rank在真实原反馈作用完成后注入非有限值；两rank都按门拒绝、清理后再完成allgather。该节点不证明任意rank-local底层异常安全。V5两attempt各一条，父wall共`10.003750981064513 s`；ledger 124项/SHA `60ee77b84661f91944ceffb22e9ab544178d607403f20696b5ffcd875f32fe67`，append receipt见[此处](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/v5_ledger_append_receipt.json)。ABI/static/rank-local pytest时间未计；此阶段无FE、无性能或0.7 nm资格。
-## 2026-10-06：Review V9 H0 文档与只读审查
+## 2026-10-06：Review V9 H0文档与只读审查（H0时点快照）
 
-本阶段只读取既有5 nm marker/side audit、13.5 nm研究锚点、2 nm producer和0.7 nm材料/容量来源，并更新H0文档及hash-bound JSON。没有运行pytest、ABI、MPI、QEP、FE或checker；因此本节不新增测试通过数，也不把历史测试结果转为V9资格。详见[H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)、[machine record](records/task041_v9_h0_readonly.json)和[Response V11](../response_v11.md)。
+H0时点只读取既有5 nm marker/side audit、13.5 nm旧研究锚点、2 nm producer和0.7 nm材料/容量来源，并更新H0文档及hash-bound JSON；没有运行pytest、ABI、MPI、QEP、FE或checker。该声明仅限定H0，不覆盖随后H1工作。详见[H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)、[machine record](records/task041_v9_h0_readonly.json)和[Response V11](../response_v11.md)。
+
+## Review V9 H1：13.5 nm Si public/service场（非测试）
+
+13.5 nm Si fixed-H6 public/service场已按原合同完成：37 outer、264次`S_H`，五项真实残差及恢复/physics通过，finalizer十项通过；唯一workflow wall `3181.091282263 s`，performance=`not_isolated`。完整side与operator计数、阶段wall及其scope见[H1 outcome](hybrid_0p7nm_2tb_48h_v9.md)和[只读cost compact](../../../results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/readonly_h1_13p5_cost_compact.json)。这不是pytest通过数，不资格化W5/0.7 nm或性能。
 
 ## 2026-09-23：Review V6 F3c4 收口
 

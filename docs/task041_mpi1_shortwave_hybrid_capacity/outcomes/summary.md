@@ -1,17 +1,38 @@
 # Task041 outcomes summary
 
-## Task041 Review V9 H0：当前短波长审查状态（2026-10-06）
+## Task041 Review V9 H0历史快照与当前进度（2026-10-06）
 
-H0只读对照了两场W 5 nm、p6/h4、M480、MPI8×1的完整consumer，并审查现有2 nm和0.7 nm证据；没有运行数值代码、测试、MPI、QEP或FE。两场各完成1920/1920正式响应并通过各自的五项真实残差和恢复/物理门，但最新场public-to-finalizer为`202124.563261555 s`（56.146 h），超过48 h目标；两场均`performance_not_isolated`，不能据此宣称优化收益。
+H0是一次只读时点：它对照两场W 5 nm、p6/h4、M480、MPI8×1完整consumer，并审查2 nm和0.7 nm证据；当时没有运行数值代码、测试、MPI、QEP或FE。其后H1组件验证与13.5 nm Si public/service完整回归已经完成，本表保留H0结论并在下节登记新状态。两场5 nm各完成1920/1920正式响应并通过各自五项真实残差和恢复/物理门；最新5 nm public-to-finalizer为`202124.563261555 s`（56.146 h），超过48 h目标。两场均`performance_not_isolated`，不据此宣称优化收益。
 
 | H0项目 | 关键事实 | 状态与证据 |
 |---|---|---|
 | 共同阶段wall | 从两份`consumer/markers.jsonl`相邻`stage`边界重算；较新场marker区间`202108.376 s`，public-to-finalizer为`202124.563 s`，范围不同；monitor独占wall无marker | 分段与原始身份见[H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)和[机器记录](records/task041_v9_h0_readonly.json)，monitor=`unknown` |
 | Side/P4工作量 | 两场内部KSP迭代合计均30296；较新场P4 backsolve和refinement各多8686次，不能从计数直接换算秒数 | 详见H0 outcome的全量分组；逐RHS MPI.MAX和嵌套时间不相加成wall |
-| 13.5 nm锚点 | 最新Si研究场37 outer/264 `S_H`，五项真实残差过门；只存有最后inner独立raw终检值 | 可作数学未变部分的接线锚点，不是W 5/0.7 nm或性能资格 |
-| H1 / 2 nm / 0.7 nm | H1 fixed-H6反馈门组件serial/MPI2 tiny测试通过，但public单`.dat`接线与W 5 nm FE尚未运行；2 nm已有PEP/TOAR但旧consumer formal响应为0/4800；0.7 nm仍缺封存W材料输入、完整W外部keys和合格网格/容量证据 | 组件测试不等于FE；2 TB与48 h均`not_qualified`；H2–H4未完成 |
+| 13.5 nm锚点 | 唯一Si public/service场37 outer/264 `S_H`，五项真实残差、recovery/physics与finalizer通过；只存有最后inner独立raw终检值 | 已验证公共身份链和完整生命周期；不是W 5/2/0.7 nm或性能资格 |
+| W 5 nm V9 fixed-H6 | 10月3日完整数值身份、legacy-native validator结果和600 external-key binding均存在；旧producer公共父/cgroup资源未资格化 | 当前新profile目录形状与旧legacy descriptor入口不兼容；资源`unqualified`单列，不抹掉数值身份，也不伪造producer资源PASS |
+| 2 nm / 0.7 nm | 2 nm已有PEP/TOAR但旧consumer formal响应为0/4800；0.7 nm来源字节已封存并给出候选插值，正式材料封套、完整W外部keys和合格网格/容量证据仍缺 | 2 TB与48 h均`not_qualified`；H2–H4未完成 |
 
 最小后续接线审查、5 nm相邻marker分段、1980行/场的side audit工作量、H3材料来源及全部身份限制见[Task041 V9 H0报告](hybrid_0p7nm_2tb_48h_v9.md)。以下V8及更早条目保留为各自阶段的历史记录。
+
+## Task041 Review V9 H1：13.5 nm Si fixed-H6 public/service完整回归
+
+这是一场已完成的公共单`.dat`生命周期回归，不是测试selector或W5算例。固定H6为模态预条件器提供按需反馈，正式结果仍由原全局方程、RIGHT FGMRES、P4、五项真实残差与物理门决定。
+
+| 项目 | 本场数据 | 边界 |
+|---|---:|---|
+| 身份 | source `836b7dfb377f11d8d9fd591eacb7a982f7cbbbac`；Invocation `443995ec69bd45d0a36a1be48ced33a3`；Si 13.5 nm、p6/h10、M120、MPI8、cell-condensed | 该场是唯一新增13.5 public回归；route-plan和leading-PH开关为false |
+| 数值 | 37 outer、264次solver `S_H`；五项真残差最大`2.284003276919731e-9 <= 5e-9`；最终inner raw相对残差`3.4826090281102427e-4 <= 1e-3` | 最终inner有独立终检；更早36次没有逐次保存的独立raw终检 |
+| side/P4 | bottom/top apply `74/74`；内部KSP `2410/2608`步；P4回代`4820/5216`、精化`0/0`；side Q/H6/A6分别`4820/2410/4820`与`5216/2608/5216` | side计数保持原rank-local/复制口径，不乘8；`side_A` audit和最终诊断范围不同 |
+| fixed反馈工作 | setup门8次`S_H`/C matvec；两侧各8次H6 apply、16次degree-3 MatMult；随后solver 264次`S_H`/C matvec、每侧264次H6 apply和528次MatMult；整场每侧272/544，Schur列0 | legacy cost-probe调用0；setup门动作计入总工作量但与GMRES原9+1预算分列 |
+| C-LU | owner rank7建因子1次；累计inventory attempt/success `0/0`，但owner/last-solve记录`8/8` | 全run C-LU solve累计数互相矛盾，记unknown；C matvec不等于LU solve |
+| 时间 | setup至outer `343.619396 s`；outer `2821.718932 s`；恢复段`9.978173 s`；consumer `3176.842516 s`；public-to-finalizer `3180.339667 s`；service父wall `3180.537532 s`；唯一finalizer账`3181.091282263 s` | 相邻marker段不重叠；嵌套、rank和phase计时不叠加。performance=`not_isolated` |
+| 资源与终态 | tree RSS `8,936,820,736 B`、PSS `6,437,861,376 B`、USS `6,069,190,656 B`、dedicated job cgroup峰`6,214,434,816 B`；finalizer `10/10` | 专属cgroup不等于共享宿主；secondary checker `not_available` |
+
+详细计数和源文件hash见[13.5 V9 outcome](hybrid_0p7nm_2tb_48h_v9.md)及[只读成本compact](../../../results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/readonly_h1_13p5_cost_compact.json)。consumer summary SHA `21ac7e56c45d90cbe540587bda831540d42077a32477cfae8a1daa2ba11f54d9`；finalizer summary SHA `04d0b4d8c2ade9f85340a363bb38b2abd9f64be4c4a0891bf9608e8fde0682f7`。V5 ledger仍127条、SHA `15d4b5dcb1ed0a867e584dc89d33a52da453575697a16a45d2aed101b5964836`，本Invocation只记一次`3181.091282263 s`。
+
+## W 5 nm当前fixed-H6入口缺口
+
+10月3日`run_manifest`、`supervisor_summary`、legacy descriptor和selected-mode binding共同保存完整的W5/M480/MPI8/p6/h4/cell-condensed身份、输入/physical/resolved hash、packet manifest/identity和600 external-key SHA；supervisor明确记`validated_legacy_native_packet`。因此当前不是数值身份缺失。fixed-H6 guard期待新profile目录（`mode_prep_summary.json`、`packet_identity.json`、`selected_mode_packet/manifest.json`及父级selected-mode记录），而旧packet按legacy descriptor指向producer root、独立packet root和identity sibling，故阻断是入口形状不兼容。旧producer仅有worker-tree资源样本，public parent/PSS/USS/cgroup未测，`resource_qualified=false`；这是独立资源资格缺失，不是数值packet否决。精确hash及W5-only兼容范围见V9 outcome；暂未修改代码或读shards。
 
 ## Task041 Review V9 H1：fixed-H6反馈门组件验证（2026-10-06）
 

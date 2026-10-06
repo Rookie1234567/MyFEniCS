@@ -1,14 +1,14 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-06：Task041 Review V9 H0 只读收口
+## 2026-10-06：Task041 Review V9 H0审计与H1当前进度
 
-**背景与基线。** 为判断已有W短波长工作量，按两场5 nm、p6/h4、M480、MPI8×1 consumer的同一组`consumer/markers.jsonl`阶段边界对照墙钟，并流式读取两份各1980行side RHS审计。两场分别完成1920/1920 formal response与各自残差/物理门；最新场public-to-finalizer为`202124.563261555 s`，约56.146 h，超过48 h目标。两场运行源码不同且均`performance_not_isolated`，不能用差值证明某优化因果或收益。
+**H0背景与基线。** 为判断已有W短波长工作量，按两场5 nm、p6/h4、M480、MPI8×1 consumer的共同`consumer/markers.jsonl`阶段边界对照墙钟，并流式读取两份各1980行side RHS审计。两场分别完成1920/1920 formal response与各自残差/物理门；最新场public-to-finalizer为`202124.563261555 s`，约56.146 h，超过48 h目标。两场运行源码不同且均`performance_not_isolated`，不能用差值证明某优化因果或收益。H0机器记录是其完成时点的只读快照，不覆盖后续H1。
 
 **方法与发现。** 使用相邻marker差值，不把summary里的嵌套KSP/PC计时叠加到阶段wall；monitor独占时间没有marker，保持`unknown`。两场内部KSP迭代合计相同，均30296；较新场P4回代和精化各比旧场多8686次。它们解释了工作量并不等同于KSP步数，但不能换算成精确秒数或归因给A6。局部A6 RHS测量不代表完整工作流；较新场modal相邻marker段多约`12092.900 s`而outer段少约`288.119 s`，因果仍未分离。
 
-**模型与路线边界。** 13.5 nm Si fixed-H6研究锚点已有37 outer/264个`S_H`作用及五项通过的outer真残差，但只存有最后一次inner独立raw终检值。2 nm已有SLEPc PEP/TOAR，旧consumer formal为0/4800且`ncv/mpd`未记录；容量审查不再提出迁移TOAR。0.7 nm可追溯W来源线索包括CXRO、NIST密度和CIAAW原子量，但源字节hash、常数、插值及复折射率符号转换未封存，完整W外部keys、网格/模态阶梯也缺失；2 TB与48 h尚未资格化。
+**H1当前结果与路线边界。** H1 fixed-H6组件门serial/MPI2测试通过，且唯一13.5 nm Si public/service整场已通过原五项真残差、recovery、physics与十项finalizer：37 outer、264个`S_H`，workflow wall `3181.091282263 s`；只存有最后一次inner独立raw终检值，performance=`performance_not_isolated`。这验证公共接线和完整生命周期，不等于W5、2 nm或0.7 nm资格。2 nm已有SLEPc PEP/TOAR，旧consumer formal为0/4800且`ncv/mpd`未记录；不再提出迁移TOAR。0.7 nm CXRO、NIST、CIAAW等来源字节现已归档并给出候选插值，但正式材料封套、完整W外部keys和网格/模态阶梯仍缺；2 TB与48 h尚未资格化。
 
-**决策、局限与下一步。** H0已形成单`.dat`入口到candidate/factory的默认关闭接线建议：fixed-H6分支以固定反馈的有界复数repeat/linearity替换该分支预付的自适应side样本，同时独立保留5 nm `5e-13`、最多两次同因子P4修正、原outer真残差与恢复/物理门。H0截止时H1–H4完整阶段尚未完成；其后H1 fixed-H6反馈门组件的serial/MPI2测试已通过，但public单`.dat`接线和真实FE尚未运行，H2–H4仍未完成。逐段wall、全量审计计数、材料输入/容量缺口和hash见[H0报告](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)与[机器记录](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_h0_readonly.json)。
+**W5当前阻断与下一步。** 10月3日完整W5已有legacy-native validator确认的数值/packet/layout身份，包括input/physical/resolved SHA、M480/MPI8、600 external keys和packet manifest/identity；不是缺少数值身份。fixed-H6新profile入口要求的producer目录与旧descriptor布局不兼容；旧producer公共parent/cgroup资源记录仍`unqualified`，独立保留，不伪造资源PASS。最薄下一步是仅在注册W5 fixed-H6分支复用已有legacy validator/binder，让legacy descriptor与new producer root二选一，保留物理/hash/选模核验；13.5/2 nm新profile及普通legacy默认不变。H2–H4仍未完成。逐段wall、全量计数、W5三类身份/兼容/资源边界和H3来源字节SHA见[Task041 V9 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[H0历史record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_h0_readonly.json)和[Response V11](task041_mpi1_shortwave_hybrid_capacity/response_v11.md)。
 
 ## 2026-09-30：Task041 Review V8 5 nm 正式 consumer 终态
 

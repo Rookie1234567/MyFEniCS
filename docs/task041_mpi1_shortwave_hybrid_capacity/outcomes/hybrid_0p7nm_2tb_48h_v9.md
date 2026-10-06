@@ -1,4 +1,4 @@
-# Task041 Review V9：H0旧场成本、短波长缺口与最小接线审查
+# Task041 Review V9：H0旧场成本、H1回归与短波长缺口
 
 ## 当前阶段结论
 
@@ -11,9 +11,28 @@ H0把两场已完成的 W、5 nm、p6/h4、M480、MPI8×1 cell-condensed consume
 | 工作量 | 两场内部KSP迭代合计都为30296；10月3日P4 backsolve与refinement各比9月28日多8686次 | 同迭代数不等于每步工作相同；不能从调用数直接换算秒数 |
 | 2 nm | 2 nm producer已使用SLEPc PEP/TOAR；旧consumer未完成4800项formal响应 | TOAR不是新候选；旧consumer负结果保留，真实2 nm新路线尚未完成 |
 | 0.7 nm W | 只有air-side组件模式枚举和外部材料来源线索；正式W材料封套、完整外部keys、合格h/M及目标容量证据未齐 | 不满足0.7 nm正式计算/2 TB/48 h资格 |
-| H0本轮执行 | 文档和只读源码审查；没有运行测试、MPI、QEP或FE | H0已完成；H1–H4完整阶段当时均未完成，Review V9仍进行中 |
+| H0本轮执行 | 文档和只读源码审查；没有运行测试、MPI、QEP或FE | 这是H0时点记录；其后H1组件和13.5 nm public/service回归已完成，W5 fixed-H6回归仍未运行 |
 
-机器可读证据见[H0 record](records/task041_v9_h0_readonly.json)。本报告没有把“完整5 nm解已通过”误写成“短波长容量目标已达标”：10月3日全流程仍约56.146 h，超过48 h目标；2 TB目标也没有0.7 nm实测峰值支持。
+机器可读H0证据见[H0 record](records/task041_v9_h0_readonly.json)。该record是H0时点快照；随后H1新增的一场13.5 nm public/service结果在下文单列。本文不把“完整5 nm或13.5 nm解已通过”误写成“0.7 nm容量目标已达标”：10月3日5 nm全流程约56.146 h，超过48 h目标；2 TB目标也没有0.7 nm实测峰值支持。
+
+## H1后续状态：13.5 nm Si public/service完整回归
+
+在完成单`.dat`接线后，Review V9授权的一场13.5 nm Si fixed-H6研究回归已沿service parent→`scripts/run_case.py`→launcher/supervisor→consumer→ExecStopPost finalizer完整运行。它验证了公共身份链和一次完整求解生命周期；H6只提供模态预条件反馈，原全局方程、RHS、RIGHT FGMRES、P4与物理验收不变。
+
+| 项目 | 实测 | 说明 |
+|---|---:|---|
+| 运行身份 | source `836b7dfb377f11d8d9fd591eacb7a982f7cbbbac`；Invocation `443995ec69bd45d0a36a1be48ced33a3`；Si 13.5 nm、p6/h10、M120、MPI8 | 唯一新public回归；不是W 5 nm或0.7 nm资格 |
+| 原方程求解 | 37 outer步；原五项真残差为`1.8215487484151747e-9 / 1.821548606659606e-9 / 2.284003276919731e-9 / 5.083945967955327e-10 / 9.156507528011665e-10`（global/reported/bottom/top/modal） | 全部≤`5e-9`；recovery、physics、80个external Q通道和closure通过 |
+| fixed-H6内层 | 264 solver `S_H`作用；最后一次inner reason 2、7次solver作用+1次独立raw末检；raw相对残差`3.4826090281102427e-4 <= 1e-3` | 只持久化最后一次inner独立末检；不宣称此前36次逐一核验 |
+| setup固定反馈门 | 8次`S_H`、C matvec 8次；每侧H6 apply 8次、degree-3实际matrix mult 16次；原legacy side预付调用0，Schur columns 0 | setup门成本另列但计入整场；这些rank-local记录不乘8 |
+| side与P4工作 | bottom/top side apply 74/74；内层KSP 2410/2608步；P4 backsolve 4820/5216；P4 refinement 0/0 | 每侧本地或复制计数；没有新leading-PH/route-plan复用 |
+| 累计operator动作 | fixed-H6每侧共272次apply、544次degree-3矩阵乘；全场C matvec共272次；side内Q 4820/5216、H6 2410/2608、A6 4820/5216、P/PH audit 4820/5216、PH total 9640/10432 | setup门8次已加在fixed-H6总数中；不得把C matvec当作C-LU solve数 |
+| C-LU | owner rank 7建立一次；inventory累计attempt/success字段`0/0`，但owner inventory和最后solve显示`8/8` | 全run累计solve数不一致，记unknown；不以C matvec补算 |
+| 非重叠时间 | setup到outer开始343.619396 s；outer 2821.718933 s；outer结束到recovery开始0.943681 s；recovery 9.978173 s；recovery结束到final cleanup 0.517839 s；consumer总段3176.842516 s | 来自相邻consumer marker；parent与嵌套阶段不能相加 |
+| 外层workflow与资源 | public-to-finalizer 3180.339667 s；service parent 3180.537532 s；finalizer计账wall 3181.091282263 s。tree RSS 8,936,820,736 B，PSS 6,437,861,376 B，USS 6,069,190,656 B，dedicated job cgroup peak 6,214,434,816 B | 同一Invocation只由finalizer计一次；`performance_not_isolated`，tree与专属cgroup峰分列；job swap 0 |
+| service终态 | exit0，finalizer 10/10 checks true | integrated secondary checker `not_available`，没有另跑checker |
+
+consumer summary为[`consumer_summary.json`](../../../results/task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8_cell_condensed/task041_13p5nm_p6h10_m120_mpi8_cell_condensed__hybrid_iterative__mpi8__M120/20261006T052732.307687Z/consumer/consumer_summary.json)，SHA `21ac7e56c45d90cbe540587bda831540d42077a32477cfae8a1daa2ba11f54d9`；finalizer summary位于[run finalizer目录](../../../results/task041_v9_13p5_fixed_h6_public_service_run_20261006T044333Z/finalizer/finalizer_summary.json)，SHA `04d0b4d8c2ade9f85340a363bb38b2abd9f64be4c4a0891bf9608e8fde0682f7`。只读工作量摘录见[cost compact](../../../results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/readonly_h1_13p5_cost_compact.json)。该Invocation已在V5 ledger唯一记账`3181.091282263 s`，ledger SHA `15d4b5dcb1ed0a867e584dc89d33a52da453575697a16a45d2aed101b5964836`。这些数值不能估算W 5 nm成本或0.7 nm容量。side audit的`side_A`计数与最终side诊断范围不同（audit delta和最终累计不一致），因此不将它们混为同一总数。
 
 ## 5 nm运行身份与数值边界
 
@@ -113,36 +132,32 @@ A6把体作用和DtN邻项融合，减少一段局部动作；已有microbenchma
 | 目标 | 现有可用证据 | 尚缺内容与边界 |
 |---|---|---|
 | W 2 nm，p6/h1.5，M1200，MPI8 | 2026-09-18 producer summary显示正/负侧均为SLEPc `PEP/TOAR`、general quadratic polynomial、shift-invert MUMPS LU；requested 2400，converged 2422/2423，各26次迭代。rank-max分项：positive-right 6009.042 s、positive-adjoint 8324.175 s、negative-right 6206.448 s、negative-adjoint 8658.907 s、reciprocal 285.402 s、总29500.000 s；另存producer phase 29504.116 s，两者嵌套，不能相加 | 旧consumer重复门失败，formal `0/4800`，不是新的完整2 nm收敛/容量资格。`ncv/mpd`没有记录，源码默认值不代替实测配置。已用TOAR，容量审查应优先量大nev下左右基、shift因子及workspace |
-| W 0.7 nm材料 | 主控浏览提供的CXRO/Henke候选数据点：1752.87 eV处f1=32.5247、f2=9.39200；1781.22 eV处f1=27.8205、f2=9.21280，括住约1771.2 eV。NIST给纯W密度19.3000 g/cm³，CIAAW给Ar(W)=183.84(1) | 这些是一手来源线索，源字节hash、常数版本、插值规则、密度/原子量使用记录与项目符号转换仍未封存；项目约定正耗散`n=1−δ+iβ`，必须从Henke公式约定显式转换，不能粘贴负虚部。1809.1/1809.3 eV邻近吸收边，不能跨边插值 |
+| W 0.7 nm材料 | 已封存CXRO/Henke、NIST、CIAAW、BIPM及CODATA来源字节；按1752.87/1781.22 eV两点线性插值得到f1=`29.48267808543176`、f2=`9.27611837781331`，候选n=`0.9995903781323069+i0.00012887909720587617` | 来源字节与SHA已记录，但从来源到正式`.dat`的常数/材料封套尚未资格化；项目正耗散约定为`n=1−δ+iβ`，不跨1809.1/1809.3 eV吸收边插值 |
 | W 0.7 nm完整外部模式 | Task039只能生成air-side组件模式清单：16030个top air keys，已测inventory SHA `28cf61cebf8656b207a5128cc98dda4e0bfcaad4cdb1fe1b784b33bcacd14e4d` | 此值没有W grating/substrate、两侧介质与完整正式input身份，不能当0.7 W外部通道清单。`src/io/execution_plan.py` 与validation显式以`0P7NM_MATERIAL_INPUT_INCOMPLETE`拒绝Full3D launch |
 | W 0.7 nm规模 | 派生候选h≈0.525 nm仅来自保持h/λ的尺度关系；p6/h0.525的投影DoF约173,802,000、active trace约51,192,000、NNZ约43,283,050,000，旧因子存储估算3234–32342 GiB | 这些是结构/容量派生，不是实际材料、网格、所选M、factor或RSS测量。缺正式材料和external keys、合格hp/M阶梯、各对象生命周期字节及目标运行的node分布。2 TB/48 h目前均未证 |
 
-NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.pl?matno=074)，CIAAW为[钨原子量页](https://ciaaw.org/tungsten.htm)，Henke为[W光学常数文件](https://henke.lbl.gov/optical_constants/sf/w.nff)及[公式说明](https://henke.lbl.gov/optical_constants/intro.html)。这里只登记主控浏览提供的来源线索与候选点值；尚未下载封存源字节或生成正式输入。后续材料封存应独立记录来源版本、文件SHA、密度/原子量、eV–nm转换、复折射率符号和插值区间。本次不变更5/2 nm冻结材料、不运行QEP或生成0.7数值输入。
+NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.pl?matno=074)，CIAAW为[钨原子量页](https://ciaaw.org/tungsten.htm)，Henke为[W光学常数文件](https://henke.lbl.gov/optical_constants/sf/w.nff)及[公式说明](https://henke.lbl.gov/optical_constants/intro.html)。来源原始字节保存在`results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/`：`w.nff` 13,801 B/SHA `dd11d29386952edd3259f2d3c4ddc88589ff6f6fb1e3ba3db43a4c589ea3ad95`、Henke公式页SHA `5dea737ff27676a17c9a076c9f9b99e40a3dfec4767fbeb549862b21b5cdfdc6`、NIST页SHA `d99569a1c84837b1f5f29e9a3862ddcc8d4acac4a52fe064cb9fd503cacfcd91`、CIAAW页SHA `b997d72d2e2cff592ce9ed5e07a490dc6ba331ea6efc5506b345bffd0ddf5454`、BIPM常数页SHA `dddeb6c0c7171df77f20c48742cb4774a5b1062d58a35d5ea75477bab31331e7`、CODATA PDF SHA `4d7e7f34b98ab2fc4df68b38247f818f6fc8bdf7f25f91abcdfbc329e22d2f32`。NIST密度19.3000 g/cm³、CIAAW原子量183.84(1)对应候选原子数密度`6.322199557658834e28 m⁻³`；0.7 nm能量为`1771.2028347600037 eV`，插值比例`0.6466608380953702`。这些来源字节及派生值便于追溯，但正式材料输入、常数使用记录和完整W外部通道仍需独立资格化。本次不变更冻结5/2 nm材料、不运行QEP或生成正式0.7 nm输入。
 
-## 最小V9接线审查（仅规划，不是实现）
+## W5 legacy-native packet到fixed-H6的最薄兼容方案（只读规划）
 
-fixed-H6的作用是给模态未知量提供廉价、固定的双侧反馈，避免预先为所有模态列重复求昂贵侧区响应；代价是它只是原外层系统的预条件近似，必须继续以原全局算子、RHS和五项真残差验收。当前`fixed_h6_modal_gmres_research`只在内部贯穿到factory，`scripts/run_case.py`没有这个公开开关，已有fixed-H6 scope也只允许13.5 nm Si、cell-condensed、M120、MPI8、V8、candidate、`target=None`。V9应使用一个默认关闭的CLI opt-in，不增加新的dat字段/模型类型，不改变ordinary default。
+10月3日完整W5已有数值身份，不是缺packet或缺布局。当前启动阻断是fixed-H6新profile入口要求的目录结构不同于已验证legacy-native descriptor；旧producer的公共资源证据另为`unqualified`，不能冒充资源PASS，也不应抹掉已有数值身份。
 
-| 层 | 现有位置与最窄接线 | V9新增检查 |
-|---|---|---|
-| 单.dat公共入口 | `scripts/run_case.py::_parser/main`；它已有`--task041-p4-refinement-target-tolerance`，并把单个resolved `.dat`交给`launch_specification` | 新的`--task041-fixed-h6-modal-gmres-research`只作为Task041 candidate显式opt-in，缺省false；绑定入resolved/run manifest，不在`.dat`中改模型身份 |
-| public launcher | `src/runners/task038_launcher.py::launch_specification`→`run_task041_public_supervisor` | strict-true仅允许注册的13.5 Si anchor与W 5 nm p6/h4/M480/MPI8 cell-condensed formal candidate；未知model/非candidate/额外诊断组合在数值启动前拒绝 |
-| supervisor与命令生成 | `src/runners/task041_supervisor.py::run_task041_public_supervisor`→`_task041_builders`→`benchmarks/task041_balh_workflow.py::build_task041_balh_candidate_consumer_command` | 在同一worker命令中透传flag，并校验命令、config、manifest的一致性；不要只在Python wrapper里偷偷改内部参数 |
-| consumer与candidate setup | `benchmarks/task041_exact_side_workflow.py::run_task041_consumer`→`_run_task041_balh_candidate_setup`→唯一`build_side_balanced_inverse`→`create_side_balh_block_ldu_preconditioner` | 继续保留producer identity、13.5/W5注册身份、MPI/M/后端与V8 swap-only规则；数值默认路径不变，复用已存在互斥诊断guard，独立标注first/delta侧响应与modal反馈 |
-| 5 nm P4 target | `.dat`仍是同一W 5 nm注册input；CLI既有target经`task038_launcher`、`task041_supervisor`、candidate命令和`run_task041_consumer`送入`task041_p4_refinement_target_binding` | 5 nm必须继续要求`5e-13`和最多2次同factor修正；这是精确侧P4逆/回代精化，不是新fixed-H6模态repeat门，也不能被其替代。13.5 nm仍要求`target=None` |
-| modal PC | `src/solvers/hybrid_fem_modal_block_ldu.py::create_side_balh_block_ldu_preconditioner` | 只在新opt-in分支用同一FixedH6双侧反馈做有界复数repeat/linearity检查，代替该fixed-H6候选在factory内对原自适应`SideBalancedInverse`预付16次/侧的旧sample repeat；其他默认与Anderson/complex-QR保持原样 |
-| 最小测试位置 | 现有`src/test/test_350_task041_balh_block_ldu.py`与`src/test/test_351_task041_balh_public_workflow.py` | 覆盖默认false、单.dat public参数到worker/factory的透传、错scope/互斥拒绝、固定H6复数repeat/linearity、5 nm target保留、原算子/RHS/五残差和cleanup；先tiny/serial，再按实际新增collective另审MPI。当前无测试运行 |
+| 合同 | 最薄兼容边界 |
+|---|---|
+| 适用范围 | 只给注册W5、p6/h4、M480、MPI8、`cell_condensed`、P4 target `5e-13`的fixed-H6显式研究分支增加legacy descriptor入口；13.5/2 nm新profile及普通legacy默认不变 |
+| 验证路径 | 原样复用`task041_legacy_native_profile`、`validate_task041_legacy_native_packet`和`bind_task041_legacy_native_consumer`，继续核验source/input/resolved/physical、M/MPI、600个external keys及packet manifest/shard hashes；不复制mode-prep封套、不放宽新profile validator |
+| 路由位置 | 只在`run_case.py`、`task038_launcher.py`、`task041_supervisor.py`、`task041_service.py`和`task041_exact_side_workflow.py`的fixed-H6 guard加入W5边界例外；service argv/manifest/worker传递同一descriptor身份。代码实现尚未获批 |
+| 负边界 | producer root与legacy descriptor必须恰有一个；两者皆无、同时提供、错target/scope/CPU map、额外诊断都拒绝；route-plan与leading-PH继续默认false |
+| 资源解释 | `resource_qualified=false`保持历史事实；新W5 consumer必须依自己的public service门采资源，不能继承或伪造producer资源资格 |
 
-`src/io/input_validation.py`不必因该CLI布尔开关新增`.dat`字段；5 nm与13.5 nm均是已登记的case。`src/runners/task041_service.py`若负责新的systemd config/public-command绑定，则必须新增窄的命令－config一致性检查；此文件当前含用户保护dirty Node0内存Gate补丁，未来实施需在该工作树原有hunk上增量应用并逐SHA保留，不能替换文件或把受保护patch混进审核提交。`src/io/input_validation.py`也有Node0/2 nm protected dirty；避免无必要触碰。当前这里只做调用链阅读，没有编辑这些源码。
-
-新门要在factory/source确认样本所用的是固定H6反馈，且对复数零/近零与非零输入分别定义；通过它不等于真实原Schur已解，也不替代全局outer五项残差、恢复/能量/物理门。若模态H6替代导致outer步数或总成本劣化，Review V9只允许一次预先指定的固定BAL_H反馈备选；不扫描弱PC、预算、history、degree或容差，也不把自适应BAL_H注册成fixed矩阵。H1前仍需主控审核本接线和测试范围。
+10月3日`supervisor_summary.json`已经记录`validated_legacy_native_packet`和descriptor SHA `175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86`；packet manifest、identity、600-key绑定和consumer输入身份均已在“5 nm运行身份与数值边界”部分绑定。本轮没有读取shards、重新运行validator或修改代码。若后续获批实现，最小测试应核W5 fixed-H6 descriptor接受、新profile入口不变、错scope/target/map及neither/both拒绝，以及普通legacy默认行为不变。
 
 ## 尚未执行与下一步
 
 | 阶段 | 当前状态 | 退出前必须提供 |
 |---|---|---|
-| H0 | 文档、markers分段、全量side count、13.5/2 nm/0.7 nm read-only和最小接线审查完成 | 主控审阅本报告与record |
-| H1 | 组件门tiny serial/MPI2测试已过；public single-dat路由及真实W5 FE仍 `not_run` | 接线后复用数值未变的13.5 anchor；再以V9路线做一次W5真实consumer，保留P4 target `5e-13`、原五门和完整physical output |
+| H0 | 文档、markers分段、全量side count、13.5/2 nm/0.7 nm只读审查完成；H0 record保留其冻结时点 | 后续H1结果另列，不覆盖H0历史 |
+| H1 | fixed-H6组件测试和13.5 nm Si public/service完整回归已过；W5 V9 fixed-H6场 `not_run`，原因是legacy-native入口布局不兼容，而非数值身份缺失 | 仅为注册W5增加descriptor兼容后，复用10月3日packet进行至多一次新public回归；P4 target `5e-13`、原五门和physics/recovery不变；producer资源保持`unqualified` |
 | H2 | `not_run` | 用已存在的合规2 nm producer packet进入同尺寸新consumer试算；Ncv/mpd与factor/workspace需实测，达到容量/残差门后才延续完整运行 |
 | H3 | `not_run` | 封存W 0.7来源字节/正耗散符号与完整keys；建立小型真实3D和相邻hp/M资格；给逐对象容量模型 |
 | H4 | `not_run` | 目标50×25 nm完整单胞，实测2 TB物理内存口径和从输入到恢复/核验/清理全过程≤48 h |
@@ -151,4 +166,4 @@ fixed-H6的作用是给模态未知量提供廉价、固定的双侧反馈，避
 
 ## H1组件测试的后续状态（2026-10-06）
 
-fixed-H6反馈repeat/linearity门已在test350的tiny代数fixture完成serial与MPI2验证：serial非有限参数1 passed；MPI2批准的五selector组两个rank各8 passed。core/test源SHA、ABI、父wall、V5唯一计账见[进行中回应V11](../response_v11.md)和[测试记录](test_summary.md)。这些测试核对门公式、每次作用计数及受控坏rank的拒绝/清理；没有启动public `.dat` consumer或真实W 5 nm场。下一步为public single-dat开关接线与service绑定，然后按H1条件运行一次真实5 nm；H2、H3、H4状态仍分别见上表。
+fixed-H6反馈repeat/linearity门已在test350 tiny代数fixture完成serial与MPI2验证；随后13.5 nm Si public/service完整回归也通过原五项残差、recovery和physics门。组件测试核对门公式、每次作用计数及受控坏rank的拒绝/清理；13.5 nm回归验证公共`.dat`身份链和完整生命周期，但不资格化W5。下一步是只对注册W5接通已验证的legacy-native descriptor validator/binder，再进行一次W5真实consumer；H2、H3、H4状态仍分别见上表。
