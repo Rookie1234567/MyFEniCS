@@ -94,8 +94,14 @@ def pack_carrier(c):
                 C=np.concatenate(cv),D=np.concatenate(dv),H=np.array([e.normalization_h for e in c.entries]))
 
 
+def require_finite_carrier_inventory(identities,expected_modes):
+    if expected_modes not in (532,828,1188) or len(identities)!=expected_modes:
+        raise ValueError('complete frozen finite inventory')
+
+
 def carrier_pair(first,second,identities,*,expected_modes=532):
-    if expected_modes not in (532,828) or len(identities)!=expected_modes or len(first.entries)!=expected_modes or len(second.entries)!=expected_modes:raise ValueError('complete frozen finite inventory')
+    require_finite_carrier_inventory(identities,expected_modes)
+    if len(first.entries)!=expected_modes or len(second.entries)!=expected_modes:raise ValueError('complete frozen finite inventory')
     result=[]
     for a,b,identity in zip(first.entries,second.entries,identities,strict=True):
         rr=np.union1d(np.union1d(a.coupling_rows,a.projection_rows),np.union1d(b.coupling_rows,b.projection_rows))

@@ -79,15 +79,23 @@ def build_bundle(cfg,setup,journal,q=47,phase=True):
 
 
 def boundary_check(cfg,setup,folder,journal):
-    from .scattering_accuracy_boundary import SurfaceComponents,carrier_pair,pack_carrier
+    from .scattering_accuracy_boundary import SurfaceComponents,carrier_pair,pack_carrier,require_finite_carrier_inventory
     from .fullspace_dtn_action import build_dynamic_mode_inventory,build_fullspace_dtn_carrier_from_surface,FullspaceDtnAction
     from petsc4py import PETSc
     V=setup['spaces'][cfg.nedelec_degree];mpc=setup['floquets'][cfg.nedelec_degree].mpc;k=carrier(cfg)
     modes,ids,digest=build_dynamic_mode_inventory(cfg);objects=[];sources=[]
+    require_finite_carrier_inventory(ids,len(modes))
+    early_receipts=[];preserve_early=journal.source_state.get('scope')=='v54'
     for q,method in ((47,'separable'),(63,'basix2d')):
         with journal.measured(f'new_phase_all532_q{q}'):
             s=SurfaceComponents(V,mpc,cfg,q,method=method,phase_carrier=k)
             objects.append(build_fullspace_dtn_carrier_from_surface(modes,s.assemblers(),mpc,cfg,retain_all_nonzero=True));sources.append(s)
+        if preserve_early:
+            receipt=save_arrays(folder/f'phase_p{cfg.nedelec_degree}_q{q}_all532.npz',**pack_carrier(objects[-1]))
+            early_receipts.append(receipt)
+            write_json(folder/f'boundary_q{q}_audit_pending.json',dict(status='AUDIT_PENDING',arrays=receipt,
+                mode_sha256=digest,mode_count=len(modes),degree=cfg.nedelec_degree,q=q,method=method,
+                source=journal.source_state,production_oracle_pair_not_yet_qualified=True))
     pair=carrier_pair(*objects,ids,expected_modes=len(modes));rng=np.random.default_rng(51047);x=PETSc.Vec().createSeq(V.dofmap.index_map.size_local,comm=PETSc.COMM_SELF)
     x.array[:]=rng.normal(size=x.getSize())+1j*rng.normal(size=x.getSize());x.array[mpc.slaves]=0
     values=[]
@@ -97,7 +105,7 @@ def boundary_check(cfg,setup,folder,journal):
         values.append((forward,adj));action.destroy();y.destroy()
     forward=relative(values[0][0]-values[1][0],values[1][0]);adjoint=relative(values[0][1]-values[1][1],values[1][1]);inc=[s.incident_traction() for s in sources]
     incident=relative(inc[0]-inc[1],inc[1]);witness=save_arrays(folder/'boundary_action_pair.npz',input=x.array.copy(),forward47=values[0][0],forward63=values[1][0],adjoint47=values[0][1],adjoint63=values[1][1],incident47=inc[0],incident63=inc[1]);x.destroy()
-    receipts=[save_arrays(folder/f'phase_p{cfg.nedelec_degree}_q{q}_all532.npz',**pack_carrier(c)) for q,c in zip((47,63),objects)]
+    receipts=early_receipts if preserve_early else [save_arrays(folder/f'phase_p{cfg.nedelec_degree}_q{q}_all532.npz',**pack_carrier(c)) for q,c in zip((47,63),objects)]
     r=dict(pair=pair,forward=forward,adjoint=adjoint,incident=incident,arrays=receipts,witness=witness,mode_sha256=digest,degree=cfg.nedelec_degree,
            costs=[s.seconds for s in sources],pass_gate=pair['pass'] and max(forward,adjoint)<=1e-10 and incident<=1e-11)
     write_json(folder/'boundary_check.json',r);journal.calls['A']+=2;journal.calls['AH']+=2

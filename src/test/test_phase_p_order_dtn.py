@@ -12,6 +12,19 @@ from src.io.phase_notch_hp import descriptor,load_phase_notch_hp
 
 
 class SeparationTests(unittest.TestCase):
+    def test_actual_carrier_pair_complete1188_and_unknown_rejected(self):
+        from src.solvers.scattering_accuracy_boundary import carrier_pair,require_finite_carrier_inventory
+        m,n=finite_mode_ranges(1188)
+        ids=[dict(mode_index=k,side=s,m=i,n=j,polarization=p) for k,(s,i,j,p) in enumerate(
+            (s,i,j,p) for s in ('top','bottom') for i in range(-m,m+1) for j in range(-n,n+1) for p in ('s','p'))]
+        entries=[SimpleNamespace(coupling_rows=np.array([0,2]),coupling_values=np.array([1+2j,-3+.2j]),
+            projection_rows=np.array([1,2]),projection_values=np.array([4-.5j,2+3j]),normalization_h=2+.7j) for _ in ids]
+        carrier=SimpleNamespace(entries=entries)
+        self.assertTrue(carrier_pair(carrier,carrier,ids,expected_modes=1188)['pass'])
+        with self.assertRaises(ValueError):carrier_pair(carrier,carrier,ids[:-1],expected_modes=1188)
+        with self.assertRaises(ValueError):carrier_pair(carrier,SimpleNamespace(entries=entries[:-1]),ids,expected_modes=1188)
+        with self.assertRaises(ValueError):require_finite_carrier_inventory(ids[:829],829)
+
     def test_closed_residual_inventory_operation_scale(self):
         from src.solvers.phase_p_order_dtn import residual_inventory_identity
         old_rhs=np.array([1+2j,3-4j]);old_volume=np.array([1e5+3j,-2e5+4j]);old_boundary=old_rhs-old_volume
@@ -81,6 +94,47 @@ class SeparationTests(unittest.TestCase):
             self.assertIsNone(reader.load(form,np.nextafter(coords,np.inf),tag=1,dimension=1))
             entry['arrays']['sha256']='wrong'
             with self.assertRaises(ValueError):reader.load(form,coords,tag=1,dimension=1)
+
+    def test_independent_inventory_checker_rejects_wrong_terms(self):
+        from benchmarks.check_phase_p_order_dtn import check_inventory_identity
+        from src.solvers.phase_p_order_dtn import residual_inventory_identity
+        old_rhs=np.array([1+2j,3-4j]);old_volume=np.array([1e5+3j,-2e5+4j]);old_boundary=old_rhs-old_volume
+        new_rhs=old_rhs+np.array([.03j,.01]);new_volume=old_volume.copy();new_boundary=old_boundary+np.array([.02,.05j])
+        old_r=old_rhs-old_volume-old_boundary;new_r=new_rhs-new_volume-new_boundary
+        terms,_=residual_inventory_identity(old_rhs,new_rhs,old_r,new_r,old_volume,new_volume,old_boundary,new_boundary)
+        v=dict(rhs_old=old_rhs,rhs_new=new_rhs,old_residual=old_r,new_residual=new_r,old_volume=old_volume,
+            new_volume=new_volume,old_closed_boundary=old_boundary,new_closed_boundary=new_boundary,**terms)
+        self.assertTrue(check_inventory_identity(v)['pass_gate'])
+        bad=dict(v,action_delta=terms['action_delta']+10)
+        with self.assertRaises(ValueError):check_inventory_identity(bad)
+        bad=dict(v);bad.pop('old_closed_boundary')
+        with self.assertRaises(ValueError):check_inventory_identity(bad)
+        bad=dict(v,old_residual=old_r+10,new_residual=new_r+10)
+        with self.assertRaises(ValueError):check_inventory_identity(bad)
+
+    def test_independent_raw_direction_checker_negative_inventory(self):
+        from benchmarks.check_phase_p_order_dtn import check_raw_direction
+        rng=np.random.default_rng(5407);coef=rng.normal(size=1344)+1j*rng.normal(size=1344)
+        pieces=[coef*3,coef*(2+1j),coef*(-4+.3j)];total=sum(pieces)
+        v={f'q13_d0_{k}':x for k,x in zip(('curl','kappa_cross','mass'),pieces,strict=True)}
+        v.update({f'q11_d0_{k}':x.copy() for k,x in zip(('curl','kappa_cross','mass'),pieces,strict=True)})
+        v.update(q13_d0=total,q11_d0=total.copy(),raw_d0=total.copy(),coefficient_d0=coef)
+        self.assertTrue(check_raw_direction(v,0)['pass_gate'])
+        bad=dict(v,raw_d0=total+.001)
+        with self.assertRaises(ValueError):check_raw_direction(bad,0)
+        bad=dict(v,coefficient_d0=np.zeros_like(coef))
+        with self.assertRaises(ValueError):check_raw_direction(bad,0)
+        bad=dict(v);bad.pop('q13_d0_kappa_cross')
+        with self.assertRaises(ValueError):check_raw_direction(bad,0)
+
+    def test_inventory_unchanged_body_binding(self):
+        from benchmarks.check_phase_p_order_dtn import check_frozen_member
+        from src.solvers.scattering_anchor import array_hash
+        x=np.array([1+2j,-3+.5j],dtype=np.complex128)
+        record=dict(members=dict(u_storage=dict(shape=[2],dtype='complex128',sha256=array_hash(x))))
+        self.assertEqual(check_frozen_member(x,record,'u_storage'),array_hash(x))
+        with self.assertRaises(ValueError):check_frozen_member(x+.01,record,'u_storage')
+        with self.assertRaises(ValueError):check_frozen_member(x.astype(np.complex64),record,'u_storage')
 
 
 if __name__=='__main__':unittest.main()

@@ -11,5 +11,8 @@ if __name__=='__main__':
         from benchmarks.collect_phase_explicit_accuracy import modal_recalculation
         roles=tuple(r for r in scope.SOLVES if (scope.ARTIFACT/(r+'.json')).exists() and scope.stage(r).get('equation_pass'))
         modal_recalculation(scope=scope,role_names=roles)
-    elif not sys.argv[1:]:collect(scope=scope)
+    elif not sys.argv[1:]:
+        collect(scope=scope)
+        from benchmarks.check_phase_p_order_dtn import collect_separation
+        collect_separation(scope)
     else:raise ValueError('V54 collector arguments')

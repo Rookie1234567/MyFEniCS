@@ -42,7 +42,7 @@ def implementation_hashes():
         'src/solvers/phase_p_order_dtn_scope.py','src/solvers/phase_p_order_dtn.py',
         'src/solvers/phase_p_order_consistency.py','src/solvers/phase_raw_tensor_reader.py',
         'src/test/test_phase_p_order_dtn.py','benchmarks/qualify_phase_p_order_dtn.py',
-        'benchmarks/collect_phase_p_order_dtn.py']
+        'benchmarks/collect_phase_p_order_dtn.py','benchmarks/check_phase_p_order_dtn.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
 
 
