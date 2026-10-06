@@ -157,6 +157,22 @@ class SeparationTests(unittest.TestCase):
             for r in receipts:boundary_arrays(r,cache)
             self.assertEqual(len(cache),3)
 
+
+    def test_saved_volume_audit_explicit_provenance_and_state_mismatch(self):
+        from benchmarks.check_phase_p_order_dtn import saved_original_volume_audit
+        u=np.array([1+2j,3-.5j]);rec=dict(arrays={'sha256':'s'},recovery_arrays={'sha256':'r'},
+            boundary={'arrays':[{},dict(sha256='q63')]},output={'fields':dict(sha256='field')},degree=7)
+        state=dict(u_storage=u,slaves=np.array([],dtype=int))
+        recovery=dict(interior_rows=np.array([1]),
+            interior_only_volume_action=u.copy(),trace_only_volume_action=u.copy(),recovered_native_full=u.copy())
+        audit=dict(audit=dict(true=1e-11,augmented=2e-11,port=3e-12),pass_gate=True)
+        with patch('benchmarks.check_phase_p_order_dtn.checked_arrays',side_effect=[state,recovery,dict(envelope_native_full=u.copy()),{}]),patch('benchmarks.collect_phase_explicit_accuracy.vector_audit',return_value=audit):
+            r=saved_original_volume_audit(rec)
+            self.assertTrue(r['direct_internal_target_pass']);self.assertFalse(r['new_FE_verify'])
+            self.assertEqual(r['boundary_array_sha256'],'q63')
+        with patch('benchmarks.check_phase_p_order_dtn.checked_arrays',side_effect=[state,recovery,dict(envelope_native_full=u+.01)]):
+            with self.assertRaises(ValueError):saved_original_volume_audit(rec)
+
     def test_inventory_unchanged_body_binding(self):
         from benchmarks.check_phase_p_order_dtn import check_frozen_member
         from src.solvers.scattering_anchor import array_hash

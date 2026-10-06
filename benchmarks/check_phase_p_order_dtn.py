@@ -53,6 +53,36 @@ def check_raw_direction(v,d):
     return dict(errors=errors,denominator=float(scale),pass_gate=True)
 
 
+
+def saved_original_volume_audit(record):
+    """Reaudit saved original volume actions and separately saved q63 ports.
+
+    No fresh FE environment: this cannot replace a new uncondensed UFL action.
+    It preserves the original q47 vectors and reports that lifecycle explicitly.
+    """
+    from benchmarks.collect_phase_explicit_accuracy import vector_audit
+    state=checked_arrays(record['arrays']);recovery=checked_arrays(record['recovery_arrays'])
+    raw=dict(state)
+    raw.update({k:recovery[k] for k in ('interior_rows','interior_only_volume_action',
+        'trace_only_volume_action')})
+    field=checked_arrays(record['output']['fields'])
+    recovered=field['envelope_native_full']
+    independent=np.setdiff1d(np.arange(len(state['u_storage'])),state['slaves'])
+    if recovered.shape!=state['u_storage'].shape or not np.array_equal(recovered[independent],state['u_storage'][independent]):
+        raise ValueError('saved recovery/solution physical state mismatch')
+    raw['recovered_native_full']=recovered
+    boundary=checked_arrays(record['boundary']['arrays'][1])
+    checked=vector_audit(raw,state,boundary,record['degree'])
+    return dict(recalculated=checked,direct_internal_target_pass=bool(
+        max(checked['audit'][k] for k in ('true','augmented','port'))<=1e-10),
+        original_volume_action='saved independent uncondensed UFL q47 action and split',
+        boundary_action='independent saved full-inventory q63 carrier',
+        new_FE_verify=False,parent_array_sha256=record['arrays']['sha256'],
+        recovery_array_sha256=record['recovery_arrays']['sha256'],
+        recovered_field_array_sha256=record['output']['fields']['sha256'],
+        boundary_array_sha256=record['boundary']['arrays'][1]['sha256'])
+
+
 def collect_separation(scope):
     from src.runners.task042_shared import write_json
     import os
@@ -96,7 +126,8 @@ def collect_separation(scope):
         checked=check_inventory_identity(v)
         if not np.isclose(checked['operation'],w['residual_identity']['operation'],rtol=1e-12,atol=1e-18):raise ValueError('recorded inventory operation differs')
         inventory.append(dict(role=role,original_count=w['original_count'],added_count=w['added_count'],new_count=w['count'],unchanged_body_sha256=unchanged,**checked))
-    result=dict(status='SAVED_VECTOR_CHECKS_PASSED',embedding=embedding,raw_classes=raw,saved_p7_evaluation=evaluations,inventory_changes=inventory,
+    original_audits=[dict(role=role,**saved_original_volume_audit(scope.stage(role))) for role in scope.SOLVES if (scope.ARTIFACT/(role+'.json')).exists() and scope.stage(role).get('equation_pass')]
+    result=dict(status='SAVED_VECTOR_CHECKS_PASSED',saved_original_audits=original_audits,embedding=embedding,raw_classes=raw,saved_p7_evaluation=evaluations,inventory_changes=inventory,
         original_D=binding,scope='independent saved vector norms/sums/identities; scalar-only J physical/dual measurements remain actor evidence; no new FE or operator')
     folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY'])/'records'
     write_json(folder/'p_order_dtn_vector_checks_v54.json',result)
