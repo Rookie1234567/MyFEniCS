@@ -96,3 +96,10 @@ def cached_comparisons():
         r=json.loads(path.read_text());rows.append(dict(pair=path.stem.split('_'),path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
             pass_gate=r['pass_gate'],fields=r['fields'],selected=r['selected'],power_differences=r['power_differences'],quadrature_operation_scaled=r['quadrature_operation_scaled']))
     return rows
+
+
+
+def verification_basis_identity(setup, result):
+    from .phase_raw_tensor_reader import live_basis_identity
+    return live_basis_identity(setup['spaces'][result['degree']].element.basix_element,
+        result['raw_tensor_checkpoint']['classes'])

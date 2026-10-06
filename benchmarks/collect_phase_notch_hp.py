@@ -43,6 +43,15 @@ def sampling_receipt(path):
         sampled_tree_peak_bytes=peak,own_swap_peak_bytes=swap,sampled_not_cgroup=True)
 
 
+def boundary_arrays(receipt, cache, *, single=False):
+    """V54 retains one complete surface packet within its 2 GiB aux budget."""
+    key=receipt['sha256']
+    if key not in cache:
+        if single:cache.clear()
+        cache[key]=checked_arrays(receipt)
+    return cache[key]
+
+
 def saved_checks(states,comparisons,*,scope=None):
     from benchmarks.collect_phase_explicit_accuracy import vector_audit
     from src.solvers.scattering_anchor import relative
@@ -50,8 +59,7 @@ def saved_checks(states,comparisons,*,scope=None):
     rows=[];regions={};cache={};pair_gates={}
     for row in states.get('VERIFY_COST',{}).get('rows',[]):
         s=states[row['role']];v=checked_arrays(s['arrays']);b=s['boundary']['arrays'][1]
-        if b['sha256'] not in cache:cache[b['sha256']]=checked_arrays(b)
-        raw=checked_arrays(row['arrays']);checked=vector_audit(raw,v,cache[b['sha256']],s['degree'])
+        raw=checked_arrays(row['arrays']);checked=vector_audit(raw,v,boundary_arrays(b,cache,single=getattr(scope,'NAMESPACE',None)=='v54'),s['degree'])
         vi,vt=raw['interior_only_volume_action'],raw['trace_only_volume_action']
         checked['recovery']['split_action_identity_operation_scale']=float(np.linalg.norm(vi+vt-raw['volume_action'])/max(np.linalg.norm(vi)+np.linalg.norm(vt),1e-30))
         modes=json.loads(Path(s['output']['fields']['path']).with_name('port_power.json').read_text())

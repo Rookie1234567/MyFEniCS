@@ -278,6 +278,7 @@ def verify_cost(folder,journal,*,scope=None):
         r=read_stage(role)
         if item['array_sha256']!=r['arrays']['sha256']:raise ValueError('frozen actual state changed')
         v=checked_arrays(r['arrays']);cfg,setup,geo=configured_setup(r['case_spec'],journal,scope=scope)
+        basis=scope.verification_basis_identity(setup,r) if scope is not None and hasattr(scope,'verification_basis_identity') else None
         for key in geo:
             if not np.array_equal(geo[key],v[key]):raise ValueError('independent final geometry '+key)
         bundle,rhs=build_bundle(cfg,setup,journal,q=63);u=rhs.duplicate();u.array[:]=v['u_storage']
@@ -286,6 +287,10 @@ def verify_cost(folder,journal,*,scope=None):
             field,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vectors,journal)
             receipt=save_arrays(folder/(role+'_independent_audit.npz'),u_storage=u.array.copy(),rhs=rhs.array.copy(),port=v['port'],recovered_native_full=field.x.array.copy(),**vectors,**rv)
             rows.append(dict(role=role,parent=r['arrays']['sha256'],audit=norms,recovery=rec,arrays=receipt,equation_pass=equation_gate(norms,rec)))
+            if basis is not None:
+                rows[-1]['actual_basis_identity']=basis
+                write_json(folder/'verification_progress.json',dict(status='AUDIT_PENDING',rows=rows,
+                    frozen_queue_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),source=journal.source_state))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
     return dict(status='COMPLETED',role='VERIFY_COST',rows=rows,cached_comparisons=compare_queue(folder,journal) if scope is None else scope.cached_comparisons(),
         new_factor_count=0,new_complete_solves=0,NN_training=0,target_qualified=False,timings=journal.timings,calls=journal.calls)

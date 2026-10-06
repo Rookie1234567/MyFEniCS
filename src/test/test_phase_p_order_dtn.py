@@ -127,6 +127,36 @@ class SeparationTests(unittest.TestCase):
         bad=dict(v);bad.pop('q13_d0_kappa_cross')
         with self.assertRaises(ValueError):check_raw_direction(bad,0)
 
+    def test_saved_modal_inventory_v54_and_legacy_default(self):
+        from benchmarks.collect_phase_explicit_accuracy import expected_modal_count
+        for count in (532,828,1188):
+            self.assertEqual(expected_modal_count(dict(case_spec=dict(complete_modes=count)),scope),count)
+        self.assertEqual(expected_modal_count({},SimpleNamespace(NAMESPACE='v51')),532)
+        with self.assertRaises(ValueError):expected_modal_count(dict(case_spec=dict(complete_modes=829)),scope)
+
+    def test_live_basis_identity_wrapper_and_mismatch(self):
+        import basix
+        from src.solvers.phase_raw_tensor_reader import live_basis_identity
+        element=basix.create_element(basix.ElementFamily.N1E,basix.CellType.hexahedron,2,basix.LagrangeVariant.legendre)
+        classes=[dict(element_hash=int(element.hash()),degree=2,dimension=element.dim,dtype='complex128')]
+        actual=live_basis_identity(element._e,classes)
+        self.assertEqual(actual['family'],'N1E');self.assertEqual(actual['lagrange_variant'],'legendre')
+        self.assertEqual(actual['dof_ordering'],list(element.dof_ordering))
+        with self.assertRaises(ValueError):live_basis_identity(element._e,[])
+        with self.assertRaises(ValueError):live_basis_identity(element._e,[dict(classes[0],element_hash=42)])
+
+    def test_v54_surface_cache_single_packet_and_old_default(self):
+        from benchmarks.collect_phase_notch_hp import boundary_arrays
+        receipts=[dict(sha256=str(i),value=np.array([i+1j])) for i in range(3)]
+        with patch('benchmarks.collect_phase_notch_hp.checked_arrays',side_effect=lambda r:r['value']):
+            cache={}
+            for r in receipts:
+                self.assertTrue(np.array_equal(boundary_arrays(r,cache,single=True),r['value']))
+                self.assertEqual(list(cache),[r['sha256']])
+            cache={}
+            for r in receipts:boundary_arrays(r,cache)
+            self.assertEqual(len(cache),3)
+
     def test_inventory_unchanged_body_binding(self):
         from benchmarks.check_phase_p_order_dtn import check_frozen_member
         from src.solvers.scattering_anchor import array_hash

@@ -23,7 +23,7 @@ def main():
         'src/solvers/phase_notch_hp.py','src/solvers/phase_notch_hp_modes.py','src/solvers/phase_tensor_checkpoint.py',
         'src/io/phase_notch_hp.py','src/runners/port_preparation.py','scripts/run_case.py',
         'src/test/test_phase_p_order_dtn.py','benchmarks/collect_phase_p_order_dtn.py','benchmarks/check_phase_p_order_dtn.py',
-        'src/solvers/scattering_accuracy_boundary.py','src/solvers/phase_explicit_accuracy.py']
+        'src/solvers/scattering_accuracy_boundary.py','src/solvers/phase_explicit_accuracy.py','benchmarks/collect_phase_notch_hp.py','benchmarks/collect_phase_explicit_accuracy.py']
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_phase_p_order_dtn'],
         ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]
     commands += [[sys.executable,'scripts/run_case.py',str(p),'--validate-only'] for p in sorted((ROOT/'input/task042_neural_coarse_inverse').glob('v54_*.dat'))]

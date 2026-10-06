@@ -70,3 +70,24 @@ class ReadonlyRawTensorProvider:
         return dict(parents=self.parents,hits=self.hits,misses=self.misses,hash_load_seconds=self.seconds,
             qualification='exact complete weak-form/basis/constant/geometry/material identity',
             cost_class='CACHE_REUSE_INCREMENTAL; parent preparation is not free cold N1')
+
+
+
+def live_basis_identity(raw_element, classes):
+    """Read the actual Basix basis and bind every frozen raw class to it."""
+    from basix.finite_element import FiniteElement
+    element=raw_element if hasattr(raw_element,'_e') else FiniteElement(raw_element)
+    enum=lambda value:getattr(value,'name',str(value))
+    identity=dict(element_hash=int(element.hash()),family=enum(element.family),
+        cell_type=enum(element.cell_type),degree=int(element.degree),dimension=int(element.dim),
+        map_type=enum(element.map_type),lagrange_variant=enum(element.lagrange_variant),
+        dpc_variant=enum(element.dpc_variant),dof_ordering=list(map(int,element.dof_ordering)),
+        dtype=str(element.dtype))
+    if not classes:raise ValueError('actual basis has no frozen raw class inventory')
+    for row in classes:
+        if any(row[key]!=identity[key] for key in ('element_hash','degree','dimension')):
+            raise ValueError('actual Basix/frozen raw class mismatch')
+        if row['dtype']!='complex128':raise ValueError('actual raw tensor dtype')
+    return dict(**identity,validated_raw_classes=len(classes),
+        empty_dof_ordering_meaning='actual Basix default order, not missing metadata',
+        field_source='live element properties; frozen full element hash binds original compiled basis')

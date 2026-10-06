@@ -259,6 +259,13 @@ def cost_opportunity(costs):
     return {'rows':rows,'only_necessary_optimistic_bounds':True,'data_teacher_training_loading_inference_cleanup_and_independent_audit_all_belong_to_H':True,'no_finite_micro_cost_extrapolation_to_target_48h':True,'NN20':False}
 
 
+def expected_modal_count(record, scope):
+    from src.solvers.phase_notch_hp_modes import finite_mode_ranges
+    count=record['case_spec']['complete_modes'] if getattr(scope,'NAMESPACE',None)=='v54' else 532
+    finite_mode_ranges(count)
+    return count
+
+
 def modal_recalculation(*, scope=None, role_names=('FLAT_P4','NOTCH_P4','NOTCH_P5','NOTCH_HPROBE')):
     """Independent saved-mode flux/coordinate audit; no FE or original metric call."""
     if scope is None:
@@ -268,6 +275,10 @@ def modal_recalculation(*, scope=None, role_names=('FLAT_P4','NOTCH_P4','NOTCH_P
     incident=area*.5*np.sin(np.deg2rad(1));complex_pair=lambda x:complex(*x)
     for role in role_names:
         r=scope.stage(role);v=checked_arrays(r['arrays']);path=Path(r['output']['fields']['path']).with_name('port_power.json');p=json.loads(path.read_text())
+        expected=expected_modal_count(r,scope)
+        if getattr(scope,'NAMESPACE',None)=='v54':
+            from src.solvers.phase_notch_hp_modes import keyed_modes
+            keyed_modes(p,expected)
         maximum=0.;power_sum={'top':0.,'bottom':0.};normalization_defect=abs(p['incident_power_code_units']-incident)
         for o in p['orders']:
             a=complex_pair(o['alpha']);g=complex_pair(o['gamma']);beta=complex_pair(o['beta']);n=complex_pair(o['refractive_index']);sign=o['vertical_sign'];i=o['auxiliary_index'];kt=np.sqrt(abs(a)**2+abs(g)**2)
@@ -282,10 +293,12 @@ def modal_recalculation(*, scope=None, role_names=('FLAT_P4','NOTCH_P4','NOTCH_P
         totals=max(abs(power_sum['top']-p['R_total']),abs(power_sum['bottom']-p['T_total']),abs(1-sum(power_sum.values())-p['A_balance']))
         energy=abs(1-sum(power_sum.values())-r['output']['volume_metrics']['A_volume_total'])
         good=maximum<=1e-10 and totals<=1e-10 and normalization_defect<=1e-12 and energy<=1e-5
-        rows.append(dict(role=role,parent_array_sha256=r['arrays']['sha256'],mode_json_sha256=digest(path),count=len(p['orders']),max_operation_scaled_coordinate_and_power_defect=maximum,totals_defect=totals,incident_power_defect=normalization_defect,energy_from_all532_and_volume=energy,recomputed_R=power_sum['top'],recomputed_T=power_sum['bottom'],pass_gate=good))
-    if not all(x['pass_gate'] and x['count']==532 for x in rows):raise ValueError('independent complete modal power/coordinate audit')
+        rows.append(dict(role=role,parent_array_sha256=r['arrays']['sha256'],mode_json_sha256=digest(path),count=len(p['orders']),expected_mode_count=expected,max_operation_scaled_coordinate_and_power_defect=maximum,totals_defect=totals,incident_power_defect=normalization_defect,energy_from_all_actual_modes_and_volume=energy,recomputed_R=power_sum['top'],recomputed_T=power_sum['bottom'],pass_gate=good))
+    if not all(x['pass_gate'] and x['count']==x['expected_mode_count'] for x in rows):raise ValueError('independent complete modal power/coordinate audit')
+    if getattr(scope,'NAMESPACE',None)!='v54':
+        for row in rows:row['energy_from_all532_and_volume']=row.pop('energy_from_all_actual_modes_and_volume')
     write_json(folder/'modal_power_recalculation.json',dict(rows=rows,new_FE_calls=0,original_power_function_calls=0,all_532_retained=True))
-    print(json.dumps(dict(status='PASSED_SAVED_ALL532_POWER',rows=len(rows))))
+    print(json.dumps(dict(status='PASSED_SAVED_COMPLETE_MODE_POWER' if getattr(scope,'NAMESPACE',None)=='v54' else 'PASSED_SAVED_ALL532_POWER',rows=len(rows))))
 
 
 if __name__=='__main__':
