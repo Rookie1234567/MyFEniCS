@@ -38,7 +38,7 @@ def configured_setup(spec,journal,*,scope=None):
         diffraction_order_max_m=m,diffraction_order_max_n=n)
     geo={**base,'notch_expected_changed_cells':2*int(np.prod(spec['splits']))}
     cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo,
-        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54') and spec['degree']==7)
+        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55') and spec['degree']==7)
     return cfg,setup,geometry
 
 
@@ -75,7 +75,8 @@ def solve_case(role,folder,journal,*,scope=None):
     if resume.exists():return audit_saved_return(role,folder,journal,json.loads(resume.read_text()),scope=scope)
     cfg,setup,geo=configured_setup(spec,journal,scope=scope)
     cap=assembly_capacity(setup,cfg,journal,spec,planning_limit_bytes=mem['planning_gib']*2**30,
-        sampled_stop_bytes=mem['sampled_stop_gib']*2**30,extra_workspace_bytes=mem['extra_cache_workspace_gib']*2**30)
+        sampled_stop_bytes=mem['sampled_stop_gib']*2**30,extra_workspace_bytes=mem['extra_cache_workspace_gib']*2**30,
+        row_cap=p.get('assembly_row_cap',80000))
     write_json(folder/'assembly_capacity.json',cap)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',role=role,case_spec=spec,capacity=cap)
     bundle=rhs=inverse=system=u=factor=None
@@ -267,11 +268,11 @@ def compare_queue(folder,journal):
     return rows
 
 
-def verify_cost(folder,journal,*,scope=None):
+def verify_cost(folder,journal,*,scope=None,inventory_path=None,read_state=None,after_state=None,output_role='VERIFY_COST'):
     from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
     live=window if scope is None else scope.window
-    read_stage=stage if scope is None else scope.stage
-    path=live.TMP/'scientific_queue_frozen.json'
+    read_stage=read_state or (stage if scope is None else scope.stage)
+    path=Path(inventory_path) if inventory_path is not None else live.TMP/'scientific_queue_frozen.json'
     if journal.source_state.get('verification_inventory',{}).get('sha256')!=hashlib.sha256(path.read_bytes()).hexdigest():raise ValueError('actual frozen queue binding')
     frozen=json.loads(path.read_text());rows=[]
     for role,item in frozen['completed_solves'].items():
@@ -287,12 +288,17 @@ def verify_cost(folder,journal,*,scope=None):
             field,rec,rv=native_recovery_action_split_check(bundle,u,rhs,v['port'],vectors,journal)
             receipt=save_arrays(folder/(role+'_independent_audit.npz'),u_storage=u.array.copy(),rhs=rhs.array.copy(),port=v['port'],recovered_native_full=field.x.array.copy(),**vectors,**rv)
             rows.append(dict(role=role,parent=r['arrays']['sha256'],audit=norms,recovery=rec,arrays=receipt,equation_pass=equation_gate(norms,rec)))
-            if basis is not None:
-                rows[-1]['actual_basis_identity']=basis
+            if basis is not None:rows[-1]['actual_basis_identity']=basis
+            write_json(folder/(role+'_audit_record.json'),rows[-1])
+            write_json(folder/'verification_progress.json',dict(status='AUDIT_PENDING',rows=rows,
+                frozen_queue_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),source=journal.source_state))
+            if after_state is not None:
+                rows[-1]['additional_checks']=after_state(role,r,setup,bundle,field,folder,journal)
+                write_json(folder/(role+'_audit_record.json'),rows[-1])
                 write_json(folder/'verification_progress.json',dict(status='AUDIT_PENDING',rows=rows,
                     frozen_queue_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),source=journal.source_state))
         finally:u.destroy();rhs.destroy();destroy_same_mesh_physical_action(bundle)
-    return dict(status='COMPLETED',role='VERIFY_COST',rows=rows,cached_comparisons=compare_queue(folder,journal) if scope is None else scope.cached_comparisons(),
+    return dict(status='COMPLETED',role=output_role,rows=rows,cached_comparisons=compare_queue(folder,journal) if scope is None else scope.cached_comparisons(),
         new_factor_count=0,new_complete_solves=0,NN_training=0,target_qualified=False,timings=journal.timings,calls=journal.calls)
 
 

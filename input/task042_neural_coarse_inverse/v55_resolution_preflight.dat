@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v55]
+stage = "SETUP"
+run_id = "task042_v55_resolution_preflight"

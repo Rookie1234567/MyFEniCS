@@ -59,7 +59,7 @@ def saved_checks(states,comparisons,*,scope=None):
     rows=[];regions={};cache={};pair_gates={}
     for row in states.get('VERIFY_COST',{}).get('rows',[]):
         s=states[row['role']];v=checked_arrays(s['arrays']);b=s['boundary']['arrays'][1]
-        raw=checked_arrays(row['arrays']);checked=vector_audit(raw,v,boundary_arrays(b,cache,single=getattr(scope,'NAMESPACE',None)=='v54'),s['degree'])
+        raw=checked_arrays(row['arrays']);checked=vector_audit(raw,v,boundary_arrays(b,cache,single=getattr(scope,'NAMESPACE',None) in ('v54','v55')),s['degree'])
         vi,vt=raw['interior_only_volume_action'],raw['trace_only_volume_action']
         checked['recovery']['split_action_identity_operation_scale']=float(np.linalg.norm(vi+vt-raw['volume_action'])/max(np.linalg.norm(vi)+np.linalg.norm(vt),1e-30))
         modes=json.loads(Path(s['output']['fields']['path']).with_name('port_power.json').read_text())

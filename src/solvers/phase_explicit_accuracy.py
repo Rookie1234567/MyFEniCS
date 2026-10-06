@@ -85,7 +85,7 @@ def boundary_check(cfg,setup,folder,journal):
     V=setup['spaces'][cfg.nedelec_degree];mpc=setup['floquets'][cfg.nedelec_degree].mpc;k=carrier(cfg)
     modes,ids,digest=build_dynamic_mode_inventory(cfg);objects=[];sources=[]
     require_finite_carrier_inventory(ids,len(modes))
-    early_receipts=[];preserve_early=journal.source_state.get('scope')=='v54'
+    early_receipts=[];preserve_early=journal.source_state.get('scope') in ('v54','v55')
     for q,method in ((47,'separable'),(63,'basix2d')):
         with journal.measured(f'new_phase_all532_q{q}'):
             s=SurfaceComponents(V,mpc,cfg,q,method=method,phase_carrier=k)

@@ -10,7 +10,8 @@ import numpy as np
 
 def storage_envelope(*,rows,native,cells,dimension,interior,raw_classes,oriented_classes,
                      graph_nnz,boundary_support_sum,boundary_cells,modes,
-                     planning_limit_bytes=16*2**30,sampled_stop_bytes=24*2**30,extra_workspace_bytes=0):
+                     planning_limit_bytes=16*2**30,sampled_stop_bytes=24*2**30,extra_workspace_bytes=0,row_cap=80000):
+    if not isinstance(row_cap,int) or row_cap<=0:raise ValueError('explicit assembly row cap')
     trace=dimension-interior
     components={
         'raw_exact_tensor_cache':raw_classes*dimension**2*16,
@@ -27,7 +28,7 @@ def storage_envelope(*,rows,native,cells,dimension,interior,raw_classes,oriented
         assembly_graph_nnz_upper=int(graph_nnz),native=native,cells=cells,
         raw_classes=int(raw_classes),oriented_classes=int(oriented_classes),rows=rows,
         boundary_support_master_sum=int(boundary_support_sum),boundary_cell_count=int(boundary_cells),
-        admitted=0<rows<=80000 and total<=planning_limit_bytes,limit_bytes=planning_limit_bytes,assembly_row_cap=80000,
+        admitted=0<rows<=row_cap and total<=planning_limit_bytes,limit_bytes=planning_limit_bytes,assembly_row_cap=row_cap,
         status='ASSEMBLY_ONLY_PENDING_SYMBOLIC_NUMERIC_ADMISSION',
         numeric_rule=f'live whole-tree RSS + 2*max(INFOG16,17)*decimal MB + 2GiB reserve <={planning_limit_bytes}B',
         dense_bound_not_numeric_admission=True,floating_internal_port_entries_retained=True,
@@ -35,7 +36,7 @@ def storage_envelope(*,rows,native,cells,dimension,interior,raw_classes,oriented
         uncertainty='engineering preallocation bound, followed by live symbolic gate and declared sampled tree stop')
 
 
-def assembly_capacity(setup,cfg,journal,expected,*,planning_limit_bytes=16*2**30,sampled_stop_bytes=24*2**30,extra_workspace_bytes=0):
+def assembly_capacity(setup,cfg,journal,expected,*,planning_limit_bytes=16*2**30,sampled_stop_bytes=24*2**30,extra_workspace_bytes=0,row_cap=80000):
     from .hcurl_assembly_time_condensation import _canonical_axis_aligned_coordinates
     V=setup['spaces'][cfg.nedelec_degree];mesh=setup['mesh'];nc=mesh.topology.index_map(3).size_local
     dim=V.element.space_dimension;ip=np.asarray(V.element.basix_element.entity_dofs[3][0],int)
@@ -74,7 +75,7 @@ def assembly_capacity(setup,cfg,journal,expected,*,planning_limit_bytes=16*2**30
     result=storage_envelope(rows=rows,native=n,cells=nc,dimension=dim,interior=len(ip),
         raw_classes=len(raw),oriented_classes=len(oriented),graph_nnz=graph,
         boundary_support_sum=sum(map(len,full)),boundary_cells=len(set(boundary)),modes=nm,
-        planning_limit_bytes=planning_limit_bytes,sampled_stop_bytes=sampled_stop_bytes,extra_workspace_bytes=extra_workspace_bytes)
+        planning_limit_bytes=planning_limit_bytes,sampled_stop_bytes=sampled_stop_bytes,extra_workspace_bytes=extra_workspace_bytes,row_cap=row_cap)
     result.update(facts,exact_unrounded_class_keys_sha256=hashlib.sha256(repr(sorted(oriented)).encode()).hexdigest(),
         class_identity='actual material tag + raw float64 widths + original DOF permutation; no approximate merges',
         boundary_master_support_sha256=[hashlib.sha256(x.tobytes()).hexdigest() for x in full],

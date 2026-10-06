@@ -42,6 +42,10 @@ def load_phase_notch_hp(path,*,scope=None):
         f=live.TMP/name
         if f.exists() and (key=='postprocessing_resume' or role=='VERIFY_COST'):
             extra[key]={'path':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest()}
+    if scope is not None and hasattr(scope,'verification_inventory_for'):
+        f=scope.verification_inventory_for(role)
+        if f is not None:
+            extra['verification_inventory']={'path':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest()}
     memory=p.get('memory_budget',dict(planning_gib=16,warning_gib=20,sampled_stop_gib=24))
     return RunSpecification(identity={'model_id':section+'_phase_notch_hp','run_id':item['run_id'],'batch':p['batch']},
         geometry=physical['geometry'],materials=physical['materials'],incidence=physical['incidence'],
