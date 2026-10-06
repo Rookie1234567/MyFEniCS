@@ -1,0 +1,68 @@
+{
+  "schema": "neural-wave.serial-dependency-qualification.v1",
+  "files_sha256": {
+    "src/runners/neural_wave_dependencies.py": "1e24e90e2f30ce67ca2d3e23d35543a00d4878cbbf5c8b1d37d745f9a038d35b",
+    "src/runners/neural_wave_campaign.py": "25bb5e21897b543cebdd252aac5e1433627cd02c078eb689086b18b537a38467",
+    "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+    "src/test/test_neural_wave_dependencies.py": "013712767a35ac62c5c98d04093f3b6c421fa9d14b8f961b08dab2d16ec0efa9"
+  },
+  "runs": [
+    {
+      "path": "tmp/task42extra/v30/bootstrap/dependency_checks_1",
+      "junit_sha256": "5730894ee27e4cdb93bcc615d425acbf15a218e4030ef3f1fe0ecbde3eb9f804",
+      "binding_sha256": "6296e50c0179e4e0042910f29caaca58c77f77f5b3bcbc4598f34d9c0784c236",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.2804999221116304,
+      "sampled_process_tree_rss_peak_bytes": 152395776,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "tmp/task42extra/v30/bootstrap/dependency_checks_2",
+      "junit_sha256": "4986c07a79ca34dbfb00721e308215a7d27f59eaef47a0d58a1e41a1af322a63",
+      "binding_sha256": "db3372f87c4eeee0b92f12d39bae5912c0d9e07ca4544966a269c7d047caf205",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.9822964258491993,
+      "sampled_process_tree_rss_peak_bytes": 151560192,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "tmp/task42extra/v30/bootstrap/dependency_checks_3",
+      "junit_sha256": "c2b7a09959c636b7d7b7f4ed211ec74c63c68607a45cfe0fd8d45ccc18ff2fa0",
+      "binding_sha256": "4123eb54b2580c1779e979041cff444313f07911092c640bd5177c155bf5e634",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 4.074723246973008,
+      "sampled_process_tree_rss_peak_bytes": 152207360,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "path": "tmp/task42extra/v30/bootstrap/dependency_checks_4",
+      "junit_sha256": "7b2db7d0546b5d5d66d210282a89284862efc12626c307f274923c750f1c04d3",
+      "binding_sha256": "1ec1ac030d4cf29945f9992dc24909f7266a77cf1a3f7891a46607f86f665953",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.3498133060056716,
+      "sampled_process_tree_rss_peak_bytes": 152231936,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "fixture_tests_passed": 27,
+  "fixture_scope": "pure synthetic chain only; no actual FE or label access",
+  "resource_scope": "fresh physical CPU/current PSI and 2GiB sampled tree; no new 60s numerical stability PASS claimed for these source-development fixtures",
+  "unchanged_numerical_training_chain": true,
+  "unchanged_resource_thresholds": true,
+  "failures_retained": [
+    "first24fixtures passed but Ruff28E701/E702 failed; syntax-only fix; final27fixtures/Ruff/compile passed"
+  ],
+  "actual_serial_dependent_FE_and_checker_executed": false,
+  "observation_seconds_so_far": 1092.52215870074,
+  "observed_wait_budget_seconds": 1200,
+  "final_additional_outer_rejection_test_passed": 1,
+  "coverage": "27 serial/guard fixtures on earlier same dependency logic; additional1 on final outer-failure receipt; final Ruff/compile all changed sources"
+}

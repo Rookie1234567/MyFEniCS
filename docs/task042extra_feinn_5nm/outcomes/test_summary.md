@@ -346,3 +346,7 @@ P0最初workflow接线和compact负控字段失败保留，修复测试后最多
 实际科学资格另列：32060模式/416780字段检查；真实Basix p4/p6全列/非单位Floquet控制；1004完整chunk的全模式q60；独立pure保存checker1218328数值门；另一个新目录1043文件的模式物理与同一数值门重新核验，全部实际通过。原q60最大9.595725209727146e-11≤1e-10、一维矩9.082805012334877e-14≤1e-12，未放宽分母。健康producer不重跑；软件接线失败不是新的数学失败。消费最后复用同一已批准样本/PSI/clock，未重新采CPU，其流程限定如实单列。
 
 [测试与原JUnit](records/targeted_tests_v28.json)、[真实source/run](records/run_index_v28.json)、[独立数组checker](records/independent_checker_v28.json)、[实际consumer](records/consumer_receipt_v28.json)、[失败/修复](records/repair_log_v28.json)、[资源](records/resource_costs_v28.json)。最后Markdown/JSON/链接和历史保留结构检查单列，不冒称GitHub视觉PASS。
+
+## V30有限准入与独立验收依赖接线
+
+27项pure串行/身份/父进程/时效/PSI/swap/间断负控＋最终1项外层拒绝保存通过，Ruff/compile通过；初次24项通过但28处测试格式错误仍保留。仅是纯开发fixture，无FE/参考加载或新60s数值稳定资格。实际2GiB整树、fresh CPU、当前PSI及Health监督，最后树峰152231936B/ownswap0。新数值启动仍必须单独60s PSI；后续FE/pure只能复用同一活监督树的实际最近完整60s，再现场复核CPU，阈值未变。[source/费用](records/dependency_qualification_v30.json)。

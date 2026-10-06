@@ -69,7 +69,6 @@ def timing_fields(allocation, attempt_identity, now):
 
 def durable(spec, *, origin, attempt=1):
     from src.runners.durable_terminal import launch_tmux
-    from src.runners.feinn_resources import admission
     from src.runners.w1_admission_scope import capture_scope
 
     source_gate()
@@ -120,10 +119,19 @@ def durable(spec, *, origin, attempt=1):
     ))
     # This outer observation captures the originally permitted cpuset only.
     # The launcher performs stability and a fresh final observation before exec.
-    facts = admission(
-        2 * 2**30,
-        observation_sink=lambda v: atomic_json(directory / "outer_admission.json", v),
-    )
+    from src.runners.neural_wave_dependencies import fresh_admission
+
+    try:
+        facts = fresh_admission(directory, 2 * 2**30, prefix="outer_admission", reserve_s=64)
+    except Exception as error:
+        atomic_json(directory / "run_summary.json", dict(
+            classification="RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+            reason=repr(error), source_sha=source_gate(), worker_started=False,
+            descendants_cleared=True,
+            evidence_scope="outer observation before launch_tmux; no terminal/worker created",
+            **timing_fields(original, json.loads((directory / "attempt_identity.json").read_text()), monotonic()),
+        ))
+        raise
     scope = capture_scope(facts)
     env = dict(
         TASK42EXTRA_WAVE_NAMESPACE=str(directory.relative_to(ROOT)),
@@ -152,7 +160,7 @@ def durable(spec, *, origin, attempt=1):
 
 def launch(spec):
     from benchmarks.subreaper_watchdog import supervise
-    from src.runners.feinn_resources import admission, envelope, Health, stable_window
+    from src.runners.feinn_resources import envelope, Health, stable_window
     from src.runners.fresh_component_receiver import (
         bind_own_terminal_core,
         set_own_low_priority,
@@ -194,12 +202,12 @@ def launch(spec):
         try:
             if shutil.disk_usage(ROOT).free < 50 * 2**30:
                 raise RuntimeError("STORAGE_START_GATE_FAILED")
+            from src.runners.neural_wave_dependencies import fresh_admission, resource_observation_cost
+
+            if resource_observation_cost() + 64 >= 1200:
+                raise RuntimeError("V30_RESOURCE_OBSERVATION_BUDGET_REACHED")
             stable_window(directory, hard, seconds=60)
-            facts = admission(
-                hard,
-                candidate_scope=terminal["allowed_scope"],
-                observation_sink=lambda v: atomic_json(directory / "admission.json", v),
-            )
+            facts = fresh_admission(directory, hard, scope=terminal["allowed_scope"])
             set_own_low_priority()
             bind_own_terminal_core(terminal, facts["cpu"])
             os.sched_setaffinity(0, {int(facts["cpu"])})
@@ -229,6 +237,7 @@ def launch(spec):
                         "src/solvers/neural_wave_screening.py",
                         "src/solvers/neural_wave_screening_qualification.py",
                         "src/runners/neural_wave_campaign.py",
+                        "src/runners/neural_wave_dependencies.py",
                         "src/runners/neural_wave_worker.py",
                         "src/io/neural_wave_campaign.py",
                         "src/runners/feinn_resources.py",
@@ -324,16 +333,27 @@ def launch(spec):
             )
             result.update(timing_fields(allocation, attempt_identity, monotonic()))
             result["source_sha"] = source
+            atomic_json(directory / "payload_summary.json", result)
+            if spec["role"] == "LEARNED_WAVE_GREEDY":
+                from src.runners.neural_wave_dependencies import followups
+
+                result["serial_independent_dependencies"] = followups(directory, manifest, terminal, result)
+                result["actual_attempt_including_dependencies_seconds"] = monotonic() - attempt_identity["origin_monotonic"]
+                if any(v["summary"]["classification"] != "COMPLETED" or v["summary"]["leader_exit_code"] != 0
+                       for v in result["serial_independent_dependencies"]):
+                    result["classification"] = "DEPENDENCY_WORKER_FAILED"
             atomic_json(directory / "run_summary.json", result)
             return result
         except Exception as error:
+            payload = directory / "payload_summary.json"
             atomic_json(
                 directory / "run_summary.json",
                 dict(
-                    classification="STARTUP_FAILED",
+                    classification="DEPENDENCY_PREPARATION_FAILED" if payload.exists() else "STARTUP_FAILED",
                     reason=repr(error),
                     source_sha=source,
                     descendants_cleared=True,
+                    completed_payload_summary="payload_summary.json" if payload.exists() else None,
                     **timing_fields(allocation, attempt_identity, monotonic()),
                 ),
             )

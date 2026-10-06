@@ -365,3 +365,7 @@ input/task042extra_feinn_5nm/v27_rb_boundary_check.dat
 | 无新增production或跨支 | 原数学c354afa449fb80cfb5012e7d2ff66a3e3e64e088与43-file快照只读 | no global/local Maxwell factor/solve/Gram/NN；无主线/dot修改或merge批准 |
 
 [依赖组清单](records/selective_merge_manifest_v28.json)、[实际所有source](records/run_index_v28.json)、[修复账](records/repair_log_v28.json)。本次通过是明确opt-in的输入与代表面资格，不提升普通生产默认。
+
+## V30有限准入和薄依赖队列
+
+新增src/runners/neural_wave_dependencies.py及定向测试；neural_wave_campaign/run_case仅接线。从原允许范围最多8次当前CPU样本，累计等待仍1200s；数值结束后独立FE/pure一项dat一进程，同活终端/监督根，正确上游不重跑。八项训练数值链不变，未授实际field Gate或生产资格。[qualification](records/dependency_qualification_v30.json)。

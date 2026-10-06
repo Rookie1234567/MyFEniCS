@@ -44,6 +44,10 @@ def main(argv: list[str] | None = None) -> int:
             if args.validate_only or args.dry_run:
                 print(json.dumps(wave, sort_keys=True))
                 return 0
+            import os
+            if os.environ.get('TASK42EXTRA_WAVE_ADMITTED_CHILD'):
+                from src.runners.neural_wave_dependencies import run_admitted
+                return run_admitted(wave)
             from src.runners.neural_wave_campaign import launch
             result = launch(wave)
             print(json.dumps(result, sort_keys=True))
