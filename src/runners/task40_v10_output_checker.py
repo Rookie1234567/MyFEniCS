@@ -456,7 +456,9 @@ def verify_v10_regular_internal_witness(packet_json: str | Path) -> dict[str, An
     }
 
 
-def verify_v10_output_bundle(packet_json: str | Path) -> dict[str, Any]:
+def verify_v10_output_bundle(
+    packet_json: str | Path, *, expected_channel_count: int = 532
+) -> dict[str, Any]:
     """Reopen output identities and independently recompute saved A6 residuals.
 
     The checker verifies the saved backend applications and their residual
@@ -490,7 +492,9 @@ def verify_v10_output_bundle(packet_json: str | Path) -> dict[str, Any]:
     ]
     if len(port_table_paths) != 1:
         raise ValueError("V10 output identity must contain exactly one full DtN port table")
-    port_mode_table_check = verify_v10_dtn_port_mode_table(port_table_paths[0])
+    port_mode_table_check = verify_v10_dtn_port_mode_table(
+        port_table_paths[0], expected_channel_count=expected_channel_count
+    )
     if not port_mode_table_check["passed"]:
         raise ValueError("V10 full top/bottom DtN port mode table is incomplete")
 
@@ -568,11 +572,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("packet_json", type=Path)
     parser.add_argument("--regular-internal-witness", action="store_true")
+    parser.add_argument(
+        "--expected-channel-count",
+        type=int,
+        choices=(340, 532),
+        default=532,
+        help="explicit case contract: 340 for Task40 V11 Gx, 532 for the B0 V10 case",
+    )
     args = parser.parse_args(argv)
     result = (
         verify_v10_regular_internal_witness(args.packet_json)
         if args.regular_internal_witness
-        else verify_v10_output_bundle(args.packet_json)
+        else verify_v10_output_bundle(
+            args.packet_json, expected_channel_count=args.expected_channel_count
+        )
     )
     print(json.dumps(result, sort_keys=True, indent=2))
     return 0

@@ -5285,6 +5285,17 @@ def _validate_task40_v10_postprocess_request(
         raise InputError("Task40 V10 saved-output recovery cannot be a contract probe")
 
 
+def _task40_campaign_time_exceeded(
+    result: Mapping[str, Any], campaign_evidence_key: str
+) -> bool:
+    """Read remaining numerical time from the active Task40 campaign record."""
+
+    remaining = result.get(campaign_evidence_key, {}).get(
+        "launcher_post_watchdog_observation", {}
+    ).get("remaining_numerical_seconds", 1.0)
+    return float(remaining) <= 0.0
+
+
 def _timestamp_directory(
     specification: RunSpecification, timestamp: str | None
 ) -> Path:
@@ -5574,8 +5585,14 @@ def launch_specification(
         TASK40_B0_CONTROL_RUN_ID,
         TASK40_B0_P6_CANDIDATE_RUN_ID,
         TASK40_B0_P4_CONTROL_PROFILE,
+        TASK40_GX560_V11_P6_RUN_ID,
+        TASK40_GX784_V11_P6_RUN_ID,
     )
-    from src.io.physical_intermediate_profile import TASK40_V10_P6_REFERENCE_PROFILE
+    from src.io.physical_intermediate_profile import (
+        TASK40_V10_P6_REFERENCE_PROFILE,
+        TASK40_V11_P6_GX560_PROFILE,
+        TASK40_V11_P6_GX784_PROFILE,
+    )
 
     run_id = str(specification.identity.get("run_id", ""))
     preconditioner = str(specification.solver.get("preconditioner", ""))
@@ -5586,10 +5603,21 @@ def launch_specification(
         run_id == TASK40_B0_P6_CANDIDATE_RUN_ID
         and preconditioner == TASK40_V10_P6_REFERENCE_PROFILE
     )
-    if task40_v10_campaign_window is not None and not task40_v10_profile:
-        raise InputError("Task40 V10 campaign window is restricted to the frozen B0 inputs")
-    if task40_v10_profile and task40_v10_campaign_window is None:
-        raise InputError("Task40 V10 B0 launch requires its fixed campaign window")
+    task40_v11_p6_grid_profile = (
+        run_id == TASK40_GX560_V11_P6_RUN_ID
+        and preconditioner == TASK40_V11_P6_GX560_PROFILE
+    ) or (
+        run_id == TASK40_GX784_V11_P6_RUN_ID
+        and preconditioner == TASK40_V11_P6_GX784_PROFILE
+    )
+    task40_campaign_profile = task40_v10_profile or task40_v11_p6_grid_profile
+    campaign_evidence_key = (
+        "task40_v10_campaign" if task40_v10_profile else "task40_v11_campaign"
+    )
+    if task40_v10_campaign_window is not None and not task40_campaign_profile:
+        raise InputError("Task40 fixed campaign window is restricted to reviewed p6 cases")
+    if task40_campaign_profile and task40_v10_campaign_window is None:
+        raise InputError("Task40 V10/V11 p6 launch requires the existing fixed campaign window")
     _validate_task40_v10_postprocess_request(
         candidate_identity=(
             run_id == TASK40_B0_P6_CANDIDATE_RUN_ID
@@ -5602,7 +5630,7 @@ def launch_specification(
     campaign_window = None
     campaign_accounting_path = None
     campaign_start_state = None
-    if task40_v10_profile:
+    if task40_campaign_profile:
         from .task40_v10_campaign import (
             CAMPAIGN_ACCOUNTING_NAME,
             load_fixed_campaign_window,
@@ -5679,7 +5707,7 @@ def launch_specification(
     )
     task40_0p7nm_profile = (
         specification.solver.get('preconditioner') in TASK40_PROFILES
-        and not task40_v10_profile
+        and not task40_campaign_profile
     )
     setup_efficiency_profile = (
         setup_efficiency_v26_profile
@@ -5714,7 +5742,7 @@ def launch_specification(
         WORKSTATION_GUIDED_LOCAL_V30_PROFILE,
         PROJECTION_LAYOUT_V31_PROFILE,
         *TASK40_PROFILES,
-    } and not task40_v10_profile
+    } and not task40_campaign_profile
     cell_stage = str(specification.solver.get('stage', ''))
     v25_authorized_performance_repeat = None
     v28_authorized_performance_repeat = None
@@ -5904,7 +5932,7 @@ def launch_specification(
         if cell_stage_budget is not None
         else physical_resources.get('solve_seconds', 3600)
     )
-    if task40_v10_profile:
+    if task40_campaign_profile:
         admitted_campaign_seconds = float(
             campaign_start_state["remaining_numerical_seconds"]
         )
@@ -6098,7 +6126,7 @@ def launch_specification(
             stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
-    elif task40_v10_profile and physical_candidate:
+    elif task40_campaign_profile and physical_candidate:
         if not _is_v28_user_service_cgroup(current_cgroup_path()):
             raise InputError(
                 "Task40 V10 formal launch requires the existing supervised "
@@ -6123,8 +6151,8 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
-        if task40_v10_profile:
-            manifest["task40_v10_campaign"] = {
+        if task40_campaign_profile:
+            manifest[campaign_evidence_key] = {
                 "window_path": str(campaign_window.path),
                 "window_sha256": campaign_window.sha256,
                 "t0_utc_ns": campaign_window.t0_utc_ns,
@@ -6135,6 +6163,7 @@ def launch_specification(
                 "accounting_writer_while_worker_active": "subreaper_watchdog_only",
                 "worker_accounting_access": "read_only_projection",
                 "launcher_entry_observation": campaign_start_state,
+                "effective_window_scope": "shared_V11_fixed_deadline_and_remaining_budget",
             }
             _write_json(run_directory / "run_manifest.json", manifest)
         if coarse_degree_v25_profile or setup_efficiency_profile:
@@ -6331,7 +6360,7 @@ def launch_specification(
                             watchdog_kwargs['active_pc_seconds'] = float(
                                 physical_resources['pc_hard_seconds']
                             )
-                    if task40_v10_profile:
+                    if task40_campaign_profile:
                         jit_source = Path(
                             str(physical_resources["qualified_jit_cache_source"])
                         )
@@ -6412,7 +6441,7 @@ def launch_specification(
                             'TASK39EXTRA_V24_P4_PREFIX_TARGET'
                         ] = str(v24_p4_prefix_target)
                         watchdog_kwargs['worker_environment'] = watchdog_environment
-                    if task40_v10_profile:
+                    if task40_campaign_profile:
                         campaign_start_state = campaign_window.observe(
                             label="launcher_pre_worker"
                         )
@@ -6427,7 +6456,7 @@ def launch_specification(
                         solve_limit = min(float(solve_limit), admitted_campaign_seconds)
                     wall_budget = (
                         float(campaign_start_state["remaining_numerical_seconds"])
-                        if task40_v10_profile
+                        if task40_campaign_profile
                         else min(
                             workflow_limit - (monotonic() - workflow_started),
                             pc_profile['deadline_monotonic'] - monotonic(),
@@ -6474,7 +6503,7 @@ def launch_specification(
                             else min(
                                 solve_limit,
                                 wall_budget
-                                if task40_v10_profile
+                                if task40_campaign_profile
                                 or (
                                     v14_lease is not None
                                     and v14_time_policy == V14_TIME_POLICY_ENFORCE
@@ -6491,12 +6520,12 @@ def launch_specification(
                     result = {'exit_status': authority['leader_exit_code'],
                         'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                         'resource_authority': authority}
-                    if task40_v10_profile:
+                    if task40_campaign_profile:
                         try:
                             campaign_post_state = campaign_window.observe(
                                 label="launcher_after_watchdog"
                             )
-                            result["task40_v10_campaign"] = {
+                            result[campaign_evidence_key] = {
                                 "window_path": str(campaign_window.path),
                                 "window_sha256": campaign_window.sha256,
                                 "accounting_path": str(campaign_accounting_path),
@@ -6504,7 +6533,7 @@ def launch_specification(
                             }
                         except (OSError, ValueError, RuntimeError) as exc:
                             result["result_classification"] = "EVIDENCE_INCOMPLETE"
-                            result["task40_v10_campaign_error"] = {
+                            result[f"{campaign_evidence_key}_error"] = {
                                 "type": type(exc).__name__,
                                 "message": str(exc),
                             }
@@ -6529,7 +6558,7 @@ def launch_specification(
                             and result['result_classification'] == 'worker_exit0'
                         ):
                             result['result_classification'] = 'EVIDENCE_INCOMPLETE'
-                    elif task40_v10_profile:
+                    elif task40_campaign_profile:
                         cgroup_swap = authority.get("job_cgroup_swap", {})
                         v10_swap_pass = bool(
                             authority.get("process_tree_swap_gate_enforced") is True
@@ -6660,15 +6689,8 @@ def launch_specification(
         if physical_candidate:
             result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
             result['full_workflow_time_exceeded'] = (
-                bool(
-                    float(
-                        result.get("task40_v10_campaign", {})
-                        .get("launcher_post_watchdog_observation", {})
-                        .get("remaining_numerical_seconds", 1.0)
-                    )
-                    <= 0.0
-                )
-                if task40_v10_profile
+                _task40_campaign_time_exceeded(result, campaign_evidence_key)
+                if task40_campaign_profile
                 else bool(result['full_workflow_monotonic_seconds'] > workflow_limit)
             )
             if schur_v14 or blr_profile or cell_condensed_profile:

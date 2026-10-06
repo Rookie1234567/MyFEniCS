@@ -419,6 +419,16 @@ class _V14Runtime:
                     "review_v10_b0_full_p6_y_orbit_reference_inverse",
                     "task40extra_v10_p6_y_orbit_reference_v1",
                 ),
+                (
+                    "Q4_ORIGINAL",
+                    "review_v11_gx560_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+                ),
+                (
+                    "Q4_ORIGINAL",
+                    "review_v11_gx784_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v11_p6_y_orbit_gx784_reference_v1",
+                ),
             }
             worker_identity = (
                 self.stage,
@@ -457,7 +467,11 @@ class _V14Runtime:
             self.infrastructure_recovery = False
             self.workflow_clock_start = dict(state["sample"])
             self.workflow_reserved_seconds = remaining
-            self.workflow_clock_source = "task40_v10_fixed_campaign_read_only_projection"
+            is_v10_campaign = str(contract.get("scope", "")).startswith("review_v10_")
+            campaign_version = "v10" if is_v10_campaign else "v11"
+            self.workflow_clock_source = (
+                f"task40_{campaign_version}_fixed_campaign_read_only_projection"
+            )
             self.shared_attempt = {
                 "status": "RUNNING",
                 "source_sha": self.source_sha,
@@ -467,7 +481,7 @@ class _V14Runtime:
                 "recovery_id": None,
             }
             self.shared_budget = {
-                "schema": "task40extra.review_v10_campaign_worker_view.v1",
+                "schema": f"task40extra.review_{campaign_version}_campaign_worker_view.v1",
                 "batch_identity": self.batch_identity,
                 "total_budget_seconds": window.total_seconds,
                 "remaining_numerical_seconds_at_worker_entry": remaining,

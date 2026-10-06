@@ -1047,6 +1047,8 @@ FIELD_SPECS: Final = (
             "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
             "task40extra_v10_p6_y_orbit_reference_v1",
             "task40extra_v10_p4_balh_control_v1",
+            "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+            "task40extra_v11_p6_y_orbit_gx784_reference_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),

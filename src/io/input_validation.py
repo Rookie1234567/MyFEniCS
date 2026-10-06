@@ -603,6 +603,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
                 "task40extra_v10_p6_y_orbit_reference_v1",
                 "task40extra_v10_p4_balh_control_v1",
+                "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v11_p6_y_orbit_gx784_reference_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1064,6 +1066,74 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     validate_task40_input(config)
                 except (TypeError, ValueError, KeyError) as exc:
                     raise _error("Task40 V10 B0 physical identity", str(exc)) from exc
+            elif preconditioner in {
+                "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v11_p6_y_orbit_gx784_reference_v1",
+            }:
+                from src.geometry.task40_nonseparable_plan import (
+                    TASK40_COMPARISON_GROUP,
+                    TASK40_GX560_V11_P6_RUN_ID,
+                    TASK40_GX784_V11_P6_RUN_ID,
+                    validate_task40_input,
+                )
+                from src.io.physical_intermediate_profile import (
+                    TASK40_V11_P6_GX560_PROFILE,
+                    TASK40_V11_P6_GX784_PROFILE,
+                )
+
+                expected_run = (
+                    TASK40_GX560_V11_P6_RUN_ID
+                    if preconditioner == TASK40_V11_P6_GX560_PROFILE
+                    else TASK40_GX784_V11_P6_RUN_ID
+                )
+                if (
+                    config.get("run_id") != expected_run
+                    or config.get("comparison_group") != TASK40_COMPARISON_GROUP
+                ):
+                    raise _error(
+                        "identity",
+                        f"{preconditioner} requires its exact frozen Gx run identity",
+                    )
+                if solver.get("stage") != "Q4_ORIGINAL":
+                    raise _error("solver.stage", f"{preconditioner} requires Q4_ORIGINAL")
+                for section, key, actual, expected in (
+                    ("solver", "linear_solver", solver.get("linear_solver"), "iterative"),
+                    ("solver", "ksp_type", solver.get("ksp_type"), "fgmres"),
+                    ("solver", "restart", solver.get("restart"), 32),
+                    ("solver", "max_iterations", solver.get("max_iterations"), 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("solver", "coarse_degree", solver.get("coarse_degree"), 4),
+                    ("solver", "memory_policy", solver.get("memory_policy"),
+                     "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"),
+                    ("solver", "physical_operator_backend", solver.get("physical_operator_backend"),
+                     "isotropic_sum_factorized_n1e_v26"),
+                    ("solver", "h6_backend_rule", solver.get("h6_backend_rule"),
+                     "direct_selected_backend_same_apply_and_power10"),
+                    ("solver", "thread_contract", solver.get("thread_contract"),
+                     "mpi1_omp1_blas1_v26"),
+                    ("solver", "numeric_cache_mode", solver.get("numeric_cache_mode"), "build"),
+                    ("execution", "mpi_size", execution.get("mpi_size"), 1),
+                    ("execution", "timeout_seconds", execution.get("timeout_seconds"), 86400),
+                    ("execution", "require_zero_swap", execution.get("require_zero_swap"), True),
+                    ("execution", "memory_limit_gb", execution.get("memory_limit_gb"), 16.0),
+                    ("execution", "warning_memory_gib", execution.get("warning_memory_gib"), 14.0),
+                    ("execution", "terminate_memory_gib", execution.get("terminate_memory_gib"), 16.0),
+                    ("discretization", "nedelec_degree", discretization.get("nedelec_degree"), 6),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"{preconditioner} fixes {key}={expected}",
+                        )
+                if geometry.get("model_variant") != "original" or geometry.get("cell_notch") is not None:
+                    raise _error(
+                        "geometry",
+                        f"{preconditioner} requires the original air_void_box_nm gap geometry",
+                    )
+                try:
+                    validate_task40_input(config)
+                except (TypeError, ValueError, KeyError) as exc:
+                    raise _error("Task40 V11 grid physical identity", str(exc)) from exc
             elif preconditioner == "task40extra_v10_p4_balh_control_v1":
                 from src.geometry.task40_nonseparable_plan import (
                     TASK40_B0_CONTROL_RUN_ID,
@@ -1480,6 +1550,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
                 "task40extra_v10_p6_y_orbit_reference_v1",
                 "task40extra_v10_p4_balh_control_v1",
+                "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v11_p6_y_orbit_gx784_reference_v1",
             }
             if task40_0p7nm:
                 if not isclose(

@@ -13,7 +13,12 @@ from src.runners.task40_v10_output_checker import (
 )
 
 
-def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_path):
+@pytest.mark.parametrize(
+    ("expected_channel_count", "modes_per_side"), ((532, 266), (340, 170))
+)
+def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(
+    tmp_path, expected_channel_count, modes_per_side
+):
     field_path = tmp_path / "field.vtu"
     field_path.write_bytes(b"tiny field fixture")
     import hashlib
@@ -26,7 +31,7 @@ def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_p
         )
         writer.writeheader()
         for side in ("top", "bottom"):
-            for mode_index in range(266):
+            for mode_index in range(modes_per_side):
                 writer.writerow(
                     {
                         "side": side,
@@ -78,19 +83,26 @@ def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(tmp_p
             }
         },
     )
-    result = verify_v10_output_bundle(tmp_path / "output.json")
+    result = verify_v10_output_bundle(
+        tmp_path / "output.json", expected_channel_count=expected_channel_count
+    )
     residual_record = json.loads((tmp_path / "residual.json").read_text())
     output_record = json.loads((tmp_path / "output.json").read_text())
     assert result["status"] == "PASS"
     assert all(row["passed"] for row in result["residual_checks"])
     assert result["field_mode_and_diffraction_file_checks"][0]["passed"]
-    assert result["full_dtn_port_mode_table_check"]["actual_channel_count"] == 532
+    assert result["full_dtn_port_mode_table_check"]["actual_channel_count"] == (
+        expected_channel_count
+    )
     assert result["full_dtn_port_mode_table_check"]["channel_count_by_side"] == {
-        "top": 266,
-        "bottom": 266,
+        "top": modes_per_side,
+        "bottom": modes_per_side,
     }
     assert residual_record["arrays"]["sha256"]
     assert output_record["scientific_identity"]["full_solution_storage_sha256"] == "a" * 64
+    if expected_channel_count == 340:
+        with pytest.raises(ValueError, match="full top/bottom DtN port mode table"):
+            verify_v10_output_bundle(tmp_path / "output.json", expected_channel_count=532)
 
 
 def test_v10_dtn_port_mode_table_requires_paired_top_and_bottom_rows(tmp_path):

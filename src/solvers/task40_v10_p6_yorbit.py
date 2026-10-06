@@ -1053,11 +1053,21 @@ def assemble_task40_v10_sector_blocks(
     return result, audit
 
 
+def _local_condensation_row_facts(local_system: Any) -> dict[str, int]:
+    """Expose the local trace and eliminated-interior row axes as recorded."""
+
+    return {
+        "local_trace_rows": int(local_system.active_rows),
+        "local_interior_rows": int(local_system.active_interior_rows),
+    }
+
+
 def build_task40_v10_p6_reference_inverse(
     cfg: Any,
     axes: Mapping[str, tuple[float, ...]],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    profile: Any | None = None,
     event: Callable[[str, Mapping[str, Any]], None] | None = None,
     identity_gate: Callable[[Mapping[str, Any], Mapping[str, Any]], None] | None = None,
     jit_options: Mapping[str, Any] | None = None,
@@ -1124,8 +1134,21 @@ def build_task40_v10_p6_reference_inverse(
         if identity_gate is not None:
             identity_gate(global_bundle, global_levels)
         modes = tuple(global_bundle["modes"])
-        from .task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
-        profile = TASK40_V10_P6_PROFILE
+        from .task40_v10_p6_periodic_profile import (
+            TASK40_V10_P6_PROFILE,
+            Task40V10P6PeriodicProfile,
+        )
+
+        if profile is None:
+            profile = TASK40_V10_P6_PROFILE
+        if not isinstance(profile, Task40V10P6PeriodicProfile):
+            raise TypeError("p6 reference builder requires a Task40 periodic case profile")
+        cell_axes = tuple(map(int, cfg.mesh_axis_cell_counts_requested or ()))
+        if cell_axes != profile.global_cell_axes:
+            raise ValueError(
+                f"p6 target grid {cell_axes} does not match reference profile "
+                f"{profile.global_cell_axes}"
+            )
         contexts = build_task40_v10_sector_contexts(
             modes,
             regular_cfg,
@@ -1154,8 +1177,15 @@ def build_task40_v10_p6_reference_inverse(
             [entry.normalization_h for entry in global_bundle["dtn_action"].carrier.entries],
             dtype=np.float64,
         )
-        if global_h.shape != (532,) or not np.isfinite(global_h).all() or np.any(global_h <= 0):
-            raise ValueError("regular p6 reference carrier must retain all 532 positive original-H values")
+        if (
+            global_h.shape != (profile.mode_count,)
+            or not np.isfinite(global_h).all()
+            or np.any(global_h <= 0)
+        ):
+            raise ValueError(
+                "regular p6 reference carrier must retain all "
+                f"{profile.mode_count} positive original-H values"
+            )
         owner.update(
             global_levels=global_levels,
             global_bundle=global_bundle,
@@ -1171,7 +1201,11 @@ def build_task40_v10_p6_reference_inverse(
                 case_name=f"{cfg.case_name}_v10_twist{context.twist_index}",
                 period_y=local_period_y,
                 grating_width_y=local_period_y,
-                mesh_axis_cell_counts=(4, 2, 5),
+                mesh_axis_cell_counts=(
+                    profile.global_cell_axes[0],
+                    profile.local_y_cells,
+                    profile.global_cell_axes[2],
+                ),
                 mesh_axis_y_values=tuple(context.local_axes["y"]),
                 mesh_plan_id=f"{SCHEMA}.local_twist{context.twist_index}",
                 mesh_plan_sha256=None,
@@ -1256,7 +1290,12 @@ def build_task40_v10_p6_reference_inverse(
                 allocation_gate=allocation_gate,
             )
             pending_sector["system"] = system
-            expected_inventory = (28722, 8496, 18000, len(local_modes))
+            expected_inventory = (
+                profile.local_storage_rows,
+                profile.local_trace_rows,
+                profile.local_interior_rows,
+                len(local_modes),
+            )
             actual_inventory = (
                 system.full_rows,
                 system.active_rows,
@@ -1328,13 +1367,56 @@ def build_task40_v10_p6_reference_inverse(
         expected_shapes = tuple(matrix.shape[0] for _q, matrix in sorted(all_q_matrices.items()))
         if expected_shapes != profile.augmented_rows_per_q:
             raise ValueError(
-                f"runtime q augmented dimensions differ from the B0 profile: {expected_shapes}"
+                "runtime q augmented dimensions differ from the selected p6 profile: "
+                f"{expected_shapes} != {profile.augmented_rows_per_q}"
             )
+        q_port_counts = [0] * profile.q_count
+        for context in contexts:
+            for branch, q in enumerate(context.global_q_indices):
+                q_port_counts[int(q)] += int(
+                    np.count_nonzero(context.local_branch_indices == branch)
+                )
+        first_local = sectors[0]
+        local_system = first_local["action"].condensed
+        local_entities = first_local["entities"]
+        runtime_inventory = {
+            "degree": int(cfg.nedelec_degree),
+            "global_cell_count": int(
+                global_levels["mesh_data"].mesh.topology.index_map(3).size_local
+            ),
+            "global_storage_rows": int(global_entities.full_rows),
+            "global_independent_rows": int(len(global_entities.independent)),
+            "global_interior_rows": int(full_layout.audit["dimension_counts"][3]),
+            "global_trace_rows": int(
+                len(global_entities.independent)
+                - int(full_layout.audit["dimension_counts"][3])
+            ),
+            "q_count": len(all_q_matrices),
+            "rows_per_q": int(full_layout.width),
+            "trace_rows_per_q": int(
+                (len(global_entities.independent)
+                 - int(full_layout.audit["dimension_counts"][3]))
+                // profile.q_count
+            ),
+            "local_cell_count": int(
+                first_local["levels"]["mesh_data"].mesh.topology.index_map(3).size_local
+            ),
+            "local_storage_rows": int(local_entities.full_rows),
+            "local_independent_rows": int(len(local_entities.independent)),
+            **_local_condensation_row_facts(local_system),
+            "local_width_per_q": int(local_entities.width),
+            **{
+                f"q_port_count_{q}": int(q_port_counts[q])
+                for q in range(profile.q_count)
+            },
+        }
+        inventory_audit = profile.validate_runtime_inventory(runtime_inventory)
         factors = AllQExactMumps(
             all_q_matrices,
             allocation_gate=allocation_gate,
             event=event,
             expected_shapes=expected_shapes,
+            profile=profile,
         )
         owner["factors"] = factors
         owner["inverse"] = CompleteTwoCellInverse(
@@ -1344,6 +1426,8 @@ def build_task40_v10_p6_reference_inverse(
             allocation_gate=allocation_gate,
         )
         owner["sector_audits"] = sector_audits
+        owner["profile"] = profile
+        owner["runtime_inventory_validation"] = inventory_audit
         owner["q_matrix_audits"] = {
             q: {
                 "shape": list(matrix.shape),
@@ -1357,6 +1441,7 @@ def build_task40_v10_p6_reference_inverse(
                 {
                     "global_p6_inventory": full_layout.audit,
                     "sector_count": len(sectors),
+            "profile": profile.identity(),
                     "all_four_q_matrices": owner["q_matrix_audits"],
                     "all_four_mumps_factors_live": True,
                 },

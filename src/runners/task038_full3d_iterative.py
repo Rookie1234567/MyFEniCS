@@ -68,6 +68,36 @@ def run_full3d_iterative(
             resolved_payload,
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
+            profile_identity=TASK40_V10_P6_REFERENCE_PROFILE,
+        )
+
+    from src.io.physical_intermediate_profile import (
+        TASK40_V11_P6_GX560_PROFILE,
+        TASK40_V11_P6_GX784_PROFILE,
+    )
+
+    if profile in {TASK40_V11_P6_GX560_PROFILE, TASK40_V11_P6_GX784_PROFILE}:
+        expected_run_id = (
+            "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1"
+            if profile == TASK40_V11_P6_GX560_PROFILE
+            else "task40extra_0p7nm_nonseparable_gx784_p6_y_orbit_v11_v1"
+        )
+        if (
+            resolved_payload.get("run_id") != expected_run_id
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != "Q4_ORIGINAL"
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            ) != profile
+        ):
+            raise ValueError("Task40 V11 p6 grid route requires its exact frozen case identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=profile,
         )
 
     if profile == TASK40_V10_P4_CONTROL_PROFILE:

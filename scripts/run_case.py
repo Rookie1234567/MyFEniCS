@@ -96,7 +96,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         '--task40-v10-campaign-window', type=Path, metavar='CAMPAIGN_WINDOW_JSON',
-        help='required fixed 24-hour campaign window for the Task40 V10 B0 control/candidate',
+        help='required existing fixed 24-hour campaign window for Task40 V10 B0 and V11 Gx p6 cases',
     )
     parser.add_argument(
         '--task40-v10-postprocess-from', type=Path, metavar='FAILED_RUN_DIRECTORY',
@@ -164,8 +164,14 @@ def main(argv: list[str] | None = None) -> int:
             TASK40_B0_CONTROL_RUN_ID,
             TASK40_B0_P6_CANDIDATE_RUN_ID,
             TASK40_B0_P4_CONTROL_PROFILE,
+            TASK40_GX560_V11_P6_RUN_ID,
+            TASK40_GX784_V11_P6_RUN_ID,
         )
-        from src.io.physical_intermediate_profile import TASK40_V10_P6_REFERENCE_PROFILE
+        from src.io.physical_intermediate_profile import (
+            TASK40_V10_P6_REFERENCE_PROFILE,
+            TASK40_V11_P6_GX560_PROFILE,
+            TASK40_V11_P6_GX784_PROFILE,
+        )
 
         v10_identity = (
             specification.identity.get('run_id') == TASK40_B0_CONTROL_RUN_ID
@@ -178,6 +184,14 @@ def main(argv: list[str] | None = None) -> int:
             specification.identity.get('run_id') == TASK40_B0_P6_CANDIDATE_RUN_ID
             and specification.solver.get('preconditioner') == TASK40_V10_P6_REFERENCE_PROFILE
         )
+        v11_grid_identity = (
+            specification.identity.get('run_id') == TASK40_GX560_V11_P6_RUN_ID
+            and specification.solver.get('preconditioner') == TASK40_V11_P6_GX560_PROFILE
+        ) or (
+            specification.identity.get('run_id') == TASK40_GX784_V11_P6_RUN_ID
+            and specification.solver.get('preconditioner') == TASK40_V11_P6_GX784_PROFILE
+        )
+        task40_campaign_identity = v10_identity or v11_grid_identity
         from src.runners.task038_launcher import _validate_task40_v10_postprocess_request
 
         _validate_task40_v10_postprocess_request(
@@ -185,12 +199,14 @@ def main(argv: list[str] | None = None) -> int:
             campaign_window=args.task40_v10_campaign_window,
             saved_run_directory=args.task40_v10_postprocess_from,
         )
-        if args.task40_v10_campaign_window is not None and not v10_identity:
-            raise InputError('--task40-v10-campaign-window is restricted to the frozen B0 V10 identities')
-        if v10_identity and not args.task40_v10_campaign_window and not (
+        if args.task40_v10_campaign_window is not None and not task40_campaign_identity:
+            raise InputError(
+                '--task40-v10-campaign-window is restricted to frozen Task40 V10 B0 and V11 Gx identities'
+            )
+        if task40_campaign_identity and not args.task40_v10_campaign_window and not (
             args.validate_only or args.dry_run
         ):
-            raise InputError('Task40 V10 B0 launches require --task40-v10-campaign-window')
+            raise InputError('Task40 V10/V11 p6 launches require --task40-v10-campaign-window')
         if args.task40_v10_campaign_window is not None and (args.validate_only or args.dry_run):
             from src.runners.task40_v10_campaign import load_fixed_campaign_window
             load_fixed_campaign_window(args.task40_v10_campaign_window)

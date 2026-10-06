@@ -13,6 +13,7 @@ from src.runners.task40_v10_worker import (
     _regular_inverse_gate_facts,
     _save_packet,
 )
+from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
 
 
 def _regular_inverse_gate_inputs():
@@ -28,6 +29,7 @@ def _regular_inverse_gate_inputs():
             "schur_port_identity_relative": 5.0e-11,
             "projected_saved_field_recovery_relative": 5.0e-12,
         },
+        "profile": TASK40_V10_P6_PROFILE,
         "local_equation_relative": 5.0e-11,
         "port_closure_relative": 5.0e-12,
         "q_residual_relative": 5.0e-11,
@@ -64,7 +66,7 @@ def test_regular_inverse_gate_failures_are_reported_independently():
         ("independent_sector_action_consistency", "action_relative", None, 1.01e-11),
         ("full_internal_recovery", "recovery", "internal_residual_relative", 1.01e-11),
         ("two_local_original_equations", "local_equation_relative", None, 1.01e-10),
-        ("all_532_port_equations", "recovery", "port_residual_relative", 1.01e-8),
+        ("all_port_equations", "recovery", "port_residual_relative", 1.01e-8),
         ("native_action_recovery_identity", "recovery", "native_identity_relative", 1.01e-10),
         ("schur_port_recovery_identity", "recovery", "schur_port_identity_relative", 1.01e-10),
         (
@@ -151,6 +153,7 @@ def test_regular_inverse_passes_sector_action_map_and_petsc_to_recovery(
     runtime = SimpleNamespace(sample=lambda _label: None)
     layout = SimpleNamespace(independent=np.array([0, 1], dtype=np.int64), full_rows=3)
     reference = {
+        "profile": TASK40_V10_P6_PROFILE,
         "inverse": _Inverse(),
         "full_layout": layout,
         "global_bundle": {

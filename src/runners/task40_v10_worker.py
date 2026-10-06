@@ -151,6 +151,7 @@ def _mapping_identity(reference: Mapping[str, Any]) -> dict[str, Any]:
     """Check native entity primal/dual work and the two-cell fold/lift duality."""
 
     layout = reference["full_layout"]
+    profile = reference["profile"]
     entities = layout.entities
     n = int(layout.independent_rows)
     rng = np.random.default_rng(40102026)
@@ -368,12 +369,36 @@ def _runtime_interior_rows(reference: Mapping[str, Any]) -> np.ndarray:
     ]
     interior = np.unique(np.concatenate(rows)) if rows else np.empty(0, dtype=np.int64)
     expected = int(reference["full_layout"].audit["dimension_counts"][3])
-    if interior.size != expected or expected != 36_000:
+    profile_expected = int(reference["profile"].global_interior_rows)
+    if interior.size != expected or expected != profile_expected:
         raise ValueError(
-            "full p6 cell-interior RHS rows do not match the 36,000-row contract: "
-            f"{interior.size} != {expected}"
+            "full p6 cell-interior RHS rows do not match the selected case profile: "
+            f"{interior.size} != {expected} != {profile_expected}"
         )
     return interior
+
+
+def _validate_target_p6_inventory(condensed: Any, profile: Any) -> dict[str, int]:
+    """Check the target's full/trace/interior/port axes against its case profile."""
+
+    actual = {
+        "full_rows": int(condensed.full_rows),
+        "trace_rows": int(condensed.active_rows),
+        "interior_rows": int(condensed.active_interior_rows),
+        "port_rows": int(condensed.appended_rows),
+    }
+    expected = {
+        "full_rows": int(profile.global_storage_rows),
+        "trace_rows": int(profile.global_trace_rows),
+        "interior_rows": int(profile.global_interior_rows),
+        "port_rows": int(profile.mode_count),
+    }
+    if actual != expected:
+        raise ValueError(
+            "actual target p6 trace+port retained inventory differs from selected profile: "
+            f"{actual} != {expected}"
+        )
+    return actual
 
 
 def _sector_native_forward_action(
@@ -386,6 +411,7 @@ def _sector_native_forward_action(
     """Synthesize the two local native actions into the global dual space."""
 
     layout = reference["full_layout"]
+    profile = reference["profile"]
     solution = np.asarray(full_solution_independent, dtype=np.complex128)
     if solution.shape != (layout.independent_rows,) or not np.isfinite(solution).all():
         raise ValueError("regular action witness needs the complete finite saved p6 solution")
@@ -445,11 +471,15 @@ def _sector_native_forward_action(
             }
         )
     ordered_modes = np.sort(np.concatenate(mode_ids))
-    if not np.array_equal(ordered_modes, np.arange(532, dtype=np.int64)):
-        raise ValueError("regular local forward actions do not cover all 532 port modes exactly once")
+    if not np.array_equal(ordered_modes, np.arange(profile.mode_count, dtype=np.int64)):
+        raise ValueError(
+            "regular local forward actions do not cover all "
+            f"{profile.mode_count} port modes exactly once"
+        )
     return synthesized, local_action_vectors, {
         "twist_count": len(sector_facts),
-        "all_532_modes_covered_once": True,
+        "expected_mode_count": profile.mode_count,
+        "all_modes_covered_once": True,
         "sectors": sector_facts,
         "local_to_global_dual_map": "TwoCellNativeTransport.lift_dual",
     }
@@ -474,6 +504,7 @@ def _regular_local_recovery_facts(
     fe_rhs = np.asarray(fe_rhs_global, dtype=np.complex128)
     ports = np.asarray(port_rhs_global, dtype=np.complex128)
     sectors = tuple(reference["sectors"])
+    profile = reference["profile"]
     internal_residuals = []
     internal_scales = []
     internal_effective_rhs = []
@@ -664,11 +695,15 @@ def _regular_local_recovery_facts(
             }
         )
     ordered_modes = np.sort(np.concatenate(covered_modes))
-    if not np.array_equal(ordered_modes, np.arange(532, dtype=np.int64)):
-        raise ValueError("local recovery checks do not cover all 532 original-H port modes exactly once")
-    if covered_internal_rows != 36_000:
+    if not np.array_equal(ordered_modes, np.arange(profile.mode_count, dtype=np.int64)):
         raise ValueError(
-            f"local recovery checks cover {covered_internal_rows} internal rows, expected 36000"
+            "local recovery checks do not cover all "
+            f"{profile.mode_count} original-H port modes exactly once"
+        )
+    if covered_internal_rows != profile.global_interior_rows:
+        raise ValueError(
+            "local recovery checks cover "
+            f"{covered_internal_rows} internal rows, expected {profile.global_interior_rows}"
         )
 
     def join(values: list[np.ndarray]) -> np.ndarray:
@@ -688,11 +723,11 @@ def _regular_local_recovery_facts(
         else np.empty(0, dtype=np.int8)
     )
     if (
-        joined_internal_rows.shape != (36_000,)
-        or joined_internal_twists.shape != (36_000,)
+        joined_internal_rows.shape != (profile.global_interior_rows,)
+        or joined_internal_twists.shape != (profile.global_interior_rows,)
         or not np.array_equal(
             np.lexsort((joined_internal_rows, joined_internal_twists)),
-            np.arange(36_000, dtype=np.int64),
+            np.arange(profile.global_interior_rows, dtype=np.int64),
         )
     ):
         raise ValueError("internal witness arrays lost their twist/row ordering")
@@ -750,6 +785,7 @@ def _regular_inverse_gate_facts(
     equation_relative: float,
     action_relative: float,
     recovery: Mapping[str, Any],
+    profile: Any,
     local_equation_relative: float,
     port_closure_relative: float,
     q_residual_relative: float,
@@ -764,7 +800,7 @@ def _regular_inverse_gate_facts(
             np.isfinite(action_relative) and action_relative <= _REGULAR_ACTION_LIMIT
         ),
         "full_internal_recovery": bool(
-            int(recovery["internal_row_count"]) == 36_000
+            int(recovery["internal_row_count"]) == profile.global_interior_rows
             and np.isfinite(float(recovery["internal_residual_relative"]))
             and float(recovery["internal_residual_relative"]) <= _REGULAR_RECOVERY_LIMIT
         ),
@@ -772,8 +808,8 @@ def _regular_inverse_gate_facts(
             np.isfinite(local_equation_relative)
             and local_equation_relative <= _REFERENCE_RESIDUAL_LIMIT
         ),
-        "all_532_port_equations": bool(
-            int(recovery["port_mode_count"]) == 532
+        "all_port_equations": bool(
+            int(recovery["port_mode_count"]) == profile.mode_count
             and np.isfinite(float(recovery["port_residual_relative"]))
             and float(recovery["port_residual_relative"]) <= _PORT_CLOSURE_LIMIT
         ),
@@ -809,7 +845,7 @@ def _regular_inverse_gate_facts(
             "independent_sector_action_consistency": _REGULAR_ACTION_LIMIT,
             "full_internal_recovery": _REGULAR_RECOVERY_LIMIT,
             "two_local_original_equations": _REFERENCE_RESIDUAL_LIMIT,
-            "all_532_port_equations": _PORT_CLOSURE_LIMIT,
+            "all_port_equations": _PORT_CLOSURE_LIMIT,
             "native_action_recovery_identity": _IDENTITY_LIMIT,
             "schur_port_recovery_identity": _IDENTITY_LIMIT,
             "saved_field_local_recovery_identity": _REGULAR_RECOVERY_LIMIT,
@@ -829,22 +865,24 @@ def _verify_regular_inverse(
 ) -> dict[str, Any]:
     """Check complete regular FE/port recovery with the live four-q factors."""
 
-    from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
     from src.solvers.p6_cell_condensed_action import _operation_relative
     from petsc4py import PETSc
 
     inverse = reference["inverse"]
     layout = reference["full_layout"]
+    profile = reference["profile"]
     bundle = reference["global_bundle"]
     template = physical_rhs
     independent = np.asarray(layout.independent, dtype=np.int64)
     n = len(independent)
     modes = tuple(bundle["modes"])
-    if len(modes) != 532:
-        raise ValueError(f"regular reference must retain 532 modes, got {len(modes)}")
+    if len(modes) != profile.mode_count:
+        raise ValueError(
+            f"regular reference must retain {profile.mode_count} modes, got {len(modes)}"
+        )
     carrier = bundle["dtn_action"].carrier
     h = np.asarray([entry.normalization_h for entry in carrier.entries], dtype=np.float64)
-    if h.shape != (532,) or not np.isfinite(h).all() or np.any(h <= 0.0):
+    if h.shape != (profile.mode_count,) or not np.isfinite(h).all() or np.any(h <= 0.0):
         raise ValueError("regular reference original-H vector is incomplete or invalid")
 
     rng = np.random.default_rng(40102027)
@@ -858,8 +896,8 @@ def _verify_regular_inverse(
         + 1j * rng.standard_normal(len(interior_rows))
     )
     amplitudes = (
-        np.sin(0.031 * (np.arange(532, dtype=np.float64) + 1.0))
-        + 1j * np.cos(0.047 * (np.arange(532, dtype=np.float64) + 1.0))
+        np.sin(0.031 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
+        + 1j * np.cos(0.047 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
     ).astype(np.complex128)
     port_rhs = (h * amplitudes).astype(np.complex128)
     physical_storage = np.asarray(physical_rhs.array_r, dtype=np.complex128).copy()
@@ -867,10 +905,10 @@ def _verify_regular_inverse(
         raise ValueError("regular physical RHS does not match the full p6 storage layout")
 
     cases = (
-        ("generic_full_independent", generic, np.zeros(532, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
-        ("interior_only_all_36000", interior, np.zeros(532, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
+        ("generic_full_independent", generic, np.zeros(profile.mode_count, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
+        (f"interior_only_all_{profile.global_interior_rows}", interior, np.zeros(profile.mode_count, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
         ("nonzero_all_mode_port_rhs", np.zeros(n, dtype=np.complex128), port_rhs, np.zeros(layout.full_rows, dtype=np.complex128)),
-        ("physical_regular_incident_rhs", physical_storage[independent].copy(), np.zeros(532, dtype=np.complex128), physical_storage),
+        ("physical_regular_incident_rhs", physical_storage[independent].copy(), np.zeros(profile.mode_count, dtype=np.complex128), physical_storage),
     )
     records = []
     for name, fe_rhs, g_rhs, full_rhs_values in cases:
@@ -948,13 +986,16 @@ def _verify_regular_inverse(
                 (float(row["true_residual_relative"]) for row in q_rows),
                 default=float("inf"),
             )
+            expected_qs = set(range(profile.q_count))
             q_coverage_passed = (
-                len(q_rows) == 4 and {int(row["q"]) for row in q_rows} == {0, 1, 2, 3}
+                len(q_rows) == profile.q_count
+                and {int(row["q"]) for row in q_rows} == expected_qs
             )
             gate_facts = _regular_inverse_gate_facts(
                 equation_relative=equation_relative,
                 action_relative=action_relative,
                 recovery=recovery,
+                profile=profile,
                 local_equation_relative=float(recovery["local_native_residual_relative"]),
                 port_closure_relative=port_relative,
                 q_residual_relative=q_residual_max,
@@ -1117,7 +1158,8 @@ def _verify_regular_inverse(
                 "maximum_q_true_residual_relative": q_residual_max,
                 "q_true_residuals": q_rows,
                 "all_four_q_branches_exercised": q_coverage_passed,
-                "all_532_port_modes_exercised": recovery["port_mode_count"] == 532,
+                "expected_port_mode_count": profile.mode_count,
+                "all_port_modes_exercised": recovery["port_mode_count"] == profile.mode_count,
                 "regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
                 "identity_limit": _REGULAR_RECOVERY_LIMIT,
                 "full_witness_packet": packet,
@@ -1142,13 +1184,17 @@ def _verify_regular_inverse(
         runtime.sample(f"v10_regular_inverse_{name}_after")
 
     return {
-        "schema": "task40extra.review_v10_p6_regular_inverse_checks.v1",
-        "profile": TASK40_V10_P6_PROFILE.identity(),
+        "schema": (
+            "task40extra.review_v10_p6_regular_inverse_checks.v1"
+            if profile.name == TASK40_V10_P6_PROFILE.name
+            else "task40extra.review_v11_p6_regular_inverse_checks.v1"
+        ),
+        "profile": profile.identity(),
         "cases": records,
         "case_count": len(records),
         "all_four_q_exercised_per_case": True,
-        "all_36000_interior_rows_exercised": True,
-        "all_532_port_modes_exercised_per_case": True,
+        "interior_rows_exercised_per_case": profile.global_interior_rows,
+        "all_port_modes_exercised_per_case": profile.mode_count,
         "regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
         "sector_native_action_consistency_limit": _REGULAR_ACTION_LIMIT,
         "regular_recovery_limit": _REGULAR_RECOVERY_LIMIT,
@@ -1173,6 +1219,7 @@ class _P6ReferencePreconditioner:
         self.PETSc = PETSc
         self.owner = owner
         self.reference = owner["global_bundle"]
+        self.profile = owner["profile"]
         self.layout = owner["full_layout"]
         self.inverse = owner["inverse"]
         self.target_action = target_action
@@ -1252,8 +1299,8 @@ class _P6ReferencePreconditioner:
                 default=float("inf"),
             )
             if (
-                len(q_rows) != 4
-                or {int(row["q"]) for row in q_rows} != {0, 1, 2, 3}
+                len(q_rows) != self.profile.q_count
+                or {int(row["q"]) for row in q_rows} != set(range(self.profile.q_count))
                 or not np.isfinite(q_relative)
                 or q_relative > _REFERENCE_RESIDUAL_LIMIT
                 or not np.isfinite(port_relative)
@@ -1266,7 +1313,7 @@ class _P6ReferencePreconditioner:
             self.calls += 1
             self.last_facts = {
                 "call": self.calls,
-                "input_space": "target_p6_active_trace_plus_532_ports",
+                "input_space": f"target_p6_active_trace_plus_{self.profile.mode_count}_ports",
                 "reference_rhs_injected_by_target_JH": True,
                 "target_active_rows": int(self.target_condensed.active_rows),
                 "target_port_rows": int(self.target_condensed.appended_rows),
@@ -1295,12 +1342,24 @@ class _P6ReferencePreconditioner:
         return facts
 
 
-def _candidate_contract(resolved: Mapping[str, Any], contract: Mapping[str, Any], runtime: Any) -> dict[str, Any]:
+def _candidate_contract(
+    resolved: Mapping[str, Any],
+    contract: Mapping[str, Any],
+    runtime: Any,
+    *,
+    profile_identity: str,
+) -> dict[str, Any]:
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
         TASK40_COMPARISON_GROUP,
+        TASK40_GX560_V11_P6_RUN_ID,
+        TASK40_GX784_V11_P6_RUN_ID,
     )
-    from src.io.physical_intermediate_profile import TASK40_V10_P6_REFERENCE_PROFILE
+    from src.io.physical_intermediate_profile import (
+        TASK40_V10_P6_REFERENCE_PROFILE,
+        TASK40_V11_P6_GX560_PROFILE,
+        TASK40_V11_P6_GX784_PROFILE,
+    )
     from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
     from src.runners.task40_v10_campaign import CAMPAIGN_SECONDS, CLOSEOUT_RESERVE_SECONDS
 
@@ -1310,15 +1369,28 @@ def _candidate_contract(resolved: Mapping[str, Any], contract: Mapping[str, Any]
     campaign = getattr(runtime, "campaign_context", None)
     shared = getattr(runtime, "shared_budget", {})
     reserved = float(getattr(runtime, "workflow_reserved_seconds", -1.0))
+    case_identity = {
+        TASK40_V10_P6_REFERENCE_PROFILE: (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
+        TASK40_V11_P6_GX560_PROFILE: (TASK40_GX560_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+        TASK40_V11_P6_GX784_PROFILE: (TASK40_GX784_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+    }
+    try:
+        expected_run_id, expected_stage, expected_memory_limit = case_identity[profile_identity]
+    except KeyError as exc:
+        raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
+    input_timeout = execution.get("timeout_seconds")
+    timeout_passed = input_timeout == CAMPAIGN_SECONDS
+    is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
     checks = {
-        "run_id": resolved.get("run_id") == TASK40_B0_P6_CANDIDATE_RUN_ID,
+        "run_id": resolved.get("run_id") == expected_run_id,
         "comparison_group": resolved.get("comparison_group") == TASK40_COMPARISON_GROUP,
-        "profile": solver.get("preconditioner") == TASK40_V10_P6_REFERENCE_PROFILE,
-        "stage": solver.get("stage") == "B0_CANDIDATE" and runtime.stage == "B0_CANDIDATE",
+        "profile": solver.get("preconditioner") == profile_identity,
+        "stage": solver.get("stage") == expected_stage and runtime.stage == expected_stage,
         "method": method.get("kind") == "full3d_iterative",
         "mpi_size": execution.get("mpi_size") == 1,
-        "timeout": execution.get("timeout_seconds") == CAMPAIGN_SECONDS,
+        "input_timeout_is_case_bound_but_not_window_authority": timeout_passed,
         "zero_swap": execution.get("require_zero_swap") is True and runtime.require_zero_swap,
+        "memory_limit": execution.get("memory_limit_gb") == expected_memory_limit,
         "restart": solver.get("restart") == 32,
         "max_iterations": solver.get("max_iterations") == 2048,
         "ksp": solver.get("ksp_type") == "fgmres",
@@ -1333,16 +1405,22 @@ def _candidate_contract(resolved: Mapping[str, Any], contract: Mapping[str, Any]
         "time_policy": getattr(runtime, "time_policy", None) == V14_TIME_POLICY_ENFORCE,
         "reserved_time": np.isfinite(reserved) and 0.0 < reserved <= CAMPAIGN_SECONDS - CLOSEOUT_RESERVE_SECONDS,
         "profile_contract": (
-            contract.get("identity") == TASK40_V10_P6_REFERENCE_PROFILE
-            and contract.get("scope") == "review_v10_b0_full_p6_y_orbit_reference_inverse"
+            contract.get("identity") == profile_identity
+            and isinstance(contract.get("scope"), str)
+            and contract.get("scope")
+            == resolved.get("derived", {}).get("physical_intermediate_profile", {}).get("scope")
             and resolved.get("derived", {}).get("physical_intermediate_profile") == contract
         ),
     }
     failed = [key for key, passed in checks.items() if not passed]
     if failed:
-        raise ValueError(f"Task40 V10 p6 candidate contract failed: {failed}")
+        raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
-        "schema": "task40extra.review_v10_b0_candidate_worker_contract.v1",
+        "schema": (
+            "task40extra.review_v10_b0_candidate_worker_contract.v1"
+            if is_v10
+            else "task40extra.review_v11_p6_grid_worker_contract.v1"
+        ),
         "checks": checks,
         "campaign_window_path": campaign["window_path"],
         "campaign_window_sha256": campaign["window_sha256"],
@@ -1350,6 +1428,7 @@ def _candidate_contract(resolved: Mapping[str, Any], contract: Mapping[str, Any]
         "worker_reserved_seconds": reserved,
         "campaign_seconds": CAMPAIGN_SECONDS,
         "closeout_reserve_seconds": CLOSEOUT_RESERVE_SECONDS,
+        "effective_wall_clock_authority": "existing_V11_fixed_deadline_and_cumulative_remaining",
         "campaign_writer": "subreaper_watchdog_only",
         "worker_accounting_access": "read_only_projection",
     }
@@ -1360,8 +1439,9 @@ def run_task40_v10_p6_reference_worker(
     run_directory: str | Path,
     *,
     source_sha: str,
+    profile_identity: str | None = None,
 ) -> dict[str, Any]:
-    """Run B0 candidate through a full p6 regular inverse and the target gap solve."""
+    """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
     from mpi4py import MPI
     from petsc4py import PETSc
@@ -1369,6 +1449,8 @@ def run_task40_v10_p6_reference_worker(
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P6_REFERENCE_PROFILE,
+        TASK40_V11_P6_GX560_PROFILE,
+        TASK40_V11_P6_GX784_PROFILE,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -1403,16 +1485,43 @@ def run_task40_v10_p6_reference_worker(
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
     )
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_P6_PERIODIC_PROFILES,
+    )
     from src.solvers.physical_retained_fgmres import run_retained_fgmres
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
 
     directory = Path(run_directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     stage = str(resolved_payload.get("solver", {}).get("stage", ""))
-    contract = profile_facts(TASK40_V10_P6_REFERENCE_PROFILE)
+    profile_identity = profile_identity or str(
+        resolved_payload.get("solver", {}).get("preconditioner", "")
+    )
+    if profile_identity not in (
+        TASK40_V10_P6_REFERENCE_PROFILE,
+        TASK40_V11_P6_GX560_PROFILE,
+        TASK40_V11_P6_GX784_PROFILE,
+    ):
+        raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
+    periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
+    is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
+    case_label = (
+        "b0"
+        if is_v10
+        else "gx560"
+        if profile_identity == TASK40_V11_P6_GX560_PROFILE
+        else "gx784"
+    )
+    evidence_prefix = "v10_candidate" if is_v10 else "v11_p6_grid"
+    contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
-        "schema": "task40extra.review_v10_b0_candidate_worker_summary.v1",
-        "profile": TASK40_V10_P6_REFERENCE_PROFILE,
+        "schema": (
+            "task40extra.review_v10_b0_candidate_worker_summary.v1"
+            if is_v10
+            else "task40extra.review_v11_p6_grid_candidate_worker_summary.v1"
+        ),
+        "profile": profile_identity,
+        "periodic_inventory_expectations": periodic_profile.identity(),
         "stage": stage,
         "source_sha": source_sha,
         "status": "STARTED",
@@ -1420,7 +1529,7 @@ def run_task40_v10_p6_reference_worker(
         "result_classification": "INCOMPLETE",
     }
     if MPI.COMM_WORLD.Get_size() != 1 or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
-        raise RuntimeError("Task40 V10 p6 worker requires qualified MPI1 complex128")
+        raise RuntimeError("Task40 p6 reference worker requires qualified MPI1 complex128")
     if not isinstance(source_sha, str) or len(source_sha) != 40:
         raise ValueError("Task40 V10 p6 worker requires the complete source SHA")
 
@@ -1448,15 +1557,19 @@ def run_task40_v10_p6_reference_worker(
             contract,
             root=_repo_root(),
             source_sha=source_sha,
-            batch_identity="task40_review_v10_integrated_p6_engineering",
-            evidence_prefix="v10_candidate",
+            batch_identity=(
+                "task40_review_v10_integrated_p6_engineering"
+                if is_v10
+                else f"task40_review_v11_{case_label}_p6_y_orbit"
+            ),
+            evidence_prefix=evidence_prefix,
             require_zero_swap=True,
         )
         summary["abi"] = _abi_facts(
-            profile_identity=TASK40_V10_P6_REFERENCE_PROFILE,
+            profile_identity=profile_identity,
         )
         summary["campaign_authority"] = _candidate_contract(
-            resolved_payload, contract, runtime
+            resolved_payload, contract, runtime, profile_identity=profile_identity
         )
         summary["time_policy"] = runtime.time_policy
         summary["time_policy_facts"] = dict(runtime.time_policy_facts)
@@ -1497,8 +1610,13 @@ def run_task40_v10_p6_reference_worker(
             dtn_phase_gauge=BOUNDARY_PLANE,
             verify_dtn_quadrature=True,
         )
-        if len(target_bundle["modes"]) != 532:
-            raise ValueError("B0 target must retain the complete 532-mode physical inventory")
+        if len(target_bundle["modes"]) != periodic_profile.mode_count:
+            raise ValueError(
+                f"{case_label} target must retain all "
+                f"{periodic_profile.mode_count} physical modes"
+            )
+        if tuple(map(int, cfg.mesh_axis_cell_counts_requested or ())) != periodic_profile.global_cell_axes:
+            raise ValueError(f"{case_label} resolved mesh axes differ from its p6 profile")
 
         regular_cfg = __import__("dataclasses").replace(
             cfg,
@@ -1534,8 +1652,8 @@ def run_task40_v10_p6_reference_worker(
         if not (
             mode_inventory_preflight["ordered_mode_keys_equal"]
             and mode_inventory_preflight["ordered_physical_mode_sha_equal"]
-            and mode_inventory_preflight["target_mode_count"] == 532
-            and mode_inventory_preflight["reference_mode_count"] == 532
+            and mode_inventory_preflight["target_mode_count"] == periodic_profile.mode_count
+            and mode_inventory_preflight["reference_mode_count"] == periodic_profile.mode_count
             and mode_inventory_preflight["target_carrier_physical_generator_sha256"]
             == target_inventory[2]
             and target_bundle.get("physical_generator_manifest_sha256") == target_inventory[2]
@@ -1634,13 +1752,7 @@ def run_task40_v10_p6_reference_worker(
             ),
         )
         target_condensed = None
-        if (
-            target_action.condensed.full_rows != 55_950
-            or target_action.condensed.active_rows != 16_992
-            or target_action.condensed.active_interior_rows != 36_000
-            or target_action.condensed.appended_rows != 532
-        ):
-            raise ValueError("actual target p6 trace+port retained inventory differs from B0 contract")
+        _validate_target_p6_inventory(target_action.condensed, periodic_profile)
         target_fast_bundle = build_packed_physical_action(
             {"levels": target_levels, "fine": target_bundle},
             cfg,
@@ -1682,6 +1794,7 @@ def run_task40_v10_p6_reference_worker(
             cfg,
             axes,
             allocation_gate=allocation_gate,
+            profile=periodic_profile,
             event=runtime.marker,
             identity_gate=identity_gate,
             jit_options=SAME_MESH_JIT_OPTIONS,
@@ -1706,7 +1819,7 @@ def run_task40_v10_p6_reference_worker(
         physical_rhs, rhs_facts = build_physical_rhs(target_bundle)
         rhs_norm = float(physical_rhs.norm())
         if not np.isfinite(rhs_norm) or rhs_norm <= 0.0:
-            raise ValueError("B0 target physical RHS must be finite and nonzero")
+            raise ValueError(f"{case_label} target physical RHS must be finite and nonzero")
         reduced_rhs_values = target_action.reduce_rhs(
             physical_rhs, rhs_is_mpc_dual=True
         )
@@ -1714,7 +1827,7 @@ def run_task40_v10_p6_reference_worker(
         _assign_vector_storage(rhs, reduced_rhs_values)
         reduced_rhs_norm = float(rhs.norm())
         if not np.isfinite(reduced_rhs_norm) or reduced_rhs_norm <= 0.0:
-            raise ValueError("B0 retained trace+port RHS must be finite and nonzero")
+            raise ValueError(f"{case_label} retained trace+port RHS must be finite and nonzero")
         identity = {
             "schema": "task40extra.review_v10_b0_candidate_identity.v1",
             "source_sha": source_sha,
@@ -1925,7 +2038,7 @@ def run_task40_v10_p6_reference_worker(
             "independent_action_count": 2,
             "target_backend": "isotropic_sum_factorized_n1e_v26",
             "independent_witness_backend": "native_ffcx_full_A6_same_target_forms_and_carrier",
-            "all_36000_cell_interior_rows_evaluated": True,
+            "all_target_cell_interior_rows_evaluated": periodic_profile.global_interior_rows,
             "actual_retained_alpha": np.asarray(pre_backend["retained_alpha"]).copy(),
             "actual_port_residual_relative": float(pre_backend["port_residual_relative"]),
             "actual_internal_residual_relative": float(pre_backend["internal_residual_relative"]),
@@ -2004,7 +2117,7 @@ def run_task40_v10_p6_reference_worker(
                 "target_backend_residual_storage": post_backend_residual,
                 "native_witness_applied_storage": post_full_rhs - post_native_residual,
                 "native_witness_residual_storage": post_native_residual,
-                "all_36000_cell_interior_rows_evaluated": True,
+                "all_target_cell_interior_rows_evaluated": periodic_profile.global_interior_rows,
                 "mode_identity": mode_identity,
             },
         )
@@ -2104,7 +2217,11 @@ def run_task40_v10_p6_reference_worker(
         if not numeric_pass:
             summary.update(
                 status="NUMERICAL_FAIL",
-                result_classification="B0_CANDIDATE_FULL_A6_OR_IDENTITY_GATE_FAIL",
+                result_classification=(
+                    "B0_CANDIDATE_FULL_A6_OR_IDENTITY_GATE_FAIL"
+                    if is_v10
+                    else f"{case_label.upper()}_P6_FULL_A6_OR_IDENTITY_GATE_FAIL"
+                ),
                 official_result=False,
             )
             return {"passed": False, "errors": [summary["result_classification"]], "summary": summary}
@@ -2137,7 +2254,7 @@ def run_task40_v10_p6_reference_worker(
         output_pass = bool(
             output.get("electric_finite") is True
             and output.get("auxiliary_finite") is True
-            and output.get("diffraction_channel_count") == 532
+            and output.get("diffraction_channel_count") == periodic_profile.mode_count
             and np.isfinite(list(power.values())).all()
             and energy_error <= 1.0e-5
             and absorption_error <= 1.0e-5
@@ -2172,7 +2289,8 @@ def run_task40_v10_p6_reference_worker(
                 "entrypoint": "src.runners.task40_v10_output_checker.verify_v10_output_bundle",
                 "command": (
                     "python -m src.runners.task40_v10_output_checker "
-                    "<v10_candidate_official_output.json>"
+                    "<v10_candidate_official_output.json> "
+                    f"--expected-channel-count {periodic_profile.mode_count}"
                 ),
                 "scope": "reopen hashes and independently recompute saved full residual algebra",
             },
@@ -2210,8 +2328,12 @@ def run_task40_v10_p6_reference_worker(
             status="PASS" if output_pass else "PHYSICAL_OUTPUT_GATE_FAIL",
             result_classification=(
                 "B0_CANDIDATE_FULL_P6_REFERENCE_INVERSE_PASS"
-                if output_pass
+                if is_v10 and output_pass
                 else "B0_CANDIDATE_PHYSICAL_OUTPUT_GATE_FAIL"
+                if is_v10
+                else f"{case_label.upper()}_P6_REFERENCE_INVERSE_PASS"
+                if output_pass
+                else f"{case_label.upper()}_P6_PHYSICAL_OUTPUT_GATE_FAIL"
             ),
             official_result=output_pass,
         )

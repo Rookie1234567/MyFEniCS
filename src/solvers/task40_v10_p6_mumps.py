@@ -13,7 +13,10 @@ from typing import Callable, Mapping, Sequence
 import numpy as np
 from scipy import sparse
 
-from .task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
+from .task40_v10_p6_periodic_profile import (
+    TASK40_V10_P6_PROFILE,
+    Task40V10P6PeriodicProfile,
+)
 
 
 def _sparse_content_sha256(matrix: sparse.spmatrix) -> str:
@@ -99,17 +102,21 @@ class AllQExactMumps:
     def __init__(self, matrices: Mapping[int, sparse.spmatrix], *,
                  allocation_gate: Callable[[str, Mapping[str, object]], None],
                  event: Callable[[str, Mapping[str, object]], None] | None = None,
-                 expected_shapes: Sequence[int] | None = None):
+                 expected_shapes: Sequence[int] | None = None,
+                 profile: Task40V10P6PeriodicProfile = TASK40_V10_P6_PROFILE):
         from petsc4py import PETSc
         from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
 
         self.PETSc = PETSc
+        if not isinstance(profile, Task40V10P6PeriodicProfile):
+            raise TypeError("all-q factors require an explicit Task40 p6 periodic profile")
+        self.profile = profile
         self.event = event or (lambda _name, _facts: None)
         if not callable(allocation_gate):
             raise TypeError("an active process-tree allocation gate is required")
         self.gate = allocation_gate
-        self.nq = TASK40_V10_P6_PROFILE.q_count
-        self.row_counts = tuple(expected_shapes or TASK40_V10_P6_PROFILE.augmented_rows_per_q)
+        self.nq = profile.q_count
+        self.row_counts = tuple(expected_shapes or profile.augmented_rows_per_q)
         if len(self.row_counts) != self.nq or set(matrices) != set(range(self.nq)):
             raise ValueError("all four actual q matrices are required before factorization")
         self.matrices = {}
@@ -122,7 +129,7 @@ class AllQExactMumps:
         self._max_simultaneous_factors = 0
         self.audit = {
             "backend": "PETSc MUMPS exact",
-            "profile": TASK40_V10_P6_PROFILE.name,
+            "profile": profile.name,
             "all_q_required": list(range(self.nq)),
             "factor_inputs": [],
             "factor_tests": [],

@@ -12,6 +12,8 @@ from src.runners.task40_v10_campaign import (
     CAMPAIGN_ACCOUNTING_NAME,
     TASK40_V10_CAMPAIGN_WINDOW,
     load_fixed_campaign_window,
+    read_campaign_state,
+    time_namespace_identity,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,6 +28,17 @@ def test_run_case_launcher_supervisor_worker_runtime_no_fe_chain(
         pytest.skip("the qualified local Task40 V10 campaign artifact is unavailable")
 
     source_window = load_fixed_campaign_window(TASK40_V10_CAMPAIGN_WINDOW)
+    try:
+        remaining_state = read_campaign_state(
+            source_window, namespace_identity=time_namespace_identity()
+        )
+    except (OSError, RuntimeError, ValueError) as exc:
+        pytest.skip(f"the historical Task40 V10 campaign state is unavailable: {exc}")
+    if remaining_state["remaining_numerical_seconds"] <= 0.0:
+        pytest.skip(
+            "the immutable historical Task40 V10 campaign has reached its closeout reserve; "
+            "the fixture does not reset or refresh that window"
+        )
     fixture_window_path = tmp_path / "campaign_window.json"
     fixture_window_path.write_bytes(source_window.path.read_bytes())
     fixture_window = load_fixed_campaign_window(fixture_window_path)
@@ -196,8 +209,8 @@ def test_run_case_launcher_supervisor_worker_runtime_no_fe_chain(
         ]
     )
     captured = capsys.readouterr()
-    result = json.loads(captured.out.strip().splitlines()[-1])
     assert exit_code == 0, captured.err or captured.out
+    result = json.loads(captured.out.strip().splitlines()[-1])
     assert result["result_classification"] == "worker_exit0"
     assert launcher_cgroup_paths == [service_cgroup]
 

@@ -1,4 +1,4 @@
-"""Strict ABI qualification for the two frozen Task40 V10 B0 profiles."""
+"""Strict ABI qualification for frozen Task40 V10/V11 p6 candidate profiles."""
 
 from __future__ import annotations
 
@@ -31,13 +31,17 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
+        TASK40_V11_P6_PROFILES,
     )
 
     if profile_identity not in (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
+        *TASK40_V11_P6_PROFILES,
     ):
-        raise RuntimeError("Task40 V10 ABI gate accepts only the exact p4-control or p6-candidate profile")
+        raise RuntimeError(
+            "Task40 V10/V11 ABI gate accepts only an exact reviewed p4/p6 profile"
+        )
 
     root = Path(__file__).resolve().parents[2]
     prefix = (root / _RUNTIME_PREFIX).resolve()
