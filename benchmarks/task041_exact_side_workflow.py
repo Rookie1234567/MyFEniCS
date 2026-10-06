@@ -5342,6 +5342,7 @@ def _run_task041_balh_candidate_setup(
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair: Mapping[str, Any] | None = None,
     task041_resource_policy: str | None = None,
+    expected_rank_cpus: Sequence[int] | None = None,
     physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -5354,7 +5355,7 @@ def _run_task041_balh_candidate_setup(
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
-        TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        task041_fixed_h6_modal_gmres_binding,
         task041_p4_refinement_target_binding,
     )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
@@ -5414,21 +5415,35 @@ def _run_task041_balh_candidate_setup(
         raise Task041ModePrepError(
             "same-g modal pairing requires the prepared complex-QR inner path"
         )
+    fixed_h6_binding = None
     if fixed_h6_modal_gmres_research:
-        fixed_h6_registered_case = task041_balh_case(
-            str(identity.get("model_id", "")) if isinstance(identity, Mapping) else ""
-        )
+        try:
+            fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
+                str(identity.get("model_id", ""))
+                if isinstance(identity, Mapping)
+                else "",
+                enabled=fixed_h6_modal_gmres_research,
+                candidate=True,
+                mpi_size=(
+                    identity.get("mpi_size", -1)
+                    if isinstance(identity, Mapping)
+                    else -1
+                ),
+                mode_count=(
+                    identity.get("mode_count", -1)
+                    if isinstance(identity, Mapping)
+                    else -1
+                ),
+                p4_inverse_backend=p4_inverse_backend,
+                p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+                task041_resource_policy=task041_resource_policy,
+                expected_rank_cpus=expected_rank_cpus,
+            )
+        except (TypeError, ValueError) as exc:
+            raise Task041ModePrepError(str(exc)) from exc
         if (
             not isinstance(identity, Mapping)
-            or str(identity.get("model_id"))
-            != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
-            or identity.get("mpi_size") != TASK041_BALH_MPI_SIZE
-            or identity.get("mode_count") != 120
-            or fixed_h6_registered_case is None
-            or fixed_h6_registered_case.get("p4_inverse_backend") != "cell_condensed"
-            or p4_inverse_backend != "cell_condensed"
-            or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
-            or p4_refinement_target_tolerance is not None
+            or fixed_h6_binding is None
             or p4_response_correction_steps != 0
             or p4_backend_pair_side is not None
             or representative_rhs_contract is not None
@@ -5448,9 +5463,9 @@ def _run_task041_balh_candidate_setup(
             or not sampled_column_contract.get("sha256")
         ):
             raise Task041ModePrepError(
-                "Fixed-H6 modal GMRES is limited to the registered 13.5 nm "
-                "cell-condensed MPI8 V8 formal candidate with no target or "
-                "other diagnostic mode"
+                "Fixed-H6 modal GMRES is limited to the registered cell-condensed "
+                "13.5/5/2 nm MPI8 V8 candidate with its registered P4 target and "
+                "no conflicting diagnostic mode"
             )
     if use_anderson_modal_inner and (
         not isinstance(identity, Mapping)
@@ -13305,13 +13320,37 @@ def _run_task041_balh_candidate_setup(
                 cleanup,
             )
 
-        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
-            probe_side(side, side_inverses[side], system)
+        if fixed_h6_modal_gmres_research:
+            legacy_sample_prepass = {
+                "status": "skipped_replaced_by_fixed_h6_feedback_gate",
+                "sampled_column_contract_sha256": sampled_column_contract[
+                    "sha256"
+                ],
+                "sampled_column_identity_retained": True,
+                "legacy_side_inverse_apply_calls_by_side": {
+                    side: len(probe_records[side])
+                    for side in ("bottom", "top")
+                },
+                "replacement_gate": "recorded_after_fixed_h6_factory_construction",
+            }
+        else:
+            for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+                probe_side(side, side_inverses[side], system)
+            legacy_sample_prepass = {
+                "status": "measured",
+                "legacy_side_inverse_apply_calls_by_side": {
+                    side: len(probe_records[side]) for side in ("bottom", "top")
+                },
+                "sampled_column_contract_sha256": sampled_column_contract[
+                    "sha256"
+                ],
+            }
         cost_probe = cost_probe_summary(
             on_demand_modal_inner=(
                 use_anderson_modal_inner or fixed_h6_modal_gmres_research
             )
         )
+        cost_probe["legacy_sample_prepass"] = legacy_sample_prepass
         for side in audit_phase:
             audit_phase[side] = "modal_schur"
 
@@ -13371,6 +13410,10 @@ def _run_task041_balh_candidate_setup(
             capture_modal_solve_trace=capture_modal_solve_trace,
         )
         context_inventory_before = dict(context.inventory)
+        if fixed_h6_modal_gmres_research:
+            cost_probe["fixed_h6_feedback_gate"] = context_inventory_before.get(
+                "early_sample_gate"
+            )
         marker_callback(
             "modal_schur_ready",
             {
@@ -13767,6 +13810,7 @@ def run_task041_consumer(
         TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
         task041_balh_formal_physical_volume_context_factory,
+        task041_fixed_h6_modal_gmres_binding,
         task041_p4_refinement_target_binding,
     )
 
@@ -13782,7 +13826,33 @@ def run_task041_consumer(
         raise Task041ModePrepError(
             "an explicit expected_rank_cpus map is limited to the fixed-H6 modal research path"
         )
-    if expected_rank_cpus is None:
+    try:
+        fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
+            str(normalized.get("model_id", "")),
+            enabled=fixed_h6_modal_gmres_research,
+            candidate=candidate,
+            mpi_size=int(comm.size),
+            mode_count=int(contract.get("mode_count", -1)),
+            p4_inverse_backend=str(contract.get("p4_inverse_backend", "")),
+            p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+            task041_resource_policy=task041_resource_policy,
+            expected_rank_cpus=expected_rank_cpus,
+        )
+    except (TypeError, ValueError) as exc:
+        raise Task041ModePrepError(str(exc)) from exc
+    if fixed_h6_binding is not None:
+        if expected_rank_cpus is None:
+            raise Task041ModePrepError(
+                "fixed-H6 public consumer requires the registered frozen rank CPU map"
+            )
+        if disable_time_stop:
+            raise Task041ModePrepError(
+                "fixed-H6 public consumer does not accept a time-stop override"
+            )
+        rank_numa_expected_cpus = tuple(
+            fixed_h6_binding["expected_rank_cpus"]
+        )
+    elif expected_rank_cpus is None:
         rank_numa_expected_cpus = tuple(
             range(1, TASK041_BALH_MPI_SIZE + 1)
         )
@@ -13814,45 +13884,30 @@ def run_task041_consumer(
         raise Task041ModePrepError("complex_qr_research must be a boolean")
     if not isinstance(capture_modal_solve_trace, bool):
         raise Task041ModePrepError("capture_modal_solve_trace must be a boolean")
-    if fixed_h6_modal_gmres_research:
-        fixed_h6_registered_case = task041_balh_case(
-            str(normalized.get("model_id", ""))
+    if fixed_h6_binding is not None and (
+        not candidate
+        or not contract.get("balh")
+        or p4_response_correction_steps != 0
+        or p4_backend_pair_side is not None
+        or packet_origin is not None
+        or legacy_native_binding is not None
+        or performance_profile is not None
+        or task041_rhs_probe_manifest is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or a6_response_pair
+        or use_anderson_modal_inner
+        or complex_qr_research
+        or capture_modal_solve_trace
+        or same_g_modal_metric_pair_request is not None
+    ):
+        raise Task041ModePrepError(
+            "Fixed-H6 modal GMRES is limited to the registered 13.5/5/2 nm "
+            "cell-condensed MPI8 V8 candidate with its registered P4 target "
+            "and no conflicting diagnostic mode"
         )
-        if (
-            not candidate
-            or not contract.get("balh")
-            or normalized.get("model_id")
-            != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
-            or fixed_h6_registered_case is None
-            or fixed_h6_registered_case.get("p4_inverse_backend")
-            != "cell_condensed"
-            or contract.get("p4_inverse_backend") != "cell_condensed"
-            or contract.get("mpi_size") != TASK041_BALH_MPI_SIZE
-            or comm.size != TASK041_BALH_MPI_SIZE
-            or contract.get("mode_count") != 120
-            or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
-            or p4_refinement_target_tolerance is not None
-            or p4_response_correction_steps != 0
-            or p4_backend_pair_side is not None
-            or packet_origin is not None
-            or legacy_native_binding is not None
-            or performance_profile is not None
-            or task041_rhs_probe_manifest is not None
-            or side_setup_schedule is not None
-            or comparison_mode is not None
-            or top_causal_replay
-            or p4_correction_replay_from is not None
-            or a6_response_pair
-            or use_anderson_modal_inner
-            or complex_qr_research
-            or capture_modal_solve_trace
-            or same_g_modal_metric_pair_request is not None
-        ):
-            raise Task041ModePrepError(
-                "Fixed-H6 modal GMRES is limited to the registered 13.5 nm "
-                "Si cell-condensed MPI8 V8 candidate with target=None and "
-                "no other diagnostic mode"
-            )
     same_g_pair_enabled = _task041_same_g_modal_metric_pair_scope(
         same_g_modal_metric_pair_request,
         identity={
@@ -14226,6 +14281,11 @@ def run_task041_consumer(
         "run_directory": str(root),
         "source_sha": source_sha,
         "task041_resource_policy": resource_policy_binding,
+        **(
+            {"fixed_h6_modal_gmres_research": fixed_h6_binding}
+            if fixed_h6_binding is not None
+            else {}
+        ),
         "status": "IMPLEMENTATION_FAILURE",
         "classification": "IMPLEMENTATION_FAILURE",
         "diagnostic_output_policy": {
@@ -14735,7 +14795,9 @@ def run_task041_consumer(
             "task041_scope": recomputed_identity["scope"],
             "qualification_scope": recomputed_identity["scope"],
             "qualification_method": (
-                "task041_balh_side_inverse_response_fgmres32"
+                "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+                if fixed_h6_binding is not None
+                else "task041_balh_side_inverse_response_fgmres32"
                 if candidate
                 else "task041_exact_side_full_formal"
             ),
@@ -15272,6 +15334,7 @@ def run_task041_consumer(
                 capture_modal_solve_trace=capture_modal_solve_trace,
                 same_g_modal_metric_pair=same_g_modal_metric_pair,
                 task041_resource_policy=task041_resource_policy,
+                expected_rank_cpus=rank_numa_expected_cpus,
                 physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity

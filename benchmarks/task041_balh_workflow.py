@@ -729,6 +729,146 @@ def task041_balh_cpu_list(model_id: str) -> str:
     return str(_require_case(model_id).get("cpu_set", "0-7"))
 
 
+def task041_balh_registered_rank_cpu_map(model_id: str) -> tuple[int, ...]:
+    """Expand the registered MPI8 CPU range as its historical default map."""
+
+    cpu_set = task041_balh_cpu_list(model_id)
+    bounds = cpu_set.split("-")
+    if len(bounds) != 2 or not all(value.isdecimal() for value in bounds):
+        raise ValueError("registered Task041 CPU set must be one numeric range")
+    first, last = (int(value) for value in bounds)
+    if first < 0 or last < first:
+        raise ValueError("registered Task041 CPU range is invalid")
+    cpus = tuple(range(first, last + 1))
+    from benchmarks.task041_rank_numa import normalize_expected_rank_cpus
+
+    try:
+        return normalize_expected_rank_cpus(
+            cpus, expected_mpi_size=TASK041_BALH_MPI_SIZE
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "registered Task041 CPU range must provide one CPU for each MPI8 rank"
+        ) from exc
+
+
+def task041_parse_expected_rank_cpus(value: str | Sequence[int] | None) -> tuple[int, ...] | None:
+    """Parse a public comma-separated CPU map without inferring from placement."""
+
+    if value is None:
+        return None
+    if isinstance(value, str):
+        tokens = value.split(",")
+        if not tokens or any(not token.strip().isdecimal() for token in tokens):
+            raise ValueError("expected rank CPUs must be comma-separated nonnegative integers")
+        parsed: Sequence[int] = tuple(int(token.strip()) for token in tokens)
+    elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray)):
+        parsed = value
+    else:
+        raise TypeError("expected rank CPUs must be a sequence of integers")
+    from benchmarks.task041_rank_numa import normalize_expected_rank_cpus
+
+    try:
+        return normalize_expected_rank_cpus(
+            parsed, expected_mpi_size=TASK041_BALH_MPI_SIZE
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"invalid expected rank CPU map: {exc}") from exc
+
+
+def task041_fixed_h6_modal_gmres_binding(
+    model_id: str,
+    *,
+    enabled: bool,
+    candidate: bool,
+    mpi_size: int,
+    mode_count: int,
+    p4_inverse_backend: str | None,
+    p4_refinement_target_tolerance: float | None,
+    task041_resource_policy: str | None,
+    expected_rank_cpus: Sequence[int] | None = None,
+) -> dict[str, Any] | None:
+    """Bind the default-off fixed-H6 route to the three registered V9 cases."""
+
+    if not isinstance(enabled, bool):
+        raise TypeError("fixed_h6_modal_gmres_research must be a boolean")
+    if not enabled:
+        if expected_rank_cpus is not None:
+            raise ValueError(
+                "expected_rank_cpus is only accepted with fixed-H6 research"
+            )
+        return None
+    allowed_targets = {
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID: None,
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID: (
+            TASK041_P4_REFINEMENT_TARGET_TOLERANCE
+        ),
+        TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID: (
+            TASK041_P4_REFINEMENT_TARGET_TOLERANCE
+        ),
+    }
+    if model_id not in allowed_targets:
+        raise ValueError(
+            "fixed-H6 research is limited to registered 13.5, 5, and 2 nm "
+            "cell-condensed cases"
+        )
+    case = task041_balh_case(model_id)
+    service_contract = task041_balh_service_contract(model_id)
+    expected_target = allowed_targets[model_id]
+    actual_target = p4_refinement_target_tolerance
+    target_matches = (
+        actual_target is None
+        if expected_target is None
+        else isinstance(actual_target, (int, float))
+        and not isinstance(actual_target, bool)
+        and float(actual_target) == expected_target
+    )
+    if (
+        candidate is not True
+        or case is None
+        or case.get("route") != "balh"
+        or case.get("p4_inverse_backend") != "cell_condensed"
+        or p4_inverse_backend != "cell_condensed"
+        or service_contract is None
+        or isinstance(mpi_size, bool)
+        or mpi_size != TASK041_BALH_MPI_SIZE
+        or isinstance(mode_count, bool)
+        or mode_count != case.get("mode_count")
+        or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
+        or not target_matches
+    ):
+        target_label = "None" if expected_target is None else "5e-13"
+        raise ValueError(
+            f"fixed-H6 research requires the registered candidate case, MPI8, "
+            f"cell_condensed P4 and target {target_label}"
+        )
+    if expected_rank_cpus is None:
+        raise ValueError(
+            "fixed-H6 research requires an explicit frozen expected_rank_cpus map"
+        )
+    supplied_cpus = task041_parse_expected_rank_cpus(expected_rank_cpus)
+    if supplied_cpus is None:
+        raise ValueError(
+            "fixed-H6 research requires an explicit frozen expected_rank_cpus map"
+        )
+    return {
+        "method": "fixed_h6_modal_gmres_research",
+        "model_id": model_id,
+        "wavelength_nm": float(case["wavelength_nm"]),
+        "mesh_target_nm": float(case["mesh_target_nm"]),
+        "mode_count": int(case["mode_count"]),
+        "mpi_size": TASK041_BALH_MPI_SIZE,
+        "p4_inverse_backend": "cell_condensed",
+        "p4_refinement_target_tolerance": expected_target,
+        "p4_refinement_target_scope": (
+            task041_p4_registered_formal_target_scope(model_id)
+        ),
+        "task041_resource_policy": TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        "expected_rank_cpus": list(supplied_cpus),
+        "rank_cpu_map_source": "explicit_frozen_expected_rank_cpus",
+    }
+
+
 def task041_balh_membind_node(model_id: str) -> str | None:
     """Return the rank-executable NUMA node binding for explicit V6 cases."""
 
@@ -1152,6 +1292,8 @@ def build_task041_balh_candidate_consumer_command(
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
+    fixed_h6_modal_gmres_research: bool = False,
+    expected_rank_cpus: Sequence[int] | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -1181,6 +1323,40 @@ def build_task041_balh_candidate_consumer_command(
     resource_policy_binding = task041_v8_resource_policy_binding(
         str(normalized["model_id"]), task041_resource_policy
     )
+    fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
+        str(normalized["model_id"]),
+        enabled=fixed_h6_modal_gmres_research,
+        candidate=True,
+        mpi_size=int(specification.execution.get("mpi_size", -1)),
+        mode_count=int(
+            specification.method.get("requested_modes_per_direction", -1)
+        ),
+        p4_inverse_backend=str(
+            task041_balh_case(str(normalized["model_id"])).get(
+                "p4_inverse_backend", ""
+            )
+        )
+        if task041_balh_case(str(normalized["model_id"])) is not None
+        else None,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        task041_resource_policy=task041_resource_policy,
+        expected_rank_cpus=expected_rank_cpus,
+    )
+    if fixed_h6_binding is not None and (
+        expected_rank_cpus is None
+        or disable_time_stop
+        or performance_profile is not None
+        or task041_rhs_probe_manifest is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or p4_response_correction_steps != 0
+        or p4_backend_pair_side is not None
+    ):
+        raise ValueError(
+            "fixed-H6 research is limited to the registered formal candidate route"
+        )
     if resource_policy_binding is not None and (
         performance_profile is not None
         or task041_rhs_probe_manifest is not None
@@ -1296,6 +1472,10 @@ def build_task041_balh_candidate_consumer_command(
         cpu_list=(
             "1-8"
             if p4_backend_pair
+            else ",".join(
+                str(cpu) for cpu in fixed_h6_binding["expected_rank_cpus"]
+            )
+            if fixed_h6_binding is not None
             else task041_balh_cpu_list(str(normalized["model_id"]))
         ),
         membind_node=(
@@ -1307,6 +1487,17 @@ def build_task041_balh_candidate_consumer_command(
     if resource_policy_binding is not None:
         command.extend(
             ["--task041-resource-policy", str(resource_policy_binding["policy"])]
+        )
+    if fixed_h6_binding is not None:
+        command.append("--task041-fixed-h6-modal-gmres-research")
+        command.extend(
+            [
+                "--task041-expected-rank-cpus",
+                ",".join(
+                    str(cpu)
+                    for cpu in fixed_h6_binding["expected_rank_cpus"]
+                ),
+            ]
         )
     return command
 
@@ -1798,6 +1989,11 @@ def _parser() -> argparse.ArgumentParser:
         choices=(TASK041_V8_SWAP_OBSERVE_CONTINUE,),
         default=None,
     )
+    parser.add_argument(
+        "--task041-fixed-h6-modal-gmres-research",
+        action="store_true",
+    )
+    parser.add_argument("--task041-expected-rank-cpus")
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1835,6 +2031,12 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         p4_refinement_target_tolerance=args.task041_p4_refinement_target_tolerance,
         p4_backend_pair_side=args.task041_p4_backend_pair_side,
         task041_resource_policy=args.task041_resource_policy,
+        fixed_h6_modal_gmres_research=(
+            args.task041_fixed_h6_modal_gmres_research
+        ),
+        expected_rank_cpus=task041_parse_expected_rank_cpus(
+            args.task041_expected_rank_cpus
+        ),
     )
 
 
@@ -1869,9 +2071,12 @@ __all__ = [
     "task041_balh_exact_consumer_iterative_config",
     "task041_balh_exact_consumer_profile",
     "task041_balh_membind_node",
+    "task041_balh_registered_rank_cpu_map",
     "task041_balh_route",
     "task041_balh_time_stop_override_record",
     "task041_balh_transfer_optimization_profile",
+    "task041_fixed_h6_modal_gmres_binding",
+    "task041_parse_expected_rank_cpus",
     "task041_schur_speed_v2_contract",
     "validate_balh_producer_packet",
 ]

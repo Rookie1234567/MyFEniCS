@@ -36,6 +36,8 @@ from benchmarks.task041_balh_workflow import (
     task041_schur_speed_v2_contract,
 )
 from src.io.input_validation import (
+    TASK041_BALH_MPI_SIZE,
+    task041_balh_case,
     task041_balh_phase_limits_for_model,
     task041_balh_service_contract,
 )
@@ -71,6 +73,91 @@ class Task041ServiceError(RuntimeError):
     """A missing or contradictory fixed service boundary record."""
 
 
+def _fixed_h6_service_binding(
+    config: Mapping[str, Any],
+    *,
+    command: list[str],
+    p4_refinement_target_tolerance: float | None,
+    task041_resource_policy: str | None,
+) -> dict[str, Any] | None:
+    enabled = config.get("fixed_h6_modal_gmres_research", False)
+    if not isinstance(enabled, bool):
+        raise Task041ServiceError(
+            "fixed_h6_modal_gmres_research service config must be a boolean"
+        )
+    configured_rank_cpus = config.get("expected_rank_cpus")
+    research_flag = "--task041-fixed-h6-modal-gmres-research"
+    cpu_flag = "--task041-expected-rank-cpus"
+    research_positions = [i for i, value in enumerate(command) if value == research_flag]
+    cpu_positions = [i for i, value in enumerate(command) if value == cpu_flag]
+    if not enabled:
+        if research_positions or cpu_positions or configured_rank_cpus is not None:
+            raise Task041ServiceError(
+                "fixed-H6 command options require the matching service config opt-in"
+            )
+        return None
+    if len(research_positions) != 1 or len(cpu_positions) != 1:
+        raise Task041ServiceError(
+            "fixed-H6 service command must bind its opt-in and frozen rank CPU map once"
+        )
+    cpu_position = cpu_positions[0]
+    if cpu_position + 1 >= len(command) or configured_rank_cpus is None:
+        raise Task041ServiceError(
+            "fixed-H6 service config and command must both provide expected_rank_cpus"
+        )
+    try:
+        from benchmarks.task041_balh_workflow import (
+            task041_fixed_h6_modal_gmres_binding,
+            task041_parse_expected_rank_cpus,
+        )
+
+        command_cpus = task041_parse_expected_rank_cpus(command[cpu_position + 1])
+        configured_cpus = task041_parse_expected_rank_cpus(configured_rank_cpus)
+        if command_cpus is None or configured_cpus != command_cpus:
+            raise ValueError("service rank CPU map does not match its public command")
+        model_id = str(config["model_id"])
+        case = task041_balh_case(model_id)
+        if case is None:
+            raise ValueError("fixed-H6 service model is not a registered Task041 case")
+        binding = task041_fixed_h6_modal_gmres_binding(
+            model_id,
+            enabled=enabled,
+            candidate=case.get("route") == "balh",
+            mpi_size=TASK041_BALH_MPI_SIZE,
+            mode_count=int(case.get("mode_count", -1)),
+            p4_inverse_backend=(
+                str(case.get("p4_inverse_backend"))
+                if case.get("p4_inverse_backend") is not None
+                else None
+            ),
+            p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+            task041_resource_policy=task041_resource_policy,
+            expected_rank_cpus=configured_cpus,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise Task041ServiceError(str(exc)) from exc
+    incompatible_flags = (
+        "--task041-performance-profile",
+        "--task041-rhs-probe",
+        "--task041-side-setup-schedule",
+        "--task041-comparison-mode",
+        "--task041-top-causal-replay",
+        "--task041-p4-correction-replay-from",
+        "--task041-p4-response-correction-steps",
+        "--task041-p4-backend-pair-side",
+        "--task041-balh-candidate-disable-time-stop",
+        "--legacy-native-packet-descriptor",
+    )
+    if (
+        any(flag in command for flag in incompatible_flags)
+        or command.count("--producer-packet-root") != 1
+    ):
+        raise Task041ServiceError(
+            "fixed-H6 service is limited to a reused registered candidate packet without other diagnostics"
+        )
+    return binding
+
+
 def _service_contract(
     config: Mapping[str, Any],
     *,
@@ -96,6 +183,12 @@ def _service_contract(
     case_contract = task041_balh_service_contract(model_id)
     resource_policy_binding = _resource_policy_binding(
         command, task041_resource_policy, model_id
+    )
+    fixed_h6_binding = _fixed_h6_service_binding(
+        config,
+        command=command,
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        task041_resource_policy=task041_resource_policy,
     )
     if resource_policy_binding is not None and (
         case_contract is None
@@ -192,6 +285,11 @@ def _service_contract(
             }
         if resource_policy_binding is not None:
             resolved_contract["task041_resource_policy"] = resource_policy_binding
+        if fixed_h6_binding is not None:
+            resolved_contract["fixed_h6_modal_gmres_research"] = fixed_h6_binding
+            resolved_contract["post_start_document_allowlist"] = sorted(
+                supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+            )
         return resolved_contract
     contract = task041_schur_speed_v2_contract(
         model_id,
@@ -733,6 +831,7 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     probe_binding = _representative_rhs_probe_binding(
         list(config["public_command"]), contract["scope"]
     )
+    fixed_h6_binding = contract.get("fixed_h6_modal_gmres_research")
     launch = {
         "schema": LAUNCH_SCHEMA,
         "config_path": str(Path(config_path)),
@@ -766,6 +865,20 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         **(
             {"task041_resource_policy": resource_policy_binding}
             if resource_policy_binding is not None
+            else {}
+        ),
+        **(
+            {"fixed_h6_modal_gmres_research": fixed_h6_binding}
+            if isinstance(fixed_h6_binding, Mapping)
+            else {}
+        ),
+        **(
+            {
+                "post_start_document_allowlist": list(
+                    contract["post_start_document_allowlist"]
+                )
+            }
+            if isinstance(fixed_h6_binding, Mapping)
             else {}
         ),
         "ledger_owner": LEDGER_OWNER,
@@ -1166,6 +1279,21 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             expected["p4_refinement_target_binding"] = dict(target_binding)
         if resource_policy_binding is not None:
             expected["task041_resource_policy"] = resource_policy_binding
+        fixed_h6_binding = contract.get("fixed_h6_modal_gmres_research")
+        if isinstance(fixed_h6_binding, Mapping):
+            expected["fixed_h6_modal_gmres_research"] = dict(
+                fixed_h6_binding
+            )
+            expected["post_start_document_allowlist"] = sorted(
+                supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+            )
+        elif (
+            "fixed_h6_modal_gmres_research" in launch
+            or "post_start_document_allowlist" in launch
+        ):
+            raise Task041ServiceError(
+                "default service launch must not declare fixed-H6 identity"
+            )
         if contract.get("compute_wall_unlimited") is True:
             expected["contract_kind"] = contract["contract_kind"]
             if contract.get("case_id") is not None:

@@ -101,6 +101,15 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="opt into the Task041 V8 swap-observe-only resource policy",
     )
+    parser.add_argument(
+        "--task041-fixed-h6-modal-gmres-research",
+        action="store_true",
+        help="opt into the registered Task041 fixed-H6 modal research candidate",
+    )
+    parser.add_argument(
+        "--task041-expected-rank-cpus",
+        help="comma-separated frozen Task041 rank-to-CPU map (fixed-H6 only)",
+    )
     return parser
 
 
@@ -128,6 +137,67 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
+        expected_rank_cpus = None
+        fixed_h6_binding = None
+        if args.task041_expected_rank_cpus is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_parse_expected_rank_cpus,
+            )
+
+            try:
+                expected_rank_cpus = task041_parse_expected_rank_cpus(
+                    args.task041_expected_rank_cpus
+                )
+            except (TypeError, ValueError) as exc:
+                raise InputError(str(exc)) from exc
+        if args.task041_fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_fixed_h6_modal_gmres_binding,
+            )
+
+            try:
+                fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
+                    str(specification.identity.get("model_id", "")),
+                    enabled=args.task041_fixed_h6_modal_gmres_research,
+                    candidate=bool(
+                        registered_case is not None
+                        and registered_case.get("route") == "balh"
+                    ),
+                    mpi_size=int(specification.execution.get("mpi_size", -1)),
+                    mode_count=int(
+                        specification.method.get(
+                            "requested_modes_per_direction", -1
+                        )
+                    ),
+                    p4_inverse_backend=(
+                        str(registered_case.get("p4_inverse_backend"))
+                        if registered_case is not None
+                        else None
+                    ),
+                    p4_refinement_target_tolerance=target_tolerance,
+                    task041_resource_policy=args.task041_resource_policy,
+                    expected_rank_cpus=expected_rank_cpus,
+                )
+            except (TypeError, ValueError) as exc:
+                raise InputError(str(exc)) from exc
+        if fixed_h6_binding is not None and (
+            expected_rank_cpus is None
+            or args.producer_packet_root is None
+            or args.legacy_native_packet_descriptor is not None
+            or args.task041_balh_candidate_disable_time_stop
+            or args.task041_performance_profile is not None
+            or args.task041_rhs_probe is not None
+            or args.task041_side_setup_schedule is not None
+            or args.task041_comparison_mode is not None
+            or args.task041_top_causal_replay
+            or args.task041_p4_correction_replay_from is not None
+            or args.task041_p4_response_correction_steps != 0
+            or target_side is not None
+        ):
+            raise InputError(
+                "fixed-H6 research requires a frozen rank map, reused BAL_H "
+                "candidate packet, registered P4 target, and no other diagnostics"
+            )
         target_binding = None
         if target_tolerance is not None or target_side is not None:
             from benchmarks.task041_balh_workflow import (
@@ -332,6 +402,10 @@ def main(argv: list[str] | None = None) -> int:
             task041_p4_refinement_target_tolerance=target_tolerance,
             task041_p4_backend_pair_side=target_side,
             task041_resource_policy=args.task041_resource_policy,
+            fixed_h6_modal_gmres_research=(
+                args.task041_fixed_h6_modal_gmres_research
+            ),
+            expected_rank_cpus=expected_rank_cpus,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

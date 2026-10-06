@@ -15,7 +15,7 @@ import platform
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -60,6 +60,17 @@ TASK041_V8_POST_START_DOCUMENT_PATHS = frozenset(
         "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/formal_5nm_2nm_v8.md",
         "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v8_formal_5nm_2nm.json",
         "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+    }
+)
+TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS = frozenset(
+    {
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/response_v11.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_fixed_h6_public_5nm.json",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md",
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md",
     }
 )
 TASK041_INPUT = "input/official/task041/5nm_p6h4_m480_mpi1.dat"
@@ -227,6 +238,7 @@ def _load_task041_supervision_record(
     source_sha: str,
     scope: str,
     representative_rhs_probe: Mapping[str, Any] | None,
+    expected_fixed_h6_binding: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
 ) -> dict[str, Any]:
@@ -260,6 +272,27 @@ def _load_task041_supervision_record(
         expected["side_setup_schedule"] = side_setup_schedule
     if comparison_mode is not None:
         expected["comparison_mode"] = comparison_mode
+    expected_post_start_document_allowlist = (
+        sorted(TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS)
+        if expected_fixed_h6_binding is not None
+        else None
+    )
+    if expected_fixed_h6_binding is not None:
+        expected["fixed_h6_modal_gmres_research"] = dict(
+            expected_fixed_h6_binding
+        )
+        expected["post_start_document_allowlist"] = (
+            expected_post_start_document_allowlist
+        )
+    elif (
+        "fixed_h6_modal_gmres_research" in payload
+        or "post_start_document_allowlist" in payload
+    ):
+        raise Task041SupervisorError(
+            "default Task041 supervision record must not declare fixed-H6 identity",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
     if isinstance(payload.get("parent_pid"), bool) or not isinstance(
         payload.get("parent_pid"), int
     ):
@@ -301,6 +334,12 @@ def _load_task041_supervision_record(
         "representative_rhs_probe": representative_rhs_probe,
         "side_setup_schedule": side_setup_schedule,
         "comparison_mode": comparison_mode,
+        "fixed_h6_modal_gmres_research": (
+            dict(expected_fixed_h6_binding)
+            if expected_fixed_h6_binding is not None
+            else None
+        ),
+        "post_start_document_allowlist": expected_post_start_document_allowlist,
         "parent_pid": parent_pid,
         "invocation_id": expected["invocation_id"],
         "ledger_path": str(Path(ledger_value).resolve()),
@@ -1704,6 +1743,7 @@ def _git_identity(
     source_sha: str,
     *,
     allow_v8_document_commits: bool = False,
+    allow_v9_fixed_h6_document_commits: bool = False,
 ) -> dict[str, Any]:
     def run_git(*args: str) -> str:
         try:
@@ -1722,10 +1762,30 @@ def _git_identity(
             ) from exc
         return completed.stdout.strip()
 
+    if allow_v8_document_commits and allow_v9_fixed_h6_document_commits:
+        raise Task041SupervisorError(
+            "V8 and V9 document commit policies are mutually exclusive",
+            classification="task041_identity_failure",
+            stage="git_identity",
+        )
+    allowed_document_paths = (
+        TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+        if allow_v9_fixed_h6_document_commits
+        else TASK041_V8_POST_START_DOCUMENT_PATHS
+        if allow_v8_document_commits
+        else frozenset()
+    )
+    document_policy_name = (
+        "V9 fixed-H6"
+        if allow_v9_fixed_h6_document_commits
+        else "V8"
+        if allow_v8_document_commits
+        else None
+    )
     head = run_git("rev-parse", "HEAD")
     branch = run_git("branch", "--show-current")
     status = run_git("status", "--porcelain", "--untracked-files=all")
-    if head != source_sha and not allow_v8_document_commits:
+    if head != source_sha and document_policy_name is None:
         raise Task041SupervisorError(
             f"HEAD {head} does not match source SHA {source_sha}",
             classification="task041_identity_failure",
@@ -1803,12 +1863,10 @@ def _git_identity(
             paths = sorted(
                 {path for path in path_result.stdout.split("\0") if path}
             )
-            unexpected = sorted(
-                set(paths) - TASK041_V8_POST_START_DOCUMENT_PATHS
-            )
+            unexpected = sorted(set(paths) - allowed_document_paths)
             if unexpected:
                 raise Task041SupervisorError(
-                    "post-start commit changed paths outside the V8 document allowlist: "
+                    f"post-start commit changed paths outside the {document_policy_name} document allowlist: "
                     + ", ".join(unexpected),
                     classification="task041_identity_failure",
                     stage="git_identity",
@@ -1824,9 +1882,14 @@ def _git_identity(
         "identity_mode": (
             "exact_source_sha"
             if head == source_sha
+            else "v9_fixed_h6_ancestor_with_allowlisted_document_commits"
+            if allow_v9_fixed_h6_document_commits
             else "v8_ancestor_with_allowlisted_document_commits"
+            if allow_v8_document_commits
+            else "exact_source_sha"
         ),
         "source_is_ancestor": True,
+        "post_start_document_allowlist": sorted(allowed_document_paths),
         "post_start_commits": commit_records,
         "post_start_changed_paths": sorted(changed_paths),
     }
@@ -7960,6 +8023,7 @@ def _consumer_result(
     expected_p4_backend_pair_side: str | None = None,
     expected_diagnostic_output: bool = False,
     expected_diagnostic_model_id: str | None = None,
+    expected_fixed_h6_modal_gmres_research: bool = False,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
     if not summary_path.is_file():
@@ -7976,6 +8040,47 @@ def _consumer_result(
             "factor_inventory": factor_inventory,
         }
     summary = _read_json(summary_path)
+    fixed_h6_method_validation = None
+    if expected_fixed_h6_modal_gmres_research:
+        setup = summary.get("setup")
+        candidate_inventory = (
+            setup.get("candidate_inventory")
+            if isinstance(setup, Mapping)
+            else None
+        )
+        formal = setup.get("full_formal") if isinstance(setup, Mapping) else None
+        solve = formal.get("solve") if isinstance(formal, Mapping) else None
+        solve_inventory = (
+            solve.get("inventory") if isinstance(solve, Mapping) else None
+        )
+        fixed_solver = (
+            solve_inventory.get("fixed_h6_modal_solver")
+            if isinstance(solve_inventory, Mapping)
+            else None
+        )
+        candidate_method = (
+            candidate_inventory.get("modal_inner_method")
+            if isinstance(candidate_inventory, Mapping)
+            else None
+        )
+        solve_method = (
+            fixed_solver.get("method") if isinstance(fixed_solver, Mapping) else None
+        )
+        fixed_h6_method_validation = {
+            "pass": bool(
+                candidate_method == "fixed_h6_modal_gmres_research"
+                and solve_method == "fixed_h6_modal_gmres_research"
+            ),
+            "candidate_inventory_method": candidate_method,
+            "solve_inventory_method": solve_method,
+            "candidate_inventory_pointer": (
+                "/setup/candidate_inventory/modal_inner_method"
+            ),
+            "solve_inventory_pointer": (
+                "/setup/full_formal/solve/inventory/"
+                "fixed_h6_modal_solver/method"
+            ),
+        }
     markers = summary.get("markers")
     observed = markers.get("observed", []) if isinstance(markers, Mapping) else []
     lifecycle = summary.get("lifecycle")
@@ -8435,6 +8540,13 @@ def _consumer_result(
         and isinstance(gates, Mapping)
         and gates.get("pass") is True
         and regular_lifecycle_gate
+        and (
+            not expected_fixed_h6_modal_gmres_research
+            or (
+                isinstance(fixed_h6_method_validation, Mapping)
+                and fixed_h6_method_validation.get("pass") is True
+            )
+        )
         and process_group_gone is True
         and marker_gate
     )
@@ -8485,6 +8597,15 @@ def _consumer_result(
         )
     elif representative_scope:
         classification = "task041_representative_rhs_validation_failure"
+    elif (
+        expected_fixed_h6_modal_gmres_research
+        and worker_classification == "TASK041_CONSUMER_PASS"
+        and not (
+            isinstance(fixed_h6_method_validation, Mapping)
+            and fixed_h6_method_validation.get("pass") is True
+        )
+    ):
+        classification = "task041_fixed_h6_method_validation_failure"
     elif worker_classification != "TASK041_CONSUMER_PASS":
         classification = worker_classification or "task041_consumer_summary_invalid"
     else:
@@ -8523,6 +8644,7 @@ def _consumer_result(
         "p4_correction_replay_validation": correction_validation,
         "p4_refinement_target": refinement_target_record,
         "p4_refinement_target_validation": p4_refinement_target_validation,
+        "fixed_h6_method_validation": fixed_h6_method_validation,
         "common_validation": common_validation,
         "completion_scope": (
             "p4_correction_replay"
@@ -8945,6 +9067,8 @@ def run_task041_public_supervisor(
     task041_p4_refinement_target_tolerance: float | None = None,
     task041_p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
+    fixed_h6_modal_gmres_research: bool = False,
+    expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -9016,6 +9140,92 @@ def run_task041_public_supervisor(
                 stage="source_identity",
             )
         identity = _validate_specification(specification, repository_root)
+        if not isinstance(fixed_h6_modal_gmres_research, bool):
+            raise Task041SupervisorError(
+                "fixed_h6_modal_gmres_research must be a boolean",
+                classification="task041_identity_failure",
+                stage="fixed_h6_research",
+            )
+        fixed_h6_binding = None
+        if fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_fixed_h6_modal_gmres_binding,
+            )
+
+            registered_case_for_fixed_h6 = task041_balh_case(
+                str(identity["model_id"])
+            )
+            try:
+                fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
+                    str(identity["model_id"]),
+                    enabled=fixed_h6_modal_gmres_research,
+                    candidate=str(identity["model_id"])
+                    in TASK041_BALH_CANDIDATE_MODEL_IDS,
+                    mpi_size=int(identity["mpi_size"]),
+                    mode_count=int(identity["requested_modes"]),
+                    p4_inverse_backend=(
+                        str(registered_case_for_fixed_h6.get("p4_inverse_backend"))
+                        if registered_case_for_fixed_h6 is not None
+                        else None
+                    ),
+                    p4_refinement_target_tolerance=(
+                        task041_p4_refinement_target_tolerance
+                    ),
+                    task041_resource_policy=task041_resource_policy,
+                    expected_rank_cpus=expected_rank_cpus,
+                )
+            except (TypeError, ValueError) as exc:
+                raise Task041SupervisorError(
+                    str(exc),
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                ) from exc
+        if fixed_h6_binding is not None:
+            if (
+                expected_rank_cpus is None
+                or producer_packet_root is None
+                or legacy_native_packet_descriptor is not None
+                or disable_time_stop
+                or performance_profile is not None
+                or task041_rhs_probe_manifest is not None
+                or task041_side_setup_schedule is not None
+                or task041_comparison_mode is not None
+                or task041_top_causal_replay
+                or task041_p4_correction_replay_from is not None
+                or task041_p4_response_correction_steps != 0
+                or task041_p4_backend_pair_side is not None
+            ):
+                raise Task041SupervisorError(
+                    "fixed-H6 research requires its registered packet, frozen CPU map, and no other diagnostic route",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
+            run_manifest = _read_json(root / "run_manifest.json")
+            if run_manifest.get("fixed_h6_modal_gmres_research") != fixed_h6_binding:
+                raise Task041SupervisorError(
+                    "run manifest does not bind the fixed-H6 research scope and rank map",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
+            expected_document_allowlist = sorted(
+                TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+            )
+            if run_manifest.get("post_start_document_allowlist") != (
+                expected_document_allowlist
+            ):
+                raise Task041SupervisorError(
+                    "run manifest does not bind the V9 fixed-H6 document allowlist",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
+            result["fixed_h6_modal_gmres_research"] = fixed_h6_binding
+            result["post_start_document_allowlist"] = expected_document_allowlist
+        elif expected_rank_cpus is not None:
+            raise Task041SupervisorError(
+                "an explicit rank CPU map is limited to fixed-H6 research",
+                classification="task041_identity_failure",
+                stage="fixed_h6_research",
+            )
         if task041_resource_policy is not None:
             from benchmarks.task041_balh_workflow import (
                 task041_v8_resource_policy_binding,
@@ -9421,6 +9631,7 @@ def run_task041_public_supervisor(
                     if representative_rhs_binding is not None
                     else None
                 ),
+                expected_fixed_h6_binding=fixed_h6_binding,
                 side_setup_schedule=supervision_contract.get(
                     "side_setup_schedule"
                 ),
@@ -9684,7 +9895,11 @@ def run_task041_public_supervisor(
                     classification="cumulative_wall_timeout",
                     stage="workflow_wall_budget",
                 )
-        git_identity = _git_identity(repository_root, source_sha)
+        git_identity = _git_identity(
+            repository_root,
+            source_sha,
+            allow_v9_fixed_h6_document_commits=(fixed_h6_binding is not None),
+        )
         environment_snapshot = _environment_snapshot(repository_root)
         result["identity"] = identity
         if expected_diagnostic_output:
@@ -10137,6 +10352,10 @@ def run_task041_public_supervisor(
                     ),
                     p4_backend_pair_side=task041_p4_backend_pair_side,
                     task041_resource_policy=task041_resource_policy,
+                    fixed_h6_modal_gmres_research=(
+                        fixed_h6_binding is not None
+                    ),
+                    expected_rank_cpus=expected_rank_cpus,
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -10323,6 +10542,9 @@ def run_task041_public_supervisor(
                         if expected_diagnostic_output
                         else {}
                     ),
+                    expected_fixed_h6_modal_gmres_research=(
+                        fixed_h6_binding is not None
+                    ),
                 )
             except Task041SupervisorError as exc:
                 consumer_status = {
@@ -10404,6 +10626,9 @@ def run_task041_public_supervisor(
                     if expected_diagnostic_output
                     else {}
                 ),
+                expected_fixed_h6_modal_gmres_research=(
+                    fixed_h6_binding is not None
+                ),
             )
         except Task041SupervisorError as exc:
             consumer_status = {
@@ -10446,7 +10671,13 @@ def run_task041_public_supervisor(
                 stage="consumer_result",
             )
         try:
-            if resource_policy_binding is None:
+            if fixed_h6_binding is not None:
+                git_identity_after = _git_identity(
+                    repository_root,
+                    source_sha,
+                    allow_v9_fixed_h6_document_commits=True,
+                )
+            elif resource_policy_binding is None:
                 git_identity_after = _git_identity(repository_root, source_sha)
             else:
                 git_identity_after = _git_identity(

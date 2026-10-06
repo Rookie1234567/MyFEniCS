@@ -82,6 +82,7 @@ from src.io.input_validation import (
     task041_balh_service_contract,
 )
 from src.io.resolved_config import resolved_config_bytes, resolved_config_sha256
+from src.runners import task038_launcher as launcher
 from src.runners import task041_supervisor as supervisor
 from src.runners.task041_supervisor import (
     _task041_p4_backend_pair_numeric_gate,
@@ -1002,6 +1003,375 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             ]
         )
     assert unknown_policy.value.code == 2
+
+
+@pytest.mark.parametrize(
+    ("input_name", "model_id", "p4_target"),
+    (
+        (
+            "13p5nm_p6h10_m120_mpi8_cell_condensed.dat",
+            TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+            None,
+        ),
+        (
+            "5nm_p6h4_m480_mpi8_cell_condensed.dat",
+            TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+            5.0e-13,
+        ),
+        (
+            "2nm_p6h1p5_m1200_mpi8_cell_condensed.dat",
+            TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
+            5.0e-13,
+        ),
+    ),
+    ids=("13p5nm-no-p4-target", "5nm-target", "2nm-target"),
+)
+def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
+    input_name, model_id, p4_target, tmp_path: Path, monkeypatch
+):
+    input_path = REPOSITORY_ROOT / "input/official/task041/side_balh" / input_name
+    specification = _specification(input_path)
+    assert specification.identity["model_id"] == model_id
+    registered_cpus = task041_balh_workflow.task041_balh_registered_rank_cpu_map(
+        model_id
+    )
+    assert registered_cpus == tuple(range(1, 9))
+    rank_cpus = (12, 10, 17, 11, 16, 13, 15, 14)
+    cpu_argument = ",".join(str(cpu) for cpu in rank_cpus)
+    resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    real_launch_specification = launcher.launch_specification
+    public_args = [
+        str(input_path),
+        "--producer-packet-root",
+        str(tmp_path / "producer"),
+        "--task041-resource-policy",
+        resource_policy,
+        "--task041-fixed-h6-modal-gmres-research",
+        "--task041-expected-rank-cpus",
+        cpu_argument,
+    ]
+    if p4_target is not None:
+        public_args.extend(
+            ["--task041-p4-refinement-target-tolerance", "5e-13"]
+        )
+
+    captured = {}
+
+    def fake_launch(observed_specification, **kwargs):
+        captured["model_id"] = observed_specification.identity["model_id"]
+        captured.update(kwargs)
+        return {"result_classification": "worker_exit0"}
+
+    monkeypatch.setattr(
+        "src.runners.task038_launcher.launch_specification", fake_launch
+    )
+    assert run_case.main(public_args) == 0
+    assert captured["model_id"] == model_id
+    assert captured["fixed_h6_modal_gmres_research"] is True
+    assert captured["expected_rank_cpus"] == rank_cpus
+    assert captured["task041_resource_policy"] == resource_policy
+    assert captured["task041_p4_refinement_target_tolerance"] == p4_target
+
+    launcher_root = tmp_path / f"launcher_{model_id}"
+    launcher_root.mkdir()
+    launcher_supervisor_call = {}
+
+    def fake_supervisor(_specification, **kwargs):
+        launcher_supervisor_call.update(kwargs)
+        return {
+            "exit_status": 0,
+            "result_classification": "worker_exit0",
+            "resource_authority": {"status": "not_sampled"},
+        }
+
+    monkeypatch.setattr(launcher, "launch_specification", real_launch_specification)
+    monkeypatch.setattr(
+        supervisor, "run_task041_public_supervisor", fake_supervisor
+    )
+    monkeypatch.setattr(
+        launcher, "_timestamp_directory", lambda *_args: launcher_root
+    )
+    launched = launcher.launch_specification(
+        specification,
+        source_sha="f" * 40,
+        producer_packet_root=tmp_path / "producer",
+        task041_resource_policy=resource_policy,
+        task041_p4_refinement_target_tolerance=p4_target,
+        fixed_h6_modal_gmres_research=True,
+        expected_rank_cpus=rank_cpus,
+    )
+    assert launched["result_classification"] == "worker_exit0"
+    assert launcher_supervisor_call["fixed_h6_modal_gmres_research"] is True
+    assert launcher_supervisor_call["expected_rank_cpus"] == rank_cpus
+    launch_manifest = json.loads(
+        (launcher_root / "run_manifest.json").read_text(encoding="utf-8")
+    )
+    assert launch_manifest["fixed_h6_modal_gmres_research"][
+        "expected_rank_cpus"
+    ] == list(rank_cpus)
+    assert launch_manifest["fixed_h6_modal_gmres_research"][
+        "rank_cpu_map_source"
+    ] == "explicit_frozen_expected_rank_cpus"
+    assert launch_manifest["post_start_document_allowlist"] == sorted(
+        supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+    )
+
+    worker_command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        specification,
+        tmp_path / "packet_manifest.json",
+        tmp_path / "packet_identity.json",
+        "b" * 64,
+        tmp_path / "worker",
+        "c" * 40,
+        "a" * 40,
+        p4_refinement_target_tolerance=p4_target,
+        task041_resource_policy=resource_policy,
+        fixed_h6_modal_gmres_research=True,
+        expected_rank_cpus=rank_cpus,
+    )
+    assert worker_command[:8] == [
+        "mpiexec",
+        "-n",
+        "8",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        cpu_argument,
+        "--report-bindings",
+    ]
+    assert worker_command[8:10] == ["numactl", "--membind=0"]
+    assert worker_command[10] == str(Path(sys.executable))
+    worker_args = worker_command[worker_command.index("--worker") :]
+    parsed_worker = task041_balh_workflow._parser().parse_args(worker_args)
+    assert parsed_worker.task041_fixed_h6_modal_gmres_research is True
+    assert parsed_worker.task041_expected_rank_cpus == cpu_argument
+    assert parsed_worker.task041_p4_refinement_target_tolerance == p4_target
+
+    default_worker_command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        specification,
+        tmp_path / "packet_manifest_default.json",
+        tmp_path / "packet_identity_default.json",
+        "c" * 64,
+        tmp_path / "worker_default",
+        "d" * 40,
+        "e" * 40,
+        p4_refinement_target_tolerance=p4_target,
+        task041_resource_policy=resource_policy,
+    )
+    default_cpu_index = default_worker_command.index("--cpu-list") + 1
+    assert default_worker_command[default_cpu_index] == task041_balh_cpu_list(
+        model_id
+    )
+    assert default_worker_command[default_cpu_index + 2 : default_cpu_index + 4] == [
+        "numactl",
+        "--membind=0",
+    ]
+    assert "--task041-fixed-h6-modal-gmres-research" not in default_worker_command
+    assert "--task041-expected-rank-cpus" not in default_worker_command
+
+    registered_service = task041_balh_service_contract(model_id)
+    from src.runners import task041_service as service
+
+    service_config = {
+        "model_id": model_id,
+        "public_command": [
+            str(REPOSITORY_ROOT / "scripts/run_case.py"),
+            *public_args,
+        ],
+        "performance_profile": None,
+        "scope": "formal_consumer",
+        "ledger_path": str(
+            (REPOSITORY_ROOT / registered_service["ledger"]["path"]).resolve()
+        ),
+        "fixed_h6_modal_gmres_research": True,
+        "expected_rank_cpus": list(rank_cpus),
+    }
+    service_contract = service._service_contract(
+        service_config,
+        side_setup_schedule=None,
+        comparison_mode=None,
+        p4_refinement_target_tolerance=p4_target,
+        p4_backend_pair_side=None,
+        task041_resource_policy=resource_policy,
+    )
+    fixed_binding = service_contract["fixed_h6_modal_gmres_research"]
+    assert fixed_binding["method"] == "fixed_h6_modal_gmres_research"
+    assert fixed_binding["expected_rank_cpus"] == list(rank_cpus)
+    assert fixed_binding["p4_refinement_target_tolerance"] == p4_target
+    assert service_contract["post_start_document_allowlist"] == sorted(
+        supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+    )
+
+    mismatched_service_config = dict(service_config)
+    mismatched_service_config["expected_rank_cpus"] = list(range(8))
+    with pytest.raises(service.Task041ServiceError, match="rank CPU map"):
+        service._service_contract(
+            mismatched_service_config,
+            side_setup_schedule=None,
+            comparison_mode=None,
+            p4_refinement_target_tolerance=p4_target,
+            p4_backend_pair_side=None,
+            task041_resource_policy=resource_policy,
+        )
+
+
+def test_task041_supervision_record_binds_fixed_h6_service_identity(
+    tmp_path: Path, monkeypatch
+):
+    from benchmarks.task041_balh_workflow import (
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        task041_fixed_h6_modal_gmres_binding,
+    )
+
+    model_id = TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+    binding = task041_fixed_h6_modal_gmres_binding(
+        model_id,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=120,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=None,
+        task041_resource_policy=TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        expected_rank_cpus=(10, 11, 12, 13, 14, 15, 16, 17),
+    )
+    invocation_id = "fixed-h6-supervision-binding-test"
+    ledger_path = (tmp_path / "ledger.json").resolve()
+    monkeypatch.setenv("INVOCATION_ID", invocation_id)
+    expected_allowlist = sorted(
+        supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+    )
+    payload = {
+        "profile_id": task041_balh_service_contract(model_id)["profile_id"],
+        "model_id": model_id,
+        "source_sha": "f" * 40,
+        "scope": task041_balh_service_contract(model_id)["scope"],
+        "ledger_owner": "service_finalizer",
+        "parent_pid": os.getppid(),
+        "invocation_id": invocation_id,
+        "representative_rhs_probe": None,
+        "ledger_path": str(ledger_path),
+        "fixed_h6_modal_gmres_research": binding,
+        "post_start_document_allowlist": expected_allowlist,
+    }
+    record_path = tmp_path / "launch_manifest.json"
+    record_path.write_text(json.dumps(payload, sort_keys=True) + "\n")
+
+    def load(record):
+        record_path.write_text(json.dumps(record, sort_keys=True) + "\n")
+        return supervisor._load_task041_supervision_record(
+            record_path,
+            profile_id=payload["profile_id"],
+            model_id=model_id,
+            source_sha=payload["source_sha"],
+            scope=payload["scope"],
+            representative_rhs_probe=None,
+            expected_fixed_h6_binding=binding,
+        )
+
+    loaded = load(payload)
+    assert loaded["fixed_h6_modal_gmres_research"] == binding
+    assert loaded["post_start_document_allowlist"] == expected_allowlist
+
+    wrong_cpu = copy.deepcopy(payload)
+    wrong_cpu["fixed_h6_modal_gmres_research"]["expected_rank_cpus"] = list(
+        range(1, 9)
+    )
+    with pytest.raises(supervisor.Task041SupervisorError, match="fixed_h6"):
+        load(wrong_cpu)
+
+    for field, value in (
+        ("method", "other_modal_method"),
+        ("p4_refinement_target_tolerance", 5.0e-13),
+    ):
+        wrong_binding = copy.deepcopy(payload)
+        wrong_binding["fixed_h6_modal_gmres_research"][field] = value
+        with pytest.raises(supervisor.Task041SupervisorError, match="fixed_h6"):
+            load(wrong_binding)
+
+    missing_binding = dict(payload)
+    missing_binding.pop("fixed_h6_modal_gmres_research")
+    with pytest.raises(supervisor.Task041SupervisorError, match="fixed_h6"):
+        load(missing_binding)
+
+    default_record = dict(payload)
+    default_record.pop("fixed_h6_modal_gmres_research")
+    default_record.pop("post_start_document_allowlist")
+    record_path.write_text(json.dumps(default_record, sort_keys=True) + "\n")
+    default_loaded = supervisor._load_task041_supervision_record(
+        record_path,
+        profile_id=payload["profile_id"],
+        model_id=model_id,
+        source_sha=payload["source_sha"],
+        scope=payload["scope"],
+        representative_rhs_probe=None,
+        expected_fixed_h6_binding=None,
+    )
+    assert default_loaded["fixed_h6_modal_gmres_research"] is None
+    unexpected_fixed = dict(payload)
+    record_path.write_text(json.dumps(unexpected_fixed, sort_keys=True) + "\n")
+    with pytest.raises(supervisor.Task041SupervisorError, match="must not declare"):
+        supervisor._load_task041_supervision_record(
+            record_path,
+            profile_id=payload["profile_id"],
+            model_id=model_id,
+            source_sha=payload["source_sha"],
+            scope=payload["scope"],
+            representative_rhs_probe=None,
+            expected_fixed_h6_binding=None,
+        )
+
+
+def test_task041_supervisor_checks_observed_fixed_h6_method_paths(tmp_path: Path):
+    root = tmp_path / "consumer"
+    root.mkdir()
+    summary_path = root / "consumer_summary.json"
+    summary = {
+        "setup": {
+            "candidate_inventory": {
+                "modal_inner_method": "fixed_h6_modal_gmres_research"
+            },
+            "full_formal": {
+                "solve": {
+                    "inventory": {
+                        "fixed_h6_modal_solver": {
+                            "method": "fixed_h6_modal_gmres_research"
+                        }
+                    }
+                }
+            },
+        }
+    }
+    summary_path.write_text(json.dumps(summary, sort_keys=True) + "\n")
+
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_fixed_h6_modal_gmres_research=True,
+    )
+    validation = result["fixed_h6_method_validation"]
+    assert validation["pass"] is True
+    assert validation["candidate_inventory_pointer"] == (
+        "/setup/candidate_inventory/modal_inner_method"
+    )
+    assert validation["solve_inventory_pointer"] == (
+        "/setup/full_formal/solve/inventory/fixed_h6_modal_solver/method"
+    )
+
+    summary["setup"]["full_formal"]["solve"]["inventory"][
+        "fixed_h6_modal_solver"
+    ]["method"] = "anderson_complex_qr_research"
+    summary_path.write_text(json.dumps(summary, sort_keys=True) + "\n")
+    rejected = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_fixed_h6_modal_gmres_research=True,
+    )
+    assert rejected["fixed_h6_method_validation"]["pass"] is False
+    assert rejected["complete"] is False
 
 
 def test_registered_formal_p4_target_rejects_13p5nm_and_old_2nm_full():
@@ -2443,6 +2813,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
             fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=default_rank_cpus,
             reuse_primal_route_plan=True,
             reuse_leading_ph_dual=True,
         )
@@ -2477,6 +2848,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
             fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=default_rank_cpus,
         )
     assert captured["reuse_primal_route_plan"] is False
     assert captured["fixed_h6_modal_gmres_research"] is True
@@ -2585,6 +2957,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["fixed_h6_modal_gmres_research"] is True
     assert captured["reuse_primal_route_plan"] is True
     assert captured["reuse_leading_ph_dual"] is True
+    assert captured["expected_rank_cpus"] == explicit_rank_cpus
     assert captured["use_anderson_modal_inner"] is False
     assert captured["complex_qr_research"] is False
     assert captured["capture_modal_solve_trace"] is False
@@ -2604,9 +2977,12 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     )
 
     captured.clear()
-    with pytest.raises(worker.Task041ModePrepError, match="Fixed-H6"):
+    with pytest.raises(worker.Task041ModePrepError, match="fixed-H6 research is limited"):
         worker.run_task041_consumer(
-            input_path=formal_cell_condensed_path,
+            input_path=(
+                REPOSITORY_ROOT
+                / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+            ),
             packet_manifest=packet_manifest_path,
             packet_identity=formal_cell_condensed_identity_path,
             packet_manifest_sha256=packet_manifest_sha,
@@ -2619,6 +2995,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             ),
             fixed_h6_modal_gmres_research=True,
             reuse_primal_route_plan=True,
+            expected_rank_cpus=tuple(range(1, 9)),
         )
     assert captured == {}
 
@@ -2637,9 +3014,12 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             ),
             use_anderson_modal_inner=True,
             fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=tuple(range(1, 9)),
         )
 
-    with pytest.raises(worker.Task041ModePrepError, match="Fixed-H6"):
+    with pytest.raises(
+        worker.Task041ModePrepError, match="fixed-H6 research requires"
+    ):
         worker.run_task041_consumer(
             input_path=formal_13p5_cell_condensed_path,
             packet_manifest=packet_manifest_path,
@@ -2654,7 +3034,61 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             ),
             p4_refinement_target_tolerance=5.0e-13,
             fixed_h6_modal_gmres_research=True,
+            expected_rank_cpus=tuple(range(1, 9)),
         )
+
+    # The same consumer path must accept the registered 5 nm / 2 nm target;
+    # the shared binding rejects only targets that disagree with each case.
+    fixed_rank_map = tuple(range(10, 18))
+    for case_input, case_identity, case_name in (
+        (
+            formal_cell_condensed_path,
+            formal_cell_condensed_identity_path,
+            "5nm",
+        ),
+        (
+            REPOSITORY_ROOT
+            / "input/official/task041/side_balh/2nm_p6h1p5_m1200_mpi8_cell_condensed.dat",
+            None,
+            "2nm",
+        ),
+    ):
+        if case_identity is None:
+            case_specification = _specification(case_input)
+            case_packet_identity = task041_balh_workflow.build_task041_balh_packet_identity(
+                case_specification,
+                case_specification.as_jsonable(),
+                source_sha,
+                worker.resolved_config_sha256(case_specification),
+            )
+            case_identity = tmp_path / f"{case_name}_cell_condensed_identity.json"
+            case_identity.write_text(
+                json.dumps(case_packet_identity, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        captured.clear()
+        with pytest.raises(SetupReached):
+            worker.run_task041_consumer(
+                input_path=case_input,
+                packet_manifest=packet_manifest_path,
+                packet_identity=case_identity,
+                packet_manifest_sha256=packet_manifest_sha,
+                run_directory=tmp_path / f"worker_{case_name}_fixed_h6_target_run",
+                source_sha=source_sha,
+                candidate=True,
+                comm=FakeComm(),
+                task041_resource_policy=(
+                    task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+                ),
+                fixed_h6_modal_gmres_research=True,
+                expected_rank_cpus=fixed_rank_map,
+                p4_refinement_target_tolerance=5.0e-13,
+            )
+        assert captured["fixed_h6_modal_gmres_research"] is True
+        assert captured["p4_refinement_target_tolerance"] == 5.0e-13
+        assert captured["expected_rank_cpus"] == fixed_rank_map
+        assert captured["p4_inverse_backend"] == "cell_condensed"
+        assert captured["a6_response_pair"] is False
 
     pair_request = {"schema": "task041.same_g_modal_metric_pair.v2"}
     prepared_pair = {
@@ -3270,6 +3704,11 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             capture_modal_solve_trace=(modal_route == "anderson"),
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            expected_rank_cpus=(
+                tuple(range(1, 9))
+                if modal_route.startswith("fixed_h6")
+                else None
             ),
         )
 

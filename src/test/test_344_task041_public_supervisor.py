@@ -2713,6 +2713,57 @@ def test_git_identity_allows_only_the_v8_document_commit_chain(tmp_path):
     assert len(identity["post_start_commits"]) == 2
 
 
+def test_git_identity_allows_only_the_v9_fixed_h6_document_chain(tmp_path):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_sha = commit_file("src/solver.py", "frozen source\n")
+    allowed_path = (
+        "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/"
+        "hybrid_0p7nm_2tb_48h_v9.md"
+    )
+    commit_file(allowed_path, "fixed-H6 V9 progress\n")
+
+    with pytest.raises(supervisor.Task041SupervisorError, match="does not match"):
+        supervisor._git_identity(repository, source_sha)
+
+    identity = supervisor._git_identity(
+        repository,
+        source_sha,
+        allow_v9_fixed_h6_document_commits=True,
+    )
+    assert identity["identity_mode"] == (
+        "v9_fixed_h6_ancestor_with_allowlisted_document_commits"
+    )
+    assert identity["post_start_changed_paths"] == [allowed_path]
+    assert identity["post_start_document_allowlist"] == sorted(
+        supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+    )
+
+
+@pytest.mark.parametrize(
+    "changed_path",
+    [
+        "src/runners/task041_supervisor.py",
+        "benchmarks/cases/task041/fixed_h6_public.json",
+    ],
+)
+def test_git_identity_rejects_v9_fixed_h6_source_and_config_advances(
+    tmp_path, changed_path
+):
+    repository, commit_file = _task041_git_identity_test_repo(tmp_path)
+    source_sha = commit_file("src/solver.py", "frozen source\n")
+    commit_file(changed_path, "unauthorized runtime or config change\n")
+
+    with pytest.raises(
+        supervisor.Task041SupervisorError,
+        match="outside the V9 fixed-H6 document allowlist",
+    ):
+        supervisor._git_identity(
+            repository,
+            source_sha,
+            allow_v9_fixed_h6_document_commits=True,
+        )
+
+
 def test_git_identity_exact_source_and_clean_tree_stays_the_default(tmp_path):
     repository, commit_file = _task041_git_identity_test_repo(tmp_path)
     source_sha = commit_file("src/solver.py", "frozen source\n")

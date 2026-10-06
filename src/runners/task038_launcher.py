@@ -9,7 +9,7 @@ import platform
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
@@ -3663,6 +3663,8 @@ def launch_specification(
     task041_p4_refinement_target_tolerance: float | None = None,
     task041_p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
+    fixed_h6_modal_gmres_research: bool = False,
+    expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3693,6 +3695,58 @@ def launch_specification(
     task041_public_route = (
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
+    if not isinstance(fixed_h6_modal_gmres_research, bool):
+        raise InputError("fixed_h6_modal_gmres_research must be a boolean")
+    fixed_h6_binding = None
+    model_id = str(specification.identity.get("model_id", ""))
+    if fixed_h6_modal_gmres_research or expected_rank_cpus is not None:
+        try:
+            from benchmarks.task041_balh_workflow import (
+                task041_fixed_h6_modal_gmres_binding,
+            )
+
+            registered_case = task041_balh_case(model_id)
+            fixed_h6_binding = task041_fixed_h6_modal_gmres_binding(
+                model_id,
+                enabled=fixed_h6_modal_gmres_research,
+                candidate=model_id in TASK041_BALH_CANDIDATE_MODEL_IDS,
+                mpi_size=int(specification.execution.get("mpi_size", -1)),
+                mode_count=int(
+                    specification.method.get("requested_modes_per_direction", -1)
+                ),
+                p4_inverse_backend=(
+                    str(registered_case.get("p4_inverse_backend"))
+                    if registered_case is not None
+                    else None
+                ),
+                p4_refinement_target_tolerance=(
+                    task041_p4_refinement_target_tolerance
+                ),
+                task041_resource_policy=task041_resource_policy,
+                expected_rank_cpus=expected_rank_cpus,
+            )
+        except (TypeError, ValueError) as exc:
+            raise InputError(str(exc)) from exc
+    if fixed_h6_binding is not None and (
+        not task041_public_route
+        or expected_rank_cpus is None
+        or model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS
+        or producer_packet_root is None
+        or legacy_native_packet_descriptor is not None
+        or disable_time_stop
+        or performance_profile is not None
+        or task041_rhs_probe_manifest is not None
+        or task041_side_setup_schedule is not None
+        or task041_comparison_mode is not None
+        or task041_top_causal_replay
+        or task041_p4_correction_replay_from is not None
+        or task041_p4_response_correction_steps != 0
+        or task041_p4_backend_pair_side is not None
+    ):
+        raise InputError(
+            "fixed-H6 research is limited to a reused registered BAL_H "
+            "candidate with no other diagnostic route"
+        )
     if task041_side_setup_schedule is not None and not task041_public_route:
         raise InputError(
             "--task041-side-setup-schedule requires the Task041 public route"
@@ -4003,6 +4057,17 @@ def launch_specification(
     if task041_resource_policy_binding is not None:
         manifest["task041_resource_policy"] = task041_resource_policy_binding
         _write_json(run_directory / "run_manifest.json", manifest)
+    if fixed_h6_binding is not None:
+        manifest["fixed_h6_modal_gmres_research"] = fixed_h6_binding
+        _write_json(run_directory / "run_manifest.json", manifest)
+        from src.runners.task041_supervisor import (
+            TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS,
+        )
+
+        manifest["post_start_document_allowlist"] = sorted(
+            TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+        )
+        _write_json(run_directory / "run_manifest.json", manifest)
     if task041_side_setup_schedule is not None:
         manifest["side_setup_schedule"] = task041_side_setup_schedule
         _write_json(run_directory / "run_manifest.json", manifest)
@@ -4085,6 +4150,10 @@ def launch_specification(
                 ),
                 task041_p4_backend_pair_side=task041_p4_backend_pair_side,
                 task041_resource_policy=task041_resource_policy,
+                fixed_h6_modal_gmres_research=(
+                    fixed_h6_modal_gmres_research
+                ),
+                expected_rank_cpus=expected_rank_cpus,
             )
         except OSError as exc:
             result = {
