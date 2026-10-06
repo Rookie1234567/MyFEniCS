@@ -14,6 +14,15 @@ from src.io.phase_notch_hp import descriptor,load_phase_notch_hp
 
 
 class SpatialTests(unittest.TestCase):
+    def test_readonly_partial_receipt_checks_array_bytes(self):
+        from benchmarks.collect_phase_spatial_resolution import array_receipt
+        from src.solvers.scattering_anchor_checks import checked_arrays
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'saved.npz';np.savez(p,u=np.array([1+2j,3-4j],np.complex128))
+            r=array_receipt(p);self.assertEqual(checked_arrays(r)['u'][0],1+2j)
+            np.savez(p,u=np.array([1+3j,3-4j],np.complex128))
+            with self.assertRaisesRegex(ValueError,'whole-file identity'):checked_arrays(r)
+
     def test_saved_return_budget_keeps_old_cost_and_audit_reserve(self):
         with tempfile.TemporaryDirectory() as d:
             tmp=Path(d);(tmp/'H7_post_resume.json').write_text('{}')
