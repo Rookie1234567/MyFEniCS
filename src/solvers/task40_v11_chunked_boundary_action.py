@@ -9,6 +9,7 @@ matrix or a mode-square operator.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from time import perf_counter, process_time
 from typing import Any
 
 import numpy as np
@@ -147,6 +148,9 @@ def full882_chunked_boundary_action(
     mode_batch_passes = 0
     max_basis_chunk_bytes = 0
     max_phase_chunk_bytes = 0
+    basis_wall_seconds = basis_cpu_seconds = 0.0
+    phase_wall_seconds = phase_cpu_seconds = 0.0
+    contraction_wall_seconds = contraction_cpu_seconds = 0.0
     max_point_count = min(point_chunk_size, len(rule))
     max_mode_count = min(mode_batch_size, len(indices))
     complex_bytes = np.dtype(np.complex128).itemsize
@@ -178,6 +182,7 @@ def full882_chunked_boundary_action(
         mode_batch_bytes_upper, boundary_accumulation_bytes_upper
     )
     for point_start in range(0, len(rule), point_chunk_size):
+        began_wall, began_cpu = perf_counter(), process_time()
         point_stop = min(point_start + point_chunk_size, len(rule))
         qrule = rule[point_start:point_stop]
         qweights = weights[point_start:point_stop]
@@ -194,6 +199,8 @@ def full882_chunked_boundary_action(
                 row_values = np.ascontiguousarray(basis[q, :, component])
                 _apply_dof_orientation(dof_element, row_values, cell_info)
                 basis[q, :, component] = row_values
+        basis_wall_seconds += perf_counter() - began_wall
+        basis_cpu_seconds += process_time() - began_cpu
         physical_points = lower + reference_points * extent
         field_values = np.einsum(
             "qjc,j->qc", basis, conjugated_coefficients, optimize=False
@@ -204,12 +211,16 @@ def full882_chunked_boundary_action(
         for mode_start in range(0, len(indices), mode_batch_size):
             mode_stop = min(mode_start + mode_batch_size, len(indices))
             block = slice(mode_start, mode_stop)
+            began_wall, began_cpu = perf_counter(), process_time()
             phases = k[block] @ physical_points.T
             phases *= 1j
             with np.errstate(over="raise", invalid="raise"):
                 np.exp(phases, out=phases)
             if not np.isfinite(phases).all():
                 raise FloatingPointError("nonfinite actual top/bottom phase")
+            phase_wall_seconds += perf_counter() - began_wall
+            phase_cpu_seconds += process_time() - began_cpu
+            began_wall, began_cpu = perf_counter(), process_time()
             factor_x = np.empty(mode_stop - mode_start, dtype=np.complex128)
             factor_y = np.empty(mode_stop - mode_start, dtype=np.complex128)
             np.multiply(alpha_selected[block], traction[block, 0], out=factor_x)
@@ -236,12 +247,17 @@ def full882_chunked_boundary_action(
             np.conjugate(d_total, out=d_total)
             d_total /= h[block]
             d_action[block] += d_total
+            contraction_wall_seconds += perf_counter() - began_wall
+            contraction_cpu_seconds += process_time() - began_cpu
             mode_batch_passes += 1
             max_phase_chunk_bytes = max(max_phase_chunk_bytes, int(phases.nbytes))
             del phases, factor_x, factor_y, d_x, d_y, d_total
 
+        began_wall, began_cpu = perf_counter(), process_time()
         b_alpha += dy * (basis[:, :, 0].T @ (qweights * weighted_traction_x))
         b_alpha += dx * (basis[:, :, 1].T @ (qweights * weighted_traction_y))
+        contraction_wall_seconds += perf_counter() - began_wall
+        contraction_cpu_seconds += process_time() - began_cpu
         basis_tabulations += 1
         max_basis_chunk_bytes = max(max_basis_chunk_bytes, int(basis.nbytes))
         del (tabulated, basis, row_values, reference_points, physical_points,
@@ -282,5 +298,13 @@ def full882_chunked_boundary_action(
             "phase_formula": "exp(+i*(kx*x + ky*y + kz*z)) at actual mapped quadrature points",
             "h_convention": "D_m = conj(integral(phi dot e_m exp(+i*k_m dot x) dS)) / H_m",
             "piola_tangential_area_factors": [dy, dx],
+            "timing": {
+                "basis_tabulation_and_orientation_wall_seconds": basis_wall_seconds,
+                "basis_tabulation_and_orientation_cpu_seconds": basis_cpu_seconds,
+                "phase_generation_and_exponential_wall_seconds": phase_wall_seconds,
+                "phase_generation_and_exponential_cpu_seconds": phase_cpu_seconds,
+                "mode_contraction_and_boundary_aggregation_wall_seconds": contraction_wall_seconds,
+                "mode_contraction_and_boundary_aggregation_cpu_seconds": contraction_cpu_seconds,
+            },
         },
     }

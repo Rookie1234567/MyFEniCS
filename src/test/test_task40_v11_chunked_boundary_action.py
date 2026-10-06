@@ -134,6 +134,7 @@ def test_full882_chunked_action_matches_independent_full_row_moments(side, mode_
         work["fixed_helper_owned_array_bytes_upper"]
     )
     assert "process-tree RSS" in work["memory_scope"]
+    assert all(np.isfinite(value) and value > 0.0 for value in work["timing"].values())
 
 
 def test_full882_chunked_action_rejects_mixed_side_and_unbounded_batches():
