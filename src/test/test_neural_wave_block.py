@@ -28,6 +28,15 @@ class DenseAction:
         return (self.A.conj().T if adjoint else self.A) @ v
 
 
+def test_preserved_readout_pair_is_recomputed_from_original_residual():
+    action = DenseAction(np.eye(3, dtype=complex), [1, 1j, 2])
+    space = BlockWaveSubspace(action, 3)
+    assert space.add_block(np.eye(3, dtype=complex)[:, :1])["accepted"]
+    assert space.retained_readout_pair_relative() < 1e-14
+    space.R[0, 0] += 1e-6
+    assert space.retained_readout_pair_relative() > 1e-10
+
+
 def test_immediate_equivalence_and_later_recombination():
     a = DenseAction(np.eye(3, dtype=complex), np.array([1, 0, 1]))
     block, old = BlockWaveSubspace(a, 3), WaveSubspace(a, 3)

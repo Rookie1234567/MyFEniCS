@@ -40,6 +40,13 @@ class BlockWaveSubspace(WaveSubspace):
             else values - null @ conjugate_product(null, values)
         )
 
+    def retained_readout_pair_relative(self):
+        """Recheck a preserved readout without declaring its old state qualified."""
+        predicted = self.action.f - self.Q[:, : self.m] @ (
+            self.R[: self.m, : self.m] @ self.a
+        )
+        return float(np.linalg.norm(self.r - predicted) / self.action.bnorm)
+
     def project(self, values):
         z = np.array(values, copy=True)
         for _ in range(2):

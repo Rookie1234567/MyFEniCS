@@ -358,8 +358,26 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             marker("complete_boundary_rank_repaired", repair)
     history = Path(artifact) / "basis_growth.jsonl"
     stop = None
+    if block_mode and previous and previous.get("rank_repair"):
+        pairing = space.retained_readout_pair_relative()
+        if not np.isfinite(pairing) or pairing > 1e-10:
+            # A diagnostic recovery preserves evidence; it is not an accepted
+            # numerical starting point. Further blocks cannot legitimize this
+            # already unqualified readout. Freeze it and continue the independent
+            # from-zero route, with all prior costs and the original clock.
+            marker(
+                "unqualified_preserved_readout_frozen",
+                dict(
+                    columns=space.m,
+                    effective_rank=space.effective_rank,
+                    small_full_action_pair_relative=pairing,
+                    threshold=1e-10,
+                    accepted_new_updates=0,
+                ),
+            )
+            stop = "PRESERVED_READOUT_STABILITY_NOT_QUALIFIED"
     save_buffer = 120 if block_mode else 600
-    while True:
+    while stop is None:
         if space.m >= capacity:
             if block_mode and capacity == strategy["max_columns"]:
                 audit = action.audit(space.c)

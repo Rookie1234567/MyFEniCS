@@ -129,7 +129,10 @@ def run_stage(manifest, artifact, marker):
         from src.solvers.neural_wave_greedy import atomic_json
 
         atomic_json(artifact / "core_qualification.json", result)
-        if spec["stage"] == "v31_global_rank_wave_checks":
+        if spec["stage"] in (
+            "v31_global_rank_wave_checks",
+            "v31_stability_exit_checks",
+        ):
             from src.solvers.neural_wave_block_qualification import (
                 qualify_existing_range,
             )
@@ -189,6 +192,11 @@ def run_stage(manifest, artifact, marker):
         )
         if repaired_qualification.exists():
             frozen_file = repaired_qualification
+        exit_qualification = (
+            profile["artifacts"] / "v31_stability_exit_checks/result.json"
+        )
+        if exit_qualification.exists():
+            frozen_file = exit_qualification
         frozen = json.loads(frozen_file.read_text())
         if not frozen["implementation_qualified"] or frozen[
             "bound_numerical_chain_sha256"
