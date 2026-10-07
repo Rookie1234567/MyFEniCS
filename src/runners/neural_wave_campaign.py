@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = 86400 if (spec or {}).get("campaign_version") == 31 else 172800
+    budget = {31: 86400, 32: 57600}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -49,10 +49,12 @@ def stage_deadline(spec, allocation, campaign):
     # original 48h window; this is no new window or solver success condition.
     # Reserve 3600s for independent reconstruction/physics plus the mandatory
     # final 1800s publication/save margin. The original campaign never resets.
-    if spec.get("campaign_version") == 31:
+    if spec.get("campaign_version") in (31, 32):
         training = spec["role"] in (
             "LEARNED_WAVE_BLOCK_GREEDY",
             "FIXED_WAVE_BLOCK_GREEDY",
+            "FIXED_MULTISCALE_WAVE_BLOCK",
+            "LEARNED_MULTISCALE_WAVE_BLOCK",
         )
         reserve = 7200 if training else 3600
     else:
@@ -77,10 +79,15 @@ def timing_fields(allocation, attempt_identity, now):
 
 
 def worker_stop_time(spec, deadline):
-    training = spec["role"] in ("FIXED_WAVE_BLOCK_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY")
+    training = spec["role"] in (
+        "FIXED_WAVE_BLOCK_GREEDY",
+        "LEARNED_WAVE_BLOCK_GREEDY",
+        "FIXED_MULTISCALE_WAVE_BLOCK",
+        "LEARNED_MULTISCALE_WAVE_BLOCK",
+    )
     # Reserve the same 30 minutes inside each 6h ceiling for frozen q60,
     # independent field/checker cost. This is not extra training time.
-    reserve = 1800 if spec.get("campaign_version") == 31 and training else 150
+    reserve = 1800 if spec.get("campaign_version") in (31, 32) and training else 150
     return deadline - reserve
 
 
@@ -110,7 +117,26 @@ def durable(spec, *, origin, attempt=1):
         ):
             raise ValueError("RECOVERY_REQUIRES_PRIOR_TREE_CLEARED")
         repairs = root / "repair_journal.jsonl"
-        if not repairs.exists() or not repairs.read_text().strip():
+        scalar_continuation = False
+        if spec.get("campaign_version") == 32 and spec["role"] in (
+            "FIXED_MULTISCALE_WAVE_BLOCK",
+            "LEARNED_MULTISCALE_WAVE_BLOCK",
+        ):
+            route_artifact = profile["artifacts"] / stage
+            result_file = route_artifact / "result.json"
+            if result_file.exists():
+                status = json.loads(result_file.read_text())["status"]
+                if status.startswith("INDEPENDENT_VALIDATION_REQUESTED_"):
+                    node = int(status[-1])
+                    scalar = route_artifact / f"validation_scalars_{node}.json"
+                    scalar_continuation = scalar.exists() and json.loads(
+                        scalar.read_text()
+                    )["boundary_sha256"] == digest(
+                        route_artifact / "basis/committed.json"
+                    )
+        if not scalar_continuation and (
+            not repairs.exists() or not repairs.read_text().strip()
+        ):
             raise ValueError("RECOVERY_REQUIRES_FAILURE_CHANGE_TEST_EVIDENCE")
     else:
         if attempt != 1:
@@ -232,6 +258,12 @@ def launch(spec):
             "reconstruction_stability",
             "FIXED_WAVE_BLOCK_GREEDY",
             "LEARNED_WAVE_BLOCK_GREEDY",
+            "multiscale_checks",
+            "support_witness",
+            "early_validate",
+            "multiscale_reconstruct",
+            "FIXED_MULTISCALE_WAVE_BLOCK",
+            "LEARNED_MULTISCALE_WAVE_BLOCK",
         )
         else 2
     ) * 2**30
@@ -249,7 +281,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") == 31:
+            if spec.get("campaign_version") in (31, 32):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -315,7 +347,7 @@ def launch(spec):
                             "src/solvers/neural_wave_block_qualification.py",
                             "src/postprocessing/neural_wave_roundoff.py",
                         )
-                        if spec.get("campaign_version") == 31
+                        if spec.get("campaign_version") in (31, 32)
                         else ()
                     )
                 },
@@ -372,6 +404,25 @@ def launch(spec):
                 benchmark_previously_seen=True,
                 production_initialization_allowed=False,
             )
+            if spec.get("campaign_version") == 32:
+                manifest["binding_source_files"].update(
+                    {
+                        path: digest(ROOT / path)
+                        for path in (
+                            "src/io/multiscale_wave_campaign.py",
+                            "src/runners/multiscale_wave_worker.py",
+                            "src/solvers/neural_wave_multiscale.py",
+                            "src/solvers/neural_wave_multiscale_validation.py",
+                            "src/postprocessing/neural_wave_support_audit.py",
+                        )
+                    }
+                )
+                manifest.update(
+                    reference_used_for_validation=True,
+                    continuation_uses_validation_scalars=True,
+                    pde_only_solve=spec["role"]
+                    in ("FIXED_MULTISCALE_WAVE_BLOCK", "LEARNED_MULTISCALE_WAVE_BLOCK"),
+                )
             atomic_json(directory / "run_manifest.json", manifest)
             atomic_json(artifact / f"run_manifest_{directory.name}.json", manifest)
             shutil.copyfile(ROOT / spec["input"], directory / "input_original.dat")

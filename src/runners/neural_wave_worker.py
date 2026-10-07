@@ -340,8 +340,11 @@ def main():
 
     try:
         atomic_json(directory / "abi.json", abi(spec["mode"]))
-        if spec.get("campaign_version") == 31:
-            from src.runners.block_wave_worker import run_stage
+        if spec.get("campaign_version") in (31,32):
+            if spec.get("campaign_version")==32:
+                from src.runners.multiscale_wave_worker import run_stage
+            else:
+                from src.runners.block_wave_worker import run_stage
             result = run_stage(manifest, artifact, marker)
             result.update(source_sha=manifest["source_sha"], input_sha256=spec["input_sha256"],
                 design_sha256=manifest["design_sha256"], worker_elapsed_seconds=perf_counter()-start,

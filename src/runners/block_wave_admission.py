@@ -11,7 +11,17 @@ from src.solvers.neural_wave_greedy import atomic_json
 POOL = ROOT / "tmp/task42extra/v31/resource_rejected_wait.jsonl"
 
 
-def rejected_wait_seconds():
+def pool(directory=None):
+    return (
+        ROOT / "tmp/task42extra/v32/resource_rejected_wait.jsonl"
+        if directory is not None
+        and Path(directory).resolve().is_relative_to(ROOT / "tmp/task42extra/v32")
+        else POOL
+    )
+
+
+def rejected_wait_seconds(directory=None):
+    POOL = pool(directory)
     if not POOL.exists():
         return 0.0
     return sum(json.loads(line)["seconds"] for line in POOL.read_text().splitlines())
@@ -19,6 +29,7 @@ def rejected_wait_seconds():
 
 def charge_rejected_wait(start, reason, directory):
     elapsed = monotonic() - start
+    POOL = pool(directory)
     POOL.parent.mkdir(parents=True, exist_ok=True)
     with POOL.open("a") as stream:
         stream.write(
@@ -41,7 +52,7 @@ def fresh_admission(directory, hard, *, scope=None, prefix="admission", **_):
     try:
         for i in range(8):
             if (
-                rejected_wait_seconds()
+                rejected_wait_seconds(directory)
                 + (monotonic() - rejected_start if rejected_start else 0)
                 >= 1800
             ):
@@ -82,7 +93,7 @@ def fresh_admission(directory, hard, *, scope=None, prefix="admission", **_):
 def stable_window(directory, hard, seconds=60):
     from src.runners.feinn_resources import stable_window as original
 
-    if rejected_wait_seconds() >= 1800:
+    if rejected_wait_seconds(directory) >= 1800:
         raise RuntimeError("V31_FAILED_RESOURCE_WAIT_LIMIT_REACHED")
     start = monotonic()
     try:

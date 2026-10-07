@@ -26,7 +26,13 @@ def frozen_models(directory):
         if sha(file) != entry["sha256"]:
             raise ValueError("FROZEN_NETWORK_CHUNK_HASH_FAILED")
         with np.load(file, allow_pickle=False) as arrays:
-            patch = Patch(tuple(arrays["center"]), tuple(arrays["radius"]))
+            patch = Patch(
+                tuple(arrays["center"]),
+                tuple(arrays["radius"]),
+                kind=str(arrays["patch_kind"])
+                if "patch_kind" in arrays.files
+                else "local",
+            )
             q = np.array(arrays["wave_q"])
             if block:
                 first, last = entry["start"], entry["stop"]
@@ -63,7 +69,9 @@ def rebuild_stable(directory, packet, marker=lambda *_: None, *, module_first=Fa
         correction = np.zeros_like(total)
         for patch, q, p in models:
             center, radius = np.array(patch.center), np.array(patch.radius)
-            if np.any(hi < center - radius) or np.any(lo > center + radius):
+            if patch.kind != "global" and (
+                np.any(hi < center - radius) or np.any(lo > center + radius)
+            ):
                 continue
             raw = patch.window(x)[:, None] * (np.exp(1j * (x - center) @ q.T) @ p)
             value = interpolation @ (raw @ jac).T.ravel() if module_first else raw

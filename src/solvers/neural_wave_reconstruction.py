@@ -21,7 +21,7 @@ def pointwise_moments(packet, field, *, zero_outside_patch=None):
     c = np.zeros(int(packet["active_rows"]), np.complex128)
     for cell, jac in enumerate(packet["jacobians"]):
         x = packet["origins"][cell] + packet["reference_points"] @ jac.T
-        if zero_outside_patch is not None:
+        if zero_outside_patch is not None and zero_outside_patch.kind != "global":
             center, radius = (
                 np.array(zero_outside_patch.center),
                 np.array(zero_outside_patch.radius),

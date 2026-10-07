@@ -295,6 +295,7 @@ class BlockBasisStore(BasisStore):
             center=np.asarray(model["patch"].center),
             radius=np.asarray(model["patch"].radius),
             patch_level=np.asarray(model["patch"].level),
+            patch_kind=np.asarray(model["patch"].kind),
             selected_raw_columns=block["selected_raw_columns"],
             singular_values=block["singular_values"],
         )

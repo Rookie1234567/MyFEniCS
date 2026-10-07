@@ -16,8 +16,15 @@ class Patch:
     center: tuple
     radius: tuple
     level: int = 0
+    kind: str = "local"
+
+    def __post_init__(self):
+        if self.kind not in ("local", "global"):
+            raise ValueError("UNKNOWN_WAVE_SUPPORT_KIND")
 
     def window(self, points):
+        if self.kind == "global":
+            return np.ones(np.asarray(points).shape[:-1], dtype=np.float64)
         t = (points - np.asarray(self.center)) / np.asarray(self.radius)
         # C1 at the support boundary; breaks coincide with cell boundaries.
         return np.prod(np.maximum(1.0 - t * t, 0.0) ** 2, axis=-1)
@@ -62,6 +69,10 @@ class WaveMoments:
         if patch in self.cell_cache:
             return self.cell_cache[patch]
         lo, hi = self.boxes
+        if patch.kind == "global":
+            result = np.arange(len(lo))
+            self.cell_cache[patch] = result
+            return result
         center, radius = np.asarray(patch.center), np.asarray(patch.radius)
         result = np.flatnonzero(
             np.all(

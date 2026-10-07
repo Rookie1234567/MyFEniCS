@@ -15,12 +15,16 @@ import numpy as np
 class LocalWaveAction:
     """A[:, support] and its exact adjoint, not a replacement full FE operator."""
 
-    def __init__(self, action, support):
+    def __init__(self, action, support, *, support_kind="local"):
+        if support_kind != "local":
+            raise ValueError("GLOBAL_SUPPORT_MUST_USE_COMPLETE_ACTION")
         start = perf_counter()
         self.action = action
         self.support = np.unique(np.asarray(support, dtype=np.int64))
-        if not len(self.support) or np.any(self.support < 0) or np.any(
-            self.support >= action.size
+        if (
+            not len(self.support)
+            or np.any(self.support < 0)
+            or np.any(self.support >= action.size)
         ):
             raise ValueError("LOCAL_WAVE_INPUT_SUPPORT_INVALID")
         self.mask = np.zeros(action.size, dtype=bool)
@@ -78,7 +82,8 @@ class LocalWaveAction:
         values = self._tensors(local.reshape(-1, action.dim, width), adjoint=False)
         out = np.zeros_like(columns)
         np.add.at(
-            out, self.eids,
+            out,
+            self.eids,
             self.evals.conj()[:, None] * values.reshape(-1, width)[self.erows],
         )
         port_before = action.costs["port_solve"]
@@ -102,7 +107,8 @@ class LocalWaveAction:
         out = np.zeros(action.size, complex)
         entries = self.input_entries
         np.add.at(
-            out, self.eids[entries],
+            out,
+            self.eids[entries],
             self.evals[entries].conj() * values.ravel()[self.erows[entries]],
         )
         port_before = action.costs["port_solve"]
@@ -118,5 +124,7 @@ class LocalWaveAction:
     @property
     def retained_bytes(self):
         return sum(
-            value.nbytes for value in vars(self).values() if isinstance(value, np.ndarray)
+            value.nbytes
+            for value in vars(self).values()
+            if isinstance(value, np.ndarray)
         )

@@ -270,7 +270,12 @@ def variable_projection(
 
 def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     block_mode = bool(design.get("block_profile", False))
-    learned = binding["route"] in ("LEARNED_WAVE_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY")
+    multiscale = bool(design.get("multiscale_support_policy", False))
+    learned = binding["route"] in (
+        "LEARNED_WAVE_GREEDY",
+        "LEARNED_WAVE_BLOCK_GREEDY",
+        "LEARNED_MULTISCALE_WAVE_BLOCK",
+    )
     strategy = design["strategy"]
     capacity = strategy["max_columns"]
     n = action.size
@@ -282,6 +287,10 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         raise ValueError("AUTHORIZED_CAPACITY_PLANNING_LINE_EXCEEDED")
     moments = WaveMoments(packet, batch=8)
     local_actions = {}
+    if multiscale:
+        from src.solvers.neural_wave_multiscale import MultiscaleSupportPolicy
+
+        support_policy = MultiscaleSupportPolicy(design["model"]["geometry"], moments)
     projection_costs = dict(build_s=0.0, project_s=0.0, calls=0, stable_fallbacks=0)
     if block_mode:
         from src.solvers.neural_wave_block import BlockWaveSubspace, BlockBasisStore
@@ -379,7 +388,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     save_buffer = 120 if block_mode else 600
     while stop is None:
         if space.m >= capacity:
-            if block_mode and capacity == strategy["max_columns"]:
+            if block_mode and not multiscale and capacity == strategy["max_columns"]:
                 audit = action.audit(space.c)
                 older = [
                     v for v in growth_state["checkpoints"] if v["rank"] <= space.m - 256
@@ -457,24 +466,60 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             4 if space.m >= 1024 else 1,
             8 if space.m >= 2048 else 1,
         )
-        patch = select_patch(
-            patch_inventory(design["model"]["geometry"], level),
-            moments,
-            space.r,
-            iteration,
-        )
+        support_record, preset_candidates = None, None
+        if multiscale:
+            from src.solvers.neural_wave_multiscale_validation import continuation_gate
+
+            decision = continuation_gate(
+                artifact,
+                space.m,
+                monotonic() - binding["route_origin_monotonic"],
+                strategy,
+            )
+            if decision is not None:
+                stop = decision
+                break
+            resolution = strategy["direction_resolutions"][resolution_index]
+            dictionary = direction_dictionary(
+                2 * np.pi / design["model"]["wavelength_nm"], resolution
+            )
+            patch, preset_candidates, support_record = support_policy.select(
+                action,
+                space,
+                moments,
+                dictionary,
+                width,
+                iteration,
+                strategy["local_refinement_steps_k0"][resolution_index]
+                * 2
+                * np.pi
+                / design["model"]["wavelength_nm"],
+            )
+            width = len(preset_candidates[0][1])
+        else:
+            patch = select_patch(
+                patch_inventory(design["model"]["geometry"], level),
+                moments,
+                space.r,
+                iteration,
+            )
         local = None
         projector = None
-        if binding.get("exact_local_input_support_reuse", False):
+        if (
+            binding.get("exact_local_input_support_reuse", False)
+            and patch.kind != "global"
+        ):
             from src.solvers.neural_wave_local_action import LocalWaveAction
 
             if patch not in local_actions:
                 support = moments.rows[moments.cells(patch)].ravel()
-                local_actions[patch] = LocalWaveAction(action, support[support >= 0])
+                local_actions[patch] = LocalWaveAction(
+                    action, support[support >= 0], support_kind=patch.kind
+                )
                 if sum(x.retained_bytes for x in local_actions.values()) > 2 * 2**30:
                     raise MemoryError("LOCAL_NUMERIC_CACHE_AUTHORIZED_2GIB_EXCEEDED")
             local = local_actions[patch]
-        if binding.get("exact_two_pass_projection_reuse", False):
+        if binding.get("exact_two_pass_projection_reuse", False) and local is not None:
             from src.solvers.neural_wave_projection import ResidualProjectionCache
 
             projector = ResidualProjectionCache(
@@ -539,48 +584,52 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     result_values.append(None)
             return result_values
 
-        initial_candidates = []
-        for seed_number in range(strategy["screen_seeds"]):
-            offset = (iteration * strategy["screen_seeds"] + seed_number) % len(
-                dictionary
-            )
-            initial_candidates.append(
-                dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
-            )
-        for q, value in zip(
-            initial_candidates, screen(initial_candidates), strict=True
-        ):
-            if value is None:
-                failures += 1
-            else:
-                candidates.append((value[0], q, value))
-        iteration += 1
-        # Same six predeclared directions and stable ordering for both routes.
-        if candidates:
-            _, seed_q, _ = max(candidates, key=lambda x: x[0])
-            step = (
-                strategy["local_refinement_steps_k0"][resolution_index]
-                * 2
-                * np.pi
-                / design["model"]["wavelength_nm"]
-            )
-            bound = (
-                strategy["q_component_bound_k0"]
-                * 2
-                * np.pi
-                / design["model"]["wavelength_nm"]
-            )
-            refined_candidates = []
-            for axis in range(3):
-                for sign in (-1, 1):
-                    refined = seed_q.copy()
-                    refined[:, axis] += sign * step
-                    refined_candidates.append(np.clip(refined, -bound, bound))
-            for refined, value in zip(
-                refined_candidates, screen(refined_candidates), strict=True
+        if multiscale:
+            candidates = preset_candidates
+            iteration += 1
+        else:
+            initial_candidates = []
+            for seed_number in range(strategy["screen_seeds"]):
+                offset = (iteration * strategy["screen_seeds"] + seed_number) % len(
+                    dictionary
+                )
+                initial_candidates.append(
+                    dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
+                )
+            for q, value in zip(
+                initial_candidates, screen(initial_candidates), strict=True
             ):
-                if value is not None:
-                    candidates.append((value[0], refined, value))
+                if value is None:
+                    failures += 1
+                else:
+                    candidates.append((value[0], q, value))
+            iteration += 1
+            # Same six predeclared directions and stable ordering for both routes.
+            if candidates:
+                _, seed_q, _ = max(candidates, key=lambda x: x[0])
+                step = (
+                    strategy["local_refinement_steps_k0"][resolution_index]
+                    * 2
+                    * np.pi
+                    / design["model"]["wavelength_nm"]
+                )
+                bound = (
+                    strategy["q_component_bound_k0"]
+                    * 2
+                    * np.pi
+                    / design["model"]["wavelength_nm"]
+                )
+                refined_candidates = []
+                for axis in range(3):
+                    for sign in (-1, 1):
+                        refined = seed_q.copy()
+                        refined[:, axis] += sign * step
+                        refined_candidates.append(np.clip(refined, -bound, bound))
+                for refined, value in zip(
+                    refined_candidates, screen(refined_candidates), strict=True
+                ):
+                    if value is not None:
+                        candidates.append((value[0], refined, value))
         if not candidates:
             charge_projection()
             stagnant += 1
@@ -660,48 +709,90 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     return -value[0] / action.bnorm**2, -value[4].ravel()
 
                 try:
-                    result = minimize(
-                        objective,
-                        q0.ravel(),
-                        jac=True,
-                        method="L-BFGS-B",
-                        bounds=[(-bound, bound)] * (3 * width),
-                        options=dict(
+                    if multiscale:
+                        from src.solvers.neural_wave_multiscale import (
+                            bounded_direction_optimize,
+                        )
+
+                        def complete_objective(proposal):
+                            if monotonic() >= deadline - save_buffer:
+                                raise TimeoutError("MODULE_SAVE_RESERVE")
+                            return variable_projection(
+                                action,
+                                space,
+                                moments,
+                                patch,
+                                proposal,
+                                gradient=True,
+                                local=local,
+                                projector=projector,
+                            )
+
+                        q, best, optimize_record = bounded_direction_optimize(
+                            complete_objective,
+                            q0,
+                            best,
+                            bound,
                             maxiter=strategy["module_max_iterations"],
-                            maxfun=strategy["module_max_evaluations"],
-                            maxls=12,
-                            ftol=1e-12,
-                            gtol=1e-10,
-                            maxcor=10,
-                        ),
+                            maxeval=strategy["module_max_evaluations"],
+                            denominator=action.bnorm**2,
+                        )
+                    else:
+                        result = minimize(
+                            objective,
+                            q0.ravel(),
+                            jac=True,
+                            method="L-BFGS-B",
+                            bounds=[(-bound, bound)] * (3 * width),
+                            options=dict(
+                                maxiter=strategy["module_max_iterations"],
+                                maxfun=strategy["module_max_evaluations"],
+                                maxls=12,
+                                ftol=1e-12,
+                                gtol=1e-10,
+                                maxcor=10,
+                            ),
+                        )
+                        trial_q = result.x.reshape(width, 3)
+                        trial = variable_projection(
+                            action,
+                            space,
+                            moments,
+                            patch,
+                            trial_q,
+                            gradient=False,
+                            local=local,
+                            projector=projector,
+                        )
+                        if trial[0] >= best[0]:
+                            q, best = trial_q, trial
+                        optimize_record = dict(
+                            executed=True,
+                            function_calls=len(calls),
+                            initial_gradient_norm=calls[0]["gradient_norm"],
+                            final_gradient_norm=calls[-1]["gradient_norm"],
+                            q_update_norm=float(np.linalg.norm(q - initial_q)),
+                            amplitude_update_norm=float(
+                                np.linalg.norm(best[1] - initial_p)
+                            ),
+                            scipy_status=int(result.status),
+                            messages=str(result.message),
+                        )
+                        optimize_record["amplitude_learning"] = amplitude_learning
+                        learning_updates += int(
+                            optimize_record["q_update_norm"] > 1e-12
+                        )
+                    optimize_record["q_update_norm"] = float(
+                        np.linalg.norm(q - initial_q)
                     )
-                    trial_q = result.x.reshape(width, 3)
-                    trial = variable_projection(
-                        action,
-                        space,
-                        moments,
-                        patch,
-                        trial_q,
-                        gradient=False,
-                        local=local,
-                        projector=projector,
+                    optimize_record["amplitude_update_norm"] = float(
+                        np.linalg.norm(best[1] - initial_p)
                     )
-                    if trial[0] >= best[0]:
-                        q, best = trial_q, trial
-                    optimize_record = dict(
-                        executed=True,
-                        function_calls=len(calls),
-                        initial_gradient_norm=calls[0]["gradient_norm"],
-                        final_gradient_norm=calls[-1]["gradient_norm"],
-                        q_update_norm=float(np.linalg.norm(q - initial_q)),
-                        amplitude_update_norm=float(
-                            np.linalg.norm(best[1] - initial_p)
-                        ),
-                        scipy_status=int(result.status),
-                        messages=str(result.message),
-                    )
-                    optimize_record["amplitude_learning"] = amplitude_learning
-                    learning_updates += int(optimize_record["q_update_norm"] > 1e-12)
+                    if multiscale:
+                        optimize_record["amplitude_learning"] = amplitude_learning
+                        learning_updates += int(
+                            optimize_record["q_update_norm"] > 1e-12
+                        )
                 except TimeoutError:
                     charge_projection()
                     stop = "MODULE_INTERRUPTED_AT_SAVE_RESERVE"
@@ -764,6 +855,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 seed_q=initial_q.tolist(),
                 learned_q=q.tolist(),
                 training=optimize_record,
+                multiscale_support=support_record,
                 score=best[0],
                 amplitude_norm=float(np.linalg.norm(best[1])),
                 elapsed_seconds=monotonic() - binding["route_origin_monotonic"],
@@ -949,6 +1041,9 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         numerical_gate="PENDING_INDEPENDENT_FULL_FIELD_CHECKER",
         block_amplitude_retention=block_mode,
         default_rank_capacity=capacity,
+        reference_used_for_validation=multiscale,
+        continuation_uses_validation_scalars=multiscale,
+        multiscale_support_policy=multiscale,
         conditional_rank_extension_not_used=True,
         rank_extension_reason="requires native/augmented<=1e-4, half residual in last256, safe reallocation and audit time; see rank growth",
         exact_local_input_support_reuse=binding.get(

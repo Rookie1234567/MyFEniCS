@@ -31,13 +31,14 @@ STAGES = {
 
 
 def profile_paths(spec):
-    if spec.get("campaign_version") == 31:
-        root = ROOT / "tmp/task42extra/v31"
+    if spec.get("campaign_version") in (31, 32):
+        version = spec["campaign_version"]
+        root = ROOT / f"tmp/task42extra/v{version}"
         return dict(
             root=root,
             window=root / "batch_window.json",
-            design=ROOT / "input/task042extra_feinn_5nm/design_v31.json",
-            artifacts=ROOT / "benchmarks/artifacts/task42extra/v31",
+            design=ROOT / f"input/task042extra_feinn_5nm/design_v{version}.json",
+            artifacts=ROOT / f"benchmarks/artifacts/task42extra/v{version}",
             reserve=3600,
         )
     return dict(
@@ -66,6 +67,10 @@ def load_wave(path):
         data = tomllib.loads(raw.decode())
     except (UnicodeError, tomllib.TOMLDecodeError) as error:
         raise InputError(str(error)) from error
+    if data.get("schema_version") == 3:
+        from src.io.multiscale_wave_campaign import load_multiscale
+
+        return load_multiscale(path, data, raw)
     if data.get("schema_version") == 2:
         from src.io.block_wave_campaign import load_block_wave
 
@@ -121,6 +126,21 @@ def training_open_allowed(path, design):
         file = Path(path).resolve()
     except TypeError:
         return True  # file descriptor, not a new filename
+    if design.get("campaign_version") == 32 and file.is_relative_to(
+        ROOT / "benchmarks/artifacts/task42extra"
+    ):
+        allowed = {
+            (ROOT / entry["path"]).resolve() for entry in design["files"].values()
+        }
+        active = Path(design["active_training_artifact"]).resolve()
+        if (
+            file not in allowed
+            and not file.is_relative_to(active)
+            and file
+            != ROOT
+            / "benchmarks/artifacts/task42extra/v32/v32_multiscale_wave_checks/result.json"
+        ):
+            return False
     if file.suffix in (".pt", ".pth"):
         return False
     if design.get("campaign_version") == 31 and file.is_relative_to(ARTIFACTS):
