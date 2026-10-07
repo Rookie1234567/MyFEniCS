@@ -85,6 +85,11 @@ def solve_c67(folder,journal):
                 x.destroy();y.destroy()
         if max(v['relative'] for v in action_rows)>1e-10:raise ValueError('local action versus assembled body')
         factor=CoordinateFactor(system.matrix,bundle,32832,journal,folder,symbolic_capacity=True,planning_limit_bytes=64*2**30);inverse.factor=factor
+        low_returns=[]
+        def persist_low(z,load,native_rhs):
+            receipt=save_arrays(folder/f'returned_low_{len(low_returns)}.npz',trace_port=z,condensed_rhs=load,native_rhs=native_rhs)
+            low_returns.append(receipt);write_json(folder/'returned_low_inventory.json',dict(arrays=low_returns,source=journal.source_state))
+        inverse.state_callback=persist_low
         with journal.measured('local_restricted_physical_solve_and_high_recovery'):
             u=inverse.apply(rhs);port=inverse.last_port_solution.copy()
         lowtrace=inverse.last_low_solution[:32832].copy()

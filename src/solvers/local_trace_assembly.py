@@ -155,8 +155,9 @@ def assemble_local_restricted(ambient,R,carrier,journal):
 
 class LocalRestrictedInverse:
     """Original high-cell recovery and low global solve, including affine load."""
-    def __init__(self,system,factor=None):
+    def __init__(self,system,factor=None,*,state_callback=None):
         self.system=system;self.factor=factor;self.last_low_solution=None;self.last_port_solution=None
+        self.state_callback=state_callback
         self.xiB={c:lu_solve(system.ambient.interior_lu_by_class[system.ambient.cell_recovery_maps[c].class_key],t.Bi)
             for c,t in system.port_terms.items()}
 
@@ -188,7 +189,8 @@ class LocalRestrictedInverse:
         f=self.reduce(rhs.array);b=PETSc.Vec().createSeq(len(f),comm=PETSc.COMM_SELF);z=b.duplicate();b.array[:]=f
         try:
             self.factor.solve_repeated(b,z);self.last_low_solution=z.array.copy()
-            self.last_port_solution=z.array[self.system.restriction.R.R.shape[1]:].copy()
+            if self.state_callback is not None:self.state_callback(self.last_low_solution,f,np.asarray(rhs.array))
+            self.last_port_solution=z.array[self.system.restriction.R.shape[1]:].copy()
             u=rhs.duplicate();u.array[:]=self.recover(z.array,rhs.array);return u
         finally:b.destroy();z.destroy()
 

@@ -7,6 +7,33 @@ from src.solvers.trace_interior_restriction import dense_restricted_witness
 
 
 class LocalTests(unittest.TestCase):
+    def test_actual_inverse_apply_saves_low_before_high_recovery(self):
+        from types import SimpleNamespace as NS
+        from scipy import sparse
+        from petsc4py import PETSc
+        from src.solvers.local_trace_assembly import LocalRestrictedInverse
+        rng=np.random.default_rng(60061);n=43
+        A=rng.normal(size=(n,n))+1j*rng.normal(size=(n,n))+100*np.eye(n)
+        i=np.array([0]);b=np.arange(1,n);lu=lu_factor(A[np.ix_(i,i)])
+        schur=A[np.ix_(b,b)]-A[np.ix_(b,i)]@lu_solve(lu,A[np.ix_(i,b)])
+        high_constraints=NS(expansion_by_original={1:(np.array([0]),np.array([1.])),2:(np.array([1]),np.array([1.]))})
+        ambient=NS(appended_rows=40,full_rows=3,cell_recovery_maps=[NS(class_key=0,interior_original_dofs=i,trace_original_dofs=np.array([1,2]))],
+            trace_constraints=high_constraints,trace_from_interior_rhs_by_class={0:-A[np.ix_([1,2],i)]@lu_solve(lu,np.eye(1))},
+            interior_lu_by_class={0:lu},interior_from_trace_by_class={0:-lu_solve(lu,A[np.ix_(i,[1,2])])})
+        term=NS(Bi=A[np.ix_(i,np.arange(3,n))],Di=-A[np.ix_(np.arange(3,n),i)],port_indices=np.arange(40))
+        restriction=NS(R=sparse.eye(2,format='csr'),high_native_rows=np.array([1,2]),R_shape=(2,2))
+        system=NS(ambient=ambient,restriction=restriction,port_terms={0:term})
+        class Factor:
+            def solve_repeated(self,load,target):target.array[:]=np.linalg.solve(schur,load.array)
+        calls=[];inverse=LocalRestrictedInverse(system,Factor(),state_callback=lambda z,f,r:calls.append(z.copy()))
+        rhs=PETSc.Vec().createSeq(3);rhs.array[:]=[1+.4j,-.7+.1j,.2-.3j]
+        try:
+            u=inverse.apply(rhs);direct=np.linalg.solve(A,np.r_[rhs.array,np.zeros(40)])
+            self.assertEqual(len(calls),1);self.assertEqual(len(inverse.last_port_solution),40)
+            self.assertLess(np.linalg.norm(u.array-direct[:3]),1e-12)
+            self.assertLess(np.linalg.norm(inverse.last_port_solution-direct[3:]),1e-12);u.destroy()
+        finally:rhs.destroy()
+
     def test_worker_uses_boundary_allowance_not_launch_guard(self):
         from unittest.mock import patch
         from src.solvers import local_subcell_scope as s
