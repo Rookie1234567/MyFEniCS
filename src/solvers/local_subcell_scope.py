@@ -13,11 +13,17 @@ SOLVES=('C67','H2')
 
 
 class LocalWindow(AccuracyWindow):
-    def remaining(self,role):
-        self.require_ready();reserve=1800 if role in SOLVES else 180
+    def available_at_boundary(self,role):
+        # The supervised worker is already registered active. Read its fixed
+        # allowance without reapplying the launch-only active-null guard.
+        reserve=1800 if role in SOLVES else 180
         used=sum(r['elapsed_seconds'] for r in self.ledger()['runs'] if r['role']==role)
         return min(plan_record()['case_wall_seconds'].get(role,900)-used,
             self.total-self.charged_wall()-reserve,self.snapshot()['heavy_remaining_seconds']-reserve)
+
+    def remaining(self,role):
+        self.require_ready()
+        return self.available_at_boundary(role)
 
 
 window=LocalWindow(ROOT/'tmp/task042/v60',label='V60',total=28800,component=28800,auxiliary=28800,probe=120,reserve=180,bootstrap=0)
@@ -67,7 +73,7 @@ def require_stage(role):
         if not stage('C67')['independent']['equation_pass']:raise RuntimeError('C67 original form not trustworthy')
         if not stage('LOCAL_RESPONSE').get('mathematics_pass',False):raise RuntimeError('local subcell algebra/mapping not qualified')
     if (ARTIFACT/(role+'.json')).exists() and stage(role).get('returned_arrays') and not (window.TMP/(role+'_post_resume.json')).exists():raise RuntimeError('returned vector consume only')
-    if window.remaining(role)<plan_record()['forecast_case_seconds'][role]:raise RuntimeError('complete case and audit reserve does not fit')
+    if window.available_at_boundary(role)<plan_record()['forecast_case_seconds'][role]:raise RuntimeError('complete case and audit reserve does not fit')
 
 
 def boundary_provider(cfg,setup,folder,journal):

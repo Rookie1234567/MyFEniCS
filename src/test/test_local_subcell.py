@@ -7,6 +7,14 @@ from src.solvers.trace_interior_restriction import dense_restricted_witness
 
 
 class LocalTests(unittest.TestCase):
+    def test_worker_uses_boundary_allowance_not_launch_guard(self):
+        from unittest.mock import patch
+        from src.solvers import local_subcell_scope as s
+        with patch.object(s.window,'remaining',side_effect=RuntimeError('launch only')), \
+             patch.object(s.window,'available_at_boundary',return_value=4000), \
+             patch.object(s,'stage',return_value={'pass_gate':True}):
+            s.require_stage('C67')
+
     def test_nonmutual_40port_nonzero_internal(self):
         r=dense_restricted_witness(6001)
         self.assertLess(max(r[k] for k in ('mixed','recovery','lift_invariance')),1e-10)
