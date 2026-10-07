@@ -1,0 +1,73 @@
+{
+  "completed_solves": {
+    "B6": {
+      "array_sha256": "b37c4a36ca7d7d579b65d74aec530f0324478ff1d7ec763342dce66fd83ca9d9",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "status": "COMPLETED",
+      "case_spec": {
+        "degree": 6,
+        "splits": [
+          1,
+          1,
+          2
+        ],
+        "cells": 160,
+        "independent": 104832,
+        "trace": 32832,
+        "internal": 72000,
+        "rows": 33660,
+        "complete_modes": 828
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z/result.json",
+        "sha256": "be75e7575da7c3b51c30168ee3c79ef103f24019ca8a1339e567666551d5244f"
+      }
+    },
+    "Y6": {
+      "array_sha256": "60728968e0c40ec24dfb3963c5e5f69bc690437973d9054e28b394e69e7d6387",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "status": "COMPLETED",
+      "case_spec": {
+        "degree": 6,
+        "splits": [
+          1,
+          2,
+          2
+        ],
+        "cells": 320,
+        "independent": 209664,
+        "trace": 65664,
+        "internal": 144000,
+        "rows": 66492,
+        "complete_modes": 828
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z/result.json",
+        "sha256": "f421f4ed308d81eb0461fb264a1773f1f399a3b16c780ae01e9270d0fa4ea53b"
+      }
+    }
+  },
+  "source_sha": "b87191df68f0961e20d9bd7e055b73c1b05bb62c",
+  "clock": {
+    "start_utc": "2026-10-07T03:58:55.787376+00:00",
+    "start_monotonic": 1270530.648268307,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+    "intake_HEAD": "feb7013db1110c9fb28b6104b235843cb7e78c49",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "observed_utc": "2026-10-07T06:57:14.967549+00:00",
+    "observed_monotonic": 1281229.828416575,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 10699.180173158646,
+    "heavy_remaining_seconds": 11800.819826841354,
+    "total_remaining_seconds": 14500.819826841354
+  },
+  "all_solve_selection_complete": true,
+  "new_solves_after_freeze": false,
+  "NN_training": 0
+}

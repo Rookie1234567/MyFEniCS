@@ -1,0 +1,42 @@
+{
+  "D": {
+    "status": "COMPLETED",
+    "source_sha": "e24056b5c88b9480055aef3951370f8a510001d6",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T042308453065Z/result.json",
+      "sha256": "99b5ac534d8042853b7517ef822d264edb8e915319eab0601f16f2a95feedd9c"
+    }
+  },
+  "K": {
+    "status": "COMPLETED",
+    "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T051014625921Z/result.json",
+      "sha256": "616c845da03fd23e3d7183c7a409b3c7b57d4cf90ad9137d5271ae4c3e5a7ded"
+    }
+  },
+  "B6": {
+    "status": "COMPLETED",
+    "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z/result.json",
+      "sha256": "be75e7575da7c3b51c30168ee3c79ef103f24019ca8a1339e567666551d5244f"
+    }
+  },
+  "Y6": {
+    "status": "COMPLETED",
+    "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z/result.json",
+      "sha256": "f421f4ed308d81eb0461fb264a1773f1f399a3b16c780ae01e9270d0fa4ea53b"
+    }
+  },
+  "VERIFY_COST": {
+    "status": "COMPLETED",
+    "source_sha": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_verify_cost_20261007T070107203807Z/result.json",
+      "sha256": "99047a22b865a7581f45cc6dbe325e341630ed054f95cc0fc564d006931ef9e1"
+    }
+  }
+}

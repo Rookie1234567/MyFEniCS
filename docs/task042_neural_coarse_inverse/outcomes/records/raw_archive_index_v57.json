@@ -1,0 +1,271 @@
+{
+  "kind": "V57_INCREMENTAL_HASH_BOUND_FULL_INDEX",
+  "full_index": {
+    "path": "tmp/task042/v57/aux_post_collect01/records/raw_archive_index_v57.json",
+    "sha256": "b439fc098fed69f023825929b5e7e6793390ada0432a37fb30b55224e9d5ee77",
+    "bytes": 1296502
+  },
+  "entries": 2756,
+  "member_count": 0,
+  "file_bytes": 89492356,
+  "groups": {
+    "tmp/task042/v57": {
+      "files": 37,
+      "bytes": 128183,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_11": {
+      "files": 23,
+      "bytes": 797726,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_08": {
+      "files": 23,
+      "bytes": 848029,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_07": {
+      "files": 23,
+      "bytes": 832698,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_04": {
+      "files": 23,
+      "bytes": 957918,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_06": {
+      "files": 23,
+      "bytes": 833540,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_03": {
+      "files": 23,
+      "bytes": 803975,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_02": {
+      "files": 11,
+      "bytes": 1174092,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_10": {
+      "files": 23,
+      "bytes": 816384,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_12": {
+      "files": 23,
+      "bytes": 803346,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_09": {
+      "files": 23,
+      "bytes": 860702,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_post_collect01": {
+      "files": 5,
+      "bytes": 672391,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_01": {
+      "files": 5,
+      "bytes": 656227,
+      "members": 0
+    },
+    "tmp/task042/v57/aux_pre_05": {
+      "files": 23,
+      "bytes": 1147158,
+      "members": 0
+    },
+    "results/task042/task042_v57_common_weak_balance_20261007T041316149930Z": {
+      "files": 10,
+      "bytes": 717733,
+      "members": 0
+    },
+    "results/task042/task042_v57_common_weak_balance_20261007T041316149930Z/supervision": {
+      "files": 3,
+      "bytes": 149268,
+      "members": 0
+    },
+    "results/task042/task042_v57_common_weak_balance_20261007T041609012185Z": {
+      "files": 10,
+      "bytes": 959994,
+      "members": 0
+    },
+    "results/task042/task042_v57_common_weak_balance_20261007T041609012185Z/supervision": {
+      "files": 3,
+      "bytes": 1663043,
+      "members": 0
+    },
+    "results/task042/task042_v57_common_weak_balance_20261007T042308453065Z": {
+      "files": 10,
+      "bytes": 2287995,
+      "members": 0
+    },
+    "results/task042/task042_v57_common_weak_balance_20261007T042308453065Z/supervision": {
+      "files": 3,
+      "bytes": 9525588,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T044747176485Z": {
+      "files": 10,
+      "bytes": 746213,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T044747176485Z/supervision": {
+      "files": 3,
+      "bytes": 327189,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T045216128516Z": {
+      "files": 10,
+      "bytes": 717386,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T045216128516Z/supervision": {
+      "files": 3,
+      "bytes": 138543,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T045533855610Z": {
+      "files": 10,
+      "bytes": 959470,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T045533855610Z/supervision": {
+      "files": 3,
+      "bytes": 1635160,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T050223752068Z": {
+      "files": 10,
+      "bytes": 1083354,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T050223752068Z/supervision": {
+      "files": 3,
+      "bytes": 2491560,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T051014625921Z": {
+      "files": 11,
+      "bytes": 760462,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_setup_20261007T051014625921Z/supervision": {
+      "files": 3,
+      "bytes": 432049,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z": {
+      "files": 10,
+      "bytes": 2310239,
+      "members": 0
+    },
+    "results/task042/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z/supervision": {
+      "files": 3,
+      "bytes": 6703063,
+      "members": 0
+    },
+    "results/task042/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z": {
+      "files": 10,
+      "bytes": 5882630,
+      "members": 0
+    },
+    "results/task042/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z/supervision": {
+      "files": 3,
+      "bytes": 11870250,
+      "members": 0
+    },
+    "results/task042/task042_v57_verify_cost_20261007T065715600242Z": {
+      "files": 10,
+      "bytes": 980191,
+      "members": 0
+    },
+    "results/task042/task042_v57_verify_cost_20261007T065715600242Z/supervision": {
+      "files": 3,
+      "bytes": 56936,
+      "members": 0
+    },
+    "results/task042/task042_v57_verify_cost_20261007T070107203807Z": {
+      "files": 10,
+      "bytes": 795083,
+      "members": 0
+    },
+    "results/task042/task042_v57_verify_cost_20261007T070107203807Z/supervision": {
+      "files": 3,
+      "bytes": 165573,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57": {
+      "files": 6,
+      "bytes": 9233,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T050223752068Z": {
+      "files": 8,
+      "bytes": 1722132,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T041609012185Z": {
+      "files": 4,
+      "bytes": 85628,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T045533855610Z": {
+      "files": 4,
+      "bytes": 232909,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T045216128516Z": {
+      "files": 2,
+      "bytes": 2124,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T041316149930Z": {
+      "files": 2,
+      "bytes": 2121,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z": {
+      "files": 547,
+      "bytes": 8933201,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z": {
+      "files": 1711,
+      "bytes": 12059062,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T051014625921Z": {
+      "files": 3,
+      "bytes": 1017273,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_verify_cost_20261007T070107203807Z": {
+      "files": 7,
+      "bytes": 151970,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T044747176485Z": {
+      "files": 2,
+      "bytes": 204134,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T042308453065Z": {
+      "files": 10,
+      "bytes": 366965,
+      "members": 0
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_verify_cost_20261007T065715600242Z": {
+      "files": 5,
+      "bytes": 14263,
+      "members": 0
+    }
+  },
+  "full_members_and_all_paths_are_in_ignored_index": true,
+  "no_historical_rescan": true,
+  "unique_archived_blobs": 2581
+}

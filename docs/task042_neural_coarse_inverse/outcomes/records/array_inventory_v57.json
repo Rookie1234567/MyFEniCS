@@ -1,0 +1,50 @@
+{
+  "kind": "V57_INCREMENTAL_HASH_BOUND_FULL_INDEX",
+  "full_index": {
+    "path": "tmp/task042/v57/aux_post_collect01/records/array_inventory_v57.json",
+    "sha256": "7708bcb008596077bc6ddf3c25c40ffb31a5e3829a21c78e54a2cf428b3f4565",
+    "bytes": 2134836
+  },
+  "entries": 2480,
+  "member_count": 6598,
+  "file_bytes": 6067343868,
+  "groups": {
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T050223752068Z": {
+      "files": 65,
+      "bytes": 1882969036,
+      "members": 451
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T045533855610Z": {
+      "files": 18,
+      "bytes": 225602460,
+      "members": 126
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z": {
+      "files": 562,
+      "bytes": 1042979126,
+      "members": 1430
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z": {
+      "files": 1779,
+      "bytes": 2409300214,
+      "members": 4141
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T044747176485Z": {
+      "files": 42,
+      "bytes": 501412588,
+      "members": 290
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T041609012185Z": {
+      "files": 4,
+      "bytes": 1443424,
+      "members": 40
+    },
+    "benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T042308453065Z": {
+      "files": 10,
+      "bytes": 3637020,
+      "members": 120
+    }
+  },
+  "full_members_and_all_paths_are_in_ignored_index": true,
+  "no_historical_rescan": true
+}

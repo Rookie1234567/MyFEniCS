@@ -1,3 +1,11 @@
+# Task042 V57：准备可部署，完整场准确性仍是主 blocker
+
+用同阶共享15个实参考积分精确构成完整相位复张量，减少按几何类重复的大积分；代价是冷参考表、保存/重开和受限仿射适用域。两个p6完整NOTCH解、独立未凝聚体/828DtN、恢复/体吸收完成；B6再现PASS，y细化散射E/H增量2.23791e−6/1.66828e−6 PASS，跨p仍0.03413 FAIL。24共同连续试验未解释分歧，不能把守恒或局部准备快称准确性突破。sampled峰7.666/16.885GiB，包含研究消费者的dat1356/4692s，完整匹配冷基线/目标成本unknown。停止固定uniform hp/M序列，唯一后续是固定倒格矢carrier的完整物理稳定性pilot；未自动执行。没有NN训练/20%收益、原尺寸或48h资格。
+
+[回应](task042_neural_coarse_inverse/response_v57.md) · [完整场与费用](task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md) · [增量索引](task042_neural_coarse_inverse/outcomes/records/delivery_index_v57.json)。以下历史逐字保留。
+
+---
+
 # Task042 V56阶段回顾：保存解变成完整物理证据
 
 旧320hex/p7/828 H7已经求解，但体吸收编译和资源重入使输出未完成。本批读取合法返回而不重算，新增显式opt-in的真实单元直接求积，保留total场、材料虚部、Jacobian/Piola和入射功率归一化；新的公开Basix完整原式向量避免用原Schur矩阵自证。它解决保存场无法被完整消费的问题，代价为场积分和独立审核费用，并没有训练NN或改变Maxwell方程。

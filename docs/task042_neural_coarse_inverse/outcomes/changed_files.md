@@ -1,3 +1,9 @@
+# V57 依赖组与 opt-in 改动
+
+新增完整相位参考15表/原raw-provider、共同连续弱试验、V57薄scope/队列/独立checker和5个dat；沿原凝聚/MUMPS/无JIT输出/独立原式，不复制求解runner、不改变普通默认。B6/Y6 fresh证据绑定aa8c46e50e125e18032a46e1afcc40f21718804a，最终保存checker为f0cc6ee829a7388688dd84d0b755fb40c35716fc。production numerical/core、runner/watchdog、checker、docs、research-only、do-not-merge依赖及建议顺序见[selective manifest](records/selective_merge_manifest_v57.json)，没有merge批准。以下历史逐字保留。
+
+---
+
 # V56变更与selective merge依赖组
 
 普通默认不变；全部新能力为显式opt-in，当前只在有限相位场完成回归。以下分组是审阅候选，不构成merge批准。

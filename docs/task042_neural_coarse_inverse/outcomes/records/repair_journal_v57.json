@@ -1,0 +1,105 @@
+{
+  "history_preserved": true,
+  "repairs": [
+    {
+      "id": "F1",
+      "cause": "PETSc/MPI imported in supervisor parent before dedicated launch",
+      "failed_source": "43396238227133bf2a7c2e05ae3c50cb70b03569",
+      "evidence": "tmp/task042/v57/aux_pre_01/launcher_failure.json",
+      "fix": "separate ABI probe; dedicated launcher imports no PETSc/MPI",
+      "scientific_worker_started": false,
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F2",
+      "cause": "small fixture did not unpack raw_direction_action tuple",
+      "failed_source": "43396238227133bf2a7c2e05ae3c50cb70b03569",
+      "evidence": "tmp/task042/v57/aux_pre_02/command0.stderr",
+      "fix_source": "12880701b997ddc31d2b2599eaadf8833adcde32",
+      "retest": "tmp/task042/v57/aux_pre_03/tests.json",
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F3",
+      "cause": "continuous common_layout passed Mesh where mesh_bounds requires FunctionSpace",
+      "failed_source": "12880701b997ddc31d2b2599eaadf8833adcde32",
+      "evidence": "results/task042/task042_v57_common_weak_balance_20261007T041316149930Z",
+      "fix_source": "e6957db7459b3e8e33438e7720d07c89ccb55fd7",
+      "retest": "tmp/task042/v57/aux_pre_04/tests.json",
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F4",
+      "cause": "new diagnostic used positive DtN traction instead of original negative traction; operation scale lost pre-assembly absolute products",
+      "failed_source": "e6957db7459b3e8e33438e7720d07c89ccb55fd7",
+      "evidence": "benchmarks/artifacts/task042/v57/task042_v57_common_weak_balance_20261007T041609012185Z/analytic_control.json",
+      "stop": "own diagnostic worker SIGTERM; supervised exit -15 and cleanup retained",
+      "fix_source": "e24056b5c88b9480055aef3951370f8a510001d6",
+      "retest": "tmp/task042/v57/aux_pre_05/tests.json",
+      "scope": "new continuous diagnostic only; original PDE/backend/old saved fields unchanged",
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F5",
+      "cause": "p7 parent key p7_Z2 differed from frozen plan p7",
+      "failed_source": "425ff629018ff7175c51803a0df5be6dc4975a2b",
+      "evidence": "results/task042/task042_v57_phase_tensor_setup_20261007T044747176485Z",
+      "stop": "own K worker SIGTERM before fresh controls; preserve completed p6 classes and recovery",
+      "resume": "tmp/task042/v57/K_p6_resume.json",
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F6",
+      "cause": "controlled K stop saved only 40 of 58 p6 classes; strict checkpoint coverage correctly rejected partial inventory",
+      "failed_source": "81c11eb3889b232c6857b0ec9fcb456d5b446320",
+      "evidence": "results/task042/task042_v57_phase_tensor_setup_20261007T045216128516Z",
+      "fix": "retain 40 rows and two local LU witnesses; one charged rebuild of same unpersisted reference table, process remaining 18 rows only; no new mathematical table family",
+      "cost": "prior 11.335911645 reference seconds plus actual rebuild and I/O recorded separately",
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F7",
+      "cause": "fresh control ndarray variable shadowed qualification dictionary during derived JSON creation",
+      "failed_source": "f804cde930e1a5b79feade8821f4f724b080029b",
+      "evidence": "results/task042/task042_v57_phase_tensor_setup_20261007T045533855610Z/supervision/worker.log",
+      "fix": "distinct names; save returned control matrices before metadata; retain 58 complete rows and 2 recovery witnesses; first control fees preserved, only second control remains",
+      "lost_control_matrix": true,
+      "control_replay": false,
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F8",
+      "cause": "new recovery checker divided cancellation residual by near-zero internal RHS rather than sum of actual operation norms",
+      "failed_source": "1960195c",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v57/task042_v57_phase_tensor_setup_20261007T050223752068Z/result.json",
+        "sha256": "6648101a50d8b35696bcfe8e00cb67d5e56a34199a7ac98237807932f8a0bb05",
+        "root_cause": "local_rhs_near_zero_operation_scale"
+      },
+      "fix": "original 1e-10 operation gate with inside+trace+rhs norm sum; reconsume saved full matrices and recovery vectors only",
+      "original_gate_unchanged": true,
+      "new_LU": 0,
+      "new_reference_tables": 0,
+      "prior_PDE_affected": false
+    },
+    {
+      "id": "F9",
+      "failed_source": "b87191df68f0961e20d9bd7e055b73c1b05bb62c",
+      "failed_run": "results/task042/task042_v57_verify_cost_20261007T065715600242Z",
+      "cause": "regrouping identical complex sums changes near-zero residual; ratio wrongly compared against independently regrouped cancellation result",
+      "max_absolute_roundoff": 1.1102230246251565e-16,
+      "max_operation_scaled": 4.687236024036561e-20,
+      "saved_fixed_ratio_internal_difference": 0.0,
+      "fix": "verify original complex-sum identity on unchanged operation scale, and ratio against its corresponding saved residual; expose regrouping defect separately",
+      "science_affected": false,
+      "new_factor": 0,
+      "new_solve": 0,
+      "fix_source": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+      "retest": "tmp/task042/v57/aux_pre_12/tests.json",
+      "prior_PDE_affected": false
+    }
+  ],
+  "fees": "all failed launch/supervision/retests/replays retained in V57 ledger; implementation elapsed included in original fixed window",
+  "exact_unsupervised_repair_cpu_seconds": "unknown; no fabricated zero or exact bill",
+  "prior_journal_version_sha256": "759f0cc8c4748125795d23e5afb1fc26919e1bc348b8d1854dbf3903c85d5139"
+}

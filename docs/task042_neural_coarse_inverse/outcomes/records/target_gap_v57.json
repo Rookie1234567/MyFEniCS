@@ -1,0 +1,256 @@
+{
+  "parent": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_final_v56.json",
+    "sha256": "bcea773b6031337d57faa02a2da5ae5d99db1de643a5b89b56693bc8f81e9e8d"
+  },
+  "V56_scenarios_reused_without_new_layout": {
+    "count": 3,
+    "new_mesh_mode_planning": 0,
+    "scenario_not_accuracy_lower_bound": true,
+    "manual_inventory_not_required_physical_channel_proof": true
+  },
+  "measured_preparation": {
+    "B6": {
+      "case": {
+        "degree": 6,
+        "splits": [
+          1,
+          1,
+          2
+        ],
+        "cells": 160,
+        "independent": 104832,
+        "trace": 32832,
+        "internal": 72000,
+        "rows": 33660,
+        "complete_modes": 828
+      },
+      "run_source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "solution_array_sha256": "b37c4a36ca7d7d579b65d74aec530f0324478ff1d7ec763342dce66fd83ca9d9",
+      "complete_physical_dat_with_research_audits_wall_seconds": 1356.2550312620588,
+      "necessary_fresh_engine_cold_N1_seconds": "unknown exact; this dat includes research comparison/weak consumers; disjoint necessary stages are measured below",
+      "cold_reference_seconds": 11.933581467019394,
+      "all_actual_raw_classes": 26,
+      "raw_combination_and_IO_provider_seconds": 8.334131188923493,
+      "local_schur_seconds": 13.151483357185498,
+      "raw_saved_bytes": 323641812,
+      "actual_local_oriented_classes": 51,
+      "retained_local_Schur_LU_original_cache_bytes": {
+        "lu_bytes": 165331800,
+        "recovery_bytes": 158630400,
+        "rhs_trace_bytes": 158630400,
+        "rhs_projection_bytes": 1620000,
+        "solution_embedding_bytes": 0,
+        "residual_projection_bytes": 0,
+        "retained_schur_bytes": 152285184,
+        "retained_numeric_cache_bytes": 636497784
+      },
+      "timing": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 4.074508941033855,
+          "new_phase_all532_q47": 42.99450220703147,
+          "new_phase_all532_q63": 242.05744509981014,
+          "JIT_full_Ckappa_and_complete532_carrier": 92.78899307316169,
+          "physical_incident_RHS": 0.23503506393171847,
+          "cold_complete_phase_reference_15_grams": 11.93418339989148,
+          "complete_phase_raw_class_combination": 4.521128483815119,
+          "phase_provider_atomic_save_reopen": 3.557012916309759,
+          "condensation_local_factors": 52.193287384929135,
+          "h_sparse_symbolic_capacity": 2.1404754349496216,
+          "h_bounded_numeric_factor": 45.46727845212445,
+          "solve_and_affine_internal_recovery": 1.4541847340296954,
+          "fixed_refinement": 2.004326802911237,
+          "physical_E_H_curl_evaluation": 2.462449993006885,
+          "direct_volume_absorption_q23": 14.668201728025451,
+          "direct_volume_absorption_q31": 29.2220286950469,
+          "all532_power_and_volume_absorption": 0.4228927430231124,
+          "non_nested_common_physical_integrals_q23": 31.60637635202147,
+          "non_nested_common_physical_integrals_q31": 63.5484289098531,
+          "public_basix_complete_uncondensed_volume_q31": 314.91005428507924,
+          "saved_full828_boundary_q63_p6": 268.49458123813383
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 4.074508941033855,
+          "new_phase_all532_q47": 42.99450220703147,
+          "new_phase_all532_q63": 242.05744509981014,
+          "JIT_full_Ckappa_and_complete532_carrier": 92.78899307316169,
+          "physical_incident_RHS": 0.23503506393171847,
+          "cold_complete_phase_reference_15_grams": 11.93418339989148,
+          "complete_phase_raw_class_combination": 4.521128483815119,
+          "phase_provider_atomic_save_reopen": 3.557012916309759,
+          "condensation_local_factors": 60.27142878505401,
+          "h_sparse_symbolic_capacity": 2.1404754349496216,
+          "h_bounded_numeric_factor": 45.46727845212445,
+          "solve_and_affine_internal_recovery": 1.4541847340296954,
+          "fixed_refinement": 2.004326802911237,
+          "physical_E_H_curl_evaluation": 2.462449993006885,
+          "direct_volume_absorption_q23": 14.668201728025451,
+          "direct_volume_absorption_q31": 29.2220286950469,
+          "all532_power_and_volume_absorption": 44.313123166095465,
+          "non_nested_common_physical_integrals_q23": 31.60637635202147,
+          "non_nested_common_physical_integrals_q31": 63.5484289098531,
+          "public_basix_complete_uncondensed_volume_q31": 314.91005428507924,
+          "saved_full828_boundary_q63_p6": 268.49458123813383
+        },
+        "root_measured_seconds": 1230.7573759381194,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "sampled_tree_peak_bytes": 8231763968,
+      "vector_scope": {
+        "full_independent_complex128_bytes": 1677312,
+        "trace_port_complex128_bytes": 538560,
+        "interior_complex128_bytes": 1152000,
+        "hypothetical_34_trace_port_vectors_bytes": 18311040,
+        "hypothetical_34_full_vectors_bytes": 57028608,
+        "Krylov_actually_allocated": false,
+        "internal_restore_and_output_not_removed": true
+      },
+      "cold_policy": "new reference factory, raw combinations, condensation and new numeric factor for this case; retained OS/JIT hits, no factor reuse",
+      "matched_complete_old_cold_control": "unknown; no end-to-end speed ratio granted"
+    },
+    "Y6": {
+      "case": {
+        "degree": 6,
+        "splits": [
+          1,
+          2,
+          2
+        ],
+        "cells": 320,
+        "independent": 209664,
+        "trace": 65664,
+        "internal": 144000,
+        "rows": 66492,
+        "complete_modes": 828
+      },
+      "run_source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "solution_array_sha256": "60728968e0c40ec24dfb3963c5e5f69bc690437973d9054e28b394e69e7d6387",
+      "complete_physical_dat_with_research_audits_wall_seconds": 4692.1166042732075,
+      "necessary_fresh_engine_cold_N1_seconds": "unknown exact; this dat includes research comparison/weak consumers; disjoint necessary stages are measured below",
+      "cold_reference_seconds": 36.48004000890069,
+      "all_actual_raw_classes": 78,
+      "raw_combination_and_IO_provider_seconds": 130.7819758206606,
+      "local_schur_seconds": 76.14771690987982,
+      "raw_saved_bytes": 970925436,
+      "actual_local_oriented_classes": 111,
+      "retained_local_Schur_LU_original_cache_bytes": {
+        "lu_bytes": 359839800,
+        "recovery_bytes": 345254400,
+        "rhs_trace_bytes": 345254400,
+        "rhs_projection_bytes": 1620000,
+        "solution_embedding_bytes": 0,
+        "residual_projection_bytes": 0,
+        "retained_schur_bytes": 331444224,
+        "retained_numeric_cache_bytes": 1383412824
+      },
+      "timing": {
+        "exclusive_seconds": {
+          "mesh_materials_envelope_MPC": 12.863736700033769,
+          "new_phase_all532_q47": 102.57962992088869,
+          "new_phase_all532_q63": 1050.6428274470381,
+          "JIT_full_Ckappa_and_complete532_carrier": 162.144468649989,
+          "physical_incident_RHS": 0.9467238429933786,
+          "cold_complete_phase_reference_15_grams": 36.49338865908794,
+          "complete_phase_raw_class_combination": 102.06333829089999,
+          "phase_provider_atomic_save_reopen": 25.4111395413056,
+          "condensation_local_factors": 226.54072151286528,
+          "h_sparse_symbolic_capacity": 5.895041991025209,
+          "h_bounded_numeric_factor": 233.05461382190697,
+          "solve_and_affine_internal_recovery": 7.501437755068764,
+          "physical_E_H_curl_evaluation": 10.523434157017618,
+          "direct_volume_absorption_q23": 45.71108536608517,
+          "direct_volume_absorption_q31": 87.90406175819226,
+          "all532_power_and_volume_absorption": 0.4311235696077347,
+          "non_nested_common_physical_integrals_q23": 176.7360195631627,
+          "non_nested_common_physical_integrals_q31": 310.8525240528397,
+          "public_basix_complete_uncondensed_volume_q31": 706.1687937560491,
+          "saved_full828_boundary_q63_p6": 623.4970910998527,
+          "Y6_common_continuous_q23": 182.13725610496476,
+          "Y6_common_continuous_q31": 425.86942666606046
+        },
+        "inclusive_seconds_do_not_sum": {
+          "mesh_materials_envelope_MPC": 12.863736700033769,
+          "new_phase_all532_q47": 102.57962992088869,
+          "new_phase_all532_q63": 1050.6428274470381,
+          "JIT_full_Ckappa_and_complete532_carrier": 162.144468649989,
+          "physical_incident_RHS": 0.9467238429933786,
+          "cold_complete_phase_reference_15_grams": 36.49338865908794,
+          "complete_phase_raw_class_combination": 102.06333829089999,
+          "phase_provider_atomic_save_reopen": 25.4111395413056,
+          "condensation_local_factors": 354.01519934507087,
+          "h_sparse_symbolic_capacity": 5.895041991025209,
+          "h_bounded_numeric_factor": 233.05461382190697,
+          "solve_and_affine_internal_recovery": 7.501437755068764,
+          "physical_E_H_curl_evaluation": 10.523434157017618,
+          "direct_volume_absorption_q23": 45.71108536608517,
+          "direct_volume_absorption_q31": 87.90406175819226,
+          "all532_power_and_volume_absorption": 134.04627069388516,
+          "non_nested_common_physical_integrals_q23": 176.7360195631627,
+          "non_nested_common_physical_integrals_q31": 310.8525240528397,
+          "public_basix_complete_uncondensed_volume_q31": 706.1687937560491,
+          "saved_full828_boundary_q63_p6": 623.4970910998527,
+          "Y6_common_continuous_q23": 182.13725610496476,
+          "Y6_common_continuous_q31": 425.86942666606046
+        },
+        "root_measured_seconds": 4535.967884226935,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "sampled_tree_peak_bytes": 18129944576,
+      "vector_scope": {
+        "full_independent_complex128_bytes": 3354624,
+        "trace_port_complex128_bytes": 1063872,
+        "interior_complex128_bytes": 2304000,
+        "hypothetical_34_trace_port_vectors_bytes": 36171648,
+        "hypothetical_34_full_vectors_bytes": 114057216,
+        "Krylov_actually_allocated": false,
+        "internal_restore_and_output_not_removed": true
+      },
+      "cold_policy": "new reference factory, raw combinations, condensation and new numeric factor for this case; retained OS/JIT hits, no factor reuse",
+      "matched_complete_old_cold_control": "unknown; no end-to-end speed ratio granted"
+    }
+  },
+  "raw_sharing": "exact p/basis/unrounded width/material/kappa classes share reference integration; not global factor sharing",
+  "streaming_DtN_interface": {
+    "input": "canonical envelope boundary rows with Piola/orientation/MPC and physical reference plane",
+    "forward": "iterate bounded mode/tile blocks, extract all modal integrals then scatter complete traction",
+    "adjoint": "conjugate dual of the same extraction/scatter with all aliases retained",
+    "current_dense_row_by_mode_is_not_target_scalable": true,
+    "target_block_size_and_latency": "unknown",
+    "reuse_scope": "existing qualified interface only; no new dot boundary experiment"
+  },
+  "action_contract": {
+    "representation": "E=g*u, Ckappa=curl(u)+i*kappa cross u; envelope MPC",
+    "kappa": [
+      8.94046081729244,
+      0.7821889682108057,
+      0.0
+    ],
+    "mode_keys": "side,m,n,polarization,physical reference plane; all modes",
+    "operator": "independent uncondensed Ckappa volume + complete DtN",
+    "restore": "original total native envelope, nonzero internal particular retained",
+    "reference_inverse_in_this_space": "not qualified; no inheritance from another gauge/space"
+  },
+  "target_factor_fill": "unknown",
+  "target_iteration_count": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_complete_cold_N1_seconds": "unknown",
+  "accuracy": {
+    "B6_same_discrete_reproduction": true,
+    "Y6_main_increment": true,
+    "common_24_weak_witness_not_error_bound": true,
+    "cross_p_absolute_accuracy": false,
+    "continuum": false
+  },
+  "required_next_solver": "accurate phase Full3D original action with scalable iterative solver; no inherited reference-inverse step qualification",
+  "NN20": {
+    "trained": 0,
+    "qualified": false,
+    "necessary_condition": "f*V-H >= 0.2*T_best_non_neural at identical complete correctness; other resource compliant",
+    "complete_correctness_anchor_available": false,
+    "learning_object_selected": null
+  },
+  "hours48_qualified": false,
+  "target_new_allocations": 0
+}

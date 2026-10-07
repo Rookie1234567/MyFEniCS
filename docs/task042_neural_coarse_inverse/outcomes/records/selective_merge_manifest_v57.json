@@ -1,0 +1,91 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "status": "RESEARCH_OPT_IN_CANDIDATE_NOT_DEFAULT",
+      "files": [
+        "src/solvers/hcurl_affine_phase_tensor.py",
+        "src/solvers/phase_reference_provider.py"
+      ],
+      "numerical_behavior": "same complete raw phase Maxwell tensor in bounded affine/scalar/real-kappa domain; no direction/MPC here",
+      "dependencies": [
+        "src/solvers/hcurl_affine_isotropic_tensor.py",
+        "src/solvers/phase_tensor_checkpoint.py",
+        "src/solvers/phase_raw_tensor_reader.py"
+      ],
+      "tests": "11 targeted + 122 saved full-class comparisons + B6 same-discrete reproduction + Y6 original audit",
+      "fresh_PDE_source": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "suggested_order": 2
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "status": "EXPLICIT_V57_NAMESPACE_ONLY",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py",
+        "src/solvers/common_weak_phase_scope.py"
+      ],
+      "numerical_behavior": "new fixed scope and one-run routing; old defaults unchanged",
+      "dependencies": [
+        "src/solvers/scattering_accuracy_scope.py",
+        "benchmarks/subreaper_watchdog.py"
+      ],
+      "tests": "5 dat validate + formal source/resource receipts",
+      "suggested_order": 3
+    },
+    {
+      "group": "checker/benchmark",
+      "status": "RESEARCH_SAVED_ARRAY_AUDIT",
+      "files": [
+        "benchmarks/collect_common_weak_phase.py",
+        "benchmarks/qualify_common_weak_phase.py",
+        "src/test/test_common_weak_phase.py",
+        "benchmarks/collect_phase_explicit_accuracy.py"
+      ],
+      "numerical_behavior": "recomputes saved identities/power/field/absorption/inventory; no solver",
+      "tests": "including finite cancellation, quadrature-negative and missing inventory fixtures; formal VERIFY",
+      "suggested_order": 4
+    },
+    {
+      "group": "compact evidence/docs",
+      "status": "RETAIN_POSITIVE_AND_NEGATIVE",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v57.md",
+        "docs/task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v57.json"
+      ],
+      "numerical_behavior": "none",
+      "tests": "final 15 documentation contracts and history suffix checks",
+      "suggested_order": 1
+    },
+    {
+      "group": "research-only",
+      "status": "NOT_ABSOLUTE_ACCURACY_CERTIFICATE",
+      "files": [
+        "src/solvers/common_continuous_weak.py",
+        "src/solvers/common_weak_phase.py",
+        "input/task042_neural_coarse_inverse/*v57*",
+        "src/solvers/phase_explicit_accuracy.py",
+        "src/solvers/phase_notch_hp.py"
+      ],
+      "numerical_behavior": "bounded continuous diagnosis and two opt-in micro solves; exact existing mode/case routing",
+      "tests": "analytic control/perturbation + D/B6/Y6/VERIFY",
+      "suggested_order": "after task approval; no promotion of accuracy or target scale"
+    },
+    {
+      "group": "do-not-merge",
+      "status": "IGNORED_RAW_NOT_GIT",
+      "files": [
+        "benchmarks/artifacts/task042/v57",
+        "tmp/task042/v57",
+        "results/task042/*v57*"
+      ],
+      "numerical_behavior": "field/tensor/CSR/cache/raw evidence only",
+      "tests": "hash-bound ignored inventory",
+      "suggested_order": "never whole-research-branch merge"
+    }
+  ],
+  "merge_approved": false,
+  "old_global_p4_route_closed": true,
+  "production_defaults_unchanged": true
+}

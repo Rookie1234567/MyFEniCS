@@ -1,0 +1,311 @@
+{
+  "physical": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "runs": [
+    {
+      "role": "D",
+      "source_sha": "12880701b997ddc31d2b2599eaadf8833adcde32",
+      "input_sha256": "97da3dfa3225e8f05753f709f8cb64ac386f8518d12d2a32f61dfef0f1f4ba71",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "870b1bf84c250e9afe13be273d22ccec99a9fe604534134bccde8eeb9486dbe6",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "D",
+      "source_sha": "e6957db7459b3e8e33438e7720d07c89ccb55fd7",
+      "input_sha256": "97da3dfa3225e8f05753f709f8cb64ac386f8518d12d2a32f61dfef0f1f4ba71",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "870b1bf84c250e9afe13be273d22ccec99a9fe604534134bccde8eeb9486dbe6",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "D",
+      "source_sha": "e24056b5c88b9480055aef3951370f8a510001d6",
+      "input_sha256": "97da3dfa3225e8f05753f709f8cb64ac386f8518d12d2a32f61dfef0f1f4ba71",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "870b1bf84c250e9afe13be273d22ccec99a9fe604534134bccde8eeb9486dbe6",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "K",
+      "source_sha": "425ff629018ff7175c51803a0df5be6dc4975a2b",
+      "input_sha256": "b841bd5d6eb87c1a757d37fec6692f6f873ee64a8df27c58b1ef15c375b29b2b",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "fb1340a64b65df79aa204d5faadaf6454add67fe19f1faaf3dd6a0ca9472a628",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "K",
+      "source_sha": "81c11eb3889b232c6857b0ec9fcb456d5b446320",
+      "input_sha256": "b841bd5d6eb87c1a757d37fec6692f6f873ee64a8df27c58b1ef15c375b29b2b",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "fb1340a64b65df79aa204d5faadaf6454add67fe19f1faaf3dd6a0ca9472a628",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "K",
+      "source_sha": "f804cde930e1a5b79feade8821f4f724b080029b",
+      "input_sha256": "b841bd5d6eb87c1a757d37fec6692f6f873ee64a8df27c58b1ef15c375b29b2b",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "fb1340a64b65df79aa204d5faadaf6454add67fe19f1faaf3dd6a0ca9472a628",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "K",
+      "source_sha": "1960195c5a304239dc0fe52f26bef271172ca3ab",
+      "input_sha256": "b841bd5d6eb87c1a757d37fec6692f6f873ee64a8df27c58b1ef15c375b29b2b",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "fb1340a64b65df79aa204d5faadaf6454add67fe19f1faaf3dd6a0ca9472a628",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "K",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "input_sha256": "b841bd5d6eb87c1a757d37fec6692f6f873ee64a8df27c58b1ef15c375b29b2b",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "fb1340a64b65df79aa204d5faadaf6454add67fe19f1faaf3dd6a0ca9472a628",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "B6",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "input_sha256": "9aa53986ce0e6b7d86f7d4800e6059bcd62d2063ec3322ca9a70323bc371c9ee",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "c33b14f95a107a59c668cd96ffc402d818c341d083299d007a7e664dfe43f605",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "Y6",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "input_sha256": "b0efbee47847555522ca4355d4e10721a5031a24c53a10cffbbeb10c98e71b71",
+      "physical_sha256": "b17451a9fecf8dfdf79799829f9c0a33cb950687e2c4e428b163f8097b4afed4",
+      "resolved_sha256": "a0de54ef41a6f3e11937d8983c95e4433ba03e3d5edfd174f3e40fcb01b594d6",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "b87191df68f0961e20d9bd7e055b73c1b05bb62c",
+      "input_sha256": "929f52ca9b52db429b9e06ee55a3629792fd8e79562e07d0481a0d8505235fda",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "b38e6def26e9ef88723635599582833405b5aec0117d3f26871fea1fdc6f6b9e",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+      "input_sha256": "929f52ca9b52db429b9e06ee55a3629792fd8e79562e07d0481a0d8505235fda",
+      "physical_sha256": "26386d0c5360ce8450084c90fdeb68288ff53632881d4509ef11ce2f82e38fb6",
+      "resolved_sha256": "b38e6def26e9ef88723635599582833405b5aec0117d3f26871fea1fdc6f6b9e",
+      "mode": "complete828",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    }
+  ],
+  "frozen_saved_parents": {
+    "S": {
+      "pointer": "benchmarks/artifacts/task042/v56/S.json",
+      "sha256": "c766f03f5a7d45489e6b8ed9e8548864e75eba976757880ac57c8e0f026729ee",
+      "result_sha256": "703942ff1f5cfc4f4157fe2e39a0f517273342a9a013119c3f02ee569176113f"
+    },
+    "T6": {
+      "pointer": "benchmarks/artifacts/task042/v56/T6.json",
+      "sha256": "82c25406ab479e6706a874a766632a66515c7dd90b3fe74cdceed676296334c0",
+      "result_sha256": "ffa83f10649975def46599d0750fadb649a2326fbbdb4a6bf158a9245453d168"
+    }
+  },
+  "raw_parent_hashes": {
+    "p7": {
+      "path": "benchmarks/artifacts/task042/v53/task042_v53_notch_z2_p7_20261006T023753707700Z/raw_tensor/manifest.json",
+      "sha256": "fc608be5647d676afc0d96b9f07e06a44015255830df93f0fbad300276efa780",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "plan_path": "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json"
+    },
+    "p6_Z4": {
+      "path": "benchmarks/artifacts/task042/v53/task042_v53_notch_z4_p6_20261006T012131753864Z/raw_tensor/manifest.json",
+      "sha256": "3c041f228299d8bf726ae7de9cd680f70f45fe667bc133c1bb563c1ce581c4bc",
+      "source_sha": "eec0e75313c91d3daf4d22e72cf04167e58f31f9",
+      "plan_path": "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json"
+    },
+    "p6_Z2": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v54/task042_v54_notch_z2_p6_m828_20261006T085359294096Z/raw_tensor/manifest.json",
+      "sha256": "be0a0f0caffeaf485c8c2e455624a220967c192bc292a57e9c9b084c02615ac0",
+      "source_sha": "65484196065491b4714068b7472aa34f815ae299",
+      "plan_path": "input/task042_neural_coarse_inverse/p_order_dtn_v54.json"
+    }
+  }
+}

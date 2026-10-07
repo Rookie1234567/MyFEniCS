@@ -1,0 +1,85 @@
+{
+  "kind": "V57_INCREMENTAL_HASH_BOUND_FULL_INDEX",
+  "full_index": {
+    "path": "tmp/task042/v57/aux_post_collect01/records/source_bindings_v57.json",
+    "sha256": "7bdfaa9a2d7452b2aa1276cbb12fd9e40862a41493aae14488d7236c99058b65",
+    "bytes": 612312
+  },
+  "entries": 1749,
+  "member_count": 0,
+  "file_bytes": 0,
+  "groups": {
+    "43396238227133bf2a7c2e05ae3c50cb70b03569": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "12880701b997ddc31d2b2599eaadf8833adcde32": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "e6957db7459b3e8e33438e7720d07c89ccb55fd7": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "e24056b5c88b9480055aef3951370f8a510001d6": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "425ff629018ff7175c51803a0df5be6dc4975a2b": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "81c11eb3889b232c6857b0ec9fcb456d5b446320": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "f804cde930e1a5b79feade8821f4f724b080029b": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "1960195c5a304239dc0fe52f26bef271172ca3ab": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "aa8c46e50e125e18032a46e1afcc40f21718804a": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "b87191df68f0961e20d9bd7e055b73c1b05bb62c": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    },
+    "f0cc6ee829a7388688dd84d0b755fb40c35716fc": {
+      "files": 159,
+      "bytes": 0,
+      "members": 0
+    }
+  },
+  "full_members_and_all_paths_are_in_ignored_index": true,
+  "no_historical_rescan": true,
+  "run_sources": [
+    "12880701b997ddc31d2b2599eaadf8833adcde32",
+    "1960195c5a304239dc0fe52f26bef271172ca3ab",
+    "425ff629018ff7175c51803a0df5be6dc4975a2b",
+    "43396238227133bf2a7c2e05ae3c50cb70b03569",
+    "81c11eb3889b232c6857b0ec9fcb456d5b446320",
+    "aa8c46e50e125e18032a46e1afcc40f21718804a",
+    "b87191df68f0961e20d9bd7e055b73c1b05bb62c",
+    "e24056b5c88b9480055aef3951370f8a510001d6",
+    "e6957db7459b3e8e33438e7720d07c89ccb55fd7",
+    "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+    "f804cde930e1a5b79feade8821f4f724b080029b"
+  ],
+  "unique_source_blobs": 185,
+  "clean_git_show_binding_verified": true
+}
