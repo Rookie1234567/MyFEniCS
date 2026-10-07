@@ -32,11 +32,15 @@ def weak_check(r,*,frozen_scales=None):
         if relative(res-v['residual'],np.maximum(np.abs(terms).sum(axis=0),1e-300))>1e-12:raise ValueError('continuous complex residual sum')
         if relative(v['region_terms'].sum(axis=0)-terms[:5],terms[:5])>1e-12:raise ValueError('continuous material contribution sum')
         if relative(v['permode_DtN'].sum(axis=0)-terms[5],terms[5])>1e-12:raise ValueError('continuous 828 boundary sum')
-        if not np.allclose(v['fixed_scaled'],np.abs(res)/v['fixed_scale'],rtol=1e-13,atol=1e-300):raise ValueError('common fixed scale')
+        # The independently regrouped sum is checked above against the original
+        # operation scale. Stored ratio must match its own saved residual; a
+        # tiny cancellation result is not a floating-point operation scale.
+        if not np.allclose(v['fixed_scaled'],np.abs(v['residual'])/v['fixed_scale'],rtol=1e-13,atol=1e-300):raise ValueError('common fixed scale')
         if not np.all(np.isfinite(v['fixed_scale'])) or np.any(v['fixed_scale']<=0):raise ValueError('nonpositive continuous scale')
         if frozen_scales is not None and row['q'] in frozen_scales and not np.allclose(v['fixed_scale'],frozen_scales[row['q']],rtol=1e-13,atol=0):raise ValueError('four candidates must share the frozen background scale')
         out.append(dict(q=row['q'],maximum_fixed_scaled=float(np.max(np.abs(res)/v['fixed_scale'])),
-            maximum_absolute=float(np.max(np.abs(res))),maximum_operation_scaled=float(np.max(np.abs(res)/v['operation_scale'])),arrays_sha256=row['arrays']['sha256']))
+            maximum_absolute=float(np.max(np.abs(res))),maximum_operation_scaled=float(np.max(np.abs(res)/v['operation_scale'])),
+            maximum_regrouping_operation_scaled=float(np.max(np.abs(res-v['residual'])/v['operation_scale'])),arrays_sha256=row['arrays']['sha256']))
     return out
 
 

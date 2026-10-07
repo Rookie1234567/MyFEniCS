@@ -160,5 +160,20 @@ class PhaseTests(unittest.TestCase):
             r['rows'][0]['q']=22
             with self.assertRaises(ValueError):weak_quadrature_rows(r)
 
+    def test_cancelled_weak_sum_uses_operation_identity_not_result_roundoff(self):
+        from unittest.mock import patch
+        from benchmarks.collect_common_weak_phase import weak_check
+        terms=np.zeros((7,24),complex);terms[0]=.1+.3j;terms[5]=.2+.1j;terms[6]=.3+.4j
+        res=terms[6]-terms[5]-terms[:5].sum(axis=0)
+        per_mode=np.zeros((828,24),complex);per_mode[0]=terms[5]
+        regions=np.zeros((3,5,24),complex);regions[0]=terms[:5]
+        values=dict(terms=terms,residual=res,permode_DtN=per_mode,region_terms=regions,
+            fixed_scale=np.ones(24),fixed_scaled=np.abs(res),operation_scale=np.full(24,2.))
+        with patch('benchmarks.collect_common_weak_phase.checked_arrays',return_value=values):
+            result=weak_check(dict(rows=[dict(q=31,arrays=dict(sha256='synthetic'))]))
+            self.assertLess(result[0]['maximum_regrouping_operation_scaled'],1e-15)
+            values['fixed_scaled']*=2
+            with self.assertRaises(ValueError):weak_check(dict(rows=[dict(q=31,arrays=dict(sha256='synthetic'))]))
+
 
 if __name__=='__main__':unittest.main()
