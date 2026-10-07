@@ -74,11 +74,14 @@ def _qualified_constraint_mode(
     tetrahedral: bool = False,
     fixed_target_high_order: bool = False,
     finite_authority_degree7: bool = False,
+    finite_authority_interior8: bool = False,
 ) -> str:
     """Return the stable public mode name for a qualified N1curl degree."""
 
     if degree == 1:
         return "topological_edges_p1"
+    if degree==8 and finite_authority_interior8 and fixed_target_high_order and not tetrahedral:
+        return 'topological_trace_p8'
     if degree==7 and finite_authority_degree7 and fixed_target_high_order and not tetrahedral:
         return "topological_trace_p7"
     if degree in {2, 3, 4} or (
@@ -94,7 +97,7 @@ def _qualified_constraint_mode(
     )
 
 
-def _resolve_constraint_mode(V, cfg: SimulationConfig3D, *, finite_authority_degree7=False) -> str:
+def _resolve_constraint_mode(V, cfg: SimulationConfig3D, *, finite_authority_degree7=False, finite_authority_interior8=False) -> str:
     requested = cfg.floquet_constraint_mode_requested
     degree = cfg.nedelec_trace_degree_resolved
     tetrahedral = V is not None and _mesh_is_tetrahedron(V.mesh)
@@ -110,6 +113,7 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D, *, finite_authority_deg
             tetrahedral=tetrahedral,
             fixed_target_high_order=fixed_target_high_order,
             finite_authority_degree7=finite_authority_degree7,
+            finite_authority_interior8=finite_authority_interior8,
         )
     if requested == "topological_trace":
         if degree not in {1, 2, 3, 4} and not (
@@ -1847,7 +1851,7 @@ def _build_double_floquet_mpc_high_order(
     cfg: SimulationConfig3D,
     dolfinx_mpc,
     log=None,
-    *,finite_authority_degree7=False,
+    *,finite_authority_degree7=False,finite_authority_interior8=False,
 ) -> DoubleFloquet3DData:
     """Create the qualified phase-cacheable high-order Floquet MPC."""
 
@@ -1857,7 +1861,7 @@ def _build_double_floquet_mpc_high_order(
         cfg.stage_case == "stage4_block_grating"
         and cfg.geometry_kind == "rectangular_block_grating"
     )
-    if degree not in {1, 2, 3, 4} and not (degree==7 and finite_authority_degree7 and fixed_target_high_order and not tetrahedral) and not (
+    if degree not in {1, 2, 3, 4} and not (degree==7 and finite_authority_degree7 and fixed_target_high_order and not tetrahedral) and not (degree==8 and finite_authority_interior8 and fixed_target_high_order and not tetrahedral) and not (
         degree in {5, 6}
         and (tetrahedral or fixed_target_high_order)
     ):
@@ -1903,6 +1907,7 @@ def _build_double_floquet_mpc_high_order(
         tetrahedral=tetrahedral,
         fixed_target_high_order=fixed_target_high_order,
         finite_authority_degree7=finite_authority_degree7,
+            finite_authority_interior8=finite_authority_interior8,
     )
 
     if log is not None:
@@ -2241,7 +2246,7 @@ def _build_double_floquet_mpc_p1_legacy(
 
 
 def build_double_floquet_mpc(
-    V, mesh_data, cfg: SimulationConfig3D, log=None, *,finite_authority_degree7=False
+    V, mesh_data, cfg: SimulationConfig3D, log=None, *,finite_authority_degree7=False,finite_authority_interior8=False
 ) -> DoubleFloquet3DData:
     """Create qualified distributed sparse double-periodic Floquet constraints."""
 
@@ -2252,7 +2257,7 @@ def build_double_floquet_mpc(
             "The 3D Floquet path requires dolfinx_mpc, but it is not installed."
         ) from exc
 
-    constraint_mode_resolved = _resolve_constraint_mode(V, cfg,finite_authority_degree7=finite_authority_degree7)
+    constraint_mode_resolved = _resolve_constraint_mode(V, cfg,finite_authority_degree7=finite_authority_degree7,finite_authority_interior8=finite_authority_interior8)
     if log is not None:
         log(
             "3D Floquet constraint mode requested = "
@@ -2266,10 +2271,11 @@ def build_double_floquet_mpc(
         "topological_trace_p4",
         "topological_trace_p5",
         "topological_trace_p6",
-    } and not (finite_authority_degree7 and constraint_mode_resolved=="topological_trace_p7"):
+    } and not (finite_authority_degree7 and constraint_mode_resolved=="topological_trace_p7") and not (finite_authority_interior8 and constraint_mode_resolved=="topological_trace_p8"):
         raise RuntimeError(
             f"Unsupported qualified Floquet mode {constraint_mode_resolved!r}."
         )
     return _build_double_floquet_mpc_high_order(
-        V, mesh_data, cfg, dolfinx_mpc, log,finite_authority_degree7=finite_authority_degree7
+        V, mesh_data, cfg, dolfinx_mpc, log,finite_authority_degree7=finite_authority_degree7,
+        finite_authority_interior8=finite_authority_interior8
     )

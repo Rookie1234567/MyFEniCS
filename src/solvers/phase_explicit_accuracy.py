@@ -31,7 +31,7 @@ def configuration(case,degree=4,grid='ORIGINAL'):
     return cfg
 
 
-def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_descriptor=None,finite_authority_degree7=False,numerical_carrier=None):
+def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_descriptor=None,finite_authority_degree7=False,finite_authority_interior8=False,numerical_carrier=None):
     from mpi4py import MPI
     from dolfinx import mesh as dxmesh,fem,default_real_type
     from basix.ufl import element
@@ -55,7 +55,7 @@ def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_de
         tags=dxmesh.meshtags(mesh,3,tags.indices,values)
         V=fem.functionspace(mesh,element('N1curl',mesh.basix_cell(),degree,dtype=default_real_type))
         data=SimpleNamespace(mesh=mesh,cell_tags=tags,facet_tags=facets)
-        floquet=build_double_floquet_mpc(V,data,envelope_configuration(cfg,k),finite_authority_degree7=finite_authority_degree7)
+        floquet=build_double_floquet_mpc(V,data,envelope_configuration(cfg,k),finite_authority_degree7=finite_authority_degree7,finite_authority_interior8=finite_authority_interior8)
     return cfg,dict(mesh=mesh,mesh_data=data,spaces={degree:V},floquets={degree:floquet},numerical_carrier=k),dict(cell_centers=centers,cell_tags=values,regular_tags=regular,geometry_x=mesh.geometry.x.copy(),geometry_dofmap=mesh.geometry.dofmap.copy())
 
 

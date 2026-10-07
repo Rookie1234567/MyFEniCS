@@ -60,9 +60,9 @@ def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
     """
 
     degree = int(degree)
-    if degree not in {1, 2, 3, 4, 5, 6, 7}:
+    if degree not in {1, 2, 3, 4, 5, 6, 7, 8}:
         raise ValueError(
-            f"Hexa N1curl entity kernel supports degrees 1--7, got {degree}."
+            f"Hexa N1curl entity kernel supports degrees 1--8, got {degree}."
         )
     hexa = element("N1curl", "hexahedron", degree).basix_element
     quadrilateral = element("N1curl", "quadrilateral", degree).basix_element
