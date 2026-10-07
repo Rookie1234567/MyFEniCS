@@ -1,0 +1,374 @@
+{
+  "initial_snapshot": {
+    "path": "benchmarks/artifacts/task042/v56/saved_science/target_gap_and_cost.json",
+    "bytes": 12531,
+    "sha256": "d2c992fb3af0d385208cc3d8687871a7a7b85b201f1cd8ea6c7353350fab83fa"
+  },
+  "history_preserved": true,
+  "bridge_scenarios": [
+    {
+      "scale_fraction": "14/135",
+      "lambda_nm": 0.7,
+      "periods_nm": [
+        5.185185185185185,
+        2.5925925925925926
+      ],
+      "z_nm": [
+        -1.037037037037037,
+        13.481481481481481
+      ],
+      "notch_box_nm": [
+        2.5925925925925926,
+        3.474074074074074,
+        0.6481481481481481,
+        1.9444444444444444,
+        4.148148148148148,
+        8.296296296296296
+      ],
+      "Nx": 8,
+      "Ny": 8,
+      "Nz": 40,
+      "physical_h_scenario": "ceil(scale/base_scale) subdivision factor, based on p7/Z4; not accuracy qualified",
+      "modes": 3060,
+      "mode_rule": {
+        "policy": "manual",
+        "m": [
+          -22,
+          22
+        ],
+        "n": [
+          -8,
+          8
+        ],
+        "rule": "same physical reciprocal cutoff, rounded outward"
+      },
+      "actual_mode_inventory": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v56/saved_science/bridge_s14_physical_mode_inventory.npz",
+        "sha256": "4df9e596314b68ec388700c0c2cf134e94a6da6fd4a1d0e7464cdc185ca7bb42",
+        "members": {
+          "keys": {
+            "shape": [
+              3060,
+              4
+            ],
+            "dtype": "int32",
+            "sha256": "6b60157d8194ba63760e2d3f35cc5733d19429ab114d66e0dafad960b564efe5"
+          },
+          "wavenumbers": {
+            "shape": [
+              3060,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "f18e9d6e0cfffa0956040d7e2b419a1aeb9537281e32164a7addf8945d60588d"
+          }
+        }
+      },
+      "layouts": {
+        "6": {
+          "cells": 2560,
+          "independent_FE": 1663488,
+          "trace": 511488,
+          "internal": 1152000,
+          "one_full_complex128_vector_bytes": 26615808,
+          "one_trace_vector_bytes": 8183808,
+          "Krylov_32_inventory_scenario_bytes": 904937472,
+          "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+          "raw_tensor_one_local_class_bytes": 12446784,
+          "local_recovery_dense_one_cell_bytes": 6350400,
+          "complete_modes": 3060,
+          "condensed_rows": 514548,
+          "mode_vector_bytes": 48960,
+          "unstreamed_C_D_dense_bytes": 50084904960,
+          "streamed_DtN_boundary_workspace": "depends on actual boundary partition, batching and shared tables; unknown",
+          "canonical_two_port_boundary_rows": 9216,
+          "two_port_support_dense_C_plus_D_bytes": 902430720,
+          "dense_bound_note": "derived top/bottom canonical trace support for structured periodic xy, open z; full-trace dense field is a wider upper bound, not actual storage",
+          "target_boundary_router_measured": false
+        },
+        "7": {
+          "cells": 2560,
+          "independent_FE": 2640512,
+          "trace": 705152,
+          "internal": 1935360,
+          "one_full_complex128_vector_bytes": 42248192,
+          "one_trace_vector_bytes": 11282432,
+          "Krylov_32_inventory_scenario_bytes": 1436438528,
+          "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+          "raw_tensor_one_local_class_bytes": 28901376,
+          "local_recovery_dense_one_cell_bytes": 16257024,
+          "complete_modes": 3060,
+          "condensed_rows": 708212,
+          "mode_vector_bytes": 48960,
+          "unstreamed_C_D_dense_bytes": 69048483840,
+          "streamed_DtN_boundary_workspace": "depends on actual boundary partition, batching and shared tables; unknown",
+          "canonical_two_port_boundary_rows": 12544,
+          "two_port_support_dense_C_plus_D_bytes": 1228308480,
+          "dense_bound_note": "derived top/bottom canonical trace support for structured periodic xy, open z; full-trace dense field is a wider upper bound, not actual storage",
+          "target_boundary_router_measured": false
+        }
+      },
+      "factor_fill": "unknown",
+      "iteration_count": "unknown",
+      "simultaneous_tree_RSS": "unknown",
+      "hours48_qualified": false,
+      "target_mesh_or_vectors_allocated": false
+    },
+    {
+      "scale_fraction": "28/135",
+      "lambda_nm": 0.7,
+      "periods_nm": [
+        10.37037037037037,
+        5.185185185185185
+      ],
+      "z_nm": [
+        -2.074074074074074,
+        26.962962962962962
+      ],
+      "notch_box_nm": [
+        5.185185185185185,
+        6.948148148148148,
+        1.2962962962962963,
+        3.888888888888889,
+        8.296296296296296,
+        16.59259259259259
+      ],
+      "Nx": 16,
+      "Ny": 16,
+      "Nz": 80,
+      "physical_h_scenario": "ceil(scale/base_scale) subdivision factor, based on p7/Z4; not accuracy qualified",
+      "modes": 11748,
+      "mode_rule": {
+        "policy": "manual",
+        "m": [
+          -44,
+          44
+        ],
+        "n": [
+          -16,
+          16
+        ],
+        "rule": "same physical reciprocal cutoff, rounded outward"
+      },
+      "actual_mode_inventory": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v56/saved_science/bridge_s28_physical_mode_inventory.npz",
+        "sha256": "2370535770b136a309732568dffab137d68689c38cd26f716f7b985ef0938492",
+        "members": {
+          "keys": {
+            "shape": [
+              11748,
+              4
+            ],
+            "dtype": "int32",
+            "sha256": "682acf7f11875e4796ef04cd40c26b33cf4ec138bf9ec29c6208a366a2f5dd9f"
+          },
+          "wavenumbers": {
+            "shape": [
+              11748,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "7d3950a197039de051edb64ea5c3d8d39542ec478fb1ca7d46bf688383e2dc88"
+          }
+        }
+      },
+      "layouts": {
+        "6": {
+          "cells": 20480,
+          "independent_FE": 13289472,
+          "trace": 4073472,
+          "internal": 9216000,
+          "one_full_complex128_vector_bytes": 212631552,
+          "one_trace_vector_bytes": 65175552,
+          "Krylov_32_inventory_scenario_bytes": 7229472768,
+          "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+          "raw_tensor_one_local_class_bytes": 12446784,
+          "local_recovery_dense_one_cell_bytes": 6350400,
+          "complete_modes": 11748,
+          "condensed_rows": 4085220,
+          "mode_vector_bytes": 187968,
+          "unstreamed_C_D_dense_bytes": 1531364769792,
+          "streamed_DtN_boundary_workspace": "depends on actual boundary partition, batching and shared tables; unknown",
+          "canonical_two_port_boundary_rows": 36864,
+          "two_port_support_dense_C_plus_D_bytes": 13858504704,
+          "dense_bound_note": "derived top/bottom canonical trace support for structured periodic xy, open z; full-trace dense field is a wider upper bound, not actual storage",
+          "target_boundary_router_measured": false
+        },
+        "7": {
+          "cells": 20480,
+          "independent_FE": 21099008,
+          "trace": 5616128,
+          "internal": 15482880,
+          "one_full_complex128_vector_bytes": 337584128,
+          "one_trace_vector_bytes": 89858048,
+          "Krylov_32_inventory_scenario_bytes": 11477860352,
+          "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+          "raw_tensor_one_local_class_bytes": 28901376,
+          "local_recovery_dense_one_cell_bytes": 16257024,
+          "complete_modes": 11748,
+          "condensed_rows": 5627876,
+          "mode_vector_bytes": 187968,
+          "unstreamed_C_D_dense_bytes": 2111304695808,
+          "streamed_DtN_boundary_workspace": "depends on actual boundary partition, batching and shared tables; unknown",
+          "canonical_two_port_boundary_rows": 50176,
+          "two_port_support_dense_C_plus_D_bytes": 18862964736,
+          "dense_bound_note": "derived top/bottom canonical trace support for structured periodic xy, open z; full-trace dense field is a wider upper bound, not actual storage",
+          "target_boundary_router_measured": false
+        }
+      },
+      "factor_fill": "unknown",
+      "iteration_count": "unknown",
+      "simultaneous_tree_RSS": "unknown",
+      "hours48_qualified": false,
+      "target_mesh_or_vectors_allocated": false
+    },
+    {
+      "scale_fraction": "135/135",
+      "lambda_nm": 0.7,
+      "periods_nm": [
+        50.0,
+        25.0
+      ],
+      "z_nm": [
+        -10.0,
+        130.0
+      ],
+      "notch_box_nm": [
+        25.0,
+        33.49999999999999,
+        6.25,
+        18.75,
+        39.99999999999999,
+        79.99999999999999
+      ],
+      "Nx": 80,
+      "Ny": 80,
+      "Nz": 400,
+      "physical_h_scenario": "ceil(scale/base_scale) subdivision factor, based on p7/Z4; not accuracy qualified",
+      "modes": 268156,
+      "mode_rule": {
+        "policy": "manual",
+        "m": [
+          -213,
+          213
+        ],
+        "n": [
+          -78,
+          78
+        ],
+        "rule": "same physical reciprocal cutoff, rounded outward"
+      },
+      "actual_mode_inventory": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v56/saved_science/bridge_s135_physical_mode_inventory.npz",
+        "sha256": "eee4bf0f02d84a5eff5fb603b9ab79ae0cf944dd2a7a51115780e7d2232aad67",
+        "members": {
+          "keys": {
+            "shape": [
+              268156,
+              4
+            ],
+            "dtype": "int32",
+            "sha256": "5f7a7d7858fc311b7017267ecbb8c1172b7b6ae808d0be4e4ca8c51c54910859"
+          },
+          "wavenumbers": {
+            "shape": [
+              268156,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "bb573113b866fc24156b58c8ee8607b169638f0fa01b9ad865f8e5193ce72734"
+          }
+        }
+      },
+      "layouts": {
+        "6": {
+          "cells": 2560000,
+          "independent_FE": 1659340800,
+          "trace": 507340800,
+          "internal": 1152000000,
+          "one_full_complex128_vector_bytes": 26549452800,
+          "one_trace_vector_bytes": 8117452800,
+          "Krylov_32_inventory_scenario_bytes": 902681395200,
+          "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+          "raw_tensor_one_local_class_bytes": 12446784,
+          "local_recovery_dense_one_cell_bytes": 6350400,
+          "complete_modes": 268156,
+          "condensed_rows": 507608956,
+          "mode_vector_bytes": 4290496,
+          "unstreamed_C_D_dense_bytes": 4353487346073600,
+          "streamed_DtN_boundary_workspace": "depends on actual boundary partition, batching and shared tables; unknown",
+          "canonical_two_port_boundary_rows": 921600,
+          "two_port_support_dense_C_plus_D_bytes": 7908242227200,
+          "dense_bound_note": "derived top/bottom canonical trace support for structured periodic xy, open z; full-trace dense field is a wider upper bound, not actual storage",
+          "target_boundary_router_measured": false
+        },
+        "7": {
+          "cells": 2560000,
+          "independent_FE": 2634867200,
+          "trace": 699507200,
+          "internal": 1935360000,
+          "one_full_complex128_vector_bytes": 42157875200,
+          "one_trace_vector_bytes": 11192115200,
+          "Krylov_32_inventory_scenario_bytes": 1433367756800,
+          "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+          "raw_tensor_one_local_class_bytes": 28901376,
+          "local_recovery_dense_one_cell_bytes": 16257024,
+          "complete_modes": 268156,
+          "condensed_rows": 699775356,
+          "mode_vector_bytes": 4290496,
+          "unstreamed_C_D_dense_bytes": 6002465687142400,
+          "streamed_DtN_boundary_workspace": "depends on actual boundary partition, batching and shared tables; unknown",
+          "canonical_two_port_boundary_rows": 1254400,
+          "two_port_support_dense_C_plus_D_bytes": 10763996364800,
+          "dense_bound_note": "derived top/bottom canonical trace support for structured periodic xy, open z; full-trace dense field is a wider upper bound, not actual storage",
+          "target_boundary_router_measured": false
+        }
+      },
+      "factor_fill": "unknown",
+      "iteration_count": "unknown",
+      "simultaneous_tree_RSS": "unknown",
+      "hours48_qualified": false,
+      "target_mesh_or_vectors_allocated": false
+    }
+  ],
+  "action_contract": {
+    "representation": "E=g*u, Ckappa=curl(u)+i*kappa cross u; envelope MPC",
+    "kappa": [
+      8.94046081729244,
+      0.7821889682108057,
+      0.0
+    ],
+    "mode_keys": "side,m,n,polarization,physical reference plane; all modes",
+    "operator": "independent uncondensed Ckappa volume + complete DtN",
+    "restore": "original total native envelope, nonzero internal particular retained",
+    "reference_inverse_in_this_space": "not qualified; no inheritance from another gauge/space"
+  },
+  "h7_formula_calibration": {
+    "cells": 320,
+    "independent_FE": 330848,
+    "trace": 88928,
+    "internal": 241920,
+    "one_full_complex128_vector_bytes": 5293568,
+    "one_trace_vector_bytes": 1422848,
+    "Krylov_32_inventory_scenario_bytes": 179981312,
+    "Krylov_inventory_label": "32 retained search directions plus two vectors, capacity scenario only; no algorithm chosen",
+    "raw_tensor_one_local_class_bytes": 28901376,
+    "local_recovery_dense_one_cell_bytes": 16257024
+  },
+  "target_factor_fill": "unknown",
+  "target_iteration_count": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_complete_time": "unknown",
+  "hours48_qualified": false,
+  "NN20_qualified": false,
+  "target_mesh_vector_matrix_factor_PDE_allocations": 0,
+  "accuracy": {
+    "p7_M828_z_h": true,
+    "p6_M828_x_h": false,
+    "cross_p_H7": false,
+    "cross_p_T6": false,
+    "continuum": false,
+    "new_M_h_inheritance": false
+  },
+  "next_pilot": "One preregistered common Bloch-compatible continuous Maxwell weak-balance witness on frozen R6/T6/R7/H7, including a nonzero-port test; split x/interface, volume and DtN contributions at operation scale. No automatic new hp/M solve."
+}

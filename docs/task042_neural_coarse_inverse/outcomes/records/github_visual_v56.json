@@ -1,0 +1,8 @@
+{
+  "review_commit": "18e597ba6f3193f1c54a292a258d9af8891c9c84",
+  "page": "https://github.com/Rookie1234567/MyFEniCS/blob/18e597ba6f3193f1c54a292a258d9af8891c9c84/docs/task042_neural_coarse_inverse/review_report_v54.md",
+  "status": "NOT_VERIFIED",
+  "reason": "web open exact GitHub page returned Internal Error / Cache miss; no visual rendering received",
+  "raw_tool_result": "Failed to fetch https://github.com/Rookie1234567/MyFEniCS/blob/18e597ba6f3193f1c54a292a258d9af8891c9c84/docs/task042_neural_coarse_inverse/review_report_v54.md: Cache miss",
+  "PDE_replays_for_web_failure": 0
+}

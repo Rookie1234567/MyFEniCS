@@ -1,3 +1,20 @@
+# V56增量测试与独立物理消费
+
+| 最小相关检查 | 实际执行与范围 | 状态/证据 |
+| --- | --- | --- |
+| final-source focused | 13项新consumer/积分/恢复/预算/完整828 checker定点测试 | PASSED，本地；[记录](records/targeted_tests_v56.json) |
+| 静态/接线 | 16模块compile、Ruff E9/F63/F7/F82、3个v56 dat真实validate | PASSED，同0d4d2366源码；未声称full Ruff/CI |
+| 科学身份/ABI | native qualified activation，complex128/int64 PETSc、MPI1/math1；原H7返回和父R6/R7按hash消费 | [身份](records/physical_identity_bindings_v56.json) |
+| 真场回归 | R7体吸收新旧差9.565e-16；H7真实九点E/H/curl最大4.176e-15 | PASS，不重算父PDE |
+| 独立原式/数组 | PUBLIC_BASIX体向量＋全部q63端口；冻结后VERIFY读取保存向量、物理场、模式和积分块重算 | [原式/门](records/gate_verdict_v56.json) |
+| 文档 | 最终字节/链接/列数/fenced math、15项文档合同 | [文档检查](records/documentation_checks_v56.json)；GitHub视觉NOT_VERIFIED |
+
+旧532 checker的数组名/库存已定点修复，保留失败证据；T6已claim的worker只查边界剩余预算，禁止再次调用启动准入导致自身active拒绝。辅助wrapper曾把成功返回dict传给sys.exit导致外层exit1；内部监督分类COMPLETED/测试PASSED/后代清场均保留，不为此重跑科学或测试。原native MPI socket被sandbox拒绝发生于测试启动前，授权本机栈执行通过，未升级ABI。
+
+没有例行full pytest/CI、父Q0/FLAT/旧q campaign、其他分支或全历史hash扫描。只有本批新数组/日志增量归档，源和费用按实际运行绑定。以下历史逐字保留。
+
+---
+
 # V55局部验收
 
 8项focused回归、8入口validate、相关Ruff/compile通过；Q0实际R6/R7切向面/独立原式通过。H7独立保存向量checker通过，但缺fresh FE/体吸收/场增量，不能授准确性。[测试](records/targeted_tests_v55.json)、[文档合同](records/documentation_checks_v55.json)、[缺项](records/gate_verdict_v55.json)。GitHub视觉NOT_VERIFIED，CI未运行。历史正文保留。

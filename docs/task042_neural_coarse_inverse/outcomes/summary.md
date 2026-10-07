@@ -1,3 +1,21 @@
+# V56最新结果：完整保存场闭合，准确性边界仍清楚
+
+直接读取旧H7有限元系数并按同一物理式做体吸收积分，避免为后处理重新编译或求解；唯一新T6检查既定横向分辨，不改变材料、相位弱式或完整828模式。独立方程审核与场准确性分开判断。
+
+| measured对象/比较 | 原式或场差 | 门与结果 | 证据 |
+| --- | --- | --- | --- |
+| H7保存消费 | true/native3.939586e-11；A_volume0.01813571903838；能量-1.249e-13 | 原式/恢复/输出完成，无新factor/solve | [独立检查](records/scientific_checks_v56.json) |
+| R7→H7，同p7 z-h | scattered E/H1.97369e-5/2.00352e-5 | 1e-4，完整增量PASS | [专题](saved_field_closure_target_bridge_v56.md) |
+| R6→T6，同p6 x-h | scattered E/H7.46595e-4/7.35082e-4；selected6.24562e-4 | 1e-4，场FAIL；通道/功率增量PASS | [专题](saved_field_closure_target_bridge_v56.md) |
+| R6→H7 / R7→T6，跨p | scattered E3.40891e-2 / 3.37661e-2 | 1e-4，FAIL，未指定高p为真解 | [门](records/gate_verdict_v56.json) |
+| 原尺寸桥接 | 仅布局和模式metadata；factor fill/迭代/峰RSS/48h unknown | 原尺寸、NN20未资格；无目标PDE | [目标缺口](records/target_gap_final_v56.json) |
+
+所有费用为shared-workstation；旧H7准备和失败费用保留，新缓存消费不冒充完整冷N=1。实际阶段/采样峰/分阶段账见[费用](records/resource_costs_final_v56.json)。未运行旧FFCx重审核，采用独立PUBLIC_BASIX未凝聚体向量和全部q63端口；H7原38类raw没有重建。新源码/输入与文档HEAD分别绑定，完整数组仍ignored。
+
+唯一下一建议是对冻结R6/T6/R7/H7做一组共同Bloch兼容的连续Maxwell弱平衡见证，拆分x向/材料界面、体和DtN作用尺度，辨清尚未通过的横向分辨与更大跨p分歧；不自动实施、不继续原样加p/h/M，不合并。以下历史逐字保留。
+
+---
+
 # Task042 V55最新交付：完整H7已保存，准确性审核部分缺项
 
 | 模型/比较 | 本轮实测 | 判定与限制 |

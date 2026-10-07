@@ -1,0 +1,10 @@
+{
+  "utility": {
+    "path": "tmp/task042/v56/edit/assemble_records.py",
+    "bytes": 7060,
+    "sha256": "c62ebed4cb9527c9dd143ed3c1e0526cc32158e7d013fda6ce31b93fdd94489f"
+  },
+  "HEAD": "c8b9f3a0c2c5797623ff3da9ca0a2ce0431e0cb0",
+  "consumer_kind": "supervised scalar/metadata settlement only; not a PDE or an array replay",
+  "final_scientific_source_is_distinct": true
+}

@@ -1,0 +1,51 @@
+{
+  "root_causes": [
+    "legacy 532 checker selected names and inventory",
+    "T6 runtime gate must inspect budget inside already claimed worker"
+  ],
+  "source_SHA": "0d4d2366a11bca50e2d3244e5863a34713e01904",
+  "targeted_tests": 13,
+  "physical_replay": 0,
+  "S_source_unchanged": "aed40a1549e394c5c6f539a50e3aba7cfc20b6ef",
+  "budget_upper_seconds": 15.0,
+  "sandbox_failure": "Open MPI local socket errno1 before unittest, no test or PDE launched; qualified native retry succeeds",
+  "metadata_wiring_failure": "nonexistent window.source_sha in preparatory script; no qualification/actor launched; fixed git rev-parse",
+  "outer_aux_wrapper": {
+    "error": "sys.exit(dict) printed a successful return and gave outer exit1",
+    "supervised_classification": "COMPLETED",
+    "test_status": "PASSED",
+    "replayed_tests": 0,
+    "physical_replays": 0
+  },
+  "measured_targeted_test_seconds": 0.882814655,
+  "conservative_fix_allowance_seconds": 15.0,
+  "allowance_is_not_measured_lower": true,
+  "documents_patch_context_mismatch": "ignored draft only, corrected exact paragraph; no scientific replay",
+  "metadata_repairs": [
+    {
+      "error": "relative_path.relative_to(absolute_ROOT)",
+      "affected": "scalar metadata settlement only",
+      "science_replays": 0,
+      "failed_utility_sha256": "9cf62529ad93f997fdab3cdd26e7c556d96a8015d4a373ff8a02a769f4bd8f29",
+      "corrected_utility_sha256": "5c03078b78e197f85256e24e296cfbc3b41628513580ed077e5b619314a6854e",
+      "failure_log": "tmp/task042/v56/aux_collect_02/supervision/worker.log",
+      "failed_launch_source": "0d4d2366a11bca50e2d3244e5863a34713e01904",
+      "UTC": "2026-10-07T03:05:38.738141+00:00"
+    },
+    {
+      "error": "final aggregate does not duplicate minimal raw_tensor_manifest_receipt field",
+      "fix": "resolve actual manifest from hash-bound T6 producer result directory",
+      "science_replays": 0,
+      "failed_source": "c8b9f3a0c2c5797623ff3da9ca0a2ce0431e0cb0",
+      "failed_utility_sha256": "5c03078b78e197f85256e24e296cfbc3b41628513580ed077e5b619314a6854e",
+      "corrected_utility_sha256": "c62ebed4cb9527c9dd143ed3c1e0526cc32158e7d013fda6ce31b93fdd94489f",
+      "stderr": "tmp/task042/v56/aux_collect_03/supervision/worker.log",
+      "UTC": "2026-10-07T03:07:39.815629+00:00"
+    }
+  ],
+  "metadata_retry_classifications": [
+    "WORKER_FAILED",
+    "WORKER_FAILED",
+    "COMPLETED"
+  ]
+}

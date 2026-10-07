@@ -1,3 +1,22 @@
+# V56变更与selective merge依赖组
+
+普通默认不变；全部新能力为显式opt-in，当前只在有限相位场完成回归。以下分组是审阅候选，不构成merge批准。
+
+| 依赖组 | 必要文件/行为 | 依赖、证据与建议顺序 |
+| --- | --- | --- |
+| numerical/core候选 | src/postprocessing/phase_volume_quadrature.py；phase_evaluation_cache.py与field/common_difference的显式分块/缓存参数 | 同total物理吸收式、真实方向/Piola；13项定点、R7/H7真实回归；先审小核和默认不变 |
+| reusable runner/监督 | run_case与port_preparation的薄V56 profile/预算身份接线 | 依赖冻结plan、已有activation/watchdog；64/80/96预算贯通；不得改变全局默认 |
+| checker/benchmark | collect_phase_saved_closure、qualify_phase_saved_closure、collect_phase_explicit_accuracy的可传入scope消费 | 依赖原数组收据和模式checker；独立复算不是复制求解器；保留532历史语义 |
+| compact evidence/docs | 新response/outcome/records及6处导航/总账前缀 | source与文档HEAD分离；原历史字节后缀不变 |
+| research-only | phase_saved_closure/scope、phase_saved_uncondensed、phase_target_bridge、冻结plan与3入口 | 当前仿射有限gVh/828资格；目标descriptor不是PDE、不能提升生产默认 |
+| do-not-merge | 大数组、raw/JIT/场/矩阵、临时报告草稿，全部ignored | 不进入Git；全局直接factor有限authority，不是生产p4强逆或NN收益 |
+
+没有复制另一大型runner或另一任务求解器。数学小核进入src；队列与配置只薄扩展既有phase_notch_hp、restore、raw reader、原审核和事务writer。新源码先clean提交再正式S/T运行；没有改活跃actor的绑定源码。旧task/review/response/raw不改，其他worktree/dot/master不操作。
+
+[交付源/数组增量索引](records/delivery_index_v56.json) · [完整结果与费用](saved_field_closure_target_bridge_v56.md)。以下历史逐字保留。
+
+---
+
 # V55增量改动
 
 新增薄空间分辨队列/显式父清单与物理切向审核小核；预算64/80/96及100000行全链opt-in；保存解补消费与独立partial checker。原凝聚/raw-provider数学核心未改。新输入、测试、紧凑证据及文档见[依赖分组manifest](records/selective_merge_manifest_v55.json)，ordinary default不变、无merge approval。历史正文保留。

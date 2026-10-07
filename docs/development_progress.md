@@ -1,3 +1,21 @@
+# Task042 V56阶段回顾：保存解变成完整物理证据
+
+旧320hex/p7/828 H7已经求解，但体吸收编译和资源重入使输出未完成。本批读取合法返回而不重算，新增显式opt-in的真实单元直接求积，保留total场、材料虚部、Jacobian/Piola和入射功率归一化；新的公开Basix完整原式向量避免用原Schur矩阵自证。它解决保存场无法被完整消费的问题，代价为场积分和独立审核费用，并没有训练NN或改变Maxwell方程。
+
+| baseline与实际进展 | measured值与判断 |
+| --- | --- |
+| H7旧FAILED外壳 | 保留；新消费得到A_volume0.018135719038380065、能量-1.249e-13，全部828复模式和240点 |
+| 同p7 z向加密 | scattered E/H差1.974e-5/2.004e-5，完整增量通过1e-4 |
+| 固定x向T6新完整对照 | 同p6 scattered E/H差7.466e-4/7.351e-4，场FAIL；功率增量通过 |
+| 跨p分歧 | 约3.4%，保持FAIL；不能指定p7是真解或把守恒当场准确 |
+| 2TB/48h | 两桥接只作descriptor/库存；目标因子填充、迭代和完整同时峰unknown |
+
+基线成本保留旧H7 raw12393.272s及dat13627.055s下界，不能只报约14s末端solve。新S/T、辅助和全部失败在独立非重叠账中结算；缓存增量、必要fresh和研究累计分列。本批没有重复邻支学习/参考逆或dot组件，不修改其他工作树。决定停止原样hp/M循环，唯一下一pilot为冻结四场的共同连续Maxwell弱平衡见证；不自动实施，原尺寸和NN20未资格。
+
+[完整报告](task042_neural_coarse_inverse/outcomes/saved_field_closure_target_bridge_v56.md) · [回应](task042_neural_coarse_inverse/response_v56.md) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v56.json)。以下历史逐字保留。
+
+---
+
 # Task042 V55：新H7实际返回，准确性仍待补审
 
 旧R6/R7/C的独立q63原式/恢复/全模式审核完成；新320hex/p7/828 H7完整返回，true4.2039e-11、采样树峰22.833GiB。后处理wall/JIT与CPU/SMT门留下体吸收/fresh审核/场增量缺项，未授准确性。38类raw核12393.27s，凝聚数学核52.74s，既有核心复用；不算NN收益。[Response V55](task042_neural_coarse_inverse/response_v55.md)、[结果与费用](task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md)。NN0，原尺寸/2TB48h/NN20未资格；旧记录保留。
