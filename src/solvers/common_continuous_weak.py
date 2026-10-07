@@ -82,9 +82,18 @@ def boundary_parts(cfg,modes,port,definition):
     return by_mode.sum(axis=0),load,by_mode
 
 
+def common_layout(space,definition):
+    from .phase_notch_hp_fields import mesh_bounds,parents_at
+    p=definition['geometry']['axes_nm'];ordered={}
+    for a,f in zip(('x','y','z'),(2,1,4),strict=True):
+        ordered[a]=sorted(set(p[a])|{l+(r-l)*j/f for l,r in zip(p[a][:-1],p[a][1:]) for j in range(f)})
+    intervals=[list(zip(ordered[a][:-1],ordered[a][1:])) for a in ('x','y','z')]
+    boxes=np.asarray([np.asarray(t).T for t in itertools.product(*intervals)])
+    return boxes,parents_at(mesh_bounds(space),boxes.mean(axis=1))
+
+
 def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analytic_control=False):
     import basix
-    from .phase_notch_hp_fields import mesh_bounds,parents_at
     from .phase_evaluation_cache import cached_evaluator_factory
     from .phase_explicit_accuracy_fields import analytic
     from .fixed_phase_fem import carrier
@@ -93,14 +102,7 @@ def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analyt
     cfg,setup,geo,field=restored;degree=record['degree'];kappa=carrier(cfg)
     modes,_,mode_sha=build_dynamic_mode_inventory(cfg)
     if len(modes)!=828 or mode_sha!=record['mode_sha256']:raise ValueError('continuous witness full mode identity')
-    p=definition['geometry']['axes_nm'];axes={a:set(p[a]) for a in ('x','y','z')}
-    # The common geometry has X2, Z4 and all three compact support boundaries.
-    for a,f in zip(('x','y','z'),(2,1,4),strict=True):
-        axes[a].update(l+(r-l)*j/f for l,r in zip(p[a][:-1],p[a][1:]) for j in range(f))
-    ordered={a:sorted(v) for a,v in axes.items()}
-    intervals=[list(zip(ordered[a][:-1],ordered[a][1:])) for a in ('x','y','z')]
-    boxes=np.asarray([np.asarray(t).T for t in itertools.product(*intervals)])
-    parents=parents_at(mesh_bounds(setup['mesh']),boxes.mean(axis=1));tags=setup['mesh_data'].cell_tags.values
+    boxes,parents=common_layout(field.function_space,definition);tags=setup['mesh_data'].cell_tags.values
     nf=len(definition['functions']);folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
     evfactory=cached_evaluator_factory(limit_bytes=256*2**20,quadrature_tables=False)
     ev=evfactory(field.function_space,15,kappa)

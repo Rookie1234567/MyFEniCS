@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import basix
 from src.solvers.hcurl_affine_phase_tensor import AffinePhaseReferenceTensor,axis_widths
-from src.solvers.common_continuous_weak import design,tests,volume_parts
+from src.solvers.common_continuous_weak import design,tests,volume_parts,common_layout
 
 
 class PhaseTests(unittest.TestCase):
@@ -56,6 +56,14 @@ class PhaseTests(unittest.TestCase):
             self.assertEqual(r.execution['planning_memory_gib'],64)
             self.assertEqual(r.derived['storage_limits'],storage_limits('v57'))
         self.assertEqual(context('v57')[0].TMP,scope.window.TMP)
+
+    def test_actual_layout_helper_consumes_function_space(self):
+        from types import SimpleNamespace
+        geo={'axes_nm':{'x':[0.,1.,2.,3.,4.],'y':[0.,1.,2.,3.,4.],'z':[-1.,0.,1.,2.,3.,4.]}}
+        points=basix.cell.geometry(basix.CellType.hexahedron)*[4.,4.,5.]+[0.,0.,-1.]
+        mesh=SimpleNamespace(geometry=SimpleNamespace(x=points,dofmap=np.arange(8).reshape(1,8)))
+        boxes,parents=common_layout(SimpleNamespace(mesh=mesh),design(geo,[.7,.2,0.]))
+        self.assertEqual(boxes.shape,(640,2,3));self.assertTrue(np.all(parents==0))
 
 
 if __name__=='__main__':unittest.main()
