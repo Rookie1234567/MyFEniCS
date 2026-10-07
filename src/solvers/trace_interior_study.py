@@ -88,14 +88,15 @@ def mixed_audit(bundle,rhs,u,port,R,journal):
     return norms,v,ambient
 
 
-def independent_complete(result,cfg,setup,geo,bundle,rhs,u,port,R,folder,journal):
+def independent_complete(result,cfg,setup,geo,bundle,rhs,u,port,R,folder,journal,*,live_scope=None):
     from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
     from .phase_saved_uncondensed import uncondensed_vectors,saved_audit
     from .phase_deployment import fixed_output
     field=restore_p0_full_field(setup['floquets'][cfg.nedelec_degree],u)
     fixed_output(result,field,cfg,bundle['kappa'],folder,journal)
+    selected_scope=scope if live_scope is None else live_scope
     vals=uncondensed_vectors(field,cfg,bundle['kappa'],setup['floquets'][cfg.nedelec_degree].mpc,setup['mesh_data'],folder/'independent_volume',journal,
-        q=2*cfg.nedelec_degree+3,identity=dict(parent_npz_sha256=result['arrays']['sha256'],own_degree_qualification=scope.stage('PREFLIGHT')['degrees'][str(cfg.nedelec_degree)]['pass_gate']))
+        q=2*cfg.nedelec_degree+3,identity=dict(parent_npz_sha256=result['arrays']['sha256'],own_degree_qualification=selected_scope.stage('PREFLIGHT')['degrees'][str(cfg.nedelec_degree)]['pass_gate']))
     ind=setup['boundary_provider'].bundle(63);d=folder/'independent_original';d.mkdir(exist_ok=True)
     high=saved_audit(checked_arrays(result['arrays']),setup,cfg,field,vals,ind,d,journal)
     h=checked_arrays(high['arrays']);vec={'residual':h['residual'],'augmented_residual':h['augmented_top'],

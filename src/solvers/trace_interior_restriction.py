@@ -45,7 +45,7 @@ def trace_constraints(floquet):
 
 class TraceRestriction:
     """Unique-row sparse interpolation including native orientation and MPC."""
-    def __init__(self,low,high,*,low_constraints=None,high_constraints=None):
+    def __init__(self,low,high,*,low_constraints=None,high_constraints=None,entity_support=False):
         from .phase_p_order_consistency import interpolation_operator
         self.low,self.high=low,high
         self.low_constraints=trace_constraints(low) if low_constraints is None else low_constraints
@@ -55,6 +55,15 @@ class TraceRestriction:
         if a.mesh.comm.size!=1:raise ValueError('finite restricted factor MPI1 only')
         a.mesh.topology.create_entity_permutations();perms=a.mesh.topology.get_cell_permutation_info()
         I=interpolation_operator(a.element.basix_element,b.element.basix_element)
+        self.entity_support=bool(entity_support);self.structural_zeros={}
+        if entity_support:
+            from .local_trace_assembly import entity_trace_support
+            support=entity_trace_support(a.element.basix_element,b.element.basix_element)
+            rejected=I[~support]
+            self.structural_zeros=dict(maximum=float(np.max(np.abs(rejected),initial=0.)),
+                norm=float(np.linalg.norm(rejected)),operation_scale=float(np.linalg.norm(I)),
+                topology_defined=True,numerical_threshold_drop=False)
+            I=np.where(support,I,0.)
         ai=np.asarray(a.element.basix_element.entity_dofs[3][0],int);bi=np.asarray(b.element.basix_element.entity_dofs[3][0],int)
         self.at=np.setdiff1d(np.arange(a.element.space_dimension),ai)
         self.bt=np.setdiff1d(np.arange(b.element.space_dimension),bi)
@@ -136,6 +145,8 @@ class TraceRestriction:
                     normal=inv.T[:,axis];normal/=np.linalg.norm(normal)
                     trace_checks.append(relative(np.cross(normal,ea-eb),np.cross(normal,ea)))
             # One complete edge and face, never a global spectrum or rank scan.
+            # Rank witness uses the same qualified coordinate map. The old
+            # unmasked interpolation stays an independent physical oracle.
             M=Ts[1]@interpolation_operator(a.element.basix_element,b.element.basix_element)@Ts[0].T
             for dim in (1,2):
                 lo=a.element.basix_element.entity_dofs[dim][0];hi=b.element.basix_element.entity_dofs[dim][0]
@@ -144,7 +155,8 @@ class TraceRestriction:
                 rank_checks.append(dict(permutation=p,entity_dimension=dim,columns=len(lo),rcond=rcond,threshold=threshold,full_column_rank=rcond>threshold))
         return dict(shared_operation_max=max(shared),dual_operation=float(dual),tangential_field_operation_max=max(trace_checks),local_entity_rank=rank_checks,nnz=int(self.R.nnz),shape=list(self.R.shape),
             csr_bytes=sum(v.nbytes for v in (self.R.data,self.R.indices,self.R.indptr)),
-            pass_gate=max(shared)<=1e-10 and dual<=1e-12 and max(trace_checks)<=1e-10 and all(x['full_column_rank'] for x in rank_checks),unique_owner=True,numerical_clipping=False)
+            pass_gate=max(shared)<=1e-10 and dual<=1e-12 and max(trace_checks)<=1e-10 and all(x['full_column_rank'] for x in rank_checks),unique_owner=True,numerical_clipping=False,
+            entity_support=self.entity_support,structural_zeros=self.structural_zeros)
 
     def save(self,path):
         return save_arrays(path,R_indptr=self.R.indptr,R_indices=self.R.indices,R_data=self.R.data,R_shape=np.asarray(self.R.shape),

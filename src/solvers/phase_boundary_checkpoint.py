@@ -65,13 +65,14 @@ class LoadedSurface:
 
 
 class StudyBoundaryProvider:
-    def __init__(self,cfg,setup,folder,journal):
+    def __init__(self,cfg,setup,folder,journal,*,entity_face_support=False):
         from .fullspace_dtn_action import build_dynamic_mode_inventory
         self.cfg,self.setup,self.folder,self.journal=cfg,setup,Path(folder)/'boundary_packets',journal
         self.folder.mkdir(parents=True,exist_ok=True);self.V=setup['spaces'][cfg.nedelec_degree]
         self.mpc=setup['floquets'][cfg.nedelec_degree].mpc;self.k=np.asarray(setup['numerical_carrier'])
         self.modes,self.ids,self.mode_sha=build_dynamic_mode_inventory(cfg)
         self.generated={};self.loads={}
+        self.entity_face_support=bool(entity_face_support)
 
     def identity(self,q):
         import basix
@@ -80,7 +81,7 @@ class StudyBoundaryProvider:
         V=self.V;m=V.mesh;mpc=self.mpc;m.topology.create_entity_permutations();maps=dual_maps(V,mpc)
         counts=np.asarray([len(r) for r,_ in maps]);rows=np.concatenate([r for r,_ in maps]);dual=np.concatenate([c for _,c in maps])
         pts,w=basix.make_quadrature(basix.CellType.quadrilateral,q)
-        return dict(schema='study.exact.boundary.v1',q=q,method='separable' if q==47 else 'basix2d',
+        value=dict(schema='study.exact.boundary.v1',q=q,method='separable' if q==47 else 'basix2d',
             native_rows=V.dofmap.index_map.size_local,ownership=[0,V.dofmap.index_map.size_global],MPI=m.comm.size,
             geometry=array_hash(m.geometry.x),geometry_dofmap=array_hash(m.geometry.dofmap),
             native_cell_dofs=array_hash(np.asarray([V.dofmap.cell_dofs(c) for c in range(len(m.geometry.dofmap))])),
@@ -94,6 +95,8 @@ class StudyBoundaryProvider:
             points=array_hash(pts),weights=array_hash(w),producer_source=self.journal.source_state['source_sha'],
             component_module_sha256=hashlib.sha256(Path(__file__).with_name('scattering_accuracy_boundary.py').read_bytes()).hexdigest(),
             checkpoint_module_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+        if self.entity_face_support:value['entity_face_support']=True
+        return value
 
     def load(self,q):
         with self.journal.measured(f'boundary_packet_reload_q{q}'):
@@ -119,7 +122,7 @@ class StudyBoundaryProvider:
             path=self.folder/f'q{q}.json'
             if path.exists():raise RuntimeError('boundary packet already generated: reload, never repeat integration')
             with self.journal.measured(f'one_original_boundary_generation_q{q}'):
-                src=SurfaceComponents(self.V,self.mpc,self.cfg,q,method=method,phase_carrier=self.k)
+                src=SurfaceComponents(self.V,self.mpc,self.cfg,q,method=method,phase_carrier=self.k,entity_face_support=self.entity_face_support)
                 c=build_fullspace_dtn_carrier_from_surface(self.modes,src.assemblers(),self.mpc,self.cfg,retain_all_nonzero=True)
                 incident=src.incident_traction();keys=list(src.cache);offset=[0];rr=[];vv=[]
                 for key in keys:
@@ -128,6 +131,7 @@ class StudyBoundaryProvider:
                     component_offsets=np.asarray(offset,np.int64),component_rows=np.concatenate(rr),component_values=np.concatenate(vv))
                 record=dict(identity=self.identity(q),method=method,keys=_json_metadata(keys),arrays=receipt,
                     producer=self.journal.source_state,seconds=src.seconds,unique_wavevectors=src.calls)
+                if self.entity_face_support:record['structural_zeros']=dict(topology_defined=True,maximum=src.structural_zero_max,operation_scale=src.structural_zero_scale)
                 write_json(path,record);self.generated[q]=1;costs.append(src.seconds);inc.append(incident)
             objects.append(c);receipts.append(receipt)
             # Independent reload before any production consumer is allowed.

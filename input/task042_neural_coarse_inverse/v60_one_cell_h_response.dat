@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v60]
+stage = "LOCAL_RESPONSE"
+run_id = "task042_v60_one_cell_h_response"

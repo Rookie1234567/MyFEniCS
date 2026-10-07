@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v60]
+stage = "C67"
+run_id = "task042_v60_local_trace6_interior7"

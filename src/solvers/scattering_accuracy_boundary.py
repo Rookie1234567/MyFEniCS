@@ -13,7 +13,7 @@ from src.solvers.scattering_anchor import relative, save_arrays
 
 
 class SurfaceComponents:
-    def __init__(self, space, mpc, cfg, q, *, method='basix2d', phase_carrier=None):
+    def __init__(self, space, mpc, cfg, q, *, method='basix2d', phase_carrier=None,entity_face_support=False):
         from src.solvers.target_boundary_witness import NativeFacetTiles
         from src.solvers.directional_boundary import FacetPolynomial
         self.tiles = NativeFacetTiles(space,mpc,cfg,(),q,'V50_EXACT_FULL_FACE')
@@ -23,6 +23,7 @@ class SurfaceComponents:
         if self.phase_carrier.shape != (3,) or not np.all(np.isfinite(self.phase_carrier)):
             raise ValueError('fixed real phase carrier')
         self.cache={}; self.seconds=0.; self.calls=0
+        self.entity_face_support=bool(entity_face_support);self.structural_zero_max=0.;self.structural_zero_scale=0.
 
     def components(self, mode):
         key=(mode.side,complex(mode.alpha),complex(mode.gamma),complex(mode.k_vector[2]))
@@ -43,6 +44,17 @@ class SurfaceComponents:
                 area=np.linalg.norm(np.cross(J[:,0],J[:,1]))
                 local=np.einsum('q,qjc->jc',source.weights*np.exp(1j*(physical@k))*area,basis)[:,:2].astype(np.complex128)
             else:local=self.polynomial.integral(side,k,J,origin,self.q)
+            if self.entity_face_support:
+                import basix
+                reference=basix.cell.geometry(basix.CellType.hexahedron)
+                face=next(i for i,vs in enumerate(basix.cell.topology(basix.CellType.hexahedron)[2]) if np.all(reference[vs,2]==z))
+                keep=np.zeros(source.element.dim,bool);keep[source.element.entity_closure_dofs[2][face]]=True
+                self.structural_zero_max=max(self.structural_zero_max,float(np.max(np.abs(local[~keep]),initial=0.)))
+                self.structural_zero_scale=max(self.structural_zero_scale,float(np.linalg.norm(local)))
+                # This is the exact zero tangential trace of nonclosure
+                # functions, not a value-dependent drop from C or D.
+                local[~keep]=0.
+                if self.structural_zero_max>1e-10*max(self.structural_zero_scale,1e-30):raise ValueError('face functional support not numerically qualified')
             local=np.ascontiguousarray(local)
             self.space.element.T_apply(local.view(np.float64).ravel(),source.permutations[cell:cell+1],4)
             for j,row in enumerate(self.space.dofmap.cell_dofs(cell)):

@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v60]
+stage = "H2"
+run_id = "task042_v60_subcell2_macro_trace6"
