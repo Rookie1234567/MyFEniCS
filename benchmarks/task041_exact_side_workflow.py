@@ -13766,6 +13766,7 @@ def run_task041_consumer(
     packet_producer_source_sha: str | None = None,
     packet_origin: str | None = None,
     legacy_native_binding: str | Path | None = None,
+    packet_source_binding: Mapping[str, Any] | None = None,
     candidate: bool = False,
     comm: Any = MPI.COMM_WORLD,
     disable_time_stop: bool = False,
@@ -13847,13 +13848,48 @@ def run_task041_consumer(
     except (TypeError, ValueError) as exc:
         raise Task041ModePrepError(str(exc)) from exc
     fixed_h6_packet_source_binding = None
-    fixed_h6_source_is_fresh_pilot = (
+    fixed_h6_is_w0p7_pilot = (
         fixed_h6_binding is not None
         and str(normalized.get("model_id", ""))
         == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
     )
-    if fixed_h6_binding is not None and (
-        legacy_native or fixed_h6_source_is_fresh_pilot
+    if packet_source_binding is not None:
+        packet_source_type = (
+            packet_source_binding.get("source_type")
+            if isinstance(packet_source_binding, Mapping)
+            else None
+        )
+        if (
+            fixed_h6_binding is None
+            or not isinstance(packet_source_binding, Mapping)
+            or packet_source_type
+            != "validated_producer_root"
+            or not fixed_h6_is_w0p7_pilot
+            or legacy_native
+        ):
+            raise Task041ModePrepError(
+                "W0.7 producer evidence is limited to its registered fixed-H6 consumer"
+            )
+        try:
+            fixed_h6_packet_source_binding = (
+                task041_fixed_h6_packet_source_binding(
+                    fixed_h6_binding,
+                    producer_packet_root=packet_source_binding.get(
+                        "producer_root"
+                    )
+                    if packet_source_type == "validated_producer_root"
+                    else None,
+                    legacy_native_packet_descriptor=None,
+                )
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise Task041ModePrepError(str(exc)) from exc
+        if fixed_h6_packet_source_binding != dict(packet_source_binding):
+            raise Task041ModePrepError(
+                "worker producer-root evidence differs from the validated launch binding"
+            )
+    elif fixed_h6_binding is not None and (
+        legacy_native or fixed_h6_is_w0p7_pilot
     ):
         try:
             fixed_h6_packet_source_binding = (
@@ -13873,12 +13909,20 @@ def run_task041_consumer(
     if fixed_h6_binding is not None and (
         (legacy_native and source_type != "legacy_native_packet_descriptor")
         or (
-            fixed_h6_source_is_fresh_pilot
-            and source_type != "fresh_registered_producer"
+            fixed_h6_is_w0p7_pilot
+            and source_type
+            not in {
+                "fresh_registered_producer",
+                "validated_producer_root",
+            }
+        )
+        or (
+            packet_source_binding is not None
+            and source_type != "validated_producer_root"
         )
         or (
             not legacy_native
-            and not fixed_h6_source_is_fresh_pilot
+            and not fixed_h6_is_w0p7_pilot
             and source_type is not None
         )
     ):
@@ -14695,6 +14739,32 @@ def run_task041_consumer(
         disk_identity = json.loads(identity_bytes)
         if not isinstance(disk_identity, Mapping):
             raise Task041ModePrepError("Task041 packet identity is not a mapping")
+        if source_type == "validated_producer_root":
+            source_files = fixed_h6_packet_source_binding.get("files")
+            expected_identity = (
+                source_files.get("packet_identity")
+                if isinstance(source_files, Mapping)
+                else None
+            )
+            expected_manifest = (
+                source_files.get("selected_mode_packet_manifest")
+                if isinstance(source_files, Mapping)
+                else None
+            )
+            if (
+                not isinstance(expected_identity, Mapping)
+                or not isinstance(expected_manifest, Mapping)
+                or Path(str(expected_identity.get("path", ""))).resolve()
+                != identity_path
+                or expected_identity.get("sha256")
+                != packet_identity_file_sha256
+                or Path(str(expected_manifest.get("path", ""))).resolve()
+                != manifest_path
+                or expected_manifest.get("sha256") != packet_manifest_sha256
+            ):
+                raise Task041ModePrepError(
+                    "worker packet files do not match the validated producer-root binding"
+                )
         if representative_rhs_contract is not None:
             packet_binding = representative_rhs_contract["packet_binding"]
             if (

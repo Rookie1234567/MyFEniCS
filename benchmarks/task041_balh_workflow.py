@@ -888,7 +888,7 @@ def task041_fixed_h6_packet_source_binding(
     *,
     producer_packet_root: str | Path | None,
     legacy_native_packet_descriptor: str | Path | None,
-) -> dict[str, str] | None:
+) -> dict[str, Any] | None:
     """Bind one registered fixed-H6 source route without validating packet shards."""
 
     if fixed_h6_binding is None:
@@ -905,12 +905,41 @@ def task041_fixed_h6_packet_source_binding(
         if (
             not isinstance(case, Mapping)
             or case.get("producer_mode") != "fresh"
-            or producer_source
             or legacy_source
         ):
             raise ValueError(
-                "the registered W0.7 pilot requires its fresh producer; packet reuse is not registered"
+                "the registered W0.7 pilot allows only its fresh producer or a validated producer root"
             )
+        if producer_source:
+            root = Path(producer_packet_root).resolve()
+            root_files = {
+                "mode_prep_summary": root / "mode_prep_summary.json",
+                "packet_identity": root / "packet_identity.json",
+                "selected_mode_packet_manifest": (
+                    root / "selected_mode_packet" / "manifest.json"
+                ),
+            }
+            parent_files = {
+                "supervisor_summary": root.parent / "supervisor_summary.json",
+                "selected_mode_manifest": root.parent / "selected_mode_manifest.json",
+            }
+            bound_files: dict[str, dict[str, str]] = {}
+            for name, path in {**root_files, **parent_files}.items():
+                resolved_path = path.resolve()
+                if not resolved_path.is_file():
+                    raise ValueError(
+                        "the W0.7 fresh producer or validated producer root is "
+                        f"incomplete; missing {name}: {resolved_path}"
+                    )
+                bound_files[name] = {
+                    "path": str(resolved_path),
+                    "sha256": hashlib.sha256(resolved_path.read_bytes()).hexdigest(),
+                }
+            return {
+                "source_type": "validated_producer_root",
+                "producer_root": str(root),
+                "files": bound_files,
+            }
         return {"source_type": "fresh_registered_producer"}
     if producer_source == legacy_source:
         raise ValueError(
@@ -929,6 +958,33 @@ def task041_fixed_h6_packet_source_binding(
         "source_type": "legacy_native_packet_descriptor",
         "descriptor_path": str(descriptor),
         "descriptor_sha256": hashlib.sha256(descriptor.read_bytes()).hexdigest(),
+    }
+
+
+def task041_fixed_h6_producer_execution_binding(
+    packet_source_binding: Mapping[str, Any] | None,
+    registered_producer: Mapping[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Describe W0.7 producer work for this invocation from its bound source route."""
+
+    if not isinstance(packet_source_binding, Mapping) or packet_source_binding.get(
+        "source_type"
+    ) != "validated_producer_root":
+        return None
+    if (
+        not isinstance(registered_producer, Mapping)
+        or registered_producer.get("mode") != "fresh"
+        or str(packet_source_binding.get("producer_root", "")) == ""
+    ):
+        raise ValueError(
+            "validated producer-root execution requires the registered fresh W0.7 producer contract"
+        )
+    return {
+        **dict(registered_producer),
+        "mode": "reused",
+        "invocation": "not_run_in_current_invocation",
+        "qep": "not_run_in_current_invocation",
+        "source_type": "validated_producer_root",
     }
 
 
@@ -1365,6 +1421,7 @@ def build_task041_balh_candidate_consumer_command(
     task041_resource_policy: str | None = None,
     fixed_h6_modal_gmres_research: bool = False,
     expected_rank_cpus: Sequence[int] | None = None,
+    packet_source_binding: Mapping[str, Any] | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -1413,6 +1470,50 @@ def build_task041_balh_candidate_consumer_command(
         task041_resource_policy=task041_resource_policy,
         expected_rank_cpus=expected_rank_cpus,
     )
+    if packet_source_binding is not None:
+        if (
+            fixed_h6_binding is None
+            or str(normalized["model_id"]) != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+            or not isinstance(packet_source_binding, Mapping)
+            or packet_source_binding.get("source_type") != "validated_producer_root"
+            or packet_origin is not None
+            or legacy_native_binding is not None
+        ):
+            raise ValueError(
+                "validated producer-root binding is limited to the registered W0.7 fixed-H6 consumer"
+            )
+        observed_source = task041_fixed_h6_packet_source_binding(
+            fixed_h6_binding,
+            producer_packet_root=packet_source_binding.get("producer_root"),
+            legacy_native_packet_descriptor=None,
+        )
+        if observed_source != dict(packet_source_binding):
+            raise ValueError(
+                "candidate consumer producer-root binding does not match its files"
+            )
+        source_files = packet_source_binding.get("files")
+        expected_identity = (
+            source_files.get("packet_identity")
+            if isinstance(source_files, Mapping)
+            else None
+        )
+        expected_manifest = (
+            source_files.get("selected_mode_packet_manifest")
+            if isinstance(source_files, Mapping)
+            else None
+        )
+        if (
+            not isinstance(expected_identity, Mapping)
+            or not isinstance(expected_manifest, Mapping)
+            or Path(packet_identity).resolve()
+            != Path(str(expected_identity.get("path", ""))).resolve()
+            or Path(packet_manifest).resolve()
+            != Path(str(expected_manifest.get("path", ""))).resolve()
+            or packet_manifest_sha256 != expected_manifest.get("sha256")
+        ):
+            raise ValueError(
+                "candidate consumer packet manifest/identity paths do not match the producer-root binding"
+            )
     if fixed_h6_binding is not None and (
         expected_rank_cpus is None
         or disable_time_stop
@@ -1570,6 +1671,17 @@ def build_task041_balh_candidate_consumer_command(
                 ),
             ]
         )
+    if packet_source_binding is not None:
+        command.extend(
+            [
+                "--task041-fixed-h6-packet-source-binding-json",
+                json.dumps(
+                    dict(packet_source_binding),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            ]
+        )
     return command
 
 
@@ -1647,6 +1759,8 @@ def task041_balh_candidate_consumer_profile(specification: Any) -> Any:
         mpi_size=TASK041_BALH_MPI_SIZE,
         h_nm=normalized["discretization"]["mesh_target_nm"],
         modal_h_nm=normalized["discretization"]["mesh_target_nm"],
+        bottom_interface_nm=normalized["method"]["bottom_interface_nm"],
+        top_interface_nm=normalized["method"]["top_interface_nm"],
         restart=32,
         max_it=2048,
         rtol=5.0e-9,
@@ -1809,7 +1923,11 @@ def validate_balh_producer_packet(
     require_public_supervisor_summary: bool = False,
     swap_observe_only: bool = False,
 ) -> dict[str, Any]:
-    """Validate a completed new-profile producer for an independent consumer."""
+    """Validate producer envelope, identity, lifecycle, and consumer binding.
+
+    Shard payloads are read and checked by the existing consumer packet reader
+    and hydration path; this function does not numerically validate every shard.
+    """
 
     root = Path(producer_root).resolve()
     summary_path = root / "mode_prep_summary.json"
@@ -2016,6 +2134,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-producer-source-sha")
     parser.add_argument("--packet-origin")
     parser.add_argument("--legacy-native-binding")
+    parser.add_argument("--task041-fixed-h6-packet-source-binding-json")
     parser.add_argument("--task041-rhs-probe")
     parser.add_argument(
         "--task041-side-setup-schedule",
@@ -2080,6 +2199,17 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
     args = _parser().parse_args(argv)
     from benchmarks.task041_exact_side_workflow import run_task041_consumer
 
+    packet_source_binding = None
+    if args.task041_fixed_h6_packet_source_binding_json is not None:
+        try:
+            packet_source_binding = json.loads(
+                args.task041_fixed_h6_packet_source_binding_json
+            )
+        except json.JSONDecodeError as exc:
+            raise ValueError("fixed-H6 packet-source binding is not valid JSON") from exc
+        if not isinstance(packet_source_binding, Mapping):
+            raise ValueError("fixed-H6 packet-source binding must be a JSON object")
+
     return run_task041_consumer(
         input_path=args.input,
         packet_manifest=args.packet_manifest,
@@ -2090,6 +2220,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         packet_producer_source_sha=args.packet_producer_source_sha,
         packet_origin=args.packet_origin,
         legacy_native_binding=args.legacy_native_binding,
+        packet_source_binding=packet_source_binding,
         candidate=True,
         disable_time_stop=args.task041_balh_candidate_disable_time_stop,
         performance_profile=args.task041_performance_profile,
@@ -2148,6 +2279,7 @@ __all__ = [
     "task041_balh_transfer_optimization_profile",
     "task041_fixed_h6_modal_gmres_binding",
     "task041_fixed_h6_packet_source_binding",
+    "task041_fixed_h6_producer_execution_binding",
     "task041_parse_expected_rank_cpus",
     "task041_schur_speed_v2_contract",
     "validate_balh_producer_packet",

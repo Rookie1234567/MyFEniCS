@@ -1185,10 +1185,7 @@ def run_frozen_m10_physics(
         setup.cfg.y_min
         + (np.arange(20, dtype=np.float64) + 0.5) * setup.cfg.period_y / 20.0
     )
-    z_nm = np.asarray(
-        [10.0, 30.0, 60.0, 90.0, 110.0],
-        dtype=np.float64,
-    )
+    z_nm = np.asarray(setup.cfg.full3d_reference_plane_z, dtype=np.float64)
     reconstructor = ModalFieldReconstructor(
         setup.cfg,
         setup.cross_section,
@@ -1208,7 +1205,10 @@ def run_frozen_m10_physics(
         recovery.modal_solution,
         x_nm,
         y_nm,
-        np.asarray([10.0, 110.0], dtype=np.float64),
+        np.asarray(
+            [profile.bottom_interface_nm, profile.top_interface_nm],
+            dtype=np.float64,
+        ),
     )
     interface_continuity = interface_field_continuity(
         setup.cfg,
@@ -1248,7 +1248,7 @@ def run_frozen_m10_physics(
     energy["A_minus_A_volume"] = energy["A"] - energy["A_volume"]
     energy_finite = all(np.isfinite(float(value)) for value in energy.values())
     energy_pass = bool(energy_finite and abs(energy["closure"]) <= 1.0e-5)
-    selected_shape = (5, 20, 40, 3)
+    selected_shape = (int(z_nm.size), 20, 40, 3)
     selected_finite = bool(
         selected_planes.electric_V_per_m.shape == selected_shape
         and selected_planes.magnetic_A_per_m.shape == selected_shape

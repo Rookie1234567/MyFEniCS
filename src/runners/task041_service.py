@@ -189,7 +189,7 @@ def _fixed_h6_packet_source_binding(
     *,
     command: list[str],
     fixed_h6_binding: Mapping[str, Any] | None,
-) -> dict[str, str] | None:
+) -> dict[str, Any] | None:
     configured = config.get("packet_source_binding")
     if fixed_h6_binding is None:
         if "packet_source_binding" in config:
@@ -372,6 +372,21 @@ def _service_contract(
             )
         if packet_source_binding is not None:
             resolved_contract["packet_source_binding"] = packet_source_binding
+            from benchmarks.task041_balh_workflow import (
+                task041_fixed_h6_producer_execution_binding,
+            )
+
+            try:
+                producer_execution = (
+                    task041_fixed_h6_producer_execution_binding(
+                        packet_source_binding,
+                        resolved_contract.get("producer"),
+                    )
+                )
+            except ValueError as exc:
+                raise Task041ServiceError(str(exc)) from exc
+            if producer_execution is not None:
+                resolved_contract["producer"] = producer_execution
         return resolved_contract
     contract = task041_schur_speed_v2_contract(
         model_id,
@@ -960,6 +975,13 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
             else {}
         ),
         **(
+            {"producer_execution": dict(contract["producer"])}
+            if isinstance(contract.get("packet_source_binding"), Mapping)
+            and contract["packet_source_binding"].get("source_type")
+            == "validated_producer_root"
+            else {}
+        ),
+        **(
             {
                 "post_start_document_allowlist": list(
                     contract["post_start_document_allowlist"]
@@ -1384,9 +1406,19 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         packet_source_binding = contract.get("packet_source_binding")
         if isinstance(packet_source_binding, Mapping):
             expected["packet_source_binding"] = dict(packet_source_binding)
+            if packet_source_binding.get("source_type") == "validated_producer_root":
+                expected["producer_execution"] = dict(contract["producer"])
+            elif "producer_execution" in launch:
+                raise Task041ServiceError(
+                    "service launch declares producer reuse for a non-reuse packet route"
+                )
         elif "packet_source_binding" in launch:
             raise Task041ServiceError(
                 "service launch declares an unexpected packet source binding"
+            )
+        elif "producer_execution" in launch:
+            raise Task041ServiceError(
+                "service launch declares producer reuse without a packet source binding"
             )
         if contract.get("compute_wall_unlimited") is True:
             expected["contract_kind"] = contract["contract_kind"]

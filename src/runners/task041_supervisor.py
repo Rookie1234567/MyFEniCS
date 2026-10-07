@@ -240,6 +240,7 @@ def _load_task041_supervision_record(
     representative_rhs_probe: Mapping[str, Any] | None,
     expected_fixed_h6_binding: Mapping[str, Any] | None = None,
     expected_packet_source_binding: Mapping[str, Any] | None = None,
+    expected_producer_execution: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
 ) -> dict[str, Any]:
@@ -304,6 +305,14 @@ def _load_task041_supervision_record(
             classification="task041_identity_failure",
             stage="supervision_record",
         )
+    if expected_producer_execution is not None:
+        expected["producer_execution"] = dict(expected_producer_execution)
+    elif "producer_execution" in payload:
+        raise Task041SupervisorError(
+            "supervision record has an unexpected producer execution binding",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
     if isinstance(payload.get("parent_pid"), bool) or not isinstance(
         payload.get("parent_pid"), int
     ):
@@ -353,6 +362,11 @@ def _load_task041_supervision_record(
         "packet_source_binding": (
             dict(expected_packet_source_binding)
             if expected_packet_source_binding is not None
+            else None
+        ),
+        "producer_execution": (
+            dict(expected_producer_execution)
+            if expected_producer_execution is not None
             else None
         ),
         "post_start_document_allowlist": expected_post_start_document_allowlist,
@@ -9328,6 +9342,34 @@ def run_task041_public_supervisor(
                         classification="task041_identity_failure",
                         stage="fixed_h6_research",
                     )
+            elif packet_source_type == "validated_producer_root":
+                from benchmarks.task041_balh_workflow import (
+                    task041_fixed_h6_packet_source_binding,
+                )
+                from src.io.input_validation import (
+                    TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+                )
+
+                reuse_case = task041_balh_case(str(identity["model_id"]))
+                observed_binding = task041_fixed_h6_packet_source_binding(
+                    fixed_h6_binding,
+                    producer_packet_root=producer_packet_root,
+                    legacy_native_packet_descriptor=None,
+                )
+                if (
+                    identity["model_id"] != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+                    or reuse_case is None
+                    or reuse_case.get("producer_mode") != "fresh"
+                    or producer_packet_root is None
+                    or legacy_native_packet_descriptor is not None
+                    or task041_supervision_record is None
+                    or observed_binding != dict(packet_source_binding)
+                ):
+                    raise Task041SupervisorError(
+                        "validated producer-root reuse is limited to the registered W0.7 fixed-H6 route",
+                        classification="task041_identity_failure",
+                        stage="fixed_h6_research",
+                    )
             elif packet_source_binding is not None:
                 raise Task041SupervisorError(
                     "fixed-H6 packet-source binding has an unsupported source_type",
@@ -9484,6 +9526,26 @@ def run_task041_public_supervisor(
                     stage="service_contract",
                 )
             case_runtime_contract = dict(registered_contract)
+            from benchmarks.task041_balh_workflow import (
+                task041_fixed_h6_producer_execution_binding,
+            )
+
+            try:
+                producer_execution = (
+                    task041_fixed_h6_producer_execution_binding(
+                        packet_source_binding,
+                        case_runtime_contract.get("producer"),
+                    )
+                )
+            except ValueError as exc:
+                raise Task041SupervisorError(
+                    str(exc),
+                    classification="task041_identity_failure",
+                    stage="producer_reuse_contract",
+                ) from exc
+            if producer_execution is not None:
+                case_runtime_contract["producer"] = producer_execution
+                result["producer_execution"] = dict(producer_execution)
             compute_wall_limit_seconds = None
             compute_wall_phase_limit_seconds = None
             compute_wall_enforced_limit_seconds = None
@@ -9783,6 +9845,14 @@ def run_task041_public_supervisor(
                 ),
                 expected_fixed_h6_binding=fixed_h6_binding,
                 expected_packet_source_binding=packet_source_binding,
+                expected_producer_execution=(
+                    case_runtime_contract.get("producer")
+                    if isinstance(packet_source_binding, Mapping)
+                    and packet_source_binding.get("source_type")
+                    == "validated_producer_root"
+                    and isinstance(case_runtime_contract.get("producer"), Mapping)
+                    else None
+                ),
                 side_setup_schedule=supervision_contract.get(
                     "side_setup_schedule"
                 ),
@@ -10272,6 +10342,53 @@ def run_task041_public_supervisor(
                 require_public_supervisor_summary=True,
                 swap_observe_only=resource_policy_binding is not None,
             )
+            if (
+                isinstance(packet_source_binding, Mapping)
+                and packet_source_binding.get("source_type")
+                == "validated_producer_root"
+            ):
+                bound_files = packet_source_binding.get("files")
+                if not isinstance(bound_files, Mapping):
+                    raise Task041SupervisorError(
+                        "validated producer-root binding lacks its file hashes",
+                        classification="task041_identity_failure",
+                        stage="producer_reuse",
+                    )
+                observed_files = {
+                    "mode_prep_summary": (
+                        producer_root / "mode_prep_summary.json",
+                        _sha256_file(producer_root / "mode_prep_summary.json"),
+                    ),
+                    "packet_identity": (
+                        Path(packet["identity_path"]).resolve(),
+                        _sha256_file(Path(packet["identity_path"])),
+                    ),
+                    "selected_mode_packet_manifest": (
+                        Path(packet["manifest"]).resolve(),
+                        packet["manifest_sha256"],
+                    ),
+                    "supervisor_summary": (
+                        Path(packet["producer_supervisor_summary"]).resolve(),
+                        packet["producer_supervisor_summary_sha256"],
+                    ),
+                    "selected_mode_manifest": (
+                        Path(packet["selected_mode_manifest"]).resolve(),
+                        packet["selected_mode_manifest_sha256"],
+                    ),
+                }
+                for name, (observed_path, observed_sha256) in observed_files.items():
+                    expected_file = bound_files.get(name)
+                    if (
+                        not isinstance(expected_file, Mapping)
+                        or Path(str(expected_file.get("path", ""))).resolve()
+                        != observed_path
+                        or expected_file.get("sha256") != observed_sha256
+                    ):
+                        raise Task041SupervisorError(
+                            "validated producer-root files changed between binding and packet validation",
+                            classification="task041_identity_failure",
+                            stage="producer_reuse",
+                        )
             producer_result = dict(packet["producer_phase"])
             producer_result.update(
                 {
@@ -10529,6 +10646,13 @@ def run_task041_public_supervisor(
                         fixed_h6_binding is not None
                     ),
                     expected_rank_cpus=expected_rank_cpus,
+                    packet_source_binding=(
+                        packet_source_binding
+                        if isinstance(packet_source_binding, Mapping)
+                        and packet_source_binding.get("source_type")
+                        == "validated_producer_root"
+                        else None
+                    ),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
