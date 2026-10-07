@@ -1,0 +1,395 @@
+{
+  "junit_runs": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/block_final_transaction_tests/junit.xml",
+        "bytes": 1634,
+        "sha256": "953584423cfead08ac305e63e518bbc191b03068a7e09e74a44c4a6dc3986c03"
+      },
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/block_fixture_tests/junit.xml",
+        "bytes": 1357,
+        "sha256": "f4d9bea70a53d680eaf6927b1d7fa71120d8be48235c6b6c01c07be84daf579b"
+      },
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/block_fixture_tests_final/junit.xml",
+        "bytes": 1357,
+        "sha256": "ff7dcc7c41c75f467193127053ecd2f53591c7f7bcbe2433baa5e449855e0c27"
+      },
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/block_json_tuple_tests_qualified/junit.xml",
+        "bytes": 343,
+        "sha256": "202a344ed65c2f849450853439a27e526710ca3677c23a61646a9d70a4254000"
+      },
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/bootstrap_tests/junit.xml",
+        "bytes": 1309,
+        "sha256": "da784bb87854d9b668804b0ac9feb5e8cabe25b857ed81480e99bd2778690a0a"
+      },
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_recovery::test_real_event_writer_complex_arrays_bool_and_reopen",
+        "src.test.test_neural_wave_recovery::test_nonfinite_event_refused_before_publish",
+        "src.test.test_neural_wave_recovery::test_completed_pair_reused_without_forward_or_reference",
+        "src.test.test_neural_wave_recovery::test_changed_partial_or_cross_state_rebuild_refused[file]",
+        "src.test.test_neural_wave_recovery::test_changed_partial_or_cross_state_rebuild_refused[source]",
+        "src.test.test_neural_wave_recovery::test_changed_partial_or_cross_state_rebuild_refused[saved]",
+        "src.test.test_neural_wave_recovery::test_changed_partial_or_cross_state_rebuild_refused[missing_q60]",
+        "src.test.test_neural_wave_recovery::test_changed_partial_or_cross_state_rebuild_refused[master]"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/diagnostic_optin_guard_tests/junit.xml",
+        "bytes": 488,
+        "sha256": "924859ba5cae4b08190fec0ac8c9ba652e5a3323939a6ff1cbee306dc9c4998e"
+      },
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/global_rank_source_final_tests/junit.xml",
+        "bytes": 2602,
+        "sha256": "23e706695b40074607071b17908518a1e9951f947bd44efbb32fa4d98468c350"
+      },
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/global_rank_targeted_tests/junit.xml",
+        "bytes": 3684,
+        "sha256": "17394262caf54c55c582057e3fb52a7d979d0e18bce64856585e4b3f398e5172"
+      },
+      "tests": 18,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/global_rank_targeted_tests_final/junit.xml",
+        "bytes": 2602,
+        "sha256": "3bd34606378458aec573c387350c1268249a3e9bdebc4c957aebf2d26607a777"
+      },
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/preserved_readout_exit_tests/junit.xml",
+        "bytes": 498,
+        "sha256": "1b2ce1372de2ee48e6fad67e050f3f68e94509343c9d45500de227dcf3104522"
+      },
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_block::test_preserved_readout_pair_is_recomputed_from_original_residual",
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v31/profile_contract_tests/junit.xml",
+        "bytes": 1043,
+        "sha256": "0f84fa3e2128a8d3b396e5b17c865fb3cee0b2c57d37c5ddc066144fec34ba60"
+      },
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver"
+      ]
+    }
+  ],
+  "full_pytest_run": false,
+  "CI_run": false,
+  "ordinary_previous_expensive_gates_reused": true,
+  "actual_formal_source_qualification": {
+    "path": "benchmarks/artifacts/task42extra/v31/v31_stability_exit_checks/result.json",
+    "bytes": 9862,
+    "sha256": "18120fd684ecad456807037a395056fcde42b338e99e612ff07fadb8a8235548"
+  },
+  "distinction": "Fixture/derivative qualifications do not qualify old fixed readout or M5 field accuracy. Failed expectation and its targeted correction are retained.",
+  "final_publication_checks": {
+    "source_sha": "c32723a6c176a75e69174bd7a9570b8c981c4160",
+    "numerical_source_unmodified": true,
+    "documents": [
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/response_v31.md",
+          "bytes": 10594,
+          "sha256": "5f7d85f3daa1394ab21132ff9eaa0c5ff82311fbf7a048573312c82c036c6a05"
+        },
+        "table_count": 3,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "whole new page"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/block_wave_neural_v31.md",
+          "bytes": 14150,
+          "sha256": "30a75a5c2ae982c458e27190cac8ca9874e3400d81d97ee48fa9b598113f48f5"
+        },
+        "table_count": 6,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "whole new page"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/README.md",
+          "bytes": 23135,
+          "sha256": "e88fbcbbd48f0baebcd4aece3129970da116a6316b408e512ba2ed57448da2f6"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "bytes": 117868,
+          "sha256": "92e9972b1421c835a8d2638efa72a1985a4626fbfe470c85ed69de8e0556004e"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "bytes": 54681,
+          "sha256": "b270c9e970f53fcb1e54d9f3c7b8d68d8ef7809da3aebd5221444ef564e61de7"
+        },
+        "table_count": 0,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "bytes": 50366,
+          "sha256": "d1aa559048b8150311ee9657cc71ed63384570ceb45788693de46df406e6e727"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/development_progress.md",
+          "bytes": 241690,
+          "sha256": "975749de9df816fc26738455d15afb47b894a7423dfe8e71cd26650a56c54bcb"
+        },
+        "table_count": 0,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/development_model_registry.md",
+          "bytes": 277626,
+          "sha256": "8a82fce35865f7c804fd24f74f53117b332cc0357410ea7555d4075e66cf5aab"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      }
+    ],
+    "required_records": [
+      "design_v31.json",
+      "v30_completed_field_audit_v31.json",
+      "reconstruction_stability_v31.json",
+      "block_checks_v31.json",
+      "block_growth_v31.csv",
+      "route_comparison_v31.json",
+      "full_numerical_gates_v31.json",
+      "cost_and_capacity_v31.json",
+      "run_index_v31.json",
+      "repair_journal_v31.json",
+      "resource_costs_v31.json"
+    ],
+    "json_finite": true,
+    "old_histories_preserved": true,
+    "local_preview_parser": "markdown-it commonmark with table",
+    "visual_GitHub_not_inferred": true,
+    "source_files_linted_compiled": [
+      "src/io/block_wave_campaign.py",
+      "src/io/neural_wave_campaign.py",
+      "src/postprocessing/neural_wave_audit.py",
+      "src/postprocessing/neural_wave_roundoff.py",
+      "src/runners/block_wave_admission.py",
+      "src/runners/block_wave_worker.py",
+      "src/runners/neural_wave_campaign.py",
+      "src/runners/neural_wave_dependencies.py",
+      "src/runners/neural_wave_worker.py",
+      "src/solvers/neural_wave_block.py",
+      "src/solvers/neural_wave_block_qualification.py",
+      "src/solvers/neural_wave_block_reconstruction.py",
+      "src/solvers/neural_wave_greedy.py",
+      "src/solvers/neural_wave_projection.py",
+      "src/test/test_block_wave_contract.py",
+      "src/test/test_neural_wave_block.py"
+    ],
+    "pure_activation": true,
+    "new_numeric_work": false
+  },
+  "final_publication_supervision": {
+    "path": "tmp/task42extra/v31/final_delivery_checks/watchdog/summary.json",
+    "bytes": 2086,
+    "sha256": "50b56acb73cd63d88d668030473445b8743eba0a7d74f03d21fb7ebf88a12aef"
+  },
+  "qualification_source_vs_precommit_helper_anchor": "Actual formal clean c327 qualification binds the numerical file chain. Precommit helper headers may retain a copied d6 anchor; not represented as c327-run pytest."
+}

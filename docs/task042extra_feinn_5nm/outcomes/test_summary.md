@@ -1,3 +1,11 @@
+# V31最终：完整保存场检查已完成，测试资格与求解失败分列
+
+writer、块代数、JSON事务、标签/预算、数值秩、诊断opt-in及严格新块guard的定向fixture通过；真实完整矩/非零方向FD和长缓存 qualification已执行。初始18项中的1个预期原因断言失败及其最小更正保留，不能抹成全程无失败。最终数学source c32723a6c176a75e69174bd7a9570b8c981c4160与文档HEAD分开，健康旧昂贵Gate未重复。
+
+独立FE重建与pure保存checker实际完成，参考合格但两新候选M5联合门FAIL；固定重建3.92857e-10及读出2.35272e-9亦FAIL。小fixture/FD PASS不能代替原方程与物理Gate。最后affected lint/compile/Markdown/链接/records合同单列；无full pytest、CI或环境重装。GitHub有限新页检查失败不得称视觉通过。
+
+[JUnit及失败](records/tests_v31.json)、[真实资格](records/block_checks_v31.json)、[完整数组门](records/full_numerical_gates_v31.json)、[费用](records/resource_costs_v31.json)、[呈现](records/render_check_v31.json)。下方旧测试原文保留。
+
 # 当前V30最终：实现资格与未完成物理验收分列
 
 新网络确实学了连续波动方向；测试只验证实现链，不能替代真正的散射解。最终native残差仍为神经0.3308837562、控制0.4237611235，均高于1e-6。独立完整矩重建后，神经模型与保存系数相对差1.71986e-10超过1e-10；全场、功率及区域验收未运行，保持负结果和UNKNOWN。

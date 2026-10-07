@@ -1,0 +1,151 @@
+{
+  "scope": "Old V30 full model; stable complex128 diagnostics and two selected Decimal110 entries. Original saved vectors unchanged.",
+  "stable_paths": {
+    "records": {
+      "v30_m5_fixed_wave": {
+        "original_model_mapping_relative": 1.596430748798739e-11,
+        "compensated_Ua_relative": 2.5747990280159544e-12,
+        "module_first_relative": 2.1571775491849525e-11,
+        "point_first_relative": 1.5957802626971594e-11,
+        "independent_stable_paths_relative": 1.4937189656630732e-11,
+        "original_action_stable_path_difference": 6.178926855278422e-10,
+        "maximum_raw_amplitude_scale": 250137.40774380937,
+        "stored_amplitude_norm": 5375.544197402831,
+        "coefficient_norm": 0.1660193282512864,
+        "contribution_norm_sum": 10421.791385503075,
+        "module_cancellation_norm_ratio": 62774.56664400352,
+        "worst_coefficient_index": 30323,
+        "worst_absolute_point_error": 1.2541178514858138e-12,
+        "raw_paths": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v31/v31_reconstruction_stability/v30_m5_fixed_wave_stable_paths.npz",
+          "sha256": "a5e2a02851506383afc9f72ea062fa5854e54be800c37fc932b1c0fad6fe394e"
+        },
+        "precision": "complex128 fixed-order Neumaier accumulation; no extended precision",
+        "old_bytes_and_failure_unchanged": true,
+        "qualification_scope": "reconstruction diagnosis only; no substitute for complete original-equation/field gates"
+      },
+      "v30_m5_learned_wave": {
+        "original_model_mapping_relative": 1.719858821415671e-10,
+        "compensated_Ua_relative": 2.2841683688676232e-11,
+        "module_first_relative": 2.7716897504467253e-10,
+        "point_first_relative": 1.7192518367089356e-10,
+        "independent_stable_paths_relative": 1.7126357644761608e-10,
+        "original_action_stable_path_difference": 6.58629559621497e-09,
+        "maximum_raw_amplitude_scale": 177382.56171059972,
+        "stored_amplitude_norm": 70666.89071669437,
+        "coefficient_norm": 0.1626932429837254,
+        "contribution_norm_sum": 46726.281613448504,
+        "module_cancellation_norm_ratio": 287204.8079963754,
+        "worst_coefficient_index": 19289,
+        "worst_absolute_point_error": 1.4292348903689934e-11,
+        "raw_paths": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v31/v31_reconstruction_stability/v30_m5_learned_wave_stable_paths.npz",
+          "sha256": "dcc8edce417f74ab1430bc839044eedb6ce05da9d995541595b17cc696def4f0"
+        },
+        "precision": "complex128 fixed-order Neumaier accumulation; no extended precision",
+        "old_bytes_and_failure_unchanged": true,
+        "qualification_scope": "reconstruction diagnosis only; no substitute for complete original-equation/field gates"
+      }
+    },
+    "old_training_repeated": false,
+    "healthy_q30_q60_rebuilds_repeated": false,
+    "new_stable_q30_diagnostic_paths_only": true,
+    "reference_read_count": 0,
+    "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+    "source_sha": "f89b6b2501062bb654cddd2c164e9e6e17100243",
+    "input_sha256": "0b54b6f5084664cf9703783b74c81090bbe39e40613628996755312338881992",
+    "design_sha256": "3cc05f1e1dc1f25a39cdc975cdbd2b4acfa9d7a1d89955e651703ac0542d1d67",
+    "worker_elapsed_seconds": 1156.1622877900954,
+    "route_elapsed_seconds": 1220.2520872321911,
+    "full_size_0p7_target_qualified": false
+  },
+  "stable_result_binding": {
+    "path": "benchmarks/artifacts/task42extra/v31/v31_reconstruction_stability/result.json",
+    "bytes": 3318,
+    "sha256": "1ca6958ccf726a17969db71c4d7ff2cb1fcd4732bbcfff756c327d9cce64711a"
+  },
+  "selected_entry_witness": {
+    "records": {
+      "v30_m5_fixed_wave": {
+        "row": 30323,
+        "owner_cell": 358,
+        "local_moment_index": 140,
+        "active_modules": 706,
+        "stored_Ua_decimal110": {
+          "real": "-0.00222189479333172744690532562744728250432783723227944212426604279897457416836914489977061748504638671875",
+          "imag": "0.0005925327871013933516867851423687888615702381716485305096028964565169072642447645193897187709808349609375",
+          "precision": 110
+        },
+        "interpolate_before_global_readout_decimal110": {
+          "real": "-0.00222189479333172744690532562744728250432783723227944212426604279897457416836914489977061748504638671875",
+          "imag": "0.0005925327871013933516867851423687888615702381716485305096028964565169072642447645193897187709808349609375",
+          "precision": 110
+        },
+        "amplitude_readout_before_interpolation_decimal110": {
+          "real": "-0.00222189479221184319047711010533511068657977338207860202616756618854143567887149401940405368804931640625",
+          "imag": "0.0005925327877565755761217700070978196606694477334836928946753165266259077981203517992980778217315673828125",
+          "precision": 110
+        },
+        "saved_vs_exact_stored_terms_absolute": 1.0735255791599564e-13,
+        "normalization_and_basis_construction_absolute": 0.0,
+        "amplitude_scaling_before_interpolation_absolute": 1.2974606588951267e-12,
+        "point_accumulation_and_final_interpolation_absolute": 5.861692009325886e-13,
+        "sum_absolute_stored_terms": 1227.9232441843574,
+        "sum_absolute_model_terms": 1227.9232441843562,
+        "identity": "same original modules and unique owner; only one worst coefficient",
+        "interpretation": "separates quantized stored-basis sum, basis normalization, amplitude scaling, and point summation; not a full-vector causal bound",
+        "new_field_or_training_precision": false,
+        "reference_read_count": 0
+      },
+      "v30_m5_learned_wave": {
+        "row": 19289,
+        "owner_cell": 212,
+        "local_moment_index": 137,
+        "active_modules": 894,
+        "stored_Ua_decimal110": {
+          "real": "-0.004681887897649291371135585745866409668325599822463933086141613278130524378184418310411274433135986328125",
+          "imag": "-0.00274482714793170612865623929709457401547983839206821160254675361078735562614383525215089321136474609375",
+          "precision": 110
+        },
+        "interpolate_before_global_readout_decimal110": {
+          "real": "-0.004681887897649291371135585745866409668325599822463933086141613278130524378184418310411274433135986328125",
+          "imag": "-0.00274482714793170612865623929709457401547983839206821160254675361078735562614383525215089321136474609375",
+          "precision": 110
+        },
+        "amplitude_readout_before_interpolation_decimal110": {
+          "real": "-0.0046818878872337546492167471415625861863381029107602348763377225586423957537363094161264598369598388671875",
+          "imag": "-0.00274482715993253912710048700821716820309394769920000832429357422170834723829102586023509502410888671875",
+          "precision": 110
+        },
+        "saved_vs_exact_stored_terms_absolute": 4.617865129192057e-13,
+        "normalization_and_basis_construction_absolute": 0.0,
+        "amplitude_scaling_before_interpolation_absolute": 1.5890355955244907e-11,
+        "point_accumulation_and_final_interpolation_absolute": 4.821046745391531e-12,
+        "sum_absolute_stored_terms": 8207.008721899563,
+        "sum_absolute_model_terms": 8207.008721899567,
+        "identity": "same original modules and unique owner; only one worst coefficient",
+        "interpretation": "separates quantized stored-basis sum, basis normalization, amplitude scaling, and point summation; not a full-vector causal bound",
+        "new_field_or_training_precision": false,
+        "reference_read_count": 0
+      }
+    },
+    "scope": "one selected worst coefficient per old route; Decimal110 only for sums of retained IEEE terms",
+    "old_vectors_unchanged": true,
+    "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+    "source_sha": "690c8bc906fb490b6a2dfb9f2e46cc06c8f6d188",
+    "input_sha256": "5d75c5a27f067cb1340867bd1ad76029a3944d9c697ae4aa353b34b64e7ef179",
+    "design_sha256": "3cc05f1e1dc1f25a39cdc975cdbd2b4acfa9d7a1d89955e651703ac0542d1d67",
+    "worker_elapsed_seconds": 32.422086735023186,
+    "route_elapsed_seconds": 96.769014157122,
+    "full_size_0p7_target_qualified": false
+  },
+  "witness_result_binding": {
+    "path": "benchmarks/artifacts/task42extra/v31/v31_roundoff_witness/result.json",
+    "bytes": 4492,
+    "sha256": "43a22cd065728a8f73819f2d15ecd76d6fa51a7484674e144ae2e54a8d4da7f9"
+  },
+  "high_precision_used_for_training": false,
+  "old_learned_full_reconstruction_qualified": false
+}

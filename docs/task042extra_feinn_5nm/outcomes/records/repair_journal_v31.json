@@ -1,0 +1,110 @@
+{
+  "source_journal": {
+    "path": "tmp/task42extra/v31/repair_journal.jsonl",
+    "bytes": 5106,
+    "sha256": "f5a4a7ef15b7654996a5424e395facde5df66da8be48c030c5930ff7bbd176d8"
+  },
+  "entries": [
+    {
+      "failure": "ATOMIC_BLOCK_BOUNDARY_REOPEN_FAILED",
+      "hypothesis": "asdict(Patch) has tuple center/radius; JSON reopens as lists; saved c/r/a and source are intact",
+      "change": "canonicalize the expected JSON value before comparing the actual reopen",
+      "test": "block_json_tuple_tests/watchdog/summary.json; one actual tuple-coordinate boundary roundtrip/restore fixture",
+      "failed_source": "690c8bc906fb490b6a2dfb9f2e46cc06c8f6d188",
+      "failed_attempt_seconds": 82.68340657604858,
+      "retained_complete_rank": 3,
+      "retained_iteration": 1,
+      "no_budget_reset": true,
+      "new_math": false,
+      "resume": "reuse first complete block; refresh source-affected checkpoint qualification",
+      "monotonic": 1291438.117251026
+    },
+    {
+      "failure": "local fixture wrapper used neighbors rather than actual neighbor_processes field; test did not start",
+      "change": "use actual admission field; no scientific source changed",
+      "qualified_test": "tmp/task42extra/v31/block_json_tuple_tests_qualified/watchdog/summary.json",
+      "classification": "COMPLETED",
+      "source": "d6c4da73",
+      "monotonic": 1291466.349764087
+    },
+    {
+      "failure": "CONTROLLED_INVESTIGATION_PREDICTED_TRUE_DECREASE_PAIR",
+      "hypothesis": "Local block rank did not ensure global R numerical independence; unstable triangular readout amplified cancellation",
+      "change": "Fixed 1e-12 small-R SVD; remove discarded left directions from exact cached/two-pass scoring; original A pairing rejection; persist and validate range buffers; recover amplitudes without replaying accepted wave blocks",
+      "test": "18 targeted tests final passed; initial 17 passed/1 failed expected-reason assertion corrected; Ruff/compile passed; short full-M5 qualification pending",
+      "resume": "same fixed allocation and boundary; learned remains from zero; no teacher/no global FE or Gram factor",
+      "prior_source": "d6c4da731f035b62657dc7e99c1c57f354cb1571",
+      "old_rank": 2991,
+      "global_numerical_rank": 2988,
+      "old_amplitude_norm": 285989711069.48517,
+      "new_amplitude_norm": 209460.0450192516,
+      "old_native": 0.47662441931213667,
+      "repaired_diagnostic_native": 0.47668200763025115,
+      "diagnostic_saved": "tmp/task42extra/v31/preliminary_records/small_r_diagnostic.json",
+      "monotonic": 1298759.367299493,
+      "original_states_and_costs_retained": true
+    },
+    {
+      "failure": "v31_global_rank_wave_checks_attempt1: SMALL_R_COMPLETE_ACTION_PAIR_REJECTED on old 2991-column instance",
+      "hypothesis": "Old retained boundary remains numerically unqualified; its diagnostic must not cancel independently qualified new block mechanism",
+      "change": "Keep strict 1e-10 acceptance for EVERY new block; explicitly diagnostic-only old-boundary SVD recovery records measured pairing/pass flag and permits subsequent new valid blocks; no threshold/loss change",
+      "test": "Default strict rollback test and source fixtures retained; affected opt-in policy test pending; actual long-basis cache/gradient qualification retried only after clean source",
+      "resume": "same fixed allocation; no healthy wave modules replayed; learned from zero",
+      "monotonic": 1299606.15551036,
+      "old_failure_preserved": true
+    },
+    {
+      "event": "repair_qualification_completed",
+      "source": "fd096634feaca8460f3c35095ffc453b212339cd",
+      "implementation_qualified": true,
+      "scope": "new small-block map and saved-long-range score/gradient/FD; not old complete readout qualification",
+      "old_complete_R_action_pair": {
+        "effective_rank": 2988,
+        "stored_columns": 2991,
+        "small_full_action_pair_relative": 2.3527241939534973e-09,
+        "small_full_action_pair_pass": false,
+        "predicted_residual_norm": 0.1387344861156511,
+        "sigma_max": 6.217976997400549,
+        "sigma_min": 7.455281096900865e-15
+      },
+      "FD_minima": [
+        5.256923581835294e-09,
+        7.885503550935714e-08,
+        2.2046767754192861e-07
+      ],
+      "fixed_resume_attempt": 3,
+      "original_deadline_preserved": true,
+      "monotonic": 1300184.278405548
+    },
+    {
+      "monotonic": 1301029.953037849,
+      "failure": "Fixed repaired boundary and successive candidate blocks fail unchanged1e-10 small-R/full-A pairing.",
+      "hypothesis": "An already unqualified diagnostic boundary cannot qualify further blocks; repeating seeds wastes budget without changing this limitation.",
+      "change": "Recompute preserved readout pairing and freeze it as a scientific negative; original numerical thresholds and new add_block strictness unchanged. Independent learned route remains authorized from zero.",
+      "test": "Targeted guard fixtures then actual original-operator qualification; controlled finalization of fixed boundary within inherited6h.",
+      "retry": "Pending; all fixed attempt costs and uncommitted rejected trials remain retained; no clock reset."
+    },
+    {
+      "monotonic": 1322014.039765187,
+      "failure": "Metadata-only neuron tally looked for q in chunk manifest; q is stored inside bound NPZ.",
+      "hypothesis": "Manifest is a chunk index, not the parameter payload.",
+      "change": "Use accepted primitive neuron counts, plus known saved/unpublished first fixed block; retain340 saved versus339 published fixed blocks.",
+      "test": "375 learned saved and375 published blocks agree;375 nonzero q changes and6083 optimizer evaluations; fixed has1000 waves and learned1286.",
+      "retry": "Metadata corrected; no numerical producer, weights or source changed."
+    }
+  ],
+  "interruptions_preserved": [
+    {
+      "path": "tmp/task42extra/v31/preliminary_records/fixed_unqualified_readout_stop.json",
+      "bytes": 1216,
+      "sha256": "d89b616ea0db8b8736f33f4915c0f3f9ee4b5fb13e95e1e5ca6334738c0d7afc"
+    },
+    {
+      "path": "tmp/task42extra/v31/preliminary_records/fixed_pair_investigation_stop.json",
+      "bytes": 499,
+      "sha256": "9f9dfb8f098256ae1061f3b0450dc6f5860672936971c97b6db5af3639f3597d"
+    }
+  ],
+  "old_failures_and_better_states_retained": true,
+  "ordinary_bug_handoff_limit_used": false
+}

@@ -1,3 +1,11 @@
+# Task42extra V31：块式神经对照与完整物理验收已完成，M5仍失败
+
+本支实际完成旧保存场补审、新块资格、两条从零对照及独立完整数组checker。学习375次连续q更新/3858有效方向，native0.3783958150、散射E0.9990517268；固定2988有效方向、native0.4766820076，读出/完整重建亦失败。块保留允许后续重组合，但没有验证精度或资源净增益。原40通道/六点/逐级功率/E/H/curl/体吸收/区域均已审，不再是NOT_RUN。
+
+学习actual19762.220962s/采样树峰6333640704B，共享独立审核942.507700s，全部失败/修复费用另列；source c32723a6c176a75e69174bd7a9570b8c981c4160，固定健康前缀/修复来源逐项分开。没有新Gram/Maxwell训练因子或准确参考重求；条件0.7nm未触发。NUMERICAL_GATE_NOT_REACHED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；保留中期较好、终态退化、D0成本否决/D1未运行、旧费用和UNKNOWN。
+
+[回执](task042extra_feinn_5nm/response_v31.md)、[专题/原门](task042extra_feinn_5nm/outcomes/block_wave_neural_v31.md)、[全数值](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v31.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v31.json)。仅同步本支；原50×25×140nm/λ0.7、decimal2e12B、172800s目标未达成，无其他支线运行许可。
+
 # Task42extra V30最终：真实新波动网络已训练，M5门未达到
 
 本支回到神经研究，实际学习连续波矢和复向量幅值，将局部函数逐步加入累计空间；原完整Nédélec矩、原M5/p3/A/f、内部未知量及40端口不变。控制拥有相同几何窗口、物理种子、确定性残差选向和稳定代数，未把辅助组件或固定弱基算NN收益。

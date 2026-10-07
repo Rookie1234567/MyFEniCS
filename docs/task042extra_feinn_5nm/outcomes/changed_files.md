@@ -1,3 +1,18 @@
+# V31最终：块保留、稳定映射及独立真实场负结果
+
+数值变化为opt-in保留独立块幅值、固定rcond小R SVD/反变换、原点值完整矩重建、已保存场补充物理检查与诊断用舍入归因。原ordinary默认、V30历史profile和其他任务源码不改。前缀source与恢复source/终态source逐项绑定，文档HEAD不代替运行源码。
+
+|依赖组|范围|资格及建议|
+|---|---|---|
+|research-only|neural_wave_block/reconstruction/qualification；greedy/projection显式opt-in|新块/导数资格通过，M5失败；不升生产默认|
+|reusable runner/watchdog|block_wave_campaign、block_wave_admission/worker及已有campaign薄分派|独立24h/每路线6h、成功PSI与失败等待分账、自己的串行持久worker|
+|checker/benchmark|neural_wave_audit/roundoff、定向test、v31 one-run输入|旧四向量复用，独立原数组检查；不信status，不新求参考|
+|compact evidence/docs|本轮Response/专题/records/导航及本支进度和总账|真实q更新、全部失败/NOT_RETAINED/UNKNOWN和时间资源保留|
+|production numerical/core|无本轮合格生产求解器|不授初始化/完整目标资格|
+|do-not-merge|ignored列库/模型/场/日志/环境/cache|大数组不入Git，不跨支线写入或merge master|
+
+[逐文件依赖和source](records/selective_merge_manifest_v31.json)、[运行索引](records/run_index_v31.json)。下方全部旧改动记录原文保留。
+
 # 当前V30最终：研究实现、保全修复与负结果交付
 
 新增机制在原M5/p3完整FE中学习连续局部波动方向，随后稳定组合累计函数。其数值核心在src；输入和编排为薄opt-in。原方程残差仍未过门，神经累计映射另有1.72e-10稳定性负结果，完整物理审核未完成；这些代码不提升为生产默认。

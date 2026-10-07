@@ -1,0 +1,47 @@
+{
+  "historical_qualified_traditional_reference": {
+    "seconds": 672.462895,
+    "tree_peak_bytes": 1245822976,
+    "scope": "Historical; not a fresh same-precision cold denominator"
+  },
+  "loaded_packet_route_costs": "See unique actual attempts, inherited allocation spans, and shared independent verification separately. Other candidate waiting is not a deployed solve cost.",
+  "fixed_actual_attempt_seconds": 7296.262521993136,
+  "learned_actual_attempt_seconds": 19762.220962276915,
+  "shared_independent_verification_seconds": 942.5076995708514,
+  "learned_conservative_attribution_seconds": 20704.728661847766,
+  "learned_attribution_below_6h": true,
+  "shared_verification_project_charge_once": true,
+  "fixed_repair_and_qualification_scope": "Additional actual small-R diagnosis and affected qualification appear in the resource ledger, within the preserved original allocation; no discarded trial count is reconstructed.",
+  "simultaneous_sampled_route_peaks": {
+    "fixed": 4757319680,
+    "learned": 6333640704
+  },
+  "complete_cold_N1": {
+    "status": "UNKNOWN",
+    "reason": "No fresh packet/reference cold regeneration authorized or required; old setup/qualification/debug and lost work are not free."
+  },
+  "scientific_accuracy_pass": false,
+  "same_precision_20_percent_gain_qualified": false,
+  "fixed_rank": 2988,
+  "learned_rank": 3858,
+  "dense_U_Q_bytes_formula": "32*N*m",
+  "shape_example_not_actual_target_DoF": {
+    "N": 10000000,
+    "m4096_U_Q_bytes": 1310720000000,
+    "m6144_U_Q_bytes": 1966080000000,
+    "operators_R_temporaries_system_reserve_excluded": true
+  },
+  "original_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "complete_cold_seconds": 172800,
+    "own_swap_bytes": 0,
+    "OOC_bytes": 0,
+    "qualified": false
+  }
+}

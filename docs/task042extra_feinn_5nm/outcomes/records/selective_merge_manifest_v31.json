@@ -1,0 +1,104 @@
+{
+  "source_sha": "c32723a6c176a75e69174bd7a9570b8c981c4160",
+  "groups": {
+    "production numerical/core": {
+      "files": [],
+      "numerical_boundary": "No qualified production solver; merge NOT_APPROVED",
+      "dependencies": "Original A/f/moments/MPC/material identity; block_wave campaign opt-in",
+      "tests": "tests_v31.json and block_checks_v31.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v31.json; M5 joint FAIL",
+      "merge_recommendation": "Research branch only; no merge approval"
+    },
+    "research-only": {
+      "files": [
+        "src/postprocessing/neural_wave_roundoff.py",
+        "src/solvers/neural_wave_block.py",
+        "src/solvers/neural_wave_block_qualification.py",
+        "src/solvers/neural_wave_block_reconstruction.py",
+        "src/solvers/neural_wave_greedy.py",
+        "src/solvers/neural_wave_projection.py"
+      ],
+      "numerical_boundary": "Changed opt-in numerical behavior; qualifications and M5 negatives retained",
+      "dependencies": "Original A/f/moments/MPC/material identity; block_wave campaign opt-in",
+      "tests": "tests_v31.json and block_checks_v31.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v31.json; M5 joint FAIL",
+      "merge_recommendation": "Research branch only; no merge approval"
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "src/io/block_wave_campaign.py",
+        "src/io/neural_wave_campaign.py",
+        "src/runners/block_wave_admission.py",
+        "src/runners/block_wave_worker.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/runners/neural_wave_dependencies.py",
+        "src/runners/neural_wave_worker.py"
+      ],
+      "numerical_boundary": "Default preserved; own process tree/campaign budgets and binding",
+      "dependencies": "Original A/f/moments/MPC/material identity; block_wave campaign opt-in",
+      "tests": "tests_v31.json and block_checks_v31.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v31.json; M5 joint FAIL",
+      "merge_recommendation": "Research branch only; no merge approval"
+    },
+    "checker/benchmark": {
+      "files": [
+        "input/task042extra_feinn_5nm/design_v31.json",
+        "input/task042extra_feinn_5nm/v31_block_compare.dat",
+        "input/task042extra_feinn_5nm/v31_block_reconstruct.dat",
+        "input/task042extra_feinn_5nm/v31_block_wave_checks.dat",
+        "input/task042extra_feinn_5nm/v31_fixed_block_wave.dat",
+        "input/task042extra_feinn_5nm/v31_global_rank_wave_checks.dat",
+        "input/task042extra_feinn_5nm/v31_learned_block_wave.dat",
+        "input/task042extra_feinn_5nm/v31_reconstruction_stability.dat",
+        "input/task042extra_feinn_5nm/v31_roundoff_witness.dat",
+        "input/task042extra_feinn_5nm/v31_saved_field_audit.dat",
+        "input/task042extra_feinn_5nm/v31_saved_field_check.dat",
+        "input/task042extra_feinn_5nm/v31_stability_exit_checks.dat",
+        "src/postprocessing/neural_wave_audit.py",
+        "src/test/test_block_wave_contract.py",
+        "src/test/test_neural_wave_block.py"
+      ],
+      "numerical_boundary": "Fixtures and full saved-field verification, no re-solve",
+      "dependencies": "Original A/f/moments/MPC/material identity; block_wave campaign opt-in",
+      "tests": "tests_v31.json and block_checks_v31.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v31.json; M5 joint FAIL",
+      "merge_recommendation": "Research branch only; no merge approval"
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/tests_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v31.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/v30_completed_field_audit_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/run_index_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/design_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/reconstruction_stability_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/cost_and_capacity_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/block_checks_v31.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v31.json",
+        "docs/task042extra_feinn_5nm/response_v31.md",
+        "docs/task042extra_feinn_5nm/outcomes/block_wave_neural_v31.md"
+      ],
+      "numerical_boundary": "Negative research evidence only; no production PASS",
+      "dependencies": "Original A/f/moments/MPC/material identity; block_wave campaign opt-in",
+      "tests": "tests_v31.json and block_checks_v31.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v31.json; M5 joint FAIL",
+      "merge_recommendation": "Research branch only; no merge approval"
+    },
+    "do-not-merge": {
+      "files": [
+        "benchmarks/artifacts/task42extra/v31",
+        "tmp/task42extra/v31",
+        ".venv",
+        ".venv-ml"
+      ],
+      "numerical_boundary": "Ignored arrays/models/environments/logs, no cross-branch migration",
+      "dependencies": "Original A/f/moments/MPC/material identity; block_wave campaign opt-in",
+      "tests": "tests_v31.json and block_checks_v31.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v31.json; M5 joint FAIL",
+      "merge_recommendation": "Research branch only; no merge approval"
+    }
+  }
+}

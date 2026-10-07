@@ -1,3 +1,20 @@
+# 当前V31最终：本支只做神经，块式学习已运行但联合门失败
+
+保留独立波幅使后续模块可重新组合，已从零执行同能力固定控制和学习路线。学习实际375次非零方向更新、3858有效复方向；原native/增广0.3783958150、散射E误差0.9990517268。固定有效秩2988、native0.4766820076，完整读出及参数重建另失败。原方程1e-6/场1e-4门未放宽，功率均diagnostic；未获同精度20%资源收益。条件0.7nm pilot未触发，NUMERICAL_GATE_NOT_REACHED / NO_VERIFIED_NN_INCREMENT。
+
+|最新measured状态|固定块控制|学习块神经|
+|---|---:|---:|
+|有效秩 / 神经元|2988 / 1000|3858 / 1286|
+|native / 独立total残差|0.4766820076 / 0.2258051065|0.3783958150 / 0.1792467640|
+|散射E / 总E相对差|0.9987387687 / 0.6848892412|0.9990517268 / 0.6851038536|
+|模型重建 / 1e-10门|3.92857e-10 FAIL|1.23026e-12 PASS|
+|路线实际attempt / s|7296.262522（受影响诊断/资格另列）|19762.220962|
+|采样同时整树峰 / B|4757319680|6333640704|
+
+独立FE与保存checker全部完成，非只报loss。V30四个健康重建向量复用后补齐全部E/H/curl、六点、40通道、体吸收/能量及原区域，旧负结果不改。参考只在冻结后评分；无新Gram或Maxwell训练因子。学习低残差不等于更准场或资源节省。原50×25×140nm、Si17/120nm、λ0.7完整3D FE、decimal2e12B/ownswap OOC0/172800s完整冷流程未达成；M3600较好、最终退化、D0成本否决/D1未运行及全部FAIL/UNKNOWN/费用保留。以下旧导航是历史，不授新训练。
+
+[Response V31](response_v31.md)、[专题](outcomes/block_wave_neural_v31.md)、[全Gate](outcomes/records/full_numerical_gates_v31.json)、[source/费用](outcomes/records/run_index_v31.json)。
+
 # 当前V30最终：本支只做神经，数值门未达到
 
 按[Review V29](review_report_v29.md)实际完成新局部波动方向学习及同能力固定控制；神经3,127列/14,520神经元，native/增广0.3308837562，控制0.4237611235，均高于1e-6。没有NN净资源收益或生产初值。[Response V30](response_v30.md)、[专题](outcomes/neural_wave_galerkin_v30.md)、[全部Gate/未运行项](outcomes/records/full_numerical_gates_v30.json)、[实际source和费用](outcomes/records/run_index_v30.json)。
