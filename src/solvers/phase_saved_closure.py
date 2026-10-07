@@ -179,11 +179,17 @@ def execute(role,folder,state):
                 old=scope.parent(k);a=restore_record(old,journal,scope=scope)
                 pairs[k+'_T6']=compare_pair(old,r,a,b,folder/(k+'_T6'),journal)
             r['comparisons']=pairs
+            points=checked_arrays(pairs['R6_T6']['arrays'])
+            fixed=dict(points=points['selected_points'],parent_cells=points['selected_parent_second'],kappa=checked_arrays(r['arrays'])['kappa'])
+            fixed.update({n+'_'+k:points['selected_'+n+'_'+k+'_second'] for n in ('E','H','curl') for k in ('total','scattered')})
+            r['output']['fixed_240']=save_arrays(folder/'fixed_240_physical_fields.npz',**fixed)
             r['independent']=independent_state(r,b,folder/'T6_original',journal)
         r.update(timings=journal.timings,calls=journal.calls);return r
     if role=='VERIFY_COST':
-        from benchmarks.collect_phase_saved_closure import check_saved_stage
+        from benchmarks.collect_phase_saved_closure import check_saved_stage,check_transverse_stage
         s=scope.stage('S');checked=check_saved_stage(s,folder,journal)
+        if (scope.ARTIFACT/'T6.json').exists() and scope.stage('T6').get('independent'):
+            checked['T6']=check_transverse_stage(scope.stage('T6'),folder/'T6_checker',journal)
         return dict(status='COMPLETED',role=role,checks=checked,all_scientific_vectors_already_independently_consumed=True,
             new_factor_count=0,new_complete_solves=0,timings=journal.timings,calls=journal.calls)
     raise ValueError('V56 explicit stage inventory')

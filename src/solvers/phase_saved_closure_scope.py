@@ -14,7 +14,13 @@ SOLVES=('T6',)
 
 class ClosureWindow(AccuracyWindow):
     def remaining(self,role):
-        self.require_ready();p=plan_record();reserve=1800 if role=='T6' else 180
+        self.require_ready()
+        return self.available_at_boundary(role)
+
+    def available_at_boundary(self,role):
+        # Read-only inside the already claimed worker; require_ready correctly
+        # refuses a second launch while active, so must not be called here.
+        p=plan_record();reserve=1800 if role=='T6' else 180
         used=sum(json.loads((Path(r['folder'])/'run_summary.json').read_text()).get('launch_wall_seconds',r['elapsed_seconds'])
             if (Path(r['folder'])/'run_summary.json').exists() else r['elapsed_seconds']
             for r in self.ledger()['runs'] if r['role']==role)
@@ -83,12 +89,27 @@ def raw_tensor_reader(role,bundle,journal):
 def require_stage(role):
     if role!='T6':raise RuntimeError('only one conditional new solve')
     if (window.TMP/'scientific_queue_frozen.json').exists():raise RuntimeError('V56 queue frozen')
-    if not stage('S')['complete_saved_closure']:raise RuntimeError('H7 saved closure incomplete')
+    saved=stage('S')
+    if not saved['complete_saved_closure']:raise RuntimeError('H7 saved closure incomplete')
+    if all(p['pass_gate'] for p in saved['comparisons'].values()):raise RuntimeError('no spatial or cross-p failure to admit T6')
     a=json.loads((window.TMP/'T6_admission.json').read_text())
     if not a['admitted'] or a['splits']!=[2,1,2]:raise RuntimeError('fixed x transverse admission')
     for item in a['evidence']:
         if hashlib.sha256(Path(item['path']).read_bytes()).hexdigest()!=item['sha256']:raise ValueError('T6 admission identity')
-    if (ARTIFACT/'T6.json').exists() and stage('T6').get('returned_arrays'):raise RuntimeError('one complete new solve already returned; consume saved state')
+    need=1800 if (window.TMP/'T6_post_resume.json').exists() else a['forecast_complete_case_seconds']
+    if window.available_at_boundary('T6')<need:raise RuntimeError('T6 complete case and audit budget no longer fits')
+    if (ARTIFACT/'T6.json').exists() and stage('T6').get('returned_arrays') and not (window.TMP/'T6_post_resume.json').exists():raise RuntimeError('one complete new solve already returned; consume saved state')
+
+
+def postprocessing_record(role):
+    if role!='T6':raise ValueError('only the one new T6 return may be consumed')
+    r=json.loads((window.TMP/'T6_post_resume.json').read_text());receipt=r['minimal_state_receipt'];path=Path(receipt['path']).resolve()
+    if not path.is_relative_to(ARTIFACT) or hashlib.sha256(path.read_bytes()).hexdigest()!=receipt['sha256']:raise ValueError('V56 saved return identity')
+    original=json.loads(path.read_text())
+    if r['arrays']!=original['arrays'] or r['case_spec']!=case_spec(role) or r['source']!=original['source']:raise ValueError('V56 saved return scientific identity')
+    raw=r['raw_tensor_manifest_receipt'];manifest=Path(raw['path']).resolve()
+    if manifest!=path.parent/'raw_tensor/manifest.json' or hashlib.sha256(manifest.read_bytes()).hexdigest()!=raw['sha256']:raise ValueError('V56 saved raw manifest identity')
+    return r
 
 
 def verification_inventory_for(role):

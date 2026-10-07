@@ -19,7 +19,9 @@ def digest(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
 def vector_check(receipt):
-    v=checked_arrays(receipt);b=v['rhs'];true=b-v['volume_action']-v['native_boundary_action']
+    v=checked_arrays(receipt)
+    if any(not np.isfinite(x).all() for x in v.values()):raise ValueError('independent original vectors must be finite')
+    b=v['rhs'];true=b-v['volume_action']-v['native_boundary_action']
     top=b-v['volume_action']-v['coupling_action'];pr=v['projected']-v['H']*v['port']
     defects=dict(saved_true=relative(true-v['residual'],np.maximum(np.abs(b),np.abs(b-v['residual']))),
         saved_top=relative(top-v['augmented_top'],np.maximum(np.abs(b),np.abs(b-v['residual']))),
@@ -33,17 +35,28 @@ def vector_check(receipt):
     scale=sum(np.linalg.norm(x[ip],axis=1) for x in (b,v['volume_inside'],v['volume_trace'],v['coupling_action']))
     inner=float(np.max(numerators/np.maximum(scale,1e-30)))
     if not np.allclose(scale,v['internal_operation_scale'],rtol=1e-13,atol=1e-30) or not np.array_equal(residual[v['internal_rows']],v['internal_residual']):raise ValueError('independent internal operation inventory')
-    return dict(norms=norms,identity_defects=defects,internal_operation_scaled_max=inner,
-        pass_gate=all(np.isfinite(x) and x<=1e-6 for x in norms.values()) and max(defects.values())<=1e-10 and inner<=1e-10)
+    slave_zero=bool(np.all(v['u_storage'][v['slaves']]==0))
+    return dict(norms=norms,identity_defects=defects,internal_operation_scaled_max=inner,slave_zero=slave_zero,
+        direct_internal_target_pass=max(norms.values())<=1e-10,
+        pass_gate=slave_zero and all(np.isfinite(x) and x<=1e-6 for x in norms.values()) and max(defects.values())<=1e-10 and inner<=1e-10)
+
+
+def pair_checks(states,pairs):
+    # The old V51 integral_pair has a fixed 532 inventory and old selected
+    # array names. Reuse the qualified full inventory/regions checker instead.
+    from benchmarks.collect_phase_notch_hp import saved_checks
+    if any(p['modes']['mode_count']!=828 for p in pairs.values()):raise ValueError('V56 complete 828 comparison inventory')
+    _,regions,gates=saved_checks(states,pairs,scope=scope)
+    return dict(regions=regions,gates=gates)
 
 
 def check_saved_stage(s,folder,journal):
-    from benchmarks.collect_phase_explicit_accuracy import integral_pair,modal_recalculation
+    from benchmarks.collect_phase_explicit_accuracy import modal_recalculation
     rows={}
     with journal.measured('independent_saved_absorption_field_original_vector_recalculation'):
         for role,key in (('R7','R7_original_regression'),('H7','H7_independent')):
             rows[role]=vector_check(s[key]['arrays'])
-        pairs={name:dict(raw_field_gate=integral_pair(p),reported_pass=p['pass_gate']) for name,p in s['comparisons'].items()}
+        pairs=pair_checks(dict(H7=s['H7'],R7=scope.parent('R7'),R6=scope.parent('R6')),s['comparisons'])
         m=s['H7']['output']['volume_metrics'];a=checked_arrays(m['arrays'])['rows'];pinc=m['incident_power_code_units'];k0=2*np.pi/.7
         av=0.
         for region in m['regions'].values():
@@ -60,6 +73,42 @@ def check_saved_stage(s,folder,journal):
         new_FE_calls=0,new_factor_count=0,new_complete_solves=0,
         equation_consumer_pass=all(r['pass_gate'] for r in rows.values()))
     write_json(folder/'independent_saved_checker.json',result);return result
+
+
+def check_transverse_stage(t,folder,journal):
+    from benchmarks.collect_phase_explicit_accuracy import modal_recalculation
+    folder.mkdir(exist_ok=True)
+    with journal.measured('independent_saved_T6_vector_field_and_power_recalculation'):
+        original=vector_check(t['independent']['arrays'])
+        pairs=pair_checks(dict(T6=t,R6=scope.parent('R6'),R7=scope.parent('R7')),t['comparisons'])
+        points=checked_arrays(t['output']['fixed_240'])
+        if points['points'].shape!=(240,3) or any(points[n+'_'+k].shape!=(240,3) for n in ('E','H','curl') for k in ('total','scattered')):raise ValueError('T6 fixed 240 inventory')
+        shim=SimpleNamespace(NAMESPACE='v56',window=scope.window,plan_record=scope.plan_record,stage=lambda _:t)
+        modal=modal_recalculation(scope=shim,role_names=('T6',),output_folder=folder)
+    result=dict(original=original,pairs=pairs,modal=modal,new_FE_calls=0,new_factor_count=0,new_complete_solves=0)
+    write_json(folder/'independent_saved_checker.json',result);return result
+
+
+def compact_state(r):
+    keys=('status','role','case_spec','degree','source_sha','solve_source_sha','arrays','returned_arrays','original_audit',
+        'direct_target_pass','equation_pass','recovery','capacity','raw_tensor_manifest_receipt','fixed_refinements')
+    result={k:r[k] for k in keys if k in r}
+    result['output']={k:r['output'][k] for k in ('fields','fixed_240','port_metrics','volume_metrics') if k in r.get('output',{})}
+    return result
+
+
+def compact_science(stages):
+    result={}
+    if 'S' in stages:
+        s=stages['S'];result['S']={k:s[k] for k in ('status','role','source_sha','comparisons','H7_independent','R7_original_regression',
+            'complete_saved_closure','field_accuracy_pass','cross_p_diagnostic_pass','new_factor_count','new_complete_solves','new_raw_tensor_classes')}
+        result['S'].update(H7=compact_state(s['H7']),R7_absorption={k:v for k,v in s['R7_absorption'].items() if k!='volume_result'},
+            H7_few_point=s['H7_few_point'],parent_pointer=json.loads((scope.ARTIFACT/'S.json').read_text()))
+    if 'T6' in stages:
+        t=stages['T6'];result['T6']=compact_state(t)
+        result['T6'].update({k:t[k] for k in ('comparisons','independent','raw_tensor_checkpoint','reason') if k in t})
+    if 'VERIFY_COST' in stages:result['VERIFY_COST']=stages['VERIFY_COST']
+    return dict(**result,NN_training=0,target_qualified=False,history_is_by_parent_pointer=True)
 
 
 def collect():
@@ -79,7 +128,7 @@ def collect():
             resolved_sha256=digest(directory/'resolved_config.json'),physical_sha256=manifest['physical_sha256'],mode='complete828',memory_budget=manifest['memory_budget']))
     stages={role:scope.stage(role) for role in scope.STAGES if (scope.ARTIFACT/(role+'.json')).exists()}
     write_json(out/'run_index_v56.json',dict(runs=runs,pointers={r:json.loads((scope.ARTIFACT/(r+'.json')).read_text()) for r in stages}))
-    write_json(out/'scientific_checks_v56.json',dict(S=stages.get('S'),T6=stages.get('T6'),VERIFY_COST=stages.get('VERIFY_COST'),NN_training=0,target_qualified=False))
+    write_json(out/'scientific_checks_v56.json',compact_science(stages))
     write_json(out/'physical_identity_bindings_v56.json',dict(runs=bindings,parents=scope.plan_record()['parents'],H7=scope.plan_record()['saved_H7']))
     write_json(out/'resource_costs_v56.json',dict(costs=costs,charged_seconds=scope.window.charged_wall(),clock=scope.window.snapshot(),
         inherited_known_lower_seconds=scope.plan_record()['historical_loaded_known_lower_seconds'],unknown_costs='unknown; not zero',fresh_N1='parent necessary prepare plus full consumer; not equal cached S increment'))

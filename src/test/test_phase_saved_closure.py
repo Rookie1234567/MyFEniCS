@@ -123,5 +123,64 @@ class SavedClosureTests(unittest.TestCase):
             p.write_bytes(b'half')
             with self.assertRaisesRegex(ValueError,'whole-file identity'):vector_check(r)
 
+    def test_actual_vector_checker_recomputes_slave_and_nonfinite_failure(self):
+        from benchmarks.collect_phase_saved_closure import vector_check
+        data=dict(rhs=np.array([2+1j,0j,3-2j]),volume_action=np.array([2+1j,0j,3-2j]),
+            native_boundary_action=np.zeros(3,complex),coupling_action=np.zeros(3,complex),
+            projected=np.array([1+2j]),H=np.array([2-1j]),port=np.array([1j]),
+            residual=np.zeros(3,complex),augmented_top=np.zeros(3,complex),port_residual=np.zeros(1,complex),
+            volume_curl=np.array([4+2j,0j,6-4j]),volume_mass=np.array([-2-1j,0j,-3+2j]),
+            volume_inside=np.array([2+1j,0j,0j]),volume_trace=np.array([0j,0j,3-2j]),
+            internal_rows=np.array([0]),internal_operation_scale=np.array([2*np.sqrt(5)]),
+            internal_residual=np.zeros(1,complex),u_storage=np.array([1+1j,0j,2j]),slaves=np.array([1]))
+        with tempfile.TemporaryDirectory() as d:
+            def check():return vector_check(save_arrays(Path(d)/'audit.npz',**data))
+            self.assertTrue(check()['pass_gate'])
+            data['u_storage'][1]=1e-20j
+            self.assertFalse(check()['pass_gate'])
+            data['u_storage'][1]=0;data['volume_curl'][0]=np.nan
+            with self.assertRaisesRegex(ValueError,'must be finite'):check()
+
+    def test_pair_checker_uses_complete_828_inventory_and_new_selected_names(self):
+        from benchmarks.collect_phase_saved_closure import pair_checks
+        from src.solvers.phase_notch_hp_modes import AMPLITUDES,compare_payloads
+        fields=('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')
+        with tempfile.TemporaryDirectory() as d:
+            folder=Path(d);payload=dict(reference_planes=dict(top_z=6.7407407407407405,bottom_z=-.5185185185185185),orders=[])
+            for side in ('top','bottom'):
+                for m in range(-11,12):
+                    for n in range(-4,5):
+                        for pol in ('s','p'):
+                            payload['orders'].append(dict(side=side,m=m,n=n,polarization=pol,power_ratio=0.,**{k:[1.,2.] for k in AMPLITUDES}))
+            modes,_=compare_payloads(payload,payload,828)
+            (folder/'port_power.json').write_text(json.dumps(payload))
+            state=dict(arrays=save_arrays(folder/'state.npz',cell_tags=np.array([1,3])),
+                output=dict(fields=dict(path=str(folder/'fields.npz')),port_metrics=dict(R_total=.2,T_total=.7,A_balance=.1),
+                    volume_metrics=dict(A_volume_total=.1,energy_closure_error_port_volume=0.)))
+            a=dict(per_cell_integrals=np.tile(np.array([0.,1.,1.]),(2,6,1)),per_cell_component_error_squared=np.zeros((2,6,3)),
+                common_centers=np.array([[0.,0.,1.],[0.,0.,3.]]),parent_second=np.array([0,1]))
+            a.update({f'selected_{f}_{suffix}':np.full((240,3),1+2j) for f in fields for suffix in ('first','second')})
+            pair=dict(arrays=save_arrays(folder/'q31.npz',**a),q23_arrays=save_arrays(folder/'q23.npz',**a),
+                fields={f:dict(relative=0.) for f in fields},selected={f:0. for f in fields},modes=modes,
+                parent_array_sha256=[state['arrays']['sha256']]*2,pass_gate=True)
+            result=pair_checks(dict(R7=state,H7=state),dict(R7_H7=pair))
+            self.assertTrue(result['gates']['R7_H7']['field_mode_power_pass'])
+            pair['modes']['mode_count']=532
+            with self.assertRaisesRegex(ValueError,'complete 828'):pair_checks(dict(R7=state,H7=state),dict(R7_H7=pair))
+
+    def test_conditional_T_live_worker_budget_does_not_request_second_launch(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder=Path(d);evidence=folder/'S.json';evidence.write_text('frozen completed S')
+            import hashlib
+            (folder/'T6_admission.json').write_text(json.dumps(dict(admitted=True,splits=[2,1,2],
+                forecast_complete_case_seconds=8000,evidence=[dict(path=str(evidence),sha256=hashlib.sha256(evidence.read_bytes()).hexdigest())])))
+            saved=dict(complete_saved_closure=True,comparisons=dict(cross_p=dict(pass_gate=False)))
+            with patch.object(scope.window,'TMP',folder),patch.object(scope,'ARTIFACT',folder),patch.object(scope,'stage',return_value=saved),\
+                patch.object(scope.window,'available_at_boundary',return_value=9000),\
+                patch.object(scope.window,'require_ready',side_effect=AssertionError('active is already claimed')):
+                scope.require_stage('T6')
+                with patch.object(scope.window,'available_at_boundary',return_value=7999):
+                    with self.assertRaisesRegex(RuntimeError,'audit budget'):scope.require_stage('T6')
+
 
 if __name__=='__main__':unittest.main()
