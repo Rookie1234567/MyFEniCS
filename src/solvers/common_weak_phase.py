@@ -145,7 +145,7 @@ def consume_p6_setup_checkpoint(path,folder,journal):
     import basix
     import ufl
     from dolfinx import fem
-    from .hcurl_affine_phase_tensor import axis_widths
+    from .hcurl_affine_phase_tensor import axis_widths,AffinePhaseReferenceTensor
     from .phase_raw_tensor_reader import ReadonlyRawTensorProvider
     from .hcurl_assembly_time_condensation import _cell_integral_kernels,_tabulate_raw_tensor_class
     from .common_3d_forms import _build_physical_volume_terms
@@ -158,14 +158,38 @@ def consume_p6_setup_checkpoint(path,folder,journal):
     old=json.loads(progress.read_text());rows=old['rows'];cfg,setup,_,field=restore_record(scope.parent('R6'),journal,scope=scope)
     k=carrier(cfg);element=basix.finite_element.FiniteElement(setup['spaces'][6].element.basix_element)
     identity=ReadonlyRawTensorProvider([scope.plan_record()['raw_tensor_parents']['p6_Z2']],dict(cfg=cfg,degree=6,kappa=k),journal,scope.ROOT)
-    expected=set()
+    expected=set();entries={}
     for role in ('R6','T6'):
         r=scope.parent(role);manifest=r['raw_tensor_checkpoint']
         for e in manifest['classes']:
             a=checked_arrays(e['arrays'])
             if e['degree']!=6 or e['element_hash']!=element.hash() or not np.array_equal(a['kappa'],k):raise ValueError('saved p6 identity')
-            expected.add((e['tag'],tuple(axis_widths(a['coordinates']))))
-    if expected!={(r['tag'],tuple(r['widths'])) for r in rows}:raise ValueError('saved setup class inventory incomplete')
+            key=(e['tag'],tuple(axis_widths(a['coordinates'])));expected.add(key);entries[key]=e
+    covered={(r['tag'],tuple(r['widths'])) for r in rows};factory=None
+    if not covered.issubset(expected):raise ValueError('saved setup class inventory contains another case')
+    if expected!=covered:
+        # The controlled stop left 18 classes unprocessed. Rebuild the same
+        # reference set once as charged repair work, not a new representation.
+        # Prior completed comparisons and the two actual LUs are not replayed.
+        with journal.measured('repair_missing_reference_table_rebuild'):
+            factory=AffinePhaseReferenceTensor(element,kappa=k,k0=cfg.k0,mu=cfg.mu_r,
+                epsilon_by_tag={cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating},q=15)
+        old['reference']['charged_repair_rebuild']=factory.audit
+        for key,e in entries.items():
+            if key in covered:continue
+            v=checked_arrays(e['arrays']);h=axis_widths(v['coordinates']);oldtensor=v['tensor']
+            with journal.measured('p6_complete_missing_class_combination'):
+                new,scale=factory.tensor(tag=e['tag'],widths=h,return_scale=True)
+            rng=np.random.default_rng(570600+len(rows));directions=rng.normal(size=(element.dim,2))+1j*rng.normal(size=(element.dim,2))
+            delta=np.linalg.norm(new-oldtensor);rel=float(delta/np.linalg.norm(oldtensor));op=float(delta/scale)
+            effects=[relative((new-oldtensor)@d,oldtensor@d) for d in directions.T]
+            witness=save_arrays(folder/f'p6_missing_class{len(rows):03d}.npz',widths=h,coordinates=v['coordinates'],
+                directions=directions,old_action=oldtensor@directions,new_action=new@directions,new_tensor=new,operation_scale=np.asarray(scale))
+            rows.append(dict(tag=e['tag'],widths=h,raw_parent=e['arrays'],relative_frobenius=rel,operation_scaled=op,
+                action_relative=effects,arrays=witness,pass_gate=rel<=1e-10 and op<=1e-12 and max(effects)<=1e-10))
+            write_json(folder/'p6_partial_qualification.json',dict(rows=rows,reference=old['reference']))
+        covered={(r['tag'],tuple(r['widths'])) for r in rows}
+    if expected!=covered:raise ValueError('complete actual p6 class coverage')
     recoveries=[]
     for witness in frozen['recoveries']:
         v=checked_arrays(witness);matches=[]
@@ -181,7 +205,7 @@ def consume_p6_setup_checkpoint(path,folder,journal):
     result['pass_gate']=tensor_check({'degrees':[result]})['6']['pass_gate'] and len(recoveries)==2
     measured=[json.loads(line)['seconds'] for line in events.read_text().splitlines()
         if json.loads(line)['event']=='p6_complete_class_combination_end']
-    if len(measured)!=len(rows):raise ValueError('saved fresh combination timing inventory')
+    if len(measured)!=len(json.loads(progress.read_text())['rows']):raise ValueError('saved fresh combination timing inventory')
     order=sorted(range(len(rows)),key=lambda i:(max(rows[i]['widths'])/min(rows[i]['widths']),tuple(rows[i]['widths']),rows[i]['tag']))
     selected=list(dict.fromkeys((order[0],order[-1])))
     write_json(folder/'fresh_pair_design.json',dict(indices=selected,selection='same predetermined min/max aspect; earlier fresh combination retained, no table rebuild'))
@@ -191,13 +215,18 @@ def consume_p6_setup_checkpoint(path,folder,journal):
         form=fem.form(terms[0]+terms[1]);kernels=_cell_integral_kernels(form,sum_duplicate_cell_integrals=True)
     fresh=[]
     for index in selected:
-        row=rows[index];v=checked_arrays(row['raw_parent']);new=checked_arrays(row['arrays'])['new_tensor']
+        row=rows[index];v=checked_arrays(row['raw_parent'])
+        if factory is not None:
+            with journal.measured('fresh_new_fixed_p6_class_combination'):
+                began=perf_counter();new=factory.tensor(tag=row['tag'],widths=row['widths']);newseconds=perf_counter()-began
+        else:
+            new=checked_arrays(row['arrays'])['new_tensor'];newseconds=measured[index]
         with journal.measured('fresh_original_fixed_p6_class'):
             start=perf_counter();old=_tabulate_raw_tensor_class(form,kernels,v['coordinates'],tag=row['tag'],dimension=element.dim);seconds=perf_counter()-start
         fresh.append(dict(degree=6,key=str(row['tag'])+str(row['widths']),old_fresh_kernel_seconds=seconds,
-            new_combination_seconds=measured[index],reference_cold_seconds=old['reference']['total_build_seconds'],
+            new_combination_seconds=newseconds,reference_cold_seconds=old['reference']['total_build_seconds'],
             same_object_relative=relative(new-old,old),cached_load_is_not_control=True,
-            timing_design='staged same-window pair; preserved earlier fresh combination, not cache-load timing; no end-to-end speed ratio',
+            timing_design='same-object fixed pair; reference repair rebuild and earlier construction both charged; no end-to-end speed ratio',
             new_combination_source_sha=frozen['source_sha']))
         write_json(folder/'fresh_control_results.json',fresh)
     del setup,field
