@@ -18,7 +18,8 @@ def main():
     paths=['src/solvers/common_weak_phase.py','src/solvers/common_weak_phase_scope.py','src/solvers/common_continuous_weak.py',
         'src/solvers/hcurl_affine_phase_tensor.py','src/solvers/phase_reference_provider.py','src/runners/port_preparation.py',
         'scripts/run_case.py','src/solvers/phase_notch_hp.py','src/solvers/phase_explicit_accuracy.py',
-        'src/test/test_common_weak_phase.py','benchmarks/qualify_common_weak_phase.py','benchmarks/collect_common_weak_phase.py']
+        'src/test/test_common_weak_phase.py','benchmarks/qualify_common_weak_phase.py','benchmarks/collect_common_weak_phase.py',
+        'benchmarks/collect_phase_explicit_accuracy.py']
     for name in paths:compile((ROOT/name).read_bytes(),name,'exec')
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_common_weak_phase'],
         ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]

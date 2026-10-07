@@ -47,7 +47,7 @@ def tensor_setup(folder,journal):
     from .common_3d_forms import _build_physical_volume_terms
     from dolfinx import fem
     import ufl
-    result=[];fresh=[]
+    result=[];fresh=[];recovery_count=0
     for degree,roles in ((6,('R6','T6')),(7,('R7','H7'))):
         if degree==7 and (perf_counter()-journal.began>1500 or scope.window.available_at_boundary('K')<500):
             result.append(dict(degree=7,status='NOT_RUN_BUDGET',pass_gate=False));break
@@ -86,7 +86,7 @@ def tensor_setup(folder,journal):
                 row=dict(tag=entry['tag'],widths=h,raw_parent=entry['arrays'],relative_frobenius=rel,
                     operation_scaled=op,action_relative=effects,arrays=witness,pass_gate=rel<=1e-10 and op<=1e-12 and max(effects)<=1e-10)
                 rows.append(row);write_json(folder/f'p{degree}_progress.json',dict(rows=rows,reference=factory.audit))
-                if len(recoveries)<2:
+                if recovery_count<2:
                     # Actual persisted coefficients provide nonzero trace and
                     # internal load. Match this raw class to its actual cell.
                     layout=checked_arrays(manifest['cell_layout']);ids=np.flatnonzero(layout['cell_class_key_utf8']==entry['key'].encode())
@@ -100,7 +100,9 @@ def tensor_setup(folder,journal):
                         fi=(old@co)[inside];recover=solve(new[np.ix_(inside,inside)],fi-new[np.ix_(inside,trace)]@co[trace])
                         defect=relative(recover-co[inside],co[inside]);rec=save_arrays(folder/f'p{degree}_recovery{len(recoveries)}.npz',
                             actual_coefficients=co,internal_rhs=fi,recovered_internal=recover,internal_rows=inside,trace_rows=trace)
-                        recoveries.append(dict(relative=defect,pass_gate=defect<=1e-10,arrays=rec,homogeneous_and_particular=True))
+                        recoveries.append(dict(relative=defect,pass_gate=defect<=1e-10,arrays=rec,homogeneous_and_particular=True,
+                            raw_class_index=len(rows)-1,raw_parent=entry['arrays'],combined_tensor=witness))
+                        recovery_count+=1
                 del new,old,v;gc.collect()
         if degree==6 and entries:
             # Only the two pre-registered geometric aspect extremes are timed.
@@ -119,8 +121,9 @@ def tensor_setup(folder,journal):
                     reference_cold_seconds=factory.build_seconds,same_object_relative=relative(new-old,old),
                     cached_load_is_not_control=True))
                 write_json(folder/'fresh_control_results.json',fresh)
-        passed=bool(rows) and all(x['pass_gate'] for x in rows) and len(recoveries)==2 and all(x['pass_gate'] for x in recoveries)
-        result.append(dict(degree=degree,status='COMPLETED',pass_gate=passed,rows=rows,reference=factory.audit,recoveries=recoveries,producer_validation=refs))
+        passed=bool(rows) and all(x['pass_gate'] for x in rows) and (degree==7 or len(recoveries)==2) and all(x['pass_gate'] for x in recoveries)
+        result.append(dict(degree=degree,status='COMPLETED',pass_gate=passed,rows=rows,reference=factory.audit,recoveries=recoveries,
+            recovery_status='COMPLETE_TWO_ACTUAL_P6_WITNESSES' if recoveries else 'NOT_RUN_GLOBAL_TWO_WITNESS_LIMIT',producer_validation=refs))
         del factory,setup,field;gc.collect()
     return dict(status='COMPLETED',role='K',degrees=result,p6_pass=next(x['pass_gate'] for x in result if x['degree']==6),
         p7_pass=any(x.get('pass_gate') for x in result if x['degree']==7),fresh_control=fresh,new_complete_solves=0,new_global_factor_count=0)
@@ -148,10 +151,12 @@ def solve_and_consume(role,folder,journal):
             r['output']['fixed_240']=save_arrays(folder/'fixed_240_physical_fields.npz',**fixed)
     r['independent']=independent_state(r,b,folder/(role+'_original'),journal)
     if role=='B6':r['backend_reproduction_pass']=strict_reproduction(pairs['R6_B6'])['pass_gate'] and r['independent']['equation_pass'] and r['independent']['recovery_pass']
-    if role=='Y6' and (scope.ARTIFACT/'common_design.json').exists():
+    if role=='Y6' and (scope.ARTIFACT/'D.json').exists():
         from .common_continuous_weak import evaluate
-        definition=json.loads((scope.ARTIFACT/'common_design.json').read_text())
-        r['weak_balance']=evaluate(r,b,definition,folder/'Y6_common_weak',journal,scope=scope)
+        d=scope.stage('D');definition=d['design']
+        scales={x['q']:checked_arrays(x['arrays'])['fixed_scale'] for x in d['analytic_control']['rows']}
+        r['weak_balance']=evaluate(r,b,definition,folder/'Y6_common_weak',journal,scope=scope,frozen_scales=scales)
+        r['weak_balance']['design_parent']=json.loads((scope.ARTIFACT/'D.json').read_text())
     return r
 
 

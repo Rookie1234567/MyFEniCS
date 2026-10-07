@@ -20,7 +20,7 @@ def reproduction_check(pair):
     return dict(measured=measures,limits=thresholds,pass_gate=all(np.isfinite(v) and v<=thresholds[k] for k,v in measures.items()))
 
 
-def weak_check(r):
+def weak_check(r,*,frozen_scales=None):
     out=[]
     for row in r['rows']:
         v=checked_arrays(row['arrays']);terms=v['terms'];res=terms[6]-terms[:6].sum(axis=0)
@@ -29,9 +29,24 @@ def weak_check(r):
         if relative(v['region_terms'].sum(axis=0)-terms[:5],terms[:5])>1e-12:raise ValueError('continuous material contribution sum')
         if relative(v['permode_DtN'].sum(axis=0)-terms[5],terms[5])>1e-12:raise ValueError('continuous 828 boundary sum')
         if not np.allclose(v['fixed_scaled'],np.abs(res)/v['fixed_scale'],rtol=1e-13,atol=1e-300):raise ValueError('common fixed scale')
+        if not np.all(np.isfinite(v['fixed_scale'])) or np.any(v['fixed_scale']<=0):raise ValueError('nonpositive continuous scale')
+        if frozen_scales is not None and row['q'] in frozen_scales and not np.allclose(v['fixed_scale'],frozen_scales[row['q']],rtol=1e-13,atol=0):raise ValueError('four candidates must share the frozen background scale')
         out.append(dict(q=row['q'],maximum_fixed_scaled=float(np.max(np.abs(res)/v['fixed_scale'])),
             maximum_absolute=float(np.max(np.abs(res))),arrays_sha256=row['arrays']['sha256']))
     return out
+
+
+def diagnostic_check(r):
+    if r.get('status')!='COMPLETED' or set(r['states'])!={'R6','T6','R7','H7'} or len(r['design']['functions'])!=24:raise ValueError('complete frozen continuous study inventory')
+    control=r['analytic_control'];scales={};control_rows=weak_check(control)
+    for row in control['rows']:
+        v=checked_arrays(row['arrays']);scales[row['q']]=v['fixed_scale']
+        perturb=v['residual']-v['perturbation_terms'].sum(axis=0)
+        if not np.allclose(perturb,v['perturbation_residual'],rtol=1e-13,atol=1e-25):raise ValueError('analytic nonzero perturbation balance')
+        if np.max(np.abs(v['residual'])/v['fixed_scale'])>1e-10:raise ValueError('analytic FLAT formula control')
+        if np.max(np.abs(v['perturbation_terms'].sum(axis=0)))<=1e-10*np.max(v['fixed_scale']):raise ValueError('zero-return diagnostic not detected')
+    return dict(control=control_rows,states={key:weak_check(v,frozen_scales=scales) for key,v in r['states'].items()},
+        full_field_accuracy_certificate=False)
 
 
 def tensor_check(k):
@@ -46,7 +61,14 @@ def tensor_check(k):
                 new_action=relative(new['new_tensor']@new['directions']-new['new_action'],new['new_action']))
             values['pass_gate']=values['relative']<=1e-10 and values['operation']<=1e-12 and max(values['old_action'],values['new_action'])<=1e-12
             rows.append(values)
-        out[str(degree['degree'])]=dict(rows=rows,pass_gate=all(x['pass_gate'] for x in rows))
+        recoveries=[]
+        for rec in degree['recoveries']:
+            v=checked_arrays(rec['arrays']);matrix=checked_arrays(rec['combined_tensor'])['new_tensor'];i=v['internal_rows'];t=v['trace_rows'];co=v['actual_coefficients']
+            residual=matrix[np.ix_(i,i)]@v['recovered_internal']+matrix[np.ix_(i,t)]@co[t]-v['internal_rhs']
+            defect=relative(v['recovered_internal']-co[i],co[i]);operation=relative(residual,v['internal_rhs'])
+            recoveries.append(dict(relative=defect,residual=operation,pass_gate=defect<=1e-10 and operation<=1e-10))
+        out[str(degree['degree'])]=dict(rows=rows,recoveries=recoveries,pass_gate=all(x['pass_gate'] for x in rows+recoveries))
+    if sum(len(v.get('recoveries',[])) for v in out.values())>2:raise ValueError('two actual recovery witness limit')
     return out
 
 
@@ -71,7 +93,7 @@ def verify(folder,journal):
             if role=='B6':row['backend_reproduction']=reproduction_check(r['comparisons']['R6_B6'])
             if r.get('weak_balance'):row['weak_balance']=weak_check(r['weak_balance'])
             out[role]=row;write_json(sub/'independent_checker.json',row)
-    for role,fn in (('D',lambda r:{key:weak_check(v) for key,v in r.get('states',{}).items()}),('K',tensor_check)):
+    for role,fn in (('D',diagnostic_check),('K',tensor_check)):
         if (scope.ARTIFACT/(role+'.json')).exists():out[role]=fn(scope.stage(role))
     return dict(status='COMPLETED',role='VERIFY_COST',checks=out,new_FE_calls=0,new_factor_count=0,new_complete_solves=0)
 

@@ -74,8 +74,9 @@ class PhaseTests(unittest.TestCase):
         from src.solvers.scattering_accuracy_fields import analytic
         from src.common.analytic_fields_3d import fresnel_reference
         from src.solvers.dtn_port_3d import _incident_projection_onto_top_mode
-        cfg=configuration('NOTCH',6,'ORIGINAL');cfg.manual_order_m=11;cfg.manual_order_n=4
+        cfg=configuration('NOTCH',6,'ORIGINAL');cfg.diffraction_order_max_m=11;cfg.diffraction_order_max_n=4
         modes,_,_=build_dynamic_mode_inventory(cfg)
+        self.assertEqual(len(modes),828)
         definition=design(plan_record()['physical_descriptor']['geometry'],carrier(cfg))
         f=fresnel_reference(cfg);port=np.asarray([_incident_projection_onto_top_mode(m,cfg)+
             (cfg.incident_amplitude*(f['r'] if m.side=='top' else f['t']) if (m.m,m.n,m.polarization)==(0,0,'s') else 0)
@@ -91,6 +92,21 @@ class PhaseTests(unittest.TestCase):
         self.assertLess(np.max(np.abs(good[12:16])),1e-10)
         self.assertGreater(np.max(np.abs(wrong[12:16])),.01)
         self.assertTrue(np.all(op+1e-12>=np.abs(summed).sum(axis=0)))
+
+    def test_new_y_cell_cuts_and_actual_modal_checker(self):
+        from types import SimpleNamespace
+        from benchmarks.collect_phase_explicit_accuracy import expected_modal_count
+        geo={'axes_nm':{'x':[0.,1.,2.,3.,4.],'y':[0.,1.,2.,3.,4.],'z':[-1.,0.,1.,2.,3.,4.]}}
+        verts=basix.cell.geometry(basix.CellType.hexahedron)
+        coordinates=np.vstack((verts*[4.,1.5,5.]+[0.,0.,-1.],verts*[4.,2.5,5.]+[0.,1.5,-1.]))
+        mesh=SimpleNamespace(geometry=SimpleNamespace(x=coordinates,dofmap=np.arange(16).reshape(2,8)))
+        boxes,parents=common_layout(SimpleNamespace(mesh=mesh),design(geo,[.7,.2,0.]))
+        self.assertEqual(len(boxes),800)
+        self.assertTrue(np.all((boxes[:,1,1]<=1.5)|(boxes[:,0,1]>=1.5)))
+        self.assertEqual(set(parents),{0,1})
+        scope=SimpleNamespace(NAMESPACE='v57')
+        self.assertEqual(expected_modal_count({'case_spec':{'complete_modes':828}},scope),828)
+        with self.assertRaises(ValueError):expected_modal_count({'case_spec':{'complete_modes':829}},scope)
 
 
 if __name__=='__main__':unittest.main()

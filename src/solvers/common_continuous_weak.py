@@ -89,15 +89,18 @@ def boundary_parts(cfg,modes,port,definition):
 
 def common_layout(space,definition):
     from .phase_notch_hp_fields import mesh_bounds,parents_at
-    p=definition['geometry']['axes_nm'];ordered={}
+    p=definition['geometry']['axes_nm'];ordered={};bounds=mesh_bounds(space)
     for a,f in zip(('x','y','z'),(2,1,4),strict=True):
-        ordered[a]=sorted(set(p[a])|{l+(r-l)*j/f for l,r in zip(p[a][:-1],p[a][1:]) for j in range(f)})
+        # Include actual cell cuts: the Y6 witness may not cross its new faces.
+        # The functions and their frozen physical support remain unchanged.
+        i=('x','y','z').index(a)
+        ordered[a]=sorted(set(p[a])|{l+(r-l)*j/f for l,r in zip(p[a][:-1],p[a][1:]) for j in range(f)}|set(bounds[:,:,i].ravel()))
     intervals=[list(zip(ordered[a][:-1],ordered[a][1:])) for a in ('x','y','z')]
     boxes=np.asarray([np.asarray(t).T for t in itertools.product(*intervals)])
-    return boxes,parents_at(mesh_bounds(space),boxes.mean(axis=1))
+    return boxes,parents_at(bounds,boxes.mean(axis=1))
 
 
-def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analytic_control=False):
+def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analytic_control=False,frozen_scales=None):
     import basix
     from .phase_evaluation_cache import cached_evaluator_factory
     from .phase_explicit_accuracy_fields import analytic
@@ -139,6 +142,11 @@ def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analyt
                 v2+=np.einsum('q,jqc->j',weights,np.abs(v)**2+np.abs((cv+1j*np.cross(kappa,v))/cfg.k0)**2)
                 if bi%64==0:journal.event('continuous_weak_box',state=record['role'],q=q,box=bi,boxes=len(boxes))
         scale=cfg.k0**2*(1+max(abs(cfg.eps_air),abs(cfg.eps_grating),abs(cfg.eps_substrate))+abs(1/cfg.mu_r))*np.sqrt(bg2*v2)
+        scale_match=None
+        if frozen_scales is not None and q in frozen_scales:
+            frozen=np.asarray(frozen_scales[q]);scale_match=float(np.linalg.norm(scale-frozen)/np.linalg.norm(frozen))
+            if frozen.shape!=(nf,) or scale_match>1e-10:raise ValueError('frozen background scale / geometry integration mismatch')
+            scale=frozen
         terms=np.vstack((sums,dt,load));res=load-dt-sums.sum(axis=0)
         operation=operation_volume+np.abs(permode).sum(axis=0)+np.abs(load)
         arrays=save_arrays(folder/f'q{q}.npz',terms=terms,residual=res,absolute=np.abs(res),fixed_scale=scale,
@@ -148,7 +156,8 @@ def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analyt
         row=dict(q=q,arrays=arrays,maximum_fixed_scaled=float(np.max(np.abs(res)/scale)),
             maximum_operation_scaled=float(np.max(np.abs(res)/np.maximum(operation,1e-300))),
             no_FE_interpolation=True,complex_parts=list(PARTS),regions='actual material tags; flat control uses layered epsilon',
-            operation_scale='absolute component products integrated before assembly/cancellation + absolute mode and load contributions')
+            operation_scale='absolute component products integrated before assembly/cancellation + absolute mode and load contributions',
+            frozen_background_scale_relative=scale_match)
         if analytic_control:
             row['analytic_control_pass']=bool(np.max(np.abs(res)/scale)<=1e-10)
             row['nonzero_perturbation_defect']=float(np.max(np.abs(perturbation.sum(axis=0))))
