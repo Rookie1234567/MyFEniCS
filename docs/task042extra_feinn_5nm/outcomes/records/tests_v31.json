@@ -391,5 +391,20 @@
     "bytes": 2086,
     "sha256": "50b56acb73cd63d88d668030473445b8743eba0a7d74f03d21fb7ebf88a12aef"
   },
-  "qualification_source_vs_precommit_helper_anchor": "Actual formal clean c327 qualification binds the numerical file chain. Precommit helper headers may retain a copied d6 anchor; not represented as c327-run pytest."
+  "qualification_source_vs_precommit_helper_anchor": "Actual formal clean c327 qualification binds the numerical file chain. Precommit helper headers may retain a copied d6 anchor; not represented as c327-run pytest.",
+  "csv_whitespace_repair": {
+    "failure": "CSV_CRLF_GIT_WHITESPACE",
+    "failed_document_commit": "774f480f72a84b3253679cb9f0d243464b5ed850",
+    "hypothesis": "csv.DictWriter default CRLF was missed by unstaged diff for a new file; shell continued after staged check",
+    "change": "LF-only publication and explicit serializer lineterminator; numeric cells/order unchanged",
+    "test": {
+      "rows_equal": true,
+      "row_count": 714,
+      "old_sha256": "ad666f8d00afafd00e12b96a28ec7a0ac554571cfe6f006b60fcc0c0a9f31add",
+      "new_sha256": "efcb171ef43e75926ceb6ccb47241a28122a1c0b1c2f197d349e2b2526448b00"
+    },
+    "source_and_numerical_arrays_unchanged": true,
+    "rerun_numeric_producer": false,
+    "monotonic": 1324254.744624609
+  }
 }

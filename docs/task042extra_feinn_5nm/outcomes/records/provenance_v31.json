@@ -58,8 +58,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v31.csv",
-      "bytes": 108558,
-      "sha256": "ad666f8d00afafd00e12b96a28ec7a0ac554571cfe6f006b60fcc0c0a9f31add"
+      "bytes": 107843,
+      "sha256": "efcb171ef43e75926ceb6ccb47241a28122a1c0b1c2f197d349e2b2526448b00"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/cost_and_capacity_v31.json",
@@ -88,8 +88,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v31.json",
-      "bytes": 6398,
-      "sha256": "101bc7dc78d82d782d3efe21c29b2e62aafdd9db9a8f9a6023daf80439c286fc"
+      "bytes": 7369,
+      "sha256": "5dee916f7f3a3c84625186f16b0ceca6ea3a15cfa2f4dbeef8ad5835a76cf1a4"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v31.json",
@@ -113,8 +113,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v31.json",
-      "bytes": 19762,
-      "sha256": "81764d19d14b5cbaaf10939b84dc439d06f20cd49756a9496217928869e74c04"
+      "bytes": 20516,
+      "sha256": "dba048b67c466771d50c5d2d499728cfab04d2351657aca6f11930deeffd8c1b"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/v30_completed_field_audit_v31.json",
