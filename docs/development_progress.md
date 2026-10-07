@@ -1,3 +1,11 @@
+# Task042 V58：完整必要单次已计时，精度未闭合
+
+同有限0.7nm真NOTCH/160hex，三份完整p6/p7/828求解及独立审核完成。C6新运行链严格再现并测得完整T_N1=904.0364s；G6/G7散射差约3.4%仍FAIL，不能称准确前向已闭合。q47/q63按身份各一次，独立体q15/q17保持原式，传统优化不归NN。3solve/3numeric，不重放已返回解、不接管邻支。
+
+[V58回应](task042_neural_coarse_inverse/response_v58.md) · [专题](task042_neural_coarse_inverse/outcomes/deployment_cost_paired_gauge_v58.md) · [最终费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v58.json)。原尺寸/2TB48h/NN20仍未资格，唯一下一有限稳定性检验只建议未执行。以下原进展逐字保留。
+
+---
+
 # Task042 V57：准备可部署，完整场准确性仍是主 blocker
 
 用同阶共享15个实参考积分精确构成完整相位复张量，减少按几何类重复的大积分；代价是冷参考表、保存/重开和受限仿射适用域。两个p6完整NOTCH解、独立未凝聚体/828DtN、恢复/体吸收完成；B6再现PASS，y细化散射E/H增量2.23791e−6/1.66828e−6 PASS，跨p仍0.03413 FAIL。24共同连续试验未解释分歧，不能把守恒或局部准备快称准确性突破。sampled峰7.666/16.885GiB，包含研究消费者的dat1356/4692s，完整匹配冷基线/目标成本unknown。停止固定uniform hp/M序列，唯一后续是固定倒格矢carrier的完整物理稳定性pilot；未自动执行。没有NN训练/20%收益、原尺寸或48h资格。

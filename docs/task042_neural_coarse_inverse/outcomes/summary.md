@@ -1,3 +1,19 @@
+# V58：运行链已完整计时，跨p物理准确性仍失败
+
+| measured对象 | 完整结果 | 资格/费用 |
+|---|---|---|
+| C6，Z2/p6/828 | independent true1.14919e-11，R/T/A_volume=0.076218704147/0.905665171695/0.018116124158 | 同离散再现PASS；完整N1=904.0364s，采样树峰7.4326GiB |
+| G6，Z2/p6/828，新carrier | true1.07103e-11；与R6散射差4.27502e-5 | 原式/direct/输出PASS；890.3844s |
+| G7，Z2/p7/828，新carrier | true1.77146e-11；G6/G7散射E/H差3.40894%/3.40603% | 原式PASS，p增量FAIL(限1e-4)；1770.5065s、峰14.336GiB |
+| P/S | q47/q63各生成一次；体q15/q17独立资格；S完整高空间缺陷/RHS=0.0499944、identity5.34772e-12 | 完成，不是完整误差界/连续收敛 |
+| 原尺寸/NN | 目标PDE0、训练0；传统运行链改进 | 0.7nm完整目标、2TB48h与NN20均未资格 |
+
+相位表示把已知振荡放入解析载波，比较时恢复实际E/H；新载波改变有限空间而非物理。完整场、240点、828复通道/逐mode功率、体吸收、能量和实际分母均保留。没有配平旧冷链，不授加速比。FGMRES目标库按V33+Z32计65条，trace+port与全FE分开，derived不冒充RSS。
+
+[完整专题](deployment_cost_paired_gauge_v58.md) · [科学](records/scientific_checks_v58.json) · [费用](records/resource_costs_final_v58.json) · [目标](records/target_gap_v58.json) · [依赖组](records/selective_merge_manifest_v58.json)。唯一下一建议为保存高空间缺陷的物理尺度稳定性检验，未自动执行。以下历史保持。
+
+---
+
 # V57：完整相位准备部署与 y 向准确性判别
 
 共享参考积分表减少重复高阶积分，仍用原完整三维Maxwell方程；实际两solve/独立原式通过，跨p场准确性未闭合，不能以小残差或有限弱试验代替。无NN训练/目标PDE/邻支操作。

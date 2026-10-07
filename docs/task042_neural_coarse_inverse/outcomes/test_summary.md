@@ -1,3 +1,11 @@
+# V58最终相关检查与完整科学验收
+
+11项targeted、15模块compile/相关Ruff、6个one-run validate通过。独立VERIFY保存数组重算三解原式/恢复/体吸收/828功率与四组共同积分；C6再现及同p跨gauge通过，G6/G7物理p增量FAIL，测试通过不覆盖该科学负结果。首次828库存误判、费用aux input错误及消费重放保留。最终文档15项及精确字节另有收据；full pytest/CI未运行、GitHub视觉NOT_VERIFIED。
+
+[测试](records/tests_v58.json) · [科学](records/scientific_checks_v58.json) · [回应](../response_v58.md)。以下历史逐字保留。
+
+---
+
 # V57 最小相关测试与完整物理验收
 
 11个targeted数学/库存/抵消反例、13相关文件compile、关键错误Ruff(E9,F63,F7,F82)、5个one-run validate通过；原场/828功率/体吸收由新进程及独立保存数组checker完成，原式门与场差门分别判断。旧Q0/H7/FLAT/PDE没有重跑，full pytest/CI未运行。最终正文另一次15项文档合同/表格链接检查，GitHub视觉NOT_VERIFIED。[测试记录](records/tests_v57.json)、[科学](records/scientific_checks_v57.json)、[回应](../response_v57.md)。F9仅补保存消费，保留原失败/费用。以下历史逐字保留。

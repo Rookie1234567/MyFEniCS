@@ -1,0 +1,65 @@
+{
+  "cases": {
+    "C6": {
+      "receipt": {
+        "path": "tmp/task042/v58/C6_one_run/receipt.json",
+        "sha256": "705d61c7ad4793c9885161b1c62970049f4826b0f86d3e8dde4a5eca209a9266",
+        "bytes": 422
+      },
+      "data": {
+        "command": [
+          "python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v58_deployment_baseline_p6.dat"
+        ],
+        "start_utc": "2026-10-07T09:15:50.308613+00:00",
+        "end_utc": "2026-10-07T09:30:54.344979+00:00",
+        "elapsed_seconds": 904.0364016660023,
+        "returncode": 0,
+        "cost_scope": "complete one-run subprocess including launcher, provenance and required IO; historical comparison excluded"
+      }
+    },
+    "G6": {
+      "receipt": {
+        "path": "tmp/task042/v58/G6_one_run/receipt.json",
+        "sha256": "72f55f581309fcdc6718c8f3d348b748233a32b6661628c961d9e5439d9b2426",
+        "bytes": 411
+      },
+      "data": {
+        "command": [
+          "python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v58_gauge_y1_p6.dat"
+        ],
+        "start_utc": "2026-10-07T09:31:15.166391+00:00",
+        "end_utc": "2026-10-07T09:46:05.550792+00:00",
+        "elapsed_seconds": 890.3844393140171,
+        "returncode": 0,
+        "cost_scope": "complete one-run subprocess including launcher, provenance and required IO; historical comparison excluded"
+      }
+    },
+    "G7": {
+      "receipt": {
+        "path": "tmp/task042/v58/G7_one_run/receipt.json",
+        "sha256": "167c74a6cc2e5fc25edc5d93c870547fecc462a93d91d9bfcb1ba1d6e4ce0347",
+        "bytes": 412
+      },
+      "data": {
+        "command": [
+          "python",
+          "scripts/run_case.py",
+          "input/task042_neural_coarse_inverse/v58_gauge_y1_p7.dat"
+        ],
+        "start_utc": "2026-10-07T09:46:34.605506+00:00",
+        "end_utc": "2026-10-07T10:16:05.112003+00:00",
+        "elapsed_seconds": 1770.5065321819857,
+        "returncode": 0,
+        "cost_scope": "complete one-run subprocess including launcher, provenance and required IO; historical comparison excluded"
+      }
+    }
+  },
+  "scientific_source": "c47799d1c2bb7109a071358f06500a905fc42c43",
+  "independent_zero_starts": true,
+  "complete_start_end_boundaries": true,
+  "no_matched_old_cold_ratio": true
+}

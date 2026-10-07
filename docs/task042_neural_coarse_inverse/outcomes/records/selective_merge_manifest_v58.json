@@ -1,0 +1,106 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core candidate",
+      "files": [
+        "src/solvers/phase_boundary_checkpoint.py"
+      ],
+      "behavior": "opt-in exact local q47/q63 component packet and independent reload; original numerical defaults preserved",
+      "dependencies": [
+        "fixed_phase_fem",
+        "phase_explicit_accuracy",
+        "phase_notch_hp",
+        "scattering_anchor"
+      ],
+      "tests": "test_phase_deployment",
+      "fresh_PDE": [
+        "C6",
+        "G6",
+        "G7"
+      ],
+      "qualification": "finite affine phase case only; production default NOT_APPROVED",
+      "order": 1
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py",
+        "src/io/phase_notch_hp.py"
+      ],
+      "behavior": "explicit V58 namespace/carrier/resources/stages; same existing supervision, no global default change",
+      "dependencies": [
+        "phase_deployment_scope",
+        "deployment_paired_gauge_v58.json",
+        "qualified activation"
+      ],
+      "tests": "budget/schema/dat targeted",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_phase_deployment.py",
+        "benchmarks/qualify_phase_deployment.py",
+        "benchmarks/collect_phase_explicit_accuracy.py",
+        "benchmarks/collect_common_weak_phase.py",
+        "src/test/test_phase_deployment.py"
+      ],
+      "behavior": "saved original vector/mode/field/cost checks; V58 mode registration; auxiliary/PDE binding kept separate",
+      "dependencies": [
+        "frozen receipts",
+        "saved_checks",
+        "vector_check",
+        "modal_recalculation"
+      ],
+      "tests": "11 unit plus independent VERIFY",
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v58",
+        "deployment_cost_paired_gauge_v58",
+        "new records",
+        "six navigation prefixes"
+      ],
+      "behavior": "new science/cost/negative result; all old suffixes unchanged",
+      "dependencies": [
+        "frozen producer hashes"
+      ],
+      "tests": "15 document contracts plus actual links/bytes",
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/phase_deployment.py",
+        "src/solvers/phase_deployment_defect.py",
+        "src/solvers/phase_deployment_scope.py",
+        "input/task042_neural_coarse_inverse/deployment_paired_gauge_v58.json",
+        "six v58 dat"
+      ],
+      "behavior": "finite paired carrier P/C6/G6/G7/S; no universal method/continuum/NN qualification",
+      "dependencies": [
+        "original phase formulation/condensation/MUMPS/independent Basix"
+      ],
+      "tests": "complete physical runs plus four frozen comparisons",
+      "order": null
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "ignored full fields/raw tensors/q packets/JIT/temporary helpers"
+      ],
+      "behavior": "large task-local scientific archives; finite global direct factor is authority only, not old p4 production inverse",
+      "dependencies": [],
+      "tests": "new array member and raw hash inventory",
+      "order": null
+    }
+  ],
+  "merge_approved": false,
+  "source_science": "c47799d1c2bb7109a071358f06500a905fc42c43",
+  "source_saved_verification": "b4898819b58fdfe8a282bc0321a5c12262cf342e",
+  "no_other_branch_changes": true,
+  "no_NN": true
+}

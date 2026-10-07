@@ -1,0 +1,26 @@
+{
+  "status": "SCIENCE_COMPLETE_FINAL_SETTLEMENT_PENDING",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "review": "721c2731da0ce02ef528345f7b6ffcea459b033c",
+  "scientific_source": "c47799d1c2bb7109a071358f06500a905fc42c43",
+  "saved_checker_source": "b4898819b58fdfe8a282bc0321a5c12262cf342e",
+  "records": [
+    "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/deployment_receipts_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/github_visual_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/physical_identity_bindings_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/queue_freeze_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/stage_verdicts_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v58.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_v58.json"
+  ],
+  "earlier_documents_and_arrays_by_parent_hash": true,
+  "history_not_rewritten": true
+}

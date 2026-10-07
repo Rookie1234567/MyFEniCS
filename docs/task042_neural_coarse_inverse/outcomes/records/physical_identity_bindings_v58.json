@@ -1,0 +1,337 @@
+{
+  "physical": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "runs": [
+    {
+      "role": "QUALIFY",
+      "source_sha": "c29b5e2c76f788dde792a86392f20b61b327f870",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "3808cb90e7e5946176fe8b14f6d47e1c82cb2be93eb6f116d75cda13a9dbbd27"
+    },
+    {
+      "role": "pre",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "0287f5442e864c2e714fa536fc4dcd8f7f5bac82cc82d13b4aa0102e00857ef4"
+    },
+    {
+      "role": "P",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "314aa15c95f48578ace832d5db005f1056f4b1f46c1a84f0ba6b21df4b5636ff",
+      "physical_sha256": "8e239fa49b5f2fee882998b31892e12d5a91dcb9bff4f067afed6eca6f64da55",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "2e6d105b4da5f058625bf76e13dacc452ccce37550a4473dfab084e97f4ae374",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "ee41b036ed495b5f9676623220f1b885077a0e17d495ef75cba4000a15a95040"
+    },
+    {
+      "role": "C6",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "5f1976f468a3cde31e2b1ab3b08fca5da48cee7d5d1a2c8ff7f2044a5d5e482b",
+      "physical_sha256": "8e239fa49b5f2fee882998b31892e12d5a91dcb9bff4f067afed6eca6f64da55",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "aa7ad184af0c411d51c72d723e5a6b60abc40e374004976bbe229f02626d627b",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "18d3de8b5c68178b0d57c54dfe59cb172761f44cef0d37a25d6c8b2488a9d061"
+    },
+    {
+      "role": "G6",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "57aa1f9bf1f1c8d761f64e87cb00e0674b3ce7478353a42796d15c231aec7e99",
+      "physical_sha256": "1562cefdc98ce11d252add2264922ea2f98d40ed253e5fa218c41728863928ec",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "549c01cc2e5dad0eaf93147c07650aecfd9ea6460a257a1f43049db676371c4e",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "eb5b69627510bdfb90855a2bdd24529838f65cacde88844b5c3e4ef8fdd8e9f4"
+    },
+    {
+      "role": "G7",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "0a2023c7377eeffe16d19387ccc0c25156f081de0f9fc40b4dc00e51937de976",
+      "physical_sha256": "b1bea666f70d9a9ea39c8d46ca31711eaffd53f50abf4ddb13553a44e1a24001",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "567c422d615cccfafb08ca16a0b6774216b11a242816ab610146781993499660",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "ca706dfaee31d3893cf19c1777fa5fc57b2901f3f01ff3787ad7c8c66766e24b"
+    },
+    {
+      "role": "S",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "553c85a403d6cbce32d0170ad037e170250b310ff0f30b48da7411d00367fad6",
+      "physical_sha256": "8e239fa49b5f2fee882998b31892e12d5a91dcb9bff4f067afed6eca6f64da55",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "d459205ff701270fbd1ae33d2fd7fbe59adc09729e252a5f20793a77b3d5616f",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "ebd50fc5d4d7225930b6e0c330a461456ec0b7d615dfe97bb6559382174712cf"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "f69060cf29c3eda6ae8aef316a5666571763053c93d7e67623536d67398098e9",
+      "physical_sha256": "8e239fa49b5f2fee882998b31892e12d5a91dcb9bff4f067afed6eca6f64da55",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "a8a7368a61f0a146d143109b93b40f4f1bb827b3f45e57f12da5172ac4ed9dad",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "526eaebe7014308070e97f97b6795d818c126b437bc081e42e53429448a72c71"
+    },
+    {
+      "role": "pre",
+      "source_sha": "b4898819b58fdfe8a282bc0321a5c12262cf342e",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "472ad0a0138921406ff83a36e737043865b6548d3bedb209245cb8de6a31650a"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "b4898819b58fdfe8a282bc0321a5c12262cf342e",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "f69060cf29c3eda6ae8aef316a5666571763053c93d7e67623536d67398098e9",
+      "physical_sha256": "8e239fa49b5f2fee882998b31892e12d5a91dcb9bff4f067afed6eca6f64da55",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "a8a7368a61f0a146d143109b93b40f4f1bb827b3f45e57f12da5172ac4ed9dad",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "49c2220f369478928928b37fd0206fa23ecb50195a5557b9b120210433e26e49"
+    },
+    {
+      "role": "post",
+      "source_sha": "b4898819b58fdfe8a282bc0321a5c12262cf342e",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "5d49066432ff32d5261437d1f7426c40c573190b096cb8402c47de169bcbc849"
+    },
+    {
+      "role": "pre",
+      "source_sha": "12d7666e3a551b496145f5bf847e57e35b0a15f1",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "baa5281669d8a676e8ffc3856c0160c09ccf97c1ffdfcf4aa569681579b3336a"
+    }
+  ],
+  "physical_incidence_unchanged": true,
+  "numerical_carrier_shift": [
+    0,
+    1
+  ],
+  "legacy_physical_hash_includes_discretization_and_numerical_carrier": true,
+  "common_physical_inventory_descriptor_sha256": "6de73bcd8309240649144230a72cf0187c82cdacc4021d5a8c4ad10a0dd55ece",
+  "physical_only_sha256": "3e0cef47a682ebfa42bef5410ce8876081c1a8e6f387776469af189fefe81aec",
+  "numerical_cases": {
+    "C6": {
+      "degree": 6,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 104832,
+      "trace": 32832,
+      "internal": 72000,
+      "rows": 33660,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        0
+      ]
+    },
+    "G6": {
+      "degree": 6,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 104832,
+      "trace": 32832,
+      "internal": 72000,
+      "rows": 33660,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        1
+      ]
+    },
+    "G7": {
+      "degree": 7,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 166208,
+      "trace": 45248,
+      "internal": 120960,
+      "rows": 46076,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        1
+      ]
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "observed_UTC": "2026-10-07T10:44:49.491518+00:00",
+  "items": [
+    {
+      "evidence": "tmp/task042/v58/repair_01.json",
+      "record": {
+        "root_cause": "new high-order Basix synthetic fixture omitted required variant",
+        "scientific_source_affected": false,
+        "fix": "explicit gll_warped in fixture",
+        "no_PDE_replay": true,
+        "failure_receipt": "tmp/task042/v58/initial_targeted/receipt.json"
+      },
+      "scientific_solves_replayed": 0
+    },
+    {
+      "evidence": "tmp/task042/v58/gauge_final_targeted/failure01.json",
+      "record": {
+        "error": "UFuncOutputCastingError: complex phase into float continuous test",
+        "phase": "boundary control, no PDE",
+        "elapsed_seconds": null,
+        "accounting": "unknown; retained within total elapsed",
+        "source": "working tree after c29b5e2c"
+      },
+      "scientific_solves_replayed": 0
+    },
+    {
+      "evidence": "tmp/task042/v58/entry_failure_P01.json",
+      "record": {
+        "error": "qualification.json absent because auxiliary was labeled QUALIFY instead of pre",
+        "source": "c47799d1",
+        "new_PDE": 0,
+        "new_factor": 0,
+        "launch_elapsed_seconds": 0.176506235,
+        "failed_role": "P",
+        "fix": "execute final-source focused receipt with original pre label, retain previous receipt"
+      },
+      "scientific_solves_replayed": 0
+    },
+    {
+      "root_cause": "saved output checker uses public energy_pass verdict",
+      "fix": "consume that public verdict explicitly and reject missing values",
+      "focused_regression": "test_saved_consumer_public_output_verdict",
+      "fixed_source": "c47799d1c2bb7109a071358f06500a905fc42c43",
+      "scientific_solves_replayed": 0
+    },
+    {
+      "id": "R05",
+      "error": "freeze wrapper KeyError solve_source_sha",
+      "failure": "tmp/task042/v58/freeze_entry_failure01.json",
+      "repair": "fallback to actual producer source_sha, no forged solve alias",
+      "PDE_replay": 0
+    },
+    {
+      "id": "R06",
+      "error": "V58 saved modal checker namespace omitted, expected532 instead of828",
+      "failure": "results/task042/task042_v58_compare_verify_cost_20261007T102202973602Z",
+      "repair": "explicit v58 registration in established modal audit; fixed actual count plus unknown-inventory rejection regression",
+      "replay": "saved consumers only; first worker already saved three independent checker verdicts",
+      "tests": "tmp/task042/v58/repair_VERIFY_inventory_targeted/receipt.json",
+      "PDE_replay": 0
+    },
+    {
+      "id": "R07",
+      "failure": "tmp/task042/v58/entry_doc_generator_failure01.json",
+      "scope": "ignored document helper only",
+      "scientific_replays": 0
+    },
+    {
+      "id": "R08",
+      "failure": "tmp/task042/v58/entry_collect_failure01.json",
+      "scope": "clean metadata launch guard before actor",
+      "scientific_replays": 0
+    },
+    {
+      "id": "R09",
+      "root_cause": "cost_rows applied formal PDE input identity fields to supervised auxiliary manifests",
+      "failure": "tmp/task042/v58/aux_post_collect01/supervision/worker.log",
+      "fix": "explicit auxiliary_command versus formal_one_run binding; formal missing keys and source mismatch still rejected",
+      "targeted_regression": "tmp/task042/v58/repair_collect_binding_targeted/receipt.json",
+      "scientific_replays": 0
+    },
+    {
+      "id": "R10",
+      "failure": "tmp/task042/v58/metadata_compile_entry_failure01.json",
+      "scope": "precommit helper compile inventory",
+      "fix": "limit compile to actual standalone helper files",
+      "scientific_replays": 0
+    }
+  ],
+  "ordinary_repairs_continued_in_same_window": true,
+  "unknown_control_failure_elapsed_preserved": true,
+  "no_old_records_rewritten": true
+}

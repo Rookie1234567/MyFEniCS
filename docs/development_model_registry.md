@@ -1,3 +1,15 @@
+# Task042 V58增量：完整有限基线与成对carrier负结果
+
+| measured模型 | 物理/离散与结果 | 完整成本/资格 |
+|---|---|---|
+| C6 | λ0.7nm、s7/135、真NOTCH、Z2/p6/828，全部104832FE；独立true1.14919e-11，R/T/A_volume=0.076218704147/0.905665171695/0.018116124158 | 完整N1=904.0364s，树峰7.4326GiB；同离散再现PASS，不是连续准确性 |
+| G6/G7 | 同物理κ′=κ+(0,2π/Ly,0)；p6/p7完整原式、828、能量通过 | 890.3844/1770.5065s；散射E/H约3.4%FAIL，峰7.408/14.336GiB |
+| target/NN | 无目标PDE/训练，3个有限全局MUMPS numeric，原路径继承 | 原尺寸0.7nm、2TB48h、NN20未资格；没有传统收益归NN |
+
+[完整场/828 mode/240点](task042_neural_coarse_inverse/outcomes/records/scientific_checks_v58.json) · [成本与峰/gap](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v58.json) · [回应](task042_neural_coarse_inverse/response_v58.md)。全部R/T源自通过原式的实际场；跨p场FAIL独立保留。历史账和正文逐字保留。
+
+---
+
 # Task042 V57 模型增量：p6 新准备与 y 细化
 
 新表仅改变原张量准备，不改变相位有限元/828模式或物理；有限全局MUMPS因子存在，微型求解资格不等于原尺寸可扩展。误差相对旧同离散/空间对照分别列出，未指定高p为真解。

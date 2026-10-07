@@ -1,0 +1,50 @@
+{
+  "P": {
+    "status": "COMPLETED",
+    "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v58/task042_v58_audit_pipeline_qualification_20261007T091146538192Z/result.json",
+      "sha256": "c5e7869ac752441000141a64bdc989f1e26afe3e80abddb681be1d43f0a1acc5"
+    }
+  },
+  "S": {
+    "status": "COMPLETED",
+    "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v58/task042_v58_saved_p_defect_20261007T101633884454Z/result.json",
+      "sha256": "a7edcb60dbd5dbebdb9203b03bc983467de4455da2f4030415a982e4d7c161ef"
+    }
+  },
+  "C6": {
+    "status": "COMPLETED",
+    "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v58/task042_v58_deployment_baseline_p6_20261007T091550637299Z/result.json",
+      "sha256": "bc84d1696088263971097ad69a70b95dd2a299e2942a4e733ef12a1152330d3b"
+    }
+  },
+  "G6": {
+    "status": "COMPLETED",
+    "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v58/task042_v58_gauge_y1_p6_20261007T093115505421Z/result.json",
+      "sha256": "ec8287d3802935d0a641f4514512793f4241313ca6fc58c2f868b32b14fe55a5"
+    }
+  },
+  "G7": {
+    "status": "COMPLETED",
+    "source_sha": "c47799d1c2bb7109a071358f06500a905fc42c43",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v58/task042_v58_gauge_y1_p7_20261007T094634947963Z/result.json",
+      "sha256": "9d22f5ddff5ba3119e382e64328d09f3dec4ad27c24d312bfa6455b8a2b34a71"
+    }
+  },
+  "VERIFY_COST": {
+    "status": "COMPLETED",
+    "source_sha": "b4898819b58fdfe8a282bc0321a5c12262cf342e",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v58/task042_v58_compare_verify_cost_20261007T102527999993Z/result.json",
+      "sha256": "2bc6eab160eddc3495ff2af3c21f89fbffdb7c12f9d6205738576dcfe44c6e39"
+    }
+  }
+}

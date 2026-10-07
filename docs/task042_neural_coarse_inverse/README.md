@@ -1,3 +1,11 @@
+# V58最新结果：完整部署成本与成对相位表示
+
+三份160cell/828-mode完整解、内部恢复和独立原式完成；C6严格再现、完整单次904.0364s。G6/G7散射E/H差0.0340894/0.0340603，仍超过1e-4，完整准确性未闭合。本轮减少重复边界积分并验证足够的体求积，不是NN收益，不扩大模型。
+
+[回应](response_v58.md) · [完整专题](outcomes/deployment_cost_paired_gauge_v58.md) · [科学](outcomes/records/scientific_checks_v58.json) · [最终费用](outcomes/records/resource_costs_final_v58.json) · [交付索引](outcomes/records/delivery_index_v58.json) · [权威Review V56](review_report_v56.md)。新源码先clean提交，三个完整solve/numeric无重放；队列完成后暂停，不通知邻支。以下历史入口逐字保留。
+
+---
+
 # 最新交付：V57 准备后端部署，y 增量通过，跨 p 未闭合
 
 已连续完成[Review V55](review_report_v55.md)：共同24弱试验、完整15参考积分相位准备、两个实际p6物理解及独立保存数组VERIFY。B6严格再现；Y6完整y增量PASS，但p6/p7散射场仍差约3.4%，固定单载波uniform hp/M序列收口。无NN训练、目标运行或merge；原尺寸0.7nm/2TB48h/NN20均未资格。

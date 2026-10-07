@@ -1,0 +1,76 @@
+{
+  "parent": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v57.json",
+    "sha256": "18a2b1f7b11431a59e0a713715012b104624ff0ed34ab8465ccfbae43c74030a"
+  },
+  "layout_parent": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_final_v56.json",
+    "sha256": "bcea773b6031337d57faa02a2da5ae5d99db1de643a5b89b56693bc8f81e9e8d"
+  },
+  "parent_scope": {
+    "scale_fraction": "135/135",
+    "modes": 268156,
+    "Nx": 80,
+    "Ny": 80,
+    "Nz": 400,
+    "not_accuracy_lower_bound": true
+  },
+  "FGMRES_restart32": {
+    "6": {
+      "trace_plus_port_rows": 507608956,
+      "full_FE_rows": 1659340800,
+      "complex128_bytes_per_value": 16,
+      "trace_plus_port_one_vector_bytes": 8121743296,
+      "V_vectors": 33,
+      "Z_vectors": 32,
+      "principal_vectors": 65,
+      "trace_plus_port_V_and_Z_bytes": 527913314240,
+      "full_FE_V_and_Z_bytes": 1725714432000,
+      "full_FE_library_excludes_port_rows": true,
+      "extra_solution_rhs_residual_workspace_not_included": true,
+      "classification": "derived scenario, not measured RSS or target allocation"
+    },
+    "7": {
+      "trace_plus_port_rows": 699775356,
+      "full_FE_rows": 2634867200,
+      "complex128_bytes_per_value": 16,
+      "trace_plus_port_one_vector_bytes": 11196405696,
+      "V_vectors": 33,
+      "Z_vectors": 32,
+      "principal_vectors": 65,
+      "trace_plus_port_V_and_Z_bytes": 727766370240,
+      "full_FE_V_and_Z_bytes": 2740261888000,
+      "full_FE_library_excludes_port_rows": true,
+      "extra_solution_rhs_residual_workspace_not_included": true,
+      "classification": "derived scenario, not measured RSS or target allocation"
+    }
+  },
+  "implementation_scope": "standard FGMRES with both V_(m+1) and preconditioned Z_m resident; other solver implementations require own accounting",
+  "measured_increment": {
+    "C6": {
+      "launch_seconds": 883.3370050860103,
+      "sampled_peak_bytes": 7980687360
+    },
+    "G6": {
+      "launch_seconds": 869.5175234801136,
+      "sampled_peak_bytes": 7954526208
+    },
+    "G7": {
+      "launch_seconds": 1748.9598473499063,
+      "sampled_peak_bytes": 15393570816
+    }
+  },
+  "target_local_Schur_and_PC_bytes": "unknown",
+  "target_factor_fill": "unknown",
+  "target_iteration_count": "unknown",
+  "target_operator_PC_orthogonalization_communication_seconds": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_complete_N1_seconds": "unknown",
+  "continuum_accuracy": false,
+  "target_2TB_48h_qualified": false,
+  "target_allocations": 0,
+  "NN_training": 0,
+  "NN20": false,
+  "learning_object_selected": null,
+  "NN20_necessary_condition": "f*V-H >= 0.2*T_best_non_neural at same complete correctness, other resource compliant"
+}
