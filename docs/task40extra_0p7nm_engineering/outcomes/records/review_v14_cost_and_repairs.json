@@ -1,0 +1,104 @@
+{
+  "schema": "task40extra.review_v14_cost_and_repairs.v1",
+  "review": "docs/task40extra_0p7nm_engineering/review_report_v14.md",
+  "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+  "status": "SNAPSHOT_NOT_FINAL_SETTLEMENT",
+  "source_ledger_snapshot": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/review_v14_two_level_ledger.jsonl",
+    "sha256_at_snapshot_cutoff": "cd64d36c617ba95b37f5d83918eb1db0aee806e250a55d94cb6cd020f7e50a72",
+    "snapshot_cutoff_utc": "2026-10-07T06:04:31Z",
+    "included_through_entry_id": "v14_gx560_attempt2_candidate_summary_sha256_pointer_audit",
+    "scope": "Compact reference to the append-only two-level JSONL snapshot; this record does not copy the full historical log. A later appended documentation-test and closeout row changes the final log SHA without changing this snapshot."
+  },
+  "fixed_window": {
+    "source_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json",
+    "source_sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+    "t0_utc": "2026-10-06T23:21:33.326800586Z",
+    "deadline_utc": "2026-10-07T23:21:33.326800586Z",
+    "duration_seconds_derived": 86400,
+    "refreshed": false,
+    "campaign_policy_charge_at_v14_attempt_start_seconds": 19227.021564747767,
+    "cumulative_policy_charge_at_gx560_attempt_end_seconds": 21647.18729120237,
+    "numerical_remaining_at_gx560_attempt_end_seconds": 64152.81270879763,
+    "timing_boundary": "These are the formal-attempt-end snapshot only. Later tests, documentation, closeout and controller Git observations remain within the unchanged original window."
+  },
+  "level1_formal_attempts": [
+    {
+      "attempt": "V14 attempt 1",
+      "source_sha": "5ac368b168b5e9cdc89889154bf78f25535e3d85",
+      "result": "WORKER_FAILED_IMPLEMENTATION_BUG",
+      "failure": "NameError: is_v13 was not defined",
+      "workflow_monotonic_seconds": 1.7350830709328875,
+      "campaign_policy_charge_seconds": 1.708305712145,
+      "cumulative_charge_start_seconds": 18894.91513887162,
+      "cumulative_charge_end_seconds": 18896.623444583765,
+      "numerical_factorization_started": false,
+      "target_solve_started": false
+    },
+    {
+      "attempt": "V14 attempt 2",
+      "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+      "result": "NUMERICAL_GATE_FAILED_BEFORE_TARGET_SOLVE",
+      "workflow_monotonic_seconds": 2220.8270128549775,
+      "campaign_conservative_realtime_charge_seconds": 2420.165726454603,
+      "cumulative_charge_start_seconds": 19227.021564747767,
+      "cumulative_charge_end_seconds": 21647.18729120237,
+      "numerical_remaining_at_attempt_end_seconds": 64152.81270879763,
+      "target_solve_started": false,
+      "official_R_T_A": "NOT_RUN"
+    }
+  ],
+  "level2_engineering_and_repairs": {
+    "source_ready_route_coverage": {
+      "source_ready_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/review_v14_source_ready_receipt.json",
+      "receipt_sha256": "535786efc4d5a7b8003f516c1ab554d45857059a22da3a375a1eb0e120a58dd8",
+      "frozen_source_sha": "5ac368b168b5e9cdc89889154bf78f25535e3d85",
+      "tests_passed": 46,
+      "pytest_seconds": 0.48,
+      "tool_wall_seconds": 5.6,
+      "campaign_charge_leaf_seconds": 0,
+      "campaign_charge_leaf_meaning": "No separate numerical debit on that memo row; not an exemption from elapsed-window accounting."
+    },
+    "pre_crossfield_failure": {
+      "status": "FIXED_AND_PRESERVED",
+      "passed": 20,
+      "failed": 3,
+      "pytest_seconds": 1.06,
+      "issue": "input cross-validation still had a preallocated-only branch; repaired to use the shared strategy policy."
+    },
+    "is_v13_nameerror_repair": {
+      "source_freeze": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_source_freeze_v14_repair01.json",
+      "freeze_sha256": "c0db577f5d98ba118e43c75890e7874eca89650fe14b1e2ee0798c1f0133fd69",
+      "repaired_source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+      "tests_passed": 4,
+      "pytest_seconds": 0.4,
+      "compileall": "PASS",
+      "diff_check": "PASS",
+      "numerical_behavior_changed": false
+    },
+    "documentation_test_and_closeout_time": "Not separately timed in this snapshot; final doc test and appended closeout event are recorded separately in the two-level ledger."
+  },
+  "accounting": {
+    "prior_campaign_charge_at_attempt_start_is_known_as_cumulative_total": true,
+    "prior_phase_by_phase_costs": "UNKNOWN_NOT_DECOMPOSED_IN_THIS_SNAPSHOT",
+    "later_documentation_test_repair_hash_and_Git_phase_durations": "UNKNOWN_BY_PHASE",
+    "all_preflight_repairs_tests_review_docs_hash_checks_and_Git_elapsed_remain_inside_original_fixed_window": true,
+    "zero_campaign_charge_memo_rows_are_budget_exempt": false,
+    "final_current_charge_and_remaining": "UNKNOWN_NOT_FINAL_SETTLEMENT",
+    "final_observation_owner": "Controller will record the final precommit and after-push observations; this snapshot is not a final settlement."
+  },
+  "closeout_boundary": {
+    "executor_commit_or_push": false,
+    "new_PDE_after_attempt_2": false,
+    "final_campaign_settlement": false,
+    "reason": "The main controller retains the post-review Git elapsed and after-push settlement."
+  },
+  "controller_precommit": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v14_controller_closeout.json",
+    "sha256": "90f182a53be114cfffc4b25ff93651421c643171414547b6b5464857c78d98a7",
+    "cumulative_charged_seconds": 24802.23942600437,
+    "remaining_numerical_seconds": 60997.760573995634,
+    "observed_utc_ns": 1791353695563495098,
+    "scope": "Includes all preparation, engineering and review elapsed through this observation. Subsequent Git elapsed stays in the same window."
+  }
+}

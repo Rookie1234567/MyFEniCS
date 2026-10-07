@@ -1,0 +1,310 @@
+{
+  "schema": "task40extra.review_v14_formal_results.v1",
+  "review": "docs/task40extra_0p7nm_engineering/review_report_v14.md",
+  "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+  "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+  "abi": {
+    "petsc_scalar": "complex128",
+    "petsc_integer": "int32",
+    "mpi_size": 1,
+    "math_threads": 1,
+    "dolfinx": "0.10.0",
+    "basix": "0.10.0",
+    "petsc4py": "3.25.6",
+    "mpich": "5.0.1"
+  },
+  "milestones": [
+    {
+      "model": "B0",
+      "status": "REUSED_ARCHIVED_PASS",
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v13",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T022739.364934Z",
+      "source_sha": "0a442ba11a66525d5010d1b6cd6384d0de8d8eab",
+      "input_sha256": "dfe7535c03da661c458ec746af6e4dd25c8d0b402fd0573b4bc4e0620dbb4f63",
+      "mesh_cells": [
+        4,
+        4,
+        5
+      ],
+      "cell_count": 80,
+      "degree": 6,
+      "mode_count": 532,
+      "q_count": 4,
+      "rows": {
+        "p6_full_storage": 55950,
+        "periodic_independent": 52992,
+        "interior": 36000,
+        "trace": 16992,
+        "q_augmented_rows": [
+          4324,
+          4400,
+          4400,
+          4400
+        ]
+      },
+      "q_nnz": [
+        2275466,
+        2349414,
+        2327176,
+        2347538
+      ],
+      "q_nnz_total": 9299594,
+      "archived_official_output": {
+        "R": 0.9842736080926642,
+        "T": 0.014240518143990319,
+        "A": 0.0014858737633455053,
+        "A_volume": 0.0014858738462134112,
+        "R_plus_T_plus_A_volume_minus_one": 8.286793473644138E-11
+      },
+      "archived_post_release_true_residual": 1.6089762312332008E-8,
+      "archived_workflow_monotonic_seconds": 1340.82869785605,
+      "reuse_policy": "No new B0 run and no reclassification of the archived original execution."
+    },
+    {
+      "model": "Gx560",
+      "status": "NUMERICAL_GATE_FAILED_BEFORE_TARGET_SOLVE",
+      "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_reference_v13",
+      "attempt_id": "20261007T044200.351370Z",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z",
+      "service_unit": "myfenics-case-20261007T044200-1934345.service",
+      "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+      "input": {
+        "path": "input/task40extra_0p7nm_engineering/nonseparable_gx560_p6_reference_v14_legacy.dat",
+        "sha256": "5306827b5bd212faca41c8606eb0d9ace40cc81608a283d56dbddaa161b6ae42"
+      },
+      "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "resolved_config_sha256": "c4c8af655cd8bce7001adbb5f6d7846602062228148891e3702248a78431a4b7",
+      "mesh_cells": [
+        10,
+        4,
+        14
+      ],
+      "cell_count": 560,
+      "degree": 6,
+      "mode_count": 340,
+      "q_count": 4,
+      "rows": {
+        "full_storage": 380040,
+        "periodic_independent": 365760,
+        "interior": 252000,
+        "q_augmented_rows": [
+          28508,
+          28508,
+          28576,
+          28508
+        ]
+      },
+      "q_nnz": [
+        15451743,
+        15479361,
+        15581290,
+        15479361
+      ],
+      "q_nnz_total": 61991755,
+      "q_numeric_factor_true_residuals": [
+        3.986719346467304E-11,
+        1.5918728695012696E-12,
+        8.624700464139001E-13,
+        2.813498243162843E-12
+      ],
+      "q_numeric_factors_all_strict_and_simultaneously_live": true,
+      "phase_gate": {
+        "name": "independent sector/global action identity",
+        "measured_relative": 1.6834572689277185E-11,
+        "limit": 1E-11,
+        "action_difference_norm": 4.13049706226925E-11,
+        "operation_denominator": 2.4535799859655354,
+        "status": "FAIL"
+      },
+      "full3d_target_solve": "NOT_RUN",
+      "field_output": "NOT_RUN",
+      "R_T_A": "NOT_RUN; no official result",
+      "classification": "NUMERICAL_GATE_FAILED; worker exit 4; not a memory or time stop"
+    },
+    {
+      "model": "Gx784",
+      "status": "NOT_RUN_CONDITION_NOT_MET",
+      "run_id": "task40extra_0p7nm_nonseparable_gx784_p6_reference_v13",
+      "input_path": "input/task40extra_0p7nm_engineering/nonseparable_gx784_p6_reference_v14_legacy.dat",
+      "input_sha256": "b5a0cfe54a2febd80a53ccc257d69cdab1ca2dcd66a487cd8dd60606cbea341f",
+      "mesh_cells": [
+        14,
+        4,
+        14
+      ],
+      "cell_count": 784,
+      "degree": 6,
+      "mode_count": 340,
+      "run_directory": null,
+      "reason": "Gx560 did not pass its required numerical gate; no Gx784 worker launched."
+    }
+  ],
+  "phase_costs": {
+    "gx560_full_workflow_monotonic_seconds": 2220.8270128549775,
+    "gx560_watchdog_monotonic_seconds": 2219.8532756629866,
+    "gx560_campaign_conservative_realtime_charge_seconds": 2420.165726454603,
+    "gx560_legacy_assembly_sector_q02_seconds": 252.60100133903325,
+    "gx560_legacy_assembly_sector_q13_seconds": 192.36570854496676,
+    "gx560_reference_setup_seconds": 30.42879885993898,
+    "gx560_four_q_numeric_factor_seconds_sum": 18.483240675064735,
+    "gx560_target_ksp_seconds": null,
+    "gx560_recovery_output_checker_seconds": null,
+    "accounting": "Assembly, reference setup, and q numeric times are contained within the complete workflow and are not additive parent costs. The difference between workflow monotonic time and policy charge is not attributed to a solver phase."
+  },
+  "resources": {
+    "gx560_sampled_process_tree_rss_peak_bytes": 10168500224,
+    "gx560_cgroup_peak_bytes": 11207577600,
+    "gx560_cgroup_limit_bytes": 17179869184,
+    "gx560_task_swap_peak_bytes": 0,
+    "gx560_watchdog_samples": 8615,
+    "gx560_pss": "DISABLED_BY_PROFILE",
+    "descendants_cleared": true,
+    "memory_gate": "PASSED",
+    "workflow_time_gate": "PASSED"
+  },
+  "outputs": {
+    "official_R_T_A_for_v14_gx560": "NOT_RUN",
+    "full_electric_magnetic_fields": "NOT_RUN",
+    "independent_mode_power_spectrum": "NOT_RUN",
+    "full_repository_pytest": "NOT_RUN",
+    "MPI4": "NOT_RUN",
+    "Ruff": "NOT_RUN",
+    "CI": "NOT_RUN"
+  },
+  "raw_artifact_hashes": {
+    "gx560_run_summary": "ff5c3f0a3aaaeb26de487128d2469aa2ac10ba98908aa7506b4b4ddeebd74fee",
+    "gx560_candidate_summary": "3e65a47696feb896681ddf6920eb792bdcae1c14f6ac2585285a0b91aa70d8b4",
+    "gx560_physical_witness_json": "c137d4aff0f4b061f17a01d70aa5c534adc7bcc5cf0104074f00a6c4662d9740",
+    "gx560_physical_witness_npz": "ecb2fecc6cd4b7cca29b1378c757fad7df6dd3da51e3d442995d0de8e3507adc",
+    "gx560_watchdog_summary": "46b1effa1a8ef3533845bd2ad3a437981086a76838e830da95debb310eea6224"
+  },
+  "q_native_factor_inventory": [
+    {
+      "q": 0,
+      "rows": 28508,
+      "nnz": 15451743,
+      "csr_payload_bytes": 309148896,
+      "csr_sha256": "06694b753a1d8ff08bb6bb10ede600f2b89300a40c46c8fdb79e55a2f1127421",
+      "allocated_bytes_upper": 1158000000,
+      "used_bytes_upper": 1017000000,
+      "factor_fill_bytes": null,
+      "factor_entries": null,
+      "raw_INFOG9": 41320088,
+      "INFOG19_decimal_MB": 1157,
+      "INFOG22_decimal_MB": 1016,
+      "numeric_seconds": 4.298435825970955
+    },
+    {
+      "q": 1,
+      "rows": 28508,
+      "nnz": 15479361,
+      "csr_payload_bytes": 309701256,
+      "csr_sha256": "6d7a24a1ddf5a22672a6ce9b243b593dfda2bd34927eeba2039691e5f207b2d4",
+      "allocated_bytes_upper": 1151000000,
+      "used_bytes_upper": 1011000000,
+      "factor_fill_bytes": null,
+      "factor_entries": null,
+      "raw_INFOG9": 41253248,
+      "INFOG19_decimal_MB": 1150,
+      "INFOG22_decimal_MB": 1010,
+      "numeric_seconds": 4.954547766014002
+    },
+    {
+      "q": 2,
+      "rows": 28576,
+      "nnz": 15581290,
+      "csr_payload_bytes": 311740108,
+      "csr_sha256": "7ec9665372c3f7b5a30f06bf44c192e023d7ff85ba22c90798dd657ee0a52673",
+      "allocated_bytes_upper": 1170000000,
+      "used_bytes_upper": 1028000000,
+      "factor_fill_bytes": null,
+      "factor_entries": null,
+      "raw_INFOG9": 41789336,
+      "INFOG19_decimal_MB": 1169,
+      "INFOG22_decimal_MB": 1027,
+      "numeric_seconds": 4.526408245088533
+    },
+    {
+      "q": 3,
+      "rows": 28508,
+      "nnz": 15479361,
+      "csr_payload_bytes": 309701256,
+      "csr_sha256": "554879249ac961fd2771b41aa5bd06e87dc8bf23feb2b4685caf4b40932225b2",
+      "allocated_bytes_upper": 1166000000,
+      "used_bytes_upper": 1024000000,
+      "factor_fill_bytes": null,
+      "factor_entries": null,
+      "raw_INFOG9": 41269544,
+      "INFOG19_decimal_MB": 1165,
+      "INFOG22_decimal_MB": 1023,
+      "numeric_seconds": 4.703848837991245
+    }
+  ],
+  "q_native_factor_inventory_totals": {
+    "allocated_bytes_upper": 4645000000,
+    "used_bytes_upper": 4080000000,
+    "memory_source": "MUMPS INFOG(19) allocated and INFOG(22) used; decimal MB converted to byte upper bounds; INFOG9 raw entries retained; factor fill bytes and decoded factor-entry count are null."
+  },
+  "launch_memory_envelope": {
+    "effective_total_bytes": 14654988288,
+    "effective_available_bytes": 13421150208,
+    "dynamic_launch_cap_bytes": 13286932480,
+    "reserve_bytes": 134217728,
+    "tree_and_cgroup_cap_bytes": 17179869184,
+    "cap_policy": "min(dynamic physical-memory envelope, explicit 16 GiB cap)",
+    "sampled_process_tree_rss_peak_bytes": 10168500224,
+    "cgroup_memory_peak_bytes": 11207577600,
+    "task_swap_peak_bytes": 0,
+    "pss_peak_bytes": null,
+    "pss_status": "DISABLED_BY_PROFILE"
+  },
+  "process_identity_and_cleanup": {
+    "service_unit": "myfenics-case-20261007T044200-1934345.service",
+    "watchdog_samples": 8615,
+    "identity_coverage": "complete",
+    "observed_child_identities": [
+      {
+        "pid": 1934401,
+        "start_ticks": 92382457
+      },
+      {
+        "pid": 1934402,
+        "start_ticks": 92382457
+      },
+      {
+        "pid": 1934403,
+        "start_ticks": 92382457
+      }
+    ],
+    "remaining_child_pids": [],
+    "descendants_cleared": true
+  },
+  "reference_correction_activity": {
+    "correction_count": 2,
+    "extra_q_mat_solve_count": 8,
+    "corrections": [
+      {
+        "witness": "generic_full_independent",
+        "extra_q_mat_solve_count": 4,
+        "solve_seconds": 13.58928250905592,
+        "scope": "entire nonrecursive raw augmented inverse callback"
+      },
+      {
+        "witness": "interior_only_all_252000",
+        "extra_q_mat_solve_count": 4,
+        "solve_seconds": 2.4666414300445467,
+        "scope": "entire nonrecursive raw augmented inverse callback"
+      }
+    ],
+    "counter_source": "Existing v13 events: factors.calls delta; each correction covered q=[0,1,2,3]. These are child phases within the full workflow.",
+    "extra_raw_augmented_inverse_seconds_sum": 16.055923939100466,
+    "pure_extra_q_mat_solve_seconds": null,
+    "pure_extra_q_mat_solve_seconds_status": "UNKNOWN_NOT_SEPARATELY_TIMED",
+    "raw_augmented_inverse_calls": 6,
+    "startup_witness_count": 4,
+    "extra_corrections": 2,
+    "target_pc_raw_augmented_inverse_calls": 0,
+    "target_pc_status": "NOT_RUN",
+    "counter_semantics": "YOrbitPeriodicInverse.apply_augmented increments this counter for each raw callback: four initial startup witness calls plus two correction calls; no target PC call occurred."
+  }
+}

@@ -1,3 +1,59 @@
+# Task40extra Review V14 当前结果：Gx560 物理作用身份门失败，目标仍未资格化
+
+本节更新当前状态；V12、V11 与更早历史原样保留在下方。冻结源码为 6ac8cf7fd4697e575a4bf47a862c560ae290076b。V14 完成 Gx560 四个 p6 q 因子和参考 RHS 检查，但物理 RHS 的独立 action identity 为 1.6834572689277185e-11，超过严格 1e-11 门槛，因此 Full3D target solve 未启动。V14 没有 Gx560 官方 R/T/A；Gx784 未运行。固定窗口未刷新。
+
+## V14 统一结果表
+
+| 模型 | 网格、方法和原因 | 结果与指标 | 时间与资源 | 状态边界 |
+|---|---|---|---|---|
+| B0 | 4×4×5、80 cells、p6、532 modes、四 q；提供小模型完整 anchor | 已归档 R/T/A = 0.9842736080926642 / 0.014240518143990319 / 0.0014858737633455053；A_volume=0.0014858738462134112；能量闭合 8.286793473644138e-11；释放后真残差 1.6089762312332008e-8 | 原 workflow monotonic 1340.82869785605 s；RSS/cgroup 峰 3,248,488,448 / 4,484,915,200 B | 复用既有 PASS；V14 未重跑，也不改写原始 worker 历史分类 |
+| Gx560 | 10×4×14、560 cells、p6、340 modes、四 q；真实三维缺口参考问题 | 总行 380,040；独立周期行 365,760；内部行 252,000；每 q 行 28,508 / 28,508 / 28,576 / 28,508；NNZ 15,451,743 / 15,479,361 / 15,581,290 / 15,479,361，总计 61,991,755。四 q 严格真残差均通过；物理 action identity 1.6834572689277185e-11 > 1e-11。R/T/A 未生成 | 完整 workflow 2220.8270128549775 s；policy charge 2420.165726454603 s，分开记；树 RSS/cgroup 峰 10,168,500,224 / 11,207,577,600 B；swap 0 | NUMERICAL_GATE_FAILED_BEFORE_TARGET_SOLVE；不是资源/时间停止 |
+| Gx784 | 14×4×14、784 cells、p6、340 modes；条件网格扩展 | 无 V14 数值或物理测量 | 未运行 | NOT_RUN：Gx560 必需数值门未通过 |
+| 原尺寸目标 | 50×25×140 nm、0.7 nm；既有候选 272×4×14=15,232 cells，模式清单 32,060 | 网格计数为 derived；模式数为 measured inventory。真实 NNZ、CSR indptr、目标解和 R/T/A 均未知 | 四 q 同时因子工作区、目标 KSP、恢复输出、2 TB 与 48 h 端到端资格未知 | NO_GO / NOT_QUALIFIED；不是数学不可能性证明 |
+
+本轮没有受控 p/h 收敛对照：三个有效或尝试中的模型均为 Full3D iterative、p6、MPI1；B0 与 Gx560 的网格、几何和模式数不同，不能把它们的差当成单独 h 或 p 效应。Hybrid、direct reference、其他 M、其他 MPI 数均未比较。
+
+运行身份：复用 B0 source 0a442ba11a66525d5010d1b6cd6384d0de8d8eab、input SHA256 dfe7535c03da661c458ec746af6e4dd25c8d0b402fd0573b4bc4e0620dbb4f63；V14 Gx560 source 6ac8cf7fd4697e575a4bf47a862c560ae290076b、input SHA256 5306827b5bd212faca41c8606eb0d9ace40cc81608a283d56dbddaa161b6ae42、physical model SHA256 d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98。正式结果、完整 run paths 与 artifact identities 见 V14 formal results 和 run index。
+
+## Gx560 因子、修正、装配和资源
+
+四个 q 因子同时存活。MUMPS INFOG 原始字段解码得到的 allocated 与 used 保守上界总和分别为 4,645,000,000 B 与 4,080,000,000 B；INFOG9 原始整数保留，因缺少有依据的单位解释，不推算因子条目数或填充量。每个 q 的 CSR 哈希及 INFOG 明细见 [V14 formal results](records/review_v14_formal_results.json)。
+
+| q | 行数 / NNZ | 严格真残差 | allocated / used 上界 | numeric 时间 |
+|---|---:|---:|---:|---:|
+| 0 | 28,508 / 15,451,743 | 3.986719346e-11 | 1,158,000,000 / 1,017,000,000 B | 4.298435826 s |
+| 1 | 28,508 / 15,479,361 | 1.591872870e-12 | 1,151,000,000 / 1,011,000,000 B | 4.954547766 s |
+| 2 | 28,576 / 15,581,290 | 8.624700464e-13 | 1,170,000,000 / 1,028,000,000 B | 4.526408245 s |
+| 3 | 28,508 / 15,479,361 | 2.813498243e-12 | 1,166,000,000 / 1,024,000,000 B | 4.703848838 s |
+
+数值修正把完整参考残差再交给同一组四 q 因子求解，并同时更新场与 port 系数；一次修正最多四次额外 q 求解。通用完整 RHS 和全内部行见证各修正一次，共 8 次额外 q MatSolve；计数器记录 4 个初始 startup witness callback 加 2 个 correction callback，raw augmented inverse 调用合计 6 次，target PC 调用 0 次且未运行。两次完整 raw augmented inverse callback 合计 16.055923939 s，纯 MatSolve 秒数未知。内部见证的 complete_augmented_FE 残差为 4.431933190549465e-12，full_regular 残差为 4.431934540620194e-12；q0 strict 失败但处于已授权有界不精确范围。物理 RHS 的 twist1 原始分母为 5.288411619304687e-16、相对残差为 165.55965111916072，逐扇区 1e-8 有界门也失败；全局完整/合并值较小不能覆盖该逐扇区门。
+
+预分配 CSR 在 B0 配对组件比较中省下 6.370516 s，但未验证 Gx 的整体 setup 或暂存峰值，故 V14 选择已授权的 LEGACY_GLOBAL_CSR_SUM，保持参考 PC 不变。Gx 两扇区装配分别为 252.601001339 s 和 192.365708545 s；四 q setup 30.428798860 s、numeric 合计 18.483240675 s 均是完整 workflow 的子阶段，不能重复相加。动态 launch cap 13,286,932,480 B；树 RSS 峰 10,168,500,224 B，cgroup 峰 11,207,577,600 B；PSS profile 禁用。资源门和时间门均通过。
+
+| 原尺寸候选量 | 当前证据与边界 |
+|---|---|
+| 网格与电尺寸 | 272×4×14 与 15,232 cells 是计数推导；名义均值 h_x=0.1838 nm、h_y=6.25 nm、h_z=10 nm，不是已生成网格的单元尺寸。自由空间 k0L 与 phase-per-cell 仅为诊断，不证明 FE 精度或材料相位 |
+| 模式与行数 | 32,060 AUTO 模式是已测 inventory；p6 full-storage rows 10,228,620。候选行数低于 int32 范围不代表实际 NNZ/CSR indptr 安全 |
+| 内存与时间 | Krylov、scratch、单个稠密 H 的已知数是派生 payload，不是同时 RSS；目标实际 NNZ、q 因子 fill、生命周期、KSP 和总时间 unknown |
+| 资格 | 原尺寸没有 FE mesh、matrix、factor、PDE、官方结果或 2 TB / 48 h 端到端实测 |
+
+## V14 下一步与选择性合并
+
+下一单一电尺寸候选是保持波长 0.7 nm 的 E1 q1.25，计划轴计数 10×4×19=760 cells，输入 SHA256 5c0aa01d1bb327f1331b69cfe359c6f775961398d316c2f88d3aeaff978af8fd。它保持 HELD、未运行；模式、实际网格和资源成本未知。当前 V13 case allowlist 没有 E1 的完整 reference-PC 路由，V14 不扩大 allowlist。下一审查须先处理 Gx560 的物理 action identity 问题，并另行审查 E1 路由与目标 y/z h/p 依据。
+
+| 依赖组 | 建议 | 依赖、测试与 fresh PDE 证据 |
+|---|---|---|
+| production numerical/core | 不设为默认 | Gx560 没有通过物理 action identity，也没有 target solve；需修复并获得新的匹配数值证据后再评估 |
+| reusable runner/watchdog | 保留通用监督、身份、资源门与已审查输入路由 | E1 source-ready 46 passed；后续 6ac NameError 修复另有 4 focused pass，分开记录；validate-only 对 B0/Gx560/Gx784 均 valid；不代表 PDE 资格 |
+| checker/benchmark | 保留按原始字段重算和分开的见证分类 | 覆盖 strict pass、bounded-inexact 与结构失败；无 target 场 checker 输入 |
+| compact evidence/docs | 可供主控审查后提交本响应、summary、target bridge、run index 与紧凑 records | 三个文档合同测试 24 passed、134 subtests passed；不含 PDE |
+| research-only | 保留 V13 参考修正、legacy CSR 选择和四 q Gx560 库存 | 只在研究配置中；无 Gx560 完整 target pass |
+| do-not-merge / do-not-claim | 不放宽 identity 门、不扩大 E1 allowlist、不宣称 Gx784 或原尺寸资格 | Gx784、原尺寸 PDE、MPI4、full repository pytest、Ruff、CI 未运行 |
+
+证据入口：[Response V14](../response_v14.md)、[接续记录](records/review_v14_execution_handoff.json)、[参考与装配记录](records/review_v14_reference_and_assembly.json)、[正式结果](records/review_v14_formal_results.json)、[成本与修复账](records/review_v14_cost_and_repairs.json)、[目标桥接包](v14_engineering_to_target.md)、[run index](records/run_index.json)、[测试摘要](test_summary.md)。此前 V13 B0 pass 与 Gx560 pre-numeric resource stop 均保留；attempt 1 NameError、V14 物理 action gate failure 与所有 NOT_RUN 项分别登记。
+
+---
+
 # Task40extra Review V12 结果总览：共享变换实测，Gx560参考逆 Gate 失败
 
 本节是当前状态；下方 V11、V10及更早结果保留为历史。V12冻结source为`6d2c54389fe885ecf24d474a8782166ff31f9154`。p6单元内部共享变换实际进入Gx560并减少了named-view重复指向独立backing的字节账；Gx560完整regular-inverse witness有三项阈值失败，worker在进入Full3D FGMRES前退出。资源/time gate通过；R5 Gx784、官方Gx560 R/T/A和原尺寸路线均未运行/未资格化。

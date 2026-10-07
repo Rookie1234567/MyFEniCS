@@ -1,0 +1,241 @@
+{
+  "schema": "task40extra.review_v14_reference_and_assembly.v1",
+  "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+  "window_sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+  "reference_pc_strategy": "STRICT_THEN_BOUNDED_INEXACT_V13",
+  "contract": {
+    "regular_equation_strict": 1E-10,
+    "regular_equation_bounded_inexact": 1E-8,
+    "local_combined_strict": 1E-10,
+    "local_combined_bounded_inexact": 1E-8,
+    "each_local_sector_bounded_inexact": 1E-8,
+    "alpha_closure_strict": 1E-11,
+    "alpha_closure_bounded_inexact": 1E-9,
+    "each_q_true_residual_strict": 1E-10,
+    "each_q_true_residual_bounded_inexact": 1E-8,
+    "identity_mapping_coverage_operator_and_representation_gates": "unchanged; no bounded relaxation",
+    "small_denominator_policy": "record raw numerator and denominator; do not apply a floor"
+  },
+  "assembly_selection": {
+    "selected_strategy": "LEGACY_GLOBAL_CSR_SUM",
+    "reference_pc_strategy_unchanged": true,
+    "b0_pair": {
+      "evidence": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/b0_q_assembly_comparison_v13.json",
+      "comparison_sha256": "e49916927e681794b736554fd59583dd1d3af674d7a84571e06e30d04f348117",
+      "preallocated_full_four_q_seconds": 44.114501785021275,
+      "legacy_full_four_q_seconds": 50.48501793597825,
+      "measured_component_savings_seconds": 6.370516150956975,
+      "all_four_operator_gates_passed": true,
+      "mumps_factors_constructed": false,
+      "gx_temporary_staging_cap_256_mib_qualified": false,
+      "decision": "The B0 component speedup does not establish a Gx whole-setup, memory, or RSS benefit; use the authorized legacy route for V14."
+    },
+    "actual_gx560_assembly_audits": [
+      {
+        "global_q_indices": [
+          0,
+          2
+        ],
+        "assembly_strategy": "LEGACY_GLOBAL_CSR_SUM",
+        "assembly_total_seconds": 252.60100133903325,
+        "contribution_generation_seconds": 16.08672270528041,
+        "local_projection_seconds": 67.83841438777745,
+        "sparse_accumulation_seconds": 168.4124367092736,
+        "numeric_contribution_count": 729,
+        "reallocation_count_upper": 2916,
+        "off_diagonal_relative": [
+          3.602180855226532E-16,
+          3.4654583896278457E-16
+        ]
+      },
+      {
+        "global_q_indices": [
+          1,
+          3
+        ],
+        "assembly_strategy": "LEGACY_GLOBAL_CSR_SUM",
+        "assembly_total_seconds": 192.36570854496676,
+        "contribution_generation_seconds": 11.866488818777725,
+        "local_projection_seconds": 55.137369802221656,
+        "sparse_accumulation_seconds": 125.13299939699937,
+        "numeric_contribution_count": 593,
+        "reallocation_count_upper": 2372,
+        "off_diagonal_relative": [
+          3.542854321047293E-16,
+          3.543049121052482E-16
+        ]
+      }
+    ],
+    "staging_memory": "No qualified V14 Gx staging peak; unknown."
+  },
+  "q_numeric_factors": {
+    "q_count": 4,
+    "all_four_live_simultaneously": true,
+    "all_four_strict_true_residual_passed": true,
+    "setup_seconds": 30.42879885993898,
+    "strict_limit": 1E-10,
+    "per_q": [
+      {
+        "q": 0,
+        "rows": 28508,
+        "true_residual_relative": 3.986719346467304E-11,
+        "strict_passed": true,
+        "numeric_seconds": 4.298435825970955
+      },
+      {
+        "q": 1,
+        "rows": 28508,
+        "true_residual_relative": 1.5918728695012696E-12,
+        "strict_passed": true,
+        "numeric_seconds": 4.954547766014002
+      },
+      {
+        "q": 2,
+        "rows": 28576,
+        "true_residual_relative": 8.624700464139001E-13,
+        "strict_passed": true,
+        "numeric_seconds": 4.526408245088533
+      },
+      {
+        "q": 3,
+        "rows": 28508,
+        "true_residual_relative": 2.813498243162843E-12,
+        "strict_passed": true,
+        "numeric_seconds": 4.703848837991245
+      }
+    ],
+    "numeric_seconds_sum": 18.483240675064735,
+    "scope_note": "The four-q numeric times and setup time are child phases inside the 2220.8270128549775 s complete workflow; do not add them to parent time.",
+    "correction_count": 2,
+    "extra_q_mat_solve_count": 8,
+    "corrections": [
+      {
+        "witness": "generic_full_independent",
+        "extra_q_mat_solve_count": 4,
+        "solve_seconds": 13.58928250905592,
+        "scope": "entire nonrecursive raw augmented inverse callback"
+      },
+      {
+        "witness": "interior_only_all_252000",
+        "extra_q_mat_solve_count": 4,
+        "solve_seconds": 2.4666414300445467,
+        "scope": "entire nonrecursive raw augmented inverse callback"
+      }
+    ],
+    "extra_raw_augmented_inverse_seconds_sum": 16.055923939100466,
+    "pure_extra_q_mat_solve_seconds": null,
+    "pure_extra_q_mat_solve_seconds_status": "UNKNOWN_NOT_SEPARATELY_TIMED",
+    "raw_augmented_inverse_calls": 6,
+    "startup_witness_count": 4,
+    "extra_corrections": 2,
+    "target_pc_raw_augmented_inverse_calls": 0,
+    "target_pc_status": "NOT_RUN",
+    "counter_semantics": "YOrbitPeriodicInverse.apply_augmented increments this counter for each raw callback: four initial startup witness calls plus two correction calls; no target PC call occurred."
+  },
+  "witness_cases": [
+    {
+      "case": "generic_full_independent",
+      "initial": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v10_regular_inverse_generic_full_independent.json",
+        "sha256": "b3870f666f9c0338d0b32d994e483fccb188bd946b31a7c710ca9a3a50e8d079",
+        "strict_status": "FAILED_BEFORE_CORRECTION"
+      },
+      "corrected": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v13_regular_inverse_generic_full_independent_corrected_v13.json",
+        "sha256": "bf9cc7da829132a68e40effad5dd9e0cb375be3a6ac921ac73cd180c2e31e402",
+        "classification": "STRICT_PASS",
+        "original_regular_equation_relative": 3.9660492982293206E-12,
+        "max_q_true_residual_relative": 5.4763372433594824E-11
+      }
+    },
+    {
+      "case": "interior_only_all_252000",
+      "initial": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v10_regular_inverse_interior_only_all_252000.json",
+        "sha256": "53342f69f2a4342e8f8c1410b27b0dfce767afd433008e3ea95f9f01ae6d6802",
+        "strict_status": "FAILED_BEFORE_CORRECTION"
+      },
+      "corrected": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v13_regular_inverse_interior_only_all_252000_corrected_v13.json",
+        "sha256": "fe732c96aba0b56a515b210768efff5da59297b47c523121fc3ee1909219d39f",
+        "classification": "BOUNDED_INEXACT_ACCEPTED",
+        "complete_equation_relative": 4.431933190549465E-12,
+        "local_combined_relative": 1.5579414148254037E-11,
+        "q0_true_residual_relative": 1.8836715361201966E-10,
+        "q0_strict_limit": 1E-10,
+        "q0_bounded_limit": 1E-8,
+        "raw_packet_passed_field": false,
+        "preserve_q0_strict_failure": true
+      }
+    },
+    {
+      "case": "nonzero_all_mode_port_rhs",
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v10_regular_inverse_nonzero_all_mode_port_rhs.json",
+      "sha256": "aab7ae3df3879393b1a6a038c78257cee22764e81653315ce4b5fe33b5685318",
+      "classification": "INITIAL_STRICT_PASS",
+      "original_regular_equation_relative": 2.8238509679728265E-12,
+      "max_q_true_residual_relative": 3.546290896537153E-11
+    },
+    {
+      "case": "physical_regular_incident_rhs",
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v10_regular_inverse_physical_regular_incident_rhs.json",
+      "sha256": "c137d4aff0f4b061f17a01d70aa5c534adc7bcc5cf0104074f00a6c4662d9740",
+      "arrays_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z/v10_regular_inverse_physical_regular_incident_rhs.npz",
+      "arrays_sha256": "ecb2fecc6cd4b7cca29b1378c757fad7df6dd3da51e3d442995d0de8e3507adc",
+      "classification": "NUMERICAL_GATE_FAILED_IDENTITY_GATE_NO_CORRECTION",
+      "sector_native_action_consistency_relative": 1.6834572689277185E-11,
+      "immutable_limit": 1E-11,
+      "independent_action_difference_norm": 4.13049706226925E-11,
+      "operation_denominator": 2.4535799859655354,
+      "original_regular_equation_relative": 1.571386718821102E-9,
+      "local_combined_relative": 1.5713721062272218E-9,
+      "alpha_closure_relative": 1.1280453648956473E-11,
+      "full_internal_recovery_relative": 1.994570459286834E-16,
+      "native_action_recovery_identity_relative": 5.4534346300710764E-11,
+      "all_port_equation_relative": 5.172410446630256E-13,
+      "q0_per_rhs_true_residual_relative": 1.105608031163589E-10,
+      "q0_per_rhs_strict_limit": 1E-10,
+      "q0_per_rhs_bounded_limit": 1E-8,
+      "q0_per_rhs_role": "bounded per-call solve, not the factorization admission residual",
+      "correction_applied": false,
+      "correction_reason": "The action identity is structural and has no authorized inexact relaxation.",
+      "twist1_scale_diagnostic": {
+        "raw_rhs_denominator": 5.288411619304687E-16,
+        "raw_local_residual_norm": 8.755475826665997E-14,
+        "max_absolute_residual": 3.8840362037877004E-15,
+        "relative_residual": 165.55965111916072,
+        "sector_rhs_share": 4.3107717291094926E-16,
+        "denominator_floor_applied": false,
+        "inexact_sector_limit": 1E-8,
+        "inexact_sector_gate_passed": false
+      }
+    }
+  ],
+  "independent_saved_action_attribution": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_saved_action_attribution.json",
+    "sha256": "cbb820248846a1a63dea5b32bec7aa1aa7e0d1528852501c4de25a098e43036c",
+    "identity_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_saved_action_identity.json",
+      "sha256": "bf0954c06c1545ca1eeb3d152f09185709a639bd7b0b71d023a3bedbb0561d13",
+      "npz_declared_sha256_matches_actual": true,
+      "npz_sha256": "ecb2fecc6cd4b7cca29b1378c757fad7df6dd3da51e3d442995d0de8e3507adc",
+      "json_sha256": "c137d4aff0f4b061f17a01d70aa5c534adc7bcc5cf0104074f00a6c4662d9740"
+    },
+    "scope": "Bounded offline recheck of saved NPZ arrays and packet identity only; no FE, factor, new reference or PDE.",
+    "recomputed_action_identity": {
+      "difference_norm": 4.13049706226925E-11,
+      "original_operation_denominator": 2.4535799859655354,
+      "original_relative_ratio": 1.6834572689277185E-11,
+      "unchanged_limit": 1E-11,
+      "gate": "FAIL"
+    }
+  },
+  "conclusion": {
+    "classification": "NUMERICAL_GATE_FAILED",
+    "implementation_bug_found": false,
+    "memory_gate_failed": false,
+    "time_gate_failed": false,
+    "relax_identity_gate": false,
+    "further_diagnostic_or_replay": false
+  }
+}

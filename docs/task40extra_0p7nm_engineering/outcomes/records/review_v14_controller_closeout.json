@@ -1,0 +1,94 @@
+{
+  "schema": "task40extra.controller_closeout.v14",
+  "review_commit_sha": "fe5b3e9217562aa4e0b6b2778471439d80b77247",
+  "review_numerical_base_sha": "0a442ba11a66525d5010d1b6cd6384d0de8d8eab",
+  "formal_source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+  "branch": "task40extra_0p7nm_engineering",
+  "executor_stopped_writes": true,
+  "audit": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_closeout_initial_audit.json",
+    "sha256": "38ddb727c31397bc9b461772bca75782b04bea10a8fa9b9fd32f0d3af1f2e99b",
+    "status": "PASS",
+    "scope": "New V14 paths/digests/tables/23 historical runs/history text. No new PDE. Original numeric failure unchanged."
+  },
+  "numerical_result": {
+    "B0": "REUSED_FULL_PASS",
+    "Gx560": "NUMERICAL_GATE_FAILED_BEFORE_TARGET_SOLVE",
+    "Gx784": "NOT_RUN",
+    "target_original_size": "NO_GO_NOT_QUALIFIED",
+    "native_sector_action_relative": 1.6834572689277185e-11,
+    "native_sector_action_limit": 1e-11
+  },
+  "preserved_historical_hash_defect": {
+    "stage": "P3_F2_M1",
+    "field": "physical_model_sha256",
+    "length": 62,
+    "present_in_source_HEAD": true,
+    "changed": false,
+    "status": "HISTORICAL_LIMITATION_NOT_V14_PASS"
+  },
+  "window_precommit_observation": {
+    "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json",
+    "sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+    "schema": "task40extra.review_v10_campaign.v1",
+    "t0_utc_ns": 1791328893326800586,
+    "deadline_utc_ns": 1791415293326800586,
+    "campaign_seconds": 86400.0,
+    "closeout_reserve_seconds": 600.0,
+    "bootstrap_charged_seconds": 0.0,
+    "adjacent_charged_seconds": 3155.052134802,
+    "cumulative_charged_seconds": 24802.23942600437,
+    "charged_seconds": 24802.23942600437,
+    "remaining_numerical_seconds": 60997.760573995634,
+    "accounting_record": {
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 28256,
+      "label": "controller_v14_precommit_after_independent_closeout_audit",
+      "campaign_window_sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+      "t0_utc_ns": 1791328893326800586,
+      "deadline_utc_ns": 1791415293326800586,
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      },
+      "previous_sample": {
+        "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6",
+        "boottime": 926044.445416274,
+        "monotonic": 926044.445412695,
+        "utc_ns": 1791350540511360296
+      },
+      "sample": {
+        "monotonic": 928937.54572412,
+        "boottime": 928937.545724968,
+        "utc_ns": 1791353695563495098,
+        "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+      },
+      "adjacent_interval": {
+        "elapsed_seconds": {
+          "monotonic": 2893.100311425049,
+          "boottime": 2893.1003086939454,
+          "utc": 3155.052134802
+        },
+        "budget_seconds": 3155.052134802,
+        "discrepancy_seconds": 261.9518261080548,
+        "tolerance_seconds": 28.93100311425049,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 261.9518233769513
+      },
+      "bootstrap_charged_seconds": 0.0,
+      "cumulative_charged_seconds": 24802.23942600437,
+      "cutoff_seconds": 85800.0
+    },
+    "sample": {
+      "monotonic": 928937.54572412,
+      "boottime": 928937.545724968,
+      "utc_ns": 1791353695563495098,
+      "boot_id": "0bb7278d-a4d8-4b78-b625-895e739880e6"
+    }
+  },
+  "final_source_changed_by_closeout": false,
+  "further_FE_in_this_review": false,
+  "settlement_scope": "Through precommit audit observation; commit/push/readback are observed separately afterward. No window refresh or cost refund."
+}

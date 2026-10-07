@@ -1,0 +1,156 @@
+{
+  "schema": "task40extra.review_v14_execution_handoff.v1",
+  "review": {
+    "path": "docs/task40extra_0p7nm_engineering/review_report_v14.md",
+    "sha256": "9a9c07e20fed59a27b1781d9eabe0554c3d4e4ad60927ac32926493176466c61"
+  },
+  "source": {
+    "branch": "task40extra_0p7nm_engineering",
+    "head": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+    "worktree_at_run_start": "clean; source remained frozen during both attempts",
+    "controller_freeze": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_source_freeze_v14.json",
+      "sha256": "e55fa7671e4cc4780e789b42b70b0988b2b89f860741f4c4743fe15a504ff049"
+    },
+    "repair_freeze": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_source_freeze_v14_repair01.json",
+      "sha256": "c0db577f5d98ba118e43c75890e7874eca89650fe14b1e2ee0798c1f0133fd69"
+    },
+    "commit_or_push_by_executor": false
+  },
+  "fixed_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json",
+    "sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+    "t0_utc": "2026-10-06T23:21:33.326800586Z",
+    "deadline_utc": "2026-10-07T23:21:33.326800586Z",
+    "refreshed": false,
+    "campaign_policy_charge_at_attempt_start_seconds": 19227.021564747767,
+    "campaign_policy_charge_at_attempt_end_seconds": 21647.18729120237,
+    "campaign_policy_charge_for_attempt_seconds": 2420.165726454603,
+    "attempt_workflow_monotonic_seconds": 2220.8270128549775,
+    "remaining_numerical_seconds_at_attempt_end": 64152.81270879763,
+    "accounting_note": "The conservative realtime policy charge and workflow monotonic interval are separate clocks. This is an attempt-stop snapshot, not final closeout settlement; later documentation and review time remains within the same window.",
+    "implementation_validation_accounting": "A campaign_charge_seconds=0 leaf denotes no separate numerical debit on that implementation memo; elapsed testing, repair, review, freeze, documentation, and Git closeout remain inside this unchanged fixed window."
+  },
+  "state_at_v14_handoff": {
+    "response_v13_archived_at_review_start": false,
+    "response_v13_fabricated": false,
+    "b0": {
+      "status": "REUSED_ARCHIVED_PASS",
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v13",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T022739.364934Z",
+      "source_sha": "0a442ba11a66525d5010d1b6cd6384d0de8d8eab",
+      "input_sha256": "dfe7535c03da661c458ec746af6e4dd25c8d0b402fd0573b4bc4e0620dbb4f63",
+      "reuse_reason": "V14 changed the reviewed explicit assembly route; the B0 V13 numerical result remains applicable. No new B0 run and no reclassification of its original run status."
+    },
+    "prior_v13_gx560": {
+      "status": "RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T025402.158242Z",
+      "numeric_factorization_started": false,
+      "target_solve_started": false,
+      "preservation": "Historical resource negative retained; not overwritten by V14.",
+      "source_sha": "0a442ba11a66525d5010d1b6cd6384d0de8d8eab",
+      "input_sha256": "77ae2474390c99639444b080f6c67ac9d1f2df77dc020b2f7bdcc43f52f54ad2"
+    }
+  },
+  "attempts": [
+    {
+      "attempt_id": "20261007T043628.226137Z",
+      "source_sha": "5ac368b168b5e9cdc89889154bf78f25535e3d85",
+      "classification": "WORKER_FAILED_IMPLEMENTATION_BUG",
+      "exception": "NameError: name 'is_v13' is not defined",
+      "workflow_monotonic_seconds": 1.7350830709328875,
+      "campaign_policy_charge_seconds": 1.708305712145,
+      "target_solve_started": false,
+      "receipt": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/review_v14_gx560_attempt1_failure.json",
+        "sha256": "903b22b7578924e5a1d53f54a24d37ba2a31ee821f63069aef07a564414d9cff"
+      },
+      "repair": "Restored the worker-local V13 strategy predicate before evidence-profile selection; four focused tests, compileall and diff check passed before controller freeze."
+    },
+    {
+      "attempt_id": "20261007T044200.351370Z",
+      "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_reference_v13",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v13__full3d_iterative__mpi1__Mna/20261007T044200.351370Z",
+      "service_unit": "myfenics-case-20261007T044200-1934345.service",
+      "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+      "input_path": "input/task40extra_0p7nm_engineering/nonseparable_gx560_p6_reference_v14_legacy.dat",
+      "input_sha256": "5306827b5bd212faca41c8606eb0d9ace40cc81608a283d56dbddaa161b6ae42",
+      "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "resolved_config_sha256": "c4c8af655cd8bce7001adbb5f6d7846602062228148891e3702248a78431a4b7",
+      "classification": "NUMERICAL_GATE_FAILED",
+      "worker_exit": 4,
+      "stop_stage": "Q4_ORIGINAL",
+      "exception": "ValueError: complete regular p6 inverse checks did not pass",
+      "target_solve_started": false,
+      "official_result": false,
+      "artifact_hashes": {
+        "run_summary.json": "ff5c3f0a3aaaeb26de487128d2469aa2ac10ba98908aa7506b4b4ddeebd74fee",
+        "task40_v10_p6_candidate_summary.json": "3e65a47696feb896681ddf6920eb792bdcae1c14f6ac2585285a0b91aa70d8b4",
+        "physical_regular_incident_rhs.json": "c137d4aff0f4b061f17a01d70aa5c534adc7bcc5cf0104074f00a6c4662d9740",
+        "physical_regular_incident_rhs.npz": "ecb2fecc6cd4b7cca29b1378c757fad7df6dd3da51e3d442995d0de8e3507adc",
+        "watchdog/summary.json": "46b1effa1a8ef3533845bd2ad3a437981086a76838e830da95debb310eea6224",
+        "watchdog/worker.log": "165e4ce9d8274c8e56ea66ec0db51263ea57246e498259b3b6bac577bdde4339"
+      }
+    }
+  ],
+  "resource_and_time_gates": {
+    "workflow_time_exceeded": false,
+    "watchdog_samples": 8615,
+    "sampled_process_tree_rss_peak_bytes": 10168500224,
+    "cgroup_memory_peak_bytes": 11207577600,
+    "memory_limit_bytes": 17179869184,
+    "task_cgroup_swap_peak_bytes": 0,
+    "pss": "DISABLED_BY_PROFILE",
+    "descendants_cleared": true,
+    "classification_implication": "The attempt stopped at the reference numerical gate, not at memory or time termination."
+  },
+  "process_identity_and_cleanup": {
+    "service_unit": "myfenics-case-20261007T044200-1934345.service",
+    "watchdog_samples": 8615,
+    "identity_coverage": "complete",
+    "observed_child_identities": [
+      {
+        "pid": 1934401,
+        "start_ticks": 92382457
+      },
+      {
+        "pid": 1934402,
+        "start_ticks": 92382457
+      },
+      {
+        "pid": 1934403,
+        "start_ticks": 92382457
+      }
+    ],
+    "remaining_child_pids": [],
+    "descendants_cleared": true
+  },
+  "documentation_contract_tests": {
+    "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py",
+    "result": "24 passed, 134 subtests passed in 0.17 s",
+    "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+    "qualified_activation": "scripts/task40_fresh_c1/activate_local_wsl_complex.sh with Task40 runtime prefix, ABI receipt, and JIT cache paths",
+    "abi": "PETSc complex128/int32; petsc4py, slepc4py, dolfinx, and mpi4py resolved from the same runtime prefix",
+    "scope": "documentation, model registry, and retrospective contracts only; no FE/MPI/PDE"
+  },
+  "closeout": {
+    "status": "CLOSEOUT_READY",
+    "source_sha": "6ac8cf7fd4697e575a4bf47a862c560ae290076b",
+    "executor_commit_or_push": false,
+    "full_repository_pytest": "NOT_RUN",
+    "MPI4": "NOT_RUN",
+    "Ruff": "NOT_RUN",
+    "CI": "NOT_RUN",
+    "campaign_final_settlement": "controller-owned; subsequent documentation, test and Git elapsed remain inside the unchanged fixed window"
+  },
+  "controller_timing_and_counter_semantics": {
+    "correction_seconds_scope": "entire nonrecursive raw augmented inverse callback",
+    "pure_q_mat_solve_seconds": "UNKNOWN_NOT_SEPARATELY_TIMED",
+    "raw_augmented_inverse_calls": 6,
+    "startup_witness_count": 4,
+    "extra_corrections": 2,
+    "target_pc_calls": 0,
+    "target_pc_status": "NOT_RUN"
+  }
+}

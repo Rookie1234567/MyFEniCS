@@ -1,3 +1,9 @@
+# Task40extra 当前进展：Review V14 Gx560 数值门失败后收口中
+
+V14 在冻结源码 6ac8cf7fd4697e575a4bf47a862c560ae290076b 上完成四个 p6 q 因子、参考见证和真实物理 RHS 核验。q 因子严格真残差与资源、时间门通过；物理 RHS 的独立算子作用身份差为 1.6834572689277185e-11，超过 1e-11 结构门，Full3D target solve 和官方 R/T/A 未运行。B0 复用 V13 已归档结果；Gx784 因 Gx560 门失败未运行。目标规模与 2 TB / 48 h 仍未资格化。下一电尺寸 E1 q1.25 输入已记录为 HELD，未启动。证据见 [Response V14](task40extra_0p7nm_engineering/response_v14.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json) 和 [test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)。
+
+---
+
 # Task40extra Review V12 当前进展：共享变换进入 Gx560，参考逆 Gate 失败后收口
 
 V12 在冻结源码 `6d2c54389fe885ecf24d474a8782166ff31f9154` 上完成。p6 cell-interior 变换 bank 在 Gx560 正式路径实际建立，共用矩阵 backing 的分配证据已记录；这不是进程 RSS 节省测量，也没有把研究路径升为 ordinary default。B0 首个 worker 在数值求解前因 NameError 失败并经定向修复测试，之后 fresh solve 的 A6 residual 通过但 worker 在物理输出门 exit 4、`official_result=false`；离线保存场复核通过，仍保留原 worker 分类。Gx560 四 q 因子探针通过，但完整参考逆见证有三项严格 Gate 失败，未进入 Full3D FGMRES。Gx784 输入已冻结并校验（SHA256 `56d9b05bf157a213d608da93e42fdd1dad6377aa9fad96cdd962d3f6086abdd5`），因 Gx560 Gate 失败而 `INPUT_FROZEN_BUT_NOT_RUN`。原尺寸目标仍 `NO_GO / NOT_QUALIFIED`。

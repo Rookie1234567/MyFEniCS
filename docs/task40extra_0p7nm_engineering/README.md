@@ -29,6 +29,17 @@
 
 | 文件 | 内容 |
 |---|---|
+| [Response V14](response_v14.md) | Gx560 四 q 因子与参考见证、物理 action identity 负结果、资源和时间口径、E1 q1.25 HELD 决定 |
+| [Review V14](review_report_v14.md) | 当前连续执行合同、数值 Gate 和 E5 目标准入边界 |
+| [Review V14 execution handoff](outcomes/records/review_v14_execution_handoff.json) | 固定窗口、V13 实际接续状态、两次 attempt 身份与进程清理 |
+| [Review V14 reference and assembly](outcomes/records/review_v14_reference_and_assembly.json) | 四类参考见证、strict/inexact 边界、legacy CSR 选择及装配分项 |
+| [Review V14 formal results](outcomes/records/review_v14_formal_results.json) | B0/Gx560/Gx784 状态、q 因子库存、残差、资源、时间和 raw artifact hashes |
+| [Review V14 cost and repairs](outcomes/records/review_v14_cost_and_repairs.json) | 固定窗口快照、两次正式 attempt、旧费用 unknown 与后续结算边界 |
+| [V14 engineering to target](outcomes/v14_engineering_to_target.md) | 原尺寸 known/unknown 与下一单一 E1 q1.25 准入包 |
+| [Updated summary](outcomes/summary.md) | V14 统一结果、时间资源与 selective-merge 边界 |
+| [V14 test summary](outcomes/test_summary.md) | source-ready、NameError repair 与文档测试分列 |
+| [V14 run index](outcomes/records/run_index.json) | 正式 attempt、历史复用、not-run 状态及 evidence hashes |
+
 | [Response V11](response_v11.md) | S0–S6回应；保存场物理复核、Gx560资源受控停止、S6唯一后续优先级和结果边界 |
 | [V11 综合工程报告](outcomes/review_v11_engineering.md) | 结果矩阵、q 因子与资源口径、阶段成本、选择性移交和证据限制 |
 | [Review V11 manifest](outcomes/records/review_v11_manifest.json) | 固定窗口、冻结源码、五份compact身份与V11结论状态 |

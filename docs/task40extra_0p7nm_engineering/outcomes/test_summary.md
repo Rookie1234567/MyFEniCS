@@ -1,3 +1,15 @@
+# Task40extra V14 测试与文档检查摘要
+
+| 检查 | 身份 / 回执 | 覆盖范围 | 结果与边界 |
+|---|---|---|---|
+| E1 路由与装配策略 source-ready | benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/review_v14_source_ready_receipt.json SHA256 535786efc4d5a7b8003f516c1ab554d45857059a22da3a375a1eb0e120a58dd8；pre-repair frozen source 5ac368b168b5e9cdc89889154bf78f25535e3d85 | route/window gates、shared strategy allowlist、dispatcher/worker、witness guard、strict/inexact fixtures | 46 passed；独立 source-ready 收据 |
+| 6ac is_v13 NameError repair | benchmarks/artifacts/task40extra_0p7nm_engineering/local_w14_wsl/controller_source_freeze_v14_repair01.json SHA256 c0db577f5d98ba118e43c75890e7874eca89650fe14b1e2ee0798c1f0133fd69; repaired source 6ac8cf7fd4697e575a4bf47a862c560ae290076b | worker-local predicate repair | 4 focused tests passed in 0.40 s; separate receipt, not combined with 46 |
+| V14 文档合同测试 | Task40 qualified activation; python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py; PETSc complex128/int32 and common runtime prefix | 文档、模型注册与回顾合同；不含 FE/MPI/PDE | 24 passed, 134 subtests passed in 0.17 s |
+| Gx560 attempt 2 数值运行 | V14 formal run，source 6ac8cf7fd4697e575a4bf47a862c560ae290076b | 四个 q 通道的严格真残差与物理 RHS action identity Gate | 数值运行不是软件测试；q 残差通过但 action identity 失败，未产生 target R/T/A |
+| full repository pytest / MPI4 / Ruff / CI | 本轮 | full repository pytest、MPI4、Ruff、CI | NOT_RUN；不声称 CI 通过 |
+
+---
+
 # Task40extra V12 测试与文档检查摘要
 
 ## Review V12 已有资格与收口验证

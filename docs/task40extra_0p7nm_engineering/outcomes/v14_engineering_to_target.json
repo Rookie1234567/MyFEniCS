@@ -1,0 +1,145 @@
+{
+  "schema": "task40extra.v14_engineering_to_target.v1",
+  "status": "NO_GO_NOT_QUALIFIED",
+  "claim_boundary": "This is a lightweight reuse of the existing target ledger and mode manifest. No original-size FE mesh, matrix, factor, or PDE was generated.",
+  "target_identity": {
+    "wavelength_nm": 0.7,
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "z_min_nm": -10.0,
+    "z_max_nm": 130.0,
+    "geometry_height_nm": 120.0,
+    "material": "the archived Si/air physical identity; target material is unchanged",
+    "source_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+    "source_record_sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a"
+  },
+  "existing_original_size_candidate": {
+    "classification": "DERIVED_COUNT_ONLY_NOT_A_MESH_OR_PDE_QUALIFICATION",
+    "axes_cell_counts": [
+      272,
+      4,
+      14
+    ],
+    "hexahedra": 15232,
+    "x_interface_segment_counts": [
+      78,
+      58,
+      58,
+      78
+    ],
+    "actual_axis_nodes": "unknown; no target FE mesh was generated",
+    "cell_width_diagnostics_nm": {
+      "x_global_mean_50_div_272": 0.18382352941176472,
+      "x_segment_average_from_archived_counts": [
+        0.21153846153846154,
+        0.14655172413793102,
+        0.14655172413793102,
+        0.21153846153846154
+      ],
+      "y_nominal_mean_25_div_4": 6.25,
+      "z_nominal_mean_140_div_14": 10.0,
+      "qualification": "These are count-derived averages, not realized per-cell h values. Local extrema and exact cell widths remain unknown."
+    },
+    "free_space_electrical_size": {
+      "k0_per_nm": 8.97597901025655,
+      "k0_times_period_x": 448.7989505128275,
+      "k0_times_period_y": 224.39947525641375,
+      "k0_times_z_span": 1256.6370614359172,
+      "nominal_free_space_phase_per_cell_rad": {
+        "x_segment_averages": [
+          1.89876479063119,
+          1.31544519977898,
+          1.31544519977898,
+          1.89876479063119
+        ],
+        "y_mean": 56.0998688141034,
+        "z_mean": 89.7597901025655
+      },
+      "qualification": "Derived vacuum phase diagnostics from geometry spans and candidate cell counts only. They do not establish FE accuracy. Exact-axis phase and material phase remain unknown."
+    },
+    "mode_inventory": {
+      "total_auto_propagating_modes": 32060,
+      "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "physical_mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "maximum_absolute_mn": [
+        142,
+        35
+      ],
+      "status": "MEASURED_MODE_INVENTORY_ONLY; no FE assembly or PDE"
+    },
+    "p6_count_only_basis": {
+      "full_storage_rows": 10228620,
+      "periodic_independent_rows": 9948672,
+      "interior_rows": 6854400,
+      "trace_plus_actual_auto_ports_rows": 3126332,
+      "actual_auto_port_modes": 32060,
+      "p4_interface_plus_actual_auto_ports_rows": 1346364,
+      "q_count": 4,
+      "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json"
+    },
+    "index_and_sparse_storage_gate": {
+      "integer_type_in_v14_run": "int32",
+      "candidate_row_counts_fit_int32_range": true,
+      "actual_target_sparse_nnz": null,
+      "actual_target_csr_indptr_end": null,
+      "target_nnz_and_indptr_int32_checked": false,
+      "required_before_target_assembly": "Check rows, actual NNZ, and CSR indptr limits together; do not qualify from row count alone."
+    }
+  },
+  "derived_workspace_and_known_unknowns": {
+    "fgmres_restart": 32,
+    "outer_vector_count": 74,
+    "outer_krylov_payload_bytes": 3701577088,
+    "retained_full_scratch_payload_bytes": 4428003200,
+    "one_dense_full_complex128_H_bytes": 16445497600,
+    "one_diagonal_complex128_H_bytes": 512960,
+    "classification": "derived payload estimates; no simultaneous lifetime or RSS sum",
+    "unknowns": [
+      "exact target axis nodes and local cell widths",
+      "material-phase resolution and h/p qualification in y and z",
+      "cold JIT and complete target assembly/runtime",
+      "actual target NNZ, CSR indptr, and four-q factor fill",
+      "all-q factor workspace and simultaneous residency",
+      "C/D and trace, port, recovery, projection, and H/Hhat object lifetimes",
+      "target Krylov convergence, complete recovery/output/checker time",
+      "2 TB physical-memory and 48-hour end-to-end qualification"
+    ]
+  },
+  "next_admission": {
+    "decision": "NO_GO; NOT_QUALIFIED; not a mathematical impossibility result",
+    "immediate_numerical_blocker": "The Gx560 physical regular-RHS independent action-identity gate failed at 1.6834572689277185e-11 versus 1e-11 before the target solve.",
+    "resource_or_time_bottleneck": "unknown; the Gx560 resource and time gates passed, while its target solve never started.",
+    "scope_for_a_later_review": "First define an exact target axis and y/z h/p qualification for the unchanged 50×25×140 nm physical geometry and 0.7 nm wavelength; retain the 32060-mode identity; then qualify rows plus NNZ/indptr and a bounded resource stage before any full target solve.",
+    "no_one_command_target_runner_claim": true,
+    "no_new_run_authorized_by_this_package": true,
+    "next_single_electrical_size_candidate": {
+      "candidate": "E1 electrical-size q1.25 at the same 0.7 nm wavelength",
+      "status": "HELD_NOT_RUN",
+      "geometry_identity": "task40extra_nonseparable_0p7nm_e1_q1p25_v1",
+      "input_path": "input/task40extra_0p7nm_engineering/nonseparable_e1_p6_q4_manual_m2_growth.dat",
+      "input_sha256": "5c0aa01d1bb327f1331b69cfe359c6f775961398d316c2f88d3aeaff978af8fd",
+      "wavelength_nm": 0.7,
+      "geometry_scale": 1.25,
+      "mesh_plan_id": "task40extra.e1.electrical_size_exact_planes.v1",
+      "mesh_plan_sha256": "b266e571b422d176521f42296739358092dc32d5c9b22a16c9f854d84c659e4e",
+      "planned_axis_cell_counts": [
+        10,
+        4,
+        19
+      ],
+      "planned_cell_count": 760,
+      "actual_generated_cells": null,
+      "actual_mode_count": null,
+      "actual_resource_cost": null,
+      "mode_policy": "Input specifies manual |m|<=10 and |n|<=3; actual propagating mode count is not measured here.",
+      "reference_pc_route": {
+        "current_strategy": "STRICT_THEN_BOUNDED_INEXACT_V13",
+        "case_level_route_status": "NOT_ADMITTED_END_TO_END",
+        "reason": "Current V13 run_case identity allowlist names B0, Gx560, and Gx784; it does not include the E1 run_id. Geometry plan and input exist, but no current reviewed V13 reference-PC launch route is wired for E1.",
+        "do_not_expand_allowlist_in_v14_closeout": true
+      },
+      "resource_and_pde": "NOT_RUN",
+      "admission_decision": "HELD pending a later review and resolution of the Gx560 physical action-identity gate."
+    }
+  }
+}
