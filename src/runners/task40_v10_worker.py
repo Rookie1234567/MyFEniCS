@@ -79,6 +79,12 @@ def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _regular_inverse_sample_label(case: str, candidate_label: str) -> str:
+    if candidate_label == "initial":
+        return f"v10_regular_inverse_{case}"
+    return f"v13_regular_inverse_{case}_{candidate_label}"
+
+
 def _append_jsonl(path: Path, row: Mapping[str, Any]) -> None:
     from .physical_p4_schur_v14 import _append_jsonl as append
 
@@ -996,11 +1002,7 @@ def _verify_regular_inverse(
             raise ValueError(f"regular inverse witness case not uniquely found: {_case_filter!r}")
     records = []
     for name, fe_rhs, g_rhs, full_rhs_values in cases:
-        sample_label = (
-            f"v10_regular_inverse_{name}"
-            if _candidate_label == "initial"
-            else f"v13_regular_inverse_{name}_{_candidate_label}"
-        )
+        sample_label = _regular_inverse_sample_label(name, _candidate_label)
         runtime.sample(f"{sample_label}_before")
         if _candidate_state is None:
             solution_values, alpha = inverse.apply_augmented(fe_rhs, port_rhs=g_rhs)
@@ -1262,7 +1264,7 @@ def _verify_regular_inverse(
             builder_action_storage[independent] = sector_action
             packet = _save_packet(
                 runtime,
-                f"v10_regular_inverse_{name}",
+                sample_label,
                 {
                     "schema": "task40extra.review_v10_regular_inverse_full_witness.v1",
                     "case": name,

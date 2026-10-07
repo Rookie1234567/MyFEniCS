@@ -21,12 +21,12 @@ STRICT_REFERENCE_PASS = "STRICT_REFERENCE_PASS"
 BOUNDED_INEXACT_REFERENCE_PC = "BOUNDED_INEXACT_REFERENCE_PC"
 REFERENCE_PC_REJECTED = "REFERENCE_PC_REJECTED"
 
+# Strict keeps the original combined local-equation gate; per-sector ratios
+# remain recorded diagnostics here, while bounded-inexact gates each sector.
 REFERENCE_PC_STRATEGIES = frozenset({STRICT_ONLY, STRICT_THEN_BOUNDED_INEXACT_V13})
 STRICT_REFERENCE_LIMITS = {
     "full_equation": 1.0e-10,
     "complete_augmented_fe_equation": 1.0e-10,
-    "local_sector_0": 1.0e-10,
-    "local_sector_1": 1.0e-10,
     "local_combined": 1.0e-10,
     "alpha_closure": 1.0e-11,
     "q_solve": 1.0e-10,

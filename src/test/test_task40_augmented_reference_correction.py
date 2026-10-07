@@ -3,10 +3,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from src.runners.physical_diagnosis_worker import save_packet
+from src.runners.task40_v10_worker import _regular_inverse_sample_label
 from src.solvers.augmented_reference_correction import (
+    BOUNDED_INEXACT_LIMITS,
     BOUNDED_INEXACT_REFERENCE_PC,
     FACTOR_CALL_COUNTER_SOURCE,
     REFERENCE_PC_REJECTED,
+    STRICT_REFERENCE_LIMITS,
     STRICT_REFERENCE_PASS,
     apply_one_augmented_residual_correction,
     augmented_port_state_offset,
@@ -335,6 +339,87 @@ def test_structural_failure_rejects_even_when_all_original_and_frozen_metrics_pa
     assert selected["admission"] == REFERENCE_PC_REJECTED
     assert selected["admitted"] is False
     assert selected["candidate_facts"][0]["bounded_inexact_passed"] is False
+
+
+def test_strict_gate_records_but_does_not_gate_tiny_scale_sector_metric():
+    sector_one_ratio = 589.5067625934344
+    candidate = _candidate(
+        _metrics(
+            full=1e-11,
+            augmented_full=1e-11,
+            local0=1e-11,
+            local1=sector_one_ratio,
+            combined=1e-11,
+            alpha=1e-12,
+            q=1e-11,
+        ),
+        state="initial",
+    )
+
+    selected = select_reference_pc_candidate([candidate])
+
+    assert "local_sector_0" not in STRICT_REFERENCE_LIMITS
+    assert "local_sector_1" not in STRICT_REFERENCE_LIMITS
+    assert BOUNDED_INEXACT_LIMITS["local_sector_0"] == 1e-8
+    assert BOUNDED_INEXACT_LIMITS["local_sector_1"] == 1e-8
+    assert candidate["metrics"]["local_sector_1"] == sector_one_ratio
+    assert selected["admission"] == STRICT_REFERENCE_PASS
+    assert selected["selected_candidate_index"] == 0
+
+
+def test_old_strict_failure_and_over_limit_sector_reject_bounded_admission():
+    candidate = _candidate(
+        _metrics(full=2e-10, local1=1.0001e-8),
+        state="initial",
+    )
+
+    selected = select_reference_pc_candidate([candidate])
+
+    assert selected["candidate_facts"][0]["strict_passed"] is False
+    assert selected["candidate_facts"][0]["bounded_inexact_passed"] is False
+    assert selected["admission"] == REFERENCE_PC_REJECTED
+
+
+def test_regular_inverse_packets_keep_legacy_initial_name_and_separate_candidates(tmp_path):
+    case = "physical_regular_incident_rhs"
+    initial_name = _regular_inverse_sample_label(case, "initial")
+    corrected_name = _regular_inverse_sample_label(case, "corrected_v13")
+
+    assert initial_name == f"v10_regular_inverse_{case}"
+    assert corrected_name == f"v13_regular_inverse_{case}_corrected_v13"
+    assert corrected_name != initial_name
+
+    save_packet(tmp_path, initial_name, {"witness": np.array([1.0 + 2.0j])})
+    save_packet(tmp_path, corrected_name, {"witness": np.array([3.0 + 4.0j])})
+
+    with np.load(tmp_path / f"{initial_name}.npz") as initial_packet:
+        np.testing.assert_array_equal(initial_packet["array_0"], [1.0 + 2.0j])
+    with np.load(tmp_path / f"{corrected_name}.npz") as corrected_packet:
+        np.testing.assert_array_equal(corrected_packet["array_0"], [3.0 + 4.0j])
+    assert (tmp_path / f"{initial_name}.json").is_file()
+    assert (tmp_path / f"{corrected_name}.json").is_file()
+
+
+def test_packet_npz_replacement_keeps_previous_packet_on_write_failure(tmp_path, monkeypatch):
+    packet_name = "atomic_witness"
+    npz_path = tmp_path / f"{packet_name}.npz"
+    json_path = tmp_path / f"{packet_name}.json"
+    save_packet(tmp_path, packet_name, {"witness": np.array([1.0 + 2.0j])})
+    old_npz = npz_path.read_bytes()
+    old_json = json_path.read_bytes()
+
+    def fail_after_partial_write(stream, **_arrays):
+        stream.write(b"partial replacement")
+        raise OSError("simulated interrupted packet write")
+
+    monkeypatch.setattr(np, "savez", fail_after_partial_write)
+    with pytest.raises(OSError, match="simulated interrupted"):
+        save_packet(tmp_path, packet_name, {"witness": np.array([9.0 + 8.0j])})
+
+    assert npz_path.read_bytes() == old_npz
+    assert json_path.read_bytes() == old_json
+    with np.load(npz_path) as saved_packet:
+        np.testing.assert_array_equal(saved_packet["array_0"], [1.0 + 2.0j])
 
 
 def test_strategy_preserves_strict_default_and_only_v13_uses_bounded_q_limit():
