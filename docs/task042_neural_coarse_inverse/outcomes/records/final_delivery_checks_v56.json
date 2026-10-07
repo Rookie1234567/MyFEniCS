@@ -1,0 +1,44 @@
+{
+  "status": "CLOSED_DELIVERY_ONLY",
+  "clock": {
+    "UTC": "2026-10-07T03:20:25.548292+00:00",
+    "monotonic": 1268220.409170107,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_elapsed_seconds": 14404.279170107096
+  },
+  "source_sha": "fa3ea0486000f97dedb3d0e365e70191fa06ddb1",
+  "scientific_queue_frozen": true,
+  "closed": true,
+  "active": null,
+  "own_actor_count": 0,
+  "own_lock_acquired_released": true,
+  "host_check": {
+    "path": "tmp/task042/v56/final_host_check.json",
+    "bytes": 708,
+    "sha256": "813c15d57da8c8ebbd3a35ef1119acf3f7031c138416ac49725956dc6d71a9c4",
+    "archived": "benchmarks/artifacts/task042/v56/raw_final/813c15d57da8c8ebbd3a35ef1119acf3f7031c138416ac49725956dc6d71a9c4"
+  },
+  "remote_before_push": "18e597ba6f3193f1c54a292a258d9af8891c9c84",
+  "final_document_bytes_match_passed_receipt": true,
+  "documentation_tests_not_replayed": true,
+  "post_close_reads_scientific_actions": 0,
+  "storage": {
+    "new_bytes": 2858110355,
+    "task_artifact_bytes": 52886280489,
+    "free_bytes": 3263486648320,
+    "reserve_bytes": 536870912,
+    "stat_only": true,
+    "UTC": "2026-10-07T03:20:25.545939+00:00"
+  },
+  "post_settlement_accounting": {
+    "measured_auth_host_tool_wall_seconds": 3.355401594,
+    "prior_finalization_inclusive_tool_wall_seconds": 0.754014992,
+    "prior_finalization_overlaps_existing_scalar_timer": true,
+    "not_summed_twice": true,
+    "metadata_read_and_git_web_overhead_elsewhere": "unknown where not independently timed; included in real total elapsed, not reported as zero",
+    "scope": "This pure metadata closure check is distinct from new FE/array/test replay"
+  },
+  "notification_to_neighbor": false,
+  "cleanup_receipt_after_push": "tmp/task042/v56/completion_git_receipt.json",
+  "metadata_pack_known_lower_seconds": 20.204956114059314
+}

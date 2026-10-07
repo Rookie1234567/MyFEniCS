@@ -14,6 +14,11 @@
       "bytes": 20318,
       "sha256": "2d5f6d5f5d7355ffbb93092effe6b8b02f0afcf36831e15b48de3e7e901cabc4"
     },
+    "documentation_checks_v56.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v56.json",
+      "bytes": 6138,
+      "sha256": "ab347880890227ec70e1d5af0e90d0777603b20d2e4708896f5bfc8455428250"
+    },
     "object_lifetimes_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/object_lifetimes_v56.json",
       "bytes": 85563,
@@ -26,13 +31,18 @@
     },
     "repairs_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/repairs_v56.json",
-      "bytes": 2403,
-      "sha256": "98c7f3892eaccebc6fcf337ffc7c800620a903f14db277974a2a397169c9aef2"
+      "bytes": 2724,
+      "sha256": "9674154fdb41ad330ec3cdd8a6cd9ad00c8caa7a164954c4e21b50b5844f71be"
     },
     "resource_costs_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v56.json",
       "bytes": 14203,
       "sha256": "7a13820a095320842abe4d99ac7f4138df9dcc2fd7890415c95f68e735eb81d5"
+    },
+    "raw_archive_index_final_v56.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_final_v56.json",
+      "bytes": 58653,
+      "sha256": "2594fced3b469dbf3fa61bbfaa2f81d24caf58619780b0e00e27d0b1c018b6bd"
     },
     "raw_archive_index_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v56.json",
@@ -44,6 +54,11 @@
       "bytes": 592,
       "sha256": "1a758d033e8da0fa2b66c624682041f6ea173e8b2fc8a5c52a5665c872d517f3"
     },
+    "closure_v56.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/closure_v56.json",
+      "bytes": 413,
+      "sha256": "bf9c206a5c1718bfc5d98514e44ff93d83f09676591c30ab515d176ee58d6ad9"
+    },
     "gate_verdict_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_verdict_v56.json",
       "bytes": 119251,
@@ -51,8 +66,8 @@
     },
     "resource_costs_final_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v56.json",
-      "bytes": 26913,
-      "sha256": "aefc36d32c5daeebf9a20d9fb9518f62050d57a9f3b2bab3bc353e491aac2531"
+      "bytes": 21659,
+      "sha256": "f4c6353af247c746cdc3e15ddb6cf3fa28def4371ed0e202e39ee609a3dbc0fd"
     },
     "run_index_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v56.json",
@@ -71,8 +86,8 @@
     },
     "storage_final_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/storage_final_v56.json",
-      "bytes": 129,
-      "sha256": "a19e7c8765240a7603cbcdc629b33dac7fd2eaaaf88b319ebb5746ec3fd2ffdf"
+      "bytes": 195,
+      "sha256": "a25e9289a8d46f1fe594511cd42ab42cadafc07e9892881e7200ac50370b1b4a"
     },
     "array_inventory_v56.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v56.json",
@@ -88,12 +103,20 @@
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v56.json",
       "bytes": 191589,
       "sha256": "78111e2cb9e88903d1a7e82d6d1702d74dc5348707df1beb7561e757bf1b57c2"
+    },
+    "final_delivery_checks_v56.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_delivery_checks_v56.json",
+      "bytes": 1838,
+      "sha256": "cf18f0eb34ad133680fc636eafb09dbd61b9fcdc988177312af35f754278dc57"
     }
   },
   "NN20": "NOT_QUALIFIED",
   "original_target_pass": false,
   "source_HEAD_at_metadata": "c8b9f3a0c2c5797623ff3da9ca0a2ce0431e0cb0",
   "final_delivery_commit": "Commit containing final settlement; exact SHA in user reply and ignored completion_git_receipt.json, distinct from scientific source",
-  "final_docs_settlement_pending": true,
-  "UTC": "2026-10-07T03:11:46.627167+00:00"
+  "final_docs_settlement_pending": false,
+  "UTC": "2026-10-07T03:16:28.138152+00:00",
+  "closed": true,
+  "active": null,
+  "latest_delivery_check_UTC": "2026-10-07T03:20:25.548292+00:00"
 }

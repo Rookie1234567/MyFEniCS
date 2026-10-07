@@ -1,0 +1,12 @@
+{
+  "active": null,
+  "closed": true,
+  "all_supervised_descendants_cleared": true,
+  "own_lock_acquired_and_released": true,
+  "all_ownswap_peak_zero": true,
+  "scientific_queue_frozen": true,
+  "new_actor_allowed": false,
+  "UTC": "2026-10-07T03:16:28.138152+00:00",
+  "remaining_total_seconds": 11033.13428401947,
+  "stop_reason": "ALL_AUTHORIZED_QUEUE_COMPLETED; physical field accuracy negative preserved"
+}

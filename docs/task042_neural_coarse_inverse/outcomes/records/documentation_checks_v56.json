@@ -1,6 +1,207 @@
 {
-  "status": "PENDING_FINAL_DOC_CONSUMER",
-  "reason": "declare the output path before the link checker; never a PASS placeholder",
-  "previous_failure": "tmp/task042/v56/aux_docs_01/supervision/worker.log",
-  "UTC": "2026-10-07T03:13:45.618961+00:00"
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "95992ec45e47fad4e1f503cb83e05eb94cdd13b783e579863e5340f5dc06fbd0",
+      "tables": [],
+      "links": [
+        "response_v56.md",
+        "outcomes/saved_field_closure_target_bridge_v56.md",
+        "outcomes/records/gate_verdict_v56.json",
+        "outcomes/records/delivery_index_v56.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "9b64212230bb2593f47e6ec9dfec044cd262c4ad3a431e91b76e42190d15281a",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "records/scientific_checks_v56.json",
+        "saved_field_closure_target_bridge_v56.md",
+        "saved_field_closure_target_bridge_v56.md",
+        "records/gate_verdict_v56.json",
+        "records/target_gap_final_v56.json",
+        "records/resource_costs_final_v56.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "da5b33a3c716175f49a5f7014839858f19abb740f0174262fa83568587d47783",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/targeted_tests_v56.json",
+        "records/physical_identity_bindings_v56.json",
+        "records/gate_verdict_v56.json",
+        "records/documentation_checks_v56.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "5185fb0555454b091451994e8567960890ff34592ac7fa247912c0403e7d1206",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/delivery_index_v56.json",
+        "saved_field_closure_target_bridge_v56.md"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "071e0e712fd4ded356fd9ddf33c45352e190f563d2af240d2ae2463b1d100ac3",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/saved_field_closure_target_bridge_v56.md",
+        "task042_neural_coarse_inverse/response_v56.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v56.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "5cb055ca2df4704ed843d7ab7b9dbcdaeec08e6d6ded18c8362645dfc3941638",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/saved_field_closure_target_bridge_v56.md",
+        "task042_neural_coarse_inverse/outcomes/records/delivery_index_v56.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v54.md",
+      "sha256": "028b72085749c122ebee41b9d3d1dbe54b900a42073de5e7680253d0420b8614",
+      "tables": [
+        {
+          "line": 38,
+          "columns": 3
+        },
+        {
+          "line": 52,
+          "columns": 3
+        },
+        {
+          "line": 131,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "response_v55.md",
+        "outcomes/spatial_resolution_audit_v55.md",
+        "outcomes/records/repairs_v55.json",
+        "outcomes/records/partial_saved_checks_v55.json",
+        "outcomes/records/resource_costs_final_v55.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v56.md",
+      "sha256": "66883f375fcdd74a7a25b9a78148e5a9d039e7a8fb405121ece6781079730a39",
+      "tables": [],
+      "links": [
+        "outcomes/saved_field_closure_target_bridge_v56.md",
+        "outcomes/records/gate_verdict_v56.json",
+        "outcomes/records/resource_costs_final_v56.json",
+        "outcomes/records/target_gap_final_v56.json",
+        "outcomes/records/delivery_index_v56.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/saved_field_closure_target_bridge_v56.md",
+      "sha256": "88050edba2ca27ea90bf6aad031a8308aab40425180b0ddd0969adda4a6fc554",
+      "tables": [
+        {
+          "line": 9,
+          "columns": 4
+        },
+        {
+          "line": 24,
+          "columns": 3
+        },
+        {
+          "line": 37,
+          "columns": 4
+        },
+        {
+          "line": 48,
+          "columns": 9
+        },
+        {
+          "line": 63,
+          "columns": 9
+        },
+        {
+          "line": 74,
+          "columns": 5
+        },
+        {
+          "line": 104,
+          "columns": 3
+        },
+        {
+          "line": 118,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "../review_report_v54.md",
+        "records/gate_verdict_v56.json",
+        "records/scientific_checks_v56.json",
+        "records/run_index_v56.json",
+        "records/resource_costs_final_v56.json",
+        "records/target_gap_final_v56.json",
+        "records/repairs_v56.json",
+        "records/delivery_index_v56.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "f319f6838a983bcd32c427a9d1749c2fcbd6430e98cde4e5ec3993687d149467"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "30a484e4e601edfdba0e7b5c2ac715d560220dd7070f090025af2989c6947e66"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "157ee7eea854ed7c9ca02612197cb11891c5e8bc9a0fceffb640685fddeff26e"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "15c7721069a80e673f4e087483f2aad312878b9e6016dae2a3b94ef6e0540064"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "e3ddd4da24a9cdeffbefe210ae9066060fc8f36ab71ee89f59ff52ae29d55596"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "3681defbdbd7f70ae28a7be510030824d3ea2491ade61445723307da19c67ee8"
+    }
+  ],
+  "test_seconds": 0.26386122312396765,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN"
 }

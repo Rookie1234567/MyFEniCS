@@ -1,6 +1,8 @@
 {
-  "new_bytes": 2801203108,
-  "task_artifact_bytes": 52829183112,
-  "free_bytes": 3263659012096,
-  "reserve_bytes": 536870912
+  "new_bytes": 2858110355,
+  "task_artifact_bytes": 52886280489,
+  "free_bytes": 3263486648320,
+  "reserve_bytes": 536870912,
+  "stat_only": true,
+  "UTC": "2026-10-07T03:20:25.545939+00:00"
 }
