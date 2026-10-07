@@ -8,12 +8,16 @@ from __future__ import annotations
 
 from hashlib import sha256
 from time import perf_counter
-from typing import Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 from scipy import sparse
 
-from .augmented_reference_correction import STRICT_ONLY, q_solve_limit
+from .augmented_reference_correction import (
+    NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+    STRICT_ONLY,
+    q_solve_limit,
+)
 from .task40_v10_p6_periodic_profile import (
     TASK40_V10_P6_PROFILE,
     Task40V10P6PeriodicProfile,
@@ -46,6 +50,71 @@ def _sparse_content_sha256(matrix: sparse.spmatrix) -> str:
 
 def _payload_bytes(csr: sparse.csr_matrix) -> int:
     return int(csr.data.nbytes + csr.indices.nbytes + csr.indptr.nbytes)
+
+
+def _petsc_csr_int_preflight(
+    shape: Sequence[int],
+    nnz: int,
+    indptr: np.ndarray,
+    indices: np.ndarray,
+    petsc_int_dtype: Any,
+) -> dict[str, int | str]:
+    """Check a SciPy CSR layout before narrowing its indices to PetscInt."""
+
+    if len(shape) != 2:
+        raise ValueError("PETSc CSR input must have a two-dimensional shape")
+    rows, columns = (int(value) for value in shape)
+    nonzeros = int(nnz)
+    if rows < 0 or columns < 0 or nonzeros < 0:
+        raise ValueError("PETSc CSR dimensions and NNZ cannot be negative")
+    integer_dtype = np.dtype(petsc_int_dtype)
+    if not np.issubdtype(integer_dtype, np.signedinteger):
+        raise TypeError("PETSc.IntType must be a signed integer dtype")
+    bounds = np.iinfo(integer_dtype)
+    if rows > bounds.max or columns > bounds.max or nonzeros > bounds.max:
+        raise OverflowError("PETSc CSR shape or NNZ exceeds PetscInt range")
+
+    row_pointers = np.asarray(indptr)
+    column_indices = np.asarray(indices)
+    if (
+        row_pointers.ndim != 1
+        or column_indices.ndim != 1
+        or not np.issubdtype(row_pointers.dtype, np.integer)
+        or not np.issubdtype(column_indices.dtype, np.integer)
+    ):
+        raise TypeError("PETSc CSR indptr and indices must be one-dimensional integers")
+    if row_pointers.size != rows + 1 or column_indices.size != nonzeros:
+        raise ValueError("PETSc CSR indptr/indices lengths disagree with shape or NNZ")
+    if row_pointers.size == 0 or int(row_pointers[0]) != 0:
+        raise ValueError("PETSc CSR indptr must start at zero")
+    if int(row_pointers[-1]) != nonzeros:
+        raise ValueError("PETSc CSR indptr endpoint must equal NNZ")
+    if np.any(row_pointers < 0) or np.any(row_pointers > bounds.max):
+        raise OverflowError("PETSc CSR indptr entry exceeds PetscInt range")
+    if np.any(row_pointers[1:] < row_pointers[:-1]):
+        raise ValueError("PETSc CSR indptr must be monotone nondecreasing")
+    if column_indices.size:
+        min_column = int(np.min(column_indices))
+        max_column = int(np.max(column_indices))
+        if min_column < 0 or max_column >= columns:
+            raise ValueError("PETSc CSR column index lies outside matrix dimensions")
+        if min_column < bounds.min or max_column > bounds.max:
+            raise OverflowError("PETSc CSR column index exceeds PetscInt range")
+    return {
+        "rows": rows,
+        "columns": columns,
+        "nnz": nonzeros,
+        "petsc_int_dtype": integer_dtype.str,
+        "petsc_int_max": int(bounds.max),
+    }
+
+
+def _factor_probe_residual_limit(strategy: str, actual_q_solve_limit: float) -> float:
+    """Keep V15's factor-qualification probe strict while PC solves use 1e-8."""
+
+    if strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        return 1.0e-10
+    return float(actual_q_solve_limit)
 
 
 def full_p6_pre_release_output_inventory(full_storage_rows: int) -> dict[str, object]:
@@ -164,6 +233,9 @@ class AllQExactMumps:
         self.profile = profile
         self.reference_pc_strategy = str(reference_pc_strategy)
         self.q_solve_limit = q_solve_limit(self.reference_pc_strategy)
+        self.factor_probe_limit = _factor_probe_residual_limit(
+            self.reference_pc_strategy, self.q_solve_limit
+        )
         self.event = event or (lambda _name, _facts: None)
         self.transform_bank = transform_bank
         self.inverse_borrowers = dict(inverse_borrowers or {})
@@ -196,6 +268,7 @@ class AllQExactMumps:
             "profile": profile.name,
             "reference_pc_strategy": self.reference_pc_strategy,
             "q_true_residual_admission_limit": self.q_solve_limit,
+            "factor_probe_true_residual_limit": self.factor_probe_limit,
             "q_true_residual_strict_limit": 1.0e-10,
             "all_q_required": list(range(self.nq)),
             "factor_inputs": [],
@@ -236,6 +309,9 @@ class AllQExactMumps:
                         or not np.isfinite(csr.data).all()
                         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)):
                     raise ValueError("exact p6 factors require finite complex128 matrices and PETSc")
+                petsc_int_preflight = _petsc_csr_int_preflight(
+                    csr.shape, csr.nnz, csr.indptr, csr.indices, PETSc.IntType
+                )
                 csr_hash = _sparse_content_sha256(csr)
                 self.source_matrices[q] = source
                 self.csr_matrices[q] = csr
@@ -251,6 +327,7 @@ class AllQExactMumps:
                     "resident_numeric_mumps_facts": resident,
                     "matrix_shape": list(csr.shape),
                     "nnz": int(csr.nnz),
+                    "petsc_int_preflight": petsc_int_preflight,
                     "matrix_payload_bytes": csr_payload,
                     "canonicalization_copy_bytes": (csr_payload if csr is not source else 0),
                     "caller_input_sha256": caller_hash,
@@ -505,7 +582,7 @@ class AllQExactMumps:
                 residual = float(np.linalg.norm(csr @ solution-rhs)/np.linalg.norm(rhs))
                 strict_passed = bool(np.isfinite(residual) and residual <= 1.0e-10)
                 residual_passed = bool(
-                    np.isfinite(residual) and residual <= self.q_solve_limit
+                    np.isfinite(residual) and residual <= self.factor_probe_limit
                 )
                 test = {
                     "q": q,
@@ -513,7 +590,9 @@ class AllQExactMumps:
                     "relative_true_residual": residual,
                     "strict_limit": 1.0e-10,
                     "strict_passed": strict_passed,
-                    "limit": self.q_solve_limit,
+                    "limit": self.factor_probe_limit,
+                    "probe_limit": self.factor_probe_limit,
+                    "actual_q_solve_limit": self.q_solve_limit,
                     "admission_passed": residual_passed,
                     "bounded_inexact_only": bool(residual_passed and not strict_passed),
                     "reference_pc_strategy": self.reference_pc_strategy,
@@ -536,8 +615,10 @@ class AllQExactMumps:
                     "raw_infog": native["raw_infog"],
                     "native_metrics": native,
                     "numeric_true_residual": residual,
-                    "numeric_true_residual_limit": self.q_solve_limit,
+                    "numeric_true_residual_limit": self.factor_probe_limit,
                     "numeric_true_residual_passed": residual_passed,
+                    "factor_probe_limit": self.factor_probe_limit,
+                    "actual_q_solve_limit": self.q_solve_limit,
                     "numeric_true_residual_strict_limit": 1.0e-10,
                     "numeric_true_residual_strict_passed": strict_passed,
                     "bounded_inexact_only": bool(residual_passed and not strict_passed),
@@ -547,7 +628,8 @@ class AllQExactMumps:
                 if not residual_passed:
                     raise ValueError(
                         f"q={q} exact MUMPS true residual failed under "
-                        f"{self.reference_pc_strategy}: {residual} > {self.q_solve_limit}"
+                        f"{self.reference_pc_strategy} factor probe: "
+                        f"{residual} > {self.factor_probe_limit}"
                     )
                 numeric_admission = self.gate("after_mumps_numeric_true_residual", {
                     "q": q,
@@ -567,8 +649,10 @@ class AllQExactMumps:
                     "current_q_native_memory_observation": native["memory_observation"],
                     "resident_numeric_mumps_facts": self._resident_factor_evidence(),
                     "numeric_true_residual": residual,
-                    "numeric_true_residual_limit": self.q_solve_limit,
+                    "numeric_true_residual_limit": self.factor_probe_limit,
                     "numeric_true_residual_passed": True,
+                    "factor_probe_limit": self.factor_probe_limit,
+                    "actual_q_solve_limit": self.q_solve_limit,
                     "numeric_true_residual_strict_limit": 1.0e-10,
                     "numeric_true_residual_strict_passed": strict_passed,
                     "bounded_inexact_only": bool(not strict_passed),
@@ -584,8 +668,10 @@ class AllQExactMumps:
                 self.event("task40_v12_mumps_numeric_q_admitted", {
                     "q": q,
                     "numeric_true_residual": residual,
-                    "numeric_true_residual_limit": self.q_solve_limit,
+                    "numeric_true_residual_limit": self.factor_probe_limit,
                     "numeric_true_residual_passed": True,
+                    "factor_probe_limit": self.factor_probe_limit,
+                    "actual_q_solve_limit": self.q_solve_limit,
                     "numeric_true_residual_strict_limit": 1.0e-10,
                     "numeric_true_residual_strict_passed": strict_passed,
                     "bounded_inexact_only": bool(not strict_passed),

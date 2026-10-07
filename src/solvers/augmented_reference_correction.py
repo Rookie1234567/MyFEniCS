@@ -16,14 +16,23 @@ import numpy as np
 
 STRICT_ONLY = "STRICT_ONLY"
 STRICT_THEN_BOUNDED_INEXACT_V13 = "STRICT_THEN_BOUNDED_INEXACT_V13"
+NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15 = (
+    "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+)
 
 STRICT_REFERENCE_PASS = "STRICT_REFERENCE_PASS"
 BOUNDED_INEXACT_REFERENCE_PC = "BOUNDED_INEXACT_REFERENCE_PC"
 REFERENCE_PC_REJECTED = "REFERENCE_PC_REJECTED"
+V15_REFERENCE_PC_PASS = "V15_REFERENCE_PC_PASS"
+V15_REFERENCE_PC_REJECTED = "V15_REFERENCE_PC_REJECTED"
 
 # Strict keeps the original combined local-equation gate; per-sector ratios
 # remain recorded diagnostics here, while bounded-inexact gates each sector.
-REFERENCE_PC_STRATEGIES = frozenset({STRICT_ONLY, STRICT_THEN_BOUNDED_INEXACT_V13})
+REFERENCE_PC_STRATEGIES = frozenset({
+    STRICT_ONLY,
+    STRICT_THEN_BOUNDED_INEXACT_V13,
+    NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+})
 STRICT_REFERENCE_LIMITS = {
     "full_equation": 1.0e-10,
     "complete_augmented_fe_equation": 1.0e-10,
@@ -40,6 +49,20 @@ BOUNDED_INEXACT_LIMITS = {
     "alpha_closure": 1.0e-9,
     "q_solve": 1.0e-8,
 }
+V15_REFERENCE_PC_LIMITS = {
+    "eliminated_fe": 1.0e-8,
+    "complete_augmented_fe": 1.0e-8,
+    "noncancelling_budget": 1.0e-8,
+    "alpha_closure": 1.0e-9,
+    "q_solve": 1.0e-8,
+}
+V15_FROZEN_SCALE_LIMITS = {
+    "eliminated_fe": 1.0e-8,
+    "complete_augmented_fe": 1.0e-8,
+    "noncancelling_budget": 1.0e-8,
+    "alpha_closure": 1.0e-9,
+}
+V15_DECOMPOSITION_CLOSURE_LIMIT = 1.0e-10
 MAX_EXTRA_MAT_SOLVES = 4
 FACTOR_CALL_COUNTER_SOURCE = "factors.calls"
 
@@ -60,7 +83,290 @@ def q_solve_limit(strategy: str) -> float:
         return STRICT_REFERENCE_LIMITS["q_solve"]
     if strategy == STRICT_THEN_BOUNDED_INEXACT_V13:
         return BOUNDED_INEXACT_LIMITS["q_solve"]
+    if strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        return V15_REFERENCE_PC_LIMITS["q_solve"]
     raise ValueError(f"unknown Task40 reference-PC strategy: {strategy!r}")
+
+
+def _finite_complex_vector(value: Any, name: str) -> np.ndarray:
+    if not isinstance(value, np.ndarray) or value.ndim != 1:
+        raise ValueError(f"{name} must be a one-dimensional NumPy vector")
+    if value.dtype != np.dtype(np.complex128):
+        raise ValueError(f"{name} must use complex128")
+    if not np.isfinite(value).all():
+        raise FloatingPointError(f"{name} contains nonfinite values")
+    return value
+
+
+def _zero_safe_relative(numerator: float, denominator: float) -> float:
+    numerator = float(numerator)
+    denominator = float(denominator)
+    if not np.isfinite(numerator) or not np.isfinite(denominator):
+        return float("inf")
+    if denominator < 0.0:
+        raise ValueError("relative-residual denominator cannot be negative")
+    if denominator == 0.0:
+        return 0.0 if numerator == 0.0 else float("inf")
+    return numerator / denominator
+
+
+def evaluate_v15_non_cancelling_budget(
+    *,
+    effective_rhs: Any,
+    global_eliminated_action: Any,
+    original_fe_rhs: Any,
+    port_elimination_action: Any,
+    complete_augmented_fe_residual: Any,
+    modal_alpha_defect_action: Any,
+    sectors: Sequence[Mapping[str, Any]],
+    retain_lifted_errors: bool = False,
+) -> dict[str, Any]:
+    """Independently evaluate V15 native residual decomposition and budget.
+
+    Each sector entry supplies its actual folded effective RHS, its local
+    native action on E_s u, and the native L_s dual-lift callable. The helper
+    performs the lifts before measuring local errors so no unitary-map or
+    sector-denominator assumption is hidden in the budget.
+    """
+
+    b_eff = _finite_complex_vector(effective_rhs, "effective FE RHS")
+    a_global = _finite_complex_vector(
+        global_eliminated_action, "global eliminated native action"
+    )
+    f_rhs = _finite_complex_vector(original_fe_rhs, "original FE RHS")
+    port_effect = _finite_complex_vector(
+        port_elimination_action, "B H^-1 g action"
+    )
+    r_fe = _finite_complex_vector(
+        complete_augmented_fe_residual, "complete augmented FE residual"
+    )
+    b_delta = _finite_complex_vector(
+        modal_alpha_defect_action, "B delta-alpha action"
+    )
+    if any(
+        vector.shape != b_eff.shape
+        for vector in (a_global, f_rhs, port_effect, r_fe, b_delta)
+    ):
+        raise ValueError("V15 global vectors have inconsistent independent-row layouts")
+    if not sectors:
+        raise ValueError("V15 residual decomposition requires every sector")
+
+    sum_lifted_rhs = np.zeros_like(b_eff)
+    sum_lifted_actions = np.zeros_like(b_eff)
+    sum_lifted_errors = np.zeros_like(b_eff)
+    lifted_rhs_norms: list[float] = []
+    lifted_action_norms: list[float] = []
+    lifted_error_norms: list[float] = []
+    lifted_errors: list[np.ndarray] = []
+    local_errors: list[np.ndarray] = []
+    lifted_effective_rhs: list[np.ndarray] = []
+    lifted_native_actions: list[np.ndarray] = []
+    for index, sector in enumerate(sectors):
+        if not isinstance(sector, Mapping):
+            raise TypeError("V15 sector decomposition entries must be mappings")
+        b_s = _finite_complex_vector(sector.get("rhs"), f"sector {index} effective RHS")
+        a_s = _finite_complex_vector(sector.get("action"), f"sector {index} native action")
+        lift = sector.get("lift_dual")
+        if b_s.shape != a_s.shape or not callable(lift):
+            raise ValueError(f"V15 sector {index} has invalid RHS/action/lift")
+        e_s = b_s - a_s
+        lifted_b = _finite_complex_vector(
+            lift(b_s), f"sector {index} lifted effective RHS"
+        )
+        lifted_a = _finite_complex_vector(
+            lift(a_s), f"sector {index} lifted native action"
+        )
+        lifted_e = _finite_complex_vector(
+            lift(e_s), f"sector {index} lifted residual"
+        )
+        if any(vector.shape != b_eff.shape for vector in (lifted_b, lifted_a, lifted_e)):
+            raise ValueError(f"V15 sector {index} lift has an invalid global layout")
+        sum_lifted_rhs += lifted_b
+        sum_lifted_actions += lifted_a
+        sum_lifted_errors += lifted_e
+        lifted_rhs_norms.append(stable_euclidean_norm(lifted_b))
+        lifted_action_norms.append(stable_euclidean_norm(lifted_a))
+        lifted_error_norms.append(stable_euclidean_norm(lifted_e))
+        if retain_lifted_errors:
+            lifted_errors.append(lifted_e.copy())
+            local_errors.append(e_s.copy())
+            lifted_effective_rhs.append(lifted_b.copy())
+            lifted_native_actions.append(lifted_a.copy())
+        del lifted_b, lifted_a, lifted_e, e_s
+    d_b = b_eff - sum_lifted_rhs
+    d_a = sum_lifted_actions - a_global
+    r_elim_direct = b_eff - a_global
+    r_elim_decomposed = d_b + sum_lifted_errors + d_a
+    r_fe_decomposed = r_elim_decomposed - b_delta
+    decomposition_error = r_elim_direct - r_elim_decomposed
+    augmented_error = r_fe - r_fe_decomposed
+    effective_rhs_identity_error = b_eff - (f_rhs - port_effect)
+
+    original_scale = stable_euclidean_norm(f_rhs) + stable_euclidean_norm(port_effect)
+    budget_terms = {
+        "d_b": stable_euclidean_norm(d_b),
+        "lifted_sector_errors": lifted_error_norms,
+        "d_A": stable_euclidean_norm(d_a),
+        "B_delta_alpha": stable_euclidean_norm(b_delta),
+    }
+    budget_numerator = float(
+        budget_terms["d_b"]
+        + sum(lifted_error_norms)
+        + budget_terms["d_A"]
+        + budget_terms["B_delta_alpha"]
+    )
+    budget_relative = _zero_safe_relative(budget_numerator, original_scale)
+    eliminated_relative = _zero_safe_relative(
+        stable_euclidean_norm(r_elim_direct), original_scale
+    )
+    complete_fe_relative = _zero_safe_relative(
+        stable_euclidean_norm(r_fe), original_scale
+    )
+    closure_scale = float(
+        stable_euclidean_norm(b_eff)
+        + stable_euclidean_norm(a_global)
+        + sum(lifted_rhs_norms)
+        + sum(lifted_action_norms)
+        + stable_euclidean_norm(r_fe)
+        + stable_euclidean_norm(b_delta)
+        + stable_euclidean_norm(f_rhs)
+        + stable_euclidean_norm(port_effect)
+    )
+    closure_numerator = max(
+        stable_euclidean_norm(decomposition_error),
+        stable_euclidean_norm(augmented_error),
+        stable_euclidean_norm(effective_rhs_identity_error),
+    )
+    closure_relative = _zero_safe_relative(closure_numerator, closure_scale)
+    scalars = (
+        original_scale, budget_numerator, budget_relative, eliminated_relative,
+        complete_fe_relative, closure_scale, closure_numerator, closure_relative,
+    )
+    if not all(np.isfinite(value) for value in scalars):
+        if original_scale == 0.0 and budget_numerator > 0.0:
+            budget_relative = float("inf")
+        elif original_scale == 0.0 and budget_numerator == 0.0:
+            budget_relative = 0.0
+        else:
+            raise FloatingPointError("V15 native residual decomposition is nonfinite")
+    return {
+        "effective_rhs_scale": original_scale,
+        "budget_numerator": budget_numerator,
+        "budget_terms": budget_terms,
+        "noncancelling_budget_relative": budget_relative,
+        "eliminated_fe_residual_norm": stable_euclidean_norm(r_elim_direct),
+        "eliminated_fe_relative": eliminated_relative,
+        "complete_augmented_fe_residual_norm": stable_euclidean_norm(r_fe),
+        "complete_augmented_fe_relative": complete_fe_relative,
+        "decomposition_closure_scale": closure_scale,
+        "decomposition_closure_norm": closure_numerator,
+        "decomposition_closure_relative": closure_relative,
+        "effective_rhs_identity_error_norm": stable_euclidean_norm(
+            effective_rhs_identity_error
+        ),
+        "d_b": d_b,
+        "d_A": d_a,
+        "sum_lifted_effective_rhs": sum_lifted_rhs,
+        "sum_lifted_native_actions": sum_lifted_actions,
+        "modal_alpha_defect_action": b_delta,
+        "lifted_sector_errors": lifted_errors if retain_lifted_errors else None,
+        "local_sector_errors": local_errors if retain_lifted_errors else None,
+        "lifted_sector_effective_rhs": (
+            lifted_effective_rhs if retain_lifted_errors else None
+        ),
+        "lifted_sector_native_actions": (
+            lifted_native_actions if retain_lifted_errors else None
+        ),
+        "eliminated_fe_residual_direct": r_elim_direct,
+        "eliminated_fe_residual_decomposed": r_elim_decomposed,
+        "complete_fe_residual_decomposed": r_fe_decomposed,
+    }
+
+
+def select_v15_reference_pc_candidate(
+    candidates: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Admit one whole V15 state only when every original/frozen gate passes."""
+
+    if not candidates:
+        raise ValueError("at least one complete V15 FE/alpha state is required")
+    facts: list[dict[str, Any]] = []
+    for index, candidate in enumerate(candidates):
+        metrics = candidate.get("metrics", {})
+        frozen = candidate.get("frozen_scale_metrics", {})
+        structural = candidate.get("structural_gates", {})
+        if not isinstance(metrics, Mapping) or not isinstance(frozen, Mapping):
+            raise TypeError("V15 candidate metrics must be mappings")
+        if not isinstance(structural, Mapping):
+            raise TypeError("V15 candidate structural gates must be a mapping")
+        raw_recheck = recompute_v15_candidate_facts(candidate)
+        original_exceedance = normalized_max_exceedance(
+            raw_recheck["metrics"], V15_REFERENCE_PC_LIMITS
+        )
+        frozen_exceedance = normalized_max_exceedance(
+            raw_recheck["frozen_scale_metrics"], V15_FROZEN_SCALE_LIMITS
+        )
+        structural_passed = bool(structural) and all(bool(v) for v in structural.values())
+        structural_passed = (
+            structural_passed
+            and raw_recheck["raw_facts_consistent"]
+            and raw_recheck["q_rows_consistent"]
+            and raw_recheck["sector_mode_mapping_valid"]
+        )
+        closure_passed = (
+            raw_recheck["decomposition_closure_relative"]
+            <= V15_DECOMPOSITION_CLOSURE_LIMIT
+        )
+        q_coverage = raw_recheck["q_phase_coverage"]
+        passed = (
+            structural_passed
+            and closure_passed
+            and q_coverage
+            and original_exceedance <= 1.0
+            and frozen_exceedance <= 1.0
+        )
+        facts.append({
+            "index": index,
+            "state_label": candidate.get("state_label"),
+            "passed": passed,
+            "structural_passed": structural_passed,
+            "raw_facts_consistent": raw_recheck["raw_facts_consistent"],
+            "decomposition_closure_passed": closure_passed,
+            "q_phase_coverage": q_coverage,
+            "original_scale_max_normalized_exceedance": original_exceedance,
+            "frozen_scale_max_normalized_exceedance": frozen_exceedance,
+            "state_sha256": raw_recheck["state_sha256"],
+        })
+
+    passed_indices = [row["index"] for row in facts if row["passed"]]
+    if passed_indices:
+        selected_index = int(passed_indices[0])
+        admission = V15_REFERENCE_PC_PASS
+    else:
+        eligible = [row for row in facts if row["structural_passed"]]
+        pool = eligible or facts
+        selected = min(
+            pool,
+            key=lambda row: max(
+                row["original_scale_max_normalized_exceedance"],
+                row["frozen_scale_max_normalized_exceedance"],
+            ),
+        )
+        selected_index = int(selected["index"])
+        admission = V15_REFERENCE_PC_REJECTED
+    return {
+        "admission": admission,
+        "admitted": admission == V15_REFERENCE_PC_PASS,
+        "selected_candidate_index": selected_index,
+        "candidate_facts": facts,
+        "original_scale_limits": dict(V15_REFERENCE_PC_LIMITS),
+        "frozen_scale_limits": dict(V15_FROZEN_SCALE_LIMITS),
+        "decomposition_closure_limit": V15_DECOMPOSITION_CLOSURE_LIMIT,
+        "selection_rule": (
+            "initial whole state is used immediately when every V15 original, "
+            "frozen, and structural gate passes; otherwise only one whole corrected state may qualify"
+        ),
+    }
 
 
 def _checked_vector(value: Any, name: str, *, check_finite: bool = True) -> np.ndarray:
@@ -80,6 +386,19 @@ def augmented_rhs_sha256(fe_residual: Any, port_residual: Any) -> str:
 
     fe = np.ascontiguousarray(_checked_vector(fe_residual, "FE residual"))
     port = np.ascontiguousarray(_checked_vector(port_residual, "port residual"))
+    digest = sha256()
+    for vector in (fe, port):
+        digest.update(np.asarray(vector.shape, dtype=np.int64).tobytes())
+        digest.update(vector.dtype.str.encode("ascii"))
+        digest.update(vector.tobytes())
+    return digest.hexdigest()
+
+
+def augmented_state_sha256(finite_element: Any, port_amplitudes: Any) -> str:
+    """Hash one complete FE/alpha candidate state with its exact layout."""
+
+    fe = np.ascontiguousarray(_checked_vector(finite_element, "finite-element state"))
+    port = np.ascontiguousarray(_checked_vector(port_amplitudes, "port-amplitude state"))
     digest = sha256()
     for vector in (fe, port):
         digest.update(np.asarray(vector.shape, dtype=np.int64).tobytes())
@@ -201,6 +520,11 @@ def evaluate_complete_augmented_residual(
         + stable_euclidean_norm(rhs_over_h),
         np.finfo(float).tiny,
     )
+    closure_raw_scale = (
+        stable_euclidean_norm(alpha)
+        + stable_euclidean_norm(recovered)
+        + stable_euclidean_norm(rhs_over_h)
+    )
     closure_relative = closure_residual_norm / closure_scale
     scalars = (
         fe_residual_norm, port_residual_norm, augmented_residual_norm,
@@ -224,7 +548,9 @@ def evaluate_complete_augmented_residual(
         "original_fe_equation_scale": fe_equation_scale,
         "complete_augmented_fe_equation_relative": complete_fe_equation_relative,
         "alpha_closure_residual_norm": closure_residual_norm,
+        "alpha_closure_residual": closure_residual,
         "alpha_closure_scale": closure_scale,
+        "alpha_closure_raw_scale": closure_raw_scale,
         "alpha_closure_relative": closure_relative,
         "fe_row_formula": "physical_action(u) + B * (alpha - recover_auxiliary(u))",
         "port_row_formula": "g - h * (alpha - recover_auxiliary(u)); H_p uses original h",
@@ -448,6 +774,142 @@ def normalized_max_exceedance(
     return max(ratios, default=0.0)
 
 
+def recompute_v15_candidate_facts(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    """Rebuild V15 admission metrics from saved raw norms and actual q rows."""
+
+    raw = candidate.get("raw_facts", {})
+    if not isinstance(raw, Mapping):
+        raise TypeError("V15 candidate raw_facts must be a mapping")
+    scale = float(raw.get("effective_rhs_scale", np.nan))
+    eliminated_norm = float(raw.get("eliminated_fe_residual_norm", np.nan))
+    complete_norm = float(raw.get("complete_augmented_fe_residual_norm", np.nan))
+    budget_terms = raw.get("budget_term_norms", {})
+    if not isinstance(budget_terms, Mapping):
+        raise TypeError("V15 candidate budget_term_norms must be a mapping")
+    sector_terms = budget_terms.get("lifted_sector_errors")
+    if not isinstance(sector_terms, Sequence) or isinstance(sector_terms, (str, bytes)):
+        raise TypeError("V15 candidate lifted-sector budget terms must be a sequence")
+    if len(sector_terms) != 2:
+        raise ValueError("V15 candidate budget must contain both twist-sector lift terms")
+    budget_numerator = float(
+        float(budget_terms.get("d_b", np.nan))
+        + sum(float(value) for value in sector_terms)
+        + float(budget_terms.get("d_A", np.nan))
+        + float(budget_terms.get("B_delta_alpha", np.nan))
+    )
+    alpha_norm = float(raw.get("alpha_closure_residual_norm", np.nan))
+    alpha_scale = float(raw.get("alpha_closure_original_scale", np.nan))
+    alpha_frozen_scale = float(raw.get("alpha_closure_frozen_scale", np.nan))
+    q_rows = raw.get("q_true_residuals")
+    if not isinstance(q_rows, Sequence) or isinstance(q_rows, (str, bytes)):
+        raise TypeError("V15 candidate q_true_residuals must be a sequence")
+    q_coverage = (
+        len(q_rows) == 4
+        and all(isinstance(row, Mapping) for row in q_rows)
+        and {int(row.get("q", -1)) for row in q_rows} == {0, 1, 2, 3}
+    )
+    q_relatives: list[float] = []
+    q_rows_consistent = bool(q_coverage)
+    for row in q_rows:
+        if not isinstance(row, Mapping):
+            q_rows_consistent = False
+            continue
+        rhs_norm = float(row.get("rhs_norm", np.nan))
+        residual_norm = float(row.get("true_residual_norm", np.nan))
+        recomputed_q_relative = _zero_safe_relative(residual_norm, rhs_norm)
+        recorded_q_relative = float(row.get("true_residual_relative", np.nan))
+        q_rows_consistent = q_rows_consistent and bool(
+            np.isfinite(rhs_norm)
+            and np.isfinite(residual_norm)
+            and rhs_norm >= 0.0
+            and residual_norm >= 0.0
+            and recorded_q_relative == recomputed_q_relative
+        )
+        q_relatives.append(recomputed_q_relative)
+    q_max = max(
+        q_relatives,
+        default=float("inf"),
+    )
+    retained_mode_count = int(raw.get("retained_mode_count", -1))
+    sector_facts = raw.get("native_sector_facts")
+    mode_ids: list[int] = []
+    sector_mapping_valid = bool(
+        isinstance(sector_facts, Sequence)
+        and not isinstance(sector_facts, (str, bytes))
+        and len(sector_facts) == 2
+        and all(isinstance(row, Mapping) for row in sector_facts)
+        and {int(row.get("twist_index", -1)) for row in sector_facts} == {0, 1}
+    )
+    if sector_mapping_valid:
+        for sector in sector_facts:
+            ids = sector.get("mode_indices")
+            if not isinstance(ids, Sequence) or isinstance(ids, (str, bytes)):
+                sector_mapping_valid = False
+                break
+            mode_ids.extend(int(value) for value in ids)
+    sector_mapping_valid = bool(
+        sector_mapping_valid
+        and retained_mode_count > 0
+        and len(mode_ids) == retained_mode_count
+        and len(set(mode_ids)) == retained_mode_count
+        and sorted(mode_ids) == list(range(retained_mode_count))
+    )
+    closure_norm = float(raw.get("decomposition_closure_norm", np.nan))
+    closure_scale = float(raw.get("decomposition_closure_scale", np.nan))
+    recomputed_metrics = {
+        "eliminated_fe": _zero_safe_relative(eliminated_norm, scale),
+        "complete_augmented_fe": _zero_safe_relative(complete_norm, scale),
+        "noncancelling_budget": _zero_safe_relative(budget_numerator, scale),
+        "alpha_closure": _zero_safe_relative(alpha_norm, alpha_scale),
+        "q_solve": q_max,
+    }
+    recomputed_frozen = {
+        "eliminated_fe": recomputed_metrics["eliminated_fe"],
+        "complete_augmented_fe": recomputed_metrics["complete_augmented_fe"],
+        "noncancelling_budget": recomputed_metrics["noncancelling_budget"],
+        "alpha_closure": _zero_safe_relative(alpha_norm, alpha_frozen_scale),
+    }
+    recorded_metrics = candidate.get("metrics", {})
+    recorded_frozen = candidate.get("frozen_scale_metrics", {})
+    metrics_match = isinstance(recorded_metrics, Mapping) and all(
+        name in recorded_metrics
+        and float(recorded_metrics[name]) == value
+        for name, value in recomputed_metrics.items()
+    )
+    frozen_match = isinstance(recorded_frozen, Mapping) and all(
+        name in recorded_frozen
+        and float(recorded_frozen[name]) == value
+        for name, value in recomputed_frozen.items()
+    )
+    state_sha = str(raw.get("state_sha256", ""))
+    state_hash_valid = len(state_sha) == 64 and all(
+        character in "0123456789abcdef" for character in state_sha
+    )
+    state_hash_valid = state_hash_valid and candidate.get("state_sha256") == state_sha
+    closure_relative = _zero_safe_relative(closure_norm, closure_scale)
+    all_finite = all(
+        np.isfinite(value)
+        for value in (
+            scale, eliminated_norm, complete_norm, budget_numerator, alpha_norm,
+            alpha_scale, alpha_frozen_scale, q_max, closure_norm, closure_scale,
+            closure_relative,
+        )
+    )
+    return {
+        "metrics": recomputed_metrics,
+        "frozen_scale_metrics": recomputed_frozen,
+        "budget_numerator": budget_numerator,
+        "q_phase_coverage": q_coverage,
+        "q_rows_consistent": q_rows_consistent,
+        "sector_mode_mapping_valid": sector_mapping_valid,
+        "decomposition_closure_relative": closure_relative,
+        "state_sha256": state_sha,
+        "raw_facts_consistent": bool(
+            metrics_match and frozen_match and state_hash_valid and all_finite
+        ),
+    }
+
+
 def _candidate_metrics_with_frozen_scales(
     candidate: Mapping[str, Any], limits: Mapping[str, float]
 ) -> tuple[dict[str, Any], dict[str, float]]:
@@ -609,6 +1071,123 @@ def recheck_reference_pc_final_admission(
             "selection_recomputed_from_candidate_metrics": False,
         }
 
+    if strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        candidates = last_facts.get("candidate_metrics")
+        recorded = last_facts.get("candidate_selection")
+        q_rows = last_facts.get("q_true_residuals_selected", ())
+        failure_reason = None
+        try:
+            if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes)):
+                raise TypeError("candidate_metrics is not a sequence")
+            recomputed = select_v15_reference_pc_candidate(candidates)
+            selected_index = int(recomputed["selected_candidate_index"])
+            selected = candidates[selected_index]
+            metrics = selected.get("metrics", {})
+            selected_raw = selected.get("raw_facts", {})
+            raw_recheck = recompute_v15_candidate_facts(selected)
+            q_coverage = (
+                isinstance(q_rows, Sequence)
+                and len(q_rows) == 4
+                and all(isinstance(row, Mapping) for row in q_rows)
+                and {int(row.get("q", -1)) for row in q_rows} == {0, 1, 2, 3}
+            )
+            q_rows_pass = bool(q_coverage) and all(
+                np.isfinite(float(row.get("true_residual_relative", np.inf)))
+                and float(row.get("true_residual_relative", np.inf))
+                <= V15_REFERENCE_PC_LIMITS["q_solve"]
+                for row in q_rows
+            )
+            selected_closure = float(
+                last_facts.get("selected_decomposition_closure_relative", np.inf)
+            )
+            reported_metrics = last_facts.get("selected_v15_metrics", {})
+            reported_raw = last_facts.get("selected_v15_raw_facts", {})
+            selected_state_sha = str(
+                last_facts.get("selected_state_sha256", "")
+            )
+            selected_q_max = max(
+                (
+                    float(row.get("true_residual_relative", np.inf))
+                    for row in q_rows
+                    if isinstance(row, Mapping)
+                ),
+                default=float("inf"),
+            )
+            if not isinstance(recorded, Mapping):
+                failure_reason = "recorded_candidate_selection_missing"
+            elif (
+                recorded.get("admission") != recomputed["admission"]
+                or recorded.get("selected_candidate_index") != selected_index
+            ):
+                failure_reason = "recorded_candidate_selection_mismatch"
+            elif last_facts.get("reference_pc_strategy") != strategy:
+                failure_reason = "recorded_reference_pc_strategy_mismatch"
+            elif not recomputed["admitted"]:
+                failure_reason = "candidate_selection_rejected"
+            elif not q_coverage or last_facts.get("all_four_q_used") is not True:
+                failure_reason = "selected_q_phase_coverage_failed"
+            elif list(q_rows) != list(selected_raw.get("q_true_residuals", ())):
+                failure_reason = "selected_q_rows_mismatch"
+            elif not q_rows_pass or not np.isfinite(q_relative) or q_relative > V15_REFERENCE_PC_LIMITS["q_solve"]:
+                failure_reason = "selected_q_solve_contract_failed"
+            elif (
+                not np.isfinite(selected_q_max)
+                or selected_q_max != q_relative
+                or selected_q_max != float(metrics.get("q_solve", np.inf))
+            ):
+                failure_reason = "selected_q_metric_mismatch"
+            elif (
+                float(last_facts.get("port_identity_relative", np.inf))
+                != float(metrics.get("alpha_closure", np.inf))
+            ):
+                failure_reason = "selected_alpha_metric_mismatch"
+            elif not np.isfinite(selected_closure) or selected_closure > V15_DECOMPOSITION_CLOSURE_LIMIT:
+                failure_reason = "selected_native_decomposition_closure_failed"
+            elif selected_closure != raw_recheck["decomposition_closure_relative"]:
+                failure_reason = "selected_decomposition_closure_mismatch"
+            elif (
+                not isinstance(selected_raw, Mapping)
+                or not isinstance(reported_raw, Mapping)
+                or dict(reported_raw) != dict(selected_raw)
+            ):
+                failure_reason = "selected_raw_facts_mismatch"
+            elif (
+                not selected_state_sha
+                or selected_state_sha != raw_recheck["state_sha256"]
+            ):
+                failure_reason = "selected_state_hash_mismatch"
+            elif not isinstance(reported_metrics, Mapping) or any(
+                not np.isfinite(float(metrics.get(name, np.inf)))
+                or float(reported_metrics.get(name, np.inf)) != float(metrics.get(name, np.inf))
+                for name in V15_REFERENCE_PC_LIMITS
+            ):
+                failure_reason = "selected_v15_metric_mismatch"
+            return {
+                "passed": failure_reason is None,
+                "strategy": strategy,
+                "admission": recomputed["admission"],
+                "selected_candidate_index": selected_index,
+                "recorded_admission": recorded.get("admission") if isinstance(recorded, Mapping) else None,
+                "recorded_selected_candidate_index": recorded.get("selected_candidate_index") if isinstance(recorded, Mapping) else None,
+                "maximum_q_true_residual_relative": q_relative,
+                "q_true_residual_limit": V15_REFERENCE_PC_LIMITS["q_solve"],
+                "all_four_q_phase_rows_covered": bool(q_coverage),
+                "selected_decomposition_closure_relative": selected_closure,
+                "decomposition_closure_limit": V15_DECOMPOSITION_CLOSURE_LIMIT,
+                "selected_state_sha256": selected_state_sha,
+                "selection_recomputed_from_candidate_metrics": True,
+                "candidate_selection": recomputed,
+                "failure_reason": failure_reason,
+            }
+        except (TypeError, ValueError, KeyError, IndexError, OverflowError) as exc:
+            return {
+                "passed": False,
+                "strategy": strategy,
+                "admission": V15_REFERENCE_PC_REJECTED,
+                "reason": f"candidate_selection_recheck_error:{type(exc).__name__}:{exc}",
+                "selection_recomputed_from_candidate_metrics": True,
+            }
+
     if strategy != STRICT_THEN_BOUNDED_INEXACT_V13:
         return {
             "passed": False,
@@ -722,17 +1301,27 @@ __all__ = [
     "BOUNDED_INEXACT_REFERENCE_PC",
     "FACTOR_CALL_COUNTER_SOURCE",
     "MAX_EXTRA_MAT_SOLVES",
+    "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
     "REFERENCE_PC_REJECTED",
     "REFERENCE_PC_STRATEGIES",
     "STRICT_ONLY",
     "STRICT_REFERENCE_LIMITS",
     "STRICT_REFERENCE_PASS",
     "STRICT_THEN_BOUNDED_INEXACT_V13",
+    "V15_DECOMPOSITION_CLOSURE_LIMIT",
+    "V15_FROZEN_SCALE_LIMITS",
+    "V15_REFERENCE_PC_LIMITS",
+    "V15_REFERENCE_PC_PASS",
+    "V15_REFERENCE_PC_REJECTED",
+    "evaluate_v15_non_cancelling_budget",
     "apply_one_augmented_residual_correction",
     "augmented_rhs_sha256",
+    "augmented_state_sha256",
     "normalized_max_exceedance",
     "q_solve_limit",
     "recheck_reference_pc_final_admission",
+    "recompute_v15_candidate_facts",
     "select_reference_pc_candidate",
+    "select_v15_reference_pc_candidate",
     "stable_euclidean_norm",
 ]

@@ -549,6 +549,252 @@ def _sector_native_forward_action(
     }
 
 
+def _v15_native_budget_allocation_facts(
+    *,
+    full_rows: int,
+    independent_rows: int,
+    mode_count: int,
+    max_local_rows: int,
+    max_local_independent: int,
+    retained_candidate_state_count: int,
+    retain_lifted_errors: bool = False,
+) -> dict[str, int | bool]:
+    """Separate resident prior candidates from genuinely new budget storage."""
+
+    n_full = int(full_rows)
+    n_independent = int(independent_rows)
+    n_modes = int(mode_count)
+    local_full = int(max_local_rows)
+    local_independent = int(max_local_independent)
+    retained = max(0, int(retained_candidate_state_count))
+    additional_array_copy_bytes = 16 * (3 * n_independent + 2 * n_modes)
+    additional_compressed_temporary_bytes = 16 * (
+        2 * local_full + 4 * local_independent
+    )
+    additional_other_budget_bytes = 16 * (
+        3 * n_full
+        + 13 * n_independent
+        + 6 * n_modes
+        + 4 * local_full
+    )
+    retained_residual_evidence_bytes = (
+        16 * (6 * n_independent + 2 * local_independent)
+        if retain_lifted_errors
+        else 0
+    )
+    workspace_bytes = 16 * (2 * n_full + 2 * local_full)
+    return {
+        "additional_payload_bytes": (
+            additional_array_copy_bytes
+            + additional_compressed_temporary_bytes
+            + additional_other_budget_bytes
+            + retained_residual_evidence_bytes
+        ),
+        "additional_array_copy_bytes": additional_array_copy_bytes,
+        "additional_compressed_temporary_bytes": additional_compressed_temporary_bytes,
+        "additional_other_native_budget_array_bytes": additional_other_budget_bytes,
+        "additional_retained_residual_evidence_bytes": retained_residual_evidence_bytes,
+        "workspace_bytes": workspace_bytes,
+        "additional_simultaneous_workspace_bytes": workspace_bytes,
+        "retained_candidate_state_count": retained,
+        "resident_candidate_state_bytes": retained * 16 * (
+            8 * n_independent + 3 * n_modes
+        ),
+        "resident_candidate_state_is_already_in_current_rss": True,
+        "resident_candidate_state_not_added_to_projected_allocation": True,
+    }
+
+
+def _v15_native_budget_facts(
+    reference: Mapping[str, Any],
+    template: Any,
+    fe_rhs: Any,
+    port_rhs: Any,
+    alpha: Any,
+    solution_values: Any,
+    global_native_action_storage: Any,
+    complete_augmented_fe_residual: Any,
+    petsc: Any,
+    *,
+    allocation_gate: Any,
+    full_solution_vector: Any | None = None,
+    sector_action_data: tuple[Any, Any, Any] | None = None,
+    retain_lifted_errors: bool = False,
+    retained_candidate_state_count: int = 0,
+) -> dict[str, Any]:
+    """Compute V15 native elimination and non-cancelling residual facts."""
+
+    from src.solvers.augmented_reference_correction import (
+        evaluate_v15_non_cancelling_budget,
+    )
+
+    layout = reference["full_layout"]
+    profile = reference["profile"]
+    bundle = reference["global_bundle"]
+    independent = np.asarray(layout.independent, dtype=np.int64)
+    finite_rhs = np.asarray(fe_rhs, dtype=np.complex128)
+    port_load_values = np.asarray(port_rhs, dtype=np.complex128)
+    alpha_values = np.asarray(alpha, dtype=np.complex128)
+    native_storage = np.asarray(global_native_action_storage, dtype=np.complex128)
+    complete_fe = np.asarray(complete_augmented_fe_residual, dtype=np.complex128)
+    if (
+        finite_rhs.shape != (len(independent),)
+        or port_load_values.shape != (profile.mode_count,)
+        or alpha_values.shape != (profile.mode_count,)
+        or native_storage.shape != (layout.full_rows,)
+        or complete_fe.shape != (len(independent),)
+    ):
+        raise ValueError("V15 native residual inputs do not match the frozen p6 layout")
+    h = np.asarray(
+        [entry.normalization_h for entry in bundle["dtn_action"].carrier.entries],
+        dtype=np.float64,
+    )
+    if h.shape != (profile.mode_count,) or not np.isfinite(h).all() or np.any(h <= 0.0):
+        raise ValueError("V15 global original-H vector is incomplete or invalid")
+    if sector_action_data is None:
+        sector_action_data = _sector_native_forward_action(
+            reference,
+            solution_values,
+            petsc,
+            allocation_gate=allocation_gate,
+        )
+    _sector_action, local_action_vectors, sector_action_facts = sector_action_data
+    if sector_action_facts.get("all_modes_covered_once") is not True:
+        raise ValueError("V15 local action mapping does not cover every retained mode")
+
+    max_local_rows = max(int(row["entities"].full_rows) for row in reference["sectors"])
+    max_local_independent = max(
+        len(row["entities"].independent) for row in reference["sectors"]
+    )
+    n_independent = int(len(independent))
+    n_modes = int(profile.mode_count)
+    allocation_facts = _v15_native_budget_allocation_facts(
+        full_rows=int(layout.full_rows),
+        independent_rows=n_independent,
+        mode_count=n_modes,
+        max_local_rows=max_local_rows,
+        max_local_independent=max_local_independent,
+        retained_candidate_state_count=retained_candidate_state_count,
+        retain_lifted_errors=retain_lifted_errors,
+    )
+    allocation_gate(
+        "task40_v15_native_augmented_residual_budget",
+        {
+            **allocation_facts,
+            "budget_independent_vector_equivalents": 16,
+            "local_action_vector_equivalents": 6,
+            "per_sector_folded_rhs_and_action_vector_equivalents": 4,
+            "uses_original_global_H": True,
+            "uses_sector_H_equal_global_H_over_two": True,
+            "uses_actual_primal_extract_and_dual_lift": True,
+            "sector_action_source": "_sector_native_forward_action_on_E_s_u",
+            "no_q_csr_action_used": True,
+            "bounded_sector_lift_accumulation": True,
+            "retain_startup_sector_lifted_errors": bool(retain_lifted_errors),
+        },
+    )
+
+    owns_solution = full_solution_vector is None
+    full_solution = (
+        _independent_storage_vector(template, independent, solution_values)
+        if owns_solution
+        else full_solution_vector
+    )
+    global_port_load = template.duplicate()
+    global_delta_load = template.duplicate()
+    local_port_loads = []
+    try:
+        recovered_global = np.asarray(
+            bundle["dtn_action"].recover_auxiliary(full_solution),
+            dtype=np.complex128,
+        )
+        global_port_load.set(0.0)
+        bundle["dtn_action"].apply_modal_rhs(port_load_values / h, global_port_load)
+        port_elimination_action = np.asarray(
+            global_port_load.array_r, dtype=np.complex128
+        ).copy()[independent]
+        effective_rhs = finite_rhs - port_elimination_action
+
+        delta_alpha = alpha_values - recovered_global - port_load_values / h
+        global_delta_load.set(0.0)
+        bundle["dtn_action"].apply_modal_rhs(delta_alpha, global_delta_load)
+        modal_alpha_defect_action = np.asarray(
+            global_delta_load.array_r, dtype=np.complex128
+        ).copy()[independent]
+
+        sector_terms = []
+        per_sector = []
+        for sector in reference["sectors"]:
+            twist = int(sector["context"].twist_index)
+            transport = sector["transport"]
+            entities = sector["entities"]
+            mode_ids = np.asarray(
+                sector["context"].original_mode_indices, dtype=np.int64
+            )
+            local_independent = np.asarray(transport.local.independent, dtype=np.int64)
+            folded_rhs = np.asarray(transport.fold_dual(finite_rhs), dtype=np.complex128)
+            if folded_rhs.shape != (len(local_independent),):
+                raise ValueError(f"V15 twist {twist} folded RHS has the wrong layout")
+            h_s = h[mode_ids] / 2.0
+            g_s = port_load_values[mode_ids] / np.sqrt(2.0)
+            if not np.isfinite(h_s).all() or np.any(h_s <= 0.0):
+                raise ValueError(f"V15 twist {twist} original-H block is invalid")
+            local_port_load = petsc.Vec().createSeq(
+                int(entities.full_rows), comm=petsc.COMM_SELF
+            )
+            local_port_loads.append(local_port_load)
+            sector["bundle"]["dtn_action"].apply_modal_rhs(
+                g_s / h_s, local_port_load
+            )
+            local_effective_rhs = folded_rhs - np.asarray(
+                local_port_load.array_r, dtype=np.complex128
+            )[local_independent]
+            local_action = np.asarray(
+                local_action_vectors[twist]["independent"], dtype=np.complex128
+            )
+            sector_terms.append({
+                "rhs": local_effective_rhs,
+                "action": local_action,
+                "lift_dual": transport.lift_dual,
+            })
+            per_sector.append({
+                "twist_index": twist,
+                "mode_indices": mode_ids.tolist(),
+                "H_s_is_global_H_over_two": True,
+                "g_s_is_global_g_over_sqrt_two": True,
+                "alpha_scaling": "sqrt(2)*global_alpha[mode_ids]",
+                "effective_rhs_norm": float(np.linalg.norm(local_effective_rhs)),
+                "native_action_norm": float(np.linalg.norm(local_action)),
+            })
+
+        budget = evaluate_v15_non_cancelling_budget(
+            effective_rhs=np.asarray(effective_rhs, dtype=np.complex128),
+            global_eliminated_action=np.asarray(native_storage[independent], dtype=np.complex128),
+            original_fe_rhs=finite_rhs,
+            port_elimination_action=port_elimination_action,
+            complete_augmented_fe_residual=complete_fe,
+            modal_alpha_defect_action=modal_alpha_defect_action,
+            sectors=sector_terms,
+            retain_lifted_errors=retain_lifted_errors,
+        )
+        budget["sector_facts"] = per_sector
+        budget["effective_rhs"] = effective_rhs.copy()
+        budget["port_elimination_action"] = port_elimination_action.copy()
+        budget["global_native_action_independent"] = native_storage[independent].copy()
+        budget["all_modes_covered_once"] = True
+        budget["effective_rhs_definition"] = "f - B H_p^-1 g"
+        budget["eliminated_action_definition"] = "V_r u + B H_p^-1 D u"
+        budget["alpha_defect_definition"] = "alpha - recover_auxiliary(u) - g/H_p"
+        return budget
+    finally:
+        for vector in local_port_loads:
+            vector.destroy()
+        global_delta_load.destroy()
+        global_port_load.destroy()
+        if owns_solution:
+            full_solution.destroy()
+
+
 def _regular_local_recovery_facts(
     reference: Mapping[str, Any],
     solution_independent: Any,
@@ -923,6 +1169,8 @@ def _regular_inverse_checks_schema(
     profile: Any, reference_pc_strategy: str = "STRICT_ONLY"
 ) -> str:
     """Select the established regular-inverse metadata schema by profile."""
+    if reference_pc_strategy == "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15":
+        return "task40extra.review_v15_p6_regular_inverse_checks.v1"
     if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
         return "task40extra.review_v13_p6_regular_inverse_checks.v1"
     if profile.name == TASK40_V10_P6_PROFILE.name:
@@ -950,6 +1198,7 @@ def _verify_regular_inverse(
         BOUNDED_INEXACT_REFERENCE_PC,
         FACTOR_CALL_COUNTER_SOURCE,
         REFERENCE_PC_REJECTED,
+        NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
         STRICT_ONLY,
         STRICT_REFERENCE_PASS,
         STRICT_THEN_BOUNDED_INEXACT_V13,
@@ -957,11 +1206,16 @@ def _verify_regular_inverse(
         augmented_port_state_offset,
         evaluate_complete_augmented_residual,
         select_reference_pc_candidate,
+        select_v15_reference_pc_candidate,
     )
     from src.solvers.p6_cell_condensed_action import _operation_relative
     from petsc4py import PETSc
 
-    if reference_pc_strategy not in {STRICT_ONLY, STRICT_THEN_BOUNDED_INEXACT_V13}:
+    if reference_pc_strategy not in {
+        STRICT_ONLY,
+        STRICT_THEN_BOUNDED_INEXACT_V13,
+        NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+    }:
         raise ValueError(f"unknown Task40 reference-PC strategy: {reference_pc_strategy!r}")
     if _candidate_state is not None and _case_filter is None:
         raise ValueError("an overridden reference state requires one explicit witness case")
@@ -983,35 +1237,75 @@ def _verify_regular_inverse(
     if h.shape != (profile.mode_count,) or not np.isfinite(h).all() or np.any(h <= 0.0):
         raise ValueError("regular reference original-H vector is incomplete or invalid")
 
-    rng = np.random.default_rng(40102027)
-    generic = (
-        rng.standard_normal(n) + 1j * rng.standard_normal(n)
-    ).astype(np.complex128)
-    interior_rows = _runtime_interior_rows(reference)
-    interior = np.zeros(n, dtype=np.complex128)
-    interior[interior_rows] = (
-        rng.standard_normal(len(interior_rows))
-        + 1j * rng.standard_normal(len(interior_rows))
-    )
-    amplitudes = (
-        np.sin(0.031 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
-        + 1j * np.cos(0.047 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
-    ).astype(np.complex128)
-    port_rhs = (h * amplitudes).astype(np.complex128)
     physical_storage = np.asarray(physical_rhs.array_r, dtype=np.complex128).copy()
     if physical_storage.shape != (layout.full_rows,):
         raise ValueError("regular physical RHS does not match the full p6 storage layout")
-
-    cases = (
-        ("generic_full_independent", generic, np.zeros(profile.mode_count, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
-        (f"interior_only_all_{profile.global_interior_rows}", interior, np.zeros(profile.mode_count, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
-        ("nonzero_all_mode_port_rhs", np.zeros(n, dtype=np.complex128), port_rhs, np.zeros(layout.full_rows, dtype=np.complex128)),
-        ("physical_regular_incident_rhs", physical_storage[independent].copy(), np.zeros(profile.mode_count, dtype=np.complex128), physical_storage),
+    case_names = (
+        "generic_full_independent",
+        f"interior_only_all_{profile.global_interior_rows}",
+        "nonzero_all_mode_port_rhs",
+        "physical_regular_incident_rhs",
     )
-    if _case_filter is not None:
-        cases = tuple(row for row in cases if row[0] == _case_filter)
-        if len(cases) != 1:
+    if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        selected_names = case_names if _case_filter is None else (_case_filter,)
+        if any(name not in case_names for name in selected_names):
             raise ValueError(f"regular inverse witness case not uniquely found: {_case_filter!r}")
+        v15_indices = {name: index for index, name in enumerate(case_names)}
+        cases_list = []
+        for name in selected_names:
+            case_index = v15_indices[name]
+            zero_ports = np.zeros(profile.mode_count, dtype=np.complex128)
+            zero_full = np.zeros(layout.full_rows, dtype=np.complex128)
+            if case_index == 0:
+                rng = np.random.default_rng(40102027 + case_index)
+                fe_case = (rng.standard_normal(n) + 1j * rng.standard_normal(n)).astype(
+                    np.complex128
+                )
+                cases_list.append((name, fe_case, zero_ports, zero_full))
+            elif case_index == 1:
+                rng = np.random.default_rng(40102027 + case_index)
+                interior_rows = _runtime_interior_rows(reference)
+                fe_case = np.zeros(n, dtype=np.complex128)
+                fe_case[interior_rows] = (
+                    rng.standard_normal(len(interior_rows))
+                    + 1j * rng.standard_normal(len(interior_rows))
+                )
+                cases_list.append((name, fe_case, zero_ports, zero_full))
+            elif case_index == 2:
+                amplitudes = (
+                    np.sin(0.031 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
+                    + 1j * np.cos(0.047 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
+                ).astype(np.complex128)
+                cases_list.append((name, np.zeros(n, dtype=np.complex128), (h * amplitudes).astype(np.complex128), zero_full))
+            else:
+                cases_list.append((name, physical_storage[independent].copy(), zero_ports, physical_storage))
+        cases = tuple(cases_list)
+    else:
+        rng = np.random.default_rng(40102027)
+        generic = (
+            rng.standard_normal(n) + 1j * rng.standard_normal(n)
+        ).astype(np.complex128)
+        interior_rows = _runtime_interior_rows(reference)
+        interior = np.zeros(n, dtype=np.complex128)
+        interior[interior_rows] = (
+            rng.standard_normal(len(interior_rows))
+            + 1j * rng.standard_normal(len(interior_rows))
+        )
+        amplitudes = (
+            np.sin(0.031 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
+            + 1j * np.cos(0.047 * (np.arange(profile.mode_count, dtype=np.float64) + 1.0))
+        ).astype(np.complex128)
+        port_rhs = (h * amplitudes).astype(np.complex128)
+        cases = (
+            ("generic_full_independent", generic, np.zeros(profile.mode_count, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
+            (f"interior_only_all_{profile.global_interior_rows}", interior, np.zeros(profile.mode_count, dtype=np.complex128), np.zeros(layout.full_rows, dtype=np.complex128)),
+            ("nonzero_all_mode_port_rhs", np.zeros(n, dtype=np.complex128), port_rhs, np.zeros(layout.full_rows, dtype=np.complex128)),
+            ("physical_regular_incident_rhs", physical_storage[independent].copy(), np.zeros(profile.mode_count, dtype=np.complex128), physical_storage),
+        )
+        if _case_filter is not None:
+            cases = tuple(row for row in cases if row[0] == _case_filter)
+            if len(cases) != 1:
+                raise ValueError(f"regular inverse witness case not uniquely found: {_case_filter!r}")
     records = []
     for name, fe_rhs, g_rhs, full_rhs_values in cases:
         sample_label = _regular_inverse_sample_label(name, _candidate_label)
@@ -1079,15 +1373,49 @@ def _verify_regular_inverse(
             )
             alpha_closure_residual_norm = float(np.linalg.norm(alpha - alpha_expected))
             port_relative = alpha_closure_residual_norm / port_scale
+            v15_alpha_facts = None
+            if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+                from src.solvers.augmented_reference_correction import stable_euclidean_norm
+
+                alpha_defect = np.asarray(alpha - alpha_expected, dtype=np.complex128)
+                alpha_norm_v15 = stable_euclidean_norm(alpha_defect)
+                alpha_scale_v15 = float(
+                    stable_euclidean_norm(np.asarray(alpha, dtype=np.complex128))
+                    + stable_euclidean_norm(np.asarray(recovered_alpha, dtype=np.complex128))
+                    + stable_euclidean_norm(np.asarray(g_rhs / h, dtype=np.complex128))
+                )
+                frozen_alpha_scale_v15 = float(
+                    (_frozen_scales or {}).get(
+                        "v15_alpha_closure_scale", alpha_scale_v15
+                    )
+                )
+
+                def v15_alpha_relative(denominator: float) -> float:
+                    if denominator == 0.0:
+                        return 0.0 if alpha_norm_v15 == 0.0 else float("inf")
+                    return alpha_norm_v15 / denominator
+
+                v15_alpha_facts = {
+                    "residual_norm": alpha_norm_v15,
+                    "original_scale": alpha_scale_v15,
+                    "original_relative": v15_alpha_relative(alpha_scale_v15),
+                    "frozen_scale": frozen_alpha_scale_v15,
+                    "frozen_relative": v15_alpha_relative(frozen_alpha_scale_v15),
+                }
             augmented_fe_residual = None
             augmented_port_residual = None
             augmented_equation_residual_norm = None
             augmented_rhs_norm = None
             augmented_stacked_relative_diagnostic = None
             complete_augmented_fe_equation_relative = None
-            if reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13:
+            if reference_pc_strategy in {
+                STRICT_THEN_BOUNDED_INEXACT_V13,
+                NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+            }:
                 allocation_gate(
-                    "task40_v13_complete_augmented_reference_equation_evaluation",
+                    "task40_v15_complete_augmented_reference_equation_evaluation"
+                    if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+                    else "task40_v13_complete_augmented_reference_equation_evaluation",
                     {
                         "additional_payload_bytes": 16 * (
                             int(layout.full_rows) + 4 * int(n)
@@ -1136,6 +1464,27 @@ def _verify_regular_inverse(
                 complete_augmented_fe_equation_relative = complete_augmented[
                     "complete_augmented_fe_equation_relative"
                 ]
+            v15_budget = None
+            if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+                v15_budget = _v15_native_budget_facts(
+                    reference,
+                    template,
+                    fe_rhs,
+                    g_rhs,
+                    alpha,
+                    solution_values,
+                    native_action_storage,
+                    augmented_fe_residual,
+                    PETSc,
+                    allocation_gate=allocation_gate,
+                    full_solution_vector=solution,
+                    sector_action_data=(
+                        sector_action,
+                        sector_action_vectors,
+                        sector_action_facts,
+                    ),
+                    retain_lifted_errors=True,
+                )
             recovery = _regular_local_recovery_facts(
                 reference,
                 solution_values,
@@ -1178,6 +1527,13 @@ def _verify_regular_inverse(
                 "alpha_closure": port_relative,
                 "q_solve": q_residual_max,
             }
+            if v15_budget is not None:
+                reference_pc_metrics.update({
+                    "eliminated_fe": float(v15_budget["eliminated_fe_relative"]),
+                    "complete_augmented_fe": float(v15_budget["complete_augmented_fe_relative"]),
+                    "noncancelling_budget": float(v15_budget["noncancelling_budget_relative"]),
+                    "alpha_closure": float(complete_augmented["alpha_closure_relative"]),
+                })
             current_scales = {
                 "full_equation": max(float(equation_scale), np.finfo(float).tiny),
                 "complete_augmented_fe_equation": max(
@@ -1199,6 +1555,10 @@ def _verify_regular_inverse(
                     for row in q_rows
                 },
             }
+            if v15_alpha_facts is not None:
+                current_scales["v15_alpha_closure_scale"] = float(
+                    v15_alpha_facts["original_scale"]
+                )
             frozen_scales = dict(_frozen_scales or current_scales)
             frozen_sector_scales = frozen_scales.get("local_sector_by_twist", {})
             frozen_q_scales = frozen_scales.get("q_rhs_by_phase", {})
@@ -1252,35 +1612,148 @@ def _verify_regular_inverse(
                 ),
                 "q_solve": max(frozen_q_relative, default=float("inf")),
             }
-            bounded_numeric_gates = {
-                "original_regular_equation",
-                "complete_augmented_fe_equation",
-                "two_local_original_equations",
-                "global_alpha_port_closure",
-                "all_four_q_true_residuals",
-            }
-            candidate_structural_gates = {
-                name: value
-                for name, value in gate_facts["gates"].items()
-                if name not in bounded_numeric_gates
-            }
-            candidate_structural_gates["all_four_q_phases_covered"] = q_coverage_passed
-            reference_pc_candidate = {
-                "metrics": reference_pc_metrics,
-                "frozen_scale_metrics": frozen_scale_metrics,
-                "structural_gates": candidate_structural_gates,
-                "state_label": _candidate_label,
-                "frozen_denominators": frozen_scales,
-            }
+            if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+                if v15_budget is None:
+                    raise RuntimeError("V15 native residual budget was not evaluated")
+                replaced_numeric_gates = {
+                    "original_regular_equation",
+                    "independent_sector_action_consistency",
+                    "two_local_original_equations",
+                    "global_alpha_port_closure",
+                    "all_four_q_true_residuals",
+                    "complete_augmented_fe_equation",
+                }
+                candidate_structural_gates = {
+                    name: value
+                    for name, value in gate_facts["gates"].items()
+                    if name not in replaced_numeric_gates
+                }
+                candidate_structural_gates.update({
+                    "all_four_q_phases_covered": q_coverage_passed,
+                    "all_retained_modes_mapped_once": bool(
+                        sector_action_facts["all_modes_covered_once"]
+                    ),
+                    "native_decomposition_closure": bool(
+                        np.isfinite(v15_budget["decomposition_closure_relative"])
+                        and v15_budget["decomposition_closure_relative"]
+                        <= 1.0e-10
+                    ),
+                    "native_augmented_actions_finite": bool(
+                        np.isfinite(v15_budget["effective_rhs_scale"])
+                        and np.isfinite(v15_budget["budget_numerator"])
+                    ),
+                })
+                frozen_alpha_scale = float(
+                    frozen_scales.get(
+                        "v15_alpha_closure_scale",
+                        v15_alpha_facts["original_scale"],
+                    )
+                )
+                v15_metrics = {
+                    "eliminated_fe": float(v15_budget["eliminated_fe_relative"]),
+                    "complete_augmented_fe": float(
+                        v15_budget["complete_augmented_fe_relative"]
+                    ),
+                    "noncancelling_budget": float(
+                        v15_budget["noncancelling_budget_relative"]
+                    ),
+                    "alpha_closure": float(
+                        v15_alpha_facts["original_relative"]
+                    ),
+                    "q_solve": q_residual_max,
+                }
+                v15_frozen_metrics = {
+                    "eliminated_fe": v15_metrics["eliminated_fe"],
+                    "complete_augmented_fe": v15_metrics["complete_augmented_fe"],
+                    "noncancelling_budget": v15_metrics["noncancelling_budget"],
+                    "alpha_closure": float(
+                        v15_alpha_facts["frozen_relative"]
+                    ),
+                }
+                from src.solvers.augmented_reference_correction import augmented_state_sha256
+
+                v15_raw_facts = {
+                    "effective_rhs_scale": float(v15_budget["effective_rhs_scale"]),
+                    "eliminated_fe_residual_norm": float(
+                        v15_budget["eliminated_fe_residual_norm"]
+                    ),
+                    "complete_augmented_fe_residual_norm": float(
+                        v15_budget["complete_augmented_fe_residual_norm"]
+                    ),
+                    "budget_term_norms": dict(v15_budget["budget_terms"]),
+                    "alpha_closure_residual_norm": float(
+                        v15_alpha_facts["residual_norm"]
+                    ),
+                    "alpha_closure_original_scale": float(
+                        v15_alpha_facts["original_scale"]
+                    ),
+                    "alpha_closure_frozen_scale": frozen_alpha_scale,
+                    "q_true_residuals": copy.deepcopy(q_rows),
+                    "retained_mode_count": int(profile.mode_count),
+                    "native_sector_facts": copy.deepcopy(
+                        v15_budget["sector_facts"]
+                    ),
+                    "decomposition_closure_norm": float(
+                        v15_budget["decomposition_closure_norm"]
+                    ),
+                    "decomposition_closure_scale": float(
+                        v15_budget["decomposition_closure_scale"]
+                    ),
+                    "state_sha256": augmented_state_sha256(solution_values, alpha),
+                }
+                reference_pc_candidate = {
+                    "metrics": v15_metrics,
+                    "frozen_scale_metrics": v15_frozen_metrics,
+                    "structural_gates": candidate_structural_gates,
+                    "state_label": _candidate_label,
+                    "state_sha256": v15_raw_facts["state_sha256"],
+                    "raw_facts": v15_raw_facts,
+                    "frozen_denominators": {
+                        "effective_rhs_scale": v15_budget["effective_rhs_scale"],
+                        "alpha_closure": frozen_alpha_scale,
+                    },
+                }
+                v15_selection = select_v15_reference_pc_candidate(
+                    [reference_pc_candidate]
+                )
+            else:
+                bounded_numeric_gates = {
+                    "original_regular_equation",
+                    "complete_augmented_fe_equation",
+                    "two_local_original_equations",
+                    "global_alpha_port_closure",
+                    "all_four_q_true_residuals",
+                }
+                candidate_structural_gates = {
+                    name: value
+                    for name, value in gate_facts["gates"].items()
+                    if name not in bounded_numeric_gates
+                }
+                candidate_structural_gates["all_four_q_phases_covered"] = q_coverage_passed
+                reference_pc_candidate = {
+                    "metrics": reference_pc_metrics,
+                    "frozen_scale_metrics": frozen_scale_metrics,
+                    "structural_gates": candidate_structural_gates,
+                    "state_label": _candidate_label,
+                    "frozen_denominators": frozen_scales,
+                }
+                v15_selection = None
             builder_action_storage = np.zeros(layout.full_rows, dtype=np.complex128)
             builder_action_storage[independent] = sector_action
             packet = _save_packet(
                 runtime,
                 sample_label,
                 {
-                    "schema": "task40extra.review_v10_regular_inverse_full_witness.v1",
+                    "schema": (
+                        "task40extra.review_v15_regular_inverse_full_witness.v1"
+                        if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+                        else "task40extra.review_v10_regular_inverse_full_witness.v1"
+                    ),
+                    "profile_identity": profile.name,
+                    "reference_pc_strategy": reference_pc_strategy,
                     "case": name,
                     "passed": passed,
+                    "legacy_gate_passed": passed,
                     "full_storage_rows": int(layout.full_rows),
                     "independent_storage_rows": independent.copy(),
                     "full_solution_storage": np.asarray(solution.array_r).copy(),
@@ -1395,6 +1868,53 @@ def _verify_regular_inverse(
                     "q_true_residuals": q_rows,
                     "limits": gate_facts["limits"],
                     "physical_rhs_facts": dict(physical_rhs_facts),
+                    **(
+                        {
+                            "v15_effective_rhs_scale": v15_budget["effective_rhs_scale"],
+                            "v15_budget_numerator": v15_budget["budget_numerator"],
+                            "v15_budget_term_norms": v15_budget["budget_terms"],
+                            "v15_non_cancelling_budget_relative": v15_budget[
+                                "noncancelling_budget_relative"
+                            ],
+                            "v15_eliminated_fe_residual_norm": v15_budget[
+                                "eliminated_fe_residual_norm"
+                            ],
+                            "v15_eliminated_fe_relative": v15_budget[
+                                "eliminated_fe_relative"
+                            ],
+                            "v15_complete_augmented_fe_residual_norm": v15_budget[
+                                "complete_augmented_fe_residual_norm"
+                            ],
+                            "v15_complete_augmented_fe_relative": v15_budget[
+                                "complete_augmented_fe_relative"
+                            ],
+                            "v15_decomposition_closure_norm": v15_budget[
+                                "decomposition_closure_norm"
+                            ],
+                            "v15_decomposition_closure_scale": v15_budget[
+                                "decomposition_closure_scale"
+                            ],
+                            "v15_d_b": v15_budget["d_b"],
+                            "v15_d_A": v15_budget["d_A"],
+                            "v15_lifted_sector_errors": tuple(
+                                v15_budget["lifted_sector_errors"] or ()
+                            ),
+                            "v15_local_sector_errors": tuple(
+                                v15_budget["local_sector_errors"] or ()
+                            ),
+                            "v15_eliminated_fe_residual_direct": v15_budget[
+                                "eliminated_fe_residual_direct"
+                            ],
+                            "v15_eliminated_fe_residual_decomposed": v15_budget[
+                                "eliminated_fe_residual_decomposed"
+                            ],
+                            "v15_complete_fe_residual_decomposed": v15_budget[
+                                "complete_fe_residual_decomposed"
+                            ],
+                        }
+                        if v15_budget is not None
+                        else {}
+                    ),
                 },
             )
             row = {
@@ -1451,6 +1971,28 @@ def _verify_regular_inverse(
                 "reference_pc_frozen_denominators": frozen_scales,
                 "reference_pc_structural_gates": candidate_structural_gates,
                 "reference_pc_candidate": reference_pc_candidate,
+                "v15_native_budget": (
+                    {
+                        key: v15_budget[key]
+                        for key in (
+                            "effective_rhs_scale",
+                            "budget_numerator",
+                            "budget_terms",
+                            "noncancelling_budget_relative",
+                            "eliminated_fe_residual_norm",
+                            "eliminated_fe_relative",
+                            "complete_augmented_fe_residual_norm",
+                            "complete_augmented_fe_relative",
+                            "decomposition_closure_norm",
+                            "decomposition_closure_scale",
+                            "decomposition_closure_relative",
+                            "effective_rhs_identity_error_norm",
+                            "sector_facts",
+                        )
+                    }
+                    if v15_budget is not None
+                    else None
+                ),
                 "regular_recovery_limit": _REGULAR_RECOVERY_LIMIT,
                 "maximum_q_true_residual_relative": q_residual_max,
                 "q_true_residuals": q_rows,
@@ -1464,7 +2006,156 @@ def _verify_regular_inverse(
                 "failed_gates": gate_facts["failed_gates"],
                 "passed": passed,
             }
-            if reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13 and _candidate_label == "initial":
+            if (
+                reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+                and _candidate_label == "initial"
+            ):
+                initial_selection = v15_selection
+                candidate_rows = [row]
+                candidate_states = [reference_pc_candidate]
+                if initial_selection["admitted"]:
+                    row["reference_pc_admission"] = "V15_REFERENCE_PC_PASS"
+                    row["reference_pc_selection"] = initial_selection
+                    row["reference_pc_initial_v15_passed"] = True
+                    row["selected_v15_metrics"] = dict(reference_pc_candidate["metrics"])
+                    row["selected_v15_raw_facts"] = dict(
+                        reference_pc_candidate["raw_facts"]
+                    )
+                    row["selected_state_sha256"] = reference_pc_candidate["state_sha256"]
+                    row["passed"] = True
+                elif all(candidate_structural_gates.values()) and _allow_correction:
+                    if augmented_fe_residual is None or augmented_port_residual is None:
+                        raise RuntimeError(
+                            "V15 complete augmented residual was not independently evaluated"
+                        )
+
+                    def raw_v15_nonrecursive_inverse(fe_error, port_error):
+                        calls_before = int(inverse.factors.calls)
+                        delta_fe, delta_port = inverse.apply_augmented(
+                            fe_error, port_rhs=port_error
+                        )
+                        calls_after = int(inverse.factors.calls)
+                        correction_rows = [
+                            q_row
+                            for sector_audit in inverse.last_solve_audit
+                            for q_row in sector_audit["q_true_residuals"]
+                        ]
+                        return delta_fe, delta_port, {
+                            "counter_source": FACTOR_CALL_COUNTER_SOURCE,
+                            "factor_calls_before": calls_before,
+                            "factor_calls_after": calls_after,
+                            "q_true_residuals": correction_rows,
+                        }
+
+                    correction = apply_one_augmented_residual_correction(
+                        solution_values,
+                        alpha,
+                        augmented_fe_residual,
+                        augmented_port_residual,
+                        raw_inverse=raw_v15_nonrecursive_inverse,
+                        allocation_gate=allocation_gate,
+                        require_verified_solve_counter=True,
+                    )
+                    correction_packet = _save_packet(
+                        runtime,
+                        f"v15_regular_inverse_{name}_augmented_correction",
+                        {
+                            "schema": "task40extra.review_v15_augmented_reference_correction.v1",
+                            "case": name,
+                            "reference_pc_strategy": reference_pc_strategy,
+                            "initial_v15_metrics": dict(reference_pc_candidate["metrics"]),
+                            "initial_v15_raw_facts": dict(reference_pc_candidate["raw_facts"]),
+                            "finite_element_residual": augmented_fe_residual,
+                            "port_residual": augmented_port_residual,
+                            "finite_element_state_before": solution_values.copy(),
+                            "port_state_before": alpha.copy(),
+                            "finite_element_delta": correction.finite_element - solution_values,
+                            "port_delta": correction.port_amplitudes - alpha,
+                            "finite_element_state_after": correction.finite_element,
+                            "port_state_after": correction.port_amplitudes,
+                            "correction_audit": dict(correction.audit),
+                        },
+                    )
+                    correction_audit = {
+                        **dict(correction.audit),
+                        "witness_packet": correction_packet,
+                        "full_augmented_equation": True,
+                        "fe_residual_sign": "expected_rhs - independent native augmented action",
+                        "port_residual_sign": "g - H*(alpha - recover_auxiliary(u))",
+                    }
+                    corrected_checks = _verify_regular_inverse(
+                        runtime,
+                        reference,
+                        physical_rhs,
+                        physical_rhs_facts,
+                        allocation_gate=allocation_gate,
+                        reference_pc_strategy=reference_pc_strategy,
+                        _case_filter=name,
+                        _candidate_state=(
+                            correction.finite_element, correction.port_amplitudes
+                        ),
+                        _frozen_scales=current_scales,
+                        _candidate_label="corrected_v15",
+                        _allow_correction=False,
+                    )
+                    corrected_row = corrected_checks["cases"][0]
+                    candidate_rows.append(corrected_row)
+                    candidate_states.append(corrected_row["reference_pc_candidate"])
+                    final_selection = select_v15_reference_pc_candidate(candidate_states)
+                    selected_index = int(final_selection["selected_candidate_index"])
+                    row = candidate_rows[selected_index]
+                    selected_candidate = candidate_states[selected_index]
+                    row["reference_pc_initial_v15_passed"] = False
+                    row["reference_pc_admission"] = final_selection["admission"]
+                    row["reference_pc_selection"] = final_selection
+                    row["reference_pc_candidates"] = [
+                        {
+                            "state_label": candidate.get("state_label"),
+                            "metrics": candidate["metrics"],
+                            "frozen_scale_metrics": candidate["frozen_scale_metrics"],
+                            "structural_gates": candidate["structural_gates"],
+                            "raw_facts": candidate["raw_facts"],
+                            "state_sha256": candidate["state_sha256"],
+                        }
+                        for candidate in candidate_states
+                    ]
+                    row["reference_pc_correction_audit"] = correction_audit
+                    row["selected_v15_metrics"] = dict(selected_candidate["metrics"])
+                    row["selected_v15_raw_facts"] = dict(selected_candidate["raw_facts"])
+                    row["selected_state_sha256"] = selected_candidate["state_sha256"]
+                    row["passed"] = bool(final_selection["admitted"])
+                    if not row["passed"]:
+                        row["failed_gates"] = list(dict.fromkeys([
+                            *row.get("failed_gates", ()),
+                            "v15_native_augmented_residual_admission",
+                        ]))
+                else:
+                    row["reference_pc_admission"] = "V15_REFERENCE_PC_REJECTED"
+                    row["reference_pc_selection"] = initial_selection
+                    row["reference_pc_initial_v15_passed"] = False
+                    row["passed"] = False
+                    row["failed_gates"] = list(dict.fromkeys([
+                        *row.get("failed_gates", ()),
+                        "v15_structural_or_numeric_admission",
+                    ]))
+            elif reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+                row["reference_pc_admission"] = (
+                    "V15_REFERENCE_PC_PASS" if v15_selection["admitted"]
+                    else "V15_REFERENCE_PC_REJECTED"
+                )
+                row["reference_pc_selection"] = v15_selection
+                row["reference_pc_candidate_label"] = _candidate_label
+                row["selected_v15_metrics"] = dict(reference_pc_candidate["metrics"])
+                row["selected_v15_raw_facts"] = dict(reference_pc_candidate["raw_facts"])
+                row["selected_state_sha256"] = reference_pc_candidate["state_sha256"]
+                row["selected_decomposition_closure_relative"] = float(
+                    v15_budget["decomposition_closure_relative"]
+                )
+                row["port_identity_relative"] = float(
+                    reference_pc_candidate["metrics"]["alpha_closure"]
+                )
+                row["passed"] = bool(v15_selection["admitted"])
+            elif reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13 and _candidate_label == "initial":
                 initial_selection = select_reference_pc_candidate([reference_pc_candidate])
                 correction_audit = None
                 candidate_rows = [row]
@@ -1607,14 +2298,74 @@ def _verify_regular_inverse(
                     f"regular p6 inverse gates failed for {name}: "
                     f"{gate_facts['failed_gates']}; full witness saved: {row}"
                 )
-            runtime.marker(f"v13_regular_inverse_{name}_evaluated", row)
+            if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+                selected_candidate = row.get(
+                    "reference_pc_candidate", reference_pc_candidate
+                )
+                selected_metrics = row.get(
+                    "selected_v15_metrics", selected_candidate.get("metrics", {})
+                )
+                selected_raw = row.get(
+                    "selected_v15_raw_facts", selected_candidate.get("raw_facts", {})
+                )
+                selected_q_rows = selected_raw.get("q_true_residuals", ())
+                selected_closure_norm = float(
+                    selected_raw.get("decomposition_closure_norm", np.nan)
+                )
+                selected_closure_scale = float(
+                    selected_raw.get("decomposition_closure_scale", np.nan)
+                )
+                row["reference_pc_strategy"] = reference_pc_strategy
+                row["candidate_metrics"] = row.get(
+                    "reference_pc_candidates", [selected_candidate]
+                )
+                row["candidate_selection"] = row.get(
+                    "reference_pc_selection", v15_selection
+                )
+                row["selected_v15_metrics"] = dict(selected_metrics)
+                row["selected_v15_raw_facts"] = dict(selected_raw)
+                row["selected_state_sha256"] = selected_candidate.get(
+                    "state_sha256", selected_raw.get("state_sha256")
+                )
+                row["port_identity_relative"] = float(
+                    selected_metrics.get("alpha_closure", np.inf)
+                )
+                row["maximum_q_true_residual_relative"] = max(
+                    (
+                        float(q_row.get("true_residual_relative", np.inf))
+                        for q_row in selected_q_rows
+                        if isinstance(q_row, Mapping)
+                    ),
+                    default=float("inf"),
+                )
+                row["q_true_residuals_selected"] = list(selected_q_rows)
+                row["all_four_q_used"] = bool(
+                    len(selected_q_rows) == 4
+                    and {int(q_row.get("q", -1)) for q_row in selected_q_rows}
+                    == {0, 1, 2, 3}
+                )
+                row["selected_decomposition_closure_relative"] = (
+                    selected_closure_norm / selected_closure_scale
+                    if selected_closure_scale > 0.0
+                    else (
+                        0.0
+                        if selected_closure_norm == 0.0
+                        else float("inf")
+                    )
+                )
+            runtime_prefix = (
+                "v15" if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+                else "v13" if reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13
+                else "v10"
+            )
+            runtime.marker(f"{runtime_prefix}_regular_inverse_{name}_evaluated", row)
             if not row["passed"] and reference_pc_strategy == STRICT_ONLY:
                 raise ValueError(
                     f"regular p6 inverse gates failed for {name}: "
                     f"{gate_facts['failed_gates']}; full witness saved: {row}"
                 )
             records.append(row)
-            runtime.marker(f"v13_regular_inverse_{name}_complete", row)
+            runtime.marker(f"{runtime_prefix}_regular_inverse_{name}_complete", row)
         finally:
             if error is not None:
                 error.destroy()
@@ -1637,7 +2388,12 @@ def _verify_regular_inverse(
         "all_port_equation_limit": _PORT_CLOSURE_LIMIT,
         "native_action_recovery_identity_limit": _IDENTITY_LIMIT,
         "schur_port_recovery_identity_limit": _IDENTITY_LIMIT,
-        "q_true_residual_limit": _REFERENCE_RESIDUAL_LIMIT,
+        "q_true_residual_limit": (
+            float(inverse.q_solve_limit)
+            if reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+            else _REFERENCE_RESIDUAL_LIMIT
+        ),
+        "factor_probe_true_residual_limit": float(inverse.factors.factor_probe_limit),
         "physical_rhs_facts": dict(physical_rhs_facts),
         "passed": len(records) == 4 and all(row["passed"] for row in records),
     }
@@ -1690,6 +2446,9 @@ class _P6ReferencePreconditioner:
             dtype=np.float64,
         )
         self.calls = 0
+        self._v15_native_evaluation_count = 0
+        self._v15_first_packet: dict[str, Any] | None = None
+        self._v15_last_state_arrays: dict[str, Any] | None = None
         self.last_facts = {
             "maximum_q_true_residual_relative": 0.0,
             "port_identity_relative": 0.0,
@@ -1699,6 +2458,7 @@ class _P6ReferencePreconditioner:
     def _evaluate_complete_augmented_state(
         self, finite_element: np.ndarray, port_amplitudes: np.ndarray,
         fe_rhs: np.ndarray, port_rhs: np.ndarray, *, label: str,
+        capture_physical_action: bool = False,
     ) -> dict[str, Any]:
         from src.solvers.augmented_reference_correction import (
             augmented_port_state_offset,
@@ -1712,13 +2472,18 @@ class _P6ReferencePreconditioner:
             raise ValueError("V13 reference alpha candidate has the wrong port layout")
         if fe_rhs.shape != (len(self.independent),) or port_rhs.shape != (self.profile.mode_count,):
             raise ValueError("V13 augmented reference RHS has the wrong layout")
+        is_v15 = self.inverse.reference_pc_strategy == (
+            "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+        )
+        prefix = "v15" if is_v15 else "v13"
         self.allocation_gate(
-            "task40_v13_pc_complete_augmented_residual_evaluation",
+            f"task40_{prefix}_pc_complete_augmented_residual_evaluation",
             {
                 "additional_payload_bytes": 16 * (
                     3 * int(self.layout.full_rows)
                     + 4 * int(len(self.independent))
                     + 7 * int(self.profile.mode_count)
+                    + (int(self.layout.full_rows) if capture_physical_action else 0)
                 ) + max(
                     int(self.layout.full_rows),
                     int(len(self.independent)),
@@ -1729,6 +2494,9 @@ class _P6ReferencePreconditioner:
                 "native_dual_coupling_uses_actual_returned_alpha": True,
                 "port_row_uses_original_h": True,
                 "shared_solver_residual_core": True,
+                "capture_physical_action_for_v15_native_budget": bool(
+                    capture_physical_action
+                ),
                 "evaluation_label": str(label),
             },
         )
@@ -1775,11 +2543,657 @@ class _P6ReferencePreconditioner:
                 original_fe_equation_scale=original_fe_equation_scale,
                 independent_rows=self.independent,
             )
+            if capture_physical_action:
+                complete["physical_action_storage"] = np.asarray(
+                    physical_action.array_r, dtype=np.complex128
+                ).copy()
         finally:
             port_coupling.destroy()
             physical_action.destroy()
             solution.destroy()
         return complete
+
+    def _evaluate_v15_state(
+        self,
+        finite_element: np.ndarray,
+        port_amplitudes: np.ndarray,
+        fe_rhs: np.ndarray,
+        port_rhs: np.ndarray,
+        q_rows: list[dict[str, Any]],
+        *,
+        label: str,
+        frozen_alpha_scale: float | None = None,
+        retained_candidate_state_count: int = 0,
+    ) -> dict[str, Any]:
+        from src.solvers.augmented_reference_correction import (
+            NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+            augmented_state_sha256,
+            stable_euclidean_norm,
+            select_v15_reference_pc_candidate,
+        )
+
+        evaluation_started = time.perf_counter()
+        complete = self._evaluate_complete_augmented_state(
+            finite_element,
+            port_amplitudes,
+            fe_rhs,
+            port_rhs,
+            label=label,
+            capture_physical_action=True,
+        )
+        template = self.PETSc.Vec().createSeq(
+            self.layout.full_rows, comm=self.PETSc.COMM_SELF
+        )
+        try:
+            budget = _v15_native_budget_facts(
+                self.owner,
+                template,
+                fe_rhs,
+                port_rhs,
+                port_amplitudes,
+                finite_element,
+                complete["physical_action_storage"],
+                complete["finite_element_residual"],
+                self.PETSc,
+                allocation_gate=self.allocation_gate,
+                retain_lifted_errors=True,
+                retained_candidate_state_count=retained_candidate_state_count,
+            )
+        finally:
+            template.destroy()
+        complete.pop("physical_action_storage", None)
+
+        expected_qs = set(range(self.profile.q_count))
+        q_coverage = (
+            len(q_rows) == self.profile.q_count
+            and {int(row.get("q", -1)) for row in q_rows} == expected_qs
+        )
+        q_max = max(
+            (float(row.get("true_residual_relative", np.inf)) for row in q_rows),
+            default=float("inf"),
+        )
+        alpha_norm = float(complete["alpha_closure_residual_norm"])
+        alpha_scale = float(complete["alpha_closure_raw_scale"])
+        frozen_scale = (
+            alpha_scale if frozen_alpha_scale is None else float(frozen_alpha_scale)
+        )
+
+        def relative(numerator: float, denominator: float) -> float:
+            numerator = float(numerator)
+            denominator = float(denominator)
+            if not np.isfinite(numerator) or not np.isfinite(denominator):
+                return float("inf")
+            if denominator < 0.0:
+                return float("inf")
+            if denominator == 0.0:
+                return 0.0 if numerator == 0.0 else float("inf")
+            return numerator / denominator
+
+        startup = self.owner.get("regular_inverse_checks", {})
+        startup_passed = (
+            isinstance(startup, Mapping) and startup.get("passed") is True
+        )
+        closure_relative = float(budget["decomposition_closure_relative"])
+        metrics = {
+            "eliminated_fe": float(budget["eliminated_fe_relative"]),
+            "complete_augmented_fe": float(
+                budget["complete_augmented_fe_relative"]
+            ),
+            "noncancelling_budget": float(
+                budget["noncancelling_budget_relative"]
+            ),
+            "alpha_closure": relative(alpha_norm, alpha_scale),
+            "q_solve": q_max,
+        }
+        frozen_metrics = {
+            "eliminated_fe": metrics["eliminated_fe"],
+            "complete_augmented_fe": metrics["complete_augmented_fe"],
+            "noncancelling_budget": metrics["noncancelling_budget"],
+            "alpha_closure": relative(alpha_norm, frozen_scale),
+        }
+        state_hash = augmented_state_sha256(finite_element, port_amplitudes)
+        raw_facts = {
+            "effective_rhs_scale": float(budget["effective_rhs_scale"]),
+            "eliminated_fe_residual_norm": float(
+                budget["eliminated_fe_residual_norm"]
+            ),
+            "complete_augmented_fe_residual_norm": float(
+                budget["complete_augmented_fe_residual_norm"]
+            ),
+            "budget_term_norms": dict(budget["budget_terms"]),
+            "alpha_closure_residual_norm": alpha_norm,
+            "alpha_closure_original_scale": alpha_scale,
+            "alpha_closure_frozen_scale": frozen_scale,
+            "q_true_residuals": copy.deepcopy(q_rows),
+            "retained_mode_count": int(self.profile.mode_count),
+            "decomposition_closure_norm": float(
+                budget["decomposition_closure_norm"]
+            ),
+            "decomposition_closure_scale": float(
+                budget["decomposition_closure_scale"]
+            ),
+            "effective_rhs_identity_error_norm": float(
+                budget["effective_rhs_identity_error_norm"]
+            ),
+            "native_sector_facts": copy.deepcopy(budget["sector_facts"]),
+            "state_sha256": state_hash,
+        }
+        structural = {
+            "startup_regular_inverse_gates_passed": startup_passed,
+            "all_four_q_phases_covered": q_coverage,
+            "all_retained_modes_mapped_once": bool(
+                budget["all_modes_covered_once"]
+            ),
+            "native_decomposition_closure": bool(
+                np.isfinite(closure_relative) and closure_relative <= 1.0e-10
+            ),
+            "native_augmented_actions_finite": bool(
+                np.isfinite(budget["effective_rhs_scale"])
+                and np.isfinite(budget["budget_numerator"])
+                and np.isfinite(alpha_norm)
+                and np.isfinite(alpha_scale)
+            ),
+        }
+        candidate = {
+            "metrics": metrics,
+            "frozen_scale_metrics": frozen_metrics,
+            "structural_gates": structural,
+            "state_label": label,
+            "state_sha256": state_hash,
+            "raw_facts": raw_facts,
+            "frozen_denominators": {
+                "effective_rhs_scale": float(budget["effective_rhs_scale"]),
+                "alpha_closure": frozen_scale,
+            },
+            "native_evaluation_seconds": float(
+                time.perf_counter() - evaluation_started
+            ),
+        }
+        self._v15_native_evaluation_count = (
+            int(getattr(self, "_v15_native_evaluation_count", 0)) + 1
+        )
+        candidate["native_evaluation_ordinal"] = self._v15_native_evaluation_count
+        return {
+            "candidate": candidate,
+            "complete": complete,
+            "budget": budget,
+            "q_rows": copy.deepcopy(q_rows),
+            "selection": select_v15_reference_pc_candidate([candidate]),
+        }
+
+    def _save_v15_pc_packet(
+        self,
+        label: str,
+        fe_rhs: np.ndarray,
+        port_rhs: np.ndarray,
+        states: list[tuple[np.ndarray, np.ndarray, Mapping[str, Any] | None]],
+        *,
+        status: str,
+        failure: str | None = None,
+        selection: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        state_count = sum(evaluated is not None for _, _, evaluated in states)
+        n_independent = int(len(fe_rhs))
+        n_modes = int(len(port_rhs))
+        copied_vector_bytes = 16 * (
+            n_independent + n_modes
+            + len(states) * (n_independent + n_modes)
+            + state_count * (18 * n_independent + 2 * n_modes)
+        )
+        self.allocation_gate(
+            "task40_v15_pc_state_evidence_packet_staging",
+            {
+                "additional_payload_bytes": copied_vector_bytes,
+                "workspace_bytes": copied_vector_bytes,
+                "simultaneous_packet_and_writer_peak_bytes": 2 * copied_vector_bytes,
+                "candidate_state_count": len(states),
+                "evaluated_candidate_count": state_count,
+                "per_candidate_vector_equivalents": {
+                    "finite_element_and_alpha": 1,
+                    "complete_fe_residual": 1,
+                    "port_and_alpha_closure_residuals": 2,
+                    "budget_decomposition_and_native_residuals": 17,
+                },
+                "rhs_vector_equivalents": 1,
+                "hash_bound_packet_only_for_first_last_or_failure": True,
+            },
+        )
+        payload: dict[str, Any] = {
+            "schema": "task40extra.review_v15_p6_pc_state_evidence.v1",
+            "reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+            "profile": self.profile.name,
+            "profile_identity": self.profile.name,
+            "call": int(self.calls),
+            "status": status,
+            "failure": failure,
+            "candidate_selection": dict(selection or {}),
+            "candidate_facts": [],
+            "fe_rhs": np.asarray(fe_rhs, dtype=np.complex128).copy(),
+            "port_rhs": np.asarray(port_rhs, dtype=np.complex128).copy(),
+        }
+        for index, (finite_element, alpha, evaluated) in enumerate(states):
+            payload[f"candidate_{index}_finite_element_state"] = np.asarray(
+                finite_element, dtype=np.complex128
+            ).copy()
+            payload[f"candidate_{index}_port_amplitudes"] = np.asarray(
+                alpha, dtype=np.complex128
+            ).copy()
+            if evaluated is None:
+                payload["candidate_facts"].append({"evaluation_available": False})
+                continue
+            candidate = evaluated["candidate"]
+            complete = evaluated["complete"]
+            budget = evaluated["budget"]
+            facts = {
+                "evaluation_available": True,
+                "metrics": dict(candidate["metrics"]),
+                "frozen_scale_metrics": dict(candidate["frozen_scale_metrics"]),
+                "raw_facts": dict(candidate["raw_facts"]),
+                "structural_gates": dict(candidate["structural_gates"]),
+                "state_sha256": candidate["state_sha256"],
+                "native_evaluation_seconds": candidate["native_evaluation_seconds"],
+                "native_evaluation_ordinal": candidate["native_evaluation_ordinal"],
+            }
+            payload["candidate_facts"].append(facts)
+            for field, key in (
+                ("finite_element_residual", "complete_augmented_fe_residual"),
+                ("port_residual", "complete_augmented_port_residual"),
+                ("alpha_closure_residual", "alpha_closure_residual"),
+            ):
+                value = complete.get(field)
+                if value is not None:
+                    payload[f"candidate_{index}_{key}"] = np.asarray(
+                        value, dtype=np.complex128
+                    ).copy()
+            for key in (
+                "d_b",
+                "d_A",
+                "effective_rhs",
+                "port_elimination_action",
+                "sum_lifted_effective_rhs",
+                "sum_lifted_native_actions",
+                "global_native_action_independent",
+                "modal_alpha_defect_action",
+                "eliminated_fe_residual_direct",
+                "eliminated_fe_residual_decomposed",
+                "complete_fe_residual_decomposed",
+            ):
+                value = budget.get(key)
+                if value is not None:
+                    payload[f"candidate_{index}_{key}"] = np.asarray(
+                        value, dtype=np.complex128
+                    ).copy()
+            for sector_index, value in enumerate(
+                budget.get("lifted_sector_errors") or ()
+            ):
+                payload[f"candidate_{index}_lifted_sector_error_{sector_index}"] = (
+                    np.asarray(value, dtype=np.complex128).copy()
+                )
+            for field, collection_key in (
+                ("lifted_sector_effective_rhs", "lifted_sector_effective_rhs"),
+                ("lifted_sector_native_action", "lifted_sector_native_actions"),
+            ):
+                for sector_index, value in enumerate(budget.get(collection_key) or ()):
+                    payload[f"candidate_{index}_{field}_{sector_index}"] = np.asarray(
+                        value, dtype=np.complex128
+                    ).copy()
+        return _save_packet(self.runtime, label, payload)
+
+    def _record_v15_pc_failure(
+        self,
+        reason: str,
+        fe_rhs: np.ndarray,
+        port_rhs: np.ndarray,
+        states: list[tuple[np.ndarray, np.ndarray, Mapping[str, Any] | None]],
+        *,
+        selection: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        packet = self._save_v15_pc_packet(
+            f"v15_pc_failure_call{self.calls}",
+            fe_rhs,
+            port_rhs,
+            states,
+            status="REJECTED",
+            failure=reason,
+            selection=selection,
+        )
+        candidates = [
+            evaluated["candidate"]
+            for _, _, evaluated in states
+            if evaluated is not None
+        ]
+        self.last_facts = {
+            "call": int(self.calls),
+            "reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+            "reference_pc_admission": "V15_REFERENCE_PC_REJECTED",
+            "failure": reason,
+            "candidate_metrics": candidates,
+            "candidate_selection": dict(selection or {}),
+            "failure_evidence_packet": packet,
+            "native_evaluation_count_cumulative": int(
+                self._v15_native_evaluation_count
+            ),
+            "per_pc_arrays_saved": False,
+            "passed": False,
+        }
+        self.runtime.marker("v15_p6_reference_pc_apply_rejected", self.last_facts)
+        return packet
+
+    def _apply_v15(self, source: Any, source_values: np.ndarray):
+        from src.solvers.augmented_reference_correction import (
+            FACTOR_CALL_COUNTER_SOURCE,
+            MAX_EXTRA_MAT_SOLVES,
+            NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+            apply_one_augmented_residual_correction,
+            select_v15_reference_pc_candidate,
+        )
+
+        self.calls += 1
+        pc_call = self.calls
+        self._v15_last_state_arrays = None
+        self.allocation_gate(
+            "task40_v15_pc_reference_rhs_injection",
+            {
+                "additional_payload_bytes": 16 * (
+                    int(self.layout.full_rows)
+                    + len(self.independent)
+                    + 2 * int(self.profile.mode_count)
+                ),
+                "workspace_bytes": 0,
+                "target_injection_is_full_storage": True,
+                "same_actual_rhs_used_for_initial_and_one_correction": True,
+            },
+        )
+        injected = self.target_action.inject_trace_port(source_values)
+        fe_rhs = np.asarray(injected[self.independent], dtype=np.complex128)
+        port_rhs = np.asarray(
+            source_values[self.target_condensed.active_rows :], dtype=np.complex128
+        ).copy()
+        factor_calls_before = int(self.inverse.factors.calls)
+        try:
+            initial_fe, initial_alpha = self.inverse.apply_augmented(
+                fe_rhs, port_rhs=port_rhs
+            )
+        except Exception as exc:
+            self._record_v15_pc_failure(
+                f"initial_raw_inverse_failed:{type(exc).__name__}:{exc}",
+                fe_rhs,
+                port_rhs,
+                [],
+            )
+            raise
+        factor_calls_after = int(self.inverse.factors.calls)
+        if factor_calls_after - factor_calls_before != self.profile.q_count:
+            raise RuntimeError(
+                "initial V15 PC raw inverse did not perform one MatSolve per q phase"
+            )
+        initial_q_rows = copy.deepcopy(
+            [
+                row
+                for sector in self.inverse.last_solve_audit
+                for row in sector["q_true_residuals"]
+            ]
+        )
+        expected_qs = set(range(self.profile.q_count))
+        try:
+            initial_eval = self._evaluate_v15_state(
+                initial_fe,
+                initial_alpha,
+                fe_rhs,
+                port_rhs,
+                initial_q_rows,
+                label=f"initial_pc_{pc_call}",
+            )
+        except Exception as exc:
+            self._record_v15_pc_failure(
+                f"initial_native_evaluation_failed:{type(exc).__name__}:{exc}",
+                fe_rhs,
+                port_rhs,
+                [(initial_fe, initial_alpha, None)],
+            )
+            raise
+        candidate_states = [initial_eval["candidate"]]
+        candidate_values = [(initial_fe, initial_alpha, initial_eval)]
+        initial_selection = initial_eval["selection"]
+        final_selection = initial_selection
+        correction_audit = None
+        correction_factor_calls = None
+        correction_q_rows: list[dict[str, Any]] = []
+        if not initial_selection["admitted"]:
+            if not all(initial_eval["candidate"]["structural_gates"].values()):
+                self._record_v15_pc_failure(
+                    "initial_structural_gates_failed",
+                    fe_rhs,
+                    port_rhs,
+                    [(initial_fe, initial_alpha, initial_eval)],
+                    selection=initial_selection,
+                )
+                raise FloatingPointError(
+                    "V15 PC structural gates failed; bounded correction is forbidden"
+                )
+
+            def raw_nonrecursive_inverse(fe_error, port_error):
+                calls_before = int(self.inverse.factors.calls)
+                delta_fe, delta_port = self.inverse.apply_augmented(
+                    fe_error, port_rhs=port_error
+                )
+                calls_after = int(self.inverse.factors.calls)
+                rows = [
+                    row
+                    for sector in self.inverse.last_solve_audit
+                    for row in sector["q_true_residuals"]
+                ]
+                return delta_fe, delta_port, {
+                    "counter_source": FACTOR_CALL_COUNTER_SOURCE,
+                    "factor_calls_before": calls_before,
+                    "factor_calls_after": calls_after,
+                    "q_true_residuals": copy.deepcopy(rows),
+                }
+
+            try:
+                correction = apply_one_augmented_residual_correction(
+                    initial_fe,
+                    initial_alpha,
+                    initial_eval["complete"]["finite_element_residual"],
+                    initial_eval["complete"]["port_residual"],
+                    raw_inverse=raw_nonrecursive_inverse,
+                    allocation_gate=self.allocation_gate,
+                    require_verified_solve_counter=True,
+                )
+            except Exception as exc:
+                self._record_v15_pc_failure(
+                    f"bounded_correction_failed:{type(exc).__name__}:{exc}",
+                    fe_rhs,
+                    port_rhs,
+                    [(initial_fe, initial_alpha, initial_eval)],
+                    selection=initial_selection,
+                )
+                raise
+            correction_audit = dict(correction.audit)
+            correction_q_rows = list(correction_audit.get("q_true_residuals", ()))
+            correction_factor_calls = {
+                "before": correction_audit.get("factor_calls_before"),
+                "after": correction_audit.get("factor_calls_after"),
+                "delta": correction_audit.get("extra_mat_solve_count"),
+            }
+            if correction_audit.get("attempted"):
+                if correction_audit.get("extra_mat_solve_count") != MAX_EXTRA_MAT_SOLVES:
+                    raise RuntimeError("V15 PC correction did not use exactly four extra MatSolves")
+                try:
+                    correction_eval = self._evaluate_v15_state(
+                        correction.finite_element,
+                        correction.port_amplitudes,
+                        fe_rhs,
+                        port_rhs,
+                        correction_q_rows,
+                        label=f"corrected_pc_{pc_call}",
+                        frozen_alpha_scale=float(
+                            initial_eval["candidate"]["raw_facts"][
+                                "alpha_closure_original_scale"
+                            ]
+                        ),
+                        retained_candidate_state_count=1,
+                    )
+                except Exception as exc:
+                    self._record_v15_pc_failure(
+                        f"corrected_native_evaluation_failed:{type(exc).__name__}:{exc}",
+                        fe_rhs,
+                        port_rhs,
+                        [
+                            (initial_fe, initial_alpha, initial_eval),
+                            (correction.finite_element, correction.port_amplitudes, None),
+                        ],
+                        selection=initial_selection,
+                    )
+                    raise
+            else:
+                correction_eval = self._evaluate_v15_state(
+                    correction.finite_element,
+                    correction.port_amplitudes,
+                    fe_rhs,
+                    port_rhs,
+                    initial_q_rows,
+                    label=f"zero_correction_pc_{pc_call}",
+                    frozen_alpha_scale=float(
+                        initial_eval["candidate"]["raw_facts"][
+                            "alpha_closure_original_scale"
+                        ]
+                    ),
+                    retained_candidate_state_count=1,
+                )
+            candidate_states.append(correction_eval["candidate"])
+            candidate_values.append(
+                (
+                    correction.finite_element,
+                    correction.port_amplitudes,
+                    correction_eval,
+                )
+            )
+            final_selection = select_v15_reference_pc_candidate(candidate_states)
+            if not final_selection["admitted"]:
+                self._record_v15_pc_failure(
+                    "initial_and_corrected_candidates_rejected",
+                    fe_rhs,
+                    port_rhs,
+                    candidate_values,
+                    selection=final_selection,
+                )
+                raise FloatingPointError(
+                    "V15 PC initial and one corrected complete FE/alpha state failed: "
+                    f"{final_selection}"
+                )
+
+        selected_index = int(final_selection["selected_candidate_index"])
+        solution_values, alpha, selected_eval = candidate_values[selected_index]
+        selected_candidate = candidate_states[selected_index]
+        selected_metrics = dict(selected_candidate["metrics"])
+        selected_raw = dict(selected_candidate["raw_facts"])
+        selected_q_rows = list(selected_raw["q_true_residuals"])
+        self.allocation_gate(
+                "task40_v15_pc_selected_output",
+            {
+                "additional_payload_bytes": 16 * (
+                    int(self.target_condensed.active_rows)
+                    + 2 * int(self.profile.mode_count)
+                ),
+                "workspace_bytes": 0,
+                "selected_complete_fe_alpha_state": True,
+                    "last_call_state_evidence_retained": True,
+                    "retained_candidate_state_count": len(candidate_values),
+                    "retained_candidate_bytes": 16
+                    * len(candidate_values)
+                    * (
+                        8 * int(len(self.independent))
+                        + 2 * int(self.profile.mode_count)
+                    ),
+                    "evidence_state_index_matches_candidate_selection": list(
+                        range(len(candidate_values))
+                    ),
+            },
+        )
+        output = source.duplicate()
+        try:
+            active = np.zeros(self.target_condensed.active_rows, dtype=np.complex128)
+            constraints = self.target_condensed.trace_constraints
+            for original in constraints.owned_active_original_dofs:
+                row = int(original)
+                active[constraints.original_to_active[row]] = solution_values[
+                    self.reference_row[row]
+                ]
+            _assign_vector_storage(
+                output, np.concatenate((active, np.asarray(alpha, dtype=np.complex128)))
+            )
+            q_relative = float(selected_metrics["q_solve"])
+            q_coverage = (
+                len(selected_q_rows) == self.profile.q_count
+                and {int(row["q"]) for row in selected_q_rows} == expected_qs
+            )
+            packet = None
+            if pc_call == 1:
+                packet = self._save_v15_pc_packet(
+                    "v15_pc_first_apply",
+                    fe_rhs,
+                    port_rhs,
+                    candidate_values,
+                    status="PASS",
+                    selection=final_selection,
+                )
+                self._v15_first_packet = packet
+            self._v15_last_state_arrays = {
+                "candidate_values": candidate_values,
+                "fe_rhs": fe_rhs,
+                "port_rhs": port_rhs,
+                "candidate_selection": final_selection,
+            }
+            self.last_facts = {
+                "call": pc_call,
+                "input_space": f"target_p6_active_trace_plus_{self.profile.mode_count}_ports",
+                "reference_rhs_injected_by_target_JH": True,
+                "target_active_rows": int(self.target_condensed.active_rows),
+                "target_port_rows": int(self.target_condensed.appended_rows),
+                "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+                "reference_pc_admission": final_selection["admission"],
+                "initial_candidate_passed": bool(initial_selection["admitted"]),
+                "selected_candidate_index": selected_index,
+                "selected_v15_metrics": selected_metrics,
+                "selected_v15_raw_facts": selected_raw,
+                "selected_state_sha256": selected_candidate["state_sha256"],
+                "selected_decomposition_closure_relative": float(
+                    selected_eval["budget"]["decomposition_closure_relative"]
+                ),
+                "port_identity_relative": float(selected_metrics["alpha_closure"]),
+                "maximum_q_true_residual_relative": q_relative,
+                "q_true_residual_limit": self.inverse.q_solve_limit,
+                "q_true_residuals_initial": initial_q_rows,
+                "q_true_residuals_correction": correction_q_rows,
+                "q_true_residuals_selected": selected_q_rows,
+                "all_four_q_used": q_coverage,
+                "initial_factor_calls": {
+                    "before": factor_calls_before,
+                    "after": factor_calls_after,
+                    "delta": factor_calls_after - factor_calls_before,
+                },
+                "correction_factor_calls": correction_factor_calls,
+                "candidate_metrics": candidate_states,
+                "candidate_selection": final_selection,
+                "correction_audit": correction_audit,
+                "native_evaluation_count_this_call": len(candidate_states),
+                "native_evaluation_count_cumulative": int(
+                    self._v15_native_evaluation_count
+                ),
+                "native_evaluation_seconds": [
+                    float(candidate["native_evaluation_seconds"])
+                    for candidate in candidate_states
+                ],
+                "first_call_evidence_packet": packet,
+                "per_pc_arrays_saved": False,
+            }
+            self.runtime.marker("v15_p6_reference_pc_apply_complete", self.last_facts)
+            self.runtime.sample(f"v15_p6_reference_pc_{self.calls}_after")
+            return output
+        except BaseException:
+            output.destroy()
+            raise
 
     def _apply_v13(self, source: Any, source_values: np.ndarray):
         from src.solvers.augmented_reference_correction import (
@@ -2100,6 +3514,8 @@ class _P6ReferencePreconditioner:
             raise ValueError("Task40 V10 p6 preconditioner input has the wrong retained layout")
         if self.inverse.reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
             return self._apply_v13(source, source_values)
+        if self.inverse.reference_pc_strategy == "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15":
+            return self._apply_v15(source, source_values)
         injected = self.target_action.inject_trace_port(source_values)
         port_rhs = source_values[self.target_condensed.active_rows :].copy()
         solution_values, alpha = self.inverse.apply_augmented(
@@ -2174,13 +3590,43 @@ class _P6ReferencePreconditioner:
             reference_solution.destroy()
 
     def detach(self) -> dict[str, Any]:
-        facts = {"calls": int(self.calls), "last_facts": dict(self.last_facts)}
+        last_packet = None
+        if self.inverse is not None and self.inverse.reference_pc_strategy == (
+            "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+        ):
+            if self.last_facts.get("reference_pc_admission") == "V15_REFERENCE_PC_REJECTED":
+                last_packet = self.last_facts.get("failure_evidence_packet")
+            elif self._v15_last_state_arrays is not None:
+                if self.calls == 1 and self._v15_first_packet is not None:
+                    last_packet = {
+                        **self._v15_first_packet,
+                        "reused_first_call_evidence": True,
+                    }
+                else:
+                    last = self._v15_last_state_arrays
+                    last_packet = self._save_v15_pc_packet(
+                        "v15_pc_last_apply",
+                        last["fe_rhs"],
+                        last["port_rhs"],
+                        last["candidate_values"],
+                        status="PASS",
+                        selection=last["candidate_selection"],
+                    )
+                self.last_facts["last_call_evidence_packet"] = last_packet
+        facts = {
+            "calls": int(self.calls),
+            "v15_native_evaluation_count": int(self._v15_native_evaluation_count),
+            "first_call_evidence_packet": self._v15_first_packet,
+            "last_call_evidence_packet": last_packet,
+            "last_facts": dict(self.last_facts),
+        }
         self.target_action = None
         self.target_condensed = None
         self.reference = None
         self.layout = None
         self.inverse = None
         self.owner = None
+        self._v15_last_state_arrays = None
         return facts
 
 
@@ -2194,12 +3640,16 @@ def _candidate_contract(
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
         TASK40_B0_P6_V13_RUN_ID,
+        TASK40_B0_P6_V15_RUN_ID,
         TASK40_COMPARISON_GROUP,
+        TASK40_E1_V15_RUN_ID,
         TASK40_GX560_V11_P6_RUN_ID,
+        TASK40_GX560_V15_RUN_ID,
         TASK40_GX784_V11_P6_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
         TASK40_V13_REFERENCE_PC_STRATEGY,
+        TASK40_V15_REFERENCE_PC_STRATEGY,
         TASK40_STRICT_REFERENCE_PC_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
@@ -2207,6 +3657,9 @@ def _candidate_contract(
         TASK40_V10_P6_REFERENCE_PROFILE,
         TASK40_V11_P6_GX560_PROFILE,
         TASK40_V11_P6_GX784_PROFILE,
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
     )
     from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
     from src.runners.task40_v10_campaign import CAMPAIGN_SECONDS, CLOSEOUT_RESERVE_SECONDS
@@ -2221,18 +3674,30 @@ def _candidate_contract(
         TASK40_V10_P6_REFERENCE_PROFILE: (
             (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
             (TASK40_B0_P6_V13_RUN_ID, "B0_CANDIDATE", 16.0),
+            None,
         ),
         TASK40_V11_P6_GX560_PROFILE: (
             (TASK40_GX560_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
             (TASK40_GX560_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
+            None,
         ),
         TASK40_V11_P6_GX784_PROFILE: (
             (TASK40_GX784_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
             (TASK40_GX784_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
+            None,
+        ),
+        TASK40_V15_P6_B0_PROFILE: (
+            None, None, (TASK40_B0_P6_V15_RUN_ID, "B0_CANDIDATE", 16.0),
+        ),
+        TASK40_V15_P6_GX560_PROFILE: (
+            None, None, (TASK40_GX560_V15_RUN_ID, "Q4_ORIGINAL", 16.0),
+        ),
+        TASK40_V15_P6_E1_PROFILE: (
+            None, None, (TASK40_E1_V15_RUN_ID, "Q4_ORIGINAL", 16.0),
         ),
     }
     try:
-        strict_identity, v13_identity = case_identity[profile_identity]
+        strict_identity, v13_identity, v15_identity = case_identity[profile_identity]
     except KeyError as exc:
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
     reference_pc_strategy = str(
@@ -2242,9 +3707,15 @@ def _candidate_contract(
         solver.get("task40_q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM")
     )
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
-    expected_run_id, expected_stage, expected_memory_limit = (
-        v13_identity if is_v13 else strict_identity
+    is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+    expected_identity = (
+        v15_identity if is_v15 else v13_identity if is_v13 else strict_identity
     )
+    if expected_identity is None:
+        raise ValueError(
+            f"Task40 profile {profile_identity} does not support {reference_pc_strategy}"
+        )
+    expected_run_id, expected_stage, expected_memory_limit = expected_identity
     input_timeout = execution.get("timeout_seconds")
     timeout_passed = input_timeout == CAMPAIGN_SECONDS
     is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
@@ -2252,6 +3723,9 @@ def _candidate_contract(
         "run_id": resolved.get("run_id") == expected_run_id,
         "reference_pc_strategy": reference_pc_strategy
         == (
+            TASK40_V15_REFERENCE_PC_STRATEGY
+            if is_v15
+            else
             TASK40_V13_REFERENCE_PC_STRATEGY
             if is_v13
             else TASK40_STRICT_REFERENCE_PC_STRATEGY
@@ -2293,7 +3767,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
-            "task40extra.review_v13_p6_reference_worker_contract.v1"
+            "task40extra.review_v15_p6_reference_worker_contract.v1"
+            if is_v15
+            else "task40extra.review_v13_p6_reference_worker_contract.v1"
             if is_v13
             else "task40extra.review_v10_b0_candidate_worker_contract.v1"
             if is_v10
@@ -2330,6 +3806,9 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V10_P6_REFERENCE_PROFILE,
         TASK40_V11_P6_GX560_PROFILE,
         TASK40_V11_P6_GX784_PROFILE,
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -2373,6 +3852,7 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.geometry.task40_nonseparable_plan import (
         TASK40_V13_REFERENCE_PC_STRATEGY,
+        TASK40_V15_REFERENCE_PC_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
     from src.solvers.task40_v10_p6_periodic_profile import (
@@ -2391,6 +3871,7 @@ def run_task40_v10_p6_reference_worker(
     if reference_pc_strategy not in REFERENCE_PC_STRATEGIES:
         raise ValueError(f"unsupported Task40 reference-PC strategy: {reference_pc_strategy!r}")
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
+    is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
     q_assembly_strategy = str(
         resolved_payload.get("solver", {}).get(
             "task40_q_assembly_strategy", Q_ASSEMBLY_LEGACY
@@ -2411,21 +3892,28 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V10_P6_REFERENCE_PROFILE,
         TASK40_V11_P6_GX560_PROFILE,
         TASK40_V11_P6_GX784_PROFILE,
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
     if type(share_transform_bank) is not bool:
         raise TypeError("V12 transform-bank selection must be an explicit boolean")
     periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
     is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
-    case_label = (
-        "b0"
-        if is_v10
-        else "gx560"
-        if profile_identity == TASK40_V11_P6_GX560_PROFILE
-        else "gx784"
-    )
+    case_labels = {
+        TASK40_V10_P6_REFERENCE_PROFILE: "b0",
+        TASK40_V11_P6_GX560_PROFILE: "gx560",
+        TASK40_V11_P6_GX784_PROFILE: "gx784",
+        TASK40_V15_P6_B0_PROFILE: "b0",
+        TASK40_V15_P6_GX560_PROFILE: "gx560",
+        TASK40_V15_P6_E1_PROFILE: "e1",
+    }
+    case_label = case_labels[profile_identity]
     evidence_prefix = (
-        "v13_p6_reference"
+        "v15_p6_reference"
+        if is_v15
+        else "v13_p6_reference"
         if is_v13
         else "v10_candidate"
         if is_v10
@@ -2434,7 +3922,9 @@ def run_task40_v10_p6_reference_worker(
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
-            "task40extra.review_v13_p6_reference_worker_summary.v1"
+            "task40extra.review_v15_p6_reference_worker_summary.v1"
+            if is_v15
+            else "task40extra.review_v13_p6_reference_worker_summary.v1"
             if is_v13
             else
             "task40extra.review_v10_b0_candidate_worker_summary.v1"
@@ -2486,7 +3976,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v13_{case_label}_p6_reference"
+                f"task40_review_v15_{case_label}_p6_reference"
+                if is_v15
+                else f"task40_review_v13_{case_label}_p6_reference"
                 if is_v13
                 else "task40_review_v10_integrated_p6_engineering"
                 if is_v10
@@ -2937,6 +4429,7 @@ def run_task40_v10_p6_reference_worker(
         ref_rhs = None
         if not regular_checks["passed"]:
             raise ValueError("complete regular p6 inverse checks did not pass")
+        reference["regular_inverse_checks"] = regular_checks
         runtime.marker("v10_regular_reference_inverse_qualified", regular_checks)
 
         physical_rhs, rhs_facts = build_physical_rhs(target_bundle)

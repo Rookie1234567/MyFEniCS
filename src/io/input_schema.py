@@ -1049,6 +1049,9 @@ FIELD_SPECS: Final = (
             "task40extra_v10_p4_balh_control_v1",
             "task40extra_v11_p6_y_orbit_gx560_reference_v1",
             "task40extra_v11_p6_y_orbit_gx784_reference_v1",
+            "task40extra_v15_p6_y_orbit_b0_reference_v1",
+            "task40extra_v15_p6_y_orbit_gx560_reference_v1",
+            "task40extra_v15_p6_y_orbit_e1_reference_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),
@@ -1058,12 +1061,18 @@ FIELD_SPECS: Final = (
         "enum",
         "none",
         ("full3d_iterative",),
-        "Task40完整参考逆的strict资格或V13有界不精确PC资格",
+        "Task40完整参考逆的strict、V13有界不精确或V15原方程准入策略",
         "task40_reference_pc_strategy",
         '"STRICT_ONLY"',
         default="STRICT_ONLY",
-        allowed=("STRICT_ONLY", "STRICT_THEN_BOUNDED_INEXACT_V13"),
-        constraints=("bounded strategy is allowed only for exact Task40 V13 run identities",),
+        allowed=(
+            "STRICT_ONLY",
+            "STRICT_THEN_BOUNDED_INEXACT_V13",
+            "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+        ),
+        constraints=(
+            "V13 and V15 are allowed only for their exact Task40 run/profile identities",
+        ),
     ),
     _f(
         "solver.task40_q_assembly_strategy",
@@ -1075,7 +1084,9 @@ FIELD_SPECS: Final = (
         '"LEGACY_GLOBAL_CSR_SUM"',
         default="LEGACY_GLOBAL_CSR_SUM",
         allowed=("LEGACY_GLOBAL_CSR_SUM", "PREALLOCATED_CSR_PATTERN_V13"),
-        constraints=("only an explicitly selected Task40 V13 case may use the preallocated pattern",),
+        constraints=(
+            "V15 requires LEGACY_GLOBAL_CSR_SUM; PREALLOCATED_CSR_PATTERN_V13 is V13-only",
+        ),
     ),
     _f(
         "solver.memory_policy",

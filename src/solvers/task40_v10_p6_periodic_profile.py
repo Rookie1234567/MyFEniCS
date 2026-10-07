@@ -50,7 +50,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
-                "task40extra.review_v10_p6_periodic_profile.v1"
+                "task40extra.review_v15_p6_periodic_profile.v1"
+                if self.name.startswith("task40extra_v15_")
+                else "task40extra.review_v10_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v10_")
                 else "task40extra.review_v11_p6_periodic_profile.v1"
             ),
@@ -139,8 +141,55 @@ TASK40_V11_P6_GX784_PROFILE = Task40V10P6PeriodicProfile(
     sector_port_counts=(204, 136),
 )
 
+TASK40_V15_P6_B0_PROFILE = Task40V10P6PeriodicProfile(
+    name="task40extra_v15_p6_y_orbit_b0_reference_v1",
+)
+
+TASK40_V15_P6_GX560_PROFILE = Task40V10P6PeriodicProfile(
+    name="task40extra_v15_p6_y_orbit_gx560_reference_v1",
+    global_cell_axes=(10, 4, 14),
+    global_cell_count=560,
+    global_storage_rows=380040,
+    global_independent_rows=365760,
+    global_interior_rows=252000,
+    global_trace_rows=113760,
+    rows_per_q=91440,
+    trace_rows_per_q=28440,
+    local_cell_count=280,
+    local_storage_rows=195132,
+    local_independent_rows=182880,
+    local_interior_rows=126000,
+    local_trace_rows=56880,
+    local_width_per_q=91440,
+    q_port_counts=(68, 68, 136, 68),
+    sector_port_counts=(204, 136),
+)
+
+TASK40_V15_P6_E1_PROFILE = Task40V10P6PeriodicProfile(
+    name="task40extra_v15_p6_y_orbit_e1_reference_v1",
+    global_cell_axes=(10, 4, 19),
+    global_cell_count=760,
+    global_storage_rows=514710,
+    global_independent_rows=495360,
+    global_interior_rows=342000,
+    global_trace_rows=153360,
+    rows_per_q=123840,
+    trace_rows_per_q=38340,
+    local_cell_count=380,
+    local_storage_rows=264282,
+    local_independent_rows=247680,
+    local_interior_rows=171000,
+    local_trace_rows=76680,
+    local_width_per_q=123840,
+    q_port_counts=(84, 168, 168, 168),
+    sector_port_counts=(252, 336),
+)
+
 TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V10_P6_PROFILE.name: TASK40_V10_P6_PROFILE,
     TASK40_V11_P6_GX560_PROFILE.name: TASK40_V11_P6_GX560_PROFILE,
     TASK40_V11_P6_GX784_PROFILE.name: TASK40_V11_P6_GX784_PROFILE,
+    TASK40_V15_P6_B0_PROFILE.name: TASK40_V15_P6_B0_PROFILE,
+    TASK40_V15_P6_GX560_PROFILE.name: TASK40_V15_P6_GX560_PROFILE,
+    TASK40_V15_P6_E1_PROFILE.name: TASK40_V15_P6_E1_PROFILE,
 }

@@ -45,10 +45,17 @@ TASK40_GX784_V11_P6_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_p6_y_orbit_v1
 TASK40_B0_P6_V13_RUN_ID = "task40extra_0p7nm_b0_p6_reference_v13"
 TASK40_GX560_V13_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_reference_v13"
 TASK40_GX784_V13_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_p6_reference_v13"
+TASK40_B0_P6_V15_RUN_ID = "task40extra_0p7nm_b0_p6_reference_v15"
+TASK40_GX560_V15_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_reference_v15"
+TASK40_E1_V15_RUN_ID = "task40extra_0p7nm_nonseparable_e1_p6_reference_v15"
 TASK40_V13_RUN_IDS = frozenset(
     {TASK40_B0_P6_V13_RUN_ID, TASK40_GX560_V13_RUN_ID, TASK40_GX784_V13_RUN_ID}
 )
+TASK40_V15_RUN_IDS = frozenset(
+    {TASK40_B0_P6_V15_RUN_ID, TASK40_GX560_V15_RUN_ID, TASK40_E1_V15_RUN_ID}
+)
 TASK40_V13_REFERENCE_PC_STRATEGY = "STRICT_THEN_BOUNDED_INEXACT_V13"
+TASK40_V15_REFERENCE_PC_STRATEGY = "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
 TASK40_STRICT_REFERENCE_PC_STRATEGY = "STRICT_ONLY"
 TASK40_Q_ASSEMBLY_LEGACY = "LEGACY_GLOBAL_CSR_SUM"
 TASK40_Q_ASSEMBLY_PREALLOCATED_V13 = "PREALLOCATED_CSR_PATTERN_V13"
@@ -63,6 +70,8 @@ def task40_q_assembly_strategy_is_allowed(
     """Share the reviewed assembly policy across validation and execution routes."""
     if reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY:
         return q_assembly_strategy in TASK40_V13_Q_ASSEMBLY_STRATEGIES
+    if reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY:
+        return q_assembly_strategy == TASK40_Q_ASSEMBLY_LEGACY
     if reference_pc_strategy == TASK40_STRICT_REFERENCE_PC_STRATEGY:
         return q_assembly_strategy == TASK40_Q_ASSEMBLY_LEGACY
     return False
@@ -91,6 +100,9 @@ TASK40_MANUAL_BOUNDS_BY_RUN_ID = {
     TASK40_B0_P6_V13_RUN_ID: (9, 3),
     TASK40_GX560_V13_RUN_ID: (8, 2),
     TASK40_GX784_V13_RUN_ID: (8, 2),
+    TASK40_B0_P6_V15_RUN_ID: (9, 3),
+    TASK40_GX560_V15_RUN_ID: (8, 2),
+    TASK40_E1_V15_RUN_ID: (10, 3),
 }
 TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH = {
     "E1": (9, 2),
@@ -117,6 +129,9 @@ TASK40_RUNS = {
     TASK40_B0_P6_V13_RUN_ID: "B0",
     TASK40_GX560_V13_RUN_ID: "GX560",
     TASK40_GX784_V13_RUN_ID: "GX784",
+    TASK40_B0_P6_V15_RUN_ID: "B0",
+    TASK40_GX560_V15_RUN_ID: "GX560",
+    TASK40_E1_V15_RUN_ID: "E1",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
 }
 TASK40_SI_N = complex(0.9998851703688496, 4.3236152269189515e-6)

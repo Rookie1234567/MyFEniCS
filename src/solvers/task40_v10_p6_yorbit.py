@@ -737,10 +737,24 @@ class CompleteTwoCellInverse:
                     self.factors.csr_matrices[q] @ modal_solution - modal_rhs,
                     dtype=np.complex128,
                 )
-                modal_rhs_norm = float(np.linalg.norm(modal_rhs))
-                modal_residual_relative = float(np.linalg.norm(modal_residual)) / max(
-                    modal_rhs_norm, np.finfo(np.float64).tiny
-                )
+                if self.reference_pc_strategy == (
+                    "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+                ):
+                    from .augmented_reference_correction import stable_euclidean_norm
+
+                    modal_rhs_norm = stable_euclidean_norm(modal_rhs)
+                    modal_residual_norm = stable_euclidean_norm(modal_residual)
+                    modal_residual_relative = (
+                        modal_residual_norm / modal_rhs_norm
+                        if modal_rhs_norm > 0.0
+                        else (0.0 if modal_residual_norm == 0.0 else float("inf"))
+                    )
+                else:
+                    modal_rhs_norm = float(np.linalg.norm(modal_rhs))
+                    modal_residual_norm = float(np.linalg.norm(modal_residual))
+                    modal_residual_relative = modal_residual_norm / max(
+                        modal_rhs_norm, np.finfo(np.float64).tiny
+                    )
                 if (
                     not np.isfinite(modal_residual_relative)
                     or modal_residual_relative > self.q_solve_limit
@@ -755,6 +769,7 @@ class CompleteTwoCellInverse:
                         "branch": branch,
                         "rows": int(modal_rhs.size),
                         "rhs_norm": modal_rhs_norm,
+                        "true_residual_norm": modal_residual_norm,
                         "true_residual_relative": modal_residual_relative,
                         "limit": self.q_solve_limit,
                         "strict_limit": 1.0e-10,

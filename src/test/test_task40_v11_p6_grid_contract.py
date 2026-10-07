@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 import textwrap
@@ -331,8 +332,37 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
     assert source_window["old_costs_and_unknowns_preserved"] is True
     assert source_window["v10_historical_charge_seconds_preserved"] > 0.0
 
+    # The immutable V11 campaign has expired. This no-FE route fixture needs
+    # a live budget so the public launcher can traverse its normal admission
+    # path; rebase only a temporary copy while preserving the official files.
+    from src.runners.workflow_timebase import clock_sample
+
+    fixture_sample = clock_sample(include_boot_id=True)
+
+    def utc_stamp(utc_ns):
+        whole_seconds, nanoseconds = divmod(int(utc_ns), 1_000_000_000)
+        whole = datetime.fromtimestamp(whole_seconds, tz=timezone.utc)
+        return f"{whole:%Y-%m-%dT%H:%M:%S}.{nanoseconds:09d}Z"
+
+    fixture_window = dict(source_window)
+    fixture_window["t0_utc"] = utc_stamp(fixture_sample["utc_ns"])
+    fixture_window["deadline_utc"] = utc_stamp(
+        fixture_sample["utc_ns"] + 86_400 * 1_000_000_000
+    )
+    fixture_window["first_full_three_clock_sample"] = fixture_sample
+    fixture_window["initial_boot_id"] = fixture_sample["boot_id"]
+    fixture_window["bootstrap_utc_elapsed_seconds"] = 0.0
+    fixture_window["bootstrap_boottime_elapsed_seconds"] = 0.0
+    fixture_window["test_fixture_clock_rebased"] = True
+    fixture_window["test_fixture_source_window_sha256"] = hashlib.sha256(
+        source_window_bytes
+    ).hexdigest()
+    fixture_window_bytes = json.dumps(
+        fixture_window, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+
     fixture_window_path = tmp_path / "campaign_window_v11.json"
-    fixture_window_path.write_bytes(source_window_bytes)
+    fixture_window_path.write_bytes(fixture_window_bytes)
     run_directory = tmp_path / "launcher_v11_run"
     worker_script = tmp_path / "v11_no_fe_worker.py"
     worker_script.write_text(
@@ -465,7 +495,7 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
     assert launcher_cgroup_paths == [service_cgroup]
     assert result["full_workflow_time_exceeded"] is False
     assert result["task40_v11_campaign"]["window_sha256"] == hashlib.sha256(
-        source_window_bytes
+        fixture_window_bytes
     ).hexdigest()
 
     manifest = json.loads((run_directory / "run_manifest.json").read_text(encoding="utf-8"))
@@ -476,7 +506,7 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
         (run_directory / "fixture_summary.json").read_text(encoding="utf-8")
     )
     assert manifest["task40_v11_campaign"]["window_sha256"] == hashlib.sha256(
-        source_window_bytes
+        fixture_window_bytes
     ).hexdigest()
     envelope = watchdog["launch_envelope"]
     assert envelope["tree_cap_bytes"] == 16 * 1024**3
@@ -487,7 +517,7 @@ def test_v11_public_run_case_supervisor_dispatch_runtime_campaign_chain_no_fe(
     # The watchdog keeps its historical field name while binding it to V11's
     # fixed window; launcher and manifest use the V11 evidence key.
     assert watchdog["task40_v10_campaign"]["window_sha256"] == hashlib.sha256(
-        source_window_bytes
+        fixture_window_bytes
     ).hexdigest()
     assert worker_record["scope"] == "no_finite_element_or_numeric_factorization"
     assert worker_record["profile_identity"] == "task40extra_v11_p6_y_orbit_gx560_reference_v1"

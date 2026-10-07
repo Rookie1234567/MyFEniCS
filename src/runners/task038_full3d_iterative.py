@@ -44,12 +44,16 @@ def run_full3d_iterative(
         TASK40_B0_CONTROL_RUN_ID,
         TASK40_B0_P6_CANDIDATE_RUN_ID,
         TASK40_B0_P6_V13_RUN_ID,
+        TASK40_B0_P6_V15_RUN_ID,
+        TASK40_E1_V15_RUN_ID,
+        TASK40_GX560_V15_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
         TASK40_COMPARISON_GROUP,
         TASK40_Q_ASSEMBLY_LEGACY,
         TASK40_STRICT_REFERENCE_PC_STRATEGY,
         TASK40_V13_REFERENCE_PC_STRATEGY,
+        TASK40_V15_REFERENCE_PC_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
     from src.io.physical_intermediate_profile import (
@@ -73,6 +77,11 @@ def run_full3d_iterative(
         )
 
     if profile == TASK40_V10_P6_REFERENCE_PROFILE:
+        if reference_pc_strategy not in {
+            TASK40_STRICT_REFERENCE_PC_STRATEGY,
+            TASK40_V13_REFERENCE_PC_STRATEGY,
+        }:
+            raise ValueError("Task40 V10 p6 route does not accept the selected reference-PC strategy")
         expected_run_id = (
             TASK40_B0_P6_V13_RUN_ID
             if reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
@@ -104,6 +113,11 @@ def run_full3d_iterative(
     )
 
     if profile in {TASK40_V11_P6_GX560_PROFILE, TASK40_V11_P6_GX784_PROFILE}:
+        if reference_pc_strategy not in {
+            TASK40_STRICT_REFERENCE_PC_STRATEGY,
+            TASK40_V13_REFERENCE_PC_STRATEGY,
+        }:
+            raise ValueError("Task40 V11 p6 route does not accept the selected reference-PC strategy")
         v13_strategy = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
         expected_run_id = (
             TASK40_GX560_V13_RUN_ID
@@ -123,6 +137,43 @@ def run_full3d_iterative(
             ) != profile
         ):
             raise ValueError("Task40 V11 p6 grid route requires its exact frozen case identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=profile,
+            share_transform_bank=True,
+        )
+
+    from src.io.physical_intermediate_profile import (
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
+    )
+    if profile in {
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
+    }:
+        cases = {
+            TASK40_V15_P6_B0_PROFILE: (TASK40_B0_P6_V15_RUN_ID, "B0_CANDIDATE"),
+            TASK40_V15_P6_GX560_PROFILE: (TASK40_GX560_V15_RUN_ID, "Q4_ORIGINAL"),
+            TASK40_V15_P6_E1_PROFILE: (TASK40_E1_V15_RUN_ID, "Q4_ORIGINAL"),
+        }
+        expected_run_id, expected_stage = cases[profile]
+        if (
+            reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
+            or q_assembly_strategy != TASK40_Q_ASSEMBLY_LEGACY
+            or resolved_payload.get("run_id") != expected_run_id
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != expected_stage
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            ) != profile
+        ):
+            raise ValueError("Task40 V15 route requires its exact registered case identity")
         from .task40_v10_worker import run_task40_v10_p6_reference_worker
 
         return run_task40_v10_p6_reference_worker(

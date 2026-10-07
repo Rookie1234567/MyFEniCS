@@ -23,6 +23,9 @@ from src.geometry.task40_nonseparable_plan import (
     TASK40_REFERENCE_METRIC_PROFILE,
     TASK40_GX560_V11_P6_RUN_ID,
     TASK40_GX784_V11_P6_RUN_ID,
+    TASK40_B0_P6_V15_RUN_ID,
+    TASK40_GX560_V15_RUN_ID,
+    TASK40_E1_V15_RUN_ID,
 )
 
 SCHUR_PROFILE = "physical_p4_schur_v14"
@@ -57,6 +60,14 @@ TASK40_V11_P6_GX784_PROFILE = "task40extra_v11_p6_y_orbit_gx784_reference_v1"
 TASK40_V11_P6_PROFILES = (
     TASK40_V11_P6_GX560_PROFILE,
     TASK40_V11_P6_GX784_PROFILE,
+)
+TASK40_V15_P6_B0_PROFILE = "task40extra_v15_p6_y_orbit_b0_reference_v1"
+TASK40_V15_P6_GX560_PROFILE = "task40extra_v15_p6_y_orbit_gx560_reference_v1"
+TASK40_V15_P6_E1_PROFILE = "task40extra_v15_p6_y_orbit_e1_reference_v1"
+TASK40_V15_P6_PROFILES = (
+    TASK40_V15_P6_B0_PROFILE,
+    TASK40_V15_P6_GX560_PROFILE,
+    TASK40_V15_P6_E1_PROFILE,
 )
 TASK40_V10_P4_CONTROL_PROFILE = TASK40_B0_P4_CONTROL_PROFILE
 A4_TENSOR_H6_PROFILES = (
@@ -101,7 +112,7 @@ TASK40_PROFILES = (
 )
 A4_TENSOR_H6_PROFILES = (*A4_TENSOR_H6_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
 FUSED_KERNEL_PROFILES = (*FUSED_KERNEL_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -116,6 +127,103 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity in TASK40_V15_P6_PROFILES:
+        from src.geometry.task40_nonseparable_plan import (
+            TASK40_COMPARISON_GROUP,
+            TASK40_V15_REFERENCE_PC_STRATEGY,
+        )
+        from src.solvers.task40_v10_p6_periodic_profile import (
+            TASK40_V15_P6_B0_PROFILE as B0_PERIODIC,
+            TASK40_V15_P6_GX560_PROFILE as GX560_PERIODIC,
+            TASK40_V15_P6_E1_PROFILE as E1_PERIODIC,
+        )
+
+        case = {
+            TASK40_V15_P6_B0_PROFILE: (
+                B0_PERIODIC, TASK40_B0_P6_V15_RUN_ID, "B0", "B0_CANDIDATE",
+            ),
+            TASK40_V15_P6_GX560_PROFILE: (
+                GX560_PERIODIC, TASK40_GX560_V15_RUN_ID, "GX560", "Q4_ORIGINAL",
+            ),
+            TASK40_V15_P6_E1_PROFILE: (
+                E1_PERIODIC, TASK40_E1_V15_RUN_ID, "E1", "Q4_ORIGINAL",
+            ),
+        }[identity]
+        periodic, run_id, grid_name, stage = case
+        facts = profile_facts(TASK40_V10_P6_REFERENCE_PROFILE)
+        facts.update(
+            identity=identity,
+            scope=f"review_v15_{grid_name.lower()}_full_p6_y_orbit_reference_inverse",
+            run_id=run_id,
+            comparison_group=TASK40_COMPARISON_GROUP,
+            stage=stage,
+            input_path=(
+                "input/task40extra_0p7nm_engineering/"
+                + {
+                    "B0": "b0_p6_reference_v15.dat",
+                    "GX560": "nonseparable_gx560_p6_reference_v15.dat",
+                    "E1": "nonseparable_e1_p6_reference_v15.dat",
+                }[grid_name]
+            ),
+            reference_pc_strategy=TASK40_V15_REFERENCE_PC_STRATEGY,
+            q_assembly_strategy="LEGACY_GLOBAL_CSR_SUM",
+            periodic_inventory=periodic.identity(),
+            qualification=(
+                f"Review V15 {grid_name} case; one full p6 target solve uses the "
+                "same live four-q factors, complete native residual admission, "
+                "and all retained modes and interior rows"
+            ),
+        )
+        facts["gates"].update(
+            task40_geometry_identity_by_mesh={
+                **facts["gates"].get("task40_geometry_identity_by_mesh", {}),
+                grid_name: (
+                    "task40extra_nonseparable_0p7nm_e1_q1p25_v1"
+                    if grid_name == "E1"
+                    else "task40extra_nonseparable_0p7nm_v1"
+                ),
+            },
+            global_cells=periodic.global_cell_count,
+            global_cell_axes=list(periodic.global_cell_axes),
+            nedelec_degree=periodic.degree,
+            global_floquet_q_branches=periodic.q_count,
+            all_internal_dofs_retained=True,
+            **{
+                key: periodic.identity()[key]
+                for key in (
+                    "global_storage_rows", "global_independent_rows",
+                    "global_interior_rows", "global_trace_rows", "q_port_counts",
+                    "local_cell_count", "local_storage_rows", "local_independent_rows",
+                    "local_interior_rows", "local_trace_rows", "local_width_per_q",
+                    "rows_per_q", "trace_rows_per_q", "augmented_rows_per_q",
+                )
+            },
+            all_original_modes_retained=periodic.mode_count,
+            all_original_modes_covered=True,
+            regular_reference_equation_relative_residual=1.0e-8,
+            complete_augmented_fe_relative_residual=1.0e-8,
+            noncancelling_budget_relative_residual=1.0e-8,
+            alpha_closure_relative_residual=1.0e-9,
+            q_solve_true_residual_relative=1.0e-8,
+            factor_probe_true_residual_relative=1.0e-10,
+        )
+        facts["resources"].update(
+            workflow_seconds=86400,
+            solve_seconds=86400,
+            pc_soft_seconds=86400,
+            pc_hard_seconds=86400,
+            process_tree_rss_cap_bytes=16 * 1024**3,
+            require_zero_swap=True,
+            campaign_window_required=True,
+            campaign_closeout_reserve_seconds=600,
+            stage_budgets={stage: {"workflow_seconds": 86400, "solve_seconds": 86400}},
+        )
+        facts.setdefault("route_selection", {}).update(
+            task40_reference_pc_strategy=TASK40_V15_REFERENCE_PC_STRATEGY,
+            task40_q_assembly_strategy="LEGACY_GLOBAL_CSR_SUM",
+            unknown_task40_case="reject",
+        )
+        return facts
     if identity in TASK40_V11_P6_PROFILES:
         from src.solvers.task40_v10_p6_periodic_profile import (
             TASK40_V11_P6_GX560_PROFILE as GX560_PERIODIC,

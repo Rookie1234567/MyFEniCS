@@ -5585,16 +5585,23 @@ def launch_specification(
         TASK40_B0_CONTROL_RUN_ID,
         TASK40_B0_P6_CANDIDATE_RUN_ID,
         TASK40_B0_P6_V13_RUN_ID,
+        TASK40_B0_P6_V15_RUN_ID,
+        TASK40_E1_V15_RUN_ID,
+        TASK40_GX560_V15_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
         TASK40_B0_P4_CONTROL_PROFILE,
         TASK40_GX560_V11_P6_RUN_ID,
         TASK40_GX784_V11_P6_RUN_ID,
+        TASK40_V15_REFERENCE_PC_STRATEGY,
     )
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P6_REFERENCE_PROFILE,
         TASK40_V11_P6_GX560_PROFILE,
         TASK40_V11_P6_GX784_PROFILE,
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
     )
 
     run_id = str(specification.identity.get("run_id", ""))
@@ -5604,6 +5611,28 @@ def launch_specification(
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
     }
+    task40_v15_profile = (
+        run_id == TASK40_B0_P6_V15_RUN_ID
+        and preconditioner == TASK40_V15_P6_B0_PROFILE
+        and specification.solver.get("task40_reference_pc_strategy")
+        == TASK40_V15_REFERENCE_PC_STRATEGY
+        and specification.solver.get("task40_q_assembly_strategy")
+        == "LEGACY_GLOBAL_CSR_SUM"
+    ) or (
+        run_id == TASK40_GX560_V15_RUN_ID
+        and preconditioner == TASK40_V15_P6_GX560_PROFILE
+        and specification.solver.get("task40_reference_pc_strategy")
+        == TASK40_V15_REFERENCE_PC_STRATEGY
+        and specification.solver.get("task40_q_assembly_strategy")
+        == "LEGACY_GLOBAL_CSR_SUM"
+    ) or (
+        run_id == TASK40_E1_V15_RUN_ID
+        and preconditioner == TASK40_V15_P6_E1_PROFILE
+        and specification.solver.get("task40_reference_pc_strategy")
+        == TASK40_V15_REFERENCE_PC_STRATEGY
+        and specification.solver.get("task40_q_assembly_strategy")
+        == "LEGACY_GLOBAL_CSR_SUM"
+    )
     task40_v10_profile = (
         run_id == TASK40_B0_CONTROL_RUN_ID
         and preconditioner == TASK40_B0_P4_CONTROL_PROFILE
@@ -5619,10 +5648,13 @@ def launch_specification(
         and preconditioner == TASK40_V11_P6_GX784_PROFILE
     )
     task40_campaign_profile = (
-        task40_v10_profile or task40_v11_p6_grid_profile or task40_v13_profile
+        task40_v10_profile or task40_v11_p6_grid_profile
+        or task40_v13_profile or task40_v15_profile
     )
     campaign_evidence_key = (
-        "task40_v13_campaign"
+        "task40_v15_campaign"
+        if task40_v15_profile
+        else "task40_v13_campaign"
         if task40_v13_profile
         else "task40_v10_campaign"
         if task40_v10_profile
@@ -5631,7 +5663,7 @@ def launch_specification(
     if task40_v10_campaign_window is not None and not task40_campaign_profile:
         raise InputError("Task40 fixed campaign window is restricted to reviewed p6 cases")
     if task40_campaign_profile and task40_v10_campaign_window is None:
-        raise InputError("Task40 V10/V11 p6 launch requires the existing fixed campaign window")
+        raise InputError("Task40 V10/V11/V13/V15 p6 launch requires the existing fixed campaign window")
     _validate_task40_v10_postprocess_request(
         candidate_identity=(
             run_id == TASK40_B0_P6_CANDIDATE_RUN_ID

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from hashlib import sha256
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
@@ -9,16 +12,22 @@ from src.solvers.augmented_reference_correction import (
     BOUNDED_INEXACT_LIMITS,
     BOUNDED_INEXACT_REFERENCE_PC,
     FACTOR_CALL_COUNTER_SOURCE,
+    NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
     REFERENCE_PC_REJECTED,
     STRICT_REFERENCE_LIMITS,
     STRICT_REFERENCE_PASS,
+    V15_REFERENCE_PC_PASS,
     apply_one_augmented_residual_correction,
+    augmented_state_sha256,
     augmented_port_state_offset,
     augmented_rhs_sha256,
     evaluate_complete_augmented_residual,
+    evaluate_v15_non_cancelling_budget,
     q_solve_limit,
     recheck_reference_pc_final_admission,
     select_reference_pc_candidate,
+    select_v15_reference_pc_candidate,
+    stable_euclidean_norm,
 )
 
 
@@ -48,6 +57,164 @@ def _candidate(metrics, *, frozen=None, state="candidate", structural=None):
         "structural_gates": {"map": True, "recovery": True} if structural is None else structural,
         "state": state,
     }
+
+
+def _v15_candidate(metrics, *, frozen=None, state="candidate", structural=None):
+    frozen_metrics = dict(metrics if frozen is None else frozen)
+    alpha = float(metrics["alpha_closure"])
+    frozen_alpha = float(frozen_metrics["alpha_closure"])
+    raw = {
+        "effective_rhs_scale": 1.0,
+        "eliminated_fe_residual_norm": float(metrics["eliminated_fe"]),
+        "complete_augmented_fe_residual_norm": float(metrics["complete_augmented_fe"]),
+        "budget_term_norms": {
+            "d_b": float(metrics["noncancelling_budget"]),
+            "lifted_sector_errors": [0.0, 0.0],
+            "d_A": 0.0,
+            "B_delta_alpha": 0.0,
+        },
+        "alpha_closure_residual_norm": alpha,
+        "alpha_closure_original_scale": 1.0,
+        "alpha_closure_frozen_scale": (
+            alpha / frozen_alpha if frozen_alpha > 0.0 else 1.0
+        ),
+        "q_true_residuals": [
+            {
+                "q": q,
+                "rhs_norm": 1.0,
+                "true_residual_norm": float(metrics["q_solve"]),
+                "true_residual_relative": float(metrics["q_solve"]),
+            }
+            for q in range(4)
+        ],
+        "retained_mode_count": 2,
+        "native_sector_facts": [
+            {"twist_index": 0, "mode_indices": [0]},
+            {"twist_index": 1, "mode_indices": [1]},
+        ],
+        "decomposition_closure_norm": 1.0e-12,
+        "decomposition_closure_scale": 1.0,
+        "state_sha256": sha256(state.encode("utf-8")).hexdigest(),
+    }
+    return {
+        "metrics": dict(metrics),
+        "frozen_scale_metrics": frozen_metrics,
+        "structural_gates": {"mapping": True, "recovery": True} if structural is None else structural,
+        "state_label": state,
+        "state_sha256": raw["state_sha256"],
+        "raw_facts": raw,
+    }
+
+
+def _v15_candidate_from_budget(budget, *, q_relative=0.0, state="native-budget"):
+    alpha_norm = 0.0
+    alpha_scale = 1.0
+    q_rows = [
+        {
+            "q": q,
+            "rhs_norm": 1.0,
+            "true_residual_norm": float(q_relative),
+            "true_residual_relative": float(q_relative),
+        }
+        for q in range(4)
+    ]
+    metrics = {
+        "eliminated_fe": float(budget["eliminated_fe_relative"]),
+        "complete_augmented_fe": float(budget["complete_augmented_fe_relative"]),
+        "noncancelling_budget": float(budget["noncancelling_budget_relative"]),
+        "alpha_closure": 0.0,
+        "q_solve": float(q_relative),
+    }
+    state_hash = augmented_state_sha256(
+        np.asarray([0.0j, 1.0j], dtype=np.complex128),
+        np.asarray([0.5 + 0.25j, -0.5j], dtype=np.complex128),
+    )
+    raw = {
+        "effective_rhs_scale": float(budget["effective_rhs_scale"]),
+        "eliminated_fe_residual_norm": float(budget["eliminated_fe_residual_norm"]),
+        "complete_augmented_fe_residual_norm": float(
+            budget["complete_augmented_fe_residual_norm"]
+        ),
+        "budget_term_norms": dict(budget["budget_terms"]),
+        "alpha_closure_residual_norm": alpha_norm,
+        "alpha_closure_original_scale": alpha_scale,
+        "alpha_closure_frozen_scale": alpha_scale,
+        "q_true_residuals": q_rows,
+        "retained_mode_count": 2,
+        "native_sector_facts": budget.get(
+            "sector_facts",
+            [
+                {"twist_index": 0, "mode_indices": [0]},
+                {"twist_index": 1, "mode_indices": [1]},
+            ],
+        ),
+        "decomposition_closure_norm": float(budget["decomposition_closure_norm"]),
+        "decomposition_closure_scale": float(budget["decomposition_closure_scale"]),
+        "state_sha256": state_hash,
+    }
+    return {
+        "metrics": metrics,
+        "frozen_scale_metrics": dict(metrics),
+        "structural_gates": {
+            "startup_regular_inverse_gates_passed": True,
+            "all_four_q_phases_covered": True,
+            "all_retained_modes_mapped_once": True,
+            "native_decomposition_closure": True,
+            "native_augmented_actions_finite": True,
+        },
+        "state_label": state,
+        "state_sha256": state_hash,
+        "raw_facts": raw,
+    }
+
+
+def _nonunitary_two_cell_transports():
+    from src.solvers.task40_v10_p6_yorbit import YOrbitEntities, TwoCellNativeTransport
+
+    cfg = SimpleNamespace(
+        ky=0.25 + 0j,
+        period_y=4.0,
+        floquet_phase_y=np.exp(1j),
+    )
+    base = (1, ((0, 0, 0), (1, 0, 0)))
+    matrices = (
+        np.asarray([[1.2 + 0.2j, 0.3 - 0.1j], [0.1 + 0.05j, 0.8 - 0.2j]]),
+        np.asarray([[0.9 - 0.1j, 0.2 + 0.3j], [-0.15 + 0.1j, 1.1 + 0.2j]]),
+        np.asarray([[1.3 + 0.1j, -0.1 + 0.2j], [0.25 + 0.1j, 0.7 - 0.15j]]),
+        np.asarray([[0.85 + 0.2j, 0.15 - 0.1j], [0.1 + 0.2j, 1.25 - 0.1j]]),
+    )
+
+    def entities(ny, records):
+        return YOrbitEntities(
+            independent=np.arange(2 * ny, dtype=np.int64),
+            full_rows=2 * ny + 3,
+            ny=ny,
+            width=2,
+            bases=(base,),
+            records={
+                (orbit, base): (
+                    np.asarray([2 * orbit, 2 * orbit + 1], dtype=np.int64),
+                    matrix.astype(np.complex128),
+                )
+                for orbit, matrix in enumerate(records)
+            },
+            slots={base: (0, 2)},
+            dimension_counts={1: 2 * ny, 3: ny},
+            y_widths=np.ones(ny),
+        )
+
+    full = entities(4, matrices)
+    local = entities(2, matrices[:2])
+    return tuple(
+        TwoCellNativeTransport(
+            full,
+            local,
+            twist_index=twist,
+            eta=np.exp(1j * (1.0 + 2.0 * np.pi * twist) / 4),
+            cfg=cfg,
+        )
+        for twist in (0, 1)
+    )
 
 
 def test_one_correction_updates_complex_fe_and_port_before_allocating_buffers():
@@ -425,7 +592,412 @@ def test_packet_npz_replacement_keeps_previous_packet_on_write_failure(tmp_path,
 def test_strategy_preserves_strict_default_and_only_v13_uses_bounded_q_limit():
     assert q_solve_limit("STRICT_ONLY") == 1e-10
     assert q_solve_limit("STRICT_THEN_BOUNDED_INEXACT_V13") == 1e-8
+    assert q_solve_limit(NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15) == 1e-8
     assert STRICT_REFERENCE_PASS == "STRICT_REFERENCE_PASS"
+
+
+def test_v15_non_cancelling_budget_catches_sector_errors_that_cancel_in_global_residual():
+    identity = lambda values: np.asarray(values, dtype=np.complex128).copy()
+    result = evaluate_v15_non_cancelling_budget(
+        effective_rhs=np.array([1.0, 0.0], dtype=np.complex128),
+        global_eliminated_action=np.array([1.0, 0.0], dtype=np.complex128),
+        original_fe_rhs=np.array([1.0, 0.0], dtype=np.complex128),
+        port_elimination_action=np.zeros(2, dtype=np.complex128),
+        complete_augmented_fe_residual=np.zeros(2, dtype=np.complex128),
+        modal_alpha_defect_action=np.zeros(2, dtype=np.complex128),
+        sectors=(
+            {
+                "rhs": np.array([0.6, 0.0], dtype=np.complex128),
+                "action": np.array([0.5, 0.0], dtype=np.complex128),
+                "lift_dual": identity,
+            },
+            {
+                "rhs": np.array([0.4, 0.0], dtype=np.complex128),
+                "action": np.array([0.5, 0.0], dtype=np.complex128),
+                "lift_dual": identity,
+            },
+        ),
+    )
+
+    assert result["eliminated_fe_relative"] == 0.0
+    assert result["noncancelling_budget_relative"] == pytest.approx(0.2)
+    assert result["decomposition_closure_relative"] == 0.0
+
+
+def test_v15_budget_preserves_tiny_scale_and_rejects_nonzero_fe_when_scale_is_zero():
+    identity = lambda values: np.asarray(values, dtype=np.complex128).copy()
+    tiny = evaluate_v15_non_cancelling_budget(
+        effective_rhs=np.array([1.0e-250], dtype=np.complex128),
+        global_eliminated_action=np.array([1.0e-250], dtype=np.complex128),
+        original_fe_rhs=np.array([1.0e-250], dtype=np.complex128),
+        port_elimination_action=np.array([0.0], dtype=np.complex128),
+        complete_augmented_fe_residual=np.array([0.0], dtype=np.complex128),
+        modal_alpha_defect_action=np.array([0.0], dtype=np.complex128),
+        sectors=(
+            {
+                "rhs": np.array([1.0e-250], dtype=np.complex128),
+                "action": np.array([1.0e-250], dtype=np.complex128),
+                "lift_dual": identity,
+            },
+        ),
+    )
+    assert tiny["effective_rhs_scale"] > 0.0
+    assert tiny["effective_rhs_scale"] == pytest.approx(1.0e-250, rel=1e-15, abs=0.0)
+    assert tiny["noncancelling_budget_relative"] == 0.0
+
+    zero_scale = evaluate_v15_non_cancelling_budget(
+        effective_rhs=np.array([1.0], dtype=np.complex128),
+        global_eliminated_action=np.array([0.0], dtype=np.complex128),
+        original_fe_rhs=np.zeros(1, dtype=np.complex128),
+        port_elimination_action=np.zeros(1, dtype=np.complex128),
+        complete_augmented_fe_residual=np.zeros(1, dtype=np.complex128),
+        modal_alpha_defect_action=np.zeros(1, dtype=np.complex128),
+        sectors=(
+            {
+                "rhs": np.zeros(1, dtype=np.complex128),
+                "action": np.zeros(1, dtype=np.complex128),
+                "lift_dual": identity,
+            },
+        ),
+    )
+    assert zero_scale["effective_rhs_scale"] == 0.0
+    assert np.isinf(zero_scale["noncancelling_budget_relative"])
+
+
+def test_v15_selection_keeps_whole_state_and_enforces_q_limit():
+    good = _v15_candidate(
+        {
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 5e-10,
+            "q_solve": 9e-9,
+        },
+        frozen={
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 8e-10,
+        },
+        state="initial",
+    )
+    bad_q = {
+        **good,
+        "metrics": {**good["metrics"], "q_solve": 1.01e-8},
+        "raw_facts": {
+            **good["raw_facts"],
+            "q_true_residuals": [
+                {
+                    "q": q,
+                    "rhs_norm": 1.0,
+                    "true_residual_norm": 1.01e-8,
+                    "true_residual_relative": 1.01e-8,
+                }
+                for q in range(4)
+            ],
+            "state_sha256": sha256(b"bad-q").hexdigest(),
+        },
+        "state_sha256": sha256(b"bad-q").hexdigest(),
+        "state_label": "bad-q",
+    }
+    selection = select_v15_reference_pc_candidate([bad_q])
+    assert selection["admitted"] is False
+    assert selection["admission"] != "V15_REFERENCE_PC_PASS"
+
+    corrected = {
+        **good,
+        "metrics": {**good["metrics"], "noncancelling_budget": 8e-9},
+        "frozen_scale_metrics": {
+            **good["frozen_scale_metrics"], "noncancelling_budget": 8e-9
+        },
+        "raw_facts": {
+            **good["raw_facts"],
+            "budget_term_norms": {
+                **good["raw_facts"]["budget_term_norms"],
+                "d_b": 8e-9,
+            },
+            "state_sha256": sha256(b"corrected").hexdigest(),
+        },
+        "state_sha256": sha256(b"corrected").hexdigest(),
+        "state_label": "corrected",
+    }
+    initial_fail = {
+        **good,
+        "metrics": {**good["metrics"], "noncancelling_budget": 2e-8},
+        "frozen_scale_metrics": {
+            **good["frozen_scale_metrics"], "noncancelling_budget": 2e-8
+        },
+        "raw_facts": {
+            **good["raw_facts"],
+            "budget_term_norms": {
+                **good["raw_facts"]["budget_term_norms"],
+                "d_b": 2e-8,
+            },
+        },
+    }
+    selection = select_v15_reference_pc_candidate([initial_fail, corrected])
+    assert selection["admitted"] is True
+    assert selection["selected_candidate_index"] == 1
+
+
+def test_v15_parent_recheck_recomputes_all_metrics_and_q_rows():
+    candidate = _v15_candidate(
+        {
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 5e-10,
+            "q_solve": 9e-9,
+        },
+        frozen={
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 8e-10,
+        },
+        state="initial",
+    )
+    facts = {
+        "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+        "maximum_q_true_residual_relative": 9e-9,
+        "port_identity_relative": 5e-10,
+        "all_four_q_used": True,
+        "q_true_residuals_selected": [
+            {
+                "q": q,
+                "rhs_norm": 1.0,
+                "true_residual_norm": 9e-9,
+                "true_residual_relative": 9e-9,
+            }
+            for q in range(4)
+        ],
+        "candidate_metrics": [candidate],
+        "candidate_selection": select_v15_reference_pc_candidate([candidate]),
+        "selected_decomposition_closure_relative": 1e-12,
+        "selected_v15_metrics": dict(candidate["metrics"]),
+        "selected_v15_raw_facts": dict(candidate["raw_facts"]),
+        "selected_state_sha256": candidate["raw_facts"]["state_sha256"],
+    }
+    accepted = recheck_reference_pc_final_admission(
+        facts, NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+    )
+    assert accepted["passed"] is True
+    assert accepted["selection_recomputed_from_candidate_metrics"] is True
+
+    facts["candidate_metrics"] = [{
+        **candidate,
+        "metrics": {**candidate["metrics"], "eliminated_fe": 1.1e-8},
+        "raw_facts": {
+            **candidate["raw_facts"],
+            "eliminated_fe_residual_norm": 1.1e-8,
+        },
+    }]
+    rejected = recheck_reference_pc_final_admission(
+        facts, NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+    )
+    assert rejected["passed"] is False
+
+
+def test_v15_budget_measures_errors_after_actual_nonunitary_complex_dual_lifts():
+    transports = _nonunitary_two_cell_transports()
+    rng = np.random.default_rng(1507)
+    sector_rhs = [
+        rng.normal(size=4).astype(np.complex128)
+        + 1j * rng.normal(size=4).astype(np.complex128)
+        for _ in transports
+    ]
+    local_errors = [
+        np.asarray([0.17 + 0.09j, -0.04 + 0.12j, 0.08 - 0.03j, 0.02 + 0.06j]),
+        np.asarray([-0.11 + 0.02j, 0.07 - 0.13j, 0.03 + 0.05j, -0.06 + 0.01j]),
+    ]
+    sector_actions = [rhs - error for rhs, error in zip(sector_rhs, local_errors)]
+    lifted_rhs = [
+        transport.lift_dual(rhs)
+        for transport, rhs in zip(transports, sector_rhs)
+    ]
+    lifted_actions = [
+        transport.lift_dual(action)
+        for transport, action in zip(transports, sector_actions)
+    ]
+    effective_rhs = lifted_rhs[0] + lifted_rhs[1]
+    global_action = lifted_actions[0] + lifted_actions[1]
+    budget = evaluate_v15_non_cancelling_budget(
+        effective_rhs=effective_rhs,
+        global_eliminated_action=global_action,
+        original_fe_rhs=effective_rhs,
+        port_elimination_action=np.zeros_like(effective_rhs),
+        complete_augmented_fe_residual=effective_rhs - global_action,
+        modal_alpha_defect_action=np.zeros_like(effective_rhs),
+        sectors=[
+            {
+                "rhs": rhs,
+                "action": action,
+                "lift_dual": transport.lift_dual,
+            }
+            for transport, rhs, action in zip(transports, sector_rhs, sector_actions)
+        ],
+        retain_lifted_errors=True,
+    )
+
+    for index, (transport, error) in enumerate(zip(transports, local_errors)):
+        expected = transport.lift_dual(error)
+        np.testing.assert_allclose(budget["lifted_sector_errors"][index], expected)
+        assert budget["budget_terms"]["lifted_sector_errors"][index] == pytest.approx(
+            stable_euclidean_norm(expected)
+        )
+        assert not np.isclose(
+            stable_euclidean_norm(expected), stable_euclidean_norm(error)
+        )
+    assert budget["decomposition_closure_relative"] < 1e-14
+
+
+def test_v15_wrong_adjoint_lift_fails_independent_native_budget_admission():
+    transports = _nonunitary_two_cell_transports()
+    sector_rhs = [
+        np.asarray([0.4 + 0.2j, -0.3 + 0.1j, 0.2 - 0.5j, 0.1 + 0.3j]),
+        np.asarray([-0.2 + 0.1j, 0.5 - 0.4j, 0.3 + 0.2j, -0.1 + 0.6j]),
+    ]
+    correct_lifts = [
+        transport.lift_dual(rhs)
+        for transport, rhs in zip(transports, sector_rhs)
+    ]
+    effective_rhs = correct_lifts[0] + correct_lifts[1]
+    correct_budget = evaluate_v15_non_cancelling_budget(
+        effective_rhs=effective_rhs,
+        global_eliminated_action=effective_rhs,
+        original_fe_rhs=effective_rhs,
+        port_elimination_action=np.zeros_like(effective_rhs),
+        complete_augmented_fe_residual=np.zeros_like(effective_rhs),
+        modal_alpha_defect_action=np.zeros_like(effective_rhs),
+        sectors=[
+            {"rhs": rhs, "action": rhs, "lift_dual": transport.lift_dual}
+            for transport, rhs in zip(transports, sector_rhs)
+        ],
+    )
+    wrong_budget = evaluate_v15_non_cancelling_budget(
+        effective_rhs=effective_rhs,
+        global_eliminated_action=effective_rhs,
+        original_fe_rhs=effective_rhs,
+        port_elimination_action=np.zeros_like(effective_rhs),
+        complete_augmented_fe_residual=np.zeros_like(effective_rhs),
+        modal_alpha_defect_action=np.zeros_like(effective_rhs),
+        sectors=[
+            # A primal lift has the wrong orientation for residuals.  This is
+            # deliberately supplied in place of the actual dual adjoint.
+            {"rhs": rhs, "action": rhs, "lift_dual": transport.lift_primal}
+            for transport, rhs in zip(transports, sector_rhs)
+        ],
+    )
+
+    assert correct_budget["noncancelling_budget_relative"] == 0.0
+    assert wrong_budget["noncancelling_budget_relative"] > 1e-8
+    selected = select_v15_reference_pc_candidate(
+        [_v15_candidate_from_budget(wrong_budget, q_relative=9e-9)]
+    )
+    assert selected["admitted"] is False
+    assert selected["candidate_facts"][0]["q_phase_coverage"] is True
+    assert (
+        selected["candidate_facts"][0]["original_scale_max_normalized_exceedance"]
+        > 1.0
+    )
+
+
+def test_v15_self_consistent_q_rows_do_not_mask_cancelling_local_error_budget():
+    identity_lift = lambda values: np.asarray(values, dtype=np.complex128).copy()
+    budget = evaluate_v15_non_cancelling_budget(
+        effective_rhs=np.asarray([1.0 + 0.0j, 0.0j]),
+        global_eliminated_action=np.asarray([1.0 + 0.0j, 0.0j]),
+        original_fe_rhs=np.asarray([1.0 + 0.0j, 0.0j]),
+        port_elimination_action=np.zeros(2, dtype=np.complex128),
+        complete_augmented_fe_residual=np.zeros(2, dtype=np.complex128),
+        modal_alpha_defect_action=np.zeros(2, dtype=np.complex128),
+        sectors=(
+            {
+                "rhs": np.asarray([0.6 + 0.0j, 0.0j]),
+                "action": np.asarray([0.5 + 0.0j, 0.0j]),
+                "lift_dual": identity_lift,
+            },
+            {
+                "rhs": np.asarray([0.4 + 0.0j, 0.0j]),
+                "action": np.asarray([0.5 + 0.0j, 0.0j]),
+                "lift_dual": identity_lift,
+            },
+        ),
+    )
+    candidate = _v15_candidate_from_budget(budget, q_relative=9e-9)
+    selected = select_v15_reference_pc_candidate([candidate])
+
+    assert budget["eliminated_fe_relative"] == 0.0
+    assert budget["budget_terms"]["lifted_sector_errors"] == pytest.approx([0.1, 0.1])
+    assert budget["noncancelling_budget_relative"] == pytest.approx(0.2)
+    assert candidate["raw_facts"]["q_true_residuals"]
+    assert all(
+        row["true_residual_relative"]
+        == row["true_residual_norm"] / row["rhs_norm"]
+        for row in candidate["raw_facts"]["q_true_residuals"]
+    )
+    assert selected["admitted"] is False
+    assert selected["candidate_facts"][0]["q_phase_coverage"] is True
+    assert selected["candidate_facts"][0]["raw_facts_consistent"] is True
+
+
+def test_v15_candidate_rejects_missing_q_missing_mode_and_nonfinite_budget():
+    identity_lift = lambda values: np.asarray(values, dtype=np.complex128).copy()
+    budget = evaluate_v15_non_cancelling_budget(
+        effective_rhs=np.asarray([1.0 + 0.0j, 2.0 + 0.0j]),
+        global_eliminated_action=np.asarray([1.0 + 0.0j, 2.0 + 0.0j]),
+        original_fe_rhs=np.asarray([1.0 + 0.0j, 2.0 + 0.0j]),
+        port_elimination_action=np.zeros(2, dtype=np.complex128),
+        complete_augmented_fe_residual=np.zeros(2, dtype=np.complex128),
+        modal_alpha_defect_action=np.zeros(2, dtype=np.complex128),
+        sectors=(
+            {
+                "rhs": np.asarray([1.0 + 0.0j]),
+                "action": np.asarray([1.0 + 0.0j]),
+                "lift_dual": lambda values: np.asarray([values[0], 0.0j]),
+            },
+            {
+                "rhs": np.asarray([2.0 + 0.0j]),
+                "action": np.asarray([2.0 + 0.0j]),
+                "lift_dual": lambda values: np.asarray([0.0j, values[0]]),
+            },
+        ),
+    )
+    del identity_lift  # Keep the intentionally disjoint two-sector maps explicit above.
+    base = _v15_candidate_from_budget(budget)
+
+    missing_q = {
+        **base,
+        "raw_facts": {
+            **base["raw_facts"],
+            "q_true_residuals": base["raw_facts"]["q_true_residuals"][:-1],
+        },
+    }
+    missing_mode_facts = [dict(row) for row in base["raw_facts"]["native_sector_facts"]]
+    missing_mode_facts[1]["mode_indices"] = []
+    missing_mode = {
+        **base,
+        "raw_facts": {**base["raw_facts"], "native_sector_facts": missing_mode_facts},
+    }
+    nonfinite_terms = dict(base["raw_facts"]["budget_term_norms"])
+    nonfinite_terms["d_b"] = float("nan")
+    nonfinite = {
+        **base,
+        "raw_facts": {
+            **base["raw_facts"],
+            "budget_term_norms": nonfinite_terms,
+        },
+    }
+
+    missing_q_result = select_v15_reference_pc_candidate([missing_q])
+    missing_mode_result = select_v15_reference_pc_candidate([missing_mode])
+    nonfinite_result = select_v15_reference_pc_candidate([nonfinite])
+    assert missing_q_result["admitted"] is False
+    assert missing_q_result["candidate_facts"][0]["q_phase_coverage"] is False
+    assert missing_mode_result["admitted"] is False
+    assert missing_mode_result["candidate_facts"][0]["structural_passed"] is False
+    assert nonfinite_result["admitted"] is False
+    assert nonfinite_result["candidate_facts"][0]["raw_facts_consistent"] is False
 
 
 def test_parent_final_gate_recomputes_v13_admission_and_bounded_pc_limits():

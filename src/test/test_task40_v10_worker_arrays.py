@@ -230,6 +230,7 @@ def test_v13_regular_inverse_continues_all_four_witnesses_after_bounded_first_st
 
     class _Factors:
         calls = 0
+        factor_probe_limit = 1.0e-10
 
     class _Inverse:
         factors = _Factors()
