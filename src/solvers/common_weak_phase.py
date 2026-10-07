@@ -49,6 +49,12 @@ def tensor_setup(folder,journal):
     import ufl
     result=[];fresh=[];recovery_count=0
     for degree,roles in ((6,('R6','T6')),(7,('R7','H7'))):
+        resume=scope.window.TMP/'K_p6_resume.json'
+        if degree==6 and resume.exists():
+            previous,controls=consume_p6_setup_checkpoint(resume,folder,journal)
+            result.append(previous);fresh.extend(controls);recovery_count=2
+            write_json(folder/'p6_completed_qualification.json',previous)
+            continue
         if degree==7 and (perf_counter()-journal.began>1500 or scope.window.available_at_boundary('K')<500):
             result.append(dict(degree=7,status='NOT_RUN_BUDGET',pass_gate=False));break
         r=scope.parent(roles[0]);cfg,setup,geo,field=restore_record(r,journal,scope=scope)
@@ -67,7 +73,7 @@ def tensor_setup(folder,journal):
             # Validate producer/material/basis contracts through the existing
             # reader for the explicitly frozen parent manifests when available.
             if role in ('R6','R7'):
-                contracts=[scope.plan_record()['raw_tensor_parents']['p6_Z2' if degree==6 else 'p7_Z2']]
+                contracts=[scope.plan_record()['raw_tensor_parents']['p6_Z2' if degree==6 else 'p7']]
                 provider=ReadonlyRawTensorProvider(contracts,dict(cfg=cfg,degree=degree,kappa=k),journal,scope.ROOT)
                 refs[role]=provider.parents
             for entry in manifest['classes']:
@@ -124,9 +130,78 @@ def tensor_setup(folder,journal):
         passed=bool(rows) and all(x['pass_gate'] for x in rows) and (degree==7 or len(recoveries)==2) and all(x['pass_gate'] for x in recoveries)
         result.append(dict(degree=degree,status='COMPLETED',pass_gate=passed,rows=rows,reference=factory.audit,recoveries=recoveries,
             recovery_status='COMPLETE_TWO_ACTUAL_P6_WITNESSES' if recoveries else 'NOT_RUN_GLOBAL_TWO_WITNESS_LIMIT',producer_validation=refs))
+        write_json(folder/f'p{degree}_completed_qualification.json',result[-1])
         del factory,setup,field;gc.collect()
     return dict(status='COMPLETED',role='K',degrees=result,p6_pass=next(x['pass_gate'] for x in result if x['degree']==6),
         p7_pass=any(x.get('pass_gate') for x in result if x['degree']==7),fresh_control=fresh,new_complete_solves=0,new_global_factor_count=0)
+
+
+def consume_p6_setup_checkpoint(path,folder,journal):
+    """Finish two controls from saved full classes; never repeat the table/LU.
+
+    The failed worker completed every p6 comparison and its two local recovery
+    witnesses. A pure wiring repair does not invalidate those saved arrays.
+    """
+    import basix
+    import ufl
+    from dolfinx import fem
+    from .hcurl_affine_phase_tensor import axis_widths
+    from .phase_raw_tensor_reader import ReadonlyRawTensorProvider
+    from .hcurl_assembly_time_condensation import _cell_integral_kernels,_tabulate_raw_tensor_class
+    from .common_3d_forms import _build_physical_volume_terms
+    from .fixed_phase_fem import carrier
+    from benchmarks.collect_common_weak_phase import tensor_check
+    frozen=json.loads(path.read_text());oldfolder=Path(frozen['folder'])
+    progress=oldfolder/'p6_progress.json';events=oldfolder/'events.jsonl'
+    for name,p in (('progress',progress),('events',events)):
+        if hashlib.sha256(p.read_bytes()).hexdigest()!=frozen[name+'_sha256']:raise ValueError('partial setup checkpoint changed')
+    old=json.loads(progress.read_text());rows=old['rows'];cfg,setup,_,field=restore_record(scope.parent('R6'),journal,scope=scope)
+    k=carrier(cfg);element=basix.finite_element.FiniteElement(setup['spaces'][6].element.basix_element)
+    identity=ReadonlyRawTensorProvider([scope.plan_record()['raw_tensor_parents']['p6_Z2']],dict(cfg=cfg,degree=6,kappa=k),journal,scope.ROOT)
+    expected=set()
+    for role in ('R6','T6'):
+        r=scope.parent(role);manifest=r['raw_tensor_checkpoint']
+        for e in manifest['classes']:
+            a=checked_arrays(e['arrays'])
+            if e['degree']!=6 or e['element_hash']!=element.hash() or not np.array_equal(a['kappa'],k):raise ValueError('saved p6 identity')
+            expected.add((e['tag'],tuple(axis_widths(a['coordinates']))))
+    if expected!={(r['tag'],tuple(r['widths'])) for r in rows}:raise ValueError('saved setup class inventory incomplete')
+    recoveries=[]
+    for witness in frozen['recoveries']:
+        v=checked_arrays(witness);matches=[]
+        for i,row in enumerate(rows):
+            oldtensor=checked_arrays(row['raw_parent'])['tensor'];inside=v['internal_rows'];co=v['actual_coefficients']
+            if relative((oldtensor@co)[inside]-v['internal_rhs'],v['internal_rhs'])<=1e-13:matches.append(i)
+        if not matches:raise ValueError('saved actual recovery cannot bind to raw class')
+        i=matches[0];defect=relative(v['recovered_internal']-v['actual_coefficients'][v['internal_rows']],v['actual_coefficients'][v['internal_rows']])
+        recoveries.append(dict(arrays=witness,relative=defect,pass_gate=defect<=1e-10,raw_class_index=i,
+            raw_parent=rows[i]['raw_parent'],combined_tensor=rows[i]['arrays'],homogeneous_and_particular=True))
+    result=dict(degree=6,status='COMPLETED',rows=rows,reference=old['reference'],recoveries=recoveries,
+        producer_validation=identity.parents,setup_checkpoint=frozen,recovery_status='REUSED_TWO_ACTUAL_WITNESSES_NO_NEW_LOCAL_LU')
+    result['pass_gate']=tensor_check({'degrees':[result]})['6']['pass_gate'] and len(recoveries)==2
+    measured=[json.loads(line)['seconds'] for line in events.read_text().splitlines()
+        if json.loads(line)['event']=='p6_complete_class_combination_end']
+    if len(measured)!=len(rows):raise ValueError('saved fresh combination timing inventory')
+    order=sorted(range(len(rows)),key=lambda i:(max(rows[i]['widths'])/min(rows[i]['widths']),tuple(rows[i]['widths']),rows[i]['tag']))
+    selected=list(dict.fromkeys((order[0],order[-1])))
+    write_json(folder/'fresh_pair_design.json',dict(indices=selected,selection='same predetermined min/max aspect; earlier fresh combination retained, no table rebuild'))
+    V=setup['spaces'][6];dx=ufl.Measure('dx',domain=setup['mesh'],subdomain_data=setup['mesh_data'].cell_tags)
+    terms=_build_physical_volume_terms(cfg,ufl.TrialFunction(V),ufl.TestFunction(V),dx,phase_carrier=k)
+    with journal.measured('fresh_control_original_form_compile_cache_identity'):
+        form=fem.form(terms[0]+terms[1]);kernels=_cell_integral_kernels(form,sum_duplicate_cell_integrals=True)
+    fresh=[]
+    for index in selected:
+        row=rows[index];v=checked_arrays(row['raw_parent']);new=checked_arrays(row['arrays'])['new_tensor']
+        with journal.measured('fresh_original_fixed_p6_class'):
+            start=perf_counter();old=_tabulate_raw_tensor_class(form,kernels,v['coordinates'],tag=row['tag'],dimension=element.dim);seconds=perf_counter()-start
+        fresh.append(dict(degree=6,key=str(row['tag'])+str(row['widths']),old_fresh_kernel_seconds=seconds,
+            new_combination_seconds=measured[index],reference_cold_seconds=old['reference']['total_build_seconds'],
+            same_object_relative=relative(new-old,old),cached_load_is_not_control=True,
+            timing_design='staged same-window pair; preserved earlier fresh combination, not cache-load timing; no end-to-end speed ratio',
+            new_combination_source_sha=frozen['source_sha']))
+        write_json(folder/'fresh_control_results.json',fresh)
+    del setup,field
+    return result,fresh
 
 
 def strict_reproduction(pair):

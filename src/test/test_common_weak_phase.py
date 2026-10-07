@@ -56,6 +56,8 @@ class PhaseTests(unittest.TestCase):
             self.assertEqual(r.execution['planning_memory_gib'],64)
             self.assertEqual(r.derived['storage_limits'],storage_limits('v57'))
         self.assertEqual(context('v57')[0].TMP,scope.window.TMP)
+        self.assertIn('p7',scope.plan_record()['raw_tensor_parents'])
+        self.assertNotIn('p7_Z2',scope.plan_record()['raw_tensor_parents'])
 
     def test_actual_layout_helper_consumes_function_space(self):
         from types import SimpleNamespace
