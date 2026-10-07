@@ -332,7 +332,10 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         )
         if block_mode and previous.get("stability_profile_version") != 2:
             before = float(np.linalg.norm(space.r) / action.bnorm)
-            repair = space.fit_retained_amplitudes()
+            # Preserve this pre-existing unqualified boundary for diagnosis.
+            # Every new add_block still requires the strict original pairing;
+            # recovery is not a declaration that the old instance passed.
+            repair = space.fit_retained_amplitudes(require_strict_pair=False)
             repair.update(
                 previous_native=before,
                 repaired_native=float(np.linalg.norm(space.r) / action.bnorm),

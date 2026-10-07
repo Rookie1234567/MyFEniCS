@@ -43,7 +43,7 @@ def qualify_existing_range(action, packet, directory, marker):
         space, np.random.default_rng(0)
     )
     rng = np.random.default_rng(4213104)
-    fit = space.fit_retained_amplitudes()
+    fit = space.fit_retained_amplitudes(require_strict_pair=False)
     last = boundary["chunks"][-1]
     with np.load(directory / last["path"], allow_pickle=False) as z:
         patch = Patch(tuple(z["center"]), tuple(z["radius"]), int(z["patch_level"]))

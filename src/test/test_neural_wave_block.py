@@ -214,6 +214,24 @@ def test_invalid_true_residual_rolls_back_and_can_reselect():
     np.testing.assert_array_equal(space.r, action.f)
 
 
+def test_diagnostic_recovery_never_relaxes_new_block_acceptance():
+    action = DenseAction(np.eye(4, dtype=complex), np.arange(1, 5))
+    s = BlockWaveSubspace(action, 4)
+    assert s.add_block(np.eye(4, dtype=complex)[:, :2])["accepted"]
+    original = action.apply
+    error = np.array([0, 0, 0, 1e-8], complex)
+    action.apply = lambda v, adjoint=False: original(v, adjoint) + error
+    with pytest.raises(ArithmeticError, match="SMALL_R_COMPLETE_ACTION_PAIR_REJECTED"):
+        s.fit_retained_amplitudes()
+    diagnostic = s.fit_retained_amplitudes(require_strict_pair=False)
+    assert not diagnostic["small_full_action_pair_pass"]
+    before = s.a.copy(), s.c.copy(), s.r.copy()
+    event = s.add_block(np.eye(4, dtype=complex)[:, 2:3])
+    assert not event["accepted"]
+    for actual, expected in zip((s.a, s.c, s.r), before):
+        np.testing.assert_array_equal(actual, expected)
+
+
 def test_interrupted_block_publication_preserves_previous_complete_state(
     tmp_path, monkeypatch
 ):

@@ -126,6 +126,9 @@ def run_stage(manifest, artifact, marker):
             ),
         )
         result["bound_numerical_chain_sha256"] = {p: digest(ROOT / p) for p in CHAIN}
+        from src.solvers.neural_wave_greedy import atomic_json
+
+        atomic_json(artifact / "core_qualification.json", result)
         if spec["stage"] == "v31_global_rank_wave_checks":
             from src.solvers.neural_wave_block_qualification import (
                 qualify_existing_range,

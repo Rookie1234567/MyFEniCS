@@ -48,7 +48,7 @@ class BlockWaveSubspace(WaveSubspace):
             )
         return z
 
-    def fit_retained_amplitudes(self):
+    def fit_retained_amplitudes(self, *, require_strict_pair=True):
         """Fixed-rcond SVD of small R; never an inverse of the FE operator.
 
         Per-block independence does not guarantee global numerical rank. The
@@ -74,12 +74,13 @@ class BlockWaveSubspace(WaveSubspace):
         self.r = self.action.f - self.action.apply(self.c)
         pairing = float(np.linalg.norm(self.r - predicted) / self.action.bnorm)
         self.seconds["true_residual"] += perf_counter() - start
-        if not np.isfinite(pairing) or pairing > 1e-10:
+        if not np.isfinite(pairing) or (require_strict_pair and pairing > 1e-10):
             raise ArithmeticError("SMALL_R_COMPLETE_ACTION_PAIR_REJECTED")
         return dict(
             effective_rank=self.effective_rank,
             stored_columns=self.m,
             small_full_action_pair_relative=pairing,
+            small_full_action_pair_pass=pairing <= 1e-10,
             predicted_residual_norm=float(np.linalg.norm(predicted)),
             sigma_max=float(singular[0]),
             sigma_min=float(singular[-1]),
