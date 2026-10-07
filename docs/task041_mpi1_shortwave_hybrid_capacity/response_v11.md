@@ -1,6 +1,6 @@
 # Task041 Response V11：Review V9 H0/H1进展记录
 
-**状态：进行中。** H0只读审计、H1 fixed-H6组件/路由验证、13.5 nm Si回归及唯一一场W5 fixed-H6 public/service完整回归均已完成。W5场通过原五项残差、P4/recovery/physics和十项finalizer；但保持`performance_not_isolated`，且不是W2或0.7 nm资格。提交 `ce31f3738f469a04d23c50af0a7c7306afde3b38` 已加入严格限定的W5 fixed-H6 legacy-native descriptor路由，原validator/binder继续负责packet身份。2 nm旧packet可复用；新的fixed-H6 W2 consumer尚未启动。H2–H4仍未完成，0.7 nm/2 TB/48 h目标尚未达。
+**状态：进行中。** H0只读审计、H1 fixed-H6组件/路由验证、13.5 nm Si回归及唯一一场W5 fixed-H6 public/service完整回归均已完成。W5场通过原五项残差、P4/recovery/physics和十项finalizer；但保持`performance_not_isolated`，且不是W2或0.7 nm资格。提交 `ce31f3738f469a04d23c50af0a7c7306afde3b38` 已加入严格限定的W5 fixed-H6 legacy-native descriptor路由，原validator/binder继续负责packet身份。W2旧TOAR packet身份可复用；新fixed-H6 W2场仍为`capacity_blocked_unqualified`，因为预测峰和cell-condensed并存上界未知。旧后端峰仅提示风险，不证明新路线超过node0空间。H3已有0.7 nm候选材料和完整几何外部key派生，仍无正式`.dat`/resolved身份或网格资格；2 TB/48 h目标尚未达。
 
 | Review V9 H0要求 | 处理 | 证据/边界 |
 |---|---|---|
@@ -11,21 +11,36 @@
 | H1 fixed-H6反馈门组件 | fixed-H6分支以8次固定反馈作用检查复数重复/线性及近零绝对误差；serial单参数1 passed，MPI2五selector每rank 8 passed | 组件测试本身只资格化门、受控错误共识和清理fixture；W5实际public/service数值结果另见下文，不从fixture推断 |
 | H1 13.5 nm public/service回归 | 唯一Si anchor完整走单`.dat`、MPI8 consumer、outer、recovery、physics与十项finalizer；37 outer、264个`S_H`作用，五项真残差通过 | 一次研究锚点；`performance_not_isolated`，不外推W 5/2/0.7 nm |
 | W 5 nm legacy packet与实际场 | 旧supervisor为`validated_legacy_native_packet`；唯一新W5 public/service场通过五残差、P4/recovery/physics及finalizer | packet身份沿原validator/binder核验；旧producer资源仍`unqualified`，新场资源独立记录；本场不是W2/0.7 nm资格 |
-| H3材料、通道与容量只读审计 | Henke/NIST/CIAAW/BIPM/CODATA来源字节已在ignored准备目录封存并记SHA；给出0.7 nm候选插值与派生材料值；2 nm已有PEP/TOAR，`ncv/mpd`未知 | 候选材料不是正式`.dat`；未生成W 0.7输入、未运行QEP或PDE |
+| H2当前容量决定 | 读取两点host/node0资源样本及历史W2两类峰所在阶段；分别核对host启动门与node0 reserve/floor | host样本高于1.70 TiB基线；`predicted_peak+256 GiB`项仍未知。node0扣384 GiB floor后约442.29 GB，旧642.45/647.90 GB峰只提示风险，来自另一后端。固定H6新峰上界未知，故为`capacity_blocked_unqualified`；不是已测OOM，也不能断言新路线必然超限 |
+| H3材料、通道与容量只读审计 | Henke/NIST/CIAAW/BIPM/CODATA来源字节及SHA；按候选W材料插值得到复折射率；用现有模式函数导出50×25 nm候选全key清单 | 候选值/32,056 keys均未绑定正式`.dat`/resolved身份；未运行QEP/FE；h/p/M与逐对象峰值资格仍缺 |
 
 ## 主要结论
 
 1. Oct 3 W5参考wall为`202124.563261555 s`；新fixed-H6 W5 public-to-finalizer为`59914.951233018 s`（16.643 h）。新场outer为49而参考为5，内部侧区KSP迭代总数7732而参考为30296，P4回代/精化也更少；两场源码、方法和隔离条件不同，约70.36%的wall差只是描述，不能归因于fixed-H6单一因素。
 2. 新W5累计原侧区P4 backsolve为27097、refinement为11633；owner C-LU为1次factor、307/307次累计attempt/success；固定反馈setup 8个`S_H`与正式求解合计315个`S_H`。计数按各自scope报告，不累加rank副本，也不把C matvec当作C-LU solve数。
 3. 最新13.5 nm Si fixed-H6 public/service场于Invocation `443995ec69bd45d0a36a1be48ced33a3`完成，public-to-finalizer wall为`3181.091282263 s`。outer为37步、264次`S_H`；最终inner独立raw相对残差为`3.4826090281102427e-4 <= 1e-3`。只有最终inner终检值被持久保存，不能补称前36次均有逐次独立终检。此场可验证公共接线，不能代替W 5/2/0.7 nm资格。
-4. 2 nm已有TOAR实现与producer数据；不是待迁移算法。0.7 nm缺正式钨材料封套、完整W外部keys和合格的h/M阶梯，2 TB与48 h都没有实测资格。
-5. 下一步复用已有W2/M1200/MPI8 producer packet准备一次fixed-H6 public/service运行；不重跑QEP。保持cell-condensed、P4 target`5e-13`和最多两次同因子修正，CPU map等fresh准入时冻结。一次setup后在同一factor生命周期内连续经过outer、recovery和finalizer；32 outer只是成本/收敛判断点，不是自动停止阈值。
+4. 2 nm已有TOAR实现与producer数据；不是待迁移算法。H3现有只读结果已得到W候选材料值和目标几何的完整外部key清单，但都不是正式输入或资格结果。0.7 nm相邻h/p/M门、材料误差和逐对象并存内存仍未核验，2 TB与48 h均未取得证据。
+5. 当前W2 fixed-H6仍为`capacity_blocked_unqualified`，原因是新路线并存对象尚无可审保守上界，不是测得它超过内存。host启动门要求`MemAvailable >= max(predicted_peak+256 GiB, 1.70 TiB)`；本次host样本已超过1.70 TiB，但预测峰项未知。384 GiB node0 floor与host MemAvailable是不同口径的并行门；node0扣floor后约442.29 GB，旧642.45/647.90 GB峰属于one-cell exact-P4旧后端，只是风险信号，不能当作cell-condensed fixed-H6预测。job有效硬上限仍取已批准各限制中最严者；swap为V9 observe-only，不恢复硬门。
 
 ## 公共接线与后续W2边界
 
 W5窄路由现已沿既有`python scripts/run_case.py <one-case.dat>`→launcher→supervisor/service→consumer链实施并完成唯一真实public/service场；没有新增第二runner或`.dat`身份字段。W5固定H6仍为显式研究分支，原方程、P4、五残差、恢复和物理门保持不变。旧producer资源`unqualified`，由新consumer自行通过资源门；这一事实不抹掉已核验的legacy-native数值packet身份。
 
-下一步只计划复用同一public/service链读取既有W2 M1200/MPI8 producer packet，不重跑QEP。W2的官方输入记录`side_residual_correction_steps=1`，注册P4 refinement target仍为`5e-13`、最多两次同因子修正；两字段不能互相替代。CPU map、unit、root及资源门要在新准备包中一致绑定并在启动前重新准入。route-plan、leading-PH以及其他研究诊断保持关闭；不由W5结果宣称W2适配、容量通过或0.7 nm资格。
+W2官方输入记录`side_residual_correction_steps=1`，注册P4 refinement target仍为`5e-13`、最多两次同因子修正；两字段不能互相替代。H2容量决定及H3派生细节、对象库存和pilot边界见下方新增记录、[派生更正](outcomes/records/task041_v9_w2_h3_interpretation_correction_20261007.json)与[只读机器记录](../../results/task041_v9_w2_capacity_decision_20261007T020417Z/w2_capacity_h3_assessment_20261007.json)。当前不启动W2的原因是固定H6路线新峰值上界缺失，不是reserve与§10.2 host门的政策冲突。
+
+## H2：W2固定H6容量决定（2026-10-07，只读）
+
+本快照只决定能否准备运行，不是新场准入。两点host样本时间为`2026-10-07T02:06:06.316388Z`和`02:06:11.552503Z`，raw分别见[host样本1](../../results/task041_v9_w2_capacity_decision_20261007T020417Z/host_visible/host_sample_1.json)（SHA `c5b53667b63a5545a3f4954c05b323e845a1417fa284b5dcb894e18093522559`）和[host样本2](../../results/task041_v9_w2_capacity_decision_20261007T020417Z/host_visible/host_sample_2.json)（SHA `2cca36005b6496f0ccc9ddace8e8f3f3d87fdc49e75fe8ade5698507893a7aa8`）。host MemAvailable为`2070749650944/2070796640256 B`；node0 MemFree为`854604922880/854608048128 B`。两样本均为共享宿主观察，CPU10–17期间负载约`2.682–4.598%`；Task039/Task042仍在其他CPU，未触碰。目标CPU观察不等于空闲保证。
+
+W2当前注册hard/warn/planning ceiling分别为`1759218604442/1539316278886/1649267441664 B`，node0 reserve/floor为`412316860416 B`；二者与任务书§10.2的host启动门并行执行，口径不同。输入中`swap_limit_bytes=0`仍是原始身份字段，Review V9有效swap策略为observe-only，不以swap非零作为硬拒绝或停止条件。consumer timeout字段为345600 s但consumer不执行elapsed停止，producer timeout才执行。正式resource authority是同时存活的process-tree RSS与专属job cgroup `memory.current`（后者存在时取二者最大）；本次session cgroup是共享的、无有限上限，不能作为专属W2容量。本次host MemAvailable为`2070749650944/2070796640256 B`，高于1.70 TiB基线约`201579883724/201626873036 B`；但§10.2还要求超过`predicted_peak+256 GiB`，该预测峰未知，故不能判完整host门通过。384 GiB floor不是host baseline门；不构成政策冲突。
+
+保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`里的node0 gate仅作政策核对，未应用。其最小hunk要求启动前/运行中读取node0 MemTotal/MemFree；384 GiB floor为`412316860416 B`；effective hard为`min(registered hard, node0 MemTotal−floor, node0 MemFree−floor)`，warning为`min(registered warning, 90% effective hard)`；采样低于node0 floor时controlled stop为`node0_memfree_floor`。按本次两点，扣reserve后的node0空间分别为`442288062464/442291187712 B`，假设性effective hard相同；warning为`398059256217/398062068940 B`。它不是已启用的新准入或W2场实测。
+
+历史W2 consumer的process-tree峰`642449637376 B`发生于top side-factor construction，bottom因子已完成；当时authority峰样本`647904415744 B`发生于第四个top pre-formal repeat batch，同时有两侧因子/动作和modal sample。后者样本process-tree RSS为`642438967296 B`，PSS/USS为`639186608128/638677749760 B`。相对本次样本1/2的node0扣reserve空间，process-tree峰分别高出`200161574912/200158449664 B`，authority峰高出`205616353280/205613228032 B`。单cell exact-P4因子在consumer-local `8176.225 s`已销毁，早于这两个峰；packet 33文件共`4842723531 B`在磁盘，但当时驻留副本、allocator留页与新fixed-H6路线峰均未知。旧峰来自`research_exact_lu/full3d_one_cell_exact_schur`，不是新W2 `cell_condensed`因素预测；旧场在正式响应前以sampled-repeat实现错误终止，formal响应`0/4800`，不属于OOM或数值收敛失败。
+
+固定H6计划明确删除全Schur列物化和旧每侧16次自适应预付sample，改成每次setup 8次有界反馈检查；每次S_H含两侧各一次H6作用（degree-3递推各2次矩阵乘）及C动作，之后GMRES每solve仍为最多9次solver作用加1次独立末检。新旧对象并存字节、rank复制、当前cell-condensed P4因子、TOAR bases/shift factor/workspace、H6/C/Krylov vectors、DtN/output/recovery buffers没有可用上界；删列或替换sample不证明旧峰消失。
+
+因此当前状态是`capacity_blocked_unqualified_for_a_new_fixed_H6_W2_run`：不启动、不归类为已测OOM/算法负结果，也不声称固定H6新路线必然超限。host预测峰加256 GiB这一项及cell-condensed新路线对象并存上界仍未知；node0旧路线峰只能作风险提示。当前快照不是未来准入；后续需补足对象并存和容量依据，不降低reserve，也不以运行中门代替启动前判断。swap保持observe-only。
 
 H0只读阶段没有执行测试、ABI、MPI、QEP、FE或checker。fixed-H6反馈门的production实现保持在source SHA `64ef9439ee2d527049877edfa88ce8e848e4370600f1a8b9ee41d4684709dea3`；本次H1测试阶段只改test350故障注入fixture，没有再改数值core。运行fresh serial/MPI2 ABI及下列定向测试，没有运行QEP、FE或public consumer。serial与MPI2父wall已按独立attempt各记一次V5，ABI/static/rank-local时间不计。
 

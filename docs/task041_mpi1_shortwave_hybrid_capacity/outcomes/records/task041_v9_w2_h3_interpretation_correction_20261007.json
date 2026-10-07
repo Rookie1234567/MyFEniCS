@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "record_kind": "derived_interpretation_correction_and_inventory",
+  "date": "2026-10-07",
+  "status": "capacity_blocked_unqualified; H3 derived candidates only",
+  "immutable_sources": {
+    "original_assessment": {
+      "path": "results/task041_v9_w2_capacity_decision_20261007T020417Z/w2_capacity_h3_assessment_20261007.json",
+      "sha256": "10e67f3e8115874f26cfac71af16b0f096019e548d56ed2f0773914fdd001f81",
+      "mutated": false
+    },
+    "host_samples_sha256": [
+      "c5b53667b63a5545a3f4954c05b323e845a1417fa284b5dcb894e18093522559",
+      "2cca36005b6496f0ccc9ddace8e8f3f3d87fdc49e75fe8ade5698507893a7aa8"
+    ],
+    "w2_consumer_summary": {
+      "path": "results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z/consumer/consumer_summary.json",
+      "sha256": "df2aff13add4a5cf8ddca9b720f0d980965165b9c25e9822607c258e0f9d8187"
+    },
+    "w5_fixed_h6_summary": {
+      "path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261006T085648.428993Z/consumer/consumer_summary.json",
+      "sha256": "4257b309c5381498c6a84110d5c49e86eb0e3ca78272b09b7bb6ee731dd18526",
+      "machine_record_sha256": "498e898e2e789daa392281b13c70e0b582def3032b5776b2af296c735796fb47"
+    },
+    "h3_material_values_and_source_hashes": "bound by original assessment sha256 above and its archived h3_sources files; not copied or rewritten here",
+    "external_key_artifact_sha256": "bb50ccac921413aab2ab213becd3bdb6bbd1a321c129e29f7071c358850ef863"
+  },
+  "capacity_correction": {
+    "decision": "capacity_blocked_unqualified",
+    "measured_oom_or_new_route_exceedance": false,
+    "host_rule": "MemAvailable >= max(predicted_peak + 256 GiB, 1.70 TiB)",
+    "host_1p70_tib_floor_bytes": 1869169767220,
+    "host_memavailable_bytes": [2070749650944, 2070796640256],
+    "host_headroom_over_1p70_tib_bytes": [201579883724, 201626873036],
+    "predicted_peak_plus_256_gib": null,
+    "host_gate": "1.70 TiB term observed above floor; predicted-peak term unknown, so the complete gate is not established",
+    "node0_floor_bytes": 412316860416,
+    "node0_memfree_bytes": [854604922880, 854608048128],
+    "node0_post_floor_bytes": [442288062464, 442291187712],
+    "registered_hard_warn_planning_bytes": [1759218604442, 1539316278886, 1649267441664],
+    "effective_job_cap": "minimum of the independently approved host, node0, job/cgroup, and registered limits",
+    "old_peaks_bytes": [642449637376, 647904415744],
+    "old_peak_backend_and_stages": [
+      "process-tree peak during top one-cell exact-P4 factor build, bottom factor/action ready",
+      "authority peak during fourth top pre-formal repeat, both side factors/actions and modal sample present"
+    ],
+    "interpretation": "384 GiB node0 floor and host §10.2 MemAvailable rule are parallel gates with different scopes, not a policy conflict. Old peaks are risk signals from research_exact_lu/full3d_one_cell_exact_schur, not a forecast for cell-condensed fixed-H6. New-route coexistence upper bound remains unknown.",
+    "swap": "V9 observe-only; input swap_limit_bytes=0 is not a hard swap gate",
+    "snapshot_is_future_admission": false
+  },
+  "w2_coexistence_inventory": {
+    "w2_identity": "2 nm, p6/h1.5, M1200, MPI8; existing producer uses PEP/TOAR, requested 2400, converged 2422/2423, 26 iterations",
+    "w2_old_one_cell_factor": {
+      "backend": "research_exact_lu/full3d_one_cell_exact_schur",
+      "augmented_rows_bottom_top": [1597216, 1597224],
+      "local_rows_bottom_top": [198916, 199632],
+      "corrected_mumps_infog9_factor_nnz_bottom_top": [7116000000, 7423000000],
+      "factor_bytes_and_cell_condensed_fill": null,
+      "limitation": "other MUMPS/PETSc memory estimates are zero or negative and cannot be used as resident factor bytes"
+    },
+    "simultaneous_objects_at_old_peaks": {
+      "packet": "33 files / 4842723531 B on disk; resident copies at peaks unknown",
+      "old_p4_factor_destroyed_at_consumer_local_seconds": 8176.224993840093,
+      "TOAR_ncv_mpd_bases_shift_workspace_bytes": null,
+      "allocator_retained_pages_and_exact_krylov_high_water": null
+    },
+    "cell_condensed_w5_reference_not_a_w2_scale_factor": {
+      "p_h_m_mpi": [6, 4.0, 480, 8],
+      "setup_factor_count_bottom_top": [1, 1],
+      "after_cleanup_factor_count_bottom_top": [0, 0],
+      "active_trace_rows_bottom_top": [56280, 56280],
+      "matrix_rows_bottom_top": [56576, 56584],
+      "full_storage_rows_and_interior_rows": [128656, 68040],
+      "port_rows_bottom_top": [296, 304],
+      "preallocated_structural_nnz_bottom_top": [27693376, 27893056],
+      "raw_tensor_logical_broadcast_bytes_per_side": 60480000,
+      "factor_fill_nnz_and_bytes": null,
+      "process_tree_and_job_cgroup_peak_bytes": [42573258752, 41376940032],
+      "scope": "measured W5 p6/h4/M480 only; no W2 scaling inference"
+    },
+    "new_fixed_h6_route": {
+      "removed": ["full modal Schur column materialization", "old adaptive SideBalancedInverse prepayment of 16 calls per side"],
+      "retained": ["QEP/TOAR and modal bases/shift workspace", "cell-condensed FE and two side factors during setup", "packet/MPI copies", "H6/C/S_H/GMRES vectors", "DtN and recovery/output buffers"],
+      "added": "8 setup S_H feedback actions; 8 H6 applies per side and 16 degree-3 MatMults per side; 8 C actions; GMRES up to 9 solver S_H calls plus one independent final check per solve",
+      "new_route_bytes_and_peak_upper_bound": null,
+      "central_or_conservative_estimate": null
+    },
+    "smallest_future_measurement": "If separately authorized, record per-rank cell-condensed rows/NNZ, factor corrected NNZ and exposed factor bytes at existing factor-ready points, plus simultaneous process-tree/job-cgroup high-water across both side setups and the fixed-H6 gate. This is a measurement proposal, not a launch authorization or prelaunch upper bound."
+  },
+  "h3_corrections": {
+    "material_status": "derived candidate; formal source/input/resolved identity not yet issued",
+    "material_uncertainty": "no uncertainty propagation was performed; not a new pilot gate and not experimental-accuracy certification",
+    "formal_material_binding_required": ["source bytes/hash", "constants and units", "Henke interpolation interval/method", "positive-loss sign convention", "n and epsilon", "geometry and resolved hash"],
+    "target_keys": {
+      "geometry": "50x25 nm",
+      "count": 32056,
+      "propagating_nonpropagating": [32054, 2],
+      "canonical_sha256": "9f43482413e86c5d2db2e7ba8e5fed0b684d89566f070a88946f4c6bbbc7d4b5"
+    },
+    "pilot_keys": {
+      "geometry": "10x5 nm, separate candidate identity",
+      "count": 1292,
+      "propagating_nonpropagating": [1290, 2],
+      "canonical_sha256": "878f48f650b8807d894a554d7b5ab76dc57edad9c58adae7997027d5c8346a21"
+    },
+    "key_policy": "retain both nonpropagating keys and existing auto_propagating/zero-Rayleigh semantics; external keys are not internal M",
+    "p6_reduced_pilot": {
+      "candidate_model_id": "task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot",
+      "registered": false,
+      "geometry_nm": {"period_x": 10.0, "period_y": 5.0, "z_min": -2.0, "z_max": 26.0, "material_interface_z": 0.0, "grating_width_x": 3.4, "grating_width_y": 5.0, "grating_height": 24.0, "air_height": 26.0, "substrate_thickness": 2.0},
+      "hybrid_internal_interfaces_nm": [2.0, 22.0],
+      "ladder_p_h_m": [[6, 0.7, 400], [6, 0.525, 400], [6, 0.525, 600]],
+      "ladder_rule": "each next point only after the prior candidate passes its own gates; M400 is an unqualified start, not a scaling-derived qualification",
+      "current_interface": "SideBalancedInverse accepts only p6; new model_id is absent from Task041 input/BAL_H/P4/fixed-H6 registries, so no candidate .dat is parser-qualified",
+      "minimum_registration_review": ["src/io/input_validation.py model/profile", "benchmarks/task041_balh_workflow.py case/P4 scope", "benchmarks/task041_exact_side_workflow.py fixed-H6 scope", "public service CPU/resource/input identity"],
+      "geometry_partition_status": "0 < bottom 2 < top 22 < interface 0 + grating height 24 passes the basic slab inequality only; propagation/loader and public identity still require review"
+    }
+  }
+}

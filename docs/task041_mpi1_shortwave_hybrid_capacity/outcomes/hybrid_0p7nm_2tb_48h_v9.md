@@ -127,14 +127,45 @@ A6把体作用和DtN邻项融合，减少一段局部动作；已有microbenchma
 
 `1177.4862258147914 s`（bottom）和`1288.735517281806 s`（top）来自baseline run `run_20261005T022505Z_fixed_h6`，source `455540e5350c1743598ea65d828c7940f4473d5f`，consumer summary SHA `3c0297553e8ab91592868d29794c46351091f031854841003bcc4b78b02942a4`。这不是上表current route-plan run，也不是`df9c3b...` leading-PH anchor。证据来自[pair closeout JSON](../../../results/task041_review_v8_on_demand_modal_schur/13p5_fixed_h6_route_plan_reuse_research_preparation_20261005T075635Z/readonly_fixed_h6_route_plan_pair_closeout_20261005.json)，SHA `1db620668805bb41a1d4d3822a4c23f76237333052ae7357dc03d4dcbf823cb8`：baseline bottom/top分别位于`/side_rhs_audits/baseline_phase_side_aggregates/4/sum_of_per_rhs_MPI_MAX_elapsed_seconds`与`/side_rhs_audits/baseline_phase_side_aggregates/5/sum_of_per_rhs_MPI_MAX_elapsed_seconds`；每侧74条。合计`2466.2217430965974 s`是由两项相加得到的derived值。它只是逐RHS的MPI.MAX耗时和，不是phase wall，且baseline同样`performance_not_isolated`，不能用于严格成本归因。
 
-## 2 nm与0.7 nm的容量/材料缺口
+## 2 nm与0.7 nm的容量/材料现状
 
 | 目标 | 现有可用证据 | 尚缺内容与边界 |
 |---|---|---|
 | W 2 nm，p6/h1.5，M1200，MPI8 | 2026-09-18 producer summary显示正/负侧均为SLEPc `PEP/TOAR`、general quadratic polynomial、shift-invert MUMPS LU；requested 2400，converged 2422/2423，各26次迭代。rank-max分项：positive-right 6009.042 s、positive-adjoint 8324.175 s、negative-right 6206.448 s、negative-adjoint 8658.907 s、reciprocal 285.402 s、总29500.000 s；另存producer phase 29504.116 s，两者嵌套，不能相加 | 旧consumer重复门失败，formal `0/4800`，不是新的完整2 nm收敛/容量资格。`ncv/mpd`没有记录，源码默认值不代替实测配置。已用TOAR，容量审查应优先量大nev下左右基、shift因子及workspace |
-| W 0.7 nm材料 | 已封存CXRO/Henke、NIST、CIAAW、BIPM及CODATA来源字节；按1752.87/1781.22 eV两点线性插值得到f1=`29.48267808543176`、f2=`9.27611837781331`，候选n=`0.9995903781323069+i0.00012887909720587617` | 来源字节与SHA已记录，但从来源到正式`.dat`的常数/材料封套尚未资格化；项目正耗散约定为`n=1−δ+iβ`，不跨1809.1/1809.3 eV吸收边插值 |
-| W 0.7 nm完整外部模式 | Task039只能生成air-side组件模式清单：16030个top air keys，已测inventory SHA `28cf61cebf8656b207a5128cc98dda4e0bfcaad4cdb1fe1b784b33bcacd14e4d` | 此值没有W grating/substrate、两侧介质与完整正式input身份，不能当0.7 W外部通道清单。`src/io/execution_plan.py` 与validation显式以`0P7NM_MATERIAL_INPUT_INCOMPLETE`拒绝Full3D launch |
-| W 0.7 nm规模 | 派生候选h≈0.525 nm仅来自保持h/λ的尺度关系；p6/h0.525的投影DoF约173,802,000、active trace约51,192,000、NNZ约43,283,050,000，旧因子存储估算3234–32342 GiB | 这些是结构/容量派生，不是实际材料、网格、所选M、factor或RSS测量。缺正式材料和external keys、合格hp/M阶梯、各对象生命周期字节及目标运行的node分布。2 TB/48 h目前均未证 |
+| W 0.7 nm材料候选 | 来源字节已封存；E=`1771.202834760004 eV`，Henke线性插值得`f1=29.482678085431722`、`f2=9.276118377813308`；NIST/CIAAW给出N=`6.322199557658834e28 m⁻³`，项目正耗散约定下`n=0.9995903781323069+i0.00012887909720587614`、`εr=0.9991809074448665+i0.00025765261101874415` | 来源和派生值已可追溯，但未形成正式`.dat`/resolved材料身份；未传播Henke插值、CIAAW原子量或CODATA常数不确定度。1809.1/1809.3 eV吸收边两点不跨边插值 |
+| W 0.7 nm全目标几何外部keys候选 | 现有几何与`outgoing_port_modes_3d`派生32056有序key：top16030、bottom16026；S/P各16028；32054 propagating、2 nonpropagating、0 Rayleigh；canonical UTF-8 key SHA `9f43482413e86c5d2db2e7ba8e5fed0b684d89566f070a88946f4c6bbbc7d4b5` | 这是完整W候选材料/目标几何的轻量枚举，不是旧16030 top-air-only列表。仍未绑定正式input/resolved/packet identity；正式channel material/geometry qualification未完成，亦未运行QEP |
+| W 0.7 nm结构规模 | H0派生p6/h0.525投影DoF约173,802,000、active trace约51,192,000、NNZ约43,283,050,000；旧因子存储估算3234–32342 GiB | 结构派生旧估算不是fixed-H6对象清单或RSS上界；cell factors、TOAR bases/shift factor、DtN、恢复和MPI驻留缺实际bytes/并存证据。2 TB/48 h未证 |
+
+### H2 W2 fixed-H6容量决定（2026-10-07，只读）
+
+官方输入为W 2 nm、p6/h1.5、M1200、MPI8、cell-condensed；既有TOAR packet身份可复用，但历史consumer在sampled-repeat实现路径停止，formal响应`0/4800`。当前**不启动**新fixed-H6 W2场，结论为`capacity_blocked_unqualified`，不是测得OOM或新算法数值失败。固定H6新路线的完整峰值未知。
+
+本次两点host/node0 raw见[样本1](../../../results/task041_v9_w2_capacity_decision_20261007T020417Z/host_visible/host_sample_1.json)（SHA `c5b53667b63a5545a3f4954c05b323e845a1417fa284b5dcb894e18093522559`）及[样本2](../../../results/task041_v9_w2_capacity_decision_20261007T020417Z/host_visible/host_sample_2.json)（SHA `2cca36005b6496f0ccc9ddace8e8f3f3d87fdc49e75fe8ade5698507893a7aa8`）。node0 MemFree=`854604922880/854608048128 B`；host MemAvailable=`2070749650944/2070796640256 B`。注册W2 hard/warn/planning ceiling=`1759218604442/1539316278886/1649267441664 B`，注册reserve/baseline=`412316860416 B`；consumer timeout字段345600 s但不执行elapsed stop。任务书§10.2要求host可用量至少`max(predicted_peak+256 GiB, 1.70 TiB)`；固定H6 `predicted_peak`未知，384 GiB baseline不能替代文档合同。
+
+保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`的node0 gate未应用，仅按最小hunk核对：用node0 MemTotal/MemFree作启动与运行门；floor=`412316860416 B`；effective hard=`min(registered hard, node0 MemTotal−floor, node0 MemFree−floor)`；warning=`min(registered warning, 90% effective hard)`；采样到node0 MemFree跌破floor时以`node0_memfree_floor`受控停止。按当前两点假设性hard=`442288062464/442291187712 B`，warning=`398059256217/398062068940 B`；扣reserve后的空间比历史树峰`642449637376 B`少约`200.16 GB`，比authority峰`647904415744 B`少约`205.61 GB`。这不是当前活动合同或新场准入值。host/node0快照是容量判断，不是future admission；共享cgroup没有有限限制。
+
+旧process-tree峰出现在top side-factor construction，bottom已ready；其workflow elapsed为`72296.84627462388 s`、consumer-local为`42792.07925245399 s`（该phase边界`32893.35281426599–43916.50308411103 s`）。authority峰出现在第四次top pre-formal repeat，workflow elapsed为`165204.9244649848 s`、consumer-local为`135700.1574428149 s`（该batch边界`116426.447–135702.941 s`），两个side factors/actions和modal sample同时存在。旧单cell exact-P4 factor在consumer-local `8176.224993840093 s`已destroy，但resident packet副本、allocator保留页、后续cell-condensed factors和新H6/C/Krylov/recovery对象的并存均unknown。新fixed-H6明确移除全Schur列物化及旧每侧16次自适应sample预付，改为8次setup反馈门；这不能推断早先top factor/repeat峰会消失，也不能给新路线下界/上界。2 nm producer使用TOAR已是现状（requested2400、converged2422/2423、26迭代）；ncv/mpd、bases、shift factor/workspace bytes未存。
+
+| 新路线库存类别 | 对象及证据状态 |
+|---|---|
+| 明确保留 | 4.84 GB磁盘packet/identity、cell-condensed P4 side operators/factors、BAL_H side actions、C-LU、固定H6、trace maps、full external DtN、Krylov basis、恢复/输出/canonical arrays、MPI copies；其中多数驻留/并存bytes未知 |
+| 明确移除 | materialized full modal Schur columns；旧每侧16次自适应`SideBalancedInverse` sample/repeat预付。替代门为8次固定H6反馈作用，不是零成本 |
+| 新增/改变 | setup中8次`S_H` gate；每侧8次H6 apply/16次degree-3 MatMult，8次C作用；GMRES每solve仍最多9次solver作用+1次独立末检 |
+| 未知 | TOAR稀疏矩阵、左右基、MUMPS shift factor/workspace；cell-condensed局部因子大小及重叠；packet驻留/复制；H6 scratch、C因子、S_H/Krylov向量；DtN/全场/recovery buffers；各对象MPI复制方式和新路线同步高水位 |
+
+原始逐对象字段见[只读机器记录](../../../results/task041_v9_w2_capacity_decision_20261007T020417Z/w2_capacity_h3_assessment_20261007.json)，SHA `10e67f3e8115874f26cfac71af16b0f096019e548d56ed2f0773914fdd001f81`；资源与并存解释的[派生更正](records/task041_v9_w2_h3_interpretation_correction_20261007.json)不修改原始记录。当前不以“启动后等硬门”代替证据；新fixed-H6对象并存峰未知，不能作保守容量上界，也不据旧peak认定新路线超限。
+
+### H3 W 0.7 nm候选派生与轻量pilot边界
+
+来源原始文件逐项SHA见同一[机器记录](../../../results/task041_v9_w2_capacity_decision_20261007T020417Z/w2_capacity_h3_assessment_20261007.json)；文件位于`results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/`。取Henke在1752.87 eV `(f1,f2)=(32.5247,9.39200)`与1781.22 eV `(27.8205,9.21280)`作线性插值；以精确SI的h、c、e求`.7 nm`能量1771.202834760004 eV，插值比例0.6466608380953782，得`f1=29.482678085431722`、`f2=9.276118377813308`。NIST钨密度19.3000 g/cm³、CIAAW相对原子质量183.84(1)、CODATA经典电子半径`2.8179403205e-15 m`和精确Avogadro常数给`N=6.322199557658834e28 m⁻³`与`N r_e λ²/(2π)=1.3893645160256921e-5`。按项目正吸收符号，`δ=4.0962186769307124e-4`、`β=1.2887909720587614e-4`，`n=1−δ+iβ=0.9995903781323069+i0.00012887909720587614`，`εr=n²=0.9991809074448665+i0.00025765261101874415`。Henke展示约定的虚部符号相反，必须按项目约定转换；不能直接搬负虚部。未做材料/source/interpolation不确定度传播，也未写正式输入。
+
+现有代码可在不建QEP的轻量几何计算中列出完整候选keys：从既有`SimulationConfig3D`/target-stage几何构造配置，用`outgoing_port_modes_3d`生成模式，并按`(side,m,n,polarization)`规范顺序序列化。目标50×25 nm几何得32056 keys；文件`../../../results/task041_v9_w2_capacity_decision_20261007T020417Z/w0p7_external_keys_candidate_20261007.json`为1633069 B、SHA `bb50ccac921413aab2ab213becd3bdb6bbd1a321c129e29f7071c358850ef863`，其中canonical key JSON 1,631,161 B、SHA `9f43482413e86c5d2db2e7ba8e5fed0b684d89566f070a88946f4c6bbbc7d4b5`。这是候选材料/几何计算产物；正式`.dat`的介质、orientation、normalization与resolved identity仍需由注册输入链权威绑定。历史16030 top-air-only key表不能替代完整W通道。
+
+当前侧逆接口只支持p6，因此撤回先前p4→p5阶次泛化方案。一个独立缩减pilot候选保持p6：周期10×5 nm、z范围−2到26 nm、材料表面`interface_z=0`、grating宽3.4 nm/高24 nm、air 26 nm、substrate 2 nm；Hybrid内部bottom/top界面由原目标10/110 nm按几何1/5映射为2/22 nm，不能与材料表面z=0混淆。候选阶梯是p6/h0.70/M400作未资格化起点；仅在其门通过后，固定p6/M400把h改到0.525；再固定该网格只改M到600。M400只是计算起点，不能由面积或`1/h²`公式称为已资格，也不作DOF/内存预测。保持10×5缩减几何与50×25目标身份分离；此候选不是完整目标。
+
+此pilot当前还不是可执行`.dat`：`physical_balanced_side_inverse.py`只接受p6，满足阶次方向；但W 0.7新`model_id`未注册，当前Task041 input registry、BAL_H case、P4 target和fixed-H6 consumer scope均拒绝未知模型。缩减尺寸是否满足loader的层区与uniform propagation假设须在最小注册审查中逐项核；明确的几何候选为`0 < bottom=2 < top=22 < interface+grating_height=24`。如进入后续实现，需为新model_id注册专用10×5×0.7身份及p6、h/M ladder，审核Hybrid内部界面2/22映射、P4 target和CPU/资源/public service绑定；不得复用W5/13.5/2 nm身份或关闭身份校验。未经该审核，不称schema/loader通过。
+
+pilot候选的光学材料和通道均属`derived`。target 50×25 nm key候选32056项与本pilot 1292项分别绑定各自的几何/输入身份；两组都保留各自2项nonpropagating key，原`auto_propagating`及zero-Rayleigh策略不变。`M`是内部模态数，不等同于外部传播通道总数；目标M32056与pilot M1292也不是此处的p6/h0.70/M400起点。来源和派生值尚未经过完整不确定度传播，也没有材料实验精度认证；这不是新增pilot门。正式输入封套需要绑定原始来源字节hash、使用常数和单位、Henke插值区间/方法、正吸收符号、n/epsilon、几何、每组有序external keys及resolved hash。
 
 NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.pl?matno=074)，CIAAW为[钨原子量页](https://ciaaw.org/tungsten.htm)，Henke为[W光学常数文件](https://henke.lbl.gov/optical_constants/sf/w.nff)及[公式说明](https://henke.lbl.gov/optical_constants/intro.html)。来源原始字节保存在`results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/`：`w.nff` 13,801 B/SHA `dd11d29386952edd3259f2d3c4ddc88589ff6f6fb1e3ba3db43a4c589ea3ad95`、Henke公式页SHA `5dea737ff27676a17c9a076c9f9b99e40a3dfec4767fbeb549862b21b5cdfdc6`、NIST页SHA `d99569a1c84837b1f5f29e9a3862ddcc8d4acac4a52fe064cb9fd503cacfcd91`、CIAAW页SHA `b997d72d2e2cff592ce9ed5e07a490dc6ba331ea6efc5506b345bffd0ddf5454`、BIPM常数页SHA `dddeb6c0c7171df77f20c48742cb4774a5b1062d58a35d5ea75477bab31331e7`、CODATA PDF SHA `4d7e7f34b98ab2fc4df68b38247f818f6fc8bdf7f25f91abcdfbc329e22d2f32`。NIST密度19.3000 g/cm³、CIAAW原子量183.84(1)对应候选原子数密度`6.322199557658834e28 m⁻³`；0.7 nm能量为`1771.2028347600037 eV`，插值比例`0.6466608380953702`。这些来源字节及派生值便于追溯，但正式材料输入、常数使用记录和完整W外部通道仍需独立资格化。本次不变更冻结5/2 nm材料、不运行QEP或生成正式0.7 nm输入。
 
@@ -175,8 +206,8 @@ NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.p
 |---|---|---|
 | H0 | 文档、markers分段、全量side count、13.5/2 nm/0.7 nm只读审查完成；H0 record保留其冻结时点 | 后续H1结果另列，不覆盖H0历史 |
 | H1 | fixed-H6组件/路由和13.5 nm Si回归通过；唯一W5 fixed-H6 public/service场已完成且原五门、恢复/physics和finalizer均通过 | W5是研究候选；性能`not_isolated`，integrated checker未运行；不外推W2/0.7/2 TB资格。详见上方H1表与record |
-| H2 | 未启动新的fixed-H6 W2 consumer；已有2 nm producer packet的封套与身份已只读核对 | 复用2026-09-18的M1200/MPI8 packet；旧consumer失败发生在历史sampled-repeat门，不是packet校验。需fresh资源/CPU准入后一次构造、同factor连续outer与恢复；ncv/mpd仍unknown |
-| H3 | `not_run` | 封存W 0.7来源字节/正耗散符号与完整keys；建立小型真实3D和相邻hp/M资格；给逐对象容量模型 |
+| H2 | 未启动；W2 fixed-H6为`capacity_blocked_unqualified` | host样本已高于1.70 TiB，但预测峰项未知；node0扣384 GiB floor后约442.29 GB。旧峰仅为不同后端风险信号，新路线峰未知；不是政策冲突或已测超限 |
+| H3 | 材料/key和p6缩减pilot为derived候选，资格`not_run` | 新model_id未注册，candidate `.dat`不可执行；formal source/constant/resolved绑定及p6 h/M真实门待审。材料不确定度模型未做，但不是pilot额外门 |
 | H4 | `not_run` | 目标50×25 nm完整单胞，实测2 TB物理内存口径和从输入到恢复/核验/清理全过程≤48 h |
 
 目前没有依据宣称0.7 nm材料、2 TB容量或48 h目标已解决。没有新运行结果时，不复用旧的D1e、小RHS均值或local A6微基准作为新路线实测。

@@ -10,7 +10,15 @@ H0是一次只读历史快照：它对照两场W 5 nm、p6/h4、M480、MPI8×1�
 | Side/P4工作量 | 两场内部KSP迭代合计均30296；较新场P4 backsolve和refinement各多8686次，不能从计数直接换算秒数 | 详见H0 outcome的全量分组；逐RHS MPI.MAX和嵌套时间不相加成wall |
 | 13.5 nm锚点 | 唯一Si public/service场37 outer/264 `S_H`，五项真实残差、recovery/physics与finalizer通过；只存有最后inner独立raw终检值 | 已验证公共身份链和完整生命周期；不是W 5/2/0.7 nm或性能资格 |
 | W 5 nm V9 fixed-H6 | 10月3日完整数值身份及legacy-native validator结果存在；后续唯一fixed-H6 public/service场已完成且五残差、physics/recovery和finalizer通过 | 旧producer资源`unqualified`单列；新场`performance_not_isolated`，不外推W2/0.7 nm、2 TB或48 h |
-| 2 nm / 0.7 nm | 2 nm已有PEP/TOAR和可复用M1200/MPI8 packet；旧consumer在历史repeat门停止、formal响应0/4800，`ncv/mpd`未记录。0.7 nm正式材料封套、完整W外部keys和合格网格/容量证据仍缺 | W2 fixed-H6新consumer尚未启动；旧consumer峰值不代替新场容量准入；2 TB与48 h均`not_qualified` |
+| 2 nm / 0.7 nm | 2 nm已有PEP/TOAR和可复用M1200/MPI8 packet；旧consumer在历史sampled-repeat实现错误处停止、formal响应0/4800，`ncv/mpd`未记录。0.7 nm已有W材料候选及目标/缩减pilot两组derived keys，未绑定正式输入 | W2 fixed-H6为`capacity_blocked_unqualified`：host样本高于1.70 TiB基线，但`predicted_peak+256 GiB`项未知；node0扣384 GiB floor后约442.29 GB，旧642.45–647.90 GB峰仅属不同后端风险信号，新路线峰未知。不是已测超限。0.7材料和keys仍为derived；2 TB与48 h未资格化 |
+
+### H2 当前容量决定与H3候选推进（只读，2026-10-07）
+
+两点host/node0样本与protected node0 gate差异、旧W2峰所处阶段以及fixed-H6新旧对象库存见[原容量/H3机器记录](../../../results/task041_v9_w2_capacity_decision_20261007T020417Z/w2_capacity_h3_assessment_20261007.json)，SHA `10e67f3e8115874f26cfac71af16b0f096019e548d56ed2f0773914fdd001f81`。机器记录绑定样本1/2 SHA `c5b53667b63a5545a3f4954c05b323e845a1417fa284b5dcb894e18093522559` / `2cca36005b6496f0ccc9ddace8e8f3f3d87fdc49e75fe8ade5698507893a7aa8`、task/current registered resource sources及保护stash OID；该快照不是launch admission。资源口径和对象并存的派生更正见[interpretation correction](records/task041_v9_w2_h3_interpretation_correction_20261007.json)，不回写原机器记录。
+
+H2状态为`capacity_blocked_unqualified`，不代表OOM或算法失败。当前node0样本扣除384 GiB floor后有`442288062464/442291187712 B`；保护stash中的node0 gate未应用。正式resource authority为process-tree RSS与专属job cgroup `memory.current`两者最大；当前session cgroup共享且无有限上限。host §10.2门与node0 floor并行：host须有`MemAvailable >= max(predicted_peak+256 GiB,1.70 TiB)`；本次host样本高于1.70 TiB，但`predicted_peak`项未知。扣floor后的node0空间约442.29 GB。旧process-tree/authority峰`642449637376/647904415744 B`分别在top side-factor construction和top pre-formal repeat，来自不同的one-cell exact-P4后端，只是风险信号；packet驻留和cell-condensed fixed-H6的新因子并存未知。新路线删除全Schur列物化和旧每侧16次预付sample，但包含8次setup反馈动作，尚无保守峰值上界。因此维持`capacity_blocked_unqualified`，并行门不冲突；不是已测OOM或新路线必然超限。输入`swap_limit_bytes=0`不会恢复硬swap门，V9为observe-only。
+
+H3派生得到一组**候选材料值**而不是正式输入：`.7 nm`光子能量`1771.202834760004 eV`，Henke 1752.87/1781.22 eV两点线性插值得`f1=29.482678085431722`、`f2=9.276118377813308`；NIST密度`19.3000 g/cm³`与CIAAW原子量`183.84(1)`给出候选`n=0.9995903781323069+i0.00012887909720587614`，项目吸收符号为`n=1−δ+iβ`。50×25 nm目标几何的derived keys为32056个有序项（top16030、bottom16026；32054 propagating、2 nonpropagating、0 Rayleigh），canonical SHA `9f43482413e86c5d2db2e7ba8e5fed0b684d89566f070a88946f4c6bbbc7d4b5`。缩减pilot另有1292项（646/side，1290 propagating、2 nonpropagating），canonical SHA `878f48f650b8807d894a554d7b5ab76dc57edad9c58adae7997027d5c8346a21`。两组key身份各自绑定候选几何，均未进入正式`.dat`/resolved。保留两项nonpropagating及其模式身份，不删作“无效值”。材料不确定度尚无模型/传播，但这不是新增的pilot启动门；正式输入仍须绑定原始来源字节、常数、单位、插值区间、正吸收符号、n/epsilon、几何及resolved hash，不能称实验精度已认证。
 
 最小后续接线审查、5 nm相邻marker分段、1980行/场的side audit工作量、H3材料来源及全部身份限制见[Task041 V9 H0报告](hybrid_0p7nm_2tb_48h_v9.md)。以下V8及更早条目保留为各自阶段的历史记录。
 
