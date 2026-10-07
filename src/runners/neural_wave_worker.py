@@ -151,7 +151,8 @@ def recover_rebuild(artifact, source, name, directory, action, packet):
     return c, higher, saved, boundary
 
 
-def verify(design, action, packet, artifact, marker, *, reuse_completed=False):
+def verify(design, action, packet, artifact, marker, *, reuse_completed=False,
+           include_producer=False, routes=None, route_root=None):
     from src.solvers.neural_wave_reconstruction import rebuild
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import field_physics, _region_field_errors
@@ -163,11 +164,11 @@ def verify(design, action, packet, artifact, marker, *, reuse_completed=False):
     highfile = ARTIFACTS / "v30_wave_checks" / "moments_q60.npz"
     with np.load(highfile, allow_pickle=False) as arrays:
         high = {k: np.array(arrays[k]) for k in arrays.files}
-    for stage, name in [
+    for stage, name in (routes or [
         ("v30_m5_fixed_wave", "FIXED_WAVE_GREEDY_CONTROL"),
         ("v30_m5_learned_wave", "LEARNED_WAVE_GREEDY"),
-    ]:
-        directory = ARTIFACTS / stage
+    ]):
+        directory = (route_root or ARTIFACTS) / stage
         if reuse_completed:
             c, higher, saved, boundary = recover_rebuild(
                 artifact, ARTIFACTS / "v30_m5_verify", name, directory, action, packet
@@ -190,6 +191,9 @@ def verify(design, action, packet, artifact, marker, *, reuse_completed=False):
         )
         # Physics consumes the independently evaluated network, not producer c.
         states[name] = c
+        if include_producer:
+            states[name + "_PRODUCER"] = saved
+            reconstruction[name + "_PRODUCER"] = dict(reconstruction[name])
         atomic_npz(artifact / (stage + "_rebuild.npz"), c30=c, c60=higher, saved=saved)
     # Only here, after independently frozen/reconstructed models, is the V1
     # label loaded. This function is never imported by a training stage.
@@ -331,6 +335,16 @@ def main():
 
     try:
         atomic_json(directory / "abi.json", abi(spec["mode"]))
+        if spec.get("campaign_version") == 31:
+            from src.runners.block_wave_worker import run_stage
+            result = run_stage(manifest, artifact, marker)
+            result.update(source_sha=manifest["source_sha"], input_sha256=spec["input_sha256"],
+                design_sha256=manifest["design_sha256"], worker_elapsed_seconds=perf_counter()-start,
+                route_elapsed_seconds=monotonic()-manifest["route_origin_monotonic"],
+                full_size_0p7_target_qualified=False)
+            atomic_json(artifact / "result.json", result)
+            marker("stage_frozen", dict(stage=spec["stage"],result_sha256=digest(artifact/"result.json")))
+            return
         design = json.loads(DESIGN.read_text())
         if digest(DESIGN) != manifest["design_sha256"]:
             raise ValueError("FROZEN_DESIGN_CHANGED_AFTER_LAUNCH")

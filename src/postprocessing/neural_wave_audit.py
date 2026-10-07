@@ -148,9 +148,9 @@ def independent_mode_power(physics, outgoing, k0, mu, incident_power):
     return np.maximum(density, 0.0) * float(physics["port_area_nm2"]) / incident_power
 
 
-def check_saved_arrays(action, physics, samples, reconstruction, mpc_checks, identity):
+def check_saved_arrays(action, physics, samples, reconstruction, mpc_checks, identity, *, names=None):
     """Recompute every Gate, ignoring producer status/pass/official labels."""
-    names = ("FIXED_WAVE_GREEDY_CONTROL", "LEARNED_WAVE_GREEDY")
+    names = tuple(names or ("FIXED_WAVE_GREEDY_CONTROL", "LEARNED_WAVE_GREEDY"))
     if set(physics["records"]) != {"REFERENCE", *names}:
         raise ValueError("COMPLETE_TWO_ROUTE_AND_REFERENCE_COVERAGE_REQUIRED")
     mode_manifest = physics["original_mode_manifest"]

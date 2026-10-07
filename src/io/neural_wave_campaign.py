@@ -30,6 +30,16 @@ STAGES = {
 }
 
 
+def profile_paths(spec):
+    if spec.get("campaign_version") == 31:
+        root = ROOT / "tmp/task42extra/v31"
+        return dict(root=root,window=root/"batch_window.json",
+            design=ROOT/"input/task042extra_feinn_5nm/design_v31.json",
+            artifacts=ROOT/"benchmarks/artifacts/task42extra/v31",reserve=3600)
+    return dict(root=ROOT/"tmp/task42extra/v30",window=WINDOW,design=DESIGN,
+        artifacts=ARTIFACTS,reserve=1800)
+
+
 def digest(path):
     h = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -47,6 +57,9 @@ def load_wave(path):
         data = tomllib.loads(raw.decode())
     except (UnicodeError, tomllib.TOMLDecodeError) as error:
         raise InputError(str(error)) from error
+    if data.get("schema_version") == 2:
+        from src.io.block_wave_campaign import load_block_wave
+        return load_block_wave(path, data, raw)
     if set(data) != {"schema_version", "neural_wave"} or data["schema_version"] != 1:
         raise InputError("V30 accepts one explicit wave-network stage")
     item = data["neural_wave"]
@@ -100,8 +113,10 @@ def training_open_allowed(path, design):
         return True  # file descriptor, not a new filename
     if file.suffix in (".pt", ".pth"):
         return False
-    if file.is_relative_to(ARTIFACTS) and any(
-        part.startswith(("v30_m5_verify", "v30_m5_saved_audit")) for part in file.parts
+    artifacts = ROOT/"benchmarks/artifacts/task42extra/v31" if design.get("campaign_version") == 31 else ARTIFACTS
+    if file.is_relative_to(artifacts) and any(
+        part.startswith(("v30_m5_verify", "v30_m5_saved_audit", "v31_saved_field",
+                         "v31_block_reconstruct", "v31_block_compare")) for part in file.parts
     ):
         return False
     if file.suffix == ".npz":
@@ -109,7 +124,7 @@ def training_open_allowed(path, design):
             (ROOT / entry["path"]).resolve() for entry in design["files"].values()
         }
         return file in allowed or (
-            file.is_relative_to(ARTIFACTS)
+            file.is_relative_to(artifacts)
             and ("basis" in file.parts or file.name.startswith("final_state"))
         )
     if file.name.startswith("index_e3_reference") or file.name == "reference_state.npz":
