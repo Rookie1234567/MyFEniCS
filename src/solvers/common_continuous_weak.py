@@ -27,7 +27,8 @@ def design(geometry,kappa):
             for side in ('top','bottom'):funcs.append(dict(kind='lift',mode=[m,n],component=a,side=side))
     return dict(functions=funcs,kappa=list(kappa),geometry=geometry,
         scale='k0^2*(1+max(abs(epsilon))+abs(1/mu))*background positive scaled Hcurl norm * test positive scaled Hcurl norm',
-        no_saved_field_in_design=True,no_FE_interpolation=True,q_degrees=[23,31],maximum_recheck_q=39)
+        no_saved_field_in_design=True,no_FE_interpolation=True,q_degrees=[23,31],maximum_recheck_q=39,
+        analytic_perturbation={'function_index':0,'amplitude':0.001,'zero_boundary_trace':True})
 
 
 def tests(points,definition):
@@ -56,12 +57,16 @@ def tests(points,definition):
     return np.asarray(vs),np.asarray(cs)
 
 
-def volume_parts(physical,points,weights,v,cv,*,kappa,k0,epsilon,mu):
+def volume_parts(physical,points,weights,v,cv,*,kappa,k0,epsilon,mu,return_operation=False):
     g=np.exp(1j*(points@kappa))[:,None];u=physical['E']/g
     cu=physical['curl']/g-1j*np.cross(kappa,u);pu=1j*np.cross(kappa,u);pv=1j*np.cross(kappa,v)
     def pair(a,b):return np.einsum('q,qc,jqc->j',weights,a,np.conj(b),optimize=True)
-    return np.asarray([pair(cu,cv)/mu,pair(pu,cv)/mu,pair(cu,pv)/mu,
+    terms=np.asarray([pair(cu,cv)/mu,pair(pu,cv)/mu,pair(cu,pv)/mu,
         pair(pu,pv)/mu,-k0*k0*epsilon*pair(u,v)])
+    if not return_operation:return terms
+    def bound(a,b):return np.einsum('q,qc,jqc->j',weights,np.abs(a),np.abs(b),optimize=True)
+    operation=(bound(cu,cv)+bound(pu,cv)+bound(cu,pv)+bound(pu,pv))/abs(mu)+k0*k0*abs(epsilon)*bound(u,v)
+    return terms,operation
 
 
 def boundary_parts(cfg,modes,port,definition):
@@ -78,7 +83,7 @@ def boundary_parts(cfg,modes,port,definition):
         inc=_incident_projection_onto_top_mode(m,cfg)
         for j,f in enumerate(definition['functions']):
             if f['kind']=='lift' and f['side']==m.side and f['mode']==[m.m,m.n]:
-                term=area*tr[f['component']];by_mode[i,j]=term*alpha;load[j]-=term*inc
+                term=area*tr[f['component']];by_mode[i,j]=-term*alpha;load[j]-=term*inc
     return by_mode.sum(axis=0),load,by_mode
 
 
@@ -116,25 +121,38 @@ def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analyt
     dt,load,permode=boundary_parts(cfg,modes,port,definition);rows=[];qs=list(qs)
     for q in qs:
         points,w=basix.make_quadrature(basix.CellType.hexahedron,q);sums=np.zeros((5,nf),complex);regions={};bg2=0.;v2=np.zeros(nf)
+        operation_volume=np.zeros(nf);perturbation=np.zeros_like(sums)
         with journal.measured(('analytic_flat_control' if analytic_control else record['role'])+'_common_continuous_q'+str(q)):
             for bi,(box,c) in enumerate(zip(boxes,parents,strict=True)):
                 xyz=box[0]+points*(box[1]-box[0]);weights=w*np.prod(box[1]-box[0]);v,cv=tests(xyz,definition)
                 known=analytic(cfg,xyz);value=known if analytic_control else ev.at(field,int(c),xyz,cfg.k0)
                 tag=int(tags[c]);eps={cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating}[tag]
                 if analytic_control:eps=cfg.eps_substrate if box.mean(axis=0)[2]<0 else cfg.eps_air
-                chunk=volume_parts(value,xyz,weights,v,cv,kappa=kappa,k0=cfg.k0,epsilon=eps,mu=cfg.mu_r)
+                chunk,op=volume_parts(value,xyz,weights,v,cv,kappa=kappa,k0=cfg.k0,epsilon=eps,mu=cfg.mu_r,return_operation=True)
+                operation_volume+=op
+                if analytic_control:
+                    pd=definition['analytic_perturbation'];j=pd['function_index'];amp=pd['amplitude'];g=np.exp(1j*(xyz@kappa))[:,None]
+                    delta={'E':amp*g*v[j],'curl':amp*g*(cv[j]+1j*np.cross(kappa,v[j]))}
+                    perturbation+=volume_parts(delta,xyz,weights,v,cv,kappa=kappa,k0=cfg.k0,epsilon=eps,mu=cfg.mu_r)
                 sums+=chunk;regions.setdefault(str(tag),np.zeros_like(sums));regions[str(tag)]+=chunk
                 bg2+=float(np.sum(weights[:,None]*(np.abs(known['E'])**2+np.abs(known['curl']/cfg.k0)**2)))
                 v2+=np.einsum('q,jqc->j',weights,np.abs(v)**2+np.abs((cv+1j*np.cross(kappa,v))/cfg.k0)**2)
                 if bi%64==0:journal.event('continuous_weak_box',state=record['role'],q=q,box=bi,boxes=len(boxes))
         scale=cfg.k0**2*(1+max(abs(cfg.eps_air),abs(cfg.eps_grating),abs(cfg.eps_substrate))+abs(1/cfg.mu_r))*np.sqrt(bg2*v2)
-        terms=np.vstack((sums,dt,load));res=load-dt-sums.sum(axis=0);operation=np.sum(np.abs(terms),axis=0)
+        terms=np.vstack((sums,dt,load));res=load-dt-sums.sum(axis=0)
+        operation=operation_volume+np.abs(permode).sum(axis=0)+np.abs(load)
         arrays=save_arrays(folder/f'q{q}.npz',terms=terms,residual=res,absolute=np.abs(res),fixed_scale=scale,
             fixed_scaled=np.abs(res)/scale,operation_scale=operation,permode_DtN=permode,
-            region_tag=np.asarray(list(regions),dtype='S16'),region_terms=np.asarray(list(regions.values())),boxes=boxes)
+            region_tag=np.asarray(list(regions),dtype='S16'),region_terms=np.asarray(list(regions.values())),boxes=boxes,
+            perturbation_terms=perturbation,perturbation_residual=res-perturbation.sum(axis=0))
         row=dict(q=q,arrays=arrays,maximum_fixed_scaled=float(np.max(np.abs(res)/scale)),
             maximum_operation_scaled=float(np.max(np.abs(res)/np.maximum(operation,1e-300))),
-            no_FE_interpolation=True,complex_parts=list(PARTS),regions='actual material tags; flat control uses layered epsilon')
+            no_FE_interpolation=True,complex_parts=list(PARTS),regions='actual material tags; flat control uses layered epsilon',
+            operation_scale='absolute component products integrated before assembly/cancellation + absolute mode and load contributions')
+        if analytic_control:
+            row['analytic_control_pass']=bool(np.max(np.abs(res)/scale)<=1e-10)
+            row['nonzero_perturbation_defect']=float(np.max(np.abs(perturbation.sum(axis=0))))
+            row['nonzero_perturbation_detected']=bool(row['nonzero_perturbation_defect']>1e-10*np.max(scale))
         rows.append(row);write_json(folder/'progress.json',dict(rows=rows,definition=definition,parent=record['arrays']['sha256']))
         if len(rows)>=2:
             from .scattering_anchor_checks import checked_arrays
@@ -144,4 +162,5 @@ def evaluate(record,restored,definition,folder,journal,*,scope,qs=(23,31),analyt
         write_json(folder/'progress.json',dict(rows=rows,definition=definition,parent=record['arrays']['sha256']))
     return dict(status='COMPLETED',rows=rows,mode_sha256=mode_sha,field_parent=record['arrays']['sha256'],
         quadrature_pass=rows[-1].get('quadrature_pass',len(rows)==1),analytic_control=analytic_control,
+        analytic_control_pass=rows[-1].get('analytic_control_pass'),nonzero_perturbation_detected=rows[-1].get('nonzero_perturbation_detected'),
         no_matrix_factor_solve=True,cache=evfactory.cache.record(),eval_checks=ev.eval_checks)

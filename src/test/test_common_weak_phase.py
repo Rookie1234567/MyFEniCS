@@ -65,5 +65,32 @@ class PhaseTests(unittest.TestCase):
         boxes,parents=common_layout(SimpleNamespace(mesh=mesh),design(geo,[.7,.2,0.]))
         self.assertEqual(boxes.shape,(640,2,3));self.assertTrue(np.all(parents==0))
 
+    def test_actual_continuous_flat_lift_sign_and_operation_scale(self):
+        from src.solvers.common_continuous_weak import boundary_parts
+        from src.solvers.common_weak_phase_scope import plan_record
+        from src.solvers.phase_explicit_accuracy import configuration
+        from src.solvers.fixed_phase_fem import carrier
+        from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
+        from src.solvers.scattering_accuracy_fields import analytic
+        from src.common.analytic_fields_3d import fresnel_reference
+        from src.solvers.dtn_port_3d import _incident_projection_onto_top_mode
+        cfg=configuration('NOTCH',6,'ORIGINAL');cfg.manual_order_m=11;cfg.manual_order_n=4
+        modes,_,_=build_dynamic_mode_inventory(cfg)
+        definition=design(plan_record()['physical_descriptor']['geometry'],carrier(cfg))
+        f=fresnel_reference(cfg);port=np.asarray([_incident_projection_onto_top_mode(m,cfg)+
+            (cfg.incident_amplitude*(f['r'] if m.side=='top' else f['t']) if (m.m,m.n,m.polarization)==(0,0,'s') else 0)
+            for m in modes])
+        dt,load,_=boundary_parts(cfg,modes,port,definition);summed=np.zeros((5,24),complex);op=np.zeros(24)
+        nodes,w=np.polynomial.legendre.leggauss(16);area=(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)
+        for a,b in zip(cfg.mesh_axis_z_values[:-1],cfg.mesh_axis_z_values[1:]):
+            xyz=np.column_stack((np.full(16,cfg.x_min+.13),np.full(16,cfg.y_min+.27),a+(nodes+1)*(b-a)/2))
+            v,cv=tests(xyz,definition);parts,bound=volume_parts(analytic(cfg,xyz),xyz,w*(b-a)*area/2,v,cv,
+                kappa=carrier(cfg),k0=cfg.k0,epsilon=cfg.eps_substrate if (a+b)/2<0 else cfg.eps_air,mu=cfg.mu_r,return_operation=True)
+            summed+=parts;op+=bound
+        good=load-dt-summed.sum(axis=0);wrong=load+dt-summed.sum(axis=0)
+        self.assertLess(np.max(np.abs(good[12:16])),1e-10)
+        self.assertGreater(np.max(np.abs(wrong[12:16])),.01)
+        self.assertTrue(np.all(op+1e-12>=np.abs(summed).sum(axis=0)))
+
 
 if __name__=='__main__':unittest.main()

@@ -24,6 +24,9 @@ def common_study(folder,journal,roles=('R6','T6','R7','H7')):
     if not np.array_equal(definition['kappa'],carrier(cfg)):raise ValueError('frozen continuous design kappa')
     control=evaluate(record,(cfg,setup,geo,field),definition,folder/'analytic_flat_control',journal,scope=scope,analytic_control=True)
     write_json(folder/'analytic_control.json',control)
+    if not control['analytic_control_pass'] or not control['nonzero_perturbation_detected']:
+        return dict(status='DIAGNOSTIC_CONTROL_FAILED',role='D',design=definition,analytic_control=control,states={},
+            full_field_accuracy_certificate=False,new_complete_solves=0,new_factor_count=0)
     rows={}
     for role in roles:
         r=scope.parent(role);restored=(cfg,setup,geo,field) if role=='R6' else restore_record(r,journal,scope=scope)
