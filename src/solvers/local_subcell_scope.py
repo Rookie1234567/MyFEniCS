@@ -28,13 +28,13 @@ class LocalWindow(AccuracyWindow):
     def launcher_overhead(self):
         seconds=super().launcher_overhead()
         for r in self.ledger()['runs']:
-            if r['role'] not in SOLVES:continue
-            p=self.TMP/(r['role']+'_one_run/receipt.json')
+            if r['role'] not in STAGES:continue
+            receipts=[p for p in self.TMP.glob(r['role']+'_one_run*/receipt.json')
+                if json.loads(p.read_text())['source_sha']==r['source_sha']]
             summary=Path(r['folder'])/'run_summary.json'
-            if not p.exists() or not summary.exists():continue
-            receipt=json.loads(p.read_text())
-            if receipt['source_sha']==r['source_sha']:
-                seconds+=max(0.,receipt['elapsed_seconds']-json.loads(summary.read_text())['launch_wall_seconds'])
+            if len(receipts)!=1 or not summary.exists():continue
+            receipt=json.loads(receipts[0].read_text())
+            seconds+=max(0.,receipt['elapsed_seconds']-json.loads(summary.read_text())['launch_wall_seconds'])
         return seconds
 
     def remaining(self,role):

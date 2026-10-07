@@ -23,8 +23,9 @@ def small_mesh(bounds,r,p):
 
 
 def factory(V,cfg,journal):
+    from .fixed_phase_fem import carrier
     with journal.measured('local_phase_reference_p'+str(cfg.nedelec_degree)):
-        return AffinePhaseReferenceTensor(V.element.basix_element,kappa=np.array([cfg.kx_inc,cfg.ky_inc,0.]),k0=cfg.k0,mu=cfg.mu_r,
+        return AffinePhaseReferenceTensor(V.element.basix_element,kappa=carrier(cfg),k0=cfg.k0,mu=cfg.mu_r,
             epsilon_by_tag={cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating},q=2*cfg.nedelec_degree+3)
 
 

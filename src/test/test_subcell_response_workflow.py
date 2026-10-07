@@ -13,6 +13,18 @@ class Journal:
 
 
 class SubcellWorkflow(unittest.TestCase):
+    def test_actual_physical_config_carrier_wires_to_factory(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from src.solvers.phase_explicit_accuracy import configuration
+        from src.solvers.subcell_macro_response import factory
+        cfg=configuration('NOTCH',6);element=object();marker=object()
+        V=SimpleNamespace(element=SimpleNamespace(basix_element=element))
+        with patch('src.solvers.subcell_macro_response.AffinePhaseReferenceTensor',return_value=marker) as construct:
+            self.assertIs(factory(V,cfg,Journal()),marker)
+        np.testing.assert_allclose(construct.call_args.kwargs['kappa'],[8.94046081729244,.7821889682108057,0],rtol=0,atol=1e-14)
+        self.assertIs(construct.call_args.args[0],element)
+
     def test_actual_nonzero_legal_edge_to_face_cannot_be_dropped(self):
         import basix
         from src.solvers.local_trace_assembly import entity_trace_support
