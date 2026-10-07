@@ -12,6 +12,7 @@ STAGES = {
     "v31_saved_field_audit": ("fe", 10800, "saved_field_audit"),
     "v31_saved_field_check": ("pure", 1800, "saved_field_check"),
     "v31_reconstruction_stability": ("ml", 7200, "reconstruction_stability"),
+    "v31_roundoff_witness": ("pure", 900, "roundoff_witness"),
     "v31_block_wave_checks": ("ml", 7200, "block_checks"),
     "v31_fixed_block_wave": ("ml", 21600, "FIXED_WAVE_BLOCK_GREEDY"),
     "v31_learned_block_wave": ("ml", 21600, "LEARNED_WAVE_BLOCK_GREEDY"),

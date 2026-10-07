@@ -50,7 +50,10 @@ def stage_deadline(spec, allocation, campaign):
     # Reserve 3600s for independent reconstruction/physics plus the mandatory
     # final 1800s publication/save margin. The original campaign never resets.
     if spec.get("campaign_version") == 31:
-        training = spec["role"] in ("LEARNED_WAVE_BLOCK_GREEDY", "FIXED_WAVE_BLOCK_GREEDY")
+        training = spec["role"] in (
+            "LEARNED_WAVE_BLOCK_GREEDY",
+            "FIXED_WAVE_BLOCK_GREEDY",
+        )
         reserve = 7200 if training else 3600
     else:
         reserve = 5400 if training else 1800
@@ -71,6 +74,14 @@ def timing_fields(allocation, attempt_identity, now):
         inherited_route_allocation_span_seconds=span,
         actual_attempt_elapsed_seconds=now - origin,
     )
+
+
+def worker_stop_time(spec, deadline):
+    training = spec["role"] in ("FIXED_WAVE_BLOCK_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY")
+    # Reserve the same 30 minutes inside each 6h ceiling for frozen q60,
+    # independent field/checker cost. This is not extra training time.
+    reserve = 1800 if spec.get("campaign_version") == 31 and training else 150
+    return deadline - reserve
 
 
 def durable(spec, *, origin, attempt=1):
@@ -107,7 +118,8 @@ def durable(spec, *, origin, attempt=1):
         original = dict(
             origin_monotonic=origin,
             deadline_monotonic=min(
-                origin + spec["max_seconds"], campaign["deadline_monotonic"] - profile["reserve"]
+                origin + spec["max_seconds"],
+                campaign["deadline_monotonic"] - profile["reserve"],
             ),
             max_seconds=spec["max_seconds"],
             stage=stage,
@@ -118,26 +130,42 @@ def durable(spec, *, origin, attempt=1):
     if directory.exists():
         raise RuntimeError("EXISTING_DURABLE_NAMESPACE: reconnect same job")
     directory.mkdir(parents=True)
-    atomic_json(directory / "attempt_identity.json", dict(
-        stage=stage, attempt=attempt, origin_monotonic=origin,
-        inherited_route_origin_monotonic=original["origin_monotonic"],
-        inherited_deadline_monotonic=original["deadline_monotonic"],
-        scope="actual attempt including imports, observation and supervision; no budget reset",
-    ))
+    atomic_json(
+        directory / "attempt_identity.json",
+        dict(
+            stage=stage,
+            attempt=attempt,
+            origin_monotonic=origin,
+            inherited_route_origin_monotonic=original["origin_monotonic"],
+            inherited_deadline_monotonic=original["deadline_monotonic"],
+            scope="actual attempt including imports, observation and supervision; no budget reset",
+        ),
+    )
     # This outer observation captures the originally permitted cpuset only.
     # The launcher performs stability and a fresh final observation before exec.
     from src.runners.neural_wave_dependencies import fresh_admission
 
     try:
-        facts = fresh_admission(directory, 2 * 2**30, prefix="outer_admission", reserve_s=64)
+        facts = fresh_admission(
+            directory, 2 * 2**30, prefix="outer_admission", reserve_s=64
+        )
     except Exception as error:
-        atomic_json(directory / "run_summary.json", dict(
-            classification="RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
-            reason=repr(error), source_sha=source_gate(), worker_started=False,
-            descendants_cleared=True,
-            evidence_scope="outer observation before launch_tmux; no terminal/worker created",
-            **timing_fields(original, json.loads((directory / "attempt_identity.json").read_text()), monotonic()),
-        ))
+        atomic_json(
+            directory / "run_summary.json",
+            dict(
+                classification="RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+                reason=repr(error),
+                source_sha=source_gate(),
+                worker_started=False,
+                descendants_cleared=True,
+                evidence_scope="outer observation before launch_tmux; no terminal/worker created",
+                **timing_fields(
+                    original,
+                    json.loads((directory / "attempt_identity.json").read_text()),
+                    monotonic(),
+                ),
+            ),
+        )
         raise
     scope = capture_scope(facts)
     env = dict(
@@ -198,8 +226,12 @@ def launch(spec):
             "verify",
             "LEARNED_WAVE_GREEDY",
             "FIXED_WAVE_GREEDY_CONTROL",
-            "saved_field_audit", "block_checks", "block_reconstruct", "reconstruction_stability",
-            "FIXED_WAVE_BLOCK_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY",
+            "saved_field_audit",
+            "block_checks",
+            "block_reconstruct",
+            "reconstruction_stability",
+            "FIXED_WAVE_BLOCK_GREEDY",
+            "LEARNED_WAVE_BLOCK_GREEDY",
         )
         else 2
     ) * 2**30
@@ -212,10 +244,16 @@ def launch(spec):
         try:
             if shutil.disk_usage(ROOT).free < 50 * 2**30:
                 raise RuntimeError("STORAGE_START_GATE_FAILED")
-            from src.runners.neural_wave_dependencies import fresh_admission, resource_observation_cost
+            from src.runners.neural_wave_dependencies import (
+                fresh_admission,
+                resource_observation_cost,
+            )
 
             if spec.get("campaign_version") == 31:
-                from src.runners.block_wave_admission import stable_window as qualified_stability
+                from src.runners.block_wave_admission import (
+                    stable_window as qualified_stability,
+                )
+
                 qualified_stability(directory, hard, seconds=60)
             else:
                 if resource_observation_cost() + 64 >= 1200:
@@ -266,10 +304,20 @@ def launch(spec):
                         "scripts/activate_task42extra.sh",
                         "scripts/launch_task42extra_durable.py",
                         "scripts/run_case.py",
-                    ) + (("src/io/block_wave_campaign.py", "src/runners/block_wave_admission.py",
-                          "src/runners/block_wave_worker.py", "src/solvers/neural_wave_block.py",
-                          "src/solvers/neural_wave_block_reconstruction.py",
-                          "src/solvers/neural_wave_block_qualification.py") if spec.get("campaign_version") == 31 else ())
+                    )
+                    + (
+                        (
+                            "src/io/block_wave_campaign.py",
+                            "src/runners/block_wave_admission.py",
+                            "src/runners/block_wave_worker.py",
+                            "src/solvers/neural_wave_block.py",
+                            "src/solvers/neural_wave_block_reconstruction.py",
+                            "src/solvers/neural_wave_block_qualification.py",
+                            "src/postprocessing/neural_wave_roundoff.py",
+                        )
+                        if spec.get("campaign_version") == 31
+                        else ()
+                    )
                 },
                 utc=stamp,
                 route_origin_monotonic=allocation["origin_monotonic"],
@@ -279,7 +327,7 @@ def launch(spec):
                     "deadline_monotonic"
                 ],
                 remaining_independent_verification_and_delivery_reserve_s=reserve,
-                worker_stop_monotonic=deadline - 150,
+                worker_stop_monotonic=worker_stop_time(spec, deadline),
                 campaign=campaign,
                 cpu=facts["cpu"],
                 mpi_size=1,
@@ -315,8 +363,12 @@ def launch(spec):
                 reference_used_for_training=False,
                 features_reference_exposed=False,
                 pde_only_solve=spec["role"]
-                in ("LEARNED_WAVE_GREEDY", "FIXED_WAVE_GREEDY_CONTROL",
-                    "LEARNED_WAVE_BLOCK_GREEDY", "FIXED_WAVE_BLOCK_GREEDY"),
+                in (
+                    "LEARNED_WAVE_GREEDY",
+                    "FIXED_WAVE_GREEDY_CONTROL",
+                    "LEARNED_WAVE_BLOCK_GREEDY",
+                    "FIXED_WAVE_BLOCK_GREEDY",
+                ),
                 benchmark_previously_seen=True,
                 production_initialization_allowed=False,
             )
@@ -324,7 +376,8 @@ def launch(spec):
             atomic_json(artifact / f"run_manifest_{directory.name}.json", manifest)
             shutil.copyfile(ROOT / spec["input"], directory / "input_original.dat")
             atomic_json(
-                directory / "resolved_config.json", json.loads(profile["design"].read_text())
+                directory / "resolved_config.json",
+                json.loads(profile["design"].read_text()),
             )
             command = [
                 sys.executable,
@@ -346,7 +399,9 @@ def launch(spec):
                 hard_stop_immediate=True,
                 source_state=manifest,
                 memory_envelope_provider=lambda: envelope(hard),
-                health_check=Health(directory, hard, [], artifact_root=profile["artifacts"]),
+                health_check=Health(
+                    directory, hard, [], artifact_root=profile["artifacts"]
+                ),
                 sampled_root_identity=terminal["server"],
             )
             result.update(timing_fields(allocation, attempt_identity, monotonic()))
@@ -355,10 +410,17 @@ def launch(spec):
             if spec["role"] == "LEARNED_WAVE_GREEDY":
                 from src.runners.neural_wave_dependencies import followups
 
-                result["serial_independent_dependencies"] = followups(directory, manifest, terminal, result)
-                result["actual_attempt_including_dependencies_seconds"] = monotonic() - attempt_identity["origin_monotonic"]
-                if any(v["summary"]["classification"] != "COMPLETED" or v["summary"]["leader_exit_code"] != 0
-                       for v in result["serial_independent_dependencies"]):
+                result["serial_independent_dependencies"] = followups(
+                    directory, manifest, terminal, result
+                )
+                result["actual_attempt_including_dependencies_seconds"] = (
+                    monotonic() - attempt_identity["origin_monotonic"]
+                )
+                if any(
+                    v["summary"]["classification"] != "COMPLETED"
+                    or v["summary"]["leader_exit_code"] != 0
+                    for v in result["serial_independent_dependencies"]
+                ):
                     result["classification"] = "DEPENDENCY_WORKER_FAILED"
             atomic_json(directory / "run_summary.json", result)
             return result
@@ -367,11 +429,15 @@ def launch(spec):
             atomic_json(
                 directory / "run_summary.json",
                 dict(
-                    classification="DEPENDENCY_PREPARATION_FAILED" if payload.exists() else "STARTUP_FAILED",
+                    classification="DEPENDENCY_PREPARATION_FAILED"
+                    if payload.exists()
+                    else "STARTUP_FAILED",
                     reason=repr(error),
                     source_sha=source,
                     descendants_cleared=True,
-                    completed_payload_summary="payload_summary.json" if payload.exists() else None,
+                    completed_payload_summary="payload_summary.json"
+                    if payload.exists()
+                    else None,
                     **timing_fields(allocation, attempt_identity, monotonic()),
                 ),
             )

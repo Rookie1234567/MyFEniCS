@@ -53,6 +53,7 @@ def run_stage(manifest, artifact, marker):
     design = json.loads(profile["design"].read_text())
     training = spec["role"] in ("FIXED_WAVE_BLOCK_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY")
     if training:
+        design["active_training_artifact"] = str(artifact)
         from src.io.neural_wave_campaign import training_open_allowed
 
         def firewall(event, arguments):
@@ -134,6 +135,16 @@ def run_stage(manifest, artifact, marker):
         result = reconstruction_stability(
             action, packet, artifact, marker, old_artifacts
         )
+    elif spec["role"] == "roundoff_witness":
+        from src.postprocessing.neural_wave_roundoff import selected_entry_witness
+        from src.io.neural_wave_campaign import ARTIFACTS as old_artifacts
+
+        frozen = json.loads(
+            (
+                profile["artifacts"] / "v31_reconstruction_stability/result.json"
+            ).read_text()
+        )
+        result = selected_entry_witness(packet, frozen, old_artifacts)
     elif spec["role"] == "block_reconstruct":
         from src.runners.neural_wave_worker import verify
 
