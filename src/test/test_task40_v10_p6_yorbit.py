@@ -15,6 +15,7 @@ from src.solvers.task40_v10_p6_yorbit import (
     V16StagingLimitError,
     _v16_checked_csr_layout,
     _assemble_v16_bitset_pattern,
+    _project_accumulate_v16,
     TwoCellNativeTransport,
     YOrbitEntities,
     assemble_task40_v10_sector_blocks,
@@ -166,6 +167,159 @@ def test_v16_exact_zero_cleanup_preserves_small_finite_nonzero_values():
     assert tiny in bounded[0].data
     assert audit["numeric_nonzero_entries_by_block"]["00"] == 1
     assert audit["exact_zero_cleanup"].startswith("not_applied")
+
+
+def _v16_target_with_support(rows_count, columns_count, row_support, column_support):
+    row_ids = np.repeat(row_support, len(column_support))
+    column_ids = np.tile(column_support, len(row_support))
+    values = np.zeros(len(row_ids), dtype=np.complex128)
+    return sparse.csr_matrix(
+        (values, (row_ids, column_ids)), shape=(rows_count, columns_count)
+    )
+
+
+def _assert_csr_equivalent_and_action(candidate, reference, *, probe_seed):
+    difference = (candidate - reference).tocsr()
+    assert difference.data.size == 0 or float(np.max(np.abs(difference.data))) <= 2.0e-12
+    rng = np.random.default_rng(probe_seed)
+    probe = rng.standard_normal(reference.shape[1]) + 1j * rng.standard_normal(reference.shape[1])
+    np.testing.assert_allclose(candidate @ probe, reference @ probe, rtol=2.0e-12, atol=2.0e-12)
+
+
+def test_v16_projection_uses_exact_support_for_b0_sized_local_block():
+    import src.solvers.task40_v10_p6_yorbit as yorbit
+
+    local_size = 432
+    global_size = 8192
+    support_size = 16
+    rows = np.arange(local_size, dtype=np.int32)
+    columns = np.arange(local_size, dtype=np.int32)
+    support = np.arange(support_size, dtype=np.int32)
+    indices = np.tile(support, local_size)
+    indptr = np.arange(local_size + 1, dtype=np.int32) * support_size
+    weights = np.tile(
+        np.linspace(0.5, 1.25, support_size, dtype=np.float64).astype(np.complex128),
+        local_size,
+    )
+    left = sparse.csr_matrix((weights, indices, indptr), shape=(local_size, global_size))
+    right = sparse.csr_matrix((weights * (0.75 + 0.125j), indices, indptr), shape=(local_size, global_size))
+    rng = np.random.default_rng(711)
+    values = rng.standard_normal((local_size, local_size)) + 1j * rng.standard_normal((local_size, local_size))
+    target = _v16_target_with_support(global_size, global_size, support, support)
+
+    left_nnz = int(left.nnz)
+    right_nnz = int(right.nnz)
+    old_left_support = min(left.shape[1], left_nnz)
+    old_right_support = min(right.shape[1], right_nnz)
+    old_dense_upper = 16 * (
+        2 * local_size * old_left_support
+        + old_left_support * local_size
+        + local_size * old_right_support
+        + old_left_support * old_right_support
+    )
+    assert values.nbytes == 2_985_984  # 432-by-432 complex128 B0-scale projection fixture.
+    assert old_dense_upper > yorbit.V16_Q_STAGING_BUDGET_BYTES
+
+    gates = []
+    projection_s, accumulation_s, staging_peak = _project_accumulate_v16(
+        target,
+        left,
+        right,
+        rows,
+        columns,
+        values,
+        allocation_gate=lambda name, facts: gates.append((name, dict(facts))),
+        label="b0-sized/repeated-support",
+    )
+    assert projection_s >= 0.0 and accumulation_s >= 0.0
+    assert staging_peak <= yorbit.V16_Q_STAGING_BUDGET_BYTES
+    support_gate = next(facts for name, facts in gates if "support_discovery" in name)
+    projection_gate = next(
+        facts for name, facts in gates if name == "task40_v16_q_projection_support/b0-sized/repeated-support"
+    )
+    assert support_gate["staging_live_bytes_upper"] <= yorbit.V16_Q_STAGING_BUDGET_BYTES
+    assert projection_gate["left_support_count"] == support_size
+    assert projection_gate["right_support_count"] == support_size
+    assert projection_gate["projection_tile_count"] == 1
+    legacy = project_reduced_contribution(
+        left,
+        right,
+        rows,
+        columns,
+        values,
+        allocation_gate=lambda *_args: None,
+        label="b0-sized/repeated-support",
+    )
+    _assert_csr_equivalent_and_action(target, legacy, probe_seed=712)
+
+
+def test_v16_projection_tiles_exact_support_without_recomputing_contributions(monkeypatch):
+    import weakref
+    import src.solvers.task40_v10_p6_yorbit as yorbit
+
+    local_size = 432
+    support_size = 864
+    support = np.arange(support_size, dtype=np.int32)
+    rows = np.arange(local_size, dtype=np.int32)
+    columns = rows.copy()
+    indices = np.arange(support_size, dtype=np.int32)
+    indptr = np.arange(local_size + 1, dtype=np.int32) * 2
+    left_data = np.linspace(0.75, 1.25, support_size, dtype=np.float64).astype(np.complex128)
+    right_data = left_data * (0.875 - 0.125j)
+    left = sparse.csr_matrix((left_data, indices, indptr), shape=(local_size, support_size))
+    right = sparse.csr_matrix((right_data, indices, indptr), shape=(local_size, support_size))
+    rng = np.random.default_rng(713)
+    values = rng.standard_normal((local_size, local_size)) + 1j * rng.standard_normal((local_size, local_size))
+    target = _v16_target_with_support(support_size, support_size, support, support)
+    monkeypatch.setattr(yorbit, "V16_Q_STAGING_BUDGET_BYTES", 56 * 1024**2)
+
+    gates = []
+    projected_owners = []
+    original_accumulator = yorbit._accumulate_v16_projection_tile
+
+    def checked_accumulator(target_arg, projected, row_ids, column_ids, *, label):
+        if projected_owners:
+            assert projected_owners[-1]() is None
+        elapsed = original_accumulator(
+            target_arg, projected, row_ids, column_ids, label=label
+        )
+        projected_owners.append(weakref.ref(projected))
+        return elapsed
+
+    monkeypatch.setattr(yorbit, "_accumulate_v16_projection_tile", checked_accumulator)
+    _project_accumulate_v16(
+        target,
+        left,
+        right,
+        rows,
+        columns,
+        values,
+        allocation_gate=lambda name, facts: gates.append((name, dict(facts))),
+        label="b0-sized/tile-required",
+    )
+    projection_gate = next(
+        facts for name, facts in gates if name == "task40_v16_q_projection_support/b0-sized/tile-required"
+    )
+    assert projection_gate["projection_tile_count"] > 1
+    assert projection_gate["projection_row_tile_count"] == 1
+    assert projection_gate["projection_column_tile_count"] > 1
+    assert projection_gate["projection_left_product_count"] == 1
+    assert projection_gate["projection_live_output_tile_peak"] == 1
+    assert len(projected_owners) == projection_gate["projection_tile_count"]
+    assert all(owner() is None for owner in projected_owners)
+    assert projection_gate["staging_live_bytes_upper"] <= 56 * 1024**2
+    assert all(facts["staging_live_bytes_upper"] <= 56 * 1024**2 for _, facts in gates)
+
+    legacy = project_reduced_contribution(
+        left,
+        right,
+        rows,
+        columns,
+        values,
+        allocation_gate=lambda *_args: None,
+        label="b0-sized/tile-required",
+    )
+    _assert_csr_equivalent_and_action(target, legacy, probe_seed=714)
 
 
 def test_v16_staging_budget_raises_typed_resource_gate_before_bitset_allocation(monkeypatch):

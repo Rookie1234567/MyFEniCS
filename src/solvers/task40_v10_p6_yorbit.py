@@ -1543,6 +1543,38 @@ def _assemble_v16_bitset_pattern(
 
 
 
+def _accumulate_v16_projection_tile(
+    target: sparse.csr_matrix,
+    projected: np.ndarray,
+    row_support_ids: np.ndarray,
+    column_support_ids: np.ndarray,
+    *,
+    label: str,
+) -> float:
+    """Add one exact projection tile and release its row views on return."""
+    import time
+
+    started = time.perf_counter()
+    for local_row, global_row_value in enumerate(row_support_ids):
+        row_values = projected[local_row]
+        nonzero_columns = np.flatnonzero(row_values)
+        if not len(nonzero_columns):
+            continue
+        global_columns = column_support_ids[nonzero_columns]
+        target_start = int(target.indptr[int(global_row_value)])
+        target_stop = int(target.indptr[int(global_row_value) + 1])
+        target_columns = target.indices[target_start:target_stop]
+        positions = np.searchsorted(target_columns, global_columns)
+        if (
+            np.any(positions >= len(target_columns))
+            or not np.array_equal(target_columns[positions], global_columns)
+        ):
+            raise ValueError(f"V16 q bitset pattern omitted a projected value at {label}")
+        target.data[target_start + positions] += row_values[nonzero_columns]
+        del nonzero_columns, global_columns, positions, row_values
+    return time.perf_counter() - started
+
+
 def _project_accumulate_v16(
     target: sparse.csr_matrix,
     left: sparse.csr_matrix,
@@ -1554,7 +1586,7 @@ def _project_accumulate_v16(
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
     label: str,
 ) -> tuple[float, float, int]:
-    """Project one local contribution and add only its nonempty rows to CSR."""
+    """Project one contribution on exact support, tiling only projection outputs."""
     import time
 
     rows = np.asarray(rows)
@@ -1585,34 +1617,111 @@ def _project_accumulate_v16(
     right_payload = right_nnz * (int(right.data.dtype.itemsize) + right_index_bytes) + (
         len(columns) + 1
     ) * int(right.indptr.dtype.itemsize)
-    left_support = min(int(left.shape[1]), left_nnz)
-    right_support = min(int(right.shape[1]), right_nnz)
     index_bytes = max(left_index_bytes, right_index_bytes, int(target.indices.dtype.itemsize))
-    support_scratch = 4 * (left_nnz + right_nnz) * index_bytes
-    support_scratch += 2 * (left_nnz + right_nnz) * 8
-    dense_workspace = 16 * (
-        2 * len(rows) * left_support
-        + left_support * len(columns)
-        + len(columns) * right_support
-        + left_support * right_support
-    )
-    row_index_scratch = right_support * (
-        3 * np.dtype(np.intp).itemsize + int(target.indices.dtype.itemsize) + 1 + 16
-    ) + 128
-    staging = (
+
+    # Admit selected CSR copies and worst-case unique/sort/index scratch before
+    # discovering exact support or creating any dense projection array.
+    support_discovery_scratch = 4 * (left_nnz + right_nnz) * index_bytes
+    support_discovery_scratch += 2 * (left_nnz + right_nnz) * 8
+    support_discovery_stage = (
         int(values.nbytes)
         + _v16_layout_array_bytes(rows, columns)
         + left_payload
         + right_payload
-        + support_scratch
-        + dense_workspace
-        + row_index_scratch
+        + support_discovery_scratch
         + V16_PROJECTION_OVERHEAD_RESERVE_BYTES
     )
+    if support_discovery_stage > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"projection_support_discovery/{label}",
+            support_discovery_stage,
+            V16_Q_STAGING_BUDGET_BYTES,
+        )
+    allocation_gate(
+        "task40_v16_q_projection_support_discovery/" + label,
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": support_discovery_stage,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": support_discovery_stage,
+            "selected_left_nnz": left_nnz,
+            "selected_right_nnz": right_nnz,
+            "selected_csr_payload_bytes": left_payload + right_payload,
+            "unique_sort_index_scratch_upper_bytes": support_discovery_scratch,
+            "support_discovery_algorithm": "admit_selected_csr_and_unique_sort_scratch_before_exact_support",
+        },
+    )
+
+    projection_started = time.perf_counter()
+    left_rows = left[rows, :].tocsr()
+    right_rows = right[columns, :].tocsr()
+    left_support_ids = np.unique(left_rows.indices)
+    right_support_ids = np.unique(right_rows.indices)
+    left_support = int(left_support_ids.size)
+    right_support = int(right_support_ids.size)
+    if not left_support or not right_support:
+        return time.perf_counter() - projection_started, 0.0, support_discovery_stage
+
+    row_index_scratch_per_column = (
+        3 * np.dtype(np.intp).itemsize
+        + index_bytes
+        + int(target.indices.dtype.itemsize)
+        + 1
+        + 32
+    )
+
+    def projection_stage(row_tile_support: int, column_tile_support: int) -> tuple[int, int]:
+        dense_workspace = 16 * (
+            2 * len(rows) * row_tile_support
+            + row_tile_support * len(columns)
+            + len(columns) * column_tile_support
+            + row_tile_support * column_tile_support
+        )
+        row_index_scratch = column_tile_support * row_index_scratch_per_column + 128
+        sparse_slice_temporary = left_payload + right_payload
+        return (
+            support_discovery_stage + sparse_slice_temporary + dense_workspace + row_index_scratch,
+            dense_workspace,
+        )
+
+    # Prefer one complete L^H @ V product and tile only R. Reduce row support
+    # only if even one R output column cannot fit with all left-support rows.
+    row_tile_support = left_support
+    full_row_one_column_stage, _ = projection_stage(row_tile_support, 1)
+    if full_row_one_column_stage <= V16_Q_STAGING_BUDGET_BYTES:
+        low, high = 1, right_support
+        while low < high:
+            middle = (low + high + 1) // 2
+            if projection_stage(row_tile_support, middle)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+                low = middle
+            else:
+                high = middle - 1
+        column_tile_support = low
+    else:
+        low, high = 1, left_support
+        while low < high:
+            middle = (low + high + 1) // 2
+            if projection_stage(middle, 1)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+                low = middle
+            else:
+                high = middle - 1
+        row_tile_support = low
+        low, high = 1, right_support
+        while low < high:
+            middle = (low + high + 1) // 2
+            if projection_stage(row_tile_support, middle)[0] <= V16_Q_STAGING_BUDGET_BYTES:
+                low = middle
+            else:
+                high = middle - 1
+        column_tile_support = low
+
+    staging, dense_workspace = projection_stage(row_tile_support, column_tile_support)
     if staging > V16_Q_STAGING_BUDGET_BYTES:
         raise V16StagingLimitError(
             f"projection/{label}", staging, V16_Q_STAGING_BUDGET_BYTES
         )
+    row_tile_count = (left_support + row_tile_support - 1) // row_tile_support
+    column_tile_count = (right_support + column_tile_support - 1) // column_tile_support
     allocation_gate(
         "task40_v16_q_projection_support/" + label,
         {
@@ -1620,56 +1729,57 @@ def _project_accumulate_v16(
             "workspace_bytes": staging,
             "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
             "staging_live_bytes_upper": staging,
-            "selected_left_nnz_upper": left_nnz,
-            "selected_right_nnz_upper": right_nnz,
-            "left_support_upper": left_support,
-            "right_support_upper": right_support,
-            "projection_algorithm": "one_local_dense_projection_then_direct_nonempty_csr_rows",
+            "support_discovery_workspace_bytes": support_discovery_stage,
+            "selected_left_nnz": left_nnz,
+            "selected_right_nnz": right_nnz,
+            "left_support_count": left_support,
+            "right_support_count": right_support,
+            "projection_row_tile_support": row_tile_support,
+            "projection_column_tile_support": column_tile_support,
+            "projection_row_tile_count": row_tile_count,
+            "projection_column_tile_count": column_tile_count,
+            "projection_tile_count": row_tile_count * column_tile_count,
+            "projection_left_product_count": row_tile_count,
+            "projection_live_output_tile_peak": 1,
+            "projection_dense_workspace_upper_bytes": dense_workspace,
+            "projection_sparse_slice_temporary_upper_bytes": left_payload + right_payload,
+            "projection_algorithm": "exact_support_tiles_preserving_LH_V_then_VR_association",
             "includes_left_conjugate_copy": True,
             "includes_matmul_intermediate_and_local_term_temporaries": True,
+            "target_csr_is_preallocated_and_not_staging": True,
         },
     )
 
-    left_rows = left[rows, :].tocsr()
-    right_rows = right[columns, :].tocsr()
-    left_support_ids = np.unique(left_rows.indices)
-    right_support_ids = np.unique(right_rows.indices)
-    if not len(left_support_ids) or not len(right_support_ids):
-        return 0.0, 0.0, staging
+    accumulation_seconds = 0.0
+    for row_start in range(0, left_support, row_tile_support):
+        row_stop = min(row_start + row_tile_support, left_support)
+        row_support_ids = left_support_ids[row_start:row_stop]
+        left_dense = left_rows[:, row_support_ids].toarray()
+        left_conjugate = left_dense.conj()
+        left_product = left_conjugate.T @ values
+        del left_dense, left_conjugate
 
-    projection_started = time.perf_counter()
-    left_dense = left_rows[:, left_support_ids].toarray()
-    right_dense = right_rows[:, right_support_ids].toarray()
-    left_conjugate = left_dense.conj()
-    left_product = left_conjugate.T @ values
-    projected = left_product @ right_dense
-    projection_seconds = time.perf_counter() - projection_started
-    del left_rows, right_rows, left_dense, right_dense, left_conjugate, left_product
+        for column_start in range(0, right_support, column_tile_support):
+            column_stop = min(column_start + column_tile_support, right_support)
+            column_support_ids = right_support_ids[column_start:column_stop]
+            right_dense = right_rows[:, column_support_ids].toarray()
+            projected = left_product @ right_dense
+            del right_dense
 
-    accumulation_started = time.perf_counter()
-    for local_row, global_row_value in enumerate(left_support_ids):
-        row_values = projected[local_row]
-        nonzero_columns = np.flatnonzero(row_values)
-        if not len(nonzero_columns):
-            continue
-        global_columns = right_support_ids[nonzero_columns]
-        target_start = int(target.indptr[int(global_row_value)])
-        target_stop = int(target.indptr[int(global_row_value) + 1])
-        target_columns = target.indices[target_start:target_stop]
-        positions = np.searchsorted(target_columns, global_columns)
-        if (
-            np.any(positions >= len(target_columns))
-            or not np.array_equal(target_columns[positions], global_columns)
-        ):
-            raise ValueError(
-                f"V16 q bitset pattern omitted a projected value at {label}"
+            accumulation_seconds += _accumulate_v16_projection_tile(
+                target,
+                projected,
+                row_support_ids,
+                column_support_ids,
+                label=label,
             )
-        target.data[target_start + positions] += row_values[nonzero_columns]
-        del nonzero_columns, global_columns, positions
-    accumulation_seconds = time.perf_counter() - accumulation_started
-    del projected, left_support_ids, right_support_ids
-    return projection_seconds, accumulation_seconds, staging
+            # The helper's frame releases row views before the owning tile is freed.
+            del projected
+        del left_product
 
+    projection_seconds = time.perf_counter() - projection_started - accumulation_seconds
+    del left_rows, right_rows, left_support_ids, right_support_ids
+    return projection_seconds, accumulation_seconds, max(support_discovery_stage, staging)
 
 def _assemble_bounded_v16_q_patterns(
     action: Any,
@@ -1700,6 +1810,22 @@ def _assemble_bounded_v16_q_patterns(
     accumulation_call_count = 0
     numeric_staging_peak = 0
     contribution_staging_peak = 0
+    projection_support_discovery_gate_count = 0
+    projection_tile_plan_count = 0
+    projection_tile_count = 0
+    projection_left_product_count = 0
+
+    def v16_projection_gate(label: str, facts: Mapping[str, Any]) -> None:
+        nonlocal projection_support_discovery_gate_count
+        nonlocal projection_tile_plan_count, projection_tile_count
+        nonlocal projection_left_product_count
+        if label.startswith("task40_v16_q_projection_support_discovery/"):
+            projection_support_discovery_gate_count += 1
+        elif label.startswith("task40_v16_q_projection_support/"):
+            projection_tile_plan_count += 1
+            projection_tile_count += int(facts.get("projection_tile_count", 0))
+            projection_left_product_count += int(facts.get("projection_left_product_count", 0))
+        allocation_gate(label, facts)
 
     def v16_contribution_gate(label: str, facts: Mapping[str, Any]) -> None:
         nonlocal contribution_staging_peak
@@ -1744,7 +1870,7 @@ def _assemble_bounded_v16_q_patterns(
                     rows,
                     columns,
                     values,
-                    allocation_gate=allocation_gate,
+                    allocation_gate=v16_projection_gate,
                     label=f"{label}/p{p}q{q}",
                 )
                 projection_seconds += projection_s
@@ -1812,6 +1938,11 @@ def _assemble_bounded_v16_q_patterns(
         "python_row_set_count": 0,
         "global_csr_reallocations_during_numeric_pass": 0,
         "numeric_contribution_count": contribution_count,
+        "projection_support_discovery_gate_count": projection_support_discovery_gate_count,
+        "projection_tile_plan_count": projection_tile_plan_count,
+        "projection_tile_count": projection_tile_count,
+        "projection_left_product_count": projection_left_product_count,
+        "projection_association": "each bounded output-row tile computes L^H @ V once before its R output-column tiles",
         "numeric_projection_and_accumulation_seconds": numeric_parent_seconds,
         "contribution_generation_seconds": float(contribution_generation_seconds),
         "local_projection_seconds": float(projection_seconds),
