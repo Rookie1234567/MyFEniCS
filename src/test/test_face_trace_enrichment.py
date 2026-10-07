@@ -25,5 +25,29 @@ class FaceTraceTests(unittest.TestCase):
         self.assertGreater(r['ambient'],1e-3);self.assertGreater(r['wrong_transpose'],.1)
         self.assertTrue(r['nonzero_internal']);self.assertTrue(r['nonzero_40port'])
 
+    def test_actual_dat_namespace_dimensions_and_memory(self):
+        from src.solvers import face_trace_scope as scope
+        from src.io.phase_notch_hp import load_phase_notch_hp
+        from src.runners.port_preparation import storage_limits,context
+        for name,role,rows in [('v61_face_x_enrichment','FX',66300),('v61_face_xy_enrichment','FXY',98940)]:
+            s=load_phase_notch_hp(scope.ROOT/'input/task042_neural_coarse_inverse'/f'{name}.dat',scope=scope)
+            self.assertEqual(s.derived['preparation_scope'],'v61');self.assertEqual(s.derived['stage'],role)
+            self.assertEqual(s.discretization['condensed_rows'],rows)
+            self.assertEqual(s.discretization['face_complement'],204)
+            self.assertEqual(s.execution['planning_memory_gib'],64)
+            self.assertEqual(s.execution['terminate_memory_gib'],96)
+        self.assertEqual(storage_limits('v61')['task_storage_bytes'],180*2**30)
+        self.assertIs(context('v61')[0],scope.window)
+        self.assertNotEqual(context('v60')[0].WINDOW_PATH,scope.window.WINDOW_PATH)
+
+    def test_sparse_port_pullback_keeps_nonmutual_complex_dual(self):
+        from scipy import sparse
+        from src.solvers.face_trace_mapping import FaceEnrichedMap
+        rng=np.random.default_rng(618);M=rng.normal(size=(11,7))+1j*rng.normal(size=(11,7))
+        m=FaceEnrichedMap.__new__(FaceEnrichedMap);m.J=sparse.csr_matrix(M);rows=np.array([1,4,9]);v=rng.normal(size=3)+1j*rng.normal(size=3)
+        np.testing.assert_allclose(m.pull_port(rows,v),M[rows].conj().T@v,rtol=1e-13,atol=1e-13)
+        np.testing.assert_allclose(m.pull_port(rows,v,dual=False),M[rows].T@v,rtol=1e-13,atol=1e-13)
+        self.assertGreater(np.linalg.norm(m.pull_port(rows,v)-m.pull_port(rows,v,dual=False)),1.)
+
 
 if __name__=='__main__':unittest.main()

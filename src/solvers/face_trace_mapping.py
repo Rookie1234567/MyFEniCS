@@ -133,6 +133,12 @@ class FaceEnrichedMap(MacroMap):
         return dict(arrays=packet,parent=parent,faces=len(self.faces),norm=float(np.linalg.norm(r)),
             mass_orthonormal_dual=True,global_shared_periodic_assembled_before_norm=True,NOT_A_FULL_HCURL_ERROR_BOUND=True)
 
+    def pull_port(self,rows,values,*,dual=True):
+        # Original carrier vectors have exact sparse z-boundary support.
+        # Select their native rows first, avoiding repeated whole-map scans.
+        sub=self.J[np.asarray(rows,int)]
+        return (sub.conj().T if dual else sub.T)@np.asarray(values)
+
     def face_trace_witness(self):
         """Actual physical tangents for both selected and zero other faces."""
         import basix

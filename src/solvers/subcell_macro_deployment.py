@@ -63,21 +63,28 @@ class MacroMap:
         internal_rows=self.internal_rows,high_native_rows=self.high_native_rows,slaves=self.slaves)
 
 
-def assemble_macro(matrix_map,responses,carrier,journal):
+def assemble_macro(matrix_map,responses,carrier,journal,*,graph_upper=34360848):
     from petsc4py import PETSc
     from .local_trace_assembly import exact_graph
     nt=matrix_map.nt;ports=len(carrier.entries);border=set();entries=[]
     for e in carrier.entries:
         fields=[]
         for rows,values in ((e.coupling_rows,e.coupling_values),(e.projection_rows,e.projection_values)):
-            v=np.zeros(matrix_map.J.shape[0],complex);v[rows]=values
             # C is a dual column; D is a primal row. They are not assumed mutual.
-            low=matrix_map.pull_native(v) if len(fields)==0 else np.conj(matrix_map.pull_native(np.conj(v)))
+            if hasattr(matrix_map,'pull_port'):low=matrix_map.pull_port(rows,values,dual=len(fields)==0)
+            else:
+                v=np.zeros(matrix_map.J.shape[0],complex);v[rows]=values
+                low=matrix_map.pull_native(v) if len(fields)==0 else np.conj(matrix_map.pull_native(np.conj(v)))
             if np.any(low[:matrix_map.ninternal]!=0):raise ValueError('physical port touches macro interior; topology boundary qualification failed')
             low=low[matrix_map.ninternal:];ids=np.flatnonzero(low!=0);border.update(map(int,ids));fields.append((ids,low[ids]))
+            if hasattr(matrix_map,'axes') and np.any(low[32832:]!=0):raise ValueError('new x/y face columns have nonzero original z-port action')
         entries.append(fields)
     counts,graph=exact_graph(matrix_map.data,nt,border,ports)
-    if graph['actual_topology_nnz_envelope']>34360848:raise ValueError('macro original trace graph exceeds mathematical bound')
+    graph.update(conservative_review_upper=graph_upper,upper_is_derived=graph_upper is not None)
+    if graph_upper is not None and graph['actual_topology_nnz_envelope']>graph_upper:raise ValueError('macro original trace graph exceeds mathematical bound')
+    if graph_upper is None:
+        planned=4*graph['actual_topology_nnz_envelope']*24+16*2**30+6*2**30
+        if planned>journal.planning_limit_bytes:raise MemoryError('actual graph four sparse copies plus local cache and field workspace exceed live plan')
     journal.allocation('macro_low_global_matrix_copies',dict(workspace_bytes=4*graph['actual_topology_nnz_envelope']*24))
     matrix=PETSc.Mat().createAIJ(size=(nt+ports,nt+ports),nnz=counts,comm=PETSc.COMM_SELF);matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR,True)
     with journal.measured('macro_direct_original_trace_global_assembly'):
@@ -117,7 +124,7 @@ class MacroInverse:
         finally:b.destroy();z.destroy()
 
 
-def solve_h2(folder,journal,scope):
+def solve_h2(folder,journal,scope,*,role='H2'):
     from .phase_notch_hp import configured_setup
     from .phase_explicit_accuracy import build_bundle,CoordinateFactor
     from .scattering_anchor import audit_original
@@ -127,16 +134,28 @@ def solve_h2(folder,journal,scope):
     from .fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field,destroy_same_mesh_physical_action
     from .phase_boundary_checkpoint import StudyBoundaryProvider
     from .scattering_anchor_checks import checked_arrays
-    scope.require_stage('H2');spec=scope.case_spec('H2');cfg,setup,geo=configured_setup(spec,journal,scope=scope)
+    scope.require_stage(role);spec=scope.case_spec(role);cfg,setup,geo=configured_setup(spec,journal,scope=scope)
     macrospec=dict(spec,splits=[1,1,2],cells=160,independent=104832,trace=32832,internal=72000,rows=33660)
     mcfg,macro,mgeo=configured_setup(macrospec,journal,scope=scope)
-    mapping=MacroMap(macro['floquets'][6],setup['floquets'][6],mgeo,geo,journal);mapreceipt=mapping.save(folder/'macro_mapping.npz')
-    journal.allocation('r2_class_cache_and_sparse_macro_map',dict(workspace_bytes=8*2**30+mapping.check['csr_primal_dual_bytes']))
+    enriched=scope.NAMESPACE=='v61'
+    if enriched:
+        from .face_trace_mapping import FaceEnrichedMap
+        mapping=FaceEnrichedMap(macro['floquets'][6],setup['floquets'][6],mgeo,geo,journal,axes=spec['face_axes'],folder=folder)
+        tangents=mapping.face_trace_witness()
+        if not tangents['pass_gate']:raise ValueError('enriched face trace physical/perimeter gate')
+    else:mapping=MacroMap(macro['floquets'][6],setup['floquets'][6],mgeo,geo,journal)
+    mapreceipt=mapping.save(folder/'macro_mapping.npz');nt=mapping.nt
+    journal.allocation('r2_class_cache_and_sparse_macro_map',dict(workspace_bytes=(16 if enriched else 8)*2**30+mapping.check['csr_primal_dual_bytes']))
     from .subcell_preparation_checkpoint import LazyPhaseTable,FrozenSubcellPreparation
     W=setup['spaces'][6];raw_factory=LazyPhaseTable(W,cfg,journal);childcache={};cache={};responses=[];class_packets={}
     resume_path=scope.window.TMP/'H2_preparation_resume.json'
-    reader=FrozenSubcellPreparation(resume_path,journal,raw_factory) if resume_path.exists() else None
-    for c,l in enumerate(mapping.layouts):
+    reader=FrozenSubcellPreparation(resume_path,journal,raw_factory) if resume_path.exists() and not enriched else None
+    if enriched:
+        from .face_trace_response import prepare_responses,ParentMicroBoundaryProvider,public_local_witness
+        responses,class_packets,consumption=prepare_responses(mapping,W,mgeo,raw_factory,journal,folder,scope.parent('H2'))
+        localpublic=public_local_witness(W,responses[0],cfg,int(mgeo['cell_tags'][0]),setup['numerical_carrier'],folder)
+        setup['boundary_provider']=ParentMicroBoundaryProvider(cfg,setup,folder,journal,scope.parent('H2'))
+    for c,l in enumerate(() if enriched else mapping.layouts):
         tag=int(mgeo['cell_tags'][c]);blocks=blocks_for(W,l,tag,raw_factory,childcache,journal,checkpoint_reader=reader,retain_raw=False);key=(l.key,tag)
         if key not in cache:
             restored=None if reader is None else reader.macro(l,tag,blocks)
@@ -158,29 +177,41 @@ def solve_h2(folder,journal,scope):
             write_json(d/(str(c)+'.json'),dict(key=l.key,tag=tag,capacity=cache[key].capacity,local_factor_backward=cache[key].backward,cache_bytes=current,arrays=packet,reused=restored is not None))
         responses.append(cache[key]);journal.event('macro_local_response_committed',cell=c,classes=len(cache),child_classes=len(childcache))
     if len(responses)!=160:raise ValueError('macro response inventory')
-    setup['boundary_provider']=StudyBoundaryProvider(cfg,setup,folder,journal,entity_face_support=True);boundary=setup['boundary_provider'].generate_pair()
+    if not enriched:setup['boundary_provider']=StudyBoundaryProvider(cfg,setup,folder,journal,entity_face_support=True)
+    boundary=setup['boundary_provider'].generate_pair()
     if not boundary['pass_gate']:return dict(status='BOUNDARY_NOT_QUALIFIED',role='H2',boundary=boundary)
     bundle=rhs=u=factor=matrix=None
     try:
-        bundle,rhs=build_bundle(cfg,setup,journal);matrix,graph=assemble_macro(mapping,responses,bundle['dtn_action'].carrier,journal)
+        bundle,rhs=build_bundle(cfg,setup,journal);matrix,graph=assemble_macro(mapping,responses,bundle['dtn_action'].carrier,journal,graph_upper=None if enriched else 34360848)
         from .local_schur_bank import save_bank,SavedLocalSchurAction
         bank=save_bank(mapping,class_packets,responses,folder/'local_schur_bank',journal.source_state['source_sha'])
         action_pairs=[]
         with journal.measured('saved_local_schur_reload_two_actual_body_actions'):
-            action=SavedLocalSchurAction(bank['path'],source_sha=bank['source_sha'],manifest_sha256=bank['sha256'],trace_rows=32832,cell_count=160)
+            action=SavedLocalSchurAction(bank['path'],source_sha=bank['source_sha'],manifest_sha256=bank['sha256'],trace_rows=nt,cell_count=160)
             from petsc4py import PETSc
             rng=np.random.default_rng(60030);x=matrix.createVecRight();y=x.duplicate()
             try:
                 for j in range(2):
-                    t=rng.normal(size=32832)+1j*rng.normal(size=32832);x.array[:]=np.r_[t,np.zeros(828)];matrix.mult(x,y)
-                    local=action.apply(t);error=relative(local-y.array[:32832],y.array[:32832])
-                    action_pairs.append(dict(relative=error,arrays=save_arrays(folder/f'saved_local_action_pair_{j}.npz',input=t,local=local,assembled=y.array[:32832].copy())))
+                    t=rng.normal(size=nt)+1j*rng.normal(size=nt);x.array[:]=np.r_[t,np.zeros(828)];matrix.mult(x,y)
+                    local=action.apply(t);error=relative(local-y.array[:nt],y.array[:nt])
+                    action_pairs.append(dict(relative=error,arrays=save_arrays(folder/f'saved_local_action_pair_{j}.npz',input=t,local=local,assembled=y.array[:nt].copy())))
                 bank.update(readonly_loaded_owner_payload_bytes=action.owner_payload_bytes,qualified_actions=action.calls)
             finally:x.destroy();y.destroy()
             del action
         if max(r['relative'] for r in action_pairs)>1e-10:raise ValueError('saved local action differs from actual assembled body')
         if scope.numeric_factor_attempts()>=3:raise RuntimeError('V60 no fourth global numeric factor, including any post flag')
-        factor=CoordinateFactor(matrix,bundle,32832,journal,folder,symbolic_capacity=True,planning_limit_bytes=64*2**30)
+        if enriched:
+            # Solution + original vectors + independent vectors, two cases,
+            # and atomic double writes must fit before numeric starts.
+            from pathlib import Path
+            import shutil
+            saved_upper=2*(36*mapping.J.shape[0]*16+mapping.check['csr_primal_dual_bytes'])*2+512*2**20
+            storage_free=shutil.disk_usage(folder).free
+            if storage_free-saved_upper<50*2**30:raise MemoryError('complete face state/audit atomic storage reserve before solve')
+            journal.event('complete_face_state_storage_prenumeric',reserved_bytes=saved_upper,free_bytes=storage_free,safety_bytes=512*2**20)
+            write_json(folder/'prenumeric_storage.json',dict(reserved_bytes=saved_upper,free_bytes=storage_free))
+            if scope.window.available_at_boundary(role)<1800:raise RuntimeError('face output/independent audit reserve exhausted')
+        factor=CoordinateFactor(matrix,bundle,nt,journal,folder,symbolic_capacity=True,planning_limit_bytes=64*2**30)
         low_returns=[]
         def persist_low(z,load,native_rhs):
             receipt=save_arrays(folder/f'returned_low_{len(low_returns)}.npz',trace_port=z,condensed_rhs=load,native_rhs=native_rhs)
@@ -189,7 +220,7 @@ def solve_h2(folder,journal,scope):
         with journal.measured('macro_restricted_global_solve_all_microfield_recovery'):u=inverse.apply(rhs);port=inverse.last_port_solution.copy()
         lowtrace=inverse.last_trace.copy()
         early=save_arrays(folder/'returned_solution.npz',u_storage=u.array.copy(),port=port,rhs=rhs.array.copy(),low_trace=inverse.last_trace,kappa=bundle['kappa'],slaves=mapping.slaves,**geo)
-        minimal=dict(status='AUDIT_PENDING',role='H2',case='NOTCH',degree=6,case_spec=spec,source=journal.source_state,returned_arrays=early,arrays=early,trace_mapping=mapreceipt,boundary=boundary,graph=graph)
+        minimal=dict(status='AUDIT_PENDING',role=role,case='NOTCH',degree=6,case_spec=spec,source=journal.source_state,returned_arrays=early,arrays=early,trace_mapping=mapreceipt,mapping_check=mapping.check,boundary=boundary,graph=graph)
         write_json(folder/'minimal_scientific_state.json',minimal)
         def audit():
             ambient,v=audit_original(bundle,rhs,u,port,journal);norm=mixed_norms(v,rhs.array,mapping);norm.update(identity=ambient['identity'],slave_zero=ambient['slave_zero']);return norm,v,ambient
@@ -202,7 +233,7 @@ def solve_h2(folder,journal,scope):
         minimal.update(arrays=arrays,original_audit=norms,ambient_audit=ambient);write_json(folder/'minimal_scientific_state.json',minimal)
         factor.destroy();factor=None;matrix.destroy();matrix=None;inverse.factor=None;gc.collect();journal.event('global_factor_low_matrix_released_complete_microfield_retained')
         output=physical_output(bundle,u,port,geo,folder,journal,volume_backend='direct_phase_quadrature')
-        result=dict(status='COMPLETED',role='H2',case='NOTCH',degree=6,case_spec=spec,grid='2x2x4',representation='MACRO_TRACE6_ALL_R2_P6_MICRO_INTERIORS',arrays=arrays,returned_arrays=early,
+        result=dict(status='COMPLETED',role=role,case='NOTCH',degree=6,case_spec=spec,grid='2x2x4',representation='MACRO_FACE_ENRICHED_P6_MICRO_INTERIORS' if enriched else 'MACRO_TRACE6_ALL_R2_P6_MICRO_INTERIORS',arrays=arrays,returned_arrays=early,
             original_audit=norms,ambient_audit=ambient,trace_mapping=mapreceipt,mapping_check=mapping.check,boundary=boundary,output=output,mode_sha256=bundle['mode_sha256'],
             new_complete_solves=1,new_global_numeric_factors=1,graph=graph,local_response_classes=len(cache),child_local_classes=len(childcache),
             local_schur_bank=bank,local_body_action_pairs=action_pairs,preparation_resume=reader.record() if reader is not None else None,
@@ -211,7 +242,7 @@ def solve_h2(folder,journal,scope):
             NOT_A_FULL_AMBIENT_SOLUTION=True,source=journal.source_state)
         field=restore_p0_full_field(setup['floquets'][6],u)
         from .phase_tangential_audit import audit_tangential
-        result['tangential_check']=audit_tangential(field,bundle,folder,'H2',journal)
+        result['tangential_check']=audit_tangential(field,bundle,folder,role,journal)
         fixed_output(result,field,cfg,bundle['kappa'],folder,journal)
         vals=uncondensed_vectors(field,cfg,bundle['kappa'],setup['floquets'][6].mpc,setup['mesh_data'],folder/'independent_volume',journal,q=15,
             identity=dict(parent_npz_sha256=arrays['sha256'],original_polynomial_body_q15_qualified=True,macro_map=mapreceipt['sha256']))
@@ -229,7 +260,10 @@ def solve_h2(folder,journal,scope):
         rec=max(recs)
         result['independent']=dict(audit_path='PUBLIC_BASIX_ALL_R2_MICRO_BODY_Q15_Q63_HERMITIAN_MACRO_PULLBACK',original_audit=mixed,ambient_original=high,arrays=mr,equation_pass=passed,recovery_pass=rec<=1e-10 and high['recovery_pass'],macro_internal_operation_scaled=rec,macro_internal_operation_by_cell=recs,
             direct_internal_target_pass=max(mixed[k] for k in ('true','native','augmented','port'))<=1e-10,NOT_A_FULL_AMBIENT_SOLUTION=True)
-        result.update(deployment_complete=passed and result['independent']['recovery_pass'] and result['tangential_check']['pass_gate'],equation_pass=passed,capacity=dict(rows=33660,mixed=729792,ambient=834048,class_cache_limit=8*2**30),timings=journal.timings,calls=journal.calls)
+        result.update(deployment_complete=passed and result['independent']['recovery_pass'] and result['tangential_check']['pass_gate'],equation_pass=passed,capacity=dict(rows=nt+828,mixed=mapping.nmixed,ambient=834048,class_cache_limit=(16 if enriched else 8)*2**30),timings=journal.timings,calls=journal.calls)
+        if enriched:
+            result.update(face_inventory=mapping.face_receipt,face_physical_witness=tangents,internal_service_consumption=consumption,local_public_witness=localpublic,
+                prepared_start=True,fresh_cold_N1=False,local_response_classes=len(responses),cache_payload_bytes=consumption['cache_explicit_upper_bytes'])
         write_json(folder/'completed_deployment_state.json',result);return result
     finally:
         if factor is not None:factor.destroy()

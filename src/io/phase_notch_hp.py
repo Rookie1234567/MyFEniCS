@@ -24,7 +24,7 @@ def descriptor(role,*,scope=None):
         expected_trace=spec.get('trace'),expected_internal=spec.get('internal'),condensed_rows=spec.get('rows'),
         unknown='TOTAL_ENVELOPE',representation='E=exp(i*kappa.x)*u',MPC='unit envelope x/y',
         surface_quadrature_degree=47,independent_surface_reference_q=63)
-    for name in ('trace_degree','interior_degree','ambient_degree','mixed_trace','mixed_independent','mixed_rows'):
+    for name in ('trace_degree','interior_degree','ambient_degree','mixed_trace','mixed_independent','mixed_rows','mixed_internal','face_axes','face_complement','face_original','face_micro','macro_splits','macro_cells','macro_edge_degree','macro_z_face_degree','local_macro_columns'):
         if name in spec:physical['discretization'][name]=spec[name]
     count=spec.get('complete_modes',532)
     from src.solvers.phase_notch_hp_modes import finite_mode_ranges

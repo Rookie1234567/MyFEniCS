@@ -13,8 +13,8 @@ from src.solvers.scattering_anchor import relative
 
 def macro_saved_check(r):
     a=checked_arrays(r['arrays']);v=checked_arrays(r['independent']['ambient_original']['arrays']);m=checked_arrays(r['trace_mapping']);saved=checked_arrays(r['independent']['arrays'])
-    J=sparse.csr_matrix((m['J_data'],m['J_indices'],m['J_indptr']),shape=tuple(m['J_shape']));ih=m['internal_rows'];sl=m['slaves'];nt=32832;ni=696960
-    if J.shape!=(len(a['u_storage']),729792) or len(ih)!=ni or len(np.unique(ih))!=ni or len(np.setdiff1d(np.arange(J.shape[0]),sl))!=834048:raise ValueError('macro complete native/mixed inventory')
+    J=sparse.csr_matrix((m['J_data'],m['J_indices'],m['J_indptr']),shape=tuple(m['J_shape']));ih=m['internal_rows'];sl=m['slaves'];nt=r.get('mapping_check',{}).get('trace',32832);ni=696960
+    if J.shape!=(len(a['u_storage']),ni+nt) or len(ih)!=ni or len(np.unique(ih))!=ni or len(np.setdiff1d(np.arange(J.shape[0]),sl))!=834048:raise ValueError('macro complete native/mixed inventory')
     x=np.r_[a['u_storage'][ih],a['low_trace']];mapped=J@x;op=relative(mapped-a['u_storage'],a['u_storage'])
     den=max(np.linalg.norm(J.conj().T@v['rhs']),1e-30)
     res=J.conj().T@v['residual'];aug=J.conj().T@v['augmented_top'];pr=v['port_residual']
@@ -44,13 +44,14 @@ def macro_saved_check(r):
         direct_target_pass=allfinite and max(fields.values())<=1e-10,NOT_A_FULL_AMBIENT_SOLUTION=True)
 
 
-def comparison(a,b,folder,journal,*,reproduction=False):
+def comparison(a,b,folder,journal,*,reproduction=False,live_scope=None):
     from src.solvers.phase_notch_hp import restore_record
     from src.solvers.phase_notch_hp_fields import common_difference
     from src.solvers.phase_notch_hp_modes import mode_comparison
     from src.solvers.phase_saved_closure import selected_points
     from src.solvers.phase_evaluation_cache import cached_evaluator_factory
-    first=restore_record(a,journal,scope=scope);second=restore_record(b,journal,scope=scope);carriers=[checked_arrays(r['arrays'])['kappa'] for r in (a,b)]
+    actual_scope=scope if live_scope is None else live_scope
+    first=restore_record(a,journal,scope=actual_scope);second=restore_record(b,journal,scope=actual_scope);carriers=[checked_arrays(r['arrays'])['kappa'] for r in (a,b)]
     if not np.array_equal(*carriers):raise ValueError('original same kappa physical comparison')
     folder.mkdir(parents=True,exist_ok=True);identity=dict(parent_array_sha256=[a['arrays']['sha256'],b['arrays']['sha256']],consumer_module_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     factory=cached_evaluator_factory(limit_bytes=256*2**20,quadrature_tables=False);rows=[]
