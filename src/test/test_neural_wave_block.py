@@ -14,6 +14,7 @@ from src.solvers.neural_wave_block import (
 )
 from src.solvers.neural_wave_subspace import WaveSubspace, optimal_amplitudes
 from src.solvers.neural_wave_moments import Patch
+from src.solvers.neural_wave_projection import ResidualProjectionCache
 
 
 class DenseAction:
@@ -40,6 +41,61 @@ def test_immediate_equivalence_and_later_recombination():
     old.add(C2[:, 0])
     assert np.linalg.norm(old.r) / a.bnorm == pytest.approx(0.5)
     assert np.linalg.norm(block.r) / a.bnorm < 1e-14
+
+
+def test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd(tmp_path):
+    action = DenseAction(np.eye(4, dtype=complex), [1, 1j, 2, -1j])
+    s = BlockWaveSubspace(action, 4)
+    first = np.eye(4, dtype=complex)[:, :1]
+    second = first + 1.5e-12 * np.eye(4, dtype=complex)[:, 1:2]
+    zeros = np.zeros((4, 2), complex)
+    binding = dict(
+        route="control",
+        source_sha="source",
+        native_sha256="a",
+        moments_sha256="m",
+        design_sha256="d",
+    )
+    store = BlockBasisStore(tmp_path, binding)
+    rng = np.random.default_rng(4213103)
+    model = dict(q=np.array([[0.2, -0.1, 0.3]]), patch=Patch((0, 0, 0), (1, 1, 1)))
+    initial = s.add_block(np.hstack([first, zeros]))
+    assert initial["accepted"]
+    store.commit(s, model, 1, initial, rng, 1e99)
+    event = s.add_block(np.hstack([second, zeros]))
+    assert event["accepted"]
+    assert s.m == 2 and s.effective_rank == 1
+    C = np.column_stack([first, second])
+    scales = np.linalg.norm(C, axis=0)
+    coeff = linalg.lstsq(C / scales, action.f, cond=1e-12)[0]
+    np.testing.assert_allclose(s.c, C / scales @ coeff, atol=1e-12)
+    left, sv, _ = linalg.svd(C / scales, full_matrices=False)
+    Q = left[:, sv > 1e-12 * sv[0]]
+    rng = np.random.default_rng(4213103)
+    value = rng.normal(size=(4, 3)) + 1j * rng.normal(size=(4, 3))
+    expected = value - Q @ (Q.conj().T @ value)
+    np.testing.assert_allclose(s.project(value), expected, atol=1e-12)
+    cache = ResidualProjectionCache(s, np.arange(4))
+    np.testing.assert_allclose(
+        cache.project(value, supported=True), expected, atol=1e-12
+    )
+    assert event["small_full_action_pair_relative"] < 1e-12
+    store.commit(s, model, 2, event, rng, 1e99)
+    restored = BlockWaveSubspace(action, 4)
+    boundary = BlockBasisStore(tmp_path, binding).restore(restored, rng)
+    assert restored.effective_rank == s.effective_rank
+    np.testing.assert_allclose(restored.project(value), expected, atol=1e-12)
+    from src.solvers.neural_wave_greedy import atomic_npz, sha
+
+    path = tmp_path / boundary["state"]["path"]
+    with np.load(path, allow_pickle=False) as z:
+        fields = {k: np.array(z[k]) for k in z.files}
+    fields["projection_null"] = np.array([[1], [0]], complex)
+    atomic_npz(path, **fields)
+    boundary["state"]["sha256"] = sha(path)
+    (tmp_path / "committed.json").write_text(json.dumps(boundary))
+    with pytest.raises(ValueError, match="RECOVERY_RETAINED_RANGE_LAYOUT_FAILED"):
+        BlockBasisStore(tmp_path, binding).restore(BlockWaveSubspace(action, 4), rng)
 
 
 @pytest.mark.parametrize(
@@ -153,7 +209,7 @@ def test_invalid_true_residual_rolls_back_and_can_reselect():
     action.apply = invalid_true_apply
     event = space.add_block(np.eye(4, dtype=complex)[:, :2])
     assert not event["accepted"]
-    assert event["reason"] == "SMALL_R_NUMERICAL_RANK_REJECTED"
+    assert event["reason"] == "SMALL_R_COMPLETE_ACTION_PAIR_REJECTED"
     assert space.m == 0
     np.testing.assert_array_equal(space.r, action.f)
 

@@ -27,6 +27,64 @@ def compensated_columns(columns, amplitudes, batch=32):
 
 
 class BlockWaveSubspace(WaveSubspace):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.projection_null = np.empty((0, 0), np.complex128)
+        self.effective_rank = 0
+
+    def filter_projection_coefficients(self, values):
+        null = self.projection_null
+        return (
+            values
+            if not null.shape[1]
+            else values - null @ conjugate_product(null, values)
+        )
+
+    def project(self, values):
+        z = np.array(values, copy=True)
+        for _ in range(2):
+            z -= self.Q[:, : self.m] @ self.filter_projection_coefficients(
+                conjugate_product(self.Q[:, : self.m], z)
+            )
+        return z
+
+    def fit_retained_amplitudes(self):
+        """Fixed-rcond SVD of small R; never an inverse of the FE operator.
+
+        Per-block independence does not guarantee global numerical rank. The
+        discarded left directions must also be excluded from residual scoring.
+        """
+        start = perf_counter()
+        rhs = conjugate_product(self.Q[:, : self.m], self.action.f)
+        left, singular, right = linalg.svd(
+            self.R[: self.m, : self.m], full_matrices=False
+        )
+        keep = singular > self.rcond * singular[0]
+        self.effective_rank = int(np.count_nonzero(keep))
+        self.projection_null = np.array(left[:, ~keep], order="F", copy=True)
+        self.a = right[keep].conj().T @ (
+            (left[:, keep].conj().T @ rhs) / singular[keep]
+        )
+        self.c = compensated_columns(self.U[:, : self.m], self.a)
+        predicted = self.action.f - self.Q[:, : self.m] @ (
+            self.R[: self.m, : self.m] @ self.a
+        )
+        self.seconds["solve"] += perf_counter() - start
+        start = perf_counter()
+        self.r = self.action.f - self.action.apply(self.c)
+        pairing = float(np.linalg.norm(self.r - predicted) / self.action.bnorm)
+        self.seconds["true_residual"] += perf_counter() - start
+        if not np.isfinite(pairing) or pairing > 1e-10:
+            raise ArithmeticError("SMALL_R_COMPLETE_ACTION_PAIR_REJECTED")
+        return dict(
+            effective_rank=self.effective_rank,
+            stored_columns=self.m,
+            small_full_action_pair_relative=pairing,
+            predicted_residual_norm=float(np.linalg.norm(predicted)),
+            sigma_max=float(singular[0]),
+            sigma_min=float(singular[-1]),
+        )
+
     def small_basis_inner_product(self):
         old = self._small_basis_product_columns
         if self._small_basis_product is None or old > self.m:
@@ -62,7 +120,9 @@ class BlockWaveSubspace(WaveSubspace):
         if not len(nonzero):
             return dict(accepted=False, reason="ZERO_ACTION_BLOCK")
         normalized = applied[:, nonzero] / scales[nonzero]
-        residual = self.project(normalized)
+        # QR storage represents all raw columns; scoring uses only the
+        # globally retained numerical range, and must not alter this QR.
+        residual = WaveSubspace.project(self, normalized)
         # Exact zeros and numerically dependent directions cannot become a
         # normalized spurious basis; scientific rank threshold remains fixed.
         active = np.flatnonzero(np.linalg.norm(residual, axis=0) > self.rcond)
@@ -84,6 +144,8 @@ class BlockWaveSubspace(WaveSubspace):
             self.r,
             self._small_basis_product,
             self._small_basis_product_columns,
+            self.projection_null,
+            self.effective_rank,
         )
         before = float(np.linalg.norm(self.r))
         mapping = np.zeros((columns.shape[1], rank), np.complex128)
@@ -107,31 +169,14 @@ class BlockWaveSubspace(WaveSubspace):
         self.m = old + actual_rank
         if not actual_rank:
             return dict(accepted=False, reason="RANK_REJECTED")
-        start = perf_counter()
-        rhs = conjugate_product(self.Q[:, : self.m], self.action.f)
-        used_svd = False
+        used_svd = True
         try:
-            self.a = linalg.solve_triangular(self.R[: self.m, : self.m], rhs)
-            self.c = compensated_columns(self.U[:, : self.m], self.a)
-            self.seconds["solve"] += perf_counter() - start
-            start = perf_counter()
-            self.r = self.action.f - self.action.apply(self.c)
+            fit = self.fit_retained_amplitudes()
             after = float(np.linalg.norm(self.r))
-            self.seconds["true_residual"] += perf_counter() - start
             if not np.isfinite(after) or after > before + 1e-10 * self.action.bnorm:
-                used_svd = True
-                self.a = linalg.lstsq(
-                    self.R[: self.m, : self.m],
-                    rhs,
-                    cond=self.rcond,
-                    lapack_driver="gelsd",
-                )[0]
-                self.c = compensated_columns(self.U[:, : self.m], self.a)
-                self.r = self.action.f - self.action.apply(self.c)
-                after = float(np.linalg.norm(self.r))
-                if not np.isfinite(after) or after > before + 1e-10 * self.action.bnorm:
-                    raise ArithmeticError("SMALL_R_NUMERICAL_RANK_REJECTED")
+                raise ArithmeticError("SMALL_R_NUMERICAL_RANK_REJECTED")
         except Exception as error:
+            trial_native_relative = float(np.linalg.norm(self.r)) / self.action.bnorm
             self.m = old
             (
                 self.a,
@@ -139,16 +184,18 @@ class BlockWaveSubspace(WaveSubspace):
                 self.r,
                 self._small_basis_product,
                 self._small_basis_product_columns,
+                self.projection_null,
+                self.effective_rank,
             ) = previous
             self.R[:, old : old + actual_rank] = 0
-            if (
-                isinstance(error, ArithmeticError)
-                and str(error) == "SMALL_R_NUMERICAL_RANK_REJECTED"
+            if isinstance(error, ArithmeticError) and str(error) in (
+                "SMALL_R_NUMERICAL_RANK_REJECTED",
+                "SMALL_R_COMPLETE_ACTION_PAIR_REJECTED",
             ):
                 return dict(
                     accepted=False,
                     reason=str(error),
-                    trial_native_relative=after / self.action.bnorm,
+                    trial_native_relative=trial_native_relative,
                 )
             raise
         self.pending_block = dict(
@@ -171,6 +218,9 @@ class BlockWaveSubspace(WaveSubspace):
             new_norm=float(singular[actual_rank - 1]),
             native_relative=after / self.action.bnorm,
             actual_energy_decrease=before**2 - after**2,
+            predicted_energy_decrease=before**2 - fit["predicted_residual_norm"] ** 2,
+            retained_global_numerical_rank=self.effective_rank,
+            small_full_action_pair_relative=fit["small_full_action_pair_relative"],
             small_rank_revealing_svd_used=used_svd,
         )
 
@@ -184,9 +234,14 @@ class BlockWaveSubspace(WaveSubspace):
             rcond=self.rcond,
             orthogonality=float(np.linalg.norm(gram - np.eye(self.m))),
             projected_residual=float(
-                np.linalg.norm(conjugate_product(self.Q[:, : self.m], self.r))
+                np.linalg.norm(
+                    self.filter_projection_coefficients(
+                        conjugate_product(self.Q[:, : self.m], self.r)
+                    )
+                )
                 / self.action.bnorm
             ),
+            retained_global_numerical_rank=self.effective_rank,
         )
 
     def extension_plan(self, capacity):
@@ -243,7 +298,14 @@ class BlockBasisStore(BasisStore):
             source_sha=self.binding["source_sha"],
         )
         state = self.directory / f"state_{last:05d}{suffix}.npz"
-        atomic_npz(state, c=space.c, r=space.r, a=space.a)
+        atomic_npz(
+            state,
+            c=space.c,
+            r=space.r,
+            a=space.a,
+            projection_null=space.projection_null,
+            effective_rank=np.asarray(space.effective_rank),
+        )
         current = self.directory / "committed.json"
         if current.exists():
             atomic_json(
@@ -266,6 +328,7 @@ class BlockBasisStore(BasisStore):
             features_reference_exposed=False,
             optimizer_state="q frozen per block; all retained amplitudes recombined after every block",
             algorithm_state=algorithm_state or {},
+            stability_profile_version=2,
         )
         # Write chunks and matched coefficients before publishing the boundary.
         if sha(chunk) != entry["sha256"] or sha(state) != value["state"]["sha256"]:
@@ -313,7 +376,22 @@ class BlockBasisStore(BasisStore):
             raise ValueError("RECOVERY_STATE_HASH_FAILED")
         with np.load(state, allow_pickle=False) as a:
             space.a, space.c, space.r = (np.array(a[k]) for k in ("a", "c", "r"))
+            if "projection_null" in a.files:
+                space.projection_null = np.array(a["projection_null"], order="F")
+                space.effective_rank = int(a["effective_rank"])
         space.m = count
+        if value.get("stability_profile_version") == 2:
+            null = space.projection_null
+            if (
+                null.shape != (count, count - space.effective_rank)
+                or not np.isfinite(null).all()
+                or not 0 <= space.effective_rank <= count
+                or np.linalg.norm(conjugate_product(null, null) - np.eye(null.shape[1]))
+                > 1e-10
+                or np.linalg.norm(conjugate_product(null, space.R[:count, :count]))
+                > 1e-10 * max(np.linalg.norm(space.R[:count, :count]), 1e-30)
+            ):
+                raise ValueError("RECOVERY_RETAINED_RANGE_LAYOUT_FAILED")
         if (
             np.linalg.norm(space.action.f - space.action.apply(space.c) - space.r)
             > 1e-10 * space.action.bnorm
@@ -325,4 +403,43 @@ class BlockBasisStore(BasisStore):
             raise ValueError("RECOVERY_COEFFICIENT_RECONSTRUCTION_FAILED")
         rng.bit_generator.state = value["rng_state"]
         self.chunks = value["chunks"]
+        return value
+
+    def preserve_repaired_boundary(self, space, previous, repair, deadline, cost_state):
+        """Replace coefficients, never replay or discard accepted wave blocks."""
+        state = (
+            self.directory
+            / f"state_{space.m:05d}_rank_repair_{int(monotonic() * 1e6)}.npz"
+        )
+        atomic_npz(
+            state,
+            c=space.c,
+            r=space.r,
+            a=space.a,
+            projection_null=space.projection_null,
+            effective_rank=np.asarray(space.effective_rank),
+        )
+        value = json.loads(json.dumps(previous))
+        value.update(
+            binding=self.binding,
+            state=dict(path=state.name, sha256=sha(state)),
+            stability_profile_version=2,
+            rank_repair=repair,
+            remaining_seconds=deadline - monotonic(),
+        )
+        value["algorithm_state"]["cost_state"] = cost_state
+        value["event"].update(
+            native_relative=repair["repaired_native"],
+            audit=space.action.audit(space.c),
+            boundary_kind="repaired_existing_wave_blocks",
+            elapsed_seconds=monotonic() - self.binding["route_origin_monotonic"],
+        )
+        value["algorithm_state"]["cost_state"]["action_counts"] = dict(
+            space.action.counts
+        )
+        value["algorithm_state"]["cost_state"]["action_seconds"] = dict(
+            space.action.costs
+        )
+        atomic_json(self.directory / "pre_rank_repair_committed.json", previous)
+        atomic_json(self.directory / "committed.json", value)
         return value

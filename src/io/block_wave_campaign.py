@@ -14,6 +14,7 @@ STAGES = {
     "v31_reconstruction_stability": ("ml", 7200, "reconstruction_stability"),
     "v31_roundoff_witness": ("pure", 900, "roundoff_witness"),
     "v31_block_wave_checks": ("ml", 7200, "block_checks"),
+    "v31_global_rank_wave_checks": ("ml", 1800, "block_checks"),
     "v31_fixed_block_wave": ("ml", 21600, "FIXED_WAVE_BLOCK_GREEDY"),
     "v31_learned_block_wave": ("ml", 21600, "LEARNED_WAVE_BLOCK_GREEDY"),
     "v31_block_reconstruct": ("fe", 10800, "block_reconstruct"),

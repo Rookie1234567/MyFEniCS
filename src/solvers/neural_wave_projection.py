@@ -28,7 +28,7 @@ class ResidualProjectionCache:
         plan = (self.columns**2 + len(self.rows) * self.columns) * 16 + n
         if plan + additional_cache_bytes > 2 * 2**30:
             raise MemoryError("DETACHED_PROJECTION_CACHE_2GIB_PLANNING_LINE")
-        self.Q = subspace.Q[:, :self.columns]
+        self.Q = subspace.Q[:, : self.columns]
         self.small_product = subspace.small_basis_inner_product()
         self.selected_Q = np.array(self.Q[self.rows], order="F", copy=True)
         self.counts = dict(project=0, explicit_two_pass_fallback=0)
@@ -49,8 +49,12 @@ class ResidualProjectionCache:
             self.selected_Q if supported else self.Q,
             values[self.rows] if supported else values,
         )
-        second = cross - self.small_product @ cross
-        out = values - self.Q @ (cross + second)
+        filter_coefficients = getattr(
+            self.space, "filter_projection_coefficients", lambda x: x
+        )
+        first = filter_coefficients(cross)
+        second = filter_coefficients(cross - self.small_product @ first)
+        out = values - self.Q @ (first + second)
         # This fixed rounding safeguard selects the original operation; it
         # changes no rank, loss, precision Gate or scientific stopping rule.
         if np.linalg.norm(out) <= 1e-6 * np.linalg.norm(values):
@@ -62,4 +66,9 @@ class ResidualProjectionCache:
 
     @property
     def retained_bytes(self):
-        return self.selected_Q.nbytes + self.small_product.nbytes + self.rows.nbytes + self.mask.nbytes
+        return (
+            self.selected_Q.nbytes
+            + self.small_product.nbytes
+            + self.rows.nbytes
+            + self.mask.nbytes
+        )

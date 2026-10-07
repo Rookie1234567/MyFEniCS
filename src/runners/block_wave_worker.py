@@ -126,6 +126,20 @@ def run_stage(manifest, artifact, marker):
             ),
         )
         result["bound_numerical_chain_sha256"] = {p: digest(ROOT / p) for p in CHAIN}
+        if spec["stage"] == "v31_global_rank_wave_checks":
+            from src.solvers.neural_wave_block_qualification import (
+                qualify_existing_range,
+            )
+
+            result["saved_long_basis_range"] = qualify_existing_range(
+                action,
+                packet,
+                profile["artifacts"] / "v31_fixed_block_wave/basis",
+                marker,
+            )
+            result["implementation_qualified"] &= result["saved_long_basis_range"][
+                "qualified"
+            ]
     elif spec["role"] == "reconstruction_stability":
         from src.solvers.neural_wave_block_reconstruction import (
             reconstruction_stability,
@@ -167,6 +181,11 @@ def run_stage(manifest, artifact, marker):
         from src.solvers.neural_wave_greedy import run_greedy
 
         frozen_file = profile["artifacts"] / "v31_block_wave_checks/result.json"
+        repaired_qualification = (
+            profile["artifacts"] / "v31_global_rank_wave_checks/result.json"
+        )
+        if repaired_qualification.exists():
+            frozen_file = repaired_qualification
         frozen = json.loads(frozen_file.read_text())
         if not frozen["implementation_qualified"] or frozen[
             "bound_numerical_chain_sha256"

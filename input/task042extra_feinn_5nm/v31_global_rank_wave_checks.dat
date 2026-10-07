@@ -1,0 +1,5 @@
+schema_version = 2
+
+[neural_wave]
+stage = "v31_global_rank_wave_checks"
+design_sha256 = "3cc05f1e1dc1f25a39cdc975cdbd2b4acfa9d7a1d89955e651703ac0542d1d67"

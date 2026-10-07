@@ -274,7 +274,10 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     strategy = design["strategy"]
     capacity = strategy["max_columns"]
     n = action.size
-    bytes_plan = 2 * 16 * n * capacity + 3 * 16 * capacity**2 + 2 * 2**30
+    small_workspace_matrices = 6 if block_mode else 3
+    bytes_plan = (
+        2 * 16 * n * capacity + small_workspace_matrices * 16 * capacity**2 + 2 * 2**30
+    )
     if bytes_plan > 12 * 2**30:
         raise ValueError("AUTHORIZED_CAPACITY_PLANNING_LINE_EXCEEDED")
     moments = WaveMoments(packet, batch=8)
@@ -327,6 +330,29 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 prior_source=previous["binding"]["source_sha"],
             ),
         )
+        if block_mode and previous.get("stability_profile_version") != 2:
+            before = float(np.linalg.norm(space.r) / action.bnorm)
+            repair = space.fit_retained_amplitudes()
+            repair.update(
+                previous_native=before,
+                repaired_native=float(np.linalg.norm(space.r) / action.bnorm),
+                reason="per-block rank did not ensure stable global R rank; fixed rcond unchanged",
+            )
+            previous = store.preserve_repaired_boundary(
+                space,
+                previous,
+                repair,
+                deadline,
+                dict(
+                    action_counts=dict(action.counts),
+                    action_seconds=dict(action.costs),
+                    moment_counts=dict(moments.counts),
+                    moment_seconds=dict(moments.seconds),
+                    qr_seconds=dict(space.seconds),
+                    projection_reuse=dict(projection_costs),
+                ),
+            )
+            marker("complete_boundary_rank_repaired", repair)
     history = Path(artifact) / "basis_growth.jsonl"
     stop = None
     save_buffer = 120 if block_mode else 600
@@ -723,6 +749,13 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             )
             if event["accepted"]:
                 event["predicted_actual_decrease_load_scaled_absolute"] = (
+                    abs(
+                        event.get("predicted_energy_decrease", best[0])
+                        - event["actual_energy_decrease"]
+                    )
+                    / action.bnorm**2
+                )
+                event["screen_score_actual_decrease_load_scaled_absolute"] = (
                     abs(best[0] - event["actual_energy_decrease"]) / action.bnorm**2
                 )
             if event["accepted"]:

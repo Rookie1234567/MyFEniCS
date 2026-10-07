@@ -1,12 +1,14 @@
 """Real full-moment block checks, isolated from all references and teachers."""
 
 from pathlib import Path
+import json
 
 import numpy as np
 
 from src.solvers.neural_wave_block import BlockWaveSubspace, BlockBasisStore
 from src.solvers.neural_wave_greedy import patch_inventory, variable_projection
 from src.solvers.neural_wave_moments import WaveMoments
+from src.solvers.neural_wave_moments import Patch
 from src.solvers.neural_wave_subspace import WaveSubspace, optimal_amplitudes
 from src.solvers.neural_wave_reconstruction import pointwise_moments
 from src.solvers.neural_wave_block_reconstruction import rebuild_stable
@@ -24,12 +26,94 @@ CHAIN = tuple(
         "neural_wave_local_action",
         "neural_wave_projection",
         "neural_wave_reconstruction",
+        "neural_wave_block_qualification",
     )
 )
 
 
 def relative(a, b):
     return float(np.linalg.norm(a - b) / max(np.linalg.norm(b), 1e-30))
+
+
+def qualify_existing_range(action, packet, directory, marker):
+    """Repair qualification on saved unlabelled basis; no accepted q update."""
+    boundary = json.loads((directory / "committed.json").read_text())
+    space = BlockWaveSubspace(action, boundary["columns"])
+    BlockBasisStore(directory, boundary["binding"]).restore(
+        space, np.random.default_rng(0)
+    )
+    rng = np.random.default_rng(4213104)
+    fit = space.fit_retained_amplitudes()
+    last = boundary["chunks"][-1]
+    with np.load(directory / last["path"], allow_pickle=False) as z:
+        patch = Patch(tuple(z["center"]), tuple(z["radius"]), int(z["patch_level"]))
+        q = np.array(z["wave_q"][:2]) + rng.uniform(-0.25, 0.25, (2, 3))
+    k0 = 2 * np.pi / 5.0  # This qualification is explicitly the frozen M5.
+    q = np.clip(q, -3.9 * k0, 3.9 * k0)
+    moments = WaveMoments(packet, batch=8)
+    support = moments.rows[moments.cells(patch)].ravel()
+    local = LocalWaveAction(action, support[support >= 0])
+    cache = ResidualProjectionCache(space, local.output_rows)
+    full = variable_projection(action, space, moments, patch, q, gradient=True)
+    cached = variable_projection(
+        action, space, moments, patch, q, gradient=True, local=local, projector=cache
+    )
+    checks = []
+    for _ in range(3):
+        direction = rng.normal(size=q.shape)
+        direction /= np.linalg.norm(direction)
+        slope = float(np.sum(full[4] * direction)) * action.bnorm**2
+        steps = []
+        for h in (1e-4, 1e-5, 1e-6):
+            plus = variable_projection(
+                action,
+                space,
+                moments,
+                patch,
+                q + h * direction,
+                gradient=False,
+                local=local,
+                projector=cache,
+            )[0]
+            minus = variable_projection(
+                action,
+                space,
+                moments,
+                patch,
+                q - h * direction,
+                gradient=False,
+                local=local,
+                projector=cache,
+            )[0]
+            fd = (plus - minus) / (2 * h)
+            steps.append(
+                dict(
+                    step=h,
+                    analytic=slope,
+                    finite_difference=fd,
+                    absolute=abs(slope - fd),
+                    relative=abs(slope - fd) / max(abs(slope), abs(fd), 1e-30),
+                )
+            )
+        checks.append(steps)
+    result = dict(
+        fit=fit,
+        score_relative=abs(full[0] - cached[0]) / max(abs(full[0]), 1e-30),
+        gradient_relative=relative(cached[4], full[4]),
+        three_real_direction_FD=checks,
+        original_boundary_source=boundary["binding"]["source_sha"],
+        original_boundary_columns=space.m,
+        reference_loaded=False,
+        accepted_direction_updates=0,
+        existing_basis_replayed=False,
+    )
+    result["qualified"] = (
+        result["score_relative"] <= 1e-10
+        and result["gradient_relative"] <= 1e-10
+        and all(min(v["relative"] for v in c) <= 1e-5 for c in checks)
+    )
+    marker("saved_long_basis_global_range_qualification", result)
+    return result
 
 
 def qualify(action, packet, high, design, artifact, marker, binding):
