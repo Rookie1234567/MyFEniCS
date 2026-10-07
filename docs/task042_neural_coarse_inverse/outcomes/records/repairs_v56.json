@@ -47,5 +47,11 @@
     "WORKER_FAILED",
     "WORKER_FAILED",
     "COMPLETED"
-  ]
+  ],
+  "documentation_output_path_repair": {
+    "error": "self-referenced final documentation receipt did not yet exist",
+    "fix": "declare PENDING output path before link validation; replace only with actual final receipt",
+    "scientific_replays": 0,
+    "failed_source": "b890040b3c6fc8020f253f6a3335856615308a24"
+  }
 }

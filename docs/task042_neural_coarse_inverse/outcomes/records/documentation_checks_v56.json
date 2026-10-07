@@ -1,0 +1,6 @@
+{
+  "status": "PENDING_FINAL_DOC_CONSUMER",
+  "reason": "declare the output path before the link checker; never a PASS placeholder",
+  "previous_failure": "tmp/task042/v56/aux_docs_01/supervision/worker.log",
+  "UTC": "2026-10-07T03:13:45.618961+00:00"
+}
