@@ -527,7 +527,9 @@ def launch(
             ARTIFACT.joinpath(role + ".json").read_bytes()
         )
     v60_archive = (namespace == 'v60' and role == 'archive'
-        and specification is None and command == [sys.executable, '-m', 'benchmarks.compact_local_subcell_raw'])
+        and specification is None and len(command or []) == 3
+        and command[0] in ('python', sys.executable)
+        and command[1:] == ['-m', 'benchmarks.compact_local_subcell_raw'])
     if v60_archive:
         # An archive may consume evidence reserve, never exceed the actual
         # frozen cap. All scientific producers retain the original gate.
