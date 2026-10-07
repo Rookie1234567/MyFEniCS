@@ -21,7 +21,9 @@ def macro_saved_check(r):
     fields=dict(true=float(np.linalg.norm(res)/den),native=float(np.linalg.norm(res)/den),augmented=float(np.linalg.norm(aug)/den),port=relative(pr,v['projected']))
     stored=relative(res-saved['mixed_residual'],J.conj().T@v['rhs'])
     rh=relative(v['rhs']-a['rhs'],a['rhs']);volume=relative(v['volume_action']-a['volume_action'],a['volume_action'])
-    rden=max(np.linalg.norm(v['volume_curl'][ih])+np.linalg.norm(v['volume_mass'][ih]),1e-30);rec=float(np.linalg.norm(v['residual'][ih])/rden)
+    recs=[]
+    for rows in ih.reshape(160,4356):recs.append(float(np.linalg.norm(v['residual'][rows])/max(np.linalg.norm(v['volume_curl'][rows])+np.linalg.norm(v['volume_mass'][rows]),1e-30)))
+    rec=max(recs)
     if not np.array_equal(v['u_storage'],a['u_storage']) or not np.array_equal(v['port'],a['port']):raise ValueError('independent H2 candidate identity')
     if len(a['port'])!=828 or len(a['low_trace'])!=nt or len(np.unique(sl))!=len(sl):raise ValueError('complete H2 port/trace/slave inventory')
     if not np.array_equal(np.sort(np.r_[ih,m['high_native_rows'],sl]),np.arange(len(a['u_storage']))):raise ValueError('H2 complete disjoint native partition')
@@ -35,7 +37,7 @@ def macro_saved_check(r):
     if not all(np.all(np.isfinite(value)) for value in v.values()):raise ValueError('nonfinite independent H2 inventory')
     allfinite=all(np.isfinite(x) for x in [*fields.values(),*identities.values(),op,stored,rh,volume,rec]);slave=bool(np.all(a['u_storage'][sl]==0))
     return dict(mixed=fields,ambient_relative=relative(v['residual'],v['rhs']),mapping_operation=op,saved_pullback_difference=stored,
-        RHS_pair_relative=rh,production_independent_volume_relative=volume,macro_internal_recovery_operation=rec,
+        RHS_pair_relative=rh,production_independent_volume_relative=volume,macro_internal_recovery_operation=rec,macro_internal_operation_by_cell=recs,
         mixed_internal_rows=ni,mixed_trace_rows=nt,ambient_independent_rows=834048,port_rows=828,slave_zero=slave,
         operation_identities=identities,
         pass_gate=allfinite and max(fields.values())<=1e-6 and max(op,stored,rh,volume,rec,*identities.values())<=1e-10 and slave,
@@ -81,15 +83,32 @@ def verify(folder,journal):
         r=scope.stage(role)
         if r['arrays']['sha256']!=item['array_sha256']:raise ValueError('V60 saved state changed after queue freeze')
         checks[role]=dict(mixed_original=mixed_vector_check(r) if role=='C67' else macro_saved_check(r),physical_outputs=output_check(r));states[role]=r
+        if role=='H2' and 'local_schur_bank' in r:
+            from src.solvers.local_schur_bank import SavedLocalSchurAction
+            bank=r['local_schur_bank'];receiver=SavedLocalSchurAction(bank['path'],source_sha=r['source_sha'],manifest_sha256=bank['sha256'],trace_rows=32832,cell_count=160)
+            witnesses=[]
+            with journal.measured('independent_saved_local_bank_consumer'):
+                for row in r['local_body_action_pairs']:
+                    a=checked_arrays(row['arrays']);y=receiver.apply(a['input']);witnesses.append(relative(y-a['assembled'],a['assembled']))
+            checks[role]['saved_local_action_bank']=dict(relative=witnesses,pass_gate=max(witnesses)<=1e-10,owner_payload_bytes=receiver.owner_payload_bytes,no_factor_reload=True,no_global_matrix=True)
+            del receiver
         write_json(folder/(role+'_saved_check.json'),checks[role])
     shim=SimpleNamespace(NAMESPACE='v60',window=scope.window,plan_record=scope.plan_record,stage=lambda role:states[role])
     modal=modal_recalculation(scope=shim,role_names=tuple(states),output_folder=folder)
     pairs={}
-    if 'C67' in states:pairs['C67_M67']=comparison(scope.parent('M67'),states['C67'],folder/'C67_M67',journal,reproduction=True)
+    if 'C67' in states:pairs['C67_M67']=comparison(states['C67'],scope.parent('M67'),folder/'C67_M67',journal,reproduction=True)
     if 'H2' in states:
         pairs['R6_H2']=comparison(scope.parent('R6'),states['H2'],folder/'R6_H2',journal)
         pairs['M68_H2']=comparison(scope.parent('M68'),states['H2'],folder/'M68_H2',journal)
-    r=dict(status='COMPLETED',role='VERIFY_COST',checks=checks,pairs=pairs,modal=modal,new_factor_count=0,new_complete_solves=0,source=journal.source_state,timings=journal.timings)
+    from benchmarks.collect_phase_notch_hp import saved_checks
+    allstates=dict(states,**{name:scope.parent(name) for name in ('M67','R6','M68')})
+    _,regions,pair_gates=saved_checks(allstates,pairs,scope=scope)
+    for name,p in pairs.items():
+        gate=pair_gates[name];fg,pg,mg=(p['fields_threshold'],p['power_threshold'],p['single_mode_power_threshold'])
+        strict=gate['field_max']<=fg and gate['selected_max']<=fg and gate['modal']['outgoing_amplitude_at_boundary_relative']<=fg and gate['modal']['mode_power_max_absolute']<=mg and max(gate['power'].values())<=pg and max(gate['energies'])<=1e-5 and gate['quadrature_operation']<=1e-10
+        gate.update(field_mode_power_pass=bool(strict),field_threshold=fg,power_threshold=pg,single_mode_power_threshold=mg)
+        if bool(strict)!=bool(p['pass_gate']):raise ValueError('strict V60 pair gate from actual saved integrals differs')
+    r=dict(status='COMPLETED',role='VERIFY_COST',checks=checks,regions=regions,saved_pair_gates=pair_gates,pairs=pairs,modal=modal,new_factor_count=0,new_complete_solves=0,source=journal.source_state,timings=journal.timings)
     write_json(folder/'verification_scientific_result.json',r);return r
 
 
@@ -111,7 +130,7 @@ def deployment_receipt(role):
 def compact_candidate(r,pointer):
     names=('status','case','degree','case_spec','grid','representation','source_sha','source','solve_source_sha','arrays','returned_arrays',
         'trace_mapping','mapping_check','original_audit','ambient_audit','recovery','recovery_arrays','capacity','graph','fixed_refinements',
-        'local_global_factors','local_action_pairs','build_audit','local_response_classes','child_local_classes','cache_payload_bytes',
+        'local_global_factors','local_action_pairs','build_audit','local_response_classes','child_local_classes','cache_payload_bytes','local_schur_bank','local_body_action_pairs',
         'equation_pass','direct_target_pass','deployment_complete','boundary','boundary_provider','tangential_check')
     result={k:r[k] for k in names if k in r};result['result']=pointer
     i=r.get('independent',{});result['independent']={k:i[k] for k in ('original_audit','arrays','equation_pass','recovery_pass','direct_internal_target_pass','audit_path','macro_internal_operation_scaled') if k in i}

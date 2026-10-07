@@ -14,7 +14,7 @@ def main():
     import numpy as np
     if PETSc.ScalarType!=np.complex128 or os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1':raise RuntimeError('V60 qualified ABI')
     paths=['src/solvers/local_subcell_scope.py','src/solvers/local_trace_assembly.py','src/solvers/local_subcell_study.py',
-        'src/solvers/subcell_macro_response.py','src/solvers/subcell_response_kernel.py','src/solvers/subcell_macro_deployment.py','src/test/test_subcell_response_workflow.py','benchmarks/collect_phase_explicit_accuracy.py','src/test/test_local_subcell.py','benchmarks/qualify_local_subcell.py','benchmarks/collect_local_subcell.py',
+        'src/solvers/subcell_macro_response.py','src/solvers/local_schur_bank.py','src/solvers/subcell_response_kernel.py','src/solvers/subcell_macro_deployment.py','src/test/test_subcell_response_workflow.py','benchmarks/collect_phase_explicit_accuracy.py','src/test/test_local_subcell.py','benchmarks/qualify_local_subcell.py','benchmarks/collect_local_subcell.py',
         'src/solvers/trace_interior_restriction.py','src/solvers/trace_interior_study.py','src/solvers/phase_boundary_checkpoint.py',
         'src/solvers/scattering_accuracy_boundary.py','src/solvers/phase_notch_hp.py','src/runners/port_preparation.py','scripts/run_case.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')

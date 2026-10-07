@@ -132,7 +132,7 @@ def solve_h2(folder,journal,scope):
     mcfg,macro,mgeo=configured_setup(macrospec,journal,scope=scope)
     mapping=MacroMap(macro['floquets'][6],setup['floquets'][6],mgeo,geo,journal);mapreceipt=mapping.save(folder/'macro_mapping.npz')
     journal.allocation('r2_class_cache_and_sparse_macro_map',dict(workspace_bytes=8*2**30+mapping.check['csr_primal_dual_bytes']))
-    raw_factory=factory(setup['spaces'][6],cfg,journal);childcache={};cache={};responses=[];W=setup['spaces'][6]
+    raw_factory=factory(setup['spaces'][6],cfg,journal);childcache={};cache={};responses=[];class_packets={};W=setup['spaces'][6]
     for c,l in enumerate(mapping.layouts):
         tag=int(mgeo['cell_tags'][c]);blocks=blocks_for(W,l,tag,raw_factory,childcache,journal);key=(l.key,tag)
         if key not in cache:
@@ -140,10 +140,11 @@ def solve_h2(folder,journal,scope):
             current=sum(r.bytes() for r in cache.values())+sum(b.bytes() for b in childcache.values())
             if current>8*2**30:raise MemoryError('r2 exact class cache exceeds 8GiB; no per-cell duplicate library allowed')
             d=folder/'local_response_packets';d.mkdir(exist_ok=True)
-            save_arrays(d/(str(c)+'.npz'),macro_schur=cache[key].low_schur,inner_from_trace=cache[key].X,boundary_lift=l.lift,second_factor=cache[key].factor[0],second_pivots=cache[key].factor[1],
+            packet=save_arrays(d/(str(c)+'.npz'),macro_schur=cache[key].low_schur,inner_from_trace=cache[key].X,boundary_lift=l.lift,second_factor=cache[key].factor[0],second_pivots=cache[key].factor[1],
                 second_trace_to_inside_data=cache[key].Sib.data,second_trace_to_inside_indices=cache[key].Sib.indices,second_trace_to_inside_indptr=cache[key].Sib.indptr,
                 second_inside_to_trace_data=cache[key].Sbi.data,second_inside_to_trace_indices=cache[key].Sbi.indices,second_inside_to_trace_indptr=cache[key].Sbi.indptr,
                 child_rows=np.asarray(l.child_rows),child_interiors=np.asarray(l.child_interiors),child_traces=np.asarray(l.child_traces),macro_boundary=l.boundary,macro_inside=l.inside,macro_trace=l.trace)
+            class_packets[id(cache[key])]=packet
             write_json(d/(str(c)+'.json'),dict(key=l.key,tag=tag,capacity=cache[key].capacity,local_factor_backward=cache[key].backward,cache_bytes=current))
         responses.append(cache[key]);journal.event('macro_local_response_committed',cell=c,classes=len(cache),child_classes=len(childcache))
     if len(responses)!=160:raise ValueError('macro response inventory')
@@ -152,6 +153,23 @@ def solve_h2(folder,journal,scope):
     bundle=rhs=u=factor=matrix=None
     try:
         bundle,rhs=build_bundle(cfg,setup,journal);matrix,graph=assemble_macro(mapping,responses,bundle['dtn_action'].carrier,journal)
+        from .local_schur_bank import save_bank,SavedLocalSchurAction
+        bank=save_bank(mapping,class_packets,responses,folder/'local_schur_bank',journal.source_state['source_sha'])
+        action_pairs=[]
+        with journal.measured('saved_local_schur_reload_two_actual_body_actions'):
+            action=SavedLocalSchurAction(bank['path'],source_sha=bank['source_sha'],manifest_sha256=bank['sha256'],trace_rows=32832,cell_count=160)
+            from petsc4py import PETSc
+            rng=np.random.default_rng(60030);x=matrix.createVecRight();y=x.duplicate()
+            try:
+                for j in range(2):
+                    t=rng.normal(size=32832)+1j*rng.normal(size=32832);x.array[:]=np.r_[t,np.zeros(828)];matrix.mult(x,y)
+                    local=action.apply(t);error=relative(local-y.array[:32832],y.array[:32832])
+                    action_pairs.append(dict(relative=error,arrays=save_arrays(folder/f'saved_local_action_pair_{j}.npz',input=t,local=local,assembled=y.array[:32832].copy())))
+                bank.update(readonly_loaded_owner_payload_bytes=action.owner_payload_bytes,qualified_actions=action.calls)
+            finally:x.destroy();y.destroy()
+            del action
+        if max(r['relative'] for r in action_pairs)>1e-10:raise ValueError('saved local action differs from actual assembled body')
+        if scope.numeric_factor_attempts()>=3:raise RuntimeError('V60 no fourth global numeric factor, including any post flag')
         factor=CoordinateFactor(matrix,bundle,32832,journal,folder,symbolic_capacity=True,planning_limit_bytes=64*2**30)
         low_returns=[]
         def persist_low(z,load,native_rhs):
@@ -177,7 +195,7 @@ def solve_h2(folder,journal,scope):
         result=dict(status='COMPLETED',role='H2',case='NOTCH',degree=6,case_spec=spec,grid='2x2x4',representation='MACRO_TRACE6_ALL_R2_P6_MICRO_INTERIORS',arrays=arrays,returned_arrays=early,
             original_audit=norms,ambient_audit=ambient,trace_mapping=mapreceipt,mapping_check=mapping.check,boundary=boundary,output=output,mode_sha256=bundle['mode_sha256'],
             new_complete_solves=1,new_global_numeric_factors=1,graph=graph,local_response_classes=len(cache),child_local_classes=len(childcache),
-            cache_payload_bytes=sum(r.bytes() for r in cache.values())+sum(b.bytes() for b in childcache.values()),fixed_refinements=refinements,
+            local_schur_bank=bank,local_body_action_pairs=action_pairs,cache_payload_bytes=sum(r.bytes() for r in cache.values())+sum(b.bytes() for b in childcache.values()),fixed_refinements=refinements,
             local_global_factors='R2_CHILD_INTERNAL_AND_MACRO_INTERNAL_LOCAL_LU_PLUS_GLOBAL_MACRO_TRACE_MUMPS_PRESENT; no global micro Schur',
             NOT_A_FULL_AMBIENT_SOLUTION=True,source=journal.source_state)
         field=restore_p0_full_field(setup['floquets'][6],u)
@@ -193,8 +211,12 @@ def solve_h2(folder,journal,scope):
         passed=max(mixed[k] for k in ('true','native','augmented','port'))<=1e-6 and mixed['identity']<=1e-10 and mixed['slave_zero']
         # Included macro-internal rows use identity: their independent full
         # residual is therefore checked, in addition to child affine recovery.
-        rec=float(np.linalg.norm(h['residual'][mapping.internal_rows])/max(np.linalg.norm(h['volume_curl'][mapping.internal_rows])+np.linalg.norm(h['volume_mass'][mapping.internal_rows]),1e-30))
-        result['independent']=dict(audit_path='PUBLIC_BASIX_ALL_R2_MICRO_BODY_Q15_Q63_HERMITIAN_MACRO_PULLBACK',original_audit=mixed,ambient_original=high,arrays=mr,equation_pass=passed,recovery_pass=rec<=1e-10 and high['recovery_pass'],macro_internal_operation_scaled=rec,
+        recs=[]
+        for c in range(160):
+            start,end=mapping.internal_offsets[c:c+2];rows=mapping.internal_rows[start:end]
+            recs.append(float(np.linalg.norm(h['residual'][rows])/max(np.linalg.norm(h['volume_curl'][rows])+np.linalg.norm(h['volume_mass'][rows]),1e-30)))
+        rec=max(recs)
+        result['independent']=dict(audit_path='PUBLIC_BASIX_ALL_R2_MICRO_BODY_Q15_Q63_HERMITIAN_MACRO_PULLBACK',original_audit=mixed,ambient_original=high,arrays=mr,equation_pass=passed,recovery_pass=rec<=1e-10 and high['recovery_pass'],macro_internal_operation_scaled=rec,macro_internal_operation_by_cell=recs,
             direct_internal_target_pass=max(mixed[k] for k in ('true','native','augmented','port'))<=1e-10,NOT_A_FULL_AMBIENT_SOLUTION=True)
         result.update(deployment_complete=passed and result['independent']['recovery_pass'] and result['tangential_check']['pass_gate'],equation_pass=passed,capacity=dict(rows=33660,mixed=729792,ambient=834048,class_cache_limit=8*2**30),timings=journal.timings,calls=journal.calls)
         write_json(folder/'completed_deployment_state.json',result);return result

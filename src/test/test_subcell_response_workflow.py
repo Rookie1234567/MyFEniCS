@@ -13,6 +13,32 @@ class Journal:
 
 
 class SubcellWorkflow(unittest.TestCase):
+    def test_saved_local_action_reader_complete_identity_and_complex_dual(self):
+        import tempfile,json
+        from pathlib import Path
+        from types import SimpleNamespace as NS
+        from scipy import sparse
+        from src.solvers.scattering_anchor import save_arrays
+        from src.solvers.local_schur_bank import save_bank,SavedLocalSchurAction
+        S=np.array([[2+1j,.7-.4j],[-.3+.2j,3-.5j]],complex);source='a'*40
+        response=object();data=[(np.array([0,1]),sparse.csr_matrix([[1j,0],[.2,1]]),True),
+            (np.array([1,2]),sparse.csr_matrix([[1,.3j],[0,-1j]]),True)]
+        mapping=NS(nt=3,data=data,transforms=[sparse.eye(2),sparse.eye(2)])
+        with tempfile.TemporaryDirectory() as d:
+            folder=Path(d);packet=save_arrays(folder/'class.npz',macro_schur=S,unneeded_factor=np.zeros(1))
+            bank=save_bank(mapping,{id(response):packet},[response,response],folder/'bank',source)
+            args=dict(source_sha=source,manifest_sha256=bank['sha256'],trace_rows=3,cell_count=2)
+            receiver=SavedLocalSchurAction(bank['path'],**args)
+            t=np.array([1+.3j,-.4j,.7-.8j]);expected=np.zeros(3,complex)
+            for ids,E,_ in data:np.add.at(expected,ids,E.conj().T@(S@(E@t[ids])))
+            np.testing.assert_allclose(receiver.apply(t),expected,rtol=0,atol=1e-14)
+            np.testing.assert_array_equal(receiver.apply(np.zeros(3,complex)),np.zeros(3,complex))
+            self.assertEqual(len(receiver.blocks),1);self.assertFalse(next(iter(receiver.blocks.values())).flags.writeable)
+            with self.assertRaisesRegex(ValueError,'producer binding'):SavedLocalSchurAction(bank['path'],**dict(args,source_sha='b'*40))
+            with self.assertRaisesRegex(ValueError,'dimensions'):SavedLocalSchurAction(bank['path'],**dict(args,cell_count=3))
+            Path(bank['path']).write_text('{}')
+            with self.assertRaisesRegex(ValueError,'manifest identity'):SavedLocalSchurAction(bank['path'],**args)
+
     def test_actual_physical_config_carrier_wires_to_factory(self):
         from types import SimpleNamespace
         from unittest.mock import patch
