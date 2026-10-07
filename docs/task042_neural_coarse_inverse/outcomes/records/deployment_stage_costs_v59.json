@@ -1,0 +1,292 @@
+{
+  "phases": {
+    "M67": {
+      "event_file": {
+        "path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior7_20261007T130850903418Z/events.jsonl",
+        "sha256": "5b684b7579db9937ad8a49f76efb8b643f7d8917f7d049e3190428c60adb9a8d"
+      },
+      "measured_boundary_intervals_seconds": {
+        "mesh_materials_envelope_MPC": [
+          3.798674547113478
+        ],
+        "same_mesh_trace6_space_MPC": [
+          1.4841917450539768
+        ],
+        "one_original_boundary_generation_q47": [
+          69.89163799607195
+        ],
+        "one_original_boundary_generation_q63": [
+          379.54938060604036
+        ],
+        "JIT_full_Ckappa_and_complete532_carrier": [
+          110.18267880612984
+        ],
+        "physical_incident_RHS": [
+          0.1318612270988524
+        ],
+        "cold_complete_phase_reference_15_grams": [
+          48.143445658963174
+        ],
+        "condensation_local_factors": [
+          267.9134579380043
+        ],
+        "actual_sparse_trace_restriction": [
+          44.18406725092791
+        ],
+        "high_schur_sparse_hermitian_trace_projection": [
+          127.79834051709622
+        ],
+        "h_sparse_symbolic_capacity": [
+          8.408578982111067
+        ],
+        "h_bounded_numeric_factor": [
+          231.17925412696786
+        ],
+        "restricted_physical_solve_and_all_high_internal_recovery": [
+          5.040025978116319
+        ],
+        "fixed_mixed_refinement": [
+          4.954890087014064
+        ],
+        "physical_E_H_curl_evaluation": [
+          6.865488920826465
+        ],
+        "all532_power_and_volume_absorption": [
+          69.33761383895762
+        ],
+        "deployment_fixed_240_full_physical_fields": [
+          9.07180682499893
+        ],
+        "public_basix_complete_uncondensed_volume_q17": [
+          84.77206584298983
+        ]
+      },
+      "nested_timers_not_added_to_T_N1": true,
+      "final_reload_other_audits_IO_and_launch_remain_in_complete_T_N1": true,
+      "legacy_event_names_do_not_override_actual_828_mode_inventory": true
+    },
+    "M68": {
+      "event_file": {
+        "path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior8_20261007T134337161559Z/events.jsonl",
+        "sha256": "201aacf452e2c4b3f87a41c85d0486e58361775acd315bfff8e2cf8a7e0bc72b"
+      },
+      "measured_boundary_intervals_seconds": {
+        "mesh_materials_envelope_MPC": [
+          10.308494779048488
+        ],
+        "same_mesh_trace6_space_MPC": [
+          2.065443583065644
+        ],
+        "one_original_boundary_generation_q47": [
+          124.10274422494695
+        ],
+        "one_original_boundary_generation_q63": [
+          678.3984017989133
+        ],
+        "JIT_full_Ckappa_and_complete532_carrier": [
+          259.24169411184266
+        ],
+        "physical_incident_RHS": [
+          0.438741842051968
+        ],
+        "cold_complete_phase_reference_15_grams": [
+          560.0293786060065
+        ],
+        "condensation_local_factors": [
+          650.4871907318011
+        ],
+        "actual_sparse_trace_restriction": [
+          87.84545989683829
+        ],
+        "high_schur_sparse_hermitian_trace_projection": [
+          223.8610003979411
+        ],
+        "h_sparse_symbolic_capacity": [
+          9.633606408024207
+        ],
+        "h_bounded_numeric_factor": [
+          270.10514125507325
+        ],
+        "restricted_physical_solve_and_all_high_internal_recovery": [
+          7.283215692965314
+        ],
+        "fixed_mixed_refinement": [
+          9.90284832008183
+        ],
+        "physical_E_H_curl_evaluation": [
+          25.395939572015777
+        ],
+        "all532_power_and_volume_absorption": [
+          133.89806965203024
+        ],
+        "deployment_fixed_240_full_physical_fields": [
+          25.57900792500004
+        ],
+        "public_basix_complete_uncondensed_volume_q19": [
+          211.84811537107453
+        ]
+      },
+      "nested_timers_not_added_to_T_N1": true,
+      "final_reload_other_audits_IO_and_launch_remain_in_complete_T_N1": true,
+      "legacy_event_names_do_not_override_actual_828_mode_inventory": true
+    }
+  },
+  "sparse_matrix_inventory": {
+    "M67": {
+      "high_shape": [
+        46076,
+        46076
+      ],
+      "high_nnz": 59693384,
+      "intermediate_shape": [
+        46076,
+        33660
+      ],
+      "intermediate_nnz": 97323900,
+      "low_shape": [
+        33660,
+        33660
+      ],
+      "low_nnz": 141754824,
+      "Q_nnz": 6511940,
+      "Q_payload_bytes": 130423108,
+      "conjugate_dual": true,
+      "MatPtAP_used": false
+    },
+    "M68": {
+      "high_shape": [
+        60476,
+        60476
+      ],
+      "high_nnz": 98051848,
+      "intermediate_shape": [
+        60476,
+        33660
+      ],
+      "intermediate_nnz": 126155880,
+      "low_shape": [
+        33660,
+        33660
+      ],
+      "low_nnz": 141754824,
+      "Q_nnz": 8583576,
+      "Q_payload_bytes": 171913428,
+      "conjugate_dual": true,
+      "MatPtAP_used": false
+    }
+  },
+  "unique_object_payload": {
+    "M67": {
+      "build_audit": {
+        "path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior7_20261007T130850903418Z/build_audit.json",
+        "sha256": "e45dbd89fdc9de4f507085f793892f0cbc6c90f63a2966804b39635218dfeb30"
+      },
+      "retained_numeric_cache_bytes": {
+        "lu_bytes": 466527600,
+        "recovery_bytes": 362734848,
+        "rhs_trace_bytes": 362734848,
+        "rhs_projection_bytes": 4572288,
+        "solution_embedding_bytes": 0,
+        "residual_projection_bytes": 0,
+        "retained_schur_bytes": 282127104,
+        "retained_numeric_cache_bytes": 1478696688
+      },
+      "raw_temporary_cache": {
+        "raw_tensor_bytes": 751435776,
+        "oriented_schur_bytes": 282127104,
+        "scope": "assembly-time peak components; raw/oriented arrays are released after return"
+      },
+      "original_oracle_bytes": 1473970176,
+      "raw_classes": 26,
+      "oriented_classes": 51,
+      "local_LU_builds": 51,
+      "local_kernel_combination_seconds": 22.63416013144888,
+      "local_schur_seconds": 37.97551037115045,
+      "nested_build_audit_seconds": 67.83885359810665,
+      "bytes_are_unique_owner_payloads_not_process_RSS": true
+    },
+    "M68": {
+      "build_audit": {
+        "path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior8_20261007T134337161559Z/build_audit.json",
+        "sha256": "bad639999a77b533ed0b145e4b7b8d63deb54d560953f4c3cb4cdb2945ebf272"
+      },
+      "retained_numeric_cache_bytes": {
+        "lu_bytes": 1128748320,
+        "recovery_bytes": 736985088,
+        "rhs_trace_bytes": 736985088,
+        "rhs_projection_bytes": 11063808,
+        "solution_embedding_bytes": 0,
+        "residual_projection_bytes": 0,
+        "retained_schur_bytes": 481296384,
+        "retained_numeric_cache_bytes": 3095078688
+      },
+      "raw_temporary_cache": {
+        "raw_tensor_bytes": 1572120576,
+        "oriented_schur_bytes": 481296384,
+        "scope": "assembly-time peak components; raw/oriented arrays are released after return"
+      },
+      "original_oracle_bytes": 3083774976,
+      "raw_classes": 26,
+      "oriented_classes": 51,
+      "local_LU_builds": 51,
+      "local_kernel_combination_seconds": 61.39813147787936,
+      "local_schur_seconds": 115.40780461276881,
+      "nested_build_audit_seconds": 192.2056650170125,
+      "bytes_are_unique_owner_payloads_not_process_RSS": true
+    }
+  },
+  "live_symbolic_numeric_gates": {
+    "M67": {
+      "source": {
+        "path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior7_20261007T130850903418Z/h_symbolic_capacity.json",
+        "sha256": "c8d4feb893b681939e21c23ddcea67aeee095242dda0f349953c44d20d8076ce"
+      },
+      "plan": {
+        "symbolic_estimate_mb": 10584,
+        "numeric_memory_allocation_cap_mb": 21168,
+        "current_whole_tree_rss_bytes": 17588486144,
+        "factor_workspace_estimate_times_two_bytes": 21168000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 40903969792,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "symbolic_infog16": 10584,
+      "symbolic_infog17": 10584,
+      "numeric_info_path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior7_20261007T130850903418Z/h_numeric_factor_info.json",
+      "numeric_info_sha256": "686ad7487ab3f041019ceb87e71728080cfd294a779a245c0c8f4d2efb5934a3",
+      "global_numeric_factors": 1,
+      "high_global_numeric_factors": 0
+    },
+    "M68": {
+      "source": {
+        "path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior8_20261007T134337161559Z/h_symbolic_capacity.json",
+        "sha256": "2bb5b9dc82127840639e42287c09094fd2e9359e271204b36da5860da6ce65dc"
+      },
+      "plan": {
+        "symbolic_estimate_mb": 10584,
+        "numeric_memory_allocation_cap_mb": 21168,
+        "current_whole_tree_rss_bytes": 23843512320,
+        "factor_workspace_estimate_times_two_bytes": 21168000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 47158995968,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "symbolic_infog16": 10584,
+      "symbolic_infog17": 10584,
+      "numeric_info_path": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior8_20261007T134337161559Z/h_numeric_factor_info.json",
+      "numeric_info_sha256": "e10982eecce3c315d773a76dd8d53f626bd90b85b2527a0ba00431cd6e6c8026",
+      "global_numeric_factors": 1,
+      "high_global_numeric_factors": 0
+    }
+  },
+  "mathematical_input_unchanged": true,
+  "new_FE_actions": 0,
+  "new_solves": 0,
+  "no_speed_ratio_without_matched_cold_control": true
+}

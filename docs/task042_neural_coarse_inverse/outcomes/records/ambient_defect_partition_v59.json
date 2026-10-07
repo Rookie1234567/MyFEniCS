@@ -1,0 +1,75 @@
+{
+  "status": "SAVED_ASSEMBLED_COORDINATE_DIAGNOSTIC",
+  "states": {
+    "M67": {
+      "groups": {
+        "air_excluding_notch": {
+          "cells": 80,
+          "trace_rows": 21840,
+          "assembled_trace_defect_squared": 0.0074965420500584905,
+          "assembled_internal_defect_squared": 4.492088420463076e-22
+        },
+        "notch_air": {
+          "cells": 4,
+          "trace_rows": 1092,
+          "assembled_trace_defect_squared": 1.0374715778117817e-05,
+          "assembled_internal_defect_squared": 3.3178640575771387e-23
+        },
+        "substrate": {
+          "cells": 32,
+          "trace_rows": 10304,
+          "assembled_trace_defect_squared": 0.0004622092063522002,
+          "assembled_internal_defect_squared": 4.077659983971557e-22
+        },
+        "Si_block": {
+          "cells": 44,
+          "trace_rows": 12012,
+          "assembled_trace_defect_squared": 9.429679059189109e-05,
+          "assembled_internal_defect_squared": 3.9032174547127317e-22
+        }
+      },
+      "unique_owner_row_membership": true,
+      "shared_contributions_assembled_before_norm": true,
+      "euclidean_coefficient_diagnostic_only": true,
+      "not_physical_energy_or_error_bound": true,
+      "cannot_compare_as_identical_norms_across_different_ambient_degrees": true,
+      "source_arrays": "5c0cbbeb813d60133eae3b741def358d2fa32bb30c4412af763c3c1016db1409",
+      "map_sha256": "4d328217bfe77012cc558f7ec54b415dbd8994397187cf6873b6fa2d2bf37ced"
+    },
+    "M68": {
+      "groups": {
+        "air_excluding_notch": {
+          "cells": 80,
+          "trace_rows": 28800,
+          "assembled_trace_defect_squared": 0.0005176635264268992,
+          "assembled_internal_defect_squared": 1.799662535936432e-21
+        },
+        "notch_air": {
+          "cells": 4,
+          "trace_rows": 1440,
+          "assembled_trace_defect_squared": 1.1232720578418538e-06,
+          "assembled_internal_defect_squared": 1.5660952344076628e-22
+        },
+        "substrate": {
+          "cells": 32,
+          "trace_rows": 13568,
+          "assembled_trace_defect_squared": 5.985029889218836e-05,
+          "assembled_internal_defect_squared": 1.6067747357285618e-21
+        },
+        "Si_block": {
+          "cells": 44,
+          "trace_rows": 15840,
+          "assembled_trace_defect_squared": 7.229837176501349e-06,
+          "assembled_internal_defect_squared": 1.752370806953592e-21
+        }
+      },
+      "unique_owner_row_membership": true,
+      "shared_contributions_assembled_before_norm": true,
+      "euclidean_coefficient_diagnostic_only": true,
+      "not_physical_energy_or_error_bound": true,
+      "cannot_compare_as_identical_norms_across_different_ambient_degrees": true,
+      "source_arrays": "b93e49fc25006d839a546e8439e74a08f36320864c9a7413b65a16e7f6875171",
+      "map_sha256": "826cf189e2adf8ad28da49982ac3b7ae874af0ca58c6df50666f932107de7935"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "fixes": [
+    {
+      "id": "F1",
+      "problem": "Mock measured context in new dense adapter fixture",
+      "source_before": "0aaa2971e78fbc939e0e1628f7677089ef60434c",
+      "source_after": "37850db901da113cf009dbe16005b04663a3c9af",
+      "evidence": "tmp/task042/v59/aux_pre_targeted01",
+      "action": "fixture MagicMock only",
+      "scientific_replay": 0
+    },
+    {
+      "id": "F2",
+      "problem": "PETSc no-argument hermitianTranspose modifies primal sparse P; product dimension mismatch",
+      "source_before": "37850db901da113cf009dbe16005b04663a3c9af",
+      "source_after": "9b8eacf9831ef8064035b6e494e296821978d1ba",
+      "evidence": "tmp/task042/v59/aux_pre_targeted02",
+      "action": "explicit independent PETSc H output; complex sparse unit pairing and real mapping qualification",
+      "scientific_replay": 0
+    },
+    {
+      "id": "F3",
+      "problem": "p6 stencil is not a bound for full stored high-to-low interpolation projection pattern",
+      "source_before": "9b8eacf9831ef8064035b6e494e296821978d1ba",
+      "source_after": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5",
+      "evidence": "benchmarks/artifacts/task042/v59/task042_v59_trace6_interior7_20261007T130850903418Z/events.jsonl",
+      "action": "bound actual stored-support cell incidence union and full port couplings before next projection; M67 numeric gate independently passed using live RSS plus credible symbolic",
+      "actual_M67_low_nnz": 141754824,
+      "mathematical_candidate_changed": false,
+      "scientific_replay": 0
+    },
+    {
+      "id": "F4",
+      "problem": "new metadata draft keyword begins with a digit, parser rejected before collector import",
+      "source_before": "9b8eacf9 plus frozen tmp/task042/v59/boundary_targeted04/worktree.diff",
+      "source_after": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5",
+      "evidence": "tmp/task042/v59/boundary_targeted04",
+      "action": "rename scalar metadata key; compile then only affected three checker fixtures",
+      "scientific_replay": 0
+    },
+    {
+      "id": "F5",
+      "problem": "overstrong no dense graph label; actual product bound uses bounded integer incidence",
+      "source_before": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5",
+      "source_after": "d2680f2fbe01e324cc57974ea5ddcb47b3a7f451",
+      "action": "metadata-only clarification and raw control-source/diff archive extension",
+      "mathematical_candidate_changed": false,
+      "scientific_replay": 0
+    },
+    {
+      "id": "F6",
+      "problem": "own early settlement wrote nonignored record before clean auxiliary admission",
+      "source_before": "d2680f2fbe01e324cc57974ea5ddcb47b3a7f451",
+      "source_after": "d2680f2fbe01e324cc57974ea5ddcb47b3a7f451",
+      "evidence": "tmp/task042/v59/collect_clean_guard_failure",
+      "action": "preserve own new snapshot in ignored V59 directory; collect before final document emission",
+      "scientific_replay": 0
+    }
+  ],
+  "ordinary_bugs_fixed_same_window": true,
+  "old_failures_immutable": true,
+  "scientific_repair_solve_replays": 0,
+  "known_targeted_fee_rows": [
+    {
+      "path": "tmp/task042/v59/boundary_targeted04/receipt.json",
+      "sha256": "bea1a279c2c24aaac97b945716494a9b18498046dbfa4900b15784ac8bab974a",
+      "additional_seconds": 1.190183041850105,
+      "exit_code": 1
+    },
+    {
+      "path": "tmp/task042/v59/boundary_targeted05/receipt.json",
+      "sha256": "45e2381108ac5ffa53e6b72b5f1241ca7f5581484a86ece539176d77e12e9991",
+      "additional_seconds": 0.9050670170690864,
+      "exit_code": 0
+    },
+    {
+      "path": "tmp/task042/v59/boundary_targeted06/receipt.json",
+      "sha256": "daf7c14a2dd38c9844a2d7791354bd1120253db4707a507b0d02244c5b71f055",
+      "additional_seconds": 1.0460356338880956,
+      "exit_code": 0
+    }
+  ],
+  "implementation_CPU": "unknown; fixed elapsed retained",
+  "boundary_targeted04_UTC_field": "post-test observation, not actual start; measured elapsed retained"
+}

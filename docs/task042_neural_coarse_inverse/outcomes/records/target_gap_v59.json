@@ -1,0 +1,81 @@
+{
+  "parent": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v58.json",
+    "sha256": "40530a8db2f5b2cfc9ce7ab9ed390715ed4debbbf85945225c9e6a455375e3f5"
+  },
+  "existing_scenario": {
+    "scale_fraction": "135/135",
+    "modes": 268156,
+    "Nx": 80,
+    "Ny": 80,
+    "Nz": 400,
+    "not_accuracy_lower_bound": true
+  },
+  "prior_FGMRES_V_Z_libraries": {
+    "6": {
+      "trace_plus_port_rows": 507608956,
+      "full_FE_rows": 1659340800,
+      "complex128_bytes_per_value": 16,
+      "trace_plus_port_one_vector_bytes": 8121743296,
+      "V_vectors": 33,
+      "Z_vectors": 32,
+      "principal_vectors": 65,
+      "trace_plus_port_V_and_Z_bytes": 527913314240,
+      "full_FE_V_and_Z_bytes": 1725714432000,
+      "full_FE_library_excludes_port_rows": true,
+      "extra_solution_rhs_residual_workspace_not_included": true,
+      "classification": "derived scenario, not measured RSS or target allocation"
+    },
+    "7": {
+      "trace_plus_port_rows": 699775356,
+      "full_FE_rows": 2634867200,
+      "complex128_bytes_per_value": 16,
+      "trace_plus_port_one_vector_bytes": 11196405696,
+      "V_vectors": 33,
+      "Z_vectors": 32,
+      "principal_vectors": 65,
+      "trace_plus_port_V_and_Z_bytes": 727766370240,
+      "full_FE_V_and_Z_bytes": 2740261888000,
+      "full_FE_library_excludes_port_rows": true,
+      "extra_solution_rhs_residual_workspace_not_included": true,
+      "classification": "derived scenario, not measured RSS or target allocation"
+    }
+  },
+  "new_mixed_control": {
+    "trace_degree": 6,
+    "interior_degrees": [
+      7,
+      8
+    ],
+    "fixed_trace_port_rows": 33660,
+    "one_complex128_trace_port_vector_bytes": 538560,
+    "principal_V_Z_vectors_bytes": 35006400,
+    "actual_Krylov_allocation": false,
+    "topological_row_reduction_vs_uniform7": 0.26946783574963107,
+    "topological_row_reduction_vs_uniform8": 0.44341556981281827
+  },
+  "interpretation": "conditional global-interface/library reduction; not an RSS or runtime reduction by the same fraction",
+  "high_global_matrix_prototype": true,
+  "target_should_use": "cellwise restricted Schur action R_e^H S_e R_e, not a target high global matrix",
+  "target_local_LU_recovery_bytes": "unknown",
+  "target_iterations": "unknown",
+  "target_factor_fill": "unknown",
+  "target_complete_N1_seconds": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_2TB_48h_qualified": false,
+  "continuum_accuracy": false,
+  "NN_training": 0,
+  "NN20": false,
+  "new_mesh_target_allocation": 0,
+  "measured_increment": {
+    "M67": {
+      "wall_seconds": 1671.3913650678005,
+      "sampled_peak_bytes": 28988141568
+    },
+    "M68": {
+      "wall_seconds": 3695.4817196761724,
+      "sampled_peak_bytes": 35240103936
+    }
+  },
+  "next_decision": "use actual paired fields and ambient diagnostics, not internal coefficient share, to select one next pilot"
+}

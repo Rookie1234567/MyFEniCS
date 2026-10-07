@@ -1,0 +1,101 @@
+{
+  "review": "docs/task042_neural_coarse_inverse/review_report_v57.md",
+  "review_commit": "e75eb2c6b4d3319e9ccb109ef5fa9debc1f60287",
+  "science_sources": {
+    "M67": "9b8eacf9831ef8064035b6e494e296821978d1ba",
+    "M68": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5"
+  },
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "records": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/ambient_defect_partition_v59.json",
+      "sha256": "1a9ba9b4ce6568e7034fbd103d944443e41bf61e826920a0f37ee19aee006fcb",
+      "bytes": 2906
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v59.json",
+      "sha256": "e96bd976ef24314388572c0dd7bbbc5ff222b9be326bc27b309e56ea69831228",
+      "bytes": 84768
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/deployment_stage_costs_v59.json",
+      "sha256": "3d2b2aae000d5ff15c82e81a7b08f901ee8e00ce403a5ca5f5e4976cb2e5b769",
+      "bytes": 9980
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_verdict_v59.json",
+      "sha256": "1e62ccee11fa9939031a6dac976f48c9be9fd18e288b4a8ba95c75d5e6e6ac5a",
+      "bytes": 3645
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/object_lifetimes_and_capacity_v59.json",
+      "sha256": "3382cba6c035263ae1d2373323fb3878b950b92254480402113e1fa044b8e20e",
+      "bytes": 8237
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/physical_identity_bindings_v59.json",
+      "sha256": "a07b38a4b0892db15fb973ef367087bfd6d3cb301c434dd5c93f04a41f128f7b",
+      "bytes": 8266
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/physical_saved_checker_v59.json",
+      "sha256": "a461d277940ef157afe890aaa7192781ef57d5d72cc81fc9c45c27f037c28d13",
+      "bytes": 20235
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v59.json",
+      "sha256": "26a60e8c57079a311d06fd45910049e1d4d8671ff4e38bef8080ab976df1e024",
+      "bytes": 28109
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v59.json",
+      "sha256": "a0b7e2286991605aea90631d4852c1ef0133c5bff618a3415ff2b2414c6e0adf",
+      "bytes": 3953
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v59.json",
+      "sha256": "dc848419774440a37034d54c9fb3546736b648be278d5bc2694d6eb6ec34bd99",
+      "bytes": 14763
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v59.json",
+      "sha256": "3449f4f38c004726d971c964fef13de4a623596f973363054c5f74fec247d96b",
+      "bytes": 128839
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v59.json",
+      "sha256": "43d9cbe2639a22f67c58b8494c38a2d07a8033346b89e8943a02caf30fb6d358",
+      "bytes": 14469
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v59.json",
+      "sha256": "23d9c436213f330ca718f60710c3f2f26d86cb585b28af43c5ff2386a60ec820",
+      "bytes": 142802
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v59.json",
+      "sha256": "85a6ab9a2cf0d6744d3df76cffbe270808c9dca3b4bd88ca2368288800f09577",
+      "bytes": 3874
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v59.json",
+      "sha256": "cd08977154283e59c06243149dedd15e63e25ed534a6e562348214abf629fd67",
+      "bytes": 29069
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v59.json",
+      "sha256": "4471383ea40b58374fb829954aad09c1c12f9af97c7cfd8859b7a150b918faea",
+      "bytes": 2895
+    }
+  ],
+  "indexes_are_generation_snapshot": true,
+  "resource_cost_final_includes_delivery_tail": true,
+  "complete_new_candidate_count": 2,
+  "complete_increment_NPZ_file_count": 1457,
+  "parent_original_carrier": [
+    "R6",
+    "R7"
+  ],
+  "no_neighbor_notification": true
+}

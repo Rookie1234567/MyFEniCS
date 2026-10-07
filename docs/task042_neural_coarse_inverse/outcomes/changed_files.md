@@ -1,3 +1,11 @@
+# V59改动：窄混阶空间与继承的完整执行链
+
+新增trace_interior_scope/restriction/study数值核心、相关checker/qualifier、四个one-run dat及冻结plan；旧p8默认仍拒绝，只向本合同开放内部p8。既有相位、凝聚、CoordinateFactor、PUBLIC_BASIX与无JIT输出复用。runner只有薄stage分派与64/80/96门传递，未复制另一套求解器。支撑图整数容量和实际消费namespace/source缺陷最小修复，nodefault生产资格提升。
+
+[依赖组和合入边界](records/selective_merge_manifest_v59.json) · [修复](records/repair_journal_v59.json) · [完整交付](records/delivery_index_v59.json)。旧task/review/response/raw未改，所有实验仅本分支。以下历史保持。
+
+---
+
 # V58最小opt-in依赖组
 
 新增phase_boundary_checkpoint、phase_deployment/defect/scope，薄接既有相位核/凝聚/MUMPS/恢复；独立q包复用、数值carrier和低q体审核显式参数化，普通默认不改。没有另开发凝聚/求解器或重建15表算法。复用runner/监督，6个dat每项明确stage。保存checker补v58完整828库存和辅助费用身份，失败保留。

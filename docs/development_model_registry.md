@@ -1,3 +1,16 @@
+# V59最新交付：固定接口的完整混阶场与实际成本
+
+保持p6边/面接口，只增加单元内部表示后恢复完整高基场；沿原凝聚链，不是NN训练或完整p7/p8求解。R6_M67散射E/H 0.00269124/0.00272376（FAIL）；R7_M67散射E/H 0.0365737/0.0365441（FAIL）；M67_M68散射E/H 0.00350687/0.00347462（FAIL）。原门1e−4不改，ambient缺陷不冒充正式混阶残差，2TB/48h/NN20仍未资格。
+
+| 完整模型 | 全球行数 | 独立mixed true | 完整T_N1/s | sampled树峰GiB | 资格 |
+|---|---|---|---|---|---|
+| M67，trace6/interior7，160hex/828 | 33660 | 1.74797e-11 | 1693.268799 | 26.997311 | 混阶原式/恢复/输出PASS；场增量单列 |
+| M68，trace6/interior8，160hex/828 | 33660 | 3.53125e-11 | 3717.934890 | 32.819904 | 混阶原式/恢复/输出PASS；场增量单列 |
+
+完整828物理复振幅/逐mode功率、R00_s/p/total、体吸收和独立能量保存在[科学记录](task042_neural_coarse_inverse/outcomes/records/scientific_checks_v59.json)与[完整专题](task042_neural_coarse_inverse/outcomes/trace_fixed_interior_enrichment_v59.md)。缩尺s=7/135且非原尺寸；M67/M68低迹全局直接因子存在，高q全球无factor，局部内部LU另计。以下历史保持。
+
+---
+
 # Task042 V58增量：完整有限基线与成对carrier负结果
 
 | measured模型 | 物理/离散与结果 | 完整成本/资格 |

@@ -1,3 +1,11 @@
+# V59增量：只验新映射、复对偶与完整消费
+
+最终相关小测试10项、Ruff关键错误检查、15个改动/依赖模块compile和四dat validate通过，source d2680f2fbe01e324cc57974ea5ddcb47b3a7f451。p7/p8真实资格、非互伴复块/内部port RHS、混阶小而ambient非零、完整保存库存/原式/功率/场数组重算均保留实际证据。fixture与PETSc API及metadata失败没有覆盖，完整PDE重放0。最终一次15文档合同的实际结果和字节hash见本轮记录，不声明CI/full pytest。
+
+[科学](records/scientific_checks_v59.json) · [原始归档](records/raw_archive_index_v59.json) · [source](records/source_bindings_v59.json) · [最终费用](records/resource_costs_final_v59.json)。以下历史保持。
+
+---
+
 # V58最终相关检查与完整科学验收
 
 11项targeted、15模块compile/相关Ruff、6个one-run validate通过。独立VERIFY保存数组重算三解原式/恢复/体吸收/828功率与四组共同积分；C6再现及同p跨gauge通过，G6/G7物理p增量FAIL，测试通过不覆盖该科学负结果。首次828库存误判、费用aux input错误及消费重放保留。最终文档15项及精确字节另有收据；full pytest/CI未运行、GitHub视觉NOT_VERIFIED。

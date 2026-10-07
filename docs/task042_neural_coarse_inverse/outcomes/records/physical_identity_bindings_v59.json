@@ -1,0 +1,282 @@
+{
+  "physical": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "runs": [
+    {
+      "role": "pre",
+      "source_sha": "0aaa2971e78fbc939e0e1628f7677089ef60434c",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "7b6d3f1f4b4e393cefc993b8eef4f8e4d81c7200dfd253ae6b53767847d4ad48"
+    },
+    {
+      "role": "pre",
+      "source_sha": "37850db901da113cf009dbe16005b04663a3c9af",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "85b7eee80304f8c02fba0716f9a3d6d27721336a4506110065f50e1fb8a4a369"
+    },
+    {
+      "role": "pre",
+      "source_sha": "9b8eacf9831ef8064035b6e494e296821978d1ba",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "c79eb402b21666c9f37f3e476f3cf52ea0becb9dcceef40df5594a24d9c6e92f"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "9b8eacf9831ef8064035b6e494e296821978d1ba",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "45f1a7adc050ad9bdb84cb2054195c6a90f033ba518bc127d992d772a5cb4120",
+      "physical_sha256": "e7bf41d39047bcf3679f6720f1a22436c791c7695ada59ea072bc089f4d94143",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "63e285478119c9870091630b77442e744e83b7f3043c976e02807756b8f7116e",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "d723e9e4f66211157353993d311feb54f9eadafd025df4b2e8985e1341e5d521"
+    },
+    {
+      "role": "M67",
+      "source_sha": "9b8eacf9831ef8064035b6e494e296821978d1ba",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "b2117ba7863702729d92f7e7cac9203612184eb38b48a0946c9110e10b95149f",
+      "physical_sha256": "e7bf41d39047bcf3679f6720f1a22436c791c7695ada59ea072bc089f4d94143",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "da6a59b6d9f3d6c80e2d19c73108958cb71e5d7835b6819bd75f25bd1ef2abfb",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "a8cc6ce4ad34dd94f6ac31e7d70c48482a21332d81fadbd1ded4054fc19b1572"
+    },
+    {
+      "role": "pre",
+      "source_sha": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "b9a57550aad2e45f46bb5e793772960338289ee05a6b4794b6c5ccf9d9cc44dc"
+    },
+    {
+      "role": "M68",
+      "source_sha": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "70cda9f90418d3f2a4d23cdcf27af0f3cc04f4f22d271d88a515af6715031f3d",
+      "physical_sha256": "49395c876fcac1568134bc0e48b351a1f8fb93985e2ba8bb3ef5b991a45e3902",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "a0b9b27539e899efad890c01ed7bbefc579ffb186cc68367d4ddc62cbfea0914",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "4a0f09582d11171bf5787fab6d895825a7766424e4b9173a93896afacf15fccb"
+    },
+    {
+      "role": "pre",
+      "source_sha": "d2680f2fbe01e324cc57974ea5ddcb47b3a7f451",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "edea79189d8579cda1f8aa3f0bcb2fd51b41de76031b95b17098323b5b33755c"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "d2680f2fbe01e324cc57974ea5ddcb47b3a7f451",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "e2c8a452e823df8cab8bb2dbf4b8f7548d0252f2d82704777b896d7f4f8aaefe",
+      "physical_sha256": "e7bf41d39047bcf3679f6720f1a22436c791c7695ada59ea072bc089f4d94143",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "e246f910bc7c98d0f79be9b16c6efd89260d19ba8afb0f32c7c2eb1f27c90a01",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "7fc3aa6b1b58dcdeb8f996f77b79a5f38e138d461da0ea4fb380c68719503bc4"
+    }
+  ],
+  "numerical_cases": {
+    "M67": {
+      "degree": 7,
+      "ambient_degree": 7,
+      "trace_degree": 6,
+      "interior_degree": 7,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 166208,
+      "trace": 45248,
+      "internal": 120960,
+      "rows": 46076,
+      "mixed_independent": 153792,
+      "mixed_trace": 32832,
+      "mixed_rows": 33660,
+      "local_dimension": 1344,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        0
+      ]
+    },
+    "M68": {
+      "degree": 8,
+      "ambient_degree": 8,
+      "trace_degree": 6,
+      "interior_degree": 8,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 247808,
+      "trace": 59648,
+      "internal": 188160,
+      "rows": 60476,
+      "mixed_independent": 220992,
+      "mixed_trace": 32832,
+      "mixed_rows": 33660,
+      "local_dimension": 1944,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        0
+      ]
+    }
+  },
+  "physical_carrier": [
+    8.94046081729244,
+    0.7821889682108057,
+    0
+  ],
+  "G6_G7_not_used": true,
+  "mixed_J": "identity on all ambient interiors, R_tau on trace and identity on all 828 port rows",
+  "conjugate_dual": true
+}

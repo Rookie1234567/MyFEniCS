@@ -1,0 +1,111 @@
+{
+  "mixed_equation_and_output": {
+    "M67": true,
+    "M68": true
+  },
+  "physical_increments": {
+    "R6_M67": {
+      "pass_gate": false,
+      "failed_quantities": {
+        "E_total": 0.0003865776344759842,
+        "H_total": 0.00039124416718791283,
+        "curl_total": 0.0003912441671879126,
+        "E_scattered": 0.0026912355479119642,
+        "H_scattered": 0.002723759239334746,
+        "curl_scattered": 0.0027237592393347457
+      },
+      "selected_failures": {
+        "E_total": 0.00033824851994525187,
+        "H_total": 0.0003217570304502482,
+        "curl_total": 0.00032175703045024453,
+        "E_scattered": 0.0023370148023462204,
+        "H_scattered": 0.0022251282050698706,
+        "curl_scattered": 0.002225128205069845
+      },
+      "complex_channels": 0.0001250518455828779,
+      "mode_power": 1.3848686953726874e-06,
+      "power_differences": {
+        "R_total": 1.7157300814252263e-06,
+        "T_total": 2.1716806908322894e-08,
+        "A_balance": 1.694013274544659e-06,
+        "A_volume": 1.6940132883946912e-06
+      },
+      "q": [
+        23,
+        31
+      ],
+      "q_operation": 1.6567170563324762e-15
+    },
+    "R7_M67": {
+      "pass_gate": false,
+      "failed_quantities": {
+        "E_total": 0.0052535674862834525,
+        "H_total": 0.005249239668454804,
+        "curl_total": 0.005249239668454801,
+        "E_scattered": 0.03657373399680957,
+        "H_scattered": 0.03654409763908154,
+        "curl_scattered": 0.03654409763908154
+      },
+      "selected_failures": {
+        "E_total": 0.004190453417234929,
+        "H_total": 0.0042119350015086725,
+        "curl_total": 0.004211935001508668,
+        "E_scattered": 0.02895253367614269,
+        "H_scattered": 0.029127865074659556,
+        "curl_scattered": 0.029127865074659524
+      },
+      "complex_channels": 0.0010031879035153916,
+      "mode_power": 3.32570096749224e-05,
+      "power_differences": {
+        "R_total": 1.5381135104935995e-05,
+        "T_total": 5.908046266989153e-06,
+        "A_balance": 2.1289181371897392e-05,
+        "A_volume": 2.128918177057154e-05
+      },
+      "q": [
+        23,
+        31
+      ],
+      "q_operation": 1.6567170563324762e-15
+    },
+    "M67_M68": {
+      "pass_gate": false,
+      "failed_quantities": {
+        "E_total": 0.0005037734180884813,
+        "H_total": 0.0004991344409467384,
+        "curl_total": 0.0004991344409467385,
+        "E_scattered": 0.0035068658316500783,
+        "H_scattered": 0.003474620214265499,
+        "curl_scattered": 0.003474620214265499
+      },
+      "selected_failures": {
+        "E_total": 0.00043683285835944446,
+        "H_total": 0.00040430005353435687,
+        "curl_total": 0.0004043000535343559,
+        "E_scattered": 0.0030197110977946,
+        "H_scattered": 0.002794328286297618,
+        "curl_scattered": 0.0027943282862976137
+      },
+      "complex_channels": 0.00014519132488178182,
+      "mode_power": 1.8306001354079227e-06,
+      "power_differences": {
+        "R_total": 2.157519424700327e-06,
+        "T_total": 1.2155719986139957e-08,
+        "A_balance": 2.1696751446587115e-06,
+        "A_volume": 2.169675383498909e-06
+      },
+      "q": [
+        23,
+        31
+      ],
+      "q_operation": 1.8234484483674058e-15
+    }
+  },
+  "NO_FULL_AMBIENT_HIGH_SPACE_PASS": true,
+  "continuum_accuracy": false,
+  "target_2TB_48h": false,
+  "NN20": false,
+  "ordinary_failures_fixed_same_window": true,
+  "scientific_solve_replay": 0,
+  "next_pilot": "one preregistered notch-adjacent material/geometry class, independent local h-reference of saved physical trace/load internal response and trace feedback; recommendation only"
+}
