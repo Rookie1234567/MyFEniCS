@@ -444,6 +444,16 @@ class _V14Runtime:
                     "review_v15_e1_full_p6_y_orbit_reference_inverse",
                     "task40extra_v15_p6_y_orbit_e1_reference_v1",
                 ),
+                (
+                    "Q4_ORIGINAL",
+                    "review_v16_gx560_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v16_p6_y_orbit_gx560_reference_v1",
+                ),
+                (
+                    "Q4_ORIGINAL",
+                    "review_v16_e1_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v16_p6_y_orbit_e1_reference_v1",
+                ),
             }
             worker_identity = (
                 self.stage,

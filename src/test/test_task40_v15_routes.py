@@ -809,7 +809,7 @@ def test_v15_csr_preflight_rejects_bad_bounds_before_pet_sc_integer_cast():
     ) == 1.0e-10
 
 
-def test_v15_fixed_campaign_runtime_accepts_registered_profiles_only(
+def test_fixed_campaign_runtime_accepts_only_registered_profiles(
     tmp_path, monkeypatch
 ):
     from src.geometry.task40_nonseparable_plan import TASK40_V15_REFERENCE_PC_STRATEGY
@@ -817,6 +817,8 @@ def test_v15_fixed_campaign_runtime_accepts_registered_profiles_only(
         TASK40_V15_P6_B0_PROFILE,
         TASK40_V15_P6_E1_PROFILE,
         TASK40_V15_P6_GX560_PROFILE,
+        TASK40_V16_P6_E1_PROFILE,
+        TASK40_V16_P6_GX560_PROFILE,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import _V14Runtime
@@ -856,6 +858,14 @@ def test_v15_fixed_campaign_runtime_accepts_registered_profiles_only(
             "Q4_ORIGINAL",
             "review_v15_e1_full_p6_y_orbit_reference_inverse",
         ),
+        TASK40_V16_P6_GX560_PROFILE: (
+            "Q4_ORIGINAL",
+            "review_v16_gx560_full_p6_y_orbit_reference_inverse",
+        ),
+        TASK40_V16_P6_E1_PROFILE: (
+            "Q4_ORIGINAL",
+            "review_v16_e1_full_p6_y_orbit_reference_inverse",
+        ),
     }
     for index, profile in enumerate(expected):
         contract = profile_facts(profile)
@@ -892,28 +902,48 @@ def test_v15_fixed_campaign_runtime_accepts_registered_profiles_only(
             "subreaper_watchdog_only"
         )
 
-    rejected = profile_facts(TASK40_V15_P6_B0_PROFILE)
-    rejected["scope"] = f"{rejected['scope']}_unregistered"
-    monkeypatch.setenv(
-        "PHYSICAL_WATCHDOG_MEMORY_POLICY",
-        rejected["resources"]["watchdog_memory_policy"],
+    v16_gx560 = profile_facts(TASK40_V16_P6_GX560_PROFILE)
+    rejected_cases = (
+        ("stage", "B0_CANDIDATE", dict(v16_gx560)),
+        (
+            "scope",
+            v16_gx560["stage"],
+            {**v16_gx560, "scope": f"{v16_gx560['scope']}_unregistered"},
+        ),
+        (
+            "profile",
+            v16_gx560["stage"],
+            {**v16_gx560, "identity": f"{v16_gx560['identity']}_unregistered"},
+        ),
     )
-    monkeypatch.setenv(
-        "PHYSICAL_WATCHDOG_PSS_POLICY",
-        rejected["resources"]["pss_sampling_policy"],
-    )
-    monkeypatch.setenv(
-        "PHYSICAL_WATCHDOG_PHASE_PATH", str(tmp_path / "rejected_phase.json")
-    )
-    with pytest.raises(RuntimeError, match="rejected this exact stage/profile/scope"):
-        _V14Runtime(
-            tmp_path / "rejected",
-            rejected["stage"],
-            rejected,
-            root=ROOT,
-            source_sha="a" * 40,
-            batch_identity="v15_runtime_unregistered_scope",
-            evidence_prefix="v15_runtime_unregistered_scope",
-            require_zero_swap=True,
+    for label, stage, rejected in rejected_cases:
+        evidence_prefix = f"v16_runtime_rejected_{label}"
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_MEMORY_POLICY",
+            rejected["resources"]["watchdog_memory_policy"],
         )
-    assert not (tmp_path / "rejected" / "v15_runtime_unregistered_scope_inventory.json").exists()
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PSS_POLICY",
+            rejected["resources"]["pss_sampling_policy"],
+        )
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PHASE_PATH",
+            str(tmp_path / f"{label}_rejected_phase.json"),
+        )
+        run_directory = tmp_path / f"rejected_{label}"
+        with pytest.raises(
+            RuntimeError, match="rejected this exact stage/profile/scope"
+        ):
+            _V14Runtime(
+                run_directory,
+                stage,
+                rejected,
+                root=ROOT,
+                source_sha="a" * 40,
+                batch_identity=f"v16_runtime_rejected_{label}",
+                evidence_prefix=evidence_prefix,
+                require_zero_swap=True,
+            )
+        assert not (
+            run_directory / f"{evidence_prefix}_inventory.json"
+        ).exists()
