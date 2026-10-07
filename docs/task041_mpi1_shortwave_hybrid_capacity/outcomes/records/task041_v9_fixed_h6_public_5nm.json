@@ -1,0 +1,211 @@
+{
+  "schema": "task041.v9.fixed_h6.public_5nm_outcome.v1",
+  "record_status": "completed_with_qualifications",
+  "measurement_class": "measured_from_existing_sealed_artifacts",
+  "unit": "task041-v9-5nm-fixed-h6-public-20261006T081113Z.service",
+  "invocation_id": "2539de4d129f41e2ac49536bfd3b6fde",
+  "service_root": "results/task041_v9_5nm_fixed_h6_public_service_run_20261006T081113Z",
+  "numeric_run_root": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261006T085648.428993Z",
+  "source_sha256": "d6fe6b2b239896e66d8c5d1bf9b8a0e45931a561",
+  "config_sha256": "3b74c64d64ba0d5364a5f5415ee13482e36c470df35effad6912ea7032b04669",
+  "argv_sha256": "f9a857943c70fe065865aaccaec26916d4e6ac149c1a8c6a99067f594194351a",
+  "wrapper_sha256": "ed1e29231efed3531b6eeb6e3e75cfa8d24dd58ec4b3bc85450af84d0ca183c0",
+  "registered_case": {
+    "material": "W",
+    "wavelength_nm": 5.0,
+    "nedelec_degree": 6,
+    "mesh_target_nm": 4.0,
+    "mode_count_per_direction": 480,
+    "mpi_ranks": 8,
+    "p4_backend": "cell_condensed",
+    "p4_refinement_target": 5e-13,
+    "method": "fixed_h6_modal_gmres_research_with_original_outer_fgmres",
+    "route_plan_reuse": false,
+    "leading_ph_dual_reuse": false,
+    "qualification": "research_only_approximate_candidate"
+  },
+  "identity": {
+    "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed",
+    "run_id": "task041_5nm_p6h4_m480_mpi8_cell_condensed",
+    "physical_sha256": "65bb1e2947604a7efe54b2d6450a63a583714341505c207241f4278bd25b22a4",
+    "input_sha256": "a788489e9d3d582d2abbdf21b3edd535a35c9649c6d5cf7dd53952f30594c5dc",
+    "resolved_sha256": "278d5813aa0227d3a8ddcfb2759b197436e9f0e74fef82b7c7b01c00ce1421eb",
+    "external_keys_count": 600,
+    "external_keys_sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a",
+    "legacy_descriptor_sha256": "175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86",
+    "selected_mode_manifest_sha256": "9db119a7890e00be36aaf6437299b450bc4df208b6a9e6fceea7902d4181fbe1"
+  },
+  "numerical_result": {
+    "consumer_status": "task041_consumer_completed",
+    "classification": "TASK041_CONSUMER_PASS",
+    "outer_ksp_reason": 2,
+    "outer_iterations": 49,
+    "five_true_residuals": {
+      "limit": 5e-9,
+      "global": 8.573354680237858e-10,
+      "bottom": 4.87285789944735e-9,
+      "top": 4.3588733213657296e-10,
+      "modal": 3.0159774145340474e-9,
+      "reported": 8.573351523834966e-10,
+      "pass": true
+    },
+    "official_rta": {
+      "status": "measured",
+      "R": 0.7331842734229947,
+      "T": 0.00022009869546076797,
+      "A": 0.2665956278815445,
+      "A_volume": 0.2665962726246991,
+      "closure": 6.447431546430238e-7
+    },
+    "recovery_contract_pass": true,
+    "recovery_pass": true,
+    "recovery_physics_pass": true,
+    "traction_pass": true,
+    "interface_projection_pass": true,
+    "external_q_pass": true,
+    "official_output_identity_pass": true,
+    "integrated_full3d_checker": "not_available_full3d_secondary_not_run"
+  },
+  "fixed_h6_work": {
+    "legacy_side_prepass_calls": 0,
+    "legacy_sample_gate": "skipped_replaced_by_fixed_h6_feedback_gate",
+    "setup_gate": {
+      "status": "passed",
+      "S_H_actions": 8,
+      "each_side_H6_apply_calls": 8,
+      "each_side_H6_MatMult_calls": 16,
+      "C_matvec_calls": 8,
+      "owner_C_LU_factorizations": 1,
+      "owner_C_LU_solve_attempts_during_gate": 0
+    },
+    "formal_inner": {
+      "solve_count": 49,
+      "solver_S_H_actions": 258,
+      "independent_final_S_H_checks": 49,
+      "total_S_H_actions": 307,
+      "not_converged_count": 0,
+      "last_solve_solver_actions": 7,
+      "last_solve_total_actions_including_final": 8,
+      "last_solve_final_relative_residual": 0.00016988128364249868,
+      "last_solve_ksp_reason": 2,
+      "owner_C_LU_cumulative_attempts": 307,
+      "owner_C_LU_cumulative_successes": 307,
+      "owner_C_LU_count_scope": "owner_authoritative_per_solve_broadcasts; replicated; do_not_sum_across_ranks"
+    },
+    "setup_plus_formal_totals": {
+      "S_H_actions": 315,
+      "each_side_H6_apply_calls": 315,
+      "each_side_H6_MatMult_calls": 630,
+      "C_matvec_calls": 315,
+      "C_LU_factorizations": 1,
+      "owner_C_LU_solve_attempts": 307,
+      "owner_C_LU_solve_successes": 307
+    },
+    "outer_pc": {
+      "apply_count": 49,
+      "first_and_delta_per_side": 49
+    },
+    "full_schur_materialized": false,
+    "full_schur_columns": 0,
+    "modal_constraint_condition": "not_measured"
+  },
+  "original_side_work": {
+    "count_scope": "retained side diagnostics; rank-local/replicated report values; do_not_multiply_by_mpi_size",
+    "bottom": {
+      "apply_records": 98,
+      "inner_ksp_iterations": 3839,
+      "pc_and_H6": 3839,
+      "Q": 7678,
+      "A6": 7678,
+      "P": 7678,
+      "PH_audit": 7678,
+      "PH_total": 15356,
+      "p4_backsolve": 11551,
+      "p4_refinement": 3873
+    },
+    "top": {
+      "apply_records": 98,
+      "inner_ksp_iterations": 3893,
+      "pc_and_H6": 3893,
+      "Q": 7786,
+      "A6": 7786,
+      "P": 7786,
+      "PH_audit": 7786,
+      "PH_total": 15572,
+      "p4_backsolve": 15546,
+      "p4_refinement": 7760
+    },
+    "P4_backsolve_total": 27097,
+    "P4_refinement_total": 11633
+  },
+  "wall_seconds": {
+    "consumer_marker_setup_to_outer_begin": 2110.2161757550202,
+    "consumer_marker_outer_begin_to_ready": 57734.11325815087,
+    "consumer_marker_outer_ready_to_recovery_begin": 1.6256045771297067,
+    "consumer_marker_recovery": 59.012698121834546,
+    "consumer_marker_recovery_end_to_cleanup": 0.8045801289845258,
+    "consumer_summary_wall": 59905.83251273399,
+    "service_parent_wall": 59912.684318848,
+    "service_finalizer_billed_parent_wall": 59914.951233018,
+    "finalizer_ledger_used_before": 459089.239327309,
+    "finalizer_ledger_used_after": 519004.190560327,
+    "ledger_scope": "service_finalizer_only; single_entry_for_this_invocation"
+  },
+  "resource": {
+    "process_tree_peak_rss_bytes": 42573258752,
+    "dedicated_job_cgroup_peak_bytes": 41376940032,
+    "warning_bytes": 47899046707,
+    "cap_bytes": 53221163008,
+    "reserve_bytes": 412316860416,
+    "minimum_host_memavailable_bytes": 2013870522368,
+    "job_swap_peak_bytes": 0,
+    "performance_not_isolated": true,
+    "peak_semantics": "process-tree RSS and dedicated job cgroup peak are separate authorities; neither establishes 0.7 nm capacity"
+  },
+  "service_finalizer": {
+    "result": "service_complete",
+    "exit_status": 0,
+    "all_ten_checks_pass": true,
+    "sole_wall_ledger_owner": "service_finalizer",
+    "integrated_checker": "not_available_full3d_secondary_not_run"
+  },
+  "october_3_reference_comparison": {
+    "reference_source_sha256": "5bfb813870182fda172f658c8f276f58318844a5",
+    "reference_public_to_finalizer_wall_seconds": 202124.563261555,
+    "reference_process_tree_peak_rss_bytes": 43415531520,
+    "reference_cgroup_peak_bytes": 43975204864,
+    "reference_outer_iterations": 5,
+    "reference_internal_side_ksp_iterations_total": 30296,
+    "current_internal_side_ksp_iterations_total": 7732,
+    "current_minus_reference_wall_seconds": -142209.61202853703,
+    "descriptive_wall_reduction_percent": 70.357412149118,
+    "current_minus_reference_R": 3.543842996833746e-11,
+    "current_minus_reference_T": 5.353057136014278e-13,
+    "current_minus_reference_A": 2.657890019186482e-10,
+    "current_minus_reference_A_volume": 1.7145174169286292e-12,
+    "causal_speedup_claim": false,
+    "reason": "different source/method and both runs performance_not_isolated; descriptive comparison only"
+  },
+  "artifact_sha256": {
+    "service_finalizer_summary": "d5d3ab362d7ee32afbcc3dbe2e91b0882762896da7247e393c7ac3250bc7e38f",
+    "service_artifact_hash_index": "2559bf72cc39943ddb84b2603692f2cb1986f124e2150d05767debc84da9cb1a",
+    "service_summary": "f0de24c268dad197513d5b794f16f5d0229f0fc409d3b8260cc39f426d290b09",
+    "service_parent_summary": "be12749b25360988f01a10d9f49adaea8259f679633ff7bcda3716c1328dcf1e",
+    "launch_manifest": "c8cecf2cc66504cc14fb60f4ff052d025af43d72d8fb4229597c369ababd1bf5",
+    "consumer_summary": "4257b309c5381498c6a84110d5c49e86eb0e3ca78272b09b7bb6ee731dd18526",
+    "consumer_markers": "c9dd6cc3867e7bf98b4d463cf2780c60995452b98cfad79c2666f94efc99ca6b",
+    "side_rhs_audits": "efe8ef30db62a8537910b11a923ae6a7f6ced973cecf6e42b336d67e0932882a",
+    "run_summary": "319aa155dcfaf5897093564c0daec45b7d0480ceed4edfceb7ace0ed2408fd17",
+    "resource_summary": "607dc9164ba83c1ab4d955399280ffbbff81ec20f8d4446aa45673d116d30e58",
+    "supervisor_and_workflow_summary": "2af4216a5877a2cc1cb595009cbff49017a1e60721f86ba43552b26e3d123ed9",
+    "public_command_stdout": "e3dfcd7d705163c2402563cff6c52f8ccd70ba4061f25db88a6f016d939297fe",
+    "service_markers": "9326b498779978aeef2b670254fdc0d30118374af2be01eb4cc0ee9d53d63536",
+    "service_memory_stages": "73f166869bcaad6de7127bafe5193773fefda55d3b71ff26ff6045e28bd22356"
+  },
+  "limitations": [
+    "This is one research-only W5 registered candidate run, not production qualification.",
+    "performance_not_isolated remains true; wall and peak-memory differences from October 3 are descriptive, not causal performance claims.",
+    "The integrated full-3D secondary checker was not available/run.",
+    "This W5 result does not establish W2, W0.7 nm, 2 TB, or 48 h qualification."
+  ]
+}

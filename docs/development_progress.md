@@ -1,14 +1,14 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-06：Task041 Review V9 H0审计与H1当前进度
+## 2026-10-07：Task041 Review V9当前进度（含H0历史基线）
 
-**H0背景与基线。** 为判断已有W短波长工作量，按两场5 nm、p6/h4、M480、MPI8×1 consumer的共同`consumer/markers.jsonl`阶段边界对照墙钟，并流式读取两份各1980行side RHS审计。两场分别完成1920/1920 formal response与各自残差/物理门；最新场public-to-finalizer为`202124.563261555 s`，约56.146 h，超过48 h目标。两场运行源码不同且均`performance_not_isolated`，不能用差值证明某优化因果或收益。H0机器记录是其完成时点的只读快照，不覆盖后续H1。
+**H0背景与基线。** 为判断已有W短波长工作量，按H0纳入的两场旧5 nm、p6/h4、M480、MPI8×1 consumer共同`consumer/markers.jsonl`阶段边界对照墙钟，并流式读取两份各1980行side RHS审计。两场分别完成1920/1920 formal response与各自残差/物理门；H0当时较新的Oct 3场public-to-finalizer为`202124.563261555 s`，约56.146 h，超过48 h目标。两场运行源码不同且均`performance_not_isolated`，不能用差值证明某优化因果或收益。H0机器记录是其完成时点的只读快照，不覆盖后续W5 fixed-H6新场。
 
 **方法与发现。** 使用相邻marker差值，不把summary里的嵌套KSP/PC计时叠加到阶段wall；monitor独占时间没有marker，保持`unknown`。两场内部KSP迭代合计相同，均30296；较新场P4回代和精化各比旧场多8686次。它们解释了工作量并不等同于KSP步数，但不能换算成精确秒数或归因给A6。局部A6 RHS测量不代表完整工作流；较新场modal相邻marker段多约`12092.900 s`而outer段少约`288.119 s`，因果仍未分离。
 
-**H1当前结果与路线边界。** H1 fixed-H6组件门serial/MPI2测试通过，且唯一13.5 nm Si public/service整场已通过原五项真残差、recovery、physics与十项finalizer：37 outer、264个`S_H`，workflow wall `3181.091282263 s`；只存有最后一次inner独立raw终检值，performance=`performance_not_isolated`。这验证公共接线和完整生命周期，不等于W5、2 nm或0.7 nm资格。2 nm已有SLEPc PEP/TOAR，旧consumer formal为0/4800且`ncv/mpd`未记录；不再提出迁移TOAR。0.7 nm CXRO、NIST、CIAAW等来源字节现已归档并给出候选插值，但正式材料封套、完整W外部keys和网格/模态阶梯仍缺；2 TB与48 h尚未资格化。
+**H1当前结果与路线边界。** H1 fixed-H6组件门serial/MPI2测试通过；唯一13.5 nm Si场与唯一W5/p6h4/M480/MPI8 fixed-H6 public/service场都通过各自原五项真残差、恢复、physics与十项finalizer。W5为49 outer、五项残差最大`4.87285789944735e-9 <= 5e-9`、315次总`S_H`、finalizer wall`59914.951233018 s`，专属job-cgroup峰`41376940032 B`；两场都保持`performance_not_isolated`，都不能外推W2或0.7 nm资格。2 nm已有SLEPc PEP/TOAR，旧consumer在历史repeat门停止、formal为0/4800，`ncv/mpd`未记录；不再提出迁移TOAR。0.7 nm正式材料封套、完整W外部keys和网格/模态阶梯仍缺，2 TB与48 h尚未资格化。
 
-**W5路由实现与下一步。** 10月3日完整W5已有legacy-native validator确认的数值/packet/layout身份，包括input/physical/resolved SHA、M480/MPI8、600 external keys和packet manifest/identity；不是缺少数值身份。提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已在注册W5 fixed-H6分支复用旧validator/binder，要求descriptor与new producer root二选一，保留物理/hash/选模核验；13.5/2 nm新profile及普通legacy默认不变。旧producer公共parent/cgroup资源仍`unqualified`，不伪造资源PASS，也不阻止验证过的数值packet复用。接下来唯一新W5 public/service FE尚未运行；H2–H4仍未完成。逐段wall、全量计数、W5三类身份/兼容/资源边界和H3来源字节SHA见[Task041 V9 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[H0历史record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_h0_readonly.json)和[Response V11](task041_mpi1_shortwave_hybrid_capacity/response_v11.md)。
+**W5当前结果与下一步。** 10月3日完整W5已有legacy-native validator确认的数值/packet/layout身份，包括input/physical/resolved SHA、M480/MPI8、600 external keys和packet manifest/identity；不是缺少数值身份。提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`在注册W5 fixed-H6分支复用旧validator/binder，保持13.5/2 nm新profile及普通legacy默认。唯一W5 fixed-H6 public/service场现已完成并通过原数值、P4/recovery/physics与finalizer门；旧producer资源仍`unqualified`，新场资源独立记录。下一步转到已有W2/M1200/MPI8 packet的只读准备，保留旧consumer负结果与容量风险；H2尚未启动，H3–H4未完成。细节见[Task041 V9 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[W5机器记录](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v9_fixed_h6_public_5nm.json)、[W2只读计划](../results/task041_v9_w2_fixed_h6_readonly_preparation_20261007/w2_readonly_plan.json)，SHA `e7f33e11636fc541958a343fae037cff0f14f91568751f1ba62f16ecc89f5aab`，和[Response V11](task041_mpi1_shortwave_hybrid_capacity/response_v11.md)。
 
 ## 2026-10-06：Task041 V9 W5 legacy路由与owner计数定向测试
 
@@ -2889,6 +2889,6 @@ Bottom与top各自四项的selected-side target诊断通过共同输入与响应
 | 测试 | serial坏输出节点1 passed；MPI2五selector两个rank各8 passed，无warning | 受控最后rank非有限输出共识/清理；不是FE或任意MPI异常安全 |
 | 预算与作用 | setup检查8次`S_H`/C；每侧8次H6 apply、16次H6矩阵乘；每个内层GMRES原9次solver作用+1次末检保持 | setup成本须计入后续整场；tiny次数不作5 nm wall预测 |
 | ledger | 两条pytest parent wall唯一计入10.003750981064513 s，V5 ledger 124项 | ABI/static/rank-local时间未计；compact与receipt在ignored results |
-| 下一步 | public `.dat`入口、supervisor/service命令绑定和受保护dirty hunk梳理后，进行最小路由测试并准备真实W 5 nm运行 | W 5 nm尚未启动；H2–H4及0.7 nm/2 TB/48 h仍未完成 |
+| 下一步（该组件阶段的当时计划） | public `.dat`入口、supervisor/service命令绑定和受保护dirty hunk梳理后，进行最小路由测试并准备真实W 5 nm运行 | 这是2026-10-06组件阶段快照；随后唯一W5运行已完成，当前H2–H4及0.7 nm/2 TB/48 h仍未完成，见本文件顶部与[W5 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md) |
 
 Task041 H0/H1详细记录见[outcomes summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[V9 outcome](task041_mpi1_shortwave_hybrid_capacity/outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[测试汇总](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)和[Response V11](task041_mpi1_shortwave_hybrid_capacity/response_v11.md)。

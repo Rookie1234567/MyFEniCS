@@ -1,16 +1,16 @@
 # Task041 outcomes summary
 
-## Task041 Review V9 H0历史快照与当前进度（2026-10-06）
+## Task041 Review V9 H0历史快照与当前进度（截至2026-10-07）
 
-H0是一次只读时点：它对照两场W 5 nm、p6/h4、M480、MPI8×1完整consumer，并审查2 nm和0.7 nm证据；当时没有运行数值代码、测试、MPI、QEP或FE。其后H1组件验证与13.5 nm Si public/service完整回归已经完成，本表保留H0结论并在下节登记新状态。两场5 nm各完成1920/1920正式响应并通过各自五项真实残差和恢复/物理门；最新5 nm public-to-finalizer为`202124.563261555 s`（56.146 h），超过48 h目标。两场均`performance_not_isolated`，不据此宣称优化收益。
+H0是一次只读历史快照：它对照两场W 5 nm、p6/h4、M480、MPI8×1完整consumer，并审查2 nm和0.7 nm证据；当时没有运行数值代码、测试、MPI、QEP或FE。其后H1组件验证、13.5 nm Si和W5 fixed-H6 public/service完整回归均已完成，下文分别登记。两场旧5 nm各完成1920/1920正式响应并通过各自五项真实残差和恢复/物理门；旧场public-to-finalizer为`202124.563261555 s`（56.146 h）。旧场均`performance_not_isolated`，不能用来证明新方法的因果收益。
 
 | H0项目 | 关键事实 | 状态与证据 |
 |---|---|---|
 | 共同阶段wall | 从两份`consumer/markers.jsonl`相邻`stage`边界重算；较新场marker区间`202108.376 s`，public-to-finalizer为`202124.563 s`，范围不同；monitor独占wall无marker | 分段与原始身份见[H0 outcome](hybrid_0p7nm_2tb_48h_v9.md)和[机器记录](records/task041_v9_h0_readonly.json)，monitor=`unknown` |
 | Side/P4工作量 | 两场内部KSP迭代合计均30296；较新场P4 backsolve和refinement各多8686次，不能从计数直接换算秒数 | 详见H0 outcome的全量分组；逐RHS MPI.MAX和嵌套时间不相加成wall |
 | 13.5 nm锚点 | 唯一Si public/service场37 outer/264 `S_H`，五项真实残差、recovery/physics与finalizer通过；只存有最后inner独立raw终检值 | 已验证公共身份链和完整生命周期；不是W 5/2/0.7 nm或性能资格 |
-| W 5 nm V9 fixed-H6 | 10月3日完整数值身份、legacy-native validator结果和600 external-key binding均存在；旧producer公共父/cgroup资源未资格化 | 当前新profile目录形状与旧legacy descriptor入口不兼容；资源`unqualified`单列，不抹掉数值身份，也不伪造producer资源PASS |
-| 2 nm / 0.7 nm | 2 nm已有PEP/TOAR但旧consumer formal响应为0/4800；0.7 nm来源字节已封存并给出候选插值，正式材料封套、完整W外部keys和合格网格/容量证据仍缺 | 2 TB与48 h均`not_qualified`；H2–H4未完成 |
+| W 5 nm V9 fixed-H6 | 10月3日完整数值身份及legacy-native validator结果存在；后续唯一fixed-H6 public/service场已完成且五残差、physics/recovery和finalizer通过 | 旧producer资源`unqualified`单列；新场`performance_not_isolated`，不外推W2/0.7 nm、2 TB或48 h |
+| 2 nm / 0.7 nm | 2 nm已有PEP/TOAR和可复用M1200/MPI8 packet；旧consumer在历史repeat门停止、formal响应0/4800，`ncv/mpd`未记录。0.7 nm正式材料封套、完整W外部keys和合格网格/容量证据仍缺 | W2 fixed-H6新consumer尚未启动；旧consumer峰值不代替新场容量准入；2 TB与48 h均`not_qualified` |
 
 最小后续接线审查、5 nm相邻marker分段、1980行/场的side audit工作量、H3材料来源及全部身份限制见[Task041 V9 H0报告](hybrid_0p7nm_2tb_48h_v9.md)。以下V8及更早条目保留为各自阶段的历史记录。
 
@@ -30,9 +30,18 @@ H0是一次只读时点：它对照两场W 5 nm、p6/h4、M480、MPI8×1完整co
 
 详细计数和源文件hash见[13.5 V9 outcome](hybrid_0p7nm_2tb_48h_v9.md)及[只读成本compact](../../../results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/readonly_h1_13p5_cost_compact.json)。consumer summary SHA `21ac7e56c45d90cbe540587bda831540d42077a32477cfae8a1daa2ba11f54d9`；finalizer summary SHA `04d0b4d8c2ade9f85340a363bb38b2abd9f64be4c4a0891bf9608e8fde0682f7`。V5 ledger仍127条、SHA `15d4b5dcb1ed0a867e584dc89d33a52da453575697a16a45d2aed101b5964836`，本Invocation只记一次`3181.091282263 s`。
 
-## W 5 nm fixed-H6 legacy路由状态
+## W 5 nm fixed-H6 public/service终态
 
-10月3日`run_manifest`、`supervisor_summary`、legacy descriptor和selected-mode binding共同保存完整的W5/M480/MPI8/p6/h4/cell-condensed身份、输入/physical/resolved hash、packet manifest/identity和600 external-key SHA；supervisor明确记`validated_legacy_native_packet`。提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已为注册W5 fixed-H6分支增加窄路由，复用既有legacy-native validator/binder，不伪造新profile封套；13.5/2 nm新profile及普通legacy默认保持原样。新的W5 public/service计算与正式packet validator尚未运行。旧producer仅有worker-tree资源样本，public parent/PSS/USS/cgroup未测，`resource_qualified=false`；这项历史资源资格缺失独立保留，不阻止已验证数值packet复用，也不构成新W5 consumer资源PASS。
+10月3日`run_manifest`、`supervisor_summary`、legacy descriptor和selected-mode binding保存完整的W5/M480/MPI8/p6/h4/cell-condensed身份、输入/physical/resolved hash、packet manifest/identity和600 external-key SHA；supervisor记为`validated_legacy_native_packet`。提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`为注册W5 fixed-H6分支增加窄路由，沿用既有validator/binder，不伪造新profile封套。随后唯一W5 fixed-H6 public/service场已完成并通过原数值、恢复、物理及finalizer门，详见下表和[机器记录](records/task041_v9_fixed_h6_public_5nm.json)。旧producer资源资格仍为`unqualified`；新consumer有独立资源记录。新场`performance_not_isolated`，也不构成W2/0.7 nm、2 TB或48 h资格。
+
+| 项目 | W5新场实测 | 解释与限制 |
+|---|---:|---|
+| 身份/方法 | source `d6fe6b2b239896e66d8c5d1bf9b8a0e45931a561`；Invocation `2539de4d129f41e2ac49536bfd3b6fde`；W 5 nm、p6/h4、M480、MPI8、cell-condensed、P4 `5e-13` | fixed-H6研究分支；旧legacy-native packet由既有validator/binder复用 |
+| 原方程/物理门 | 49 outer；五项真实残差最大`4.87285789944735e-9 <= 5e-9`；R/T/A/A_volume=`0.7331842734229947/0.00022009869546076797/0.2665956278815445/0.2665962726246991` | consumer、恢复、physics、traction、interface、external-Q及official-output身份门通过；secondary full3D checker未运行 |
+| 反馈与侧区工作 | setup 8次`S_H`；正式求解307次；总315次；每侧H6 apply/MatMult `315/630`；C matvec 315；侧区KSP `3839/3893` | 旧预付probe 0、完整Schur列0；C-LU因子1次，owner累计solve attempts/successes `307/307`；P4 backsolve `11551/15546`、refinement `3873/7760` |
+| 唯一wall与资源 | service finalizer计账`59914.951233018 s`；tree RSS峰`42573258752 B`；专属job-cgroup峰`41376940032 B` | `performance_not_isolated`；两种峰口径分列。与Oct 3约70.36%的wall差是不同source/method下的描述，不是因果提速 |
+
+固定反馈的setup门和正式求解分别计数；侧区保留计数不乘MPI rank。具体非重叠marker wall、各字段scope和原始artifact SHA见[W5 outcome](hybrid_0p7nm_2tb_48h_v9.md)与[机器记录](records/task041_v9_fixed_h6_public_5nm.json)。唯一wall由service finalizer记账，不另计outer、consumer或rank时间。
 
 ## Task041 Review V9 H1：fixed-H6反馈门组件验证（2026-10-06）
 
@@ -45,7 +54,15 @@ H0是一次只读时点：它对照两场W 5 nm、p6/h4、M480、MPI8×1完整co
 | 工作量合同 | setup repeat/linearity门8次`S_H`，每侧8次H6 apply和16次实际H6矩阵乘，8次C作用；GMRES原9+1预算未改 | setup门和每次求解分列；不据tiny计数估算5 nm成本或提速 |
 | 账本 | V5增加两条唯一pytest attempt；新增10.003750981064513 s；ledger 124条，SHA `60ee77b84661f91944ceffb22e9ab544178d607403f20696b5ffcd875f32fe67` | ABI/static/rank-local时间排除；见[receipt](../../../results/task041_v9_fixed_h6_feedback_mpi2_20261006T033051Z/v5_ledger_append_receipt.json) |
 
-生产代码仍是显式研究分支，普通默认未改变。public `scripts/run_case.py`单.dat接线及13.5 anchor已通过；W 5 nm真实consumer、H2–H4仍未完成。H1路由实现和组件测试不构成W5数值、资源、容量或48 h资格。
+生产代码仍是显式研究分支，普通默认未改变。public `scripts/run_case.py`单.dat接线、13.5 anchor及唯一W5 public/service场均已通过各自合同；W5性能未隔离，H2–H4仍未完成。H1路由实现和组件测试不单独构成W5资格；W5数值结果、资源口径与限制见上方终态表。
+
+## H2：W2 packet与容量只读准备（未启动）
+
+官方输入是`input/official/task041/side_balh/2nm_p6h1p5_m1200_mpi8_cell_condensed.dat`，SHA `28c4dc3f723176693ee8b933b7cd5315a973ebeff0c7a4df5d01dee15ea54307`；W 2 nm、p6/h1.5、M1200、MPI8、cell-condensed。已有producer位于`results/task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8/task041_2nm_p6h1p5_m1200_mpi8_balh__hybrid_iterative__mpi8__M1200/20260918T095546.139183Z/producer`，`mode_prep_summary.json`记`TASK041_MODE_PREP_PACKET_READY`、`producer_scope_released=true`。旧producer输入SHA为`0edd17344454939cb2cd439b5221f6d08f03c42b9f36b083469e63f667e75e57`，当前正式`.dat` SHA另列；两输入文本差异只在`model_id`和`run_id`。物理SHA `537056f184c8be19a4688c7e4cc1fef883141b9dbab7380c1df2efc5a3b465fc`，resolved SHA `10835c84bc3c6f6fdbb5630a48a84a538fa87bd621346f068942cb5cdcc9f6b4`，3904 external keys SHA `582ec6db409ecbbaa13254bb52686e330bf4c2ff3cf7939a5d47a410c11c8e95`。packet manifest SHA `7ef2ecc5587f79a123e44cacfe347356d13b36336948ade1672787c6430163d2`，identity SHA `171ef1ca91ce72d3ca2a7ca61d7ab2f5be4759934656e7730afd757d3ab49d17`，mode-prep summary SHA `5810f19d2834c122e16c178ad1346c10e8288aa3ade565bf26ea73006c252be2`。旧`selected_mode_manifest.json`的`consumer_binding.pass=true`只属于历史consumer绑定，不证明新的fixed-H6 consumer已通过。此次只读准备没有读取shards、运行packet checker或正式链validator；新consumer的实际身份绑定仍待新场验证。
+
+producer已用SLEPc PEP/TOAR；正、负方向各请求2400并收敛2422/2423个候选，26次迭代，最后选择每方向1200。`ncv/mpd`未记录，不能由源码默认补成实测。旧2 nm consumer曾在历史sampled-repeat门停止：`absolute=2.637750e-4`、参考范数`5.957499`、relative`4.427612e-5`，高于`1e-10`；formal响应为0/4800。这是旧consumer路线的负结果，不是packet身份失败。fixed-H6分支将以自己的8次setup反馈门替代旧预付sample，不取消后续原方程、P4、五项残差、恢复与物理门。
+
+容量风险仍未闭合：旧失败consumer在formal响应前的process-tree RSS峰为`642449637376 B`，memory authority峰`647904415744 B`、PSS/USS `639186608128/638677749760 B`；它不是fixed-H6完整W2峰值。先前单次node0读数扣reserve后约`442474672128 B`，仅作非准入观察且此处无独立原始快照路径；未来运行必须重新采集宿主、node0、cgroup、磁盘及冻结CPU map门。component级时间、new W2总峰与wall都仍未知。此只读阶段状态为`plan_only`：无新config/argv、无fresh ABI、无unit/root准入、无QEP和FE。
 
 ## Task041 Review V9 H1：W5路由与owner计数定向验证
 

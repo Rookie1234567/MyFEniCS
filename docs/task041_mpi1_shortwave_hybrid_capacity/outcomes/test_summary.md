@@ -297,4 +297,10 @@ R2h v1、R2h v2 和 R2g 原 index 均保留；未重跑已绑定测试、FE/MPI�
 
 一次未成功设置`BLIS_NUM_THREADS`的派生启动器在pytest前退出，保留为preflight-only/no pytest wall；没有重跑其它已通过节点。三个有pytest wall的attempt各按唯一ID入账一次，V5 ledger为130项、SHA `11679a139bbcd5f8a40a7b1758a9434df396d50c2e069fd46f115620d2a5c7f4`；ABI/static与rank-local时间未计。保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`未apply/drop。
 
-资格边界：这些是合成路由/service身份fixture及tiny fixed-H6 solver测试；不是对实际8-rank W5 worker map的MPI8验证、legacy descriptor全量shard复验、W5 FE、性能或0.7 nm/48 h通过。本轮真实W5 public/service run仍待启动。
+资格边界：这些是合成路由/service身份fixture及tiny fixed-H6 solver测试；不单独证明实际8-rank worker map、全量packet校验、FE、性能或0.7 nm/48 h资格。随后W5真实public/service运行的结论单列如下，不把它倒算成pytest结果。
+
+## Review V9 H1：W5 fixed-H6 public/service场（非pytest）
+
+唯一W5/p6h4/M480/MPI8/cell-condensed场已通过原consumer数值门、P4/recovery/physics门和service finalizer十项检查。五项真实残差最大`4.87285789944735e-9 <= 5e-9`，49 outer；R/T/A/A_volume=`0.7331842734229947/0.00022009869546076797/0.2665956278815445/0.2665962726246991`。fixed-H6 setup门8次`S_H`、正式求解307次，总315次；每侧H6 apply/MatMult `315/630`；owner C-LU一次factor、307/307次累计solve。public-to-finalizer唯一wall为`59914.951233018 s`，process-tree RSS峰`42573258752 B`，专属job-cgroup峰`41376940032 B`，保持`performance_not_isolated`。完整marker分段、P4/侧区计数、资源口径与artifact hash见[W5 outcome](hybrid_0p7nm_2tb_48h_v9.md)和[机器记录](records/task041_v9_fixed_h6_public_5nm.json)。
+
+此场是研究候选结果，不等于W2、0.7 nm、2 TB或48 h资格；Full3D secondary checker仍未运行。Oct 3 producer的资源状态仍为`unqualified`，其数值packet沿既有legacy-native validator/binder复用，不伪造producer资源PASS。

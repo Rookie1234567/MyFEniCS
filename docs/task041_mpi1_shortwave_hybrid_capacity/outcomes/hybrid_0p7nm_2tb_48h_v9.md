@@ -11,7 +11,7 @@ H0把两场已完成的 W、5 nm、p6/h4、M480、MPI8×1 cell-condensed consume
 | 工作量 | 两场内部KSP迭代合计都为30296；10月3日P4 backsolve与refinement各比9月28日多8686次 | 同迭代数不等于每步工作相同；不能从调用数直接换算秒数 |
 | 2 nm | 2 nm producer已使用SLEPc PEP/TOAR；旧consumer未完成4800项formal响应 | TOAR不是新候选；旧consumer负结果保留，真实2 nm新路线尚未完成 |
 | 0.7 nm W | 只有air-side组件模式枚举和外部材料来源线索；正式W材料封套、完整外部keys、合格h/M及目标容量证据未齐 | 不满足0.7 nm正式计算/2 TB/48 h资格 |
-| H0本轮执行 | 文档和只读源码审查；没有运行测试、MPI、QEP或FE | 这是H0时点记录；其后H1组件和13.5 nm public/service回归已完成，W5 fixed-H6回归仍未运行 |
+| H0本轮执行 | 文档和只读源码审查；没有运行测试、MPI、QEP或FE | 这是H0时点记录；其后H1组件、13.5 nm Si和W5 fixed-H6 public/service回归分别在后续章节记录 |
 
 机器可读H0证据见[H0 record](records/task041_v9_h0_readonly.json)。该record是H0时点快照；随后H1新增的一场13.5 nm public/service结果在下文单列。本文不把“完整5 nm或13.5 nm解已通过”误写成“0.7 nm容量目标已达标”：10月3日5 nm全流程约56.146 h，超过48 h目标；2 TB目标也没有0.7 nm实测峰值支持。
 
@@ -150,15 +150,32 @@ NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.p
 | 负边界 | producer root与legacy descriptor必须恰有一个；两者皆无、同时提供、错target/scope/CPU map、额外诊断都拒绝；route-plan与leading-PH继续默认false |
 | 资源解释 | `resource_qualified=false`保持历史事实；新W5 consumer必须依自己的public service门采资源，不能继承或伪造producer资源资格 |
 
-10月3日`supervisor_summary.json`已经记录`validated_legacy_native_packet`和descriptor SHA `175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86`；packet manifest、identity、600-key绑定和consumer输入身份均已在“5 nm运行身份与数值边界”部分绑定。H0本身没有读取shards或重跑validator。其后提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已按该边界实现W5 fixed-H6 descriptor/binder兼容；定向测试证据见[Response V11](../response_v11.md)和[test summary](test_summary.md)。真实W5 public/service validator与FE仍尚未运行。
+10月3日`supervisor_summary.json`已经记录`validated_legacy_native_packet`和descriptor SHA `175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86`；packet manifest、identity、600-key绑定和consumer输入身份均已在“5 nm运行身份与数值边界”部分绑定。H0本身没有读取shards或重跑validator。其后提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已按该边界实现W5 fixed-H6 descriptor/binder兼容；路由测试证据见[Response V11](../response_v11.md)和[test summary](test_summary.md)。该段描述的是H0时点；W5实际public/service结果见下方H1终态。
+
+## H1：W5 fixed-H6 public/service完整回归（2026-10-06）
+
+固定反馈给模态方程的内层迭代提供一个按需近似作用，避免先为全部模态列逐一调用昂贵侧区逆；正式答案仍由原全局算子、右预条件FGMRES、P4修正、五项真实残差和物理门决定。本场复用已验证的legacy-native W5 packet，不重跑QEP；旧producer资源资格仍为`unqualified`，本场只用自己的准入和资源采样。
+
+| 项目 | 实测 | 解释与范围 |
+|---|---:|---|
+| 身份与终态 | source `d6fe6b2b239896e66d8c5d1bf9b8a0e45931a561`；Invocation `2539de4d129f41e2ac49536bfd3b6fde`；W 5 nm、p6/h4、M480、MPI8、`cell_condensed`、P4 target `5e-13` | `TASK041_CONSUMER_PASS`；固定H6为显式研究方法，不是普通默认 |
+| 原方程求解 | 49 outer；五项真残差 global/bottom/top/modal/reported=`8.573354680237858e-10 / 4.87285789944735e-9 / 4.3588733213657296e-10 / 3.0159774145340474e-9 / 8.573351523834966e-10` | 全部`<=5e-9`；KSP reason 2，recovery、physics、traction、interface及external-Q门通过 |
+| 物理输出 | R/T/A/A_volume=`0.7331842734229947 / 0.00022009869546076797 / 0.2665956278815445 / 0.2665962726246991`；closure=`6.447431546430238e-7` | 此场官方输出通过原门；integrated full-3D secondary checker仍`not_available/not_run` |
+| 固定反馈工作 | 旧legacy预付probe为0；setup gate 8次`S_H`、每侧8次H6 apply/16次MatMult、8次C matvec；49个inner共258次solver `S_H`和49次独立末检 | setup+solve为315次`S_H`、每侧315次H6 apply/630次MatMult、315次C matvec；C-LU只因子化1次，owner累计LU solve attempts/successes为307/307；不同rank的复制报告不相加 |
+| 原侧区与P4工作 | bottom/top各98条apply记录，内部KSP 3839/3893步；P4 backsolve 11551/15546，refinement 3873/7760 | side Q/A6/P/PH与H6按各自审计字段保存，不乘8；原侧区不是固定H6算子 |
+| 非重叠wall | consumer marker setup到outer `2110.216175755 s`；outer `57734.113258151 s`；outer ready到recovery begin `1.625604577 s`；recovery `59.012698122 s`；recovery end到cleanup `0.804580129 s` | 各段来自相邻marker；consumer wall `59905.832512734 s`；唯一public-to-finalizer账为`59914.951233018 s`，由service finalizer写一次 |
+| 资源与清理 | process-tree峰`42,573,258,752 B`；专属job-cgroup峰`41,376,940,032 B`；job swap峰0；finalizer 10/10 checks true | warning/cap/reserve为`47,899,046,707 / 53,221,163,008 / 412,316,860,416 B`；保持`performance_not_isolated`；不同内存口径分列 |
+| 限定 | H0 Oct 3 wall `202124.563261555 s`；本场wall较低`142209.612028537 s`（派生约70.36%） | source与方法变化、宿主未隔离，不能称因果加速；两场旧新峰值差也不是内存优化资格 |
+
+同一Invocation的consumer、side audit、marker、run/resource、service及finalizer文件SHA见[W5 machine record](records/task041_v9_fixed_h6_public_5nm.json)，record SHA `498e898e2e789daa392281b13c70e0b582def3032b5776b2af296c735796fb47`。该record绑定finalizer唯一ledger增量`59914.951233018 s`；不再重计consumer/阶段/rank墙钟。完整secondary checker、W2、0.7 nm、2 TB容量和目标48 h资格仍未建立。
 
 ## 尚未执行与下一步
 
 | 阶段 | 当前状态 | 退出前必须提供 |
 |---|---|---|
 | H0 | 文档、markers分段、全量side count、13.5/2 nm/0.7 nm只读审查完成；H0 record保留其冻结时点 | 后续H1结果另列，不覆盖H0历史 |
-| H1 | fixed-H6组件测试、public路由/owner-count定向测试和13.5 nm Si public/service完整回归已过；W5 fixed-H6 public/service场尚`not_run` | 提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`已复用原legacy-native validator/binder增加注册W5 descriptor路由；下一步唯一W5 public/service场保持P4 target `5e-13`、原五门与physics/recovery。旧producer资源仍`unqualified`，新consumer须自采资源 |
-| H2 | `not_run` | 用已存在的合规2 nm producer packet进入同尺寸新consumer试算；Ncv/mpd与factor/workspace需实测，达到容量/残差门后才延续完整运行 |
+| H1 | fixed-H6组件/路由和13.5 nm Si回归通过；唯一W5 fixed-H6 public/service场已完成且原五门、恢复/physics和finalizer均通过 | W5是研究候选；性能`not_isolated`，integrated checker未运行；不外推W2/0.7/2 TB资格。详见上方H1表与record |
+| H2 | 未启动新的fixed-H6 W2 consumer；已有2 nm producer packet的封套与身份已只读核对 | 复用2026-09-18的M1200/MPI8 packet；旧consumer失败发生在历史sampled-repeat门，不是packet校验。需fresh资源/CPU准入后一次构造、同factor连续outer与恢复；ncv/mpd仍unknown |
 | H3 | `not_run` | 封存W 0.7来源字节/正耗散符号与完整keys；建立小型真实3D和相邻hp/M资格；给逐对象容量模型 |
 | H4 | `not_run` | 目标50×25 nm完整单胞，实测2 TB物理内存口径和从输入到恢复/核验/清理全过程≤48 h |
 
@@ -166,4 +183,4 @@ NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.p
 
 ## H1组件与接线测试状态（2026-10-06）
 
-fixed-H6反馈repeat/linearity门已在test350 tiny代数fixture完成serial与MPI2验证；随后13.5 nm Si public/service完整回归也通过原五项残差、recovery和physics门。九文件提交`ce31f3738f469a04d23c50af0a7c7306afde3b38`增加注册W5 fixed-H6 legacy-native路由；合成public/service fixture和test350 owner-count节点分attempt通过，边界及warning见[test summary](test_summary.md)。这仍不资格化W5数值或资源。下一步是沿既有public/service链运行唯一真实W5 consumer，调用原完整validator/binder并保持P4、五残差、recovery/physics与finalizer合同；H2、H3、H4状态仍分别见上表。
+fixed-H6反馈repeat/linearity门已在test350 tiny代数fixture完成serial与MPI2验证；后续13.5 nm Si和W5 public/service整场均完成各自原数值门。W5沿原legacy-native validator/binder复用旧packet，并用新consumer自己的资源合同和ExecStopPost finalizer收尾；组件测试、单场与资源边界见[test summary](test_summary.md)。下一步是以既有W2 packet准备一次fixed-H6同生命周期场，不重跑W5或QEP；H3/H4仍按上表保留未完成项。
