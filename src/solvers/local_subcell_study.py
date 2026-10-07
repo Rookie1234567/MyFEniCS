@@ -136,6 +136,9 @@ def solve_c67(folder,journal):
 def execute(role,folder,state):
     journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=64*2**30);journal.source_state=state
     if state.get('memory_budget')!=scope.plan_record()['memory_budget']:raise ValueError('V60 live memory binding')
+    if role=='H2' and state.get('postprocessing_resume'):
+        from benchmarks.consume_saved_subcell import consume
+        return consume(folder,journal,state)
     if role=='PREFLIGHT':return preflight(folder,journal)
     if role=='C67':return solve_c67(folder,journal)
     if role in ('LOCAL_RESPONSE','H2'):

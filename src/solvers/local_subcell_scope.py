@@ -57,7 +57,7 @@ def implementation_hashes():
     from .trace_interior_scope import implementation_hashes as prior
     names=list(prior())+[str(PLAN.relative_to(ROOT)),'src/solvers/local_subcell_scope.py','src/solvers/local_trace_assembly.py',
         'src/solvers/local_subcell_study.py','src/solvers/subcell_macro_response.py','src/test/test_local_subcell.py',
-        'benchmarks/qualify_local_subcell.py','benchmarks/collect_local_subcell.py','benchmarks/compact_local_subcell_raw.py','src/test/test_local_subcell_archive.py','src/solvers/local_schur_bank.py','src/solvers/subcell_preparation_checkpoint.py','src/solvers/subcell_response_kernel.py','src/solvers/subcell_macro_deployment.py','src/test/test_subcell_response_workflow.py','benchmarks/collect_phase_explicit_accuracy.py']
+        'benchmarks/qualify_local_subcell.py','benchmarks/collect_local_subcell.py','benchmarks/consume_saved_subcell.py','src/test/test_saved_subcell_consumer.py','benchmarks/compact_local_subcell_raw.py','src/test/test_local_subcell_archive.py','src/solvers/local_schur_bank.py','src/solvers/subcell_preparation_checkpoint.py','src/solvers/subcell_response_kernel.py','src/solvers/subcell_macro_deployment.py','src/test/test_subcell_response_workflow.py','benchmarks/collect_phase_explicit_accuracy.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
 
 

@@ -85,7 +85,7 @@ def verify(folder,journal):
         checks[role]=dict(mixed_original=mixed_vector_check(r) if role=='C67' else macro_saved_check(r),physical_outputs=output_check(r));states[role]=r
         if role=='H2' and 'local_schur_bank' in r:
             from src.solvers.local_schur_bank import SavedLocalSchurAction
-            bank=r['local_schur_bank'];receiver=SavedLocalSchurAction(bank['path'],source_sha=r['source_sha'],manifest_sha256=bank['sha256'],trace_rows=32832,cell_count=160)
+            bank=r['local_schur_bank'];receiver=SavedLocalSchurAction(bank['path'],source_sha=r.get('solve_source_sha',r['source_sha']),manifest_sha256=bank['sha256'],trace_rows=32832,cell_count=160)
             witnesses=[]
             with journal.measured('independent_saved_local_bank_consumer'):
                 for row in r['local_body_action_pairs']:
@@ -119,7 +119,19 @@ def digest(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def deployment_receipt(role):
     p=scope.window.TMP/(role+'_one_run/receipt.json')
     if not p.exists():return dict(status='unknown',reason='no measured external process/cleanup receipt')
-    a=json.loads(p.read_text());ok=a['exit_code']==0 and scope.stage(role).get('deployment_complete',False)
+    a=json.loads(p.read_text());r=scope.stage(role);ok=a['exit_code']==0 and r.get('deployment_complete',False)
+    if r.get('consumer_only'):
+        from datetime import datetime
+        paths=sorted(scope.window.TMP.glob(role+'_one_run*/receipt.json'))
+        parts=[dict(path=str(p),sha256=digest(p),**json.loads(p.read_text())) for p in paths]
+        start=min(datetime.fromisoformat(v['start_utc']) for v in parts);end=max(datetime.fromisoformat(v['end_utc']) for v in parts)
+        return dict(status='measured_complete_restart_chain' if ok else 'partial_restart_chain',
+            T_N1_observed_restart_chain_seconds=(end-start).total_seconds(),necessary_process_segments_seconds=sum(v['elapsed_seconds'] for v in parts),
+            fresh_numerical_cold_T_N1_seconds='unknown; preparation was stopped and reused, not independently rebuilt',
+            receipts=parts,original_stop=r['original_stop'],postprocessing_source_sha=r['source_sha'],solve_source_sha=r['solve_source_sha'],
+            boundaries='first H2 preparation process through saved-only consumer cleanup; repair, archival and intervening waits included in observed chain',
+            cold_policy='177 child/110 macro class checkpoints reused; remaining exact classes constructed; all historical failures charged',
+            time_gain_not_granted_without_matched_control=True,history_comparisons_included=False,optional_local_research_included=False)
     return dict(status='measured_complete' if ok else 'partial',T_N1_seconds=a['elapsed_seconds'],receipt=a,receipt_sha256=digest(p),
         boundaries='before run_case process through complete required outputs, independent original audit, IO and process cleanup',
         cold_policy='fresh per-case numerical preparation; shared OS/JIT cache retained and recorded',
@@ -131,7 +143,8 @@ def compact_candidate(r,pointer):
     names=('status','case','degree','case_spec','grid','representation','source_sha','source','solve_source_sha','arrays','returned_arrays',
         'trace_mapping','mapping_check','original_audit','ambient_audit','recovery','recovery_arrays','capacity','graph','fixed_refinements',
         'local_global_factors','local_action_pairs','build_audit','local_response_classes','child_local_classes','preparation_resume','cache_payload_bytes','local_schur_bank','local_body_action_pairs',
-        'equation_pass','direct_target_pass','deployment_complete','boundary','boundary_provider','tangential_check')
+        'equation_pass','direct_target_pass','deployment_complete','boundary','boundary_provider','tangential_check',
+        'consumer_only','original_stop','producer_manifest','original_solve_source')
     result={k:r[k] for k in names if k in r};result['result']=pointer
     i=r.get('independent',{});result['independent']={k:i[k] for k in ('original_audit','arrays','equation_pass','recovery_pass','direct_internal_target_pass','audit_path','macro_internal_operation_scaled') if k in i}
     result['independent']['ambient_original_arrays']=i.get('ambient_original',{}).get('arrays')
