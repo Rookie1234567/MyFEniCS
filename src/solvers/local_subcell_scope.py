@@ -17,9 +17,25 @@ class LocalWindow(AccuracyWindow):
         # The supervised worker is already registered active. Read its fixed
         # allowance without reapplying the launch-only active-null guard.
         reserve=1800 if role in SOLVES else 180
-        used=sum(r['elapsed_seconds'] for r in self.ledger()['runs'] if r['role']==role)
+        used=0.
+        for r in self.ledger()['runs']:
+            if r['role']!=role:continue
+            p=Path(r['folder'])/'run_summary.json'
+            used+=json.loads(p.read_text())['launch_wall_seconds'] if p.exists() else r['elapsed_seconds']
         return min(plan_record()['case_wall_seconds'].get(role,900)-used,
             self.total-self.charged_wall()-reserve,self.snapshot()['heavy_remaining_seconds']-reserve)
+
+    def launcher_overhead(self):
+        seconds=super().launcher_overhead()
+        for r in self.ledger()['runs']:
+            if r['role'] not in SOLVES:continue
+            p=self.TMP/(r['role']+'_one_run/receipt.json')
+            summary=Path(r['folder'])/'run_summary.json'
+            if not p.exists() or not summary.exists():continue
+            receipt=json.loads(p.read_text())
+            if receipt['source_sha']==r['source_sha']:
+                seconds+=max(0.,receipt['elapsed_seconds']-json.loads(summary.read_text())['launch_wall_seconds'])
+        return seconds
 
     def remaining(self,role):
         self.require_ready()
@@ -41,7 +57,7 @@ def implementation_hashes():
     from .trace_interior_scope import implementation_hashes as prior
     names=list(prior())+[str(PLAN.relative_to(ROOT)),'src/solvers/local_subcell_scope.py','src/solvers/local_trace_assembly.py',
         'src/solvers/local_subcell_study.py','src/solvers/subcell_macro_response.py','src/test/test_local_subcell.py',
-        'benchmarks/qualify_local_subcell.py','benchmarks/collect_local_subcell.py']
+        'benchmarks/qualify_local_subcell.py','benchmarks/collect_local_subcell.py','src/solvers/subcell_response_kernel.py','src/solvers/subcell_macro_deployment.py','src/test/test_subcell_response_workflow.py','benchmarks/collect_phase_explicit_accuracy.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
 
 
@@ -60,12 +76,28 @@ def parent(role):
     raise ValueError('frozen parent inventory')
 
 
-def case_spec(role):return dict(plan_record()['cases'][role if role in SOLVES else 'C67'])
+def case_spec(role):
+    if role=='LOCAL_RESPONSE':return dict(degree=6,splits=[1,1,2],cells=160,independent=104832,trace=32832,internal=72000,rows=0,complete_modes=828,
+        computation='one preselected local macro; no global PDE or factor',local_inventory=['P6','P7','P8','R2_P6','R4_P6'])
+    return dict(plan_record()['cases'][role if role in SOLVES else 'C67'])
 def physical_output_options():return dict(volume_backend='direct_phase_quadrature')
+
+
+def numeric_factor_attempts():
+    ledger=window.ledger();rows=list(ledger['runs'])
+    if ledger['active'] is not None:rows.append(ledger['active'])
+    seen=set();count=0
+    for row in rows:
+        folder=ARTIFACT/Path(row['folder']).name
+        if folder in seen:continue
+        seen.add(folder);p=folder/'events.jsonl'
+        if p.exists():count+=sum(json.loads(line).get('event')=='h_bounded_numeric_factor_begin' for line in p.read_text().splitlines())
+    return count
 
 
 def require_stage(role):
     if role not in SOLVES:raise ValueError('V60 fixed solve inventory')
+    if numeric_factor_attempts()>=3 and not (window.TMP/(role+'_post_resume.json')).exists():raise RuntimeError('V60 three numeric attempt ceiling includes failures')
     if (window.TMP/'scientific_queue_frozen.json').exists():raise RuntimeError('V60 frozen')
     pre=stage('PREFLIGHT')
     if not pre['pass_gate']:raise RuntimeError('new entity map not qualified')

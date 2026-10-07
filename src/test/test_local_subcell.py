@@ -39,7 +39,7 @@ class LocalTests(unittest.TestCase):
         from src.solvers import local_subcell_scope as s
         with patch.object(s.window,'remaining',side_effect=RuntimeError('launch only')), \
              patch.object(s.window,'available_at_boundary',return_value=4000), \
-             patch.object(s,'stage',return_value={'pass_gate':True}):
+             patch.object(s,'stage',return_value={'pass_gate':True}), patch.object(s,'numeric_factor_attempts',return_value=0):
             s.require_stage('C67')
 
     def test_nonmutual_40port_nonzero_internal(self):
