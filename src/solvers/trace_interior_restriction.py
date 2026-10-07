@@ -204,7 +204,8 @@ def projection_pattern_envelope(Rmap,ports):
         index64_complex128_entry_bytes=24,product_payload_copies=2,mapping_payload_copies=4,
         workspace_bytes=int(workspace),pattern_workspace_upper_bytes=(high+low)*((low+7)//8+32),
         high_existing_in_live_RSS=True,
-        no_numerical_clipping=True,no_dense_projection_or_graph_allocation=True)
+        no_numerical_clipping=True,no_dense_numeric_projection=True,
+        bounded_integer_incidence_storage=True)
 
 
 class RestrictedTraceFactor:

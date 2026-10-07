@@ -107,6 +107,8 @@ class SavedCheckerTests(unittest.TestCase):
         self.assertGreaterEqual(plan['low_nnz_upper'],np.count_nonzero(Q.conj().T@A@Q))
         self.assertEqual(plan['cell_low_support_max'],3)
         self.assertTrue(plan['all_stored_interpolation_entries_counted'])
+        self.assertTrue(plan['no_dense_numeric_projection'])
+        self.assertTrue(plan['bounded_integer_incidence_storage'])
 
     def test_cost_binding_uses_actual_consumer_scope(self):
         import json,tempfile

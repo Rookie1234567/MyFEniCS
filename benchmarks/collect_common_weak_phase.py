@@ -181,7 +181,7 @@ def archive_increment(folder,out,runs,sources,*,active_scope=scope):
     for root in [scope.window.TMP]+[Path(r['folder']) for r in runs]+[scope.ARTIFACT]:
         for p in root.rglob('*'):
             if not p.is_file() or p in seen or p.is_relative_to(archive) or p.is_relative_to(out):continue
-            if p.suffix not in ('.json','.jsonl','.log','.stdout','.stderr','.dat','.txt') and not (label=='v58' and p.name in ('stdout','stderr')):continue
+            if p.suffix not in ('.json','.jsonl','.log','.stdout','.stderr','.dat','.txt') and not (label in ('v58','v59') and p.name in ('stdout','stderr')) and not (label=='v59' and p.suffix in ('.diff','.py')):continue
             seen.add(p)
             if p.is_relative_to(scope.window.TMP) and any(n in p.relative_to(scope.window.TMP).parts
                 for n in ('edit','pycache','xdg','torch','uv','ruff','source_archive')):continue

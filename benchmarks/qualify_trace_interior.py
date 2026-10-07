@@ -14,7 +14,7 @@ def main():
     import numpy as np
     if PETSc.ScalarType!=np.complex128 or os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1':raise RuntimeError('V59 qualified ABI')
     paths=['src/solvers/trace_interior_scope.py','src/solvers/trace_interior_restriction.py','src/solvers/trace_interior_study.py',
-        'src/test/test_trace_interior.py','benchmarks/qualify_trace_interior.py','benchmarks/collect_trace_interior.py','benchmarks/collect_phase_deployment.py',
+        'src/test/test_trace_interior.py','benchmarks/qualify_trace_interior.py','benchmarks/collect_trace_interior.py','benchmarks/collect_phase_deployment.py','benchmarks/collect_common_weak_phase.py',
         'src/constraints/floquet_3d.py','src/constraints/high_order_floquet_trace.py','src/solvers/phase_explicit_accuracy.py',
         'src/solvers/phase_notch_hp.py','src/runners/port_preparation.py','src/io/phase_notch_hp.py','scripts/run_case.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')
