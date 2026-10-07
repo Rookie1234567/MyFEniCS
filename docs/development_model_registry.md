@@ -1,5 +1,15 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V10-r2：W0.7 reduced-p6首场资源受控停止（2026-10-08）
+
+| 模型/阶段 | 当前实测 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，matched-cell fixed-H6 warm consumer | 内部setup到达one-cell factor、bottom P4 factor/Woodbury及top P4矩阵/port；唯一service wall`2350.819163285 s`后按`absolute_memory_limit`受控停止 | tree RSS峰`53,541,888,000 B`超过cap`53,221,163,008 B`；feedback/outer/五残差/recovery/physics未到达，不能登记数值结果或pass |
+| P4矩阵与因子 | bottom矩阵64966²/NNZ 27,929,686且factor live；top矩阵64966²/NNZ 39,242,250，factor-ready未记录；逐因子字节/fill unknown | 峰定位在top `ResearchExactFactorInverse`构造区间，不能断言具体symbolic/numeric点或把总RSS归于factor；finalizer controlled-stop 7/10，清场/RSS下降通过 |
+| 匹配h控制 | normal-incidence homogeneous-W serial selector pass，wall`237.46574084204622 s` | MPI2路径明确skip，因此MPI2=`not_run`；不是图案pilot/QEP模态资格 |
+
+此reduced pilot仍不代表完整`50×25 nm` W0.7、2 TB容量或48 h目标通过。证据与所有原始路径/哈希见[Task041 V10 measured progress](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_measured_progress_v10.md)和[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)。
+
 ## Task041 Review V9 H0：最新只读状态（2026-10-06）
 
 | 模型/阶段 | 当前事实 | 资格边界与证据 |

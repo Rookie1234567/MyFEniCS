@@ -1,5 +1,13 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-08：Task041 Review V10-r2 W0.7 reduced-p6现场进度
+
+唯一warm matched-cell consumer（Invocation `10d761079d90473dadce79d3f7eb6457`）在top P4因子构造阶段因process-tree RSS达到`53,541,888,000 B`、超过`53,221,163,008 B` cap而受控停止。Public-to-finalizer wall `2350.819163285 s`，V5 ledger 160项且此Invocation恰一项；finalizer为`controlled_stop`、常规检查7/10，清场和RSS下降检查通过。没有启动第二场。
+
+外层service只记录public command开始/结束，不代表consumer没有setup。consumer内部44条marker已到one-cell factor、bottom P4 factor/Woodbury、top full action及top P4 trace/port；bottom矩阵64966²、NNZ 27,929,686且因子live，top矩阵64966²、NNZ 39,242,250但无factor-ready记录。port-ready后源码进入`ResearchExactFactorInverse`，其`ksp.setUp()`含symbolic/numeric而生命周期事件未向marker转发；故停点仅能定位到顶侧factor构造区间，不能拆symbolic/numeric或把整体RSS全算作factor。反馈门、outer、五残差、recovery/physics均未到达。详细原始SHA、内部/外层资源样本见[Task041 V10 measured progress](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_measured_progress_v10.md)及[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)。
+
+匹配h的均匀W控制已有serial pass，但测试在MPI size≠1时skip，因此MPI2仍not_run；下一步只审原测试分布式trace/坐标helper的窄适配，不把skip当pass。下一场数值运行先要有顶侧factor symbolic/工作区估计或有界分配计划。W0.7完整目标、2 TB容量和48 h目标仍未达。
+
 ## 2026-10-07：Task041 Review V9当前进度（含H0历史基线）
 
 **H0背景与基线。** 为判断已有W短波长工作量，按H0纳入的两场旧5 nm、p6/h4、M480、MPI8×1 consumer共同`consumer/markers.jsonl`阶段边界对照墙钟，并流式读取两份各1980行side RHS审计。两场分别完成1920/1920 formal response与各自残差/物理门；H0当时较新的Oct 3场public-to-finalizer为`202124.563261555 s`，约56.146 h，超过48 h目标。两场运行源码不同且均`performance_not_isolated`，不能用差值证明某优化因果或收益。H0机器记录是其完成时点的只读快照，不覆盖后续W5 fixed-H6新场。

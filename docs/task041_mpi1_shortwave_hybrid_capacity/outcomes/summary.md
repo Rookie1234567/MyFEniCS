@@ -1,5 +1,13 @@
 # Task041 outcomes summary
 
+## Task041 Review V10-r2：W0.7 reduced-p6 matched-cell warm consumer受控停止（2026-10-07）
+
+唯一warm consumer Invocation `10d761079d90473dadce79d3f7eb6457`以`absolute_memory_limit`受控停止。service public-to-finalizer wall为`2350.819163285 s`，V5 ledger 160项中该Invocation恰一条。process-tree RSS峰`53,541,888,000 B`超过冻结cap`53,221,163,008 B`共`320,724,992 B`；dedicated cgroup峰`51,229,249,536 B`另列，不能替代tree资源权威。Finalizer为`controlled_stop`、常规检查7/10，进程组清场与RSS下降检查通过。
+
+外层markers只记录public command开始/结束；绑定的consumer内部284,367 B marker（SHA `b1f338ca…`）有44条事件，已显示one-cell factor、bottom P4/Woodbury、top full action和top P4 trace/port均已实际到达。Bottom P4矩阵为64966×64966、NNZ 27,929,686，factor ready并live；top矩阵为同维度、NNZ 39,242,250，但factor-ready未记录。port-ready后源码立即进入顶侧`ResearchExactFactorInverse`构造，其`ksp.setUp()`包含symbolic/numeric，factor生命周期事件没有转发到consumer markers。因此资源峰只能定位到顶侧factor构造区间，不能断言精确symbolic/numeric停止点或factor已完成，也不能把所有RSS都归因于因子。
+
+固定H6反馈门、outer、五项残差、recovery及physics均`not_reached/not_evaluated`；这不是数值通过或数值失败。顶侧factor fill/字节、symbolic内存估计、下一笔分配上界仍unknown，故不得原样重跑跨入numeric。完整阶段、采样、finalizer、ledger及SHA见[本轮实测进度](shortwave_measured_progress_v10.md)、[派生记录](records/task041_v10_controlled_stop_20261007.json)和[Response V12](../response_v12.md)。匹配h控制仅有serial pass，当前节点对MPI size≠1明确skip；MPI2为not_run。
+
 ## Task041 Review V9 H0历史快照与当前进度（截至2026-10-07）
 
 H0是一次只读历史快照：它对照两场W 5 nm、p6/h4、M480、MPI8×1完整consumer，并审查2 nm和0.7 nm证据；当时没有运行数值代码、测试、MPI、QEP或FE。其后H1组件验证、13.5 nm Si和W5 fixed-H6 public/service完整回归均已完成，下文分别登记。两场旧5 nm各完成1920/1920正式响应并通过各自五项真实残差和恢复/物理门；旧场public-to-finalizer为`202124.563261555 s`（56.146 h）。旧场均`performance_not_isolated`，不能用来证明新方法的因果收益。

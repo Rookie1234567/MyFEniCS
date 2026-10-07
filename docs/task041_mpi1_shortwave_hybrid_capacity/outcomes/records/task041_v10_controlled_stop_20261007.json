@@ -1,0 +1,152 @@
+{
+  "schema": "task041.review_v10.measured_progress.v1",
+  "as_of": "2026-10-08",
+  "review": "V10-r2",
+  "repository": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "review_sync_head": "174ad73a78dcb8a584ea9739007ddbd1e2ef39cc",
+    "runtime_source": "5025fdd31a1edc4ce34a8df3150a12ca90009c01",
+    "protected_stash": "90e50393831cf8a9da6fe223ef8cae4d3cfa3976",
+    "stash_action": "retained_not_applied"
+  },
+  "run": {
+    "invocation_id": "10d761079d90473dadce79d3f7eb6457",
+    "unit": "task041-v9-w0p7-matched-cell-p6-fixed-h6-warm-sorted-map10-11-12-14-15-16-17-18-20261007T174630Z.service",
+    "runroot": "results/task041_w0p7_matched_cell_warm_consumer_run_map10_11_12_14_15_16_17_18_20261007T174630Z",
+    "consumer_result_root": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261007T180353.062546Z",
+    "source": "5025fdd31a1edc4ce34a8df3150a12ca90009c01",
+    "cpu_map": [10, 11, 12, 14, 15, 16, 17, 18],
+    "producer_mode": "validated_producer_root_reuse",
+    "qep_runs_in_invocation": 0,
+    "classification": "controlled_stop",
+    "termination_reason": "absolute_memory_limit",
+    "public_returncode": -15,
+    "service_terminal_exit_status": 3,
+    "service_parent_wall_seconds": 2350.819163285,
+    "numerical_gates": {
+      "fixed_h6_feedback_gate": "not_reached",
+      "outer_solve": "not_reached",
+      "five_true_residuals": "not_evaluated",
+      "recovery": "not_run",
+      "physics": "not_run"
+    }
+  },
+  "resource": {
+    "process_tree_cap_bytes": 53221163008,
+    "warning_bytes": 47899046707,
+    "reserve_bytes": 412316860416,
+    "process_tree_peak_rss_bytes": 53541888000,
+    "process_tree_peak_over_cap_bytes": 320724992,
+    "dedicated_cgroup_peak_bytes": 51229249536,
+    "peak_pss_bytes": 43305919488,
+    "peak_uss_bytes": 42881789952,
+    "job_swap_peak_bytes": 0,
+    "memory_peak_factor_attribution": "unknown"
+  },
+  "consumer_markers": {
+    "path": "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261007T180353.062546Z/consumer/markers.jsonl",
+    "sha256": "b1f338ca12f9abf8c6fd5f8e9e03112086b29c4d2007a8f73e18074989121996",
+    "bytes": 284367,
+    "event_count": 44,
+    "last_event": "top p4_condensed_port_ready",
+    "last_event_wall_seconds": 2329.3651888179593,
+    "milestones": [
+      {"event": "one_cell_factor_ready", "wall_seconds": 702.9149955320172},
+      {"event": "one_cell_factor_destroyed", "wall_seconds": 973.6114115479868},
+      {"event": "system_ready", "wall_seconds": 1804.3207318261266},
+      {"event": "bottom_p4_condensed_trace_ready", "wall_seconds": 1943.747303801123},
+      {"event": "bottom_p4_condensed_port_ready", "wall_seconds": 1946.3846031839494},
+      {"event": "bottom_factor_ready", "wall_seconds": 2262.0265946399886},
+      {"event": "bottom_woodbury_ready", "wall_seconds": 2262.0696785529144},
+      {"event": "top_full_action_ready", "wall_seconds": 2279.5189887720626},
+      {"event": "top_p4_condensed_trace_ready", "wall_seconds": 2317.3957305001095},
+      {"event": "top_p4_condensed_port_ready", "wall_seconds": 2329.3651888179593}
+    ]
+  },
+  "matrices": {
+    "bottom_p4": {
+      "shape": [64966, 64966],
+      "nnz": 27929686,
+      "active_trace_rows": 64320,
+      "interior_rows": 77760,
+      "port_rows": 646,
+      "factor_create_count": 1,
+      "factor_solve_count": 0,
+      "factor_live_at_ready": true,
+      "factor_bytes": null
+    },
+    "top_p4": {
+      "shape": [64966, 64966],
+      "nnz": 39242250,
+      "matrix_materialized": true,
+      "factor_ready": false,
+      "factor_bytes": null,
+      "factor_fill": null
+    }
+  },
+  "factor_setup_boundary": {
+    "after_last_consumer_marker": "ResearchExactFactorInverse construction",
+    "implementation": "ksp.setUp() includes factor symbolic and numeric setup",
+    "factor_lifecycle_forwarded_to_consumer_markers": false,
+    "exact_symbolic_numeric_stop_point": "unknown",
+    "top_factor_completion": "not_recorded"
+  },
+  "resident_samples": {
+    "near_last_consumer_marker": {
+      "elapsed_seconds": 2329.2314126039855,
+      "process_tree_rss_bytes": 46439280640,
+      "dedicated_cgroup_current_bytes": 44137930752,
+      "tree_cap_headroom_bytes": 6781882368
+    },
+    "near_stop": {
+      "elapsed_seconds": 2347.906314032851,
+      "process_tree_rss_bytes": 52890804224,
+      "dedicated_cgroup_current_bytes": 50623971328,
+      "dedicated_cgroup_peak_bytes": 50624233472,
+      "tree_cap_headroom_bytes": 330358784
+    }
+  },
+  "finalizer": {
+    "status": "controlled_stop",
+    "ordinary_checks_passed": 7,
+    "ordinary_checks_total": 10,
+    "ordinary_false_checks": [
+      "pre_exit_members_clean",
+      "public_result_completed",
+      "service_terminal_normal"
+    ],
+    "process_group_gone": true,
+    "rss_drop_pass": true
+  },
+  "ledger": {
+    "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+    "entries": 160,
+    "matching_invocation_entries": 1,
+    "sha256": "a7022ccc177cf604dea1e0bff4bcd96735e2e82aded33645016455163927abd4"
+  },
+  "evidence_sha256": {
+    "service_summary": "b3bcec419161df8088756ee764ae72397680404438c743724fcdc4e4f8d50e08",
+    "service_parent_summary": "b81db090e4ea6831a449362602cdde26a581b0e5d6324fc01d42c695e0f01a1a",
+    "finalizer_summary": "669e3ee0349725ec1ef1057c253b8c6b2195b29df43070abccf619c5304bdbc6",
+    "artifact_hashes": "822dec2079590117f9e4fae384666c3e688c16bef2351c6a47f11dd433b8af82",
+    "outer_memory_stages": "592de00a7d693770fe095d231f3ff995440e73f3ee6ed1abf4b9903d110b201d",
+    "inner_memory_stages": "1519477ff8d8f31f246295c0505a3e0dbacc7ec5d22ba2aa7493727018056fb7",
+    "outer_markers": "7f2e6e335b2b9a91c6c0ba97f0fb2cf0a7262522c1a1486be5ea5d75ffd19378",
+    "consumer_markers": "b1f338ca12f9abf8c6fd5f8e9e03112086b29c4d2007a8f73e18074989121996",
+    "consumer_factor_inventory_not_run_placeholder": "28a37983ea005197a7febb7b94e3f435ad8449a7a61f35c8575b83ad3fcb13f3",
+    "ledger": "a7022ccc177cf604dea1e0bff4bcd96735e2e82aded33645016455163927abd4"
+  },
+  "matched_h_control": {
+    "selector": "src/test/test_task037c_exact_one_cell_traction.py::test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control",
+    "result": "serial_pass",
+    "parent_wall_seconds": 237.46574084204622,
+    "mpi2": "not_run; selector skips when comm.size != 1"
+  },
+  "limitations": [
+    "The run did not reach the fixed-H6 setup feedback gate or outer solve.",
+    "The process-tree peak is not attributed wholly to the top P4 factor.",
+    "Bottom factor bytes and top factor fill/bytes are unknown.",
+    "No numerical residual or physical result was produced by this Invocation.",
+    "The reduced pilot is not the full 50x25 nm W0.7 target or 2 TB/48 h qualification."
+  ]
+}
