@@ -198,7 +198,7 @@ def launch(spec):
             "verify",
             "LEARNED_WAVE_GREEDY",
             "FIXED_WAVE_GREEDY_CONTROL",
-            "saved_field_audit", "block_checks", "block_reconstruct",
+            "saved_field_audit", "block_checks", "block_reconstruct", "reconstruction_stability",
             "FIXED_WAVE_BLOCK_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY",
         )
         else 2
@@ -267,7 +267,9 @@ def launch(spec):
                         "scripts/launch_task42extra_durable.py",
                         "scripts/run_case.py",
                     ) + (("src/io/block_wave_campaign.py", "src/runners/block_wave_admission.py",
-                          "src/runners/block_wave_worker.py") if spec.get("campaign_version") == 31 else ())
+                          "src/runners/block_wave_worker.py", "src/solvers/neural_wave_block.py",
+                          "src/solvers/neural_wave_block_reconstruction.py",
+                          "src/solvers/neural_wave_block_qualification.py") if spec.get("campaign_version") == 31 else ())
                 },
                 utc=stamp,
                 route_origin_monotonic=allocation["origin_monotonic"],

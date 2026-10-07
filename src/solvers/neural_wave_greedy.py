@@ -236,10 +236,14 @@ class BasisStore:
         return value
 
 
-def variable_projection(action, subspace, moments, patch, q, *, gradient, local=None, projector=None):
+def variable_projection(
+    action, subspace, moments, patch, q, *, gradient, local=None, projector=None
+):
     columns = moments.columns(patch, q)
     p, z, record = optimal_amplitudes(
-        action, subspace, columns,
+        action,
+        subspace,
+        columns,
         applied_columns=local.columns(columns) if local is not None else None,
         projector=projector,
     )
@@ -250,12 +254,14 @@ def variable_projection(action, subspace, moments, patch, q, *, gradient, local=
     # Envelope derivative of ||r-Zp||^2; p is the tiny SVD minimizer.
     fallback = record["original_two_pass_rounding_fallback"]
     projected = (
-        subspace.project(subspace.r - z) if projector is None or fallback
+        subspace.project(subspace.r - z)
+        if projector is None or fallback
         else projector.project(subspace.r - z)
     )
     cotangent = (
         action.apply(projected, adjoint=True)
-        if local is None or fallback else local.adjoint(projected)
+        if local is None or fallback
+        else local.adjoint(projected)
     )
     gq, _ = moments.vjp(patch, q, amplitude, cotangent)
     gq *= 2 / float(np.vdot(action.f, action.f).real)
@@ -263,7 +269,8 @@ def variable_projection(action, subspace, moments, patch, q, *, gradient, local=
 
 
 def run_greedy(action, packet, design, artifact, binding, deadline, marker):
-    learned = binding["route"] == "LEARNED_WAVE_GREEDY"
+    block_mode = bool(design.get("block_profile", False))
+    learned = binding["route"] in ("LEARNED_WAVE_GREEDY", "LEARNED_WAVE_BLOCK_GREEDY")
     strategy = design["strategy"]
     capacity = strategy["max_columns"]
     n = action.size
@@ -273,12 +280,24 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
     moments = WaveMoments(packet, batch=8)
     local_actions = {}
     projection_costs = dict(build_s=0.0, project_s=0.0, calls=0, stable_fallbacks=0)
-    space = WaveSubspace(action, capacity)
-    store = BasisStore(Path(artifact) / "basis", binding)
+    if block_mode:
+        from src.solvers.neural_wave_block import BlockWaveSubspace, BlockBasisStore
+
+        space = BlockWaveSubspace(action, capacity)
+        store = BlockBasisStore(Path(artifact) / "basis", binding)
+    else:
+        space = WaveSubspace(action, capacity)
+        store = BasisStore(Path(artifact) / "basis", binding)
     rng = np.random.default_rng(strategy["seed"])
     level, width, resolution_index, stagnant = 0, 1, 0, 0
     iteration, failures, learning_updates = 0, 0, 0
     primitive_history_complete = True
+    growth_state = dict(
+        last_rank=0,
+        last_native=1.0,
+        checkpoints=[dict(rank=0, native=1.0)],
+        last_audit_rank=0,
+    )
     previous = store.restore(space, rng)
     if previous:
         iteration = previous["iteration"]
@@ -288,6 +307,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             saved[k] for k in ("level", "width", "resolution_index", "stagnant")
         )
         failures, learning_updates = saved["failures"], saved["learning_updates"]
+        growth_state = saved.get("block_growth_state", growth_state)
         prior_costs = saved.get("cost_state")
         if prior_costs:
             # Restoration has already checked the complete original residual.
@@ -309,7 +329,52 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         )
     history = Path(artifact) / "basis_growth.jsonl"
     stop = None
-    while space.m < capacity:
+    save_buffer = 120 if block_mode else 600
+    while True:
+        if space.m >= capacity:
+            if block_mode and capacity == strategy["max_columns"]:
+                audit = action.audit(space.c)
+                older = [
+                    v for v in growth_state["checkpoints"] if v["rank"] <= space.m - 256
+                ]
+                previous_native = older[-1]["native"] if older else 1.0
+                extension = strategy["conditional_rank_cap"]
+                gates = dict(
+                    native_and_augmented=max(
+                        audit["native_relative"], audit["augmented_relative"]
+                    )
+                    <= 1e-4,
+                    residual_halved_over_at_least_256=audit["native_relative"]
+                    <= 0.5 * previous_native,
+                    temporary_planning_bytes=space.extension_plan(extension),
+                    temporary_planning_pass=space.extension_plan(extension)
+                    <= 12 * 2**30,
+                    enough_time_for_audit=deadline - monotonic() >= 1800,
+                )
+                admitted = all(
+                    gates[k]
+                    for k in (
+                        "native_and_augmented",
+                        "residual_halved_over_at_least_256",
+                        "temporary_planning_pass",
+                        "enough_time_for_audit",
+                    )
+                )
+                atomic_json(
+                    Path(artifact) / "conditional_capacity_gate.json",
+                    dict(
+                        gates=gates,
+                        admitted=admitted,
+                        default_capacity=capacity,
+                        conditional_capacity=extension,
+                    ),
+                )
+                if admitted:
+                    space.grow_capacity(extension)
+                    capacity = extension
+                    bytes_plan = 32 * n * capacity + 3 * 16 * capacity**2 + 2 * 2**30
+                    continue
+            break
         comparison = Path(artifact) / "common_comparison_boundary.json"
         if (
             not comparison.exists()
@@ -330,7 +395,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             )
             stop = "COMMON_COST_WORK_NODE_FROZEN_NOT_FINAL"
             break
-        if monotonic() > deadline - 600:
+        if monotonic() > deadline - save_buffer:
             stop = "CAMPAIGN_OR_ROUTE_BUDGET_SAVE_RESERVE"
             break
         norm_before = float(np.linalg.norm(space.r))
@@ -366,8 +431,11 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             from src.solvers.neural_wave_projection import ResidualProjectionCache
 
             projector = ResidualProjectionCache(
-                space, local.output_rows,
-                additional_cache_bytes=sum(x.retained_bytes for x in local_actions.values()),
+                space,
+                local.output_rows,
+                additional_cache_bytes=sum(
+                    x.retained_bytes for x in local_actions.values()
+                ),
             )
             projection_costs["build_s"] += projector.seconds["build"]
             projector_charged = dict(project_s=0.0, calls=0, stable_fallbacks=0)
@@ -383,6 +451,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             for key, value in current.items():
                 projection_costs[key] += value - projector_charged[key]
                 projector_charged[key] = value
+
         resolution = strategy["direction_resolutions"][resolution_index]
         dictionary = direction_dictionary(
             2 * np.pi / design["model"]["wavelength_nm"], resolution
@@ -392,17 +461,31 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         def screen(q_values):
             if width in binding.get("bounded_candidate_screening_widths", []):
                 from src.solvers.neural_wave_screening import screen_candidates
+
                 return screen_candidates(
-                    action, space, moments, patch, q_values,
-                    local=local, projector=projector,
+                    action,
+                    space,
+                    moments,
+                    patch,
+                    q_values,
+                    local=local,
+                    projector=projector,
                 )
             result_values = []
             for proposal in q_values:
                 try:
-                    result_values.append(variable_projection(
-                        action, space, moments, patch, proposal,
-                        gradient=False, local=local, projector=projector,
-                    ))
+                    result_values.append(
+                        variable_projection(
+                            action,
+                            space,
+                            moments,
+                            patch,
+                            proposal,
+                            gradient=False,
+                            local=local,
+                            projector=projector,
+                        )
+                    )
                 except ValueError as error:
                     if str(error) != "DEGENERATE_NEW_DIRECTION":
                         raise
@@ -411,11 +494,15 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
 
         initial_candidates = []
         for seed_number in range(strategy["screen_seeds"]):
-            offset = (iteration * strategy["screen_seeds"] + seed_number) % len(dictionary)
+            offset = (iteration * strategy["screen_seeds"] + seed_number) % len(
+                dictionary
+            )
             initial_candidates.append(
                 dictionary[(offset + np.arange(width) * 7) % len(dictionary)].copy()
             )
-        for q, value in zip(initial_candidates, screen(initial_candidates), strict=True):
+        for q, value in zip(
+            initial_candidates, screen(initial_candidates), strict=True
+        ):
             if value is None:
                 failures += 1
             else:
@@ -424,15 +511,27 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         # Same six predeclared directions and stable ordering for both routes.
         if candidates:
             _, seed_q, _ = max(candidates, key=lambda x: x[0])
-            step = strategy["local_refinement_steps_k0"][resolution_index] * 2 * np.pi / design["model"]["wavelength_nm"]
-            bound = strategy["q_component_bound_k0"] * 2 * np.pi / design["model"]["wavelength_nm"]
+            step = (
+                strategy["local_refinement_steps_k0"][resolution_index]
+                * 2
+                * np.pi
+                / design["model"]["wavelength_nm"]
+            )
+            bound = (
+                strategy["q_component_bound_k0"]
+                * 2
+                * np.pi
+                / design["model"]["wavelength_nm"]
+            )
             refined_candidates = []
             for axis in range(3):
                 for sign in (-1, 1):
                     refined = seed_q.copy()
                     refined[:, axis] += sign * step
                     refined_candidates.append(np.clip(refined, -bound, bound))
-            for refined, value in zip(refined_candidates, screen(refined_candidates), strict=True):
+            for refined, value in zip(
+                refined_candidates, screen(refined_candidates), strict=True
+            ):
                 if value is not None:
                     candidates.append((value[0], refined, value))
         if not candidates:
@@ -458,24 +557,29 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 )
                 seed_c = moments.forward(patch, q, p_seed)
                 seed_action = (
-                    action.apply(seed_c) if local is None
+                    action.apply(seed_c)
+                    if local is None
                     else local.columns(seed_c[:, None])[:, 0]
                 )
                 seed_z = (
-                    space.project(seed_action) if projector is None
+                    space.project(seed_action)
+                    if projector is None
                     else projector.project(seed_action, supported=True)
                 )
                 projected_seed = (
-                    space.project(seed_z - space.r) if projector is None
+                    space.project(seed_z - space.r)
+                    if projector is None
                     else projector.project(seed_z - space.r)
                 )
                 _, gp = moments.vjp(
                     patch,
                     q,
                     p_seed,
-                    2 * (
+                    2
+                    * (
                         action.apply(projected_seed, adjoint=True)
-                        if local is None else local.adjoint(projected_seed)
+                        if local is None
+                        else local.adjoint(projected_seed)
                     ),
                 )
                 amplitude_learning = dict(
@@ -488,7 +592,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 )
 
                 def objective(flat):
-                    if monotonic() >= deadline - 600:
+                    if monotonic() >= deadline - save_buffer:
                         raise TimeoutError("MODULE_SAVE_RESERVE")
                     value = variable_projection(
                         action,
@@ -526,7 +630,14 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     )
                     trial_q = result.x.reshape(width, 3)
                     trial = variable_projection(
-                        action, space, moments, patch, trial_q, gradient=False, local=local, projector=projector
+                        action,
+                        space,
+                        moments,
+                        patch,
+                        trial_q,
+                        gradient=False,
+                        local=local,
+                        projector=projector,
                     )
                     if trial[0] >= best[0]:
                         q, best = trial_q, trial
@@ -563,11 +674,40 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 np.linalg.norm(actual_column - best[2])
                 / max(np.linalg.norm(actual_column), 1e-30)
             )
-            event = (
-                space.add(actual_column)
-                if mapping_pair <= 1e-10
-                else dict(accepted=False, reason="TENSOR_FULL_MAPPING_PAIR_FAILED")
-            )
+            if block_mode and mapping_pair <= 1e-10:
+                raw_columns = moments.columns(patch, q)
+                # Each amplitude direction is independently mapped from its
+                # actual point values; no ideal tensor vector is substituted.
+                actual_columns = np.column_stack(
+                    [
+                        pointwise_moments(
+                            packet,
+                            lambda x, j=j: patch.window(x)[:, None]
+                            * np.exp(1j * (x - np.array(patch.center)) @ q[j // 3])[
+                                :, None
+                            ]
+                            * np.eye(3)[j % 3],
+                            zero_outside_patch=patch,
+                        )
+                        for j in range(3 * len(q))
+                    ]
+                )
+                block_pair = float(
+                    np.linalg.norm(actual_columns - raw_columns)
+                    / max(np.linalg.norm(actual_columns), 1e-30)
+                )
+                event = (
+                    space.add_block(actual_columns)
+                    if block_pair <= 1e-10
+                    else dict(accepted=False, reason="BLOCK_FULL_MAPPING_PAIR_FAILED")
+                )
+                event["block_full_mapping_relative"] = block_pair
+            else:
+                event = (
+                    space.add(actual_column)
+                    if mapping_pair <= 1e-10
+                    else dict(accepted=False, reason="TENSOR_FULL_MAPPING_PAIR_FAILED")
+                )
             event["tensor_full_mapping_relative"] = mapping_pair
             event.update(
                 module=iteration,
@@ -596,6 +736,49 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 # Compute the complete native/augmented audit before saving;
                 # the public committed row is still published only afterwards.
                 event["audit"] = action.audit(space.c)
+                if block_mode:
+                    event["retained_amplitude_rank"] = space.m
+                    event["basis_bytes"] = int(
+                        32 * action.size * space.m + 16 * space.m * space.m
+                    )
+                    if (
+                        space.m - growth_state["last_rank"]
+                        >= strategy["rank_audit_interval"]
+                    ):
+                        current = event["audit"]["native_relative"]
+                        decrease = 1 - current / growth_state["last_native"]
+                        event["rank_interval_audit"] = dict(
+                            previous_rank=growth_state["last_rank"],
+                            actual_new_rank=space.m - growth_state["last_rank"],
+                            relative_residual_decrease=decrease,
+                            slow_threshold=strategy["slow_relative_decrease_per_64"],
+                        )
+                        growth_state["checkpoints"].append(
+                            dict(rank=space.m, native=current)
+                        )
+                        if decrease <= strategy["slow_relative_decrease_per_64"]:
+                            if (
+                                resolution_index
+                                < len(strategy["direction_resolutions"]) - 1
+                            ):
+                                resolution_index += 1
+                                event["slow_enrichment"] = "direction_resolution"
+                            elif width < 8:
+                                width *= 2
+                                resolution_index = 0
+                                event["slow_enrichment"] = "width"
+                            elif level < 2:
+                                level += 1
+                                resolution_index = 0
+                                event["slow_enrichment"] = "support"
+                            else:
+                                event["slow_enrichment"] = (
+                                    "authorized_support_width_resolution_exhausted"
+                                )
+                        growth_state["last_rank"], growth_state["last_native"] = (
+                            space.m,
+                            current,
+                        )
                 store.commit(
                     space,
                     model,
@@ -611,6 +794,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                         failures=failures,
                         learning_updates=learning_updates,
                         primitive_history_complete=primitive_history_complete,
+                        block_growth_state=growth_state if block_mode else None,
                         cost_state=dict(
                             action_counts=action.counts.copy(),
                             action_seconds=action.costs.copy(),
@@ -627,8 +811,37 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                     stream.flush()
                     os.fsync(stream.fileno())
                 marker("wave_committed", event)
-                if space.m in strategy["capacity_milestones"]:
+                if block_mode:
+                    previous_boundary = Path(artifact) / "basis/previous_committed.json"
+                    for node in strategy["time_nodes_seconds"]:
+                        target = Path(artifact) / f"time_node_{node}.json"
+                        if not target.exists() and event["elapsed_seconds"] >= node:
+                            prior = (
+                                json.loads(previous_boundary.read_text())
+                                if previous_boundary.exists()
+                                else None
+                            )
+                            atomic_json(
+                                target,
+                                dict(
+                                    node_seconds=node,
+                                    selection="latest committed boundary before the common time; not reference-best",
+                                    boundary=prior
+                                    if prior
+                                    and prior["event"]["elapsed_seconds"] <= node
+                                    else None,
+                                    first_boundary_after_seconds=event[
+                                        "elapsed_seconds"
+                                    ],
+                                    not_retained=not bool(prior),
+                                ),
+                            )
+                if (not block_mode and space.m in strategy["capacity_milestones"]) or (
+                    block_mode and space.m - growth_state["last_audit_rank"] >= 256
+                ):
                     rank = space.rank_audit()
+                    if block_mode:
+                        growth_state["last_audit_rank"] = space.m
                     atomic_json(Path(artifact) / f"rank_{space.m}.json", rank)
             else:
                 stagnant += 1
@@ -680,13 +893,25 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
         qr_seconds=space.seconds,
         capacity_plan_bytes=bytes_plan,
         numerical_gate="PENDING_INDEPENDENT_FULL_FIELD_CHECKER",
-        exact_local_input_support_reuse=binding.get("exact_local_input_support_reuse", False),
+        block_amplitude_retention=block_mode,
+        default_rank_capacity=capacity,
+        conditional_rank_extension_not_used=True,
+        rank_extension_reason="requires native/augmented<=1e-4, half residual in last256, safe reallocation and audit time; see rank growth",
+        exact_local_input_support_reuse=binding.get(
+            "exact_local_input_support_reuse", False
+        ),
         local_numeric_cache_bytes=sum(x.retained_bytes for x in local_actions.values()),
-        local_action_costs=[dict(counts=x.counts, seconds=x.seconds) for x in local_actions.values()],
+        local_action_costs=[
+            dict(counts=x.counts, seconds=x.seconds) for x in local_actions.values()
+        ],
         inherited_primitive_counters_retained=primitive_history_complete,
-        exact_two_pass_projection_reuse=binding.get("exact_two_pass_projection_reuse", False),
+        exact_two_pass_projection_reuse=binding.get(
+            "exact_two_pass_projection_reuse", False
+        ),
         projection_reuse_costs=projection_costs,
-        bounded_candidate_screening_widths=binding.get("bounded_candidate_screening_widths", []),
+        bounded_candidate_screening_widths=binding.get(
+            "bounded_candidate_screening_widths", []
+        ),
     )
     atomic_json(Path(artifact) / "result.json", result)
     return result

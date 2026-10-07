@@ -152,7 +152,7 @@ def recover_rebuild(artifact, source, name, directory, action, packet):
 
 
 def verify(design, action, packet, artifact, marker, *, reuse_completed=False,
-           include_producer=False, routes=None, route_root=None):
+           include_producer=False, routes=None, route_root=None, stable_rebuild=False):
     from src.solvers.neural_wave_reconstruction import rebuild
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import field_physics, _region_field_errors
@@ -175,8 +175,13 @@ def verify(design, action, packet, artifact, marker, *, reuse_completed=False,
             )
             marker("sealed_complete_rebuild_reused", dict(name=name, new_network_forward=0))
         else:
-            c, saved, boundary = rebuild(directory / "basis", packet, marker)
-            higher, _, _ = rebuild(directory / "basis", high, marker)
+            if stable_rebuild:
+                from src.solvers.neural_wave_block_reconstruction import rebuild_stable
+                c, saved, boundary = rebuild_stable(directory / "basis", packet, marker)
+                higher, _, _ = rebuild_stable(directory / "basis", high, marker)
+            else:
+                c, saved, boundary = rebuild(directory / "basis", packet, marker)
+                higher, _, _ = rebuild(directory / "basis", high, marker)
         same = float(np.linalg.norm(c - saved) / max(np.linalg.norm(saved), 1e-30))
         drift = float(np.linalg.norm(c - higher) / max(np.linalg.norm(c), 1e-30))
         action_drift = float(np.linalg.norm(action.apply(c - higher)) / action.bnorm)
