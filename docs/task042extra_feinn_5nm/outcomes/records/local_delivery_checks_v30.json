@@ -1,6 +1,6 @@
 {
   "classification": "PASS_LOCAL_SCOPE_ONLY",
-  "source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+  "source_sha": "2b78a0958b18bcc7c9d67a1527de976a74fe7f13",
   "scope": "new V30 pages/current navigation, compact JSON and saved vector arithmetic only",
   "pages": [
     {
@@ -131,8 +131,8 @@
   "original_navigation_source": "7bd72c7e81a9983addeff4032e9feacde6088a27",
   "diff_check_pass": true,
   "full_pytest_CI_and_browser_visual_pass": false,
-  "monotonic": 1284154.107479885,
-  "elapsed_seconds": 0.21378913708031178,
+  "monotonic": 1284276.516915874,
+  "elapsed_seconds": 0.20163789694197476,
   "environment": {
     "activation": "pure",
     "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",

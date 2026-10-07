@@ -1,11 +1,8 @@
 {
+  "classification": "BLOCKED_NO_VISUAL_EVIDENCE",
   "local_structure": "PASS_LOCAL_SCOPE_ONLY",
   "actual_browser_visual_pass": false,
-  "classification": "BLOCKED_NO_VISUAL_EVIDENCE",
-  "scope": "Review V29 and two key new pages only",
-  "old_failures_retained": true,
-  "publication_attempts": "finite post-push attempts will be recorded",
-  "no_full_historical_render": true,
+  "scope": "Review V29 and exactly two key newly published pages; no historical bulk rendering",
   "review_attempt": {
     "scope": "finite published Review V29 rendered-page access",
     "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8d617d4d206b08f38279320b67188db1b8ccd301/docs/task042extra_feinn_5nm/review_report_v29.md",
@@ -17,5 +14,27 @@
     "numerical_execution_blocked": false,
     "attempts": 1
   },
-  "new_pages_visual": "PENDING_ONE_FINITE_POST_PUBLICATION_ATTEMPT; not visual PASS"
+  "publication_sha": "2b78a0958b18bcc7c9d67a1527de976a74fe7f13",
+  "new_page_attempts": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/2b78a0958b18bcc7c9d67a1527de976a74fe7f13/docs/task042extra_feinn_5nm/response_v30.md",
+      "method": "web.open, not a screenshot or browser DOM",
+      "result": "Internal Error / Failed to fetch: Cache miss",
+      "published_blob_local_sha256": "d864aa7ab324d8562099e5e005258e95c7b4f7040a032d5d3b52de37216e6c7c",
+      "actual_visual_inspection": false
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/2b78a0958b18bcc7c9d67a1527de976a74fe7f13/docs/task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md",
+      "method": "web.open, not a screenshot or browser DOM",
+      "result": "Internal Error / Failed to fetch: Cache miss",
+      "published_blob_local_sha256": "ffda282271bcaf8ca3434811ddc1f8c53d8deb9e72814605df8eec4a2379b047",
+      "actual_visual_inspection": false
+    }
+  ],
+  "recorded_after_attempts_monotonic": 1284276.143133411,
+  "screenshot_count": 0,
+  "browser_DOM_obtained": false,
+  "new_numerical_execution_blocked_by_web": false,
+  "old_failures_retained": true,
+  "sealing_commit_changes_no_numerical_code_or_raw": true
 }

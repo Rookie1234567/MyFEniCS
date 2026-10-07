@@ -72,7 +72,7 @@
   "disk_available_snapshot_bytes": 3253769207808,
   "disk_available_snapshot_scope": "final preparation snapshot, not a new startup certificate",
   "observation_scope_of_above_values": "at actual numerical recovery rejection; later finite pure delivery observation charged separately",
-  "resource_observation_seconds_at_this_snapshot": 1161.3564897177275,
+  "resource_observation_seconds_at_this_snapshot": 1162.4436764507554,
   "post_stop_pure_delivery_checks": [
     {
       "name": "final_metadata_1",
@@ -101,7 +101,23 @@
       "own_swap_bytes": 0,
       "cleared": true,
       "scope": "finite light text/record/vector norms only; no new numerical admission"
+    },
+    {
+      "name": "final_delivery_checks_2",
+      "supervision": {
+        "path": "tmp/task42extra/v30/bootstrap/final_delivery_checks_2/supervised/summary.json",
+        "bytes": 2004,
+        "sha256": "b340ff33c19ca8a3c6be90e7cf656b366825f9ea34fb4cd3708ce52e356d578d"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.3820682528894395,
+      "simultaneous_sampled_tree_rss_peak_bytes": 141426688,
+      "own_swap_bytes": 0,
+      "cleared": true,
+      "scope": "finite light metadata and independent saved vector arithmetic only; no new numerical admission"
     }
   ],
-  "snapshot_monotonic_latest_light_record": 1284153.870960484
+  "snapshot_monotonic_latest_light_record": 1284276.293537391,
+  "final_web_access": "two published key pages Internal Error/Cache miss, visual false; finite cost inside original calendar",
+  "final_tail_untracked_receipt": "tmp/task42extra/v30/delivery_receipt.json, includes post-seal push/fetch/cleanup and remaining clock"
 }
