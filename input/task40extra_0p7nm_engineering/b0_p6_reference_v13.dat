@@ -1,0 +1,110 @@
+# Task40 Review V13 standalone case; run_id=task40extra_0p7nm_b0_p6_reference_v13 is a dedicated V13 attempt, with the reviewed physical profile unchanged.
+# The controller freezes the exact V13 source before launch; runtime provenance records that Git source_sha.
+schema_version = 1
+model_id = "task40extra_nonseparable_0p7nm"
+run_id = "task40extra_0p7nm_b0_p6_reference_v13"
+comparison_group = "task40extra_0p7nm_nonseparable_n0_n6"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+model_variant = "original"
+geometry_identity = "task40extra_nonseparable_0p7nm_v1"
+period_x_nm = 2.5925925925925926
+period_y_nm = 1.2962962962962963
+z_min_nm = -0.51851851851851849
+z_max_nm = 6.7407407407407405
+interface_z_nm = 0.0
+air_height_nm = 6.7407407407407405
+substrate_thickness_nm = 0.51851851851851849
+grating_width_x_nm = 0.88148148148148142
+grating_width_y_nm = 1.2962962962962963
+grating_height_nm = 6.2222222222222223
+air_void_box_nm = [1.2962962962962963, 1.7370370370370369, 0.32407407407407407, 0.97222222222222221, 2.074074074074074, 4.1481481481481479]
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.99988517036884961, 4.3236152269189515e-06]
+grating_name = "Si / silicon"
+n_grating = [0.99988517036884961, 4.3236152269189515e-06]
+
+[incidence]
+wavelength_nm = 0.7
+grazing_angle_deg = 1.0
+azimuth_deg = 5.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "manual"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+dtn_manual_order_max_m = 9
+dtn_manual_order_max_n = 3
+[execution]
+mpi_size = 1
+warning_memory_gib = 12.0
+terminate_memory_gib = 16.0
+timeout_seconds = 86400
+memory_limit_gb = 16.0
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [0.51851851851851849, 1.5555555555555556, 3.1111111111111112, 4.666666666666667, 5.7037037037037033]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 24
+top_probe_z_nm = 6.6111111111111107
+bottom_probe_z_nm = -0.3888888888888889
+probe_fraction = 0.75
+diffraction_order_max_m = 9
+diffraction_order_max_n = 3
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 0.51851851851851849
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+mesh_plan_id = "task40extra.b0.w0_80cell_exact_planes.v1"
+mesh_plan_sha256 = "e741049b57a79e48db62e0fd9787f5c87caffdac4632777784b8b0a8c4e55a37"
+mesh_axis_z_profile = "task40extra.b0.w0_80cell_exact_planes.v1"
+mesh_axis_cell_counts = [4,4,5]
+mesh_axis_x_values = [0.0,0.8555555555555555,1.2962962962962963,1.737037037037037,2.5925925925925926]
+mesh_axis_y_values = [0.0,0.32407407407407407,0.6481481481481481,0.9722222222222222,1.2962962962962963]
+mesh_axis_z_values = [-0.5185185185185185,0.0,2.074074074074074,4.148148148148148,6.222222222222222,6.7407407407407405]
+
+[method]
+kind = "full3d_iterative"
+
+[solver]
+linear_solver = "iterative"
+ksp_type = "fgmres"
+preconditioner = "task40extra_v10_p6_y_orbit_reference_v1"
+stage = "B0_CANDIDATE"
+memory_policy = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+outer_restart = 0
+physical_operator_backend = "isotropic_sum_factorized_n1e_v26"
+h6_backend_rule = "direct_selected_backend_same_apply_and_power10"
+thread_contract = "mpi1_omp1_blas1_v26"
+restart = 32
+max_iterations = 2048
+task40_reference_pc_strategy = "STRICT_THEN_BOUNDED_INEXACT_V13"
+task40_q_assembly_strategy = "PREALLOCATED_CSR_PATTERN_V13"

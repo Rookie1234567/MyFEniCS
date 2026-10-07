@@ -75,8 +75,9 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `comparison_group` | `string` | `none` | yes | `—` | — | all | 可比较运行的分组标识 | `comparison_group` | safe filename characters [A-Za-z0-9_.-]+ | `"task038_examples"` |
 | `dimension` | `integer` | `none` | yes | `—` | 2, 3 | all | 问题维数 | `dimension` | — | `3` |
 | `geometry.cell_notch` | `string` | `none` | no | `—` | positive_x_middle_y_z40_80 | 2d/3d | 按原网格单元中心把局部光栅改为空气 | `cell_notch` | — | `"positive_x_middle_y_z40_80"` |
-| `geometry.model_variant` | `enum` | `none` | no | `—` | original, frozen_notch | full3d_iterative | 显式几何模型分支标识；不由 stage 名称推断 | `geometry_model_variant` | — | `"original"` |
-| `geometry.geometry_identity` | `string` | `none` | no | `—` | — | full3d_iterative | 冻结几何实体/坐标身份 | `geometry_identity` | — | `"v21_original_h7p5"` |
+| `geometry.air_void_box_nm` | `float_array` | `nm` | no | `—` | — | full3d_iterative/full3d_direct | 从实体光栅中扣除的显式矩形空气盒 [x0,x1,y0,y1,z0,z1] | `air_void_box_nm` | exactly six finite values; contained in the grating block and may touch a face | `[]` |
+| `geometry.model_variant` | `enum` | `none` | no | `—` | original, frozen_notch | full3d_iterative/full3d_direct | 显式几何模型分支标识；不由 stage 名称推断 | `geometry_model_variant` | — | `"original"` |
+| `geometry.geometry_identity` | `string` | `none` | no | `—` | — | full3d_iterative/full3d_direct | 冻结几何实体/坐标身份 | `geometry_identity` | — | `"v21_original_h7p5"` |
 | `geometry.geometry_kind` | `string` | `none` | yes | `—` | euv_grating_2d, layered_2d, airbox, fresnel_interface, flat_layer, rectangular_block_grating | 2d/3d | 形状模型名称 | `geometry_kind` | 2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/flat_layer/rectangular_block_grating | `"rectangular_block_grating"` |
 | `geometry.period_x_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | x 方向周期 | `period_x` | > 0 | `50.0` |
 | `geometry.period_y_nm` | `float` | `nm` | yes | `—` | — | 3d | y 方向周期 | `period_y` | > 0 | `25.0` |
@@ -109,13 +110,13 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `discretization.mesh_target_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | 目标网格尺寸 | `mesh_target_size` | > 0 | `10.0` |
 | `discretization.mesh_cell_type` | `enum` | `none` | yes | `—` | auto, triangle, quadrilateral, tetrahedron, hexahedron | 2d/3d | 网格单元类型 | `2D mesh_cell_shape / 3D mesh_cell_type` | 2D allows triangle/quadrilateral; 3D allows auto/tetrahedron/hexahedron | `"hexahedron"` |
 | `discretization.mesh_spacing_mode` | `enum` | `none` | no | `auto` | auto, uniform_strict, boundary_fitted, local_refined | 3d | 三维网格尺寸分配策略 | `mesh_spacing_mode` | — | `"boundary_fitted"` |
-| `discretization.mesh_plan_id` | `string` | `none` | no | `—` | — | full3d_iterative | 冻结轴/实体网格计划标识 | `mesh_plan_id` | — | `"task039extra.v21.frozen-geometry-mesh-plan.v1"` |
-| `discretization.mesh_plan_sha256` | `string` | `sha256` | no | `—` | — | full3d_iterative | 冻结轴/实体网格计划内容哈希 | `mesh_plan_sha256` | 64 lowercase hexadecimal characters | `"b5bab6..."` |
-| `discretization.mesh_axis_cell_counts` | `integer_array` | `cells` | no | `—` | — | full3d_iterative | 显式 x/y/z 张量轴单元数 | `mesh_axis_cell_counts` | exactly three positive integers | `[9, 5, 22]` |
-| `discretization.mesh_axis_z_profile` | `string` | `none` | no | `—` | — | full3d_iterative | z 轴计划的局部身份标签 | `mesh_axis_z_profile` | — | `"v21_frozen_geometry_mesh_plan"` |
-| `discretization.mesh_axis_x_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative | 显式 x 轴坐标；与冻结计划逐项绑定 | `mesh_axis_x_values` | strictly increasing; endpoints equal x bounds | `[0.0, 5.5, 11.0, 16.5, 22.166666666666668, 27.833333333333336, 33.5, 39.0, 44.5, 50.0]` |
-| `discretization.mesh_axis_y_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative | 显式 y 轴坐标；与冻结计划逐项绑定 | `mesh_axis_y_values` | strictly increasing; endpoints equal y bounds | `[0.0, 4.166666666666667, 8.333333333333334, 13.88888888888889, 19.444444444444443, 25.0]` |
-| `discretization.mesh_axis_z_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative | 显式 z 轴坐标；与冻结计划逐项绑定 | `mesh_axis_z_values` | strictly increasing; endpoints equal z bounds | `[-10.0, -5.0, 0.0, 6.666666666666667, 13.333333333333334, 20.0, 26.666666666666668, 33.333333333333336, 40.0, 46.666666666666664, 53.333333333333336, 60.0, 66.66666666666667, 73.33333333333334, 80.0, 86.66666666666667, 93.33333333333333, 100.0, 106.66666666666667, 113.33333333333334, 120.0, 125.0, 130.0]` |
+| `discretization.mesh_plan_id` | `string` | `none` | no | `—` | — | full3d_iterative/full3d_direct | 冻结轴/实体网格计划标识 | `mesh_plan_id` | — | `"task039extra.v21.frozen-geometry-mesh-plan.v1"` |
+| `discretization.mesh_plan_sha256` | `string` | `sha256` | no | `—` | — | full3d_iterative/full3d_direct | 冻结轴/实体网格计划内容哈希 | `mesh_plan_sha256` | 64 lowercase hexadecimal characters | `"b5bab6..."` |
+| `discretization.mesh_axis_cell_counts` | `integer_array` | `cells` | no | `—` | — | full3d_iterative/full3d_direct | 显式 x/y/z 张量轴单元数 | `mesh_axis_cell_counts` | exactly three positive integers | `[9, 5, 22]` |
+| `discretization.mesh_axis_z_profile` | `string` | `none` | no | `—` | — | full3d_iterative/full3d_direct | z 轴计划的局部身份标签 | `mesh_axis_z_profile` | — | `"v21_frozen_geometry_mesh_plan"` |
+| `discretization.mesh_axis_x_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative/full3d_direct | 显式 x 轴坐标；与冻结计划逐项绑定 | `mesh_axis_x_values` | strictly increasing; endpoints equal x bounds | `[0.0, 5.5, 11.0, 16.5, 22.166666666666668, 27.833333333333336, 33.5, 39.0, 44.5, 50.0]` |
+| `discretization.mesh_axis_y_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative/full3d_direct | 显式 y 轴坐标；与冻结计划逐项绑定 | `mesh_axis_y_values` | strictly increasing; endpoints equal y bounds | `[0.0, 4.166666666666667, 8.333333333333334, 13.88888888888889, 19.444444444444443, 25.0]` |
+| `discretization.mesh_axis_z_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative/full3d_direct | 显式 z 轴坐标；与冻结计划逐项绑定 | `mesh_axis_z_values` | strictly increasing; endpoints equal z bounds | `[-10.0, -5.0, 0.0, 6.666666666666667, 13.333333333333334, 20.0, 26.666666666666668, 33.333333333333336, 40.0, 46.666666666666664, 53.333333333333336, 60.0, 66.66666666666667, 73.33333333333334, 80.0, 86.66666666666667, 93.33333333333333, 100.0, 106.66666666666667, 113.33333333333334, 120.0, 125.0, 130.0]` |
 | `discretization.mesh_refined_size_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化尺寸 | `mesh_refined_size` | > 0 when refinement is enabled | `5.0` |
 | `discretization.mesh_refinement_radius_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化半径 | `mesh_refinement_radius` | > 0 when refinement is enabled | `25.0` |
 | `discretization.lock_near_field_template` | `boolean` | `none` | yes | `—` | — | 2d | 是否锁定二维近场采样模板 | `mesh_lock_near_field_template` | — | `true` |
@@ -128,7 +129,9 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `boundary.use_floquet_y` | `boolean` | `none` | no | `false` | — | 3d | 是否施加 y 周期约束 | `use_floquet_xy` | 3D y component; x/y values must agree | `true` |
 | `boundary.vertical_boundary` | `enum` | `none` | yes | `—` | dtn_port, pml, robin0, strong_dirichlet, dtn, robin | 2d/3d | 上下边界模型 | `stage4_boundary_model / port_boundary_model` | 3D uses dtn_port/pml/robin0; airbox strong_dirichlet maps to Stage1/Floquet airbox, Fresnel requires pml; 2d_port uses dtn/robin; 2d_scattered uses pml | `"dtn_port"` |
 | `boundary.scattering_background` | `enum` | `none` | no | `—` | air, layered | 2d/3d | 散射背景的介质层模型 | `scattering_background` | required for 2d_scattered and Stage4 3D; Stage4 currently requires layered; may be omitted for port-only methods | `"layered"` |
-| `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; explicit 2D port accepts zero_order or auto_propagating; 2D TE + dtn currently accepts only zero_order; legacy manual is internal/not public v1 | `"auto_propagating"` |
+| `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating, manual | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; explicit 2D port accepts zero_order or auto_propagating; 2D TE + dtn currently accepts only zero_order; public manual selection is 3D-only and requires dtn_manual_order_max_m/n; output diffraction_order_max_m/n remain reporting-only | `"auto_propagating"` |
+| `boundary.dtn_manual_order_max_m` | `integer` | `order` | no | `—` | — | 3d | manual DtN 的 x 阶最大绝对值 | `diffraction_order_max_m for manual DtN selection` | >= 0; required with dtn_order_policy=manual | `8` |
+| `boundary.dtn_manual_order_max_n` | `integer` | `order` | no | `—` | — | 3d | manual DtN 的 y 阶最大绝对值 | `diffraction_order_max_n for manual DtN selection` | >= 0; required with dtn_order_policy=manual | `2` |
 | `boundary.dtn_assembly` | `enum` | `none` | no | `—` | auxiliary, explicit | 2d/3d | DtN 装配方式 | `stage4_dtn_assembly / port_dtn_assembly` | required only when vertical_boundary is dtn or dtn_port | `"auxiliary"` |
 | `boundary.use_pml` | `boolean` | `none` | no | `false` | — | 2d/3d | 是否使用 PML | `2D scattered use_pml / 2D port port_use_pml / 3D use_pml` | compatible with vertical_boundary | `false` |
 | `boundary.pml_top_thickness_nm` | `float` | `nm` | no | `—` | — | 2d/3d | 顶部 PML 厚度 | `pml_top_thickness` | >= 0; required when use_pml | `25.0` |
@@ -145,6 +148,8 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `solver.linear_solver` | `enum` | `none` | yes | `—` | direct, fgmres, iterative | 2d_scattered/2d_port/full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative | 线性求解器类型 | `linear_solver` | direct methods require direct; hybrid_iterative requires fgmres; full3d_iterative requires iterative | `"fgmres"` |
 | `solver.ksp_type` | `enum` | `none` | yes | `—` | fgmres | full3d_iterative | Full3D 迭代求解器类型 | `ksp_type` | full3d_iterative fixed profile only | `"fgmres"` |
 | `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_scalable_v1, fullspace_pml_double_sweep_v19, physical_intermediate_p4_shifted_aux_v1, physical_intermediate_p4_reference_v1, a2r_equivalent_fast_v1, a2r_packed_equivalent_v2, light_p4ref_jointmr3_v2, balanced_h6_p4_v5, balanced_s6_p4_v5, projected_krylov6_h6_p4_v5, balanced_h6_recursive_p4_lo_v6, balanced_h6_recursive_p4_hi_v6, bounded_entity16_v7, bounded_projected_seq2_16_v7, balanced_h6_entity_gcrot8_v8, balanced_h6_entity_gcrot8_new16_v9, p6smooth_p4ref_p6smooth_v1, physical_macro_dd4_v10, physical_macro_dd4_v11, physical_macro_dd4_v12, physical_p4_direction_diagnosis_v13, physical_p4_schur_v14, physical_p4_blr_bal_h_v16, physical_p4_blr_tradeoff_v17, physical_p4_cell_condensed_exact_v18, physical_p4_cell_condensed_blr_v18, physical_p6_trace_coarse_degree_speed_v25, physical_p6_trace_setup_efficiency_v26, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
+| `solver.task40_reference_pc_strategy` | `enum` | `none` | no | `STRICT_ONLY` | STRICT_ONLY, STRICT_THEN_BOUNDED_INEXACT_V13 | full3d_iterative | Task40 完整参考逆的 strict 或 V13 有界不精确 PC 资格 | `task40_reference_pc_strategy` | bounded strategy only for exact Task40 V13 run identities | `"STRICT_ONLY"` |
+| `solver.task40_q_assembly_strategy` | `enum` | `none` | no | `LEGACY_GLOBAL_CSR_SUM` | LEGACY_GLOBAL_CSR_SUM, PREALLOCATED_CSR_PATTERN_V13 | full3d_iterative | Task40 四 q 稀疏矩阵累加策略 | `task40_q_assembly_strategy` | preallocated pattern only for explicitly selected Task40 V13 cases | `"LEGACY_GLOBAL_CSR_SUM"` |
 | `solver.memory_policy` | `enum` | `none` | no | `LEGACY_LOCAL_MUMPS_MEMORY_POLICY` | LEGACY_LOCAL_MUMPS_MEMORY_POLICY, SYMBOLIC_SIZED_LOCAL_MUMPS_V11 | full3d_iterative | 局部 MUMPS 工作空间分配策略 | `memory_policy` | V11 profile fixes SYMBOLIC_SIZED_LOCAL_MUMPS_V11; legacy remains the default | `"LEGACY_LOCAL_MUMPS_MEMORY_POLICY"` |
 | `solver.stage` | `enum` | `none` | no | `STANDARD` | STANDARD, N1_CALIBRATION, N2_M1_CONTROLS, N3_RESTART_PROBE, N4_ORIGINAL, N4_NOTCH, Q3_ORIGINAL, Q4_ORIGINAL, Q2_ORIGINAL, U0_PREFLIGHT, U1_CONTROL_BRIDGE, U2_EXACT_CONTROL, U3_BLR_CONTROL, U4_ORIGINAL, U4_EXACT_FALLBACK, U5_NOTCH, U6_FINALIZE | full3d_iterative | V11/N3/N4/V18/V25 execution stage identity | `stage` | stage is an input identity; its budgets remain in the selected profile ledger | `"STANDARD"` |
 | `solver.outer_restart` | `integer` | `iterations` | no | `0` | 0, 32, 64 | full3d_iterative | N3/N4 outer FGMRES restart；0 表示 macro control stage 未启用 | `outer_restart` | only 0, 32, or 64; macro I4 restart remains solver.restart=4 | `0` |
@@ -201,8 +206,9 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"comparison_group","unit":"none","applicability":["all"]} -->
 <!-- schema-field {"key":"dimension","unit":"none","applicability":["all"]} -->
 <!-- schema-field {"key":"geometry.cell_notch","unit":"none","applicability":["2d","3d"]} -->
-<!-- schema-field {"key":"geometry.model_variant","unit":"none","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"geometry.geometry_identity","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"geometry.air_void_box_nm","unit":"nm","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"geometry.model_variant","unit":"none","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"geometry.geometry_identity","unit":"none","applicability":["full3d_iterative","full3d_direct"]} -->
 <!-- schema-field {"key":"geometry.geometry_kind","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.period_x_nm","unit":"nm","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.period_y_nm","unit":"nm","applicability":["3d"]} -->
@@ -235,13 +241,13 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"discretization.mesh_target_nm","unit":"nm","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_cell_type","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_spacing_mode","unit":"none","applicability":["3d"]} -->
-<!-- schema-field {"key":"discretization.mesh_plan_id","unit":"none","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"discretization.mesh_plan_sha256","unit":"sha256","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"discretization.mesh_axis_cell_counts","unit":"cells","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"discretization.mesh_axis_z_profile","unit":"none","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"discretization.mesh_axis_x_values","unit":"nm","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"discretization.mesh_axis_y_values","unit":"nm","applicability":["full3d_iterative"]} -->
-<!-- schema-field {"key":"discretization.mesh_axis_z_values","unit":"nm","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_plan_id","unit":"none","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"discretization.mesh_plan_sha256","unit":"sha256","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_cell_counts","unit":"cells","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_z_profile","unit":"none","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_x_values","unit":"nm","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_y_values","unit":"nm","applicability":["full3d_iterative","full3d_direct"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_z_values","unit":"nm","applicability":["full3d_iterative","full3d_direct"]} -->
 <!-- schema-field {"key":"discretization.mesh_refined_size_nm","unit":"nm","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_refinement_radius_nm","unit":"nm","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.lock_near_field_template","unit":"none","applicability":["2d"]} -->
@@ -255,6 +261,8 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"boundary.vertical_boundary","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"boundary.scattering_background","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"boundary.dtn_order_policy","unit":"none","applicability":["2d","3d"]} -->
+<!-- schema-field {"key":"boundary.dtn_manual_order_max_m","unit":"order","applicability":["3d"]} -->
+<!-- schema-field {"key":"boundary.dtn_manual_order_max_n","unit":"order","applicability":["3d"]} -->
 <!-- schema-field {"key":"boundary.dtn_assembly","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"boundary.use_pml","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"boundary.pml_top_thickness_nm","unit":"nm","applicability":["2d","3d"]} -->
@@ -271,6 +279,8 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"solver.linear_solver","unit":"none","applicability":["2d_scattered","2d_port","full3d_direct","full3d_iterative","hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.ksp_type","unit":"none","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"solver.preconditioner","unit":"none","applicability":["full3d_iterative","hybrid_iterative"]} -->
+<!-- schema-field {"key":"solver.task40_reference_pc_strategy","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"solver.task40_q_assembly_strategy","unit":"none","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"solver.memory_policy","unit":"none","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"solver.stage","unit":"none","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"solver.outer_restart","unit":"iterations","applicability":["full3d_iterative"]} -->
