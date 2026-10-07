@@ -174,6 +174,222 @@ class P6DirectTracePortTerms:
 
 
 @dataclass(frozen=True)
+class P6MatrixFreeHhatTerm:
+    """One local, action-only contribution to ``Hhat @ alpha``.
+
+    ``interior_rhs`` is the already formed local ``Bi @ alpha`` vector for
+    this call. ``apply_Di`` must return the *raw* local ``Di @ x`` values in
+    ``output_ports`` order; it must not divide by the original ``H_p`` or
+    infer ``D`` from ``B``. The callback may use a bounded quadrature/action
+    implementation instead of retaining a dense ``Di`` matrix.
+    """
+
+    output_ports: np.ndarray
+    interior_lu: tuple[np.ndarray, np.ndarray]
+    interior_rhs: np.ndarray
+    apply_Di: Callable[[np.ndarray], Any]
+    callback_workspace_bytes: int = 0
+
+
+def raw_plane_D_action_from_global_normalized(
+    global_normalized_action: Any,
+    modes: Sequence[Any],
+    cfg: Any,
+    original_h: DiagonalOriginalPortBlock,
+) -> np.ndarray:
+    """Convert S5-style ``D_global/H_global`` values to raw plane ``D``.
+
+    ``FullspaceDtnAction.recover_auxiliary`` and the V11 q60 helper return
+    normalized modal values. The P6 carrier factory instead stores raw
+    ``projection_values`` as ``Di`` and keeps plane ``normalization_h`` in
+    the original ``H_p`` block. Convert the normalized global-z value to the
+    boundary-plane modal coordinate with the production gauge routine, then
+    apply that same plane ``H_p``. This returns raw ``Di @ x`` values and
+    deliberately performs no ``B`` conjugacy inference.
+    """
+
+    if not isinstance(original_h, DiagonalOriginalPortBlock):
+        raise TypeError("normalized projection conversion requires the explicit diagonal plane H_p block")
+    values = np.asarray(global_normalized_action)
+    mode_rows = tuple(modes)
+    if (
+        values.ndim not in (1, 2)
+        or values.shape[0] != original_h.count
+        or values.dtype != np.dtype(np.complex128)
+        or not values.flags.c_contiguous
+        or not np.isfinite(values).all()
+        or len(mode_rows) != original_h.count
+    ):
+        raise ValueError("global normalized D action and ordered mode rows have incompatible layouts")
+    for key, mode in zip(original_h.mode_keys, mode_rows, strict=True):
+        if tuple(key[1:]) != (
+            str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)
+        ):
+            raise ValueError("plane H_p keys differ from the normalized D mode ordering")
+    from .dtn_boundary_phase_gauge import BOUNDARY_PLANE, solver_amplitudes_from_global
+
+    plane_normalized = solver_amplitudes_from_global(
+        values, mode_rows, cfg, BOUNDARY_PLANE
+    )
+    raw_action = np.asarray(original_h.apply(plane_normalized))
+    if (
+        raw_action.shape != values.shape
+        or raw_action.dtype != np.dtype(np.complex128)
+        or not raw_action.flags.c_contiguous
+        or not np.isfinite(raw_action).all()
+    ):
+        raise FloatingPointError("boundary-plane raw Di action is nonfinite or has an invalid layout")
+    return raw_action
+
+
+def apply_p6_hhat_vector_action(
+    original_h: DiagonalOriginalPortBlock | DenseOriginalPortBlock,
+    amplitudes: Any,
+    terms: Sequence[P6MatrixFreeHhatTerm],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+) -> np.ndarray:
+    """Apply ``H_p + sum(D_i V_ii^{-1} B_i)`` without storing ``Hhat``.
+
+    Each term supplies its actual local ``B_i @ amplitudes`` vector and a
+    callback for the independent raw ``D_i`` action. The original ``H_p``
+    action comes from the validated port-block object. This supports a
+    bounded subset or the complete ordered mode vector, and one or multiple
+    right-hand sides, without allocating a mode-square matrix or a global
+    factorization.
+    """
+
+    if not isinstance(original_h, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)):
+        raise TypeError("matrix-free Hhat action requires an explicit original H_p block")
+    if not callable(allocation_gate):
+        raise TypeError("matrix-free Hhat action requires a whole-tree allocation gate")
+    alpha = np.asarray(amplitudes)
+    if (
+        alpha.ndim not in (1, 2)
+        or alpha.shape[0] != original_h.count
+        or (alpha.ndim == 2 and alpha.shape[1] == 0)
+        or alpha.dtype != np.dtype(np.complex128)
+        or not alpha.flags.c_contiguous
+        or not np.isfinite(alpha).all()
+    ):
+        raise ValueError("Hhat amplitudes must be finite, C-contiguous complex128 with a complete port row")
+    rhs_count = 1 if alpha.ndim == 1 else int(alpha.shape[1])
+    result_bytes = int(alpha.size * np.dtype(np.complex128).itemsize)
+    allocation_gate("p6_hhat_vector/original_H", {
+        "matrix_payload_bytes": result_bytes,
+        "workspace_bytes": result_bytes,
+        "original_H_output_bytes": result_bytes,
+        "allocation_semantics": "additional_objects_to_current_resident_RSS",
+        "full_Hhat_allocated": False,
+        "mode_square_matrix_allocated": False,
+        "global_factorization_calls": 0,
+    })
+    result = np.asarray(original_h.apply(alpha))
+    if (
+        result.shape != alpha.shape
+        or result.dtype != np.dtype(np.complex128)
+        or not result.flags.c_contiguous
+        or not np.isfinite(result).all()
+    ):
+        raise ValueError("original H_p action returned an invalid complex128 port vector")
+
+    for index, term in enumerate(terms):
+        if not isinstance(term, P6MatrixFreeHhatTerm):
+            raise TypeError("matrix-free Hhat terms have an invalid type")
+        ports = np.asarray(term.output_ports)
+        if (
+            ports.ndim != 1
+            or ports.dtype.kind not in "iu"
+            or not ports.size
+            or (ports.size and (int(ports.min()) < 0 or int(ports.max()) >= original_h.count))
+            or len(np.unique(ports)) != len(ports)
+        ):
+            raise ValueError("matrix-free Hhat output ports must be unique valid port indices")
+        if not callable(term.apply_Di):
+            raise TypeError("matrix-free Hhat term requires an independent Di action callback")
+        if (
+            isinstance(term.callback_workspace_bytes, bool)
+            or not isinstance(term.callback_workspace_bytes, int)
+            or term.callback_workspace_bytes < 0
+        ):
+            raise ValueError("matrix-free Hhat callback workspace must be a nonnegative integer")
+        interior_rhs = np.asarray(term.interior_rhs)
+        if (
+            interior_rhs.ndim not in (1, 2)
+            or interior_rhs.dtype != np.dtype(np.complex128)
+            or not interior_rhs.flags.c_contiguous
+            or not np.isfinite(interior_rhs).all()
+            or (interior_rhs.ndim != alpha.ndim)
+            or (interior_rhs.ndim == 2 and interior_rhs.shape[1] != rhs_count)
+        ):
+            raise ValueError("matrix-free Hhat internal RHS must match the finite complex128 input RHS layout")
+        factor = term.interior_lu
+        if not isinstance(factor, tuple) or len(factor) != 2:
+            raise ValueError("matrix-free Hhat term requires a SciPy local LU factor")
+        lu = np.asarray(factor[0])
+        pivots = np.asarray(factor[1])
+        interior_rows = int(interior_rhs.shape[0])
+        if (
+            interior_rows <= 0
+            or lu.shape != (interior_rows, interior_rows)
+            or lu.dtype != np.dtype(np.complex128)
+            or not np.isfinite(lu).all()
+            or pivots.shape != (interior_rows,)
+            or pivots.dtype.kind not in "iu"
+            or (pivots.size and (int(pivots.min()) < 0 or int(pivots.max()) >= interior_rows))
+        ):
+            raise ValueError("matrix-free Hhat local LU dimensions or values are invalid")
+
+        solve_bytes = int(interior_rhs.size * np.dtype(np.complex128).itemsize)
+        d_output_bytes = int(ports.size * rhs_count * np.dtype(np.complex128).itemsize)
+        # Count the retained H_p output, LU solve result plus one solve-sized
+        # work allowance, D output, indexed scatter scratch, and the caller's
+        # declared peak callback workspace before either local allocation.
+        scatter_workspace_bytes = int(d_output_bytes + ports.size * np.dtype(np.int64).itemsize)
+        allocation_gate(f"p6_hhat_vector/local_D/{index}", {
+            "matrix_payload_bytes": d_output_bytes,
+            "workspace_bytes": (
+                result_bytes + 2 * solve_bytes + scatter_workspace_bytes
+                + int(term.callback_workspace_bytes)
+            ),
+            "original_H_output_bytes": result_bytes,
+            "interior_solve_output_bytes": solve_bytes,
+            "interior_solve_workspace_bytes": solve_bytes,
+            "Di_output_bytes": d_output_bytes,
+            "indexed_scatter_workspace_bytes": scatter_workspace_bytes,
+            "callback_workspace_bytes": int(term.callback_workspace_bytes),
+            "allocation_semantics": "additional_objects_to_current_resident_RSS",
+            "full_Hhat_allocated": False,
+            "mode_square_matrix_allocated": False,
+            "global_factorization_calls": 0,
+            "consumer_must_release_before_next": True,
+        })
+        interior_solution = np.ascontiguousarray(
+            lu_solve(factor, interior_rhs, check_finite=True), dtype=np.complex128
+        )
+        if not np.isfinite(interior_solution).all():
+            raise FloatingPointError("matrix-free Hhat local interior solve returned nonfinite values")
+        interior_solution.flags.writeable = False
+        di_action = term.apply_Di(interior_solution)
+        di_action = np.asarray(di_action)
+        expected_shape = (len(ports),) if alpha.ndim == 1 else (len(ports), rhs_count)
+        if (
+            di_action.shape != expected_shape
+            or di_action.dtype != np.dtype(np.complex128)
+            or not di_action.flags.c_contiguous
+            or not np.isfinite(di_action).all()
+        ):
+            raise ValueError("independent Di callback returned an invalid raw port action")
+        with np.errstate(over="ignore", invalid="ignore"):
+            np.add.at(result, ports, di_action)
+        if not np.isfinite(result).all():
+            raise FloatingPointError("matrix-free Hhat accumulation returned nonfinite values")
+        del interior_solution, di_action
+
+    return result
+
+
+@dataclass(frozen=True)
 class CondensedPhysicalCell:
     """Dense local result of eliminating one internal block.
 
@@ -2085,11 +2301,14 @@ def native_residual_from_augmented(
 
 __all__ = (
     "CondensedPhysicalCell",
+    "P6MatrixFreeHhatTerm",
     "P6CellCondensedAction",
     "P6CellPortTerms",
     "P6DirectTracePortTerms",
     "P6RetainedBALHBridge",
+    "apply_p6_hhat_vector_action",
     "build_p6_cell_condensed_action_from_carrier",
     "condense_physical_cell_blocks",
     "native_residual_from_augmented",
+    "raw_plane_D_action_from_global_normalized",
 )

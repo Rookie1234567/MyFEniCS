@@ -19,13 +19,17 @@ from src.solvers.augmented_reference_correction import (
     stable_euclidean_norm,
 )
 from src.solvers.p6_cell_condensed_action import (
+    P6MatrixFreeHhatTerm,
     P6CellCondensedAction,
     P6CellPortTerms,
     P6RetainedBALHBridge,
+    apply_p6_hhat_vector_action,
     build_p6_cell_condensed_action_from_carrier,
     condense_physical_cell_blocks,
     native_residual_from_augmented,
+    raw_plane_D_action_from_global_normalized,
 )
+from src.solvers.original_port_blocks import DiagonalOriginalPortBlock
 from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_BOUNDED_V16,
     Q_ASSEMBLY_LEGACY,
@@ -1179,3 +1183,182 @@ def test_real_ffcx_mpc_action_only_matches_augmented_schur_and_nonzero_rhs(
             condensed.destroy()
         unconstrained_full.destroy()
         full.destroy()
+
+
+def test_p6_matrix_free_hhat_action_preserves_independent_nonhermitian_blocks_and_multirhs():
+    port_keys = tuple((index, "top", index, 0, "s") for index in range(4))
+    original_h = DiagonalOriginalPortBlock(
+        np.asarray([2.0 + 0.3j, 1.4 - 0.2j, 3.1 + 0.1j, 0.8 + 0.4j]),
+        port_keys,
+    )
+    alpha = np.asarray(
+        [
+            [0.8 + 0.2j, -0.3 + 0.9j, 0.5 - 0.1j],
+            [0.1 - 0.6j, 0.7 + 0.3j, -0.4 + 0.2j],
+            [-0.5 + 0.4j, 0.2 + 0.1j, 0.9 - 0.7j],
+            [0.6 + 0.5j, -0.8 + 0.2j, 0.3 + 0.6j],
+        ],
+        dtype=np.complex128,
+    )
+    blocks = []
+    for vii, bi, di, ports, callback_bytes in (
+        (
+            np.asarray([[3.0 + 0.4j, 0.2 - 0.3j], [-0.1 + 0.5j, 2.2 - 0.2j]]),
+            np.asarray(
+                [[0.2 + 0.3j, -0.4 + 0.1j, 0.7 - 0.2j, 0.1 + 0.6j],
+                 [0.5 - 0.1j, 0.3 + 0.8j, -0.2 + 0.4j, 0.9 + 0.2j]]
+            ),
+            np.asarray([[0.4 + 0.2j, -0.3 + 0.7j], [0.1 - 0.5j, 0.8 + 0.1j]]),
+            np.asarray([0, 2], dtype=np.int32),
+            1024,
+        ),
+        (
+            np.asarray([[1.7 - 0.6j]]),
+            np.asarray([[0.3 + 0.5j, -0.7 + 0.2j, 0.6 + 0.1j, -0.2 - 0.4j]]),
+            np.asarray([[0.2 - 0.3j], [0.9 + 0.4j]]),
+            np.asarray([1, 2], dtype=np.int32),
+            2048,
+        ),
+    ):
+        factor = lu_factor(vii)
+        internal_rhs = np.ascontiguousarray(bi @ alpha)
+        blocks.append(
+            {
+                "factor": factor,
+                "rhs": internal_rhs,
+                "ports": ports,
+                "di": di,
+                "callback_bytes": callback_bytes,
+            }
+        )
+
+    gate_records = []
+
+    def allocation_gate(stage, facts):
+        gate_records.append((stage, dict(facts)))
+
+    terms = tuple(
+        P6MatrixFreeHhatTerm(
+            output_ports=block["ports"],
+            interior_lu=block["factor"],
+            interior_rhs=block["rhs"],
+            apply_Di=lambda value, di=block["di"]: np.ascontiguousarray(di @ value),
+            callback_workspace_bytes=block["callback_bytes"],
+        )
+        for block in blocks
+    )
+    actual = apply_p6_hhat_vector_action(
+        original_h,
+        alpha,
+        terms,
+        allocation_gate=allocation_gate,
+    )
+
+    expected = original_h.apply(alpha)
+    for block in blocks:
+        correction = block["di"] @ lu_solve(block["factor"], block["rhs"])
+        np.add.at(expected, block["ports"], correction)
+    assert actual.shape == (4, 3)
+    np.testing.assert_allclose(actual, expected, rtol=2e-14, atol=2e-14)
+    assert np.linalg.norm(alpha) > 0.0
+    assert all(np.linalg.norm(block["rhs"]) > 0.0 for block in blocks)
+    assert not np.allclose(original_h.diagonal, np.ones(original_h.count))
+    assert [stage for stage, _facts in gate_records] == [
+        "p6_hhat_vector/original_H",
+        "p6_hhat_vector/local_D/0",
+        "p6_hhat_vector/local_D/1",
+    ]
+    for _stage, facts in gate_records[1:]:
+        assert facts["full_Hhat_allocated"] is False
+        assert facts["mode_square_matrix_allocated"] is False
+        assert facts["global_factorization_calls"] == 0
+        assert facts["original_H_output_bytes"] == actual.nbytes
+        assert facts["Di_output_bytes"] == 2 * 3 * np.dtype(np.complex128).itemsize
+
+
+def test_p6_hhat_action_rejects_nonfinite_solve_and_accumulation():
+    keys = ((0, "top", 0, 0, "s"),)
+    allocation_gate = lambda _stage, _facts: None
+    original_h = DiagonalOriginalPortBlock(np.asarray([2.0 + 0.5j]), keys)
+    callback_called = False
+
+    def unexpected_callback(_value):
+        nonlocal callback_called
+        callback_called = True
+        return np.zeros(1, dtype=np.complex128)
+
+    singular = P6MatrixFreeHhatTerm(
+        output_ports=np.asarray([0], dtype=np.int32),
+        interior_lu=(
+            np.zeros((1, 1), dtype=np.complex128),
+            np.asarray([0], dtype=np.int32),
+        ),
+        interior_rhs=np.asarray([1.0 + 0.0j]),
+        apply_Di=unexpected_callback,
+    )
+    with pytest.raises(FloatingPointError, match="local interior solve returned nonfinite"):
+        apply_p6_hhat_vector_action(
+            original_h,
+            np.asarray([0.7 + 0.2j]),
+            (singular,),
+            allocation_gate=allocation_gate,
+        )
+    assert callback_called is False
+
+    large_h = DiagonalOriginalPortBlock(np.asarray([1.0e308 + 0.0j]), keys)
+    overflowing = P6MatrixFreeHhatTerm(
+        output_ports=np.asarray([0], dtype=np.int32),
+        interior_lu=lu_factor(np.asarray([[1.0 + 0.0j]])),
+        interior_rhs=np.asarray([1.0 + 0.0j]),
+        apply_Di=lambda _value: np.asarray([1.0e308 + 0.0j]),
+    )
+    with pytest.raises(FloatingPointError, match="Hhat accumulation returned nonfinite"):
+        apply_p6_hhat_vector_action(
+            large_h,
+            np.asarray([1.0 + 0.0j]),
+            (overflowing,),
+            allocation_gate=allocation_gate,
+        )
+
+
+def test_global_normalized_projection_maps_to_raw_boundary_plane_di():
+    from src.common.config_3d import SimulationConfig3D
+    from src.common.modes_3d import PortMode3D
+    from src.solvers.dtn_boundary_phase_gauge import assembly_projection_denominator
+    from src.solvers.dtn_boundary_phase_gauge import BOUNDARY_PLANE
+
+    cfg = SimulationConfig3D(period_x=50.0, period_y=25.0, z_min=-10.0, z_max=130.0)
+    mode = PortMode3D(
+        side="top",
+        m=0,
+        n=0,
+        polarization="s",
+        alpha=0.0 + 0.0j,
+        gamma=0.0 + 0.0j,
+        beta=0.02 + 0.01j,
+        refractive_index=1.0 + 0.0j,
+        vertical_sign=1,
+        e_vector=np.asarray([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+        k_vector=np.asarray([0.0 + 0.0j, 0.0 + 0.0j, 0.02 + 0.01j]),
+        h_vector=np.asarray([0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j]),
+        electric_tangential_norm_sq=1.0,
+        power_per_unit_amplitude=0.0,
+        propagating=False,
+        rayleigh_warning=False,
+    )
+    hp = assembly_projection_denominator(mode, cfg, BOUNDARY_PLANE)
+    original_h = DiagonalOriginalPortBlock(
+        np.asarray([hp], dtype=np.complex128),
+        ((0, "top", 0, 0, "s"),),
+    )
+    global_normalized = np.asarray([[0.2 - 0.4j, -0.7 + 0.1j]], dtype=np.complex128)
+    actual = raw_plane_D_action_from_global_normalized(
+        global_normalized,
+        (mode,),
+        cfg,
+        original_h,
+    )
+    scale = np.exp(1j * mode.k_vector[2] * cfg.physical_z_max)
+    expected = hp * scale * global_normalized
+    np.testing.assert_allclose(actual, expected, rtol=2e-14, atol=2e-14)
+    assert not np.isclose(abs(scale), 1.0)
