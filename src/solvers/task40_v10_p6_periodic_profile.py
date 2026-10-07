@@ -7,7 +7,7 @@ original B0 dimensions.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Mapping
 
 
@@ -50,7 +50,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
-                "task40extra.review_v15_p6_periodic_profile.v1"
+                "task40extra.review_v16_p6_periodic_profile.v1"
+                if self.name.startswith("task40extra_v16_")
+                else "task40extra.review_v15_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v15_")
                 else "task40extra.review_v10_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v10_")
@@ -185,6 +187,15 @@ TASK40_V15_P6_E1_PROFILE = Task40V10P6PeriodicProfile(
     sector_port_counts=(252, 336),
 )
 
+TASK40_V16_P6_GX560_PROFILE = replace(
+    TASK40_V15_P6_GX560_PROFILE,
+    name="task40extra_v16_p6_y_orbit_gx560_reference_v1",
+)
+TASK40_V16_P6_E1_PROFILE = replace(
+    TASK40_V15_P6_E1_PROFILE,
+    name="task40extra_v16_p6_y_orbit_e1_reference_v1",
+)
+
 TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V10_P6_PROFILE.name: TASK40_V10_P6_PROFILE,
     TASK40_V11_P6_GX560_PROFILE.name: TASK40_V11_P6_GX560_PROFILE,
@@ -192,4 +203,6 @@ TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V15_P6_B0_PROFILE.name: TASK40_V15_P6_B0_PROFILE,
     TASK40_V15_P6_GX560_PROFILE.name: TASK40_V15_P6_GX560_PROFILE,
     TASK40_V15_P6_E1_PROFILE.name: TASK40_V15_P6_E1_PROFILE,
+    TASK40_V16_P6_GX560_PROFILE.name: TASK40_V16_P6_GX560_PROFILE,
+    TASK40_V16_P6_E1_PROFILE.name: TASK40_V16_P6_E1_PROFILE,
 }

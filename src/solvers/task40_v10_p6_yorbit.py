@@ -13,6 +13,7 @@ import numpy as np
 from scipy import sparse
 
 from src.geometry.task40_nonseparable_plan import (
+    TASK40_Q_ASSEMBLY_BOUNDED_V16,
     TASK40_Q_ASSEMBLY_LEGACY,
     TASK40_Q_ASSEMBLY_PREALLOCATED_V13,
     TASK40_V13_Q_ASSEMBLY_STRATEGIES,
@@ -1026,7 +1027,35 @@ def build_task40_v10_sector_contexts(
 
 Q_ASSEMBLY_LEGACY = TASK40_Q_ASSEMBLY_LEGACY
 Q_ASSEMBLY_PREALLOCATED_V13 = TASK40_Q_ASSEMBLY_PREALLOCATED_V13
-Q_ASSEMBLY_STRATEGIES = TASK40_V13_Q_ASSEMBLY_STRATEGIES
+Q_ASSEMBLY_BOUNDED_V16 = TASK40_Q_ASSEMBLY_BOUNDED_V16
+Q_ASSEMBLY_STRATEGIES = TASK40_V13_Q_ASSEMBLY_STRATEGIES | frozenset(
+    {Q_ASSEMBLY_BOUNDED_V16}
+)
+V16_Q_STAGING_BUDGET_BYTES = 256 * 1024**2
+V16_PYTHON_OVERHEAD_RESERVE_BYTES = 32 * 1024**2
+V16_PROJECTION_OVERHEAD_RESERVE_BYTES = V16_PYTHON_OVERHEAD_RESERVE_BYTES
+V16_HHAT_BLOCK_COLUMNS = 64
+
+
+class V16StagingLimitError(MemoryError):
+    """A reviewed V16 bounded-staging gate stopped before exceeding its limit."""
+
+    def __init__(self, label: str, required_bytes: int, limit_bytes: int) -> None:
+        self.label = str(label)
+        self.required_bytes = int(required_bytes)
+        self.limit_bytes = int(limit_bytes)
+        super().__init__(
+            f"V16 staging limit at {self.label}: "
+            f"required {self.required_bytes} bytes exceeds {self.limit_bytes} bytes"
+        )
+
+    def evidence(self) -> dict[str, Any]:
+        return {
+            "condition": "V16_BOUNDED_STAGING_LIMIT",
+            "label": self.label,
+            "required_bytes": self.required_bytes,
+            "limit_bytes": self.limit_bytes,
+        }
 
 
 def _pattern_block_shapes(q_maps):
@@ -1282,6 +1311,524 @@ def _assemble_preallocated_q_patterns(
     }
 
 
+def _v16_csr_payload_bytes(matrix: sparse.csr_matrix) -> int:
+    return int(matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes)
+
+
+def _v16_layout_array_bytes(rows: np.ndarray, columns: np.ndarray) -> int:
+    return int(rows.nbytes + columns.nbytes)
+
+
+def _v16_checked_csr_layout(
+    shape: tuple[int, int], row_counts: Any
+) -> tuple[int, int]:
+    """Check all int32 CSR bounds with Python integers before CSR allocation."""
+    rows, columns = (int(shape[0]), int(shape[1]))
+    limit = int(np.iinfo(np.int32).max)
+    if min(rows, columns) < 0 or max(rows, columns) > limit:
+        raise OverflowError("V16 CSR shape exceeds qualified PETSc int32 range")
+    total_nnz = 0
+    for row, raw_count in enumerate(row_counts):
+        count = int(raw_count)
+        if count < 0 or count > columns:
+            raise ValueError(f"V16 CSR row {row} count is outside its column range")
+        total_nnz += count
+        if total_nnz > limit:
+            raise OverflowError("V16 CSR NNZ/indptr exceeds qualified PETSc int32 range")
+    csr_payload = (rows + 1) * np.dtype(np.int32).itemsize + total_nnz * (
+        np.dtype(np.int32).itemsize + np.dtype(np.complex128).itemsize
+    )
+    return total_nnz, int(csr_payload)
+
+
+def _assemble_v16_bitset_pattern(
+    action: Any,
+    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    block_key: tuple[int, int],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+) -> tuple[sparse.csr_matrix, dict[str, Any]]:
+    """Build one conservative CSR pattern with one bounded row bitset.
+
+    A bit is a structural column in one row. Only one q-block bitset is live
+    at once; four final CSR matrices are accounted separately from staging.
+    This avoids both V13's Python row sets and a contribution-wide COO list.
+    """
+    p, q = block_key
+    left, right = q_maps[p], q_maps[q]
+    shape = (int(left.shape[1]), int(right.shape[1]))
+    int32_limit = int(np.iinfo(np.int32).max)
+    if max(shape) > int32_limit:
+        raise OverflowError("V16 q block shape exceeds qualified PETSc int32 range")
+    byte_columns = (shape[1] + 7) // 8
+    bitset_bytes = int(shape[0] * byte_columns)
+    reserve = V16_PYTHON_OVERHEAD_RESERVE_BYTES
+    if bitset_bytes + reserve > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"pattern_bitset/p{p}q{q}",
+            bitset_bytes + reserve,
+            V16_Q_STAGING_BUDGET_BYTES,
+        )
+    allocation_gate(
+        f"task40_v16_q_pattern_bitset/p{p}q{q}",
+        {
+            "additional_payload_bytes": bitset_bytes,
+            "workspace_bytes": reserve,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": bitset_bytes + reserve,
+            "pattern_shape": list(shape),
+            "pattern_bitset_bytes": bitset_bytes,
+            "python_overhead_reserve_bytes": reserve,
+            "pattern_representation": "one_uint8_row_bitset_for_one_q_block",
+        },
+    )
+    pattern = np.zeros((shape[0], byte_columns), dtype=np.uint8)
+    pattern_started = __import__("time").perf_counter()
+    layout_count = 0
+    projected_superset_pairs = 0
+    peak_staging = bitset_bytes + reserve
+    index_bytes = max(int(left.indices.dtype.itemsize), int(right.indices.dtype.itemsize))
+
+    for rows, columns, label in action.iter_reduced_contribution_layouts(
+        hhat_block_columns=V16_HHAT_BLOCK_COLUMNS
+    ):
+        rows = np.asarray(rows)
+        columns = np.asarray(columns)
+        if (
+            rows.ndim != 1
+            or columns.ndim != 1
+            or rows.dtype.kind not in "iu"
+            or columns.dtype.kind not in "iu"
+            or (rows.size and (int(rows.min()) < 0 or int(rows.max()) >= left.shape[0]))
+            or (columns.size and (int(columns.min()) < 0 or int(columns.max()) >= right.shape[0]))
+        ):
+            raise ValueError(f"invalid V16 q pattern contribution layout {label}")
+        layout_count += 1
+        left_nnz = _selected_csr_nnz(left, rows)
+        right_nnz = _selected_csr_nnz(right, columns)
+        left_slice_bytes = left_nnz * (
+            int(left.data.dtype.itemsize) + int(left.indices.dtype.itemsize)
+        ) + (len(rows) + 1) * int(left.indptr.dtype.itemsize)
+        right_slice_bytes = right_nnz * (
+            int(right.data.dtype.itemsize) + int(right.indices.dtype.itemsize)
+        ) + (len(columns) + 1) * int(right.indptr.dtype.itemsize)
+        support_scratch = (
+            4 * (left_nnz + right_nnz) * index_bytes
+            + 2 * right_nnz * index_bytes
+            + right_nnz
+            + _v16_layout_array_bytes(rows, columns)
+            + reserve
+        )
+        live_staging = bitset_bytes + left_slice_bytes + right_slice_bytes + support_scratch
+        peak_staging = max(peak_staging, live_staging)
+        if live_staging > V16_Q_STAGING_BUDGET_BYTES:
+            raise V16StagingLimitError(
+                f"pattern_support/p{p}q{q}/{label}",
+                live_staging,
+                V16_Q_STAGING_BUDGET_BYTES,
+            )
+        allocation_gate(
+            f"task40_v16_q_pattern_support/{label}/p{p}q{q}",
+            {
+                "additional_payload_bytes": 0,
+                "workspace_bytes": left_slice_bytes + right_slice_bytes + support_scratch,
+                "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                "staging_live_bytes_upper": live_staging,
+                "selected_left_nnz_upper": left_nnz,
+                "selected_right_nnz_upper": right_nnz,
+                "metadata_only_no_local_schur_solve": True,
+            },
+        )
+        left_rows = left[rows, :].tocsr()
+        right_rows = right[columns, :].tocsr()
+        left_support = np.unique(left_rows.indices)
+        right_support = np.unique(right_rows.indices)
+        byte_ids = np.right_shift(right_support, 3)
+        bit_values = np.left_shift(
+            np.uint8(1), np.bitwise_and(right_support, 7).astype(np.uint8, copy=False)
+        )
+        for row in left_support:
+            np.bitwise_or.at(pattern[int(row)], byte_ids, bit_values)
+        projected_superset_pairs += int(len(left_support) * len(right_support))
+        del left_rows, right_rows, left_support, right_support, byte_ids, bit_values
+        del rows, columns
+
+    pattern_seconds = __import__("time").perf_counter() - pattern_started
+    row_count_bytes = 4 * shape[0]
+    row_decode_scratch = byte_columns + shape[1] + 8 * shape[1]
+    row_stage = bitset_bytes + row_count_bytes + row_decode_scratch + reserve
+    peak_staging = max(peak_staging, row_stage)
+    if row_stage > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"pattern_row_counts/p{p}q{q}",
+            row_stage,
+            V16_Q_STAGING_BUDGET_BYTES,
+        )
+    allocation_gate(
+        f"task40_v16_q_pattern_row_counts/p{p}q{q}",
+        {
+            "additional_payload_bytes": row_count_bytes,
+            "workspace_bytes": row_decode_scratch + reserve,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": row_stage,
+            "row_count_dtype": "int32",
+            "row_decode_strategy": "one_row_unpackbits_at_a_time",
+        },
+    )
+    row_counts = np.empty(shape[0], dtype=np.int32)
+    for row in range(shape[0]):
+        unpacked = np.unpackbits(pattern[row], bitorder="little", count=shape[1])
+        count = int(np.count_nonzero(unpacked))
+        if count > int(np.iinfo(np.int32).max):
+            raise OverflowError("V16 CSR row count exceeds signed int32 range")
+        row_counts[row] = count
+        del unpacked
+    # The qualified Task40 PETSc ABI is signed int32. Check shape, every
+    # Python-int prefix sum, total NNZ, and indptr endpoint before CSR arrays.
+    total_nnz, csr_payload = _v16_checked_csr_layout(shape, row_counts)
+    index_dtype = np.int32
+    index_limit = int(np.iinfo(index_dtype).max)
+    final_stage = bitset_bytes + row_count_bytes + row_decode_scratch + reserve
+    peak_staging = max(peak_staging, final_stage)
+    if final_stage > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"pattern_csr_materialization/p{p}q{q}",
+            final_stage,
+            V16_Q_STAGING_BUDGET_BYTES,
+        )
+    allocation_gate(
+        f"task40_v16_q_pattern_csr_materialization/p{p}q{q}",
+        {
+            "additional_payload_bytes": csr_payload,
+            "workspace_bytes": row_count_bytes + row_decode_scratch + reserve,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": final_stage,
+            "pattern_payload_bytes": csr_payload,
+            "pattern_nnz": total_nnz,
+            "row_set_count": 0,
+            "full_coo_list_count": 0,
+        },
+    )
+    indptr = np.empty(shape[0] + 1, dtype=index_dtype)
+    indptr[0] = 0
+    running = 0
+    for row, count in enumerate(row_counts):
+        running += int(count)
+        indptr[row + 1] = running
+    indices = np.empty(total_nnz, dtype=index_dtype)
+    data = np.zeros(total_nnz, dtype=np.complex128)
+    for row in range(shape[0]):
+        unpacked = np.unpackbits(pattern[row], bitorder="little", count=shape[1])
+        columns = np.flatnonzero(unpacked)
+        start, stop = int(indptr[row]), int(indptr[row + 1])
+        if len(columns) != stop - start:
+            raise RuntimeError("V16 CSR row expansion differs from its checked row count")
+        if columns.size and int(columns.max()) > index_limit:
+            raise OverflowError("V16 CSR column index exceeds its selected dtype")
+        indices[start:stop] = columns
+        del unpacked, columns
+    matrix = sparse.csr_matrix((data, indices, indptr), shape=shape, copy=False)
+    if not matrix.has_canonical_format or not matrix.has_sorted_indices:
+        raise RuntimeError("V16 bitset pattern did not produce canonical sorted CSR")
+    return matrix, {
+        "layout_count": layout_count,
+        "pattern_nnz": total_nnz,
+        "pattern_payload_bytes": csr_payload,
+        "pattern_bitset_bytes": bitset_bytes,
+        "projected_superset_pairs": projected_superset_pairs,
+        "pattern_seconds": float(pattern_seconds),
+        "staging_peak_bytes": int(peak_staging),
+        "index_dtype": np.dtype(index_dtype).str,
+    }
+
+
+
+def _project_accumulate_v16(
+    target: sparse.csr_matrix,
+    left: sparse.csr_matrix,
+    right: sparse.csr_matrix,
+    rows: np.ndarray,
+    columns: np.ndarray,
+    values: np.ndarray,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    label: str,
+) -> tuple[float, float, int]:
+    """Project one local contribution and add only its nonempty rows to CSR."""
+    import time
+
+    rows = np.asarray(rows)
+    columns = np.asarray(columns)
+    values = np.asarray(values)
+    if (
+        rows.ndim != 1
+        or columns.ndim != 1
+        or rows.dtype.kind not in "iu"
+        or columns.dtype.kind not in "iu"
+        or values.shape != (len(rows), len(columns))
+        or values.dtype != np.dtype(np.complex128)
+        or not np.isfinite(values).all()
+        or (len(rows) and (int(rows.min()) < 0 or int(rows.max()) >= left.shape[0]))
+        or (len(columns) and (int(columns.min()) < 0 or int(columns.max()) >= right.shape[0]))
+    ):
+        raise ValueError(f"invalid V16 p6 contribution {label}")
+    if target.shape != (left.shape[1], right.shape[1]) or not target.has_canonical_format:
+        raise ValueError("V16 target CSR is not canonical or shape matched")
+
+    left_nnz = _selected_csr_nnz(left, rows)
+    right_nnz = _selected_csr_nnz(right, columns)
+    left_index_bytes = int(left.indices.dtype.itemsize)
+    right_index_bytes = int(right.indices.dtype.itemsize)
+    left_payload = left_nnz * (int(left.data.dtype.itemsize) + left_index_bytes) + (
+        len(rows) + 1
+    ) * int(left.indptr.dtype.itemsize)
+    right_payload = right_nnz * (int(right.data.dtype.itemsize) + right_index_bytes) + (
+        len(columns) + 1
+    ) * int(right.indptr.dtype.itemsize)
+    left_support = min(int(left.shape[1]), left_nnz)
+    right_support = min(int(right.shape[1]), right_nnz)
+    index_bytes = max(left_index_bytes, right_index_bytes, int(target.indices.dtype.itemsize))
+    support_scratch = 4 * (left_nnz + right_nnz) * index_bytes
+    support_scratch += 2 * (left_nnz + right_nnz) * 8
+    dense_workspace = 16 * (
+        2 * len(rows) * left_support
+        + left_support * len(columns)
+        + len(columns) * right_support
+        + left_support * right_support
+    )
+    row_index_scratch = right_support * (
+        3 * np.dtype(np.intp).itemsize + int(target.indices.dtype.itemsize) + 1 + 16
+    ) + 128
+    staging = (
+        int(values.nbytes)
+        + _v16_layout_array_bytes(rows, columns)
+        + left_payload
+        + right_payload
+        + support_scratch
+        + dense_workspace
+        + row_index_scratch
+        + V16_PROJECTION_OVERHEAD_RESERVE_BYTES
+    )
+    if staging > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"projection/{label}", staging, V16_Q_STAGING_BUDGET_BYTES
+        )
+    allocation_gate(
+        "task40_v16_q_projection_support/" + label,
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": staging,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": staging,
+            "selected_left_nnz_upper": left_nnz,
+            "selected_right_nnz_upper": right_nnz,
+            "left_support_upper": left_support,
+            "right_support_upper": right_support,
+            "projection_algorithm": "one_local_dense_projection_then_direct_nonempty_csr_rows",
+            "includes_left_conjugate_copy": True,
+            "includes_matmul_intermediate_and_local_term_temporaries": True,
+        },
+    )
+
+    left_rows = left[rows, :].tocsr()
+    right_rows = right[columns, :].tocsr()
+    left_support_ids = np.unique(left_rows.indices)
+    right_support_ids = np.unique(right_rows.indices)
+    if not len(left_support_ids) or not len(right_support_ids):
+        return 0.0, 0.0, staging
+
+    projection_started = time.perf_counter()
+    left_dense = left_rows[:, left_support_ids].toarray()
+    right_dense = right_rows[:, right_support_ids].toarray()
+    left_conjugate = left_dense.conj()
+    left_product = left_conjugate.T @ values
+    projected = left_product @ right_dense
+    projection_seconds = time.perf_counter() - projection_started
+    del left_rows, right_rows, left_dense, right_dense, left_conjugate, left_product
+
+    accumulation_started = time.perf_counter()
+    for local_row, global_row_value in enumerate(left_support_ids):
+        row_values = projected[local_row]
+        nonzero_columns = np.flatnonzero(row_values)
+        if not len(nonzero_columns):
+            continue
+        global_columns = right_support_ids[nonzero_columns]
+        target_start = int(target.indptr[int(global_row_value)])
+        target_stop = int(target.indptr[int(global_row_value) + 1])
+        target_columns = target.indices[target_start:target_stop]
+        positions = np.searchsorted(target_columns, global_columns)
+        if (
+            np.any(positions >= len(target_columns))
+            or not np.array_equal(target_columns[positions], global_columns)
+        ):
+            raise ValueError(
+                f"V16 q bitset pattern omitted a projected value at {label}"
+            )
+        target.data[target_start + positions] += row_values[nonzero_columns]
+        del nonzero_columns, global_columns, positions
+    accumulation_seconds = time.perf_counter() - accumulation_started
+    del projected, left_support_ids, right_support_ids
+    return projection_seconds, accumulation_seconds, staging
+
+
+def _assemble_bounded_v16_q_patterns(
+    action: Any,
+    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
+    """Bounded V16 pattern staging followed by direct CSR value accumulation."""
+    import time
+
+    blocks: dict[tuple[int, int], sparse.csr_matrix] = {}
+    patterns: dict[str, Any] = {}
+    pattern_started = time.perf_counter()
+    for key in ((0, 0), (0, 1), (1, 0), (1, 1)):
+        matrix, facts = _assemble_v16_bitset_pattern(
+            action, q_maps, key, allocation_gate=allocation_gate
+        )
+        blocks[key] = matrix
+        patterns[f"{key[0]}{key[1]}"] = facts
+    pattern_seconds = time.perf_counter() - pattern_started
+
+    numeric_started = time.perf_counter()
+    contribution_generation_seconds = 0.0
+    projection_seconds = 0.0
+    accumulation_seconds = 0.0
+    contribution_count = 0
+    projection_call_count = 0
+    accumulation_call_count = 0
+    numeric_staging_peak = 0
+    contribution_staging_peak = 0
+
+    def v16_contribution_gate(label: str, facts: Mapping[str, Any]) -> None:
+        nonlocal contribution_staging_peak
+        payload = int(facts.get("matrix_payload_bytes", facts.get("additional_payload_bytes", 0)))
+        workspace = int(facts.get("workspace_bytes", 0))
+        staging = payload + workspace + V16_PYTHON_OVERHEAD_RESERVE_BYTES
+        contribution_staging_peak = max(contribution_staging_peak, staging)
+        if staging > V16_Q_STAGING_BUDGET_BYTES:
+            raise V16StagingLimitError(
+                label, staging, V16_Q_STAGING_BUDGET_BYTES
+            )
+        allocation_gate(
+            label,
+            {
+                **dict(facts),
+                "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                "staging_live_bytes_upper": staging,
+                "python_overhead_reserve_bytes": V16_PYTHON_OVERHEAD_RESERVE_BYTES,
+            },
+        )
+
+    contribution_iterator = iter(
+        action.iter_reduced_contributions(
+            allocation_gate=v16_contribution_gate,
+            hhat_block_columns=V16_HHAT_BLOCK_COLUMNS,
+        )
+    )
+    while True:
+        generation_started = time.perf_counter()
+        try:
+            rows, columns, values, label = next(contribution_iterator)
+        except StopIteration:
+            break
+        contribution_generation_seconds += time.perf_counter() - generation_started
+        contribution_count += 1
+        for p in (0, 1):
+            for q in (0, 1):
+                projection_s, accumulation_s, staging_peak = _project_accumulate_v16(
+                    blocks[p, q],
+                    q_maps[p],
+                    q_maps[q],
+                    rows,
+                    columns,
+                    values,
+                    allocation_gate=allocation_gate,
+                    label=f"{label}/p{p}q{q}",
+                )
+                projection_seconds += projection_s
+                accumulation_seconds += accumulation_s
+                numeric_staging_peak = max(numeric_staging_peak, staging_peak)
+                projection_call_count += 1
+                accumulation_call_count += 1
+        del rows, columns, values
+
+    stored_pattern_slots = {
+        f"{p}{q}": int(matrix.nnz) for (p, q), matrix in blocks.items()
+    }
+    numeric_nonzero_entries = {
+        f"{p}{q}": int(np.count_nonzero(matrix.data))
+        for (p, q), matrix in blocks.items()
+    }
+    exact_zero_slots_retained = {
+        key: int(stored_pattern_slots[key] - numeric_nonzero_entries[key])
+        for key in stored_pattern_slots
+    }
+    # Keep the preallocated backing arrays unchanged. SciPy's prune may retain
+    # the old owner or copy depending on its size heuristic; that copy path has
+    # not been admitted here, so report exact zeros and stored owners separately.
+    final_nnz = {
+        f"{p}{q}": int(matrix.nnz) for (p, q), matrix in blocks.items()
+    }
+    final_csr_bytes = {
+        f"{p}{q}": _v16_csr_payload_bytes(matrix)
+        for (p, q), matrix in blocks.items()
+    }
+    numeric_parent_seconds = float(time.perf_counter() - numeric_started)
+    max_staging = max(
+        max(int(row["staging_peak_bytes"]) for row in patterns.values()),
+        contribution_staging_peak,
+        numeric_staging_peak,
+    )
+    if max_staging > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            "four_block_peak", max_staging, V16_Q_STAGING_BUDGET_BYTES
+        )
+    return blocks, {
+        "assembly_strategy": Q_ASSEMBLY_BOUNDED_V16,
+        "pattern_algorithm": "one_row_bitset_per_q_block_then_direct_preallocated_csr_accumulation",
+        "staging_budget_bytes_total_all_q_blocks": V16_Q_STAGING_BUDGET_BYTES,
+        "staging_budget_scope": "maximum_concurrent_across_all_four_blocks_including_support_and_projection_temporaries",
+        "pattern_seconds": float(pattern_seconds),
+        "numeric_parent_seconds": numeric_parent_seconds,
+        "pattern_stage_peak_bytes_by_block": {
+            key: int(value["staging_peak_bytes"]) for key, value in patterns.items()
+        },
+        "contribution_generation_stage_peak_bytes": int(contribution_staging_peak),
+        "projection_stage_peak_bytes": int(numeric_staging_peak),
+        "staging_peak_bytes_total_all_blocks": int(max_staging),
+        "pattern_facts_by_block": patterns,
+        "final_csr_payload_bytes_by_block": final_csr_bytes,
+        "final_csr_payload_bytes_total": int(sum(final_csr_bytes.values())),
+        "stored_pattern_slots_by_block": stored_pattern_slots,
+        "numeric_nonzero_entries_by_block": numeric_nonzero_entries,
+        "exact_zero_slots_retained_by_block": exact_zero_slots_retained,
+        "final_nnz_by_block": final_nnz,
+        "exact_zero_cleanup": "not_applied; original CSR backing arrays retained",
+        "no_compaction_owner_copy_created": True,
+        "flush_merge_temporary_bytes": 0,
+        "full_coo_list_count": 0,
+        "python_row_set_count": 0,
+        "global_csr_reallocations_during_numeric_pass": 0,
+        "numeric_contribution_count": contribution_count,
+        "numeric_projection_and_accumulation_seconds": numeric_parent_seconds,
+        "contribution_generation_seconds": float(contribution_generation_seconds),
+        "local_projection_seconds": float(projection_seconds),
+        "global_sparse_accumulation_seconds": float(accumulation_seconds),
+        "local_projection_call_count": projection_call_count,
+        "global_sparse_accumulation_call_count": accumulation_call_count,
+        "block_shapes": {
+            f"{p}{q}": list(matrix.shape) for (p, q), matrix in blocks.items()
+        },
+        "timing_scope": {
+            "assembly_total_seconds": "parent interval including q-map construction and bounded pattern generation",
+            "pattern_seconds": "pattern metadata/pattern CSR parent interval, outside numeric_parent_seconds",
+            "numeric_parent_seconds": "parent interval including contribution generation, projection, accumulation, exact-zero cleanup, and loop overhead",
+            "child_intervals_are_nonoverlapping_and_already_inside_numeric_parent": True,
+            "parent_and_child_intervals_must_not_be_added": True,
+        },
+    }
 def assemble_task40_v10_sector_blocks(
     action: Any,
     coordinates: TwoCellBranchCoordinates,
@@ -1291,7 +1838,7 @@ def assemble_task40_v10_sector_blocks(
     assembly_strategy: str = Q_ASSEMBLY_LEGACY,
     return_all_blocks: bool = False,
 ) -> tuple[dict[Any, sparse.csr_matrix], dict[str, Any]]:
-    """Assemble all four q blocks using the explicit legacy or V13 strategy."""
+    """Assemble all four q blocks using the explicit legacy, V13, or V16 strategy."""
     import time
 
     if not callable(allocation_gate):
@@ -1303,7 +1850,11 @@ def assemble_task40_v10_sector_blocks(
         coordinates.q_map(branch, allocation_gate=allocation_gate)
         for branch in (0, 1)
     )
-    if assembly_strategy == Q_ASSEMBLY_PREALLOCATED_V13:
+    if assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+        blocks, strategy_audit = _assemble_bounded_v16_q_patterns(
+            action, q_maps, allocation_gate=allocation_gate
+        )
+    elif assembly_strategy == Q_ASSEMBLY_PREALLOCATED_V13:
         blocks, strategy_audit = _assemble_preallocated_q_patterns(
             action, q_maps, context, allocation_gate=allocation_gate
         )
@@ -1387,6 +1938,7 @@ def assemble_task40_v10_sector_blocks(
             raise ValueError(f"global q={q} augmented matrix shape mismatch: {matrix.shape}")
         if not matrix.has_canonical_format or not np.isfinite(matrix.data).all():
             raise ValueError(f"global q={q} matrix is not finite canonical CSR")
+
     audit = {
         "global_q_indices": list(context.global_q_indices),
         "block_shapes": {
@@ -1417,8 +1969,9 @@ def compare_task40_v10_sector_assembly(
     context: Task40V10SectorContext,
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    candidate_strategy: str = Q_ASSEMBLY_PREALLOCATED_V13,
 ) -> dict[str, Any]:
-    """Compare both assemblers on one contribution stream without co-retaining CSR oracles."""
+    """Compare legacy CSR with one registered candidate without co-retaining oracles."""
     import gc
     import hashlib
     import tempfile
@@ -1429,8 +1982,11 @@ def compare_task40_v10_sector_assembly(
 
     if not callable(allocation_gate):
         raise TypeError("q-block comparison requires a live allocation gate")
+    if candidate_strategy not in {Q_ASSEMBLY_PREALLOCATED_V13, Q_ASSEMBLY_BOUNDED_V16}:
+        raise ValueError(f"unsupported q-assembly comparison strategy: {candidate_strategy!r}")
+    candidate_version = "v16" if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 else "v13"
     pair_started = time.perf_counter()
-    with tempfile.TemporaryDirectory(prefix="task40-v13-b0-q-assembly-pair-") as scratch:
+    with tempfile.TemporaryDirectory(prefix=f"task40-{candidate_version}-q-assembly-pair-") as scratch:
         scratch_path = Path(scratch)
         legacy, legacy_audit = assemble_task40_v10_sector_blocks(
             action,
@@ -1476,7 +2032,7 @@ def compare_task40_v10_sector_assembly(
         gc.collect()
 
         allocation_gate(
-            "task40_v13_q_pair_single_legacy_block_reload",
+            f"task40_{candidate_version}_q_pair_single_legacy_block_reload",
             {
                 "additional_payload_bytes": candidate_free_memory_payload,
                 "workspace_bytes": 2 * candidate_free_memory_payload,
@@ -1490,7 +2046,7 @@ def compare_task40_v10_sector_assembly(
             coordinates,
             context,
             allocation_gate=allocation_gate,
-            assembly_strategy=Q_ASSEMBLY_PREALLOCATED_V13,
+            assembly_strategy=candidate_strategy,
             return_all_blocks=True,
         )
         candidate_offdiagonal = dict(candidate_audit["off_diagonal_relative"])
@@ -1598,7 +2154,8 @@ def compare_task40_v10_sector_assembly(
         candidate_seconds = float(candidate_audit["assembly_total_seconds"])
         faster = candidate_seconds < legacy_seconds
         return {
-            "schema": "task40extra.review_v13_q_assembly_pair.v1",
+            "schema": f"task40extra.review_{candidate_version}_q_assembly_pair.v1",
+            "candidate_strategy": candidate_strategy,
             "global_q_indices": list(context.global_q_indices),
             "block_shapes": dict(candidate_audit["block_shapes"]),
             "legacy_assembly_seconds": legacy_seconds,
@@ -1621,9 +2178,15 @@ def compare_task40_v10_sector_assembly(
             == {"00", "01", "10", "11"},
             "numerically_equivalent_at_original_operator_gate": equivalent,
             "candidate_full_assembly_faster": faster,
-            "candidate_selected_for_next_formal_case": bool(equivalent and faster),
+            "candidate_selected_for_next_formal_case": bool(
+                equivalent
+                and (candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 or faster)
+            ),
             "selection_rule": (
-                "select the candidate only if complete four-block CSR/action and off-diagonal "
+                "V16 is retained when complete four-block CSR/action and off-diagonal gates pass; "
+                "paired time is reported independently"
+                if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16
+                else "select V13 only when complete four-block CSR/action and off-diagonal "
                 "gates pass and its paired full assembly elapsed is strictly lower"
             ),
         }
@@ -1633,6 +2196,8 @@ def _summarize_task40_b0_q_assembly_pairs(
     profile: Any,
     reports: list[Mapping[str, Any]],
     covered_q: set[int],
+    *,
+    candidate_strategy: str = Q_ASSEMBLY_PREALLOCATED_V13,
 ) -> dict[str, Any]:
     """Validate and aggregate two real sector-pair reports without FE objects."""
     expected_qs = set(range(int(profile.q_count)))
@@ -1662,8 +2227,16 @@ def _summarize_task40_b0_q_assembly_pairs(
         for pair in reports
     )
     candidate_faster = candidate_seconds < legacy_seconds
+    if candidate_strategy not in {Q_ASSEMBLY_PREALLOCATED_V13, Q_ASSEMBLY_BOUNDED_V16}:
+        raise ValueError(f"unsupported q-assembly comparison strategy: {candidate_strategy!r}")
+    candidate_version = "v16" if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 else "v13"
+    selected = bool(
+        numerically_equivalent
+        and (candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 or candidate_faster)
+    )
     return {
-        "schema": "task40extra.review_v13_b0_q_assembly_comparison.v1",
+        "schema": f"task40extra.review_{candidate_version}_q_assembly_comparison.v1",
+        "candidate_strategy": candidate_strategy,
         "profile": profile.identity(),
         "global_q_count": int(profile.q_count),
         "covered_q": sorted(covered_q),
@@ -1672,19 +2245,16 @@ def _summarize_task40_b0_q_assembly_pairs(
         "candidate_assembly_seconds": candidate_seconds,
         "candidate_faster_for_complete_two_sector_build": candidate_faster,
         "all_four_blocks_numerically_equivalent": numerically_equivalent,
-        "all_q_shapes_match_frozen_b0_profile": True,
+        "all_q_shapes_match_selected_profile": True,
         "mumps_factors_constructed": False,
-        "candidate_selected_for_formal_cases": bool(
-            numerically_equivalent and candidate_faster
-        ),
-        "selected_strategy": (
-            Q_ASSEMBLY_PREALLOCATED_V13
-            if numerically_equivalent and candidate_faster
-            else Q_ASSEMBLY_LEGACY
-        ),
+        "candidate_selected_for_formal_cases": selected,
+        "selected_strategy": candidate_strategy if selected else Q_ASSEMBLY_LEGACY,
         "selection_rule": (
-            "select the candidate only when all four CSR/action blocks, the original "
-            "off-diagonal gates, complete B0 q coverage, and profile shapes pass "
+            "retain V16 after exact four-block CSR/action and off-diagonal equivalence; "
+            "report paired time separately"
+            if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16
+            else "select V13 only when all four CSR/action blocks, the original "
+            "off-diagonal gates, complete q coverage, and profile shapes pass "
             "and the total paired assembly time is strictly lower"
         ),
     }
@@ -1736,8 +2306,11 @@ def build_task40_v10_p6_reference_inverse(
         raise ValueError(f"unknown Task40 q assembly strategy: {q_assembly_strategy!r}")
     if type(q_assembly_comparison_only) is not bool:
         raise TypeError("q-assembly comparison-only selection must be an explicit boolean")
-    if q_assembly_comparison_only and q_assembly_strategy != Q_ASSEMBLY_PREALLOCATED_V13:
-        raise ValueError("V13 q-assembly pairing requires the explicitly selected candidate strategy")
+    if q_assembly_comparison_only and q_assembly_strategy not in {
+        Q_ASSEMBLY_PREALLOCATED_V13,
+        Q_ASSEMBLY_BOUNDED_V16,
+    }:
+        raise ValueError("q-assembly pairing requires an explicitly selected registered candidate")
     if (
         MPI.COMM_SELF.Get_size() != 1
         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
@@ -1870,6 +2443,25 @@ def build_task40_v10_p6_reference_inverse(
             global_entities=global_entities,
             full_layout=full_layout,
         )
+        if event is not None and q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+            event(
+                "task40_v16_reference_global_ready",
+                {
+                    "profile": profile.identity(),
+                    "global_storage_rows": int(full_layout.full_rows),
+                    "global_independent_rows": int(len(global_entities.independent)),
+                    "global_interior_rows": int(
+                        full_layout.audit["dimension_counts"][3]
+                    ),
+                    "global_mode_count": int(profile.mode_count),
+                    "ordered_mode_sha256": str(global_bundle["mode_sha256"]),
+                    "carrier_manifest_sha256": str(
+                        global_bundle["dtn_action"].carrier.mode_manifest_sha256
+                    ),
+                    "transform_bank_enabled": bool(share_transform_bank),
+                    "_named_arrays": global_entities.named_backing_arrays("global"),
+                },
+            )
         all_q_matrices: dict[int, sparse.csr_matrix] = {}
         sector_audits = []
         q_assembly_pair_reports = []
@@ -2019,6 +2611,7 @@ def build_task40_v10_p6_reference_inverse(
                     coordinates,
                     context,
                     allocation_gate=allocation_gate,
+                    candidate_strategy=q_assembly_strategy,
                 )
                 q_assembly_pair_reports.append(block_audit)
                 q_coverage.update(map(int, context.global_q_indices))
@@ -2045,18 +2638,47 @@ def build_task40_v10_p6_reference_inverse(
             )
             sector_audits.append(block_audit)
             if event is not None:
-                event(
-                    "task40_v10_p6_sector_ready",
-                    {
-                        "twist_index": context.twist_index,
-                        "global_q_indices": list(context.global_q_indices),
-                        "local_inventory": list(actual_inventory),
-                        "block_audit": block_audit,
-                    },
-                )
+                sector_facts = {
+                    "twist_index": context.twist_index,
+                    "global_q_indices": list(context.global_q_indices),
+                    "local_inventory": list(actual_inventory),
+                    "block_audit": block_audit,
+                }
+                if q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+                    sector_facts.update(
+                        condensation_owner_audit={
+                            key: action.condensed.build_audit.get(key)
+                            for key in (
+                                "identity_cache_mode",
+                                "identity_cache_readonly",
+                                "identity_cache_class_count_local",
+                                "identity_cache_bytes_local",
+                                "retained_local_schur_bytes_local",
+                                "retained_local_schur_class_count_local",
+                                "local_lu_identity_relative_residual_max",
+                                "local_lu_factor_cache_bytes_local",
+                            )
+                        },
+                        action_buffer_inventory=dict(action.buffer_inventory),
+                        source_owner_lifecycle=(
+                            "assembly-time system owner transferred to action.condensed; "
+                            "the action remains the owner of local recovery/LU/Schur data"
+                        ),
+                        _q_matrices=sector_matrices,
+                    )
+                event("task40_v10_p6_sector_ready", sector_facts)
             del compiled
         if not q_assembly_comparison_only and set(all_q_matrices) != set(range(4)):
             raise ValueError("two p6 twist sectors did not produce all four global q matrices")
+        if event is not None and q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+            event(
+                "task40_v16_q_csr_all_ready",
+                {
+                    "q_count": len(all_q_matrices),
+                    "all_four_q_matrices": set(all_q_matrices) == set(range(4)),
+                    "_q_matrices": all_q_matrices,
+                },
+            )
         if transform_bank is not None:
             transform_bank.seal()
             named_arrays = global_entities.named_backing_arrays("global")
@@ -2070,10 +2692,21 @@ def build_task40_v10_p6_reference_inverse(
                 event("task40_v12_transform_bank_ready", receipt)
         if q_assembly_comparison_only:
             comparison_report = _summarize_task40_b0_q_assembly_pairs(
-                profile, q_assembly_pair_reports, q_coverage
+                profile,
+                q_assembly_pair_reports,
+                q_coverage,
+                candidate_strategy=q_assembly_strategy,
             )
             if event is not None:
-                event("task40_v13_b0_q_assembly_comparison_complete", comparison_report)
+                candidate_version = (
+                    "v16"
+                    if q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16
+                    else "v13"
+                )
+                event(
+                    f"task40_{candidate_version}_q_assembly_comparison_complete",
+                    comparison_report,
+                )
             destroy_task40_v10_p6_reference_inverse(owner)
             for sector in sectors:
                 sector.clear()

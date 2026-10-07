@@ -5,11 +5,16 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from scipy import sparse
 
 from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_LEGACY,
     Q_ASSEMBLY_PREALLOCATED_V13,
+    Q_ASSEMBLY_BOUNDED_V16,
+    V16StagingLimitError,
+    _v16_checked_csr_layout,
+    _assemble_v16_bitset_pattern,
     TwoCellNativeTransport,
     YOrbitEntities,
     assemble_task40_v10_sector_blocks,
@@ -58,10 +63,12 @@ class _ContributionAction:
     def __init__(self, matrix):
         self.matrix = np.asarray(matrix, dtype=np.complex128)
 
-    def iter_reduced_contribution_layouts(self):
+    def iter_reduced_contribution_layouts(self, *, hhat_block_columns=None):
+        del hhat_block_columns
         yield np.asarray([0, 1], dtype=np.int32), np.asarray([0, 1], dtype=np.int32), "fixture"
 
-    def iter_reduced_contributions(self, *, allocation_gate):
+    def iter_reduced_contributions(self, *, allocation_gate, hhat_block_columns=None):
+        del hhat_block_columns
         allocation_gate("fixture_numeric_contribution", {"rows": 2})
         yield (
             np.asarray([0, 1], dtype=np.int32),
@@ -111,6 +118,87 @@ def test_public_preallocated_assembly_retains_four_blocks_and_matches_legacy_dia
     np.testing.assert_array_equal(candidate[0].toarray(), [[2.0 + 0.2j]])
     np.testing.assert_array_equal(candidate[2].toarray(), [[3.0 - 0.4j]])
 
+
+
+def test_public_v16_bounded_assembly_matches_legacy_and_preserves_all_block_return():
+    matrix = np.asarray(
+        [[2.0 + 0.2j, 0.0], [0.0, 3.0 - 0.4j]], dtype=np.complex128
+    )
+    legacy, _ = _assemble_small_q_fixture(matrix, Q_ASSEMBLY_LEGACY)
+    bounded, audit = _assemble_small_q_fixture(matrix, Q_ASSEMBLY_BOUNDED_V16)
+    all_blocks, all_audit = assemble_task40_v10_sector_blocks(
+        _ContributionAction(matrix),
+        _TwoBranchCoordinates(),
+        SimpleNamespace(global_q_indices=(0, 2)),
+        allocation_gate=lambda *_args: None,
+        assembly_strategy=Q_ASSEMBLY_BOUNDED_V16,
+        return_all_blocks=True,
+    )
+
+    assert set(bounded) == {0, 2}
+    assert set(all_blocks) == {(0, 0), (0, 1), (1, 0), (1, 1)}
+    assert all_audit["assembly_strategy"] == Q_ASSEMBLY_BOUNDED_V16
+    assert audit["assembly_strategy"] == Q_ASSEMBLY_BOUNDED_V16
+    assert audit["pattern_seconds"] >= 0.0
+    assert audit["numeric_parent_seconds"] >= 0.0
+    assert audit["numeric_parent_seconds"] == audit[
+        "numeric_projection_and_accumulation_seconds"
+    ]
+    assert audit["timing_scope"]["parent_and_child_intervals_must_not_be_added"]
+    assert audit["exact_zero_slots_retained_by_block"]["01"] > 0
+    assert audit["final_nnz_by_block"]["01"] == audit["stored_pattern_slots_by_block"]["01"]
+    assert audit["no_compaction_owner_copy_created"] is True
+    assert audit["staging_peak_bytes_total_all_blocks"] <= audit["staging_budget_bytes_total_all_q_blocks"]
+    assert audit["python_row_set_count"] == audit["full_coo_list_count"] == 0
+    assert audit["global_csr_reallocations_during_numeric_pass"] == 0
+    assert audit["off_diagonal_relative"] == {
+        "q0_q1_relative": 0.0,
+        "q1_q0_relative": 0.0,
+    }
+    for q in (0, 2):
+        np.testing.assert_allclose(bounded[q].toarray(), legacy[q].toarray(), rtol=0.0, atol=1e-14)
+
+
+def test_v16_exact_zero_cleanup_preserves_small_finite_nonzero_values():
+    tiny = 1.0e-200
+    matrix = np.asarray([[tiny, 0.0], [0.0, 1.0]], dtype=np.complex128)
+    bounded, audit = _assemble_small_q_fixture(matrix, Q_ASSEMBLY_BOUNDED_V16)
+    assert tiny in bounded[0].data
+    assert audit["numeric_nonzero_entries_by_block"]["00"] == 1
+    assert audit["exact_zero_cleanup"].startswith("not_applied")
+
+
+def test_v16_staging_budget_raises_typed_resource_gate_before_bitset_allocation(monkeypatch):
+    import src.solvers.task40_v10_p6_yorbit as yorbit
+
+    monkeypatch.setattr(yorbit, "V16_Q_STAGING_BUDGET_BYTES", yorbit.V16_PYTHON_OVERHEAD_RESERVE_BYTES)
+    q_maps = _TwoBranchCoordinates().maps
+    with pytest.raises(V16StagingLimitError) as captured:
+        _assemble_v16_bitset_pattern(
+            _ContributionAction(np.eye(2, dtype=np.complex128)),
+            q_maps,
+            (0, 0),
+            allocation_gate=lambda *_args: None,
+        )
+    assert captured.value.evidence() == {
+        "condition": "V16_BOUNDED_STAGING_LIMIT",
+        "label": "pattern_bitset/p0q0",
+        "required_bytes": yorbit.V16_PYTHON_OVERHEAD_RESERVE_BYTES + 1,
+        "limit_bytes": yorbit.V16_PYTHON_OVERHEAD_RESERVE_BYTES,
+    }
+
+
+def test_v16_csr_bounds_use_python_integer_prefixes_before_allocation():
+    limit = int(np.iinfo(np.int32).max)
+    total, payload = _v16_checked_csr_layout((2, limit), [limit - 1, 1])
+    assert total == limit
+    assert payload == 3 * np.dtype(np.int32).itemsize + limit * (
+        np.dtype(np.int32).itemsize + np.dtype(np.complex128).itemsize
+    )
+    with pytest.raises(OverflowError, match="NNZ/indptr"):
+        _v16_checked_csr_layout((2, limit), [limit, 1])
+    with pytest.raises(OverflowError, match="shape"):
+        _v16_checked_csr_layout((2, limit + 1), [0, 0])
 
 def test_public_preallocated_assembly_rejects_uncancelled_off_diagonal_q_blocks():
     matrix = np.asarray(

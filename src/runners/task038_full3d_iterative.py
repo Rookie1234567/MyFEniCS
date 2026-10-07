@@ -47,6 +47,9 @@ def run_full3d_iterative(
         TASK40_B0_P6_V15_RUN_ID,
         TASK40_E1_V15_RUN_ID,
         TASK40_GX560_V15_RUN_ID,
+        TASK40_E1_V16_RUN_ID,
+        TASK40_GX560_V16_RUN_ID,
+        TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
         TASK40_COMPARISON_GROUP,
@@ -174,6 +177,37 @@ def run_full3d_iterative(
             ) != profile
         ):
             raise ValueError("Task40 V15 route requires its exact registered case identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=profile,
+            share_transform_bank=True,
+        )
+
+    from src.io.physical_intermediate_profile import (
+        TASK40_V16_P6_GX560_PROFILE,
+        TASK40_V16_P6_E1_PROFILE,
+    )
+    if profile in {TASK40_V16_P6_GX560_PROFILE, TASK40_V16_P6_E1_PROFILE}:
+        cases = {
+            TASK40_V16_P6_GX560_PROFILE: (TASK40_GX560_V16_RUN_ID, "Q4_ORIGINAL"),
+            TASK40_V16_P6_E1_PROFILE: (TASK40_E1_V16_RUN_ID, "Q4_ORIGINAL"),
+        }
+        expected_run_id, expected_stage = cases[profile]
+        if (
+            reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
+            or q_assembly_strategy != TASK40_Q_ASSEMBLY_BOUNDED_V16
+            or resolved_payload.get("run_id") != expected_run_id
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != expected_stage
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            ) != profile
+        ):
+            raise ValueError("Task40 V16 route requires its exact registered case identity")
         from .task40_v10_worker import run_task40_v10_p6_reference_worker
 
         return run_task40_v10_p6_reference_worker(

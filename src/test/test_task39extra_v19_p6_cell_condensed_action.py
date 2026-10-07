@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy import sparse
 from scipy.linalg import lu_factor, lu_solve
 
 from src.solvers.hcurl_assembly_time_condensation import CellRecoveryMap
@@ -24,6 +25,12 @@ from src.solvers.p6_cell_condensed_action import (
     build_p6_cell_condensed_action_from_carrier,
     condense_physical_cell_blocks,
     native_residual_from_augmented,
+)
+from src.solvers.task40_v10_p6_yorbit import (
+    Q_ASSEMBLY_BOUNDED_V16,
+    Q_ASSEMBLY_LEGACY,
+    assemble_task40_v10_sector_blocks,
+    compare_task40_v10_sector_assembly,
 )
 
 
@@ -124,6 +131,149 @@ def test_reduced_contribution_iterator_matches_cached_action() -> None:
     np.testing.assert_allclose(assembled @ rhs, action.apply(rhs), rtol=2e-12, atol=2e-12)
     assert len(gates) == 4
     assert all(facts["consumer_must_release_before_next"] for _name, facts in gates)
+
+
+def test_reduced_contribution_iterator_builds_hhat_by_column_blocks(monkeypatch) -> None:
+    _condensed, _block, action = _problem()
+    n = action.reduced_size
+    rhs = _matrix(np.random.default_rng(20261008), n, 1)[:, 0]
+    expected = action.apply(rhs)
+    full = np.zeros((n, n), dtype=np.complex128)
+    for rows, columns, values, _label in action.iter_reduced_contributions(
+        allocation_gate=lambda *_args: None
+    ):
+        full[np.ix_(rows, columns)] += values
+
+    def reject_full_hhat_materialization():
+        raise AssertionError("blocked Hhat path must not materialize the full Hhat")
+
+    monkeypatch.setattr(action, "_materialize_Hhat", reject_full_hhat_materialization)
+    blocked = np.zeros((n, n), dtype=np.complex128)
+    labels = []
+    for rows, columns, values, label in action.iter_reduced_contributions(
+        allocation_gate=lambda *_args: None,
+        hhat_block_columns=1,
+    ):
+        blocked[np.ix_(rows, columns)] += values
+        labels.append(label)
+
+    np.testing.assert_allclose(blocked, full, rtol=0.0, atol=1e-14)
+    np.testing.assert_allclose(blocked @ rhs, expected, rtol=2e-12, atol=2e-12)
+    assert labels[:2] == ["ports/Hhat/0:1", "ports/Hhat/1:2"]
+
+
+def test_v16_bounded_q_route_matches_small_p6_action_fixture(monkeypatch) -> None:
+    """Exercise the registered q route with the actual action class on a small algebra fixture."""
+    def diagonal(values):
+        return np.diag(np.asarray(values, dtype=np.complex128))
+
+    block = {
+        "Vii": diagonal([4.0, 5.0]),
+        "Vit": diagonal([0.1, 0.2]),
+        "Vti": diagonal([0.15, 0.25]),
+        "Vtt": diagonal([2.0, 3.0]),
+        "Bi": diagonal([0.3, 0.4]),
+        "Bt": diagonal([0.2, 0.3]),
+        "Di": diagonal([0.1, 0.2]),
+        "Dt": diagonal([0.4, 0.5]),
+        "H": diagonal([6.0, 7.0]),
+    }
+    condensed = _FakeCondensed((block,))
+    terms = {
+        0: P6CellPortTerms(
+            block["Bi"],
+            block["Di"],
+            np.asarray([0, 1], dtype=PETSc.IntType),
+            Bt=block["Bt"],
+            Dt=block["Dt"],
+            H=block["H"],
+        )
+    }
+    action = P6CellCondensedAction(
+        condensed, H_p=diagonal([8.0, 9.0]), port_terms=terms
+    )
+
+    class _Coordinates:
+        maps = (
+            sparse.csr_matrix(
+                np.asarray(
+                    [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
+                    dtype=np.complex128,
+                )
+            ),
+            sparse.csr_matrix(
+                np.asarray(
+                    [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 1.0]],
+                    dtype=np.complex128,
+                )
+            ),
+        )
+
+        def q_map(self, branch, *, allocation_gate):
+            allocation_gate("real_p6_fixture_q_map", {"branch": int(branch)})
+            return self.maps[branch]
+
+    coordinates = _Coordinates()
+    context = SimpleNamespace(global_q_indices=(0, 2))
+    native_blocks = {}
+    for p in (0, 1):
+        for q in (0, 1):
+            q_basis = coordinates.maps[q].toarray()
+            native_action = np.column_stack(
+                [action.apply(q_basis[:, column]) for column in range(q_basis.shape[1])]
+            )
+            native_blocks[p, q] = coordinates.maps[p].conjugate().T @ native_action
+
+    legacy, _legacy_audit = assemble_task40_v10_sector_blocks(
+        action,
+        coordinates,
+        context,
+        allocation_gate=lambda *_args: None,
+        assembly_strategy=Q_ASSEMBLY_LEGACY,
+        return_all_blocks=True,
+    )
+    comparison = compare_task40_v10_sector_assembly(
+        action,
+        coordinates,
+        context,
+        allocation_gate=lambda *_args: None,
+        candidate_strategy=Q_ASSEMBLY_BOUNDED_V16,
+    )
+    assert comparison["schema"] == "task40extra.review_v16_q_assembly_pair.v1"
+    assert comparison["candidate_strategy"] == Q_ASSEMBLY_BOUNDED_V16
+    assert comparison["numerically_equivalent_at_original_operator_gate"]
+    assert comparison["all_four_blocks_independently_compared"]
+
+    def reject_full_hhat_materialization():
+        raise AssertionError("V16 q route must use streamed Hhat contribution blocks")
+
+    monkeypatch.setattr(action, "_materialize_Hhat", reject_full_hhat_materialization)
+    bounded, audit = assemble_task40_v10_sector_blocks(
+        action,
+        coordinates,
+        context,
+        allocation_gate=lambda *_args: None,
+        assembly_strategy=Q_ASSEMBLY_BOUNDED_V16,
+        return_all_blocks=True,
+    )
+
+    assert set(bounded) == {(0, 0), (0, 1), (1, 0), (1, 1)}
+    assert audit["assembly_strategy"] == Q_ASSEMBLY_BOUNDED_V16
+    assert audit["numeric_contribution_count"] > 0
+    assert audit["staging_peak_bytes_total_all_blocks"] <= audit[
+        "staging_budget_bytes_total_all_q_blocks"
+    ]
+    for key in bounded:
+        np.testing.assert_allclose(
+            bounded[key].toarray(), legacy[key].toarray(), rtol=0.0, atol=1e-14
+        )
+        np.testing.assert_allclose(
+            bounded[key].toarray(), native_blocks[key], rtol=2e-12, atol=2e-12
+        )
+    assert audit["off_diagonal_relative"] == {
+        "q0_q1_relative": 0.0,
+        "q1_q0_relative": 0.0,
+    }
 
 
 def test_v13_augmented_residual_sign_and_original_h_scale_match_small_p6_action():

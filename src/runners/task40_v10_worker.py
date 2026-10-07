@@ -105,6 +105,124 @@ def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _v16_unique_array_owner_inventory(named_arrays: Mapping[str, Any]) -> dict[str, Any]:
+    """Summarize named NumPy borrowers by their unique backing ndarray owner."""
+    owners: dict[int, dict[str, Any]] = {}
+    array_reference_count = 0
+    for name, value in named_arrays.items():
+        if not isinstance(value, np.ndarray):
+            continue
+        array_reference_count += 1
+        root = value
+        while isinstance(getattr(root, "base", None), np.ndarray):
+            root = root.base
+        key = id(root)
+        row = owners.setdefault(
+            key,
+            {
+                "owner_token": f"ndarray-owner-{key:x}",
+                "backing_bytes": int(root.nbytes),
+                "dtype": str(root.dtype),
+                "shape": list(root.shape),
+                "names": [],
+            },
+        )
+        row["names"].append(str(name))
+    ordered = sorted(owners.values(), key=lambda row: (-row["backing_bytes"], row["owner_token"]))
+    aliases = [row for row in ordered if len(row["names"]) > 1]
+    return {
+        "named_array_reference_count": array_reference_count,
+        "unique_backing_buffer_count": len(owners),
+        "unique_backing_bytes": int(sum(row["backing_bytes"] for row in owners.values())),
+        "alias_group_count": len(aliases),
+        "alias_reference_count": int(sum(len(row["names"]) - 1 for row in aliases)),
+        "largest_backing_buffers": [
+            {**row, "names": row["names"][:4]} for row in ordered[:12]
+        ],
+    }
+
+
+def _v16_csr_owner_inventory(
+    matrices: Mapping[Any, Any], *, numeric_nonzero_by_key: Mapping[str, int] | None = None
+) -> dict[str, Any]:
+    """Report stored slots, numerical nonzeros, visible payload, and unique backing owners."""
+    named_arrays: dict[str, np.ndarray] = {}
+    by_block: dict[str, Any] = {}
+    for key, matrix in matrices.items():
+        label = "".join(map(str, key)) if isinstance(key, tuple) else str(key)
+        arrays = {
+            "data": matrix.data,
+            "indices": matrix.indices,
+            "indptr": matrix.indptr,
+        }
+        for field, array in arrays.items():
+            named_arrays[f"block{label}.{field}"] = array
+        stored = int(matrix.nnz)
+        numeric = (
+            int(numeric_nonzero_by_key[label])
+            if numeric_nonzero_by_key is not None and label in numeric_nonzero_by_key
+            else int(np.count_nonzero(matrix.data))
+        )
+        by_block[label] = {
+            "shape": list(matrix.shape),
+            "stored_slots": stored,
+            "numeric_nonzero_entries": numeric,
+            "exact_zero_slots_retained": stored - numeric,
+            "visible_csr_payload_bytes": int(
+                matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes
+            ),
+            "canonical": bool(matrix.has_canonical_format and matrix.has_sorted_indices),
+        }
+    return {
+        "schema": "task40extra.review_v16_csr_owner_inventory.v1",
+        "by_block": by_block,
+        "unique_array_backings": _v16_unique_array_owner_inventory(named_arrays),
+        "zero_cleanup": "not_applied; no array owner copy or RSS reduction claimed",
+    }
+
+
+def _allocation_gate_summary_key(label: str) -> str:
+    text = str(label)
+    if "all_q_symbolic_before_any_numeric" in text:
+        return "all_q_symbolic_before_any_numeric"
+    if "before_full_p6" in text or "full_p6_post_release" in text:
+        return "full_p6_output"
+    if text.startswith("task40_v16_q_"):
+        return text.split("/", 1)[0]
+    if text.startswith("p6_reduced_contribution/"):
+        parts = text.split("/")
+        return "/".join(parts[:2])
+    if "symbolic" in text:
+        return "symbolic_other"
+    if "numeric" in text or "factor" in text:
+        return "numeric_factor_other"
+    if "sector" in text:
+        return "sector_other"
+    if "target" in text:
+        return "target_other"
+    return text.split("/", 1)[0][:64]
+
+
+def _event_file_identity(path: Path) -> dict[str, int | str]:
+    digest = hashlib.sha256()
+    total_records = admission_records = completion_records = 0
+    with path.open("rb") as stream:
+        for line in stream:
+            digest.update(line)
+            total_records += 1
+            if b'"event":"v10_strict_allocation_admission"' in line:
+                admission_records += 1
+            elif b'"event":"v10_strict_allocation_admission_complete"' in line:
+                completion_records += 1
+    return {
+        "size_bytes": int(path.stat().st_size),
+        "sha256": digest.hexdigest(),
+        "record_count": total_records,
+        "allocation_admission_event_count": admission_records,
+        "allocation_admission_complete_event_count": completion_records,
+    }
+
+
 def _regular_inverse_sample_label(case: str, candidate_label: str) -> str:
     if candidate_label == "initial":
         return f"v10_regular_inverse_{case}"
@@ -3534,6 +3652,9 @@ class _P6ReferencePreconditioner:
             raise
 
     def apply(self, source: Any):
+        import time
+
+        whole_pc_started_ns = time.perf_counter_ns()
         self.runtime.sample(f"v10_p6_reference_pc_{self.calls + 1}_before")
         source_values = np.asarray(source.array_r, dtype=np.complex128)
         if source_values.shape != (self.target_action.reduced_size,):
@@ -3541,7 +3662,48 @@ class _P6ReferencePreconditioner:
         if self.inverse.reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
             return self._apply_v13(source, source_values)
         if self.inverse.reference_pc_strategy == "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15":
-            return self._apply_v15(source, source_values)
+            try:
+                output = self._apply_v15(source, source_values)
+            except BaseException as exc:
+                finished_ns = time.perf_counter_ns()
+                self.runtime.marker(
+                    "v15_p6_reference_pc_apply_parent_failed",
+                    {
+                        "call": int(self.calls),
+                        "monotonic_start_ns": int(whole_pc_started_ns),
+                        "monotonic_end_ns": int(finished_ns),
+                        "whole_pc_apply_seconds": float(
+                            (finished_ns - whole_pc_started_ns) / 1.0e9
+                        ),
+                        "failure": {"type": type(exc).__name__, "message": str(exc)},
+                    },
+                )
+                raise
+            finished_ns = time.perf_counter_ns()
+            elapsed = float((finished_ns - whole_pc_started_ns) / 1.0e9)
+            native_children = list(self.last_facts.get("native_evaluation_seconds", ()))
+            self.last_facts["whole_pc_apply_seconds"] = elapsed
+            self.last_facts["whole_pc_apply_monotonic_interval_ns"] = [
+                int(whole_pc_started_ns), int(finished_ns)
+            ]
+            self.last_facts["whole_pc_timing_scope"] = (
+                "parent includes raw q solves, native complete-state evaluation, optional one "
+                "augmentation, output conversion, evidence write, and resource sample"
+            )
+            self.last_facts["native_evaluation_seconds_are_children_not_additive"] = True
+            self.runtime.marker(
+                "v15_p6_reference_pc_apply_parent_complete",
+                {
+                    "call": int(self.calls),
+                    "monotonic_start_ns": int(whole_pc_started_ns),
+                    "monotonic_end_ns": int(finished_ns),
+                    "whole_pc_apply_seconds": elapsed,
+                    "native_evaluation_seconds": native_children,
+                    "native_evaluation_seconds_are_children_not_additive": True,
+                    "timing_scope": self.last_facts["whole_pc_timing_scope"],
+                },
+            )
+            return output
         injected = self.target_action.inject_trace_port(source_values)
         port_rhs = source_values[self.target_condensed.active_rows :].copy()
         solution_values, alpha = self.inverse.apply_augmented(
@@ -3671,6 +3833,9 @@ def _candidate_contract(
         TASK40_E1_V15_RUN_ID,
         TASK40_GX560_V11_P6_RUN_ID,
         TASK40_GX560_V15_RUN_ID,
+        TASK40_E1_V16_RUN_ID,
+        TASK40_GX560_V16_RUN_ID,
+        TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_GX784_V11_P6_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
@@ -3686,6 +3851,8 @@ def _candidate_contract(
         TASK40_V15_P6_B0_PROFILE,
         TASK40_V15_P6_GX560_PROFILE,
         TASK40_V15_P6_E1_PROFILE,
+        TASK40_V16_P6_GX560_PROFILE,
+        TASK40_V16_P6_E1_PROFILE,
     )
     from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
     from src.runners.task40_v10_campaign import CAMPAIGN_SECONDS, CLOSEOUT_RESERVE_SECONDS
@@ -3696,36 +3863,6 @@ def _candidate_contract(
     campaign = getattr(runtime, "campaign_context", None)
     shared = getattr(runtime, "shared_budget", {})
     reserved = float(getattr(runtime, "workflow_reserved_seconds", -1.0))
-    case_identity = {
-        TASK40_V10_P6_REFERENCE_PROFILE: (
-            (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
-            (TASK40_B0_P6_V13_RUN_ID, "B0_CANDIDATE", 16.0),
-            None,
-        ),
-        TASK40_V11_P6_GX560_PROFILE: (
-            (TASK40_GX560_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
-            (TASK40_GX560_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
-            None,
-        ),
-        TASK40_V11_P6_GX784_PROFILE: (
-            (TASK40_GX784_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
-            (TASK40_GX784_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
-            None,
-        ),
-        TASK40_V15_P6_B0_PROFILE: (
-            None, None, (TASK40_B0_P6_V15_RUN_ID, "B0_CANDIDATE", 16.0),
-        ),
-        TASK40_V15_P6_GX560_PROFILE: (
-            None, None, (TASK40_GX560_V15_RUN_ID, "Q4_ORIGINAL", 16.0),
-        ),
-        TASK40_V15_P6_E1_PROFILE: (
-            None, None, (TASK40_E1_V15_RUN_ID, "Q4_ORIGINAL", 16.0),
-        ),
-    }
-    try:
-        strict_identity, v13_identity, v15_identity = case_identity[profile_identity]
-    except KeyError as exc:
-        raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
     reference_pc_strategy = str(
         solver.get("task40_reference_pc_strategy", TASK40_STRICT_REFERENCE_PC_STRATEGY)
     )
@@ -3734,12 +3871,52 @@ def _candidate_contract(
     )
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+    is_v16 = q_assembly_strategy == TASK40_Q_ASSEMBLY_BOUNDED_V16
+    case_identity = {
+        TASK40_V10_P6_REFERENCE_PROFILE: (
+            (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
+            (TASK40_B0_P6_V13_RUN_ID, "B0_CANDIDATE", 16.0),
+            None,
+            None,
+        ),
+        TASK40_V11_P6_GX560_PROFILE: (
+            (TASK40_GX560_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+            (TASK40_GX560_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
+            None,
+            None,
+        ),
+        TASK40_V11_P6_GX784_PROFILE: (
+            (TASK40_GX784_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+            (TASK40_GX784_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
+            None,
+            None,
+        ),
+        TASK40_V15_P6_B0_PROFILE: (
+            None, None, (TASK40_B0_P6_V15_RUN_ID, "B0_CANDIDATE", 16.0), None,
+        ),
+        TASK40_V15_P6_GX560_PROFILE: (
+            None, None, (TASK40_GX560_V15_RUN_ID, "Q4_ORIGINAL", 16.0), None,
+        ),
+        TASK40_V15_P6_E1_PROFILE: (
+            None, None, (TASK40_E1_V15_RUN_ID, "Q4_ORIGINAL", 16.0), None,
+        ),
+        TASK40_V16_P6_GX560_PROFILE: (
+            None, None, None, (TASK40_GX560_V16_RUN_ID, "Q4_ORIGINAL", 16.0),
+        ),
+        TASK40_V16_P6_E1_PROFILE: (
+            None, None, None, (TASK40_E1_V16_RUN_ID, "Q4_ORIGINAL", 16.0),
+        ),
+    }
+    try:
+        strict_identity, v13_identity, v15_identity, v16_identity = case_identity[profile_identity]
+    except KeyError as exc:
+        raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
     expected_identity = (
-        v15_identity if is_v15 else v13_identity if is_v13 else strict_identity
+        v16_identity if is_v16 else v15_identity if is_v15 else v13_identity if is_v13 else strict_identity
     )
     if expected_identity is None:
         raise ValueError(
-            f"Task40 profile {profile_identity} does not support {reference_pc_strategy}"
+            f"Task40 profile {profile_identity} does not support {reference_pc_strategy}/{q_assembly_strategy}"
         )
     expected_run_id, expected_stage, expected_memory_limit = expected_identity
     input_timeout = execution.get("timeout_seconds")
@@ -3793,7 +3970,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
-            "task40extra.review_v15_p6_reference_worker_contract.v1"
+            "task40extra.review_v16_p6_reference_worker_contract.v1"
+            if is_v16
+            else "task40extra.review_v15_p6_reference_worker_contract.v1"
             if is_v15
             else "task40extra.review_v13_p6_reference_worker_contract.v1"
             if is_v13
@@ -3835,6 +4014,8 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_B0_PROFILE,
         TASK40_V15_P6_GX560_PROFILE,
         TASK40_V15_P6_E1_PROFILE,
+        TASK40_V16_P6_GX560_PROFILE,
+        TASK40_V16_P6_E1_PROFILE,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -3871,7 +4052,9 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.solvers.task40_v10_p6_yorbit import (
         Q_ASSEMBLY_LEGACY,
+        Q_ASSEMBLY_BOUNDED_V16,
         Q_ASSEMBLY_STRATEGIES,
+        V16StagingLimitError,
         build_task40_v10_p6_reference_inverse,
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
@@ -3921,12 +4104,15 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_B0_PROFILE,
         TASK40_V15_P6_GX560_PROFILE,
         TASK40_V15_P6_E1_PROFILE,
+        TASK40_V16_P6_GX560_PROFILE,
+        TASK40_V16_P6_E1_PROFILE,
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
     if type(share_transform_bank) is not bool:
         raise TypeError("V12 transform-bank selection must be an explicit boolean")
     periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
     is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
+    is_v16 = profile_identity in (TASK40_V16_P6_GX560_PROFILE, TASK40_V16_P6_E1_PROFILE)
     case_labels = {
         TASK40_V10_P6_REFERENCE_PROFILE: "b0",
         TASK40_V11_P6_GX560_PROFILE: "gx560",
@@ -3934,10 +4120,14 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_B0_PROFILE: "b0",
         TASK40_V15_P6_GX560_PROFILE: "gx560",
         TASK40_V15_P6_E1_PROFILE: "e1",
+        TASK40_V16_P6_GX560_PROFILE: "gx560",
+        TASK40_V16_P6_E1_PROFILE: "e1",
     }
     case_label = case_labels[profile_identity]
     evidence_prefix = (
-        "v15_p6_reference"
+        "v16_p6_reference"
+        if is_v16
+        else "v15_p6_reference"
         if is_v15
         else "v13_p6_reference"
         if is_v13
@@ -3948,7 +4138,9 @@ def run_task40_v10_p6_reference_worker(
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
-            "task40extra.review_v15_p6_reference_worker_summary.v1"
+            "task40extra.review_v16_p6_reference_worker_summary.v1"
+            if is_v16
+            else "task40extra.review_v15_p6_reference_worker_summary.v1"
             if is_v15
             else "task40extra.review_v13_p6_reference_worker_summary.v1"
             if is_v13
@@ -3991,9 +4183,12 @@ def run_task40_v10_p6_reference_worker(
     pc = None
     reference_audit_snapshot = None
     allocation_gate_records: list[dict[str, Any]] = []
+    allocation_gate_summary: dict[str, dict[str, Any]] = {}
+    allocation_gate_invocation_count = 0
     handlers: dict[int, Any] = {}
     outer_started = False
     result: dict[str, Any] | None = None
+    worker_result: dict[str, Any] | None = None
     try:
         runtime = _V14Runtime(
             directory,
@@ -4002,7 +4197,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v15_{case_label}_p6_reference"
+                f"task40_review_v16_{case_label}_p6_reference"
+                if is_v16
+                else f"task40_review_v15_{case_label}_p6_reference"
                 if is_v15
                 else f"task40_review_v13_{case_label}_p6_reference"
                 if is_v13
@@ -4113,6 +4310,8 @@ def run_task40_v10_p6_reference_worker(
         runtime.sample("v10_candidate_target_mesh_and_operator_complete")
 
         def allocation_gate(label: str, facts: Mapping[str, Any]) -> dict[str, Any]:
+            nonlocal allocation_gate_invocation_count
+            allocation_gate_invocation_count += 1
             amount = int(facts.get(
                 "additional_payload_bytes",
                 facts.get("matrix_payload_bytes", facts.get("workspace_bytes", 0)),
@@ -4233,7 +4432,49 @@ def run_task40_v10_p6_reference_worker(
                     "selected_future_nonfactor_co_resident_phase"
                 ),
             }
-            allocation_gate_records.append(admission)
+            if is_v16:
+                if label.startswith("task40_v16_q_") or label.startswith(
+                    "p6_reduced_contribution/"
+                ):
+                    admission["v16_staging_facts"] = dict(facts)
+                key = _allocation_gate_summary_key(label)
+                if key not in allocation_gate_summary and len(allocation_gate_summary) >= 32:
+                    key = "other_bounded_groups"
+                row = allocation_gate_summary.setdefault(
+                    key,
+                    {
+                        "count": 0,
+                        "peak_staging_live_bytes_upper": 0,
+                        "peak_requested_additional_bytes": 0,
+                        "peak_requested_workspace_bytes": 0,
+                        "peak_projected_process_tree_rss_bytes": 0,
+                        "peak_projected_incremental_capacity_bytes": 0,
+                        "peak_label": "",
+                    },
+                )
+                row["count"] += 1
+                staging_peak = int(
+                    facts.get("staging_live_bytes_upper", amount + workspace)
+                )
+                row["peak_requested_additional_bytes"] = max(
+                    int(row["peak_requested_additional_bytes"]), amount
+                )
+                row["peak_requested_workspace_bytes"] = max(
+                    int(row["peak_requested_workspace_bytes"]), workspace
+                )
+                row["peak_projected_process_tree_rss_bytes"] = max(
+                    int(row["peak_projected_process_tree_rss_bytes"]),
+                    int(bounds["projected_process_tree_rss_bytes"]),
+                )
+                row["peak_projected_incremental_capacity_bytes"] = max(
+                    int(row["peak_projected_incremental_capacity_bytes"]),
+                    int(bounds["projected_incremental_capacity_bytes"]),
+                )
+                if staging_peak >= int(row["peak_staging_live_bytes_upper"]):
+                    row["peak_staging_live_bytes_upper"] = staging_peak
+                    row["peak_label"] = str(label)
+            else:
+                allocation_gate_records.append(admission)
             runtime.marker("v10_strict_allocation_admission", admission)
             if not (
                 bounds["total_rss_inequality_passed"]
@@ -4264,9 +4505,21 @@ def run_task40_v10_p6_reference_worker(
             strict_local_checks=True,
             materialize_global_matrix=False,
             retain_local_schur_for_matrix_free=True,
+            share_identity_cache=is_v16,
             preserve_exact_geometry=True,
             allocation_gate=allocation_gate,
         )
+        target_identity_cache_audit = {
+            key: target_condensed.build_audit.get(key)
+            for key in (
+                "identity_cache_mode",
+                "identity_cache_readonly",
+                "identity_cache_class_count_local",
+                "identity_cache_bytes_local",
+                "retained_local_schur_bytes_local",
+                "retained_local_schur_class_count_local",
+            )
+        }
         target_action = build_p6_cell_condensed_action_from_carrier(
             target_condensed,
             target_bundle["dtn_action"].carrier,
@@ -4277,6 +4530,20 @@ def run_task40_v10_p6_reference_worker(
                 target_bundle["dtn_action"].carrier.entries
             ),
         )
+        if is_v16:
+            target_owner_inventory = {
+                "schema": "task40extra.review_v16_target_owner_inventory.v1",
+                "target_condensation_identity_cache": target_identity_cache_audit,
+                "target_action_buffer_inventory": dict(target_action.buffer_inventory),
+                "identity_cache_scope": (
+                    "one read-only real identity per target interior shape; local LU, recovery, "
+                    "and Schur buffers remain their separately counted owners"
+                ),
+                "source_owner": "target_condensed transferred to target_action.condensed",
+            }
+            summary["v16_target_owner_inventory"] = target_owner_inventory
+            runtime.marker("v16_target_condensed_action_owner_inventory", target_owner_inventory)
+            runtime.sample("v16_target_condensed_action_complete")
         target_condensed = None
         _validate_target_p6_inventory(target_action.condensed, periodic_profile)
         target_fast_bundle = build_packed_physical_action(
@@ -4332,8 +4599,65 @@ def run_task40_v10_p6_reference_worker(
             return saved
 
         def reference_event(name: str, facts: Mapping[str, Any]) -> None:
+            if is_v16 and name == "task40_v16_reference_global_ready":
+                saved = dict(facts)
+                named_arrays = saved.pop("_named_arrays", {})
+                saved["global_entity_backing_inventory"] = (
+                    _v16_unique_array_owner_inventory(named_arrays)
+                )
+                saved["stage_resource_sample"] = runtime.sample(
+                    "v16_reference_global_ready", enforce=False
+                )
+                runtime.marker(name, saved)
+                return
+            if is_v16 and name == "task40_v10_p6_sector_ready":
+                saved = dict(facts)
+                q_matrices = saved.pop("_q_matrices", {})
+                saved["q_matrix_owner_inventory"] = _v16_csr_owner_inventory(
+                    q_matrices
+                )
+                sample_label = (
+                    "v16_reference_sector"
+                    + str(saved.get("twist_index", "unknown"))
+                    + "_q_csr_ready"
+                )
+                saved["stage_resource_sample"] = runtime.sample(
+                    sample_label, enforce=False
+                )
+                runtime.marker(name, saved)
+                return
+            if is_v16 and name == "task40_v16_q_csr_all_ready":
+                saved = dict(facts)
+                q_matrices = saved.pop("_q_matrices", {})
+                saved["q_matrix_owner_inventory"] = _v16_csr_owner_inventory(
+                    q_matrices
+                )
+                saved["stage_resource_sample"] = runtime.sample(
+                    "v16_q_csr_all_ready_before_symbolic", enforce=False
+                )
+                runtime.marker(name, saved)
+                return
+            if is_v16 and name in {
+                "task40_v12_transform_bank_ready",
+                "task40_v10_p6_reference_inverse_ready",
+                "task40_v16_q_assembly_comparison_complete",
+            }:
+                saved = dict(facts)
+                label = {
+                    "task40_v12_transform_bank_ready": "v16_all_spaces_transform_bank_ready",
+                    "task40_v10_p6_reference_inverse_ready": "v16_reference_inverse_ready",
+                    "task40_v16_q_assembly_comparison_complete": "v16_q_assembly_comparison_complete",
+                }[name]
+                saved["stage_resource_sample"] = runtime.sample(label, enforce=False)
+                runtime.marker(name, saved)
+                return
             if name == "task40_v12_mumps_symbolic_q_complete":
                 q = int(facts["q"])
+                facts = dict(facts)
+                if is_v16:
+                    facts["stage_resource_sample"] = runtime.sample(
+                        f"v16_mumps_q{q}_symbolic_complete", enforce=False
+                    )
                 _write_json(
                     directory / f"task40_v12_p6_q{q}_symbolic.json",
                     {
@@ -4348,6 +4672,11 @@ def run_task40_v10_p6_reference_worker(
                 return
             if name == "task40_v12_mumps_numeric_q_complete":
                 q = int(facts["q"])
+                facts = dict(facts)
+                if is_v16:
+                    facts["stage_resource_sample"] = runtime.sample(
+                        f"v16_mumps_q{q}_numeric_complete", enforce=False
+                    )
                 _write_json(
                     directory / f"task40_v12_p6_q{q}_numeric.json",
                     {
@@ -4472,6 +4801,8 @@ def run_task40_v10_p6_reference_worker(
             raise ValueError(f"{case_label} retained trace+port RHS must be finite and nonzero")
         identity = {
             "schema": "task40extra.review_v10_b0_candidate_identity.v1",
+            "profile_identity": profile_identity,
+            "q_assembly_strategy": q_assembly_strategy,
             "source_sha": source_sha,
             "input_sha256": resolved_payload.get("provenance", {}).get("input_sha256"),
             "physical_model_sha256": resolved_payload.get("provenance", {}).get("physical_model_sha256"),
@@ -4517,12 +4848,25 @@ def run_task40_v10_p6_reference_worker(
             target_backend=target_backend_facts,
             target_condensed_action_audit=dict(target_action.audit),
             allocation_admission_gates=allocation_gate_records,
+            allocation_admission_gate_summary=(
+                allocation_gate_summary if is_v16 else None
+            ),
         )
 
         pc = _P6ReferencePreconditioner(
             runtime, reference, target_action, target_bundle["dtn_action"].carrier,
             allocation_gate=allocation_gate,
         )
+        if is_v16:
+            startup_facts = {
+                "schema": "task40extra.review_v16_solver_startup_inventory.v1",
+                "q_matrix_audits": dict(reference.get("q_matrix_audits", {})),
+                "all_four_factor_objects_live": True,
+                "target_reduced_rows": int(target_action.reduced_size),
+                "target_action_buffer_inventory": dict(target_action.buffer_inventory),
+            }
+            runtime.marker("v16_solver_startup_complete_before_ksp", startup_facts)
+            runtime.sample("v16_solver_startup_complete_before_ksp", enforce=False)
         checkpoints = {"count": 0}
         outer_started_ns = time.perf_counter_ns()
         runtime.begin_outer_solve()
@@ -4613,6 +4957,19 @@ def run_task40_v10_p6_reference_worker(
             elapsed = float(runtime.workflow_clock_interval()["budget_seconds"])
             return elapsed >= float(runtime.workflow_reserved_seconds)
 
+        if is_v16:
+            runtime.marker(
+                "v16_ksp_start",
+                {
+                    "outer_solver": "FGMRES",
+                    "restart": 32,
+                    "max_it": 2048,
+                    "initial_guess": "zero",
+                    "mpi_size": 1,
+                    "mathematical_threads": 1,
+                },
+            )
+            runtime.sample("v16_ksp_start", enforce=False)
         result = run_retained_fgmres(
             rhs,
             action,
@@ -4772,6 +5129,8 @@ def run_task40_v10_p6_reference_worker(
         )
         summary["target_condensed_action_final_audit"] = dict(target_action.audit)
         summary["allocation_admission_gates"] = allocation_gate_records
+        if is_v16:
+            summary["allocation_admission_gate_summary"] = allocation_gate_summary
         destroy_task40_v10_p6_reference_inverse(reference)
         reference = None
         runtime.sample("v10_candidate_reference_factor_release_complete")
@@ -4960,7 +5319,8 @@ def run_task40_v10_p6_reference_worker(
                 ),
                 official_result=False,
             )
-            return {"passed": False, "errors": [summary["result_classification"]], "summary": summary}
+            worker_result = {"passed": False, "errors": [summary["result_classification"]], "summary": summary}
+            return worker_result
 
         runtime.set_phase("evaluation")
         output_directory = directory / "numerical_output"
@@ -5097,12 +5457,23 @@ def run_task40_v10_p6_reference_worker(
             official_result=output_pass,
         )
         runtime.marker("v10_candidate_worker_result", summary)
-        return {
+        worker_result = {
             "passed": bool(output_pass),
             "errors": [] if output_pass else ["physical R/T/A output gates failed"],
             "summary": summary,
             "numerical_output_directory": str(output_directory),
         }
+        return worker_result
+    except V16StagingLimitError as exc:
+        summary.update(
+            status="CONTROLLED_STOP",
+            official_result=False,
+            result_classification="RESOURCE_CONTROLLED_STOP",
+            v16_staging_gate=exc.evidence(),
+            error={"type": type(exc).__name__, "message": str(exc)},
+        )
+        worker_result = {"passed": False, "errors": [str(exc)], "summary": summary}
+        return worker_result
     except V14ResourceStop as exc:
         summary.update(
             status="CONTROLLED_STOP",
@@ -5110,7 +5481,8 @@ def run_task40_v10_p6_reference_worker(
             result_classification=getattr(exc, "classification", "RESOURCE_CONTROLLED_STOP"),
             error={"type": type(exc).__name__, "message": str(exc)},
         )
-        return {"passed": False, "errors": [str(exc)], "summary": summary}
+        worker_result = {"passed": False, "errors": [str(exc)], "summary": summary}
+        return worker_result
     except BaseException as exc:
         summary.update(
             status="FAILED",
@@ -5221,10 +5593,101 @@ def run_task40_v10_p6_reference_worker(
                     "cleanup_errors", []
                 ).append({"type": type(exc).__name__, "message": str(exc)})
             try:
+                summary["allocation_admission_gates"] = allocation_gate_records
+                if is_v16:
+                    summary["allocation_admission_gate_summary"] = allocation_gate_summary
+                    summary["allocation_admission_gate_storage"] = (
+                        "full per-gate records are durably appended to the raw events file; "
+                        "memory retains bounded grouped maxima only"
+                    )
+                    summary["allocation_gate_invocation_count"] = int(
+                        allocation_gate_invocation_count
+                    )
                 _write_json(directory / "task40_v10_p6_candidate_summary.json", summary)
                 runtime.marker("v10_candidate_worker_complete", summary)
-            except Exception:
-                pass
+                if is_v16:
+                    events_path = Path(runtime.events_path)
+                    raw_identity = _event_file_identity(events_path)
+                    summary["allocation_admission_raw"] = {
+                        "path": str(events_path.relative_to(directory)),
+                        **raw_identity,
+                        "allocation_gate_invocation_count": int(
+                            allocation_gate_invocation_count
+                        ),
+                    }
+                    admission_count = int(
+                        raw_identity["allocation_admission_event_count"]
+                    )
+                    completion_count = int(
+                        raw_identity["allocation_admission_complete_event_count"]
+                    )
+                    completion_gap = admission_count - completion_count
+                    status = str(summary.get("status", ""))
+                    ledger_passed = bool(
+                        admission_count == allocation_gate_invocation_count
+                        and 0 <= completion_gap <= 1
+                        and (status != "PASS" or completion_gap == 0)
+                    )
+                    summary["allocation_admission_raw_validation"] = {
+                        "admission_events_match_invocation_count": (
+                            admission_count == allocation_gate_invocation_count
+                        ),
+                        "admission_event_count": admission_count,
+                        "completion_event_count": completion_count,
+                        "incomplete_admission_count": completion_gap,
+                        "status_at_closeout": status,
+                        "passed": ledger_passed,
+                    }
+                    if not ledger_passed:
+                        error = {
+                            "type": "V16AllocationLedgerMismatch",
+                            "message": (
+                                "raw allocation admission/complete event counts do not "
+                                "match recorded gate invocations and result status"
+                            ),
+                        }
+                        summary.update(
+                            status="FAILED",
+                            official_result=False,
+                            result_classification="V16_ADMISSION_LEDGER_INCONSISTENT",
+                            v16_admission_ledger_error=error,
+                        )
+                        if worker_result is not None:
+                            worker_result["passed"] = False
+                            worker_result.setdefault("errors", []).append(error["message"])
+                    _write_json(directory / "task40_v10_p6_candidate_summary.json", summary)
+            except Exception as exc:
+                if is_v16:
+                    prior_status = str(summary.get("status", ""))
+                    error = {
+                        "type": "V16AllocationLedgerEvidenceWriteFailure",
+                        "cause_type": type(exc).__name__,
+                        "message": str(exc),
+                    }
+                    summary.update(
+                        status="FAILED",
+                        official_result=False,
+                        result_classification="V16_ADMISSION_LEDGER_EVIDENCE_FAILURE",
+                        allocation_admission_raw_validation={
+                            "passed": False,
+                            "status_at_closeout": prior_status,
+                            "error": error,
+                        },
+                        v16_admission_ledger_error=error,
+                    )
+                    if worker_result is not None:
+                        worker_result["passed"] = False
+                        worker_result.setdefault("errors", []).append(error["message"])
+                    try:
+                        _write_json(directory / "task40_v10_p6_candidate_summary.json", summary)
+                    except Exception as write_exc:
+                        summary.setdefault("cleanup_errors", []).append(
+                            {
+                                "type": type(write_exc).__name__,
+                                "message": str(write_exc),
+                                "while_persisting_v16_ledger_failure": True,
+                            }
+                        )
         for signum, handler in handlers.items():
             signal.signal(signum, handler)
 

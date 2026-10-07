@@ -1195,7 +1195,9 @@ class P6CellCondensedAction:
             self._matrix.setUp()
         return self._matrix
 
-    def iter_reduced_contribution_layouts(self):
+    def iter_reduced_contribution_layouts(
+        self, *, hhat_block_columns: int | None = None
+    ):
         """Yield row/column metadata without computing any local Schur values.
 
         This metadata-only walk lets the Task40 V13 q assembler build a sparse
@@ -1212,7 +1214,15 @@ class P6CellCondensedAction:
             raise OverflowError("reduced matrix row range exceeds PETSc.IntType")
 
         ports = np.arange(trace_rows, total_rows, dtype=PETSc.IntType)
-        yield ports, ports, "ports/Hhat"
+        port_count = len(ports)
+        if hhat_block_columns is None:
+            yield ports, ports, "ports/Hhat"
+        else:
+            if type(hhat_block_columns) is not int or hhat_block_columns <= 0:
+                raise ValueError("Hhat block-column width must be a positive integer")
+            for start in range(0, port_count, hhat_block_columns):
+                stop = min(start + hhat_block_columns, port_count)
+                yield ports, ports[start:stop], f"ports/Hhat/{start}:{stop}"
         del ports
         for cell_index, cell in enumerate(self._cells):
             yield cell.active_ids, cell.active_ids, f"volume/cell/{cell_index}"
@@ -1235,7 +1245,12 @@ class P6CellCondensedAction:
             yield port_id, columns, f"direct/-D/port/{port}"
             del port_id
 
-    def iter_reduced_contributions(self, *, allocation_gate: Callable[[str, Mapping[str, Any]], None]):
+    def iter_reduced_contributions(
+        self,
+        *,
+        allocation_gate: Callable[[str, Mapping[str, Any]], None],
+        hhat_block_columns: int | None = None,
+    ):
         """Yield the complete cached reduced matrix as one bounded block at a time.
 
         This is the assembly seam for exact quotient solvers. It emits the
@@ -1289,13 +1304,117 @@ class P6CellCondensedAction:
             block_view.setflags(write=False)
             return row_view, column_view, block_view, label
 
-        # Hhat is a bounded small port square; it includes the original H and
-        # every cached Di*XiB correction exactly once for both H layouts.
-        gate("ports/Hhat", 16 * port_count * port_count, 16 * port_count * port_count)
         ports = np.arange(trace_rows, total_rows, dtype=PETSc.IntType)
-        hhat = self._materialize_Hhat()
-        yield checked(ports, ports, hhat, "ports/Hhat")
-        del ports, hhat
+        if hhat_block_columns is None:
+            hhat_bytes = int(16 * port_count * port_count)
+            gate("ports/Hhat", hhat_bytes, hhat_bytes)
+            hhat = self._materialize_Hhat()
+            yield checked(ports, ports, hhat, "ports/Hhat")
+            del hhat
+        else:
+            if type(hhat_block_columns) is not int or hhat_block_columns <= 0:
+                raise ValueError("Hhat block-column width must be a positive integer")
+            for start in range(0, port_count, hhat_block_columns):
+                stop = min(start + hhat_block_columns, port_count)
+                width = stop - start
+                label = f"ports/Hhat/{start}:{stop}"
+                block_bytes = int(16 * port_count * width)
+                max_internal_width = max(
+                    (int(cell.Bi.shape[0]) for cell in self._cells), default=0
+                )
+                max_cell_port_width = max(
+                    (len(cell.ports) for cell in self._cells), default=0
+                )
+                if self.port_block_layout == RESEARCH_PORT_LAYOUT:
+                    assert self._condensed_port_block is not None
+                    max_internal_width = max(
+                        (
+                            int(correction.XiB.shape[0])
+                            for correction in self._condensed_port_block._corrections
+                        ),
+                        default=max_internal_width,
+                    )
+                    max_cell_port_width = max(
+                        (
+                            len(correction.port_indices)
+                            for correction in self._condensed_port_block._corrections
+                        ),
+                        default=max_cell_port_width,
+                    )
+                local_width = min(width, max_cell_port_width)
+                xi_b_copy = int(16 * max_internal_width * local_width)
+                uncached_bi_copy = 0
+                if self.port_block_layout != RESEARCH_PORT_LAYOUT:
+                    max_uncached_internal_width = max(
+                        (int(cell.Bi.shape[0]) for cell in self._cells if cell.XiB is None),
+                        default=0,
+                    )
+                    uncached_bi_copy = int(16 * max_uncached_internal_width * local_width)
+                local_delta = int(16 * max_cell_port_width * local_width)
+                indexed_target_copy = local_delta
+                # Count Di@XiB output and any dtype conversion copy, selected and
+                # output-column arrays, correction port indices, and Boolean masks.
+                index_workspace = int(16 * max_cell_port_width + 32 * width)
+                basis_workspace = block_bytes
+                hhat_workspace = (
+                    basis_workspace
+                    + xi_b_copy
+                    + uncached_bi_copy
+                    + 2 * local_delta
+                    + indexed_target_copy
+                    + index_workspace
+                )
+                gate(
+                    label,
+                    block_bytes,
+                    hhat_workspace,
+                )
+                basis = np.zeros((port_count, width), dtype=np.complex128)
+                basis[np.arange(start, stop), np.arange(width)] = 1.0
+                hhat_block = np.asarray(
+                    self._apply_original_h(basis), dtype=np.complex128
+                )
+                del basis
+
+                if self.port_block_layout == RESEARCH_PORT_LAYOUT:
+                    assert self._condensed_port_block is not None
+                    for correction in self._condensed_port_block._corrections:
+                        correction_ports = np.asarray(
+                            correction.port_indices, dtype=np.int64
+                        )
+                        selected = np.flatnonzero(
+                            (correction_ports >= start) & (correction_ports < stop)
+                        )
+                        if not len(selected):
+                            continue
+                        output_columns = correction_ports[selected] - start
+                        xi_b = correction.XiB[:, selected]
+                        delta = np.asarray(correction.Di @ xi_b, dtype=np.complex128)
+                        hhat_block[np.ix_(correction_ports, output_columns)] += delta
+                        del xi_b, delta, selected, output_columns
+                else:
+                    for cell in self._cells:
+                        cell_ports = np.asarray(cell.ports, dtype=np.int64)
+                        selected = np.flatnonzero(
+                            (cell_ports >= start) & (cell_ports < stop)
+                        )
+                        if not len(selected):
+                            continue
+                        output_columns = cell_ports[selected] - start
+                        xi_b = (
+                            cell.XiB[:, selected]
+                            if cell.XiB is not None
+                            else lu_solve(cell.interior_lu, cell.Bi[:, selected])
+                        )
+                        if cell.XiB is None:
+                            self._streamed_hhat_lu_solve_count += 1
+                        delta = np.asarray(cell.Di @ xi_b, dtype=np.complex128)
+                        hhat_block[np.ix_(cell_ports, output_columns)] += delta
+                        del xi_b, delta, selected, output_columns
+
+                yield checked(ports, ports[start:stop], hhat_block, label)
+                del hhat_block
+        del ports
 
         for cell_index, cell in enumerate(self._cells):
             active_count = len(cell.active_ids)

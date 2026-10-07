@@ -413,10 +413,11 @@ def test_run_case_validate_only_accepts_v15_case_without_spending_campaign_time(
     assert __import__("json").loads(captured.out)["run_id"] == run_id
 
 
-def test_v15_strategy_keeps_only_legacy_q_assembly():
+def test_v15_pc_strategy_rejects_v13_and_allows_the_v16_assembly_policy():
     from src.geometry.task40_nonseparable_plan import (
         TASK40_Q_ASSEMBLY_LEGACY,
         TASK40_Q_ASSEMBLY_PREALLOCATED_V13,
+        TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_V15_REFERENCE_PC_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
@@ -426,6 +427,9 @@ def test_v15_strategy_keeps_only_legacy_q_assembly():
     )
     assert not task40_q_assembly_strategy_is_allowed(
         TASK40_V15_REFERENCE_PC_STRATEGY, TASK40_Q_ASSEMBLY_PREALLOCATED_V13
+    )
+    assert task40_q_assembly_strategy_is_allowed(
+        TASK40_V15_REFERENCE_PC_STRATEGY, TASK40_Q_ASSEMBLY_BOUNDED_V16
     )
 
 

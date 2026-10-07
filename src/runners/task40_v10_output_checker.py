@@ -23,6 +23,72 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _verify_v16_allocation_admission_ledger(
+    run_directory: str | Path, summary: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Independently bind the V16 worker's raw gate events to its invocation count."""
+    root = Path(run_directory).resolve()
+    raw = summary.get("allocation_admission_raw")
+    if not isinstance(raw, Mapping) or not isinstance(raw.get("path"), str):
+        raise ValueError("V16 candidate summary omits its raw allocation event identity")
+    relative_path = Path(str(raw["path"]))
+    if relative_path.is_absolute():
+        raise ValueError("V16 allocation event path must be relative to its run directory")
+    event_path = (root / relative_path).resolve(strict=True)
+    try:
+        event_path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("V16 allocation event path escapes its run directory") from exc
+
+    digest = hashlib.sha256()
+    record_count = admission_count = completion_count = 0
+    with event_path.open("rb") as stream:
+        for line in stream:
+            digest.update(line)
+            record_count += 1
+            if b'"event":"v10_strict_allocation_admission"' in line:
+                admission_count += 1
+            if b'"event":"v10_strict_allocation_admission_complete"' in line:
+                completion_count += 1
+    actual = {
+        "path": str(event_path.relative_to(root)),
+        "size_bytes": int(event_path.stat().st_size),
+        "sha256": digest.hexdigest(),
+        "record_count": record_count,
+        "allocation_admission_event_count": admission_count,
+        "allocation_admission_complete_event_count": completion_count,
+    }
+    for field, value in actual.items():
+        if field != "path" and raw.get(field) != value:
+            raise ValueError(f"V16 raw allocation event {field} differs from its saved identity")
+
+    invocation_count = int(summary.get("allocation_gate_invocation_count", -1))
+    completion_gap = admission_count - completion_count
+    status = str(summary.get("status", ""))
+    passed = bool(
+        invocation_count >= 0
+        and admission_count == invocation_count
+        and 0 <= completion_gap <= 1
+        and (status != "PASS" or completion_gap == 0)
+    )
+    stored_validation = summary.get("allocation_admission_raw_validation")
+    if not isinstance(stored_validation, Mapping) or stored_validation.get("passed") is not True:
+        passed = False
+    if not passed:
+        raise ValueError(
+            "V16 raw admission/complete counts do not match the recorded invocation count "
+            "and worker result"
+        )
+    return {
+        "schema": "task40extra.review_v16_allocation_admission_ledger_check.v1",
+        **actual,
+        "allocation_gate_invocation_count": invocation_count,
+        "incomplete_admission_count": completion_gap,
+        "worker_status": status,
+        "passed": True,
+    }
+
+
 def _raw_array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarray:
     reference = record.get(key)
     if not isinstance(reference, Mapping) or not isinstance(reference.get("array_key"), str):
@@ -40,14 +106,17 @@ def _array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarray:
 def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
     """Resolve only registered V15 identities; never trust packet row counts."""
 
-    from src.io.physical_intermediate_profile import TASK40_V15_P6_PROFILES
+    from src.io.physical_intermediate_profile import (
+        TASK40_V15_P6_PROFILES,
+        TASK40_V16_P6_PROFILES,
+    )
     from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
 
-    if not isinstance(identity, str) or identity not in TASK40_V15_P6_PROFILES:
-        raise ValueError(f"unknown registered Task40 V15 profile identity: {identity!r}")
+    if not isinstance(identity, str) or identity not in (*TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES):
+        raise ValueError(f"unknown registered Task40 V15/V16 profile identity: {identity!r}")
     profile = TASK40_P6_PERIODIC_PROFILES.get(identity)
     if profile is None:
-        raise ValueError(f"registered Task40 V15 profile has no periodic inventory: {identity}")
+        raise ValueError(f"registered Task40 V15/V16 profile has no periodic inventory: {identity}")
     return {
         "identity": identity,
         "global_interior_rows": int(profile.global_interior_rows),
@@ -1058,6 +1127,15 @@ def verify_v10_output_bundle(
             })
     if not all(row["passed"] for row in residual_checks):
         raise ValueError("V10 independently recomputed saved residual did not pass")
+    v16_allocation_ledger = None
+    if identity.get("q_assembly_strategy") == "BOUNDED_STAGING_CSR_V16":
+        summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
+        if not summary_path.is_file():
+            raise ValueError("V16 official output is missing its candidate worker summary")
+        worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        v16_allocation_ledger = _verify_v16_allocation_admission_ledger(
+            path.parent, worker_summary
+        )
     return {
         "schema": "task40extra.review_v10_output_packet_recheck.v1",
         "packet_json": str(path),
@@ -1069,6 +1147,7 @@ def verify_v10_output_bundle(
         "field_mode_and_diffraction_file_checks": file_checks,
         "full_dtn_port_mode_table_check": port_mode_table_check,
         "residual_checks": residual_checks,
+        "v16_allocation_admission_ledger": v16_allocation_ledger,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }
