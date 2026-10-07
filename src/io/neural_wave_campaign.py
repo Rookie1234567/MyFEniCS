@@ -25,6 +25,8 @@ STAGES = {
     "v30_m5_saved_audit": ("pure", 7200, "saved_audit"),
     "v30_m5_verify_final": ("fe", 7200, "verify"),
     "v30_m5_saved_audit_final": ("pure", 7200, "saved_audit"),
+    "v30_m5_verify_recovery": ("fe", 3600, "verify_recovery"),
+    "v30_m5_saved_audit_recovery": ("pure", 3600, "saved_audit"),
 }
 
 

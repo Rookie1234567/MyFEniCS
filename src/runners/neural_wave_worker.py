@@ -87,7 +87,71 @@ def require_checks():
     return record
 
 
-def verify(design, action, packet, artifact, marker):
+def publish_event(directory, stage, values):
+    """The real event sink accepts the same physical types as atomic_json."""
+    def convert(value):
+        if isinstance(value, complex):
+            return dict(real=value.real, imag=value.imag)
+        if hasattr(value, "tolist"):
+            return value.tolist()
+        raise TypeError(type(value).__name__)
+
+    encoded = json.dumps(
+        dict(stage=stage, values=values), allow_nan=False, default=convert
+    )
+    print(encoded, flush=True)
+    with (Path(directory) / "events.jsonl").open("a") as stream:
+        stream.write(encoded + "\n")
+
+
+def recover_rebuild(artifact, source, name, directory, action, packet):
+    """Reuse a sealed completed q30/q60 rebuild, never a partial field result."""
+    receipt_file = source / "completed_rebuild_recovery.json"
+    receipt = json.loads(receipt_file.read_text())
+    if (
+        receipt["schema"] != "neural-wave.completed-rebuild-recovery.v1"
+        or receipt["native_sha256"] != digest(
+            ROOT / json.loads(DESIGN.read_text())["files"]["native"]["path"]
+        )
+        or receipt["original_verifier_source_sha"] != "79f363981765876e7020ac09cec326e8ba7e656e"
+        or receipt["moments_q30_sha256"] != digest(
+            ROOT / json.loads(DESIGN.read_text())["files"]["moments_q30"]["path"]
+        )
+        or receipt["moments_q60_sha256"] != digest(
+            ARTIFACTS / "v30_wave_checks/moments_q60.npz"
+        )
+    ):
+        raise ValueError("COMPLETED_REBUILD_RECOVERY_IDENTITY_FAILED")
+    item = receipt["records"][name]
+    file = source / item["file"]
+    if (
+        file.parent != source
+        or digest(file) != item["sha256"]
+        or digest(directory / "basis/committed.json") != item["committed_sha256"]
+    ):
+        raise ValueError("COMPLETED_REBUILD_RECOVERY_HASH_FAILED")
+    boundary = json.loads((directory / "basis/committed.json").read_text())
+    state = directory / "basis" / boundary["state"]["path"]
+    if digest(state) != boundary["state"]["sha256"]:
+        raise ValueError("COMPLETED_REBUILD_COMMITTED_STATE_CHANGED")
+    with np.load(file, allow_pickle=False) as arrays:
+        if set(arrays.files) != {"c30", "c60", "saved"}:
+            raise ValueError("COMPLETE_TWO_QUADRATURE_REBUILD_REQUIRED")
+        c, higher, saved = (np.array(arrays[key]) for key in ("c30", "c60", "saved"))
+    with np.load(state, allow_pickle=False) as arrays:
+        original = np.array(arrays["c"])
+    if (
+        not np.array_equal(original, saved)
+        or any(v.shape != (action.size,) or v.dtype != np.complex128
+               or not np.isfinite(v).all() for v in (c, higher, saved))
+        or not np.array_equal(packet["master_native_rows"], action.a["masters"])
+    ):
+        raise ValueError("COMPLETED_REBUILD_RECOVERY_COEFFICIENT_LAYOUT_FAILED")
+    atomic_npz(artifact / file.name, c30=c, c60=higher, saved=saved)
+    return c, higher, saved, boundary
+
+
+def verify(design, action, packet, artifact, marker, *, reuse_completed=False):
     from src.solvers.neural_wave_reconstruction import rebuild
     from src.solvers.feinn_fem import build_model
     from src.solvers.feinn_reference import field_physics, _region_field_errors
@@ -104,8 +168,14 @@ def verify(design, action, packet, artifact, marker):
         ("v30_m5_learned_wave", "LEARNED_WAVE_GREEDY"),
     ]:
         directory = ARTIFACTS / stage
-        c, saved, boundary = rebuild(directory / "basis", packet, marker)
-        higher, _, _ = rebuild(directory / "basis", high, marker)
+        if reuse_completed:
+            c, higher, saved, boundary = recover_rebuild(
+                artifact, ARTIFACTS / "v30_m5_verify", name, directory, action, packet
+            )
+            marker("sealed_complete_rebuild_reused", dict(name=name, new_network_forward=0))
+        else:
+            c, saved, boundary = rebuild(directory / "basis", packet, marker)
+            higher, _, _ = rebuild(directory / "basis", high, marker)
         same = float(np.linalg.norm(c - saved) / max(np.linalg.norm(saved), 1e-30))
         drift = float(np.linalg.norm(c - higher) / max(np.linalg.norm(c), 1e-30))
         action_drift = float(np.linalg.norm(action.apply(c - higher)) / action.bnorm)
@@ -257,17 +327,7 @@ def main():
     start = perf_counter()
 
     def marker(stage, values):
-        print(
-            json.dumps(dict(stage=stage, values=values), default=lambda v: v.tolist()),
-            flush=True,
-        )
-        with (directory / "events.jsonl").open("a") as stream:
-            stream.write(
-                json.dumps(
-                    dict(stage=stage, values=values), default=lambda v: v.tolist()
-                )
-                + "\n"
-            )
+        publish_event(directory, stage, values)
 
     try:
         atomic_json(directory / "abi.json", abi(spec["mode"]))
@@ -381,12 +441,13 @@ def main():
                 marker,
                 frozen_high=high,
             )
-        elif spec["role"] == "verify":
-            result = verify(design, action, packet, artifact, marker)
+        elif spec["role"] in ("verify", "verify_recovery"):
+            result = verify(design, action, packet, artifact, marker,
+                            reuse_completed=spec["role"] == "verify_recovery")
         elif spec["role"] == "saved_audit":
             from src.postprocessing.neural_wave_audit import check_saved_arrays
 
-            paired = (
+            paired = "v30_m5_verify_recovery" if spec["stage"].endswith("_recovery") else (
                 "v30_m5_verify_final"
                 if spec["stage"].endswith("_final")
                 else "v30_m5_verify"
