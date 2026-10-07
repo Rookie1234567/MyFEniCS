@@ -1,6 +1,6 @@
 """Targeted restricted-space complex dual, adapter and namespace tests."""
 import unittest
-from unittest.mock import Mock
+from unittest.mock import MagicMock
 import numpy as np
 from scipy import sparse
 from src.solvers.trace_interior_restriction import dense_restricted_witness,sparse_projection,RestrictedTraceFactor,mixed_norms
@@ -21,7 +21,7 @@ class Tests(unittest.TestCase):
         Q=sparse.block_diag((R,sparse.eye(40)),format='csr').toarray()
         A=rng.normal(size=(46,46))+1j*rng.normal(size=(46,46))+20*np.eye(46)
         csr=sparse.csr_matrix(A);mat=PETSc.Mat().createAIJ(size=A.shape,csr=(csr.indptr.astype(PETSc.IntType),csr.indices.astype(PETSc.IntType),csr.data),comm=PETSc.COMM_SELF)
-        j=Mock();low=sparse_projection(mat,R,40,j)
+        j=MagicMock();low=sparse_projection(mat,R,40,j)
         try:
             ip,ix,v=low.getValuesCSR();actual=sparse.csr_matrix((v,ix,ip),shape=low.getSize()).toarray()
             np.testing.assert_allclose(actual,Q.conj().T@A@Q,rtol=1e-13,atol=1e-11)
