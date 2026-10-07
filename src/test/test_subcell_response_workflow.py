@@ -76,6 +76,23 @@ class SubcellWorkflow(unittest.TestCase):
         f=rng.normal(size=len(A))+1j*rng.normal(size=len(A));low,_=response.reduce(f)
         t=np.linalg.solve(response.low_schur,low);u=response.recover(t,f);direct=J@np.linalg.solve(J.conj().T@A@J,J.conj().T@f)
         self.assertLess(np.linalg.norm(u-direct)/np.linalg.norm(direct),1e-11)
+        # Resume only saved complete factors. No fresh LU is permitted, and
+        # removing construction-only raw/X changes neither affine recovery.
+        from unittest.mock import patch
+        child_packets=[dict(raw=B.raw,interior_factor=B.lu[0],interior_pivots=B.lu[1],trace_from_interior=B.Ati,interior_from_trace=B.X,child_schur=B.S) for B in blocks]
+        macro_packet=dict(child_rows=np.asarray(layout.child_rows),child_interiors=np.asarray(layout.child_interiors),child_traces=np.asarray(layout.child_traces),
+            macro_boundary=layout.boundary,macro_inside=layout.inside,macro_trace=layout.trace,boundary_lift=layout.lift,
+            second_factor=response.factor[0],second_pivots=response.factor[1],macro_schur=response.low_schur,
+            second_trace_to_inside_data=response.Sib.data,second_trace_to_inside_indices=response.Sib.indices,second_trace_to_inside_indptr=response.Sib.indptr,
+            second_inside_to_trace_data=response.Sbi.data,second_inside_to_trace_indices=response.Sbi.indices,second_inside_to_trace_indptr=response.Sbi.indptr)
+        with patch('src.solvers.subcell_response_kernel.lu_factor',side_effect=AssertionError('no factor rebuild')):
+            restored_blocks=[ChildBlock.from_checkpoint(a,el) for a in child_packets]
+            restored=MacroResponse.from_checkpoint(layout,restored_blocks,macro_packet,response.capacity)
+        self.assertIsNone(restored.X);self.assertTrue(all(b.raw is None for b in restored_blocks))
+        np.testing.assert_allclose(restored.reduce(f)[0],low,rtol=1e-13,atol=1e-12)
+        np.testing.assert_allclose(restored.recover(t,f),u,rtol=1e-13,atol=1e-12)
+        self.assertLess(sum(b.bytes() for b in restored_blocks)+restored.bytes(),sum(b.bytes() for b in blocks)+response.bytes())
+        with self.assertRaisesRegex(ValueError,'layout/trace pairing'):MacroResponse.from_checkpoint(layout,restored_blocks,dict(macro_packet,boundary_lift=layout.lift+1),response.capacity)
         reaction,res=response.reaction(u,f);self.assertLess(np.linalg.norm(J.conj().T@res)/np.linalg.norm(J.conj().T@f),1e-11)
         self.assertGreater(np.linalg.norm(res),1e-6) # restricted solution has a real ambient defect
         # The deployed macro inverse consumes the actual two-stage response,

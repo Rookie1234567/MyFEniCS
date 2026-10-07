@@ -139,6 +139,22 @@ class MacroLayout:
 
 
 class ChildBlock:
+    @classmethod
+    def from_checkpoint(cls,a,el):
+        """Reuse a complete saved factor; no new LU or tensor construction."""
+        obj=cls.__new__(cls);obj.ii=np.asarray(el.entity_dofs[3][0],int);obj.tt=np.setdiff1d(np.arange(el.dim),obj.ii)
+        raw=a['raw'];obj.lu=(a['interior_factor'],a['interior_pivots']);obj.Ati=a['trace_from_interior'];obj.X=a['interior_from_trace'];obj.S=a['child_schur']
+        sizes={'raw':(el.dim,el.dim),'interior_factor':(len(obj.ii),len(obj.ii)),'interior_pivots':(len(obj.ii),),
+            'trace_from_interior':(len(obj.tt),len(obj.ii)),'interior_from_trace':(len(obj.ii),len(obj.tt)),'child_schur':(len(obj.tt),len(obj.tt))}
+        if any(a[k].shape!=shape or not np.isfinite(a[k]).all() for k,shape in sizes.items()) or any(a[k].dtype!=np.complex128 for k in sizes if k!='interior_pivots'):raise ValueError('saved child complete factor inventory')
+        obj.scale=float(np.linalg.norm(raw));Aii=raw[np.ix_(obj.ii,obj.ii)]
+        w=np.linspace(1,2,len(obj.ii))+1j*np.linspace(.1,.9,len(obj.ii));sol=lu_solve(obj.lu,w);defect=Aii@sol-w
+        obj.rhs_relative_error=relative(defect,w);obj.backward_error=float(np.linalg.norm(defect)/max(np.linalg.norm(Aii)*np.linalg.norm(sol)+np.linalg.norm(w),1e-30))
+        obj.rcond1,info=get_lapack_funcs('gecon',(obj.lu[0],))(obj.lu[0],np.linalg.norm(Aii,1))
+        if info or not np.isfinite(obj.rcond1) or obj.rcond1<=0 or obj.backward_error>1e-10:raise ValueError('saved child factor qualification')
+        for value in (obj.lu[0],obj.lu[1],obj.Ati,obj.X,obj.S):value.setflags(write=False)
+        obj.raw=None;return obj
+
     def __init__(self,A,el):
         self.ii=np.asarray(el.entity_dofs[3][0],int);self.tt=np.setdiff1d(np.arange(el.dim),self.ii)
         self.lu=lu_factor(A[np.ix_(self.ii,self.ii)])
@@ -154,10 +170,28 @@ class ChildBlock:
         if info or not np.isfinite(self.rcond1) or self.rcond1<=0:raise ValueError('child LU finite/zero-pivot qualification')
         if not np.isfinite(back) or back>1e-10:raise ValueError('local child LU backward error')
         self.backward_error=back
-    def bytes(self):return sum(a.nbytes for a in (self.lu[0],self.lu[1],self.Ati,self.X,self.S,self.raw))
+    def bytes(self):return sum(a.nbytes for a in (self.lu[0],self.lu[1],self.Ati,self.X,self.S,self.raw) if a is not None)
 
 
 class MacroResponse:
+    @classmethod
+    def from_checkpoint(cls,layout,blocks,a,capacity):
+        """Reload one trusted response and second LU without refactorization."""
+        for name,actual in (('child_rows',np.asarray(layout.child_rows)),('child_interiors',np.asarray(layout.child_interiors)),
+            ('child_traces',np.asarray(layout.child_traces)),('macro_boundary',layout.boundary),('macro_inside',layout.inside),('macro_trace',layout.trace),('boundary_lift',layout.lift)):
+            if not np.array_equal(a[name],actual):raise ValueError('saved macro exact layout/trace pairing')
+        obj=cls.__new__(cls);obj.layout=layout;obj.blocks=tuple(blocks);obj.response=True;obj.sparse_inner=False
+        position={int(r):i for i,r in enumerate(layout.trace)};obj.bi=np.asarray([position[int(r)] for r in layout.boundary]);obj.ji=np.asarray([position[int(r)] for r in layout.inside])
+        nb,ni=len(obj.bi),len(obj.ji);obj.factor=(a['second_factor'],a['second_pivots'])
+        obj.Sib=sparse.csr_matrix((a['second_trace_to_inside_data'],a['second_trace_to_inside_indices'],a['second_trace_to_inside_indptr']),shape=(ni,nb))
+        obj.Sbi=sparse.csr_matrix((a['second_inside_to_trace_data'],a['second_inside_to_trace_indices'],a['second_inside_to_trace_indptr']),shape=(nb,ni))
+        obj.low_schur=a['macro_schur'];obj.X=None;obj.Sii=None;obj.Sbb=None;obj.capacity=dict(capacity)
+        if obj.factor[0].shape!=(ni,ni) or obj.factor[1].shape!=(ni,) or obj.low_schur.shape!=(layout.lift.shape[1],)*2 or any(not np.isfinite(v).all() for v in (obj.factor[0],obj.low_schur,obj.Sib.data,obj.Sbi.data)):raise ValueError('saved macro finite complete inventory')
+        obj.backward=capacity['factor_witness_operation_backward'];obj.rhs_relative=capacity['factor_witness_RHS_relative']
+        if not np.isfinite(obj.backward) or obj.backward>1e-10:raise ValueError('saved macro factor qualification')
+        for value in (obj.factor[0],obj.factor[1],obj.low_schur,obj.Sib.data,obj.Sbi.data):value.setflags(write=False)
+        obj.solve=lambda rhs:lu_solve(obj.factor,rhs);return obj
+
     def __init__(self,layout,blocks,journal,*,response=True):
         self.layout=layout;self.blocks=tuple(blocks);self.response=response;columns=layout.lift.shape[1]
         contributions=sum(len(rows)**2 for rows in layout.child_traces)

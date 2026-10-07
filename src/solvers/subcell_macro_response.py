@@ -29,20 +29,24 @@ def factory(V,cfg,journal):
             epsilon_by_tag={cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating},q=2*cfg.nedelec_degree+3)
 
 
-def blocks_for(V,layout,tag,raw_factory,cache,journal):
+def blocks_for(V,layout,tag,raw_factory,cache,journal,*,checkpoint_reader=None,retain_raw=True):
     result=[]
     for c in layout.cells:
         xyz=V.mesh.geometry.x[V.mesh.geometry.dofmap[c]];widths=axis_widths(xyz);p=int(V.mesh.topology.get_cell_permutation_info()[c])
         key=(int(tag),widths.tobytes(),p)
         if key not in cache:
-            with journal.measured('child_complete_raw_internal_LU_response'):
-                A=raw_factory.tensor(tag=tag,widths=widths);T=transform(V,int(c));A=np.ascontiguousarray(T@A@T.T)
-                cache[key]=ChildBlock(A,V.element.basix_element)
-            d=journal.folder/'child_complete_packets';d.mkdir(exist_ok=True)
-            identity=hashlib.sha256(repr(key).encode()+str(raw_factory.element.hash()).encode()+raw_factory.kappa.tobytes()).hexdigest()
-            receipt=save_arrays(d/(identity+'.npz'),raw=cache[key].raw,child_schur=cache[key].S,interior_factor=cache[key].lu[0],interior_pivots=cache[key].lu[1],interior_from_trace=cache[key].X,trace_from_interior=cache[key].Ati,widths=widths,kappa=raw_factory.kappa)
-            write_json(d/(identity+'.json'),dict(tag=int(tag),degree=raw_factory.element.degree,element_hash=int(raw_factory.element.hash()),permutation=p,k0=raw_factory.k0,mu=raw_factory.mu,epsilon=raw_factory.epsilon[tag],arrays=receipt,producer=journal.source_state['source_sha'],backend=raw_factory.backend))
-            journal.event('child_local_class_saved',tag=int(tag),permutation=p,widths=widths,class_count=len(cache),bytes=cache[key].bytes(),packet=receipt['sha256'])
+            restored=None if checkpoint_reader is None else checkpoint_reader.child(tag,widths,p)
+            if restored is not None:cache[key]=restored
+            else:
+                with journal.measured('child_complete_raw_internal_LU_response'):
+                    A=raw_factory.tensor(tag=tag,widths=widths);T=transform(V,int(c));A=np.ascontiguousarray(T@A@T.T)
+                    cache[key]=ChildBlock(A,V.element.basix_element)
+                d=journal.folder/'child_complete_packets';d.mkdir(exist_ok=True)
+                identity=hashlib.sha256(repr(key).encode()+str(raw_factory.element.hash()).encode()+raw_factory.kappa.tobytes()).hexdigest()
+                receipt=save_arrays(d/(identity+'.npz'),raw=cache[key].raw,child_schur=cache[key].S,interior_factor=cache[key].lu[0],interior_pivots=cache[key].lu[1],interior_from_trace=cache[key].X,trace_from_interior=cache[key].Ati,widths=widths,kappa=raw_factory.kappa)
+                write_json(d/(identity+'.json'),dict(tag=int(tag),degree=raw_factory.element.degree,element_hash=int(raw_factory.element.hash()),permutation=p,k0=raw_factory.k0,mu=raw_factory.mu,epsilon=raw_factory.epsilon[tag],arrays=receipt,producer=journal.source_state['source_sha'],backend=raw_factory.backend))
+                journal.event('child_local_class_saved',tag=int(tag),permutation=p,widths=widths,class_count=len(cache),bytes=cache[key].bytes(),packet=receipt['sha256'])
+            if not retain_raw:cache[key].raw=None
         result.append(cache[key])
     return result
 

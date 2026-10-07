@@ -130,7 +130,7 @@ def deployment_receipt(role):
 def compact_candidate(r,pointer):
     names=('status','case','degree','case_spec','grid','representation','source_sha','source','solve_source_sha','arrays','returned_arrays',
         'trace_mapping','mapping_check','original_audit','ambient_audit','recovery','recovery_arrays','capacity','graph','fixed_refinements',
-        'local_global_factors','local_action_pairs','build_audit','local_response_classes','child_local_classes','cache_payload_bytes','local_schur_bank','local_body_action_pairs',
+        'local_global_factors','local_action_pairs','build_audit','local_response_classes','child_local_classes','preparation_resume','cache_payload_bytes','local_schur_bank','local_body_action_pairs',
         'equation_pass','direct_target_pass','deployment_complete','boundary','boundary_provider','tangential_check')
     result={k:r[k] for k in names if k in r};result['result']=pointer
     i=r.get('independent',{});result['independent']={k:i[k] for k in ('original_audit','arrays','equation_pass','recovery_pass','direct_internal_target_pass','audit_path','macro_internal_operation_scaled') if k in i}

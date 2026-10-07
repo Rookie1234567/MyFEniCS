@@ -5,7 +5,7 @@ from scipy import sparse
 from src.runners.task042_shared import write_json
 from .scattering_anchor import relative,save_arrays
 from .subcell_response_kernel import MacroLayout,MacroResponse,transform
-from .subcell_macro_response import factory,blocks_for
+from .subcell_macro_response import blocks_for
 from .trace_interior_restriction import trace_constraints,mixed_norms
 
 
@@ -132,20 +132,30 @@ def solve_h2(folder,journal,scope):
     mcfg,macro,mgeo=configured_setup(macrospec,journal,scope=scope)
     mapping=MacroMap(macro['floquets'][6],setup['floquets'][6],mgeo,geo,journal);mapreceipt=mapping.save(folder/'macro_mapping.npz')
     journal.allocation('r2_class_cache_and_sparse_macro_map',dict(workspace_bytes=8*2**30+mapping.check['csr_primal_dual_bytes']))
-    raw_factory=factory(setup['spaces'][6],cfg,journal);childcache={};cache={};responses=[];class_packets={};W=setup['spaces'][6]
+    from .subcell_preparation_checkpoint import LazyPhaseTable,FrozenSubcellPreparation
+    W=setup['spaces'][6];raw_factory=LazyPhaseTable(W,cfg,journal);childcache={};cache={};responses=[];class_packets={}
+    resume_path=scope.window.TMP/'H2_preparation_resume.json'
+    reader=FrozenSubcellPreparation(resume_path,journal,raw_factory) if resume_path.exists() else None
     for c,l in enumerate(mapping.layouts):
-        tag=int(mgeo['cell_tags'][c]);blocks=blocks_for(W,l,tag,raw_factory,childcache,journal);key=(l.key,tag)
+        tag=int(mgeo['cell_tags'][c]);blocks=blocks_for(W,l,tag,raw_factory,childcache,journal,checkpoint_reader=reader,retain_raw=False);key=(l.key,tag)
         if key not in cache:
-            cache[key]=MacroResponse(l,blocks,journal,response=True)
+            restored=None if reader is None else reader.macro(l,tag,blocks)
+            if restored is not None:cache[key],packet=restored
+            else:
+                cache[key]=MacroResponse(l,blocks,journal,response=True)
+                d=folder/'local_response_packets';d.mkdir(exist_ok=True)
+                packet=save_arrays(d/(str(c)+'.npz'),macro_schur=cache[key].low_schur,inner_from_trace=cache[key].X,boundary_lift=l.lift,second_factor=cache[key].factor[0],second_pivots=cache[key].factor[1],
+                    second_trace_to_inside_data=cache[key].Sib.data,second_trace_to_inside_indices=cache[key].Sib.indices,second_trace_to_inside_indptr=cache[key].Sib.indptr,
+                    second_inside_to_trace_data=cache[key].Sbi.data,second_inside_to_trace_indices=cache[key].Sbi.indices,second_inside_to_trace_indptr=cache[key].Sbi.indptr,
+                    child_rows=np.asarray(l.child_rows),child_interiors=np.asarray(l.child_interiors),child_traces=np.asarray(l.child_traces),macro_boundary=l.boundary,macro_inside=l.inside,macro_trace=l.trace)
+            # The columns construct Se; affine recovery consumes the saved
+            # second LU/Sib and child factors, never this extra X copy.
+            cache[key].X=None
             current=sum(r.bytes() for r in cache.values())+sum(b.bytes() for b in childcache.values())
             if current>8*2**30:raise MemoryError('r2 exact class cache exceeds 8GiB; no per-cell duplicate library allowed')
             d=folder/'local_response_packets';d.mkdir(exist_ok=True)
-            packet=save_arrays(d/(str(c)+'.npz'),macro_schur=cache[key].low_schur,inner_from_trace=cache[key].X,boundary_lift=l.lift,second_factor=cache[key].factor[0],second_pivots=cache[key].factor[1],
-                second_trace_to_inside_data=cache[key].Sib.data,second_trace_to_inside_indices=cache[key].Sib.indices,second_trace_to_inside_indptr=cache[key].Sib.indptr,
-                second_inside_to_trace_data=cache[key].Sbi.data,second_inside_to_trace_indices=cache[key].Sbi.indices,second_inside_to_trace_indptr=cache[key].Sbi.indptr,
-                child_rows=np.asarray(l.child_rows),child_interiors=np.asarray(l.child_interiors),child_traces=np.asarray(l.child_traces),macro_boundary=l.boundary,macro_inside=l.inside,macro_trace=l.trace)
             class_packets[id(cache[key])]=packet
-            write_json(d/(str(c)+'.json'),dict(key=l.key,tag=tag,capacity=cache[key].capacity,local_factor_backward=cache[key].backward,cache_bytes=current))
+            write_json(d/(str(c)+'.json'),dict(key=l.key,tag=tag,capacity=cache[key].capacity,local_factor_backward=cache[key].backward,cache_bytes=current,arrays=packet,reused=restored is not None))
         responses.append(cache[key]);journal.event('macro_local_response_committed',cell=c,classes=len(cache),child_classes=len(childcache))
     if len(responses)!=160:raise ValueError('macro response inventory')
     setup['boundary_provider']=StudyBoundaryProvider(cfg,setup,folder,journal,entity_face_support=True);boundary=setup['boundary_provider'].generate_pair()
@@ -195,7 +205,8 @@ def solve_h2(folder,journal,scope):
         result=dict(status='COMPLETED',role='H2',case='NOTCH',degree=6,case_spec=spec,grid='2x2x4',representation='MACRO_TRACE6_ALL_R2_P6_MICRO_INTERIORS',arrays=arrays,returned_arrays=early,
             original_audit=norms,ambient_audit=ambient,trace_mapping=mapreceipt,mapping_check=mapping.check,boundary=boundary,output=output,mode_sha256=bundle['mode_sha256'],
             new_complete_solves=1,new_global_numeric_factors=1,graph=graph,local_response_classes=len(cache),child_local_classes=len(childcache),
-            local_schur_bank=bank,local_body_action_pairs=action_pairs,cache_payload_bytes=sum(r.bytes() for r in cache.values())+sum(b.bytes() for b in childcache.values()),fixed_refinements=refinements,
+            local_schur_bank=bank,local_body_action_pairs=action_pairs,preparation_resume=reader.record() if reader is not None else None,
+            cache_payload_bytes=sum(r.bytes() for r in cache.values())+sum(b.bytes() for b in childcache.values()),fixed_refinements=refinements,
             local_global_factors='R2_CHILD_INTERNAL_AND_MACRO_INTERNAL_LOCAL_LU_PLUS_GLOBAL_MACRO_TRACE_MUMPS_PRESENT; no global micro Schur',
             NOT_A_FULL_AMBIENT_SOLUTION=True,source=journal.source_state)
         field=restore_p0_full_field(setup['floquets'][6],u)
