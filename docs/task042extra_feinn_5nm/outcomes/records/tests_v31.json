@@ -406,5 +406,23 @@
     "source_and_numerical_arrays_unchanged": true,
     "rerun_numeric_producer": false,
     "monotonic": 1324254.744624609
+  },
+  "local_optimizer_budget_qualification": {
+    "configured_maxiter": 12,
+    "configured_maxfun": 18,
+    "actual_accepted_objective_calls": 6083,
+    "actual_max_calls": 24,
+    "modules_above18": 134,
+    "optimization_success_modules": 71,
+    "optimization_limit_modules": 304,
+    "strict_18_call_cap_qualified": false,
+    "original_configuration_preserved": true,
+    "costs_not_discarded": true,
+    "healthy_training_not_replayed": true
+  },
+  "finite_browser_scope": {
+    "first_viewports": 3,
+    "whole_page_visual_pass": false,
+    "render_record": "render_check_v31.json"
   }
 }

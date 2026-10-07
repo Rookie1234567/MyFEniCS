@@ -6181,7 +6181,20 @@
       "fixed_missing_public_row": null,
       "interrupted_uncommitted_primitive_count_scope": "Complete counters from the single uninterrupted run",
       "dense_global_Maxwell_factor_count": 0,
-      "global_Gram_factor_count": 0
+      "global_Gram_factor_count": 0,
+      "optimizer_limit_scope": {
+        "configured_maxiter": 12,
+        "configured_maxfun": 18,
+        "actual_accepted_objective_calls": 6083,
+        "actual_max_calls": 24,
+        "modules_above18": 134,
+        "optimization_success_modules": 71,
+        "optimization_limit_modules": 304,
+        "strict_18_call_cap_qualified": false,
+        "original_configuration_preserved": true,
+        "costs_not_discarded": true,
+        "healthy_training_not_replayed": true
+      }
     }
   },
   "route_comparison_scope": "Two from-zero attempts; fixed prefix needed numerical-rank repair and then scientific stop. Historical prefix algorithm/source differences prevent attributing a same-cost advantage.",

@@ -1,0 +1,202 @@
+{
+  "checks": {
+    "source_sha": "c32723a6c176a75e69174bd7a9570b8c981c4160",
+    "numerical_source_unmodified": true,
+    "documents": [
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/response_v31.md",
+          "bytes": 11058,
+          "sha256": "840e99d4eef5dde9e67adcd6f70178681e53db5798631d8a4efe86f1bf4e4dc2"
+        },
+        "table_count": 3,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "whole new page"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/block_wave_neural_v31.md",
+          "bytes": 14543,
+          "sha256": "ff49572a43e816a3c4dab708ec460994bf9fe307e4533711d4feada7ddd68240"
+        },
+        "table_count": 6,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "whole new page"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/README.md",
+          "bytes": 23135,
+          "sha256": "e88fbcbbd48f0baebcd4aece3129970da116a6316b408e512ba2ed57448da2f6"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "bytes": 117868,
+          "sha256": "92e9972b1421c835a8d2638efa72a1985a4626fbfe470c85ed69de8e0556004e"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "bytes": 54681,
+          "sha256": "b270c9e970f53fcb1e54d9f3c7b8d68d8ef7809da3aebd5221444ef564e61de7"
+        },
+        "table_count": 0,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "bytes": 50366,
+          "sha256": "d1aa559048b8150311ee9657cc71ed63384570ceb45788693de46df406e6e727"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/development_progress.md",
+          "bytes": 241690,
+          "sha256": "975749de9df816fc26738455d15afb47b894a7423dfe8e71cd26650a56c54bcb"
+        },
+        "table_count": 0,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      },
+      {
+        "binding": {
+          "path": "docs/development_model_registry.md",
+          "bytes": 277626,
+          "sha256": "8a82fce35865f7c804fd24f74f53117b332cc0357410ea7555d4075e66cf5aab"
+        },
+        "table_count": 1,
+        "local_links_pass": true,
+        "math_and_fences_pass": true,
+        "scope": "new navigation prefix plus complete fence/display-format check; unchanged history suffix separately hash checked"
+      }
+    ],
+    "required_records": [
+      "design_v31.json",
+      "v30_completed_field_audit_v31.json",
+      "reconstruction_stability_v31.json",
+      "block_checks_v31.json",
+      "block_growth_v31.csv",
+      "route_comparison_v31.json",
+      "full_numerical_gates_v31.json",
+      "cost_and_capacity_v31.json",
+      "run_index_v31.json",
+      "repair_journal_v31.json",
+      "resource_costs_v31.json"
+    ],
+    "json_finite": true,
+    "old_histories_preserved": true,
+    "local_preview_parser": "markdown-it commonmark with table",
+    "visual_GitHub_not_inferred": true,
+    "source_files_linted_compiled": [
+      "src/io/block_wave_campaign.py",
+      "src/io/neural_wave_campaign.py",
+      "src/postprocessing/neural_wave_audit.py",
+      "src/postprocessing/neural_wave_roundoff.py",
+      "src/runners/block_wave_admission.py",
+      "src/runners/block_wave_worker.py",
+      "src/runners/neural_wave_campaign.py",
+      "src/runners/neural_wave_dependencies.py",
+      "src/runners/neural_wave_worker.py",
+      "src/solvers/neural_wave_block.py",
+      "src/solvers/neural_wave_block_qualification.py",
+      "src/solvers/neural_wave_block_reconstruction.py",
+      "src/solvers/neural_wave_greedy.py",
+      "src/solvers/neural_wave_projection.py",
+      "src/test/test_block_wave_contract.py",
+      "src/test/test_neural_wave_block.py"
+    ],
+    "pure_activation": true,
+    "new_numeric_work": false,
+    "scope": "affected publication metadata only; healthy numerical source lint/compile and earlier mathematical tests reused"
+  },
+  "supervision": {
+    "sampled_root_identity": null,
+    "workflow_deadline_seconds": 300,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "measured_tree_rss_only_v3",
+    "rss_hard_limit_bytes": 2147483648,
+    "rss_warning_bytes": 1879048192,
+    "startup_headroom_bytes": 628626898944,
+    "swap_policy": "observe_only",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      2832996
+    ],
+    "sampled_process_tree_rss_peak_bytes": 86134784,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 3139250,
+        "pswpout_pages": 5146004
+      },
+      "end": {
+        "pswpin_pages": 3139250,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "no_task_or_global_swap_observed",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2058516148224,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2058516148224,
+      "reserve_bytes": 628626898944,
+      "launch_cap_bytes": 2147483648,
+      "planning_cap_bytes": 2147483648,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 412316860416,
+      "shared_workstation": true
+    },
+    "samples": 4,
+    "elapsed_seconds": 1.9384813650976866,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "add6426c59e13baa275fd12aecc2cb8907cb24cf",
+      "purpose": "only affected CSV/metadata/Markdown publication checks; previous healthy code qualifiers reused",
+      "numerical_source_sha": "c32723a6c176a75e69174bd7a9570b8c981c4160"
+    }
+  },
+  "original_result_binding": {
+    "path": "tmp/task42extra/v31/final_metadata_checks/result.json",
+    "bytes": 4892,
+    "sha256": "121209bbe59f49badb814f0733488b9d9e361069dfe3987dc16f6cc430f40a58"
+  },
+  "scope": "Local source/metadata/links/history preservation; visual scope separately limited to three first viewports",
+  "healthy_expensive_tests_not_replayed": true
+}

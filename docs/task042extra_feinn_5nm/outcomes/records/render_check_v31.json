@@ -1,8 +1,81 @@
 {
-  "scope": "Review V30 and necessary new V31 pages only",
-  "review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/a96f7775c9d2f33c85a61535e5512e5e511eae95/docs/task042extra_feinn_5nm/review_report_v30.md",
-  "web_tool_attempt": "Failed to fetch: Cache miss",
-  "visual_status": "NOT_VERIFIED",
-  "local_source_checks_are_not_visual_PASS": true,
-  "new_pages_browser_attempt": "Awaiting finite attempt after publication; no numerical stage depends on rendering"
+  "scope": "Review V30 and necessary new response/topic only",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a96f7775c9d2f33c85a61535e5512e5e511eae95/docs/task042extra_feinn_5nm/review_report_v30.md",
+      "published_source_sha": "a96f7775c9d2f33c85a61535e5512e5e511eae95",
+      "screenshot": {
+        "path": "tmp/task42extra/v31/render_check/review/page.png",
+        "bytes": 419546,
+        "sha256": "4152d551754d6f4616d26896f9bc04ba67fd2d2386166efc6d2096922ad0f8ff"
+      },
+      "supervision_binding": {
+        "path": "tmp/task42extra/v31/render_check/review/watchdog/summary.json",
+        "bytes": 2323,
+        "sha256": "e29e859c8fefd828921e5890652bb5b113dcf4ba9313e7643636830351cae115"
+      },
+      "classification": "COMPLETED",
+      "cleared": true,
+      "elapsed_seconds": 9.205050830962136,
+      "tree_rss_peak_bytes": 893943808,
+      "own_swap_peak_bytes": 0,
+      "visual_scope": "first1440x1200 viewport manually inspected",
+      "visual_scope_pass": true,
+      "whole_page_visual_pass": false
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/add6426c59e13baa275fd12aecc2cb8907cb24cf/docs/task042extra_feinn_5nm/response_v31.md",
+      "published_source_sha": "add6426c59e13baa275fd12aecc2cb8907cb24cf",
+      "screenshot": {
+        "path": "tmp/task42extra/v31/render_check/response/page.png",
+        "bytes": 315544,
+        "sha256": "40be6bc6addc82cbb6cebc482f9ab1aff745f7ec2461ca78e3a34733dcf7d5c3"
+      },
+      "supervision_binding": {
+        "path": "tmp/task42extra/v31/render_check/response/watchdog/summary.json",
+        "bytes": 2266,
+        "sha256": "166c2585b6502f436e759e099498cf6da7a431d6ab311e0db15066d9123626fc"
+      },
+      "classification": "COMPLETED",
+      "cleared": true,
+      "elapsed_seconds": 6.463687337934971,
+      "tree_rss_peak_bytes": 596209664,
+      "own_swap_peak_bytes": 0,
+      "visual_scope": "first1440x1200 viewport manually inspected",
+      "visual_scope_pass": true,
+      "whole_page_visual_pass": false
+    },
+    {
+      "name": "topic",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/add6426c59e13baa275fd12aecc2cb8907cb24cf/docs/task042extra_feinn_5nm/outcomes/block_wave_neural_v31.md",
+      "published_source_sha": "add6426c59e13baa275fd12aecc2cb8907cb24cf",
+      "screenshot": {
+        "path": "tmp/task42extra/v31/render_check/topic/page.png",
+        "bytes": 372277,
+        "sha256": "29083cf3af241beb37ba52e4586987a0d4a89f66e4d1298184648970e109130d"
+      },
+      "supervision_binding": {
+        "path": "tmp/task42extra/v31/render_check/topic/watchdog/summary.json",
+        "bytes": 2284,
+        "sha256": "8952e91d6e7c96643a085b5ca0618da49882e27dc8506431c9b246c50b39e766"
+      },
+      "classification": "COMPLETED",
+      "cleared": true,
+      "elapsed_seconds": 6.177571066888049,
+      "tree_rss_peak_bytes": 596090880,
+      "own_swap_peak_bytes": 0,
+      "visual_scope": "first1440x1200 viewport manually inspected",
+      "visual_scope_pass": true,
+      "whole_page_visual_pass": false
+    }
+  ],
+  "web_tool_original_attempt": "Review fetch failed: Cache miss; failure retained despite later actual browser access",
+  "first_viewports": "PASS_SCOPE_LIMITED",
+  "whole_pages": "NOT_VERIFIED",
+  "formulas_below_viewport": "NOT_VERIFIED",
+  "later_local_call_count_disclosure": "below inspected viewport; no claim that later complete document HEAD was visually inspected",
+  "no_old_bulk_render": true,
+  "no_sandbox_bypass": true
 }

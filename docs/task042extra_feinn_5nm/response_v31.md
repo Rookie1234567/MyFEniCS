@@ -73,6 +73,8 @@ tuple/list重开错误、秩修复、断开调查、失败qualification、被拒
 
 学习原A126132次、A*6458次、完整audit376次、准确端口解133343次；完整矩forward12458/VJP6458，正交化3341.622314s、小系统解5751.481536s，费用均真实计入。每64方向增长/共同预设缓降扩充和checkpoint记录见[增长CSV](outcomes/records/block_growth_v31.csv)。学习未到4096，且残差远高于1e-4，不准扩6144；固定不是普通模块达限而停止，是持续完整读出配对失败。学习正常预算保存出口不是OOM、PSI或求解收敛。
 
+6083是已接受模块的实际优化评价数：71模块返回优化成功，304到迭代/调用上限。配置仍为12iter/18maxfun，但SciPy在完成线搜索时实际调用可超maxfun：134个模块超过18，最高24，原记录全保留、全计费。不能称“实际每模块≤18”的硬次数资格通过，也不能把达限当局部收敛；这项流程限定不改变已测不合格场或授予收益。没有为补好调用历史重演训练。
+
 总窗唯一86400s，未另开训练窗；最后保留3600s。正常60s PSI计总墙钟，不扣失败等待池。CPU-only/MPI1/math1、合格物理核、数值warn12/hard16GiB、轻树2GiB、ownswap/OOC0、系统和384GiB邻增长保护保持。阶段/辅助/日历账分别在[资源](outcomes/records/resource_costs_v31.json)，项目历史精确累计仍UNKNOWN，旧失联3284s及所有旧成本保留。最终发布与清场收据为`tmp/task42extra/v31/delivery_receipt.json`，最终完整HEAD/tracking另在交付消息核报，文档HEAD不冒充数值source。
 
 ## 5. 交付、测试与下一步边界

@@ -1252,5 +1252,104 @@
     "source_sha": "c32723a6c176a75e69174bd7a9570b8c981c4160"
   },
   "latest_record_calendar_seconds": 36084.106855839025,
-  "minimum_final_reserve_at_record_seconds": 50315.893143289955
+  "minimum_final_reserve_at_record_seconds": 50315.893143289955,
+  "browser_finite_attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a96f7775c9d2f33c85a61535e5512e5e511eae95/docs/task042extra_feinn_5nm/review_report_v30.md",
+      "published_source_sha": "a96f7775c9d2f33c85a61535e5512e5e511eae95",
+      "screenshot": {
+        "path": "tmp/task42extra/v31/render_check/review/page.png",
+        "bytes": 419546,
+        "sha256": "4152d551754d6f4616d26896f9bc04ba67fd2d2386166efc6d2096922ad0f8ff"
+      },
+      "supervision_binding": {
+        "path": "tmp/task42extra/v31/render_check/review/watchdog/summary.json",
+        "bytes": 2323,
+        "sha256": "e29e859c8fefd828921e5890652bb5b113dcf4ba9313e7643636830351cae115"
+      },
+      "classification": "COMPLETED",
+      "cleared": true,
+      "elapsed_seconds": 9.205050830962136,
+      "tree_rss_peak_bytes": 893943808,
+      "own_swap_peak_bytes": 0,
+      "visual_scope": "first1440x1200 viewport manually inspected",
+      "visual_scope_pass": true,
+      "whole_page_visual_pass": false
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/add6426c59e13baa275fd12aecc2cb8907cb24cf/docs/task042extra_feinn_5nm/response_v31.md",
+      "published_source_sha": "add6426c59e13baa275fd12aecc2cb8907cb24cf",
+      "screenshot": {
+        "path": "tmp/task42extra/v31/render_check/response/page.png",
+        "bytes": 315544,
+        "sha256": "40be6bc6addc82cbb6cebc482f9ab1aff745f7ec2461ca78e3a34733dcf7d5c3"
+      },
+      "supervision_binding": {
+        "path": "tmp/task42extra/v31/render_check/response/watchdog/summary.json",
+        "bytes": 2266,
+        "sha256": "166c2585b6502f436e759e099498cf6da7a431d6ab311e0db15066d9123626fc"
+      },
+      "classification": "COMPLETED",
+      "cleared": true,
+      "elapsed_seconds": 6.463687337934971,
+      "tree_rss_peak_bytes": 596209664,
+      "own_swap_peak_bytes": 0,
+      "visual_scope": "first1440x1200 viewport manually inspected",
+      "visual_scope_pass": true,
+      "whole_page_visual_pass": false
+    },
+    {
+      "name": "topic",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/add6426c59e13baa275fd12aecc2cb8907cb24cf/docs/task042extra_feinn_5nm/outcomes/block_wave_neural_v31.md",
+      "published_source_sha": "add6426c59e13baa275fd12aecc2cb8907cb24cf",
+      "screenshot": {
+        "path": "tmp/task42extra/v31/render_check/topic/page.png",
+        "bytes": 372277,
+        "sha256": "29083cf3af241beb37ba52e4586987a0d4a89f66e4d1298184648970e109130d"
+      },
+      "supervision_binding": {
+        "path": "tmp/task42extra/v31/render_check/topic/watchdog/summary.json",
+        "bytes": 2284,
+        "sha256": "8952e91d6e7c96643a085b5ca0618da49882e27dc8506431c9b246c50b39e766"
+      },
+      "classification": "COMPLETED",
+      "cleared": true,
+      "elapsed_seconds": 6.177571066888049,
+      "tree_rss_peak_bytes": 596090880,
+      "own_swap_peak_bytes": 0,
+      "visual_scope": "first1440x1200 viewport manually inspected",
+      "visual_scope_pass": true,
+      "whole_page_visual_pass": false
+    }
+  ],
+  "browser_attempt_seconds": 21.846309235785156,
+  "browser_peaks_are_light_tree": true,
+  "record_freeze_calendar_seconds": 36450.222513861954,
+  "all_present_formal_descendants_cleared": true,
+  "final_metadata_checks": {
+    "summary_binding": {
+      "path": "tmp/task42extra/v31/final_metadata_checks/watchdog/summary.json",
+      "bytes": 2125,
+      "sha256": "307242fd212c51a4d506bb05634292ae606ecd69c88ea928aa294948072b2294"
+    },
+    "elapsed_seconds": 1.9384813650976866,
+    "tree_rss_peak_bytes": 86134784,
+    "swap_peak_bytes": 0,
+    "cleared": true
+  },
+  "artifact_capacity": {
+    "measured_live_apparent_bytes": 8328176041,
+    "file_count": 1564,
+    "cap_bytes": 21474836480,
+    "within_live_cap": true,
+    "physical_disk_free_bytes": 3218645880832,
+    "scope": "current own V31 artifact folder only; not bytes ever written or deleted, not RSS; historic artifacts untouched",
+    "new_own_temporary_directory_apparent_bytes": 312614055,
+    "combined_current_artifact_and_own_v31_temporary_bytes": 8640790096,
+    "combined_below20GiB": true
+  },
+  "last_record_freeze_calendar_seconds": 36564.96884215297,
+  "last_record_remaining_seconds": 49835.031157034915
 }

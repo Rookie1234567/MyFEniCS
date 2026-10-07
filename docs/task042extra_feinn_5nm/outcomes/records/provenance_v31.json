@@ -77,14 +77,19 @@
       "sha256": "7f00a8f02ce2b6959bc4bce0073f3f4126ed3aa272ca3debb20d28fa1a8a69db"
     },
     {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v31.json",
+      "bytes": 7807,
+      "sha256": "d96eb0b874497b66684e695c436ac3903cb2f6d1c4d2698769fa59a6a88cc503"
+    },
+    {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/reconstruction_stability_v31.json",
       "bytes": 8810,
       "sha256": "aa2fe5fe602e793fe6f0097ce118b7d4c14449693c72ccd9d6f4b464d13f1773"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v31.json",
-      "bytes": 473,
-      "sha256": "82218a0c7b36789fd26692d85efacc4a54e9672d4906061a2d5f9e29bc0c4943"
+      "bytes": 3582,
+      "sha256": "a8f3d48f35949d7bc39149faa08c5274dd5cda66e1b33239ee87c621e38def0f"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v31.json",
@@ -93,13 +98,13 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v31.json",
-      "bytes": 59287,
-      "sha256": "40d7eb70c66631d5da47384ea9ab450ed0a20e5c3710c5c2b7fb5da7f4265b52"
+      "bytes": 63572,
+      "sha256": "133e9ff4c50ddc9795769c4c94a30f81e429499b379d69e5b28610c732a1d13d"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v31.json",
-      "bytes": 235593,
-      "sha256": "9e087034a59ab00668b46f3f3f32d95e11d0c8c9347adbec7e1f99db908a5511"
+      "bytes": 236082,
+      "sha256": "33c529e5a191ea9ab5777a698f6dda2f0272a9a509e5a368be81acd05778d9a3"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v31.json",
@@ -113,8 +118,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v31.json",
-      "bytes": 20516,
-      "sha256": "dba048b67c466771d50c5d2d499728cfab04d2351657aca6f11930deeffd8c1b"
+      "bytes": 21109,
+      "sha256": "3285870c97826e733bac2b9b411a413d9286e27d2e3aea661a3037979d021d6b"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/v30_completed_field_audit_v31.json",
