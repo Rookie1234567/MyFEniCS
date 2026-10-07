@@ -86,6 +86,19 @@ def checked_state(original,output):
 
 
 
+def cost_binding(run,manifest,directory):
+    directory=Path(directory)
+    if manifest['source_sha']!=run['source_sha']:raise ValueError('cost source identity')
+    formal=run['role'] in scope.STAGES
+    return dict(role=run['role'],source_sha=run['source_sha'],
+        binding_scope='formal_one_run' if formal else 'auxiliary_command',
+        input_sha256=manifest['input_sha256'] if formal else None,
+        physical_sha256=manifest['physical_sha256'] if formal else None,
+        auxiliary_has_no_PDE_input=not formal,
+        resolved_sha256=digest(directory/'resolved_config.json') if (directory/'resolved_config.json').exists() else None,
+        memory=manifest.get('memory_budget'),manifest_sha256=digest(directory/'run_manifest.json'))
+
+
 def cost_rows(runs):
     from benchmarks.collect_phase_notch_hp import measured_timeline,sampling_receipt
     rows=[];sources={};bindings=[]
@@ -107,9 +120,7 @@ def cost_rows(runs):
                 e['event'] in ('object_owner_snapshot','factor_present','h_numeric_capacity','finite_factor_numeric_admission')],
             symbolic_numeric_capacity=json.loads((worker/'h_symbolic_capacity.json').read_text())['plan']
                 if (worker/'h_symbolic_capacity.json').exists() else None))
-        bindings.append(dict(role=run['role'],source_sha=run['source_sha'],input_sha256=m['input_sha256'],
-            physical_sha256=m['physical_sha256'],resolved_sha256=digest(d/'resolved_config.json') if (d/'resolved_config.json').exists() else None,
-            memory=m.get('memory_budget'),manifest_sha256=digest(d/'run_manifest.json')))
+        bindings.append(cost_binding(run,m,d))
     return rows,sources,bindings
 
 

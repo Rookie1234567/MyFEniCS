@@ -13,6 +13,23 @@ from src.runners.task042_shared import write_json
 
 
 class Tests(unittest.TestCase):
+    def test_cost_binding_separates_auxiliary_and_formal_input(self):
+        from benchmarks.collect_phase_deployment import cost_binding
+        with tempfile.TemporaryDirectory() as d:
+            folder=Path(d);manifest={'source_sha':'a'}
+            write_json(folder/'run_manifest.json',manifest)
+            aux=cost_binding({'role':'post','source_sha':'a'},manifest,folder)
+            self.assertEqual(aux['binding_scope'],'auxiliary_command')
+            self.assertIsNone(aux['input_sha256'])
+            self.assertTrue(aux['auxiliary_has_no_PDE_input'])
+            with self.assertRaises(KeyError):cost_binding({'role':'C6','source_sha':'a'},manifest,folder)
+            with self.assertRaisesRegex(ValueError,'source identity'):cost_binding({'role':'post','source_sha':'b'},manifest,folder)
+            manifest.update(input_sha256='input',physical_sha256='physics')
+            write_json(folder/'run_manifest.json',manifest)
+            formal=cost_binding({'role':'C6','source_sha':'a'},manifest,folder)
+            self.assertEqual(formal['input_sha256'],'input')
+            self.assertFalse(formal['auxiliary_has_no_PDE_input'])
+
     def test_saved_consumer_public_output_verdict(self):
         from benchmarks.collect_phase_deployment import checked_state
         self.assertTrue(checked_state({'pass_gate':True},{'energy_pass':True})['pass_gate'])
