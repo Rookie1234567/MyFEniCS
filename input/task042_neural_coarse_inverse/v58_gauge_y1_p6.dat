@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v58]
+stage = "G6"
+run_id = "task042_v58_gauge_y1_p6"

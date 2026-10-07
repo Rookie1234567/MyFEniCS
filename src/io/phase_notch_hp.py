@@ -28,6 +28,8 @@ def descriptor(role,*,scope=None):
     from src.solvers.phase_notch_hp_modes import finite_mode_ranges
     m,n=finite_mode_ranges(count)
     physical['boundary'].update(manual_m=[-m,m],manual_n=[-n,n],complete_modes=count)
+    if 'gauge_shift' in spec:
+        physical['discretization']['numerical_carrier']={'physical_incidence_unchanged':True,'reciprocal_shift':spec['gauge_shift']}
     return physical,spec
 
 

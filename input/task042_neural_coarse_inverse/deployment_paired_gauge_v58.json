@@ -1,0 +1,316 @@
+{
+  "schema": "task042.v58.deployment-paired-gauge.v1",
+  "batch": "V58_DEPLOYMENT_COST_AND_PAIRED_GAUGE",
+  "review_commit": "721c2731da0ce02ef528345f7b6ffcea459b033c",
+  "stages": [
+    "P",
+    "S",
+    "C6",
+    "G6",
+    "G7",
+    "VERIFY_COST"
+  ],
+  "physical_descriptor": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "local_numeric_closure": [
+    "src/adaptivity/dyadic_hexa_broken_mesh.py",
+    "src/adaptivity/dyadic_hexa_refinement.py",
+    "src/adaptivity/exact_sequence_variable_p.py",
+    "src/adaptivity/fast_custom_element_ufl.py",
+    "src/adaptivity/fixed_trace_element_cache.py",
+    "src/adaptivity/hcurl_broken_cell_trace.py",
+    "src/adaptivity/hcurl_broken_trace_graph.py",
+    "src/adaptivity/hcurl_hanging_trace.py",
+    "src/adaptivity/hcurl_trace_constraint_graph.py",
+    "src/adaptivity/stage4_local_h.py",
+    "src/adaptivity/variable_p_degree_plan.py",
+    "src/adaptivity/variable_p_entity_map.py",
+    "src/adaptivity/variable_p_periodic_orbits.py",
+    "src/adaptivity/variable_p_transfer.py",
+    "src/common/analytic_fields_3d.py",
+    "src/common/config.py",
+    "src/common/config_3d.py",
+    "src/common/materials.py",
+    "src/common/modes_3d.py",
+    "src/common/optical_material_table.py",
+    "src/common/pml.py",
+    "src/common/pml_3d.py",
+    "src/common/units.py",
+    "src/constraints/floquet_3d.py",
+    "src/constraints/floquet_3d_high_order.py",
+    "src/constraints/floquet_constraint.py",
+    "src/constraints/high_order_floquet_trace.py",
+    "src/geometry/cell_notch.py",
+    "src/geometry/mesh_builder.py",
+    "src/geometry/mesh_builder_3d.py",
+    "src/geometry/tetra_mesh_audit.py",
+    "src/io/input_loader.py",
+    "src/io/input_schema.py",
+    "src/io/input_validation.py",
+    "src/io/physical_balanced_profile.py",
+    "src/io/physical_intermediate_profile.py",
+    "src/io/physical_recursive_profile.py",
+    "src/io/resolved_config.py",
+    "src/io/run_specification.py",
+    "src/postprocessing/diffraction_3d.py",
+    "src/postprocessing/full3d_reference.py",
+    "src/postprocessing/near_field_2d.py",
+    "src/postprocessing/postprocess.py",
+    "src/postprocessing/postprocess_3d.py",
+    "src/postprocessing/power_metrics.py",
+    "src/postprocessing/rta_3d.py",
+    "src/solvers/common_3d_fields.py",
+    "src/solvers/common_3d_forms.py",
+    "src/solvers/common_3d_solve.py",
+    "src/solvers/common_3d_utils.py",
+    "src/solvers/condensed_dtn.py",
+    "src/solvers/condensed_reference_preflight.py",
+    "src/solvers/dtn_port_3d.py",
+    "src/solvers/fullspace_dtn_action.py",
+    "src/solvers/fullspace_lor_edge_geometric_mg.py",
+    "src/solvers/fullspace_lor_edge_geometric_mg_global.py",
+    "src/solvers/fullspace_lor_hx_root_cause.py",
+    "src/solvers/fullspace_lor_memory_first_foundation.py",
+    "src/solvers/fullspace_lor_native_hx.py",
+    "src/solvers/fullspace_lor_native_hx_fixture.py",
+    "src/solvers/fullspace_lor_topology.py",
+    "src/solvers/fullspace_lor_transfer.py",
+    "src/solvers/fullspace_mpc_action.py",
+    "src/solvers/fullspace_physical_action.py",
+    "src/solvers/fullspace_quadrature_diagonal.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+    "src/solvers/fullspace_v17_p3_oracle.py",
+    "src/solvers/hcurl_affine_isotropic_tensor.py",
+    "src/solvers/hcurl_assembly_time_condensation.py",
+    "src/solvers/hcurl_canonical_vector.py",
+    "src/solvers/hcurl_canonical_vector_dolfinx.py",
+    "src/solvers/hcurl_cell_static_condensation.py",
+    "src/solvers/hcurl_fixed_trace_element.py",
+    "src/solvers/hcurl_variable_p_assembly.py",
+    "src/solvers/hcurl_variable_p_local.py",
+    "src/solvers/hcurl_variable_p_reduction.py",
+    "src/solvers/mpc_form_action.py",
+    "src/solvers/p4_cell_condensed_inverse.py",
+    "src/solvers/p6_cell_condensed_action.py",
+    "src/solvers/solve_vector_maxwell.py",
+    "src/solvers/static_local_schur_action.py",
+    "src/solvers/scattering_accuracy.py",
+    "src/solvers/scattering_accuracy_fields.py",
+    "src/solvers/scattering_accuracy_boundary.py",
+    "src/solvers/scattering_accuracy_analytic.py",
+    "src/solvers/scattering_accuracy_scope.py"
+  ],
+  "new_storage_bytes": 12884901888,
+  "task_storage_bytes": 109521666048,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "complete_solve_cap": 3,
+  "frozen_surface_q": [
+    47,
+    63
+  ],
+  "NN_training": false,
+  "total_loaded_seconds": 21600,
+  "metadata_target_seconds": 1200,
+  "independent_verification_reserve_seconds": 1800,
+  "assembly_row_cap": 100000,
+  "pre_numeric_planning_bytes": 68719476736,
+  "cases": {
+    "C6": {
+      "degree": 6,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 104832,
+      "trace": 32832,
+      "internal": 72000,
+      "rows": 33660,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        0
+      ]
+    },
+    "G6": {
+      "degree": 6,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 104832,
+      "trace": 32832,
+      "internal": 72000,
+      "rows": 33660,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        1
+      ]
+    },
+    "G7": {
+      "degree": 7,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 166208,
+      "trace": 45248,
+      "internal": 120960,
+      "rows": 46076,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        1
+      ]
+    }
+  },
+  "historical_loaded_known_lower_seconds": 176686.25237452157,
+  "case_wall_seconds": {
+    "P": 2400,
+    "S": 1200,
+    "C6": 5000,
+    "G6": 5000,
+    "G7": 6500,
+    "VERIFY_COST": 5000
+  },
+  "planning_peak_bytes": 68719476736,
+  "memory_budget": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "historical_cost_unknown": "historical unknown remains unknown; all parent raw preparation charged separately from cache incremental",
+  "reserve_new_audit_seconds": 1800,
+  "scientific_loaded_seconds": 21600,
+  "maximum_new_solves": 3,
+  "resource_observation": {
+    "min_probe_interval_seconds": 120,
+    "total_wait_seconds": 1800,
+    "episode_count_cap": null
+  },
+  "physical_qualification": "finite hp consistency only; no NN or continuum/target qualification",
+  "new_backend": "AFFINE_PHASE_REFERENCE_TENSOR",
+  "B6_reproduction_limits": {
+    "fields": 1e-06,
+    "channels": 1e-06,
+    "RTA_volume": 1e-08,
+    "mode_power": 1e-09
+  },
+  "forecast_case_seconds": {
+    "C6": 2000,
+    "G6": 2200,
+    "G7": 3600
+  },
+  "P_body_limits": {
+    "vector_relative": 1e-10,
+    "operation_scaled": 1e-12
+  },
+  "scope_note": "new gauge only changes numerical carrier, physical cfg remains frozen; no field/reference initialisation"
+}

@@ -35,10 +35,11 @@ def common_boxes(first,second):
     return boxes,a,b
 
 
-def common_difference(first,second,cfg,journal,folder,*,q,selected_points,evaluator_factory=None,progress_identity=None):
+def common_difference(first,second,cfg,journal,folder,*,q,selected_points,evaluator_factory=None,progress_identity=None,carrier_pair=None):
     from .fixed_phase_fem import carrier
     factory=PhaseEvaluator if evaluator_factory is None else evaluator_factory
-    k=carrier(cfg);a=factory(first.function_space,q,k);b=factory(second.function_space,q,k)
+    k=carrier(cfg);ka,kb=(k,k) if carrier_pair is None else carrier_pair
+    a=factory(first.function_space,q,ka);b=factory(second.function_space,q,kb)
     ba,bb=mesh_bounds(first.function_space),mesh_bounds(second.function_space)
     boxes,pa,pb=common_boxes(ba,bb);names=('E_total','H_total','curl_total','E_scattered','H_scattered','curl_scattered')
     sums=np.zeros((6,3));per=[];components=[]

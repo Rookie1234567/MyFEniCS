@@ -37,8 +37,12 @@ def configured_setup(spec,journal,*,scope=None):
         mesh_plan_id='task042.'+label+'.fixed',mesh_axis_z_profile='task042.'+label+'.fixed',
         diffraction_order_max_m=m,diffraction_order_max_n=n)
     geo={**base,'notch_expected_changed_cells':2*int(np.prod(spec['splits']))}
+    numerical=None
+    if scope is not None and hasattr(scope,'numerical_carrier'):
+        numerical=scope.numerical_carrier(cfg,spec)
     cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo,
-        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55','v56','v57') and spec['degree']==7)
+        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55','v56','v57','v58') and spec['degree']==7,
+        numerical_carrier=numerical)
     return cfg,setup,geometry
 
 
@@ -83,7 +87,10 @@ def solve_case(role,folder,journal,*,scope=None):
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',role=role,case_spec=spec,capacity=cap)
     bundle=rhs=inverse=system=u=factor=None
     try:
-        boundary=boundary_check(cfg,setup,folder,journal)
+        if scope is not None and hasattr(scope,'boundary_provider'):
+            setup['boundary_provider']=scope.boundary_provider(cfg,setup,folder,journal)
+            boundary=setup['boundary_provider'].generate_pair()
+        else:boundary=boundary_check(cfg,setup,folder,journal)
         if not boundary['pass_gate']:return dict(status='NUMERICAL_BOUNDARY_NOT_QUALIFIED',role=role,case_spec=spec,boundary=boundary,capacity=cap)
         bundle,rhs=build_bundle(cfg,setup,journal);write_json(folder/'actual_volume_form_identity.json',volume_form_identity(bundle))
         if len(bundle['modes'])!=spec['complete_modes']:raise ValueError('actual full mode count')
@@ -133,6 +140,8 @@ def solve_case(role,folder,journal,*,scope=None):
         journal.event('factor_and_matrix_released_original_oracle_retained')
         result=postprocess_state(role,spec,cfg,setup,geo,bundle,rhs,u,port,arrays,early,folder,journal,
             cap,boundary,minimal['build_audit'],norms,vectors,scope=scope)
+        if scope is not None and hasattr(scope,'deployment_postprocess'):
+            result=scope.deployment_postprocess(result,(cfg,setup,geo),bundle,rhs,u,port,folder,journal)
         if checkpoint is not None:result['raw_tensor_checkpoint']=checkpoint.record()
         result['fixed_refinements']=refinements;write_json(folder/'scientific_result.json',result)
         return result
@@ -186,7 +195,7 @@ def audit_saved_return(role,folder,journal,record,*,scope=None):
     spec=record['case_spec'];v=checked_arrays(record['arrays']);cfg,setup,geo=configured_setup(spec,journal,scope=scope)
     for k in geo:
         if not np.array_equal(geo[k],v[k]):raise ValueError('returned geometry changed '+k)
-    if not np.array_equal(v['kappa'],carrier(cfg)) or not np.array_equal(v['slaves'],setup['floquets'][spec['degree']].mpc.slaves):
+    if not np.array_equal(v['kappa'],setup.get('numerical_carrier',carrier(cfg))) or not np.array_equal(v['slaves'],setup['floquets'][spec['degree']].mpc.slaves):
         raise ValueError('returned carrier/MPC changed')
     bundle,rhs=build_bundle(cfg,setup,journal);u=rhs.duplicate();u.array[:]=v['u_storage']
     try:

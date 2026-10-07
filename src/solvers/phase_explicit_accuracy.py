@@ -31,7 +31,7 @@ def configuration(case,degree=4,grid='ORIGINAL'):
     return cfg
 
 
-def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_descriptor=None,finite_authority_degree7=False):
+def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_descriptor=None,finite_authority_degree7=False,numerical_carrier=None):
     from mpi4py import MPI
     from dolfinx import mesh as dxmesh,fem,default_real_type
     from basix.ufl import element
@@ -39,7 +39,8 @@ def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_de
     from src.constraints.floquet_3d import build_double_floquet_mpc
     cfg=configuration(case,degree,grid) if configured is None else configured
     geometry=plan_record()['physical_descriptor']['geometry'] if geometry_descriptor is None else geometry_descriptor
-    k=carrier(cfg,phase)
+    k=carrier(cfg,phase) if numerical_carrier is None else np.asarray(numerical_carrier,float)
+    if k.shape!=(3,) or not np.all(np.isfinite(k)) or k[2]!=0:raise ValueError('real transverse numerical carrier')
     with journal.measured('mesh_materials_envelope_MPC'):
         mesh=_structured_hexa_mesh(MPI.COMM_SELF,cfg.mesh_axis_x_values,cfg.mesh_axis_y_values,cfg.mesh_axis_z_values,preserve_input_partition=cfg.stage4_preserve_structured_input_partition)
         facets,_=_mark_boundary_facets(mesh,cfg);tags=_mark_cells(mesh,cfg)
@@ -55,16 +56,17 @@ def make_setup(case,degree,grid,journal,phase=True,*,configured=None,geometry_de
         V=fem.functionspace(mesh,element('N1curl',mesh.basix_cell(),degree,dtype=default_real_type))
         data=SimpleNamespace(mesh=mesh,cell_tags=tags,facet_tags=facets)
         floquet=build_double_floquet_mpc(V,data,envelope_configuration(cfg,k),finite_authority_degree7=finite_authority_degree7)
-    return cfg,dict(mesh=mesh,mesh_data=data,spaces={degree:V},floquets={degree:floquet}),dict(cell_centers=centers,cell_tags=values,regular_tags=regular,geometry_x=mesh.geometry.x.copy(),geometry_dofmap=mesh.geometry.dofmap.copy())
+    return cfg,dict(mesh=mesh,mesh_data=data,spaces={degree:V},floquets={degree:floquet},numerical_carrier=k),dict(cell_centers=centers,cell_tags=values,regular_tags=regular,geometry_x=mesh.geometry.x.copy(),geometry_dofmap=mesh.geometry.dofmap.copy())
 
 
 def build_bundle(cfg,setup,journal,q=47,phase=True):
     from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
     from .scattering_accuracy_boundary import SurfaceComponents
     from petsc4py import PETSc
-    k=carrier(cfg,phase);holder={}
+    k=setup.get('numerical_carrier',carrier(cfg,phase));holder={}
     def surface(V,data,cfg,oldq,*,jit_options):
-        src=SurfaceComponents(V,setup['floquets'][cfg.nedelec_degree].mpc,cfg,q,method='separable' if q==47 else 'basix2d',phase_carrier=k)
+        provider=setup.get('boundary_provider')
+        src=provider.load(q) if provider is not None else SurfaceComponents(V,setup['floquets'][cfg.nedelec_degree].mpc,cfg,q,method='separable' if q==47 else 'basix2d',phase_carrier=k)
         holder['source']=src
         return src.assemblers()
     with journal.measured('JIT_full_Ckappa_and_complete532_carrier'):
