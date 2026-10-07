@@ -121,4 +121,44 @@ class PhaseTests(unittest.TestCase):
         self.assertFalse(local_recovery_check(a,v)['pass_gate'])
 
 
+    def test_saved_output_absorption_and_required_inventory(self):
+        from unittest.mock import patch
+        from copy import deepcopy
+        from benchmarks.collect_common_weak_phase import output_check
+        k0=2*np.pi/.7;n=1+.1j;eps=n*n;pinc=100.;coef=k0*.5*eps.imag/pinc
+        arrays={'state':dict(cell_tags=np.array([1,2,3])),
+            'q23':dict(rows=np.array([[1,7,1],[2,2,1],[3,3,1]],float),cell_ids=np.arange(3)),
+            'q31':dict(rows=np.array([[1,7,1],[2,2,1],[3,3,1]],float),cell_ids=np.arange(3)),
+            'points':dict(points=np.zeros((240,3)),**{name+'_'+kind:np.zeros((240,3),complex)
+                for name in ('E','H','curl') for kind in ('total','scattered')})}
+        regions={name:dict(tag=tag,n_complex=[n.real,n.imag],epsilon_r_complex=[eps.real,eps.imag],
+            Im_epsilon_r=eps.imag,cell_count=1,A_volume=coef*value)
+            for name,tag,value in (('substrate',2,2),('grating',3,3))}
+        vm=dict(backend='direct_phase_quadrature',field_model_for_absorption='total_field',q_pair=[23,31],
+            all_rule_arrays=['q23','q31'],regions=regions,incident_power_code_units=pinc,
+            A_volume_total=coef*5,energy_closure_error_port_volume=0.)
+        r=dict(arrays='state',case_spec=dict(cells=3,complete_modes=828),output=dict(volume_metrics=vm,
+            port_metrics=dict(R_total=.1,T_total=.9-coef*5),fixed_240='points'))
+        with patch('benchmarks.collect_common_weak_phase.checked_arrays',side_effect=lambda receipt:arrays[receipt]):
+            self.assertTrue(output_check(r)['energy_pass'])
+            bad=deepcopy(r);bad['output']['volume_metrics']['A_volume_total']*=1.01
+            with self.assertRaises(ValueError):output_check(bad)
+            arrays['q31']['rows'][2,0]=1
+            with self.assertRaises(ValueError):output_check(r)
+            arrays['q31']['rows'][2,0]=3;arrays['points']['H_scattered']=np.zeros((239,3),complex)
+            with self.assertRaises(ValueError):output_check(r)
+
+    def test_saved_weak_quadrature_recomputed_from_operation_scale(self):
+        from unittest.mock import patch
+        from benchmarks.collect_common_weak_phase import weak_quadrature_rows
+        values={n:dict(terms=np.ones((7,24),complex)*(1+.2j),operation_scale=np.full(24,10.)) for n in ('q23','q31')}
+        r=dict(rows=[dict(q=q,arrays='q'+str(q)) for q in (23,31)])
+        with patch('benchmarks.collect_common_weak_phase.checked_arrays',side_effect=lambda x:values[x]):
+            self.assertTrue(weak_quadrature_rows(r)[-1]['quadrature_pass'])
+            values['q31']['terms'][0]+=1e-5
+            self.assertFalse(weak_quadrature_rows(r)[-1]['quadrature_pass'])
+            r['rows'][0]['q']=22
+            with self.assertRaises(ValueError):weak_quadrature_rows(r)
+
+
 if __name__=='__main__':unittest.main()

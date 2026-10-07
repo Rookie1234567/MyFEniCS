@@ -137,10 +137,11 @@ def tensor_setup(folder,journal):
 
 
 def consume_p6_setup_checkpoint(path,folder,journal):
-    """Finish two controls from saved full classes; never repeat the table/LU.
+    """Continue saved class comparisons and controls, preserving their costs.
 
-    The failed worker completed every p6 comparison and its two local recovery
-    witnesses. A pure wiring repair does not invalidate those saved arrays.
+    The controlled stop saved 40/58 classes and both local recovery witnesses.
+    The same unpersisted reference table is rebuilt once as charged repair;
+    only missing classes and unconsumed fresh controls are evaluated.
     """
     import basix
     import ufl
