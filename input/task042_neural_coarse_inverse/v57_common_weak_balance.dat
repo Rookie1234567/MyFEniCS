@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v57]
+stage = "D"
+run_id = "task042_v57_common_weak_balance"
