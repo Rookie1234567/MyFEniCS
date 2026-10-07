@@ -1072,6 +1072,8 @@ def recheck_reference_pc_final_admission(
         }
 
     if strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15:
+        alpha_limit = float(V15_REFERENCE_PC_LIMITS["alpha_closure"])
+        q_limit = float(V15_REFERENCE_PC_LIMITS["q_solve"])
         candidates = last_facts.get("candidate_metrics")
         recorded = last_facts.get("candidate_selection")
         q_rows = last_facts.get("q_true_residuals_selected", ())
@@ -1169,8 +1171,10 @@ def recheck_reference_pc_final_admission(
                 "selected_candidate_index": selected_index,
                 "recorded_admission": recorded.get("admission") if isinstance(recorded, Mapping) else None,
                 "recorded_selected_candidate_index": recorded.get("selected_candidate_index") if isinstance(recorded, Mapping) else None,
+                "port_identity_relative": alpha,
+                "port_identity_limit": alpha_limit,
                 "maximum_q_true_residual_relative": q_relative,
-                "q_true_residual_limit": V15_REFERENCE_PC_LIMITS["q_solve"],
+                "q_true_residual_limit": q_limit,
                 "all_four_q_phase_rows_covered": bool(q_coverage),
                 "selected_decomposition_closure_relative": selected_closure,
                 "decomposition_closure_limit": V15_DECOMPOSITION_CLOSURE_LIMIT,
@@ -1184,6 +1188,10 @@ def recheck_reference_pc_final_admission(
                 "passed": False,
                 "strategy": strategy,
                 "admission": V15_REFERENCE_PC_REJECTED,
+                "port_identity_relative": alpha,
+                "port_identity_limit": alpha_limit,
+                "maximum_q_true_residual_relative": q_relative,
+                "q_true_residual_limit": q_limit,
                 "reason": f"candidate_selection_recheck_error:{type(exc).__name__}:{exc}",
                 "selection_recomputed_from_candidate_metrics": True,
             }

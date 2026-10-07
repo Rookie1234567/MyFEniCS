@@ -100,7 +100,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         '--task40-v10-postprocess-from', type=Path, metavar='FAILED_RUN_DIRECTORY',
-        help='recover candidate outputs from its preserved V10 full-field packet without rerunning the solve',
+        help='recover the frozen V10/V15 B0 outputs from its saved full field without rerunning the solve',
     )
     parser.add_argument(
         '--v24-p4-prefix-target',
@@ -246,6 +246,11 @@ def main(argv: list[str] | None = None) -> int:
                 ),
             )
         )
+        v15_b0_candidate_identity = (
+            v15_campaign_identity
+            and specification.identity.get('run_id') == TASK40_B0_P6_V15_RUN_ID
+            and specification.solver.get('preconditioner') == TASK40_V15_P6_B0_PROFILE
+        )
         task40_campaign_identity = (
             v10_identity or v11_grid_identity or v13_campaign_identity
             or v15_campaign_identity
@@ -253,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
         from src.runners.task038_launcher import _validate_task40_v10_postprocess_request
 
         _validate_task40_v10_postprocess_request(
-            candidate_identity=v10_candidate_identity,
+            candidate_identity=(v10_candidate_identity or v15_b0_candidate_identity),
             campaign_window=args.task40_v10_campaign_window,
             saved_run_directory=args.task40_v10_postprocess_from,
         )

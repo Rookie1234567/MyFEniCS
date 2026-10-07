@@ -23,6 +23,9 @@ from src.runners.task40_v10_saved_output_recovery import (
     _MODE_SHA256,
     _MPC_SHA256,
     _SAVED_ASSEMBLY_SOURCE_SHA256,
+    _V15_B0_RUN_RELATIVE,
+    _V15_B0_SAVED_ASSEMBLY_SOURCE_SHA256,
+    _saved_run_identity_contract,
     _canonical_identity_bytes,
     _saved_carrier_identity_recheck,
     _saved_scalar_gate_checks,
@@ -138,6 +141,43 @@ def test_saved_carrier_rebind_replays_only_the_reviewed_source_hashes():
     assert result["actual"]["source_sha256"] == result["expected"][
         "frozen_current_source_sha256"
     ]
+
+
+def test_saved_carrier_rebind_uses_exact_v15_source_map_without_v10_rebind():
+    inputs = _saved_carrier_identity_fixture()
+    inputs["assembly_context"]["source_sha256"] = dict(
+        _V15_B0_SAVED_ASSEMBLY_SOURCE_SHA256
+    )
+    _refresh_current_context_and_manifest_hashes(inputs)
+    manifest = json.loads(inputs["mode_manifest_bytes"])
+    expected_saved_sha = hashlib.sha256(_canonical_identity_bytes(manifest)).hexdigest()
+    inputs.pop("expected_saved_assembly_sha256")
+
+    result = _saved_carrier_identity_recheck(
+        **inputs,
+        expected_saved_assembly_sha256=expected_saved_sha,
+        expected_saved_source_sha256=_V15_B0_SAVED_ASSEMBLY_SOURCE_SHA256,
+        expected_current_source_sha256=_V15_B0_SAVED_ASSEMBLY_SOURCE_SHA256,
+        expected_changed_source_names=(),
+    )
+
+    assert result["passed"]
+    assert result["expected"]["reviewed_changed_source_names"] == []
+    assert result["expected"]["saved_source_sha256"] == _V15_B0_SAVED_ASSEMBLY_SOURCE_SHA256
+
+
+def test_saved_run_identity_contract_pins_v15_b0_and_keeps_its_original_fail(tmp_path):
+    root = (tmp_path / _V15_B0_RUN_RELATIVE).resolve()
+    identity = _saved_run_identity_contract(tmp_path, root)
+
+    assert identity["kind"] == "V15"
+    assert identity["source_sha"] == "0201815c6b13f8456e9717ab93cc5023d4c946d1"
+    assert identity["input_sha256"] == "9dd565dd69dc0924bf2e6511c363b55460b9c83e9b57fd037ecc161572bc6080"
+    assert identity["numeric_gates_passed"] is False
+    assert identity["workflow_seconds"] == pytest.approx(1052.75076205004)
+    assert identity["charged_seconds"] == pytest.approx(1052.5283799329773)
+    with pytest.raises(ValueError, match="reviewed V10 or V15 B0 run"):
+        _saved_run_identity_contract(tmp_path, root.parent)
 
 
 def test_saved_carrier_rebind_rejects_an_unreviewed_source_change():

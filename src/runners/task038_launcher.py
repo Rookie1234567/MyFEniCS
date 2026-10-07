@@ -5278,7 +5278,7 @@ def _validate_task40_v10_postprocess_request(
     if saved_run_directory is None:
         return
     if not candidate_identity:
-        raise InputError("Task40 V10 saved-output recovery is restricted to the frozen B0 candidate")
+        raise InputError("Task40 saved-output recovery is restricted to a frozen B0 candidate")
     if campaign_window is None:
         raise InputError("Task40 V10 saved-output recovery requires its fixed campaign window")
     if contract_probe:
@@ -5633,6 +5633,11 @@ def launch_specification(
         and specification.solver.get("task40_q_assembly_strategy")
         == "LEGACY_GLOBAL_CSR_SUM"
     )
+    task40_v15_b0_candidate_profile = (
+        task40_v15_profile
+        and run_id == TASK40_B0_P6_V15_RUN_ID
+        and preconditioner == TASK40_V15_P6_B0_PROFILE
+    )
     task40_v10_profile = (
         run_id == TASK40_B0_CONTROL_RUN_ID
         and preconditioner == TASK40_B0_P4_CONTROL_PROFILE
@@ -5666,8 +5671,11 @@ def launch_specification(
         raise InputError("Task40 V10/V11/V13/V15 p6 launch requires the existing fixed campaign window")
     _validate_task40_v10_postprocess_request(
         candidate_identity=(
-            run_id == TASK40_B0_P6_CANDIDATE_RUN_ID
-            and preconditioner == TASK40_V10_P6_REFERENCE_PROFILE
+            (
+                run_id == TASK40_B0_P6_CANDIDATE_RUN_ID
+                and preconditioner == TASK40_V10_P6_REFERENCE_PROFILE
+            )
+            or task40_v15_b0_candidate_profile
         ),
         campaign_window=task40_v10_campaign_window,
         saved_run_directory=task40_v10_postprocess_from,

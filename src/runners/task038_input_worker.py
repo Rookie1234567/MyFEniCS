@@ -261,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.contract_probe and args.task40_v10_postprocess_from is not None:
         if comm.rank == 0:
-            print("Task40 V10 saved-output recovery cannot be a contract probe")
+            print("Task40 saved-output recovery cannot be a contract probe")
         return 2
     if args.contract_probe:
         comm.Barrier()
@@ -281,7 +281,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.task40_v10_postprocess_from is not None:
         if comm.size != 1 or args.expected_method != "full3d_iterative":
             if comm.rank == 0:
-                print("Task40 V10 saved-output recovery requires the MPI1 iterative candidate")
+                print("Task40 saved-output recovery requires the MPI1 iterative B0 candidate")
             return 2
         try:
             from src.runners.task40_v10_saved_output_recovery import (
@@ -296,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         except Exception as exc:
             if comm.rank == 0:
-                print(f"Task40 V10 saved-output recovery failed: {exc}")
+                print(f"Task40 saved-output recovery failed: {exc}")
             return 4
         if comm.rank == 0:
             print(json.dumps(result, sort_keys=True, separators=(",", ":")))

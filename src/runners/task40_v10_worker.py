@@ -47,6 +47,32 @@ def _single_side_diffraction_order_count_passed(
     )
 
 
+def _reference_pc_final_identity_pass(
+    reference_pc_final_gate: Mapping[str, Any], identity_metrics: Mapping[str, Any]
+) -> bool:
+    """Retain the parent alpha and q checks using the strategy's explicit limits."""
+
+    def finite_within(metric: Any, limit: Any) -> bool:
+        try:
+            value = float(metric)
+            bound = float(limit)
+        except (TypeError, ValueError, OverflowError):
+            return False
+        return bool(np.isfinite(value) and np.isfinite(bound) and value <= bound)
+
+    return bool(
+        reference_pc_final_gate.get("passed") is True
+        and finite_within(
+            identity_metrics.get("reference_pc_port_identity_relative"),
+            reference_pc_final_gate.get("port_identity_limit", -1.0),
+        )
+        and finite_within(
+            identity_metrics.get("maximum_q_true_residual_relative"),
+            reference_pc_final_gate.get("q_true_residual_limit", -1.0),
+        )
+    )
+
+
 def _v12_memory_admission_bounds(
     *,
     live_rss_bytes: int,
@@ -4887,14 +4913,8 @@ def run_task40_v10_p6_reference_worker(
             and np.isfinite(final_port_closure)
             and final_port_closure <= _PORT_CLOSURE_LIMIT
             and identity_metrics["native_mapping_identity_relative"] <= _IDENTITY_LIMIT
-            and reference_pc_final_gate["passed"]
-            and finite_within(
-                identity_metrics["reference_pc_port_identity_relative"],
-                reference_pc_port_identity_limit,
-            )
-            and finite_within(
-                identity_metrics["maximum_q_true_residual_relative"],
-                reference_pc_q_limit,
+            and _reference_pc_final_identity_pass(
+                reference_pc_final_gate, identity_metrics
             )
             and all(inverse_input_identity.values())
         )

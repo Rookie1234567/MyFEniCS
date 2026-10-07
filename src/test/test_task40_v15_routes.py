@@ -656,6 +656,7 @@ def test_v15_apply_initial_pass_returns_one_whole_state_without_correction(monke
         NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
         recheck_reference_pc_final_admission,
     )
+    from src.runners.task40_v10_worker import _reference_pc_final_identity_pass
 
     pc, source, inverse = _make_v15_pc_fixture(
         monkeypatch, first_call_needs_correction=False
@@ -676,6 +677,39 @@ def test_v15_apply_initial_pass_returns_one_whole_state_without_correction(monke
     )
     assert parent["passed"] is True
     assert parent["selection_recomputed_from_candidate_metrics"] is True
+    assert parent["port_identity_relative"] == pc.last_facts["port_identity_relative"]
+    assert parent["port_identity_limit"] == 1.0e-9
+    assert parent["q_true_residual_limit"] == 1.0e-8
+    assert _reference_pc_final_identity_pass(
+        parent,
+        {
+            "reference_pc_port_identity_relative": 2.3487194882225214e-15,
+            "maximum_q_true_residual_relative": pc.last_facts[
+                "maximum_q_true_residual_relative"
+            ],
+        },
+    )
+    assert not _reference_pc_final_identity_pass(
+        parent,
+        {
+            "reference_pc_port_identity_relative": 1.01e-9,
+            "maximum_q_true_residual_relative": 0.0,
+        },
+    )
+    incomplete = recheck_reference_pc_final_admission(
+        {}, NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+    )
+    assert incomplete["passed"] is False
+    assert not _reference_pc_final_identity_pass(incomplete, {})
+    missing_limit = dict(parent)
+    missing_limit.pop("port_identity_limit")
+    assert not _reference_pc_final_identity_pass(
+        missing_limit,
+        {
+            "reference_pc_port_identity_relative": 2.3487194882225214e-15,
+            "maximum_q_true_residual_relative": 0.0,
+        },
+    )
 
 
 def test_v15_apply_corrects_once_then_next_pc_invocation_continues(monkeypatch):
