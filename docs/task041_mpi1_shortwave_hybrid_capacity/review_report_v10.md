@@ -1,219 +1,256 @@
-# Task041 Review V10：接受16.64 h的5 nm突破，完成真实2 nm容量试算与0.7 nm三维pilot
+# Task041 Review V10（复审修订）：保留5 nm提速，优先交付0.7 nm pilot与2 nm阶段容量
 
-## 0. 审阅决定与任务身份
+## 0. 本次复审事实、决定与身份
 
-**无逐列Schur路线已经取得实质进展：W、5 nm、p6/h4、M480、MPI8完整consumer由旧56.15 h降至16.64 h，原五项真实残差、恢复、物理和finalizer均通过。保留其非隔离性能与研究候选边界，但不再把它描述成尚未运行或没有加速。当前主要blocker转为：新2 nm后端缺少可用于准入的逐对象内存预测，以及0.7 nm pilot仍未形成已发布的真实PDE结果。**
+**2026-10-08再次访问原Task041分支，远端仍为上一版Review V10提交 `e217541d8d45b555eabd7070e808acbf764ae053`；数学源码仍为 `5025fdd31a1edc4ce34a8df3150a12ca90009c01`，最新response仍为V11，outcomes树仍为 `276be4a319bf248a933113c2161425fb190e00be`。没有新增已推送的V10运行结果或Response V12。** 这不能证明工作站未工作；只能说明本次没有新的实测可供审阅，不得把旧16.64 h再次包装成新增成绩。
 
-本轮优先取得实际场和实际容量，不再扩展独立诊断框架。保持有效的fixed-H6模态反馈＋准确p4凝聚/BAL_H侧区求解；先完成已有0.7 nm缩减pilot，并以分阶段、受监督的真实2 nm构造校准容量。两项可交换顺序，但不可并发重跑，任何一项受阻不停止另一项的安全工作。用已有代码的小范围等价优化继续减少重复工作；没有收益就保留基线，不再等待一个预测完美的PC。
+依根AGENTS第15节，本次直接修订尚未收口的V10，用普通commit保存前版历史，不另建V11/addendum，不重置已有运行、费用或资格。此次ChatGPT仅修改review与交接文本，没有运行PDE、停止进程或修改工作站。
+
+**执行决定：已成功的fixed-H6按需模态反馈＋准确p4凝聚/BAL_H继续作为基线。优先完成已注册的0.7 nm缩减pilot；真实2 nm通过明确可执行的阶段容量检查推进。缓存及其他性能优化不再成为这两项的共同前置任务。普通接口bug局部修正后继续，原方程/物理/内存安全不放宽。**
 
 ```text
 repository                 = Rookie1234567/MyFEniCS
 working_branch             = codex/20260902-task41-mpi1-shortwave-hybrid-capacity
-review_date                = 2026-10-08 (Asia/Singapore, UTC+8)
-initial_audit_SHA           = b85d7a57cfb9b5d6d7d61521e199422063666c3d
-reviewed_base_SHA           = 5025fdd31a1edc4ce34a8df3150a12ca90009c01
-base_latest_commit         = Add opt-in matched W0.7 axial cell policy
+review_date                = 2026-10-08, Asia/Singapore
+review_revision            = V10-r2; replaces working text, keeps prior Git history
+reaudited_remote_HEAD      = e217541d8d45b555eabd7070e808acbf764ae053
+reviewed_numerical_base    = 5025fdd31a1edc4ce34a8df3150a12ca90009c01
+base_latest_code_commit    = Add opt-in matched W0.7 axial cell policy
 previous_review            = review_report_v9.md
 latest_response            = response_v11.md
-qualified_W5_run_source    = d6fe6b2b239896e66d8c5d1bf9b8a0e45931a561
+response_required          = response_v12.md
+qualified_W5_source        = d6fe6b2b239896e66d8c5d1bf9b8a0e45931a561
 qualified_W5_invocation    = 2539de4d129f41e2ac49536bfd3b6fde
 batch                      = task041_v10_measured_shortwave_progress
-response_required          = response_v12.md
 default_candidate          = fixed_h6_modal_gmres_research + cell_condensed p4
 swap_policy                = task041_v8_swap_observe_continue
-default_execution          = MPI8 x 1, frozen physical-core map, socket0/node0
+execution                  = MPI8 x 1, frozen physical-core map, socket0/node0
 ordinary_default           = unchanged
 master_merge               = NOT_APPROVED
 ```
 
-本轮消除“已证明的5 nm路线不能转化为短波长实测”的blocker，属于求解器性能、内存、恢复与执行治理。最终仍为**0.7 nm、目标50×25 nm单胞、约2 TB物理内存、48 h完整计算**；Hybrid内部必须满足模态传播假设，不将其等同于任意非可分三维Full3D资格。完整时间包含QEP、FE/PC构建、求解、恢复、检查和清理；warm-consumer与研发累计费用另列。
+最终目标仍是**0.7 nm、目标50×25 nm周期单胞、约2 TB物理内存、有系统余量、48 h完整计算**。完整时间含QEP、FE/PC构建、求解、恢复、核验和清理；warm-consumer与研发费用分列。Hybrid内部必须满足模态传播假设，不等同于任意非可分三维Full3D通过。通用Full3D仍需分布式、matrix-free和可扩展预条件架构。
 
-本报告覆盖V9中阻止“整场峰未知时进行任何实际容量测量”的过强解释，授权§4的有限分阶段准入；不免除下一次大分配的预算证明，不提高旧5 nm/2 nm硬cap，不放宽数学门。接受当前注册0.7 pilot及已修复的复用入口，授权必要局部修复后连续执行，不再逐项向用户索取相同授权。根AGENTS的主控/执行内部审核保留，但普通bug修复不结束整轮任务。48 h/24 h是性能目标，不是自动强杀线；不恢复swap否决，不擅自中止健康作业、重启硬件或修改运行中的代码。
+### 0.1 本次修订消除的执行歧义
 
-## 1. 最新证据审阅与明确裁决
+| 修订点 | 本轮要求 |
+|---|---|
+| 没有新推送结果 | 接续原V10，不要求重新开始、不虚构新状态；先公布本机真实阶段 |
+| P1/P2/P3的顺序 | 已有健康作业继续；否则优先pilot。W2阶段容量与pilot串行重负载，附加优化不挡住二者 |
+| symbolic分析接口 | 先用本机小矩阵证明能在numeric前停住，不能将PCLU的完整setup当成仅symbolic |
+| 原始资源公式的适用阶段 | host整场启动门只在启动评估；运行中检查阶段新增需求及冻结cap，不重复扣本job已占内存 |
+| matched-cell验证 | 优先复用现有真实FE拼接测试，不新造框架；均匀正入射控制不能冒充W光栅全部模态资格 |
+| 后处理失败 | 已封存的合格解优先只读重验或恢复；不为schema、报告或坐标错误重算QEP/线性求解 |
+| 阶段交付 | 一个当前runroot、一个当前blocker和下一动作；至少交实际PDE/容量证据，而非又一轮注册测试 |
 
-主要依据为本base的[Response V11](response_v11.md)、[V9 outcome](outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[W5实测record](outcomes/records/task041_v9_fixed_h6_public_5nm.json)、[W2解释更正](outcomes/records/task041_v9_w2_h3_interpretation_correction_20261007.json)、[summary](outcomes/summary.md)和当前输入/代码。文件内部的早期快照与后续注册事实必须按时间和source区分。
+此修订沿用V9/V10对exact-only、MPI1-only、0.7禁跑和swap硬门的显式覆盖，不回写旧task。授权有限阶段容量测量不等于授权未知大分配；不提高旧case硬cap、不降低384 GiB节点floor、不启用node1、不变更普通默认。主控/执行内部审核照旧，用户不必逐项重复批准相同范围。
 
-| 对象 | 已测/派生事实 | 本轮裁决 |
-|---|---|---|
-| 新W5完整consumer | W、p6/h4、M480、MPI8；Schur物化列0；预付原侧区sample 0；49 outer；315次S_H含8次setup检查 | 接受fixed-H6在真实W5的完整求解，不重跑旧1920列基线 |
-| 五项原残差 | global 8.573354680237858e-10；bottom 4.87285789944735e-9；top 4.3588733213657296e-10；modal 3.0159774145340474e-9；reported 8.573351523834966e-10 | 全部<=5e-9；bottom接近门限但确实通过，不为“更好看”重算，也不放宽以后门限 |
-| R/T/A/A_volume | 0.7331842734229947 / 0.00022009869546076797 / 0.2665956278815445 / 0.2665962726246991；closure 6.447431546430238e-7 | 本场物理门通过；同离散复场/衍射对旧authority的独立对照应复用已存数组补齐，不用scalar代替 |
-| 工作量 | 196次原侧区响应，内部步3839+3893=7732；p4回代27097、精化11633；C-LU一次factor，owner累计307/307次solve | 相比旧30296内部步约减少74.48%，约3.92倍；rank复制计数不乘MPI8 |
-| 时间 | public至finalizer 59914.951233018 s=16.643 h；旧202124.563261555 s=56.146 h | 描述性时间比3.3735、降时70.36%；非隔离且方法/source不同，不声称严格隔离的单一因果提速 |
-| 资源/收尾 | tree RSS 42573258752 B=42.573 GB/39.649 GiB；专属cgroup峰41376940032 B；job swap0；10项finalizer通过 | 在旧53221163008 B cap内；接纳本作业资源结果，不继承旧producer缺测项的资源PASS |
-| 新W2 | packet可按原合同复用；未见新fixed-H6 FE完整结果；新后端峰仍unknown | `capacity_blocked_unqualified`不是OOM/求解失败；进入§4测量，不拿旧约650 GB直接作新后端预测 |
-| 0.7 reduced pilot | 已有10×5 nm、z=-2..26、接口2/22、p6/h0.70/M400/MPI8注册输入；已做路由测试 | 可以进入真实producer/consumer；代码存在不等于packet或PDE已经产生 |
-| 最新源码 | b85d7a57修复producer-root/恢复坐标；审阅中新增5025fdd31的matched axial cell策略 | 两次提交均已检查；新接口单元的离散语义须验证，不把新代码当已运行结果 |
+## 1. 现有结果的裁决：5 nm已加速，短波长仍待实测
 
-### 1.1 两项只需离线修正的记录问题
+依据本base的[Response V11](response_v11.md)、[summary](outcomes/summary.md)、[V9 outcome](outcomes/hybrid_0p7nm_2tb_48h_v9.md)、[W5 record](outcomes/records/task041_v9_fixed_h6_public_5nm.json)与[W2解释记录](outcomes/records/task041_v9_w2_h3_interpretation_correction_20261007.json)。早期快照和后续注册状态按source/时间分开。
 
-W5 record中的`october_3_reference_comparison.current_minus_reference_T/A`与两场已列原值相减不符。按列出的数值精度，新减旧应约为：R `+3.54384e-11`、T `-2.6720737e-13`、A `-3.51712e-11`、A_volume `+1.7145e-12`。当前记录T为正5.353e-13、A为正2.658e-10，疑似混用了另一reference；不得在未核对原summary前直接覆盖。输出含两侧source/hash的派生更正，旧值保留可追溯性。这不是重新跑16 h的理由。40位Git SHA被字段命名为`source_sha256`的地方只纠正语义，不把它当64位文件hash。
+| 项目 | 原逐列路线 | fixed-H6已完成W5 | 裁决 |
+|---|---:|---:|---|
+| 模型 | W、5 nm、p6/h4、M480、MPI8 | 相同冻结物理/离散 | 研究候选，不是连续解资格 |
+| 预构建正式侧区响应 | 1920 | 0 | 不物化全列Schur，原方程不变 |
+| outer / 侧区内部总步 | 5 / 30296 | 49 / 7732 | 不能仅按outer步数评性能 |
+| p4 backsolve / refinement | 89237 / 28645 | 27097 / 11633 | rank复制计数不乘MPI8 |
+| public至finalizer | 202124.563261555 s | 59914.951233018 s | 56.146→16.643 h，描述性约3.3735倍；两场非隔离，不作单因素因果声称 |
+| process-tree RSS峰 | 43415531520 B | 42573258752 B | 约43.42→42.57 GB；新场在53221163008 B cap内 |
+| 新场原五残差 | — | 最大4.87285789944735e-9 | 各<=5e-9通过，bottom接近门限不等于失败 |
+| 新场物理/收尾 | — | 原recovery/physics与10项finalizer通过 | 已完成，无需重跑16 h来补元数据 |
 
-早期H3 record仍称pilot `registered=false`、没有.dat，而当前tree已存在注册.dat和新路由：保留该早期record为历史快照，更新当前入口指向。材料来自归档来源的确定性候选，允许数值pilot；材料不确定度尚未传播限制实验准确性声明，不新增为pilot前置阻塞。
+新场原残差分别为global `8.573354680237858e-10`、bottom `4.87285789944735e-9`、top `4.3588733213657296e-10`、modal `3.0159774145340474e-9`、reported `8.573351523834966e-10`。R/T/A/A_volume分别为 `0.7331842734229947 / 0.00022009869546076797 / 0.2665956278815445 / 0.2665962726246991`，closure `6.447431546430238e-7`。专属cgroup峰 `41376940032 B`、job swap0与tree峰分列；旧producer资源缺测不否定已验证packet的数值身份，也不能补造producer资源PASS。
 
-W5的`integrated_full3d_checker=not_available`与同离散Hybrid对照不是同一检查。先用已有10月3日完整场/600-channel数组离线比较E/H、canonical、显著复幅值与通量；缺旧资源摘要不否决数值项。真实不匹配才定位，接口/root路径错误最小修后重验已有artifact，禁止为纯checker字段重跑PDE。
+**仍未取得的新证据：** W2 fixed-H6真实容量/完整场，0.7 pilot真实producer/consumer终态，以及原50×25 nm目标的h/M/容量/48 h资格。0.7已注册、producer-root路由和matched-cell代码已存在，不再沿用早期 `registered=false` 作为当前阻塞。代码存在不是已运行。
 
-## 2. 现在的性能瓶颈在哪里
+### 1.1 P0只读收口，不追加PDE
 
-旧路线预先计算4M次昂贵侧区响应；新路线不存全列Schur，使用固定近似反馈：
+W5 record的部分 `current_minus_reference_T/A` 与所列原值不一致。按记录原值新减旧，R约 `+3.54384e-11`、T约 `-2.6720737e-13`、A约 `-3.51712e-11`、A_volume约 `+1.7145e-12`。先核对双方原summary/source/hash，另写可追溯派生更正；不得直接覆盖成猜测，也不重算PDE。40位Git SHA不因字段误叫 `source_sha256` 而变成64位文件hash。
+
+复用已存W5与10月3日参考的E/H、canonical、600通道复振幅/功率和normal flux做同离散离线比较。`integrated_full3d_checker=not_available`不是这项Hybrid比较的同义词。旧资源不完整不否决数值项；旧数组确实缺失则明确partial，不伪造通过。checker/root/schema错误修完读取同一封存artifact，不能再次运行QEP或完整求解。
+
+## 2. 当前时间成本与优化方向
+
+固定H6仅替代预条件器内部的模态反馈：
 
 ```math
 \widetilde S_Hv=Cv-L_bJ_bH_{6,b}J_b^HG_bv-L_tJ_tH_{6,t}J_t^HG_tv.
 ```
 
-H6是冻结的正定辅助近似，不是准确Maxwell逆；原LDU其余位置仍用BAL_H支持的侧区FGMRES。每次外层PC有两侧first/delta，共四次实际侧区响应。原全局A、RHS及最终物理检查未变。[S1]
+H6是固定正定辅助作用，不是磁场或准确Maxwell逆；LDU其余位置仍用准确p4凝聚/BAL_H支持的侧区FGMRES。原Hybrid A和f不变。FGMRES允许非线性PC，不意味着可把非线性近似作用当原线性MatMult。[S1]
 
-**这次并非把1920次工作原封不动搬进外层：原侧区响应实测降为196次，内部步显著减少；但剩余响应更难，平均约39.45步/响应。** 新outer marker段57734.113258151 s占完整时间约96.36%；setup 2110.216175755 s，恢复59.012698122 s。57734/7732≈7.467 s仅为包含模态/正交化等成本的outer摊销指标，不能称纯内层kernel时间。
+新W5有196次实际侧区响应，平均约39.45个内部步/响应；outer inclusive为 `57734.113258151 s`，约占总wall96.36%。setup约2110.216 s，恢复约59.013 s。`57734/7732≈7.467 s`包含模态/正交化/检查，不能写成纯kernel单步时间。现阶段不再优化旧1920列容器。
 
-因此不再优化不存在的全列Schur构建，目标转为：减少每个昂贵侧区步的净成本、避免不必要的传递/恢复，以及在确有必要时减少外层工作。保留fixed-H6作为已成功的首选，不因它是近似PC就要求它与真实Schur逐项一致。其线性/重复门和每次实际模态inner的独立raw残差仍保留；内层自适应BAL_H不能直接伪装成固定线性MatMult。
+48 h预算必须同时考虑迭代数量和每步成本。仅作条件算术：若W2仍需7732步、QEP仍按旧29504.116 s，则48 h扣QEP后，忽略其他费用也仅剩约18.53 s/步。旧W2约100 s/步不能由W5的3.37倍描述性收益自动消除。这不是新W2的预测，更不是其失败结论。
 
-**条件时间预算示例，不是W2预测：**若W2仍需7732个内部步，且QEP仍按旧29504.116 s计，则48 h扣QEP后，即使忽略FE/setup/模态/输出，留给内部步的摊销时间也只有约18.53 s/步。旧W2约100 s/步不能由W5的16.64 h直接消除。必须用新W2的实际N_side、N_inner、T_step与QEP分别校准，不能承诺跨波长仍是3.37倍或天然满足48 h。
+因此先取得新W2及真实0.7的计数/耗时。现成route-plan/leading-PH复用是可选低风险后续，不是先把5 nm压到几小时才允许启动短波长。保持fixed-H6主线；只有短波长实际停滞或总工作明显失控时，才进入§6唯一备选。
 
-## 3. 连续执行计划：结果优先，局部错误可修复后继续
+## 3. 执行顺序：一个当前工作流，先出真实结果
 
-| 阶段 | 最小工作与交付 | 自动继续条件 |
+启动时核对本机branch/HEAD/upstream/dirty、保护stash、当前unit/InvocationID/PID/starttime、source、runroot及阶段。已有健康且在授权范围内的作业继续，不为同步本次文档强杀、重启或热改源码。尚未推送的实际结果先出小型record，不用“远端没有”推断本机没做。
+
+| 顺序 | 工作与退出证据 | 连续推进规则 |
 |---|---|---|
-| P0，证据/当前作业核对 | 复用W5封存结果，纠正派生差值；查看是否已有新的pilot/QEP或健康运行 | 没有真正数学变化则不再跑13.5或旧W5；已有有效结果直接采用 |
-| P1，0.7 reduced三维结果 | 沿已注册公共入口完成一个producer→validator→consumer→恢复完整场；有兼容packet则复用 | 达自身数值/资源门后先发布字段/计数/时间，不等所有精度研究结束 |
-| P2，真实W2容量与求解 | 原p6/h1.5/M1200，分阶段实际构造并形成新后端内存表；通过后同生命周期进入原方程求解 | 不是先索要不存在的整场峰；下一阶段可预算且安全则连续推进 |
-| P3，热点加速 | 读取7732步日志；优先验证现成route-plan/leading-PH复用，再至多一个主要净热点 | 原动作门通过且端到端有收益才采用；收益不明也不阻塞P1/P2基线实测 |
-| P4，资格与扩展 | pilot的h/M相邻点、W2新成本、目标50×25 nm逐对象预测；条件合格后一个中间尺度或目标场 | 先通过相邻尺度，再扩展；不能用缩小pilot的成功代替目标单胞资格 |
+| P0 | 当前运行快照、旧W5离线比较/派生更正 | 轻量工作不阻塞已准备的真实运行 |
+| P1优先 | 已注册W0.7 reduced的最小必要接线/离散验证，随后producer→consumer→完整场与finalizer | 不等待新缓存、W2双侧峰或pilot的网格收敛研究 |
+| P2 | W2实际mesh/矩阵库存→阶段分析→可支付的factor→真实求解 | 已有W2健康作业则优先继续；与P1不并发重负载 |
+| P3条件 | 同factor少量真实RHS验证缓存，再最多一个净热点 | 无收益或准备不足用已通过基线，不让此项挡住P1/P2 |
+| P4条件 | pilot相邻h/M点、W2容量/耗时校准、一个必要中间尺度或目标规模 | 一次只改一个可解释的离散因素；不能直接跳最大0.7模型 |
 
-P1/P2串行，按已准备的packet、容量和现有进程选择先后；P0的轻量离线工作可穿插。不因W2容量未知停止P1，不因pilot某个后处理bug停止安全的W2库存工作。对于同一代码/输入/ABI/hash已通过的节点，只测改动影响的最小范围，不重跑整个测试金字塔。
+**默认先P1；只有W2已经在健康运行，或P1存在暂时无法绕过的真实物理/资源问题且P2某阶段已可支付时，才调换。** 确定首个实际阶段后不要反复在两条线间改计划。两项可并行编辑/只读核查，但重型矩阵、QEP、PDE必须串行。其他项目的heavy不属于停止授权；无可用窗口时记录外部资源阻塞并完成轻量工作，不擅自终止、迁移或抢占邻任务。
 
-**局部bug授权：**路径、profile/CLI透传、模型注册、固定坐标、empty-owner、进程收尾、schema/账本等有明确定位的错误，保存原attempt，最小修复、实际调用链定向测试后自行继续；不因为一个新错误就整轮返回等审阅。真实数值错误也允许定位后修复并只重测受影响节点，但未修正的原算子/残差/物理错误不得绕过。同一根因连续两次仍复现，禁止第三次原样重启昂贵构造，先把定位降到最小fixture；同时推进独立的已安全工作。不同局部错误不是共享“一次失败就停止全部任务”的预算。
+普通路径、profile/CLI、empty-owner、坐标、schema、账本和finalizer错误，保存失败→最小修正→受影响实际调用链测试→自行继续；不每遇一处错误就结束整轮等待用户。未修正的原方程、残差或物理错误不得放行。同根因连续两次仍失败，第三次必须先降为最小fixture定位，禁止原样重复大构造；其他独立、安全工作继续。已有费用不清零。
 
-## 4. W2：将未知容量转为有界实测，而不是盲跑或永久blocked
+## 4. W2阶段容量：必须能够停在下一笔大分配之前
 
-### 4.1 不能混用的量
+### 4.1 身份与可用量
 
-10月7日host MemAvailable约2.071 TB、node0 MemFree约854.605 GB；node0留384 GiB（412316860416 B）后约442.288 GB。这是历史两点样本，不是启动许可。host旧1.70 TiB门与node0 floor是并行约束，不是互相矛盾；新后端预测项未知才是现有缺口。保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`未应用，必须核对实际工作树，不能声称其中规则已在运行。
+保持W、2 nm、p6/h1.5、M1200、MPI8、cell_condensed、fixed-H6、P4 target5e-13及最多两次修正。复用对应旧TOAR packet，沿原validator/hydration核验；若公共W2 guard尚未透传，授权现有注册范围内的窄修复，不新增第二runner。`side_residual_correction_steps=1`不是p4 refinement次数。
 
-旧642.45–647.90 GB峰来自不同后端与阶段，既不能当作当前cell-condensed新峰，也不能因取消全列Schur而认定它已经消失。应区分最终侧区p4因子、one-cell traction构造因子、临时精确PDE因子及其销毁时点；禁止把名字相似的factor记成同一对象。QEP若作为独立producer退出，则其峰与consumer峰取最大值，不同时相加。
+10月7日host MemAvailable约2.071 TB、node0 MemFree约854.605 GB，node0扣384 GiB floor后约442.288 GB。这是历史样本，不是现在准入。保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`中的node0门未应用；查实际代码与策略，不整包应用stash，不称其已在运行。
 
-### 4.2 本review明确授权分阶段容量准入
+旧642.45–647.90 GB峰来自不同后端/阶段，既不是新后端必需量，也不因删Schur列就自动消失。区分最终侧区p4因子、one-cell traction的临时精确因子和其他构造因子，逐对象记录出生/销毁。独立QEP producer已退出时，其峰与consumer峰取最大，不相加；packet加载的驻留副本仍属于consumer。
 
-**允许在整场预测尚未知时，先执行可预算的几何/空间盘点、装配与symbolic analysis等阶段；这不是完整numeric factor或完整求解的无条件准入。** 复用现有runner/构造marker增加薄的阶段检查，不再建一个独立容量框架。默认保留当前W2全部物理/离散身份，p6/h1.5、M1200、MPI8、cell_condensed、fixed-H6、P4 target5e-13。若W2公共fixed-H6 guard/packet binder尚未接通，授权在已有注册边界内最薄扩展W2并测试实际argv/worker透传，不新建第二runner。输入`side_residual_correction_steps=1`与p4最多两次精化是不同语义，不相互覆盖。
+### 4.2 阶段式准入授权及实际调用次序
 
-执行顺序为：真实mesh/constraints与模式布局库存 → 当前所需矩阵/局部缓存形成 → 各实际MUMPS系统symbolic analysis及估计 → 第一侧numeric factor → 第二侧构造/因子 → 同时驻留与首次PC检查 → 原方程求解。每一阶段进入前，用当前驻留量、下一阶段额外对象/工作区的保守估计和释放计划证明可支付；数值factor估计必须来自当前矩阵/后端分析或经小规模校准的模型，不能只按W5全树RSS乘比例。
+**整场峰未知时，允许先做已经可预算的mesh/constraints、矩阵/缓存形成和symbolic分析；不允许跨越未知大分配直接numeric factor。** 分级顺序必须服从真实call graph：若one-cell traction因子早于两侧p4因子构造，它就是更早的阶段门；不得画出错误顺序后在内部偷偷完成分解。
 
-使用PETSc/MUMPS现有矩阵统计和原生估计接口，记录每rank rows/allocated-used NNZ、factor estimate、数值factor完成后的实际条目/可读bytes；MUMPS工作内存限制只按安装版本、每rank实际分布及非MUMPS余量设置。它不是全树cap，也不是保证RSS的魔法开关。负值、0、缺失统计须解释编码或标unknown，不能当0字节。[S2–S3]
+每个实际大对象按：预分配库存→装配→symbolic→读取估计→numeric→驻留核验→下一对象。用当前矩阵结构和已校准模型估计下一阶段，而非用W5全树RSS乘比例。PETSc rows/NNZ、MUMPS INFO/INFOG/RINFOG的单位、scope和编码须按安装版解释；0、负数或缺失不得默认0字节。symbolic本身也消耗内存，必须预算其图结构/工作区。[S2–S3]
 
-运行时保留现有全树/专属cgroup watchdog、真实节点floor与分配失败保护；独立的硬限制是最后防线，OOM不是合格试验。若估计不可靠且无法给出下一次大分配的安全空间，只运行到已能约束的阶段，保留matrix/symbolic统计后退出；下一步优先消除已识别的重叠或重复存储。此时应交具体对象/bytes/缺口，不再只交一句`new_peak=unknown`。必要的真实单侧构造允许执行，不能以“还不知道两侧峰”否决所有单侧测量；其结果不能冒充双侧容量。
+### 4.2.1 本机symbolic能力先用小矩阵核验
 
-### 4.3 防止预算被重复扣减
+本次复审发现的是**接口可执行性风险，不是已测工作站bug**：PETSc C提供 `MatGetFactor → MatLUFactorSymbolic → MatLUFactorNumeric`，但公开petsc4py文档把 `factorSymbolicLU` / `factorNumericLU` 标为 `Not implemented`。不能仅凭Python属性存在就认定可用。`PCFactorSetUpMatSolverType`只取得factor对象，不等于完成symbolic；PCLU的普通setup路径包含numeric，不能将 `KSP.setUp()`/`PC.setUp()`笼统当成安全的analysis-only。[S7–S10]
 
-启动时冻结本作业可用cap，至少取注册上限、规划上限、node0总容量减floor、启动node0 MemFree减floor及专属cgroup/父级限制的最严者。运行中另查node0 floor和host余量，不每次把`当前MemFree-floor`当作新的“允许总RSS”再和已有RSS比较，否则本作业已占内存被重复扣除。下一阶段应比较**新增需求**与当前余量，并同时满足冻结总cap。若记录不足以判断，先用只改变计数的fixture测试，不据此虚报现场已有double-count bug。[S4–S5]
+在原生complex128/MPI ABI下，先用一个小型非Hermitian复矩阵验证实际路径，记录installed version、调用边界、analysis完成/ numeric未进入证据，以及拒绝numeric后的全rank清理。优先复用仓库已有原生桥；确实缺失时允许一个使用当前PETSc公开C API与正确头文件/ABI的最薄分析桥及focused tests。不得猜私有结构、用错误句柄、升级PETSc、换MPI、增加第二套MUMPS或新造通用求解框架。
 
-本轮不靠降低384 GiB floor、不使用未资格node1、不清page cache或swapoff强行获得准入；不把整机2 TB当node0可用量。旧host整场准入公式继续用于无分阶段证据的完整启动；对于本节受监督的阶段式运行，以可审的阶段高水位/额外需求替代未知的整场预测项，全部非swap安全阈值仍有效。
+native分析暂不可用，不得用一次完整W2 numeric作为探针。先完成可支付的真实rows/NNZ/内存库存，提交明确的“哪一调用不能分离、已测到哪一对象、下一额外需求和缺口”，修复该局部接线；同时继续P1。不再将整个结论停在 `new_peak=unknown`。symbolic估计是预测而非严格RSS上界，需包括pivot/工作区余量与非MUMPS并存对象。
 
-两侧建立后，先在同一真实入射上观察前8个外层步骤/自然收敛，再观察一个restart窗口；这些是连续运行的检查点，不是强制退出重建。用已计算的残差/计数做轻量汇总；原数值、安全和进展正常则继续到完整结果。长期停滞或明显需要月级工作时，先保存可定位的实际轨迹，执行§6唯一备选/热点修正而不是提高max_it。48 h越过本身不强杀，不能归零重来。
+### 4.3 不重复扣减已用内存
 
-## 5. 0.7 nm：完成已注册pilot，并让恢复与输入真正匹配
+启动时冻结总cap `B_cap`，取case硬上限、规划线、节点总量减floor、启动节点可用量减floor，以及可用父/专属cgroup限制的最严者。父cgroup还有其他占用时扣除实际剩余额度，不只读其裸上限。继续保持原384 GiB node0 floor及host安全余量，不借2 TB名义提cap。
 
-当前已存在：
+每次大分配前，`B_live`为本job当前同scope驻留，`Delta_next`为下一阶段新增对象及临时高水位，`W_margin`为有依据的未覆盖余量，`F0_now`为当前node0 MemFree：
+
+```math
+B_{\mathrm{live}}+\Delta_{\mathrm{next}}+W_{\mathrm{margin}}\le B_{\mathrm{cap}},\qquad
+\Delta_{\mathrm{next}}+W_{\mathrm{margin}}\le F_{0,\mathrm{now}}-R_0.
+```
+
+host当前余量另查，新增分配后仍须保留已批准host reserve。仅确实已释放且采样确认的对象可减少当前基数；计划释放不能预扣。多个互斥阶段的峰不机械相加，真实重叠不能遗漏。`F0_now`已扣本job当前占用，不能再拿 `F0_now−floor`作新的允许总RSS与 `B_live`比较。该风险用只改变字节计数的fixture验证，不伪称现场已发生double-count bug。
+
+旧 `MemAvailable >= max(predicted_peak+256 GiB,1.70 TiB)`是整场**启动**合同，不是运行期间须反复保持1.70 TiB空闲。无分阶段证据的完整启动沿用；本节阶段式运行以该阶段保守高水位替代未知的整场预测项，运行时按冻结cap和当前reserve执行。不能因正常分配使启动前空闲量下降而错误停机；也不能恢复swap硬门。
+
+当前矩阵numeric仍不可支付则受控退出该阶段，保留可审统计/可用工件；优先去除最大复制或生命周期重叠。不改网格、材料、M来伪称原W2已跑。两侧可支付且原检查正常后，同生命周期进入实际入射，前8步/一个restart仅为观察点，不退出重建；正常进展继续完整结果。实际长期停滞才按§6有界处理，不提高max_it或开月级盲跑。
+
+## 5. W0.7 pilot：从已有注册和测试进入真实PDE
 
 ```text
 input/official/task041/side_balh/w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat
-period = 10 x 5 nm; z = -2 .. 26 nm; interfaces = 2, 22 nm
-p6 / h0.70 / M400 / MPI8
-n_W = 0.9995903781323069 + i*0.00012887909720587614
-selected planes = 2, 7, 12, 17, 22 nm
+geometry       = 10 x 5 nm; z=-2..26 nm; interfaces=2/22 nm
+numerics       = p6/h0.70/M400/MPI8; fixed-H6; p4 target5e-13
+candidate n_W  = 0.9995903781323069 + i*0.00012887909720587614
+selected z     = 2, 7, 12, 17, 22 nm
+current cap    = 53221163008 B
 ```
 
-该.dat放在official目录不表示已经得到正式准确性资格；本轮把它当冻结的source-derived W材料数值pilot。保留材料原始字节、常数、单位、密度、插值区间、n/epsilon与hash；正耗散符号按当前模型。材料不确定度未量化只限制物理准确性声明，不要求先完成实验材料研究才能算这一份离散问题。
+这是source-derived W材料的冻结数值pilot；位于official目录不等于已取得材料不确定度、h/M或生产资格。材料原始字节、常数/单位、密度、能量、插值区间、正吸收符号、n/epsilon和hash必须绑定。不把材料不确定度研究新增为首场启动门。
 
-**执行一条现有公共链，不再审批一个新的wrapper项目：** fresh ABI/节点/磁盘与阶段容量 → 已有兼容producer-root则验证并复用，否则运行已注册fresh producer → producer完全退出 → packet validator/consumer payload读取 → fixed-H6 consumer → 原五残差、恢复、R/T/A/A_volume、复E/H、全部衍射与finalizer。最新b85d7a57已经实现validated-root路由；不得仅因consumer/恢复失败重算已经有效的QEP。
+### 5.1 最小验证后连续执行，不另开验证项目
 
-注册入口允许复用不代表磁盘必然有packet。先核对实际存在的manifest/shards/hash与producer终态；未存在或物理/网格/M改变才按实际需求生成新packet。不复制一个假envelope去适配目录，不重写producer source为consumer source。
+`b85d7a57`已接通validated producer-root并纠正恢复坐标；`5025fdd31`加入 `matched_uniform_axial_cell`。后者采用L20/N29，局部精确单元长度及传播步长均为20/29≈0.689655 nm，不能删除旧L100断言后继续使用10 nm局部traction。这是接口离散变化，需要独立验证，不是简单包装修补。
 
-**审阅中新增的5025fdd31必须纳入最终版本。** 旧精确traction路径默认`historical_local10_global100`，显式要求100 nm中段，局部精确单元长度10 nm；因此仅把接口改成2/22并不能完成缩减pilot。新commit为当前W0.7/p6h0.70/M400 pilot添加`matched_uniform_axial_cell`：中段L=20 nm、N=29，局部单元与离散传播步长均为20/29≈0.689655 nm。它改变了本pilot的接口离散定义，不是仅换目录或关闭断言；不得删除L100保护后继续使用旧10 nm局部traction。
+**当前已存在真实FE测试，不应重复开发：** `src/test/test_task037c_exact_one_cell_traction.py::test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control` 比较同轴向步长的局部端点通量与完整L20/N29直接消元，matched分支已有5e-9响应门；历史h10分支只记录差异、没有等价通过门。优先查最终数学源码/ABI下已有serial和MPI2证据；缺哪项仅补哪项，不再创建另一套三箱/拼接oracle。
 
-接受这一最小方向，要求用已有定向测试核对局部矩阵的独立Schur/端点通量、正负lam/mu分解及normal/phase、单步传播与N步总传播一致、横截面primal/dual映射、selected-packet与fresh-basis构造的相同定义。至少一个真实小FE/MPI2组件oracle，不能只有mock调用参数断言；已在最终数学源码上完成且有证据的测试直接复用。首个pilot随后以原全场残差/接口连续/体吸收验证，不因此另开一个长期方法研究。
+该测试是均匀W正入射、常切向场控制，不使用真实选取QEP模式，不能冒充1°光栅全模态资格。生产实际路径仍需验证端点primal/dual、normal/phase、正负lam/mu、`local_h=global_h=L/N`、局部与总传播语义，并在首场保留原traction/projection/physics门；不要求预付全部400模式的独立侧区响应来资格化无逐列路线。selected-packet与fresh-basis应使用相同局部定义，不错误沿用旧source的数值算子身份。
 
-当前策略guard明确只容许h0.70、N29。后续h0.525/M600等相邻点须在每个已注册case范围内，按`L/N`和实际生成器的N派生并验证匹配策略，不能盲复用29或删除全部guard。W5/W2仍走各自原策略，不把pilot的局部长度变化静默推广过去。将strategy、local/global h、N、L及numerical_source写入数值manifest；source digest变化不能只用旧物理SHA掩盖。
+参考平面从cfg、接口从profile读取，检查W5保持10/110而pilot为2/22；采样坐标、材料侧、normal、shape与体积分一致。使用已有公共路由/恢复测试补最小受影响断言；不能因为函数名仍含m10而另写恢复器。mock参数透传通过不等于真实FE通过，但已有真实测试也不应被忽略。
 
-b85d7a57已将`run_frozen_m10_physics()`里的参考平面/接口由旧10/110 nm硬编码改为cfg/profile值，并将BAL_H consumer profile的接口参数透传。补一组真正覆盖公共入口→profile→reconstructor/recovery的测试，确认W5仍10/110、pilot为2/22、所有采样点在本几何内、坐标和场shape来自同一配置。不可因函数名含m10就认定只支持旧几何，也不再次为这个已修复项重跑W5。保护同材料侧选择、normal、phase和体吸收积分，不只检查数组shape。
+### 5.2 QEP、求解和恢复的失败边界分开
 
-pilot当前cap为53221163008 B，保持并先做实际库存；此cap下不可支付的阶段不能开。若碰到真实容量边界，保全有效QEP/已完成结果并指出最大对象，继续W2或有界存储修复，不靠悄悄提高cap解决。资源合同更改必须显式有证据，不能把2 TB整机规格当自动提高任一case限值的授权。
+只有一个当前public run：ABI/资源→有兼容packet则原validator/hydration复用，否则registered fresh producer→确认producer退出→consumer→原五残差→封存最小recovery packet→释放factor→复E/H、R/T/A/A_volume、全部衍射→finalizer。
 
-通过首个pilot后，按现有建议阶梯执行相邻点：`p6/h0.70/M400 → p6/h0.525/M400 → p6/h0.525/M600`，每个为独立.dat和物理/数值身份，先检查预算再生成新QEP。前一相邻比较不足时再加一个有理由的点，不做hp×M笛卡尔扫描。不要求先证明h/M收敛才能启动首个pilot，也不能把未收敛pilot包装为准确0.7 nm结果。
+validated-root代码存在不表示磁盘必有packet。核实际manifest、shards、producer终态与输入兼容；不复制假封套、不改写producer source。有效QEP不因consumer bug、轴向恢复修正或纯metadata更新自动重算；但横截面离散、材料或所需模式集合改变时重新做依赖判断，不声称任意输入都能复用。
 
-完整目标几何的32056个external keys（top16030/bottom16026）与pilot的1292项是两组派生清单；必须用各自resolved输入在实际路径重新绑定、检查完整性，并保留两项nonpropagating及原Rayleigh语义。它们不是内部M。输出harmonic范围不能截掉已进入PDE的通道；只扩大report覆盖不改变边界物理。通过pilot不证明原50×25 nm单胞：同h时几何放大5倍，体量约125倍，而显式trace×channel耦合可能有更高增长，不能按一个倍率外推全部内存/时间。
+恢复/输出/checker失败时，先读取已封存的合格解与原run身份，用原恢复路径重建输出或只读重验，不重新factor或线性求解；只有恢复工件确实缺失/损坏、字段不可恢复或数学输入变化，才重跑相应最小阶段。不能承诺恢复未保存的p4因子或Krylov内存，也不能拿不满足原残差的场生成official结果。
 
-## 6. 进一步加速：先复用已有低风险实现，再有条件增强反馈
+当前pilot cap不提高，分阶段库存应覆盖one-cell临时精确构造、packet复制和两个p4因子。若限额内某阶段确实不可支付，保留已合格QEP，交最大对象和差额，继续有界存储修正/P2；不要求拆内存、开启node1或提高硬上限来推进。
 
-### 6.1 第一优先：现成route-plan和leading-PH复用
+### 5.3 首场先交付，再做相邻精度
 
-最新W5实测记录中`route_plan_reuse=false`、`leading_ph_dual_reuse=false`，尽管这两项已有13.5 nm研究证据。先从现有196条响应日志取真实最大净热点，确认两项可覆盖的时间；使用同布局/同factor的bottom、top各一条真实非零RHS，包含一条较难方向，做原/新/新/原有界对照。
+首场通过立即提交真实结果及计数，不等h/M研究结束。随后独立.dat阶梯为 `p6/h0.70/M400 → p6/h0.525/M400 → p6/h0.525/M600`，各阶段先预算；不要hp×M全组合扫描。当前guard仅h0.70/N29，后续按各已注册case的实际 `N=ceil(L/h_target)`（沿用原近整数规则）及 `h_z=L/N`扩展，不能盲复用29或删除所有guard。W5/W2原策略不静默改变。
 
-复用只能减少固定owner/索引/请求计划重建，以及一次PC内部已经算过的同一PH输入；必须保留实际值通信、ghost/周期/伴随和原A4检查。缓存不得以向量范数或旧RHS号作为相等性证明，不跨PC错误复用可变值；生命周期跟随factor/layout。原动作与完整侧区残差通过、计入setup/通信/恢复后整条响应确有收益才启用，后续P1/P2直接使用合格配置，不额外再跑一场16 h W5仅看microbenchmark。
+32056个目标external keys和1292个pilot keys是不同几何的派生清单，必须按实际resolved重新绑定，保留原nonpropagating/Rayleigh语义；external keys不是内部M。完整输出不能被report范围截断。首场离散解不是h/M收敛；缩减10×5 nm不是原50×25 nm目标。相同h下几何各向放大5倍，体规模示意约125倍，不能统一外推因子/trace×channel/QEP成本。
 
-**新增优化最多再选一项主要热点。** 优先考虑A4原残差kernel或凝聚缩减/恢复的有界编译/批处理，复用已通过的张量逻辑而非重写所有算子。按现在的全调用数统计refinement接受/失败与成本，不能因为精化多就删除`5e-13`策略或原`1e-10`检查。Math保持complex128、原积分与材料，内存不靠大常驻副本换速度。新路线下不存在全列构建热点，不继续优化旧1920列容器。
+## 6. 提速只针对剩余工作，不重新发明已成功方法
 
-### 6.2 只有外层质量确实阻碍短波长时才启用物理反馈备选
+W5实测 `route_plan_reuse=false`、`leading_ph_dual_reuse=false`。现有p4逆本身已经缓存部分active-trace请求计划；不要把两者混称全部缓存都未实现。先从196条原响应审计定位哪些路由/PH仍重复，以及其包含关系，不再重做已缓存的部分。
 
-49步W5是成功基线，不为追求更少步数立即更换它。若W2或0.7真残差停滞/总工作明显失控，沿V9唯一备选：一次固定物理BAL_H作用替代模态H6反馈，而不是内部每次再做完整侧区FGMRES。必须冻结精化次数、A6/Q/H6与映射，验证复数线性/重复；动态p4停止不能当线性MatMult。原准确侧区修正和原全局A保持。
+准备充分且不延误P1/P2时，底/顶各一条真实非零RHS（含一个困难方向），同布局、同factor、零初值，做原/新/新/原有限对照。缓存仅复用固定owner/索引计划或同一次PC中已证明相同的PH输入；实际值通信、ghost/周期/伴随和原A4检查保留。不跨PC以范数相同替代值相同，不让可变输入污染缓存。setup和常驻workspace计入，端到端收益不明就保留基线。
 
-只做一次同问题有界比较，以`总侧区步数×实测单步成本＋模态/C成本`选择，不以outer步数单独选。失败时保留实际轨迹，回到已通过主线继续其他阶段；不扫描ILU、几十个PC参数，不重开Anderson实现研究，不提高上万步上限，不默认启用GPU/MPI48/未资格node1。
+最多再选一个净热点：A4原残差作用或凝聚缩减/恢复的有界编译/批处理。**源码 `_reduce_storage_rhs` 当前在某些无内部端口项的单元仍先做 `lu_solve`，而trace修正另由已有映射完成；可在确认其输出确实不被使用后，改为仅对非空端口支撑计算。** 这是候选代码冗余，不是已测瓶颈或必然加速；有端口支撑/复数非Hermitian/恢复残差负例必须保持，收益由真实响应测量。不删除5e-13策略、1e-10原A4检查或用大常驻副本换速度。
 
-## 7. 2 TB／48 h的闭合条件
+49 outer的W5是成功基线，不为好看的步数立即换PC。短波长实际停滞或总成本明显失控时，才允许V9的唯一备选：在模态反馈内使用一次固定物理BAL_H，而非每次完整侧区FGMRES；精化次数和A6/Q/H6/映射固定，复数线性/重复及原A4检查通过后才可作线性MatMult。仅一次有界比较，以全部侧区步数、p4/模态工作与wall决定。失败不扫几十个PC，不恢复Anderson大研究，不增至上万步，不默认GPU/MPI48/node1。
 
-### 7.1 分项模型和下一规模决策
+## 7. 2 TB、48 h及扩大几何的资格
 
-建立一张随P1/P2实测更新的对象表，而不是一张全树比例表：p6/p4独立/内部/trace/port行、局部类/缓存/恢复、各真实稀疏矩阵与因子、QEP左右基/shift factor/workspace、mode packet驻留及MPI副本、DtN trace×channel、C/negative-map/LU、内外Krylov及output/recovery。物化C目前仍可能每rank复制，owner LU不代表C本体无复制；不得假定其对角化或删除原内部修正。
+对象表至少含p6/p4 independent/interior/trace/port、局部类/缓存/恢复、所有真实稀疏矩阵/因子、one-cell构造、QEP正负/左右基与shift factor/workspace、packet驻留及MPI副本、DtN trace×channel、C/negative-map/LU、内外Krylov和输出。C-LU仅owner持有不代表C本体无复制。已有2 nm PEP/TOAR不再列为新迁移，补实际nev/ncv/mpd；源码默认不能冒充已测。[S6]
 
-2 nm已经使用PEP/TOAR，不再列“迁移TOAR”为新加速。只补实际nev/ncv/mpd、左右与正负分支workspace和factor数据；值缺失不拿源码默认冒充。若QEP或packet成为最大问题，先优化这个实测对象：顺序/流式构造、共享只读selected数据或紧致基空间管理，每次只动一层，保留原多项式残差、选模/通量/簇子空间及packets。高阶模式数与shift因子不因TOAR自动消失。[S6]
+每次只修实测最大的超预算项，优先生命周期去重、有界批处理/流式、分布式数据，不改变物理通道/模式集合来伪装等价。完整目标不能仅按W5约43 GB乘倍率；用W2和pilot的逐项锚点校准，并给预测中央值/上界假设及差额。若目标暂不准入，选择一个有意义中间尺度，仍须交具体对象成本，不只写unknown或无望。
 
 ```math
-T_{\mathrm{cold}}=T_{\mathrm{QEP}}+T_{\mathrm{setup}}+T_{\mathrm{outer\ inclusive}}+T_{\mathrm{recovery/check/cleanup}},\qquad T_{\mathrm{goal}}=172800\ \mathrm{s}.
+T_{\mathrm{cold}}=T_{\mathrm{QEP}}+T_{\mathrm{setup}}+T_{\mathrm{outer,inclusive}}+T_{\mathrm{recovery/check/cleanup}},\qquad T_{\mathrm{goal}}=172800\ \mathrm{s}.
 ```
 
-outer包含其侧区、模态、通信和诊断，内部拆分不能再次相加。新5nm16.64 h是warm-consumer，不是0.7 cold资格。目标原单胞仍需正式材料/输入、实际通道、h/M局部资格和以pilot/W2校准的成本模型。若模型确实不能支持目标，至少给出需要压低哪个对象/工作量、当前值/允许值/差额，不只写unknown或“无望”。选择一个最小的中间尺度校准，不无依据启动最大case。
+相邻marker的互斥阶段相加，嵌套PC与rank-max之和不再加到outer。warm复用QEP与cold成本分列，开发/失败费用另列；复用工件的历史producer资源缺测不能填0。48 h/原5 nm24 h是目标，不是新增自动强杀线；正常进展已过目标如实未达，不能归零重算。小残差不等于网格收敛，完整守恒不等于全部E/H正确。
 
-### 7.2 安全、时间与结果分类
+对2 TB声明采用 `B_phys=min(实际MemTotal,2000000000000 B)`，实际2 TiB单列，整机余量至少 `max(0.2 B_phys,412316860416 B)`，case/节点/父cgroup更严限制继续有效。不把node0当全2 TB。仅因node1仍未资格不停止node0内可支付工作，但本轮不修BIOS、不使用未资格node1、不拆DIMM。
 
-对2 TB声明用`B_phys=min(实测MemTotal,2,000,000,000,000 B)`；实际2 TiB另列。整机余量至少`max(0.2 B_phys,412316860416 B)`，且case/节点/父cgroup更严限制继续有效。node0仍未代表全2 TB，node1不新增为本轮前置维修任务，也不在未资格时使用它。没有测到资源项就限定声明，不虚构full-tree peak。
+swap严格V8 observe-only：global、tree或job/cgroup非零/增长不单独拒绝、停止或判失败；记录原值/缺测，不swapoff、不清计数、不扩swap。resident减少而swap增加不能称算法内存下降；2 TB容量判断不能用换出制造假余量，应同时报告可得的同时间驻留/本job交换工作集。真实cap/floor、OOM/分配失败、磁盘、硬件错误和未关闭数学失败继续受控处理。
 
-swap严格按V8观察：global、job/cgroup非零或增长本身不拒绝/中止/判失败；不清计数、不swapoff、不扩大swap。resident降低但job swap增加不算内存优化，不用swap兑现2 TB预算。真实cap/floor、OOM、硬件错误、磁盘不足或未关闭数学失败继续受控停止。
+## 8. 数值门、停止边界与实际交付
 
-48 h和旧5 nm24 h仅为性能目标；已有正常进展的运行不因到点就杀掉重来。禁止未经检查把长RHS、日志稀疏或resource contract字段问题称为死锁。真正死锁/非有限/原门失败保存最小证据后修复；保留已完成QEP和安全可用恢复结果，不承诺恢复未checkpoint的p4/Krylov内存状态。
-
-## 8. 数值资格及最小交付
-
-| 检查 | 本轮保持的门/解释 |
+| 检查 | 要求 |
 |---|---|
-| 原reported/global/bottom/top/modal residual | 各<=5e-9，用原完整Hybrid算子；小全局残差不能代替分块残差 |
+| 原reported/global/bottom/top/modal | 各<=5e-9，使用原完整Hybrid A；全局小残差不能代替分块 |
 | projection / traction / external-q | <=1e-8 / <=1e-8 / <=1e-10 |
-| p4完整逆 | physical/augmented各<=1e-10；注册target5e-13、最多2次精化；全调用汇总不只last_solve |
-| fixed-H6线性/重复和inner | 原复数与近零检查、实际未缩放S_H残差；逐solve标量统计/最大值，不保存全量大向量；旧scope缺测不补造 |
-| 同一离散W5对已有参考 | R/T/A/A_volume abs<=1e-8；selected复E/H<=1e-6，canonical<=1e-5，显著衍射复幅值/功率<=1e-6，normal flux<=1e-4 |
-| 能量/体吸收 | abs(A_balance-A_volume)与abs(R+T+A_volume-1)各<=1e-5；不是全部精度证明 |
-| 0.7相邻离散资格 | R/T/A/A_volume abs变化<=1e-4；selected复E/H与显著复幅值relative<=1e-3；原更严要求从严，物理坐标/材料侧/完整通道对应，边角奇异点另列 |
-| 无完整参考的2/0.7 | 原残差＋独立物理＋离散相邻证据分层；首个离散成功可报告，但不叫网格/M收敛 |
+| p4完整逆 | physical/augmented各<=1e-10；target5e-13、最多2次精化；全调用标量最大值而非仅last_solve |
+| fixed-H6 | 原复数线性/重复/近零门；每次inner独立未缩放raw残差；逐solve标量/最大值足够，不保存全部大向量 |
+| 同离散W5参考 | R/T/A/A_volume abs<=1e-8；selected复E/H<=1e-6；canonical<=1e-5；显著复幅值/功率<=1e-6；normal flux<=1e-4 |
+| 能量与体吸收 | abs(A_balance−A_volume)、abs(R+T+A_volume−1)各<=1e-5 |
+| 0.7相邻h/M | R/T/A/A_volume abs变化<=1e-4；selected复E/H和显著复幅值relative<=1e-3；材料侧/物理坐标/通道对应，边角奇异点单列；原更严门从严 |
+| 无完整参考的W2/pilot | 离散PDE成功、物理检查、h/M资格分别分类；不得把缩减pilot称为目标规模或任意三维通过 |
 
-正式统一`python scripts/run_case.py <one-case.dat>`，不嵌套第二个mpiexec；生产方法在src，沿用既有service和runner。每场绑定原始dat、resolved、input/physical/source hash、环境/complex128/IntType、MPI/线程、几何、材料、模式、恢复及artifact身份；旧source与document HEAD分列。运行期间只改预先允许的文档，不热改代码；允许的文档commit不使数学source失效。
+正式统一 `python scripts/run_case.py <one-case.dat>`，MPI由既有公共链启动，不嵌套第二mpiexec。原生activation、complex128/IntType、MPI/BLAS等线程、source/input/physical/resolved、材料/几何/模式、artifact hash均绑定。不为网页API升级环境。代码变化在fresh进程生效，不热改已启动程序。
 
-新增`response_v12.md`与一个中心`outcomes/shortwave_measured_progress_v10.md`和必要轻量record，更新summary/test_summary/项目进度/模型总账。旧负项不改写，派生更正链接原值。Git只存小证据，原始场/QEP/matrix/factor留ignored目录。
+**首次进度提交只回答现场事实：当前runroot、runtime source、phase、是否确实运行、唯一阻塞和下一动作。** 之后开始、明确阻塞、终态及时push轻量摘要；长阶段沿现有状态至少每小时更新outer/inner、调用、残差、wall、RSS/cgroup/node0和swap。不要再让summary停在旧版本，也不要在每个数值step写巨量日志。已批准文档commit不使固定数值source失效。
 
-**本轮不接受仅交“路由12项通过”或再次“W2峰unknown”：**至少必须交0.7 reduced的真实producer/consumer进展及场结果或可定位失败、新W2当前后端的实际rows/NNZ/分析与阶段内存/成本、W5真实热点前后对照及目标2TB/48h缺口。条件满足后继续完整W2和pilot相邻点，不把最低交付当提前停工理由。普通工程bug可以继续修；真正无法安全进入某段时必须给下一次大分配的具体限制，并完成其他可安全工作。
+新增 `response_v12.md`、一个 `outcomes/shortwave_measured_progress_v10.md`及必要compact，更新summary/test_summary/项目进度/模型总账。Response顶部列出本轮：
 
-开始运行、终态和明确blocker及时push轻量进度，长阶段沿现有状态至少每小时记录phase、runtime SHA、unit/PID、outer/inner/counts、残差、wall、RSS/cgroup/node0和swap。不要只推代码让用户再次无法判断是否运行。内部阶段审查不重复请求用户批准所有小步骤。
+1. 实际完成/仍在运行的pilot阶段与场结果，或者准确的失败算子/物理量及修复证据；
+2. W2真实rows/NNZ/分析/阶段驻留和下一对象额外需求，安全时继续完整解；
+3. 当前最大耗时/内存对象、已实施加速或未实施原因；
+4. 0.7目标模型的精度、2 TB、48 h分别处于何种状态。
 
-提交顺序：证据更正和最小接线回归 → 必要阶段容量/缓存窄改动及测试 → 0.7真实pilot → W2阶段/完整证据 → 相邻资格及Response V12；以实际可支付顺序串行调整。仅当前Task041分支，不amend/强推/覆盖stash/删除负结果/合并master。既有保护stash先读diff并标明所有权，只提取本review确需且审查过的窄hunk，不整包应用。此次ChatGPT只写review与执行文本，没有在工作站运行PDE。
+P3未实施可如实记 `not_run—优先P1/P2`，不为了凑齐微基准延迟实际计算；同样不能把仅有路由测试或纯旧峰推算当P1/P2完成。真实安全阻塞可以收口受影响阶段，但必须交实际测量或可验证原因并完成其他可行项，不能虚构强制成功。
 
-## 9. 依据与审阅范围
+所有状态区分 `measured / derived / predicted / diagnostic / not_run / failed / controlled_stop / blocked`。保留旧负项和逐attempt费用，唯一workflow计账，旧结果派生更正可追溯。只在原分支普通commit/push，不amend/force-push/覆盖stash/删除负结果/merge master。此修订不重置执行批次、测试资格或预算；健康已运行作业保留原source/review身份，新增修订只约束后续可安全执行部分。
 
-仓库固定base为§0。已核对当前根/文档AGENTS、工作原则、task的历史身份和资源/失败条款、V9全文、Response V11及current outcomes/records；任务目录没有另列补充任务书。task旧MPI1/exact-only/swap等由历次review的显式覆盖继续生效，不倒改历史任务。关键代码/输入为当前`task041_balh_workflow.py`、b85d7a57及审阅期间新增5025fdd31差异与`hybrid_internal_modes.py`/`hybrid_one_cell_exact_traction_builder.py`，`physical_balanced_side_inverse.py`、已审阅的fixed-H6/LDU与p4凝聚实现、W0.7注册.dat；没有以工具接口测试代替实际数值测试。
+## 9. 审阅范围与技术依据
 
-外部依据仅解释机制，2026-10-08查阅；安装版本API/统计单位以工作站实际版本为准，不升级ABI来适配网页：
+本次核对远端ref/任务目录、根及docs规则、工作原则、当前review/response/summary/record和相关源码；task与V9的历史合同按已读同blob复用，目录无另列补充任务书。再次检查 `test_task037c_exact_one_cell_traction.py` 的真实matched-h控制、`p4_cell_condensed_inverse.py`的请求计划与局部缩减代码。确认本次没有新的运行推送，不把新增文档当成已执行修复。
 
-- [S1 PETSc KSPFGMRES](https://petsc.org/release/manualpages/KSP/KSPFGMRES/)：允许非线性PC且仅右预条件，不保证任意PC迅速收敛。
-- [S2 PETSc MUMPS接口](https://petsc.org/release/manualpages/Mat/MATSOLVERMUMPS/)：原生统计、分析/工作区和每processor内存限制；不是全树RSS承诺。
-- [S3 PETSc MatGetInfo](https://petsc.org/release/manualpages/Mat/MatGetInfo/)：本地、全局最大与全局求和统计不同；结构NNZ不等于factor RSS。
-- [S4 Linux NUMA内存策略](https://docs.kernel.org/admin-guide/mm/numa_memory_policy.html)：membind和cpuset限制实际可用节点，整机空闲量不能代替node0容量。
-- [S5 Linux cgroup v2](https://docs.kernel.org/admin-guide/cgroup-v2.html)：专属作业与父级资源统计/限制；本任务swap与global不混归因。
-- [S6 SLEPc PEPSetDimensions](https://slepc.upv.es/release/manualpages/PEP/PEPSetDimensions.html)：nev/ncv/mpd分别记录，已有TOAR不消除大量模式的成本。
+参考链接仅说明接口/机制，不证明本机已可用，安装版本与小矩阵实测优先：
 
-本文数学块按GitHub fenced math，表格/围栏做静态检查；若当前工具不能验证GitHub视觉渲染，明确标未核验，不因此重跑任何PDE。
+- [S1 PETSc KSPFGMRES](https://petsc.org/release/manualpages/KSP/KSPFGMRES/)：右侧灵活预条件，不保证任意PC有效。
+- [S2 PETSc MUMPS](https://petsc.org/release/manualpages/Mat/MATSOLVERMUMPS/)：外部因子、统计和每processor工作内存，不是全树RSS保证。
+- [S3 PETSc MatGetInfo](https://petsc.org/release/manualpages/Mat/MatGetInfo/)：本地/全局统计与结构NNZ口径。
+- [S4 Linux NUMA](https://docs.kernel.org/admin-guide/mm/numa_memory_policy.html)：可分配节点不等于整机余量。
+- [S5 Linux cgroup v2](https://docs.kernel.org/admin-guide/cgroup-v2.html)：作业与父级限制/统计应分清。
+- [S6 SLEPc PEPSetDimensions](https://slepc.upv.es/release/manualpages/PEP/PEPSetDimensions.html)：nev/ncv/mpd分别记录，TOAR已有不等于成本消失。
+- [S7 PETSc MatLUFactorSymbolic](https://petsc.org/release/manualpages/Mat/MatLUFactorSymbolic/)：公开C接口的symbolic/numeric分离。
+- [S8 petsc4py Mat reference](https://petsc.org/release/petsc4py/reference/petsc4py.PETSc.Mat.html)：公开文档对factorSymbolicLU/factorNumericLU标注未实现，必须核本机实际能力。
+- [S9 PCFactorSetUpMatSolverType](https://petsc.org/release/manualpages/PC/PCFactorSetUpMatSolverType/)：创建factor对象以设参数，不是symbolic完成。
+- [S10 PETSc PCLU source](https://petsc.org/release/src/ksp/pc/impls/factor/lu/lu.c.html)：普通PCSetUp_LU路径包含symbolic和numeric调用。
+
+S7–S10于2026-10-08重新核阅；其余沿前版机制依据，不冒充本机新增测量。Markdown围栏/表格做静态检查；GitHub网页视觉若不可验证须明确未核验，不以此触发PDE重算。
