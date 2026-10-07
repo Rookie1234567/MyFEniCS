@@ -769,3 +769,113 @@ def test_v15_csr_preflight_rejects_bad_bounds_before_pet_sc_integer_cast():
     assert _factor_probe_residual_limit(
         NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15, 1.0e-8
     ) == 1.0e-10
+
+
+def test_v15_fixed_campaign_runtime_accepts_registered_profiles_only(
+    tmp_path, monkeypatch
+):
+    from src.geometry.task40_nonseparable_plan import TASK40_V15_REFERENCE_PC_STRATEGY
+    from src.io.physical_intermediate_profile import (
+        TASK40_V15_P6_B0_PROFILE,
+        TASK40_V15_P6_E1_PROFILE,
+        TASK40_V15_P6_GX560_PROFILE,
+        profile_facts,
+    )
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+    from src.runners.task40_v10_campaign import (
+        CAMPAIGN_ACCOUNTING_NAME,
+        load_fixed_campaign_window,
+        read_campaign_state,
+    )
+
+    window_path = (
+        ROOT
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json"
+    )
+    if not window_path.is_file():
+        pytest.skip("the active fixed Task40 campaign window is unavailable")
+    window = load_fixed_campaign_window(window_path)
+    accounting_path = window.path.parent / CAMPAIGN_ACCOUNTING_NAME
+    if not accounting_path.is_file():
+        pytest.skip("the active fixed Task40 campaign accounting ledger is unavailable")
+    campaign_state = read_campaign_state(window, accounting_path)
+    if campaign_state["remaining_numerical_seconds"] <= 0.0:
+        pytest.skip("the fixed Task40 campaign window has reached its closeout reserve")
+
+    monkeypatch.setenv("TASK40_V10_CAMPAIGN_WINDOW", str(window.path))
+    monkeypatch.setenv("TASK40_V10_CAMPAIGN_WINDOW_SHA256", window.sha256)
+    monkeypatch.setenv("TASK40_V10_CAMPAIGN_ACCOUNTING", str(accounting_path))
+    expected = {
+        TASK40_V15_P6_B0_PROFILE: (
+            "B0_CANDIDATE",
+            "review_v15_b0_full_p6_y_orbit_reference_inverse",
+        ),
+        TASK40_V15_P6_GX560_PROFILE: (
+            "Q4_ORIGINAL",
+            "review_v15_gx560_full_p6_y_orbit_reference_inverse",
+        ),
+        TASK40_V15_P6_E1_PROFILE: (
+            "Q4_ORIGINAL",
+            "review_v15_e1_full_p6_y_orbit_reference_inverse",
+        ),
+    }
+    for index, profile in enumerate(expected):
+        contract = profile_facts(profile)
+        assert (contract["stage"], contract["scope"]) == expected[profile]
+        assert contract["reference_pc_strategy"] == TASK40_V15_REFERENCE_PC_STRATEGY
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_MEMORY_POLICY",
+            contract["resources"]["watchdog_memory_policy"],
+        )
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PSS_POLICY",
+            contract["resources"]["pss_sampling_policy"],
+        )
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PHASE_PATH",
+            str(tmp_path / f"accepted_{index}_phase.json"),
+        )
+        run_directory = tmp_path / f"accepted_{index}"
+        run_directory.mkdir()
+        runtime = _V14Runtime(
+            run_directory,
+            contract["stage"],
+            contract,
+            root=ROOT,
+            source_sha="a" * 40,
+            batch_identity=f"v15_runtime_no_fe_{index}",
+            evidence_prefix=f"v15_runtime_no_fe_{index}",
+            require_zero_swap=True,
+        )
+        assert runtime.campaign_context["window_sha256"] == window.sha256
+        assert runtime.campaign_context["read_only"] is True
+        assert runtime.workflow_reserved_seconds > 0.0
+        assert runtime.shared_budget["writer_while_worker_active"] == (
+            "subreaper_watchdog_only"
+        )
+
+    rejected = profile_facts(TASK40_V15_P6_B0_PROFILE)
+    rejected["scope"] = f"{rejected['scope']}_unregistered"
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_MEMORY_POLICY",
+        rejected["resources"]["watchdog_memory_policy"],
+    )
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_PSS_POLICY",
+        rejected["resources"]["pss_sampling_policy"],
+    )
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_PHASE_PATH", str(tmp_path / "rejected_phase.json")
+    )
+    with pytest.raises(RuntimeError, match="rejected this exact stage/profile/scope"):
+        _V14Runtime(
+            tmp_path / "rejected",
+            rejected["stage"],
+            rejected,
+            root=ROOT,
+            source_sha="a" * 40,
+            batch_identity="v15_runtime_unregistered_scope",
+            evidence_prefix="v15_runtime_unregistered_scope",
+            require_zero_swap=True,
+        )
+    assert not (tmp_path / "rejected" / "v15_runtime_unregistered_scope_inventory.json").exists()
