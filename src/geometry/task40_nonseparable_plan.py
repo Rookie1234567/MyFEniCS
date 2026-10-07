@@ -48,6 +48,26 @@ TASK40_GX784_V13_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_p6_reference_v13
 TASK40_V13_RUN_IDS = frozenset(
     {TASK40_B0_P6_V13_RUN_ID, TASK40_GX560_V13_RUN_ID, TASK40_GX784_V13_RUN_ID}
 )
+TASK40_V13_REFERENCE_PC_STRATEGY = "STRICT_THEN_BOUNDED_INEXACT_V13"
+TASK40_STRICT_REFERENCE_PC_STRATEGY = "STRICT_ONLY"
+TASK40_Q_ASSEMBLY_LEGACY = "LEGACY_GLOBAL_CSR_SUM"
+TASK40_Q_ASSEMBLY_PREALLOCATED_V13 = "PREALLOCATED_CSR_PATTERN_V13"
+TASK40_V13_Q_ASSEMBLY_STRATEGIES = frozenset(
+    {TASK40_Q_ASSEMBLY_LEGACY, TASK40_Q_ASSEMBLY_PREALLOCATED_V13}
+)
+
+
+def task40_q_assembly_strategy_is_allowed(
+    reference_pc_strategy: str, q_assembly_strategy: str
+) -> bool:
+    """Share the reviewed assembly policy across validation and execution routes."""
+    if reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY:
+        return q_assembly_strategy in TASK40_V13_Q_ASSEMBLY_STRATEGIES
+    if reference_pc_strategy == TASK40_STRICT_REFERENCE_PC_STRATEGY:
+        return q_assembly_strategy == TASK40_Q_ASSEMBLY_LEGACY
+    return False
+
+
 TASK40_B0_CONTROL_RUN_ID = "task40extra_0p7nm_b0_p4_balh_control_v10"
 TASK40_B0_P6_CANDIDATE_RUN_ID = "task40extra_0p7nm_b0_p6_y_orbit_candidate_v10"
 TASK40_B0_P4_CONTROL_PROFILE = "task40extra_v10_p4_balh_control_v1"

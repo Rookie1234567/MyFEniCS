@@ -47,18 +47,35 @@ def run_full3d_iterative(
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
         TASK40_COMPARISON_GROUP,
+        TASK40_Q_ASSEMBLY_LEGACY,
+        TASK40_STRICT_REFERENCE_PC_STRATEGY,
+        TASK40_V13_REFERENCE_PC_STRATEGY,
+        task40_q_assembly_strategy_is_allowed,
     )
     from src.io.physical_intermediate_profile import (
         PHYSICAL_MEMORY_POLICY_V23,
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
     )
+    reference_pc_strategy = str(
+        solver.get(
+            "task40_reference_pc_strategy", TASK40_STRICT_REFERENCE_PC_STRATEGY
+        )
+    )
+    q_assembly_strategy = str(
+        solver.get("task40_q_assembly_strategy", TASK40_Q_ASSEMBLY_LEGACY)
+    )
+    if not task40_q_assembly_strategy_is_allowed(
+        reference_pc_strategy, q_assembly_strategy
+    ):
+        raise ValueError(
+            "Task40 dispatcher rejected q assembly for the selected reference-PC strategy"
+        )
 
     if profile == TASK40_V10_P6_REFERENCE_PROFILE:
         expected_run_id = (
             TASK40_B0_P6_V13_RUN_ID
-            if solver.get("task40_reference_pc_strategy")
-            == "STRICT_THEN_BOUNDED_INEXACT_V13"
+            if reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
             else TASK40_B0_P6_CANDIDATE_RUN_ID
         )
         if (
@@ -87,10 +104,7 @@ def run_full3d_iterative(
     )
 
     if profile in {TASK40_V11_P6_GX560_PROFILE, TASK40_V11_P6_GX784_PROFILE}:
-        v13_strategy = (
-            solver.get("task40_reference_pc_strategy")
-            == "STRICT_THEN_BOUNDED_INEXACT_V13"
-        )
+        v13_strategy = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
         expected_run_id = (
             TASK40_GX560_V13_RUN_ID
             if v13_strategy and profile == TASK40_V11_P6_GX560_PROFILE

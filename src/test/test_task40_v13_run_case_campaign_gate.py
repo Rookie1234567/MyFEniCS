@@ -1,4 +1,4 @@
-"""No-FE public CLI contract for V13 campaign-window identities."""
+"""No-FE CLI contract for V13 identities and V14-authorized assembly fallback."""
 
 from __future__ import annotations
 
@@ -29,6 +29,23 @@ V13_CASES = (
     (
         "nonseparable_gx784_p6_reference_v13.dat",
         "task40extra_0p7nm_nonseparable_gx784_p6_reference_v13",
+    ),
+)
+V14_LEGACY_CASES = (
+    (
+        "b0_p6_reference_v13.dat",
+        "task40extra_0p7nm_b0_p6_reference_v13",
+        True,
+    ),
+    (
+        "nonseparable_gx560_p6_reference_v14_legacy.dat",
+        "task40extra_0p7nm_nonseparable_gx560_p6_reference_v13",
+        False,
+    ),
+    (
+        "nonseparable_gx784_p6_reference_v14_legacy.dat",
+        "task40extra_0p7nm_nonseparable_gx784_p6_reference_v13",
+        False,
     ),
 )
 
@@ -76,10 +93,6 @@ def test_run_case_validate_only_accepts_each_v13_identity_with_fixed_window(
             'task40_reference_pc_strategy = "STRICT_THEN_BOUNDED_INEXACT_V13"',
             'task40_reference_pc_strategy = "STRICT_ONLY"',
         ),
-        (
-            'task40_q_assembly_strategy = "PREALLOCATED_CSR_PATTERN_V13"',
-            'task40_q_assembly_strategy = "LEGACY_GLOBAL_CSR_SUM"',
-        ),
     ),
 )
 def test_run_case_rejects_v13_run_profile_or_strategy_mismatch_with_window(
@@ -123,6 +136,100 @@ def test_run_case_still_rejects_campaign_window_for_unrelated_profile(
     captured = capsys.readouterr()
     assert exit_code == 2
     assert "restricted to reviewed Task40" in captured.err
+
+
+@pytest.mark.parametrize(
+    ("filename", "run_id", "rewrite_to_temporary_input"), V14_LEGACY_CASES
+)
+def test_run_case_validate_only_accepts_reviewed_legacy_assembly_for_v13_identity(
+    tmp_path: Path,
+    filename: str,
+    run_id: str,
+    rewrite_to_temporary_input: bool,
+    capsys: pytest.CaptureFixture[str],
+):
+    _require_campaign_artifacts()
+    input_path = INPUT_ROOT / filename
+    if rewrite_to_temporary_input:
+        lines = input_path.read_text(encoding="utf-8").splitlines()
+        matches = [
+            index
+            for index, line in enumerate(lines)
+            if line.startswith("task40_q_assembly_strategy =")
+        ]
+        assert len(matches) == 1
+        lines[matches[0]] = 'task40_q_assembly_strategy = "LEGACY_GLOBAL_CSR_SUM"'
+        input_path = tmp_path / "b0_p6_reference_v13_legacy_probe.dat"
+        input_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    exit_code = run_case.main(
+        [
+            str(input_path),
+            "--validate-only",
+            "--task40-v10-campaign-window",
+            str(CAMPAIGN_WINDOW),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert exit_code == 0, captured.err or captured.out
+    assert json.loads(captured.out)["run_id"] == run_id
+
+
+def test_run_case_rejects_unreviewed_q_assembly_strategy_with_window(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    _require_campaign_artifacts()
+    text = (INPUT_ROOT / V13_CASES[0][0]).read_text(encoding="utf-8")
+    lines = text.splitlines()
+    matches = [
+        index
+        for index, line in enumerate(lines)
+        if line.startswith("task40_q_assembly_strategy =")
+    ]
+    assert len(matches) == 1
+    lines[matches[0]] = 'task40_q_assembly_strategy = "UNREVIEWED_Q_ASSEMBLY"'
+    invalid_input = tmp_path / "invalid_q_assembly_strategy.dat"
+    invalid_input.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    exit_code = run_case.main(
+        [
+            str(invalid_input),
+            "--validate-only",
+            "--task40-v10-campaign-window",
+            str(CAMPAIGN_WINDOW),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "Task38 input error:" in captured.err
+
+
+def test_q_assembly_policy_allows_reviewed_v13_strategies_and_keeps_strict_legacy_only():
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_Q_ASSEMBLY_LEGACY,
+        TASK40_Q_ASSEMBLY_PREALLOCATED_V13,
+        TASK40_STRICT_REFERENCE_PC_STRATEGY,
+        TASK40_V13_REFERENCE_PC_STRATEGY,
+        task40_q_assembly_strategy_is_allowed,
+    )
+
+    assert task40_q_assembly_strategy_is_allowed(
+        TASK40_V13_REFERENCE_PC_STRATEGY, TASK40_Q_ASSEMBLY_LEGACY
+    )
+    assert task40_q_assembly_strategy_is_allowed(
+        TASK40_V13_REFERENCE_PC_STRATEGY, TASK40_Q_ASSEMBLY_PREALLOCATED_V13
+    )
+    assert task40_q_assembly_strategy_is_allowed(
+        TASK40_STRICT_REFERENCE_PC_STRATEGY, TASK40_Q_ASSEMBLY_LEGACY
+    )
+    assert not task40_q_assembly_strategy_is_allowed(
+        TASK40_STRICT_REFERENCE_PC_STRATEGY, TASK40_Q_ASSEMBLY_PREALLOCATED_V13
+    )
+    assert not task40_q_assembly_strategy_is_allowed(
+        TASK40_V13_REFERENCE_PC_STRATEGY, "UNREVIEWED_Q_ASSEMBLY"
+    )
+    assert not task40_q_assembly_strategy_is_allowed(
+        "UNKNOWN_PC", TASK40_Q_ASSEMBLY_LEGACY
+    )
 
 
 def test_run_case_requires_campaign_window_for_v13_formal_entry(

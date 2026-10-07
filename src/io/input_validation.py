@@ -567,12 +567,19 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(
                     "solver.ksp_type", "full3d_iterative requires ksp_type=fgmres"
                 )
+            from src.geometry.task40_nonseparable_plan import (
+                TASK40_Q_ASSEMBLY_LEGACY,
+                TASK40_STRICT_REFERENCE_PC_STRATEGY,
+                TASK40_V13_REFERENCE_PC_STRATEGY,
+                task40_q_assembly_strategy_is_allowed,
+            )
+
             preconditioner = solver["preconditioner"]
             reference_pc_strategy = solver.get(
-                "task40_reference_pc_strategy", "STRICT_ONLY"
+                "task40_reference_pc_strategy", TASK40_STRICT_REFERENCE_PC_STRATEGY
             )
             q_assembly_strategy = solver.get(
-                "task40_q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM"
+                "task40_q_assembly_strategy", TASK40_Q_ASSEMBLY_LEGACY
             )
             task40_reference_profiles = {
                 "task40extra_v10_p6_y_orbit_reference_v1",
@@ -580,7 +587,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v11_p6_y_orbit_gx784_reference_v1",
             }
             if (
-                reference_pc_strategy != "STRICT_ONLY"
+                reference_pc_strategy != TASK40_STRICT_REFERENCE_PC_STRATEGY
                 and preconditioner not in task40_reference_profiles
             ):
                 raise _error(
@@ -588,22 +595,19 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "V13 bounded admission is restricted to reviewed Task40 p6 reference profiles",
                 )
             if (
-                q_assembly_strategy != "LEGACY_GLOBAL_CSR_SUM"
+                q_assembly_strategy != TASK40_Q_ASSEMBLY_LEGACY
                 and preconditioner not in task40_reference_profiles
             ):
                 raise _error(
                     "solver.task40_q_assembly_strategy",
                     "V13 q-block assembly is restricted to Task40 p6 reference profiles",
                 )
-            expected_q_assembly = (
-                "PREALLOCATED_CSR_PATTERN_V13"
-                if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
-                else "LEGACY_GLOBAL_CSR_SUM"
-            )
-            if q_assembly_strategy != expected_q_assembly:
+            if not task40_q_assembly_strategy_is_allowed(
+                reference_pc_strategy, q_assembly_strategy
+            ):
                 raise _error(
                     "solver.task40_q_assembly_strategy",
-                    "Task40 V13 reference profiles require preallocated CSR patterns; strict profiles retain legacy global CSR sums",
+                    "q assembly strategy is not authorized for the selected Task40 reference-PC strategy",
                 )
             if preconditioner not in {
                 "full3d_scalable_v1",
@@ -1077,7 +1081,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
 
                 expected_run = (
                     TASK40_B0_P6_V13_RUN_ID
-                    if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
+                    if reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
                     else TASK40_B0_P6_CANDIDATE_RUN_ID
                 )
                 if (
@@ -1129,7 +1133,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     TASK40_V11_P6_GX784_PROFILE,
                 )
 
-                if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
+                if reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY:
                     expected_run = (
                         TASK40_GX560_V13_RUN_ID
                         if preconditioner == TASK40_V11_P6_GX560_PROFILE

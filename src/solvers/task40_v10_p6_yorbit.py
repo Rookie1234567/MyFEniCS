@@ -12,6 +12,11 @@ from typing import Any, Callable, Mapping
 import numpy as np
 from scipy import sparse
 
+from src.geometry.task40_nonseparable_plan import (
+    TASK40_Q_ASSEMBLY_LEGACY,
+    TASK40_Q_ASSEMBLY_PREALLOCATED_V13,
+    TASK40_V13_Q_ASSEMBLY_STRATEGIES,
+)
 from .augmented_reference_correction import STRICT_ONLY, q_solve_limit
 
 SCHEMA = "task40extra.y-orbit-full3d-reference.v1"
@@ -1004,11 +1009,9 @@ def build_task40_v10_sector_contexts(
     return tuple(contexts)
 
 
-Q_ASSEMBLY_LEGACY = "LEGACY_GLOBAL_CSR_SUM"
-Q_ASSEMBLY_PREALLOCATED_V13 = "PREALLOCATED_CSR_PATTERN_V13"
-Q_ASSEMBLY_STRATEGIES = frozenset(
-    {Q_ASSEMBLY_LEGACY, Q_ASSEMBLY_PREALLOCATED_V13}
-)
+Q_ASSEMBLY_LEGACY = TASK40_Q_ASSEMBLY_LEGACY
+Q_ASSEMBLY_PREALLOCATED_V13 = TASK40_Q_ASSEMBLY_PREALLOCATED_V13
+Q_ASSEMBLY_STRATEGIES = TASK40_V13_Q_ASSEMBLY_STRATEGIES
 
 
 def _pattern_block_shapes(q_maps):

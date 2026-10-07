@@ -21,6 +21,7 @@ GX784_INPUT = INPUT_ROOT / "nonseparable_gx784_p6_y_orbit_v11.dat"
 GX560_PHYSICAL_INPUT = INPUT_ROOT / "nonseparable_gx560_p6_q4_manual_m2_v3.dat"
 GX784_PHYSICAL_INPUT = INPUT_ROOT / "nonseparable_gx784_p6_q4_review_v5.dat"
 B0_P6_INPUT = INPUT_ROOT / "b0_p6_y_orbit_reference_v10.dat"
+GX560_V14_LEGACY_INPUT = INPUT_ROOT / "nonseparable_gx560_p6_reference_v14_legacy.dat"
 V11_ARTIFACTS = (
     ROOT / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w11_wsl"
 )
@@ -118,6 +119,90 @@ def test_v10_memory_warning_contract_is_unchanged():
     old = load_and_resolve(B0_P6_INPUT).as_jsonable()
     assert old["execution"]["warning_memory_gib"] == 12.0
     assert old["execution"]["terminate_memory_gib"] == 16.0
+
+
+def test_v14_legacy_assembly_passes_the_shared_worker_candidate_contract():
+    from src.io.physical_intermediate_profile import profile_facts
+    from src.runners import task40_v10_worker
+    from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
+
+    payload = load_and_resolve(GX560_V14_LEGACY_INPUT).as_jsonable()
+    profile_identity = payload["solver"]["preconditioner"]
+    contract = profile_facts(profile_identity)
+    window_sha = "a" * 64
+    runtime = SimpleNamespace(
+        stage=payload["solver"]["stage"],
+        campaign_context={
+            "read_only": True,
+            "window_path": "fixture-window.json",
+            "window_sha256": window_sha,
+            "accounting_path": "fixture-accounting.json",
+        },
+        shared_budget={"campaign_window_sha256": window_sha},
+        workflow_reserved_seconds=1000.0,
+        require_zero_swap=True,
+        _ledger_path=None,
+        time_policy=V14_TIME_POLICY_ENFORCE,
+    )
+
+    authority = task40_v10_worker._candidate_contract(
+        payload, contract, runtime, profile_identity=profile_identity
+    )
+
+    assert authority["checks"]["q_assembly_strategy"] is True
+    assert all(authority["checks"].values())
+
+
+def test_v14_legacy_assembly_reaches_the_task40_dispatcher(monkeypatch, tmp_path: Path):
+    from src.runners import task038_full3d_iterative, task40_v10_worker
+
+    payload = load_and_resolve(GX560_V14_LEGACY_INPUT).as_jsonable()
+    captured = {}
+
+    def fake_worker(resolved, run_directory, **kwargs):
+        captured["run_id"] = resolved["run_id"]
+        captured["q_assembly_strategy"] = resolved["solver"][
+            "task40_q_assembly_strategy"
+        ]
+        captured["kwargs"] = kwargs
+        return {"status": "dispatch_fixture_pass"}
+
+    monkeypatch.setattr(
+        task40_v10_worker, "run_task40_v10_p6_reference_worker", fake_worker
+    )
+    result = task038_full3d_iterative.run_full3d_iterative(
+        payload, tmp_path, source_sha="f" * 40
+    )
+
+    assert result == {"status": "dispatch_fixture_pass"}
+    assert captured["run_id"] == payload["run_id"]
+    assert captured["q_assembly_strategy"] == "LEGACY_GLOBAL_CSR_SUM"
+    assert captured["kwargs"]["share_transform_bank"] is True
+
+
+def test_worker_packet_refuses_duplicate_witness_name_without_changing_old_hashes(
+    tmp_path: Path,
+):
+    from src.runners import task40_v10_worker
+
+    name = "v13_regular_inverse_gx560_initial"
+    npz_path = Path(f"{tmp_path / name}.npz")
+    json_path = Path(f"{tmp_path / name}.json")
+    npz_path.write_bytes(b"old array packet")
+    json_path.write_bytes(b"old metadata packet")
+    old_hashes = {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (npz_path, json_path)
+    }
+    runtime = SimpleNamespace(directory=tmp_path)
+
+    with pytest.raises(FileExistsError, match="refusing overwrite"):
+        task40_v10_worker._save_packet(runtime, name, {})
+
+    assert {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (npz_path, json_path)
+    } == old_hashes
 
 
 def test_profile_inventory_uses_trace_axes_and_keeps_all_q_branches():

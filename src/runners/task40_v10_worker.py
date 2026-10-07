@@ -140,11 +140,23 @@ def _disk_admit(runtime: Any, *, additional_bytes: int, label: str) -> dict[str,
 def _save_packet(runtime: Any, name: str, payload: Mapping[str, Any]) -> dict[str, Any]:
     from .physical_p4_schur_v14 import _save_packet as save
 
+    packet_target = runtime.directory / name
+    packet_paths = (
+        Path(f"{packet_target}.npz"),
+        Path(f"{packet_target}.json"),
+    )
+    collisions = [
+        path.name for path in packet_paths if path.exists() or path.is_symlink()
+    ]
+    if collisions:
+        raise FileExistsError(
+            f"Task40 witness packet {name!r} already exists ({', '.join(collisions)}); refusing overwrite"
+        )
+
     # np.savez is uncompressed.  Reserve every array byte plus a conservative
     # per-member/header margin, then reconcile the actual files immediately.
     projected = int(_packet_array_bytes(payload) * 1.05) + (2 << 20)
     _disk_admit(runtime, additional_bytes=projected, label=f"packet:{name}")
-    packet_target = runtime.directory / name
     packet_target.parent.mkdir(parents=True, exist_ok=True)
     packet = save(runtime.directory, name, payload, runtime=runtime)
     _disk_admit(runtime, additional_bytes=0, label=f"packet_written:{name}")
@@ -2187,6 +2199,9 @@ def _candidate_contract(
         TASK40_GX784_V11_P6_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
+        TASK40_V13_REFERENCE_PC_STRATEGY,
+        TASK40_STRICT_REFERENCE_PC_STRATEGY,
+        task40_q_assembly_strategy_is_allowed,
     )
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P6_REFERENCE_PROFILE,
@@ -2220,11 +2235,13 @@ def _candidate_contract(
         strict_identity, v13_identity = case_identity[profile_identity]
     except KeyError as exc:
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
-    reference_pc_strategy = str(solver.get("task40_reference_pc_strategy", "STRICT_ONLY"))
+    reference_pc_strategy = str(
+        solver.get("task40_reference_pc_strategy", TASK40_STRICT_REFERENCE_PC_STRATEGY)
+    )
     q_assembly_strategy = str(
         solver.get("task40_q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM")
     )
-    is_v13 = reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
+    is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     expected_run_id, expected_stage, expected_memory_limit = (
         v13_identity if is_v13 else strict_identity
     )
@@ -2234,12 +2251,13 @@ def _candidate_contract(
     checks = {
         "run_id": resolved.get("run_id") == expected_run_id,
         "reference_pc_strategy": reference_pc_strategy
-        == ("STRICT_THEN_BOUNDED_INEXACT_V13" if is_v13 else "STRICT_ONLY"),
-        "q_assembly_strategy": q_assembly_strategy
         == (
-            "PREALLOCATED_CSR_PATTERN_V13"
+            TASK40_V13_REFERENCE_PC_STRATEGY
             if is_v13
-            else "LEGACY_GLOBAL_CSR_SUM"
+            else TASK40_STRICT_REFERENCE_PC_STRATEGY
+        ),
+        "q_assembly_strategy": task40_q_assembly_strategy_is_allowed(
+            reference_pc_strategy, q_assembly_strategy
         ),
         "comparison_group": resolved.get("comparison_group") == TASK40_COMPARISON_GROUP,
         "profile": solver.get("preconditioner") == profile_identity,
@@ -2348,12 +2366,12 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.solvers.task40_v10_p6_yorbit import (
         Q_ASSEMBLY_LEGACY,
-        Q_ASSEMBLY_PREALLOCATED_V13,
         Q_ASSEMBLY_STRATEGIES,
         build_task40_v10_p6_reference_inverse,
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
     )
+    from src.geometry.task40_nonseparable_plan import task40_q_assembly_strategy_is_allowed
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK40_P6_PERIODIC_PROFILES,
     )
@@ -2376,12 +2394,11 @@ def run_task40_v10_p6_reference_worker(
     )
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
         raise ValueError(f"unsupported Task40 q assembly strategy: {q_assembly_strategy!r}")
-    is_v13 = reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
-    if q_assembly_strategy != (
-        Q_ASSEMBLY_PREALLOCATED_V13 if is_v13 else Q_ASSEMBLY_LEGACY
+    if not task40_q_assembly_strategy_is_allowed(
+        reference_pc_strategy, q_assembly_strategy
     ):
         raise ValueError(
-            "Task40 V13 requires its reviewed preallocated q assembly; strict profiles retain legacy assembly"
+            "Task40 q assembly strategy is not authorized for the selected reference-PC strategy"
         )
     profile_identity = profile_identity or str(
         resolved_payload.get("solver", {}).get("preconditioner", "")

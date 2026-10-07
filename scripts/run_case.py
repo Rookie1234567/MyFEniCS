@@ -169,6 +169,9 @@ def main(argv: list[str] | None = None) -> int:
             TASK40_GX560_V13_RUN_ID,
             TASK40_GX784_V11_P6_RUN_ID,
             TASK40_GX784_V13_RUN_ID,
+            TASK40_Q_ASSEMBLY_LEGACY,
+            TASK40_V13_REFERENCE_PC_STRATEGY,
+            task40_q_assembly_strategy_is_allowed,
         )
         from src.io.physical_intermediate_profile import (
             TASK40_V10_P6_REFERENCE_PROFILE,
@@ -194,31 +197,27 @@ def main(argv: list[str] | None = None) -> int:
             specification.identity.get('run_id') == TASK40_GX784_V11_P6_RUN_ID
             and specification.solver.get('preconditioner') == TASK40_V11_P6_GX784_PROFILE
         )
-        v13_campaign_identity = (
+        v13_case_identity = (
             specification.identity.get('run_id'),
             specification.solver.get('preconditioner'),
-            specification.solver.get('task40_reference_pc_strategy'),
-            specification.solver.get('task40_q_assembly_strategy'),
         ) in {
-            (
-                TASK40_B0_P6_V13_RUN_ID,
-                TASK40_V10_P6_REFERENCE_PROFILE,
-                'STRICT_THEN_BOUNDED_INEXACT_V13',
-                'PREALLOCATED_CSR_PATTERN_V13',
-            ),
-            (
-                TASK40_GX560_V13_RUN_ID,
-                TASK40_V11_P6_GX560_PROFILE,
-                'STRICT_THEN_BOUNDED_INEXACT_V13',
-                'PREALLOCATED_CSR_PATTERN_V13',
-            ),
-            (
-                TASK40_GX784_V13_RUN_ID,
-                TASK40_V11_P6_GX784_PROFILE,
-                'STRICT_THEN_BOUNDED_INEXACT_V13',
-                'PREALLOCATED_CSR_PATTERN_V13',
-            ),
+            (TASK40_B0_P6_V13_RUN_ID, TASK40_V10_P6_REFERENCE_PROFILE),
+            (TASK40_GX560_V13_RUN_ID, TASK40_V11_P6_GX560_PROFILE),
+            (TASK40_GX784_V13_RUN_ID, TASK40_V11_P6_GX784_PROFILE),
         }
+        v13_campaign_identity = (
+            v13_case_identity
+            and specification.solver.get('task40_reference_pc_strategy')
+            == TASK40_V13_REFERENCE_PC_STRATEGY
+            and task40_q_assembly_strategy_is_allowed(
+                str(specification.solver.get('task40_reference_pc_strategy')),
+                str(
+                    specification.solver.get(
+                        'task40_q_assembly_strategy', TASK40_Q_ASSEMBLY_LEGACY
+                    )
+                ),
+            )
+        )
         task40_campaign_identity = v10_identity or v11_grid_identity or v13_campaign_identity
         from src.runners.task038_launcher import _validate_task40_v10_postprocess_request
 
