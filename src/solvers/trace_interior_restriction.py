@@ -172,6 +172,41 @@ def sparse_projection(matrix,R,ports,journal):
         H.destroy();P.destroy()
 
 
+def projection_pattern_envelope(Rmap,ports):
+    """Count conservative cell support before a sparse triple product.
+
+    Trace interpolation has tiny stored entries outside the ideal entity
+    pattern. All stored entries count; a p6 stencil cannot bound this graph.
+    Body blocks connect only the canonical high traces of their source cell.
+    Ports are conservatively allowed to couple every trace and one another.
+    """
+    high,low=Rmap.R.shape;largest=0
+    # Temporary integer incidence unions, no floating operator/projection.
+    # At most (high+low)*ceil(low/8) bytes, released before sparse products.
+    high_incidence=[0]*high;low_incidence=[0]*low
+    for _,br,_ in Rmap.rows:
+        ids=np.unique(np.concatenate([Rmap.high_constraints.expansion_by_original[int(r)][0] for r in br]))
+        columns=np.unique(Rmap.R[ids].indices);n=len(columns)
+        bits=sum(1<<int(c) for c in columns)
+        for row in ids:high_incidence[int(row)]|=bits
+        for row in columns:low_incidence[int(row)]|=bits
+        largest=max(largest,n)
+    mid=sum(x.bit_count() for x in high_incidence)
+    small=sum(x.bit_count() for x in low_incidence)
+    mid=min((high+ports)*(low+ports),mid+ports*(high+low)+ports*ports)
+    small=min((low+ports)**2,small+2*ports*low+ports*ports)
+    mapping_bytes=sum(x.nbytes for x in (Rmap.R.data,Rmap.R.indices,Rmap.R.indptr))
+    # Existing high Schur is already in live RSS. Allow two copies of each
+    # new product, and four mapping payloads (SciPy/PETSc primal and dual).
+    workspace=2*(mid+small)*24+4*mapping_bytes
+    return dict(intermediate_nnz_upper=int(mid),low_nnz_upper=int(small),
+        cell_low_support_max=int(largest),all_stored_interpolation_entries_counted=True,
+        index64_complex128_entry_bytes=24,product_payload_copies=2,mapping_payload_copies=4,
+        workspace_bytes=int(workspace),pattern_workspace_upper_bytes=(high+low)*((low+7)//8+32),
+        high_existing_in_live_RSS=True,
+        no_numerical_clipping=True,no_dense_projection_or_graph_allocation=True)
+
+
 class RestrictedTraceFactor:
     """Restricted solve adapter; returns ambient trace for original recovery."""
     def __init__(self,R,ports,factor):

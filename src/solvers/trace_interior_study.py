@@ -6,7 +6,7 @@ import numpy as np
 from scipy.linalg import lu_factor,lu_solve
 from src.runners.task042_shared import write_json,_json_metadata
 from . import trace_interior_scope as scope
-from .trace_interior_restriction import TraceRestriction,RestrictedTraceFactor,sparse_projection,mixed_norms,dense_restricted_witness
+from .trace_interior_restriction import TraceRestriction,RestrictedTraceFactor,sparse_projection,mixed_norms,dense_restricted_witness,projection_pattern_envelope
 from .scattering_anchor import Journal,save_arrays,relative,condense,audit_original
 from .scattering_anchor_checks import checked_arrays
 from .phase_notch_hp import configured_setup
@@ -143,8 +143,9 @@ def solve_case(role,folder,journal):
         # low-trace stencil lives on the same cells, without global filling.
         lowcap=assembly_capacity(dict(setup,spaces={6:setup['spaces'][6]},floquets={6:low}),__import__('dataclasses').replace(cfg,nedelec_degree=6),journal,
             dict(independent=104832,trace=32832,internal=72000,cells=160,rows=33660,complete_modes=828),planning_limit_bytes=64*2**30,row_cap=100000)
-        added=3*(cap['assembly_graph_nnz_upper']+lowcap['assembly_graph_nnz_upper'])*24+mapcheck['csr_bytes']
-        journal.allocation('restricted_sparse_projection',dict(workspace_bytes=int(added)))
+        graph=projection_pattern_envelope(R,828)
+        journal.event('restricted_projection_pattern_envelope',**graph)
+        journal.allocation('restricted_sparse_projection',dict(workspace_bytes=graph['workspace_bytes']))
         reduced=sparse_projection(system.matrix,R.R,828,journal)
         if reduced.getSize()!=(33660,33660):raise ValueError('fixed trace6 global rows')
         # Keep independent uncondensed action and local recovery. The high
@@ -180,7 +181,7 @@ def solve_case(role,folder,journal):
         result=dict(status='COMPLETED',role=role,case='NOTCH',case_spec=spec,degree=spec['degree'],trace_degree=6,interior_degree=spec['degree'],ambient_degree=spec['degree'],grid='1x1x2',
             representation='FIXED_PHASE_TRACE6_ALL_AMBIENT_INTERIORS',arrays=arrays,returned_arrays=early,original_audit=norms,ambient_audit=ambient,
             recovery=recovery,recovery_arrays=rec,output=output,equation_pass=eq,direct_target_pass=max(norms[k] for k in ('true','native','augmented','port'))<=1e-10,
-            trace_mapping=mapping,mapping_check=mapcheck,capacity=cap,build_audit=_json_metadata(system.build_audit),boundary=boundary,mode_sha256=bundle['mode_sha256'],
+            trace_mapping=mapping,mapping_check=mapcheck,projection_graph_plan=graph,capacity=cap,build_audit=_json_metadata(system.build_audit),boundary=boundary,mode_sha256=bundle['mode_sha256'],
             fixed_refinements=refinements,local_global_factors='ambient local internal LU plus GLOBAL_LOW_TRACE_EXACT_MUMPS_FACTOR_PRESENT; no high global factor',
             NOT_A_FULL_AMBIENT_SOLUTION=True,new_complete_solves=1,new_global_numeric_factors=1)
         result=independent_complete(result,cfg,setup,geo,bundle,rhs,u,port,R,folder,journal)

@@ -86,7 +86,8 @@ def checked_state(original,output):
 
 
 
-def cost_binding(run,manifest,directory):
+def cost_binding(run,manifest,directory,*,active_scope=scope):
+    scope=active_scope
     directory=Path(directory)
     if manifest['source_sha']!=run['source_sha']:raise ValueError('cost source identity')
     formal=run['role'] in scope.STAGES
@@ -99,7 +100,8 @@ def cost_binding(run,manifest,directory):
         memory=manifest.get('memory_budget'),manifest_sha256=digest(directory/'run_manifest.json'))
 
 
-def cost_rows(runs):
+def cost_rows(runs,*,active_scope=scope):
+    scope=active_scope
     from benchmarks.collect_phase_notch_hp import measured_timeline,sampling_receipt
     rows=[];sources={};bindings=[]
     for run in runs:
@@ -120,7 +122,7 @@ def cost_rows(runs):
                 e['event'] in ('object_owner_snapshot','factor_present','h_numeric_capacity','finite_factor_numeric_admission')],
             symbolic_numeric_capacity=json.loads((worker/'h_symbolic_capacity.json').read_text())['plan']
                 if (worker/'h_symbolic_capacity.json').exists() else None))
-        bindings.append(cost_binding(run,m,d))
+        bindings.append(cost_binding(run,m,d,active_scope=scope))
     return rows,sources,bindings
 
 
