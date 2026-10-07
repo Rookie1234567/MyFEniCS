@@ -1,6 +1,7 @@
 """Meaningful opt-in global support, hard learning budget and scalar isolation."""
 
 import json
+import os
 
 import numpy as np
 import pytest
@@ -137,3 +138,33 @@ def test_actual_optimizer_never_forces_a_change_at_stationary_seed():
     actual, _, r = bounded_direction_optimize(objective, q, objective(q), 4)
     np.testing.assert_array_equal(actual, q)
     assert r["function_calls"] == 1
+
+
+def test_short_socket_is_opt_in_bound_to_unique_stage(monkeypatch, tmp_path):
+    from src.runners.durable_terminal import launch_tmux
+
+    calls = []
+    monkeypatch.setattr(
+        "src.runners.durable_terminal.subprocess.run",
+        lambda cmd, **kw: calls.append(cmd),
+    )
+    monkeypatch.setattr(
+        "src.runners.durable_terminal.subprocess.check_output",
+        lambda *a, **kw: f"{os.getpid()} {os.getpid()}",
+    )
+    directory = tmp_path / "tmp/task42extra" / ("w" * 100)
+    # Small isolated fixture root; no system service or real tmux is created.
+    sockets = tmp_path / "tmp/task42extra/s"
+    if len(os.fsencode(sockets)) + 30 >= 104:
+        # pytest may use long qualified cache roots. The path rejection itself
+        # must happen before any server is started.
+        with pytest.raises(ValueError, match="still too long"):
+            launch_tmux(
+                directory, "fixture", ["true"], tmp_path, socket_directory=sockets
+            )
+        assert calls == []
+    else:
+        receipt = launch_tmux(
+            directory, "fixture", ["true"], tmp_path, socket_directory=sockets
+        )
+        assert len(os.fsencode(receipt["socket"])) < 104 and calls

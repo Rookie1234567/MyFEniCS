@@ -216,6 +216,9 @@ def durable(spec, *, origin, attempt=1):
         ROOT,
         management_supervised=True,
         allowed_scope=scope,
+        socket_directory=root / "sockets"
+        if spec.get("campaign_version") == 32
+        else None,
     )
 
 

@@ -1,6 +1,7 @@
 """One explicitly requested bounded job in its own native tmux server."""
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import shlex
@@ -16,6 +17,7 @@ def launch_tmux(
     *,
     management_supervised=False,
     allowed_scope=None,
+    socket_directory=None,
 ):
     directory, root = Path(directory).resolve(), Path(root).resolve()
     if not directory.is_relative_to(root / "tmp/task42extra"):
@@ -28,6 +30,15 @@ def launch_tmux(
             stream,
         )
     socket = directory / "tmux.sock"
+    if socket_directory is not None:
+        sockets = Path(socket_directory).resolve()
+        if not sockets.is_relative_to(root / "tmp/task42extra"):
+            raise ValueError("durable socket must remain task-local")
+        sockets.mkdir(parents=True, exist_ok=True)
+        name = hashlib.sha256(str(directory).encode()).hexdigest()[:24]
+        socket = sockets / (name + ".sock")
+        if len(os.fsencode(socket)) >= 104:
+            raise ValueError("durable Unix socket path still too long")
     shell = directory / "job.sh"
     proof = shlex.quote(str(directory / "terminal_identity.json"))
     shell.write_text(
