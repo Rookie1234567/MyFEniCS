@@ -110,5 +110,15 @@ class PhaseTests(unittest.TestCase):
         self.assertEqual(expected_modal_count({'case_spec':{'complete_modes':828}},scope),828)
         with self.assertRaises(ValueError):expected_modal_count({'case_spec':{'complete_modes':829}},scope)
 
+    def test_actual_recovery_checker_with_near_zero_internal_rhs(self):
+        from benchmarks.collect_common_weak_phase import local_recovery_check
+        a=np.array([[3+1j,2-.4j],[.7+.2j,1.5-.1j]])
+        co=np.array([-(2-.4j)/(3+1j),1.],complex);i=np.array([0]);t=np.array([1])
+        v=dict(actual_coefficients=co,internal_rows=i,trace_rows=t,internal_rhs=(a@co)[i],recovered_internal=co[i]*(1+1e-15))
+        result=local_recovery_check(a,v)
+        self.assertTrue(result['pass_gate']);self.assertGreater(result['operation_scale'],1.)
+        v['recovered_internal']=co[i]*.99
+        self.assertFalse(local_recovery_check(a,v)['pass_gate'])
+
 
 if __name__=='__main__':unittest.main()

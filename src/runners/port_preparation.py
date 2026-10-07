@@ -346,6 +346,14 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
+    if namespace=='v57' and role=='K' and previous.get('status')=='COMPLETED' and not previous.get('p6_pass'):
+        from src.solvers.common_weak_phase_scope import window
+        fix=window.TMP/'K_checker_resume.json'
+        if fix.exists():
+            item=json.loads(fix.read_text());p=Path(item['path'])
+            return (item.get('root_cause')=='local_rhs_near_zero_operation_scale' and p.is_file()
+                and hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256']
+                and json.loads(p.read_text()).get('source_sha')==previous.get('source_sha'))
     if namespace=='v54' and role=='D':
         fix=plan.get('diagnosed_p_order_scale_recheck',{});path=Path(fix.get('evidence_path','/not_present'))
         return (previous.get('classification')=='CROSS_P_CONSISTENCY_NOT_ESTABLISHED' and previous.get('same_p_paths_trusted') is True

@@ -49,6 +49,17 @@ def diagnostic_check(r):
         full_field_accuracy_certificate=False)
 
 
+def local_recovery_check(matrix,v):
+    i=v['internal_rows'];t=v['trace_rows'];co=v['actual_coefficients']
+    inside=matrix[np.ix_(i,i)]@v['recovered_internal'];trace=matrix[np.ix_(i,t)]@co[t];rhs=v['internal_rhs']
+    residual=inside+trace-rhs
+    scale=sum(np.linalg.norm(x) for x in (inside,trace,rhs))
+    operation=float(np.linalg.norm(residual)/max(scale,1e-300))
+    defect=relative(v['recovered_internal']-co[i],co[i])
+    return dict(relative=defect,residual_operation_scaled=operation,residual_absolute=float(np.linalg.norm(residual)),
+        operation_scale=float(scale),rhs_norm=float(np.linalg.norm(rhs)),pass_gate=defect<=1e-10 and operation<=1e-10)
+
+
 def tensor_check(k):
     out={}
     for degree in k['degrees']:
@@ -63,10 +74,8 @@ def tensor_check(k):
             rows.append(values)
         recoveries=[]
         for rec in degree['recoveries']:
-            v=checked_arrays(rec['arrays']);matrix=checked_arrays(rec['combined_tensor'])['new_tensor'];i=v['internal_rows'];t=v['trace_rows'];co=v['actual_coefficients']
-            residual=matrix[np.ix_(i,i)]@v['recovered_internal']+matrix[np.ix_(i,t)]@co[t]-v['internal_rhs']
-            defect=relative(v['recovered_internal']-co[i],co[i]);operation=relative(residual,v['internal_rhs'])
-            recoveries.append(dict(relative=defect,residual=operation,pass_gate=defect<=1e-10 and operation<=1e-10))
+            v=checked_arrays(rec['arrays']);matrix=checked_arrays(rec['combined_tensor'])['new_tensor']
+            recoveries.append(local_recovery_check(matrix,v))
         out[str(degree['degree'])]=dict(rows=rows,recoveries=recoveries,pass_gate=all(x['pass_gate'] for x in rows+recoveries))
     if sum(len(v.get('recoveries',[])) for v in out.values())>2:raise ValueError('two actual recovery witness limit')
     return out

@@ -274,7 +274,19 @@ def execute(role,folder,state):
     journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=64*2**30);journal.source_state=state
     if state.get('memory_budget')!=scope.plan_record()['memory_budget']:raise ValueError('V57 resolved/live envelope')
     if role=='D':r=common_study(folder,journal)
-    elif role=='K':r=tensor_setup(folder,journal)
+    elif role=='K':
+        repair=scope.window.TMP/'K_checker_resume.json'
+        if repair.exists():
+            from benchmarks.collect_common_weak_phase import tensor_check
+            parent=json.loads(repair.read_text());path=Path(parent['path'])
+            if hashlib.sha256(path.read_bytes()).hexdigest()!=parent['sha256']:raise ValueError('frozen K checker input')
+            r=json.loads(path.read_text())
+            with journal.measured('saved_phase_tensor_independent_recovery_scale_recheck'):checks=tensor_check(r)
+            r.update(original_qualification_parent=parent,independent_recheck=checks,
+                p6_pass=checks['6']['pass_gate'],p7_pass=checks.get('7',{}).get('pass_gate',False),
+                new_complete_solves=0,new_global_factor_count=0,new_reference_tables=0,new_local_LU=0)
+            for d in r['degrees']:d['pass_gate']=checks[str(d['degree'])].get('pass_gate',False)
+        else:r=tensor_setup(folder,journal)
     elif role in scope.SOLVES:r=solve_and_consume(role,folder,journal)
     elif role=='VERIFY_COST':
         from benchmarks.collect_common_weak_phase import verify
