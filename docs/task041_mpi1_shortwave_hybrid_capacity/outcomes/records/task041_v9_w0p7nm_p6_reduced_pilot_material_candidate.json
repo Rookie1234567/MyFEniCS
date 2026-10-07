@@ -1,0 +1,128 @@
+{
+  "record_kind": "task041_w0p7nm_p6_reduced_pilot_material_candidate",
+  "schema_version": 1,
+  "status": "derived_candidate_not_experimental_material_qualification",
+  "case": {
+    "model_id": "task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot",
+    "wavelength_nm": 0.7,
+    "photon_energy_eV": 1771.202834760004,
+    "geometry": {
+      "period_x_nm": 10.0,
+      "period_y_nm": 5.0,
+      "z_min_nm": -2.0,
+      "z_max_nm": 26.0,
+      "material_surface_z_nm": 0.0,
+      "hybrid_interfaces_nm": [2.0, 22.0],
+      "grating_width_x_nm": 3.4,
+      "grating_width_y_nm": 5.0,
+      "grating_height_nm": 24.0,
+      "internal_section_z_invariant": true
+    },
+    "discretization": {
+      "element_family": "Nedelec H(curl)",
+      "p": 6,
+      "h_nm": 0.7,
+      "internal_modes_per_direction": 400,
+      "mpi_size": 8,
+      "pilot_status": "unqualified_first_point"
+    },
+    "external_mode_keys_candidate": {
+      "count": 1292,
+      "canonical_json_utf8_sha256": "878f48f650b8807d894a554d7b5ab76dc57edad9c58adae7997027d5c8346a21",
+      "propagating": 1290,
+      "nonpropagating": 2,
+      "full_target_32056_keys_are_separate": true
+    }
+  },
+  "sources": [
+    {
+      "label": "CXRO Henke W optical constants",
+      "url": "https://henke.lbl.gov/optical_constants/sf/w.nff",
+      "archived_path": "results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/w.nff",
+      "bytes": 13801,
+      "sha256": "dd11d29386952edd3259f2d3c4ddc88589ff6f6fb1e3ba3db43a4c589ea3ad95",
+      "use": "tabulated f1 and f2"
+    },
+    {
+      "label": "CXRO optical-constant formula and sign convention",
+      "url": "https://henke.lbl.gov/optical_constants/intro.html",
+      "archived_path": "results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/henke_intro.html",
+      "bytes": 4367,
+      "sha256": "5dea737ff27676a17c9a076c9f9b99e40a3dfec4767fbeb549862b21b5cdfdc6",
+      "use": "formula and displayed imaginary-sign convention"
+    },
+    {
+      "label": "NIST tungsten density",
+      "url": "https://physics.nist.gov/cgi-bin/Star/compos.pl?matno=074",
+      "archived_path": "results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/nist_tungsten.html",
+      "bytes": 16083,
+      "sha256": "d99569a1c84837b1f5f29e9a3862ddcc8d4acac4a52fe064cb9fd503cacfcd91",
+      "use": "density 19.3000 g/cm^3"
+    },
+    {
+      "label": "CIAAW tungsten relative atomic mass",
+      "url": "https://ciaaw.org/tungsten.htm",
+      "archived_path": "results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/ciaaw_tungsten.html",
+      "bytes": 5719,
+      "sha256": "b997d72d2e2cff592ce9ed5e07a490dc6ba331ea6efc5506b345bffd0ddf5454",
+      "use": "Ar(W)=183.84(1)"
+    },
+    {
+      "label": "BIPM SI defining constants",
+      "url": "https://www.bipm.org/en/measurement-units/si-defining-constants",
+      "archived_path": "results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/bipm_si_constants.html",
+      "bytes": 239792,
+      "sha256": "dddeb6c0c7171df77f20c48742cb4774a5b1062d58a35d5ea75477bab31331e7",
+      "use": "exact h, c, e, and Avogadro constant definitions"
+    },
+    {
+      "label": "NIST CODATA 2022 recommended values",
+      "url": "https://physics.nist.gov/cuu/Constants/RevModPhys.2022.html",
+      "archived_path": "results/task041_v9_13p5_public_fixed_h6_service_preparation_20261006T044333Z/h3_sources/nist_codata_2022_recommended_values.pdf",
+      "bytes": 5920363,
+      "sha256": "4d7e7f34b98ab2fc4df68b38247f818f6fc8bdf7f25f91abcdfbc329e22d2f32",
+      "use": "classical electron radius"
+    }
+  ],
+  "derivation": {
+    "density_g_cm3": 19.3,
+    "density_kg_m3": 19300.0,
+    "relative_atomic_mass_source_notation": "183.84(1)",
+    "molar_mass_kg_mol_used": 0.18384,
+    "number_density_per_m3": 6.322199557658834e28,
+    "h_J_s": 6.62607015e-34,
+    "c_m_s": 299792458.0,
+    "elementary_charge_C": 1.602176634e-19,
+    "avogadro_constant_per_mol": 6.02214076e23,
+    "classical_electron_radius_m": 2.8179403205e-15,
+    "henke_rows": {
+      "lower": {"energy_eV": 1752.87, "f1": 32.5247, "f2": 9.392},
+      "upper": {"energy_eV": 1781.22, "f1": 27.8205, "f2": 9.2128},
+      "interpolation_fraction": 0.6466608380953782,
+      "method": "linear_between_adjacent_rows_without_crossing_absorption_edge",
+      "f1": 29.482678085431722,
+      "f2": 9.276118377813308
+    },
+    "prefactor_N_re_lambda2_over_2pi": 1.3893645160256921e-5,
+    "positive_absorption_convention": {
+      "conversion": "Conjugate the displayed Henke imaginary sign to the project convention n=1-delta+i*beta.",
+      "delta": 0.00040962186769307124,
+      "beta": 0.00012887909720587614,
+      "n": [0.9995903781323069, 0.00012887909720587614],
+      "epsilon_r": [0.9991809074448665, 0.00025765261101874415]
+    }
+  },
+  "uncertainty": {
+    "propagated": false,
+    "henke_interpolation_or_model_uncertainty": "not quantified",
+    "ciaaw_atomic_mass_notation": "183.84(1)",
+    "experimental_accuracy_certified": false,
+    "adds_pilot_gate": false
+  },
+  "formal_input_binding": {
+    "input_path": "input/official/task041/side_balh/w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
+    "resolved_config_sha256": "generated_in_ignored_registration_package",
+    "external_mode_key_artifact_sha256": "generated_in_ignored_registration_package",
+    "note": "The official input and resolved/key hashes are produced only after the registered input is parsed; this record freezes material derivation and candidate identity, not a completed numerical qualification."
+  }
+}

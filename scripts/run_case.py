@@ -140,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         expected_rank_cpus = None
         fixed_h6_binding = None
         packet_source_binding = None
+        fresh_fixed_h6_producer = False
         if args.task041_expected_rank_cpus is not None:
             from benchmarks.task041_balh_workflow import (
                 task041_parse_expected_rank_cpus,
@@ -218,9 +219,15 @@ def main(argv: list[str] | None = None) -> int:
             or target_side is not None
         ):
             raise InputError(
-                "fixed-H6 research requires a frozen rank map, reused BAL_H "
-                "candidate packet, registered P4 target, and no other diagnostics"
+                "fixed-H6 research requires a frozen rank map, registered packet-source route, P4 target, and no other diagnostics"
             )
+        fresh_fixed_h6_producer = (
+            isinstance(packet_source_binding, dict)
+            and packet_source_binding
+            == {"source_type": "fresh_registered_producer"}
+            and registered_case is not None
+            and registered_case.get("producer_mode") == "fresh"
+        )
         target_binding = None
         if target_tolerance is not None or target_side is not None:
             from benchmarks.task041_balh_workflow import (
@@ -250,9 +257,10 @@ def main(argv: list[str] | None = None) -> int:
             and registered_case.get("p4_inverse_backend") == "cell_condensed"
             and args.producer_packet_root is None
             and args.legacy_native_packet_descriptor is None
+            and not fresh_fixed_h6_producer
         ):
             raise InputError(
-                "cell-condensed Task041 consumer requires an existing producer packet or legacy descriptor"
+                "cell-condensed Task041 consumer requires a registered packet source or the fixed-H6 fresh producer route"
             )
         if args.task041_balh_candidate_disable_time_stop:
             from benchmarks.task041_balh_workflow import (

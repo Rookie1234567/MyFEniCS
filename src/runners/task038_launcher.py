@@ -3765,8 +3765,7 @@ def launch_specification(
         or task041_p4_backend_pair_side is not None
     ):
         raise InputError(
-            "fixed-H6 research is limited to a reused registered BAL_H "
-            "candidate with no other diagnostic route"
+            "fixed-H6 research requires a registered BAL_H candidate packet-source route with no other diagnostic route"
         )
     if task041_side_setup_schedule is not None and not task041_public_route:
         raise InputError(
@@ -4005,7 +4004,7 @@ def launch_specification(
     if packet_source_binding is not None:
         if supervision_record_path is None:
             raise InputError(
-                "fixed-H6 legacy-native packets require the service supervision record"
+                "fixed-H6 packet-source routes require the service supervision record"
             )
         try:
             supervision_payload = json.loads(
@@ -4013,7 +4012,7 @@ def launch_specification(
             )
         except (OSError, json.JSONDecodeError) as exc:
             raise InputError(
-                "cannot read the fixed-H6 legacy packet supervision binding"
+                "cannot read the fixed-H6 packet-source supervision binding"
             ) from exc
         if (
             not isinstance(supervision_payload, Mapping)
@@ -4021,7 +4020,7 @@ def launch_specification(
             != packet_source_binding
         ):
             raise InputError(
-                "service supervision record does not bind the selected legacy packet descriptor"
+                "service supervision record does not bind the selected fixed-H6 packet-source route"
             )
     if producer_packet_root is not None and (
         not task041_public_route

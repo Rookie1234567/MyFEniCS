@@ -9287,7 +9287,12 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="fixed_h6_research",
                 )
-            if packet_source_binding is not None:
+            packet_source_type = (
+                packet_source_binding.get("source_type")
+                if isinstance(packet_source_binding, Mapping)
+                else None
+            )
+            if packet_source_type == "legacy_native_packet_descriptor":
                 from benchmarks.task041_legacy_native_packet import (
                     task041_legacy_native_profile,
                 )
@@ -9301,6 +9306,34 @@ def run_task041_public_supervisor(
                         classification="task041_identity_failure",
                         stage="fixed_h6_research",
                     )
+            elif packet_source_type == "fresh_registered_producer":
+                from src.io.input_validation import (
+                    TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+                )
+
+                fresh_case = task041_balh_case(str(identity["model_id"]))
+                if (
+                    dict(packet_source_binding)
+                    != {"source_type": "fresh_registered_producer"}
+                    or identity["model_id"]
+                    != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+                    or fresh_case is None
+                    or fresh_case.get("producer_mode") != "fresh"
+                    or producer_packet_root is not None
+                    or legacy_native_packet_descriptor is not None
+                    or task041_supervision_record is None
+                ):
+                    raise Task041SupervisorError(
+                        "fresh packet-source binding is limited to the registered W0.7 fixed-H6 producer route",
+                        classification="task041_identity_failure",
+                        stage="fixed_h6_research",
+                    )
+            elif packet_source_binding is not None:
+                raise Task041SupervisorError(
+                    "fixed-H6 packet-source binding has an unsupported source_type",
+                    classification="task041_identity_failure",
+                    stage="fixed_h6_research",
+                )
             run_manifest = _read_json(root / "run_manifest.json")
             if run_manifest.get("fixed_h6_modal_gmres_research") != fixed_h6_binding:
                 raise Task041SupervisorError(
@@ -9311,7 +9344,7 @@ def run_task041_public_supervisor(
             if packet_source_binding is not None:
                 if run_manifest.get("packet_source_binding") != packet_source_binding:
                     raise Task041SupervisorError(
-                        "run manifest does not bind the selected legacy descriptor path/SHA",
+                        "run manifest does not bind the selected fixed-H6 packet-source route",
                         classification="task041_identity_failure",
                         stage="fixed_h6_research",
                     )
@@ -9470,9 +9503,11 @@ def run_task041_public_supervisor(
             and registered_case.get("p4_inverse_backend") == "cell_condensed"
             and producer_packet_root is None
             and not legacy_native
+            and packet_source_binding
+            != {"source_type": "fresh_registered_producer"}
         ):
             raise Task041SupervisorError(
-                "cell-condensed Task041 consumer requires an existing producer packet or legacy descriptor; producer mode-prep is not automatic",
+                "cell-condensed Task041 consumer requires an existing packet or its explicitly registered fresh producer route",
                 classification="task041_identity_failure",
                 stage="producer_reuse_contract",
             )
@@ -10170,11 +10205,17 @@ def run_task041_public_supervisor(
             producer_root = Path(packet["producer_root"]).resolve()
             producer_command = None
         elif balh:
+            producer_command_kwargs = (
+                {"expected_rank_cpus": expected_rank_cpus}
+                if fixed_h6_binding is not None
+                else {}
+            )
             producer_command = producer_command_module["balh_mode_prep"](
                 python_entry,
                 specification,
                 producer_root,
                 source_sha,
+                **producer_command_kwargs,
             )
         elif shortwave:
             producer_command = producer_command_module["shortwave_mode_prep"](
@@ -10320,7 +10361,15 @@ def run_task041_public_supervisor(
                 ),
                 global_swap_baseline=global_swap_baseline if balh else None,
                 partial_phase_results=result["phase_results"],
-                enforce_time_stops=True,
+                enforce_time_stops=(
+                    bool(
+                        case_runtime_contract.get("producer", {}).get(
+                            "time_stop_enforced", True
+                        )
+                    )
+                    if isinstance(case_runtime_contract, Mapping)
+                    else True
+                ),
                 swap_observe_only=resource_policy_binding is not None,
             )
         producer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(

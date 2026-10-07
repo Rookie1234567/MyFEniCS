@@ -76,6 +76,8 @@ from src.io.input_loader import InputError
 from src.io.input_validation import (
     TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+    TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256,
+    TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
     load_and_resolve,
     task041_balh_diagnostic_output_enabled,
     task041_balh_phase_limits_for_model,
@@ -171,6 +173,89 @@ def _specification(path: Path):
     return specification
 
 
+def test_task041_w0p7_reduced_p6_pilot_has_frozen_material_and_fixed_h6_route():
+    input_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/"
+        "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat"
+    )
+    specification = _specification(input_path)
+    payload = specification.as_jsonable()
+    assert specification.identity["model_id"] == (
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    )
+    assert payload["derived"]["material_provenance"]["derived_material_record"] == {
+        "path": (
+            "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+            "task041_v9_w0p7nm_p6_reduced_pilot_material_candidate.json"
+        ),
+        "sha256": TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256,
+        "status": "source_derived_candidate_uncertainty_not_propagated",
+    }
+    assert payload["derived"]["external_mode_inventory"]["count"] == 1292
+    assert payload["derived"]["external_mode_inventory"]["counts"][
+        "nonpropagating"
+    ] == 2
+    solver_contract = payload["derived"]["task041_solver_contract"]
+    assert solver_contract["p4_refinement_target"] == {
+        "schema": "task041.p4_refinement_target.strategy.v1",
+        "tolerance": 5.0e-13,
+        "scope": "registered_w0p7nm_reduced_p6_pilot_target",
+        "max_same_factor_refinements": 2,
+        "gates_unchanged": True,
+    }
+    assert payload["solver"]["side_residual_correction_steps"] == 1
+
+    expected_cpus = tuple(range(10, 18))
+    policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+    binding = task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        enabled=True,
+        candidate=True,
+        mpi_size=8,
+        mode_count=400,
+        p4_inverse_backend="cell_condensed",
+        p4_refinement_target_tolerance=5.0e-13,
+        task041_resource_policy=policy,
+        expected_rank_cpus=expected_cpus,
+    )
+    assert binding["expected_rank_cpus"] == list(expected_cpus)
+    assert binding["p4_refinement_target_scope"] == (
+        "registered_w0p7nm_reduced_p6_pilot_target"
+    )
+    with pytest.raises(ValueError, match="requires fixed-H6"):
+        task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            enabled=False,
+            candidate=True,
+            mpi_size=8,
+            mode_count=400,
+            p4_inverse_backend="cell_condensed",
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=policy,
+            expected_rank_cpus=expected_cpus,
+        )
+    with pytest.raises(ValueError, match="target"):
+        task041_balh_workflow.task041_fixed_h6_modal_gmres_binding(
+            TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+            enabled=True,
+            candidate=True,
+            mpi_size=8,
+            mode_count=400,
+            p4_inverse_backend="cell_condensed",
+            p4_refinement_target_tolerance=1.0e-12,
+            task041_resource_policy=policy,
+            expected_rank_cpus=expected_cpus,
+        )
+
+    bad_geometry = copy.deepcopy(payload)
+    bad_geometry["geometry"]["period_x_nm"] = 50.0
+    assert task041_balh_profile_errors(bad_geometry)
+    bad_material = copy.deepcopy(payload)
+    bad_material["materials"]["n_grating"] = [1.0, 0.0]
+    assert task041_balh_profile_errors(bad_material)
+
+
 def test_task041_formal_a6_volume_factory_is_registered_5nm_only():
     from src.solvers.physical_balanced_fused_volume import (
         build_task041_fused_physical_volume_context,
@@ -212,7 +297,7 @@ def test_task041_formal_a6_volume_factory_is_registered_5nm_only():
 
 
 def test_task041_balh_dat_contracts_and_public_identity():
-    assert len(BALH_INPUTS) == 7
+    assert len(BALH_INPUTS) == 9
     for path in BALH_INPUTS:
         specification = _specification(path)
         model_id = str(specification.identity["model_id"])
@@ -227,7 +312,7 @@ def test_task041_balh_dat_contracts_and_public_identity():
         )
         assert plan.adapter_identity == TASK041_PUBLIC_SUPERVISOR_ADAPTER
         identity = _validate_specification(specification, REPOSITORY_ROOT)
-        assert identity["requested_modes"] in {120, 480, 1200}
+        assert identity["requested_modes"] in {120, 400, 480, 1200}
         assert identity["mpi_size"] == 8
         contract = _task041_case_contract(
             specification.as_jsonable(), 8, phase="consumer"
@@ -241,12 +326,26 @@ def test_task041_balh_dat_contracts_and_public_identity():
             assert contract["construction_audit"] == "reference_entity_trace_v1"
             service_contract = task041_balh_service_contract(model_id)
             assert service_contract is not None
-            assert service_contract["producer"] == {
-                "mode": "reuse",
-                "invocation": "required",
-                "time_stop_enforced": True,
-                "qep": "not_run",
-            }
+            if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+                assert service_contract["producer"] == {
+                    "mode": "fresh",
+                    "invocation": "required",
+                    "time_stop_enforced": False,
+                    "qep": "fresh",
+                }
+                assert service_contract["memory_cap_bytes"] == 53221163008
+                assert service_contract["warning_memory_bytes"] == 47899046707
+                assert service_contract["runtime_reserve_bytes"] == 412316860416
+                assert service_contract["memory_cap_source"] == (
+                    "approved_pilot_run_cap_not_peak_prediction"
+                )
+            else:
+                assert service_contract["producer"] == {
+                    "mode": "reuse",
+                    "invocation": "required",
+                    "time_stop_enforced": True,
+                    "qep": "not_run",
+                }
             assert service_contract["time_stop"]["consumer_enforced"] is False
             assert service_contract["ledger"]["schema"] == (
                 "task041.review_v5.r1_load_ledger.v1"
@@ -255,8 +354,20 @@ def test_task041_balh_dat_contracts_and_public_identity():
                 "results/task041_review_v5_cpu_numa_condensed_speed/"
                 "r0_r1_20260920/r1_load_ledger_20260920.json"
             )
+            expected_ceiling_source = {
+                TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID: (
+                    "approved_pilot_run_cap_not_peak_prediction"
+                ),
+                TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID: (
+                    "strict_hard_cap_admission_upper_bound_not_model_peak"
+                ),
+                TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID: (
+                    "strict_hard_cap_admission_upper_bound_not_model_peak"
+                ),
+                TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID: None,
+            }[model_id]
             assert service_contract["planning_ceiling_source"] == (
-                "strict_hard_cap_admission_upper_bound_not_model_peak"
+                expected_ceiling_source
             )
 
 
@@ -415,7 +526,7 @@ def test_task041_cell_condensed_contract_survives_resolved_serialization():
         for path in BALH_INPUTS
         if 'cell_condensed' in path.stem
     ]
-    assert len(cell_cases) == 2
+    assert len(cell_cases) == 4
     for specification in cell_cases:
         payload = json.loads(resolved_config_bytes(specification))
         serialized = payload['derived']['task041_solver_contract']
@@ -425,13 +536,28 @@ def test_task041_cell_condensed_contract_survives_resolved_serialization():
             'reference_entity_trace_v1'
         )
         execution = serialized['execution_contract']
+        expected_cpu_set = (
+            "10-17"
+            if specification.identity["model_id"]
+            == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+            else "1-8"
+        )
         assert execution == {
             'mpi_size': 8,
-            'cpu_set': '1-8',
+            'cpu_set': expected_cpu_set,
             'membind_node': 0,
             'consumer_time_stop_enforced': False,
             'runtime_reserve_bytes': 412316860416,
         }
+        if expected_cpu_set == "10-17":
+            target = serialized["p4_refinement_target"]
+            assert target == {
+                "schema": "task041.p4_refinement_target.strategy.v1",
+                "tolerance": 5.0e-13,
+                "scope": "registered_w0p7nm_reduced_p6_pilot_target",
+                "max_same_factor_refinements": 2,
+                "gates_unchanged": True,
+            }
 
 
 def test_task041_2nm_balh_case_uses_low_level_profile_without_v2_contract(tmp_path):
@@ -582,6 +708,20 @@ def test_task041_balh_public_commands_select_one_consumer():
             assert route == "exact"
             assert command[command.index("--phase") + 1] == "consumer"
         else:
+            model_id = str(specification.identity["model_id"])
+            pilot_options = (
+                {
+                    "p4_refinement_target_tolerance": 5.0e-13,
+                    "task041_resource_policy": (
+                        task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+                    ),
+                    "fixed_h6_modal_gmres_research": True,
+                    "expected_rank_cpus": tuple(range(10, 18)),
+                }
+                if model_id
+                == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+                else {}
+            )
             command = build_task041_balh_candidate_consumer_command(
                 "python",
                 specification,
@@ -591,9 +731,18 @@ def test_task041_balh_public_commands_select_one_consumer():
                 REPOSITORY_ROOT / "results" / "ignored_test351_consumer",
                 "c" * 40,
                 "a" * 40,
+                **pilot_options,
             )
             assert route == "balh"
             assert command[command.index("--phase") + 1] == "candidate-consumer"
+            if pilot_options:
+                assert command[command.index("--cpu-list") + 1] == "10,11,12,13,14,15,16,17"
+                assert "numactl" in command
+                assert "--membind=0" in command
+                assert "--task041-fixed-h6-modal-gmres-research" in command
+                assert command[
+                    command.index("--task041-expected-rank-cpus") + 1
+                ] == "10,11,12,13,14,15,16,17"
         assert command.count("--phase") == 1
         assert "--phase" in command
         assert not ("consumer" in command and "candidate-consumer" in command)
@@ -1033,18 +1182,27 @@ def test_registered_cell_condensed_formal_target_reaches_worker(
             5.0e-13,
             "producer_root",
         ),
+        (
+            "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat",
+            "task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot",
+            5.0e-13,
+            "fresh_producer",
+        ),
     ),
     ids=(
         "13p5nm-new-profile",
         "5nm-legacy-native",
         "5nm-new-profile",
         "2nm-new-profile",
+        "w0p7nm-fresh-fixed-h6-pilot",
     ),
 )
 def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     input_name, model_id, p4_target, packet_source, tmp_path: Path, monkeypatch
 ):
     from benchmarks.task041_balh_workflow import (
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+        build_task041_balh_mode_prep_command,
         task041_fixed_h6_modal_gmres_binding,
         task041_fixed_h6_packet_source_binding,
     )
@@ -1058,7 +1216,11 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     registered_cpus = task041_balh_workflow.task041_balh_registered_rank_cpu_map(
         model_id
     )
-    assert registered_cpus == tuple(range(1, 9))
+    assert registered_cpus == (
+        tuple(range(10, 18))
+        if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+        else tuple(range(1, 9))
+    )
     rank_cpus = (12, 10, 17, 11, 16, 13, 15, 14)
     cpu_argument = ",".join(str(cpu) for cpu in rank_cpus)
     resource_policy = task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
@@ -1084,6 +1246,25 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             producer_packet_root=None,
             legacy_native_packet_descriptor=descriptor,
         )
+    elif packet_source == "fresh_producer":
+        source_binding = task041_fixed_h6_packet_source_binding(
+            fixed_binding,
+            producer_packet_root=None,
+            legacy_native_packet_descriptor=None,
+        )
+        assert source_binding == {"source_type": "fresh_registered_producer"}
+        with pytest.raises(ValueError, match="fresh producer"):
+            task041_fixed_h6_packet_source_binding(
+                fixed_binding,
+                producer_packet_root=tmp_path / "wrong_reused_packet",
+                legacy_native_packet_descriptor=None,
+            )
+        with pytest.raises(ValueError, match="fresh producer"):
+            task041_fixed_h6_packet_source_binding(
+                fixed_binding,
+                producer_packet_root=None,
+                legacy_native_packet_descriptor=tmp_path / "wrong_legacy.json",
+            )
     real_launch_specification = launcher.launch_specification
     public_args = [
         str(input_path),
@@ -1093,9 +1274,9 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         "--task041-expected-rank-cpus",
         cpu_argument,
     ]
-    if descriptor is None:
+    if packet_source == "producer_root":
         public_args.extend(["--producer-packet-root", str(tmp_path / "producer")])
-    else:
+    elif descriptor is not None:
         public_args.extend(["--legacy-native-packet-descriptor", str(descriptor)])
     if p4_target is not None:
         public_args.extend(
@@ -1118,7 +1299,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert captured["expected_rank_cpus"] == rank_cpus
     assert captured["task041_resource_policy"] == resource_policy
     assert captured["task041_p4_refinement_target_tolerance"] == p4_target
-    if descriptor is None:
+    if packet_source == "producer_root":
         assert captured["producer_packet_root"] == tmp_path / "producer"
         assert captured["legacy_native_packet_descriptor"] is None
     else:
@@ -1151,7 +1332,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         "fixed_h6_modal_gmres_research": True,
         "expected_rank_cpus": rank_cpus,
     }
-    if descriptor is None:
+    if packet_source == "producer_root":
         launcher_kwargs["producer_packet_root"] = tmp_path / "producer"
     else:
         supervision_record = tmp_path / "service_launch_manifest.json"
@@ -1159,7 +1340,8 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             json.dumps({"packet_source_binding": source_binding}, sort_keys=True)
             + "\n"
         )
-        launcher_kwargs["legacy_native_packet_descriptor"] = descriptor
+        if descriptor is not None:
+            launcher_kwargs["legacy_native_packet_descriptor"] = descriptor
         launcher_kwargs["task041_supervision_record"] = supervision_record.resolve()
     launched = launcher.launch_specification(specification, **launcher_kwargs)
     assert launched["result_classification"] == "worker_exit0"
@@ -1181,6 +1363,32 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert "packet_source_binding" not in launch_manifest
     else:
         assert launch_manifest["packet_source_binding"] == source_binding
+        assert launcher_supervisor_call["legacy_native_packet_descriptor"] == (
+            launcher_kwargs.get("legacy_native_packet_descriptor")
+        )
+        assert launcher_supervisor_call["task041_supervision_record"] == Path(
+            launcher_kwargs["task041_supervision_record"]
+        ).resolve()
+        forwarded_supervision = json.loads(
+            Path(launcher_supervisor_call["task041_supervision_record"])
+            .read_text(encoding="utf-8")
+        )
+        assert forwarded_supervision["packet_source_binding"] == source_binding
+
+    if packet_source == "fresh_producer":
+        bad_service_record = tmp_path / "service_launch_manifest_mismatch.json"
+        bad_service_record.write_text(
+            json.dumps(
+                {"packet_source_binding": {"source_type": "wrong_route"}},
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        mismatch_kwargs = dict(launcher_kwargs)
+        mismatch_kwargs["task041_supervision_record"] = bad_service_record.resolve()
+        with pytest.raises(InputError, match="service supervision record"):
+            launcher.launch_specification(specification, **mismatch_kwargs)
 
     worker_command = build_task041_balh_candidate_consumer_command(
         str(Path(sys.executable)),
@@ -1221,35 +1429,68 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
     assert parsed_worker.task041_fixed_h6_modal_gmres_research is True
     assert parsed_worker.task041_expected_rank_cpus == cpu_argument
     assert parsed_worker.task041_p4_refinement_target_tolerance == p4_target
-    if descriptor is None:
+    if packet_source == "producer_root":
         assert "--packet-origin" not in worker_command
         assert "--legacy-native-binding" not in worker_command
-    else:
+    elif descriptor is not None:
         assert parsed_worker.packet_origin == TASK041_LEGACY_NATIVE_PACKET_ORIGIN
         assert Path(parsed_worker.legacy_native_binding) == descriptor
+    else:
+        assert "--packet-origin" not in worker_command
+        assert "--legacy-native-binding" not in worker_command
 
-    default_worker_command = build_task041_balh_candidate_consumer_command(
-        str(Path(sys.executable)),
-        specification,
-        tmp_path / "packet_manifest_default.json",
-        tmp_path / "packet_identity_default.json",
-        "c" * 64,
-        tmp_path / "worker_default",
-        "d" * 40,
-        "e" * 40,
-        p4_refinement_target_tolerance=p4_target,
-        task041_resource_policy=resource_policy,
-    )
-    default_cpu_index = default_worker_command.index("--cpu-list") + 1
-    assert default_worker_command[default_cpu_index] == task041_balh_cpu_list(
-        model_id
-    )
-    assert default_worker_command[default_cpu_index + 2 : default_cpu_index + 4] == [
-        "numactl",
-        "--membind=0",
-    ]
-    assert "--task041-fixed-h6-modal-gmres-research" not in default_worker_command
-    assert "--task041-expected-rank-cpus" not in default_worker_command
+    if packet_source == "fresh_producer":
+        producer_command = build_task041_balh_mode_prep_command(
+            str(Path(sys.executable)),
+            specification,
+            tmp_path / "fresh_producer",
+            "f" * 40,
+            expected_rank_cpus=rank_cpus,
+        )
+        producer_cpu_index = producer_command.index("--cpu-list") + 1
+        assert producer_command[producer_cpu_index] == cpu_argument
+        assert producer_command[producer_cpu_index + 2 : producer_cpu_index + 4] == [
+            "numactl",
+            "--membind=0",
+        ]
+
+    if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+        with pytest.raises(ValueError, match="requires fixed-H6"):
+            build_task041_balh_candidate_consumer_command(
+                str(Path(sys.executable)),
+                specification,
+                tmp_path / "packet_manifest_default.json",
+                tmp_path / "packet_identity_default.json",
+                "c" * 64,
+                tmp_path / "worker_default",
+                "d" * 40,
+                "e" * 40,
+                p4_refinement_target_tolerance=p4_target,
+                task041_resource_policy=resource_policy,
+            )
+    else:
+        default_worker_command = build_task041_balh_candidate_consumer_command(
+            str(Path(sys.executable)),
+            specification,
+            tmp_path / "packet_manifest_default.json",
+            tmp_path / "packet_identity_default.json",
+            "c" * 64,
+            tmp_path / "worker_default",
+            "d" * 40,
+            "e" * 40,
+            p4_refinement_target_tolerance=p4_target,
+            task041_resource_policy=resource_policy,
+        )
+        default_cpu_index = default_worker_command.index("--cpu-list") + 1
+        assert default_worker_command[default_cpu_index] == task041_balh_cpu_list(
+            model_id
+        )
+        assert default_worker_command[default_cpu_index + 2 : default_cpu_index + 4] == [
+            "numactl",
+            "--membind=0",
+        ]
+        assert "--task041-fixed-h6-modal-gmres-research" not in default_worker_command
+        assert "--task041-expected-rank-cpus" not in default_worker_command
 
     registered_service = task041_balh_service_contract(model_id)
     from src.runners import task041_service as service
@@ -1293,6 +1534,17 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
         assert "packet_source_binding" not in service_contract
     else:
         assert service_contract["packet_source_binding"] == source_binding
+    if packet_source == "fresh_producer":
+        assert service_contract["producer"]["mode"] == "fresh"
+        assert service_contract["producer"]["time_stop_enforced"] is False
+        assert service_contract["phase_budgets_seconds"]["producer"] == 172800
+        assert service_contract["compute_wall_unlimited"] is True
+        wrong_fresh_record = copy.deepcopy(service_config)
+        wrong_fresh_record["packet_source_binding"] = {
+            "source_type": "legacy_native_packet_descriptor"
+        }
+        with pytest.raises(service.Task041ServiceError, match="path/SHA"):
+            resolve_service_contract(wrong_fresh_record)
 
     mismatched_service_config = dict(service_config)
     mismatched_service_config["expected_rank_cpus"] = list(range(8))
@@ -1306,7 +1558,7 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
             task041_resource_policy=resource_policy,
         )
 
-    if source_binding is not None:
+    if descriptor is not None:
         wrong_hash = copy.deepcopy(service_config)
         wrong_hash["packet_source_binding"]["descriptor_sha256"] = "0" * 64
         with pytest.raises(service.Task041ServiceError, match="path/SHA"):
@@ -1349,6 +1601,56 @@ def test_task041_fixed_h6_public_dat_route_binds_worker_and_service(
 
         with pytest.raises(service.Task041ServiceError, match="5e-13"):
             resolve_service_contract(service_config, target=None)
+    elif packet_source == "fresh_producer":
+        missing_source = copy.deepcopy(service_config)
+        missing_source.pop("packet_source_binding")
+        with pytest.raises(service.Task041ServiceError, match="path/SHA"):
+            resolve_service_contract(missing_source)
+
+        legacy_mixed_source = copy.deepcopy(service_config)
+        legacy_mixed_source["public_command"].extend(
+            [
+                "--legacy-native-packet-descriptor",
+                str(tmp_path / "unrelated_w5_descriptor.json"),
+            ]
+        )
+        with pytest.raises(service.Task041ServiceError, match="registered 5 nm"):
+            resolve_service_contract(legacy_mixed_source)
+
+        old_input = _specification(
+            REPOSITORY_ROOT
+            / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_cell_condensed.dat"
+        )
+        old_binding = task041_fixed_h6_modal_gmres_binding(
+            str(old_input.identity["model_id"]),
+            enabled=True,
+            candidate=True,
+            mpi_size=8,
+            mode_count=120,
+            p4_inverse_backend="cell_condensed",
+            p4_refinement_target_tolerance=None,
+            task041_resource_policy=resource_policy,
+            expected_rank_cpus=rank_cpus,
+        )
+        with pytest.raises(ValueError, match="exactly one"):
+            task041_fixed_h6_packet_source_binding(
+                old_binding,
+                producer_packet_root=None,
+                legacy_native_packet_descriptor=None,
+            )
+
+        with pytest.raises(ValueError):
+            task041_fixed_h6_modal_gmres_binding(
+                "task041_unregistered_fixed_h6_case",
+                enabled=True,
+                candidate=True,
+                mpi_size=8,
+                mode_count=400,
+                p4_inverse_backend="cell_condensed",
+                p4_refinement_target_tolerance=5.0e-13,
+                task041_resource_policy=resource_policy,
+                expected_rank_cpus=rank_cpus,
+            )
 
 
 def test_task041_fixed_h6_supervision_and_validator_bind_legacy_descriptor(
@@ -6497,8 +6799,9 @@ def test_task041_balh_early_identity_failure_keeps_error_classification(tmp_path
     (
         ("13p5nm_p6h10_m120_mpi8_balh.dat", False),
         ("2nm_p6h1p5_m1200_mpi8_balh.dat", True),
+        ("w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat", True),
     ),
-    ids=("legacy-balh", "registered-2nm"),
+    ids=("legacy-balh", "registered-2nm", "registered-w0p7-fresh-fixed-h6"),
 )
 def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     tmp_path: Path, monkeypatch, candidate_filename, registered_case
@@ -6509,9 +6812,16 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         / candidate_filename
     )
     from benchmarks import task041_balh_workflow
+    from src.io.input_validation import TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
     from src.runners import task041_supervisor as supervisor
 
     candidate_model = str(candidate.identity["model_id"])
+    fixed_h6_pilot = candidate_model == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    frozen_cpus = (12, 10, 17, 11, 16, 13, 15, 14)
+    fixed_binding = None
+    source_binding = None
+    resource_binding = None
+    service_record_path = None
     case_contract = (
         task041_balh_service_contract(candidate_model)
         if registered_case
@@ -6522,16 +6832,32 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         if case_contract is not None
         else "compute_wall_ledger.json"
     )
-    ledger_payload = {
-        "schema": "task041.compute_wall_ledger.v1",
-        "limit_seconds": 172800.0,
-        "used_compute_wall_seconds": 10.0,
-        "used_status": "measured",
-        "basis": "test-local BALH fresh-phase ledger",
-        "measured": {"status": "measured", "seconds": 10.0, "records": []},
-        "derived": {"status": "not_measured", "seconds": None},
-    }
-    if case_contract is not None:
+    ledger_payload = (
+        {
+            "schema": "task041.review_v5.r1_load_ledger.v1",
+            "ledger_status": "measured",
+            "scope": "task041_w0p7_reduced_p6_pilot",
+            "charged_seconds": 10.0,
+            "entries": [
+                {
+                    "id": "prior-pilot-load",
+                    "seconds": 10.0,
+                    "status": "measured",
+                }
+            ],
+        }
+        if fixed_h6_pilot
+        else {
+            "schema": "task041.compute_wall_ledger.v1",
+            "limit_seconds": 172800.0,
+            "used_compute_wall_seconds": 10.0,
+            "used_status": "measured",
+            "basis": "test-local BALH fresh-phase ledger",
+            "measured": {"status": "measured", "seconds": 10.0, "records": []},
+            "derived": {"status": "not_measured", "seconds": None},
+        }
+    )
+    if case_contract is not None and not fixed_h6_pilot:
         ledger_payload.update(
             {
                 "case_id": candidate_model,
@@ -6539,6 +6865,60 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
                 "limit_seconds": None,
                 "budget_semantics": case_contract["budget_semantics"],
             }
+        )
+    if fixed_h6_pilot:
+        from benchmarks.task041_balh_workflow import (
+            TASK041_V8_SWAP_OBSERVE_CONTINUE,
+            task041_fixed_h6_modal_gmres_binding,
+            task041_fixed_h6_packet_source_binding,
+            task041_v8_resource_policy_binding,
+        )
+
+        fixed_binding = task041_fixed_h6_modal_gmres_binding(
+            candidate_model,
+            enabled=True,
+            candidate=True,
+            mpi_size=8,
+            mode_count=int(candidate.method["requested_modes_per_direction"]),
+            p4_inverse_backend="cell_condensed",
+            p4_refinement_target_tolerance=5.0e-13,
+            task041_resource_policy=TASK041_V8_SWAP_OBSERVE_CONTINUE,
+            expected_rank_cpus=frozen_cpus,
+        )
+        source_binding = task041_fixed_h6_packet_source_binding(
+            fixed_binding,
+            producer_packet_root=None,
+            legacy_native_packet_descriptor=None,
+        )
+        resource_binding = task041_v8_resource_policy_binding(
+            candidate_model, TASK041_V8_SWAP_OBSERVE_CONTINUE
+        )
+        service_record_path = (tmp_path / "service_launch_manifest.json").resolve()
+        invocation_id = "task041-w0p7-fresh-producer-contract-test"
+        monkeypatch.setenv("INVOCATION_ID", invocation_id)
+        expected_allowlist = sorted(
+            supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+        )
+        service_record_path.write_text(
+            json.dumps(
+                {
+                    "profile_id": case_contract["profile_id"],
+                    "model_id": candidate_model,
+                    "source_sha": "e" * 40,
+                    "scope": case_contract["scope"],
+                    "ledger_owner": "service_finalizer",
+                    "parent_pid": os.getppid(),
+                    "invocation_id": invocation_id,
+                    "representative_rhs_probe": None,
+                    "ledger_path": str(ledger_path.resolve()),
+                    "fixed_h6_modal_gmres_research": fixed_binding,
+                    "packet_source_binding": source_binding,
+                    "post_start_document_allowlist": expected_allowlist,
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
         )
     ledger_path.write_text(
         json.dumps(ledger_payload, sort_keys=True)
@@ -6645,7 +7025,7 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     monkeypatch.setattr(
         supervisor,
         "_git_identity",
-        lambda repository_root, source_sha: {
+        lambda repository_root, source_sha, **_kwargs: {
             "head": source_sha,
             "branch": supervisor.TASK041_BRANCH,
             "source_sha": source_sha,
@@ -6662,16 +7042,40 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         "_child_environment",
         lambda: {name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
     )
+    builder_calls = {}
+
+    def fake_mode_prep_builder(*_args, **kwargs):
+        builder_calls["producer_expected_rank_cpus"] = kwargs.get(
+            "expected_rank_cpus"
+        )
+        return ["mode-prep"]
+
+    def fake_candidate_builder(*_args, **kwargs):
+        builder_calls["consumer_expected_rank_cpus"] = kwargs.get(
+            "expected_rank_cpus"
+        )
+        return ["candidate-consumer"]
+
+    build_commands = {
+        "balh_mode_prep": fake_mode_prep_builder,
+        "balh_candidate_consumer": fake_candidate_builder,
+    }
     monkeypatch.setattr(
-        supervisor,
-        "_task041_builders",
-        lambda: {
-            "balh_mode_prep": lambda *_args: ["mode-prep"],
-            "balh_candidate_consumer": lambda *_args, **_kwargs: [
-                "candidate-consumer"
-            ],
-        },
+        supervisor, "_task041_builders", lambda: build_commands
     )
+    if fixed_h6_pilot:
+        actual_service_contract = supervisor.task041_balh_service_contract
+
+        def temp_ledger_contract(model_id):
+            contract = actual_service_contract(model_id)
+            if contract is not None:
+                contract = copy.deepcopy(dict(contract))
+                contract["ledger"]["path"] = None
+            return contract
+
+        monkeypatch.setattr(
+            supervisor, "task041_balh_service_contract", temp_ledger_contract
+        )
     monkeypatch.setattr(task041_balh_workflow, "validate_balh_producer_packet", fake_validate)
     observed_schedules = []
 
@@ -6684,6 +7088,16 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         observed_schedules.append(expected_side_setup_schedule)
         assert expected_side_setup_schedule is None
         if registered_case:
+            if fixed_h6_pilot:
+                assert "expected_diagnostic_output" not in kwargs
+                assert kwargs["expected_fixed_h6_modal_gmres_research"] is True
+                return {
+                    "complete": True,
+                    "classification": "worker_exit0",
+                    "worker_classification": "TASK041_CONSUMER_PASS",
+                    "process_group_gone": process_group_gone,
+                    "factor_inventory": {},
+                }
             assert kwargs["expected_diagnostic_output"] is True
             assert kwargs["expected_diagnostic_model_id"] == candidate_model
             return {
@@ -6714,6 +7128,34 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     source_sha = "e" * 40
     fresh_run = tmp_path / "fresh_public_run"
     fresh_run.mkdir()
+    supervisor_kwargs = {}
+    if fixed_h6_pilot:
+        assert fixed_binding is not None
+        assert source_binding == {"source_type": "fresh_registered_producer"}
+        assert resource_binding is not None
+        expected_allowlist = sorted(
+            supervisor.TASK041_V9_FIXED_H6_POST_START_DOCUMENT_PATHS
+        )
+        (fresh_run / "run_manifest.json").write_text(
+            json.dumps(
+                {
+                    "fixed_h6_modal_gmres_research": fixed_binding,
+                    "packet_source_binding": source_binding,
+                    "task041_resource_policy": resource_binding,
+                    "post_start_document_allowlist": expected_allowlist,
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        supervisor_kwargs = {
+            "fixed_h6_modal_gmres_research": True,
+            "expected_rank_cpus": frozen_cpus,
+            "task041_resource_policy": task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+            "task041_p4_refinement_target_tolerance": 5.0e-13,
+            "task041_supervision_record": service_record_path,
+        }
     result = supervisor.run_task041_public_supervisor(
         candidate,
         source_sha=source_sha,
@@ -6724,18 +7166,45 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         sample_factory=fake_sample,
         process_group_gone=lambda _pid: True,
         sleep=lambda _seconds: None,
+        **supervisor_kwargs,
     )
     assert result["result_classification"] == "worker_exit0"
     assert len(popen_calls) == 2
     assert observed_schedules == [None]
-    assert [call["enforce_time_stops"] for call in phase_calls] == [
-        True,
-        not registered_case,
-    ]
+    assert [call["enforce_time_stops"] for call in phase_calls] == (
+        [False, False]
+        if fixed_h6_pilot
+        else [True, not registered_case]
+    )
+    if fixed_h6_pilot:
+        assert builder_calls["producer_expected_rank_cpus"] == frozen_cpus
+        assert builder_calls["consumer_expected_rank_cpus"] == frozen_cpus
+        assert result["packet_source_binding"] == source_binding
+        assert result["service_contract"]["compute_wall_unlimited"] is True
+        assert result["service_contract"]["producer"]["time_stop_enforced"] is False
+        assert result["phase_results"]["producer"]["limits"][
+            "timeout_seconds"
+        ] == 172800
+        assert result["phase_results"]["producer"]["time_stop_enforced"] is False
+        assert result["phase_results"]["consumer"]["limits"][
+            "timeout_seconds"
+        ] is None
+        assert result["phase_results"]["consumer"]["time_stop_enforced"] is False
     assert phase_calls[0]["cumulative_compute_used_seconds"] == pytest.approx(10.0)
     producer_seconds = result["phase_results"]["producer"]["phase_wall_seconds"]
     budget = result["compute_wall_budget"]
-    if registered_case:
+    if fixed_h6_pilot:
+        assert phase_calls[1]["cumulative_compute_used_seconds"] == pytest.approx(
+            10.0
+        )
+        assert budget["limit_seconds"] is None
+        assert budget["remaining_after_seconds"] is None
+        updated = supervisor._read_json(ledger_path)
+        assert updated["schema"] == "task041.review_v5.r1_load_ledger.v1"
+        assert updated["charged_seconds"] == pytest.approx(10.0)
+        assert updated["entries"] == ledger_payload["entries"]
+        assert budget["ledger_update"] == "deferred_to_service_finalizer"
+    elif registered_case:
         assert phase_calls[1]["cumulative_compute_used_seconds"] == pytest.approx(
             10.0
         )

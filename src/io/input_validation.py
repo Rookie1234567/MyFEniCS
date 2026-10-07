@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Mapping
 from copy import deepcopy
@@ -439,7 +440,29 @@ TASK041_BALH_2NM_MODEL_ID = (
 TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID = (
     "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8_cell_condensed"
 )
+TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID = (
+    "task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot"
+)
+TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD = (
+    "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+    "task041_v9_w0p7nm_p6_reduced_pilot_material_candidate.json"
+)
+TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256 = (
+    "fe3bf4e5df2f369907f21033a4aa84e62fdf7b3a0961e05ec29743c9cafd70d2"
+)
+TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE = (
+    "registered_w0p7nm_reduced_p6_pilot_target"
+)
 TASK041_BALH_2NM_N = (0.99880148307, 0.000213688647)
+TASK041_BALH_W0P7NM_PILOT_N = (
+    0.9995903781323069,
+    0.00012887909720587614,
+)
+TASK041_BALH_W0P7NM_PILOT_EPSILON_R = (
+    0.9991809074448665,
+    0.00025765261101874415,
+)
+TASK041_BALH_W0P7NM_PILOT_LABEL = "W / tungsten, 0.7 nm source-derived candidate"
 TASK041_BALH_2NM_W_LABEL = "W / tungsten, 2 nm"
 TASK041_BALH_2NM_PLANNING_CEILING_BYTES = 1649267441664
 TASK041_BALH_2NM_WARNING_MEMORY_BYTES = 1539316278886
@@ -652,6 +675,71 @@ TASK041_BALH_CASES = {
         "reporting_harmonic_bound": 60,
     },
 }
+TASK041_BALH_CASES[TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID] = {
+    "run_id": "task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot",
+    "scope": "task041_w0p7_reduced_p6_pilot",
+    "comparison_group": "task041_w0p7_reduced_p6_pilot",
+    "input": (
+        "input/official/task041/side_balh/"
+        "w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat"
+    ),
+    "route": "balh",
+    "wavelength_nm": 0.7,
+    "material_n": TASK041_BALH_W0P7NM_PILOT_N,
+    "material_epsilon_r": TASK041_BALH_W0P7NM_PILOT_EPSILON_R,
+    "material_label": TASK041_BALH_W0P7NM_PILOT_LABEL,
+    "material_record_path": TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD,
+    "material_record_sha256": TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256,
+    "mesh_target_nm": 0.7,
+    "mode_count": 400,
+    "warning_memory_gib": 44.6094635007903,
+    "warning_memory_bytes": TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+    "terminate_memory_gib": 49.566070556640625,
+    "absolute_terminate_memory_bytes": TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+    "producer_timeout_seconds": 172800,
+    "consumer_timeout_seconds": 172800,
+    "producer_time_stop_enforced": False,
+    "consumer_time_stop_enforced": False,
+    "runtime_reserve_bytes": TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+    "planning_ceiling_bytes": TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+    "planning_ceiling_source": "approved_pilot_run_cap_not_peak_prediction",
+    "memory_cap_source": "approved_pilot_run_cap_not_peak_prediction",
+    "producer_mode": "fresh",
+    "service_contract_id": "task041_w0p7_p6_pilot_service_v1",
+    "compute_wall_ledger_filename": TASK041_BALH_CELL_CONDENSED_LEDGER_FILENAME,
+    "compute_wall_ledger_path": (
+        "results/task041_review_v5_cpu_numa_condensed_speed/"
+        "r0_r1_20260920/r1_load_ledger_20260920.json"
+    ),
+    "solver_contract": "task041_side_balh_candidate_fgmres32_cell_condensed_w0p7_pilot_v1",
+    "preconditioner": "hybrid_block_ldu_balh_side_inverse",
+    "transfer_optimization_profile": TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
+    "p4_inverse_backend": "cell_condensed",
+    "support_policy": "entity_closure",
+    "construction_audit": TASK041_BALH_CELL_CONDENSED_CONSTRUCTION_VERSION,
+    "cpu_set": "10-17",
+    "membind_node": 0,
+    "reporting_harmonic_bound": 25,
+    "profile_geometry": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 10.0,
+        "period_y_nm": 5.0,
+        "z_min_nm": -2.0,
+        "z_max_nm": 26.0,
+        "interface_z_nm": 0.0,
+        "air_height_nm": 26.0,
+        "substrate_thickness_nm": 2.0,
+        "grating_width_x_nm": 3.4,
+        "grating_width_y_nm": 5.0,
+        "grating_height_nm": 24.0,
+    },
+    "hybrid_interfaces_nm": (2.0, 22.0),
+    "reference_plane_z_nm": (2.0, 7.0, 12.0, 17.0, 22.0),
+    "side_residual_correction_steps": 1,
+    "p4_refinement_target_tolerance": 5.0e-13,
+    "p4_refinement_target_scope": TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE,
+    "p4_same_factor_refinement_max": 2,
+}
 TASK041_BALH_CASES[TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID] = {
     **TASK041_BALH_CASES[TASK041_BALH_2NM_MODEL_ID],
     "run_id": "task041_2nm_p6h1p5_m1200_mpi8_cell_condensed",
@@ -805,6 +893,7 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
     if case is None or "service_contract_id" not in case:
         return None
     cell_condensed = case.get("p4_inverse_backend") == "cell_condensed"
+    producer_mode = case.get("producer_mode", "reuse" if cell_condensed else "fresh")
     warning_bytes = int(
         case.get("warning_memory_bytes", case["warning_memory_gib"] * 2**30)
     )
@@ -819,10 +908,13 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
         "comparison_mode": None,
         "memory_cap_bytes": int(case["absolute_terminate_memory_bytes"]),
         "warning_memory_bytes": warning_bytes,
-        "memory_cap_source": (
-            "task041_v6_cell_condensed_resource_contract"
-            if cell_condensed
-            else "task041_2nm_case_resource_contract"
+        "memory_cap_source": case.get(
+            "memory_cap_source",
+            (
+                "task041_v6_cell_condensed_resource_contract"
+                if cell_condensed
+                else "task041_2nm_case_resource_contract"
+            ),
         ),
         "memory_gate_source": "simultaneous_process_tree_rss",
         "planning_ceiling_bytes": int(case["planning_ceiling_bytes"]),
@@ -840,21 +932,12 @@ def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
         "active_consumer_budget_seconds": None,
         "batch_budget_seconds": None,
         "compute_wall_unlimited": True,
-        "producer": (
-            {
-                "mode": "reuse",
-                "invocation": "required",
-                "time_stop_enforced": bool(case.get("producer_time_stop_enforced", True)),
-                "qep": "not_run",
-            }
-            if cell_condensed
-            else {
-                "mode": "fresh",
-                "invocation": "required",
-                "time_stop_enforced": bool(case.get("producer_time_stop_enforced", True)),
-                "qep": "fresh",
-            }
-        ),
+        "producer": {
+            "mode": producer_mode,
+            "invocation": "required",
+            "time_stop_enforced": bool(case.get("producer_time_stop_enforced", True)),
+            "qep": "not_run" if producer_mode == "reuse" else "fresh",
+        },
         "time_stop": {
             "producer_enforced": bool(case.get("producer_time_stop_enforced", True)),
             "consumer_enforced": bool(case.get("consumer_time_stop_enforced", False)),
@@ -1248,6 +1331,12 @@ def task041_balh_material_provenance(
     if "delta" in case:
         provenance["delta"] = float(case["delta"])
         provenance["beta"] = float(case["beta"])
+    if case.get("material_record_path") is not None:
+        provenance["derived_material_record"] = {
+            "path": case["material_record_path"],
+            "sha256": case["material_record_sha256"],
+            "status": "source_derived_candidate_uncertainty_not_propagated",
+        }
     return provenance
 
 
@@ -1508,13 +1597,9 @@ def task041_balh_profile_errors(
     if case is None:
         return [("model_id", "Task041 side BAL_H accepts only registered profiles")]
     reporting_harmonic_bound = case.get("reporting_harmonic_bound", 25)
-    expected: dict[str | None, dict[str, Any]] = {
-        None: {
-            "model_id": model_id,
-            "run_id": case["run_id"],
-            "comparison_group": case["comparison_group"],
-        },
-        "geometry": {
+    geometry = case.get(
+        "profile_geometry",
+        {
             "geometry_kind": "rectangular_block_grating",
             "period_x_nm": 50.0,
             "period_y_nm": 25.0,
@@ -1527,6 +1612,17 @@ def task041_balh_profile_errors(
             "grating_width_y_nm": 25.0,
             "grating_height_nm": 120.0,
         },
+    )
+    bottom_interface_nm, top_interface_nm = case.get(
+        "hybrid_interfaces_nm", (10.0, 110.0)
+    )
+    expected: dict[str | None, dict[str, Any]] = {
+        None: {
+            "model_id": model_id,
+            "run_id": case["run_id"],
+            "comparison_group": case["comparison_group"],
+        },
+        "geometry": geometry,
         "materials": {
             "n_air": (1.0, 0.0),
             "mu_r": (1.0, 0.0),
@@ -1563,8 +1659,8 @@ def task041_balh_profile_errors(
         },
         "method": {
             "kind": "hybrid_iterative",
-            "bottom_interface_nm": 10.0,
-            "top_interface_nm": 110.0,
+            "bottom_interface_nm": bottom_interface_nm,
+            "top_interface_nm": top_interface_nm,
             "requested_modes_per_direction": case["mode_count"],
             "propagation_model": "full3d_uniform_cg",
             "traction_model": "full3d_one_cell_exact_schur",
@@ -1581,7 +1677,9 @@ def task041_balh_profile_errors(
             "ilu_shift": 0.1,
             "subdomain_count_per_endcap": 1,
             "overlap_fraction": 0.0,
-            "side_residual_correction_steps": 1,
+            "side_residual_correction_steps": case.get(
+                "side_residual_correction_steps", 1
+            ),
         },
         "execution": {
             "mpi_size": TASK041_BALH_MPI_SIZE,
@@ -1601,7 +1699,9 @@ def task041_balh_profile_errors(
             "export_canonical_vectors": True,
             "export_modal_amplitudes": True,
             "export_reference_planes": True,
-            "reference_plane_z_nm": (10.0, 30.0, 60.0, 90.0, 110.0),
+            "reference_plane_z_nm": case.get(
+                "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)
+            ),
             "sample_count_x": 40,
             "sample_count_y": 20,
             "diffraction_sample_count_x": 32,
@@ -1619,6 +1719,53 @@ def task041_balh_profile_errors(
             if not _same_profile_value(actual, expected_value):
                 path = key if section is None else f"{section}.{key}"
                 errors.append((path, f"Task041 side BAL_H requires {expected_value!r}"))
+    if case.get("material_record_path") is not None:
+        material_path = Path(__file__).resolve().parents[2] / case[
+            "material_record_path"
+        ]
+        try:
+            material_bytes = material_path.read_bytes()
+            material_record = json.loads(material_bytes)
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(
+                (
+                    "materials.source_record",
+                    f"cannot read registered W0.7 material record: {exc}",
+                )
+            )
+        else:
+            if sha256(material_bytes).hexdigest() != case["material_record_sha256"]:
+                errors.append(
+                    (
+                        "materials.source_record_sha256",
+                        "registered W0.7 material record hash does not match",
+                    )
+                )
+            try:
+                recorded_case = material_record["case"]
+                recorded_n = material_record["derivation"][
+                    "positive_absorption_convention"
+                ]["n"]
+                recorded_epsilon = material_record["derivation"][
+                    "positive_absorption_convention"
+                ]["epsilon_r"]
+                record_matches = (
+                    material_record.get("record_kind")
+                    == "task041_w0p7nm_p6_reduced_pilot_material_candidate"
+                    and recorded_case.get("model_id") == model_id
+                    and recorded_case.get("wavelength_nm") == case["wavelength_nm"]
+                    and recorded_n == list(case["material_n"])
+                    and recorded_epsilon == list(case["material_epsilon_r"])
+                )
+            except (KeyError, TypeError):
+                record_matches = False
+            if not record_matches:
+                errors.append(
+                    (
+                        "materials.source_record_identity",
+                        "registered W0.7 material record does not match the case identity",
+                    )
+                )
     return errors
 
 
@@ -3684,6 +3831,16 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
                     },
                 }
             )
+        if case.get("p4_refinement_target_tolerance") is not None:
+            task041_solver_contract["p4_refinement_target"] = {
+                "schema": "task041.p4_refinement_target.strategy.v1",
+                "tolerance": float(case["p4_refinement_target_tolerance"]),
+                "scope": case["p4_refinement_target_scope"],
+                "max_same_factor_refinements": int(
+                    case["p4_same_factor_refinement_max"]
+                ),
+                "gates_unchanged": True,
+            }
         derived["task041_solver_contract"] = task041_solver_contract
     material_provenance = task041_material_provenance(config)
     if material_provenance is None:
@@ -3786,6 +3943,10 @@ __all__ = [
     "TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID",
     "TASK041_BALH_SI_LABEL",
     "TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE",
+    "TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD",
+    "TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256",
+    "TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID",
+    "TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE",
     "TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID",
     "TASK041_BALH_W_LABEL",
     "TASK041_COMPARISON_GROUP",

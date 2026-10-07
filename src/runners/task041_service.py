@@ -38,6 +38,7 @@ from benchmarks.task041_balh_workflow import (
 from src.io.input_validation import (
     TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_MPI_SIZE,
+    TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
     task041_balh_case,
     task041_balh_phase_limits_for_model,
     task041_balh_service_contract,
@@ -156,12 +157,23 @@ def _fixed_h6_service_binding(
         for i, value in enumerate(command)
         if value == "--legacy-native-packet-descriptor"
     ]
+    model_id = str(config.get("model_id", ""))
+    case = task041_balh_case(model_id)
+    fresh_registered_producer = (
+        model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+        and isinstance(case, Mapping)
+        and case.get("producer_mode") == "fresh"
+    )
+    source_counts = (len(producer_positions), len(legacy_positions))
     if (
         any(flag in command for flag in incompatible_flags)
-        or (len(producer_positions), len(legacy_positions)) not in {(1, 0), (0, 1)}
+        or (
+            source_counts not in {(1, 0), (0, 1)}
+            and not (source_counts == (0, 0) and fresh_registered_producer)
+        )
     ):
         raise Task041ServiceError(
-            "fixed-H6 service requires exactly one registered packet source without other diagnostics"
+            "fixed-H6 service requires exactly one registered packet source, or the registered fresh W0.7 producer, without other diagnostics"
         )
     if legacy_positions and str(config.get("model_id")) != (
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
@@ -211,7 +223,7 @@ def _fixed_h6_packet_source_binding(
     if actual is None:
         if "packet_source_binding" in config:
             raise Task041ServiceError(
-                "producer-root fixed-H6 service must not declare a legacy packet source binding"
+                "a reused-packet fixed-H6 service must not declare a packet source binding"
             )
         return None
     if not isinstance(configured, Mapping) or dict(configured) != actual:

@@ -5463,8 +5463,8 @@ def _run_task041_balh_candidate_setup(
             or not sampled_column_contract.get("sha256")
         ):
             raise Task041ModePrepError(
-                "Fixed-H6 modal GMRES is limited to the registered cell-condensed "
-                "13.5/5/2 nm MPI8 V8 candidate with its registered P4 target and "
+                "Fixed-H6 modal GMRES is limited to registered cell-condensed "
+                "Task041 MPI8 V8 candidates with their registered P4 target and "
                 "no conflicting diagnostic mode"
             )
     if use_anderson_modal_inner and (
@@ -13812,6 +13812,7 @@ def run_task041_consumer(
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
         task041_balh_formal_physical_volume_context_factory,
         task041_fixed_h6_modal_gmres_binding,
@@ -13846,7 +13847,14 @@ def run_task041_consumer(
     except (TypeError, ValueError) as exc:
         raise Task041ModePrepError(str(exc)) from exc
     fixed_h6_packet_source_binding = None
-    if fixed_h6_binding is not None and legacy_native:
+    fixed_h6_source_is_fresh_pilot = (
+        fixed_h6_binding is not None
+        and str(normalized.get("model_id", ""))
+        == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    )
+    if fixed_h6_binding is not None and (
+        legacy_native or fixed_h6_source_is_fresh_pilot
+    ):
         try:
             fixed_h6_packet_source_binding = (
                 task041_fixed_h6_packet_source_binding(
@@ -13857,11 +13865,25 @@ def run_task041_consumer(
             )
         except (OSError, TypeError, ValueError) as exc:
             raise Task041ModePrepError(str(exc)) from exc
-    if fixed_h6_binding is not None and bool(legacy_native) != (
-        fixed_h6_packet_source_binding is not None
+    source_type = (
+        fixed_h6_packet_source_binding.get("source_type")
+        if isinstance(fixed_h6_packet_source_binding, Mapping)
+        else None
+    )
+    if fixed_h6_binding is not None and (
+        (legacy_native and source_type != "legacy_native_packet_descriptor")
+        or (
+            fixed_h6_source_is_fresh_pilot
+            and source_type != "fresh_registered_producer"
+        )
+        or (
+            not legacy_native
+            and not fixed_h6_source_is_fresh_pilot
+            and source_type is not None
+        )
     ):
         raise Task041ModePrepError(
-            "fixed-H6 legacy packet origin and descriptor binding do not match the registered 5 nm route"
+            "fixed-H6 packet origin does not match the registered source route"
         )
     if fixed_h6_binding is not None:
         if expected_rank_cpus is None:
@@ -13926,8 +13948,8 @@ def run_task041_consumer(
         or same_g_modal_metric_pair_request is not None
     ):
         raise Task041ModePrepError(
-            "Fixed-H6 modal GMRES is limited to the registered 13.5/5/2 nm "
-            "cell-condensed MPI8 V8 candidate with its registered P4 target "
+            "Fixed-H6 modal GMRES is limited to registered Task041 "
+            "cell-condensed MPI8 V8 candidates with their registered P4 target "
             "and no conflicting diagnostic mode"
         )
     same_g_pair_enabled = _task041_same_g_modal_metric_pair_scope(

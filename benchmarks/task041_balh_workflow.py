@@ -23,6 +23,8 @@ from src.io.input_validation import (
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MPI_SIZE,
     TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
+    TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
+    TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE,
     task041_balh_case,
     task041_balh_profile_errors,
     task041_balh_service_contract,
@@ -73,6 +75,9 @@ TASK041_P4_REGISTERED_5NM_TARGET_SCOPE = (
 TASK041_P4_REGISTERED_2NM_TARGET_SCOPE = (
     "registered_2nm_cell_condensed_formal_consumer_target"
 )
+TASK041_P4_W0P7_PILOT_TARGET_SCOPE = (
+    TASK041_BALH_W0P7NM_P6_PILOT_P4_TARGET_SCOPE
+)
 TASK041_V8_SWAP_OBSERVE_CONTINUE = "task041_v8_swap_observe_continue"
 TASK041_V8_REVIEW_PATH = (
     "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v8.md"
@@ -102,6 +107,9 @@ def task041_p4_registered_formal_target_scope(model_id: str) -> str | None:
         TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID: (
             TASK041_P4_REGISTERED_2NM_TARGET_SCOPE
         ),
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID: (
+            TASK041_P4_W0P7_PILOT_TARGET_SCOPE
+        ),
     }.get(str(model_id))
 
 
@@ -119,10 +127,11 @@ def task041_v8_resource_policy_binding(
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
     } or task041_balh_service_contract(model_id) is None:
         raise ValueError(
-            "V8 resource policy is limited to registered 13.5 nm, 5 nm, "
-            "and 2 nm Task041 cell-condensed consumers"
+            "V8 resource policy is limited to registered Task041 "
+            "cell-condensed consumers"
         )
     review_path = Path(__file__).resolve().parents[1] / TASK041_V8_REVIEW_PATH
     if not review_path.is_file():
@@ -788,11 +797,13 @@ def task041_fixed_h6_modal_gmres_binding(
     task041_resource_policy: str | None,
     expected_rank_cpus: Sequence[int] | None = None,
 ) -> dict[str, Any] | None:
-    """Bind the default-off fixed-H6 route to the three registered V9 cases."""
+    """Bind the default-off fixed-H6 route to registered V9 cases."""
 
     if not isinstance(enabled, bool):
         raise TypeError("fixed_h6_modal_gmres_research must be a boolean")
     if not enabled:
+        if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+            raise ValueError("the W0.7 reduced pilot requires fixed-H6 research")
         if expected_rank_cpus is not None:
             raise ValueError(
                 "expected_rank_cpus is only accepted with fixed-H6 research"
@@ -806,10 +817,13 @@ def task041_fixed_h6_modal_gmres_binding(
         TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID: (
             TASK041_P4_REFINEMENT_TARGET_TOLERANCE
         ),
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID: (
+            TASK041_P4_REFINEMENT_TARGET_TOLERANCE
+        ),
     }
     if model_id not in allowed_targets:
         raise ValueError(
-            "fixed-H6 research is limited to registered 13.5, 5, and 2 nm "
+            "fixed-H6 research is limited to registered Task041 "
             "cell-condensed cases"
         )
     case = task041_balh_case(model_id)
@@ -875,7 +889,7 @@ def task041_fixed_h6_packet_source_binding(
     producer_packet_root: str | Path | None,
     legacy_native_packet_descriptor: str | Path | None,
 ) -> dict[str, str] | None:
-    """Bind the one allowed fixed-H6 packet source, without validating shards."""
+    """Bind one registered fixed-H6 source route without validating packet shards."""
 
     if fixed_h6_binding is None:
         return None
@@ -885,13 +899,26 @@ def task041_fixed_h6_packet_source_binding(
         raise ValueError("fixed-H6 packet source requires its registered binding")
     producer_source = producer_packet_root is not None
     legacy_source = legacy_native_packet_descriptor is not None
+    model_id = str(fixed_h6_binding.get("model_id", ""))
+    if model_id == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID:
+        case = task041_balh_case(model_id)
+        if (
+            not isinstance(case, Mapping)
+            or case.get("producer_mode") != "fresh"
+            or producer_source
+            or legacy_source
+        ):
+            raise ValueError(
+                "the registered W0.7 pilot requires its fresh producer; packet reuse is not registered"
+            )
+        return {"source_type": "fresh_registered_producer"}
     if producer_source == legacy_source:
         raise ValueError(
             "fixed-H6 research requires exactly one producer root or legacy descriptor"
         )
     if producer_source:
         return None
-    if fixed_h6_binding.get("model_id") != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID:
+    if model_id != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID:
         raise ValueError(
             "fixed-H6 legacy-native packets are limited to the registered 5 nm case"
         )
@@ -1250,6 +1277,8 @@ def build_task041_balh_mode_prep_command(
     specification: Any,
     run_directory: str | Path,
     source_sha: str,
+    *,
+    expected_rank_cpus: Sequence[int] | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     failures = tuple(task041_balh_profile_errors(normalized))
@@ -1258,6 +1287,12 @@ def build_task041_balh_mode_prep_command(
         raise ValueError("Task041 side BAL_H profile rejected: " + detail)
     if normalized["execution"]["mpi_size"] != TASK041_BALH_MPI_SIZE:
         raise ValueError("Task041 side BAL_H mode-prep requires MPI8")
+    cpu_list = task041_balh_cpu_list(str(normalized["model_id"]))
+    if expected_rank_cpus is not None:
+        frozen_cpus = task041_parse_expected_rank_cpus(expected_rank_cpus)
+        if frozen_cpus is None:
+            raise ValueError("mode-prep expected_rank_cpus must be an explicit map")
+        cpu_list = ",".join(str(cpu) for cpu in frozen_cpus)
     return _mpi8_command(
         python_executable,
         TASK041_BALH_MODE_PREP_PHASE,
@@ -1269,7 +1304,7 @@ def build_task041_balh_mode_prep_command(
         source_sha,
         None,
         module="benchmarks.task041_exact_side_workflow",
-        cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
+        cpu_list=cpu_list,
         membind_node=task041_balh_membind_node(str(normalized["model_id"])),
     )
 

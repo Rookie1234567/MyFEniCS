@@ -118,3 +118,11 @@ marker非重叠阶段、owner计数scope、内存口径、Oct 3对照和完整ar
 官方W2输入为p6/h1.5、M1200、MPI8、cell-condensed；既有producer来自2026-09-18的TOAR packet，每方向选择1200模态，producer封套记录`TASK041_MODE_PREP_PACKET_READY`并已释放producer scope。旧packet与当前官方输入的SHA不同；先前逐行比较只见`model_id`和`run_id`不同，身份值分列保存，未改写packet。当前正式consumer仍须沿public链实际完成验证，本文没有读shards或运行validator。
 
 旧W2 consumer在历史sampled-repeat门停止，formal为0/4800；这不是packet身份失败。旧consumer在正式响应前测到process-tree RSS峰`642449637376 B`。此前单次node0观察扣reserve后约`442474672128 B`，但该观察没有绑定独立raw快照且不是fresh admission；两者仅提示容量风险，不能预测fixed-H6新路线峰值。W2新unit/root、CPU map、ABI和资源策略均尚未准备或资格化，未运行QEP、FE或新场。详细身份哈希、容量口径和未来准入缺项见[W2只读计划](../../results/task041_v9_w2_fixed_h6_readonly_preparation_20261007/w2_readonly_plan.json)，SHA `e7f33e11636fc541958a343fae037cff0f14f91568751f1ba62f16ecc89f5aab`；W2计划不继承W5资源限值，也不把输入中的`side_residual_correction_steps=1`误作P4 target，注册P4仍是`5e-13`且最多两次同因子修正。
+
+## H1：W 0.7 nm reduced-p6 pilot 注册与 public-contract serial 收口（2026-10-07）
+
+本轮在既有单 `.dat` 公共链注册一个独立的缩减 pilot：`task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot`，几何为 `10 × 5 nm`、`z=-2..26 nm`、内部 Hybrid 界面 `2/22 nm`，p6/h0.70、M400、MPI8；fixed-H6开启，P4 target `5e-13`且最多两次同因子精化。producer路径声明为`fresh_registered_producer`，producer/consumer使用同一冻结rank CPU序列；其他研究开关保持关闭。材料JSON是来源派生候选，SHA `fe3bf4e5df2f369907f21033a4aa84e62fdf7b3a0961e05ec29743c9cafd70d2`，不代表材料不确定度已传播或实验精度已认证。
+
+六个批准selector对应12个唯一serial case最终均在分批attempt中通过，但不是在同一最终test SHA上一次整组运行。13个pytest父attempt（含fixture断言失败与受影响节点重试）均保留，并各自只计一次V5；父wall合计 `65.0168370383326 s`。V5 ledger从131项增至144项，charged总量 `519069.20739736536 s`，SHA `24a6f6917006275d5035aa220cfb83e5755be9afe0f8036cc9793cc4e3b8bca4`。逐attempt失败原因和原始证据见[测试摘要](outcomes/test_summary.md)。最终test351 SHA为 `f92641ffd227f108fd42071103d3ea820d9983db6bfd456230c3dc8405cb33af`；7个生产Python源文件保持固定diff SHA。
+
+fresh serial ABI stdout SHA `d14b69359735f64bfcc72de26de625f4bdb3360e9a5370ed1b22d533e690256e`：CPU10、membind0、native complex128/Int32和六线程（含BLIS）通过；后续selector重用了同一env/CPU身份的ABI证据。此阶段只验证输入解析、注册身份、路由与轻量service合同；没有运行QEP、MPI8 producer、FE、consumer或service finalizer，也没有生成可复用mode packet。下一步是准备新的ignored producer→validator→consumer→finalizer运行包，fresh资源/ABI准入和唯一dispatch仍需单独审核。本pilot不代表Full `50 × 25 nm` W模型、W0.7正式资格、2 TB容量或48 h目标已达成。
