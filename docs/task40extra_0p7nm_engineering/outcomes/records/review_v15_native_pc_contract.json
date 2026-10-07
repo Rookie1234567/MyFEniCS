@@ -1,0 +1,247 @@
+{
+  "schema": "task40extra.review_v15_native_pc_contract.v1",
+  "task": "Task40extra_0p7nm_engineering",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+  "authoritative_contract": "docs/task40extra_0p7nm_engineering/review_report_v15.md#4-v15-核心决定-独立-native-增广残差约束的不精确参考-pc",
+  "strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+  "purpose": "同一四 q p6 参考因子的近似预条件器新准入合同；不改真实 target 方程、材料、缺口、MPC、模式或最终物理门。旧 strict/inexact 结果保留为各自历史标签。",
+  "scales": {
+    "frozen_FE_rhs_scale": "S = ||f||_2 + ||B H_p^{-1} g||_2, evaluated from the original RHS",
+    "scale_is_frozen_from_original_rhs": true,
+    "candidate_amplitude_or_near_zero_sector_floor_used": false,
+    "alpha_closure": "retain both frozen original-RHS scale and candidate original scale; both must meet the adopted contract",
+    "FE_and_port_scales_combined_without_basis": false
+  },
+  "thresholds": {
+    "independent_global_native_eliminated_FE_relative_max": 1e-08,
+    "independent_global_native_complete_augmented_FE_relative_max": 1e-08,
+    "noncancelling_budget_eta_max": 1e-08,
+    "global_alpha_closure_relative_max": 1e-09,
+    "actual_per_q_MatSolve_true_residual_relative_max": 1e-08,
+    "initial_factor_admission_probe_true_residual_relative_max_strict": 1e-10,
+    "decomposition_closure_relative_max": 1e-10,
+    "target_A6_after_release_relative_max": 1e-06,
+    "target_identity_relative_max": 1e-10,
+    "mapping_coverage_adjoint_mode_and_RHS_identity": "original V15 gates unchanged; complete mode coverage required",
+    "internal_recovery_native_recovery_Schur_port_and_saved_field_representation": "original scopes and thresholds unchanged",
+    "old_sector_native_1e-11_and_per_sector_ratio": "raw values, denominator, and old PASS/FAIL preserved; separately judged by V15 budget for PC use"
+  },
+  "correction_and_selection": {
+    "maximum_complete_augmented_residual_corrections_per_apply": 1,
+    "maximum_extra_q_MatSolves_per_correction": 4,
+    "same_four_q_factors_reused": true,
+    "new_factorization_allowed": false,
+    "recursive_correction_or_hidden_inner_Krylov_allowed": false,
+    "initial_and_corrected_complete_states_saved_and_independently_rejudged": true,
+    "candidate_selection": "All candidates, including one that passes old strict labels, must first pass the complete V15 budgets, independent global native equations, and all unchanged structural gates. Select one complete state; never mix the best u, alpha, or individual metrics from different candidates. If the initial state passes, use it without forced refinement; if it fails only new numerical budgets and structural/resource gates pass, permit at most one correction; otherwise reject.",
+    "NaN_Inf_mapping_factor_or_resource_failures_may_be_swallowed": false
+  },
+  "Gx560_observation": {
+    "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_reference_v15",
+    "output_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v15__full3d_iterative__mpi1__Mna/20261007T112908.545968Z",
+    "event_source": "v15_p6_reference_events.jsonl; task40_v10_p6_candidate_summary.json",
+    "initial_factor_probe_count": 4,
+    "initial_factor_probe_limit": 1e-10,
+    "initial_factor_probes_strict_pass": true,
+    "startup_reference_q_MatSolve_count": 16,
+    "initial_factor_probe_q_MatSolve_count": 4,
+    "target_PC_apply_count": 3,
+    "target_PC_q_MatSolve_count": 12,
+    "correction_count": 0,
+    "correction_q_MatSolve_count": 0,
+    "total_q_MatSolve_count": 32,
+    "per_apply_full_PC_wall_seconds": null,
+    "per_apply_full_PC_wall_seconds_status": "UNKNOWN_NOT_SEPARATELY_TIMED; native_evaluation_seconds is a subphase only",
+    "native_evaluation_seconds_by_apply": [
+      13.98000237706583,
+      8.303275091107935,
+      8.755025952938013
+    ],
+    "maximum_metrics_across_all_three_applies": {
+      "q_solve_relative_true_residual": 1.6728992449013993e-10,
+      "eliminated_FE_relative_residual": 2.469234290753763e-09,
+      "noncancelling_budget_eta": 4.965656744485208e-09,
+      "complete_augmented_FE_relative_residual": 1.9232496878824963e-10,
+      "alpha_closure_relative_residual": 1.7789327117126578e-11,
+      "all_V15_numeric_thresholds_pass": true
+    },
+    "calls": [
+      {
+        "call": 1,
+        "selected_candidate_index": 0,
+        "initial_factor_call_counter_before": 16,
+        "initial_factor_call_counter_after": 20,
+        "initial_factor_call_counter_delta": 4,
+        "correction_factor_calls_raw": null,
+        "correction_observed": false,
+        "q_MatSolve_count": 4,
+        "native_evaluation_seconds": 13.98000237706583,
+        "metrics": {
+          "q_solve_relative_true_residual": 1.5744074325045077e-10,
+          "eliminated_FE_relative_residual": 2.469234290753763e-09,
+          "noncancelling_budget_eta": 4.965656744485208e-09,
+          "complete_augmented_FE_relative_residual": 1.9232496878824963e-10,
+          "alpha_closure_relative_residual": 1.7744073402983854e-11
+        },
+        "V15_status": "PASS",
+        "old_strict_q_1e-10_label": "FAIL; actual solve remains within the distinct V15 1e-8 limit",
+        "selected_state_sha256": "6f227866b598720b875bd960a4773754f0b086baa991ff86a8f57e11c6db4fa5"
+      },
+      {
+        "call": 2,
+        "selected_candidate_index": 0,
+        "initial_factor_call_counter_before": 20,
+        "initial_factor_call_counter_after": 24,
+        "initial_factor_call_counter_delta": 4,
+        "correction_factor_calls_raw": null,
+        "correction_observed": false,
+        "q_MatSolve_count": 4,
+        "native_evaluation_seconds": 8.303275091107935,
+        "metrics": {
+          "q_solve_relative_true_residual": 1.6728992449013993e-10,
+          "eliminated_FE_relative_residual": 1.7218560606121957e-09,
+          "noncancelling_budget_eta": 3.463881640184704e-09,
+          "complete_augmented_FE_relative_residual": 1.2281052516091713e-10,
+          "alpha_closure_relative_residual": 1.7789327117126578e-11
+        },
+        "V15_status": "PASS",
+        "old_strict_q_1e-10_label": "FAIL; actual solve remains within the distinct V15 1e-8 limit",
+        "selected_state_sha256": "03ab5b9c6d4fdc4f9f5d09d9b5f26d07d6eaccd24ac3028379996d9e1171c17b"
+      },
+      {
+        "call": 3,
+        "selected_candidate_index": 0,
+        "initial_factor_call_counter_before": 24,
+        "initial_factor_call_counter_after": 28,
+        "initial_factor_call_counter_delta": 4,
+        "correction_factor_calls_raw": null,
+        "correction_observed": false,
+        "q_MatSolve_count": 4,
+        "native_evaluation_seconds": 8.755025952938013,
+        "metrics": {
+          "q_solve_relative_true_residual": 1.2181831144747779e-11,
+          "eliminated_FE_relative_residual": 1.1390931213076856e-10,
+          "noncancelling_budget_eta": 2.3029022722884166e-10,
+          "complete_augmented_FE_relative_residual": 1.0170007843691498e-11,
+          "alpha_closure_relative_residual": 1.142131712315168e-11
+        },
+        "V15_status": "PASS",
+        "old_strict_q_1e-10_label": "PASS",
+        "selected_state_sha256": "59d7079636a59badcf6e03385d28a3a4e262eb602a30b84190078fdbc24ad417"
+      }
+    ],
+    "structural_gates": {
+      "all_four_q_used_each_apply": true,
+      "mapping_and_full_mode_coverage": "PASS under unchanged original gates",
+      "adjoint_work_identity": "PASS under unchanged original gates",
+      "RHS_and_physical_mode_identity": "PASS under unchanged original gates",
+      "internal_recovery_native_recovery_Schur_port_identity_and_saved_field_representation": "PASS under unchanged original gates",
+      "post_release_A6_and_physics": "PASS; see formal_results and independent checker"
+    }
+  },
+  "factor_and_PC_resource_notes": {
+    "all_four_factors_live_simultaneously": true,
+    "all_four_factors_live_count": 4,
+    "INFOG9_raw_by_q": {
+      "q0": 41320088,
+      "q1": 41253248,
+      "q2": 41789336,
+      "q3": 41269544
+    },
+    "INFOG9_entries_decoded": null,
+    "INFOG19_allocated_upper_bound_sum_bytes_decimal": 4645000000,
+    "INFOG22_used_upper_bound_sum_bytes_decimal": 4080000000,
+    "factor_setup_parent_seconds": 54.22691535402555,
+    "numeric_child_seconds_by_q": [
+      4.608882202999666,
+      9.8442988259485,
+      6.02894541004207,
+      13.55097411503084
+    ],
+    "all_q_live_before_destroy_tree_rss_bytes": 10189733888,
+    "all_q_live_before_destroy_PSS_bytes": null,
+    "all_q_live_before_destroy_swap_bytes": 0,
+    "post_release_event": {
+      "label": "v10_candidate_reference_factor_release_complete",
+      "timestamp_ns": 1791375180969806284,
+      "root_pid": 1957605,
+      "identity_count": 4,
+      "identity_complete": true,
+      "reported_process_tree_rss_bytes": 4354420736,
+      "rss_semantics": "sum of same four process member RSS values",
+      "PSS_bytes": null,
+      "swap_bytes": 0
+    },
+    "release_scope_limit": "Paired event samples share the same root and all four PID/start-tick identities; rss_bytes is explicitly sum(member RSS). The measured decrease is for whole reference-PC cleanup and cannot be attributed solely to MUMPS. Do not compare it to a process-tree peak.",
+    "paired_reference_PC_cleanup_samples": {
+      "sampling_semantics_source": "benchmarks/task038_full3d_jit_staging.py:389-401; rss_bytes is sum(member.rss_bytes)",
+      "same_root_pid": true,
+      "same_members_pid_start_ticks": true,
+      "rss_drop_bytes": 5934645248,
+      "scope": "whole reference-PC cleanup observation; not attributable solely to MUMPS and not a process-tree-peak subtraction",
+      "before": {
+        "label": "packet_v15_pc_last_apply_projected",
+        "timestamp_ns": 1791375177031350087,
+        "root_pid": 1957605,
+        "identity_count": 4,
+        "identity_complete": true,
+        "rss_bytes": 10289065984,
+        "rss_semantics": "sum of the four member rss_bytes",
+        "swap_bytes": 0,
+        "members_pid_start_ticks": [
+          [
+            1957605,
+            94616837
+          ],
+          [
+            1957636,
+            94616870
+          ],
+          [
+            1957637,
+            94616871
+          ],
+          [
+            1957638,
+            94616871
+          ]
+        ]
+      },
+      "after": {
+        "label": "v10_candidate_reference_factor_release_complete",
+        "timestamp_ns": 1791375180969806284,
+        "root_pid": 1957605,
+        "identity_count": 4,
+        "identity_complete": true,
+        "rss_bytes": 4354420736,
+        "rss_semantics": "sum of the same four member rss_bytes",
+        "swap_bytes": 0,
+        "members_pid_start_ticks": [
+          [
+            1957605,
+            94616837
+          ],
+          [
+            1957636,
+            94616870
+          ],
+          [
+            1957637,
+            94616871
+          ],
+          [
+            1957638,
+            94616871
+          ]
+        ]
+      }
+    }
+  },
+  "evidence": {
+    "run_summary_sha256": "f3b9d627dc1a62a8a18643c11b48cd6cae4707b6a96aec3a55670fc8a5e0b211",
+    "candidate_summary_sha256": "57c9085089cc81d4a51c074a218484a8044a73e0888776c6a66b5e5d61dbdcfe",
+    "native_pc_event_log": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v15__full3d_iterative__mpi1__Mna/20261007T112908.545968Z/v15_p6_reference_events.jsonl",
+    "independent_output_checker_sha256": "14f8d956d3236951952fceb544d4c9935212dc30bc812a4f0fa4b82e8509926f"
+  }
+}

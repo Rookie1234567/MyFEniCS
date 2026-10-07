@@ -1,0 +1,406 @@
+{
+  "E1_global_swap_diagnostic": {
+    "attribution": "UNRESOLVED; host/global page deltas are not attributable to the Task40 process",
+    "baseline_pages": {
+      "pswpin": 843,
+      "pswpout": 6632
+    },
+    "cgroup_swap_peak_bytes": 0,
+    "delta_pages": {
+      "pswpin": 315,
+      "pswpout": 55203
+    },
+    "end_pages": {
+      "pswpin": 1158,
+      "pswpout": 61835
+    },
+    "scope": "WSL-global diagnostic, not dedicated Task40 job/cgroup",
+    "task_swap_peak_bytes": 0
+  },
+  "E1_resource_gate": {
+    "dynamic_total_cap_bytes": 12474302464,
+    "gate": "all_q_symbolic_before_any_numeric",
+    "incremental_headroom_inequality_passed": false,
+    "is_oom": false,
+    "live_tree_rss_bytes": 12064264192,
+    "official_result": false,
+    "physical_available_bytes": 544256000,
+    "projected_tree_rss_bytes": 19192602560,
+    "small_evidence_reserve_bytes": 134217728,
+    "total_rss_inequality_passed": false
+  },
+  "E1_timebases": {
+    "interpretation": "三项原始时间分列。UTC 与 monotonic 差值本身不定性数值失败，不据此改写 campaign budget。",
+    "manifest_UTC_wall_interval_seconds": 6275.443429654,
+    "run_summary_full_workflow_monotonic_seconds": 5671.918120639981,
+    "watchdog_elapsed_monotonic_seconds": 5671.578105875989
+  },
+  "Gx560_cost_comparison": {
+    "all_four_factors_live_simultaneously": true,
+    "all_q_pre_destroy_tree_rss_bytes": 10189733888,
+    "assembly_strategy": "LEGACY_GLOBAL_CSR_SUM",
+    "assembly_subphases_by_sector": [
+      {
+        "assembly_parent_seconds": 230.1554919469636,
+        "contribution_generation_seconds": 14.59096719918307,
+        "global_csr_accumulation_calls": 2916,
+        "local_projection_seconds": 60.93788634915836,
+        "q_indices": [
+          0,
+          2
+        ],
+        "sector": 0,
+        "sparse_accumulation_seconds": 154.39376044040546
+      },
+      {
+        "assembly_parent_seconds": 192.38454383797944,
+        "contribution_generation_seconds": 12.947970218257979,
+        "global_csr_accumulation_calls": 2372,
+        "local_projection_seconds": 57.76932401303202,
+        "q_indices": [
+          1,
+          3
+        ],
+        "sector": 1,
+        "sparse_accumulation_seconds": 121.44291810877621
+      }
+    ],
+    "classification": "FULL_TARGET_AND_PHYSICS_PASS; not an end-to-end speedup",
+    "factor_setup_parent_seconds": 54.22691535402555,
+    "interpretation": "outer iteration 数下降，但完整 workflow 增长约 25%、RSS 接近翻倍；不能宣称全流程加速。",
+    "new_outer_iterations": 3,
+    "new_tree_rss_peak_bytes": 10294927360,
+    "new_workflow_monotonic_seconds": 2407.5724155559437,
+    "next_single_engineering_focus": "A Gx-safe global CSR accumulation candidate with bounded staging; verify each q matrix identity/result and compare end-to-end assembly time and staging peak.",
+    "numeric_child_seconds_by_q": [
+      4.608882202999666,
+      9.8442988259485,
+      6.02894541004207,
+      13.55097411503084
+    ],
+    "old_B0_only_preallocated_CSR_comparison": {
+      "Gx_256MiB_staging_cap_qualified": false,
+      "Gx_preallocation_result": "NOT_QUALIFIED; do not generalize B0-only timing",
+      "MUMPS_factors_built": false,
+      "all_operator_gates_passed": true,
+      "legacy_seconds": 50.48501793597825,
+      "preallocated_seconds": 44.114501785021275,
+      "saved_seconds": 6.370516150956975
+    },
+    "old_outer_iterations": 171,
+    "old_tree_rss_peak_bytes": 5255675904,
+    "old_workflow_monotonic_seconds": 1925.862865802017,
+    "paired_reference_PC_cleanup_samples": {
+      "after_label": "v10_candidate_reference_factor_release_complete",
+      "after_root_pid": 1957605,
+      "after_rss_bytes": 4354420736,
+      "after_timestamp_ns": 1791375180969806284,
+      "before_label": "packet_v15_pc_last_apply_projected",
+      "before_root_pid": 1957605,
+      "before_rss_bytes": 10289065984,
+      "before_timestamp_ns": 1791375177031350087,
+      "interpretation": "whole reference-PC cleanup observation; not solely attributable to MUMPS and not compared with a peak",
+      "rss_drop_bytes": 5934645248,
+      "rss_semantics": "rss_bytes is sum(member rss_bytes), per benchmarks/task038_full3d_jit_staging.py:389-401",
+      "same_four_member_pid_start_tick_set": true,
+      "swap_bytes_before_after": 0
+    },
+    "parent_child_timing_scope": "Child subphases are nested in their parent intervals; do not sum parent and child times. The total workflow increase is not fully attributed to sparse accumulation.",
+    "post_release_resource_event": {
+      "PSS_bytes": null,
+      "identity_complete": true,
+      "identity_count": 4,
+      "label": "v10_candidate_reference_factor_release_complete",
+      "member_pid_start_ticks": [
+        [
+          1957605,
+          94616837
+        ],
+        [
+          1957636,
+          94616870
+        ],
+        [
+          1957637,
+          94616871
+        ],
+        [
+          1957638,
+          94616871
+        ]
+      ],
+      "reported_process_tree_rss_bytes": 4354420736,
+      "root_pid": 1957605,
+      "rss_semantics": "rss_bytes is sum of the same four process members",
+      "swap_bytes": 0,
+      "timestamp_ns": 1791375180969806284
+    },
+    "post_release_scope_caveat": "Same-root, same four PID/start-tick member set; rss_bytes is the sum of member RSS. The 5,934,645,248 B drop is observed over whole reference-PC cleanup, not attributable solely to MUMPS and not a peak subtraction.",
+    "workflow_delta_attribution": "UNKNOWN; do not attribute the full +481.70955 s to any one assembly subphase.",
+    "workflow_delta_fraction": 0.2501,
+    "workflow_delta_seconds": 481.7095497539267,
+    "comparison_scope": "两次不同冻结源码的历史完整运行；没有同日交错控制缓存、供电或CPU状态。已记录时间和RSS比例只作观察，不作因果归因或受控加速结论。"
+  },
+  "branch": "task40extra_0p7nm_engineering",
+  "campaign_accounting": {
+    "delta_to_latest_observation_seconds": 19928.130838449448,
+    "executor_closeout_observations": [
+      {
+        "accounting_record_sequence": 64143,
+        "adjacent_charged_seconds": 4261.018818522,
+        "cumulative_charged_seconds": 59234.28902233291,
+        "label": "review_v15_p5_executor_closeout",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/executor_v15_closeout_observation.json",
+        "receipt_sha256": "b119f4b4ae4002bafa0450a8328d5125381fb7c86a2d01468dc9f20d14a0e964",
+        "remaining_numerical_seconds": 26565.71097766709,
+        "sample_utc": "2026-10-07T15:48:47.610379136Z",
+        "sample_utc_ns": 1791388127610379136
+      },
+      {
+        "accounting_record_sequence": 64144,
+        "adjacent_charged_seconds": 240.139806441,
+        "cumulative_charged_seconds": 59474.42882877391,
+        "label": "review_v15_p5_final_executor_closeout",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/executor_v15_final_closeout_observation.json",
+        "receipt_sha256": "17673999f2c02b82912bb8d9c2beba8c0e4e91000d5624b8b6a3a290a9b40069",
+        "remaining_numerical_seconds": 26325.57117122609,
+        "sample_utc": "2026-10-07T15:52:47.750185577Z",
+        "sample_utc_ns": 1791388367750185577
+      }
+    ],
+    "latest_executor_observation_label": "review_v15_p5_final_executor_closeout",
+    "latest_executor_observation_sequence": 64144,
+    "named_run_workflow_monotonic_sum_seconds": 9245.74848158599,
+    "rule": "UTC policy accounting, run-summary monotonic, watchdog monotonic and UTC wall interval remain separate. Do not infer a numerical failure or rewrite budget by subtracting their differences.",
+    "runtime_repair_checkpoint_cumulative_seconds": 39546.29799032446,
+    "unallocated_intervening_charge": "UNKNOWN; aggregate policy charge minus workflow clocks is not attributable to any one stage."
+  },
+  "fixed_window": {
+    "T0_utc": "2026-10-06T23:21:33.326800586Z",
+    "closeout_reserve_seconds": 600,
+    "deadline_utc": "2026-10-07T23:21:33.326800586Z",
+    "latest_cumulative_policy_charge_seconds": 59474.42882877391,
+    "latest_is_pre_closeout_observation": false,
+    "latest_observation_label": "review_v15_p5_final_executor_closeout",
+    "new_window_opened": false,
+    "numerical_cutoff_seconds": 85800,
+    "post_closeout_observation": {
+      "accounting_record_sequence": 64144,
+      "adjacent_charged_seconds": 240.139806441,
+      "cumulative_charged_seconds": 59474.42882877391,
+      "label": "review_v15_p5_final_executor_closeout",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/executor_v15_final_closeout_observation.json",
+      "receipt_sha256": "17673999f2c02b82912bb8d9c2beba8c0e4e91000d5624b8b6a3a290a9b40069",
+      "remaining_numerical_seconds": 26325.57117122609,
+      "sample_utc": "2026-10-07T15:52:47.750185577Z",
+      "sample_utc_ns": 1791388367750185577
+    },
+    "prior_post_closeout_observation": {
+      "accounting_record_sequence": 64143,
+      "adjacent_charged_seconds": 4261.018818522,
+      "cumulative_charged_seconds": 59234.28902233291,
+      "label": "review_v15_p5_executor_closeout",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/executor_v15_closeout_observation.json",
+      "receipt_sha256": "b119f4b4ae4002bafa0450a8328d5125381fb7c86a2d01468dc9f20d14a0e964",
+      "remaining_numerical_seconds": 26565.71097766709,
+      "sample_utc": "2026-10-07T15:48:47.610379136Z",
+      "sample_utc_ns": 1791388127610379136
+    },
+    "remaining_at_that_observation_seconds": 26325.57117122609,
+    "sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+    "total_seconds": 86400
+  },
+  "historical_E2_reference": {
+    "cells": 880,
+    "evidence_path": "docs/task40extra_0p7nm_engineering/outcomes/records/electrical_size_v2.json",
+    "evidence_sha256": "aeff2aaf6f384ab87074bd65eedaa5ed661bbcc684a3e4660cbcce642035f898",
+    "historical_source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+    "old_route_tree_RSS_peak_bytes": 11349196800,
+    "old_route_workflow_seconds": 7692.028065770981,
+    "original_classification": "ORIGINAL_WORKER_FAILED; official_result=false",
+    "original_failure": "Output sampling 24x24 did not meet required minimum 25x7 after solve.",
+    "original_worker_exit": 4,
+    "qualification_boundary": "E1 V15 controlled stop does not inherit E2 historical capacity; Ny=4/700-mode E2 does not qualify y or general-Ny.",
+    "retained_modes": 700,
+    "route": "historical p6 target + exact p4 correction",
+    "saved_field_v3_recovery": {
+      "A_volume": 0.02489005360260621,
+      "R_total": 0.05116886160983426,
+      "T_total": 0.9239410512847893,
+      "classification": "SAVED_FIELD_OFFLINE_OUTPUT_RECOVERY; ORIGINAL_WORKER_FAILED_PRESERVED",
+      "fresh_PDE_KSP_factor": false,
+      "native_A6": 9.793073227317083e-07,
+      "process_seconds": 74.153920702
+    },
+    "v15_new_reference_PC": "NOT_RUN"
+  },
+  "q_factor_inventory": {
+    "E1_INFOG16_17_sum_symbolic_estimate_bytes": 6530000000,
+    "E1_actual_CSR_NNZ_total": 84935314,
+    "E1_actual_CSR_rows_NNZ_by_q": [
+      [
+        38424,
+        21010722
+      ],
+      [
+        38508,
+        21303127
+      ],
+      [
+        38508,
+        21314038
+      ],
+      [
+        38508,
+        21307427
+      ]
+    ],
+    "E1_actual_CSR_rows_total": 153948,
+    "E1_numeric_factor_inventory": null,
+    "E1_numeric_factor_inventory_status": "NOT_RUN; symbolic INFOG16/17 estimate is not measured numeric allocation",
+    "Gx560_INFOG9_factor_entries_decoded": null,
+    "Gx560_INFOG9_raw_by_q": {
+      "q0": 41320088,
+      "q1": 41253248,
+      "q2": 41789336,
+      "q3": 41269544
+    },
+    "Gx560_SUM_INFOG19_allocated_upper_bytes": 4645000000,
+    "Gx560_SUM_INFOG22_used_upper_bytes": 4080000000,
+    "Gx560_actual_CSR_rows_NNZ_by_q": [
+      [
+        28508,
+        15451743
+      ],
+      [
+        28508,
+        15479361
+      ],
+      [
+        28576,
+        15581290
+      ],
+      [
+        28508,
+        15479361
+      ]
+    ],
+    "Gx560_actual_factor_CSR_NNZ_total": 61991755,
+    "Gx560_all_four_factors_live_simultaneously": true,
+    "Gx560_live_factor_count": 4,
+    "INFOG9": "保留原始整数；不推断 factor entries、fill 或字节数。"
+  },
+  "raw_audit": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_v15_closeout_raw_audit.json",
+    "sha256": "2087970ab31f0f299d64c846b021f2c6be4ce68300bdee54dccfa51d88f77250"
+  },
+  "run_time_and_resource_table": [
+    {
+      "PSS": null,
+      "cgroup_peak_bytes": 3216044032,
+      "cgroup_swap_peak_bytes": 0,
+      "run": "B0 original",
+      "task_swap_peak_bytes": 0,
+      "tree_rss_peak_bytes": 2776645632,
+      "utc_interval_seconds": null,
+      "watchdog_monotonic_seconds": 1052.5283799329773,
+      "workflow_monotonic_seconds": 1052.75076205004
+    },
+    {
+      "PSS": null,
+      "cgroup_peak_bytes": 910651392,
+      "cgroup_swap_peak_bytes": 0,
+      "run": "B0 saved-field recovery",
+      "task_swap_peak_bytes": 0,
+      "tree_rss_peak_bytes": 770363392,
+      "utc_interval_seconds": null,
+      "watchdog_monotonic_seconds": 10.687777973012999,
+      "workflow_monotonic_seconds": 10.71895933500491
+    },
+    {
+      "PSS": null,
+      "cgroup_peak_bytes": 11674669056,
+      "cgroup_swap_peak_bytes": 0,
+      "outer_iterations": 3,
+      "pure_KSP_seconds": 155.863280533,
+      "retained_outer_through_terminal_snapshot_seconds": 166.360910008,
+      "run": "Gx560 V15",
+      "task_swap_peak_bytes": 0,
+      "tree_rss_peak_bytes": 10294927360,
+      "utc_interval_seconds": null,
+      "watchdog_monotonic_seconds": 2406.9811705389293,
+      "workflow_monotonic_seconds": 2407.5724155559437
+    },
+    {
+      "UTC_interval_seconds": null,
+      "cgroup_swap_peak_bytes": 0,
+      "derived_cause": "EXECUTOR_COORDINATION_INTERRUPTION",
+      "run": "E1 coordination interruption",
+      "task_swap_peak_bytes": 0,
+      "time_refunded": false,
+      "watchdog_monotonic_seconds": 102.75083850300871,
+      "workflow_monotonic_seconds": 102.78822400502395
+    },
+    {
+      "PSS": null,
+      "UTC_interval_seconds": 6275.443429654,
+      "cgroup_peak_bytes": 12346351616,
+      "cgroup_swap_peak_bytes": 0,
+      "host_global_swap_delta_pages": {
+        "attribution": "UNRESOLVED",
+        "pswpin": 315,
+        "pswpout": 55203
+      },
+      "run": "E1 V15 resource stop",
+      "task_swap_peak_bytes": 0,
+      "tree_rss_peak_bytes": 12234416128,
+      "watchdog_monotonic_seconds": 5671.578105875989,
+      "workflow_monotonic_seconds": 5671.918120639981
+    }
+  ],
+  "schema": "task40extra.review_v15_cost_and_readiness.v1",
+  "selective_merge_groups": [
+    {
+      "group": "production numerical/core",
+      "recommendation": "不设 production default；V15 保持显式 opt-in。"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "recommendation": "由主控审查固定窗口、身份、资源准入和后代清理通用改动。"
+    },
+    {
+      "group": "checker/benchmark",
+      "recommendation": "保留保存场恢复、独立 Gx560 输出和同离散 checker。"
+    },
+    {
+      "group": "compact evidence/docs",
+      "recommendation": "四份 compact、response、index 和 summary 作为一组审阅。"
+    },
+    {
+      "group": "research-only",
+      "recommendation": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15 四 q p6 参考 PC 仅研究 opt-in。"
+    },
+    {
+      "group": "do-not-merge / do-not-claim",
+      "recommendation": "不宣称 E1 数值结果、连续收敛、原尺寸/2 TB decimal (2000000000000 B)/48 h 资格或全流程速度提升。"
+    }
+  ],
+  "source_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+  "target_readiness": {
+    "derived_payloads_not_RSS": "Krylov ~3.70 GB, scratch ~4.43 GB, one dense 32060x32060 complex128 H ~16.45 GB are derived single-object payloads, not simultaneous RSS or proof of target feasibility/infeasibility.",
+    "next_focus": "Gx560 bounded-staging global CSR accumulation candidate, based on measured sparse-accumulation subphase; separately retain y/z and general-Ny target qualification gaps. Do not attribute the complete workflow delta to this phase.",
+    "open_blockers": [
+      "y/z accuracy evidence and general-Ny orbit/index/mapping qualification",
+      "target q CSR NNZ, indptr safety, all-q factor fill/workspace and simultaneous inventory",
+      "global NumPy/int32/MPI1 assumptions; distributed/int64 route not qualified",
+      "reference Hhat is still materialized through _materialize_Hhat(); its mode-squared intermediate lifetime is not qualified",
+      "full AUTO 882-row selected-mode boundary route and output/index identity in this implementation; 84-row compressed alternative is not qualified",
+      "target recovery/output/release lifecycle and cold end-to-end workflow measured against decimal 2 TB and 48 h"
+    ],
+    "status": "NOT_QUALIFIED",
+    "target": "50 x 25 x 140 nm; wavelength 0.7 nm; memory limit 2000000000000 B (decimal 2 TB); 48 h",
+    "target_memory_limit_decimal_bytes": 2000000000000,
+    "target_memory_limit_label": "2 TB decimal = 2000000000000 B"
+  },
+  "task": "Task40extra_0p7nm_engineering"
+}

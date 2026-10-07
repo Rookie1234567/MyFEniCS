@@ -1,0 +1,149 @@
+{
+  "schema": "task40extra.review_v15_failure_witness_and_repairs.v1",
+  "task": "Task40extra_0p7nm_engineering",
+  "branch": "task40extra_0p7nm_engineering",
+  "source_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+  "witnesses": [
+    {
+      "id": "B0-original-v15-gate-routing-failure",
+      "source_sha": "0201815c6b13f8456e9717ab93cc5023d4c946d1",
+      "raw_parent_classification": "WORKER_FAILED",
+      "exit_status": 4,
+      "candidate_classification": "B0_P6_FULL_A6_OR_IDENTITY_GATE_FAIL",
+      "candidate_status": "NUMERICAL_FAIL",
+      "official_result": false,
+      "workflow_monotonic_seconds": 1052.75076205004,
+      "post_release_A6_true_residual": 1.6089774391665316E-8,
+      "independent_native_witness": 1.6089791915820923E-8,
+      "recorded_port_identity_relative": 2.3487194882225214E-15,
+      "recorded_port_identity_limit": -1.0,
+      "interpretation": "保存原始失败。候选记录的负端口身份限值使 Gate 失败；真残差的单项通过不能覆盖原始整组 Gate。"
+    },
+    {
+      "id": "B0-saved-field-output-recovery",
+      "source_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+      "saved_field_source_sha": "0201815c6b13f8456e9717ab93cc5023d4c946d1",
+      "status": "PASS",
+      "result_classification": "B0_CANDIDATE_POSTPROCESS_RECOVERY_PASS",
+      "official_result": true,
+      "KSP_solve_count": 0,
+      "reference_factors_built": false,
+      "native_A6_matvec_count": 1,
+      "R_T_A_Avolume": {
+        "R": 0.9842736080926772,
+        "T": 0.014240518143988908,
+        "A_balance": 0.001485873763333926,
+        "A_volume": 0.00148587384621333
+      },
+      "energy_closure_absolute": 8.287925901129256E-11,
+      "absorption_consistency_absolute": 8.287940407754324E-11,
+      "original_failure_preserved": true,
+      "interpretation": "仅对已保存场恢复输出和独立重算；不改写原始 worker exit 4。"
+    },
+    {
+      "id": "Gx560-old-field-first-comparison-attempt",
+      "classification": "COMPARISON_BLOCKED_OR_FAILED",
+      "elapsed_seconds": 4.685804,
+      "artifact": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/gx560_v15_old_field_same_discrete_comparison_20261007.json",
+      "sha256": "97940d6c0f9c8919f0c2e781ff05a9ff966950e0e7713ba8868850b2dcd3b9b5"
+    },
+    {
+      "id": "Gx560-old-field-v2-aggregate-hash-discrepancy",
+      "status": "PASS",
+      "old_aggregate_sha256": "9030a1b8e5fbf66e899796f8a36dd4762f0c3eedc97452bc75b4bed77f9f9f5d",
+      "recomputed_aggregate_sha256": "954e19d6f9bd6c1dca7975084dffb7f4e5b1beac508c6a4b1709478075248b8c",
+      "all_nine_constituent_arrays_exact": true,
+      "rebuilt_arrays_np_array_equal": true,
+      "target_mpc_sha256": "e21a119c02bbc1f44be219be066a9aea03d001aceb15f602623461cefaceb89d",
+      "aggregate_root_cause": "UNKNOWN; discrepancy remains unexplained and is not the sole identity gate."
+    },
+    {
+      "id": "E1-coordination-interruption",
+      "raw_result_classification": "USER_CONTROLLED_STOP",
+      "raw_resource_classification": "USER_CONTROLLED_STOP",
+      "raw_exit_status": -9,
+      "derived_cause": "EXECUTOR_COORDINATION_INTERRUPTION",
+      "human_stop_requested": false,
+      "controller_message_requested_kill": false,
+      "workflow_monotonic_seconds": 102.78822400502395,
+      "watchdog_monotonic_seconds": 102.75083850300871,
+      "time_refunded": false,
+      "numeric_factor_checkpoint_files": [],
+      "receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_e1_coordination_interruption_v15.json",
+      "receipt_sha256": "bfb01118875fb18911f41f644aacd2c08204540e60aad16be4dbd8ed1c29551d"
+    },
+    {
+      "id": "E1-v15-resource-controlled-stop",
+      "raw_run_classification": "WORKER_FAILED",
+      "raw_exit_status": 4,
+      "candidate_classification": "RESOURCE_CONTROLLED_STOP",
+      "candidate_status": "CONTROLLED_STOP",
+      "official_result": false,
+      "gate": "all_q_symbolic_before_any_numeric",
+      "all_four_q_symbolic_completed": true,
+      "numeric_factors_built": false,
+      "live_tree_rss_bytes": 12064264192,
+      "dynamic_total_cap_bytes": 12474302464,
+      "projected_tree_rss_bytes": 19192602560,
+      "effective_available_bytes": 544256000,
+      "reserve_bytes": 134217728,
+      "total_rss_inequality_passed": false,
+      "incremental_headroom_inequality_passed": false,
+      "task_swap_peak_bytes": 0,
+      "cgroup_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "interpretation": "四 q symbolic 后、任何 numeric/factor 前由资源 Gate 受控停止；不是 OOM，没有 KSP、场或官方结果。"
+    }
+  ],
+  "no_fe_or_startup_failures": [
+    {
+      "issue": "runtime profile registration",
+      "classification": "ENGINEERING_RUNTIME_PROFILE_REGISTRATION_NO_FE",
+      "workflow_seconds": 1.7790742749348283,
+      "repair_tests_passed": 41,
+      "source_sha": "e77575f7df27154196a79819d7d9ed3044d4b62a"
+    },
+    {
+      "issue": "ABI profile registration",
+      "classification": "ENGINEERING_ABI_PROFILE_REGISTRATION_NO_FE",
+      "workflow_seconds": 1.7060625570593402,
+      "status": "ENGINEERING_ABI_PROFILE_REGISTRATION_NO_FE",
+      "failed_attempt": "20261007T102226.442467Z",
+      "repair_tests": {
+        "real_abi_helper_three_profiles": 7,
+        "related_suite_passed": 49,
+        "related_suite_skipped": 1
+      },
+      "run_summary": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v15__full3d_iterative__mpi1__Mna/20261007T102226.442467Z/run_summary.json",
+      "run_summary_sha256": "27fc4fd04bdbddf3747b861c799a0a23f0d1f827dc12dcbb131d731d07939f1b"
+    },
+    {
+      "issue": "supervised launch preflight",
+      "detail": "b0_formal_execution.log records that formal Task40 launch requires an existing supervised service cgroup.",
+      "workflow_seconds": null,
+      "status": "UNKNOWN_NOT_IN_RECEIPT"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_v15_closeout_raw_audit.json",
+      "sha256": "2087970ab31f0f299d64c846b021f2c6be4ce68300bdee54dccfa51d88f77250"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v15__full3d_iterative__mpi1__Mna/20261007T112650.870129Z/postprocess_recovery_record.json",
+      "sha256": "3050420c4a6f3c40504341558c9d1b60ab99f6836fc037a6aa574fc2f7cc8fe1"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v15__full3d_iterative__mpi1__Mna/20261007T112650.870129Z/v15_b0_official_output_recovered.json",
+      "sha256": "df8aadddbb3f2d2a311444e27b01528ac35eefbca0a418d28e518800efa620a7"
+    },
+    {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/gx560_v15_old_field_same_discrete_comparison_20261007_v2.json",
+      "sha256": "f804a3855bfedd3846a202ba01b1af772b275526ccfb580727edbf44fd34a5a4"
+    },
+    {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v15__full3d_iterative__mpi1__Mna/20261007T102226.442467Z/run_summary.json",
+      "sha256": "27fc4fd04bdbddf3747b861c799a0a23f0d1f827dc12dcbb131d731d07939f1b"
+    }
+  ]
+}
