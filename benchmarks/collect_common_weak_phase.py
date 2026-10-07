@@ -173,13 +173,15 @@ def compact_science(stages,pointers):
     return dict(stages=out,NN_training=0,NN20=False,target_qualified=False,history_is_by_parent_pointer=True)
 
 
-def archive_increment(folder,out,runs,sources):
-    """Only V57 increment and bound clean source, never a historical rescan."""
+def archive_increment(folder,out,runs,sources,*,active_scope=scope):
+    """Only the active increment and bound clean source, never a historical rescan."""
+    scope=active_scope
+    label=getattr(scope,'NAMESPACE','v57')
     archive=scope.ARTIFACT/('raw_'+folder.name);archive.mkdir(exist_ok=False);raw=[];seen=set()
     for root in [scope.window.TMP]+[Path(r['folder']) for r in runs]+[scope.ARTIFACT]:
         for p in root.rglob('*'):
             if not p.is_file() or p in seen or p.is_relative_to(archive) or p.is_relative_to(out):continue
-            if p.suffix not in ('.json','.jsonl','.log','.stdout','.stderr','.dat','.txt'):continue
+            if p.suffix not in ('.json','.jsonl','.log','.stdout','.stderr','.dat','.txt') and not (label=='v58' and p.name in ('stdout','stderr')):continue
             seen.add(p)
             if p.is_relative_to(scope.window.TMP) and any(n in p.relative_to(scope.window.TMP).parts
                 for n in ('edit','pycache','xdg','torch','uv','ruff','source_archive')):continue
@@ -189,7 +191,7 @@ def archive_increment(folder,out,runs,sources):
             if not dest.exists():dest.write_bytes(data)
             raw.append(dict(path=str(p.relative_to(scope.ROOT)),bytes=len(data),sha256=h,archived=str(dest.relative_to(scope.ROOT)),
                 byte_snapshot=True,final_auxiliary_tail_is_separate=True))
-    write_json(out/'raw_archive_index_v57.json',dict(files=raw))
+    write_json(out/f'raw_archive_index_{label}.json',dict(files=raw))
     source_archive=scope.ARTIFACT/'source_archive';source_archive.mkdir(exist_ok=True);rows=[]
     for sha,files in sources.items():
         for name,h in files.items():
@@ -198,7 +200,7 @@ def archive_increment(folder,out,runs,sources):
             dest=source_archive/h
             if not dest.exists():dest.write_bytes(data)
             rows.append(dict(source_sha=sha,path=name,sha256=h,archived=str(dest.relative_to(scope.ROOT))))
-    write_json(out/'source_bindings_v57.json',dict(files=rows,document_HEAD_is_not_run_source=True))
+    write_json(out/f'source_bindings_{label}.json',dict(files=rows,document_HEAD_is_not_run_source=True))
     # JSON receipts bind full dtype/shape/member hashes. Audit only new arrays.
     inventory=[]
     for p in scope.ARTIFACT.rglob('*.npz'):
@@ -207,7 +209,7 @@ def archive_increment(folder,out,runs,sources):
             for n in saved.files:
                 value=saved[n];members[n]=dict(shape=list(value.shape),dtype=str(value.dtype),sha256=array_hash(value))
         inventory.append(dict(path=str(p.relative_to(scope.ROOT)),bytes=p.stat().st_size,sha256=digest(p),members=members))
-    write_json(out/'array_inventory_v57.json',dict(files=inventory))
+    write_json(out/f'array_inventory_{label}.json',dict(files=inventory))
 
 
 def verify(folder,journal):

@@ -16,7 +16,8 @@ def main():
     paths=['src/solvers/phase_deployment.py','src/solvers/phase_deployment_scope.py','src/solvers/phase_boundary_checkpoint.py',
         'src/solvers/phase_deployment_defect.py','src/solvers/phase_notch_hp.py','src/solvers/phase_notch_hp_fields.py',
         'src/solvers/phase_explicit_accuracy.py','src/runners/port_preparation.py','scripts/run_case.py','src/io/phase_notch_hp.py',
-        'src/test/test_phase_deployment.py','benchmarks/qualify_phase_deployment.py','benchmarks/collect_phase_deployment.py']
+        'src/test/test_phase_deployment.py','benchmarks/qualify_phase_deployment.py','benchmarks/collect_phase_deployment.py',
+        'benchmarks/collect_common_weak_phase.py','benchmarks/collect_phase_explicit_accuracy.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')
     cmds=[[sys.executable,'-m','unittest','-q','src.test.test_phase_deployment'],
         ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]

@@ -70,4 +70,38 @@ class Tests(unittest.TestCase):
             if r.derived['stage']=='G7':self.assertEqual(r.discretization['degree'],7);self.assertEqual(r.boundary['complete_modes'],828)
 
 
+    def test_target_bank_includes_preconditioned_directions(self):
+        from benchmarks.collect_phase_deployment import target_scope
+        record=target_scope([])
+        for degree,rows in (('6',507608956),('7',699775356)):
+            v=record['FGMRES_restart32'][degree]
+            self.assertEqual((v['V_vectors'],v['Z_vectors']),(33,32))
+            self.assertEqual(v['trace_plus_port_V_and_Z_bytes'],rows*16*(33+32))
+            self.assertFalse(record['target_2TB_48h_qualified'])
+            self.assertTrue(v['extra_solution_rhs_residual_workspace_not_included'])
+
+    def test_increment_archive_preserves_literal_stdout_and_member_hashes(self):
+        from benchmarks.collect_common_weak_phase import archive_increment
+        import hashlib
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);tmp=root/'tmp';artifact=root/'artifact';out=root/'records';folder=tmp/'aux';folder.mkdir(parents=True);artifact.mkdir();out.mkdir()
+            (tmp/'stdout').write_text('nonempty scientific result\n');(tmp/'stderr').write_text('retained failure\n')
+            values=np.array([1+2j,-3+4j]);receipt=save_arrays(artifact/'state.npz',z=values)
+            s=SimpleNamespace(ROOT=root,NAMESPACE='v58',ARTIFACT=artifact,window=SimpleNamespace(TMP=tmp))
+            archive_increment(folder,out,[],{},active_scope=s)
+            index=json.loads((out/'raw_archive_index_v58.json').read_text())
+            byname={Path(row['path']).name:row for row in index['files']}
+            for name in ('stdout','stderr'):
+                self.assertEqual((root/byname[name]['archived']).read_bytes(),(tmp/name).read_bytes())
+            arrays=json.loads((out/'array_inventory_v58.json').read_text())
+            self.assertEqual(arrays['files'][0]['members']['z']['sha256'],receipt['members']['z']['sha256'])
+            self.assertEqual(hashlib.sha256((artifact/'state.npz').read_bytes()).hexdigest(),arrays['files'][0]['sha256'])
+
+    def test_actual_v58_modal_inventory(self):
+        from benchmarks.collect_phase_explicit_accuracy import expected_modal_count
+        self.assertEqual(expected_modal_count({'case_spec':{'complete_modes':828}},SimpleNamespace(NAMESPACE='v58')),828)
+        with self.assertRaises(ValueError):expected_modal_count({'case_spec':{'complete_modes':827}},SimpleNamespace(NAMESPACE='v58'))
+
+
+
 if __name__=='__main__':unittest.main()
