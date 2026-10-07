@@ -85,6 +85,13 @@
       "scope": "precommit helper compile inventory",
       "fix": "limit compile to actual standalone helper files",
       "scientific_replays": 0
+    },
+    {
+      "id": "R11",
+      "failure": "tmp/task042/v58/close_metadata_failure01.json",
+      "scope": "final archive journal path only",
+      "fix": "read actual progress_journal; closed-tail completion only, never reopen window",
+      "scientific_replays": 0
     }
   ],
   "ordinary_repairs_continued_in_same_window": true,

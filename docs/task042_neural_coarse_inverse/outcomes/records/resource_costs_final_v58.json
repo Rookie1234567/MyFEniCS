@@ -1,6 +1,6 @@
 {
-  "status": "PRE_CLOSE_SETTLEMENT_SNAPSHOT",
-  "run_count": 13,
+  "status": "CLOSED_FINAL_SETTLEMENT",
+  "run_count": 14,
   "runs": [
     {
       "role": "QUALIFY",
@@ -287,6 +287,28 @@
       },
       "descendants_cleared": true,
       "actual_numeric_factors": 0
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v58/aux_post_docs01",
+      "source_sha": "6b4929b989d949f792fedec7fc71b88107c80a56",
+      "classification": "COMPLETED",
+      "supervised_seconds": 13.013491550926119,
+      "launch_seconds": 37.508973736083135,
+      "summary": {
+        "path": "tmp/task042/v58/aux_post_docs01/summary.json",
+        "sha256": "3575670223ee3d471ac7b6eff1b08f81f3d8b533dcd014e4d47160b5207a47fc",
+        "bytes": 24616
+      },
+      "sampling": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 5.070873801829293,
+        "sampled_tree_peak_bytes": 96415744,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "descendants_cleared": true,
+      "actual_numeric_factors": 0
     }
   ],
   "clock": {
@@ -298,20 +320,22 @@
     "scientific_loaded_limit_seconds": 21600,
     "review_commit": "721c2731da0ce02ef528345f7b6ffcea459b033c",
     "intake_HEAD": "8091c9515fc4c2116b57481408f71d05b0c7eb9b",
-    "closed": false,
+    "closed": true,
     "first_work_start_never_refreshed": true,
     "monotonic_observation_precision_seconds": 0.01,
-    "observed_utc": "2026-10-07T10:53:55.903018+00:00",
-    "observed_monotonic": 1295430.763885185,
+    "closed_utc": "2026-10-07T10:57:02.459311+00:00",
+    "budget_never_refreshed": true,
+    "observed_utc": "2026-10-07T10:59:23.595896+00:00",
+    "observed_monotonic": 1295758.456763,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 7382.6038851849735,
-    "heavy_remaining_seconds": 17817.396114815027,
-    "total_remaining_seconds": 21417.396114815027
+    "elapsed_seconds": 7710.2967630000785,
+    "heavy_remaining_seconds": 17489.70323699992,
+    "total_remaining_seconds": 21089.70323699992
   },
-  "charged_known_loaded_lower_seconds": 5032.301375719333,
+  "charged_known_loaded_lower_seconds": 5069.810349455416,
   "historical_known_loaded_lower_seconds": 176686.25237452157,
-  "cumulative_known_loaded_lower_seconds": 181718.5537502409,
+  "cumulative_known_loaded_lower_seconds": 181756.062723977,
   "known_loaded_limit_seconds": 21600,
   "window_elapsed_limit_seconds": 28800,
   "within_loaded_budget": true,
@@ -420,7 +444,7 @@
   "reference_used_for_initialization": false,
   "scientific_queue_frozen": true,
   "active": null,
-  "closed": false,
+  "closed": true,
   "scientific_source": "c47799d1c2bb7109a071358f06500a905fc42c43",
   "sampled_peak_is_not_continuous_hard_peak": true,
   "shared_workstation": true,
@@ -433,10 +457,25 @@
     "G7": 1770.5065321819857
   },
   "three_deployments_nonoverlapping_seconds": 3564.927373162005,
-  "T_research_measured_known_lower_seconds": 1467.374002557328,
+  "T_research_measured_known_lower_seconds": 1504.882976293411,
   "T_research_policy": "P and S controls, frozen pair comparisons, checker, failed/replayed consumers, tests/probes and metadata; excludes each complete deployment once",
-  "scientific_loaded_conservative_upper_seconds": 7382.6038851849735,
+  "scientific_loaded_conservative_upper_seconds": 7710.2967630000785,
   "upper_policy": "immutable whole first-work-to-settlement elapsed includes all unknown reading/implementation/failure/helper costs conservatively; not claimed as measured CPU",
-  "repair_conservative_upper_seconds": 2931.742279614089,
-  "repair_limit_seconds": 7200
+  "repair_conservative_upper_seconds": 3259.435157429194,
+  "repair_limit_seconds": 7200,
+  "live_storage_at_close": {
+    "new_bytes": 8124421166,
+    "task_artifact_bytes": 67884501383,
+    "free_bytes": 3241048014848,
+    "reserve_bytes": 536870912
+  },
+  "own_actor_count": 0,
+  "own_lock_acquire_release": true,
+  "exact_C6_N1_seconds": 904.0364016660023,
+  "documentation_test_seconds": 0.2348904290702194,
+  "final_document_source": "6b4929b989d949f792fedec7fc71b88107c80a56",
+  "metadata_archive_included_in_elapsed_upper": true,
+  "loaded_upper_within_budget": true,
+  "repair_upper_within_budget": true,
+  "post_push_clock": "tmp/task042/v58/final_git_receipt.json"
 }

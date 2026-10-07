@@ -274,5 +274,10 @@
   },
   "full_repository_pytest": "NOT_RUN",
   "CI": "NOT_RUN",
-  "documentation": "final receipt follows"
+  "documentation": {
+    "status": "PASSED_LOCAL",
+    "count": 15,
+    "source": "6b4929b989d949f792fedec7fc71b88107c80a56",
+    "record": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v58.json"
+  }
 }
