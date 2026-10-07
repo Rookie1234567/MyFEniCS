@@ -1,3 +1,11 @@
+# V60最终相关检查
+
+16项新增实体支撑/合法edge→face、复双层消元/非零内部port源、真实工作流、恢复checkpoint/作用bank、saved-only与archive负例；24模块compile、关键错误Ruff、五one-run dat validate通过，最终代码source f9b6d3886b59a3b1f549af62aec677347f2f8482。C67/H2实际独立PUBLIC_BASIX原式、3776切向面和保存checker分别判门。最终15项文档检查绑定真实交付字节，full pytest/CI未运行；GitHub视觉NOT_VERIFIED，不掩盖两组场增量FAIL。
+
+[测试](records/tests_v60.json) · [原式/场](records/scientific_checks_v60.json) · [raw](records/raw_archive_index_v60.json) · [最终费用](records/resource_costs_final_v60.json)。以下历史保持。
+
+---
+
 # V59增量：只验新映射、复对偶与完整消费
 
 最终相关小测试10项、Ruff关键错误检查、15个改动/依赖模块compile和四dat validate通过，source d2680f2fbe01e324cc57974ea5ddcb47b3a7f451。p7/p8真实资格、非互伴复块/内部port RHS、混阶小而ambient非零、完整保存库存/原式/功率/场数组重算均保留实际证据。fixture与PETSc API及metadata失败没有覆盖，完整PDE重放0。最终一次15文档合同的实际结果和字节hash见本轮记录，不声明CI/full pytest。

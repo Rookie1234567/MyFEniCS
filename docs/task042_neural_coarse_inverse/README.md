@@ -1,3 +1,9 @@
+# 最新入口：V60完成，等待审阅
+
+[Response V60](response_v60.md) · [完整物理/费用](outcomes/local_assembly_subcell_response_v60.md) · [Review V58](review_report_v58.md) · [run/source](outcomes/records/run_index_v60.json) · [最终结算](outcomes/records/resource_costs_final_v60.json)。C67同M67严格再现，存储项28510524/峰8.855GiB；H2全球33660行、完整微场及独立mixed原式通过，但R6/H2、M68/H2散射场/240点仍FAIL。L仅一个单元稳定，不授全域准确性；NN/原尺寸/2TB48h未资格。所有历史继续保留，不merge、不通知邻支、不自动新窗口。
+
+---
+
 # V59最新交付：固定接口的完整混阶场与实际成本
 
 保持p6边/面接口，只增加单元内部表示后恢复完整高基场；沿原凝聚链，不是NN训练或完整p7/p8求解。R6_M67散射E/H 0.00269124/0.00272376（FAIL）；R7_M67散射E/H 0.0365737/0.0365441（FAIL）；M67_M68散射E/H 0.00350687/0.00347462（FAIL）。原门1e−4不改，ambient缺陷不冒充正式混阶残差，2TB/48h/NN20仍未资格。

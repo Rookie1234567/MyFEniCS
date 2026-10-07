@@ -1,3 +1,14 @@
+# Task042 V60新增模型记录
+
+| 有限0.7nm真实NOTCH，全828 | 原方程/完整输出 | R/T/A_volume | 资源/分类 |
+|---|---|---|---|
+| C67：trace6/interior7，160hex | mixed true1.71352e−11；旧M67全场严格再现 | 0.076220419877 / 0.905665149979 / 0.0181144301443 | 全球33660行/nnz28510524；8.855GiB；同空间存储PASS |
+| H2：macro trace6 / r2-p6，160宏/1280微 | mixed true3.08496e−11；恢复/全通道/能量PASS | 0.076218461329 / 0.905665148664 / 0.0181163900076 | nnz28510461；13.2926GiB；两组散射/240点增量FAIL |
+
+真实R00_s/R00_p/总和、每mode复数与功率、direct/ambient区别、所有阶段费用与checkpoint重入见[专题](task042_neural_coarse_inverse/outcomes/local_assembly_subcell_response_v60.md)及[科学](task042_neural_coarse_inverse/outcomes/records/scientific_checks_v60.json)。完整物理解不等于连续精度；无NN训练、其他模型/分支运行或原尺寸资格。以下历史逐字保留。
+
+---
+
 # V59最新交付：固定接口的完整混阶场与实际成本
 
 保持p6边/面接口，只增加单元内部表示后恢复完整高基场；沿原凝聚链，不是NN训练或完整p7/p8求解。R6_M67散射E/H 0.00269124/0.00272376（FAIL）；R7_M67散射E/H 0.0365737/0.0365441（FAIL）；M67_M68散射E/H 0.00350687/0.00347462（FAIL）。原门1e−4不改，ambient缺陷不冒充正式混阶残差，2TB/48h/NN20仍未资格。

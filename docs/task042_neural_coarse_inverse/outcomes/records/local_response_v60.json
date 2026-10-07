@@ -1,0 +1,878 @@
+{
+  "status": "PARTIAL",
+  "role": "LOCAL_RESPONSE",
+  "selection": {
+    "cell": 74,
+    "tag": 3,
+    "notch_cell": 86,
+    "aspect": 3.2000000000000006,
+    "center": [
+      1.075925925925926,
+      0.4861111111111111,
+      3.6296296296296293
+    ],
+    "bounds": [
+      [
+        0.8555555555555555,
+        0.32407407407407407,
+        3.1111111111111107
+      ],
+      [
+        1.2962962962962963,
+        0.6481481481481481,
+        4.148148148148148
+      ]
+    ],
+    "selection": "maximum exact aspect then center lexicographic; selected before C6 coefficient read"
+  },
+  "loads": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/fixed_local_loads.npz",
+    "sha256": "c64f2cae21629bdc25a599de41c0817f0b0a00bdb0b22cb16a5f320ea6581167",
+    "members": {
+      "C6_reference_trace": {
+        "shape": [
+          432
+        ],
+        "dtype": "complex128",
+        "sha256": "ec867ce18d6d2543a1a96b997c2835268b2bece87e4e2a3e1d5353fe09257a29"
+      },
+      "C6_actual_internal_rhs": {
+        "shape": [
+          450
+        ],
+        "dtype": "complex128",
+        "sha256": "69e9922fec97d8ffa6c20fd1d25dcf16787cf602aaeb1dee8e56b9a09f6d88af"
+      },
+      "manufactured_parent_reference_coefficient": {
+        "shape": [
+          882
+        ],
+        "dtype": "complex128",
+        "sha256": "e6d8c38ec4ceb3ce3066182bd6f1410ee031ddd9134cc82e960415e7e6169e5e"
+      },
+      "parent_geometry": {
+        "shape": [
+          2,
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "4f63cad844a71cfeba03b46f5ac521f819c4a8965716e7628bb36f39c801f64f"
+      },
+      "kappa": {
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+      }
+    }
+  },
+  "rows": [
+    {
+      "space": "P6",
+      "status": "COMPLETED",
+      "degree": 6,
+      "r": 1,
+      "capacity": {
+        "macro_rows": 882,
+        "child_internal_rows": 450,
+        "LU_backward": 1.4762523227494067e-18
+      },
+      "loads": [
+        {
+          "load": "physical",
+          "operation_scaled_internal": 2.383615240407649e-15,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/P6/physical.npz",
+            "sha256": "1a033a650bd9c619aaae2f6c1a07155e7db2f912ec181eb9d247dfcc3e6e531c",
+            "members": {
+              "local_native": {
+                "shape": [
+                  882
+                ],
+                "dtype": "complex128",
+                "sha256": "2c5092732a71a296693a37555bdd2ecaaf5817d6c3937b6d8d173ab48bd8236f"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "82ea66d4ea56332d08974b33a6c64d6384c975c9d3de55b5f13cc88ce8c99ad3"
+              },
+              "local_rhs": {
+                "shape": [
+                  882
+                ],
+                "dtype": "complex128",
+                "sha256": "2e0ccb4fa04d0606f06a4d17a72cb083e5b2a0e8cffacf4cd78beabc1abcd476"
+              },
+              "native_rows": {
+                "shape": [
+                  882
+                ],
+                "dtype": "int64",
+                "sha256": "910bafba0a0a7c8d60bbd7d6b5aa998e8a083b3c9247fb6f2ee5aa1bbfb9ffbb"
+              }
+            }
+          }
+        },
+        {
+          "load": "manufactured",
+          "operation_scaled_internal": 5.505523065625004e-16,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/P6/manufactured.npz",
+            "sha256": "ec62ceba0e28a0dbb9f7e3ed5b15197ff3f237323e60aa2c5430a8e749d9d3a9",
+            "members": {
+              "local_native": {
+                "shape": [
+                  882
+                ],
+                "dtype": "complex128",
+                "sha256": "e1818bc414e9f897aee6c52cfa115753d03a92da76eefbfed6f04570fe534438"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "f84340f3d9ea4b855716336ca1813f3593c8e359dd264dacb87fe8644ddb9b1b"
+              },
+              "local_rhs": {
+                "shape": [
+                  882
+                ],
+                "dtype": "complex128",
+                "sha256": "2dad725cfadb34e33c4462fb05fe51836bf6f733378af047a2bf3a50d6a3e0f5"
+              },
+              "native_rows": {
+                "shape": [
+                  882
+                ],
+                "dtype": "int64",
+                "sha256": "910bafba0a0a7c8d60bbd7d6b5aa998e8a083b3c9247fb6f2ee5aa1bbfb9ffbb"
+              }
+            }
+          }
+        }
+      ],
+      "structural_zero": 4.334153305940286e-14,
+      "shared": 0.0,
+      "physical_tangential": 1.9940662886134696e-15
+    },
+    {
+      "space": "P7",
+      "status": "COMPLETED",
+      "degree": 7,
+      "r": 1,
+      "capacity": {
+        "macro_rows": 1344,
+        "child_internal_rows": 756,
+        "LU_backward": 9.327106718523646e-19
+      },
+      "loads": [
+        {
+          "load": "physical",
+          "operation_scaled_internal": 3.1898333209289557e-15,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/P7/physical.npz",
+            "sha256": "929d92af24668895158ec41d34140b36c9d27019c0b52ff26742dd6a48f342d6",
+            "members": {
+              "local_native": {
+                "shape": [
+                  1344
+                ],
+                "dtype": "complex128",
+                "sha256": "e9d87eb608588bc8146934cfeb764895a05cbae872482918950bfe8b403d9124"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "aacd8846d38db7b42eeab59c62410ef69b45a7efc294e025a19959aefd881d13"
+              },
+              "local_rhs": {
+                "shape": [
+                  1344
+                ],
+                "dtype": "complex128",
+                "sha256": "eead7b030b483c6b80fd17a92c57d6b2bb945ff02b37dd10d2a294a2c482083a"
+              },
+              "native_rows": {
+                "shape": [
+                  1344
+                ],
+                "dtype": "int64",
+                "sha256": "5e862f1c9567ef4c5d9df92d6339c817b75f9ed2bb9c0cec2bbefbb22d6fd3a0"
+              }
+            }
+          }
+        },
+        {
+          "load": "manufactured",
+          "operation_scaled_internal": 1.202920763216841e-15,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/P7/manufactured.npz",
+            "sha256": "d50afceb4f29cc5a51edc6e4ad980dc2659e27d05ae714a8e6f8cc9d8d8ee770",
+            "members": {
+              "local_native": {
+                "shape": [
+                  1344
+                ],
+                "dtype": "complex128",
+                "sha256": "b4aa0646829742acfe3d1fe9dad2e6818c22b033bf1996b965951931838a2147"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "eb0a71073f53850bae69b8f364b3e0b03b9cab4c439a9604664b88b9aa24b066"
+              },
+              "local_rhs": {
+                "shape": [
+                  1344
+                ],
+                "dtype": "complex128",
+                "sha256": "4459c68e5ea0328e94e9be4e7ee834184c3cf9f0ffe88353df1fa128b7c089c8"
+              },
+              "native_rows": {
+                "shape": [
+                  1344
+                ],
+                "dtype": "int64",
+                "sha256": "5e862f1c9567ef4c5d9df92d6339c817b75f9ed2bb9c0cec2bbefbb22d6fd3a0"
+              }
+            }
+          }
+        }
+      ],
+      "structural_zero": 7.228908725561194e-14,
+      "shared": 0.0,
+      "physical_tangential": 2.514453069491129e-15
+    },
+    {
+      "space": "P8",
+      "status": "COMPLETED",
+      "degree": 8,
+      "r": 1,
+      "capacity": {
+        "macro_rows": 1944,
+        "child_internal_rows": 1176,
+        "LU_backward": 5.135480740456252e-19
+      },
+      "loads": [
+        {
+          "load": "physical",
+          "operation_scaled_internal": 3.581075093036597e-15,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/P8/physical.npz",
+            "sha256": "297e2454568ec8af9e1b0305cef55d37448071cdc5c2c62de4dd7b59cf50acd9",
+            "members": {
+              "local_native": {
+                "shape": [
+                  1944
+                ],
+                "dtype": "complex128",
+                "sha256": "8b9c1bdabac8d9b9f64da0f54887cd307e940ddd53d3949ec04f9175c5b308fa"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "df06bf2ab095f77eeec093fd3eccb5feaf5d760a9d05d7ebcfcf0b26ffc4ad51"
+              },
+              "local_rhs": {
+                "shape": [
+                  1944
+                ],
+                "dtype": "complex128",
+                "sha256": "d5af73c6ebc69878d44b9527c675a5b9e4d07dce068ab6b3cfad695b52a2c911"
+              },
+              "native_rows": {
+                "shape": [
+                  1944
+                ],
+                "dtype": "int64",
+                "sha256": "d1796b9afbc693833367f62aeb218c0b06370ef8d9529fe39efc05c350f99610"
+              }
+            }
+          }
+        },
+        {
+          "load": "manufactured",
+          "operation_scaled_internal": 7.398729023259296e-16,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/P8/manufactured.npz",
+            "sha256": "7e3c8a53a30afc0c4a0c6bb600cf01f35ab39210962ff34ec6ebb8d6ad7ff7a6",
+            "members": {
+              "local_native": {
+                "shape": [
+                  1944
+                ],
+                "dtype": "complex128",
+                "sha256": "e7383189a4032758d86a92bbcb6983b85a127be595fcfeeec4aecfffd8f2daa5"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "2617296bcbe3704c17f2cb45d220b8d082fe0753d82e355bbd04133b7adcebea"
+              },
+              "local_rhs": {
+                "shape": [
+                  1944
+                ],
+                "dtype": "complex128",
+                "sha256": "a03ee47f38419ce67529ce3b9f77f3e820903f6a5b6f06e92425dc4af9768520"
+              },
+              "native_rows": {
+                "shape": [
+                  1944
+                ],
+                "dtype": "int64",
+                "sha256": "d1796b9afbc693833367f62aeb218c0b06370ef8d9529fe39efc05c350f99610"
+              }
+            }
+          }
+        }
+      ],
+      "structural_zero": 1.301325506547117e-13,
+      "shared": 0.0,
+      "physical_tangential": 2.677891102857246e-15
+    },
+    {
+      "space": "R2",
+      "status": "COMPLETED",
+      "degree": 6,
+      "r": 2,
+      "capacity": {
+        "macro_rows": 6084,
+        "trace_rows": 2484,
+        "boundary_rows": 1728,
+        "second_stage_rows": 756,
+        "matrix_nnz": 1408536,
+        "planned_workspace_bytes": 209392564,
+        "r4_full_response_library": false,
+        "assembly_overlap_bound_bytes": 137355264,
+        "sparse_factor_full_fill_payload_bound_bytes": null,
+        "sparse_factor_workspace_assumption": "three full-fill payloads; actual sparse factor and measured RSS reported separately",
+        "r4_dense_second_matrix_allocated": false,
+        "actual_second_factor_bytes": 9147600,
+        "factor_witness_RHS_relative": 3.897719970269547e-12,
+        "factor_witness_operation_backward": 3.8072208633108406e-18,
+        "child_backward_max": 8.836996114911618e-19,
+        "child_RHS_relative_max": 4.499804404219141e-12,
+        "child_rcond1_min": 2.916786001921975e-08,
+        "LU_backward": 3.8072208633108406e-18
+      },
+      "loads": [
+        {
+          "load": "physical",
+          "operation_scaled_internal": 2.250552205655368e-16,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/R2/physical.npz",
+            "sha256": "4fe84dad95174f5ff15aa238ce76d01c868b92b83d8553b1a4f3ef91ee7ae8e4",
+            "members": {
+              "local_native": {
+                "shape": [
+                  6084
+                ],
+                "dtype": "complex128",
+                "sha256": "e82a2813ec9cee363f641bace93c275332fe9cb6bbbb11dd645b732c954e6d85"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "0d8f4d893ba886e1c7dcef90c5e822ab231b882c39cf3d4910a1fc4c6b9c30ad"
+              },
+              "local_rhs": {
+                "shape": [
+                  6084
+                ],
+                "dtype": "complex128",
+                "sha256": "3ee357bcffe37675ea9c92c2f730a936f7e21ae38faced4eda487858df9631d7"
+              },
+              "native_rows": {
+                "shape": [
+                  6084
+                ],
+                "dtype": "int64",
+                "sha256": "9b2dd0589ad0c56732c2835645779e06b1a603cabf4efcce69e1308a590d2382"
+              }
+            }
+          }
+        },
+        {
+          "load": "manufactured",
+          "operation_scaled_internal": 1.5135997890269052e-16,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/R2/manufactured.npz",
+            "sha256": "775905d026ba846057a2d2ad311210d62156d0e860d1955ac6b59fb5b8a47e33",
+            "members": {
+              "local_native": {
+                "shape": [
+                  6084
+                ],
+                "dtype": "complex128",
+                "sha256": "85f49e2540d6b5ccc0649bce0537dd429861a7828376ad3b440297863a3cce31"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "46dd1c4f119951cb2bd1c7cb5aa03d83b4603458afe116bad4bc02dd6e5d09e4"
+              },
+              "local_rhs": {
+                "shape": [
+                  6084
+                ],
+                "dtype": "complex128",
+                "sha256": "2f41698d8fbbc473026199de1d714c9f278607de9cf133ca84841670ab9ed28c"
+              },
+              "native_rows": {
+                "shape": [
+                  6084
+                ],
+                "dtype": "int64",
+                "sha256": "9b2dd0589ad0c56732c2835645779e06b1a603cabf4efcce69e1308a590d2382"
+              }
+            }
+          }
+        }
+      ],
+      "structural_zero": 8.416834123038172e-15,
+      "shared": 0.0,
+      "physical_tangential": 2.7293363062903557e-14
+    },
+    {
+      "space": "R4",
+      "status": "COMPLETED",
+      "degree": 6,
+      "r": 4,
+      "capacity": {
+        "macro_rows": 45000,
+        "trace_rows": 16200,
+        "boundary_rows": 6912,
+        "second_stage_rows": 9288,
+        "matrix_nnz": 10931760,
+        "planned_workspace_bytes": 7529430820,
+        "r4_full_response_library": false,
+        "assembly_overlap_bound_bytes": 1074954240,
+        "sparse_factor_full_fill_payload_bound_bytes": 2070629568,
+        "sparse_factor_workspace_assumption": "three full-fill payloads; actual sparse factor and measured RSS reported separately",
+        "r4_dense_second_matrix_allocated": false,
+        "actual_second_factor_bytes": 785117552,
+        "factor_witness_RHS_relative": 8.06552123165238e-11,
+        "factor_witness_operation_backward": 2.9982449363278015e-18,
+        "child_backward_max": 7.776714865978121e-19,
+        "child_RHS_relative_max": 1.6189678624492433e-11,
+        "child_rcond1_min": 7.543001436991048e-09,
+        "LU_backward": 2.9982449363278015e-18
+      },
+      "loads": [
+        {
+          "load": "physical",
+          "operation_scaled_internal": 1.990494957651353e-16,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/R4/physical.npz",
+            "sha256": "e52f04edc574bdfb0a58bbd0166e0b10cc4f5b4ae70672436723ce34ba7fec0e",
+            "members": {
+              "local_native": {
+                "shape": [
+                  45000
+                ],
+                "dtype": "complex128",
+                "sha256": "a49d2ce4d12f89fdc78afe09a4fd7f9a6137dc88e7bb667fd99ab6445f9fe226"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "c53d43d770e7c09be0ebc0b8926478285a9de8ce4bc15c90562f8cca8c2dc30f"
+              },
+              "local_rhs": {
+                "shape": [
+                  45000
+                ],
+                "dtype": "complex128",
+                "sha256": "a1844821f30a3167a0fdee530e8a3d3558b1224880105d2c427a464e78c4dbb5"
+              },
+              "native_rows": {
+                "shape": [
+                  45000
+                ],
+                "dtype": "int64",
+                "sha256": "f3d3381a10f46c5613bfb22a773c3d8c5393d03392f91232e023ebed4f705f9c"
+              }
+            }
+          }
+        },
+        {
+          "load": "manufactured",
+          "operation_scaled_internal": 1.3994133312577894e-16,
+          "arrays": {
+            "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/R4/manufactured.npz",
+            "sha256": "c2d989dd2694cb9416657035702b88de78cc57ca7a610971a3e63037c14816df",
+            "members": {
+              "local_native": {
+                "shape": [
+                  45000
+                ],
+                "dtype": "complex128",
+                "sha256": "b0daf13bc8af8a7a67a487437a58a676ae9538b64fbfe7d0325d4c49ba806377"
+              },
+              "feedback": {
+                "shape": [
+                  432
+                ],
+                "dtype": "complex128",
+                "sha256": "dcfa254e8500fcd5496ee258c6634a3195c59fb65ffd09beea22e594dc7bee0d"
+              },
+              "local_rhs": {
+                "shape": [
+                  45000
+                ],
+                "dtype": "complex128",
+                "sha256": "1acf30d888dea3e7887548d065bba7e14d32313c4a3c2d622268c413bb086f0a"
+              },
+              "native_rows": {
+                "shape": [
+                  45000
+                ],
+                "dtype": "int64",
+                "sha256": "f3d3381a10f46c5613bfb22a773c3d8c5393d03392f91232e023ebed4f705f9c"
+              }
+            }
+          }
+        }
+      ],
+      "structural_zero": 8.077734523758117e-15,
+      "shared": 1.6281466691725586e-14,
+      "physical_tangential": 3.739690025153052e-14
+    }
+  ],
+  "pairs": [
+    {
+      "first": "R2",
+      "second": "R4",
+      "fields_relative": [
+        [
+          2.1768117574201407e-07,
+          4.274402279182331e-07
+        ],
+        [
+          6.364008952608196e-13,
+          4.629940393511151e-14
+        ]
+      ],
+      "feedback_fixed_432_coordinate_relative": [
+        6.257208094047369e-08,
+        1.1751638687404642
+      ],
+      "feedback_scope": "fixed macro reference trace dual coordinates; not a physical mass norm",
+      "manufactured_feedback_relative_is_not_gate": "exact polynomial weak load has zero boundary reaction; relative roundoff diagnostic only",
+      "quadrature_operation_scaled": 8.825775197179179e-15,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_one_cell_h_response_20261007T180100017287Z/R2_R4.npz",
+        "sha256": "40ef3d960c35eb1a1a0a6078c61a9abca4d6b6312c402b0832a471729669a421",
+        "members": {
+          "q23": {
+            "shape": [
+              2,
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "7e5ab822618a6d0d140cff67b7c09a1787a66d4be2bf1448064d178909d0928c"
+          },
+          "q31": {
+            "shape": [
+              2,
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "b07f66d71a0186d3d5ea92bd7bd7d17d4533dee7f953dde34fe20a8f023eb53a"
+          }
+        }
+      },
+      "pass_increment": true,
+      "increment_gate_scope": "physical C6 trace/source response; manufactured nonzero-source recovery has its separate operation gate"
+    }
+  ],
+  "mathematics_pass": true,
+  "new_complete_solves": 0,
+  "new_global_factors": 0,
+  "physical_source_identity": {
+    "total_volume_source": "identically zero in frozen physical descriptor",
+    "saved_internal_rhs_norm": 0.0,
+    "saved_full_rhs_norm": 2.0828954595131424,
+    "boundary_numerical_roundoff_separate": true
+  },
+  "local_response_not_full_scattering": true,
+  "elapsed_local": 3306.829811926931,
+  "source": {
+    "source_sha": "9fec5659d97cc5a2a0b3450bfe79a920fb9472bb",
+    "stage": "V60-LOCAL_RESPONSE",
+    "scope": "v60",
+    "window": {
+      "start_utc": "2026-10-07T16:52:06.864562+00:00",
+      "start_monotonic": 1316921.72,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 32400,
+      "total_limit_seconds": 36000,
+      "scientific_loaded_limit_seconds": 28800,
+      "review_commit": "7514fbedf6253807966f0aad7b1b864e908efd8e",
+      "intake_HEAD": "7e31cf67a23917b137e0867e1320919d6a951cb1",
+      "contract_HEAD": "7514fbedf6253807966f0aad7b1b864e908efd8e",
+      "closed": false,
+      "first_work_start_never_refreshed": true,
+      "monotonic_observation_precision_seconds": 0.01,
+      "observed_utc": "2026-10-07T18:01:24.405023+00:00",
+      "observed_monotonic": 1321079.265890593,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 4157.54589059297,
+      "heavy_remaining_seconds": 28242.45410940703,
+      "total_remaining_seconds": 31842.45410940703
+    },
+    "implementation_hashes": {
+      "benchmarks/check_phase_p_order_dtn.py": "714f4cff41044375d433b8b7ca41ee8b1ce8ad3b7a0913de42f0407682d9dcf9",
+      "benchmarks/collect_common_weak_phase.py": "e69efb8fa301021a17be03512ab938e1923b88e44bc08c83fd9a7e9d6a194b3c",
+      "benchmarks/collect_local_subcell.py": "bf4fe5ab83928c7471a45bddb5f316d327dbf55e66e1bcfa9a02c95719d0d3c9",
+      "benchmarks/collect_phase_deployment.py": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "benchmarks/collect_phase_explicit_accuracy.py": "6c916c0a854875a273726549818103fe27d6c4543baf12ced305afe67fd14e24",
+      "benchmarks/collect_phase_hp_completion.py": "3dc3fbec6040633642d3de5116070451f03a33039b4da765528fbc8bf724f58f",
+      "benchmarks/collect_phase_notch_hp.py": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "benchmarks/collect_phase_p_order_dtn.py": "1a11c140ab6ec86abc7ef04a199a0779daf79dac6f9bf4ad59f1cb74b527bf4c",
+      "benchmarks/collect_phase_saved_closure.py": "6af4ad0e902f0fb5c26011cdda0292891ad90fb45e5717ed528e96ae98054bdc",
+      "benchmarks/collect_phase_spatial_resolution.py": "c4bb46fc42b40dce162f340dcd2a0e98fd9de8fdb0e9598bc796e0f28c66e9d3",
+      "benchmarks/collect_trace_interior.py": "628f37150f5b36e1a78a73f53795a39fe9c24838682ad619ea37371b00ad9f2e",
+      "benchmarks/qualify_common_weak_phase.py": "e4505128738aabd14da8f9e78589acdf60b5c5db212bcd858af5169a7457d7d2",
+      "benchmarks/qualify_local_subcell.py": "31b6931b850ad3e33907ffbe6fc446170fea7ea3540804ef07f59b0f3da2627b",
+      "benchmarks/qualify_phase_deployment.py": "f5cc2e593595436f1411aea17e136bfd1e995fa136493bf99307648fda73fc54",
+      "benchmarks/qualify_phase_explicit_accuracy.py": "2dc18bb7f5a0bd95ad9a4a2a618261b9049f783e9025e02609f181153b9ca0de",
+      "benchmarks/qualify_phase_hp_completion.py": "37d544f2a9bba26ce255a2f40a04dd00763e990ee367bf9d0ec2963dc9d33cf4",
+      "benchmarks/qualify_phase_notch_hp.py": "0e1582e3965647df506e6b7c2fbf66758cc78cb35872b4f8b4d83e482a53b1d5",
+      "benchmarks/qualify_phase_p_order_dtn.py": "bd7e9511ef09230957222ca7ac6ba463c95e7b7cd6c53dc1ea3c7c6a04a4a2ec",
+      "benchmarks/qualify_phase_saved_closure.py": "97516b26296da5b81e01c59efa4068a58793548e770dddd5fa434792e248bc81",
+      "benchmarks/qualify_phase_spatial_resolution.py": "5655a0076b0ff6b73ce490bd98e35831d3bb555a66cf44573bdc397dd72484dd",
+      "benchmarks/qualify_trace_interior.py": "6ba80fa9ad963158b42c78c6bb147f4f3597bdc6ac6a7313e464272cc8a1e8c8",
+      "benchmarks/subreaper_watchdog.py": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "input/materials/si_optical_constants_v1.json": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "input/task042_neural_coarse_inverse/common_weak_phase_v57.json": "6fead31ca904bbd45f3cecc4be85eddd7a22f67afa20912d2cd22e0460531147",
+      "input/task042_neural_coarse_inverse/deployment_paired_gauge_v58.json": "89ad5f07b4a5d9db61ad2e08a4242dc52f182a8a40062e14d1818ca740f048ca",
+      "input/task042_neural_coarse_inverse/local_assembly_subcell_v60.json": "446028f296dd90ed00cc2bd2f24d54c46bbc356bd9cc39189f9bfa8736d23065",
+      "input/task042_neural_coarse_inverse/p_order_dtn_v54.json": "0f98bdcf10966c814c56007bd9219a363a23fb1ca4f2a05838e1999d2092bea4",
+      "input/task042_neural_coarse_inverse/phase_explicit_accuracy_v51.json": "fe43b5e97a090cd6a5cc3f6c733e464e753599720e954b0ae5c3afa05ae0322f",
+      "input/task042_neural_coarse_inverse/phase_hp_completion_v53.json": "104b895120906f818c374735d849edd84600a0d4ea71b7f7352435dc04199d57",
+      "input/task042_neural_coarse_inverse/phase_notch_hp_v52.json": "6a56bdcc3628d6f39a92dadb43c93ca58d2795498b17878c18b97e0c89315c4a",
+      "input/task042_neural_coarse_inverse/saved_field_closure_v56.json": "cb853c59a3bedc23fe6d343e62c68472ea8db0a6786b3591926a173c20c9c879",
+      "input/task042_neural_coarse_inverse/spatial_resolution_v55.json": "9698302b5c29839e2ed7e4da8a5dea5d583c94b2ed00300b19e865cf804a60b0",
+      "input/task042_neural_coarse_inverse/trace_interior_enrichment_v59.json": "58165d997acf0107a4afec08e1f75c182da13a9df192d57f598da028d05b0c30",
+      "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "scripts/run_case.py": "32d9a3c530f5ac7f88dcb3026a68f650de8f37ef2f13dfe2dbeb8fd5ca252a43",
+      "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "src/adaptivity/fast_custom_element_ufl.py": "68cb5d3fc350bd0d220af1adf8965f947719a5eabe423ee32d45ae027bc6cfb4",
+      "src/adaptivity/fixed_trace_element_cache.py": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "src/adaptivity/stage4_local_h.py": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "src/adaptivity/variable_p_degree_plan.py": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "src/adaptivity/variable_p_periodic_orbits.py": "c3ef4c02457aa0568ee070b02df932873532b17ffa6807297d0803cdc88c7701",
+      "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config.py": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905",
+      "src/common/config_3d.py": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "src/common/materials.py": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5",
+      "src/common/modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "src/common/optical_material_table.py": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "src/common/pml.py": "187f0a2397ee08f4c09b86821b7955b43448447c60dcbbdbcf61b4b6bcf7f015",
+      "src/common/pml_3d.py": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "src/common/units.py": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "src/constraints/floquet_3d.py": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "src/constraints/floquet_constraint.py": "0b6f1d46041af531fccbec47bc50b3daf33c00cc7ce3de7d077bd8046ff07d99",
+      "src/constraints/high_order_floquet_trace.py": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "src/geometry/cell_notch.py": "def78dd19702c53340f784ba04fbc32ee10139893cb36d731e9425b5d5ca93c5",
+      "src/geometry/mesh_builder.py": "a62a9f9b75560e8a4980bcf794904e72a9c361d7828b206734bef8611b4025e4",
+      "src/geometry/mesh_builder_3d.py": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "src/geometry/tetra_mesh_audit.py": "e90edd49a7a9328727e9042b283796b70191ecbf29b4e14a36087a4d6b89542c",
+      "src/io/input_loader.py": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042",
+      "src/io/input_schema.py": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393",
+      "src/io/input_validation.py": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15",
+      "src/io/phase_explicit_accuracy.py": "00a54616510ca767e2102bcdd118057450d3a1901dba5b67d6a4961498b435e6",
+      "src/io/phase_notch_hp.py": "a1b9521ae881cb613bd44cec06743f0d48f7b94220f397e7415c3c0560f44b0b",
+      "src/io/physical_balanced_profile.py": "cee33593b6f37dfc0ad35a3bcb2288aca2d34b2ea53fe06b514f7e5da9ff0114",
+      "src/io/physical_intermediate_profile.py": "ceaa10d57c3a2d234ee3a771d4d5bb8f6f0a5a7ec2edf84429bdb2cbfb6b248c",
+      "src/io/physical_recursive_profile.py": "0fa6e49664d313afc76c1169dee12833f45d6e2629a2301ddbd876458320dad0",
+      "src/io/resolved_config.py": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a",
+      "src/io/run_specification.py": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556",
+      "src/postprocessing/diffraction_3d.py": "775d281e8a3b9e1a232413f4131c39b6a99f80ecbdfd993b2752ca083f209b7b",
+      "src/postprocessing/full3d_reference.py": "bc9ed5e01ff56df55519c85aec992b619b4ca292ffd856e8428844ecb4084012",
+      "src/postprocessing/near_field_2d.py": "c9c5a84119af74a70f898a5258dc2caf147c7d27a9bb2d3d5a777fce132d1df1",
+      "src/postprocessing/phase_volume_quadrature.py": "e1ac4f47c89f9bf5c935ec7c94742ff946998e3234617818b47c3d779bb10cd1",
+      "src/postprocessing/postprocess.py": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/power_metrics.py": "5d8e87761664bc5a37fcdc503d4d79b05dc64285a19ec2cba4b5e35ff486626f",
+      "src/postprocessing/rta_3d.py": "580e02c0f06198d96f28c0d5a6cf3053250bb240b7582e05e155c0fe981bc6d9",
+      "src/runners/diagnostic_storage.py": "7b6ad614bbcc0806f1d09a7c53775557ac76291ddd066cc4bc401f3aa9213bf7",
+      "src/runners/port_preparation.py": "e44cc7a10f0e67f7a21e970332331182fc4b80139efbdda3f882a9ca3ac61347",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/common_continuous_weak.py": "9a693dc12bca632ed9bb7980e38b99ab4896f6672f24b9dc4ed989a1853da48b",
+      "src/solvers/common_weak_phase.py": "e4f38157fbc512214249b93ac2363cb843ed1beacffc9ac84df4cc7342179643",
+      "src/solvers/common_weak_phase_scope.py": "2629cc272ca9478f197f3ae7499c27080ebfd3bce7eb02f42513493511383fa1",
+      "src/solvers/condensed_dtn.py": "125f7cd400b2ff4d11cf6619b751427517d83e2a6a2a9fd690b116e7b7df6ae4",
+      "src/solvers/condensed_reference_preflight.py": "9862145d5c4bf240e70ce785c44546d46edd1d4db266a3ac83b91ef3f7d10ce4",
+      "src/solvers/dtn_port_3d.py": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "src/solvers/fixed_phase_fem.py": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "src/solvers/fullspace_dtn_action.py": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "src/solvers/fullspace_lor_edge_geometric_mg.py": "f1e4c9578d6114eab1d2e9c9191b4cf27dff2b34d9e4bd6c6e8507d3c6a751f3",
+      "src/solvers/fullspace_lor_edge_geometric_mg_global.py": "0f244aa6195ed16e3764674e34281255de222e78e4d4825392acb507db2dbd02",
+      "src/solvers/fullspace_lor_hx_root_cause.py": "453344e97a5399a007315c6bd4641bffc9c6b2ba4cd4adca36db5f68db226ad5",
+      "src/solvers/fullspace_lor_memory_first_foundation.py": "478ea67c3af94f5a97da48f21b6f3eeb01c82299364966cbc0212e7838247505",
+      "src/solvers/fullspace_lor_native_hx.py": "01b8561af0135fe5727a3ebe7c51d4147d99bea7e7ac3ae954f4105d36c3bd81",
+      "src/solvers/fullspace_lor_native_hx_fixture.py": "9e25402531b27cb30fc52abbe71cbe951233cf7ab31f8e4a5a115d1774e5b1dc",
+      "src/solvers/fullspace_lor_topology.py": "2a48706abd3c33f9e466f930243e8f8e7300ff22af17cbc081b0604659b993fe",
+      "src/solvers/fullspace_lor_transfer.py": "f9fa9129104b076c797d2f55c61ae5fa8b77429a12695ab31b1ee941eab0280f",
+      "src/solvers/fullspace_mpc_action.py": "5d025bf295c2dfaa983ff572a09dbd9c7a3bab67656d964b502b6054f1b47f82",
+      "src/solvers/fullspace_physical_action.py": "c45ad3ec350547922f8bbd7337371b6308aeb71669f1b4a51d4e5cd66fb54258",
+      "src/solvers/fullspace_quadrature_diagonal.py": "81af27491cdfdf50fbeffba42ae96f2faf4e25dde338c7bafa6e02ac8c8dfb85",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg.py": "51485311c07e66106d202d05f86c6118cf7bf3a8edd4be5eba1a5f560d39ecf3",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py": "b3a646e1e5a7af379ed1a1445b64842579986c051d6f6c0603c8b23a718bbb67",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py": "2d1100104b1e9091478648bcdd2b637d3f928c0486b3dfad4fc7ad7f8d187b79",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py": "d69614f602304607dd17b01c0ed965b25817eb2b017ded8ffcac0258f1963637",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+      "src/solvers/fullspace_v17_p3_oracle.py": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "src/solvers/hcurl_affine_isotropic_tensor.py": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+      "src/solvers/hcurl_affine_phase_tensor.py": "47f7ae4cb357f7aed35e5e0d329d741ac6034e706a9fffadc9fbf4f743fa5ee6",
+      "src/solvers/hcurl_assembly_time_condensation.py": "29f2623c5e3f5c79ccc8d7e4407623f8553a420dc97b628bbdedaf6209b9cda5",
+      "src/solvers/hcurl_canonical_vector.py": "1a4ea90a6074b6035f4a9d7474a97c151fc349342f6476884c4fa71f6df1a74c",
+      "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+      "src/solvers/hcurl_cell_static_condensation.py": "22a0fb530a2443b28625d9bc9eb86768d105c6e644b8fae2d74f00aa419c3fac",
+      "src/solvers/hcurl_fixed_trace_element.py": "79aebcb6ad92efd0a45a6fbd0169168de9c062093ca33fb16721bb1a622b4d76",
+      "src/solvers/hcurl_variable_p_assembly.py": "5f96ce5589ffc85ccd2207401ce73dd251e4e5b3679ea34eccb6ba4b713375be",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930",
+      "src/solvers/local_subcell_scope.py": "11b320fb601e12c22836261748af1e0b37ac6e2bd970e5db567dfdecfa0c1c8a",
+      "src/solvers/local_subcell_study.py": "2fd1abeb6256b9e73a49fb64426507613bf88309c95c28bc386a1ea7926fe947",
+      "src/solvers/local_trace_assembly.py": "9aef6d2f0db4ae5ee055daf2ccd1a88fb88226cf53483149d905422c5ff5bc33",
+      "src/solvers/mpc_form_action.py": "295ef1bef32164ab3c188bb492f0ac575e3d0ce7663192778e5e66f5b42536ff",
+      "src/solvers/p4_cell_condensed_inverse.py": "f083ccc5d5c4af167efa6325f11094c6c7109cb71b8c43bb0d508fa89cf7126a",
+      "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+      "src/solvers/phase_boundary_checkpoint.py": "81219a1201f6edd0719201c8173d9c9ff0b9f99fb2d51f74a10f983bf3801543",
+      "src/solvers/phase_deployment.py": "ef411c981c01f98e4c11d7fa761cbd2d2d1ae07db688cbe6bc0abc7db737bed8",
+      "src/solvers/phase_deployment_defect.py": "b3701fa24462bb08d02a85b87867c3dcb54504d0dbc3f3f52123dd57fe7e4a8b",
+      "src/solvers/phase_deployment_scope.py": "5591a4951d7e41728b98455be7b114edd81597823314e82054dddb28d9536e79",
+      "src/solvers/phase_evaluation_cache.py": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "src/solvers/phase_explicit_accuracy.py": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "src/solvers/phase_explicit_accuracy_capacity.py": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "src/solvers/phase_explicit_accuracy_fields.py": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "src/solvers/phase_explicit_accuracy_scope.py": "84647d5d88b77be556dac33ff934d47862fc6914681453d62c649b5fba10076e",
+      "src/solvers/phase_hp_completion.py": "7eeb7c7d1bfd6518d37d11dd1fc41e8a53d39e20af9e2118bb89c91ae5dcf714",
+      "src/solvers/phase_hp_completion_scope.py": "f516794ea41d9452aab4952a6eda365f034e4ba798f3db43cf9ecdd55af69948",
+      "src/solvers/phase_notch_hp.py": "70b29ae12dcb37e7762d6c0f254daacc5b7c8cfaa0e5019c2187c8ff51b6afd9",
+      "src/solvers/phase_notch_hp_capacity.py": "ea1509bd4e91292250aa571eaa377022338257e0819dd94d8b67eed7dae74788",
+      "src/solvers/phase_notch_hp_fields.py": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "src/solvers/phase_notch_hp_modes.py": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "src/solvers/phase_notch_hp_scope.py": "18fef8950cd62d92da33ddc869f8adef5ed1dfc8cfddf9f0711c2d58fd36ad10",
+      "src/solvers/phase_p_order_consistency.py": "c0403a045276a4c38b5588b33a89f28c098a107d1b94d3b289c520db973c1aa6",
+      "src/solvers/phase_p_order_dtn.py": "8c19b7c8d664023db584116dda651eec8acfca63c9f4bdd72d0622f07a933622",
+      "src/solvers/phase_p_order_dtn_scope.py": "cb80c8094015f2547781045ec3215be105074987271d3d9178ad5b21d134076b",
+      "src/solvers/phase_raw_tensor_reader.py": "ed8dbfeabada5b0158d5e535569aade9ad20508039aea86c3462ff819438d2cd",
+      "src/solvers/phase_reference_provider.py": "a66a4bbb6d2d873e263ca2856d53b68dbe15d9a8e2ed170e0d0c3328ff18c26a",
+      "src/solvers/phase_saved_closure.py": "0dd45e5a4c39e3a55ad739c0b89e956d5857690979b0741afecb2fb390556378",
+      "src/solvers/phase_saved_closure_scope.py": "9b33e2fad80a69db4ae642add14a119bd2454b0500c719a66d9e2d1ded9b1379",
+      "src/solvers/phase_saved_uncondensed.py": "6a743386749b31ad2f8ea0add321a1cfe6ac4e4152e0aca1729018b8ddb2da08",
+      "src/solvers/phase_spatial_resolution.py": "c372eef816721d65f215a13271dbd4340d02457ef7baa63bc991de93644eec53",
+      "src/solvers/phase_spatial_resolution_scope.py": "9123607b885bf8699f11930eaf547b3c00d7eb74954a6e98f6c44a207034f41a",
+      "src/solvers/phase_tangential_audit.py": "3293b8baa1ea5d17286bc6c5a0c7115d21cdc0f0e9564a07bba12ceed127ef35",
+      "src/solvers/phase_target_bridge.py": "549f680ff7e7e2dba0a4b37858432dd9c2f958ce115a4028ddab05a8d1c69083",
+      "src/solvers/phase_tensor_checkpoint.py": "4caf2ca9e1021a140f3d59976beec7914f60ffc4ef7b653147d47ca5979739db",
+      "src/solvers/scattering_accuracy.py": "617fffbde5a7112ec3b9098fe4918d1978c9e40f528bcc491c5604f6e2b243af",
+      "src/solvers/scattering_accuracy_analytic.py": "d59c32fbec370cd397383b6af52fcfc33922e9bd97974de50adb7fd00ffa8a2d",
+      "src/solvers/scattering_accuracy_boundary.py": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "src/solvers/scattering_accuracy_fields.py": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "src/solvers/scattering_accuracy_scope.py": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "src/solvers/solve_vector_maxwell.py": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+      "src/solvers/static_local_schur_action.py": "149d3c2710412172a3ff9d99fcdc87d41a9b34e1fbb51ed0b29e70e46b32c0c8",
+      "src/solvers/subcell_macro_deployment.py": "4d96d45e4cff94f0d4b989ca0dd0abc2544c7da9c3ef9e15704025a95d4497a7",
+      "src/solvers/subcell_macro_response.py": "0e3c9f4ba796467f22d278be65844faae206f718de4be231752811221e208a1c",
+      "src/solvers/subcell_response_kernel.py": "525c255bf54e0f217cd9c350f12af8482c89053f12adb2be5b8bafdb0f873dea",
+      "src/solvers/trace_interior_restriction.py": "4af52ef06b684fe42af8bfd3e1d284612485347128f28940d7f52a854c6c6cfe",
+      "src/solvers/trace_interior_scope.py": "d61a65eeee9b6c6cc88ed3c1fde76de634298caedfb2b2895e8210cc19c68482",
+      "src/solvers/trace_interior_study.py": "74022f6da550cd834356a6af8a1a3e33859bbd34c64d801a85eafdd3e8343ede",
+      "src/test/test_common_weak_phase.py": "2a2920f0732e84809fe634e62eaee5b7a589a61f9a723d3aa1b0fdff5b56ead9",
+      "src/test/test_local_subcell.py": "622c2950b9f117a21b06ada1857c44d86a24d78efab9726f12fcc6d02a3355a4",
+      "src/test/test_phase_deployment.py": "a73178774feadab54925049d9c08286043d2c589f051c38c7a7243a76da1a7f7",
+      "src/test/test_phase_explicit_accuracy.py": "e51f7bf983d2166ad1a4b7902aaa223b6202f27eb5c441d8532adc72e6cb70b3",
+      "src/test/test_phase_hp_completion.py": "242b64b06fa9bf10f7ce5fe408f15dd99e6dcd56a8f556d4d795280d115386fe",
+      "src/test/test_phase_notch_hp.py": "6438974b6860545b8715370323550dd0a2d5db6e3e45fab073f247d98fd036f4",
+      "src/test/test_phase_p_order_dtn.py": "148e0ad6e8e1ee5958c78b0d82b02c56d3d7ad0839fe2f5ea57537b8fa0b1828",
+      "src/test/test_phase_saved_closure.py": "db9a3f618e4c997c1e85ecd9923f47a25733c4cc59ec7d21ebb022b30c4b6446",
+      "src/test/test_phase_spatial_resolution.py": "cc9c8366f887ff3c4e4e48b27d0d95ff4ab847c0c26d548d1f88f0ed03f8b83e",
+      "src/test/test_subcell_response_workflow.py": "56edd76b13688c152e297c8b24f9b40d083ad8cf484ca57bdb59c127dff74025",
+      "src/test/test_trace_interior.py": "eeae5520fc55641062daceaa25b58d76fec6bf2fba30531501e244712ea018e2"
+    },
+    "shared_workstation": true,
+    "environment_mode": "fe",
+    "cpu": 2,
+    "rank_cpus": [
+      2
+    ],
+    "MPI_size": 1,
+    "planned_bytes": 68719476736,
+    "new_volume_action_count": null,
+    "new_factor_count": null,
+    "numeric_object_inventory_status": "actual stage inventory in result/events; launcher unknown",
+    "storage_limits": {
+      "new_storage_bytes": 17179869184,
+      "task_storage_bytes": 150323855360,
+      "free_bytes": 53687091200,
+      "evidence_reserve_bytes": 536870912
+    },
+    "memory_budget": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "input_sha256": "3a065dfbbbd23c1887db8155d860ee354b3d1cbcc77a5efd518ab4eb3d47e88e",
+    "physical_sha256": "d44831cb4ded7cf9b3835fe5b96c93ad8a3ff95ce9276da04f6a8db2cef09338",
+    "plan_sha256": "446028f296dd90ed00cc2bd2f24d54c46bbc356bd9cc39189f9bfa8736d23065"
+  },
+  "timings": {
+    "mesh_materials_envelope_MPC": 2.057732205139473,
+    "local_phase_reference_p6": 11.893182635074481,
+    "child_complete_raw_internal_LU_response": 32.68410569662228,
+    "local_phase_reference_p7": 48.770389893092215,
+    "local_phase_reference_p8": 700.4040060811676,
+    "child_schur_macro_local_assembly": 2.115049749147147,
+    "macro_internal_microtrace_factor": 65.23761916719377,
+    "macro_432_response_bounded_16_columns": 1.2264928079675883
+  },
+  "H2_mathematics_prerequisite": "P6 and R2 mapping/affine recovery/operation scales; R4 increment or capacity does not gate global R2",
+  "stage": "LOCAL_RESPONSE",
+  "source_sha": "9fec5659d97cc5a2a0b3450bfe79a920fb9472bb",
+  "elapsed_worker_seconds": 3307.3887423628476,
+  "input_sha256": "3a065dfbbbd23c1887db8155d860ee354b3d1cbcc77a5efd518ab4eb3d47e88e",
+  "physical_contract_sha256": "d44831cb4ded7cf9b3835fe5b96c93ad8a3ff95ce9276da04f6a8db2cef09338"
+}

@@ -1,0 +1,450 @@
+{
+  "physical": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "runs": [
+    {
+      "role": "pre",
+      "source_sha": "af1ac88ecf3cbc6c5295db624a1a9613bf60b4c9",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "adc1417bce75cb60ce1696bc34e475832b2223204111424acd354f3ebbc261f0"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "af1ac88ecf3cbc6c5295db624a1a9613bf60b4c9",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "9bb9a844aa1f6145d809ee5dee6afcc9cc021b2062a7408713f96fa4c115ab9f",
+      "physical_sha256": "569d4195e02e01858613cd6a1fb83dc1213aaff94f06ac12df4192d41745422e",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "64e54011cd858cba34b880afbbee532e6e4666e1d57cdeae08fe9a49d110f15e",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "2162c393c0b64b61809c76a30a85f7c7e401aa5a8dbbabb0562b4a6125fb4262"
+    },
+    {
+      "role": "C67",
+      "source_sha": "af1ac88ecf3cbc6c5295db624a1a9613bf60b4c9",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "652458e7cf8178004958184bb78543d6af02431d8d98cea36af46e2f6f6b40d5",
+      "physical_sha256": "569d4195e02e01858613cd6a1fb83dc1213aaff94f06ac12df4192d41745422e",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "b21214800deb0ef7bc222b6018c81826bf0fbce3853c0bb38fac5da7080a1432",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "c5c8c4fd45fadc215955321ef4fb4e90f13c24ace18fe17e6fba16eb410079fd"
+    },
+    {
+      "role": "pre",
+      "source_sha": "0283c6c20873fae8b32cee0e8fe9942eee4fcbe7",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "e44f8c51f1e3e04e6cc54c51e42ee2a2e6494d8154da19f361f1b901f9739416"
+    },
+    {
+      "role": "C67",
+      "source_sha": "0283c6c20873fae8b32cee0e8fe9942eee4fcbe7",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "652458e7cf8178004958184bb78543d6af02431d8d98cea36af46e2f6f6b40d5",
+      "physical_sha256": "569d4195e02e01858613cd6a1fb83dc1213aaff94f06ac12df4192d41745422e",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "b21214800deb0ef7bc222b6018c81826bf0fbce3853c0bb38fac5da7080a1432",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "bcec97083b2ec97113406b570b77ca4c194e1b491cef71c310972fa3a387ee1b"
+    },
+    {
+      "role": "pre",
+      "source_sha": "e06d38742c64db261e6d6c30b91d6271965fb1f5",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "64432c3175fcd7a864d21db28e9d03c54e0ac2443cd6d79d28db034fd11ff76a"
+    },
+    {
+      "role": "C67",
+      "source_sha": "e06d38742c64db261e6d6c30b91d6271965fb1f5",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "652458e7cf8178004958184bb78543d6af02431d8d98cea36af46e2f6f6b40d5",
+      "physical_sha256": "569d4195e02e01858613cd6a1fb83dc1213aaff94f06ac12df4192d41745422e",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "b21214800deb0ef7bc222b6018c81826bf0fbce3853c0bb38fac5da7080a1432",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "25df99edb3cd3097f17d840822f4ad7d89723af411bc0b6de9e5ecb7031fb19c"
+    },
+    {
+      "role": "pre",
+      "source_sha": "8e17689ff4a32e7f2f889b6b019038848c6d76cc",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "2a3b841e0abffde4b15d060ece95d70a8df7d9213b265bd60edee1cf2b575e64"
+    },
+    {
+      "role": "LOCAL_RESPONSE",
+      "source_sha": "8e17689ff4a32e7f2f889b6b019038848c6d76cc",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "3a065dfbbbd23c1887db8155d860ee354b3d1cbcc77a5efd518ab4eb3d47e88e",
+      "physical_sha256": "d44831cb4ded7cf9b3835fe5b96c93ad8a3ff95ce9276da04f6a8db2cef09338",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "467d1c68f941ce0efabc6a3205395ae06a977e93fae7ad4801bcd262219e3960",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "37a3934bd80bb5899299ef6df581b6c20f86b372f5a2a70f28259d053dc0d610"
+    },
+    {
+      "role": "pre",
+      "source_sha": "9fec5659d97cc5a2a0b3450bfe79a920fb9472bb",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "3cd2174d51893ce5a12e4dcb71e7d7bf1a4e0e0fa4e3a55151fe14965ee57ac0"
+    },
+    {
+      "role": "LOCAL_RESPONSE",
+      "source_sha": "9fec5659d97cc5a2a0b3450bfe79a920fb9472bb",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "3a065dfbbbd23c1887db8155d860ee354b3d1cbcc77a5efd518ab4eb3d47e88e",
+      "physical_sha256": "d44831cb4ded7cf9b3835fe5b96c93ad8a3ff95ce9276da04f6a8db2cef09338",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "467d1c68f941ce0efabc6a3205395ae06a977e93fae7ad4801bcd262219e3960",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "56608cf90b82ae2b6a9cce1d640eb234edfad4b6d8610fa68ba298961c3ab066"
+    },
+    {
+      "role": "pre",
+      "source_sha": "d728fbc7113531af4dbc3d0f3655e1d05246fa1e",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "fab95daa4e6d567f2fde3499ab77677d7e2977f5848b45043b7494bc97604133"
+    },
+    {
+      "role": "H2",
+      "source_sha": "d728fbc7113531af4dbc3d0f3655e1d05246fa1e",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "ac971a42f04a047576e5873dcccd5f890bc5580491a309c625031754f017048f",
+      "physical_sha256": "12326c3c1cd069f2aa0fc4dac54c1fc75da17d018096df3c4ea2731978524808",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "0e61a497c9f7d4f3489040665c6f5957e81ba6fb1ef5a991f125b5ca2d575431",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "654f4bda1dc2c5e56b4f986bee1151bdac9bad29b0154cfc2d28afac1f6725f9"
+    },
+    {
+      "role": "pre",
+      "source_sha": "d42ac36b99bd758478da7ce42b34215826832676",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "5e2cf5288a0897fb9dc16470fa69dbe051243b1993291cc52b287337835eee6c"
+    },
+    {
+      "role": "pre",
+      "source_sha": "d42ac36b99bd758478da7ce42b34215826832676",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "b120bda457f330056fa87b2560b5aa183033200ce6e6f1b9d5226590ffc25a62"
+    },
+    {
+      "role": "H2",
+      "source_sha": "d42ac36b99bd758478da7ce42b34215826832676",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "ac971a42f04a047576e5873dcccd5f890bc5580491a309c625031754f017048f",
+      "physical_sha256": "12326c3c1cd069f2aa0fc4dac54c1fc75da17d018096df3c4ea2731978524808",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "0e61a497c9f7d4f3489040665c6f5957e81ba6fb1ef5a991f125b5ca2d575431",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "f70dd4aecfd2134336d4e4148b8a7d05aa24a8a3fbd1d09e9cb95c593bcc7181"
+    },
+    {
+      "role": "archive",
+      "source_sha": "cd69a4bbfe9be91f101615f60c6fcbaf5752500a",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "1908f098ed13116187345c320674a7b9f3588a15dd618912477c420836a586e2"
+    },
+    {
+      "role": "pre",
+      "source_sha": "f9b6d3886b59a3b1f549af62aec677347f2f8482",
+      "binding_scope": "auxiliary_command",
+      "input_sha256": null,
+      "physical_sha256": null,
+      "auxiliary_has_no_PDE_input": true,
+      "resolved_sha256": null,
+      "memory": null,
+      "manifest_sha256": "0ae5370d5d4882f3732bd43570b6a196021a739979c3e498fccacfe1420346c7"
+    },
+    {
+      "role": "H2",
+      "source_sha": "f9b6d3886b59a3b1f549af62aec677347f2f8482",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "ac971a42f04a047576e5873dcccd5f890bc5580491a309c625031754f017048f",
+      "physical_sha256": "12326c3c1cd069f2aa0fc4dac54c1fc75da17d018096df3c4ea2731978524808",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "b3dd585a876534ebe19411fbea44eb76e1a57195a788744e79562efc68034bd5",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "ad068131e16d8ec41dbeaab85e17d8ca2f18f440282fa7d7062a2750c9abd6b5"
+    },
+    {
+      "role": "VERIFY_COST",
+      "source_sha": "f9b6d3886b59a3b1f549af62aec677347f2f8482",
+      "binding_scope": "formal_one_run",
+      "input_sha256": "7a236490308eaf489366628ebf7f83441c240c31bc95eaced424ae47845d1efd",
+      "physical_sha256": "569d4195e02e01858613cd6a1fb83dc1213aaff94f06ac12df4192d41745422e",
+      "auxiliary_has_no_PDE_input": false,
+      "resolved_sha256": "ef83dfe3875c774f0789e5e776e4d3a639f26af8fda87d343a4cbacfc477147d",
+      "memory": {
+        "planning_gib": 64,
+        "warning_gib": 80,
+        "sampled_stop_gib": 96,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "manifest_sha256": "e4d8a5571b7caac1883f4554cbf0e4387e01a58d08781508261aa25299839e3c"
+    }
+  ],
+  "cases": {
+    "C67": {
+      "degree": 7,
+      "ambient_degree": 7,
+      "trace_degree": 6,
+      "interior_degree": 7,
+      "splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 160,
+      "independent": 166208,
+      "trace": 45248,
+      "internal": 120960,
+      "rows": 33660,
+      "mixed_independent": 153792,
+      "mixed_trace": 32832,
+      "mixed_rows": 33660,
+      "local_dimension": 1344,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        0
+      ],
+      "ambient_rows": 46076
+    },
+    "H2": {
+      "degree": 6,
+      "ambient_degree": 6,
+      "trace_degree": 6,
+      "interior_degree": 6,
+      "splits": [
+        2,
+        2,
+        4
+      ],
+      "macro_splits": [
+        1,
+        1,
+        2
+      ],
+      "cells": 1280,
+      "macro_cells": 160,
+      "independent": 834048,
+      "trace": 258048,
+      "internal": 576000,
+      "rows": 33660,
+      "mixed_independent": 729792,
+      "mixed_trace": 32832,
+      "mixed_internal": 696960,
+      "mixed_rows": 33660,
+      "local_dimension": 882,
+      "complete_modes": 828,
+      "gauge_shift": [
+        0,
+        0
+      ],
+      "subcell_ratio": 2
+    }
+  },
+  "carrier": [
+    8.94046081729244,
+    0.7821889682108057,
+    0.0
+  ],
+  "G6_G7_not_used": true,
+  "all_modes": 828,
+  "primal_dual": "Hermitian",
+  "local_inside_affine_particular_retained": true,
+  "high_global_schur_not_formed": true
+}

@@ -1,3 +1,11 @@
+# V60增量及依赖分组
+
+数值核在src/solvers：entity-supported local restriction、两级subcell response/恢复/部署、只读准备checkpoint与body-only Schur bank。薄scope/study/五dat及run_case复用原runner/监督；边界provider仅显式entity支持，原普通默认不改。独立checker、saved-only consumer及仅同V60成功副本的hash-bound archive接口有targeted回归；数学/源/数组与完整C67/H2均保留。
+
+source与文件级[依赖分组](records/selective_merge_v60.json)、[clean绑定](records/source_bindings_v60.json)、[run](records/run_index_v60.json)。这是opt-in有限研究，不是production/default或merge approval。旧task/review/response/raw及其他worktree不改；文档只增加当前入口与结果。
+
+---
+
 # V59改动：窄混阶空间与继承的完整执行链
 
 新增trace_interior_scope/restriction/study数值核心、相关checker/qualifier、四个one-run dat及冻结plan；旧p8默认仍拒绝，只向本合同开放内部p8。既有相位、凝聚、CoordinateFactor、PUBLIC_BASIX与无JIT输出复用。runner只有薄stage分派与64/80/96门传递，未复制另一套求解器。支撑图整数容量和实际消费namespace/source缺陷最小修复，nodefault生产资格提升。

@@ -1,0 +1,30 @@
+{
+  "schema": "task042.compact-index.v1",
+  "full_ignored_inventory": {
+    "path": "tmp/task042/v60/aux_post_collect01/records/source_bindings_v60.json",
+    "sha256": "1b81d6df86e2fc78065376800c22ed8201703693ed3a57133a6e406701ea8b83",
+    "bytes": 584677
+  },
+  "entry_count": 1669,
+  "historical_inventory_rescans": 0,
+  "all_full_rows_retained": true,
+  "clean_source_shas": [
+    "0283c6c20873fae8b32cee0e8fe9942eee4fcbe7",
+    "8e17689ff4a32e7f2f889b6b019038848c6d76cc",
+    "9fec5659d97cc5a2a0b3450bfe79a920fb9472bb",
+    "af1ac88ecf3cbc6c5295db624a1a9613bf60b4c9",
+    "cd69a4bbfe9be91f101615f60c6fcbaf5752500a",
+    "d42ac36b99bd758478da7ce42b34215826832676",
+    "d728fbc7113531af4dbc3d0f3655e1d05246fa1e",
+    "e06d38742c64db261e6d6c30b91d6271965fb1f5",
+    "f9b6d3886b59a3b1f549af62aec677347f2f8482"
+  ],
+  "archived_unique_contents": 224,
+  "document_HEAD_is_not_run_source": true,
+  "formal_producers": {
+    "C67": "e06d38742c64db261e6d6c30b91d6271965fb1f5",
+    "H2": "d42ac36b99bd758478da7ce42b34215826832676"
+  },
+  "H2_saved_consumer": "f9b6d3886b59a3b1f549af62aec677347f2f8482",
+  "VERIFY": "f9b6d3886b59a3b1f549af62aec677347f2f8482"
+}

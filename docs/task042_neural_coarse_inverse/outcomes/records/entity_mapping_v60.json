@@ -1,0 +1,420 @@
+{
+  "preflight": {
+    "status": "COMPLETED",
+    "role": "PREFLIGHT",
+    "pass_gate": true,
+    "degrees": {
+      "7": {
+        "pass_gate": true,
+        "mapping_check": {
+          "shared_operation_max": 1.11347489886263e-15,
+          "dual_operation": 2.2287262184532454e-17,
+          "tangential_field_operation_max": 3.2085482373798754e-13,
+          "local_entity_rank": [
+            {
+              "permutation": 0,
+              "entity_dimension": 1,
+              "columns": 6,
+              "rcond": 0.9999999999999993,
+              "threshold": 1.5543122344752192e-15,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 0,
+              "entity_dimension": 2,
+              "columns": 60,
+              "rcond": 0.0016646763363610641,
+              "threshold": 1.865174681370263e-14,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 36873,
+              "entity_dimension": 1,
+              "columns": 6,
+              "rcond": 0.9999999999999993,
+              "threshold": 1.5543122344752192e-15,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 36873,
+              "entity_dimension": 2,
+              "columns": 60,
+              "rcond": 0.0016646763363610654,
+              "threshold": 1.865174681370263e-14,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 576,
+              "entity_dimension": 1,
+              "columns": 6,
+              "rcond": 0.9999999999999993,
+              "threshold": 1.5543122344752192e-15,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 576,
+              "entity_dimension": 2,
+              "columns": 60,
+              "rcond": 0.0016646763363610641,
+              "threshold": 1.865174681370263e-14,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 4680,
+              "entity_dimension": 1,
+              "columns": 6,
+              "rcond": 0.9999999999999993,
+              "threshold": 1.5543122344752192e-15,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 4680,
+              "entity_dimension": 2,
+              "columns": 60,
+              "rcond": 0.0016646763363610641,
+              "threshold": 1.865174681370263e-14,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 32769,
+              "entity_dimension": 1,
+              "columns": 6,
+              "rcond": 0.9999999999999993,
+              "threshold": 1.5543122344752192e-15,
+              "full_column_rank": true
+            },
+            {
+              "permutation": 32769,
+              "entity_dimension": 2,
+              "columns": 60,
+              "rcond": 0.0016646763363610654,
+              "threshold": 1.865174681370263e-14,
+              "full_column_rank": true
+            }
+          ],
+          "nnz": 1766792,
+          "shape": [
+            45248,
+            32832
+          ],
+          "csr_bytes": 35516836,
+          "pass_gate": true,
+          "unique_owner": true,
+          "numerical_clipping": false,
+          "entity_support": true,
+          "structural_zeros": {
+            "maximum": 9.66531851321601e-14,
+            "norm": 1.2240077600329499e-12,
+            "operation_scale": 329.74484595508113,
+            "topology_defined": true,
+            "numerical_threshold_drop": false
+          }
+        }
+      }
+    },
+    "trace_mapping": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_local_assembly_preflight_20261007T170224434168Z/entity_trace_mapping.npz",
+      "sha256": "1a54918dc986cec0dcc84324dc7606724a7be4ec424fc9de334fbc055aa79e86",
+      "members": {
+        "R_indptr": {
+          "shape": [
+            45249
+          ],
+          "dtype": "int32",
+          "sha256": "ef1ba1a53f7655a4e537a42cf977646cf455ffe67887df37b731ba7129927c4e"
+        },
+        "R_indices": {
+          "shape": [
+            1766792
+          ],
+          "dtype": "int32",
+          "sha256": "cb219817acf010686c667467af706f5619001cb29597e02200f171f7e59d3209"
+        },
+        "R_data": {
+          "shape": [
+            1766792
+          ],
+          "dtype": "complex128",
+          "sha256": "eb6c5e269a5aa522e4ed7ec32fd21479660f545d45cc675170364d5c248be46e"
+        },
+        "R_shape": {
+          "shape": [
+            2
+          ],
+          "dtype": "int64",
+          "sha256": "4413eb93c99ba26eb7db377692eb10b216cfb246bc498e100be000dc56bc759b"
+        },
+        "high_native_rows": {
+          "shape": [
+            45248
+          ],
+          "dtype": "int64",
+          "sha256": "e2f26392e80f61a8ec302cf5dcbcbc18e3a7e0596874ad32d1bf194a034a084b"
+        },
+        "low_native_rows": {
+          "shape": [
+            32832
+          ],
+          "dtype": "int64",
+          "sha256": "cfad51668b098b913be9abb216db48cb85e52bfbfd68a1dca9401ca6077db2f5"
+        },
+        "internal_rows": {
+          "shape": [
+            120960
+          ],
+          "dtype": "int32",
+          "sha256": "253dd56a98e7be60c9b53dd6fe4759bd1abca06a12067fad405ecc8c88486493"
+        },
+        "owner": {
+          "shape": [
+            45248
+          ],
+          "dtype": "int64",
+          "sha256": "fc2edd7f5143b9450856fcbba994b628568760591333250166e410671474bec4"
+        }
+      }
+    },
+    "old_stored_support_difference": 1.6743558185232514e-15,
+    "old_mapping_parent": "4d328217bfe77012cc558f7ec54b415dbd8994397187cf6873b6fa2d2bf37ced",
+    "trace_witness": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_local_assembly_preflight_20261007T170224434168Z/old_new_trace_support_pair.npz",
+      "sha256": "8142c94739e829e07f02d1f2bafaad7497ef1316ad1a16da3df403f9fa25c77f",
+      "members": {
+        "low_trace": {
+          "shape": [
+            32832
+          ],
+          "dtype": "complex128",
+          "sha256": "b80dba577aee4b50ffe6e125832d406e11129ad85e7ee57d8eff49a0b8f87a3e"
+        },
+        "new_high_trace": {
+          "shape": [
+            45248
+          ],
+          "dtype": "complex128",
+          "sha256": "871bbc7e962454fe231815fe6fb40080ff9659529ae84d56caebb9dc7398d5cd"
+        },
+        "old_high_trace": {
+          "shape": [
+            45248
+          ],
+          "dtype": "complex128",
+          "sha256": "339897385cac357653831ac6877f4da630a89a08dddf7c58142548b37665c354"
+        }
+      }
+    },
+    "small": {
+      "recovery": 2.729721697651932e-16,
+      "lift_invariance": 1.0201083139683281e-15,
+      "mixed": 4.989341417995929e-16,
+      "ambient": 0.20139470314536806,
+      "transpose_counterexample": 1.2670840377108572,
+      "nonzero_internal_rhs": true,
+      "nonzero_40port_rhs": true,
+      "non_mutual_C_D": true,
+      "NOT_A_FULL_AMBIENT_SOLUTION": true
+    },
+    "new_global_factors": 0,
+    "new_complete_solves": 0,
+    "geometry": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_local_assembly_preflight_20261007T170224434168Z/geometry.npz",
+      "sha256": "96d97bf4a2db48c272cb614818c50e8c745264d1e2332fb96841ce197cf9c466",
+      "members": {
+        "cell_centers": {
+          "shape": [
+            160,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "a6450af7a140dfe330d40107aba58ec88cfa42d58d9f84cc4a22be6d943c890c"
+        },
+        "cell_tags": {
+          "shape": [
+            160
+          ],
+          "dtype": "int32",
+          "sha256": "6aec2cf5344a1fa9d668da349ea4025633ed19af9a742cf2c10d27b0fe889efb"
+        },
+        "regular_tags": {
+          "shape": [
+            160
+          ],
+          "dtype": "int32",
+          "sha256": "dedccffcc31c1e934aae3d98c9c7244b817f29a31f771ba4e3fda04162a77a4a"
+        },
+        "geometry_x": {
+          "shape": [
+            275,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "c4d2e7ec21a1f34da7215abb382b3b70e4f32e0684c988be107bf49bf20d0638"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            160,
+            8
+          ],
+          "dtype": "int32",
+          "sha256": "b21359559b5884d8eb427c8302953de41e903f36c29e52667aba66f22b8f6f36"
+        }
+      }
+    },
+    "stage": "PREFLIGHT",
+    "source_sha": "af1ac88ecf3cbc6c5295db624a1a9613bf60b4c9",
+    "elapsed_worker_seconds": 62.56588539597578,
+    "input_sha256": "9bb9a844aa1f6145d809ee5dee6afcc9cc021b2062a7408713f96fa4c115ab9f",
+    "physical_contract_sha256": "569d4195e02e01858613cd6a1fb83dc1213aaff94f06ac12df4192d41745422e"
+  },
+  "C67_mapping": {
+    "shared_operation_max": 1.11347489886263e-15,
+    "dual_operation": 2.2287262184532454e-17,
+    "tangential_field_operation_max": 3.2085482373798754e-13,
+    "local_entity_rank": [
+      {
+        "permutation": 0,
+        "entity_dimension": 1,
+        "columns": 6,
+        "rcond": 0.9999999999999993,
+        "threshold": 1.5543122344752192e-15,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 0,
+        "entity_dimension": 2,
+        "columns": 60,
+        "rcond": 0.0016646763363610641,
+        "threshold": 1.865174681370263e-14,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 36873,
+        "entity_dimension": 1,
+        "columns": 6,
+        "rcond": 0.9999999999999993,
+        "threshold": 1.5543122344752192e-15,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 36873,
+        "entity_dimension": 2,
+        "columns": 60,
+        "rcond": 0.0016646763363610654,
+        "threshold": 1.865174681370263e-14,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 576,
+        "entity_dimension": 1,
+        "columns": 6,
+        "rcond": 0.9999999999999993,
+        "threshold": 1.5543122344752192e-15,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 576,
+        "entity_dimension": 2,
+        "columns": 60,
+        "rcond": 0.0016646763363610641,
+        "threshold": 1.865174681370263e-14,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 4680,
+        "entity_dimension": 1,
+        "columns": 6,
+        "rcond": 0.9999999999999993,
+        "threshold": 1.5543122344752192e-15,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 4680,
+        "entity_dimension": 2,
+        "columns": 60,
+        "rcond": 0.0016646763363610641,
+        "threshold": 1.865174681370263e-14,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 32769,
+        "entity_dimension": 1,
+        "columns": 6,
+        "rcond": 0.9999999999999993,
+        "threshold": 1.5543122344752192e-15,
+        "full_column_rank": true
+      },
+      {
+        "permutation": 32769,
+        "entity_dimension": 2,
+        "columns": 60,
+        "rcond": 0.0016646763363610654,
+        "threshold": 1.865174681370263e-14,
+        "full_column_rank": true
+      }
+    ],
+    "nnz": 1766792,
+    "shape": [
+      45248,
+      32832
+    ],
+    "csr_bytes": 35516836,
+    "pass_gate": true,
+    "unique_owner": true,
+    "numerical_clipping": false,
+    "entity_support": true,
+    "structural_zeros": {
+      "maximum": 9.66531851321601e-14,
+      "norm": 1.2240077600329499e-12,
+      "operation_scale": 329.74484595508113,
+      "topology_defined": true,
+      "numerical_threshold_drop": false
+    }
+  },
+  "H2_mapping": {
+    "event": "macro_full_primal_dual_inventory",
+    "elapsed_s": 116.68942835088819,
+    "RSS_bytes": 2438664192,
+    "clock": {
+      "start_utc": "2026-10-07T16:52:06.864562+00:00",
+      "start_monotonic": 1316921.72,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 32400,
+      "total_limit_seconds": 36000,
+      "scientific_loaded_limit_seconds": 28800,
+      "review_commit": "7514fbedf6253807966f0aad7b1b864e908efd8e",
+      "intake_HEAD": "7e31cf67a23917b137e0867e1320919d6a951cb1",
+      "contract_HEAD": "7514fbedf6253807966f0aad7b1b864e908efd8e",
+      "closed": false,
+      "first_work_start_never_refreshed": true,
+      "monotonic_observation_precision_seconds": 0.01,
+      "observed_utc": "2026-10-07T19:35:56.658643+00:00",
+      "observed_monotonic": 1326751.519510358,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 9829.799510358134,
+      "heavy_remaining_seconds": 22570.200489641866,
+      "total_remaining_seconds": 26170.200489641866
+    },
+    "shared_operation_max": 9.088767765581625e-16,
+    "dual_operation": 1.9864184017755e-17,
+    "shape": [
+      857304,
+      729792
+    ],
+    "nnz": 6216193,
+    "mixed_FE": 729792,
+    "ambient_FE": 834048,
+    "internal": 696960,
+    "trace": 32832,
+    "actual_local_complete": 6084,
+    "second_stage": 756,
+    "csr_primal_dual_bytes": 254996112,
+    "unique_owner": true,
+    "full_field_never_projected_to_macro": true,
+    "physical_tangential_operation_max": 5.625460655833662e-14,
+    "pass_gate": true
+  },
+  "topology_mask_not_magnitude_drop": true,
+  "legal_edge_to_face_retained": true,
+  "Piola_orientation_owner_MPC_once": true
+}

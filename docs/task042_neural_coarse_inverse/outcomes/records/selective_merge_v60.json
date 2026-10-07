@@ -1,0 +1,136 @@
+{
+  "merge_approved": false,
+  "ordinary_default_changed": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/local_trace_assembly.py",
+        "src/solvers/subcell_response_kernel.py",
+        "src/solvers/subcell_macro_response.py",
+        "src/solvers/subcell_macro_deployment.py"
+      ],
+      "classification": "reusable opt-in research core; not production default",
+      "numerical_behavior": "entity-supported local restriction and macro-local two-level condensation",
+      "dependencies": [
+        "original high-order moments/MPC",
+        "complete Ckappa tensors",
+        "original condensation/recovery",
+        "original DtN"
+      ],
+      "tests": [
+        "16 targeted tests",
+        "C67 strict reproduction",
+        "H2 independent mixed original/recovery"
+      ],
+      "fresh_PDE": [
+        "C67",
+        "H2"
+      ],
+      "suggested_order": 1
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "src/solvers/local_subcell_scope.py",
+        "src/solvers/local_subcell_study.py",
+        "src/solvers/subcell_preparation_checkpoint.py"
+      ],
+      "classification": "V60 opt-in guards/resume/wiring",
+      "numerical_behavior": "no ordinary-route relaxation; original capacity and storage gates retained",
+      "dependencies": [
+        "existing activation/deadline/subreaper"
+      ],
+      "tests": [
+        "five actual dat validations",
+        "saved-only no-factor regression",
+        "archive mismatch test"
+      ],
+      "fresh_PDE": [
+        "C67",
+        "H2"
+      ],
+      "suggested_order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/solvers/local_schur_bank.py",
+        "benchmarks/collect_local_subcell.py",
+        "benchmarks/qualify_local_subcell.py",
+        "benchmarks/consume_saved_subcell.py",
+        "benchmarks/compact_local_subcell_raw.py",
+        "src/test/test_local_subcell.py",
+        "src/test/test_subcell_response_workflow.py",
+        "src/test/test_local_subcell_archive.py",
+        "src/test/test_saved_subcell_consumer.py"
+      ],
+      "classification": "independent consumers/research tests",
+      "numerical_behavior": "saved-array classification and body-only local action; no new solve",
+      "dependencies": [
+        "hash-bound V60 records"
+      ],
+      "tests": [
+        "actual VERIFY",
+        "16 focused"
+      ],
+      "fresh_PDE": [
+        "C67",
+        "H2"
+      ],
+      "suggested_order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v60.md",
+        "docs/task042_neural_coarse_inverse/outcomes/local_assembly_subcell_response_v60.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v60.json"
+      ],
+      "classification": "evidence only",
+      "numerical_behavior": "none",
+      "dependencies": [
+        "ignored increment/source inventories"
+      ],
+      "tests": [
+        "one compact documentation check"
+      ],
+      "suggested_order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/local_assembly_subcell_v60.json",
+        "input/task042_neural_coarse_inverse/v60_*.dat"
+      ],
+      "classification": "fixed finite research contract",
+      "numerical_behavior": "opt-in only",
+      "dependencies": [
+        "all previous groups"
+      ],
+      "tests": [
+        "five dat validators"
+      ],
+      "suggested_order": 5
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "tmp/task042/v60",
+        "benchmarks/artifacts/task042/v60",
+        "results/task042/task042_v60_*"
+      ],
+      "classification": "ignored large tensors/LU/fields/raw; preserve on research host",
+      "numerical_behavior": "not production artifacts",
+      "dependencies": [
+        "hash indices"
+      ],
+      "tests": [
+        "7921 NPZ/22047 members checked"
+      ],
+      "suggested_order": null
+    }
+  ]
+}

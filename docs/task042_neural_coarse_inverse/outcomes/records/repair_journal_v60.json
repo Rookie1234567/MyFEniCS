@@ -1,0 +1,128 @@
+{
+  "entries": [
+    {
+      "root": "F1_launch_guard_inside_active_worker",
+      "source": "af1ac88ecf3cbc6c5295db624a1a9613bf60b4c9",
+      "failed_run": "task042_v60_local_trace6_interior7_20261007T170417510784Z",
+      "error": "V36 closed/active scope",
+      "elapsed_actor_seconds": 3.1326501769945025,
+      "no_numeric_work": true,
+      "repair": "Separate launch-only guard from in-worker fixed boundary allowance; no window reset",
+      "affected_replay": "C67 before any saved return"
+    },
+    {
+      "root": "F2_port_slice_nested_R_attribute",
+      "source": "0283c6c20873fae8b32cee0e8fe9942eee4fcbe7",
+      "failed_run": "task042_v60_local_trace6_interior7_20261007T170956335399Z",
+      "error": "csr_matrix has no attribute R at port slice after numerical solve",
+      "new_numeric_factor_attempts": 1,
+      "complete_high_field_returned": false,
+      "no_saved_full_candidate": true,
+      "elapsed_actor_seconds": 1247.2029317331035,
+      "repair": "Use restriction.R.shape once; save complete low solution before recovery; actual apply 40-port regression",
+      "replay": "same C67 physical zero initial; no fabricated low trace from scalar records"
+    },
+    {
+      "root": "F3_actual_config_carrier_fields",
+      "source": "8e17689ff4a32e7f2f889b6b019038848c6d76cc",
+      "failed_run": "task042_v60_one_cell_h_response_20261007T175801710818Z",
+      "error": "SimulationConfig3D has kx/ky, not kx_inc/ky_inc",
+      "elapsed_actor_seconds": 8.453590458026156,
+      "new_numeric_factor_attempts": 0,
+      "repair": "Use frozen existing carrier(cfg); actual physical config factory regression",
+      "affected_replay": "fixed local five-space diagnostic before first local tensor/LU"
+    },
+    {
+      "root": "F4_unneeded_preparation_raw_and_response_columns_resident",
+      "source": "d728fbc7113531af4dbc3d0f3655e1d05246fa1e",
+      "failed_run": "task042_v60_subcell2_macro_trace6_20261007T190444822239Z",
+      "elapsed_actor_seconds": 464.27562743006274,
+      "external_wall_seconds": 511.43654184695333,
+      "new_numeric_factor_attempts": 0,
+      "repair_source": "d42ac36b99bd758478da7ce42b34215826832676",
+      "repair": "Keep recovery LU/Ati/X/Sib; release checkpointed unused child raw and macro construction X; no capacity relaxation",
+      "resume": "177 saved child and 110 saved macro classes frozen; missing exact classes constructed only; no prior global factor",
+      "repair_interval_upper_start_utc": "2026-10-07T19:13:15.920603+00:00",
+      "repair_interval_upper_end_utc": "2026-10-07T19:33:04.369808+00:00"
+    },
+    {
+      "root": "F5_aux_pre_non_test_receipt_contract",
+      "source": "d42ac36b99bd758478da7ce42b34215826832676",
+      "completed_child": "aux_pre_prepare_resume01",
+      "evidence": "/home/fenics/Projects/NN-Lab/tmp/task042/v60/aux_pre_prepare_resume01/launcher_postprocess_failure.json",
+      "charged_child_seconds": 56.797624732134864,
+      "new_factor_count": 0,
+      "fix": "post-role non-test invocation; retain successful snapshot and targeted07 qualification; no rehash replay"
+    },
+    {
+      "root": "F6_saved_H2_storage_reserve",
+      "source": "d42ac36b99bd758478da7ce42b34215826832676",
+      "stop": "RESOURCE_CONTROLLED_STOP",
+      "external_seconds": 2919.576414142968,
+      "complete_vector_preserved": true,
+      "repair": "same-namespace byte-identical successful raw copies replaced by hash-bound readonly links; original failed copies unchanged; original numeric storage thresholds restored",
+      "affected_replay": "saved vectors only; no LU, factor, PDE solve or body integration"
+    },
+    {
+      "root": "F7_archive_exact_aux_argv",
+      "failed": "aux_archive_raw_dedup01",
+      "actor_count": 0,
+      "repair": "match actual python or sys.executable for the one exact archive command before launcher normalization",
+      "source": "cd69a4bbfe9be91f101615f60c6fcbaf5752500a"
+    },
+    {
+      "root": "saved_consumer_precommit_probe",
+      "failure": "sandbox MPI socket blocked then metadata probe positional namespace used as reserve; both before PDE",
+      "repair": "qualified elevated targeted test; namespace keyword for storage",
+      "targeted_tests": 3,
+      "raw": "tmp/task042/v60/saved_consumer_precommit",
+      "no_numeric_work": true
+    }
+  ],
+  "all_failures_and_costs_retained": true,
+  "delivery_control_failure": {
+    "error": "AttributeError: 'list' object has no attribute 'keys'",
+    "location": "one scalar-only display of LOCAL_RESPONSE pairs inventory; pairs is a list",
+    "numerical_replay": 0,
+    "fix": "metadata exporter consumes the list directly; physical arrays unchanged",
+    "raw_stderr_location": "execution tool transcript; no separate original stderr file"
+  },
+  "archive_first_admission_raw_stderr": "not saved by prelaunch exception; actual zero-actor failure and source recorded; not recreated",
+  "conservative_repair_related_elapsed_upper_seconds": 8294.29639,
+  "repair_upper_policy": "disjoint conservative UTC windows for F1/F2/F3/F4/F6 plus control allowance; includes first healthy L science, nested F5/F7 not counted twice",
+  "conservative_repair_elapsed_intervals": [
+    {
+      "root": "F1",
+      "start_utc": "2026-10-07T17:04:17.510784+00:00",
+      "end_utc": "2026-10-07T17:09:56.335399+00:00",
+      "seconds": 338.824615
+    },
+    {
+      "root": "F2",
+      "start_utc": "2026-10-07T17:30:00+00:00",
+      "end_utc": "2026-10-07T17:55:56.417652+00:00",
+      "seconds": 1556.417652
+    },
+    {
+      "root": "F3",
+      "start_utc": "2026-10-07T17:58:01.710818+00:00",
+      "end_utc": "2026-10-07T18:56:58.008079+00:00",
+      "seconds": 3536.297261
+    },
+    {
+      "root": "F4",
+      "start_utc": "2026-10-07T19:12:00+00:00",
+      "end_utc": "2026-10-07T19:33:35.201698+00:00",
+      "seconds": 1295.201698
+    },
+    {
+      "root": "F6",
+      "start_utc": "2026-10-07T20:21:00+00:00",
+      "end_utc": "2026-10-07T20:42:07.555164+00:00",
+      "seconds": 1267.555164
+    }
+  ],
+  "conservative_repair_elapsed_interval_seconds": 7994.29639,
+  "conservative_control_allowance_seconds": 300,
+  "control_allowance_is_upper_not_measured_CPU": true
+}

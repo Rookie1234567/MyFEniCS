@@ -1,0 +1,50 @@
+{
+  "parent": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v59.json",
+    "sha256": "4471383ea40b58374fb829954aad09c1c12f9af97c7cfd8859b7a150b918faea"
+  },
+  "local_formation": "sum E_e^H S_e E_e, no global high Schur/projection",
+  "fixed_trace_port_rows": 33660,
+  "one_complex128_trace_port_vector_bytes": 538560,
+  "FGMRES_restart32_V33_Z32_payload_bytes": 35006400,
+  "actual_FGMRES_allocation": false,
+  "complete_FE_vectors_excluded_from_interface_Krylov": true,
+  "graph_bound_derived": 34360848,
+  "C67_actual_graph": {
+    "actual_topology_nnz_envelope": 31102992,
+    "macro_local_trace_max": 432,
+    "physical_boundary_support_rows": 2304,
+    "conservative_review_upper": 34360848,
+    "upper_is_derived": true,
+    "no_matrix_clipping": true,
+    "measured_nnz": 28510524,
+    "global_high_schur_present": false,
+    "global_sparse_projection_present": false,
+    "local_low_classes": 51,
+    "local_low_payload_bytes": 152285184
+  },
+  "H2_actual_graph": {
+    "actual_topology_nnz_envelope": 31102992,
+    "macro_local_trace_max": 432,
+    "physical_boundary_support_rows": 2304,
+    "conservative_review_upper": 34360848,
+    "upper_is_derived": true,
+    "no_matrix_clipping": true,
+    "measured_nnz": 28510461,
+    "global_micro_schur": false,
+    "global_micro_factor": false
+  },
+  "H2_mixed": 729792,
+  "H2_ambient": 834048,
+  "local_cache_cap_bytes": 8589934592,
+  "local_r4_cap_bytes": 17179869184,
+  "local_objects": "exact geometry/material/direction classes shared readonly; full field block recovery, no cellwise duplicate response library",
+  "target_fill": "unknown",
+  "target_iterations": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_complete_N1": "unknown",
+  "global_direct_factor_present": true,
+  "NN_training": 0,
+  "NN20": false,
+  "qualified_2TB_48h": false
+}

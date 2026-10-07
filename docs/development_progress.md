@@ -1,3 +1,11 @@
+# Task042 V60：局部形成兑现同空间存储，完整微场尚未收敛
+
+把高阶响应先在单元内限制后装到原p6共享接口，使C67严格复现M67而存储项从141754824降到28510524，采样峰8.855GiB、完整T_N1=1287.2062s。H2每宏内部8个p6小单元、两级局部消元，mixed true3.08496e−11且能量1.89e−13；完整微场与R6/M68散射差6.42e−4/4.11e−4仍超1e−4，不能授准确性。单元r2/r4稳定只为局部见证；存储停机后的向量仅补消费，全部失败费用保留。原尺寸、2TB48h、NN20未资格，确定性收益不归NN。
+
+[回应](task042_neural_coarse_inverse/response_v60.md) · [完整专题](task042_neural_coarse_inverse/outcomes/local_assembly_subcell_response_v60.md) · [最终账](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v60.json)。以下历史逐字保留。
+
+---
+
 # V59最新交付：固定接口的完整混阶场与实际成本
 
 保持p6边/面接口，只增加单元内部表示后恢复完整高基场；沿原凝聚链，不是NN训练或完整p7/p8求解。R6_M67散射E/H 0.00269124/0.00272376（FAIL）；R7_M67散射E/H 0.0365737/0.0365441（FAIL）；M67_M68散射E/H 0.00350687/0.00347462（FAIL）。原门1e−4不改，ambient缺陷不冒充正式混阶残差，2TB/48h/NN20仍未资格。

@@ -1,0 +1,14 @@
+{
+  "schema": "task042.compact-index.v1",
+  "full_ignored_inventory": {
+    "path": "tmp/task042/v60/aux_post_collect01/records/raw_archive_index_v60.json",
+    "sha256": "9fce734988c0995b2bad4e29c662482573e13795345fd072f35d971551bfcc83",
+    "bytes": 3955933
+  },
+  "entry_count": 8249,
+  "historical_inventory_rescans": 0,
+  "all_full_rows_retained": true,
+  "logical_version_bytes": 120276300,
+  "archived_unique_contents": 8107,
+  "current_auxiliary_tail_is_separately_settled": true
+}
