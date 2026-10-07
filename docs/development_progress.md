@@ -1,4 +1,16 @@
-# Task40extra 当前进展：Review V14 Gx560 数值门失败后收口中
+# Task40extra 当前进展：Review V15 Gx560 完整 target 通过，E1 受控资源停止
+
+V15 已完成 P0–P4 实现、定向测试和三项实际里程碑；P5 离线文档/证据收口与最终定向合同检查已完成。冻结源码顺序为 `3a737f3e → e77575f7 → 0201815c → 40dbe138`。B0 原正式运行在 `0201815c` 上保留 `WORKER_FAILED`/exit 4；`40dbe138` 对已保存 B0 场的恢复输出和独立 checker PASS，但不覆盖原失败。Gx560 新参考 PC 完成完整 p6 target、物理门和旧同离散场比较，A6 after release `4.704401351e-9`，3 次外层步。它比旧 171 步少，但完整 workflow `2407.572 s` 比旧 `1925.863 s` 慢约25%，tree RSS 峰从 `5.256 GB` 增至 `10.295 GB`；不能宣称全流程加速。
+
+E1 在 760 cells、588 modes、四 q symbolic 完成后触发资源门：live tree RSS `12,064,264,192 B`、dynamic cap `12,474,302,464 B`、预测继续执行 `19,192,602,560 B`、可用内存 `544,256,000 B`、reserve `134,217,728 B`。两个资源不等式均失败，swap 0，后代已清理；numeric/KSP/field/R/T/A 是 `NOT_RUN`，不是 OOM 或 solver fail。目标 `50×25×140 nm`、0.7 nm 仍未资格化；限制按十进制 2 TB（2000000000000 B）和48 h记录。
+
+PC 合同说明旧 exact-reference 负结果仍在。V15 用原 RHS 冻结尺度下的非抵消预算和独立全局 native 方程约束近似参考修正方向；q 实际调用门为1e-8，初始 factor probe仍strict 1e-10，mapping/恢复/物理门不放宽。Gx560 三次apply均通过新合同；前两次q残差未达到旧strict 1e-10标签，独立标注。唯一下一项工程性能对象是 measured Gx560 global CSR sparse accumulation 的 bounded-staging 候选；本轮未运行它。
+
+本轮固定 campaign window 未刷新。E1协调中断 `102.788224 s` 不是用户要求停止且不退费；正式 E1 workflow 与UTC wall间隔分别记账。费用、未知成本、正式运行 provenance、测试和目标未闭合项见 [Response V15](task40extra_0p7nm_engineering/response_v15.md)、[结果总账](task40extra_0p7nm_engineering/outcomes/summary.md)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json) 与 [V15 cost/readiness](task40extra_0p7nm_engineering/outcomes/records/review_v15_cost_and_readiness.json)。四份 compact 和任务入口见 [Task40 README](task40extra_0p7nm_engineering/README.md)。P5 是离线收口；执行者不提交或推送，由主控按同分支规则处理。
+
+---
+
+# Task40extra 历史进展：Review V14 Gx560 数值门失败后收口中
 
 V14 在冻结源码 6ac8cf7fd4697e575a4bf47a862c560ae290076b 上完成四个 p6 q 因子、参考见证和真实物理 RHS 核验。q 因子严格真残差与资源、时间门通过；物理 RHS 的独立算子作用身份差为 1.6834572689277185e-11，超过 1e-11 结构门，Full3D target solve 和官方 R/T/A 未运行。B0 复用 V13 已归档结果；Gx784 因 Gx560 门失败未运行。目标规模与 2 TB / 48 h 仍未资格化。下一电尺寸 E1 q1.25 输入已记录为 HELD，未启动。证据见 [Response V14](task40extra_0p7nm_engineering/response_v14.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json) 和 [test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)。
 

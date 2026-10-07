@@ -27,8 +27,20 @@
 
 ## 本轮结果入口
 
+Review V15 已完成 B0 保存场恢复 PASS、Gx560 完整 target/物理/同离散比较 PASS；E1 在四 q symbolic 后由资源门受控停止，numeric/KSP/新场未运行。原尺寸目标仍未资格化，资源目标为十进制 2 TB（2000000000000 B）和 48 h。V15 的 3 次 PC apply 减少了外层步数，但 Gx560 完整 workflow 增长约 25%，不能宣称端到端加速。
+
 | 文件 | 内容 |
 |---|---|
+| [Response V15](response_v15.md) | P0–P5 执行回应、真实结果与成本、近似参考 PC 合同、E1资源停止及目标未关闭项 |
+| [Review V15](review_report_v15.md) | 本轮执行合同与验收要求 |
+| [Review V15 native PC contract](outcomes/records/review_v15_native_pc_contract.json) | 新预算、原结构门、逐次 Gx560 PC 指标与计数 |
+| [Review V15 failure witnesses](outcomes/records/review_v15_failure_witness_and_repairs.json) | B0 原失败和恢复、ABI/启动失败、E1协调中断及资源停止 |
+| [Review V15 formal results](outcomes/records/review_v15_formal_results.json) | B0/Gx560/E1身份、物理结果、比较、网格与场哈希 |
+| [Review V15 cost and readiness](outcomes/records/review_v15_cost_and_readiness.json) | 固定窗口、两级时间资源账、装配/因子分项、2 TB目标边界 |
+| [V15 outcomes summary](outcomes/summary.md) | 当前统一结果、成本、负结果和下一工程对象 |
+| [V15 test summary](outcomes/test_summary.md) | 按冻结源码分列的实现测试、恢复测试与最终文档合同测试 |
+| [V15 run index](outcomes/records/run_index.json) | 正式运行身份和 hash-bound 文档/证据索引 |
+| [V14 response](response_v14.md) | V14 原始物理 action identity Gate 失败，保留为历史负结果 |
 | [Response V14](response_v14.md) | Gx560 四 q 因子与参考见证、物理 action identity 负结果、资源和时间口径、E1 q1.25 HELD 决定 |
 | [Review V14](review_report_v14.md) | 当前连续执行合同、数值 Gate 和 E5 目标准入边界 |
 | [Review V14 execution handoff](outcomes/records/review_v14_execution_handoff.json) | 固定窗口、V13 实际接续状态、两次 attempt 身份与进程清理 |

@@ -1,4 +1,75 @@
-# Task40extra Review V14 当前结果：Gx560 物理作用身份门失败，目标仍未资格化
+# Task40extra Review V15 当前结果：Gx560 完整求解通过，E1 资源受控停止，目标未资格化
+
+本节更新当前状态；V14 和更早结论保留在下方。V15 的四个冻结源码阶段依次为 `3a737f3e`、`e77575f7`、`0201815c`、`40dbe138`。B0 正式运行对应 `0201815c`；B0 保存场恢复、Gx560 与 E1 对应 `40dbe138`。P5 只补离线证据、文档和最终定向合同检查，不追加 FE/PDE。固定窗口和所有历史失败/停止均保留。
+
+## V15 统一结果表
+
+| 模型 | 模型与方法 | 实际结果 | workflow / 资源 | 状态与原因 |
+|---|---|---|---|---|
+| B0 原运行 | 80 cells（4×4×5），p6、532 modes、4 q；小模型用于检查新参考 PC 和完整 target | A6 真残差 `1.608977439e-8`；q CSR rows `4324/4400/4400/4400`，NNZ 合计 `9,227,053` | workflow `1052.751 s`；watchdog `1052.528 s`；tree RSS/cgroup peak `2.777/3.216 GB`；swap 0 | 原 worker `WORKER_FAILED`、exit 4。负端口身份限值为 -1，导致完整输出门失败；保留原分类 |
+| B0 保存场恢复 | 同一网格/模式；只恢复已有场和重算输出，没有新 factor 或 KSP | R/T/A_balance/A_volume=`0.9842736081/0.0142405181/0.001485873763/0.001485873846`；能量闭合 `8.29e-11` | workflow `10.719 s`；tree RSS/cgroup peak `0.770/0.911 GB` | postprocess recovery 与独立 checker PASS；不覆盖原 exit 4 |
+| Gx560 V15 | 560 cells（10×4×14），p6、340 modes、4 q；三维非可分缺口模型 | full-storage 380,040 rows；q CSR rows `28508/28508/28576/28508`、NNZ 合计 `61,991,755`。A6 after release `4.704401351e-9`；独立 native witness `4.704257056e-9`。R/T/A_balance/A_volume=`0.07612406709/0.90576922010/0.01810671281/0.01810671258`；R00_s/p/total=`0.07612359351/7.36e-22/0.07612359351` | workflow `2407.572416 s`；纯 KSP `155.863281 s`；3 次 outer iteration；tree RSS/cgroup peak `10.295/11.675 GB`；swap 0 | target、物理门、独立输出 checker和旧同离散场比较 PASS；不是 continuum convergence |
+| E1 V15 | 760 cells（10×4×19），p6、588 modes、4 q；比 Gx560 电尺寸更大的诊断模型 | symbolic 完成；真实 q CSR rows `38424/38508/38508/38508`，NNZ 合计 `84,935,314`；数值因子、KSP、field、正式 R/T/A 均未运行 | workflow `5671.918121 s`；watchdog `5671.578106 s`；UTC wall `6275.443430 s`；tree RSS/cgroup peak `12.234/12.346 GB`；task/cgroup swap 0；WSL-global pswpin/pswpout `+315/+55203` 页、归属未知 | symbolic 阶段后资源门停止并清场；不是 OOM，也不是 solver 数值失败 |
+| 原尺寸目标 | `50×25×140 nm`、0.7 nm；15,232 cells 是 derived 候选，32,060 modes 是 measured inventory；目标限制 2 TB 十进制和 48 h | 目标 q NNZ/factor、完整解、官方 R/T/A 和精度均无实测 | Krylov/scratch/Hhat 等已有单对象数字是派生 payload，不是同一时刻 RSS | `NOT_QUALIFIED`；不是数学上不可能的结论 |
+
+B0 代表小模型；Gx560 与 E1 改变网格和物理电尺寸，所以彼此不能作为单变量 p/h 收敛试验。Gx560 的旧同离散 p6 target+p4 correction 保存场是匹配比较基线：340 个模式功率最大绝对差 `2.2270624789e-8`；11 个冻结显著模式最大相对振幅差 `8.6046720745e-7`，限值 `1e-4`。共同子单元的八类场对照、各自输入和 mode/mesh/field identities 见正式结果 compact。
+
+## Gx560 成本、因子与参考 PC
+
+| 项目 | 实测与口径 |
+|---|---|
+| 新旧整体比较 | outer iteration 171→3；workflow `1925.862866→2407.572416 s`，增加 `481.709550 s`（约 25.01%）；tree RSS peak `5.256→10.295 GB`。迭代减少不等于全流程加速，workflow 增量尚未完全归因 |
+| 因子同时库存 | 四个 q 因子同时 live；setup parent `54.226915 s`；numeric q0–q3 `4.608882/9.844299/6.028945/13.550974 s`。INFOG9 raw=`41320088/41253248/41789336/41269544`，无依据解码为 factor entries；INFOG19/22 十进制 upper bounds 合计 `4.645/4.080 GB` |
+| factor release 口径 | all-q 销毁前另测 tree RSS `10,189,733,888 B`；同 root、同四 PID/start-ticks 的 cleanup 配对样本 member RSS 总和从 `10,289,065,984` 降至 `4,354,420,736 B`，下降 `5,934,645,248 B`。这是 whole reference-PC cleanup 观测，不全归因于 MUMPS，也不和 peak 相减 |
+| assembly sector 0 | parent `230.155492 s`；projection `60.937886 s`；sparse accumulation `154.393760 s`；contribution generation `14.590967 s`；CSR accumulation calls 2916 |
+| assembly sector 1 | parent `192.384544 s`；projection `57.769324 s`；sparse accumulation `121.442918 s`；contribution generation `12.947970 s`；CSR accumulation calls 2372 |
+
+assembly 子阶段嵌在父计时内，不能把父和子重复求和；也不能把全 workflow 的 `+481.709550 s` 全归因到稀疏累加。四 q startup reference 共 16 次 MatSolve，factor strict probes 4 次，3 次 target PC 共 12 次，修正 0 次，总计 32 次 q MatSolve。三次 apply 都选 candidate 0；前两次 q solve 最大残差 `1.5744e-10` 和 `1.6729e-10` 未达到旧 strict `1e-10`，但都低于 V15 实际调用的 `1e-8`。全程最大 eta `4.9656567445e-9`，消元 FE `2.4692342908e-9`，完整增广 FE `1.9232496879e-10`，alpha closure `1.7789327117e-11`，均满足 V15。完整 PC wall-time 没有独立计时；native evaluation 子时间不能代替完整 PC。
+
+已测最大 assembly 子阶段为 `LEGACY_GLOBAL_CSR_SUM` 的 sparse accumulation。旧 B0-only preallocated CSR 配对比较只节省 `6.370516 s`，且 Gx 256 MiB staging cap 未资格化。唯一下一工程对象建议是 bounded-staging、Gx-safe global CSR accumulation candidate：逐 q 检查矩阵身份/结果，测端到端 assembly 时间和 staging 峰值；本轮没有运行该候选。
+
+## E1 资源 Gate 和时间分类
+
+| Gate 输入 | 数值 |
+|---|---:|
+| live process-tree RSS | 12,064,264,192 B |
+| dynamic total cap | 12,474,302,464 B |
+| projected process-tree RSS（预测） | 19,192,602,560 B |
+| physical available memory | 544,256,000 B |
+| evidence reserve | 134,217,728 B |
+| 总 RSS 与增量余量不等式 | 均不通过 |
+| task/cgroup swap peak；descendant cleanup | 0 B；完成 |
+
+真实 CSR rows/NNZ 与 symbolic estimate 分开记录。INFOG16/17 合计 `6.53 GB` 是 symbolic estimate，不是数值因子实测；INFOG3 等 raw 字段不能冒充 actual CSR NNZ。协调中断 workflow `102.788224005 s` 单独保留：它不是用户要求停止，费用不退。随后 E1 正式 workflow `5671.918121 s`、watchdog `5671.578106 s`、UTC wall `6275.443430 s`分列。
+
+## 目标边界与后续工程
+
+目标精度与容量仍有具体未闭合项：
+
+- y/z 精度和 general-Ny orbit/索引/mapping 尚未资格化；现有 p6 路径锁定 Ny=4、local Ny=2。
+- 目标 q CSR NNZ、indptr 安全性、四 q 因子 fill/工作区和同时 live 库存没有实测；当前全局 NumPy、int32 与 MPI1 假设也没有分布式/int64 资格。
+- reference assembly 仍调用 `_materialize_Hhat()`，mode² 中间对象的真实生命周期未被目标规模测量。
+- 完整 AUTO 882-row 选定模式边界路线在本实现中的映射、索引和输出身份没有闭合；84-row 压缩路线未资格化，不能声称可替代。
+- recovery、field 输出、factor release 与 checker 的冷启动完整流程没有在 2 TB 十进制/48 h 条件下实测。
+
+下一主线只有 Gx560 的 bounded-staging CSR 累加候选；y/z、general-Ny 和目标级容量属于并行保留的资格缺口，不由该候选自动解决。已有 Krylov `3.70 GB`、scratch `4.43 GB` 和单个 32,060² complex128 H `16.45 GB` 是派生对象大小，不代表同时 RSS，也不单独证明目标可行或不可行。
+
+## 依赖组与证据边界
+
+| 依赖组 / 建议顺序 | 数值行为 | 主要依赖文件 | 对应测试 | fresh PDE / 证据 | 合入建议 |
+|---|---|---|---|---|---|
+| reusable runner/watchdog（先满足入口依赖） | 不改变离散或方程；修正 profile/ABI 注册、正式入口与受控资源生命周期 | `scripts/run_case.py`；`src/runners/task038_launcher.py`、`task038_full3d_iterative.py`、`task038_input_worker.py`、`task40_v10_abi.py`；`src/io/input_schema.py`、`input_validation.py`；`src/geometry/task40_nonseparable_plan.py`、`physical_intermediate_profile.py` | 按源分列 103、29、41、49 pass/1 skip；见 V15 test summary 与各 source-freeze receipt | B0 original、Gx560、E1 由相应冻结 source 启动；E1受控停止，不能外推为 runner 的目标容量资格 | 先核对身份/schema/watchdog 依赖，再合入数值核心；不单独改变默认策略 |
+| production numerical/core（第二顺序，仍需审批） | 加入独立增广 FE 预算和 V15 PC 选择；不改真实 target A6 与物理模型；保持 opt-in | `src/solvers/augmented_reference_correction.py`、`task40_v10_p6_mumps.py`、`task40_v10_p6_yorbit.py`、`task40_v10_p6_periodic_profile.py`；`src/runners/physical_p4_schur_v14.py`、`task40_v10_worker.py` | source `40dbe138` 的 `test_task40_v15_routes.py` 和 `test_task40_augmented_reference_correction.py` 属于 61-pass suite | B0 原输出门失败但恢复通过；Gx560 完整 target/physics/comparison PASS；E1止于 symbolic | 作为独立显式研究策略审查；不提升 ordinary default |
+| checker/benchmark（第三顺序） | 不求解/不改矩阵；从 saved packet 重算输出、身份和比较 | `src/runners/task40_v10_output_checker.py`、`task40_v10_saved_output_recovery.py` | `test_task40_v10_output_checker.py`、`test_task40_v10_saved_output_recovery.py`；纳入 source `40dbe138` 的 61-pass suite | B0 saved-field 独立输出 checker PASS；Gx560 独立输出 checker 与同离散比较 PASS | 与 runner/core 对齐后合入；保留原 exit 4 负结果 |
+| compact evidence/docs（第四顺序） | 不改变数值行为 | 本节链接的四份 compact、`response_v15.md`、README、summary、test summary、progress、model registry、run index | 最终文档合同 29 passed / 134 subtests | 报告中的 B0/Gx560/E1 结果绑定原 run 和 checker hashes；无新 PDE | 作为一组保持 hash/link 一致后合入 |
+| research-only（独立研究分组） | 四 q p6 native augmented residual PC；尚未实施的 bounded-staging CSR candidate | V15 数值 core 依赖；候选 CSR 尚无实现、测试或 fresh run | PC 合同测试与 Gx560 run 仅资格化现有策略；CSR 新候选 `NOT_RUN` | Gx560完整PASS但workflow +25%；E1资源停止；无 CSR 候选证据 | 只留显式 opt-in / research；bounded-staging candidate 需后续单独审查 |
+| do-not-merge / do-not-claim | 不改阈值、MUMPS参数或普通默认；不把预测写成测量 | 目标 readiness 与成本 compact 中的 unknown 项 | full repository pytest、MPI4、Ruff、CI、target-scale tests 均未运行 | E1 numeric/KSP/field NOT_RUN；原尺寸 2 TB/48 h 未资格化；continuum 未证明 | 不以本轮证据合入/宣称生产默认或全流程加速 |
+
+详细解释见 [Response V15](../response_v15.md)、[Review V15](../review_report_v15.md)、[test summary](test_summary.md)、[README](../README.md)、[development model registry](../../development_model_registry.md)、[development progress](../../development_progress.md) 和 [run index](records/run_index.json)。四份 compact 为 [native PC contract](records/review_v15_native_pc_contract.json)、[failure witnesses](records/review_v15_failure_witness_and_repairs.json)、[formal results](records/review_v15_formal_results.json)、[cost/readiness](records/review_v15_cost_and_readiness.json)。
+
+---
+
+# Task40extra Review V14 历史结果：Gx560 物理作用身份门失败，目标仍未资格化
 
 本节更新当前状态；V12、V11 与更早历史原样保留在下方。冻结源码为 6ac8cf7fd4697e575a4bf47a862c560ae290076b。V14 完成 Gx560 四个 p6 q 因子和参考 RHS 检查，但物理 RHS 的独立 action identity 为 1.6834572689277185e-11，超过严格 1e-11 门槛，因此 Full3D target solve 未启动。V14 没有 Gx560 官方 R/T/A；Gx784 未运行。固定窗口未刷新。
 

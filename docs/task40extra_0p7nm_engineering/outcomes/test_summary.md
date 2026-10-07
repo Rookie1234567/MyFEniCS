@@ -1,4 +1,24 @@
-# Task40extra V14 测试与文档检查摘要
+# Task40extra Review V15 测试与文档检查摘要
+
+## P0–P5 按冻结源码分列的测试
+
+| 阶段 / source | 命令或 hash-bound 收据 | 结果 | 边界 |
+|---|---|---|---|
+| P1 初始合同/路由实现，source `3a737f3e57fc5eda6119fada77e734d656483d98` | [source freeze receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_source_freeze_v15.json) | 初始 targeted 103 passed；最后一项 owner fix 另有 29 targeted passed；compileall、git diff check 和三份 dat validate-only PASS；Ruff 未安装/未运行 | 不把两个不同 targeted 阶段并成一次测试；validate-only 不是 PDE |
+| P1 runtime profile repair，source `e77575f7df27154196a79819d7d9ed3044d4b62a` | [runtime repair receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_source_freeze_v15_runtime_repair.json) | 41 targeted tests passed | 工程 runtime profile 注册修复；无 FE/PDE |
+| P1 ABI profile repair，source `0201815c6b13f8456e9717ab93cc5023d4c946d1` | [ABI repair receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_source_freeze_v15_abi_repair.json)；[failure/repair compact](records/review_v15_failure_witness_and_repairs.json) | real ABI helper three profiles 7 passed；相关套件 49 passed, 1 skipped | 修复启动/ABI profile 注册；不算 PDE 数值通过。失败尝试 20261007T102226.442467Z 的 workflow 1.706062557 s 仍按工程失败记录 |
+| P5 文档合同最终复测 | 资格化激活；`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py`；PETSc complex128/int32 | 29 passed, 134 subtests passed (final run) | 仅文档、模型登记和回顾合同；无 FE/PDE |
+| P2–P4 冻结 source `40dbe138f53b9a2ee39399eac66dc4b0867a2d50` | [final source freeze receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w15_wsl/controller_source_freeze_v15_b0_recovery.json)；`python -m pytest -q src/test/test_task40_v15_routes.py src/test/test_task40_v10_saved_output_recovery.py src/test/test_task40_augmented_reference_correction.py` | 61 passed in 0.49 s；compileall、git diff check PASS；Ruff unavailable | 这是路由、saved-output recovery 和增广修正 targeted tests；不是 full repository pytest、MPI suite 或新 PDE 的替代 |
+
+冻结 source 之间按运行阶段记录，不将 103、29、41、49、61 相加成一组覆盖率。B0 原运行、B0 saved-field recovery、Gx560 完整 target 和 E1 symbolic resource stop 是科学/资源证据，不是 pytest 计数。
+
+## 未运行范围
+
+本轮没有 full repository pytest、MPI4、Ruff 或 GitHub Actions/CI；没有运行 bounded-staging CSR 候选。E1 在数值 factor 前受控资源停止，numeric factor、KSP、field 和官方输出均 `NOT_RUN`。不声称 CI 通过。
+
+---
+
+# Task40extra V14 历史测试与文档检查摘要
 
 | 检查 | 身份 / 回执 | 覆盖范围 | 结果与边界 |
 |---|---|---|---|

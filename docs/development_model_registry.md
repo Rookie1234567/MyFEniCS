@@ -1,4 +1,22 @@
-# Task40extra 当前模型状态：Review V12 共享变换路径的数值 Gate 负结果
+# Task40extra 当前模型登记：Review V15 Gx560 完整结果通过，E1 资源受控停止
+
+本登记区分完整 Maxwell target、已保存场复核和未完成的 symbolic 阶段。V15 新参考 PC 是显式研究策略，不改变 ordinary default。Gx560 的 target、物理门、独立输出和旧同离散场比较通过；E1 四 q symbolic 后受控停止；原尺寸精度与容量仍未资格化。
+
+| 模型 / 阶段 | source 与身份 | 实测结果 | 当前资格边界 |
+|---|---|---|---|
+| B0 V15 原 target | worker source `0201815c6b13f8456e9717ab93cc5023d4c946d1`；80 cells（4×4×5）、p6、532 modes、4 q；input SHA256 `9dd565dd69dc0924bf2e6511c363b55460b9c83e9b57fd037ecc161572bc6080` | A6 `1.608977439e-8`；workflow `1052.751 s`；exit 4，port identity gate limit 记录为 -1 | 原始 `WORKER_FAILED` 与 `official_result=false` 保留；不以 A6 单项通过覆盖输出门 |
+| B0 V15 saved-field recovery | recovery source `40dbe138f53b9a2ee39399eac66dc4b0867a2d50`；同 input/physical identity；532 modes | R/T/A_volume、能量闭合及独立输出 checker PASS；无 reference factor 和 KSP | saved-field postprocess result，不覆盖原运行失败或冒充 fresh target |
+| Gx560 V15 p6 target | source `40dbe138f53b9a2ee39399eac66dc4b0867a2d50`；10×4×14、560 cells、340 modes、4 q；input SHA256 `3057eb64e59961d7a724083d9e721ec2ce2fd82996db5b447eb5377278d4c3a9`；physical SHA256 `d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98` | A6 after release `4.704401351e-9`；R/T/A_balance/A_volume=`0.07612406709/0.90576922010/0.01810671281/0.01810671258`；3 outer steps；旧同离散比较 PASS | 完整离散 target 与物理输出通过；完整 workflow 比旧路线慢约25%，不代表 continuum convergence 或目标容量资格 |
+| E1 V15 p6 symbolic route | source `40dbe138f53b9a2ee39399eac66dc4b0867a2d50`；10×4×19、760 cells、588 modes、4 q；input SHA256 `17f8434b396ae6bfb4a87ae802fbbc4c92edd1b7d6cb86b32ffcb7e02896f4ee`；physical SHA256 `6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d` | 4 q symbolic rows/NNZ=`38424/21010722`, `38508/21303127`, `38508/21314038`, `38508/21307427`；合计 153,948 rows / 84,935,314 NNZ | `RESOURCE_CONTROLLED_STOP`；numeric factor、KSP、new field、官方 R/T/A 均 `NOT_RUN`；不是 OOM 或数值失败 |
+| 原尺寸目标 | 50×25×140 nm、0.7 nm；15,232 cells derived、32,060 modes measured inventory；资源限值 2 TB 十进制（2000000000000 B）/48 h | 无目标 q fill/factors、完整场、目标精度或冷启动端到端资源实测 | `NOT_QUALIFIED`；不是数学不可计算结论 |
+
+完整输入/运行目录/命令、resolved config、可用 mode/mesh/field SHA 见 [V15 formal results](task40extra_0p7nm_engineering/outcomes/records/review_v15_formal_results.json) 和 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。E1 实际 mesh-plan hash 已记录；停止前未输出 standalone 新 ordered-mode hash或 field hash，历史 mode SHA 不混作本轮身份。Gx560 PC 合同/逐次指标见 [native PC compact](task40extra_0p7nm_engineering/outcomes/records/review_v15_native_pc_contract.json)。完整报告见 [Response V15](task40extra_0p7nm_engineering/response_v15.md) 与 [outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。
+
+后续唯一工程性能对象是 measured Gx560 global CSR sparse accumulation 的 bounded-staging 候选；另须保留 y/z 精度、general-Ny indexing/mapping、AUTO 882-row 边界链、Hhat mode² 临时存储、目标 q CSR/factor inventory、MPI/int32/全局向量与冷全流程恢复/输出资格。新 PC 不自动关闭这些目标缺口；V15 implementation 和测试也不改变 master 或 production default。
+
+---
+
+# Task40extra 历史模型状态：Review V12 共享变换路径的数值 Gate 负结果
 
 本节登记当前研究状态，不新增 official Maxwell pass。p6 cell-interior 共享变换 bank 已进入 Gx560 reference path，但完整参考逆 Gate 未通过；ordinary default 保持不变。B0 保存场离线复核与 fresh worker、Gx560 inverse witness 与外层 PDE solve 分开登记。
 
