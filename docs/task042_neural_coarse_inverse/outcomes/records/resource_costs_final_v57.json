@@ -1,0 +1,736 @@
+{
+  "status": "CLOSED_FINAL_SETTLEMENT",
+  "run_count": 26,
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_01",
+      "source_sha": "43396238227133bf2a7c2e05ae3c50cb70b03569",
+      "classification": "SUPERVISOR_SETUP_FAILED",
+      "supervised_seconds": 58.9584743399173,
+      "launch_lower_seconds": 58.9584743399173,
+      "peak_bytes": 0,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_01/launcher_failure.json",
+        "sha256": "b5778ae16311fa14ee5936237da7e9906c0e10fb0e12f1df1a73e4f524d52198",
+        "bytes": 431
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_02",
+      "source_sha": "43396238227133bf2a7c2e05ae3c50cb70b03569",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 29.947508005890995,
+      "launch_lower_seconds": 49.8084137418773,
+      "peak_bytes": 153423872,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_02/summary.json",
+        "sha256": "6653d664ab2ac3c92ab6240474bc328c8b8ef0f78416bf08527915b10f1ed709",
+        "bytes": 23653
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_03",
+      "source_sha": "12880701b997ddc31d2b2599eaadf8833adcde32",
+      "classification": "COMPLETED",
+      "supervised_seconds": 5.082717205863446,
+      "launch_lower_seconds": 24.831465042894706,
+      "peak_bytes": 228069376,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_03/summary.json",
+        "sha256": "7aaa07515d7cb8e4d59ea3d4d160f7dd96d50fa0e36a7ba5aad0bf72f8a51e85",
+        "bytes": 23665
+      }
+    },
+    {
+      "role": "D",
+      "folder": "results/task042/task042_v57_common_weak_balance_20261007T041316149930Z",
+      "source_sha": "12880701b997ddc31d2b2599eaadf8833adcde32",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 12.004151802975684,
+      "launch_lower_seconds": 31.94894694816321,
+      "peak_bytes": 377421824,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_common_weak_balance_20261007T041316149930Z/run_summary.json",
+        "sha256": "d388ebdb772787579b5182841c070601c7940ac3998ab25b567f69f3d57f5bd8",
+        "bytes": 24125
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_04",
+      "source_sha": "e6957db7459b3e8e33438e7720d07c89ccb55fd7",
+      "classification": "COMPLETED",
+      "supervised_seconds": 17.047204470960423,
+      "launch_lower_seconds": 37.0222112708725,
+      "peak_bytes": 211062784,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_04/summary.json",
+        "sha256": "05b0d8b262fba1fab1dca2aad5f7158dda89798c36b3e348f853d12a052654c3",
+        "bytes": 23660
+      }
+    },
+    {
+      "role": "D",
+      "folder": "results/task042/task042_v57_common_weak_balance_20261007T041609012185Z",
+      "source_sha": "e6957db7459b3e8e33438e7720d07c89ccb55fd7",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 216.1233847429976,
+      "launch_lower_seconds": 235.74706677603535,
+      "peak_bytes": 807985152,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_common_weak_balance_20261007T041609012185Z/run_summary.json",
+        "sha256": "86b6b4edc088b4086825912b3e406e76ef2be04d34476ce8cf35f75eaaef7fdd",
+        "bytes": 24147
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_05",
+      "source_sha": "e24056b5c88b9480055aef3951370f8a510001d6",
+      "classification": "COMPLETED",
+      "supervised_seconds": 33.38408650411293,
+      "launch_lower_seconds": 53.181069809012115,
+      "peak_bytes": 400240640,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_05/summary.json",
+        "sha256": "f0baea849a9287f5ad711fba2e3300f6aab6b75249c64475ca8c96b5fc86baa4",
+        "bytes": 23685
+      }
+    },
+    {
+      "role": "D",
+      "folder": "results/task042/task042_v57_common_weak_balance_20261007T042308453065Z",
+      "source_sha": "e24056b5c88b9480055aef3951370f8a510001d6",
+      "classification": "COMPLETED",
+      "supervised_seconds": 1266.2176601269748,
+      "launch_lower_seconds": 1285.9415214941837,
+      "peak_bytes": 1173422080,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_common_weak_balance_20261007T042308453065Z/run_summary.json",
+        "sha256": "408a13f518dc1a7b44ba349513d139a2ed38730417cad345812f195aa3b358f0",
+        "bytes": 24160
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_06",
+      "source_sha": "425ff629018ff7175c51803a0df5be6dc4975a2b",
+      "classification": "COMPLETED",
+      "supervised_seconds": 8.580021478002891,
+      "launch_lower_seconds": 28.502864731941372,
+      "peak_bytes": 401203200,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_06/summary.json",
+        "sha256": "a6cb7b2c2f84b56aa2d26c4ca7a7e945ac80c1ca8108c78a96b23b3d87792baf",
+        "bytes": 23677
+      }
+    },
+    {
+      "role": "K",
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T044747176485Z",
+      "source_sha": "425ff629018ff7175c51803a0df5be6dc4975a2b",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 38.27237554406747,
+      "launch_lower_seconds": 58.40397705300711,
+      "peak_bytes": 460107776,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_phase_tensor_setup_20261007T044747176485Z/run_summary.json",
+        "sha256": "574b348927e50c208c6bd933f242f0dc2fc90163cd5ac8a0eb9d976c14923afd",
+        "bytes": 24130
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_07",
+      "source_sha": "81c11eb3889b232c6857b0ec9fcb456d5b446320",
+      "classification": "COMPLETED",
+      "supervised_seconds": 8.723218366969377,
+      "launch_lower_seconds": 28.989271761849523,
+      "peak_bytes": 401346560,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_07/summary.json",
+        "sha256": "f562595bb60b04ad13821902bbd74c94b4ef6248702cd90b77b6d21e4d9cee0d",
+        "bytes": 23664
+      }
+    },
+    {
+      "role": "K",
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T045216128516Z",
+      "source_sha": "81c11eb3889b232c6857b0ec9fcb456d5b446320",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 13.882288509979844,
+      "launch_lower_seconds": 33.76453499705531,
+      "peak_bytes": 367390720,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_phase_tensor_setup_20261007T045216128516Z/run_summary.json",
+        "sha256": "a7259d0a1836c4ce1661b87733960c866a8cac329152d8a4735b009b82c25b48",
+        "bytes": 24146
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_08",
+      "source_sha": "f804cde930e1a5b79feade8821f4f724b080029b",
+      "classification": "COMPLETED",
+      "supervised_seconds": 8.962693538051099,
+      "launch_lower_seconds": 28.868102515116334,
+      "peak_bytes": 407937024,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_08/summary.json",
+        "sha256": "039ca4e9c521f66360821988e6bab0b6f73f1fe6b221aecc78f73936d522f610",
+        "bytes": 23666
+      }
+    },
+    {
+      "role": "K",
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T045533855610Z",
+      "source_sha": "f804cde930e1a5b79feade8821f4f724b080029b",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 220.5576589528937,
+      "launch_lower_seconds": 240.67268380289897,
+      "peak_bytes": 2284396544,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_phase_tensor_setup_20261007T045533855610Z/run_summary.json",
+        "sha256": "13e696d7582e92b3c50db9e69675d3cc35f5e6d31d7814149acd93d6dc61e9fd",
+        "bytes": 24180
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_09",
+      "source_sha": "1960195c5a304239dc0fe52f26bef271172ca3ab",
+      "classification": "COMPLETED",
+      "supervised_seconds": 11.279168543173,
+      "launch_lower_seconds": 31.33601332292892,
+      "peak_bytes": 399474688,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_09/summary.json",
+        "sha256": "6b0867a263d75a572469848a3356f0b329de75bfa0b3a9635bb7b65b15a4a8df",
+        "bytes": 23681
+      }
+    },
+    {
+      "role": "K",
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T050223752068Z",
+      "source_sha": "1960195c5a304239dc0fe52f26bef271172ca3ab",
+      "classification": "COMPLETED",
+      "supervised_seconds": 319.49032537592575,
+      "launch_lower_seconds": 339.47432631789707,
+      "peak_bytes": 836034560,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_phase_tensor_setup_20261007T050223752068Z/run_summary.json",
+        "sha256": "c9283dd8f8bf7b4c0670b74b29ed97a8a97ecf0249934770a34683a40a0bf551",
+        "bytes": 24141
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_10",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "classification": "COMPLETED",
+      "supervised_seconds": 8.480970500968397,
+      "launch_lower_seconds": 28.52177989296615,
+      "peak_bytes": 393105408,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_10/summary.json",
+        "sha256": "c08289d242c2b78d594b2612051d19d2ca592a9b7e42b5e47fca1d91a61fcc07",
+        "bytes": 23668
+      }
+    },
+    {
+      "role": "K",
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T051014625921Z",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "classification": "COMPLETED",
+      "supervised_seconds": 61.690971380099654,
+      "launch_lower_seconds": 81.5245824099984,
+      "peak_bytes": 320425984,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_phase_tensor_setup_20261007T051014625921Z/run_summary.json",
+        "sha256": "fee9f73b72b267898cc8ff45829548ffd430ded3ae6ce556b661f5a5d9c36265",
+        "bytes": 24121
+      }
+    },
+    {
+      "role": "B6",
+      "folder": "results/task042/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "classification": "COMPLETED",
+      "supervised_seconds": 1336.4056716600899,
+      "launch_lower_seconds": 1356.2550312620588,
+      "peak_bytes": 8231763968,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z/run_summary.json",
+        "sha256": "a2488ec950849d0ddb8e1323f18dba134d7a15fe0277811e61d086b67b92d51f",
+        "bytes": 24348
+      }
+    },
+    {
+      "role": "Y6",
+      "folder": "results/task042/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z",
+      "source_sha": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+      "classification": "COMPLETED",
+      "supervised_seconds": 4671.766503511928,
+      "launch_lower_seconds": 4692.1166042732075,
+      "peak_bytes": 18129944576,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z/run_summary.json",
+        "sha256": "7aade39625d48d27780bd6af61df30f903b43bbb4a42764abe4f591ef21e1c3d",
+        "bytes": 24142
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_11",
+      "source_sha": "b87191df68f0961e20d9bd7e055b73c1b05bb62c",
+      "classification": "COMPLETED",
+      "supervised_seconds": 16.140814387006685,
+      "launch_lower_seconds": 38.64683599304408,
+      "peak_bytes": 403648512,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_11/summary.json",
+        "sha256": "0428557553a513813a100861116a00d43dc1aa0820b3f7b78490f848dbd197cd",
+        "bytes": 23665
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "results/task042/task042_v57_verify_cost_20261007T065715600242Z",
+      "source_sha": "b87191df68f0961e20d9bd7e055b73c1b05bb62c",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 11.027304488001391,
+      "launch_lower_seconds": 33.74625374400057,
+      "peak_bytes": 93757440,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_verify_cost_20261007T065715600242Z/run_summary.json",
+        "sha256": "d2c9da35912ca941f2e7ab9e8345b77715d268d9bb0e41c6d4ded70490a752ad",
+        "bytes": 24319
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v57/aux_pre_12",
+      "source_sha": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+      "classification": "COMPLETED",
+      "supervised_seconds": 16.302715594880283,
+      "launch_lower_seconds": 39.01301893591881,
+      "peak_bytes": 402169856,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_pre_12/summary.json",
+        "sha256": "018fdab5e745097888567c41c5fb9c12ee4ea531848f3a80845f10436b2a88df",
+        "bytes": 23653
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "results/task042/task042_v57_verify_cost_20261007T070107203807Z",
+      "source_sha": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+      "classification": "COMPLETED",
+      "supervised_seconds": 82.56167404190637,
+      "launch_lower_seconds": 105.04231856577098,
+      "peak_bytes": 328249344,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "results/task042/task042_v57_verify_cost_20261007T070107203807Z/run_summary.json",
+        "sha256": "8fc28c7b75185fea68c677a95338a2a2d805abcce4b5a003c61780be6fd81c3f",
+        "bytes": 24352
+      }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v57/aux_post_collect01",
+      "source_sha": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+      "classification": "COMPLETED",
+      "supervised_seconds": 98.3994425421115,
+      "launch_lower_seconds": 121.1798172518611,
+      "peak_bytes": 929619968,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_post_collect01/summary.json",
+        "sha256": "55d5c4fac9066c451ba6e19435ce2131629c1a556f686e659d81f36f2da798b8",
+        "bytes": 23622
+      }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v57/aux_post_docs01",
+      "source_sha": "113c4ad2e2cca1453442e3d3369cc67ced5ef00a",
+      "classification": "COMPLETED",
+      "supervised_seconds": 11.857111911987886,
+      "launch_lower_seconds": 35.1055390429683,
+      "peak_bytes": 94961664,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task042/v57/aux_post_docs01/summary.json",
+        "sha256": "345ba4eafd6dc4eb6e22e50b9f6986fcb8ed07f88c974e858c897e1253f39379",
+        "bytes": 23618
+      }
+    }
+  ],
+  "charged_measured_known_lower_seconds": 9099.905092192581,
+  "historic_known_lower_seconds": 167565.471479738,
+  "historic_plus_new_known_lower_seconds": 176665.37657193057,
+  "historic_unknown": "preserved",
+  "unsupervised_light_CPU_seconds": "unknown",
+  "scientific_loaded_conservative_upper_seconds": 12222.75994181633,
+  "scientific_loaded_limit_seconds": 18000,
+  "upper_policy": "entire initial-to-closure elapsed bounds all science/tests/failures/light helper fees including idle, Git and implementation; unknown helpers not zero",
+  "repair_conservative_upper_seconds": 4948.370106517337,
+  "repair_limit_seconds": 7200,
+  "repair_policy": "whole elapsed minus only successful D/B6/Y6 supervised windows; all other implementation/K/tests/IO/wait conservatively charged to repair upper",
+  "measured_launch_overhead_policy": "prelaunch/probes and launch summaries included by existing charged_wall; storage scans after summary/unsupervised helpers remain inside whole-window upper, exact CPU unknown",
+  "sampled_tree_peak_bytes": 18129944576,
+  "own_swap_peak_bytes": 0,
+  "actual_max_sample_gap_seconds": 8.68580075004138,
+  "sampling": [
+    {
+      "folder": "tmp/task042/v57/aux_pre_02",
+      "sample_count": 39,
+      "actual_max_sample_gap_seconds": 1.1087980570737273,
+      "sampled_tree_peak_bytes": 153423872,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_03",
+      "sample_count": 6,
+      "actual_max_sample_gap_seconds": 1.2086909459903836,
+      "sampled_tree_peak_bytes": 228069376,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_common_weak_balance_20261007T041316149930Z",
+      "sample_count": 12,
+      "actual_max_sample_gap_seconds": 1.5591687629930675,
+      "sampled_tree_peak_bytes": 377421824,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_04",
+      "sample_count": 19,
+      "actual_max_sample_gap_seconds": 1.1731523268390447,
+      "sampled_tree_peak_bytes": 211062784,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_common_weak_balance_20261007T041609012185Z",
+      "sample_count": 160,
+      "actual_max_sample_gap_seconds": 1.618483236990869,
+      "sampled_tree_peak_bytes": 807985152,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_05",
+      "sample_count": 36,
+      "actual_max_sample_gap_seconds": 1.3804549637716264,
+      "sampled_tree_peak_bytes": 400240640,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_common_weak_balance_20261007T042308453065Z",
+      "sample_count": 919,
+      "actual_max_sample_gap_seconds": 1.683601750060916,
+      "sampled_tree_peak_bytes": 1173422080,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_06",
+      "sample_count": 8,
+      "actual_max_sample_gap_seconds": 1.3757221021223813,
+      "sampled_tree_peak_bytes": 401203200,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T044747176485Z",
+      "sample_count": 29,
+      "actual_max_sample_gap_seconds": 1.687952279113233,
+      "sampled_tree_peak_bytes": 460107776,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_07",
+      "sample_count": 8,
+      "actual_max_sample_gap_seconds": 1.3703927900642157,
+      "sampled_tree_peak_bytes": 401346560,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T045216128516Z",
+      "sample_count": 11,
+      "actual_max_sample_gap_seconds": 1.693773650098592,
+      "sampled_tree_peak_bytes": 367390720,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_08",
+      "sample_count": 8,
+      "actual_max_sample_gap_seconds": 1.4365862382110208,
+      "sampled_tree_peak_bytes": 407937024,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T045533855610Z",
+      "sample_count": 152,
+      "actual_max_sample_gap_seconds": 1.7820234508253634,
+      "sampled_tree_peak_bytes": 2284396544,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_09",
+      "sample_count": 10,
+      "actual_max_sample_gap_seconds": 1.7768138779792935,
+      "sampled_tree_peak_bytes": 399474688,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T050223752068Z",
+      "sample_count": 237,
+      "actual_max_sample_gap_seconds": 1.8506237459369004,
+      "sampled_tree_peak_bytes": 836034560,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_10",
+      "sample_count": 7,
+      "actual_max_sample_gap_seconds": 1.5507506518624723,
+      "sampled_tree_peak_bytes": 393105408,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_phase_tensor_setup_20261007T051014625921Z",
+      "sample_count": 41,
+      "actual_max_sample_gap_seconds": 1.8819080500397831,
+      "sampled_tree_peak_bytes": 320425984,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_phase_tensor_baseline_p6_20261007T051214904250Z",
+      "sample_count": 638,
+      "actual_max_sample_gap_seconds": 3.2688166149891913,
+      "sampled_tree_peak_bytes": 8231763968,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_notch_y2z2_p6_m828_20261007T053536868905Z",
+      "sample_count": 1143,
+      "actual_max_sample_gap_seconds": 6.516697667073458,
+      "sampled_tree_peak_bytes": 18129944576,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_11",
+      "sample_count": 4,
+      "actual_max_sample_gap_seconds": 6.039693174883723,
+      "sampled_tree_peak_bytes": 403648512,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_verify_cost_20261007T065715600242Z",
+      "sample_count": 3,
+      "actual_max_sample_gap_seconds": 5.548765466082841,
+      "sampled_tree_peak_bytes": 93757440,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_pre_12",
+      "sample_count": 4,
+      "actual_max_sample_gap_seconds": 6.132293042959645,
+      "sampled_tree_peak_bytes": 402169856,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "results/task042/task042_v57_verify_cost_20261007T070107203807Z",
+      "sample_count": 14,
+      "actual_max_sample_gap_seconds": 6.543698540888727,
+      "sampled_tree_peak_bytes": 328249344,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_post_collect01",
+      "sample_count": 13,
+      "actual_max_sample_gap_seconds": 8.68580075004138,
+      "sampled_tree_peak_bytes": 929619968,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    },
+    {
+      "folder": "tmp/task042/v57/aux_post_docs01",
+      "sample_count": 3,
+      "actual_max_sample_gap_seconds": 4.672689855098724,
+      "sampled_tree_peak_bytes": 94961664,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
+    }
+  ],
+  "nominal_sampling_seconds": 0.5,
+  "sampled_is_not_continuous_hard_peak": true,
+  "shared_workstation": true,
+  "absolute_zero_interference_claim": false,
+  "original_window": {
+    "start_utc": "2026-10-07T03:58:55.787376+00:00",
+    "start_monotonic": 1270530.648268307,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+    "intake_HEAD": "feb7013db1110c9fb28b6104b235843cb7e78c49",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "closed_utc": "2026-10-07T07:19:23.896951+00:00",
+    "budget_never_refreshed": true,
+    "observed_utc": "2026-10-07T07:19:23.923129+00:00",
+    "observed_monotonic": 1282558.783996765,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12028.135752916336,
+    "heavy_remaining_seconds": 10471.864247083664,
+    "total_remaining_seconds": 13171.864247083664
+  },
+  "latest_admission_storage": "recorded by raw resource_baseline; final stat below",
+  "free_bytes_at_close": 3253910089728,
+  "new_storage_limit_bytes": 10737418240,
+  "task_storage_limit_bytes": 109521666048,
+  "final_document_test_seconds": 0.28739437786862254,
+  "last_collector_and_document_fee_included": true,
+  "numeric_factors": 2,
+  "new_complete_solves": 2,
+  "new_p7_PDE": 0,
+  "NN_training": 0,
+  "NN20": false,
+  "target_PDE": 0,
+  "exact_required_fresh_cold_N1": "unknown; B6/Y6 dat contain research consumers, disjoint stage fees retained",
+  "earlier_nonoverlapping_stage_record": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v57.json",
+    "sha256": "cd0fc68d016dbc1376f5e772a9110d6bf6f311ea7ed83e263f6753c9306d8d66",
+    "bytes": 250684
+  },
+  "final_storage_stat_only": {
+    "new_bytes": 6866358087,
+    "task_artifact_bytes": 59753648162,
+    "free_bytes": 3253885976576,
+    "reserve_bytes": 536870912
+  },
+  "final_storage_stat_seconds": 20.8758025909774,
+  "charged_measured_known_lower_seconds_including_final_stat": 9120.780894783558,
+  "historic_plus_new_known_lower_seconds_including_final_stat": 176686.25237452154,
+  "final_storage_payload_or_factor_reads": 0,
+  "delivery_helper_exact_other_cpu_seconds": "unknown, covered by entire elapsed upper",
+  "final_delivery_accounting_clock": {
+    "start_utc": "2026-10-07T03:58:55.787376+00:00",
+    "start_monotonic": 1270530.648268307,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+    "intake_HEAD": "feb7013db1110c9fb28b6104b235843cb7e78c49",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "closed_utc": "2026-10-07T07:19:23.896951+00:00",
+    "budget_never_refreshed": true,
+    "observed_utc": "2026-10-07T07:21:43.907086+00:00",
+    "observed_monotonic": 1282698.767953525,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12168.119710445404,
+    "heavy_remaining_seconds": 10331.880289554596,
+    "total_remaining_seconds": 13031.880289554596
+  },
+  "fixed_window_last_metadata_clock": {
+    "start_utc": "2026-10-07T03:58:55.787376+00:00",
+    "start_monotonic": 1270530.648268307,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+    "intake_HEAD": "feb7013db1110c9fb28b6104b235843cb7e78c49",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "closed_utc": "2026-10-07T07:19:23.896951+00:00",
+    "budget_never_refreshed": true,
+    "observed_utc": "2026-10-07T07:22:38.547318+00:00",
+    "observed_monotonic": 1282753.408185068,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12222.75994181633,
+    "heavy_remaining_seconds": 10277.24005818367,
+    "total_remaining_seconds": 12977.24005818367
+  },
+  "delivery_commit_push_and_later_metadata": "actual final UTC/monotonic/elapsed and upper bounds recorded in ignored tmp/task042/v57/post_push_receipt_v57.json after push; no new science; unknown CPU never zero"
+}

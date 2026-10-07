@@ -1,0 +1,17 @@
+{
+  "id": "M1",
+  "classification": "FINAL_METADATA_PATH_ERROR_NO_SCIENCE",
+  "observed_utc": "2026-10-07T07:22:10.524532+00:00",
+  "startup_HEAD": "113c4ad2e2cca1453442e3d3369cc67ced5ef00a",
+  "clean_scientific_run": false,
+  "worktree": "final documentation/JSON settlement in progress; no numeric source changes",
+  "stderr": {
+    "path": "tmp/task042/v57/delivery_metadata_failure.stderr",
+    "sha256": "cbe17b0c0fd5cbe7d73f73fd1d0be1400410f127a5568f51e47d79efe1f005d9"
+  },
+  "cause": "relative record path passed to absolute canonical root relative_to",
+  "fix": "construct record directory from absolute ROOT before building final index",
+  "replay": "index/hash accounting only; no repeat storage stat, FE, factor, solve, integration or test",
+  "cost": "20.8758025909774s storage stat already saved and charged; remaining helper CPU unknown within total elapsed",
+  "old_ledgers_reopened": false
+}

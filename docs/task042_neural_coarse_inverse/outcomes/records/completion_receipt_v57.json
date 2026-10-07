@@ -1,0 +1,235 @@
+{
+  "status": "AUTHORIZED_QUEUE_COMPLETED_PAUSE_AFTER_SINGLE_BRANCH_PUSH",
+  "actual_science_source": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+  "saved_checker_source": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
+  "document_validation_source": "113c4ad2e2cca1453442e3d3369cc67ced5ef00a",
+  "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "ledger_closed": true,
+  "active": null,
+  "own_actor_count": 0,
+  "own_lock_acquire_and_release": true,
+  "descendants_cleared": true,
+  "closure_clock": {
+    "start_utc": "2026-10-07T03:58:55.787376+00:00",
+    "start_monotonic": 1270530.648268307,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+    "intake_HEAD": "feb7013db1110c9fb28b6104b235843cb7e78c49",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "closed_utc": "2026-10-07T07:19:23.896951+00:00",
+    "budget_never_refreshed": true,
+    "observed_utc": "2026-10-07T07:19:23.923129+00:00",
+    "observed_monotonic": 1282558.783996765,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12028.135752916336,
+    "heavy_remaining_seconds": 10471.864247083664,
+    "total_remaining_seconds": 13171.864247083664
+  },
+  "helper_source": {
+    "path": "tmp/task042/v57/edit/close_delivery.py",
+    "sha256": "2c375951818a803595a2716629d2dff3c4377d0d33e78a63d187fa53932fe947",
+    "bytes": 10642
+  },
+  "source_identity_notes": "final delivery HEAD is not run source; post-push exact final HEAD/remote/clean receipt saved separately under ignored tmp/task042/v57",
+  "documents": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "70bb611245a390ee847b9fa57aa9229f5addecd50f480c8548193d7d45ff0bf8",
+      "bytes": 90201
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "e0f05a5fcfa130fd7871a2ada722e76a5c6430a78ebabb606367464f9c2658e2",
+      "bytes": 144332
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "3b9eec576fa9f65aacb75b28baa35d33a270bfa97acb8fdbfcc8830cf524abec",
+      "bytes": 80685
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "58fd3de422436a9ecc4cfeafe99274759ede09cd857994b2384b78551c0257a4",
+      "bytes": 80487
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "1234815372c7541d5337a76adaa90de9adb05138505c76ed518668d55acec41f",
+      "bytes": 267894
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "6767c3e1517166f0fcbb1eb6484da0fb0ac77ef8a8834107a9f9d9dcc3b12b6c",
+      "bytes": 304239
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v55.md",
+      "sha256": "eb1070185ec0b3d701ea8b330ce4aaf2544e4af9d54530c356aa159c137825a7",
+      "bytes": 23145
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v57.md",
+      "sha256": "af166975886dcca529c8c4616cf5421bb2d4f1496f9b757dfa4313044b5fc8c1",
+      "bytes": 12001
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+      "sha256": "b0ef5fc3b311374d5a201188e2b1327351abd6e7c7c326fc4206509b64fd2741",
+      "bytes": 11890
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v57.json",
+      "sha256": "561674fa69dc409307fa9c53282288ca3898d096d5081d014528a35c27a42fc7",
+      "bytes": 1636
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_index_v57.json",
+      "sha256": "916f8f20bc5c005c36df1f0c2293b8d642ac05a132f3b61c6c5af9e0594d7938",
+      "bytes": 3147
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_metadata_repair_v57.json",
+      "sha256": "b86ae8e380d19eedcab8d71c41e912af57f26ab9b492b841324cd112a471e2a1",
+      "bytes": 909
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v57.json",
+      "sha256": "17dff421b5f20125f091b4c4ecd847e1fb3d2c18d9fe600036499ed4080f0d8c",
+      "bytes": 7007
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/github_visual_v57.json",
+      "sha256": "8f66ae183e086a896d8284510e964b6110ee9cdf0ecd52f10c79bce2c85ec575",
+      "bytes": 286
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/physical_identity_bindings_v57.json",
+      "sha256": "2bda6f5b82dceda9634109462357f7ee8ec1f7fa7e7e48cab19cd748a8276cff",
+      "bytes": 10914
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v57.json",
+      "sha256": "c5be080de10e62750104bbecc16619fe6935780dd8850d8a4f4628679db06a0f",
+      "bytes": 7649
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_final_tail_v57.json",
+      "sha256": "5d6ff74c0a60835dc9bddb12097a036ab6e6396df715e084e26af5cd85a7c7de",
+      "bytes": 13374
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v57.json",
+      "sha256": "a229fcdaf365b05078fa66b921c2022c52283d0f4ee9a30d81ab5ab8082d20de",
+      "bytes": 5720
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v57.json",
+      "sha256": "91ce6f14d0c6a02f081b755ef1121638f10b08fb5e143a628414860c6b36e709",
+      "bytes": 28285
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v57.json",
+      "sha256": "cd0fc68d016dbc1376f5e772a9110d6bf6f311ea7ed83e263f6753c9306d8d66",
+      "bytes": 250684
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v57.json",
+      "sha256": "8b95234648942d0460be57f0053342fb59963d966c64542213aae9c6aff7fea7",
+      "bytes": 32296
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v57.json",
+      "sha256": "1ff7e095a240bf7556c1531f83bedfb9ebb1c1787df5e1833f6cf5ccb807df60",
+      "bytes": 454041
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_queue_freeze_v57.json",
+      "sha256": "702b3a7631c3b6a489a0c976c65ce3278ea0f4c973137674460d7d1b1bb990e3",
+      "bytes": 2487
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_manifest_v57.json",
+      "sha256": "0aa44fed9e7ab096fedf67d5a40126c5d51ac2a65e847f904def074a8603ee9d",
+      "bytes": 3564
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v57.json",
+      "sha256": "a572ea79e36ad4f6f2d430ef7b248d852a6e97b4e7e369d774f0a8b49319796d",
+      "bytes": 2308
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_identity_clarifications_v57.json",
+      "sha256": "c2ae497336085628341b09860f5e4a41b72f87517023f7ef07e4a06b10229531",
+      "bytes": 299
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/stage_verdicts_v57.json",
+      "sha256": "e4c2ced5b2e01d82dffe4a47eb2b8d89df354cbfa05f1d99cb57d256a673e873",
+      "bytes": 1780
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v57.json",
+      "sha256": "18a2b1f7b11431a59e0a713715012b104624ff0ed34ab8465ccfbae43c74030a",
+      "bytes": 12541
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/tests_v57.json",
+      "sha256": "8c619ef8a7e7bc71cca2347e230591568445b4e98c4b311bc067a9840e49426b",
+      "bytes": 22508
+    }
+  ],
+  "new_solves": 2,
+  "equation_pass": [
+    "B6",
+    "Y6"
+  ],
+  "backend_reproduction": true,
+  "Y6_main_increment": true,
+  "cross_p_accuracy": false,
+  "target_full_accuracy": false,
+  "target_2TB_48h": false,
+  "NN20": false,
+  "automatic_next_window": false,
+  "neighbor_notification": false,
+  "merge": false,
+  "final_storage": {
+    "new_bytes": 6866358087,
+    "task_artifact_bytes": 59753648162,
+    "free_bytes": 3253885976576,
+    "reserve_bytes": 536870912
+  },
+  "final_metadata_fix": {
+    "id": "M1",
+    "replayed_science": 0,
+    "saved_evidence": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_metadata_repair_v57.json"
+  },
+  "final_settlement_clock": {
+    "start_utc": "2026-10-07T03:58:55.787376+00:00",
+    "start_monotonic": 1270530.648268307,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 22500,
+    "total_limit_seconds": 25200,
+    "scientific_loaded_limit_seconds": 18000,
+    "review_commit": "e08e598146f8bcd5a25d7bcf0364cf8c94c9f091",
+    "intake_HEAD": "feb7013db1110c9fb28b6104b235843cb7e78c49",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "closed_utc": "2026-10-07T07:19:23.896951+00:00",
+    "budget_never_refreshed": true,
+    "observed_utc": "2026-10-07T07:22:38.562460+00:00",
+    "observed_monotonic": 1282753.423326979,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12222.775084018707,
+    "heavy_remaining_seconds": 10277.224915981293,
+    "total_remaining_seconds": 12977.224915981293
+  }
+}

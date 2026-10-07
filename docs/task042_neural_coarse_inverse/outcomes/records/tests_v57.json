@@ -261,7 +261,12 @@
     "sha256": "366e1808794dae8b547718c979819aabc3edfad67b19dae577787ba3e6db462c"
   },
   "targeted_count": 11,
-  "documentation": "one final 15-item check still pending; final receipt separate",
+  "documentation": {
+    "status": "PASSED_LOCAL",
+    "count": 15,
+    "record": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v57.json",
+    "run_source": "113c4ad2e2cca1453442e3d3369cc67ced5ef00a"
+  },
   "full_pytest": "NOT_RUN",
   "CI": "NOT_RUN"
 }

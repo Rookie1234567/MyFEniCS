@@ -1,0 +1,235 @@
+{
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "70bb611245a390ee847b9fa57aa9229f5addecd50f480c8548193d7d45ff0bf8",
+      "tables": [],
+      "links": [
+        "review_report_v55.md",
+        "response_v57.md",
+        "outcomes/common_weak_phase_preparation_v57.md",
+        "outcomes/records/delivery_index_v57.json",
+        "outcomes/records/scientific_checks_v57.json",
+        "outcomes/records/resource_costs_v57.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "e0f05a5fcfa130fd7871a2ada722e76a5c6430a78ebabb606367464f9c2658e2",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "../response_v57.md",
+        "common_weak_phase_preparation_v57.md",
+        "records/scientific_checks_v57.json",
+        "records/resource_costs_v57.json",
+        "records/target_gap_v57.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "3b9eec576fa9f65aacb75b28baa35d33a270bfa97acb8fdbfcc8830cf524abec",
+      "tables": [],
+      "links": [
+        "records/tests_v57.json",
+        "records/scientific_checks_v57.json",
+        "../response_v57.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "58fd3de422436a9ecc4cfeafe99274759ede09cd857994b2384b78551c0257a4",
+      "tables": [],
+      "links": [
+        "records/selective_merge_manifest_v57.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "1234815372c7541d5337a76adaa90de9adb05138505c76ed518668d55acec41f",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v57.md",
+        "task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+        "task042_neural_coarse_inverse/outcomes/records/delivery_index_v57.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "6767c3e1517166f0fcbb1eb6484da0fb0ac77ef8a8834107a9f9d9dcc3b12b6c",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 5
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v57.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v55.md",
+      "sha256": "eb1070185ec0b3d701ea8b330ce4aaf2544e4af9d54530c356aa159c137825a7",
+      "tables": [
+        {
+          "line": 35,
+          "columns": 3
+        },
+        {
+          "line": 62,
+          "columns": 5
+        }
+      ],
+      "links": [
+        "response_v56.md",
+        "outcomes/saved_field_closure_target_bridge_v56.md",
+        "outcomes/records/gate_verdict_v56.json",
+        "outcomes/records/resource_costs_final_v56.json",
+        "outcomes/records/target_gap_final_v56.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v57.md",
+      "sha256": "af166975886dcca529c8c4616cf5421bb2d4f1496f9b757dfa4313044b5fc8c1",
+      "tables": [
+        {
+          "line": 9,
+          "columns": 2
+        },
+        {
+          "line": 19,
+          "columns": 6
+        },
+        {
+          "line": 30,
+          "columns": 8
+        },
+        {
+          "line": 38,
+          "columns": 4
+        },
+        {
+          "line": 51,
+          "columns": 4
+        },
+        {
+          "line": 63,
+          "columns": 3
+        },
+        {
+          "line": 74,
+          "columns": 6
+        },
+        {
+          "line": 81,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "outcomes/records/scientific_checks_v57.json",
+        "outcomes/records/array_inventory_v57.json",
+        "outcomes/records/resource_costs_v57.json",
+        "outcomes/records/target_gap_v57.json",
+        "outcomes/common_weak_phase_preparation_v57.md",
+        "outcomes/records/run_index_v57.json",
+        "outcomes/records/source_bindings_v57.json",
+        "outcomes/records/raw_archive_index_v57.json",
+        "outcomes/records/tests_v57.json",
+        "outcomes/records/selective_merge_manifest_v57.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+      "sha256": "b0ef5fc3b311374d5a201188e2b1327351abd6e7c7c326fc4206509b64fd2741",
+      "tables": [
+        {
+          "line": 9,
+          "columns": 2
+        },
+        {
+          "line": 19,
+          "columns": 6
+        },
+        {
+          "line": 30,
+          "columns": 8
+        },
+        {
+          "line": 38,
+          "columns": 4
+        },
+        {
+          "line": 51,
+          "columns": 4
+        },
+        {
+          "line": 63,
+          "columns": 3
+        },
+        {
+          "line": 74,
+          "columns": 6
+        },
+        {
+          "line": 81,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/scientific_checks_v57.json",
+        "records/array_inventory_v57.json",
+        "records/resource_costs_v57.json",
+        "records/target_gap_v57.json",
+        "../response_v57.md",
+        "records/run_index_v57.json",
+        "records/source_bindings_v57.json",
+        "records/raw_archive_index_v57.json",
+        "records/tests_v57.json",
+        "records/selective_merge_manifest_v57.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "95992ec45e47fad4e1f503cb83e05eb94cdd13b783e579863e5340f5dc06fbd0"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "9b64212230bb2593f47e6ec9dfec044cd262c4ad3a431e91b76e42190d15281a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "da5b33a3c716175f49a5f7014839858f19abb740f0174262fa83568587d47783"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "5185fb0555454b091451994e8567960890ff34592ac7fa247912c0403e7d1206"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "071e0e712fd4ded356fd9ddf33c45352e190f563d2af240d2ae2463b1d100ac3"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "5cb055ca2df4704ed843d7ab7b9dbcdaeec08e6d6ded18c8362645dfc3941638"
+    }
+  ],
+  "test_seconds": 0.28739437786862254,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "producer": {
+    "path": "tmp/task042/v57/aux_post_docs01/documentation_checks.json",
+    "sha256": "64969ffa2b25a1986c372eeb35c7ae2386a95f342b0c614c65119eca10d1e391",
+    "bytes": 6604
+  },
+  "run_source": "113c4ad2e2cca1453442e3d3369cc67ced5ef00a",
+  "unittest_count": 15,
+  "legacy_stdout_label": "V52_DOCUMENTS_PASSED_LOCAL is inherited print only; explicit targets/review/source above are V57"
+}

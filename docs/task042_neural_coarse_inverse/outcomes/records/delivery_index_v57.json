@@ -6,10 +6,16 @@
   "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
   "records": [
     "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v57.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/completion_receipt_v57.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/delivery_index_v57.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/delivery_metadata_repair_v57.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/github_visual_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/physical_identity_bindings_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v57.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/raw_final_tail_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v57.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v57.json",
     "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v57.json",
@@ -26,5 +32,9 @@
   "run_source": "aa8c46e50e125e18032a46e1afcc40f21718804a",
   "checker_source": "f0cc6ee829a7388688dd84d0b755fb40c35716fc",
   "next_pilot": "固定一次 y 倒格矢相位重分配：κ′=κ+(0,2π/Ly,0)，物理入射、模式的 kx/ky、材料、p6/828 与 NOTCH 不变，独立零初值求完整物理解。把一个整周期相位从包络移到解析载波，连续 Maxwell 场应不变，有限表示/稳定性敏感性可受控检查。先需要解析控制及完整 Cκ′、物理 RHS、C/D、MPC 身份与容量门；本批未实现/运行，不扫描载波、不预设它更准确。",
-  "final_settlement": "resource_costs_final_v57.json and completion_receipt_v57.json will close last documents/collector; no scientific work after freeze"
+  "final_settlement": "COMPLETED: resource_costs_final_v57.json and completion_receipt_v57.json",
+  "ledger_closed": true,
+  "active": null,
+  "source_science": "aa8c46e50e125e18032a46e1afcc40f21718804a",
+  "completion_record": "docs/task042_neural_coarse_inverse/outcomes/records/completion_receipt_v57.json"
 }
