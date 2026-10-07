@@ -1,0 +1,386 @@
+{
+  "schema": "task40extra.review_v16_build_and_memory.v1",
+  "task": "Task40extra 0.7 nm nonseparable Full3D",
+  "branch": "task40extra_0p7nm_engineering",
+  "review_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+  "source_state": {
+    "p1_candidate_source": "7ac204557080019fa0e3788a351e618b96a3411b",
+    "p1_admission_source": "a09f887b46ea01e89ac8ffb316caf798a4443ae7",
+    "formal_gx560_source": "54b98a871632a1eef1c34e3542788f5859ee255c",
+    "p4_component_source_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+    "p4_helper_source_sha256": "7e2fa0629ab350ad0bf5e976c63c09363c96d2fd718bae11eb1044461283d21d",
+    "p4_test_source_sha256": "d60ef7e7a2cb33085a76eaba70b243d6fb2f07548cb61ddcac5fa923ce7e05b9",
+    "p5_changed_numerical_source": false,
+    "interpretation": "The full Gx560 solve used the frozen V16 source 54b98a8. HEAD 3ff adds an independent bounded Hhat-vector helper; it was not wired into the formal Gx560 route. The old 19 production definitions were unchanged by that helper."
+  },
+  "build_route": {
+    "q_assembly_strategy": "BOUNDED_STAGING_CSR_V16",
+    "reference_pc_strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+    "staging_total_limit_bytes": 268435456,
+    "python_overhead_reserve_per_q_bytes": 33554432,
+    "measured_q_pattern_support_staging_live_upper_bytes": 137113676,
+    "measured_q_pattern_support_invocations": 5308,
+    "pattern_memory_shape": "For one q block, one full-shape uint8 row-bitset: rows * ceil(columns/8), plus 32 MiB reserve and support scratch. The bitset remains O(rows*columns), so it is not a target-scale row-tile pattern.",
+    "square_shape_theoretical_boundary_rows": 43344,
+    "square_shape_boundary_note": "Derived from the 256 MiB cap after the 32 MiB reserve for the pure bitset only; support slices, row decoding and CSR construction make the practical limit lower.",
+    "projection_and_numeric_accumulation": "Uses bounded projection/numeric accumulation within the staging gate; this does not bound the full-shape q pattern bitset at target dimensions.",
+    "p6_transform_bank": {
+      "status": "Pre-existing V12 transform-bank path retained in V16",
+      "scope": "p6 cell-interior 450x450 blocks only; edges/faces use the legacy path",
+      "sharing_basis": "Basix/direction-state payload identity",
+      "separate_from_share_identity_cache": true,
+      "qualification_note": "Do not interpret this transform bank as the float64 identity I cache or as a universal per-shape cache.",
+      "one_owner_for_transform_bank_across_global_and_both_sectors": true,
+      "owner_sharing_note": "This is the distinct pre-existing V12 transform-bank object, shared according to Basix/direction-state identity; it is not share_identity_cache.",
+      "sharing_scope": "The pre-existing V12 transform bank is shared across the global-reference collection and both local sector systems under Basix/direction-state payload identity; it is separate from the identity-I cache."
+    },
+    "share_identity_cache": {
+      "sharing_scope": "The target condensation system and each of the two local sector systems independently enable share_identity_cache; there is no identity-I owner shared among the three systems.",
+      "reported_local_payload_bytes": 1620000,
+      "reported_local_class_count": 1,
+      "payload_shape": [
+        450,
+        450
+      ],
+      "payload_dtype": "float64",
+      "payload_semantics": "read-only identity matrix I",
+      "not_shared_by_this_option": [
+        "transform matrices",
+        "Schur matrices",
+        "LU factors",
+        "recovery maps"
+      ],
+      "aggregate_memory_saving": "not measured",
+      "enabled_for_target_and_two_sector_systems": true
+    },
+    "gx560_actual_q_csr": {
+      "rows_by_q": [
+        28508,
+        28508,
+        28576,
+        28508
+      ],
+      "nnz_by_q": [
+        15457680,
+        15483524,
+        15600060,
+        15483524
+      ],
+      "nnz_total": 62024788,
+      "payload_bytes_total": 1240952176
+    },
+    "sector_assembly_timing_seconds_rounded": {
+      "v15_two_sector_parent_total": 422.54,
+      "v16_two_sector_parent_total": 408.214,
+      "v15_sparse_accumulation_subphase_total": 275.837,
+      "v16_sparse_accumulation_subphase_total": 16.777,
+      "v16_new_pattern_construction": 110.582,
+      "remaining_parent_time_attribution": "unknown; parent/subphase times are nested and must not be arithmetically assigned to unmeasured causes"
+    },
+    "e1_prebuild_admission": {
+      "dominant_future_estimate": "6,530,000,000 B INFOG16/17-derived conservative future numeric estimate across four q; not allocated/used factor bytes."
+    }
+  },
+  "gx560_memory_and_lifecycle": {
+    "v16": {
+      "simultaneous_process_tree_rss_peak_bytes": 10204880896,
+      "cgroup_memory_peak_bytes": 11907702784,
+      "process_tree_swap_peak_bytes": 0,
+      "pss_peak_bytes": null,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "wsl_global_swap_delta_pages": {
+        "pswpin": 52,
+        "pswpout": 0
+      },
+      "global_swap_attribution": "unresolved; not a dedicated job metric"
+    },
+    "v15_comparison": {
+      "simultaneous_process_tree_rss_peak_bytes": 10294927360,
+      "cgroup_memory_peak_bytes": 11674669056,
+      "mumps_allocated_upper_sum_bytes": 4645000000
+    },
+    "v16_object_inventory": {
+      "read_only_identity_cache_bytes_local": 1620000,
+      "read_only_identity_cache_class_count_local": 1,
+      "retained_local_schur_bytes_local": 164229120,
+      "retained_local_schur_class_count_local": 55,
+      "unique_LU_factor_buffers": 55,
+      "unique_S_V_buffers": 55,
+      "unique_recovery_buffers": 55,
+      "unique_trace_rhs_projection_buffers": 55,
+      "all_q_mumps_allocated_upper_sum_bytes": 4692000000,
+      "all_q_mumps_used_upper_sum_bytes": 4118000000,
+      "reference_factors_released_after_solve": true,
+      "post_release_target_A6_relative": 4.70443000240316E-9,
+      "post_release_native_A6_relative": 4.704309875855315E-9,
+      "release_RSS_saving_attributable_to_individual_objects": "unknown",
+      "identity_cache": {
+        "sharing_scope": "The target condensation system and each of the two local sector systems independently enable share_identity_cache; there is no identity-I owner shared among the three systems.",
+        "reported_local_payload_bytes": 1620000,
+        "reported_local_class_count": 1,
+        "payload_shape": [
+          450,
+          450
+        ],
+        "payload_dtype": "float64",
+        "payload_semantics": "read-only identity matrix I",
+        "not_shared_by_this_option": [
+          "transform matrices",
+          "Schur matrices",
+          "LU factors",
+          "recovery maps"
+        ],
+        "aggregate_memory_saving": "not measured",
+        "enabled_for_target_and_two_sector_systems": true
+      }
+    },
+    "delta_v16_minus_v15": {
+      "tree_rss_bytes": -90046464,
+      "cgroup_peak_bytes": 233033728,
+      "mumps_allocated_upper_sum_bytes": 47000000,
+      "interpretation": "Tree RSS fell by about 0.88%, while cgroup peak and MUMPS allocated upper bounds rose. This does not establish a net simultaneous-memory reduction or multi-GiB capacity gain."
+    },
+    "q_numeric_and_live_factor_inventory": {
+      "per_q_numeric_records": [
+        {
+          "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q0_numeric.json",
+          "record_sha256": "556bc1733e88dbc4637ade0543b66893f5081d95db8752434834b2ea18b8608b",
+          "q": 0,
+          "rows": 28508,
+          "nnz": 15457680,
+          "factor_csr_sha256": "036fa99d56e741c74d1b17ed3afc179c280afaf2727ad1fc60d859928be16488",
+          "numeric_elapsed_seconds": 4.276749133947305,
+          "INFOG19_allocated_bytes_upper": 1156000000,
+          "INFOG22_used_bytes_upper": 1015000000,
+          "raw_INFOG9": 41415880,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q1_numeric.json",
+          "record_sha256": "a255657d8aeea2d52e77e191114d132e36b8d0cc6493f5f839b165c2f108a9f8",
+          "q": 1,
+          "rows": 28508,
+          "nnz": 15483524,
+          "factor_csr_sha256": "bbf15a7e68cce2042dd584971be6b1281fa0e89d0d223df5a3a29b9ceb25eaba",
+          "numeric_elapsed_seconds": 5.314689437975176,
+          "INFOG19_allocated_bytes_upper": 1177000000,
+          "INFOG22_used_bytes_upper": 1033000000,
+          "raw_INFOG9": 42179536,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q2_numeric.json",
+          "record_sha256": "32239eed18e51f4af0731cebb826f01a7106322037e5902d1336e50b29b8f3a2",
+          "q": 2,
+          "rows": 28576,
+          "nnz": 15600060,
+          "factor_csr_sha256": "60b7a85fcd2d29f8e7f2fd6f32de23b0b28fb602d137f0279b5d9992a0e949bd",
+          "numeric_elapsed_seconds": 4.573781676939689,
+          "INFOG19_allocated_bytes_upper": 1182000000,
+          "INFOG22_used_bytes_upper": 1037000000,
+          "raw_INFOG9": 42165112,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q3_numeric.json",
+          "record_sha256": "7f8f2a6c216ad6c9297a2f351ed91dc56f96008834700c856303d2a2ff7f59e4",
+          "q": 3,
+          "rows": 28508,
+          "nnz": 15483524,
+          "factor_csr_sha256": "a28858650e77298f58640ba9c1c6877f10c4c03131fcc627e325ab3716db864e",
+          "numeric_elapsed_seconds": 4.485745296929963,
+          "INFOG19_allocated_bytes_upper": 1177000000,
+          "INFOG22_used_bytes_upper": 1033000000,
+          "raw_INFOG9": 42179536,
+          "INFOG9_factor_entries": "unknown"
+        }
+      ],
+      "all_q_live_before_destroy": {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_all_q_live_before_destroy.json",
+        "record_sha256": "dcd10562ea4a841b595eeee7d012ba9a555823dd1a11f3640df4a9349b856dbc",
+        "factor_live_count": 4,
+        "factor_q_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "current_native_factor_inventory_by_q": [
+          {
+            "q": 0,
+            "INFOG19_allocated_bytes_upper": 1156000000,
+            "INFOG22_used_bytes_upper": 1015000000,
+            "raw_INFOG9": 41415880,
+            "INFOG9_factor_entries": "unknown"
+          },
+          {
+            "q": 1,
+            "INFOG19_allocated_bytes_upper": 1177000000,
+            "INFOG22_used_bytes_upper": 1033000000,
+            "raw_INFOG9": 42179536,
+            "INFOG9_factor_entries": "unknown"
+          },
+          {
+            "q": 2,
+            "INFOG19_allocated_bytes_upper": 1182000000,
+            "INFOG22_used_bytes_upper": 1037000000,
+            "raw_INFOG9": 42165112,
+            "INFOG9_factor_entries": "unknown"
+          },
+          {
+            "q": 3,
+            "INFOG19_allocated_bytes_upper": 1177000000,
+            "INFOG22_used_bytes_upper": 1033000000,
+            "raw_INFOG9": 42179536,
+            "INFOG9_factor_entries": "unknown"
+          }
+        ]
+      },
+      "numeric_subphase_sum_seconds": 18.6509655,
+      "sum_scope": "per-q numeric subphase only; not the full setup or workflow",
+      "all_q_factor_presence": 4
+    },
+    "reference_pc_apply_timing": {
+      "events": [
+        {
+          "call": 1,
+          "whole_pc_apply_seconds": 67.115958898,
+          "native_evaluation_seconds": [
+            12.136823044973426
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        },
+        {
+          "call": 2,
+          "whole_pc_apply_seconds": 17.49246456,
+          "native_evaluation_seconds": [
+            8.510160509962589
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        },
+        {
+          "call": 3,
+          "whole_pc_apply_seconds": 9.798304339,
+          "native_evaluation_seconds": [
+            8.345820695976727
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        }
+      ],
+      "whole_pc_apply_is_parent_scope": true,
+      "native_evaluation_is_child_not_additive": true,
+      "setup_total": "unknown"
+    }
+  },
+  "e1_prebuild_admission": {
+    "status": "NOT_ADMITTED_PREBUILD",
+    "e1_build_or_symbolic_started_this_review": false,
+    "current_dynamic_launch_cap_bytes": 13432152064,
+    "projected_process_tree_rss_bytes": 19192602560,
+    "projected_total_minus_cap_bytes": 5760450496,
+    "projected_total_inequality_passed": false,
+    "future_symbolic_bank_vector_objects_bytes": 6994120640,
+    "current_headroom_after_reserve_bytes": 13432152064,
+    "remaining_headroom_after_those_objects_bytes": 6438031424,
+    "dominant_future_estimate": "6,530,000,000 B INFOG16/17-derived conservative future numeric estimate across four q; not allocated/used factor bytes.",
+    "time_gate": "A complete E1 numeric-to-output and required-checker wall-time budget was not demonstrated.",
+    "classification_note": "The 6.994 GB arithmetic is only a prebuild estimate against current free headroom; it does not mean the original post-symbolic second resource gate passed.",
+    "prebuild_arithmetic_margin_bytes": 6438031424,
+    "prebuild_arithmetic_only": true,
+    "original_post_symbolic_incremental_gate": "NOT_RUN_UNKNOWN",
+    "historical_v15_post_symbolic_headroom_after_reserve_bytes": 410038272,
+    "historical_v15_post_symbolic_incremental_gate_passed": false
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "WORKER_FAILED_INPUT_GATE",
+      "driver_sha256": "904d86b01e587373f6474a0460c1b31b1f8db92c83604b25d47e0cb626074ad9",
+      "watchdog_elapsed_seconds": 3.5364082739688456,
+      "watchdog_tree_rss_peak_bytes": 532824064,
+      "watchdog_cgroup_peak_bytes": 630579200,
+      "campaign_charge_start_seconds": 81479.10208913799,
+      "campaign_charge_end_seconds": 81482.64266916203,
+      "initial_error": "top S5 Balpha no longer matches the S2 Bi/Bt partition",
+      "correction": "The old comparison divided an interior subset difference by that subset's near-zero norm. The corrected acceptance scale is the full 882-entry S5 Balpha norm; the raw subset-relative numbers remain diagnostic only."
+    },
+    {
+      "attempt": 2,
+      "status": "COMPONENT_GATE_FAIL",
+      "driver_sha256": "801be88540ca5ff43c250635eff58c0f8d67fdb5a3210a30e5f95a2b1d8d7f0d",
+      "launcher_sha256": "3828656b5f9a736b3bd83353fc2f60da9864d0ca51b7736277417bcc4cf58c5f",
+      "watchdog_elapsed_seconds": 9.723211361910217,
+      "service_runtime_seconds": 10.204,
+      "component_runtime_seconds": 8.005120284040459,
+      "watchdog_tree_rss_peak_bytes": 769708032,
+      "watchdog_cgroup_peak_bytes": 843534336,
+      "task_swap_peak_bytes": 0,
+      "pss_peak_bytes": null,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "wsl_global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "campaign_charge_start_seconds": 82490.85814151603,
+      "campaign_charge_end_seconds": 82500.5853229492,
+      "array_payload_bytes": 31452848,
+      "array_sha256": "d98e3e4b6b045d49c2fe367d2b4d2f9c118f1f6f09f89957daa65385f79bf07f",
+      "component_json_sha256": "d797f074900a630088c71df27389cefbbaeadadab24660e1b41c29bd5da6841e",
+      "readback_json_sha256": "da0a0ec95ef75f1db3bd291695188dc461366daf184d2d014122124378cc9f82",
+      "watchdog_json_sha256": "8d9941c6333c7e84ca7f3cf438e4c50b1446d0731b175e7cc36ef3f74c07b62e",
+      "events_sha256": "096338ed1be1b4561cd69aee3be097ea78834df7fef58725da395053c17f13b6",
+      "inventory_sha256": "d462c104b2cec9b7a6276ffb513a8a2d6c95fe91f6844e34edb3b5388ce6ca6c",
+      "worker_resources_sha256": "061905e4623f5ccbbcea4931da88d8e9fa7d6d0411d7e5208ab29763c7c7686e",
+      "service_log_sha256": "6847a66d1eac10245de8e0a2e33e4a8be6f4e058d15c045fb9bf8a8fda9da300"
+    }
+  ],
+  "evidence_paths": {
+    "gx560_run_summary": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/run_summary.json",
+    "p3_admission": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p3_e1_admission_v16.json",
+    "p4_run01": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p4_hhat_v16/run_01",
+    "p4_run02": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p4_hhat_v16/run_02"
+  },
+  "identity_cache_correction": {
+    "correction": "The 1,620,000 B object is a float64 450x450 identity I, not an interior transformation matrix. The V12 Basix/direction-state transform bank is a separate existing object family.",
+    "worker_inventory_note": "Worker inventory references 4508/4538; the yorbit worker records share_identity_cache separately for the target condensation system and each of the two local sector systems.",
+    "share_identity_cache_semantics": "share_identity_cache stores only float64 identity I. The target condensation system and two local sector systems each enable it independently; no identity-I owner spans all three systems, and the option does not share transforms or local Schur/LU/recovery objects."
+  },
+  "target_readiness_formula_reference": {
+    "source_paths": [
+      "docs/task40extra_0p7nm_engineering/outcomes/v14_engineering_to_target.json",
+      "src/geometry/task40_nonseparable_plan.py",
+      "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json"
+    ],
+    "source_hashes": {
+      "v14_target_record_sha256": "f5831d69c1952d01d3baa35bde3fc424c056275e9b7a3a67b700e631a7779852",
+      "analytic_plan_sha256": "c4f091f88c34a6a0980e2b0e75f2b22a4274042370253176467816a601cde713",
+      "resource_ledger_sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4"
+    },
+    "candidate_rows": {
+      "full_storage": 10228620,
+      "periodic_independent": 9948672,
+      "interior": 6854400,
+      "trace_plus_port": 3126332
+    },
+    "outer_vectors_formula": "(2*(32+1)+8)*3126332*16 = 3701577088 B; 74 vectors",
+    "retained_scratch_formula": "24*10228620*16 + 10*3126332*16 = 4428003200 B",
+    "local_single_instance_payload_bytes": {
+      "tensor_882_squared": 12446784,
+      "interior_LU_450_squared": 3240000,
+      "Schur_432_squared": 2985984,
+      "coupling_450x432": 3110400,
+      "recovery_450x432": 3110400
+    },
+    "shared_by_class_vs_per_cell": "N_unique_classes × per-class payload vs. 15,232 derived cells × per-cell payload; target class count and sparse LU fill unknown",
+    "lifecycle_limit": "single-instance payload formulas are not simultaneous RSS; target q fill, C/D/XiB/H/Hhat copies and full-process RSS remain unknown"
+  }
+}

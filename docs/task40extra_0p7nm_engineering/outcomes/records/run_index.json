@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+  "current_code_sha": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -1062,6 +1062,101 @@
       "status": "NOT_RUN_CONDITION_NOT_MET",
       "reason": "Gx560 numerical gate did not pass; no Gx784 worker launched.",
       "run_directory": null
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_reference_v16",
+      "stage": "V16_GX560_FORMAL",
+      "attempt": 1,
+      "kind": "formal_worker",
+      "source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
+      "input_sha256": "884eafa914200c27ffd22d017bfea180cf5e56ce77ba5a829fdcbb11c38cc0e2",
+      "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z",
+      "status": "PASS",
+      "official_result": true,
+      "worker_monotonic_seconds": 2274.267412,
+      "conservative_realtime_budget_interval_seconds": 2526.263,
+      "outer_iterations": 3,
+      "target_A6_true_residual": 4.70443000240316e-09,
+      "independent_native_A6_witness": 4.704309875855315e-09,
+      "residual_limit": 1e-06,
+      "q_rows": [
+        28508,
+        28508,
+        28576,
+        28508
+      ],
+      "q_nnz": [
+        15457680,
+        15483524,
+        15600060,
+        15483524
+      ],
+      "q_nnz_total": 62024788,
+      "run_summary_sha256": "ffdd6d71723f384043c4a668c67d154cf115513e7b3ad191ff09d439a4995ddd",
+      "candidate_summary_sha256": "77f9eec6e748b4b61ff1c64d038af820ca0779cd598bee78b67e297a886dc36d",
+      "post_release_packet_sha256": "9959c3e0352b01d52c3f1b9f02b94fb7738e05d89d5b2074d60eec50b829c8bd",
+      "output_checker_sha256": "4cee5b8b9d27ba328bd592ede94c8f50b884bd577faf4534a5c44dda03a9c254",
+      "saved_field_comparison_sha256": "829c2c28bc6db14f3183b5cedcd3c46df0df57f0abe079a28b867db7a2a7dbba"
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_e1_p6_reference_v16",
+      "stage": "V16_E1_PREBUILD_ADMISSION",
+      "attempt": 1,
+      "kind": "prebuild_admission",
+      "source_sha": "a09f887b46ea01e89ac8ffb316caf798a4443ae7",
+      "input_sha256": "2eed5a9ae87a8a615bfed02214eb621b6e254aec2d215ebce7cb4a2ef441b54b",
+      "run_directory": null,
+      "status": "NOT_ADMITTED_PREBUILD",
+      "official_result": false,
+      "build_started": false,
+      "symbolic_started": false,
+      "numeric_started": false,
+      "ksp_started": false,
+      "field_obtained": false,
+      "admission_receipt_sha256": "6d74df7f1fee4ae457bc6ba3d905dc952ef8ff77da6a98e30716643b46dba3c0",
+      "projected_process_tree_rss_bytes": 19192602560,
+      "dynamic_cap_bytes": 13432152064,
+      "projected_excess_bytes": 5760450496,
+      "input_path": "input/task40extra_0p7nm_engineering/nonseparable_e1_p6_reference_v16.dat"
+    },
+    {
+      "run_id": "p4_hhat_vector_v16_run_01",
+      "stage": "V16_P4_HHAT_VECTOR_COMPONENT",
+      "attempt": 1,
+      "kind": "saved_array_component_attempt",
+      "source_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+      "run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p4_hhat_v16/run_01",
+      "status": "WORKER_FAILED_INPUT_GATE",
+      "official_result": false,
+      "watchdog_elapsed_seconds": 3.5364082739688456,
+      "campaign_charge_start_seconds": 81479.10208913799,
+      "campaign_charge_end_seconds": 81482.64266916203,
+      "driver_sha256": "904d86b01e587373f6474a0460c1b31b1f8db92c83604b25d47e0cb626074ad9",
+      "failure_receipt_sha256": "7113665ee8073628a4e900e4bf29d52056ee04761795bac78c633d56e55319c2"
+    },
+    {
+      "run_id": "p4_hhat_vector_v16_run_02",
+      "stage": "V16_P4_HHAT_VECTOR_COMPONENT",
+      "attempt": 2,
+      "kind": "saved_array_component_attempt",
+      "source_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+      "run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p4_hhat_v16/run_02",
+      "status": "COMPONENT_GATE_FAIL",
+      "official_result": false,
+      "component_runtime_seconds": 8.005120284040459,
+      "watchdog_elapsed_seconds": 9.723211361910217,
+      "campaign_charge_start_seconds": 82490.85814151603,
+      "campaign_charge_end_seconds": 82500.5853229492,
+      "driver_sha256": "801be88540ca5ff43c250635eff58c0f8d67fdb5a3210a30e5f95a2b1d8d7f0d",
+      "launcher_sha256": "3828656b5f9a736b3bd83353fc2f60da9864d0ca51b7736277417bcc4cf58c5f",
+      "array_sha256": "d98e3e4b6b045d49c2fe367d2b4d2f9c118f1f6f09f89957daa65385f79bf07f",
+      "component_json_sha256": "d797f074900a630088c71df27389cefbbaeadadab24660e1b41c29bd5da6841e",
+      "readback_json_sha256": "da0a0ec95ef75f1db3bd291695188dc461366daf184d2d014122124378cc9f82",
+      "watchdog_json_sha256": "8d9941c6333c7e84ca7f3cf438e4c50b1446d0731b175e7cc36ef3f74c07b62e",
+      "events_sha256": "096338ed1be1b4561cd69aee3be097ea78834df7fef58725da395053c17f13b6",
+      "inventory_sha256": "d462c104b2cec9b7a6276ffb513a8a2d6c95fe91f6844e34edb3b5388ce6ca6c",
+      "worker_resources_sha256": "061905e4623f5ccbbcea4931da88d8e9fa7d6d0411d7e5208ab29763c7c7686e"
     }
   ],
   "ledger": {
@@ -1102,7 +1197,7 @@
       "fix": "allow the authorized V6 postprocess continuation after preserved POSTPROCESS_PARENT_FAILED when postprocess source is newer"
     }
   ],
-  "last_formal_run_source_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+  "last_formal_run_source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -3071,5 +3166,139 @@
       "observation_status": "Final P5 executor observation appended through FixedCampaignWindow.observe; accounting JSONL was not edited manually."
     },
     "controller_review": "PASS: independent raw/metadata review and 54 hash-reference checks; target and physics PASS, E1 resource stop retained; source SHA denotes numerical code, not this documentation commit."
+  },
+  "review_v16_evidence_index": {
+    "branch": "task40extra_0p7nm_engineering",
+    "review_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+    "numerical_source_chain": {
+      "p1_candidate": "7ac204557080019fa0e3788a351e618b96a3411b",
+      "p1_admission": "a09f887b46ea01e89ac8ffb316caf798a4443ae7",
+      "gx560_formal": "54b98a871632a1eef1c34e3542788f5859ee255c",
+      "p4_component_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+      "p4_helper_sha256": "7e2fa0629ab350ad0bf5e976c63c09363c96d2fd718bae11eb1044461283d21d",
+      "p4_test_sha256": "d60ef7e7a2cb33085a76eaba70b243d6fb2f07548cb61ddcac5fa923ce7e05b9",
+      "p5_changed_numerical_source": false
+    },
+    "compact_records": {
+      "build_and_memory": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_build_and_memory.json",
+        "sha256": "5e356575cb2bd114a0dad79f424f4bfac49ed1135563a0e8958bb0122be39bdd"
+      },
+      "formal_results": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_formal_results.json",
+        "sha256": "27b98dbeff68f967d81f4d8187d20637e1ad354f7144f92e074a0183d9de7944"
+      },
+      "target_components": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_target_components.json",
+        "sha256": "c582372eebe8b5fc515c3d61bcf42b95ad97e32e87fc8d6610019cbf617deb45"
+      },
+      "cost_and_readiness": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_cost_and_readiness.json",
+        "sha256": "d7e52edb68ad66b0a7aaf65ec0e404e4e3483b2f14e057bb6a3936eca861c70e"
+      }
+    },
+    "response_path": "docs/task40extra_0p7nm_engineering/response_v16.md",
+    "review_path": "docs/task40extra_0p7nm_engineering/review_report_v16.md",
+    "summary_path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+    "test_summary_path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+    "campaign_closeout_observation": {
+      "status": "RECORDED",
+      "label": "review_v16_p5_closeout",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/executor_v16_p5_closeout_observation.json",
+      "receipt_sha256": "cb88f54378743ec0aa9e4fb7117223aa83ffc3b94d164d3db14925ea29d54ad1",
+      "window_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json",
+      "window_sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+      "remaining_numerical_seconds": 0.0,
+      "cumulative_charged_seconds": 85892.89690395721,
+      "accounting_record_sequence": 77301,
+      "sample_utc_ns": 1791414786217123994
+    },
+    "closeout": {
+      "status": "P5_OFFLINE_CLOSEOUT_COMPLETE_AWAITING_CONTROLLER_COMMIT_PUSH",
+      "executor_commit_or_push": false,
+      "master_merge": false
+    },
+    "test_evidence": {
+      "p1_candidate_initial": {
+        "source_sha": "7ac204557080019fa0e3788a351e618b96a3411b",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/controller_source_candidate_v16.json",
+        "receipt_sha256": "fc004f50c31cad6d9982d5f27c7e5dd58f9b7dc3c6fee98652c0c66b28d6330b",
+        "passed": 69,
+        "pytest_reported_seconds": 0.94,
+        "classification": "initial candidate baseline; not final repaired validation"
+      },
+      "p1_projection_repair": {
+        "source_sha": "a09f887b46ea01e89ac8ffb316caf798a4443ae7",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/controller_source_repair_v16_projection.json",
+        "receipt_sha256": "d81d215abc102fdc48eca3c4fd85476c9707f3dfcc35e454627a917d70a32c57",
+        "passed": 71,
+        "pytest_reported_seconds": 1.23
+      },
+      "runtime_registration_repair": {
+        "source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/controller_runtime_registration_repair_v16.json",
+        "receipt_sha256": "1010ad6407d3c032424e754760289ab97805131e847064a732a0e256b443ba6c",
+        "separate_scopes": {
+          "real_runtime_with_current_window": "1 passed",
+          "v16_routes": "11 passed"
+        },
+        "negative_cases_preserved": [
+          "wrong stage",
+          "wrong scope",
+          "wrong profile"
+        ]
+      },
+      "p4_hhat_helper": {
+        "source_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+        "helper_path": "src/solvers/p6_cell_condensed_action.py",
+        "helper_sha256": "7e2fa0629ab350ad0bf5e976c63c09363c96d2fd718bae11eb1044461283d21d",
+        "test_path": "src/test/test_task39extra_v19_p6_cell_condensed_action.py",
+        "test_sha256": "d60ef7e7a2cb33085a76eaba70b243d6fb2f07548cb61ddcac5fa923ce7e05b9",
+        "passed": 3,
+        "scope": "helper component tests; actual P4 remains COMPONENT_GATE_FAIL"
+      },
+      "p5_abi_preflight": {
+        "status": "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/executor_v16_p5_abi_preflight_final.json",
+        "receipt_sha256": "569e7ba5f001122529744591bfc6e826e6f4fd1210598230edd18efecd3ac108",
+        "PETSc_scalar_type": "complex128",
+        "PETSc_int_type": "int32",
+        "MPI": "MPICH 5.0.1, rank 1"
+      },
+      "p5_documentation_suite": {
+        "status": "PASS",
+        "source_sha": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+        "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+        "passed": 29,
+        "subtests_passed": 134,
+        "pytest_reported_seconds": 0.24,
+        "wrapper_wall_seconds": 0.3574455459602177,
+        "test_source_sha256": {
+          "src/test/test_26_documentation_contract.py": "5a61766388f16937be4fd2c1638581e25f87347eea596442b40e55e5a62e936a",
+          "src/test/test_development_model_registry_contract.py": "a3d15d404269fae3ad31266dc3682d40ec59cd639177d1d638e213b6bd92d3df",
+          "src/test/test_29_task_retrospective_contract.py": "fe4a77eda4818ffc9a424c5ab8fb1042ce4903eef82d847d5c0268948e9e6c45",
+          "src/test/test_183_development_model_registry_markdown.py": "94de9ef19bfdf3c0f355890bbb8becc88c377e8db521cdf9f508966f003310a6"
+        },
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/executor_v16_p5_documentation_tests.json",
+        "receipt_sha256": "458a4d32ca0f1e1d99a072dd646ee8a61b651e84bfe0f51607e57effb1f6eb53"
+      },
+      "superseded_incomplete_attempt": {
+        "status": "INCOMPLETE_SCOPE_NOT_FINAL",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/executor_v16_p5_documentation_partial_two_files.json",
+        "receipt_sha256": "e6e7d59039eb176e8ae425503530a40e5cb900cf2c84e71c61612816d8351c81",
+        "scope": "two of four requested files; excluded from final suite result"
+      },
+      "not_run": [
+        "full repository pytest",
+        "MPI4",
+        "Ruff",
+        "CI"
+      ]
+    },
+    "documentation_hashes": {
+      "response_v16.md": "1aeb34473c81a80b2b63745f287262c1c70af66c64a39568ba3fd2bcec84a926",
+      "summary.md": "93ce25ef58aff7ad08a0d0bc0f0c4c0d14c77fef8040c9496210b43d4aac2ef7",
+      "test_summary.md": "118752c0f3535e482a66439a9e4096c132472a8736403db016fb8f187eab1944"
+    }
   }
 }

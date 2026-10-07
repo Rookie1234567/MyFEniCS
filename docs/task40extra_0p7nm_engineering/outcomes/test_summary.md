@@ -1,3 +1,19 @@
+# Task40extra Review V16 测试与文档检查摘要
+
+| 阶段 / source | 收据与身份 | 结果 | 证据边界 |
+|---|---|---|---|
+| P1 初始候选（基线） | source `7ac204557080019fa0e3788a351e618b96a3411b`；候选收据 SHA-256 `fc004f50c31cad6d9982d5f27c7e5dd58f9b7dc3c6fee98652c0c66b28d6330b` | 69 targeted tests，0.94 s | 修复前基线，不是最终修复验证 |
+| P1 projection 修复 | source `a09f887b46ea01e89ac8ffb316caf798a4443ae7`；[receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/controller_source_repair_v16_projection.json) SHA-256 `d81d215abc102fdc48eca3c4fd85476c9707f3dfcc35e454627a917d70a32c57` | 71 targeted tests，1.23 s | 命令和源文件哈希由 receipt 绑定；不含 PDE |
+| runtime registration：真实当前窗口 | source `54b98a871632a1eef1c34e3542788f5859ee255c`；[receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/controller_runtime_registration_repair_v16.json) SHA-256 `1010ad6407d3c032424e754760289ab97805131e847064a732a0e256b443ba6c` | real_runtime_with_current_window：1 passed | 独立 1 项范围；wrong-stage/scope/profile 负例保留 |
+| runtime registration：V16 routes | 同一 source 与 receipt | v16_routes：11 passed | 独立 11 项范围；不拼成 12 项 suite |
+| P4 Hhat helper | helper source HEAD `3fffbddc3ebdf597cf25eed5600095d09f24d918`，helper SHA `7e2fa0629ab350ad0bf5e976c63c09363c96d2fd718bae11eb1044461283d21d`；test SHA `d60ef7e7a2cb33085a76eaba70b243d6fb2f07548cb61ddcac5fa923ce7e05b9` | 3 targeted tests passed | helper 单测；实际组件为 COMPONENT_GATE_FAIL |
+| P4 launcher / driver | qualified runtime；`py_compile` 与两个 launcher 的 `bash -n` | PASS | 静态检查，不是数值门 |
+| P5 ABI preflight | activation + `qualify_imports_only.py --runtime-profile local_wsl2_authorized`；[receipt](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/executor_v16_p5_abi_preflight_final.json) | PASS；以 receipt 为准 | 仅 runtime/API 检查 |
+| P5 文档合同 suite | `python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py`；source HEAD `3fffbddc3ebdf597cf25eed5600095d09f24d918` | 最终实测 29 passed / 134 subtests passed in 0.24 s（pytest 报告值；wrapper wall 0.357446 s） | 文档、登记和回顾合同；不含 FE/PDE |
+| full repository pytest / MPI4 / Ruff / CI | 未运行 | not_run | 不外推为全仓或 CI 通过 |
+
+所有阶段按各自源码 SHA、收据和覆盖范围记录；不把各阶段计数相加。Gx560 是独立科学运行，P4 两次 attempt 是组件运行，不计入 pytest 通过数。P5 不改数值源码。
+
 # Task40extra Review V15 测试与文档检查摘要
 
 ## P0–P5 按冻结源码分列的测试

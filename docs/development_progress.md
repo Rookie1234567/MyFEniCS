@@ -1,3 +1,54 @@
+# Task40extra 当前进展：Review V16 的 Gx560 完整解通过，E1 未准入，端口恢复组件失败
+
+**任务身份。** Task40extra_0p7nm_engineering，分支 `task40extra_0p7nm_engineering`。V16 review base 为 `f59884b1a98b329cfce2a3de8307dd3db8560520`；P5 离线收口开始时本地 HEAD 为 `3fffbddc3ebdf597cf25eed5600095d09f24d918`。Gx560 正式计算绑定数值源码 `54b98a871632a1eef1c34e3542788f5859ee255c`，P4 的 Hhat 向量 helper 是另一项独立组件。当前 classification 是“Gx560 离散解及物理输出通过；V16/V15 同离散场比较通过；E1 未获预构建准入；P4 组件门失败；原尺寸目标仍未资格化”。V16 review 尚待主控最终审查；没有合入 master，也没有改变 ordinary default。
+
+## 为什么启动与冻结基线
+
+V15 已在 Gx560 得到完整 p6 解并通过物理及同离散比较，但四 q 参考 PC 的完整 worker workflow 为 2,407.572 s、树 RSS 峰为 10.295 GB；扩大到 760-cell E1 时，四 q symbolic 后资源 Gate 阻止 numeric/KSP。少迭代没有消除构建、矩阵和因子成本，所以 V16 的问题是减少构建开销、重新现场判断 E1，并继续验证完整端口向量路径。任务不把 Gx560 当成连续极限，也不把笔记本估算当成十进制 2 TB 工作站容量结论。
+
+Gx560 冻结的是 0.7 nm 的真实非可分三维几何、560 个六面体单元（10×4×14）、p6、340 个有序外部模式和四个 q 稀疏块；同离散参考是 V15 保存场。最终原方程 A6 真残差门为 `1e-6`，物理输出另由独立 checker 核验；场比较按场/缩放 curl、显著模式振幅、全部模式功率和 R/T/A 使用各自限值。P4 的对象则是已保存 W11/S2/S5 数组上的两张边界面，并非新建目标网格或目标 PDE。
+
+## 方法与实施矩阵
+
+V16 把稀疏矩阵按 CSR（按行连续保存的稀疏数组）构建，尝试用受限暂存降低逐项全局稀疏加法的开销。Gx560 实算了四 q 完整构建、求解、恢复和官方输出，并离线同 V15 场比较。E1 重新读取当前内存余量和旧 E1 规模证据，在任何本轮网格或矩阵构建前执行准入。P4 则对保存的完整 32,060 模式向量作分块 Hhat 作用并核验恢复/端口方程。
+
+| 阶段 | 实际结果 | 证据边界 |
+|---|---|---|
+| P1 bounded-staging CSR | 69 个 targeted tests 通过；Gx560 的四 q pattern/数值累加实际运行 | q pattern 仍是全 shape bitset；不是目标尺寸 row-tile 资格 |
+| P2 Gx560 p6 | 3 次外层迭代，A6 真残差和 native witness 通过，官方输出通过 | 只证明该离散和本次输入 |
+| V15 同离散比较 | 六类场/curl、340 模式功率、11 个显著复振幅和 R/T/A 对照通过 | 离线已保存场比较，不是第二场 PDE |
+| P3 E1 | `NOT_ADMITTED_PREBUILD` | 没有 E1 网格、symbolic、numeric、KSP、场或官方 R/T/A |
+| P4 端口组件 | run_02 完整向量作用及端口方程通过；原 S2 前向恢复门失败 | 只使用已保存数组；不等价于完整 Hhat 矩阵或目标 PDE |
+
+## 关键结果与解释
+
+Gx560 的四个 q 块 rows 为 `28,508 / 28,508 / 28,576 / 28,508`，NNZ 合计 `62,024,788`。A6 真残差为 `4.704430002e-9`，独立 native witness 为 `4.704309876e-9`，都低于 `1e-6`。`R/T/A_balance/A_volume` 为 `0.07612406709 / 0.90576922010 / 0.01810671281 / 0.01810671258`。V16 相对 V15 保存场的最大 E/H/缩放 curl 相对 L2 差为 `1.632e-12`，最大模式功率差为 `2.368e-13`，显著模式复振幅差为 `1.258e-10`，均低于各自门槛。
+
+worker monotonic 时间从 V15 的 `2,407.572 s` 降到 `2,274.267 s`，少 `133.305 s`（约 `5.54%`）；两 sector sparse accumulation 子阶段从 `275.837 s` 到 `16.777 s`，但新的 pattern construction 占 `110.582 s`。子计时嵌套在 parent 计时内，父阶段剩余差额没有足够证据归因。树 RSS 峰下降 `90,046,464 B`，但 cgroup 峰值增加 `233,033,728 B`，MUMPS allocated 上界增加 `47,000,000 B`，所以不能说同时内存已净下降，也不能把一次 worker 时间差推广为完整单场加速。
+
+当前 pattern 对每个 q 仍分配 `rows × ceil(columns/8)` 的全 shape uint8 bitset，再加 reserve；它随行列乘积增长。256 MiB 总限额扣除 32 MiB reserve 后，纯方阵 bitset 理论上界约 43,344 行，实际还要为 support slice、解码和 CSR 保留空间。Gx560 上观察到的最大 pattern support staging 为 `137,113,676 B`，但目标候选保留行约 3.13 million，现有策略没有目标规模资格。另一个缓存也需正确区分：V12 早已存在的 transform bank 按 Basix/方向状态复用 p6 cell-interior payload，边和面仍走旧路径；`share_identity_cache` 仅是target condensation system 与两个 local sector system 分别启用的 float64 只读单位阵 I（单个本地库存 1,620,000 B），三套 system 之间没有共用 I owner，也不共享变换、Schur、LU 或恢复映射。这个对象数据不足以支撑总体内存节省结论。
+
+E1 的保守总 RSS 投影 `19,192,602,560 B` 高于现场动态 cap `13,432,152,064 B`，超出 `5,760,450,496 B`，单此项就足以拒绝本轮构建。未来 symbolic、bank、vector 合计 `6,994,120,640 B` 与当前 headroom 的算术比较只是 prebuild 估算；原 post-symbolic 第二资源 Gate 是 `NOT_RUN/UNKNOWN`。`6,530,000,000 B` 是 INFOG16/17 推导的未来 numeric 保守估算，不是实际已分配因子。V15 当时 symbolic stop 后只有 `410,038,272 B` reserve 后 headroom，历史 Gate 失败照旧保留，不混为本轮事件。
+
+P4 run_01 因 interior 子集近零分母把 Balpha 判成不匹配。改用完整 882 项 Balpha 范数后，原误差为 `1.13e-13 / 1.04e-14`，已纠正该输入门；run_02 的其他结果仍单独判定。按当前公式直接复核已保存数组、未尝试 recovery refinement 时，S2 非零 RHS known-state 前向误差 top/bottom 为 `2.20293e-11 / 2.42443e-11`，均超过原 `1e-11` 限值。局部方程误差和端口方程都通过，但不能覆盖这个失败。历史 V11 保存的精化合格状态 `5.35e-14 / 5.14e-14` 与当前未精化直接 LU 重验使用同一 S2 arrays SHA `d656ff94…` 及同一组 Vii/fi/trace/Bi/known 输入；前者是已保存 refined state，后者为不做 refinement 的重验，差异尚未归因，旧 PASS 原样保留。W11/S2/S5 数组实际存在并在 P4 复用；旧函数 hash 差异只限制按当前源码重新生成的资格，不代表数组缺失。
+
+## 最终决策、合并边界与下一步
+
+| 依赖组 | 本轮建议 | 数值影响、测试与新 PDE 证据 | 顺序/边界 |
+|---|---|---|---|
+| production numerical/core | 保留为显式 Task40 研究候选，逐依赖审查 | bounded q assembly 改变累加顺序但保留 q 数学项；69 项定向测试与 source `54b98a8` 的 Gx560 fresh PDE 通过；目标 row-tile 未完成 | 先审源码/对象生命周期，再决定是否迁移；不改 ordinary default |
+| reusable runner/watchdog | 只迁移确有复用价值的 schema/dispatcher/ABI 依赖 | 路由定向测试和 Gx560 route 有实际接通；E1 未运行 | 需与对应 solver profile 一起审查，不单独宣称 E1 资格 |
+| checker/benchmark | 保留独立 checker 与轻量组件记录 | Gx560 输出 checker PASS；P4 raw vector readback 一致、端口子门通过，但总体 READBACK_GATE_FAIL 与 recovery gate fail；无完整目标 PDE | checker 仅读证据重算状态；P4 组件不是 production checker 资格 |
+| compact evidence/docs | 建议按证据哈希与路径整体纳入本任务审查 | 本轮 targeted 文档合同测试待最终记录；无数值行为变化 | 文档、四份 compact、summary、test summary、run index 同步核验 |
+| research-only | P4 Hhat 向量 helper、当前目标端口实验及未资格化通用 Ny 路径 | helper 自身 3 项测试通过；实际组件 `COMPONENT_GATE_FAIL`；无目标 q CSR/PDE | 不提升为生产默认；先解决 S2 前向恢复超限，再审映射/索引 |
+| do-not-merge / do-not-claim | 不合并 master、不改变普通默认、不把估算称为结果 | E1 未准入、目标模式截断/NNZ/indptr/int32安全和 2 TB/48 h 未关闭 | 等待主控 review 与明确批准；保留所有负结果和 unknown |
+
+下一步先定位两面保存数组上 S2 前向恢复误差：当前证据显示局部方程正确、但已知解重构误差超限，且 `Bi alpha` 范数仅约 `1.12e-13 / 1.43e-13`，因此要调查近舍入耦合方向，不预先宣称唯一根因或改阈值。只有该门解释并通过后，再由后续 review 决定 Ny 映射、完整 q 覆盖和目标索引验证；K 必须由 global/local orbit 关系推导，不能假定 Ny=8 就等于 K=8。更后的工作还需固定物理下的 y/z 精度对照、最终模式截断、目标 q CSR/NNZ/indptr、numeric 因子和完整单场时间/同时内存。
+
+证据入口：[Task40 V16 response](task40extra_0p7nm_engineering/response_v16.md)、[V16 review](task40extra_0p7nm_engineering/review_report_v16.md)、[结果总账](task40extra_0p7nm_engineering/outcomes/summary.md)、[测试摘要](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[成本/readiness](task40extra_0p7nm_engineering/outcomes/records/review_v16_cost_and_readiness.json)、[模型登记](development_model_registry.md)。
+
+---
+
 # Task40extra 当前进展：Review V15 Gx560 完整 target 通过，E1 受控资源停止
 
 V15 已完成 P0–P4 实现、定向测试和三项实际里程碑；P5 离线文档/证据收口与最终定向合同检查已完成。冻结源码顺序为 `3a737f3e → e77575f7 → 0201815c → 40dbe138`。B0 原正式运行在 `0201815c` 上保留 `WORKER_FAILED`/exit 4；`40dbe138` 对已保存 B0 场的恢复输出和独立 checker PASS，但不覆盖原失败。Gx560 新参考 PC 完成完整 p6 target、物理门和旧同离散场比较，A6 after release `4.704401351e-9`，3 次外层步。它比旧 171 步少，但完整 workflow `2407.572 s` 比旧 `1925.863 s` 慢约25%，tree RSS 峰从 `5.256 GB` 增至 `10.295 GB`；不能宣称全流程加速。

@@ -1,0 +1,728 @@
+{
+  "schema": "task40extra.review_v16_cost_and_readiness.v1",
+  "task": "Task40extra 0.7 nm nonseparable Full3D",
+  "branch": "task40extra_0p7nm_engineering",
+  "closeout_start_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+  "scope": {
+    "p5_changed_numerical_source": false,
+    "p5_ran_fe_or_pde": false,
+    "executor_commit_or_push": false,
+    "master_merge": false,
+    "interpretation": "P5 is offline record, documentation, and contract-test closeout. The closeout-start HEAD is not a final commit or push SHA.",
+    "controller_commit_or_push": "pending centralized review; the executor does not commit or push"
+  },
+  "fixed_campaign_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json",
+    "accounting_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_accounting_v10.jsonl",
+    "t0_utc": "2026-10-06T23:21:33.326800586Z",
+    "deadline_utc": "2026-10-07T23:21:33.326800586Z",
+    "window_sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+    "duration_seconds": 86400,
+    "closeout_reserve_seconds": 600,
+    "numerical_cutoff_seconds": 85800,
+    "window_refreshed": false,
+    "prior_costs_and_unknowns_preserved": true,
+    "final_observation": {
+      "status": "RECORDED",
+      "label": "review_v16_p5_closeout",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/executor_v16_p5_closeout_observation.json",
+      "receipt_sha256": "cb88f54378743ec0aa9e4fb7117223aa83ffc3b94d164d3db14925ea29d54ad1",
+      "window_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w13_wsl/campaign_window_v13.json",
+      "window_sha256": "226f64427d3e7c413e1b65992f5071041283499adaa06e4493d1865aae78d185",
+      "remaining_numerical_seconds": 0.0,
+      "cumulative_charged_seconds": 85892.89690395721,
+      "accounting_record_sequence": 77301,
+      "sample_utc_ns": 1791414786217123994
+    }
+  },
+  "gx560_v16_cost_and_resources": {
+    "run_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/run_summary.json",
+    "source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
+    "worker_monotonic_seconds": 2274.267412,
+    "conservative_realtime_budget_interval_seconds": 2526.263,
+    "required_checker_and_saved_field_comparison_in_worker_interval": "not fully included / unknown",
+    "separate_saved_field_comparison_seconds": 29.976448,
+    "separate_post_release_saved_residual_recheck_seconds": 0.616464,
+    "complete_single_field_critical_path_seconds": null,
+    "complete_single_field_critical_path_status": "UNKNOWN; do not add unrelated or nested intervals",
+    "v15_worker_monotonic_seconds": 2407.572416,
+    "worker_delta_v16_minus_v15_seconds": -133.305004,
+    "worker_delta_fraction": -0.0554,
+    "memory_bytes": {
+      "v16_simultaneous_process_tree_rss_peak": 10204880896,
+      "v15_simultaneous_process_tree_rss_peak": 10294927360,
+      "v16_minus_v15_tree_rss": -90046464,
+      "v16_cgroup_memory_peak": 11907702784,
+      "v15_cgroup_memory_peak": 11674669056,
+      "v16_minus_v15_cgroup_peak": 233033728,
+      "v16_mumps_allocated_upper_sum": 4692000000,
+      "v15_mumps_allocated_upper_sum": 4645000000,
+      "v16_minus_v15_mumps_allocated_upper_sum": 47000000,
+      "task_swap_peak_bytes": 0,
+      "wsl_global_swap_delta_pages": {
+        "pswpin": 52,
+        "pswpout": 0
+      },
+      "global_swap_attribution": "unresolved",
+      "pss_bytes": null,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "interpretation": "Tree RSS fell, while cgroup peak and MUMPS allocated upper bound rose; no net simultaneous-memory reduction is established."
+    },
+    "assembly_subphase_seconds_rounded": {
+      "v15_two_sector_parent": 422.54,
+      "v16_two_sector_parent": 408.214,
+      "v15_sparse_accumulation": 275.837,
+      "v16_sparse_accumulation": 16.777,
+      "v16_new_pattern_construction": 110.582,
+      "remaining_parent_time_attribution": "unknown; child timings are nested"
+    },
+    "solver_phase_timings": {
+      "ksp_solve_monotonic_seconds": 148.349809164,
+      "retained_outer_solve_seconds": 158.978736877,
+      "retained_outer_solve_scope": "retained_outer_solve_clock_through_terminal_snapshot; separate from KSP and worker workflow",
+      "target_condensed_native_identity_relative": 5.592504268634092e-11,
+      "energy_closure_absolute": 2.3666513193632e-10,
+      "absorption_consistency_absolute": 2.366651527530017e-10,
+      "reference_pc_apply_parent_events": [
+        {
+          "call": 1,
+          "whole_pc_apply_seconds": 67.115958898,
+          "native_evaluation_seconds": [
+            12.136823044973426
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        },
+        {
+          "call": 2,
+          "whole_pc_apply_seconds": 17.49246456,
+          "native_evaluation_seconds": [
+            8.510160509962589
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        },
+        {
+          "call": 3,
+          "whole_pc_apply_seconds": 9.798304339,
+          "native_evaluation_seconds": [
+            8.345820695976727
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        }
+      ],
+      "native_evaluation_child_not_additive": true,
+      "numeric_setup_total": "unknown"
+    },
+    "q_numeric_inventory": [
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q0_numeric.json",
+        "record_sha256": "556bc1733e88dbc4637ade0543b66893f5081d95db8752434834b2ea18b8608b",
+        "q": 0,
+        "rows": 28508,
+        "nnz": 15457680,
+        "factor_csr_sha256": "036fa99d56e741c74d1b17ed3afc179c280afaf2727ad1fc60d859928be16488",
+        "numeric_elapsed_seconds": 4.276749133947305,
+        "INFOG19_allocated_bytes_upper": 1156000000,
+        "INFOG22_used_bytes_upper": 1015000000,
+        "raw_INFOG9": 41415880,
+        "INFOG9_factor_entries": "unknown"
+      },
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q1_numeric.json",
+        "record_sha256": "a255657d8aeea2d52e77e191114d132e36b8d0cc6493f5f839b165c2f108a9f8",
+        "q": 1,
+        "rows": 28508,
+        "nnz": 15483524,
+        "factor_csr_sha256": "bbf15a7e68cce2042dd584971be6b1281fa0e89d0d223df5a3a29b9ceb25eaba",
+        "numeric_elapsed_seconds": 5.314689437975176,
+        "INFOG19_allocated_bytes_upper": 1177000000,
+        "INFOG22_used_bytes_upper": 1033000000,
+        "raw_INFOG9": 42179536,
+        "INFOG9_factor_entries": "unknown"
+      },
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q2_numeric.json",
+        "record_sha256": "32239eed18e51f4af0731cebb826f01a7106322037e5902d1336e50b29b8f3a2",
+        "q": 2,
+        "rows": 28576,
+        "nnz": 15600060,
+        "factor_csr_sha256": "60b7a85fcd2d29f8e7f2fd6f32de23b0b28fb602d137f0279b5d9992a0e949bd",
+        "numeric_elapsed_seconds": 4.573781676939689,
+        "INFOG19_allocated_bytes_upper": 1182000000,
+        "INFOG22_used_bytes_upper": 1037000000,
+        "raw_INFOG9": 42165112,
+        "INFOG9_factor_entries": "unknown"
+      },
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q3_numeric.json",
+        "record_sha256": "7f8f2a6c216ad6c9297a2f351ed91dc56f96008834700c856303d2a2ff7f59e4",
+        "q": 3,
+        "rows": 28508,
+        "nnz": 15483524,
+        "factor_csr_sha256": "a28858650e77298f58640ba9c1c6877f10c4c03131fcc627e325ab3716db864e",
+        "numeric_elapsed_seconds": 4.485745296929963,
+        "INFOG19_allocated_bytes_upper": 1177000000,
+        "INFOG22_used_bytes_upper": 1033000000,
+        "raw_INFOG9": 42179536,
+        "INFOG9_factor_entries": "unknown"
+      }
+    ],
+    "all_q_live_before_destroy": {
+      "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_all_q_live_before_destroy.json",
+      "record_sha256": "dcd10562ea4a841b595eeee7d012ba9a555823dd1a11f3640df4a9349b856dbc",
+      "factor_live_count": 4,
+      "factor_q_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "current_native_factor_inventory_by_q": [
+        {
+          "q": 0,
+          "INFOG19_allocated_bytes_upper": 1156000000,
+          "INFOG22_used_bytes_upper": 1015000000,
+          "raw_INFOG9": 41415880,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "q": 1,
+          "INFOG19_allocated_bytes_upper": 1177000000,
+          "INFOG22_used_bytes_upper": 1033000000,
+          "raw_INFOG9": 42179536,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "q": 2,
+          "INFOG19_allocated_bytes_upper": 1182000000,
+          "INFOG22_used_bytes_upper": 1037000000,
+          "raw_INFOG9": 42165112,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "q": 3,
+          "INFOG19_allocated_bytes_upper": 1177000000,
+          "INFOG22_used_bytes_upper": 1033000000,
+          "raw_INFOG9": 42179536,
+          "INFOG9_factor_entries": "unknown"
+        }
+      ]
+    },
+    "q_numeric_subphase_sum_seconds": 18.6509655,
+    "q_numeric_sum_scope": "numeric subphase only; not the full setup/workflow"
+  },
+  "e1_v16_admission": {
+    "status": "NOT_ADMITTED_PREBUILD",
+    "build_or_symbolic_or_numeric_or_ksp_started": false,
+    "field_and_official_rta": "not_run",
+    "dynamic_launch_cap_bytes": 13432152064,
+    "conservative_projected_process_tree_rss_bytes": 19192602560,
+    "projected_excess_over_cap_bytes": 5760450496,
+    "total_projection_gate_passed": false,
+    "future_symbolic_bank_vector_estimate_bytes": 6994120640,
+    "current_headroom_after_reserve_bytes": 13432152064,
+    "prebuild_arithmetic_margin_bytes": 6438031424,
+    "prebuild_arithmetic_only": true,
+    "original_post_symbolic_incremental_gate": "NOT_RUN/UNKNOWN; the prebuild arithmetic is not a pass",
+    "future_numeric_estimate": {
+      "bytes": 6530000000,
+      "basis": "conservative INFOG16/17-derived estimate across four q",
+      "not": [
+        "allocated or used numeric factor bytes",
+        "an actual factor allocation or usage measurement"
+      ]
+    },
+    "historical_v15_e1_symbolic_stop": {
+      "status": "preserved historical resource stop",
+      "post_reserve_headroom_bytes": 410038272,
+      "original_incremental_gate_passed": false,
+      "reclassified_as_v16_event": false
+    },
+    "complete_numeric_to_output_and_checker_budget": "not demonstrated",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p3_e1_admission_v16.json",
+    "receipt_sha256": "6d74df7f1fee4ae457bc6ba3d905dc952ef8ff77da6a98e30716643b46dba3c0"
+  },
+  "p4_component_resources": {
+    "status": "COMPONENT_GATE_FAIL",
+    "component_runtime_seconds": 8.005120284,
+    "watchdog_elapsed_seconds": 9.723211362,
+    "process_tree_rss_peak_bytes": 769708032,
+    "cgroup_memory_peak_bytes": 843534336,
+    "array_payload_bytes": 31452848,
+    "task_swap_peak_bytes": 0,
+    "pss_bytes": null,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "failed_original_known_state_forward_error_top_bottom": [
+      2.202932653970648e-11,
+      2.42442721473547e-11
+    ],
+    "original_limit": 1e-11,
+    "next_blocker": "locate and independently re-evaluate the saved-array S2 forward recovery discrepancy without relaxing the gate",
+    "historical_saved_refined_state": {
+      "status": "PASS; historical saved qualified refined state retained",
+      "forward_relative_top_bottom": [
+        5.35e-14,
+        5.14e-14
+      ],
+      "same_S2_arrays_sha256": "d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273",
+      "comparison_scope": "Same saved S2 arrays as the present direct LU recheck; this is a previously saved refined state, while the current failed check was run without refinement. Difference remains unattributed."
+    },
+    "separate_s5_bi_hhat_check": {
+      "status": "PASS after full-882 normalization",
+      "top_bottom_relative": [
+        1.1308675126224078e-13,
+        1.0414255157250765e-14
+      ],
+      "scope": "S5 Balpha versus S2 Bi/Bt partition check; separate from the failed S2 known-state forward recovery recheck."
+    },
+    "readback_status": "READBACK_GATE_FAIL",
+    "raw_vector_readback_consistent": true,
+    "port_equation_subchecks_passed": true,
+    "overall_readback_passed": false
+  },
+  "target_readiness": {
+    "overall": "NOT_QUALIFIED",
+    "geometry_and_discretization": {
+      "candidate_axes_derived": [
+        272,
+        4,
+        14
+      ],
+      "candidate_cells_derived": 15232,
+      "p6_full_storage_rows_derived": 10228620,
+      "trace_plus_port_rows_derived": 3126332,
+      "target_mesh_or_pde_built": false,
+      "target_identity_from_frozen_record": {
+        "wavelength_nm": 0.7,
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "z_min_nm": -10.0,
+        "z_max_nm": 130.0,
+        "geometry_height_nm": 120.0,
+        "material": "the archived Si/air physical identity; target material is unchanged",
+        "source_record": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "source_record_sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a"
+      },
+      "axis_and_interface_recipe": {
+        "classification": "DERIVED_RECIPE_NOT_A_MESH_OR_FE_QUALIFICATION",
+        "candidate_axis_cell_counts": [
+          272,
+          4,
+          14
+        ],
+        "x_interface_segment_counts": [
+          78,
+          58,
+          58,
+          78
+        ],
+        "segment_count_recipe_from_review_v5_section_5_1": "ceil(4×135/7), ceil(3×135/7), ceil(3×135/7), ceil(4×135/7) = 78/58/58/78; nx=272; ny=4 and nz=14 are count-only choices",
+        "actual_target_axis_nodes_nm": "unknown; no target FE mesh was generated",
+        "target_interface_or_notch_plane_coordinates_nm": "unknown in the frozen target candidate; do not substitute reduced Gx axes or infer coordinates",
+        "source_paths": [
+          "docs/task40extra_0p7nm_engineering/outcomes/v14_engineering_to_target.json",
+          "docs/task40extra_0p7nm_engineering/review_report_v5.md#section-5-1",
+          "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json"
+        ],
+        "target_identity_source_sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a",
+        "resource_ledger_sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4",
+        "analytic_plane_breakpoints_nm_from_task40_plan": {
+          "x_interface_breakpoints": [
+            0,
+            16.5,
+            25,
+            33.5,
+            50
+          ],
+          "y_notch_breakpoints": [
+            0,
+            6.25,
+            18.75,
+            25
+          ],
+          "z_interface_and_layer_breakpoints": [
+            -10,
+            0,
+            40,
+            80,
+            120,
+            130
+          ]
+        },
+        "derived_candidate_axes_recipe": {
+          "x_segment_cells": [
+            78,
+            58,
+            58,
+            78
+          ],
+          "x_coordinate_formula_per_segment": "x_j = x_low + j*(x_high-x_low)/n_segment, with n_segment=[78,58,58,78]",
+          "y_uniform_ny4_nodes_nm": [
+            0,
+            6.25,
+            12.5,
+            18.75,
+            25
+          ],
+          "z_segment_cells": [
+            1,
+            4,
+            4,
+            4,
+            1
+          ],
+          "z_nz14_nodes_nm": [
+            -10,
+            0,
+            10,
+            20,
+            30,
+            40,
+            50,
+            60,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            130
+          ],
+          "status": "DERIVED_RECIPE_NOT_GENERATED_TARGET_FE"
+        },
+        "analytic_plan_source": "src/geometry/task40_nonseparable_plan.py",
+        "analytic_plan_source_sha256": "c4f091f88c34a6a0980e2b0e75f2b22a4274042370253176467816a601cde713",
+        "v14_target_record_sha256": "f5831d69c1952d01d3baa35bde3fc424c056275e9b7a3a67b700e631a7779852",
+        "review_v5_recipe_source_sha256": "9b937b97cad8814f50becc3bd8545c4cd3df661209a2eefcec0a96e5e43cf702",
+        "coordinate_and_identity_limit": "These are unscaled analytic plane coordinates and a count-derived recipe, not archived target mesh nodes. Actual target axes remain unbuilt. Bind target geometry/origin, MPC, and material hashes in a later qualification; do not substitute the reduced Gx784 mesh axes."
+      },
+      "basis_and_row_ledger_from_frozen_count_only_source": {
+        "full_storage_rows": 10228620,
+        "periodic_independent_rows": 9948672,
+        "interior_rows": 6854400,
+        "trace_plus_actual_auto_ports_rows": 3126332,
+        "actual_auto_port_modes": 32060,
+        "p4_interface_plus_actual_auto_ports_rows": 1346364,
+        "q_count": 4,
+        "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json"
+      }
+    },
+    "directional_precision": {
+      "y_z_error_comparison": "not run",
+      "next_evidence": "fixed-geometry y/z comparisons of E/H, scattered E/H, scaled curl, significant modal amplitudes and all modal powers"
+    },
+    "external_modes": {
+      "saved_auto_mode_count": 32060,
+      "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "physical_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "final_truncation_qualified": false
+    },
+    "port_intermediates": {
+      "p4_saved_face_vector_component_only": true,
+      "target_q_csr_or_nnz_built": false,
+      "full_target_hhat_or_mode_square_materialized_in_p4": false,
+      "production_path_target_mode_square_exclusion": "not proven"
+    },
+    "csr_and_integer_safety": {
+      "current_petsc_int_type": "int32",
+      "derived_full_storage_rows_fit_int32": true,
+      "target_q_nnz_indptr_and_intermediate_offsets_measured": false,
+      "target_index_safety_closed": false
+    },
+    "local_cache_growth": {
+      "gx560_local_categories_measured": 55,
+      "target_unique_backing_buffer_growth": "not quantified",
+      "share_identity_cache_payload_bytes_local": 1620000,
+      "identity_cache_semantics": "read-only float64 450x450 identity I; enabled separately by the target condensation system and the two local sector systems",
+      "v12_transform_bank": "separate pre-existing Basix/direction-state p6 cell-interior cache; edges/faces remain on legacy path"
+    },
+    "factor_and_full_workflow": {
+      "e1_numeric_factor": "not_run",
+      "target_numeric_factor": "not_run",
+      "single_field_complete_time": "unknown",
+      "decimal_2tb_and_48h_qualified": false,
+      "target_q_nnz_and_indptr_end": "unknown; no target q CSR built",
+      "target_sparse_LU_fill_and_backend_workspace": "unknown; no target factorization or backend setup",
+      "target_full_workflow_simultaneous_RSS": "unknown; derived payloads are not a simultaneous RSS sum",
+      "lifecycle_formula_source": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json"
+    },
+    "general_ny_component": {
+      "candidate_global_ny": 8,
+      "status": "NOT_RUN",
+      "derived_orbit_multiplicity_k": null,
+      "current_asserted_global_ny": 4,
+      "current_asserted_local_ny": 2,
+      "limitation": "derive K from the actual global/local orbit mapping; do not assume K=8 or merely change constants",
+      "candidate_actual_k_branches": "not constructed; K is not derived",
+      "eight_q_branches_assumption": "none; candidate actual K branches not constructed"
+    },
+    "port_intermediates_and_lifecycle": {
+      "classification": "derived single-instance payloads and source formulas only; no target arrays or simultaneous RSS measured",
+      "mode_count": 32060,
+      "mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "physical_mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "one_diagonal_H_bytes": 512960,
+      "one_dense_mode_square_object_bytes": 16445497600,
+      "H_Hhat_ownership_and_simultaneous_lifetime": "unknown; not measured",
+      "C_D_XiB_projection_recipe": "dual_di = L.conj().T @ D_i; xib_primal = XiB @ R; projected = dual_di @ xib_primal; then sparse conversion/accumulation.",
+      "target_C_D_XiB_dimensions_copies_and_peak_lifetime": "unknown; no target arrays constructed",
+      "existing_P4_vector_tile": {
+        "mode_batch_size": 16,
+        "point_chunk_size": 64,
+        "classification": "measured helper component parameters; not a target tile qualification"
+      },
+      "target_tile_dimensions_copies_and_peak_lifetime": "unknown; not qualified",
+      "single_local_payloads_from_frozen_resource_ledger": {
+        "classification": "derived_single_instance_dense_shape_payloads_not_actual_sparse_storage_or_RSS",
+        "dimensions": {
+          "local_tensor": 882,
+          "interior": 450,
+          "trace": 432
+        },
+        "complex128_bytes_per_value": 16,
+        "one_raw_full_local_tensor": {
+          "shape": [
+            882,
+            882
+          ],
+          "bytes": 12446784
+        },
+        "one_interior_block_and_in_place_dense_LU_storage": {
+          "shape": [
+            450,
+            450
+          ],
+          "bytes": 3240000,
+          "qualification": "dense shape-derived payload only; actual sparse factor fill and backend workspace remain unknown"
+        },
+        "one_schur_block": {
+          "shape": [
+            432,
+            432
+          ],
+          "bytes": 2985984
+        },
+        "one_interior_trace_coupling": {
+          "shape": [
+            450,
+            432
+          ],
+          "bytes": 3110400
+        },
+        "one_recovery_operator": {
+          "shape": [
+            450,
+            432
+          ],
+          "bytes": 3110400,
+          "qualification": "single dense recovery-map instance; class count, sharing, and live overlap are unknown"
+        },
+        "single_local_interior_rhs_vector": {
+          "shape": [
+            450
+          ],
+          "bytes": 7200
+        },
+        "simultaneous_lifecycle_sum": "not inferred by adding these alternative/per-instance objects"
+      },
+      "C_D_XiB_shape_and_copy_counts": "unknown for target; no target arrays constructed",
+      "target_H_Hhat_mode_tile": {
+        "one_diagonal_H_bytes": 512960,
+        "one_dense_mode_square_bytes": 16445497600,
+        "H_Hhat_simultaneous_lifetime": "unknown",
+        "measured_P4_helper_tile_only": {
+          "mode_batch_size": 16,
+          "point_chunk_size": 64
+        },
+        "target_tile_copies_and_peak_lifetime": "unknown"
+      },
+      "port_coupling_dimensions_per_face": {
+        "M_face": 16030,
+        "full_interface_M": 32060,
+        "shapes": {
+          "Bi_XiB": [
+            450,
+            "M_face"
+          ],
+          "Di": [
+            "M_face",
+            450
+          ],
+          "Bt": [
+            432,
+            "M_face"
+          ],
+          "Dt": [
+            "M_face",
+            432
+          ],
+          "full_local_row_coupling": [
+            882,
+            "M_face"
+          ]
+        },
+        "single_dense_shape_payload_bytes_complex128_per_face": {
+          "Bi_or_XiB_or_Di": 115416000,
+          "Bt_or_Dt": 110799360,
+          "full_882_row_coupling": 226215360,
+          "full_interface_M_32060_doubles_each": true
+        },
+        "temporary_mode_tile_payload_bytes_formula": "16*n*b for complex128; payload only, not an RSS estimate",
+        "tile_widths": {
+          "production_Hhat_b64": {
+            "rows_450": 460800,
+            "rows_432": 442368,
+            "rows_882": 903168
+          },
+          "P4_helper_b16": {
+            "rows_450": 115200,
+            "rows_432": 110592,
+            "rows_882": 225792
+          }
+        },
+        "copies_simultaneous_lifecycle_and_target_actual_owner": "unknown; no target arrays were constructed"
+      },
+      "volume_interior_trace_coupling": {
+        "shapes": [
+          [
+            450,
+            432
+          ],
+          [
+            432,
+            450
+          ]
+        ],
+        "payload_bytes_each_complex128": 3110400,
+        "classification": "volume interior-to-trace coupling (Vit/Vti), not port C/D"
+      }
+    },
+    "outer_vector_and_scratch": {
+      "classification": "derived_by_existing_Task39_Task40_workspace_formulas",
+      "candidate_p6_full_rows": 10228620,
+      "retained_rows_with_actual_auto_M": 3126332,
+      "actual_auto_M": 32060,
+      "complex128_bytes_per_vector_entry": 16,
+      "fgmres_restart": 32,
+      "fgmres_basis_groups": {
+        "Krylov_basis_vectors": {
+          "count": 33,
+          "bytes": 1650703296
+        },
+        "preconditioned_basis_vectors": {
+          "count": 33,
+          "bytes": 1650703296
+        }
+      },
+      "additional_work_vectors": {
+        "count": 8,
+        "bytes": 400170496
+      },
+      "total_krylov_vector_count": 74,
+      "total_outer_krylov_bytes": 3701577088,
+      "outer_krylov_source_formula": "_v14_outer_krylov_workspace_bytes(retained_rows, restart=32) = (2*(restart+1)+8)*retained_rows*16",
+      "retained_full_scratch_bytes": 4428003200,
+      "retained_full_scratch_source_formula": "_retained_outer_scratch_workspace_bytes(full_rows,retained_rows) = 24*full_rows*16 + 10*retained_rows*16",
+      "retained_full_scratch_terms": {
+        "full_space_24_vector_payload_bytes": 3927790080,
+        "retained_space_10_vector_payload_bytes": 500213120
+      },
+      "workspace_lifecycle_overlap": "source-derived payload estimates; not a simultaneous RSS sum"
+    },
+    "local_growth_and_lifecycle": {
+      "measured_Gx560_unique_local_categories": 55,
+      "target_unique_geometry_material_orientation_class_count": "unknown; no assumption of one class",
+      "target_shared_by_equivalence_formula": "N_unique_classes × per-class LU/Schur/coupling/recovery payloads; N_unique_classes and target sparse-LU fill remain unknown",
+      "candidate_per_cell_growth_formula": "15,232 cells × per-cell LU/Schur/coupling/recovery payloads; this is an alternative multiplicity scenario, not a claim that every target cell is unique",
+      "dense_shape_payloads_not_sparse_factor_measurements": {
+        "classification": "derived_single_instance_dense_shape_payloads_not_actual_sparse_storage_or_RSS",
+        "dimensions": {
+          "local_tensor": 882,
+          "interior": 450,
+          "trace": 432
+        },
+        "complex128_bytes_per_value": 16,
+        "one_raw_full_local_tensor": {
+          "shape": [
+            882,
+            882
+          ],
+          "bytes": 12446784
+        },
+        "one_interior_block_and_in_place_dense_LU_storage": {
+          "shape": [
+            450,
+            450
+          ],
+          "bytes": 3240000,
+          "qualification": "dense shape-derived payload only; actual sparse factor fill and backend workspace remain unknown"
+        },
+        "one_schur_block": {
+          "shape": [
+            432,
+            432
+          ],
+          "bytes": 2985984
+        },
+        "one_interior_trace_coupling": {
+          "shape": [
+            450,
+            432
+          ],
+          "bytes": 3110400
+        },
+        "one_recovery_operator": {
+          "shape": [
+            450,
+            432
+          ],
+          "bytes": 3110400,
+          "qualification": "single dense recovery-map instance; class count, sharing, and live overlap are unknown"
+        },
+        "single_local_interior_rhs_vector": {
+          "shape": [
+            450
+          ],
+          "bytes": 7200
+        },
+        "simultaneous_lifecycle_sum": "not inferred by adding these alternative/per-instance objects"
+      },
+      "transform_bank_scope": "Separate V12 Basix/direction-state p6 cell-interior cache; unique target backing bytes and lifetime are unknown.",
+      "identity_cache_scope": "Target condensation plus two local sector systems independently enable read-only float64 identity I; this option shares no transforms, Schur, LU or recovery map.",
+      "lifecycle_unknowns": {
+        "unique_local_geometry_material_or_orientation_class_count": "unknown; not treated as one class",
+        "actual_sparse_lu_fill_bytes_by_q": "unknown; no factorization",
+        "backend_factor_workspace_and_all_q_overlap": "unknown; no backend setup"
+      },
+      "single_instance_payloads": {
+        "raw_882x882_local_tensor_complex128_bytes": 12446784,
+        "450x450_interior_dense_LU_shape_bytes": 3240000,
+        "432x432_Schur_shape_bytes": 2985984,
+        "450x432_interior_trace_coupling_C_or_D_shape_bytes": 3110400,
+        "450x432_recovery_map_shape_bytes": 3110400,
+        "450_entry_local_rhs_bytes": 7200,
+        "qualification": "dense shape-derived payloads only; actual sparse LU fill, copies, class count, and lifetime remain unknown"
+      },
+      "shared_by_class_formula": "N_unique_geometry/material/orientation classes × the per-class local payloads above; target N_unique_classes is unknown.",
+      "per_cell_formula": "15,232 derived candidate cells × per-cell local payloads above; an alternative multiplicity scenario, not an assertion that all target cells are unique.",
+      "target_q_fill_and_total_RSS": "unknown; no target q CSR/factorization or simultaneous full-workflow measurement"
+    }
+  },
+  "evidence_paths": {
+    "response": "docs/task40extra_0p7nm_engineering/response_v16.md",
+    "summary": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+    "test_summary": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+    "build_and_memory": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_build_and_memory.json",
+    "formal_results": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_formal_results.json",
+    "target_components": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_target_components.json",
+    "run_index": "docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json"
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "schema": "task40extra.review_v16_target_components.v1",
+  "task": "Task40extra 0.7 nm nonseparable Full3D",
+  "branch": "task40extra_0p7nm_engineering",
+  "review_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+  "preserved_target_inventory": {
+    "status": "INVENTORY_COMPLETE_TARGET_P6_PORT_COMPONENT_NOT_QUALIFIED",
+    "mode_count": 32060,
+    "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "physical_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "generator_lineage": "Frozen generator blobs match the historical manifest. Named dtn_port_3d.py and fullspace_dtn_action.py functions changed afterward, which limits a claim of regenerated/current-source qualification; it does not mean the saved W11/S2/S5 arrays were missing.",
+    "candidate_grid": {
+      "axis_cells": [
+        272,
+        4,
+        14
+      ],
+      "cell_count_derived": 15232,
+      "p6_full_storage_rows_derived": 10228620,
+      "trace_plus_actual_auto_port_rows_derived": 3126332,
+      "status": "derived candidate; no target mesh or PDE built",
+      "target_geometry_nm": {
+        "period_x": 50,
+        "period_y": 25,
+        "z_min": -10,
+        "z_max": 130
+      },
+      "analytic_plane_breakpoints_nm": {
+        "x": [
+          0,
+          16.5,
+          25,
+          33.5,
+          50
+        ],
+        "y_notch": [
+          0,
+          6.25,
+          18.75,
+          25
+        ],
+        "z": [
+          -10,
+          0,
+          40,
+          80,
+          120,
+          130
+        ]
+      },
+      "derived_candidate_axis_recipe": {
+        "x_segment_cells": [
+          78,
+          58,
+          58,
+          78
+        ],
+        "y_uniform_ny4_nodes_nm": [
+          0,
+          6.25,
+          12.5,
+          18.75,
+          25
+        ],
+        "z_segment_cells": [
+          1,
+          4,
+          4,
+          4,
+          1
+        ],
+        "z_nz14_nodes_nm": [
+          -10,
+          0,
+          10,
+          20,
+          30,
+          40,
+          50,
+          60,
+          70,
+          80,
+          90,
+          100,
+          110,
+          120,
+          130
+        ]
+      },
+      "recipe_status": "DERIVED_RECIPE_NOT_GENERATED_TARGET_FE; actual target axis nodes remain unknown",
+      "source_hashes": {
+        "analytic_plan_sha256": "c4f091f88c34a6a0980e2b0e75f2b22a4274042370253176467816a601cde713",
+        "v14_target_record_sha256": "f5831d69c1952d01d3baa35bde3fc424c056275e9b7a3a67b700e631a7779852",
+        "review_v5_recipe_sha256": "9b937b97cad8814f50becc3bd8545c4cd3df661209a2eefcec0a96e5e43cf702",
+        "target_resource_ledger_sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4"
+      },
+      "geometry_origin_mpc_material_binding": "not closed; bind in a later qualification"
+    },
+    "32k_dense_complex128_matrix_payload_derived_bytes": 16445497600,
+    "int32": "PETSc IntType is int32. The derived row count fits, but target NNZ, indptr[-1], intermediate offsets and q CSR were not built or bounded, so index safety is not closed.",
+    "saved_w11_arrays_reused": {
+      "reused": true,
+      "S2_arrays_sha256": "d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273",
+      "S5_arrays_sha256": "1850543a43f42211f3bc5f5a4756640860bb1ffcf8b9e86b02083208c57bab93",
+      "pre_component_bridge_false_availability_statement": "The earlier inventory bridge was a pre-component snapshot. P4 then reused these saved arrays; do not report missing target arrays as the blocker."
+    },
+    "target_readiness_formula_reference": {
+      "p6_rows": {
+        "full_storage": 10228620,
+        "periodic_independent": 9948672,
+        "interior": 6854400,
+        "trace_plus_actual_auto_ports": 3126332,
+        "p4_interface_plus_auto_ports": 1346364
+      },
+      "outer_krylov_formula": "(2*(restart+1)+8)*retained_rows*16; restart=32; vector_count=74; bytes=3701577088",
+      "retained_full_scratch_formula": "24*full_rows*16 + 10*retained_rows*16; bytes=4428003200",
+      "local_shape_payload_bytes": {
+        "tensor_882_squared": 12446784,
+        "dense_LU_450_squared": 3240000,
+        "Schur_432_squared": 2985984,
+        "coupling_450x432": 3110400,
+        "recovery_450x432": 3110400
+      },
+      "mode_payload_bytes": {
+        "diagonal_H": 512960,
+        "dense_mode_square_single_object": 16445497600
+      },
+      "target_q_nnz_factor_fill_and_simultaneous_RSS": "unknown"
+    }
+  },
+  "p4_hhat_vector_component": {
+    "status": "COMPONENT_GATE_FAIL",
+    "official_result": false,
+    "component_scope": "One full 32,060-entry Hhat vector action and local recovery/port checks on two saved boundary faces; no full Hhat matrix, target volume mesh/MPC, global factor or target PDE.",
+    "formula_in_words": "For each saved boundary-face mode vector, apply the diagonal boundary operator and add the boundary feedback produced by eliminating the local interior field. This tests a matrix-free vector action without storing a 32,060-by-32,060 dense matrix.",
+    "discretization": {
+      "ordered_modes": 32060,
+      "top_modes": 16030,
+      "bottom_modes": 16030,
+      "local_rows": 882,
+      "interior_rows": 450,
+      "trace_rows": 432,
+      "quadrature_degree": 60,
+      "mode_batch_size": 16,
+      "point_chunk_size": 64
+    },
+    "actual_index_coverage": {
+      "top_first_last": [
+        0,
+        16029
+      ],
+      "bottom_first_last": [
+        16030,
+        32059
+      ],
+      "top_and_bottom_count_each": 16030,
+      "saved_rhs_count_each_face": 32060
+    },
+    "memory_scope": {
+      "full_mode_square_materialized": false,
+      "helper_owned_array_upper_bytes": 7313968,
+      "callback_workspace_bytes_per_face": 10485760,
+      "array_payload_bytes": 31452848,
+      "process_tree_rss_peak_bytes": 769708032,
+      "cgroup_peak_bytes": 843534336,
+      "scope_warning": "The helper-owned bound excludes caller inputs, arrays in NumPy/Basix/BLAS, runtime and process-tree RSS. No full target peak or dense Hhat storage claim follows."
+    },
+    "positive_gates": {
+      "S5_Balpha_full_882_relative_top": 1.1308675126224078E-13,
+      "S5_Balpha_full_882_relative_bottom": 1.0414255157250765E-14,
+      "original_and_reduced_port_equations_top": 1.5177605639629314E-16,
+      "original_and_reduced_port_equations_bottom": 1.514604176111899E-16,
+      "port_equation_limit": 1E-10,
+      "same_factor_XiB_comparison_relative_top_bottom": [
+        0.0,
+        0.0
+      ],
+      "readback_vectors_exactly_match_saved": true
+    },
+    "failed_original_recovery_gate": {
+      "gate": "known-state nonzero-RHS forward recovery relative error <= 1e-11",
+      "top_value": 2.202932653970648E-11,
+      "top_excess_over_limit": 1.202932653970648E-11,
+      "bottom_value": 2.42442721473547E-11,
+      "bottom_excess_over_limit": 1.42442721473547E-11,
+      "saved_recovery_forward_top_bottom": [
+        2.202786217850225E-11,
+        2.4235700994569635E-11
+      ],
+      "local_recovery_equation_top_bottom": [
+        9.733379503721583E-16,
+        1.1109276940915554E-15
+      ],
+      "local_equation_limit": 1E-10,
+      "small_Bi_alpha_norm_top_bottom": [
+        1.1192369144466513E-13,
+        1.4273013434600724E-13
+      ],
+      "interpretation": "The local equations pass while the original known-state forward gate fails on both faces. The very small Bi-alpha scale suggests a weak/near-roundoff direction; this is a diagnostic limitation, not proof of a unique root cause. The threshold is unchanged."
+    },
+    "run01_diagnostic_correction": {
+      "original_exception": "top S5 Balpha no longer matches the S2 Bi/Bt partition",
+      "old_top_interior_subset_relative": 0.21474874731035232,
+      "old_bottom_interior_subset_relative": 0.1656022069259044,
+      "top_interior_difference_over_full_882_norm": 9.557703039879081E-16,
+      "bottom_interior_difference_over_full_882_norm": 9.278214341546907E-16,
+      "correction": "The subset denominator was near zero. Use the full 882-entry S5 Balpha norm for acceptance; retain subset-relative values as diagnostics. This removes the false mismatch but does not change the separate nonzero-recovery failure."
+    },
+    "independent_readback_limit": "D coordinates were converted back with the production gauge helper; no independent Di quadrature oracle was run.",
+    "readback_status": "READBACK_GATE_FAIL",
+    "overall_readback_passed": false,
+    "raw_vector_readback_consistent": true,
+    "port_equation_subchecks_passed": true,
+    "readback_record_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p4_hhat_v16/run_02/p4_hhat_vector_readback_v16.json",
+    "readback_record_sha256": "da0a0ec95ef75f1db3bd291695188dc461366daf184d2d014122124378cc9f82"
+  },
+  "general_ny_component": {
+    "status": "NOT_RUN",
+    "intended_small_component": "Ny=8 with the same fixed analytic geometry and unshifted quarter-cell notch location",
+    "concrete_unclosed_interfaces": [
+      "The current p6 path asserts global Ny=4 and local Ny=2; no Ny=8 Basix/dofmap or orientation map was constructed.",
+      "Internal dof coverage and primal/dual transfer maps were not built or checked.",
+      "The adjoint/work identity for the generalized orbit was not evaluated.",
+      "The complete physical mode-to-orbit assignment and q coverage were not enumerated for candidate actual K branches, not constructed.",
+      "The relation between global Ny, local orbit size and K is not derived for the candidate; consequently K and H/RHS/alpha normalization must be derived and tested from the actual mapping, not assumed to equal 8 or copied by changing literals.",
+      "The all-q residual, correction-call budget and 32-bit row/NNZ offset checks were not qualified for Ny=8."
+    ],
+    "decision": "Do not infer arbitrary Ny from Ny=4, and do not start a Ny=8 PDE from this component record.",
+    "candidate_actual_k_branches": "not constructed; K is not derived"
+  },
+  "evidence_hashes": {
+    "target_inventory_bridge_sha256": "b65bfc73f4e5515ec7e1f93a8eda973cc4f8d7477177ee288749342dc93ab74d",
+    "p4_component_json_sha256": "d797f074900a630088c71df27389cefbbaeadadab24660e1b41c29bd5da6841e",
+    "p4_preliminary_json_sha256": "9f9036ef8e4cf8bcc184857d2d8f8885938944b6336c4360ab611c24ac815e0a",
+    "p4_readback_json_sha256": "da0a0ec95ef75f1db3bd291695188dc461366daf184d2d014122124378cc9f82",
+    "p4_npz_sha256": "d98e3e4b6b045d49c2fe367d2b4d2f9c118f1f6f09f89957daa65385f79bf07f",
+    "p4_watchdog_sha256": "8d9941c6333c7e84ca7f3cf438e4c50b1446d0731b175e7cc36ef3f74c07b62e",
+    "p4_inventory_sha256": "d462c104b2cec9b7a6276ffb513a8a2d6c95fe91f6844e34edb3b5388ce6ca6c",
+    "p4_events_sha256": "096338ed1be1b4561cd69aee3be097ea78834df7fef58725da395053c17f13b6",
+    "p4_worker_resources_sha256": "061905e4623f5ccbbcea4931da88d8e9fa7d6d0411d7e5208ab29763c7c7686e",
+    "controller_target_mode_lineage_audit_sha256": "c5e232b8b40a1fe5259352a9512271cc9c2f4ab4cbc2c2af7b9ecaa39055f35d"
+  },
+  "source_audit_sha256": "c5e232b8b40a1fe5259352a9512271cc9c2f4ab4cbc2c2af7b9ecaa39055f35d",
+  "historical_v11_s2_local_block_pass": {
+    "status": "PASS; unchanged historical record",
+    "forward_relative_top_bottom": [
+      5.35E-14,
+      5.14E-14
+    ],
+    "scope": "Same S2 arrays SHA d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273 as the present recheck. The historical pass is a previously saved refined qualified state; the current P4 direct-LU check used the same saved Vii/fi/trace/Bi/known inputs without refinement and failed. The difference remains unattributed; do not describe it as different input or missing arrays.",
+    "same_S2_arrays_sha256": "d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273"
+  },
+  "current_p4_scope_correction": "The P4 failure is a direct LU forward recheck on the same saved S2 arrays (Vii, fi, trace, Bi, known state) as the historical refined PASS; no recovery refinement was attempted. The difference is not yet attributed. The separate S5 Balpha-versus-S2 Bi/Bt partition check passes after full-882 normalization.",
+  "separate_s5_bi_hhat_check": {
+    "status": "PASS after full-882 normalization",
+    "top_bottom_relative": [
+      1.1308675126224078E-13,
+      1.0414255157250765E-14
+    ],
+    "scope": "S5 Balpha versus S2 Bi/Bt partition identity check; independent of the S2 nonzero-RHS forward recovery gate."
+  }
+}

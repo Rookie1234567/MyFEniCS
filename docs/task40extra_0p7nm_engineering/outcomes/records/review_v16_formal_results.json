@@ -1,0 +1,447 @@
+{
+  "schema": "task40extra.review_v16_formal_results.v1",
+  "task": "Task40extra 0.7 nm nonseparable Full3D",
+  "branch": "task40extra_0p7nm_engineering",
+  "review_head": "3fffbddc3ebdf597cf25eed5600095d09f24d918",
+  "gx560": {
+    "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_reference_v16",
+    "source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
+    "input_sha256": "884eafa914200c27ffd22d017bfea180cf5e56ce77ba5a829fdcbb11c38cc0e2",
+    "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+    "discretization": {
+      "cells": 560,
+      "axis_cells": [
+        10,
+        4,
+        14
+      ],
+      "order": 6,
+      "retained_modes": 340,
+      "q_blocks": 4,
+      "full_storage_rows": 380040
+    },
+    "q_csr": {
+      "rows": [
+        28508,
+        28508,
+        28576,
+        28508
+      ],
+      "nnz": [
+        15457680,
+        15483524,
+        15600060,
+        15483524
+      ],
+      "nnz_total": 62024788
+    },
+    "official_result": true,
+    "status": "PASS",
+    "solver": {
+      "outer_iterations": 3,
+      "target_A6_true_residual": 4.70443000240316E-9,
+      "independent_native_A6_witness": 4.704309875855315E-9,
+      "limit": 0.000001,
+      "port_residual": 2.864556475412625E-16,
+      "ksp_solve_monotonic_seconds": 148.349809164,
+      "retained_outer_solve_seconds": 158.978736877,
+      "retained_outer_solve_scope": "retained_outer_solve_clock_through_terminal_snapshot; separate from KSP solve and worker workflow",
+      "target_condensed_native_identity_relative": 5.592504268634092E-11
+    },
+    "physics": {
+      "R": 0.0761240670863029,
+      "T": 0.9057692200997514,
+      "A_balance": 0.018106712813945713,
+      "A_volume": 0.01810671257728056,
+      "energy_closure_absolute": 2.3666513193632E-10,
+      "absorption_consistency_absolute": 2.366651527530017E-10
+    },
+    "qualification": "A complete discrete Gx560 target and physical result. It does not establish continuum convergence or target-size precision/capacity.",
+    "zero_order_reflection": {
+      "R00_s": 0.0761235935066231,
+      "R00_p": 7.341919406880154E-22,
+      "R00_total": 0.0761235935066231
+    },
+    "q_numeric_inventory": [
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q0_numeric.json",
+        "record_sha256": "556bc1733e88dbc4637ade0543b66893f5081d95db8752434834b2ea18b8608b",
+        "q": 0,
+        "rows": 28508,
+        "nnz": 15457680,
+        "factor_csr_sha256": "036fa99d56e741c74d1b17ed3afc179c280afaf2727ad1fc60d859928be16488",
+        "numeric_elapsed_seconds": 4.276749133947305,
+        "INFOG19_allocated_bytes_upper": 1156000000,
+        "INFOG22_used_bytes_upper": 1015000000,
+        "raw_INFOG9": 41415880,
+        "INFOG9_factor_entries": "unknown"
+      },
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q1_numeric.json",
+        "record_sha256": "a255657d8aeea2d52e77e191114d132e36b8d0cc6493f5f839b165c2f108a9f8",
+        "q": 1,
+        "rows": 28508,
+        "nnz": 15483524,
+        "factor_csr_sha256": "bbf15a7e68cce2042dd584971be6b1281fa0e89d0d223df5a3a29b9ceb25eaba",
+        "numeric_elapsed_seconds": 5.314689437975176,
+        "INFOG19_allocated_bytes_upper": 1177000000,
+        "INFOG22_used_bytes_upper": 1033000000,
+        "raw_INFOG9": 42179536,
+        "INFOG9_factor_entries": "unknown"
+      },
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q2_numeric.json",
+        "record_sha256": "32239eed18e51f4af0731cebb826f01a7106322037e5902d1336e50b29b8f3a2",
+        "q": 2,
+        "rows": 28576,
+        "nnz": 15600060,
+        "factor_csr_sha256": "60b7a85fcd2d29f8e7f2fd6f32de23b0b28fb602d137f0279b5d9992a0e949bd",
+        "numeric_elapsed_seconds": 4.573781676939689,
+        "INFOG19_allocated_bytes_upper": 1182000000,
+        "INFOG22_used_bytes_upper": 1037000000,
+        "raw_INFOG9": 42165112,
+        "INFOG9_factor_entries": "unknown"
+      },
+      {
+        "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_q3_numeric.json",
+        "record_sha256": "7f8f2a6c216ad6c9297a2f351ed91dc56f96008834700c856303d2a2ff7f59e4",
+        "q": 3,
+        "rows": 28508,
+        "nnz": 15483524,
+        "factor_csr_sha256": "a28858650e77298f58640ba9c1c6877f10c4c03131fcc627e325ab3716db864e",
+        "numeric_elapsed_seconds": 4.485745296929963,
+        "INFOG19_allocated_bytes_upper": 1177000000,
+        "INFOG22_used_bytes_upper": 1033000000,
+        "raw_INFOG9": 42179536,
+        "INFOG9_factor_entries": "unknown"
+      }
+    ],
+    "all_q_live_before_destroy": {
+      "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/task40_v12_p6_all_q_live_before_destroy.json",
+      "record_sha256": "dcd10562ea4a841b595eeee7d012ba9a555823dd1a11f3640df4a9349b856dbc",
+      "factor_live_count": 4,
+      "factor_q_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "current_native_factor_inventory_by_q": [
+        {
+          "q": 0,
+          "INFOG19_allocated_bytes_upper": 1156000000,
+          "INFOG22_used_bytes_upper": 1015000000,
+          "raw_INFOG9": 41415880,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "q": 1,
+          "INFOG19_allocated_bytes_upper": 1177000000,
+          "INFOG22_used_bytes_upper": 1033000000,
+          "raw_INFOG9": 42179536,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "q": 2,
+          "INFOG19_allocated_bytes_upper": 1182000000,
+          "INFOG22_used_bytes_upper": 1037000000,
+          "raw_INFOG9": 42165112,
+          "INFOG9_factor_entries": "unknown"
+        },
+        {
+          "q": 3,
+          "INFOG19_allocated_bytes_upper": 1177000000,
+          "INFOG22_used_bytes_upper": 1033000000,
+          "raw_INFOG9": 42179536,
+          "INFOG9_factor_entries": "unknown"
+        }
+      ]
+    },
+    "reference_pc_apply_parent_events": {
+      "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v16__full3d_iterative__mpi1__Mna/20261007T195038.976517Z/v16_p6_reference_events.jsonl",
+      "record_sha256": "de73a6129b55608669aba17ddb5f64d175f22d4bb52bc545c8f77b9d9f61ed5b",
+      "events": [
+        {
+          "call": 1,
+          "whole_pc_apply_seconds": 67.115958898,
+          "native_evaluation_seconds": [
+            12.136823044973426
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        },
+        {
+          "call": 2,
+          "whole_pc_apply_seconds": 17.49246456,
+          "native_evaluation_seconds": [
+            8.510160509962589
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        },
+        {
+          "call": 3,
+          "whole_pc_apply_seconds": 9.798304339,
+          "native_evaluation_seconds": [
+            8.345820695976727
+          ],
+          "native_evaluation_seconds_are_children_not_additive": true,
+          "timing_scope": "parent includes raw q solves, native complete-state evaluation, optional one augmentation, output conversion, evidence write, and resource sample",
+          "selected_correction_candidate_index": 0,
+          "augmentation_applied": false
+        }
+      ],
+      "scope_note": "whole_pc_apply_seconds are parent intervals; native evaluation is a child and must not be added. Parent intervals do not represent whole setup."
+    }
+  },
+  "gx560_v15_same_discrete_comparison": {
+    "status": "PASS",
+    "comparison_receipt_sha256": "829c2c28bc6db14f3183b5cedcd3c46df0df57f0abe079a28b867db7a2a7dbba",
+    "physical_model_sha256_equal": true,
+    "resolved_physical_signature_equal": true,
+    "mesh_axes_equal": true,
+    "geometry_equal": true,
+    "target_mpc_equal": true,
+    "carrier_payload_equal": true,
+    "physical_mode_identity_equal": true,
+    "mode_count": 340,
+    "ordered_keys_equal": true,
+    "input_sha256_equal": false,
+    "field_comparison_limit_relative_l2": 0.0001,
+    "maximum_E_H_scaled_curl_relative_l2": 1.6316487264432077E-12,
+    "all_mode_power_max_absolute_difference": 2.368105711525459E-13,
+    "all_mode_power_limit": 0.000001,
+    "frozen_significant_mode_count": 11,
+    "frozen_significant_mode_amplitude_max_relative": 1.2580188762004668E-10,
+    "significant_mode_amplitude_limit": 0.0001,
+    "R_T_A_Avolume_absolute_differences": {
+      "R": 3.480549182199866E-14,
+      "T": 2.368105711525459E-13,
+      "A": 2.716715741257758E-13,
+      "A_volume": 5.571931804837504E-15
+    },
+    "R_T_A_Avolume_limit": 0.00001,
+    "interpretation": "V16 and V15 share the exact physical/discrete identity listed above; their raw input-file hashes differ. The comparison is an offline saved-field check, not a second PDE solve."
+  },
+  "b0_review": {
+    "controller_review_status": "PASS_WITH_COST_AND_RESOURCE_QUALIFICATIONS",
+    "boundary": "This label does not claim a new full B0 PDE run in P5; P5 adds no FE/PDE calculation.",
+    "b0_component03": {
+      "source_sha": "a09f887b46ea01e89ac8ffb316caf798a4443ae7",
+      "record_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/b0_v16_fe_component_03/v16_b0_fe_component.json",
+      "record_sha256": "055d316694d0c8eeed07b09f4d3f14484293bc4371ce5970b80ccb7b82902b61",
+      "status": "PASS_COMPONENT",
+      "official_result": false,
+      "candidate_assembly_seconds": 94.42951723595615,
+      "legacy_assembly_seconds": 65.41740538494196,
+      "numeric_factor": "not_run",
+      "KSP": "not_run",
+      "official_PDE": "not_run"
+    }
+  },
+  "evidence": {
+    "gx560_run_summary_sha256": "ffdd6d71723f384043c4a668c67d154cf115513e7b3ad191ff09d439a4995ddd",
+    "gx560_candidate_summary_sha256": "77f9eec6e748b4b61ff1c64d038af820ca0779cd598bee78b67e297a886dc36d",
+    "gx560_post_release_packet_sha256": "9959c3e0352b01d52c3f1b9f02b94fb7738e05d89d5b2074d60eec50b829c8bd",
+    "gx560_post_release_npz_sha256": "caa1a308df71616b87e503da5af38da371b26bfa972134457d66e9a930714c5a",
+    "gx560_saved_field_comparison_sha256": "829c2c28bc6db14f3183b5cedcd3c46df0df57f0abe079a28b867db7a2a7dbba",
+    "gx560_output_checker_c1_sha256": "4cee5b8b9d27ba328bd592ede94c8f50b884bd577faf4534a5c44dda03a9c254",
+    "p3_e1_admission_receipt_sha256": "6d74df7f1fee4ae457bc6ba3d905dc952ef8ff77da6a98e30716643b46dba3c0"
+  },
+  "assembly_timing_comparison_seconds_rounded": {
+    "v15_two_sector_parent_total": 422.54,
+    "v16_two_sector_parent_total": 408.214,
+    "v15_sparse_accumulation_subphase_total": 275.837,
+    "v16_sparse_accumulation_subphase_total": 16.777,
+    "v16_new_pattern_construction": 110.582,
+    "remaining_parent_time_attribution": "unknown; nested phases and other differences are not assigned to a cause"
+  },
+  "e1_v16_admission": {
+    "status": "NOT_ADMITTED_PREBUILD",
+    "admitted": false,
+    "build_started": false,
+    "symbolic_started": false,
+    "numeric_factor_started": false,
+    "ksp_started": false,
+    "field_obtained": false,
+    "official_R_T_A": "not_run",
+    "projected_process_tree_rss_bytes": 19192602560,
+    "current_dynamic_launch_cap_bytes": 13432152064,
+    "projected_excess_bytes": 5760450496,
+    "projected_total_inequality_passed": false,
+    "future_symbolic_bank_vector_bytes": 6994120640,
+    "current_headroom_after_reserve_bytes": 13432152064,
+    "headroom_margin_bytes": 6438031424,
+    "dominant_estimate": {
+      "INFOG16_17_derived_conservative_numeric_estimate_bytes": 6530000000,
+      "classification": "conservative derived estimate, not allocated/used factor bytes"
+    },
+    "time_gate": "A full E1 numeric-to-output plus required-checker budget was not demonstrated.",
+    "classification_note": "V16 made a prebuild admission decision. V15's earlier E1 symbolic resource stop remains a separate historical event and is not reclassified.",
+    "prebuild_future_object_arithmetic": {
+      "future_symbolic_bank_vector_bytes": 6994120640,
+      "current_headroom_after_reserve_bytes": 13432152064,
+      "arithmetic_margin_bytes": 6438031424,
+      "scope": "prebuild estimate only; not the original post-symbolic second resource gate"
+    },
+    "original_post_symbolic_incremental_gate": "NOT_RUN_UNKNOWN",
+    "historical_v15_post_symbolic_headroom_after_reserve_bytes": 410038272,
+    "historical_v15_post_symbolic_incremental_gate_passed": false,
+    "input_path": "input/task40extra_0p7nm_engineering/nonseparable_e1_p6_reference_v16.dat",
+    "input_sha256": "2eed5a9ae87a8a615bfed02214eb621b6e254aec2d215ebce7cb4a2ef441b54b",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p3_e1_admission_v16.json",
+    "receipt_sha256": "6d74df7f1fee4ae457bc6ba3d905dc952ef8ff77da6a98e30716643b46dba3c0"
+  },
+  "target_readiness": {
+    "geometry_and_discretization": {
+      "axis_and_interface_recipe": {
+        "analytic_plane_breakpoints_nm_from_task40_plan": {
+          "x_interface_breakpoints": [
+            0,
+            16.5,
+            25,
+            33.5,
+            50
+          ],
+          "y_notch_breakpoints": [
+            0,
+            6.25,
+            18.75,
+            25
+          ],
+          "z_interface_and_layer_breakpoints": [
+            -10,
+            0,
+            40,
+            80,
+            120,
+            130
+          ]
+        },
+        "derived_candidate_axes_recipe": {
+          "x_segment_cells": [
+            78,
+            58,
+            58,
+            78
+          ],
+          "x_coordinate_formula_per_segment": "x_j = x_low + j*(x_high-x_low)/n_segment, with n_segment=[78,58,58,78]",
+          "y_uniform_ny4_nodes_nm": [
+            0,
+            6.25,
+            12.5,
+            18.75,
+            25
+          ],
+          "z_segment_cells": [
+            1,
+            4,
+            4,
+            4,
+            1
+          ],
+          "z_nz14_nodes_nm": [
+            -10,
+            0,
+            10,
+            20,
+            30,
+            40,
+            50,
+            60,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            130
+          ],
+          "status": "DERIVED_RECIPE_NOT_GENERATED_TARGET_FE"
+        },
+        "analytic_plan_source": "src/geometry/task40_nonseparable_plan.py",
+        "analytic_plan_source_sha256": "c4f091f88c34a6a0980e2b0e75f2b22a4274042370253176467816a601cde713",
+        "v14_target_record_sha256": "f5831d69c1952d01d3baa35bde3fc424c056275e9b7a3a67b700e631a7779852",
+        "review_v5_recipe_source_sha256": "9b937b97cad8814f50becc3bd8545c4cd3df661209a2eefcec0a96e5e43cf702",
+        "resource_ledger_sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4",
+        "coordinate_and_identity_limit": "These are unscaled analytic plane coordinates and a count-derived recipe, not archived target mesh nodes. Actual target axes remain unbuilt. Bind target geometry/origin, MPC, and material hashes in a later qualification; do not substitute the reduced Gx784 mesh axes."
+      }
+    },
+    "local_growth_and_lifecycle": {
+      "single_instance_payloads": {
+        "raw_882x882_local_tensor_complex128_bytes": 12446784,
+        "450x450_interior_dense_LU_shape_bytes": 3240000,
+        "432x432_Schur_shape_bytes": 2985984,
+        "450x432_interior_trace_coupling_C_or_D_shape_bytes": 3110400,
+        "450x432_recovery_map_shape_bytes": 3110400,
+        "450_entry_local_rhs_bytes": 7200,
+        "qualification": "dense shape-derived payloads only; actual sparse LU fill, copies, class count, and lifetime remain unknown"
+      },
+      "shared_by_class_formula": "N_unique_geometry/material/orientation classes × the per-class local payloads above; target N_unique_classes is unknown.",
+      "per_cell_formula": "15,232 derived candidate cells × per-cell local payloads above; an alternative multiplicity scenario, not an assertion that all target cells are unique.",
+      "target_q_fill_and_total_RSS": "unknown; no target q CSR/factorization or simultaneous full-workflow measurement"
+    },
+    "port_intermediates_and_lifecycle": {
+      "C_D_XiB_projection_recipe": "dual_di = L.conj().T @ D_i; xib_primal = XiB @ R; projected = dual_di @ xib_primal; then sparse conversion/accumulation.",
+      "C_D_XiB_shape_and_copy_counts": "unknown for target; no target arrays constructed",
+      "target_H_Hhat_mode_tile": {
+        "one_diagonal_H_bytes": 512960,
+        "one_dense_mode_square_bytes": 16445497600,
+        "H_Hhat_simultaneous_lifetime": "unknown",
+        "measured_P4_helper_tile_only": {
+          "mode_batch_size": 16,
+          "point_chunk_size": 64
+        },
+        "target_tile_copies_and_peak_lifetime": "unknown"
+      }
+    }
+  },
+  "target_readiness_formula_reference": {
+    "source_hashes": {
+      "v14_target_record_sha256": "f5831d69c1952d01d3baa35bde3fc424c056275e9b7a3a67b700e631a7779852",
+      "analytic_plan_sha256": "c4f091f88c34a6a0980e2b0e75f2b22a4274042370253176467816a601cde713",
+      "resource_ledger_sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4"
+    },
+    "candidate_counts": {
+      "axes_cells": [
+        272,
+        4,
+        14
+      ],
+      "p6_full_rows": 10228620,
+      "interior_rows": 6854400,
+      "trace_plus_actual_auto_ports": 3126332,
+      "measured_mode_inventory": 32060
+    },
+    "outer_vectors_formula": "(2*(32+1)+8)*3126332*16 = 3701577088 B; 74 vectors",
+    "retained_scratch_formula": "24*10228620*16 + 10*3126332*16 = 4428003200 B",
+    "H_and_local_shape_payloads": {
+      "diagonal_H": 512960,
+      "dense_mode_square_single_object": 16445497600,
+      "tensor_882_squared": 12446784,
+      "interior_LU_450_squared": 3240000,
+      "Schur_432_squared": 2985984,
+      "coupling_or_recovery_450x432": 3110400
+    },
+    "C_D_XiB_recipe": "dual_di=L.conj().T@D_i; xib_primal=XiB@R; projected=dual_di@xib_primal; target dimensions/lifetimes unknown",
+    "target_axis_and_FE_status": "analytic recipe only; no target mesh/PDE constructed; actual target nodes unknown",
+    "target_q_fill_and_full_RSS": "unknown"
+  },
+  "p4_hhat_readback": {
+    "status": "READBACK_GATE_FAIL",
+    "record_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w16_wsl/p4_hhat_v16/run_02/p4_hhat_vector_readback_v16.json",
+    "record_sha256": "da0a0ec95ef75f1db3bd291695188dc461366daf184d2d014122124378cc9f82",
+    "raw_vector_readback_consistent": true,
+    "port_equation_subchecks_passed": true,
+    "S2_forward_recovery_top_bottom": [
+      2.202932653970648E-11,
+      2.42442721473547E-11
+    ],
+    "limit": 1E-11,
+    "overall_readback_passed": false
+  }
+}

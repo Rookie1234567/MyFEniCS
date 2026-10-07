@@ -1,5 +1,21 @@
 # Task40extra：0.7 nm工程方法（笔记本起步）
 
+## Review V16 当前交付
+
+V16 在 Gx560 上完成了新的有界 CSR 构建路线和完整 p6 target 求解；与 V15 的同离散场/模式比较通过。E1 未获预构建准入。P4 完成两个保存面上的 32,060 模式向量作用，但原 known-state forward recovery gate 失败。目标 2 TB / 48 h、一般 Ny 与 y/z 精度仍未资格化。
+
+| 文件 | 内容 |
+|---|---|
+| [Response V16](response_v16.md) | P0–P5 逐项回应、Gx560、E1、P4 负结果及后续阻塞 |
+| [Review V16](review_report_v16.md) | 本轮执行合同、资源/数值门与交付要求 |
+| [V16 build and memory](outcomes/records/review_v16_build_and_memory.json) | bounded CSR、对象库存、内存和两次 P4 attempt |
+| [V16 formal results](outcomes/records/review_v16_formal_results.json) | Gx560 官方结果、V15 同离散对照、E1 prebuild decision |
+| [V16 target components](outcomes/records/review_v16_target_components.json) | 32,060 模式向量组件、索引、失败恢复门和 general-Ny 缺口 |
+| [V16 cost and readiness](outcomes/records/review_v16_cost_and_readiness.json) | 固定窗口、成本口径、资源/目标 readiness |
+| [V16 outcomes summary](outcomes/summary.md) | 当前统一结果与下一具体阻塞 |
+| [V16 test summary](outcomes/test_summary.md) | 按 source/范围分列的测试和文档检查 |
+| [V16 run index](outcomes/records/run_index.json) | 正式运行、组件 attempts 与证据 hashes |
+
 **先取得真实0.7nm、三维非可分缩小模型的完整FE解；再以误差与资源证据决定面向约2TB目标规模的下一项工程方法。**
 
 ## 本机执行目录与平台身份

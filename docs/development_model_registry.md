@@ -1,3 +1,16 @@
+# Task40extra 当前模型登记：Review V16 Gx560 target 通过，E1 未准入，P4 组件门失败
+
+| 模型 / 阶段 | source 与身份 | 实测/派生结果 | 当前资格边界 |
+|---|---|---|---|
+| Gx560 V16 | source 54b98a871632a1eef1c34e3542788f5859ee255c；560 cells (10×4×14)、p6、340 modes、4 q；physical model SHA d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98 | q rows 28508/28508/28576/28508；NNZ 总计 62,024,788；A6 4.704430002e-9；native witness 4.704309876e-9；R/T/A_balance/A_volume 0.07612406709/0.90576922010/0.01810671281/0.01810671258；3 步 | 完整离散 Gx560 和物理输出通过；V15 same-discrete field/mode comparison 通过；不等于 continuum 或目标精度 |
+| E1 V16 admission | 原 760-cell、588-mode、四-q 输入；本轮 admission receipt | projected 19,192,602,560 B > dynamic cap 13,432,152,064 B；多 5,760,450,496 B；未来 symbolic+bank+vector 6,994,120,640 B 留有 6,438,031,424 B headroom | NOT_ADMITTED_PREBUILD；无本轮 E1 网格、symbolic、factor、KSP 或场 |
+| 目标端口 P4 | HEAD 3fffbddc；32060 个保存有序模式、两个 882-row 面 | Hhat vector/action 和端口方程 pass；已知非零 RHS forward 误差 2.203e-11/2.424e-11，限值 1e-11 | COMPONENT_GATE_FAIL；不具备 full Hhat matrix/target PDE 资格 |
+| 原尺寸目标 | 50×25×140 nm、0.7 nm；candidate 272×4×14 和 15,232 cells 为 derived | 32,060 模式 inventory 已保存；10,228,620 p6 rows 为 derived | y/z 精度、一般 Ny、目标 NNZ/int32、因子与 2 TB/48 h 全流程仍 NOT_QUALIFIED |
+
+V16 工程成本/峰值与 P4 的负/正组件证据见 [V16 response](task40extra_0p7nm_engineering/response_v16.md)、[formal results](task40extra_0p7nm_engineering/outcomes/records/review_v16_formal_results.json)、[target components](task40extra_0p7nm_engineering/outcomes/records/review_v16_target_components.json)、[cost/readiness](task40extra_0p7nm_engineering/outcomes/records/review_v16_cost_and_readiness.json)。P4 Hhat helper 是独立研究组件；不提升 ordinary default，也不批准 selective merge。
+
+---
+
 # Task40extra 当前模型登记：Review V15 Gx560 完整结果通过，E1 资源受控停止
 
 本登记区分完整 Maxwell target、已保存场复核和未完成的 symbolic 阶段。V15 新参考 PC 是显式研究策略，不改变 ordinary default。Gx560 的 target、物理门、独立输出和旧同离散场比较通过；E1 四 q symbolic 后受控停止；原尺寸精度与容量仍未资格化。
