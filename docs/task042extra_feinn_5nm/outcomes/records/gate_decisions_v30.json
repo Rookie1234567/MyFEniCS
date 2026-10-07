@@ -1,0 +1,33 @@
+{
+  "classification": "NUMERICAL_GATE_NOT_REACHED",
+  "implementation_qualified": true,
+  "learned_direction_training_executed": true,
+  "actual_nonzero_direction_updates": 3127,
+  "actual_nonzero_amplitude_updates": 3127,
+  "local_center_radius_continuous_training_executed": false,
+  "m5_full_discrete_numerical_gate": false,
+  "native_and_augmented_gate_passed": false,
+  "independent_total_field_and_power_gates": "NOT_RUN_AFTER_REPAIR_RESOURCE_REFUSAL",
+  "independent_committed_model_mapping_pass": {
+    "FIXED_WAVE_GREEDY_CONTROL": true,
+    "LEARNED_WAVE_GREEDY": false
+  },
+  "full_higher_quadrature_gate": "UNKNOWN: coefficient drift measured, action and FE15/30 not run",
+  "continuous_discretization_qualified": false,
+  "neural_increment_qualified": false,
+  "reduced_0p7_numerical_gate": "NOT_IMPLEMENTED_NOT_RUN_PRECONDITION_M5_JOINT_GATE",
+  "full_size_0p7_target_qualified": false,
+  "official_candidate_results": false,
+  "production_initialization_allowed": false,
+  "reference_used_for_training": false,
+  "features_reference_exposed": false,
+  "pde_only_solve": true,
+  "benchmark_previously_seen": true,
+  "reference_solve_count": 0,
+  "training_and_verifier_Gram_Maxwell_factor_counts": 0,
+  "legacy_FEINN_closed": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "no_second_campaign_window": true,
+  "neighbor_review_notification_sent": false
+}

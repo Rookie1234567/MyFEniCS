@@ -1,0 +1,81 @@
+{
+  "scope": "PARTIAL independent saved vector arithmetic; no fresh equation/field/power qualification",
+  "source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+  "rows": [
+    {
+      "route": "FIXED_WAVE_GREEDY_CONTROL",
+      "columns": 2160,
+      "binding": {
+        "rebuild_sha256": "4636e795d755f2c30150a74e5a962597f1137106959d1372850ec3364ca0ea2a",
+        "state_sha256": "e8cf91d53cfe75e137d2c63f9bce481d2db2bfb31357f21304f3c78ada36963b",
+        "committed_sha256": "227261d8c177a8272bec558acab43f029bf1a73bdc5d84b104b0cdc1b109aa44",
+        "result_sha256": "86199ab22bc2d9d6c2978f421323675143342ccaf57a31fb76971e2c602280d9"
+      },
+      "saved_coefficient_byte_equal": true,
+      "model_map": {
+        "numerator": 2.650383605152648e-12,
+        "actual_denominator": 0.1660193282512864,
+        "relative": 1.596430748798739e-11,
+        "limit": 1e-10,
+        "pass_from_raw": true
+      },
+      "coefficient_quadrature": {
+        "numerator": 8.580783820285456e-14,
+        "actual_denominator": 0.1660193282512694,
+        "relative": 5.168545078858821e-13,
+        "limit": 1e-08,
+        "pass_from_raw": true
+      },
+      "retained_residual": {
+        "numerator": 0.12333228602508238,
+        "actual_denominator": 0.29104200262261154,
+        "relative": 0.4237611235276062,
+        "limit": 1e-06,
+        "pass_from_saved_r": false,
+        "scope": "norm of retained producer r with retained load norm, not a fresh A*c-f evaluation"
+      },
+      "original_action_called": 0,
+      "new_network_forward": 0,
+      "reference_loaded": false
+    },
+    {
+      "route": "LEARNED_WAVE_GREEDY",
+      "columns": 3127,
+      "binding": {
+        "rebuild_sha256": "3aaff9597501d136f5c9817e9695faa753dc47c21266e29b10aac5ec4c961b6a",
+        "state_sha256": "381a9c5cb6921f537829400cf4d536ed60d1bad4e04436169fe0d4508f206bba",
+        "committed_sha256": "57daba8a4388a3f7ee104151679e0e0533ab86303889539a16db4de49d2d1008",
+        "result_sha256": "9d672516b2169e5711b73d572f4291140acc284268c26e2ad1897bc490141fb9"
+      },
+      "saved_coefficient_byte_equal": true,
+      "model_map": {
+        "numerator": 2.7980940913028334e-11,
+        "actual_denominator": 0.1626932429837254,
+        "relative": 1.719858821415671e-10,
+        "limit": 1e-10,
+        "pass_from_raw": false
+      },
+      "coefficient_quadrature": {
+        "numerator": 1.842809257463204e-12,
+        "actual_denominator": 0.16269324298375254,
+        "relative": 1.132689485848676e-11,
+        "limit": 1e-08,
+        "pass_from_raw": true
+      },
+      "retained_residual": {
+        "numerator": 0.09630107103766544,
+        "actual_denominator": 0.29104200262261154,
+        "relative": 0.33088375619287214,
+        "limit": 1e-06,
+        "pass_from_saved_r": false,
+        "scope": "norm of retained producer r with retained load norm, not a fresh A*c-f evaluation"
+      },
+      "original_action_called": 0,
+      "new_network_forward": 0,
+      "reference_loaded": false
+    }
+  ],
+  "full_field_checker": "NOT_RUN",
+  "official_candidate_results": false,
+  "new_FE_A_AH_reference_solve_and_network_forward_counts": 0
+}

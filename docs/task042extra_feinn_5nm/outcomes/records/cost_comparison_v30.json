@@ -1,0 +1,135 @@
+{
+  "classification": "NO_VERIFIED_NN_INCREMENT",
+  "neural_resource_gain_qualified": false,
+  "same_joint_accuracy_comparison_available": false,
+  "common_approximately_18h_node": {
+    "classification": "PREDECLARED_COMMON_WORK_NODE_NOT_FINAL",
+    "rows": [
+      {
+        "route": "LEARNED_WAVE_GREEDY",
+        "source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+        "columns": 2563,
+        "modules": 2563,
+        "learned_direction_updates": 2563,
+        "audit": {
+          "native_relative": 0.34267870798566263,
+          "augmented_relative": 0.34267870798566263,
+          "original_total_augmented_relative": 0.1623275075006377,
+          "port_absolute": 3.804385241010637e-19,
+          "port_full_rhs_relative": 1.3071602059939468e-18,
+          "port_operation_relative": 1.1899088496610088e-17,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 0.10360968827517597,
+          "full_coefficient_norm": 0.15854768026658178,
+          "port_unknown_norm": 0.0002599586012154115,
+          "strict_pass": false
+        },
+        "common_node": {
+          "columns": 2563,
+          "native_relative": 0.34267870798566263,
+          "elapsed_seconds": 64850.005434213206,
+          "source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+          "continuation_allowed_within_original_campaign": true
+        },
+        "actual_attempt_elapsed_seconds": 51832.567303262185,
+        "supervised_seconds": 51768.700354411965,
+        "inherited_route_allocation_span_seconds": 64852.2773607932,
+        "sampled_simultaneous_tree_rss_peak_bytes": 3681804288,
+        "own_swap_peak_bytes": 0,
+        "primitive_prefix_retention": false,
+        "files": {
+          "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/result.json": "6672281676f3ff4f95f191570432db112311c4390c3624f25f8d10a464c59000",
+          "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/common_comparison_boundary.json": "aa328096971bb0fffe35fc92cb243a78d9c0a1d45ab04209f88ceb5d1556d0bc",
+          "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/committed.json": "564171d171e6c8eefc8cf361083fd43f6c73ae98127052fd5d3c4355b0704d89",
+          "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt4/run_summary.json": "e56744d18128effcc02199750d318268fa4ac51f50406c051ff5d0ca9fbd7f6b"
+        }
+      },
+      {
+        "route": "FIXED_WAVE_GREEDY_CONTROL",
+        "source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+        "columns": 2160,
+        "modules": 2195,
+        "learned_direction_updates": 0,
+        "audit": {
+          "native_relative": 0.4237611235276062,
+          "augmented_relative": 0.4237611235276062,
+          "original_total_augmented_relative": 0.2007363905457445,
+          "port_absolute": 1.075015294613133e-18,
+          "port_full_rhs_relative": 3.693677493028676e-18,
+          "port_operation_relative": 1.9080592381271006e-17,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 0.11276798099273012,
+          "full_coefficient_norm": 0.1660193282512864,
+          "port_unknown_norm": 0.00047332445820433906,
+          "strict_pass": false
+        },
+        "common_node": {
+          "columns": 2160,
+          "native_relative": 0.4237611235276062,
+          "elapsed_seconds": 64831.452548600035,
+          "source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+          "continuation_allowed_within_original_campaign": true
+        },
+        "actual_attempt_elapsed_seconds": 64834.23888433515,
+        "supervised_seconds": 64770.228531182045,
+        "inherited_route_allocation_span_seconds": 64834.23888433515,
+        "sampled_simultaneous_tree_rss_peak_bytes": 3267076096,
+        "own_swap_peak_bytes": 0,
+        "primitive_prefix_retention": true,
+        "files": {
+          "benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/result.json": "86199ab22bc2d9d6c2978f421323675143342ccaf57a31fb76971e2c602280d9",
+          "benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/common_comparison_boundary.json": "0206adb025a952bea9125fa35600db4464c5cf1503e3b257afb66b01df0d4af3",
+          "benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/basis/committed.json": "227261d8c177a8272bec558acab43f029bf1a73bdc5d84b104b0cdc1b109aa44",
+          "tmp/task42extra/v30/durable/v30_m5_fixed_wave_attempt1/run_summary.json": "9b848e2fb9d854912618d99c192338bc28e8439eae3e29e618bf0b474ba1cd96"
+        }
+      }
+    ],
+    "reference_loaded": false,
+    "independent_field_gate": "NOT_RUN",
+    "neural_resource_gain_qualified": false,
+    "scope": "same approximately18h allocation node; NN engineering/caching prefixes and shared workstation limit cost comparability; native residual is not field accuracy",
+    "continuation_within_original_window": true
+  },
+  "original_common_mutable_committed_json_and_rng_bytes": "NOT_RETAINED after continuation",
+  "frozen_common_retention_receipt": {
+    "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/common_cost_node_frozen/retention_receipt.json",
+    "bytes": 395751,
+    "sha256": "4b4d66a71a8857651a7471d5e560a4e489a3f27e5890f1b6c33c612d9079c742"
+  },
+  "common_three_copies_and_2563_immutable_models_and_state_retained": true,
+  "final_control_native": 0.4237611235276062,
+  "final_learned_native": 0.33088375619287214,
+  "residual_improvement_at_common_node_derived": 0.19133991071897227,
+  "final_residual_improvement_vs_control_derived": 0.21917387456776338,
+  "final_improvement_after_extra_time_is_not_same_cost": true,
+  "control_full_attempt_seconds": 64834.23888433515,
+  "learned_actual_attempt_seconds_where_retained": [
+    5180.431140770204,
+    3412.691356702009,
+    51832.567303262185,
+    29081.75956760696
+  ],
+  "learned_attempt2_supervised_seconds_only": 2851.4166935079265,
+  "learned_attempt2_pre_supervision_import_setup": "NOT_RETAINED",
+  "latest_parent_payload_summary": {
+    "path": "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt7/payload_summary.json",
+    "bytes": 10093,
+    "sha256": "3e64a8b6c990f7fcf3de3c6a216c433b3657e57031f2dd9a3ee0c75f154fddee"
+  },
+  "latest_parent_complete_chain_summary": {
+    "path": "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt7/run_summary.json",
+    "bytes": 21845,
+    "sha256": "60b347d08b3839eea99bd13c9735643f363a0a17dbdde493bd23434d5a2e3367"
+  },
+  "common_control_sampled_tree_peak_bytes": 3267076096,
+  "common_neural_sampled_tree_peak_bytes": 3681804288,
+  "final_neural_sampled_tree_peak_bytes": 4395831296,
+  "peaks_are_not_summed": true,
+  "qualified_successful_single_source_N1_cold_time": "NOT_MEASURED: neither route reached joint Gate",
+  "old_reference_672_46_seconds": "historical Review V29/V12 evidence, not a fresh V30 timing or same-accuracy NN ratio",
+  "no_allocation_calendar_double_counting": true
+}

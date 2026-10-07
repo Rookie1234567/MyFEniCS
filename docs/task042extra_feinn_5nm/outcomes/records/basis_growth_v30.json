@@ -1,0 +1,339 @@
+{
+  "entries": {
+    "v30_m5_fixed_wave": {
+      "scope": "frozen producer-metadata aggregate; not independent equation/field qualification",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/basis_growth.jsonl",
+      "sha256": "53bee2637b01a220a0c3a7bbb15b3b2b03834c3377b069cf99a90ddd4f3794d6",
+      "bytes": 3457354,
+      "counters": {
+        "rows": 2160,
+        "accepted": 2160,
+        "rejected": 0,
+        "neurons": 6784,
+        "direction_training": 0
+      },
+      "accepted_module_widths": {
+        "1": 256,
+        "2": 768,
+        "4": 1024,
+        "8": 112
+      },
+      "accepted_modules_saved_direction_function_calls": 0,
+      "accepted_direction_optimizer_status_counts": {},
+      "real_stored_wave_and_linear_weights": 65376,
+      "redundant_parameter_count_is_not_independent_FE_dimension": true,
+      "moments_all_families_retained": true,
+      "patch_centers_and_supports_continuously_trained": false,
+      "geometric_support_selection": "fixed geometry, residual selection, authorized levels",
+      "finite_saved_metrics": {
+        "full_mapping_relative": {
+          "count": 2160,
+          "nonzero": 2160,
+          "min": 1.2262084968047048e-15,
+          "max": 3.793935122669291e-14,
+          "mean": 2.9609421550213603e-15
+        },
+        "predicted_actual_load_scaled_absolute": {
+          "count": 2160,
+          "nonzero": 2160,
+          "min": 3.9998983505680433e-19,
+          "max": 5.789210103781671e-13,
+          "mean": 3.579685758193824e-14
+        }
+      },
+      "first": {
+        "module": 1,
+        "index": 0,
+        "neurons": 1,
+        "native_relative": 0.9693833610615005,
+        "elapsed_seconds": 72.12693030317314
+      },
+      "last": {
+        "module": 2195,
+        "index": 2159,
+        "neurons": 8,
+        "native_relative": 0.4237611235276062,
+        "elapsed_seconds": 64831.29076574999
+      },
+      "fixed_work_nodes": [
+        {
+          "module": 1,
+          "index": 0,
+          "neurons": 1,
+          "native_relative": 0.9693833610615005,
+          "elapsed_seconds": 72.12693030317314
+        },
+        {
+          "module": 256,
+          "index": 255,
+          "neurons": 1,
+          "native_relative": 0.6434088178138121,
+          "elapsed_seconds": 533.4908205191605
+        },
+        {
+          "module": 512,
+          "index": 511,
+          "neurons": 2,
+          "native_relative": 0.5807700942052427,
+          "elapsed_seconds": 1222.484202309046
+        },
+        {
+          "module": 768,
+          "index": 767,
+          "neurons": 2,
+          "native_relative": 0.547079705263184,
+          "elapsed_seconds": 2341.2406131459866
+        },
+        {
+          "module": 770,
+          "index": 769,
+          "neurons": 2,
+          "native_relative": 0.5468299320079671,
+          "elapsed_seconds": 2353.960024008993
+        },
+        {
+          "module": 1024,
+          "index": 1023,
+          "neurons": 2,
+          "native_relative": 0.520875656465071,
+          "elapsed_seconds": 4005.285457245074
+        },
+        {
+          "module": 1280,
+          "index": 1279,
+          "neurons": 4,
+          "native_relative": 0.4888933850734886,
+          "elapsed_seconds": 10494.007775546983
+        },
+        {
+          "module": 1541,
+          "index": 1535,
+          "neurons": 4,
+          "native_relative": 0.4653915429945581,
+          "elapsed_seconds": 16485.421569571132
+        },
+        {
+          "module": 1806,
+          "index": 1791,
+          "neurons": 4,
+          "native_relative": 0.4489569483912573,
+          "elapsed_seconds": 28544.70179760107
+        },
+        {
+          "module": 2081,
+          "index": 2047,
+          "neurons": 4,
+          "native_relative": 0.4345723901954146,
+          "elapsed_seconds": 46187.233960637124
+        }
+      ],
+      "native_increase_over_1e_12": [],
+      "rejected_and_uncommitted_direction_function_call_totals": "NOT_RETAINED unless separately present in frozen cumulative counters",
+      "reference_used_for_training": false,
+      "any_FE_NN_forward_or_matrix_action_executed_by_this_reader": false
+    },
+    "v30_m5_learned_wave": {
+      "scope": "frozen producer-metadata aggregate; not independent equation/field qualification",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis_growth.jsonl",
+      "sha256": "72f1d16cd4ff3000956b810280ef5b3f70d199a2db7c567ffa817d3e8381c5e4",
+      "bytes": 8079385,
+      "counters": {
+        "rows": 3127,
+        "accepted": 3127,
+        "rejected": 0,
+        "neurons": 14520,
+        "direction_training": 3127
+      },
+      "accepted_module_widths": {
+        "1": 256,
+        "2": 768,
+        "4": 1024,
+        "8": 1079
+      },
+      "accepted_modules_saved_direction_function_calls": 52286,
+      "accepted_direction_optimizer_status_counts": {
+        "0": 261,
+        "1": 2866
+      },
+      "real_stored_wave_and_linear_weights": 136934,
+      "redundant_parameter_count_is_not_independent_FE_dimension": true,
+      "moments_all_families_retained": true,
+      "patch_centers_and_supports_continuously_trained": false,
+      "geometric_support_selection": "fixed geometry, residual selection, authorized levels",
+      "finite_saved_metrics": {
+        "q_update_norm": {
+          "count": 3127,
+          "nonzero": 3127,
+          "min": 1.7294635184325875e-07,
+          "max": 20.5144685455484,
+          "mean": 3.0944904828429705
+        },
+        "amplitude_update_norm": {
+          "count": 3127,
+          "nonzero": 3127,
+          "min": 1.9329857000480515e-10,
+          "max": 42627.50571318032,
+          "mean": 13.68585046648105
+        },
+        "initial_direction_gradient_norm": {
+          "count": 3127,
+          "nonzero": 3127,
+          "min": 1.7294635182765825e-07,
+          "max": 0.1500436502638951,
+          "mean": 0.00033304916774422777
+        },
+        "initial_amplitude_gradient_norm": {
+          "count": 3127,
+          "nonzero": 3127,
+          "min": 0.04228715187565907,
+          "max": 2774248.6751205637,
+          "mean": 9678.259361068966
+        },
+        "full_mapping_relative": {
+          "count": 3127,
+          "nonzero": 3127,
+          "min": 1.2612508610607262e-15,
+          "max": 6.80507736514648e-14,
+          "mean": 3.260487426829651e-15
+        },
+        "predicted_actual_load_scaled_absolute": {
+          "count": 3127,
+          "nonzero": 3127,
+          "min": 9.599756041363305e-19,
+          "max": 3.9275998253907377e-13,
+          "mean": 3.795876775657813e-15
+        }
+      },
+      "first": {
+        "module": 1,
+        "index": 0,
+        "neurons": 1,
+        "native_relative": 0.9693093947245692,
+        "elapsed_seconds": 88.28809936717153
+      },
+      "last": {
+        "module": 3127,
+        "index": 3126,
+        "neurons": 8,
+        "native_relative": 0.33088375619287214,
+        "elapsed_seconds": 160750.7579985771
+      },
+      "fixed_work_nodes": [
+        {
+          "module": 1,
+          "index": 0,
+          "neurons": 1,
+          "native_relative": 0.9693093947245692,
+          "elapsed_seconds": 88.28809936717153
+        },
+        {
+          "module": 256,
+          "index": 255,
+          "neurons": 1,
+          "native_relative": 0.5535684168680776,
+          "elapsed_seconds": 3016.7290350450203
+        },
+        {
+          "module": 512,
+          "index": 511,
+          "neurons": 2,
+          "native_relative": 0.4904158713227417,
+          "elapsed_seconds": 8406.784443290206
+        },
+        {
+          "module": 768,
+          "index": 767,
+          "neurons": 2,
+          "native_relative": 0.4571664550183084,
+          "elapsed_seconds": 12284.811470417073
+        },
+        {
+          "module": 770,
+          "index": 769,
+          "neurons": 2,
+          "native_relative": 0.45703607130804935,
+          "elapsed_seconds": 12316.569419834064
+        },
+        {
+          "module": 1024,
+          "index": 1023,
+          "neurons": 2,
+          "native_relative": 0.4318515036685369,
+          "elapsed_seconds": 16683.13322857418
+        },
+        {
+          "module": 1280,
+          "index": 1279,
+          "neurons": 4,
+          "native_relative": 0.40273987718587256,
+          "elapsed_seconds": 21733.01828639605
+        },
+        {
+          "module": 1536,
+          "index": 1535,
+          "neurons": 4,
+          "native_relative": 0.38562266704449394,
+          "elapsed_seconds": 28741.823314210167
+        },
+        {
+          "module": 1792,
+          "index": 1791,
+          "neurons": 4,
+          "native_relative": 0.37491302292760387,
+          "elapsed_seconds": 35313.03207923402
+        },
+        {
+          "module": 2048,
+          "index": 2047,
+          "neurons": 4,
+          "native_relative": 0.36629631192134304,
+          "elapsed_seconds": 42758.951055585174
+        },
+        {
+          "module": 2304,
+          "index": 2303,
+          "neurons": 8,
+          "native_relative": 0.35179014970671635,
+          "elapsed_seconds": 53022.13974785013
+        },
+        {
+          "module": 2560,
+          "index": 2559,
+          "neurons": 8,
+          "native_relative": 0.3426942579512257,
+          "elapsed_seconds": 64680.43699487811
+        },
+        {
+          "module": 2563,
+          "index": 2562,
+          "neurons": 8,
+          "native_relative": 0.34267870798566263,
+          "elapsed_seconds": 64849.887804145226
+        },
+        {
+          "module": 2816,
+          "index": 2815,
+          "neurons": 8,
+          "native_relative": 0.3363820112641189,
+          "elapsed_seconds": 143962.99122179602
+        },
+        {
+          "module": 3072,
+          "index": 3071,
+          "neurons": 8,
+          "native_relative": 0.3314843557163153,
+          "elapsed_seconds": 157704.2726302282
+        }
+      ],
+      "native_increase_over_1e_12": [],
+      "rejected_and_uncommitted_direction_function_call_totals": "NOT_RETAINED unless separately present in frozen cumulative counters",
+      "reference_used_for_training": false,
+      "any_FE_NN_forward_or_matrix_action_executed_by_this_reader": false
+    }
+  },
+  "frozen_parameter_layout": "3 real q + 3 complex p per neuron; complex cumulative coefficient per accepted module",
+  "accepted_column_is_composed_wave_module_not_individual_neuron": true,
+  "capacity_limit": 4096,
+  "full_independent_complex_FE_coefficients": 31968,
+  "no_full_FE_inverse_or_Gram_factor": true
+}

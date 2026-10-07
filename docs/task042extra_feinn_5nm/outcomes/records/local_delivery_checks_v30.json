@@ -1,0 +1,143 @@
+{
+  "classification": "PASS_LOCAL_SCOPE_ONLY",
+  "source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+  "scope": "new V30 pages/current navigation, compact JSON and saved vector arithmetic only",
+  "pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v29.md",
+      "sha256": "7379f1d9ed314a4432f847c67e144e978201733a27462bbe6ef7985b38698a10",
+      "checked_scope": "entire page",
+      "markdown_tables": 3,
+      "parsed_tables": 3,
+      "math_fences": 3,
+      "links": 12
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v30.md",
+      "sha256": "d864aa7ab324d8562099e5e005258e95c7b4f7040a032d5d3b52de37216e6c7c",
+      "checked_scope": "entire page",
+      "markdown_tables": 3,
+      "parsed_tables": 3,
+      "math_fences": 0,
+      "links": 13
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md",
+      "sha256": "ffda282271bcaf8ca3434811ddc1f8c53d8deb9e72814605df8eec4a2379b047",
+      "checked_scope": "entire page",
+      "markdown_tables": 3,
+      "parsed_tables": 3,
+      "math_fences": 2,
+      "links": 26
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "sha256": "dd72ffed33d3ae9c694a09f07772a5ebe559e8b2ee2c3c135da4eac47adba453",
+      "checked_scope": "当前V30最终：",
+      "markdown_tables": 0,
+      "parsed_tables": 0,
+      "math_fences": 0,
+      "links": 5
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "eed2e4a6f2aad58c4d760cab4b239a533811b67fdae5162ba7772bfb3a7f0f83",
+      "checked_scope": "当前V30最终：",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 9
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "sha256": "98f19c3e7665950b28f4f8b921f36db4667130757ea6f2b42923425b9b7ab3d4",
+      "checked_scope": "当前V30最终：",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 4
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "sha256": "25a3bac98abac6a5b6b1ce248d01cb480b18ac2bb6d3efc5b40426ab82245a92",
+      "checked_scope": "当前V30最终：",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 3
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "04cdb4e6063914c8b9888795ff86589fbda50660bd43522c3650cead3bcaad83",
+      "checked_scope": "Task42extra V30最终：",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 5
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "ab6c861e6a41282e742e526b555846412dd3782f3a11d7f2e5b11dfc5f7c6e59",
+      "checked_scope": "Task42extra V30最终模型账：",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 4
+    }
+  ],
+  "raw_array_check": "saved_vector_delivery_check_v30.json",
+  "valid_compact_records": [
+    "docs/task042extra_feinn_5nm/outcomes/records/analytic_and_moment_cost_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/basis_growth_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/common_cost_node_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/cost_comparison_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/dependency_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/design_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/engineering_pause_2_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/engineering_pause_3_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/engineering_pause_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/frozen_field_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/implementation_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/learning_milestone_256_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/local_action_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/local_delivery_checks_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/projection_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/projection_targeted_tests_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/rebuild_recovery_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/recovery_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/render_check_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/run_index_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/saved_vector_delivery_check_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/screening_qualification_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/screening_targeted_tests_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/support_reuse_targeted_tests_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v30.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/training_v30.json"
+  ],
+  "protected_authority_unchanged": [
+    "AGENTS.md",
+    "docs/AGENTS.md",
+    "docs/repository_work_principles.md",
+    "docs/task042extra_feinn_5nm/AGENTS.md",
+    "docs/task042extra_feinn_5nm/task.md",
+    "docs/task042extra_feinn_5nm/review_report_v29.md"
+  ],
+  "historical_navigation_suffixes_preserved": true,
+  "original_navigation_source": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+  "diff_check_pass": true,
+  "full_pytest_CI_and_browser_visual_pass": false,
+  "monotonic": 1284154.107479885,
+  "elapsed_seconds": 0.21378913708031178,
+  "environment": {
+    "activation": "pure",
+    "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "numpy": "1.26.4"
+  },
+  "full_FE_field_power_checker": "NOT_RUN",
+  "no_new_FE_A_or_NN_calls": true
+}

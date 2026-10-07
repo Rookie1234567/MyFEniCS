@@ -1,0 +1,200 @@
+{
+  "source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+  "scope": "pure real writer/reopen and sealed-rebuild consumer only, not resumed FE physics",
+  "tests": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_1/binding.json",
+        "bytes": 522,
+        "sha256": "87e6c9618c040fb35a3e49cb15830b0176d617a9b84700a512d5962a77ed97eb"
+      },
+      "junit": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_1/junit.xml",
+        "bytes": 1309,
+        "sha256": "099161dc3b003b000e9acf636f6868e2b67a5ec73e439f96e936aea46f4c4aaf"
+      },
+      "junit_totals": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "8",
+        "time": "0.287",
+        "timestamp": "2026-10-07T15:25:33.100241",
+        "hostname": "fenics-ws01"
+      },
+      "supervision": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_1/supervised/summary.json",
+        "bytes": 1971,
+        "sha256": "30f936a1473f23f123559ba853a2c11b25d8ce634e39b41fc78186d482022e6f"
+      },
+      "resource": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          2676152,
+          2676153
+        ],
+        "sampled_process_tree_rss_peak_bytes": 151482368,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139250,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139250,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2069618262016,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2069618262016,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 7,
+        "elapsed_seconds": 2.4422127010766417,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "scope": "pure fixture only",
+          "cpu": 0,
+          "math_threads": 1,
+          "activation": "pure"
+        }
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_1/supervised/worker.log",
+        "bytes": 665,
+        "sha256": "bd3580513eee3d60606c1b7292ff50f5fb50ae7b137d7d610b7bf283c7f7ec2d"
+      }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_2/binding.json",
+        "bytes": 522,
+        "sha256": "6c6997d69bd964e44f0c111c06ab1c1d37ced5fb0114eb6c8199ab422b4e64b1"
+      },
+      "junit": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_2/junit.xml",
+        "bytes": 1309,
+        "sha256": "42d499f5423ad3ba195e0839dfc535c4af82bdbd07163ec4ab4a9689919cf988"
+      },
+      "junit_totals": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "8",
+        "time": "0.284",
+        "timestamp": "2026-10-07T15:26:42.839780",
+        "hostname": "fenics-ws01"
+      },
+      "supervision": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_2/supervised/summary.json",
+        "bytes": 1967,
+        "sha256": "4e1a51586516dd091d99bf8a7661700c1fb8a9653ddd8be5e2569b6c709b0cd3"
+      },
+      "resource": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          2676562,
+          2676563
+        ],
+        "sampled_process_tree_rss_peak_bytes": 151871488,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139250,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139250,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2069605658624,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2069605658624,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 7,
+        "elapsed_seconds": 2.4251960848923773,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "scope": "pure fixture only",
+          "cpu": 0,
+          "math_threads": 1,
+          "activation": "pure"
+        }
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/v30/bootstrap/recovery_checks_2/supervised/worker.log",
+        "bytes": 231,
+        "sha256": "3d637e2fd62212dbe837c435121d03c3b47bb69501451e07d8f709fc5a4585e8"
+      }
+    }
+  ],
+  "real_recovery_physical_stage_started": false,
+  "old_accepted_implementation_qualification_reused": true,
+  "unchanged_eight_file_numerical_training_chain": true,
+  "no_full_pytest_or_ABI_reinstall": true
+}

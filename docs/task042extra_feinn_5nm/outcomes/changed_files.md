@@ -1,3 +1,18 @@
+# 当前V30最终：研究实现、保全修复与负结果交付
+
+新增机制在原M5/p3完整FE中学习连续局部波动方向，随后稳定组合累计函数。其数值核心在src；输入和编排为薄opt-in。原方程残差仍未过门，神经累计映射另有1.72e-10稳定性负结果，完整物理审核未完成；这些代码不提升为生产默认。
+
+| 依赖组 / 审阅顺序 | 文件及目的 | 最终资格与建议 |
+| --- | --- | --- |
+| research-only numerical | src/solvers/neural_wave_moments、subspace、greedy；局部作用/投影/候选分批及各qualification | 全矩/梯度/原作用资格和真实学习已执行；M5求解失败。共享等价优化不算NN增量，留研究支线 |
+| reusable runner/watchdog | src/io/neural_wave_campaign、src/runners/neural_wave_campaign/dependencies/worker，已有scripts薄分派 | 只增加显式V30入口、独立source和串行审核；复数writer/已完成重建复用8项通过，恢复FE被资源门拒绝，不授完整可用物理链 |
+| checker/benchmark | src/postprocessing/neural_wave_audit/frozen_field；8类neural_wave fixture及one-run dat | 小fixture与受影响hash资格分列；独立完整字段审核NOT_RUN，不能只消费producer PASS |
+| compact evidence/docs | Response V30、专题、当前README/summary、test/changed_files、进度和模型总账及records | 报真实学习、原残差、映射失败、未运行、时间/RSS/费用与硬观察额度出口；旧历史不回写 |
+| production numerical/core | 无本轮合格生产算法 | 不合并未通过的神经求解路径、不给生产初始化 |
+| do-not-merge | ignored的U/Q/R、场、全部模型/权重、history、环境、缓存、tmux及旧W1/其他支线材料 | 大数组不进Git；不恢复NN旧模型、不跨支线修改、不merge master |
+
+[逐文件依赖、测试/source和建议顺序](records/selective_merge_manifest_v30.json)、[运行及真实source](records/run_index_v30.json)、[最终数值边界](records/full_numerical_gates_v30.json)。最后数学source为79f363981765876e7020ac09cec326e8ba7e656e，保全修复source为7bd72c7e81a9983addeff4032e9feacde6088a27；文档HEAD分开。以下原开发记录完整保留，旧“进行中”不授权新运行。
+
 # V30追加：实际网络验收与共同成本边界
 
 正式后处理改为消费独立网络点值经原完整矩生成的c；原重建核及八文件训练资格链不变。新增严格零重建小组件/12fixture仅作研究对照，性能多项更差而未启用。V30薄launcher以原唯一deadline规划5400s完整验收/发布预留，受影响计时回归通过，不改普通默认。当前导航、进度和总账更新神经2,563/控制2,160共同节点；旧770列、失败、负成本和UNKNOWN全部保留，继续同一研究批次，不交棒。[原量及source](records/common_cost_node_v30.json)、[检查](records/frozen_field_qualification_v30.json)。

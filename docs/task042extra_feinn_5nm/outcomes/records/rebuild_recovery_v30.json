@@ -1,0 +1,44 @@
+{
+  "schema": "neural-wave.completed-rebuild-recovery.v1",
+  "origin_semantics": "sealed after failure; original write-time file digests NOT_RETAINED",
+  "original_verifier_source_sha": "79f363981765876e7020ac09cec326e8ba7e656e",
+  "original_run_manifest_sha256": "49fd43a03cca417944d579505cdc39d6caf7145dc20a1cf048132e75405ba252",
+  "original_failure_sha256": "fad3c1e1f4700235c059457c434483c2246c92b6758be9352ba897882d9f3547",
+  "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+  "moments_q30_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+  "moments_q60_sha256": "849f5bdebb5767dfdbedb005360196b1fddb1aa45db3bd3a3f121c2d1a6f9a56",
+  "no_new_FE_NN_forward_reference_read_or_matrix_action": true,
+  "monotonic": 1282961.837139255,
+  "records": {
+    "FIXED_WAVE_GREEDY_CONTROL": {
+      "file": "v30_m5_fixed_wave_rebuild.npz",
+      "sha256": "4636e795d755f2c30150a74e5a962597f1137106959d1372850ec3364ca0ea2a",
+      "bytes": 1535204,
+      "mtime_ns": 1791355848231364337,
+      "columns": 2160,
+      "candidate_source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+      "committed_sha256": "227261d8c177a8272bec558acab43f029bf1a73bdc5d84b104b0cdc1b109aa44",
+      "state_sha256": "e8cf91d53cfe75e137d2c63f9bce481d2db2bfb31357f21304f3c78ada36963b",
+      "complete_model_mapping_relative": 1.596430748798739e-11,
+      "coefficient_q30_q60_relative": 5.168545078858821e-13,
+      "original_action_q30_q60_load_relative": "NOT_RUN",
+      "independently_assembled_total_equation": "NOT_RUN",
+      "FE_fields_power_regions_and_FE15_30_drift": "NOT_RUN"
+    },
+    "LEARNED_WAVE_GREEDY": {
+      "file": "v30_m5_learned_wave_rebuild.npz",
+      "sha256": "3aaff9597501d136f5c9817e9695faa753dc47c21266e29b10aac5ec4c961b6a",
+      "bytes": 1535204,
+      "mtime_ns": 1791357570907041739,
+      "columns": 3127,
+      "candidate_source_sha": "79f363981765876e7020ac09cec326e8ba7e656e",
+      "committed_sha256": "57daba8a4388a3f7ee104151679e0e0533ab86303889539a16db4de49d2d1008",
+      "state_sha256": "381a9c5cb6921f537829400cf4d536ed60d1bad4e04436169fe0d4508f206bba",
+      "complete_model_mapping_relative": 1.719858821415671e-10,
+      "coefficient_q30_q60_relative": 1.132689485848676e-11,
+      "original_action_q30_q60_load_relative": "NOT_RUN",
+      "independently_assembled_total_equation": "NOT_RUN",
+      "FE_fields_power_regions_and_FE15_30_drift": "NOT_RUN"
+    }
+  }
+}

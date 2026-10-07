@@ -1,0 +1,1459 @@
+{
+  "scope": "frozen accepted model/metadata; trial omissions explicit",
+  "entries": {
+    "v30_m5_fixed_wave": {
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/result.json",
+        "bytes": 14022,
+        "sha256": "86199ab22bc2d9d6c2978f421323675143342ccaf57a31fb76971e2c602280d9"
+      },
+      "final_state": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/final_state.npz",
+        "bytes": 1058260,
+        "sha256": "e8cf91d53cfe75e137d2c63f9bce481d2db2bfb31357f21304f3c78ada36963b"
+      },
+      "committed": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/basis/committed.json",
+        "bytes": 422558,
+        "sha256": "227261d8c177a8272bec558acab43f029bf1a73bdc5d84b104b0cdc1b109aa44"
+      },
+      "metadata": {
+        "scope": "frozen producer-metadata aggregate; not independent equation/field qualification",
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_fixed_wave/basis_growth.jsonl",
+        "sha256": "53bee2637b01a220a0c3a7bbb15b3b2b03834c3377b069cf99a90ddd4f3794d6",
+        "bytes": 3457354,
+        "counters": {
+          "rows": 2160,
+          "accepted": 2160,
+          "rejected": 0,
+          "neurons": 6784,
+          "direction_training": 0
+        },
+        "accepted_module_widths": {
+          "1": 256,
+          "2": 768,
+          "4": 1024,
+          "8": 112
+        },
+        "accepted_modules_saved_direction_function_calls": 0,
+        "accepted_direction_optimizer_status_counts": {},
+        "real_stored_wave_and_linear_weights": 65376,
+        "redundant_parameter_count_is_not_independent_FE_dimension": true,
+        "moments_all_families_retained": true,
+        "patch_centers_and_supports_continuously_trained": false,
+        "geometric_support_selection": "fixed geometry, residual selection, authorized levels",
+        "finite_saved_metrics": {
+          "full_mapping_relative": {
+            "count": 2160,
+            "nonzero": 2160,
+            "min": 1.2262084968047048e-15,
+            "max": 3.793935122669291e-14,
+            "mean": 2.9609421550213603e-15
+          },
+          "predicted_actual_load_scaled_absolute": {
+            "count": 2160,
+            "nonzero": 2160,
+            "min": 3.9998983505680433e-19,
+            "max": 5.789210103781671e-13,
+            "mean": 3.579685758193824e-14
+          }
+        },
+        "first": {
+          "module": 1,
+          "index": 0,
+          "neurons": 1,
+          "native_relative": 0.9693833610615005,
+          "elapsed_seconds": 72.12693030317314
+        },
+        "last": {
+          "module": 2195,
+          "index": 2159,
+          "neurons": 8,
+          "native_relative": 0.4237611235276062,
+          "elapsed_seconds": 64831.29076574999
+        },
+        "fixed_work_nodes": [
+          {
+            "module": 1,
+            "index": 0,
+            "neurons": 1,
+            "native_relative": 0.9693833610615005,
+            "elapsed_seconds": 72.12693030317314
+          },
+          {
+            "module": 256,
+            "index": 255,
+            "neurons": 1,
+            "native_relative": 0.6434088178138121,
+            "elapsed_seconds": 533.4908205191605
+          },
+          {
+            "module": 512,
+            "index": 511,
+            "neurons": 2,
+            "native_relative": 0.5807700942052427,
+            "elapsed_seconds": 1222.484202309046
+          },
+          {
+            "module": 768,
+            "index": 767,
+            "neurons": 2,
+            "native_relative": 0.547079705263184,
+            "elapsed_seconds": 2341.2406131459866
+          },
+          {
+            "module": 770,
+            "index": 769,
+            "neurons": 2,
+            "native_relative": 0.5468299320079671,
+            "elapsed_seconds": 2353.960024008993
+          },
+          {
+            "module": 1024,
+            "index": 1023,
+            "neurons": 2,
+            "native_relative": 0.520875656465071,
+            "elapsed_seconds": 4005.285457245074
+          },
+          {
+            "module": 1280,
+            "index": 1279,
+            "neurons": 4,
+            "native_relative": 0.4888933850734886,
+            "elapsed_seconds": 10494.007775546983
+          },
+          {
+            "module": 1541,
+            "index": 1535,
+            "neurons": 4,
+            "native_relative": 0.4653915429945581,
+            "elapsed_seconds": 16485.421569571132
+          },
+          {
+            "module": 1806,
+            "index": 1791,
+            "neurons": 4,
+            "native_relative": 0.4489569483912573,
+            "elapsed_seconds": 28544.70179760107
+          },
+          {
+            "module": 2081,
+            "index": 2047,
+            "neurons": 4,
+            "native_relative": 0.4345723901954146,
+            "elapsed_seconds": 46187.233960637124
+          }
+        ],
+        "native_increase_over_1e_12": [],
+        "rejected_and_uncommitted_direction_function_call_totals": "NOT_RETAINED unless separately present in frozen cumulative counters",
+        "reference_used_for_training": false,
+        "any_FE_NN_forward_or_matrix_action_executed_by_this_reader": false
+      },
+      "producer_result": {
+        "status": "COMMON_COST_WORK_NODE_FROZEN_NOT_FINAL",
+        "route": "FIXED_WAVE_GREEDY_CONTROL",
+        "columns": 2160,
+        "modules": 2195,
+        "learned_direction_updates": 0,
+        "degenerate_modules": 0,
+        "audit": {
+          "native_relative": 0.4237611235276062,
+          "augmented_relative": 0.4237611235276062,
+          "original_total_augmented_relative": 0.2007363905457445,
+          "port_absolute": 1.075015294613133e-18,
+          "port_full_rhs_relative": 3.693677493028676e-18,
+          "port_operation_relative": 1.9080592381271006e-17,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 0.11276798099273012,
+          "full_coefficient_norm": 0.1660193282512864,
+          "port_unknown_norm": 0.00047332445820433906,
+          "strict_pass": false
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "global_Maxwell_factor_count": 0,
+        "global_Gram_factor_count": 0,
+        "action_counts": {
+          "A": 490283,
+          "AH": 0,
+          "audit": 2161,
+          "port_solve": 494606
+        },
+        "action_seconds": {
+          "A": 11120.247457563411,
+          "AH": 0.0,
+          "audit": 168.43364651803859,
+          "port_solve": 11.054835833143443
+        },
+        "moment_counts": {
+          "forward": 11815,
+          "vjp": 0,
+          "cells": 117072
+        },
+        "moment_seconds": {
+          "forward": 1062.9392264324706,
+          "vjp": 0.0
+        },
+        "qr_seconds": {
+          "orthogonalize": 1524.7389160073362,
+          "solve": 799.493527607061,
+          "true_residual": 86.15407232753932
+        },
+        "capacity_plan_bytes": 7142899712,
+        "numerical_gate": "PENDING_INDEPENDENT_FULL_FIELD_CHECKER",
+        "exact_local_input_support_reuse": true,
+        "local_numeric_cache_bytes": 25280208,
+        "local_action_costs": [
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.004037128062918782,
+              "columns": 5.720022207824513,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0021735208574682474,
+              "columns": 2.7799487598240376,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0024013749789446592,
+              "columns": 2.982314377091825,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 294,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0024204240180552006,
+              "columns": 5.2048928833100945,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 126,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0019698129035532475,
+              "columns": 1.9445843046996742,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 210,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0015574109274894,
+              "columns": 1.9912161584943533,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 126,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.003104947041720152,
+              "columns": 3.549336747266352,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 84,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0024366239085793495,
+              "columns": 2.2138334959745407,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 588,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0016121629159897566,
+              "columns": 6.636796316131949,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 420,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0016537609044462442,
+              "columns": 5.885084385285154,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 504,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001465687993913889,
+              "columns": 4.910297141876072,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 336,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0014152501244097948,
+              "columns": 3.076164637459442,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 378,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0013914040755480528,
+              "columns": 3.2624685862101614,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0013301009312272072,
+              "columns": 1.1030478079337627,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 294,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0013572738971561193,
+              "columns": 3.0177888243924826,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 504,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0013337309937924147,
+              "columns": 4.129389665555209,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 420,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001647651195526123,
+              "columns": 4.7802456493955106,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 378,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0016154430340975523,
+              "columns": 5.122474773554131,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 42,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0045895439106971025,
+              "columns": 0.31749921035952866,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 33852,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001106492942199111,
+              "columns": 138.37778713484295,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 11928,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001126183895394206,
+              "columns": 51.861623080447316,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 11928,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.004139804048463702,
+              "columns": 71.36754711321555,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 27342,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0009972199331969023,
+              "columns": 154.7635201108642,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 420,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010268280748277903,
+              "columns": 1.0737414432223886,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 15372,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010114118922501802,
+              "columns": 92.10577339679003,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 2478,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010473569855093956,
+              "columns": 11.427871221210808,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 27342,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010503639932721853,
+              "columns": 142.65627449308522,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 336,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001285838894546032,
+              "columns": 1.4090643441304564,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 546,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0009692709427326918,
+              "columns": 3.3140636559110135,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 22512,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010041140485554934,
+              "columns": 81.58870777278207,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 33264,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0014873340260237455,
+              "columns": 163.57264195173047,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 1344,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010160941164940596,
+              "columns": 4.6586078512482345,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 16380,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0009173639118671417,
+              "columns": 98.1039319736883,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 20832,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0011600458528846502,
+              "columns": 94.33964480482973,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 11256,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010763290338218212,
+              "columns": 48.05065095378086,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 3696,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001033723121508956,
+              "columns": 20.43751955567859,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 1092,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001046756049618125,
+              "columns": 4.491347439819947,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 2772,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.000974105903878808,
+              "columns": 9.052497402997687,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 6300,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0011138569097965956,
+              "columns": 31.0230754960794,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 3108,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0011018740478903055,
+              "columns": 16.18294206284918,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 13104,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0012093470431864262,
+              "columns": 64.77530110022053,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 840,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0009531918913125992,
+              "columns": 2.865584736689925,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 84,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0009890589863061905,
+              "columns": 0.29987406404688954,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 11592,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0011380231007933617,
+              "columns": 64.2138112357352,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0012015148531645536,
+              "columns": 0.656971255550161,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 3360,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.004226048942655325,
+              "columns": 21.937478702981025,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0010871740523725748,
+              "columns": 0.5604666089639068,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0011130759958177805,
+              "columns": 0.6375988512299955,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0008761989884078503,
+              "columns": 0.586335556814447,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 672,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0009392141364514828,
+              "columns": 3.3025125404819846,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 672,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.001445963978767395,
+              "columns": 4.317132470430806,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 504,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.0023883439134806395,
+              "columns": 2.454783661989495,
+              "adjoint": 0.0
+            }
+          },
+          {
+            "counts": {
+              "columns": 168,
+              "adjoint": 0
+            },
+            "seconds": {
+              "build": 0.004233691142871976,
+              "columns": 1.4040437345393002,
+              "adjoint": 0.0
+            }
+          }
+        ],
+        "inherited_primitive_counters_retained": true,
+        "exact_two_pass_projection_reuse": true,
+        "projection_reuse_costs": {
+          "build_s": 765.1344921167474,
+          "project_s": 5221.743719251361,
+          "calls": 4390,
+          "stable_fallbacks": 7425
+        },
+        "bounded_candidate_screening_widths": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+        "input_sha256": "63645d60719ea0c47416e2b9fe4ce354f9db199f2b9bdc08309038a3ab41e7d0",
+        "design_sha256": "df336d93f6f7b2ab2cb600fe70f224b1e8e056ac5552c589a0391ff5a4a11b37",
+        "worker_elapsed_seconds": 64767.27489839005,
+        "route_elapsed_seconds": 64831.65755440015,
+        "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "full_size_0p7_target_qualified": false
+      },
+      "committed_history_does_not_include_rejected_trials": true,
+      "uncommitted_or_rejected_modules_derived_from_final_producer_counts": 35,
+      "interrupted_last_trial_is_not_an_accepted_column": false,
+      "scientific_qualification_is_independent_checker_only": true
+    },
+    "v30_m5_learned_wave": {
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/result.json",
+        "bytes": 9659,
+        "sha256": "9d672516b2169e5711b73d572f4291140acc284268c26e2ad1897bc490141fb9"
+      },
+      "final_state": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/final_state.npz",
+        "bytes": 1073732,
+        "sha256": "381a9c5cb6921f537829400cf4d536ed60d1bad4e04436169fe0d4508f206bba"
+      },
+      "committed": {
+        "path": "benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis/committed.json",
+        "bytes": 611278,
+        "sha256": "57daba8a4388a3f7ee104151679e0e0533ab86303889539a16db4de49d2d1008"
+      },
+      "metadata": {
+        "scope": "frozen producer-metadata aggregate; not independent equation/field qualification",
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v30/v30_m5_learned_wave/basis_growth.jsonl",
+        "sha256": "72f1d16cd4ff3000956b810280ef5b3f70d199a2db7c567ffa817d3e8381c5e4",
+        "bytes": 8079385,
+        "counters": {
+          "rows": 3127,
+          "accepted": 3127,
+          "rejected": 0,
+          "neurons": 14520,
+          "direction_training": 3127
+        },
+        "accepted_module_widths": {
+          "1": 256,
+          "2": 768,
+          "4": 1024,
+          "8": 1079
+        },
+        "accepted_modules_saved_direction_function_calls": 52286,
+        "accepted_direction_optimizer_status_counts": {
+          "0": 261,
+          "1": 2866
+        },
+        "real_stored_wave_and_linear_weights": 136934,
+        "redundant_parameter_count_is_not_independent_FE_dimension": true,
+        "moments_all_families_retained": true,
+        "patch_centers_and_supports_continuously_trained": false,
+        "geometric_support_selection": "fixed geometry, residual selection, authorized levels",
+        "finite_saved_metrics": {
+          "q_update_norm": {
+            "count": 3127,
+            "nonzero": 3127,
+            "min": 1.7294635184325875e-07,
+            "max": 20.5144685455484,
+            "mean": 3.0944904828429705
+          },
+          "amplitude_update_norm": {
+            "count": 3127,
+            "nonzero": 3127,
+            "min": 1.9329857000480515e-10,
+            "max": 42627.50571318032,
+            "mean": 13.68585046648105
+          },
+          "initial_direction_gradient_norm": {
+            "count": 3127,
+            "nonzero": 3127,
+            "min": 1.7294635182765825e-07,
+            "max": 0.1500436502638951,
+            "mean": 0.00033304916774422777
+          },
+          "initial_amplitude_gradient_norm": {
+            "count": 3127,
+            "nonzero": 3127,
+            "min": 0.04228715187565907,
+            "max": 2774248.6751205637,
+            "mean": 9678.259361068966
+          },
+          "full_mapping_relative": {
+            "count": 3127,
+            "nonzero": 3127,
+            "min": 1.2612508610607262e-15,
+            "max": 6.80507736514648e-14,
+            "mean": 3.260487426829651e-15
+          },
+          "predicted_actual_load_scaled_absolute": {
+            "count": 3127,
+            "nonzero": 3127,
+            "min": 9.599756041363305e-19,
+            "max": 3.9275998253907377e-13,
+            "mean": 3.795876775657813e-15
+          }
+        },
+        "first": {
+          "module": 1,
+          "index": 0,
+          "neurons": 1,
+          "native_relative": 0.9693093947245692,
+          "elapsed_seconds": 88.28809936717153
+        },
+        "last": {
+          "module": 3127,
+          "index": 3126,
+          "neurons": 8,
+          "native_relative": 0.33088375619287214,
+          "elapsed_seconds": 160750.7579985771
+        },
+        "fixed_work_nodes": [
+          {
+            "module": 1,
+            "index": 0,
+            "neurons": 1,
+            "native_relative": 0.9693093947245692,
+            "elapsed_seconds": 88.28809936717153
+          },
+          {
+            "module": 256,
+            "index": 255,
+            "neurons": 1,
+            "native_relative": 0.5535684168680776,
+            "elapsed_seconds": 3016.7290350450203
+          },
+          {
+            "module": 512,
+            "index": 511,
+            "neurons": 2,
+            "native_relative": 0.4904158713227417,
+            "elapsed_seconds": 8406.784443290206
+          },
+          {
+            "module": 768,
+            "index": 767,
+            "neurons": 2,
+            "native_relative": 0.4571664550183084,
+            "elapsed_seconds": 12284.811470417073
+          },
+          {
+            "module": 770,
+            "index": 769,
+            "neurons": 2,
+            "native_relative": 0.45703607130804935,
+            "elapsed_seconds": 12316.569419834064
+          },
+          {
+            "module": 1024,
+            "index": 1023,
+            "neurons": 2,
+            "native_relative": 0.4318515036685369,
+            "elapsed_seconds": 16683.13322857418
+          },
+          {
+            "module": 1280,
+            "index": 1279,
+            "neurons": 4,
+            "native_relative": 0.40273987718587256,
+            "elapsed_seconds": 21733.01828639605
+          },
+          {
+            "module": 1536,
+            "index": 1535,
+            "neurons": 4,
+            "native_relative": 0.38562266704449394,
+            "elapsed_seconds": 28741.823314210167
+          },
+          {
+            "module": 1792,
+            "index": 1791,
+            "neurons": 4,
+            "native_relative": 0.37491302292760387,
+            "elapsed_seconds": 35313.03207923402
+          },
+          {
+            "module": 2048,
+            "index": 2047,
+            "neurons": 4,
+            "native_relative": 0.36629631192134304,
+            "elapsed_seconds": 42758.951055585174
+          },
+          {
+            "module": 2304,
+            "index": 2303,
+            "neurons": 8,
+            "native_relative": 0.35179014970671635,
+            "elapsed_seconds": 53022.13974785013
+          },
+          {
+            "module": 2560,
+            "index": 2559,
+            "neurons": 8,
+            "native_relative": 0.3426942579512257,
+            "elapsed_seconds": 64680.43699487811
+          },
+          {
+            "module": 2563,
+            "index": 2562,
+            "neurons": 8,
+            "native_relative": 0.34267870798566263,
+            "elapsed_seconds": 64849.887804145226
+          },
+          {
+            "module": 2816,
+            "index": 2815,
+            "neurons": 8,
+            "native_relative": 0.3363820112641189,
+            "elapsed_seconds": 143962.99122179602
+          },
+          {
+            "module": 3072,
+            "index": 3071,
+            "neurons": 8,
+            "native_relative": 0.3314843557163153,
+            "elapsed_seconds": 157704.2726302282
+          }
+        ],
+        "native_increase_over_1e_12": [],
+        "rejected_and_uncommitted_direction_function_call_totals": "NOT_RETAINED unless separately present in frozen cumulative counters",
+        "reference_used_for_training": false,
+        "any_FE_NN_forward_or_matrix_action_executed_by_this_reader": false
+      },
+      "producer_result": {
+        "status": "MODULE_INTERRUPTED_AT_SAVE_RESERVE",
+        "route": "LEARNED_WAVE_GREEDY",
+        "columns": 3127,
+        "modules": 3128,
+        "learned_direction_updates": 3127,
+        "degenerate_modules": 0,
+        "audit": {
+          "native_relative": 0.33088375619287214,
+          "augmented_relative": 0.33088375619287214,
+          "original_total_augmented_relative": 0.15674021806304106,
+          "port_absolute": 1.9738833881103996e-18,
+          "port_full_rhs_relative": 6.782125501898417e-18,
+          "port_operation_relative": 6.387473891952872e-17,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 0.1046462691762016,
+          "full_coefficient_norm": 0.1626932429837254,
+          "port_unknown_norm": 0.0002534892461929053,
+          "strict_pass": false
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "global_Maxwell_factor_count": 0,
+        "global_Gram_factor_count": 0,
+        "action_counts": {
+          "A": 1360460,
+          "AH": 49638,
+          "audit": 2762,
+          "port_solve": 1415626
+        },
+        "action_seconds": {
+          "A": 5536.990399858449,
+          "AH": 333.2326119549107,
+          "audit": 164.67541148746386,
+          "port_solve": 10.326350194402039
+        },
+        "moment_counts": {
+          "forward": 63001,
+          "vjp": 49638,
+          "cells": 504008
+        },
+        "moment_seconds": {
+          "forward": 2611.3746648954693,
+          "vjp": 1847.1779494287912
+        },
+        "qr_seconds": {
+          "orthogonalize": 1816.3790080228355,
+          "solve": 1092.798490773188,
+          "true_residual": 83.94924747943878
+        },
+        "capacity_plan_bytes": 7142899712,
+        "numerical_gate": "PENDING_INDEPENDENT_FULL_FIELD_CHECKER",
+        "exact_local_input_support_reuse": true,
+        "local_numeric_cache_bytes": 5817832,
+        "local_action_costs": [
+          {
+            "counts": {
+              "columns": 47159,
+              "adjoint": 948
+            },
+            "seconds": {
+              "build": 0.0013142500538378954,
+              "columns": 236.26355537376367,
+              "adjoint": 8.01006346126087
+            }
+          },
+          {
+            "counts": {
+              "columns": 54363,
+              "adjoint": 1205
+            },
+            "seconds": {
+              "build": 0.0010583139955997467,
+              "columns": 224.80071391444653,
+              "adjoint": 8.691616665804759
+            }
+          },
+          {
+            "counts": {
+              "columns": 2235,
+              "adjoint": 51
+            },
+            "seconds": {
+              "build": 0.0012146709486842155,
+              "columns": 9.81688987230882,
+              "adjoint": 0.43644670327194035
+            }
+          },
+          {
+            "counts": {
+              "columns": 10862,
+              "adjoint": 257
+            },
+            "seconds": {
+              "build": 0.0013702618889510632,
+              "columns": 42.98847830831073,
+              "adjoint": 1.9205307643860579
+            }
+          },
+          {
+            "counts": {
+              "columns": 27131,
+              "adjoint": 631
+            },
+            "seconds": {
+              "build": 0.001056858105584979,
+              "columns": 87.39966890146025,
+              "adjoint": 3.8861180713865906
+            }
+          },
+          {
+            "counts": {
+              "columns": 42686,
+              "adjoint": 796
+            },
+            "seconds": {
+              "build": 0.001104264985769987,
+              "columns": 217.65827584383078,
+              "adjoint": 6.520151323406026
+            }
+          },
+          {
+            "counts": {
+              "columns": 25017,
+              "adjoint": 579
+            },
+            "seconds": {
+              "build": 0.0014236860442906618,
+              "columns": 121.91903554857709,
+              "adjoint": 4.913055066950619
+            }
+          },
+          {
+            "counts": {
+              "columns": 44722,
+              "adjoint": 1048
+            },
+            "seconds": {
+              "build": 0.0010885479860007763,
+              "columns": 141.24177885311656,
+              "adjoint": 6.60687760845758
+            }
+          },
+          {
+            "counts": {
+              "columns": 47222,
+              "adjoint": 1097
+            },
+            "seconds": {
+              "build": 0.0011324649676680565,
+              "columns": 154.74854003544897,
+              "adjoint": 6.7317567663267255
+            }
+          },
+          {
+            "counts": {
+              "columns": 1562,
+              "adjoint": 37
+            },
+            "seconds": {
+              "build": 0.0011773810256272554,
+              "columns": 7.97284526610747,
+              "adjoint": 0.28643949376419187
+            }
+          },
+          {
+            "counts": {
+              "columns": 7642,
+              "adjoint": 178
+            },
+            "seconds": {
+              "build": 0.0010472920257598162,
+              "columns": 25.34107467578724,
+              "adjoint": 1.126535282470286
+            }
+          },
+          {
+            "counts": {
+              "columns": 8483,
+              "adjoint": 199
+            },
+            "seconds": {
+              "build": 0.0011982480064034462,
+              "columns": 41.01743242354132,
+              "adjoint": 1.6960907643660903
+            }
+          },
+          {
+            "counts": {
+              "columns": 10213,
+              "adjoint": 243
+            },
+            "seconds": {
+              "build": 0.0011765090748667717,
+              "columns": 50.70726667623967,
+              "adjoint": 2.0474953141529113
+            }
+          },
+          {
+            "counts": {
+              "columns": 2836,
+              "adjoint": 62
+            },
+            "seconds": {
+              "build": 0.001152584096416831,
+              "columns": 11.921494034584612,
+              "adjoint": 0.4710338832810521
+            }
+          },
+          {
+            "counts": {
+              "columns": 22277,
+              "adjoint": 521
+            },
+            "seconds": {
+              "build": 0.00117970397695899,
+              "columns": 118.86455939384177,
+              "adjoint": 4.377861602930352
+            }
+          },
+          {
+            "counts": {
+              "columns": 1466,
+              "adjoint": 33
+            },
+            "seconds": {
+              "build": 0.0012166760861873627,
+              "columns": 4.904726846143603,
+              "adjoint": 0.20776430261321366
+            }
+          },
+          {
+            "counts": {
+              "columns": 5719,
+              "adjoint": 140
+            },
+            "seconds": {
+              "build": 0.001018584007397294,
+              "columns": 17.61734020197764,
+              "adjoint": 0.8255235005635768
+            }
+          },
+          {
+            "counts": {
+              "columns": 22447,
+              "adjoint": 500
+            },
+            "seconds": {
+              "build": 0.001155313802883029,
+              "columns": 92.03225479624234,
+              "adjoint": 3.537321627372876
+            }
+          },
+          {
+            "counts": {
+              "columns": 2331,
+              "adjoint": 55
+            },
+            "seconds": {
+              "build": 0.0011278309393674135,
+              "columns": 7.854544324334711,
+              "adjoint": 0.3649627778213471
+            }
+          },
+          {
+            "counts": {
+              "columns": 10814,
+              "adjoint": 254
+            },
+            "seconds": {
+              "build": 0.004570577992126346,
+              "columns": 54.94923201599158,
+              "adjoint": 2.0666141600813717
+            }
+          },
+          {
+            "counts": {
+              "columns": 793,
+              "adjoint": 19
+            },
+            "seconds": {
+              "build": 0.0012333160266280174,
+              "columns": 2.2604362783022225,
+              "adjoint": 0.08946475200355053
+            }
+          },
+          {
+            "counts": {
+              "columns": 1442,
+              "adjoint": 32
+            },
+            "seconds": {
+              "build": 0.001075522042810917,
+              "columns": 6.4591064339037985,
+              "adjoint": 0.25609993538819253
+            }
+          },
+          {
+            "counts": {
+              "columns": 769,
+              "adjoint": 18
+            },
+            "seconds": {
+              "build": 0.0012868461199104786,
+              "columns": 3.5912300595082343,
+              "adjoint": 0.12674385332502425
+            }
+          },
+          {
+            "counts": {
+              "columns": 2187,
+              "adjoint": 49
+            },
+            "seconds": {
+              "build": 0.0012526549398899078,
+              "columns": 9.64205458573997,
+              "adjoint": 0.3385632438585162
+            }
+          },
+          {
+            "counts": {
+              "columns": 817,
+              "adjoint": 20
+            },
+            "seconds": {
+              "build": 0.0012579839676618576,
+              "columns": 3.0056595006026328,
+              "adjoint": 0.12799479393288493
+            }
+          },
+          {
+            "counts": {
+              "columns": 817,
+              "adjoint": 20
+            },
+            "seconds": {
+              "build": 0.0010933228768408298,
+              "columns": 3.7602952343877405,
+              "adjoint": 0.12359968945384026
+            }
+          },
+          {
+            "counts": {
+              "columns": 745,
+              "adjoint": 17
+            },
+            "seconds": {
+              "build": 0.0013327081687748432,
+              "columns": 3.2149530267342925,
+              "adjoint": 0.11642598430626094
+            }
+          },
+          {
+            "counts": {
+              "columns": 7382,
+              "adjoint": 111
+            },
+            "seconds": {
+              "build": 0.0010631210170686245,
+              "columns": 31.024643630720675,
+              "adjoint": 0.8403122797608376
+            }
+          },
+          {
+            "counts": {
+              "columns": 673,
+              "adjoint": 14
+            },
+            "seconds": {
+              "build": 0.0011166241019964218,
+              "columns": 2.954300669254735,
+              "adjoint": 0.11133180209435523
+            }
+          },
+          {
+            "counts": {
+              "columns": 817,
+              "adjoint": 20
+            },
+            "seconds": {
+              "build": 0.0011249729432165623,
+              "columns": 2.3146681310608983,
+              "adjoint": 0.14703124179504812
+            }
+          }
+        ],
+        "inherited_primitive_counters_retained": false,
+        "exact_two_pass_projection_reuse": true,
+        "projection_reuse_costs": {
+          "build_s": 1045.3766444860958,
+          "project_s": 61054.77608286566,
+          "calls": 104627,
+          "stable_fallbacks": 405
+        },
+        "bounded_candidate_screening_widths": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "source_sha": "79f363981765876e7020ac09cec326e8ba7e656e",
+        "input_sha256": "79e334a6d6a47576aae58bd4c7ea9341a54f27c9031e7abc7c40b4e3cb0c7e8d",
+        "design_sha256": "df336d93f6f7b2ab2cb600fe70f224b1e8e056ac5552c589a0391ff5a4a11b37",
+        "worker_elapsed_seconds": 29014.605922625866,
+        "route_elapsed_seconds": 160769.950257126,
+        "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "full_size_0p7_target_qualified": false
+      },
+      "committed_history_does_not_include_rejected_trials": true,
+      "uncommitted_or_rejected_modules_derived_from_final_producer_counts": 1,
+      "interrupted_last_trial_is_not_an_accepted_column": true,
+      "scientific_qualification_is_independent_checker_only": true
+    }
+  },
+  "reference_used_for_training": false
+}

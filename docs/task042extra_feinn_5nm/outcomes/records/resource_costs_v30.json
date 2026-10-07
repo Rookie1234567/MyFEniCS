@@ -1,0 +1,107 @@
+{
+  "scope": "single conservative calendar covers all new preparation/repairs/waits/failures/learning/checking/publishing",
+  "batch_window": {
+    "schema_version": 1,
+    "authority": "review_report_v29.md",
+    "budget_s": 172800,
+    "origin_monotonic": 1113200.0,
+    "deadline_monotonic": 1286000.0,
+    "origin_semantics": "conservative bound including initial read-only preparation; prior to observed 1113404.68 uptime",
+    "final_reserve_s": 1800,
+    "single_window": true
+  },
+  "snapshot_monotonic": 1283304.677440094,
+  "campaign_calendar_seconds_at_snapshot": 170104.67744009406,
+  "campaign_remaining_seconds_at_snapshot": 2695.322559905937,
+  "final_reserve_seconds": 1800,
+  "exact_total_window_exhausted": false,
+  "hard_failure_exit": "fresh numerical supervision cannot fit the remaining foreground-stability allowance",
+  "observation_hard_limit_seconds": 1200,
+  "observation_consumed_seconds": 1158.0882629137486,
+  "observation_remaining_seconds": 41.91173708625138,
+  "fresh_root_PSI_required_seconds": 60,
+  "launch_observation_reserve_seconds": 64,
+  "actual_recovery_refusal": {
+    "file": {
+      "path": "tmp/task42extra/v30/durable/v30_m5_verify_recovery_attempt1/run_summary.json",
+      "bytes": 640,
+      "sha256": "e4191461a28c827fcaf415c589755d61663c966a2e06854dbb3de95843e3379f"
+    },
+    "record": {
+      "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+      "reason": "RuntimeError('V30_RESOURCE_OBSERVATION_BUDGET_REACHED')",
+      "source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+      "worker_started": false,
+      "descendants_cleared": true,
+      "evidence_scope": "outer observation before launch_tmux; no terminal/worker created",
+      "launch_to_summary_seconds": 0.4098111828789115,
+      "launch_to_summary_semantics": "inherited allocation span including prior runs and pauses; not additive attempt cost",
+      "inherited_route_allocation_span_seconds": 0.4098111828789115,
+      "actual_attempt_elapsed_seconds": 0.4098111828789115
+    }
+  },
+  "actual_learned_columns": 3127,
+  "authorized_cap": 4096,
+  "full_column_capacity_exhausted": false,
+  "resource_thresholds_not_relaxed": true,
+  "no_physical_memory_shortage_claimed": true,
+  "numerical_sampled_own_swap_peak_bytes": 0,
+  "OOC_bytes": 0,
+  "observer_and_tool_metadata_multiroot_simultaneous_peak": "NOT_RETAINED",
+  "hard_RSS_semantics": "watchdog sampled process-tree stop, not a continuous kernel/cgroup memory certificate",
+  "parent_child_times_and_RSS_peaks_must_not_be_summed": true,
+  "per_run_ledger": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v30.json",
+    "bytes": 49958,
+    "sha256": "816e3425286cc497c6ef77dfaf26c8a4afab0d7070a55654f769fec26a432f1e"
+  },
+  "project_exact_historical_cumulative_seconds": "UNKNOWN",
+  "old_lost_3284_seconds_and_all_historical_failure_and_replay_costs_retained": true,
+  "old_global_swap_scope_string": "WSL-global is a legacy string; host is native Linux; no task attribution from that string",
+  "final_publication_tail": "tracked in ignored delivery_receipt after exact push/fetch/cleanup",
+  "neighbor_affinities_environments_locks_watchdogs_not_modified": true,
+  "own_admission_affinity_changes_recorded": true,
+  "max_of_sampled_owned_numerical_tree_phase_peaks_bytes": 4395831296,
+  "artifact_snapshot": {
+    "logical_bytes": 11214618652,
+    "limit_bytes": 21474836480,
+    "scope": "du -sb own complete V30 artifact root, retained historical arrays included; not simultaneous RSS",
+    "timing": "final snapshot; du -sb output retained in task tool record",
+    "measured_monotonic": 1284068.38
+  },
+  "disk_available_snapshot_bytes": 3253769207808,
+  "disk_available_snapshot_scope": "final preparation snapshot, not a new startup certificate",
+  "observation_scope_of_above_values": "at actual numerical recovery rejection; later finite pure delivery observation charged separately",
+  "resource_observation_seconds_at_this_snapshot": 1161.3564897177275,
+  "post_stop_pure_delivery_checks": [
+    {
+      "name": "final_metadata_1",
+      "supervision": {
+        "path": "tmp/task42extra/v30/bootstrap/final_metadata_1/supervised/summary.json",
+        "bytes": 2004,
+        "sha256": "9762717963cac4f891529dd448a361ce2110e7f99660bd5c0c6950ca4d78c753"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.8460596918594092,
+      "simultaneous_sampled_tree_rss_peak_bytes": 66527232,
+      "own_swap_bytes": 0,
+      "cleared": true,
+      "scope": "finite light text/record/vector norms only; no new numerical admission"
+    },
+    {
+      "name": "final_delivery_checks_1",
+      "supervision": {
+        "path": "tmp/task42extra/v30/bootstrap/final_delivery_checks_1/supervised/summary.json",
+        "bytes": 2002,
+        "sha256": "b7e6c671f1f28fb7fe8658ee4da4fae13a775ec19022b5a092a883cc4fba8c86"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.051331603899598,
+      "simultaneous_sampled_tree_rss_peak_bytes": 94715904,
+      "own_swap_bytes": 0,
+      "cleared": true,
+      "scope": "finite light text/record/vector norms only; no new numerical admission"
+    }
+  ],
+  "snapshot_monotonic_latest_light_record": 1284153.870960484
+}

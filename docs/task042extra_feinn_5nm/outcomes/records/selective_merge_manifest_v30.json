@@ -1,0 +1,201 @@
+{
+  "authority": "8d617d4d206b08f38279320b67188db1b8ccd301",
+  "frozen_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "scope": "proposed review dependency groups only; no merge or production qualification",
+  "qualification": {
+    "implementation_source": "96d9618c4d14177d58e7a4ea39008e8744e2a944",
+    "actual_learned_final_source": "79f363981765876e7020ac09cec326e8ba7e656e",
+    "actual_control_source": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+    "repair_source": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+    "implementation_records": [
+      "implementation_qualification_v30.json",
+      "local_action_qualification_v30.json",
+      "projection_qualification_v30.json",
+      "screening_qualification_v30.json",
+      "recovery_qualification_v30.json"
+    ],
+    "fresh_PDE_evidence": "actual native operator training and independent full moment rebuilds; full FE physics NOT_RUN",
+    "numerical_gate": "NUMERICAL_GATE_NOT_REACHED",
+    "neural_gain": false
+  },
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "dependencies": [],
+      "numerical_behavior_changes": false,
+      "recommendation": "NONE: no qualified production numerical algorithm"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/launch_task42extra_durable.py",
+        "scripts/run_case.py",
+        "src/io/neural_wave_campaign.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/runners/neural_wave_dependencies.py",
+        "src/runners/neural_wave_worker.py"
+      ],
+      "dependencies": [
+        "existing durable launcher/activation/watchdog",
+        "explicit opt-in stage"
+      ],
+      "numerical_behavior_changes": false,
+      "recommendation": "review reusable resource/logging pieces separately; recovered FE physical execution NOT_RUN",
+      "tests": [
+        "src/test/test_neural_wave_dependencies.py",
+        "src/test/test_neural_wave_recovery.py"
+      ]
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/postprocessing/neural_wave_audit.py",
+        "src/postprocessing/neural_wave_frozen_field.py",
+        "src/test/test_neural_wave.py",
+        "src/test/test_neural_wave_audit.py",
+        "src/test/test_neural_wave_dependencies.py",
+        "src/test/test_neural_wave_frozen_field.py",
+        "src/test/test_neural_wave_local_action.py",
+        "src/test/test_neural_wave_projection.py",
+        "src/test/test_neural_wave_recovery.py",
+        "src/test/test_neural_wave_screening.py"
+      ],
+      "dependencies": [
+        "original model/reference only after candidate freeze",
+        "sealed raw fields"
+      ],
+      "numerical_behavior_changes": false,
+      "recommendation": "fixtures passed; do not claim completed independent field/power gates",
+      "tests": [
+        "src/test/test_neural_wave_audit.py",
+        "src/test/test_neural_wave_frozen_field.py"
+      ]
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042extra_feinn_5nm/README.md",
+        "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+        "docs/task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/analytic_and_moment_cost_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/basis_growth_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/common_cost_node_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/cost_comparison_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/dependency_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/design_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/engineering_pause_2_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/engineering_pause_3_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/engineering_pause_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/frozen_field_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/implementation_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/learning_milestone_256_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/local_action_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/local_delivery_checks_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/projection_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/projection_targeted_tests_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/rebuild_recovery_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/recovery_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/render_check_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/run_index_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/saved_vector_delivery_check_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/screening_qualification_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/screening_targeted_tests_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/support_reuse_targeted_tests_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/training_v30.json",
+        "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "docs/task042extra_feinn_5nm/response_v30.md"
+      ],
+      "dependencies": [
+        "ignored immutable raw hashes",
+        "explicit actual source SHA"
+      ],
+      "numerical_behavior_changes": false,
+      "recommendation": "review evidence before code promotion; preserve negative, NOT_RUN and UNKNOWN",
+      "tests": [
+        "records/local_delivery_checks_v30.json"
+      ],
+      "suggested_order": 1
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042extra_feinn_5nm/design_v30.json",
+        "input/task042extra_feinn_5nm/v30_m5_fixed_wave.dat",
+        "input/task042extra_feinn_5nm/v30_m5_learned_wave.dat",
+        "input/task042extra_feinn_5nm/v30_m5_saved_audit.dat",
+        "input/task042extra_feinn_5nm/v30_m5_saved_audit_final.dat",
+        "input/task042extra_feinn_5nm/v30_m5_saved_audit_recovery.dat",
+        "input/task042extra_feinn_5nm/v30_m5_verify.dat",
+        "input/task042extra_feinn_5nm/v30_m5_verify_final.dat",
+        "input/task042extra_feinn_5nm/v30_m5_verify_recovery.dat",
+        "input/task042extra_feinn_5nm/v30_wave_calibration_0p7nm.dat",
+        "input/task042extra_feinn_5nm/v30_wave_calibration_5nm.dat",
+        "input/task042extra_feinn_5nm/v30_wave_checks.dat",
+        "input/task042extra_feinn_5nm/v30_wave_fast_checks.dat",
+        "input/task042extra_feinn_5nm/v30_wave_local_action_checks.dat",
+        "input/task042extra_feinn_5nm/v30_wave_projection_checks.dat",
+        "input/task042extra_feinn_5nm/v30_wave_screening_checks.dat",
+        "src/solvers/feinn_reference.py",
+        "src/solvers/neural_wave_factorized.py",
+        "src/solvers/neural_wave_greedy.py",
+        "src/solvers/neural_wave_local_action.py",
+        "src/solvers/neural_wave_local_qualification.py",
+        "src/solvers/neural_wave_moments.py",
+        "src/solvers/neural_wave_projection.py",
+        "src/solvers/neural_wave_projection_qualification.py",
+        "src/solvers/neural_wave_qualification.py",
+        "src/solvers/neural_wave_reconstruction.py",
+        "src/solvers/neural_wave_screening.py",
+        "src/solvers/neural_wave_screening_qualification.py",
+        "src/solvers/neural_wave_subspace.py"
+      ],
+      "dependencies": [
+        "complete original native/moments/MPC identities",
+        "opt-in runner",
+        "qualification/checker"
+      ],
+      "numerical_behavior_changes": true,
+      "recommendation": "retain research-only; actual M5 native fails and cumulative model map fails",
+      "tests": [
+        "src/test/test_neural_wave.py",
+        "src/test/test_neural_wave_local_action.py",
+        "src/test/test_neural_wave_projection.py",
+        "src/test/test_neural_wave_screening.py"
+      ],
+      "fresh_PDE_evidence": "see run_index_v30.json and full_numerical_gates_v30.json"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [],
+      "dependencies": [],
+      "numerical_behavior_changes": false,
+      "paths": [
+        "benchmarks/artifacts/task42extra/v30",
+        "tmp/task42extra/v30",
+        ".venv",
+        ".venv-ml",
+        "old supervised models",
+        "other branch task materials"
+      ],
+      "recommendation": "do not merge arrays/checkpoints/environments or unqualified initialization"
+    }
+  ],
+  "suggested_review_order": [
+    "compact evidence/docs",
+    "checker/benchmark",
+    "reusable runner/watchdog",
+    "research-only",
+    "production numerical/core (none)"
+  ]
+}

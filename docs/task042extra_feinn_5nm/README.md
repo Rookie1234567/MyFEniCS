@@ -1,3 +1,11 @@
+# 当前V30最终：本支只做神经，数值门未达到
+
+按[Review V29](review_report_v29.md)实际完成新局部波动方向学习及同能力固定控制；神经3,127列/14,520神经元，native/增广0.3308837562，控制0.4237611235，均高于1e-6。没有NN净资源收益或生产初值。[Response V30](response_v30.md)、[专题](outcomes/neural_wave_galerkin_v30.md)、[全部Gate/未运行项](outcomes/records/full_numerical_gates_v30.json)、[实际source和费用](outcomes/records/run_index_v30.json)。
+
+四次独立完整矩重建已保存；神经累计模型↔producer相对差1.71986e-10高于1e-10。FE日志复数错误在同批修好，8项pure测试/Ruff/compile通过；正式恢复却因剩余资源观察41.91s不足新的60s PSI窗口在worker前拒绝。全场/通道/功率为NOT_RUN，不能以测试或残差下降代替。条件0.7nm三维pilot未触发；本批收口暂停，不续做W0/W1、全口面或主线接入，不自动训练第二窗。
+
+原尺寸50×25×140nm/λ0.7完整3D FE、decimal2e12B、ownswap/OOC0、172800s完整流程及原精度目标仍未达成。M3600较好/Mfinal退化、D0成本否决/D1未运行、全部负结果/UNKNOWN/费用保留。以下旧导航是开发历史，不授予新运行。
+
 # 当前 V30：本支只做神经求解研究
 
 [Review V29](review_report_v29.md)授权局部复指数神经元和累计神经子空间。两条路线已实际到预登记共同成本节点：神经2,563列、native0.342678708；同能力固定方向控制2,160列、native0.423761124，均未达1e-6。节点不是最终结项；随后从完整神经边界继续原48h窗，再独立验完整场与功率。训练不读参考、无全局Gram或Maxwell因子；参考仅在两态冻结后独立验收读取。没有可验证NN净收益，0.7nm缩小pilot条件未触发。[专题](outcomes/neural_wave_galerkin_v30.md)、[共同节点/source/费用](outcomes/records/common_cost_node_v30.json)、[完整重建资格及负成本](outcomes/records/frozen_field_qualification_v30.json)。旧770列及全部失败保留；下方全部旧正文是历史，不授权W0/W1。

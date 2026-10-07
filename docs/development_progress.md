@@ -1,3 +1,20 @@
+# Task42extra V30最终：真实新波动网络已训练，M5门未达到
+
+本支回到神经研究，实际学习连续波矢和复向量幅值，将局部函数逐步加入累计空间；原完整Nédélec矩、原M5/p3/A/f、内部未知量及40端口不变。控制拥有相同几何窗口、物理种子、确定性残差选向和稳定代数，未把辅助组件或固定弱基算NN收益。
+
+| measured / not_run；原M5同离散 | 结果、实际门和原因 |
+| --- | --- |
+| 学习/控制 | 神经3127列/14520神经元，3127次非零q/幅值更新；控制2160列/6784神经元，方向训练0 |
+| 完整原方程 | 神经native/增广0.3308837562，控制0.4237611235，均未达1e-6；不因loss下降宣布收敛 |
+| 保存模型独立重建 | q30/q60系数漂移1.13e-11/5.17e-13；神经模型↔producer相对1.71986e-10超过1e-10，控制1.59643e-11通过；累加稳定性原因尚未独立归因 |
+| 后处理和硬出口 | FE事件序列化复数失败已修复；8项pure/Ruff/compile通过，健康模型及四次重建复用不重跑；正式恢复因剩余资源观察41.91s不足新60s PSI在worker前拒绝 |
+| 成本/资源 | 固定完整attempt64834.238884s，最后NN续段29081.759568s，含失败FE链31796.833255s；父子不能双加。采样峰control3267076096B/NN4395831296B，swap0；不授同精度NN收益 |
+| 未完成/决策 | 独立total、完整E/H/curl/通道/功率/区域NOT_RUN；M5联合门false，0.7缩小pilot未触发；NUMERICAL_GATE_NOT_REACHED / NO_VERIFIED_NN_INCREMENT |
+
+可复用的输入支持/投影/候选分批优化均由原非零见证资格化并供两路线共用；张量和严格零重建的负成本保留，不算NN增益。前三次工程暂停、启动拒绝、旧失联3284s、M3600较好/Mfinal退化、D0否决/D1未运行及所有UNKNOWN/费用不改。研发单窗不重置，剩余保存/发布预留不转成另一训练窗；本轮不是在接口通过或一次bug时交棒。
+
+[Response V30](task042extra_feinn_5nm/response_v30.md)、[专题](task042extra_feinn_5nm/outcomes/neural_wave_galerkin_v30.md)、[原量与NOT_RUN](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v30.json)、[学习证据](task042extra_feinn_5nm/outcomes/records/training_v30.json)、[完整source/资源](task042extra_feinn_5nm/outcomes/records/run_index_v30.json)。原50×25×140nm/Si17–120nm/λ0.7完整3D FE、decimal2e12B整机、ownswap/OOC0和172800s完整冷流程及原精度门仍未达成。研究代码留本支，普通默认不改；推送清场后暂停，无隔壁通知、不改其他分支、不merge。以下历史原文保留。
+
 # Task42extra V30进行中：回到真正的波动神经函数学习
 
 用户纠正范围后，本支只做神经求解。新方法根据原方程尚未消除的残差，学习带局部窗口的连续波矢和复幅值，逐块扩展可用函数空间，再在累计空间中稳定求解。它改变了神经表示和残差优化流程，仍保留原M5/p3全部边、面、内部矩及原物理算子；代价包含筛选、插值、导数、列存储、正交化和保存。禁止把接口或局部残差下降当完整解。

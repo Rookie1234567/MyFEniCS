@@ -23,5 +23,88 @@
       "resume": "independent model reconstruction now executed"
     }
   ],
-  "formal_repairs": []
+  "formal_repairs": [
+    {
+      "failure": "unlocalized repeated 384-cell proposals dominated cost",
+      "hypothesis": "exact input support can bound original A/AH without dropping output rows",
+      "change": "qualified local-support action on all families/MPC and shared by both routes",
+      "test": "local_action_qualification_v30.json",
+      "resume": "366 columns, no prefix replay; WORKER_FAILED/-2 retained",
+      "cost": "engineering_pause_v30.json"
+    },
+    {
+      "failure": "repeated residual projection cost increased with Q",
+      "hypothesis": "same two-pass algebra can reuse bounded Q products",
+      "change": "fixed correct projection cache with stable fallback; no inverse",
+      "test": "projection_qualification_v30.json",
+      "resume": "512 columns, no prefix replay",
+      "cost": "engineering_pause_2_v30.json"
+    },
+    {
+      "failure": "independent proposals repeated tiny Python/cell loops",
+      "hypothesis": "bounded batching keeps exactly same ordered candidates and scores",
+      "change": "qualified maximum8 proposals/64 neurons, all moments retained",
+      "test": "screening_qualification_v30.json",
+      "resume": "770 columns; both routes share optimization",
+      "cost": "engineering_pause_3_v30.json"
+    },
+    {
+      "failure": "outer or inner fresh CPU rejection at attempts5/6",
+      "hypothesis": "must sample original allowed scope again; old selected core is not new admission",
+      "change": "bounded fresh sampling plus guarded separate FE/pure serial dependencies; thresholds unchanged",
+      "test": "dependency_qualification_v30.json",
+      "resume": "attempt7 from2563, no duplicate/control replay",
+      "cost": "run_index_v30.json"
+    },
+    {
+      "failure": "actual FE physical_model marker called .tolist() on Python complex",
+      "hypothesis": "marker converter narrower than actual atomic writer",
+      "change": "actual publish_event handles complex/arrays/bools; sealed recovery consumes completed q30/q60 rather than rebuilding",
+      "test": "recovery_checks_2:8pure tests/Ruff/compile pass; source7bd72c7e81a9983addeff4032e9feacde6088a27",
+      "resume": "formal recovery entry attempted, rejected before terminal by hard observation budget; no worker",
+      "cost": "failed FE2713.0728316761088s retained plus all fix/test/admission calendar"
+    },
+    {
+      "failure": "first repair test8passed but Ruff duplicate Path import",
+      "hypothesis": "local import duplication",
+      "change": "remove one identical import",
+      "test": "second8pure/Ruff/compile all passed",
+      "resume": "same batch, no healthy physical producer replay",
+      "cost": "recovery_checks_1 and2 retained"
+    },
+    {
+      "failure": "own metadata reader had no useful progress during FE work",
+      "hypothesis": "metadata-only scheduling delay, exact cause UNKNOWN",
+      "change": "identity/ticks-bound SIGTERM of only metadata reader and frozen read resumed",
+      "test": "metadata_reader_recovery.json and learned_learning_summary_native.json",
+      "resume": "numerical tree untouched",
+      "cost": "calendar retained; reader CPU/exclusive duration NOT_RETAINED"
+    }
+  ],
+  "negative_costs_retained": [
+    "tensor moment prototype slower: analytic_and_moment_cost_v30.json",
+    "one coarse local-action ratio<1: local_action_qualification_v30.json",
+    "frozen zero-skipping prototype slower/not selected: frozen_field_qualification_v30.json"
+  ],
+  "no_bug_count_limit_used": true,
+  "no_healthy_training_or_rebuild_replayed_for_writer_failure": true,
+  "final_document_delivery_repairs": [
+    {
+      "failure": "new final navigation initially appended at end, leaving old ongoing state at page top",
+      "hypothesis": "empty-context document insertion location",
+      "change": "move only the new V30 section to page beginning; preserve old bytes as suffix",
+      "test": "9-page local checker explicitly proves six old navigation/test/file histories remain unchanged suffixes",
+      "resume": "final delivery only, no numerical work restarted",
+      "old_intermediate_raw": "NOT_RETAINED: uncommitted text edit, tool diff retained",
+      "cost_scope": "included single original campaign clock; editor-only wall not separately retained"
+    },
+    {
+      "failure": "first final-test-summary patch expected an outdated heading and made no change",
+      "hypothesis": "header spelling mismatch",
+      "change": "read actual heading and apply local insertion",
+      "test": "subsequent finite Markdown/link/table check passed",
+      "resume": "final delivery only",
+      "cost_scope": "included original continuous campaign clock"
+    }
+  ]
 }

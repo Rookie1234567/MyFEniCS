@@ -1,0 +1,149 @@
+{
+  "scope": "PARTIAL actual independent model rebuild; full FE/checker not completed",
+  "classification": "NUMERICAL_GATE_NOT_REACHED",
+  "original_verifier_source_sha": "79f363981765876e7020ac09cec326e8ba7e656e",
+  "repair_source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+  "final_documentation_HEAD_is_not_run_source": true,
+  "failure": {
+    "file": {
+      "path": "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt7/dependencies/v30_m5_verify/failure.json",
+      "bytes": 1801,
+      "sha256": "fad3c1e1f4700235c059457c434483c2246c92b6758be9352ba897882d9f3547"
+    },
+    "record": {
+      "error": "AttributeError(\"'complex' object has no attribute 'tolist'\")",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/neural_wave_worker.py\", line 385, in main\n    result = verify(design, action, packet, artifact, marker)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/neural_wave_worker.py\", line 144, in verify\n    model = build_model(design[\"model\"], marker=marker)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_fem.py\", line 116, in build_model\n    marker(\"physical_model\", record)\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/neural_wave_worker.py\", line 261, in marker\n    json.dumps(dict(stage=stage, values=values), default=lambda v: v.tolist()),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/encoder.py\", line 258, in iterencode\n    return _iterencode(o, 0)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/neural_wave_worker.py\", line 261, in <lambda>\n    json.dumps(dict(stage=stage, values=values), default=lambda v: v.tolist()),\n                                                                   ^^^^^^^^\nAttributeError: 'complex' object has no attribute 'tolist'\n",
+      "elapsed_seconds": 2710.63440695405,
+      "source_sha": "79f363981765876e7020ac09cec326e8ba7e656e"
+    }
+  },
+  "failed_verifier_summary": {
+    "path": "tmp/task42extra/v30/durable/v30_m5_learned_wave_attempt7/dependencies/v30_m5_verify/run_summary.json",
+    "bytes": 10411,
+    "sha256": "b7bad41f10e8edf835d3a690653fbe4f251dd355355338946f9c53aebb703228"
+  },
+  "recovery_admission": {
+    "file": {
+      "path": "tmp/task42extra/v30/durable/v30_m5_verify_recovery_attempt1/run_summary.json",
+      "bytes": 640,
+      "sha256": "e4191461a28c827fcaf415c589755d61663c966a2e06854dbb3de95843e3379f"
+    },
+    "record": {
+      "classification": "RESOURCE_ADMISSION_REJECTED_BEFORE_TERMINAL",
+      "reason": "RuntimeError('V30_RESOURCE_OBSERVATION_BUDGET_REACHED')",
+      "source_sha": "7bd72c7e81a9983addeff4032e9feacde6088a27",
+      "worker_started": false,
+      "descendants_cleared": true,
+      "evidence_scope": "outer observation before launch_tmux; no terminal/worker created",
+      "launch_to_summary_seconds": 0.4098111828789115,
+      "launch_to_summary_semantics": "inherited allocation span including prior runs and pauses; not additive attempt cost",
+      "inherited_route_allocation_span_seconds": 0.4098111828789115,
+      "actual_attempt_elapsed_seconds": 0.4098111828789115
+    }
+  },
+  "reconstruction": {
+    "schema": "neural-wave.completed-rebuild-recovery.v1",
+    "origin_semantics": "sealed after failure; original write-time file digests NOT_RETAINED",
+    "original_verifier_source_sha": "79f363981765876e7020ac09cec326e8ba7e656e",
+    "original_run_manifest_sha256": "49fd43a03cca417944d579505cdc39d6caf7145dc20a1cf048132e75405ba252",
+    "original_failure_sha256": "fad3c1e1f4700235c059457c434483c2246c92b6758be9352ba897882d9f3547",
+    "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "moments_q30_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+    "moments_q60_sha256": "849f5bdebb5767dfdbedb005360196b1fddb1aa45db3bd3a3f121c2d1a6f9a56",
+    "no_new_FE_NN_forward_reference_read_or_matrix_action": true,
+    "monotonic": 1282961.837139255,
+    "records": {
+      "FIXED_WAVE_GREEDY_CONTROL": {
+        "file": "v30_m5_fixed_wave_rebuild.npz",
+        "sha256": "4636e795d755f2c30150a74e5a962597f1137106959d1372850ec3364ca0ea2a",
+        "bytes": 1535204,
+        "mtime_ns": 1791355848231364337,
+        "columns": 2160,
+        "candidate_source_sha": "e6aafc6583aeb8aeebb32a8359dab662ba14ca66",
+        "committed_sha256": "227261d8c177a8272bec558acab43f029bf1a73bdc5d84b104b0cdc1b109aa44",
+        "state_sha256": "e8cf91d53cfe75e137d2c63f9bce481d2db2bfb31357f21304f3c78ada36963b",
+        "complete_model_mapping_relative": 1.596430748798739e-11,
+        "coefficient_q30_q60_relative": 5.168545078858821e-13,
+        "original_action_q30_q60_load_relative": "NOT_RUN",
+        "independently_assembled_total_equation": "NOT_RUN",
+        "FE_fields_power_regions_and_FE15_30_drift": "NOT_RUN"
+      },
+      "LEARNED_WAVE_GREEDY": {
+        "file": "v30_m5_learned_wave_rebuild.npz",
+        "sha256": "3aaff9597501d136f5c9817e9695faa753dc47c21266e29b10aac5ec4c961b6a",
+        "bytes": 1535204,
+        "mtime_ns": 1791357570907041739,
+        "columns": 3127,
+        "candidate_source_sha": "79f363981765876e7020ac09cec326e8ba7e656e",
+        "committed_sha256": "57daba8a4388a3f7ee104151679e0e0533ab86303889539a16db4de49d2d1008",
+        "state_sha256": "381a9c5cb6921f537829400cf4d536ed60d1bad4e04436169fe0d4508f206bba",
+        "complete_model_mapping_relative": 1.719858821415671e-10,
+        "coefficient_q30_q60_relative": 1.132689485848676e-11,
+        "original_action_q30_q60_load_relative": "NOT_RUN",
+        "independently_assembled_total_equation": "NOT_RUN",
+        "FE_fields_power_regions_and_FE15_30_drift": "NOT_RUN"
+      }
+    }
+  },
+  "independent_checker": "NOT_RUN: no completed FE sample packet",
+  "independent_total_original_equation": "NOT_RUN",
+  "total_and_scattered_E_H_curl": "NOT_RUN",
+  "six_complex_E_H_samples": "NOT_RUN",
+  "four_complete_40_complex_channel_classes": "NOT_RUN",
+  "R_T_A_A_volume_R00_and_per_mode_power": "NOT_RUN",
+  "independent_energy_closure": "NOT_RUN",
+  "original_material_and_interface_region_errors": "NOT_RUN",
+  "FE_norm_q15_q30_and_original_action_q30_q60": "NOT_RUN",
+  "expanded_MPC_verification": "NOT_RUN",
+  "reference_sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7",
+  "reference_loaded_only_after_candidate_freeze": true,
+  "reference_solve_count": 0,
+  "global_Maxwell_factor_count": 0,
+  "global_Gram_factor_count": 0,
+  "model_reconstruction_relative_limit": 1e-10,
+  "coefficient_quadrature_relative_limit": 1e-08,
+  "reconstruction_pass": {
+    "FIXED_WAVE_GREEDY_CONTROL": true,
+    "LEARNED_WAVE_GREEDY": false
+  },
+  "fresh_reference_physics_gate": "NOT_RUN; earlier V1 evidence reused only as reference identity",
+  "official_candidate_results": false,
+  "full_size_0p7_target_qualified": false,
+  "continuous_discretization_qualified": false,
+  "m5_full_discrete_numerical_gate": false,
+  "neural_increment_qualified": false,
+  "producer_equation_audits": {
+    "v30_m5_fixed_wave": {
+      "native_relative": 0.4237611235276062,
+      "augmented_relative": 0.4237611235276062,
+      "original_total_augmented_relative": 0.2007363905457445,
+      "port_absolute": 1.075015294613133e-18,
+      "port_full_rhs_relative": 3.693677493028676e-18,
+      "port_operation_relative": 1.9080592381271006e-17,
+      "augmented_rhs_norm": 0.29104200262261154,
+      "native_rhs_norm": 0.29104200262261154,
+      "slave_storage_max": 0.0,
+      "interior_coefficient_norm": 0.11276798099273012,
+      "full_coefficient_norm": 0.1660193282512864,
+      "port_unknown_norm": 0.00047332445820433906,
+      "strict_pass": false
+    },
+    "v30_m5_learned_wave": {
+      "native_relative": 0.33088375619287214,
+      "augmented_relative": 0.33088375619287214,
+      "original_total_augmented_relative": 0.15674021806304106,
+      "port_absolute": 1.9738833881103996e-18,
+      "port_full_rhs_relative": 6.782125501898417e-18,
+      "port_operation_relative": 6.387473891952872e-17,
+      "augmented_rhs_norm": 0.29104200262261154,
+      "native_rhs_norm": 0.29104200262261154,
+      "slave_storage_max": 0.0,
+      "interior_coefficient_norm": 0.1046462691762016,
+      "full_coefficient_norm": 0.1626932429837254,
+      "port_unknown_norm": 0.0002534892461929053,
+      "strict_pass": false
+    }
+  },
+  "separate_partial_saved_vector_check": "saved_vector_delivery_check_v30.json",
+  "partial_checker_boundary": "independently recomputed saved c mapping/q30-q60/r norms only; no fresh A or field/power pass"
+}

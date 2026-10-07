@@ -1,3 +1,25 @@
+# 当前V30最终：本支只做神经，NUMERICAL_GATE_NOT_REACHED
+
+新网络学习局部复指数函数的连续方向和幅值，再冻结并扩充累计空间；同能力非神经控制使用相同物理种子、窗口及稳定代数，从固定方向按原残差选择。实际两路线都运行，完整FE内部/边/面及40端口保留。残差下降不等于场准确，完整成本判定也不等于局部调用加速。
+
+| measured / derived / not_run；同M5/5nm/384hex/p3/31968复FE/40端口 | 固定控制 | 神经 | 限值/边界/证据 |
+| --- | ---: | ---: | --- |
+| 接受列/神经元 | 2160/6784 | 3127/14520 | 容量4096未耗尽；[增长及梯度](records/basis_growth_v30.json) |
+| 真实非零连续q/幅值接受更新 | 0 | 3127/3127 | 不复用旧NN/监督方向；局部几何中心/支持非连续训练 |
+| 完整native及增广相对残差 | 0.4237611235276062 | 0.33088375619287214 | ≤1e-6，两者失败；[原量](records/full_numerical_gates_v30.json) |
+| 原total增广相对残差，producer | 0.2007363905457445 | 0.15674021806304106 | 不是独立total原方程；此项亦不合格 |
+| 网络独立完整矩↔保存c | 1.596430748798739e-11 | 1.719858821415671e-10 | ≤1e-10；神经失败；[向量封存](records/rebuild_recovery_v30.json) |
+| 系数q30/q60相对漂移 | 5.168545078858821e-13 | 1.132689485848676e-11 | ≤1e-8子项通过，完整求积UNKNOWN |
+| 独立total/MPC、total/scattered E/H/curl、六点复场 | NOT_RUN | NOT_RUN | FE日志错误修复后遭原稳定观察额度拒绝，未推断物理通过/失败 |
+| 全部复通道/R/T/A/A_volume/R00/逐级功率/独立能量/区域 | NOT_RUN | NOT_RUN | 无official结果；不用A=1-R-T充能量证据 |
+| 采样同时数值树峰，B | 3267076096 | 4395831296 | 各阶段swap0；未达同精度，不能授20%NN收益 |
+| 完整成本比较 | 控制attempt64834.238884s | 额外末段attempt29081.759568s及全部前缀 | 共同约18h残差0.423761/0.342679，只是limited中间信号；[比较](records/cost_comparison_v30.json) |
+| 0.7nm缩小pilot/原目标 | NOT_RUN | NOT_RUN | M5联合门未过；连续离散/原尺寸0.7nm、2e12B/172800s均未资格化 |
+
+唯一172800s研发窗覆盖全部准备、失败、等待及发布；正式恢复实际拒绝为`V30_RESOURCE_OBSERVATION_BUDGET_REACHED`，已用1158.088263/1200s，剩41.911737s不足新60s PSI。不是当前RAM不足/OOM，不将保存预留或未满4096列写成耗尽。复数日志writer和保全入口8项受影响pure测试/Ruff/compile通过，未重跑健康训练/四次重建。[全部修复](records/repair_journal_v30.json)、[资源账](records/resource_costs_v30.json)、[source/run](records/run_index_v30.json)、[回执](../response_v30.md)、[专题](neural_wave_galerkin_v30.md)。
+
+`implementation_qualified=true`、`learned_direction_training_executed=true`；M5联合门、连续精度、神经净收益和原尺寸目标false，条件0.7nm未运行。旧FEINN主求解器保持暂停，无production或merge批准；只完成本支推送/清场后暂停，不通知隔壁、不自动继续。M3600较好/Mfinal退化、D0否决/D1未运行及所有旧FAIL/UNKNOWN/费用保留。下方全部历史原文及旧“进行中”不授新运行。
+
 # 当前 V30：神经求解研究进行中
 
 | 当前范围 / 实测身份 | 原结果及边界 |
