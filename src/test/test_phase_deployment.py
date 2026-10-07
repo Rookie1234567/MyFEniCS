@@ -13,6 +13,13 @@ from src.runners.task042_shared import write_json
 
 
 class Tests(unittest.TestCase):
+    def test_saved_consumer_public_output_verdict(self):
+        from benchmarks.collect_phase_deployment import checked_state
+        self.assertTrue(checked_state({'pass_gate':True},{'energy_pass':True})['pass_gate'])
+        self.assertFalse(checked_state({'pass_gate':True},{'energy_pass':False})['pass_gate'])
+        self.assertFalse(checked_state({'pass_gate':False},{'energy_pass':True})['pass_gate'])
+        with self.assertRaises(KeyError):checked_state({'pass_gate':True},{})
+
     def test_complex_action_and_adjoint(self):
         rng=np.random.default_rng(58);C=rng.normal(size=6)+1j*rng.normal(size=6);D=rng.normal(size=6)+1j*rng.normal(size=6)
         p=dict(offsets=np.array([0,3,6]),rows=np.array([0,1,2,1,2,3]),C=C,D=D,H=np.array([.7,1.3]))

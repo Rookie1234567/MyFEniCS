@@ -58,7 +58,7 @@ def verify(folder,journal):
         states[role]=r
         with journal.measured('saved_independent_original_and_output_'+role):
             original=vector_check(r['independent']['arrays']);output=output_check(r)
-        checks[role]=dict(original=original,output=output,pass_gate=original['pass_gate'] and output['pass_gate'])
+        checks[role]=checked_state(original,output)
         write_json(folder/'completed_checker_states.json',checks)
     shim=SimpleNamespace(NAMESPACE='v58',window=scope.window,plan_record=scope.plan_record,stage=lambda role:states[role])
     modal=modal_recalculation(scope=shim,role_names=tuple(states),output_folder=folder)
@@ -75,6 +75,13 @@ def verify(folder,journal):
     _,regions,gates=saved_checks(allstates,pairs,scope=scope)
     return dict(status='COMPLETED',role='VERIFY_COST',states=checks,comparisons=pairs,regions=regions,
         saved_pair_gates=gates,modal=modal,independent_consumer=True,new_complete_solves=0,new_factor_count=0)
+
+
+def checked_state(original,output):
+    # output_check independently recomputes volume/energy and validates the
+    # full field inventory; its public verdict is energy_pass, not pass_gate.
+    return dict(original=original,output=output,
+        pass_gate=bool(original['pass_gate'] and output['energy_pass']))
 
 
 if __name__=='__main__':

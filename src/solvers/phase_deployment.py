@@ -80,6 +80,83 @@ def body_qualification(role,folder,journal):
     return out
 
 
+def continuous_gauge_flat(cfg,modes,k,kp,folder,journal):
+    """Four continuous lifts, full physical ports/load, no FE interpolation.
+
+    The test envelope is changed together with the analytic field envelope.
+    Body uses q31, Fourier boundary q63; the polynomial body shortcut is not
+    applied to exponential functions. All 828 keys remain in the saved port
+    inventory, even though the exact flat solution has zero diffracted modes.
+    """
+    import basix
+    from src.common.analytic_fields_3d import fresnel_reference
+    from .scattering_accuracy_fields import analytic
+    from .common_continuous_weak import volume_parts
+    from .dtn_port_3d import _traction_vector,_mode_boundary_phase,_incident_projection_onto_top_mode
+    ref=fresnel_reference(cfg);port=np.zeros(len(modes),complex)
+    inc=np.asarray([_incident_projection_onto_top_mode(m,cfg) for m in modes])
+    for i,m in enumerate(modes):
+        if (m.m,m.n,m.polarization)==(0,0,'s'):
+            port[i]=cfg.incident_amplitude*(ref['r'] if m.side=='top' else ref['t'])
+    port+=inc
+    if np.linalg.norm(port)==0 or np.linalg.norm(inc)==0:raise ValueError('nonzero physical flat port/load control')
+    lo=np.array([cfg.x_min,cfg.y_min,cfg.z_min]);hi=np.array([cfg.x_max,cfg.y_max,cfg.z_max]);G=kp-k
+    definitions=[(side,a) for side in ('top','bottom') for a in (0,1)]
+    def lifts(points):
+        zz=(points[:,2]-lo[2])/(hi[2]-lo[2]);v=[];cv=[]
+        for side,a in definitions:
+            unit=np.eye(3)[a];sign=1 if side=='top' else -1
+            phi=zz if sign==1 else 1-zz
+            v.append(phi[:,None]*unit);cv.append(np.broadcast_to(np.cross([0.,0.,sign/(hi[2]-lo[2])],unit),(len(points),3)))
+        return np.asarray(v),np.asarray(cv)
+    terms=[];ops=[];bounds=[lo[2],0.,hi[2]]
+    points,w=basix.make_quadrature(basix.CellType.hexahedron,31)
+    with journal.measured('continuous_flat_paired_gauge_body_and_q63_ports'):
+        for carrier in (k,kp):
+            body=np.zeros((5,4),complex);operation=np.zeros(4)
+            for z0,z1 in zip(bounds[:-1],bounds[1:]):
+                box0=lo.copy();box0[2]=z0;box1=hi.copy();box1[2]=z1
+                xyz=box0+points*(box1-box0);ww=w*np.prod(box1-box0);v,cv=lifts(xyz)
+                if np.array_equal(carrier,kp):
+                    ph=np.exp(-1j*(xyz@G))[None,:,None]
+                    cv=ph*(cv-1j*np.cross(G,v));v=ph*v
+                epsilon=cfg.eps_substrate if z1<=0 else cfg.eps_air
+                a,b=volume_parts(analytic(cfg,xyz),xyz,ww,v,cv,kappa=carrier,k0=cfg.k0,
+                    epsilon=epsilon,mu=cfg.mu_r,return_operation=True)
+                body+=a;operation+=b
+            # Literal physical boundary integration includes the test phase,
+            # modal reference phase, independent C/D sign and incident load.
+            qp,qw=basix.make_quadrature(basix.CellType.quadrilateral,63)
+            dt=np.zeros(4,complex);load=dt.copy();bm=np.zeros((len(modes),4),complex)
+            for side,z in (('top',hi[2]),('bottom',lo[2])):
+                xyz=np.column_stack((lo[:2]+qp*(hi-lo)[:2],np.full(len(qp),z)))
+                v,_=lifts(xyz)
+                if np.array_equal(carrier,kp):v=v*np.exp(-1j*(xyz@G))[None,:,None]
+                physical_test=np.exp(1j*(xyz@carrier))[None,:,None]*v
+                ww=qw*np.prod((hi-lo)[:2])
+                for i,m in enumerate(modes):
+                    if m.side!=side or (port[i]==0 and inc[i]==0):continue
+                    tr=np.exp(1j*(xyz[:,:2]@np.array([m.alpha,m.gamma])))[:,None]*(_traction_vector(m,cfg)*_mode_boundary_phase(m,cfg))
+                    overlap=np.einsum('q,qc,jqc->j',ww,tr,np.conj(physical_test))
+                    bm[i]=-port[i]*overlap;dt+=bm[i];load-=inc[i]*overlap
+                if side=='top':
+                    ei=cfg.incident_amplitude*np.asarray(cfg.polarization_vector)
+                    tr=np.exp(1j*(xyz@cfg.wavevector))[:,None]*np.cross(1j*np.cross(cfg.wavevector,ei),[0.,0.,1.])
+                    load+=np.einsum('q,qc,jqc->j',ww,tr,np.conj(physical_test))
+            terms.append(np.vstack((body,dt,load)));ops.append(operation+np.abs(bm).sum(axis=0)+np.abs(load))
+    a=np.asarray(terms);op=np.asarray(ops);res=a[:,6]-a[:,:6].sum(axis=1)
+    rel=float(np.max(np.abs(res)/np.maximum(op,1e-30)))
+    # Only the combined full curl term is gauge invariant; individual cross
+    # components change with the carrier and are retained separately.
+    combined=np.concatenate((a[:,:4].sum(axis=1)[:,None,:],a[:,4:]),axis=1)
+    diff=float(np.max(np.abs(combined[0]-combined[1])/np.maximum(op.sum(axis=0),1e-30)))
+    arrays=save_arrays(folder/'continuous_flat_gauge_balance.npz',terms=a,operation_scales=op,residuals=res,
+        physical_port=port,incident_projection=inc,kappa=k,kappa_prime=kp)
+    return dict(arrays=arrays,physical_modes=len(modes),tests=4,body_q=31,boundary_q=63,
+        maximum_operation_scaled_balance=rel,combined_gauge_operation_difference=diff,
+        nonzero_port_rhs=True,no_FE_interpolation=True,no_PDE=True,pass_gate=max(rel,diff)<=1e-10)
+
+
 def actual_gauge_controls(folder,journal):
     from .phase_explicit_accuracy import configuration
     from .phase_notch_hp import configured_setup
@@ -105,6 +182,7 @@ def actual_gauge_controls(folder,journal):
     bg=analytic(cfg,points);up=np.exp(-1j*(points@k))[:,None]*bg['E']
     cp=np.exp(-1j*(points@k))[:,None]*bg['curl']-1j*np.cross(k,up)
     flat=gauge_identity(points,up,cp,k,G);flat.pop('incident_envelope')
+    continuous=continuous_gauge_flat(cfg,modes,k,kp,folder,journal)
     cellchecks=[]
     for degree,q in ((6,15),(7,17)):
         spec=scope.case_spec('G6' if degree==6 else 'G7');c,s,_=configured_setup(spec,journal,scope=scope)
@@ -126,8 +204,8 @@ def actual_gauge_controls(folder,journal):
         del evlow,evhigh,s;gc.collect()
     result.update(kappa=k,kappa_prime=kp,G=G,product_rule_arrays=arrays,periodic_phase_defect=periodic,
         physical_inventory_sha=sha,mode_count=len(modes),n_env_rule='n_physical - 1; physical key unchanged',
-        analytic_flat_continuous=flat,new_carrier_body_cells=cellchecks,
-        pass_gate=max(result['E'],result['curl'],periodic,flat['E'],flat['curl'])<=1e-12 and all(x['pass_gate'] for x in cellchecks))
+        analytic_flat_continuous=flat,analytic_flat_balance=continuous,new_carrier_body_cells=cellchecks,
+        pass_gate=max(result['E'],result['curl'],periodic,flat['E'],flat['curl'])<=1e-12 and continuous['pass_gate'] and all(x['pass_gate'] for x in cellchecks))
     write_json(folder/'gauge_controls.json',result);return result
 
 
