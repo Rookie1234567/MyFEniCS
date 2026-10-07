@@ -526,10 +526,18 @@ def launch(
         (folder / "superseded_partial_pointer.json").write_bytes(
             ARTIFACT.joinpath(role + ".json").read_bytes()
         )
+    v60_archive = (namespace == 'v60' and role == 'archive'
+        and specification is None and command == [sys.executable, '-m', 'benchmarks.compact_local_subcell_raw'])
+    if v60_archive:
+        # An archive may consume evidence reserve, never exceed the actual
+        # frozen cap. All scientific producers retain the original gate.
+        limited = storage(namespace=namespace, cleanup=True)
+        if limited['new_bytes'] + 32*2**20 > storage_limits(namespace)['new_storage_bytes']:
+            raise MemoryError('V60 bounded archive does not fit actual cap')
     storage_record = storage(
         (1024 if namespace == "v42" else 32) * 2**20,
         namespace=namespace,
-        cleanup=(namespace in ("v37", "v40") and role == "archive"),
+        cleanup=((namespace in ("v37", "v40") and role == "archive") or v60_archive),
     )
     with (ROOT / "tmp/task042/task042_shared.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
