@@ -82,11 +82,15 @@ def collect():
     costs=[];sources={};bindings=[]
     for r in scope.window.ledger()['runs']:
         d=Path(r['folder']);manifest=json.loads((d/'run_manifest.json').read_text());sources[r['source_sha']]=manifest['implementation_hashes']
-        s=json.loads((d/('run_summary.json' if (d/'run_summary.json').exists() else 'summary.json')).read_text())
+        summary=d/('run_summary.json' if (d/'run_summary.json').exists() else 'summary.json')
+        if not summary.exists():summary=d/'launcher_failure.json'
+        s=json.loads(summary.read_text())
         worker=scope.ARTIFACT/d.name
         costs.append(dict(role=r['role'],folder=str(d),source_sha=r['source_sha'],classification=r['classification'],
             supervised_seconds=r['elapsed_seconds'],launch_seconds=s['launch_wall_seconds'],peak_bytes=r['peak_bytes'],swap_bytes=r['swap_bytes'],
-            sampling=sampling_receipt(d/'supervision/resources.jsonl'),disjoint_timing=measured_timeline(worker/'events.jsonl') if (worker/'events.jsonl').exists() else {}))
+            sampling=sampling_receipt(d/'supervision/resources.jsonl') if (d/'supervision/resources.jsonl').exists() else dict(status='NOT_MEASURED_NO_WORKER_STARTED'),
+            disjoint_timing=measured_timeline(worker/'events.jsonl') if (worker/'events.jsonl').exists() else {},
+            before_supervisor_resource_status=r.get('resource_measurement_status','measured sampled tree')))
         if (d/'resolved_config.json').exists():bindings.append(dict(role=r['role'],source_sha=r['source_sha'],input_sha256=manifest['input_sha256'],
             physical_sha256=manifest['physical_sha256'],resolved_sha256=hashlib.sha256((d/'resolved_config.json').read_bytes()).hexdigest(),memory=manifest['memory_budget']))
     pointers={role:json.loads((scope.ARTIFACT/(role+'.json')).read_text()) for role in scope.STAGES if (scope.ARTIFACT/(role+'.json')).exists()}

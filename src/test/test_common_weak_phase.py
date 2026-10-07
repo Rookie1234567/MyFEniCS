@@ -17,7 +17,7 @@ class PhaseTests(unittest.TestCase):
         f=AffinePhaseReferenceTensor(self.element,kappa=k,k0=2.3,epsilon_by_tag={3:eps},q=7)
         ref=basix.cell.geometry(basix.CellType.hexahedron);coords=ref*h
         rng=np.random.default_rng(571);d=rng.normal(size=self.element.dim)+1j*rng.normal(size=self.element.dim)
-        expected=raw_direction_action(self.element,coords,d,k,2.3,eps,1.,4)
+        expected,_=raw_direction_action(self.element,coords,d,k,2.3,eps,1.,4)
         actual=f.tensor(tag=3,widths=h)@d
         self.assertLess(np.linalg.norm(actual-expected)/np.linalg.norm(expected),1e-12)
         wrong=f.base.tensor(tag=3,widths=h)@d
