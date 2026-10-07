@@ -100,6 +100,7 @@ class TraceRestriction:
     def lift_trace(self,t):return self.R@np.asarray(t)
 
     def qualification(self,seed=5907):
+        from .phase_p_order_consistency import interpolation_operator
         rng=np.random.default_rng(seed);t=rng.normal(size=self.R.shape[1])+1j*rng.normal(size=self.R.shape[1]);h=self.R@t
         shared=[]
         for ar,br,p in self.rows:
@@ -107,9 +108,43 @@ class TraceRestriction:
             ref=np.array([np.dot(co,h[ids]) for r in br for ids,co in [self.high_constraints.expansion_by_original[int(r)]]])
             shared.append(relative(self.local[p]@src-ref,ref))
         y=rng.normal(size=len(h))+1j*rng.normal(size=len(h));dual=abs(np.vdot(y,h)-np.vdot(self.R.conj().T@y,t))/max(np.linalg.norm(y)*np.linalg.norm(h),1e-30)
-        return dict(shared_operation_max=max(shared),dual_operation=float(dual),nnz=int(self.R.nnz),shape=list(self.R.shape),
+        # Face tangential values, rather than just an algebraic map pairing.
+        # Ambient interior coefficients are zero here only because this is
+        # a trace witness; their physical interior values are not compared.
+        a=self.low.mpc.function_space;b=self.high.mpc.function_space
+        trace_checks=[];rank_checks=[];seen=set()
+        for c,(_,_,p) in enumerate(self.rows):
+            if p in seen:continue
+            seen.add(p);Ts=[]
+            for V in (a,b):
+                T=np.eye(V.element.space_dimension)
+                V.element.T_apply(T.ravel(),np.asarray([p],np.uint32),len(T));Ts.append(T)
+            xyz=a.mesh.geometry.x[a.mesh.geometry.dofmap[c]]
+            import basix
+            affine=np.linalg.lstsq(np.column_stack((basix.cell.geometry(basix.CellType.hexahedron),np.ones(8))),xyz,rcond=None)[0]
+            inv=np.linalg.inv(affine[:3].T)
+            source=rng.normal(size=len(self.at))+1j*rng.normal(size=len(self.at))
+            ca=np.zeros(a.element.space_dimension,complex);ca[self.at]=source
+            cb=np.zeros(b.element.space_dimension,complex);cb[self.bt]=self.local[p]@source
+            ca=Ts[0].T@ca;cb=Ts[1].T@cb
+            for axis in range(3):
+                for side in (0.,1.):
+                    pts=np.empty((9,3));pts[:,axis]=side
+                    pts[:,[d for d in range(3) if d!=axis]]=np.stack(np.meshgrid([.19,.5,.81],[.19,.5,.81],indexing='ij'),axis=-1).reshape(9,2)
+                    ea=np.einsum('qjc,j->qc',a.element.basix_element.tabulate(0,pts)[0],ca)@inv
+                    eb=np.einsum('qjc,j->qc',b.element.basix_element.tabulate(0,pts)[0],cb)@inv
+                    normal=inv.T[:,axis];normal/=np.linalg.norm(normal)
+                    trace_checks.append(relative(np.cross(normal,ea-eb),np.cross(normal,ea)))
+            # One complete edge and face, never a global spectrum or rank scan.
+            M=Ts[1]@interpolation_operator(a.element.basix_element,b.element.basix_element)@Ts[0].T
+            for dim in (1,2):
+                lo=a.element.basix_element.entity_dofs[dim][0];hi=b.element.basix_element.entity_dofs[dim][0]
+                values=np.linalg.svd(M[np.ix_(hi,lo)],compute_uv=False)
+                rcond=float(values[-1]/values[0]);threshold=np.finfo(float).eps*max(len(hi),len(lo))
+                rank_checks.append(dict(permutation=p,entity_dimension=dim,columns=len(lo),rcond=rcond,threshold=threshold,full_column_rank=rcond>threshold))
+        return dict(shared_operation_max=max(shared),dual_operation=float(dual),tangential_field_operation_max=max(trace_checks),local_entity_rank=rank_checks,nnz=int(self.R.nnz),shape=list(self.R.shape),
             csr_bytes=sum(v.nbytes for v in (self.R.data,self.R.indices,self.R.indptr)),
-            pass_gate=max(shared)<=1e-10 and dual<=1e-12,unique_owner=True,numerical_clipping=False)
+            pass_gate=max(shared)<=1e-10 and dual<=1e-12 and max(trace_checks)<=1e-10 and all(x['full_column_rank'] for x in rank_checks),unique_owner=True,numerical_clipping=False)
 
     def save(self,path):
         return save_arrays(path,R_indptr=self.R.indptr,R_indices=self.R.indices,R_data=self.R.data,R_shape=np.asarray(self.R.shape),
@@ -121,7 +156,7 @@ def sparse_projection(matrix,R,ports,journal):
     from petsc4py import PETSc
     Q=sparse.block_diag((R,sparse.eye(ports,format='csr',dtype=complex)),format='csr')
     P=PETSc.Mat().createAIJ(size=Q.shape,csr=(Q.indptr.astype(PETSc.IntType),Q.indices.astype(PETSc.IntType),Q.data),comm=PETSc.COMM_SELF)
-    H=P.hermitianTranspose();mid=small=None
+    H=PETSc.Mat();P.hermitianTranspose(H);mid=small=None
     try:
         with journal.measured('high_schur_sparse_hermitian_trace_projection'):
             mid=matrix.matMult(P);small=H.matMult(mid)
