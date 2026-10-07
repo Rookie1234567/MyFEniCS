@@ -271,7 +271,10 @@ class BlockBasisStore(BasisStore):
         if sha(chunk) != entry["sha256"] or sha(state) != value["state"]["sha256"]:
             raise ValueError("ATOMIC_BLOCK_ARRAY_REOPEN_FAILED")
         atomic_json(current, value)
-        if json.loads(current.read_text()) != value:
+        # JSON canonically turns tuple coordinates into lists. Compare the
+        # actual serialized value, preserving all scientific fields, rather
+        # than rejecting an otherwise complete boundary on Python container type.
+        if json.loads(current.read_text()) != json.loads(json.dumps(value)):
             raise ValueError("ATOMIC_BLOCK_BOUNDARY_REOPEN_FAILED")
         self.chunks.append(entry)
         return value

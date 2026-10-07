@@ -1,6 +1,7 @@
 """Opt-in block algebra, original amplitude maps and complete boundaries."""
 
 import json
+from dataclasses import asdict
 
 import numpy as np
 import pytest
@@ -115,6 +116,9 @@ def test_atomic_boundary_inverse_map_and_recovery(tmp_path):
     store = BlockBasisStore(tmp_path, binding)
     rng = np.random.default_rng(4213001)
     model = dict(q=np.array([[0.3, 0.2, 0.1]]), patch=Patch((0, 0, 0), (1, 1, 1)))
+    # The real runner publishes dataclass coordinates as tuples; reopening
+    # JSON yields lists and must still retain the complete matching state.
+    e.update(patch=asdict(model["patch"]), learned_q=model["q"].tolist())
     store.commit(s, model, 1, e, rng, 1e99)
     other = BlockWaveSubspace(action, 6)
     recovered = BlockBasisStore(tmp_path, binding).restore(
