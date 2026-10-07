@@ -152,7 +152,7 @@ def consume_p6_setup_checkpoint(path,folder,journal):
     from .fixed_phase_fem import carrier
     from benchmarks.collect_common_weak_phase import tensor_check
     frozen=json.loads(path.read_text());oldfolder=Path(frozen['folder'])
-    progress=oldfolder/'p6_progress.json';events=oldfolder/'events.jsonl'
+    progress=Path(frozen.get('progress_path',oldfolder/'p6_progress.json'));events=oldfolder/'events.jsonl'
     for name,p in (('progress',progress),('events',events)):
         if hashlib.sha256(p.read_bytes()).hexdigest()!=frozen[name+'_sha256']:raise ValueError('partial setup checkpoint changed')
     old=json.loads(progress.read_text());rows=old['rows'];cfg,setup,_,field=restore_record(scope.parent('R6'),journal,scope=scope)
@@ -203,8 +203,11 @@ def consume_p6_setup_checkpoint(path,folder,journal):
     result=dict(degree=6,status='COMPLETED',rows=rows,reference=old['reference'],recoveries=recoveries,
         producer_validation=identity.parents,setup_checkpoint=frozen,recovery_status='REUSED_TWO_ACTUAL_WITNESSES_NO_NEW_LOCAL_LU')
     result['pass_gate']=tensor_check({'degrees':[result]})['6']['pass_gate'] and len(recoveries)==2
-    measured=[json.loads(line)['seconds'] for line in events.read_text().splitlines()
-        if json.loads(line)['event']=='p6_complete_class_combination_end']
+    measured=frozen.get('combination_seconds')
+    if measured is None:
+        cumulative=[json.loads(line)['seconds'] for line in events.read_text().splitlines()
+            if json.loads(line)['event']=='p6_complete_class_combination_end']
+        measured=list(np.diff([0.,*cumulative]))
     if len(measured)!=len(json.loads(progress.read_text())['rows']):raise ValueError('saved fresh combination timing inventory')
     order=sorted(range(len(rows)),key=lambda i:(max(rows[i]['widths'])/min(rows[i]['widths']),tuple(rows[i]['widths']),rows[i]['tag']))
     selected=list(dict.fromkeys((order[0],order[-1])))
@@ -213,8 +216,9 @@ def consume_p6_setup_checkpoint(path,folder,journal):
     terms=_build_physical_volume_terms(cfg,ufl.TrialFunction(V),ufl.TestFunction(V),dx,phase_carrier=k)
     with journal.measured('fresh_control_original_form_compile_cache_identity'):
         form=fem.form(terms[0]+terms[1]);kernels=_cell_integral_kernels(form,sum_duplicate_cell_integrals=True)
-    fresh=[]
+    fresh=list(frozen.get('fresh_controls_consumed',[]));consumed={x['class_index'] for x in fresh}
     for index in selected:
+        if index in consumed:continue
         row=rows[index];v=checked_arrays(row['raw_parent'])
         if factory is not None:
             with journal.measured('fresh_new_fixed_p6_class_combination'):
@@ -222,10 +226,12 @@ def consume_p6_setup_checkpoint(path,folder,journal):
         else:
             new=checked_arrays(row['arrays'])['new_tensor'];newseconds=measured[index]
         with journal.measured('fresh_original_fixed_p6_class'):
-            start=perf_counter();old=_tabulate_raw_tensor_class(form,kernels,v['coordinates'],tag=row['tag'],dimension=element.dim);seconds=perf_counter()-start
-        fresh.append(dict(degree=6,key=str(row['tag'])+str(row['widths']),old_fresh_kernel_seconds=seconds,
+            start=perf_counter();oldtensor=_tabulate_raw_tensor_class(form,kernels,v['coordinates'],tag=row['tag'],dimension=element.dim);seconds=perf_counter()-start
+        # Save returned matrices before formatting any derivative JSON record.
+        control_arrays=save_arrays(folder/f'fresh_pair_{index:03d}.npz',old_tensor=oldtensor,new_tensor=new,coordinates=v['coordinates'])
+        fresh.append(dict(degree=6,class_index=index,arrays=control_arrays,key=str(row['tag'])+str(row['widths']),old_fresh_kernel_seconds=seconds,
             new_combination_seconds=newseconds,reference_cold_seconds=old['reference']['total_build_seconds'],
-            same_object_relative=relative(new-old,old),cached_load_is_not_control=True,
+            same_object_relative=relative(new-oldtensor,oldtensor),cached_load_is_not_control=True,
             timing_design='same-object fixed pair; reference repair rebuild and earlier construction both charged; no end-to-end speed ratio',
             new_combination_source_sha=frozen['source_sha']))
         write_json(folder/'fresh_control_results.json',fresh)
