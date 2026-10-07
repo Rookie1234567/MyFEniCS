@@ -24,6 +24,16 @@
       "bytes": 9980
     },
     {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v59.json",
+      "sha256": "1e770cd9295e523f3b804abc32c844a00871175abcd97417c3781a4a87b4bb9b",
+      "bytes": 6689
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/final_delivery_tail_v59.json",
+      "sha256": "9ec9aa7e4f87aa836c26da882e59bb42e7427707b5c3f5ac84cf8a91d7a1b602",
+      "bytes": 15915
+    },
+    {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/gate_verdict_v59.json",
       "sha256": "1e62ccee11fa9939031a6dac976f48c9be9fd18e288b4a8ba95c75d5e6e6ac5a",
       "bytes": 3645
@@ -55,8 +65,8 @@
     },
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v59.json",
-      "sha256": "dc848419774440a37034d54c9fb3546736b648be278d5bc2694d6eb6ec34bd99",
-      "bytes": 14763
+      "sha256": "efc49b6ddd887a4c86de582b6158614ea49205b3496645dab670c201e9790799",
+      "bytes": 16775
     },
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v59.json",

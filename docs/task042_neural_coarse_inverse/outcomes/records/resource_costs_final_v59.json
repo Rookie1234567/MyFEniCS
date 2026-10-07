@@ -1,6 +1,6 @@
 {
-  "status": "PRE_CLOSE_SETTLEMENT_SNAPSHOT",
-  "run_count": 10,
+  "status": "CLOSED_FINAL_SETTLEMENT",
+  "run_count": 11,
   "runs": [
     {
       "role": "pre",
@@ -221,6 +221,28 @@
       },
       "descendants_cleared": true,
       "actual_global_numeric_factors": 0
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v59/aux_post_docs01",
+      "source_sha": "a6b403a0ef7375abf1800bd6455f00e736eed086",
+      "classification": "COMPLETED",
+      "supervised_seconds": 8.885918481973931,
+      "launch_seconds": 33.76390768913552,
+      "summary": {
+        "path": "tmp/task042/v59/aux_post_docs01/summary.json",
+        "sha256": "aa8eb41dbc7e38e73df9290fed16a007b5b8b2d1469a99a33b26719a52e863fe",
+        "bytes": 25524
+      },
+      "sampling": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 3.5982077529188246,
+        "sampled_tree_peak_bytes": 97808384,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "descendants_cleared": true,
+      "actual_global_numeric_factors": 0
     }
   ],
   "clock": {
@@ -233,20 +255,24 @@
     "review_commit": "e75eb2c6b4d3319e9ccb109ef5fa9debc1f60287",
     "intake_HEAD": "8033ed11640defa61d422b5916e5ae2d22b45ff2",
     "contract_HEAD": "e75eb2c6b4d3319e9ccb109ef5fa9debc1f60287",
-    "closed": false,
+    "closed": true,
     "first_work_start_never_refreshed": true,
     "monotonic_observation_precision_seconds": 0.01,
-    "observed_utc": "2026-10-07T15:13:56.361177+00:00",
-    "observed_monotonic": 1311031.222045258,
+    "closed_UTC": "2026-10-07T15:21:12.568761+00:00",
+    "closed_monotonic": 1311467.429628732,
+    "stop_reason": "both authorized mixed physical solves and all frozen independent comparisons/checkers complete; no further solve authorized",
+    "start_never_refreshed": true,
+    "observed_utc": "2026-10-07T15:21:13.062420+00:00",
+    "observed_monotonic": 1311467.923287532,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 9451.402045257855,
-    "heavy_remaining_seconds": 15748.597954742145,
-    "total_remaining_seconds": 19348.597954742145
+    "elapsed_seconds": 9888.103287531994,
+    "heavy_remaining_seconds": 15311.896712468006,
+    "total_remaining_seconds": 18911.896712468006
   },
-  "charged_known_loaded_lower_seconds": 7218.951772914998,
+  "charged_known_loaded_lower_seconds": 7252.715680604134,
   "historical_known_loaded_lower_seconds": 181756.062723977,
-  "cumulative_known_loaded_lower_seconds": 188975.014496892,
+  "cumulative_known_loaded_lower_seconds": 189008.77840458113,
   "known_loaded_limit_seconds": 21600,
   "window_elapsed_limit_seconds": 28800,
   "within_loaded_budget": true,
@@ -338,7 +364,7 @@
   "reference_used_for_initialization": false,
   "scientific_queue_frozen": true,
   "active": null,
-  "closed": false,
+  "closed": true,
   "scientific_sources": {
     "M67": "9b8eacf9831ef8064035b6e494e296821978d1ba",
     "M68": "26b2793eaeecd1f8b09e0f67800d3c9c99a528b5"
@@ -353,12 +379,31 @@
     "M68": 3717.934889774071
   },
   "two_deployments_nonoverlapping_seconds": 5411.203689265065,
-  "T_research_measured_known_lower_seconds": 1807.7480836499335,
+  "T_research_measured_known_lower_seconds": 1841.511991339069,
   "T_research_policy": "preflight/qualifications, frozen field comparisons, checker, failed/supplemented consumers, tests/probes and metadata; excludes complete deployment once",
-  "scientific_loaded_conservative_upper_seconds": 9451.402045257855,
+  "scientific_loaded_conservative_upper_seconds": 9888.103287531994,
   "upper_policy": "whole immutable first-work-to-settlement elapsed includes all unknown implementation/control fees conservatively; not measured CPU",
   "repair_limit_seconds": 7200,
-  "repair_conservative_upper_seconds": 2574.399562086677,
+  "repair_conservative_upper_seconds": 3002.2148858788423,
   "repair_upper_policy": "immutable elapsed minus successful disjoint supervised stages; also includes all implementation, reading, idle/control and IO, not measured repair CPU",
-  "within_repair_budget_by_conservative_bound": true
+  "within_repair_budget_by_conservative_bound": true,
+  "documentation_check_seconds": 0.25350879319012165,
+  "documentation_final_byte_source": {
+    "path": "tmp/task042/v59/aux_post_docs01/documentation_checks.json",
+    "sha256": "1e770cd9295e523f3b804abc32c844a00871175abcd97417c3781a4a87b4bb9b"
+  },
+  "final_storage": {
+    "new_bytes": 9692013923,
+    "task_artifact_bytes": 77577441100,
+    "free_bytes": 3225659273216,
+    "reserve_bytes": 536870912
+  },
+  "own_lock_acquired_and_released": true,
+  "process_read_scope": "live /proc command tokens plus all 11 actual supervisor descendant-clear receipts",
+  "git_push_and_user_delivery_tail": {
+    "receipt_path": "tmp/task042/v59/post_push_delivery_receipt.json",
+    "policy": "created after final push; actual UTC/monotonic interval and final Git identity; CPU for Git/control not invented as 0; not another numerical stage",
+    "charged_known_lower_excludes_unknown_Git_control_CPU": true,
+    "immutable_window_start_is_preserved": true
+  }
 }
