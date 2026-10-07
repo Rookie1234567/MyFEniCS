@@ -12,6 +12,11 @@ from petsc4py import PETSc
 from scipy.linalg import lu_factor, lu_solve
 
 from src.solvers.hcurl_assembly_time_condensation import CellRecoveryMap
+from src.solvers.augmented_reference_correction import (
+    augmented_port_state_offset,
+    evaluate_complete_augmented_residual,
+    stable_euclidean_norm,
+)
 from src.solvers.p6_cell_condensed_action import (
     P6CellCondensedAction,
     P6CellPortTerms,
@@ -119,6 +124,87 @@ def test_reduced_contribution_iterator_matches_cached_action() -> None:
     np.testing.assert_allclose(assembled @ rhs, action.apply(rhs), rtol=2e-12, atol=2e-12)
     assert len(gates) == 4
     assert all(facts["consumer_must_release_before_next"] for _name, facts in gates)
+
+
+def test_v13_augmented_residual_sign_and_original_h_scale_match_small_p6_action():
+    condensed, block, prior_action = _problem()
+    prior_action.destroy()
+    h = np.asarray([1.7, 0.8], dtype=np.float64)
+    terms = {
+        0: P6CellPortTerms(
+            block["Bi"],
+            block["Di"],
+            np.asarray([0, 1], dtype=PETSc.IntType),
+            Bt=block["Bt"],
+            Dt=block["Dt"],
+        )
+    }
+    action = P6CellCondensedAction(
+        condensed, H_p=np.diag(h).astype(np.complex128), port_terms=terms
+    )
+    try:
+        volume = np.block(
+            [[block["Vii"], block["Vit"]], [block["Vti"], block["Vtt"]]]
+        )
+        coupling = np.vstack((block["Bi"], block["Bt"]))
+        dual = np.hstack((block["Di"], block["Dt"]))
+        assert action.operator_recipe["sign_convention"] == "augmented=[[V,B],[-D,Hp]]"
+        assert not np.allclose(dual, coupling.conj().T)
+        np.testing.assert_array_equal(np.diag(action.H_p).real, h)
+
+        rng = np.random.default_rng(401031)
+        finite_element = (
+            rng.standard_normal(4) + 1j * rng.standard_normal(4)
+        ).astype(np.complex128)
+        alpha = (
+            rng.standard_normal(2) + 1j * rng.standard_normal(2)
+        ).astype(np.complex128)
+        fe_rhs = (
+            rng.standard_normal(4) + 1j * rng.standard_normal(4)
+        ).astype(np.complex128)
+        port_rhs = (
+            rng.standard_normal(2) + 1j * rng.standard_normal(2)
+        ).astype(np.complex128)
+        recovered = action.original_hp_solve(dual @ finite_element)
+        offset = augmented_port_state_offset(alpha, recovered)
+        native_physical_action = volume @ finite_element + coupling @ recovered
+        dual_port_action = coupling @ offset
+        original_fe_scale = stable_euclidean_norm(fe_rhs) + stable_euclidean_norm(
+            coupling @ (port_rhs / h)
+        )
+
+        result = evaluate_complete_augmented_residual(
+            physical_action_storage=native_physical_action,
+            dual_coupling_storage=dual_port_action,
+            finite_element_rhs=fe_rhs,
+            port_amplitudes=alpha,
+            recovered_port_amplitudes=recovered,
+            port_state_offset=offset,
+            port_rhs=port_rhs,
+            h=h,
+            original_fe_equation_scale=original_fe_scale,
+            independent_rows=np.arange(4, dtype=np.int64),
+        )
+
+        expected_fe_residual = fe_rhs - (volume @ finite_element + coupling @ alpha)
+        expected_port_residual = port_rhs - (
+            -dual @ finite_element + np.diag(h) @ alpha
+        )
+        np.testing.assert_allclose(
+            result["finite_element_residual"], expected_fe_residual,
+            rtol=3e-13, atol=3e-13,
+        )
+        np.testing.assert_allclose(
+            result["port_residual"], expected_port_residual,
+            rtol=3e-13, atol=3e-13,
+        )
+        assert result["original_fe_equation_scale"] == pytest.approx(original_fe_scale)
+        assert result["complete_augmented_fe_equation_relative"] == pytest.approx(
+            stable_euclidean_norm(expected_fe_residual) / original_fe_scale
+        )
+    finally:
+        action.destroy()
+        condensed.destroy()
 
 
 def test_nonhermitian_local_condensation_and_recovery_match_dense_blocks() -> None:

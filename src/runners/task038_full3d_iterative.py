@@ -43,6 +43,9 @@ def run_full3d_iterative(
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_CONTROL_RUN_ID,
         TASK40_B0_P6_CANDIDATE_RUN_ID,
+        TASK40_B0_P6_V13_RUN_ID,
+        TASK40_GX560_V13_RUN_ID,
+        TASK40_GX784_V13_RUN_ID,
         TASK40_COMPARISON_GROUP,
     )
     from src.io.physical_intermediate_profile import (
@@ -52,8 +55,14 @@ def run_full3d_iterative(
     )
 
     if profile == TASK40_V10_P6_REFERENCE_PROFILE:
+        expected_run_id = (
+            TASK40_B0_P6_V13_RUN_ID
+            if solver.get("task40_reference_pc_strategy")
+            == "STRICT_THEN_BOUNDED_INEXACT_V13"
+            else TASK40_B0_P6_CANDIDATE_RUN_ID
+        )
         if (
-            resolved_payload.get("run_id") != TASK40_B0_P6_CANDIDATE_RUN_ID
+            resolved_payload.get("run_id") != expected_run_id
             or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
             or stage != "B0_CANDIDATE"
             or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
@@ -78,8 +87,16 @@ def run_full3d_iterative(
     )
 
     if profile in {TASK40_V11_P6_GX560_PROFILE, TASK40_V11_P6_GX784_PROFILE}:
+        v13_strategy = (
+            solver.get("task40_reference_pc_strategy")
+            == "STRICT_THEN_BOUNDED_INEXACT_V13"
+        )
         expected_run_id = (
-            "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1"
+            TASK40_GX560_V13_RUN_ID
+            if v13_strategy and profile == TASK40_V11_P6_GX560_PROFILE
+            else TASK40_GX784_V13_RUN_ID
+            if v13_strategy
+            else "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1"
             if profile == TASK40_V11_P6_GX560_PROFILE
             else "task40extra_0p7nm_nonseparable_gx784_p6_y_orbit_v11_v1"
         )

@@ -901,8 +901,12 @@ def _regular_inverse_gate_facts(
     }
 
 
-def _regular_inverse_checks_schema(profile: Any) -> str:
+def _regular_inverse_checks_schema(
+    profile: Any, reference_pc_strategy: str = "STRICT_ONLY"
+) -> str:
     """Select the established regular-inverse metadata schema by profile."""
+    if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
+        return "task40extra.review_v13_p6_regular_inverse_checks.v1"
     if profile.name == TASK40_V10_P6_PROFILE.name:
         return "task40extra.review_v10_p6_regular_inverse_checks.v1"
     return "task40extra.review_v11_p6_regular_inverse_checks.v1"
@@ -915,11 +919,34 @@ def _verify_regular_inverse(
     physical_rhs_facts: Mapping[str, Any],
     *,
     allocation_gate: Any,
+    reference_pc_strategy: str = "STRICT_ONLY",
+    _case_filter: str | None = None,
+    _candidate_state: tuple[np.ndarray, np.ndarray] | None = None,
+    _frozen_scales: Mapping[str, Any] | None = None,
+    _candidate_label: str = "initial",
+    _allow_correction: bool = True,
 ) -> dict[str, Any]:
     """Check complete regular FE/port recovery with the live four-q factors."""
 
+    from src.solvers.augmented_reference_correction import (
+        BOUNDED_INEXACT_REFERENCE_PC,
+        FACTOR_CALL_COUNTER_SOURCE,
+        REFERENCE_PC_REJECTED,
+        STRICT_ONLY,
+        STRICT_REFERENCE_PASS,
+        STRICT_THEN_BOUNDED_INEXACT_V13,
+        apply_one_augmented_residual_correction,
+        augmented_port_state_offset,
+        evaluate_complete_augmented_residual,
+        select_reference_pc_candidate,
+    )
     from src.solvers.p6_cell_condensed_action import _operation_relative
     from petsc4py import PETSc
+
+    if reference_pc_strategy not in {STRICT_ONLY, STRICT_THEN_BOUNDED_INEXACT_V13}:
+        raise ValueError(f"unknown Task40 reference-PC strategy: {reference_pc_strategy!r}")
+    if _candidate_state is not None and _case_filter is None:
+        raise ValueError("an overridden reference state requires one explicit witness case")
 
     inverse = reference["inverse"]
     layout = reference["full_layout"]
@@ -963,10 +990,25 @@ def _verify_regular_inverse(
         ("nonzero_all_mode_port_rhs", np.zeros(n, dtype=np.complex128), port_rhs, np.zeros(layout.full_rows, dtype=np.complex128)),
         ("physical_regular_incident_rhs", physical_storage[independent].copy(), np.zeros(profile.mode_count, dtype=np.complex128), physical_storage),
     )
+    if _case_filter is not None:
+        cases = tuple(row for row in cases if row[0] == _case_filter)
+        if len(cases) != 1:
+            raise ValueError(f"regular inverse witness case not uniquely found: {_case_filter!r}")
     records = []
     for name, fe_rhs, g_rhs, full_rhs_values in cases:
-        runtime.sample(f"v10_regular_inverse_{name}_before")
-        solution_values, alpha = inverse.apply_augmented(fe_rhs, port_rhs=g_rhs)
+        sample_label = (
+            f"v10_regular_inverse_{name}"
+            if _candidate_label == "initial"
+            else f"v13_regular_inverse_{name}_{_candidate_label}"
+        )
+        runtime.sample(f"{sample_label}_before")
+        if _candidate_state is None:
+            solution_values, alpha = inverse.apply_augmented(fe_rhs, port_rhs=g_rhs)
+        else:
+            solution_values = np.asarray(_candidate_state[0], dtype=np.complex128)
+            alpha = np.asarray(_candidate_state[1], dtype=np.complex128)
+            if solution_values.shape != (n,) or alpha.shape != (profile.mode_count,):
+                raise ValueError("corrected complete augmented candidate has a mismatched layout")
         solution = _independent_storage_vector(template, independent, solution_values)
         applied = template.duplicate()
         port_load = template.duplicate()
@@ -991,7 +1033,8 @@ def _verify_regular_inverse(
                     float(expected.norm()) + float(port_load.norm()),
                     np.finfo(float).tiny,
                 )
-                equation_relative = float(error.norm()) / equation_scale
+                equation_residual_norm = float(error.norm())
+                equation_relative = equation_residual_norm / equation_scale
             finally:
                 expected.destroy()
 
@@ -1020,8 +1063,65 @@ def _verify_regular_inverse(
                 + float(np.linalg.norm(g_rhs / h)),
                 np.finfo(float).tiny,
             )
-            port_relative = float(np.linalg.norm(alpha - alpha_expected)) / port_scale
-
+            alpha_closure_residual_norm = float(np.linalg.norm(alpha - alpha_expected))
+            port_relative = alpha_closure_residual_norm / port_scale
+            augmented_fe_residual = None
+            augmented_port_residual = None
+            augmented_equation_residual_norm = None
+            augmented_rhs_norm = None
+            augmented_stacked_relative_diagnostic = None
+            complete_augmented_fe_equation_relative = None
+            if reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13:
+                allocation_gate(
+                    "task40_v13_complete_augmented_reference_equation_evaluation",
+                    {
+                        "additional_payload_bytes": 16 * (
+                            int(layout.full_rows) + 4 * int(n)
+                            + 7 * int(profile.mode_count)
+                        ) + max(int(layout.full_rows), int(n), int(profile.mode_count)),
+                        "workspace_bytes": 0,
+                        "native_volume_action_is_independent": True,
+                        "native_dual_coupling_uses_actual_returned_alpha": True,
+                        "port_row_uses_original_h": True,
+                        "shared_solver_residual_core": True,
+                    },
+                )
+                augmented_port_coupling = template.duplicate()
+                try:
+                    alpha_minus_recovered = augmented_port_state_offset(
+                        alpha, recovered_alpha
+                    )
+                    bundle["dtn_action"].apply_modal_rhs(
+                        alpha_minus_recovered, augmented_port_coupling
+                    )
+                    complete_augmented = evaluate_complete_augmented_residual(
+                        physical_action_storage=native_action_storage,
+                        dual_coupling_storage=np.asarray(
+                            augmented_port_coupling.array_r, dtype=np.complex128
+                        ),
+                        finite_element_rhs=expected_storage[independent],
+                        port_amplitudes=alpha,
+                        recovered_port_amplitudes=recovered_alpha,
+                        port_state_offset=alpha_minus_recovered,
+                        port_rhs=g_rhs,
+                        h=h,
+                        original_fe_equation_scale=equation_scale,
+                        independent_rows=independent,
+                    )
+                finally:
+                    augmented_port_coupling.destroy()
+                augmented_fe_residual = complete_augmented["finite_element_residual"]
+                augmented_port_residual = complete_augmented["port_residual"]
+                augmented_equation_residual_norm = complete_augmented[
+                    "augmented_residual_norm"
+                ]
+                augmented_rhs_norm = complete_augmented["augmented_rhs_norm"]
+                augmented_stacked_relative_diagnostic = complete_augmented[
+                    "complete_augmented_stacked_relative_diagnostic"
+                ]
+                complete_augmented_fe_equation_relative = complete_augmented[
+                    "complete_augmented_fe_equation_relative"
+                ]
             recovery = _regular_local_recovery_facts(
                 reference,
                 solution_values,
@@ -1055,6 +1155,109 @@ def _verify_regular_inverse(
                 q_coverage_passed=q_coverage_passed,
             )
             passed = bool(gate_facts["passed"])
+            reference_pc_metrics = {
+                "full_equation": equation_relative,
+                "complete_augmented_fe_equation": complete_augmented_fe_equation_relative,
+                "local_sector_0": float(recovery["sector_facts"][0]["native_residual_relative"]),
+                "local_sector_1": float(recovery["sector_facts"][1]["native_residual_relative"]),
+                "local_combined": float(recovery["local_native_residual_relative"]),
+                "alpha_closure": port_relative,
+                "q_solve": q_residual_max,
+            }
+            current_scales = {
+                "full_equation": max(float(equation_scale), np.finfo(float).tiny),
+                "complete_augmented_fe_equation": max(
+                    float(equation_scale), np.finfo(float).tiny
+                ),
+                "local_sector_by_twist": {
+                    int(sector["twist_index"]): max(
+                        float(sector["native_rhs_operation_scale"]), np.finfo(float).tiny
+                    )
+                    for sector in recovery["sector_facts"]
+                },
+                "local_combined": max(
+                    float(recovery["local_native_rhs_operation_scale"]),
+                    np.finfo(float).tiny,
+                ),
+                "alpha_closure": max(float(port_scale), np.finfo(float).tiny),
+                "q_rhs_by_phase": {
+                    int(row["q"]): max(float(row["rhs_norm"]), np.finfo(float).tiny)
+                    for row in q_rows
+                },
+            }
+            frozen_scales = dict(_frozen_scales or current_scales)
+            frozen_sector_scales = frozen_scales.get("local_sector_by_twist", {})
+            frozen_q_scales = frozen_scales.get("q_rhs_by_phase", {})
+            sector_by_twist = {
+                int(sector["twist_index"]): sector for sector in recovery["sector_facts"]
+            }
+
+            def frozen_relative(numerator: float, denominator: Any) -> float:
+                scale = float(denominator)
+                value = float(numerator)
+                if not np.isfinite(value) or not np.isfinite(scale) or scale <= 0.0:
+                    return float("inf")
+                return value / scale
+
+            frozen_q_relative = []
+            for q_row in q_rows:
+                q = int(q_row["q"])
+                q_denominator = frozen_q_scales.get(q)
+                current_denominator = max(float(q_row["rhs_norm"]), np.finfo(float).tiny)
+                q_residual_norm = float(q_row["true_residual_relative"]) * current_denominator
+                frozen_q_relative.append(frozen_relative(q_residual_norm, q_denominator))
+            frozen_scale_metrics = {
+                "full_equation": frozen_relative(
+                    equation_residual_norm, frozen_scales.get("full_equation")
+                ),
+                "complete_augmented_fe_equation": (
+                    frozen_relative(
+                        float(complete_augmented["finite_element_residual_norm"]),
+                        frozen_scales.get("complete_augmented_fe_equation"),
+                    )
+                    if complete_augmented_fe_equation_relative is not None
+                    else float("inf")
+                ),
+                "local_sector_0": frozen_relative(
+                    float(sector_by_twist[0]["native_residual_relative"])
+                    * float(sector_by_twist[0]["native_rhs_operation_scale"]),
+                    frozen_sector_scales.get(0),
+                ),
+                "local_sector_1": frozen_relative(
+                    float(sector_by_twist[1]["native_residual_relative"])
+                    * float(sector_by_twist[1]["native_rhs_operation_scale"]),
+                    frozen_sector_scales.get(1),
+                ),
+                "local_combined": frozen_relative(
+                    float(np.linalg.norm(recovery["arrays"]["native_residuals"])),
+                    frozen_scales.get("local_combined"),
+                ),
+                "alpha_closure": frozen_relative(
+                    alpha_closure_residual_norm,
+                    frozen_scales.get("alpha_closure"),
+                ),
+                "q_solve": max(frozen_q_relative, default=float("inf")),
+            }
+            bounded_numeric_gates = {
+                "original_regular_equation",
+                "complete_augmented_fe_equation",
+                "two_local_original_equations",
+                "global_alpha_port_closure",
+                "all_four_q_true_residuals",
+            }
+            candidate_structural_gates = {
+                name: value
+                for name, value in gate_facts["gates"].items()
+                if name not in bounded_numeric_gates
+            }
+            candidate_structural_gates["all_four_q_phases_covered"] = q_coverage_passed
+            reference_pc_candidate = {
+                "metrics": reference_pc_metrics,
+                "frozen_scale_metrics": frozen_scale_metrics,
+                "structural_gates": candidate_structural_gates,
+                "state_label": _candidate_label,
+                "frozen_denominators": frozen_scales,
+            }
             builder_action_storage = np.zeros(layout.full_rows, dtype=np.complex128)
             builder_action_storage[independent] = sector_action
             packet = _save_packet(
@@ -1117,7 +1320,24 @@ def _verify_regular_inverse(
                         alpha_expected, dtype=np.complex128
                     ).copy(),
                     "original_regular_equation_relative_residual": equation_relative,
+                    "original_regular_equation_residual_norm": equation_residual_norm,
                     "original_regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
+                    "complete_augmented_fe_equation_relative_residual": complete_augmented_fe_equation_relative,
+                    "complete_augmented_stacked_relative_diagnostic": augmented_stacked_relative_diagnostic,
+                    "complete_augmented_equation_residual_norm": augmented_equation_residual_norm,
+                    "complete_augmented_equation_rhs_norm_diagnostic": augmented_rhs_norm,
+                    "complete_augmented_fe_residual": augmented_fe_residual,
+                    "complete_augmented_port_residual": augmented_port_residual,
+                    "complete_augmented_fe_row_formula": (
+                        "physical_action(u) + B * (alpha - recover_auxiliary(u))"
+                    ),
+                    "complete_augmented_port_row_formula": (
+                        "g - h * (alpha - recover_auxiliary(u)); H_p uses original h"
+                    ),
+                    "reference_pc_metrics": reference_pc_metrics,
+                    "frozen_scale_metrics": frozen_scale_metrics,
+                    "reference_pc_frozen_denominators": frozen_scales,
+                    "reference_pc_structural_gates": candidate_structural_gates,
                     "sector_native_action_consistency_relative": action_relative,
                     "sector_native_action_consistency_operation_scale": action_operation_scale,
                     "full_internal_recovery_relative": recovery[
@@ -1207,6 +1427,16 @@ def _verify_regular_inverse(
                     "recovered_field_ffcx_apply_seconds"
                 ],
                 "regular_port_closure_relative": port_relative,
+                "regular_port_closure_residual_norm": alpha_closure_residual_norm,
+                "complete_augmented_fe_equation_relative_residual": complete_augmented_fe_equation_relative,
+                "complete_augmented_stacked_relative_diagnostic": augmented_stacked_relative_diagnostic,
+                "complete_augmented_equation_residual_norm": augmented_equation_residual_norm,
+                "complete_augmented_equation_rhs_norm_diagnostic": augmented_rhs_norm,
+                "reference_pc_metrics": reference_pc_metrics,
+                "frozen_scale_metrics": frozen_scale_metrics,
+                "reference_pc_frozen_denominators": frozen_scales,
+                "reference_pc_structural_gates": candidate_structural_gates,
+                "reference_pc_candidate": reference_pc_candidate,
                 "regular_recovery_limit": _REGULAR_RECOVERY_LIMIT,
                 "maximum_q_true_residual_relative": q_residual_max,
                 "q_true_residuals": q_rows,
@@ -1220,14 +1450,157 @@ def _verify_regular_inverse(
                 "failed_gates": gate_facts["failed_gates"],
                 "passed": passed,
             }
-            runtime.marker(f"v10_regular_inverse_{name}_evaluated", row)
-            if not passed:
+            if reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13 and _candidate_label == "initial":
+                initial_selection = select_reference_pc_candidate([reference_pc_candidate])
+                correction_audit = None
+                candidate_rows = [row]
+                candidate_states = [reference_pc_candidate]
+                if initial_selection["admission"] == STRICT_REFERENCE_PASS:
+                    row["reference_pc_admission"] = STRICT_REFERENCE_PASS
+                    row["reference_pc_selection"] = initial_selection
+                    row["passed"] = True
+                elif all(candidate_structural_gates.values()) and _allow_correction:
+                    if augmented_fe_residual is None or augmented_port_residual is None:
+                        raise RuntimeError("V13 complete augmented residual was not independently evaluated")
+
+                    def raw_nonrecursive_inverse(fe_error, port_error):
+                        calls_before = int(inverse.factors.calls)
+                        delta_fe, delta_port = inverse.apply_augmented(
+                            fe_error, port_rhs=port_error
+                        )
+                        calls_after = int(inverse.factors.calls)
+                        solve_audit = inverse.last_solve_audit
+                        correction_q_rows = [
+                            q_row
+                            for sector_audit in solve_audit
+                            for q_row in sector_audit["q_true_residuals"]
+                        ]
+                        return delta_fe, delta_port, {
+                            "counter_source": FACTOR_CALL_COUNTER_SOURCE,
+                            "factor_calls_before": calls_before,
+                            "factor_calls_after": calls_after,
+                            "q_true_residuals": correction_q_rows,
+                        }
+
+                    correction = apply_one_augmented_residual_correction(
+                        solution_values,
+                        alpha,
+                        augmented_fe_residual,
+                        augmented_port_residual,
+                        raw_inverse=raw_nonrecursive_inverse,
+                        allocation_gate=allocation_gate,
+                        require_verified_solve_counter=True,
+                    )
+                    correction_packet = _save_packet(
+                        runtime,
+                        f"v13_regular_inverse_{name}_augmented_correction",
+                        {
+                            "schema": "task40extra.review_v13_augmented_reference_correction.v1",
+                            "case": name,
+                            "reference_pc_strategy": reference_pc_strategy,
+                            "finite_element_residual": augmented_fe_residual,
+                            "port_residual": augmented_port_residual,
+                            "complete_augmented_fe_equation_relative_residual": complete_augmented_fe_equation_relative,
+                            "complete_augmented_stacked_relative_diagnostic": augmented_stacked_relative_diagnostic,
+                            "complete_augmented_fe_row_formula": (
+                                "physical_action(u) + B * (alpha - recover_auxiliary(u))"
+                            ),
+                            "complete_augmented_port_row_formula": (
+                                "g - h * (alpha - recover_auxiliary(u))"
+                            ),
+                            "finite_element_state_before": solution_values.copy(),
+                            "port_state_before": alpha.copy(),
+                            "finite_element_delta": correction.finite_element - solution_values,
+                            "port_delta": correction.port_amplitudes - alpha,
+                            "finite_element_state_after": correction.finite_element,
+                            "port_state_after": correction.port_amplitudes,
+                            "correction_audit": dict(correction.audit),
+                        },
+                    )
+                    correction_audit = {
+                        **dict(correction.audit),
+                        "witness_packet": correction_packet,
+                        "full_augmented_equation": True,
+                        "fe_residual_sign": "expected_rhs - independent_reference_action(u, alpha)",
+                        "port_residual_sign": "h * (alpha_expected - alpha)",
+                    }
+                    corrected_checks = _verify_regular_inverse(
+                        runtime,
+                        reference,
+                        physical_rhs,
+                        physical_rhs_facts,
+                        allocation_gate=allocation_gate,
+                        reference_pc_strategy=reference_pc_strategy,
+                        _case_filter=name,
+                        _candidate_state=(
+                            correction.finite_element, correction.port_amplitudes
+                        ),
+                        _frozen_scales=current_scales,
+                        _candidate_label="corrected_v13",
+                        _allow_correction=False,
+                    )
+                    corrected_row = corrected_checks["cases"][0]
+                    candidate_rows.append(corrected_row)
+                    candidate_states.append(corrected_row["reference_pc_candidate"])
+                    final_selection = select_reference_pc_candidate(candidate_states)
+                    selected_index = int(final_selection["selected_candidate_index"])
+                    row = candidate_rows[selected_index]
+                    row["reference_pc_initial_strict_gate_passed"] = bool(
+                        initial_selection["admission"] == STRICT_REFERENCE_PASS
+                    )
+                    row["reference_pc_admission"] = final_selection["admission"]
+                    row["reference_pc_selection"] = final_selection
+                    row["reference_pc_candidates"] = [
+                        {
+                            "label": "initial" if index == 0 else "corrected_v13",
+                            "metrics": candidate["metrics"],
+                            "frozen_scale_metrics": candidate["frozen_scale_metrics"],
+                            "structural_gates": candidate["structural_gates"],
+                            "q_true_residuals": candidate_rows[index].get("q_true_residuals"),
+                            "maximum_q_true_residual_relative": candidate_rows[index].get(
+                                "maximum_q_true_residual_relative"
+                            ),
+                            "full_witness_packet": candidate_rows[index].get("full_witness_packet"),
+                        }
+                        for index, candidate in enumerate(candidate_states)
+                    ]
+                    row["reference_pc_correction_audit"] = correction_audit
+                    row["passed"] = bool(final_selection["admitted"])
+                    if not row["passed"]:
+                        row["failed_gates"] = list(dict.fromkeys([
+                            *row.get("failed_gates", ()),
+                            "reference_pc_original_and_frozen_scale_admission",
+                        ]))
+                else:
+                    row["reference_pc_admission"] = REFERENCE_PC_REJECTED
+                    row["reference_pc_selection"] = initial_selection
+                    row["reference_pc_initial_strict_gate_passed"] = bool(
+                        initial_selection["admission"] == STRICT_REFERENCE_PASS
+                    )
+                    row["passed"] = False
+                    row["failed_gates"] = list(dict.fromkeys([
+                        *row.get("failed_gates", ()),
+                        "reference_pc_structural_or_numeric_admission",
+                    ]))
+            elif reference_pc_strategy == STRICT_THEN_BOUNDED_INEXACT_V13:
+                row["reference_pc_admission"] = (
+                    STRICT_REFERENCE_PASS if passed else REFERENCE_PC_REJECTED
+                )
+                row["reference_pc_candidate_label"] = _candidate_label
+                row["passed"] = bool(passed)
+            elif not passed:
+                raise ValueError(
+                    f"regular p6 inverse gates failed for {name}: "
+                    f"{gate_facts['failed_gates']}; full witness saved: {row}"
+                )
+            runtime.marker(f"v13_regular_inverse_{name}_evaluated", row)
+            if not row["passed"] and reference_pc_strategy == STRICT_ONLY:
                 raise ValueError(
                     f"regular p6 inverse gates failed for {name}: "
                     f"{gate_facts['failed_gates']}; full witness saved: {row}"
                 )
             records.append(row)
-            runtime.marker(f"v10_regular_inverse_{name}_complete", row)
+            runtime.marker(f"v13_regular_inverse_{name}_complete", row)
         finally:
             if error is not None:
                 error.destroy()
@@ -1237,7 +1610,7 @@ def _verify_regular_inverse(
         runtime.sample(f"v10_regular_inverse_{name}_after")
 
     return {
-        "schema": _regular_inverse_checks_schema(profile),
+        "schema": _regular_inverse_checks_schema(profile, reference_pc_strategy),
         "profile": profile.identity(),
         "cases": records,
         "case_count": len(records),
@@ -1260,12 +1633,16 @@ class _P6ReferencePreconditioner:
     """Apply the regular two-cell inverse on the target trace+port space."""
 
     def __init__(
-        self, runtime: Any, owner: dict[str, Any], target_action: Any, target_carrier: Any
+        self, runtime: Any, owner: dict[str, Any], target_action: Any,
+        target_carrier: Any, *, allocation_gate: Any,
     ):
         from petsc4py import PETSc
 
         self.runtime = runtime
         self.PETSc = PETSc
+        self.allocation_gate = allocation_gate
+        if not callable(self.allocation_gate):
+            raise TypeError("V13 PC requires the live allocation gate")
         self.owner = owner
         self.reference = owner["global_bundle"]
         self.profile = owner["profile"]
@@ -1305,11 +1682,410 @@ class _P6ReferencePreconditioner:
             "q_true_residuals": [],
         }
 
+    def _evaluate_complete_augmented_state(
+        self, finite_element: np.ndarray, port_amplitudes: np.ndarray,
+        fe_rhs: np.ndarray, port_rhs: np.ndarray, *, label: str,
+    ) -> dict[str, Any]:
+        from src.solvers.augmented_reference_correction import (
+            augmented_port_state_offset,
+            evaluate_complete_augmented_residual,
+            stable_euclidean_norm,
+        )
+
+        if finite_element.shape != (len(self.independent),):
+            raise ValueError("V13 reference FE candidate has the wrong independent layout")
+        if port_amplitudes.shape != (self.profile.mode_count,):
+            raise ValueError("V13 reference alpha candidate has the wrong port layout")
+        if fe_rhs.shape != (len(self.independent),) or port_rhs.shape != (self.profile.mode_count,):
+            raise ValueError("V13 augmented reference RHS has the wrong layout")
+        self.allocation_gate(
+            "task40_v13_pc_complete_augmented_residual_evaluation",
+            {
+                "additional_payload_bytes": 16 * (
+                    3 * int(self.layout.full_rows)
+                    + 4 * int(len(self.independent))
+                    + 7 * int(self.profile.mode_count)
+                ) + max(
+                    int(self.layout.full_rows),
+                    int(len(self.independent)),
+                    int(self.profile.mode_count),
+                ),
+                "workspace_bytes": 0,
+                "native_volume_action_is_independent": True,
+                "native_dual_coupling_uses_actual_returned_alpha": True,
+                "port_row_uses_original_h": True,
+                "shared_solver_residual_core": True,
+                "evaluation_label": str(label),
+            },
+        )
+        solution = self.PETSc.Vec().createSeq(
+            self.layout.full_rows, comm=self.PETSc.COMM_SELF
+        )
+        physical_action = solution.duplicate()
+        port_coupling = solution.duplicate()
+        try:
+            solution.set(0.0)
+            _assign_vector_storage(solution, finite_element, rows=self.independent)
+            self.reference["physical_action"].apply(solution, physical_action)
+            recovered = np.asarray(
+                self.reference["dtn_action"].recover_auxiliary(solution),
+                dtype=np.complex128,
+            )
+            port_coupling.set(0.0)
+            self.reference["dtn_action"].apply_modal_rhs(
+                port_rhs / self.h, port_coupling
+            )
+            original_fe_equation_scale = (
+                stable_euclidean_norm(fe_rhs) + float(port_coupling.norm())
+            )
+            port_state_offset = augmented_port_state_offset(
+                port_amplitudes, recovered
+            )
+            port_coupling.set(0.0)
+            self.reference["dtn_action"].apply_modal_rhs(
+                port_state_offset, port_coupling
+            )
+            complete = evaluate_complete_augmented_residual(
+                physical_action_storage=np.asarray(
+                    physical_action.array_r, dtype=np.complex128
+                ),
+                dual_coupling_storage=np.asarray(
+                    port_coupling.array_r, dtype=np.complex128
+                ),
+                finite_element_rhs=fe_rhs,
+                port_amplitudes=port_amplitudes,
+                recovered_port_amplitudes=recovered,
+                port_state_offset=port_state_offset,
+                port_rhs=port_rhs,
+                h=self.h,
+                original_fe_equation_scale=original_fe_equation_scale,
+                independent_rows=self.independent,
+            )
+        finally:
+            port_coupling.destroy()
+            physical_action.destroy()
+            solution.destroy()
+        return complete
+
+    def _apply_v13(self, source: Any, source_values: np.ndarray):
+        from src.solvers.augmented_reference_correction import (
+            BOUNDED_INEXACT_LIMITS,
+            BOUNDED_INEXACT_REFERENCE_PC,
+            FACTOR_CALL_COUNTER_SOURCE,
+            STRICT_REFERENCE_LIMITS,
+            STRICT_REFERENCE_PASS,
+            apply_one_augmented_residual_correction,
+            select_reference_pc_candidate,
+        )
+
+        self.allocation_gate(
+            "task40_v13_pc_reference_rhs_injection",
+            {
+                "additional_payload_bytes": 16 * (
+                    int(self.layout.full_rows) + len(self.independent)
+                    + 2 * int(self.profile.mode_count)
+                ),
+                "workspace_bytes": 0,
+                "target_injection_is_full_storage": True,
+            },
+        )
+        injected = self.target_action.inject_trace_port(source_values)
+        fe_rhs = np.asarray(injected[self.independent], dtype=np.complex128)
+        port_rhs = np.asarray(
+            source_values[self.target_condensed.active_rows :], dtype=np.complex128
+        ).copy()
+        factor_calls_before = int(self.inverse.factors.calls)
+        initial_fe, initial_alpha = self.inverse.apply_augmented(
+            fe_rhs, port_rhs=port_rhs
+        )
+        factor_calls_after = int(self.inverse.factors.calls)
+        if factor_calls_after - factor_calls_before != self.profile.q_count:
+            raise RuntimeError(
+                "initial V13 PC raw inverse did not perform exactly one MatSolve per q phase"
+            )
+        initial_q_rows = copy.deepcopy(
+            [
+                row
+                for sector in self.inverse.last_solve_audit
+                for row in sector["q_true_residuals"]
+            ]
+        )
+        expected_qs = set(range(self.profile.q_count))
+        initial_q_coverage = (
+            len(initial_q_rows) == self.profile.q_count
+            and {int(row["q"]) for row in initial_q_rows} == expected_qs
+        )
+        initial_q_relative = max(
+            (float(row["true_residual_relative"]) for row in initial_q_rows),
+            default=float("inf"),
+        )
+        initial_eval = self._evaluate_complete_augmented_state(
+            initial_fe, initial_alpha, fe_rhs, port_rhs,
+            label=f"initial_pc_{self.calls + 1}",
+        )
+        strict_limits = {
+            name: float(STRICT_REFERENCE_LIMITS[name])
+            for name in ("complete_augmented_fe_equation", "alpha_closure", "q_solve")
+        }
+        bounded_limits = {
+            name: float(BOUNDED_INEXACT_LIMITS[name])
+            for name in ("complete_augmented_fe_equation", "alpha_closure", "q_solve")
+        }
+        initial_metrics = {
+            "complete_augmented_fe_equation": float(
+                initial_eval["complete_augmented_fe_equation_relative"]
+            ),
+            "alpha_closure": float(initial_eval["alpha_closure_relative"]),
+            "q_solve": initial_q_relative,
+        }
+        initial_candidate = {
+            "metrics": initial_metrics,
+            "frozen_scale_metrics": dict(initial_metrics),
+            "structural_gates": {
+                "all_four_q_phases_covered": initial_q_coverage,
+                "native_augmented_action_finite": True,
+            },
+            "state_label": "initial",
+        }
+        initial_selection = select_reference_pc_candidate(
+            [initial_candidate],
+            strict_limits=strict_limits,
+            bounded_inexact_limits=bounded_limits,
+        )
+        candidate_states = [initial_candidate]
+        candidate_values = [(initial_fe, initial_alpha, initial_eval, initial_q_rows)]
+        correction_audit = None
+        correction_q_rows: list[dict[str, Any]] = []
+        correction_factor_calls = None
+        selected_index = 0
+        final_selection = initial_selection
+        if initial_selection["admission"] != STRICT_REFERENCE_PASS:
+            if not all(initial_candidate["structural_gates"].values()):
+                raise FloatingPointError(
+                    "V13 PC reference structural q coverage failed; bounded admission is forbidden"
+                )
+            initial_q_scales = {
+                int(row["q"]): max(float(row["rhs_norm"]), np.finfo(float).tiny)
+                for row in initial_q_rows
+            }
+            frozen_scales = {
+                "complete_augmented_fe_equation": max(
+                    float(initial_eval["original_fe_equation_scale"]),
+                    np.finfo(float).tiny,
+                ),
+                "alpha_closure": float(initial_eval["alpha_closure_scale"]),
+                "q_rhs_by_phase": initial_q_scales,
+            }
+
+            def raw_nonrecursive_inverse(fe_error, port_error):
+                calls_before = int(self.inverse.factors.calls)
+                delta_fe, delta_port = self.inverse.apply_augmented(
+                    fe_error, port_rhs=port_error
+                )
+                calls_after = int(self.inverse.factors.calls)
+                q_rows = [
+                    row
+                    for sector in self.inverse.last_solve_audit
+                    for row in sector["q_true_residuals"]
+                ]
+                return delta_fe, delta_port, {
+                    "counter_source": FACTOR_CALL_COUNTER_SOURCE,
+                    "factor_calls_before": calls_before,
+                    "factor_calls_after": calls_after,
+                    "q_true_residuals": copy.deepcopy(q_rows),
+                }
+
+            correction = apply_one_augmented_residual_correction(
+                initial_fe,
+                initial_alpha,
+                initial_eval["finite_element_residual"],
+                initial_eval["port_residual"],
+                raw_inverse=raw_nonrecursive_inverse,
+                allocation_gate=self.allocation_gate,
+                require_verified_solve_counter=True,
+            )
+            correction_audit = dict(correction.audit)
+            correction_q_rows = list(correction_audit["q_true_residuals"])
+            correction_factor_calls = {
+                "before": correction_audit["factor_calls_before"],
+                "after": correction_audit["factor_calls_after"],
+            }
+            correction_eval = self._evaluate_complete_augmented_state(
+                correction.finite_element,
+                correction.port_amplitudes,
+                fe_rhs,
+                port_rhs,
+                label=f"corrected_pc_{self.calls + 1}",
+            )
+            correction_q_coverage = (
+                len(correction_q_rows) == self.profile.q_count
+                and {int(row["q"]) for row in correction_q_rows} == expected_qs
+            )
+            correction_q_relative = max(
+                (float(row["true_residual_relative"]) for row in correction_q_rows),
+                default=float("inf"),
+            )
+            correction_q_frozen = []
+            for row in correction_q_rows:
+                q = int(row["q"])
+                current_rhs_scale = max(float(row["rhs_norm"]), np.finfo(float).tiny)
+                frozen_rhs_scale = initial_q_scales.get(q)
+                correction_q_frozen.append(
+                    float(row["true_residual_relative"])
+                    * current_rhs_scale
+                    / frozen_rhs_scale
+                    if frozen_rhs_scale is not None and frozen_rhs_scale > 0.0
+                    else float("inf")
+                )
+            corrected_candidate = {
+                "metrics": {
+                    "complete_augmented_fe_equation": float(
+                        correction_eval["complete_augmented_fe_equation_relative"]
+                    ),
+                    "alpha_closure": float(correction_eval["alpha_closure_relative"]),
+                    "q_solve": correction_q_relative,
+                },
+                "frozen_scale_metrics": {
+                    "complete_augmented_fe_equation": float(
+                        correction_eval["finite_element_residual_norm"]
+                        / frozen_scales["complete_augmented_fe_equation"]
+                    ),
+                    "alpha_closure": float(
+                        correction_eval["alpha_closure_residual_norm"]
+                        / frozen_scales["alpha_closure"]
+                    ),
+                    "q_solve": max(correction_q_frozen, default=float("inf")),
+                },
+                "structural_gates": {
+                    "all_four_q_phases_covered": correction_q_coverage,
+                    "native_augmented_action_finite": True,
+                },
+                "state_label": "corrected_v13",
+            }
+            candidate_states.append(corrected_candidate)
+            candidate_values.append(
+                (
+                    correction.finite_element,
+                    correction.port_amplitudes,
+                    correction_eval,
+                    correction_q_rows,
+                )
+            )
+            final_selection = select_reference_pc_candidate(
+                candidate_states,
+                strict_limits=strict_limits,
+                bounded_inexact_limits=bounded_limits,
+            )
+            selected_index = int(final_selection["selected_candidate_index"])
+            if not final_selection["admitted"]:
+                raise FloatingPointError(
+                    "V13 PC full augmented reference residual/alpha/q gates failed: "
+                    f"{final_selection}"
+                )
+
+        solution_values, alpha, selected_eval, selected_q_rows = candidate_values[selected_index]
+        q_relative = max(
+            (float(row["true_residual_relative"]) for row in selected_q_rows),
+            default=float("inf"),
+        )
+        q_coverage = (
+            len(selected_q_rows) == self.profile.q_count
+            and {int(row["q"]) for row in selected_q_rows} == expected_qs
+        )
+        self.allocation_gate(
+            "task40_v13_pc_selected_output",
+            {
+                "additional_payload_bytes": 16 * (
+                    int(self.target_condensed.active_rows)
+                    + 2 * int(self.profile.mode_count)
+                ),
+                "workspace_bytes": 0,
+                "selected_complete_fe_alpha_state": True,
+            },
+        )
+        output = source.duplicate()
+        try:
+            active = np.zeros(self.target_condensed.active_rows, dtype=np.complex128)
+            constraints = self.target_condensed.trace_constraints
+            for original in constraints.owned_active_original_dofs:
+                row = int(original)
+                active[constraints.original_to_active[row]] = solution_values[
+                    self.reference_row[row]
+                ]
+            retained_output = np.concatenate((active, alpha))
+            _assign_vector_storage(output, retained_output)
+            self.calls += 1
+            self.last_facts = {
+                "call": self.calls,
+                "input_space": f"target_p6_active_trace_plus_{self.profile.mode_count}_ports",
+                "reference_rhs_injected_by_target_JH": True,
+                "target_active_rows": int(self.target_condensed.active_rows),
+                "target_port_rows": int(self.target_condensed.appended_rows),
+                "reference_pc_strategy": "STRICT_THEN_BOUNDED_INEXACT_V13",
+                "reference_pc_admission": final_selection["admission"],
+                "strict_initial_candidate_passed": bool(
+                    initial_selection["admission"] == STRICT_REFERENCE_PASS
+                ),
+                "selected_candidate_index": selected_index,
+                "selected_complete_augmented_fe_equation_relative": float(
+                    selected_eval["complete_augmented_fe_equation_relative"]
+                ),
+                "selected_complete_augmented_stacked_relative_diagnostic": float(
+                    selected_eval["complete_augmented_stacked_relative_diagnostic"]
+                ),
+                "selected_original_fe_equation_scale": float(
+                    selected_eval["original_fe_equation_scale"]
+                ),
+                "selected_complete_augmented_residual_norm": float(
+                    selected_eval["augmented_residual_norm"]
+                ),
+                "selected_complete_augmented_rhs_norm": float(
+                    selected_eval["augmented_rhs_norm"]
+                ),
+                "selected_alpha_closure_relative": float(
+                    selected_eval["alpha_closure_relative"]
+                ),
+                "port_identity_relative": float(selected_eval["alpha_closure_relative"]),
+                "maximum_q_true_residual_relative": q_relative,
+                "q_true_residual_limit": self.inverse.q_solve_limit,
+                "q_strict_passed": bool(q_relative <= _REFERENCE_RESIDUAL_LIMIT),
+                "q_true_residuals_initial": initial_q_rows,
+                "q_true_residuals_correction": correction_q_rows,
+                "q_true_residuals_selected": selected_q_rows,
+                "all_four_q_used": q_coverage,
+                "initial_factor_calls": {
+                    "before": factor_calls_before,
+                    "after": factor_calls_after,
+                    "delta": factor_calls_after - factor_calls_before,
+                },
+                "correction_factor_calls": correction_factor_calls,
+                "initial_metrics": initial_metrics,
+                "candidate_metrics": [
+                    {
+                        "state_label": candidate.get("state_label"),
+                        "metrics": candidate["metrics"],
+                        "frozen_scale_metrics": candidate["frozen_scale_metrics"],
+                        "structural_gates": candidate["structural_gates"],
+                    }
+                    for candidate in candidate_states
+                ],
+                "candidate_selection": final_selection,
+                "correction_audit": correction_audit,
+            }
+            self.runtime.marker("v13_p6_reference_pc_apply_complete", self.last_facts)
+            self.runtime.sample(f"v13_p6_reference_pc_{self.calls}_after")
+            return output
+        except BaseException:
+            output.destroy()
+            raise
+
     def apply(self, source: Any):
         self.runtime.sample(f"v10_p6_reference_pc_{self.calls + 1}_before")
         source_values = np.asarray(source.array_r, dtype=np.complex128)
         if source_values.shape != (self.target_action.reduced_size,):
             raise ValueError("Task40 V10 p6 preconditioner input has the wrong retained layout")
+        if self.inverse.reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
+            return self._apply_v13(source, source_values)
         injected = self.target_action.inject_trace_port(source_values)
         port_rhs = source_values[self.target_condensed.active_rows :].copy()
         solution_values, alpha = self.inverse.apply_augmented(
@@ -1351,13 +2127,14 @@ class _P6ReferencePreconditioner:
                 len(q_rows) != self.profile.q_count
                 or {int(row["q"]) for row in q_rows} != set(range(self.profile.q_count))
                 or not np.isfinite(q_relative)
-                or q_relative > _REFERENCE_RESIDUAL_LIMIT
+                or q_relative > self.inverse.q_solve_limit
                 or not np.isfinite(port_relative)
                 or port_relative > _IDENTITY_LIMIT
             ):
                 raise FloatingPointError(
                     "Task40 V10 p6 inverse apply failed q or port identity gate: "
-                    f"q={q_relative}, port={port_relative}"
+                    f"q={q_relative} (limit={self.inverse.q_solve_limit}), "
+                    f"port={port_relative}"
                 )
             self.calls += 1
             self.last_facts = {
@@ -1367,6 +2144,8 @@ class _P6ReferencePreconditioner:
                 "target_active_rows": int(self.target_condensed.active_rows),
                 "target_port_rows": int(self.target_condensed.appended_rows),
                 "maximum_q_true_residual_relative": q_relative,
+                "q_true_residual_limit": self.inverse.q_solve_limit,
+                "q_strict_passed": bool(q_relative <= _REFERENCE_RESIDUAL_LIMIT),
                 "port_identity_relative": port_relative,
                 "q_true_residuals": q_rows,
                 "all_four_q_used": True,
@@ -1400,9 +2179,12 @@ def _candidate_contract(
 ) -> dict[str, Any]:
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_P6_CANDIDATE_RUN_ID,
+        TASK40_B0_P6_V13_RUN_ID,
         TASK40_COMPARISON_GROUP,
         TASK40_GX560_V11_P6_RUN_ID,
         TASK40_GX784_V11_P6_RUN_ID,
+        TASK40_GX560_V13_RUN_ID,
+        TASK40_GX784_V13_RUN_ID,
     )
     from src.io.physical_intermediate_profile import (
         TASK40_V10_P6_REFERENCE_PROFILE,
@@ -1419,19 +2201,44 @@ def _candidate_contract(
     shared = getattr(runtime, "shared_budget", {})
     reserved = float(getattr(runtime, "workflow_reserved_seconds", -1.0))
     case_identity = {
-        TASK40_V10_P6_REFERENCE_PROFILE: (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
-        TASK40_V11_P6_GX560_PROFILE: (TASK40_GX560_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
-        TASK40_V11_P6_GX784_PROFILE: (TASK40_GX784_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+        TASK40_V10_P6_REFERENCE_PROFILE: (
+            (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
+            (TASK40_B0_P6_V13_RUN_ID, "B0_CANDIDATE", 16.0),
+        ),
+        TASK40_V11_P6_GX560_PROFILE: (
+            (TASK40_GX560_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+            (TASK40_GX560_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
+        ),
+        TASK40_V11_P6_GX784_PROFILE: (
+            (TASK40_GX784_V11_P6_RUN_ID, "Q4_ORIGINAL", 16.0),
+            (TASK40_GX784_V13_RUN_ID, "Q4_ORIGINAL", 16.0),
+        ),
     }
     try:
-        expected_run_id, expected_stage, expected_memory_limit = case_identity[profile_identity]
+        strict_identity, v13_identity = case_identity[profile_identity]
     except KeyError as exc:
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
+    reference_pc_strategy = str(solver.get("task40_reference_pc_strategy", "STRICT_ONLY"))
+    q_assembly_strategy = str(
+        solver.get("task40_q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM")
+    )
+    is_v13 = reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
+    expected_run_id, expected_stage, expected_memory_limit = (
+        v13_identity if is_v13 else strict_identity
+    )
     input_timeout = execution.get("timeout_seconds")
     timeout_passed = input_timeout == CAMPAIGN_SECONDS
     is_v10 = profile_identity == TASK40_V10_P6_REFERENCE_PROFILE
     checks = {
         "run_id": resolved.get("run_id") == expected_run_id,
+        "reference_pc_strategy": reference_pc_strategy
+        == ("STRICT_THEN_BOUNDED_INEXACT_V13" if is_v13 else "STRICT_ONLY"),
+        "q_assembly_strategy": q_assembly_strategy
+        == (
+            "PREALLOCATED_CSR_PATTERN_V13"
+            if is_v13
+            else "LEGACY_GLOBAL_CSR_SUM"
+        ),
         "comparison_group": resolved.get("comparison_group") == TASK40_COMPARISON_GROUP,
         "profile": solver.get("preconditioner") == profile_identity,
         "stage": solver.get("stage") == expected_stage and runtime.stage == expected_stage,
@@ -1466,7 +2273,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
-            "task40extra.review_v10_b0_candidate_worker_contract.v1"
+            "task40extra.review_v13_p6_reference_worker_contract.v1"
+            if is_v13
+            else "task40extra.review_v10_b0_candidate_worker_contract.v1"
             if is_v10
             else "task40extra.review_v11_p6_grid_worker_contract.v1"
         ),
@@ -1530,7 +2339,15 @@ def run_task40_v10_p6_reference_worker(
     )
     from src.solvers.physical_equivalent_fast import build_packed_physical_action
     from src.solvers.retained_port_block_layout import RESEARCH_PORT_LAYOUT
+    from src.solvers.augmented_reference_correction import (
+        REFERENCE_PC_STRATEGIES,
+        STRICT_ONLY,
+        recheck_reference_pc_final_admission,
+    )
     from src.solvers.task40_v10_p6_yorbit import (
+        Q_ASSEMBLY_LEGACY,
+        Q_ASSEMBLY_PREALLOCATED_V13,
+        Q_ASSEMBLY_STRATEGIES,
         build_task40_v10_p6_reference_inverse,
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
@@ -1545,6 +2362,25 @@ def run_task40_v10_p6_reference_worker(
     directory = Path(run_directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     stage = str(resolved_payload.get("solver", {}).get("stage", ""))
+    reference_pc_strategy = str(
+        resolved_payload.get("solver", {}).get("task40_reference_pc_strategy", STRICT_ONLY)
+    )
+    if reference_pc_strategy not in REFERENCE_PC_STRATEGIES:
+        raise ValueError(f"unsupported Task40 reference-PC strategy: {reference_pc_strategy!r}")
+    q_assembly_strategy = str(
+        resolved_payload.get("solver", {}).get(
+            "task40_q_assembly_strategy", Q_ASSEMBLY_LEGACY
+        )
+    )
+    if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
+        raise ValueError(f"unsupported Task40 q assembly strategy: {q_assembly_strategy!r}")
+    is_v13 = reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
+    if q_assembly_strategy != (
+        Q_ASSEMBLY_PREALLOCATED_V13 if is_v13 else Q_ASSEMBLY_LEGACY
+    ):
+        raise ValueError(
+            "Task40 V13 requires its reviewed preallocated q assembly; strict profiles retain legacy assembly"
+        )
     profile_identity = profile_identity or str(
         resolved_payload.get("solver", {}).get("preconditioner", "")
     )
@@ -1565,15 +2401,26 @@ def run_task40_v10_p6_reference_worker(
         if profile_identity == TASK40_V11_P6_GX560_PROFILE
         else "gx784"
     )
-    evidence_prefix = "v10_candidate" if is_v10 else "v11_p6_grid"
+    evidence_prefix = (
+        "v13_p6_reference"
+        if is_v13
+        else "v10_candidate"
+        if is_v10
+        else "v11_p6_grid"
+    )
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
+            "task40extra.review_v13_p6_reference_worker_summary.v1"
+            if is_v13
+            else
             "task40extra.review_v10_b0_candidate_worker_summary.v1"
             if is_v10
             else "task40extra.review_v11_p6_grid_candidate_worker_summary.v1"
         ),
         "profile": profile_identity,
+        "reference_pc_strategy": reference_pc_strategy,
+        "q_assembly_strategy": q_assembly_strategy,
         "periodic_inventory_expectations": periodic_profile.identity(),
         "stage": stage,
         "source_sha": source_sha,
@@ -1616,7 +2463,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                "task40_review_v10_integrated_p6_engineering"
+                f"task40_review_v13_{case_label}_p6_reference"
+                if is_v13
+                else "task40_review_v10_integrated_p6_engineering"
                 if is_v10
                 else f"task40_review_v11_{case_label}_p6_y_orbit"
             ),
@@ -2046,6 +2895,8 @@ def run_task40_v10_p6_reference_worker(
             jit_options=SAME_MESH_JIT_OPTIONS,
             share_transform_bank=share_transform_bank,
             target_full_storage_rows=int(target_action.condensed.full_rows),
+            reference_pc_strategy=reference_pc_strategy,
+            q_assembly_strategy=q_assembly_strategy,
         )
         if not mode_identity:
             raise RuntimeError("regular p6 physical identity callback did not run before q factors")
@@ -2057,6 +2908,7 @@ def run_task40_v10_p6_reference_worker(
             ref_rhs,
             ref_rhs_facts,
             allocation_gate=allocation_gate,
+            reference_pc_strategy=reference_pc_strategy,
         )
         ref_rhs.destroy()
         ref_rhs = None
@@ -2126,7 +2978,8 @@ def run_task40_v10_p6_reference_worker(
         )
 
         pc = _P6ReferencePreconditioner(
-            runtime, reference, target_action, target_bundle["dtn_action"].carrier
+            runtime, reference, target_action, target_bundle["dtn_action"].carrier,
+            allocation_gate=allocation_gate,
         )
         checkpoints = {"count": 0}
         outer_started_ns = time.perf_counter_ns()
@@ -2465,6 +3318,22 @@ def run_task40_v10_p6_reference_worker(
                 pre_backend["schur_port_identity_relative"]
             ),
         }
+        reference_pc_final_gate = recheck_reference_pc_final_admission(
+            pc_snapshot["last_facts"], reference_pc_strategy
+        )
+        reference_pc_port_identity_limit = float(
+            reference_pc_final_gate.get("port_identity_limit", -1.0)
+        )
+        reference_pc_q_limit = float(
+            reference_pc_final_gate.get("q_true_residual_limit", -1.0)
+        )
+        identity_metrics["reference_pc_port_identity_limit"] = (
+            reference_pc_port_identity_limit
+        )
+        identity_metrics["reference_pc_q_true_residual_limit"] = reference_pc_q_limit
+        identity_metrics["reference_pc_admission"] = reference_pc_final_gate.get(
+            "admission"
+        )
         final_physical_metrics = {
             "pre_release_target_backend": pre_backend,
             "pre_release_native_witness": pre_native,
@@ -2502,8 +3371,15 @@ def run_task40_v10_p6_reference_worker(
             and np.isfinite(final_port_closure)
             and final_port_closure <= _PORT_CLOSURE_LIMIT
             and identity_metrics["native_mapping_identity_relative"] <= _IDENTITY_LIMIT
-            and identity_metrics["reference_pc_port_identity_relative"] <= _IDENTITY_LIMIT
-            and identity_metrics["maximum_q_true_residual_relative"] <= _REFERENCE_RESIDUAL_LIMIT
+            and reference_pc_final_gate["passed"]
+            and finite_within(
+                identity_metrics["reference_pc_port_identity_relative"],
+                reference_pc_port_identity_limit,
+            )
+            and finite_within(
+                identity_metrics["maximum_q_true_residual_relative"],
+                reference_pc_q_limit,
+            )
             and all(inverse_input_identity.values())
         )
         summary.update(
@@ -2515,6 +3391,7 @@ def run_task40_v10_p6_reference_worker(
             post_release_native_witness_relative_residual=post_native_relative,
             inverse_input_identity=inverse_input_identity,
             identity_metrics=identity_metrics,
+            reference_pc_final_gate_recheck=reference_pc_final_gate,
             final_evaluation=final_eval,
             final_physical_metrics={
                 name: {

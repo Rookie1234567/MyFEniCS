@@ -73,17 +73,17 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 116
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 121
+    assert len(FIELD_SPECS) == 121
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 126
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
-        "geometry": 14,
+        "geometry": 15,
         "materials": 6,
         "incidence": 8,
         "discretization": 22,
-        "boundary": 10,
+        "boundary": 12,
         "method": 7,
-        "solver": 22,
+        "solver": 24,
         "execution": 7,
         "output": 20,
     }
@@ -113,6 +113,7 @@ def test_schema_identity_sections_and_unique_whitelist():
     assert FIELD_SPECS_BY_KEY["boundary.dtn_order_policy"].allowed == (
         "zero_order",
         "auto_propagating",
+        "manual",
     )
     assert FIELD_SPECS_BY_KEY["discretization.assembly_backend"].allowed == (
         "standard_full",
@@ -161,6 +162,17 @@ def test_schema_identity_sections_and_unique_whitelist():
                     "physical_p6_trace_p4_condensed_laptop_speed_v24",
                     "physical_p6_trace_coarse_degree_speed_v25",
                     "physical_p6_trace_setup_efficiency_v26",
+                    "physical_p6_trace_workingset_efficiency_v27",
+                    "physical_p6_trace_fused_kernel_v28",
+                    "physical_p6_trace_a4_tensor_h6_v29",
+                    "physical_p6_trace_workstation_guided_v30",
+                    "physical_p6_trace_projection_layout_v31",
+                    "task40extra_0p7nm_p6trace_p4_v1",
+                    "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
+                    "task40extra_v10_p6_y_orbit_reference_v1",
+                    "task40extra_v10_p4_balh_control_v1",
+                    "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+                    "task40extra_v11_p6_y_orbit_gx784_reference_v1",
                     "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
@@ -188,7 +200,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 121
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 126
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:

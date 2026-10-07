@@ -568,6 +568,43 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "solver.ksp_type", "full3d_iterative requires ksp_type=fgmres"
                 )
             preconditioner = solver["preconditioner"]
+            reference_pc_strategy = solver.get(
+                "task40_reference_pc_strategy", "STRICT_ONLY"
+            )
+            q_assembly_strategy = solver.get(
+                "task40_q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM"
+            )
+            task40_reference_profiles = {
+                "task40extra_v10_p6_y_orbit_reference_v1",
+                "task40extra_v11_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v11_p6_y_orbit_gx784_reference_v1",
+            }
+            if (
+                reference_pc_strategy != "STRICT_ONLY"
+                and preconditioner not in task40_reference_profiles
+            ):
+                raise _error(
+                    "solver.task40_reference_pc_strategy",
+                    "V13 bounded admission is restricted to reviewed Task40 p6 reference profiles",
+                )
+            if (
+                q_assembly_strategy != "LEGACY_GLOBAL_CSR_SUM"
+                and preconditioner not in task40_reference_profiles
+            ):
+                raise _error(
+                    "solver.task40_q_assembly_strategy",
+                    "V13 q-block assembly is restricted to Task40 p6 reference profiles",
+                )
+            expected_q_assembly = (
+                "PREALLOCATED_CSR_PATTERN_V13"
+                if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
+                else "LEGACY_GLOBAL_CSR_SUM"
+            )
+            if q_assembly_strategy != expected_q_assembly:
+                raise _error(
+                    "solver.task40_q_assembly_strategy",
+                    "Task40 V13 reference profiles require preallocated CSR patterns; strict profiles retain legacy global CSR sums",
+                )
             if preconditioner not in {
                 "full3d_scalable_v1",
                 "fullspace_pml_double_sweep_v19",
@@ -1033,15 +1070,24 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             elif preconditioner == "task40extra_v10_p6_y_orbit_reference_v1":
                 from src.geometry.task40_nonseparable_plan import (
                     TASK40_B0_P6_CANDIDATE_RUN_ID,
+                    TASK40_B0_P6_V13_RUN_ID,
                     TASK40_COMPARISON_GROUP,
                     validate_task40_input,
                 )
 
+                expected_run = (
+                    TASK40_B0_P6_V13_RUN_ID
+                    if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13"
+                    else TASK40_B0_P6_CANDIDATE_RUN_ID
+                )
                 if (
-                    config.get("run_id") != TASK40_B0_P6_CANDIDATE_RUN_ID
+                    config.get("run_id") != expected_run
                     or config.get("comparison_group") != TASK40_COMPARISON_GROUP
                 ):
-                    raise _error("identity", "V10 p6 profile requires the frozen B0 candidate identity")
+                    raise _error(
+                        "identity",
+                        "V10 p6 profile run_id must match its strict or V13 reference-PC strategy",
+                    )
                 if solver.get("stage") != "B0_CANDIDATE":
                     raise _error("solver.stage", "V10 p6 profile requires B0_CANDIDATE")
                 for section, key, actual, expected in (
@@ -1074,6 +1120,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     TASK40_COMPARISON_GROUP,
                     TASK40_GX560_V11_P6_RUN_ID,
                     TASK40_GX784_V11_P6_RUN_ID,
+                    TASK40_GX560_V13_RUN_ID,
+                    TASK40_GX784_V13_RUN_ID,
                     validate_task40_input,
                 )
                 from src.io.physical_intermediate_profile import (
@@ -1081,11 +1129,18 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     TASK40_V11_P6_GX784_PROFILE,
                 )
 
-                expected_run = (
-                    TASK40_GX560_V11_P6_RUN_ID
-                    if preconditioner == TASK40_V11_P6_GX560_PROFILE
-                    else TASK40_GX784_V11_P6_RUN_ID
-                )
+                if reference_pc_strategy == "STRICT_THEN_BOUNDED_INEXACT_V13":
+                    expected_run = (
+                        TASK40_GX560_V13_RUN_ID
+                        if preconditioner == TASK40_V11_P6_GX560_PROFILE
+                        else TASK40_GX784_V13_RUN_ID
+                    )
+                else:
+                    expected_run = (
+                        TASK40_GX560_V11_P6_RUN_ID
+                        if preconditioner == TASK40_V11_P6_GX560_PROFILE
+                        else TASK40_GX784_V11_P6_RUN_ID
+                    )
                 if (
                     config.get("run_id") != expected_run
                     or config.get("comparison_group") != TASK40_COMPARISON_GROUP

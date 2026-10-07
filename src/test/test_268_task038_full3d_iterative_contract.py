@@ -131,7 +131,7 @@ def test_full3d_iterative_profile_is_explicit_and_strategic_limits_are_distinct(
         ),
         (
             (("wavelength_nm = 13.5", "wavelength_nm = 0.7"),),
-            "0.7 nm full-PDE is not authorized",
+            "existing full3d_iterative profiles remain frozen to 13.5 nm",
         ),
     ),
 )

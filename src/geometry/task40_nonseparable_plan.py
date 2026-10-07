@@ -42,6 +42,12 @@ TASK40_GZ528_RUN_ID = "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1"
 TASK40_GX784_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_review_v5_v1"
 TASK40_GX560_V11_P6_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_y_orbit_v11_v1"
 TASK40_GX784_V11_P6_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_p6_y_orbit_v11_v1"
+TASK40_B0_P6_V13_RUN_ID = "task40extra_0p7nm_b0_p6_reference_v13"
+TASK40_GX560_V13_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_reference_v13"
+TASK40_GX784_V13_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_p6_reference_v13"
+TASK40_V13_RUN_IDS = frozenset(
+    {TASK40_B0_P6_V13_RUN_ID, TASK40_GX560_V13_RUN_ID, TASK40_GX784_V13_RUN_ID}
+)
 TASK40_B0_CONTROL_RUN_ID = "task40extra_0p7nm_b0_p4_balh_control_v10"
 TASK40_B0_P6_CANDIDATE_RUN_ID = "task40extra_0p7nm_b0_p6_y_orbit_candidate_v10"
 TASK40_B0_P4_CONTROL_PROFILE = "task40extra_v10_p4_balh_control_v1"
@@ -62,6 +68,9 @@ TASK40_MANUAL_BOUNDS_BY_RUN_ID = {
     TASK40_GX784_V11_P6_RUN_ID: (8, 2),
     TASK40_B0_CONTROL_RUN_ID: (9, 3),
     TASK40_B0_P6_CANDIDATE_RUN_ID: (9, 3),
+    TASK40_B0_P6_V13_RUN_ID: (9, 3),
+    TASK40_GX560_V13_RUN_ID: (8, 2),
+    TASK40_GX784_V13_RUN_ID: (8, 2),
 }
 TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH = {
     "E1": (9, 2),
@@ -85,6 +94,9 @@ TASK40_RUNS = {
     TASK40_GX784_V11_P6_RUN_ID: "GX784",
     TASK40_B0_CONTROL_RUN_ID: "B0",
     TASK40_B0_P6_CANDIDATE_RUN_ID: "B0",
+    TASK40_B0_P6_V13_RUN_ID: "B0",
+    TASK40_GX560_V13_RUN_ID: "GX560",
+    TASK40_GX784_V13_RUN_ID: "GX784",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
 }
 TASK40_SI_N = complex(0.9998851703688496, 4.3236152269189515e-6)

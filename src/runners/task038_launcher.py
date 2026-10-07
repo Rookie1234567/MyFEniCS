@@ -5584,6 +5584,9 @@ def launch_specification(
     from src.geometry.task40_nonseparable_plan import (
         TASK40_B0_CONTROL_RUN_ID,
         TASK40_B0_P6_CANDIDATE_RUN_ID,
+        TASK40_B0_P6_V13_RUN_ID,
+        TASK40_GX560_V13_RUN_ID,
+        TASK40_GX784_V13_RUN_ID,
         TASK40_B0_P4_CONTROL_PROFILE,
         TASK40_GX560_V11_P6_RUN_ID,
         TASK40_GX784_V11_P6_RUN_ID,
@@ -5596,6 +5599,11 @@ def launch_specification(
 
     run_id = str(specification.identity.get("run_id", ""))
     preconditioner = str(specification.solver.get("preconditioner", ""))
+    task40_v13_profile = run_id in {
+        TASK40_B0_P6_V13_RUN_ID,
+        TASK40_GX560_V13_RUN_ID,
+        TASK40_GX784_V13_RUN_ID,
+    }
     task40_v10_profile = (
         run_id == TASK40_B0_CONTROL_RUN_ID
         and preconditioner == TASK40_B0_P4_CONTROL_PROFILE
@@ -5610,9 +5618,15 @@ def launch_specification(
         run_id == TASK40_GX784_V11_P6_RUN_ID
         and preconditioner == TASK40_V11_P6_GX784_PROFILE
     )
-    task40_campaign_profile = task40_v10_profile or task40_v11_p6_grid_profile
+    task40_campaign_profile = (
+        task40_v10_profile or task40_v11_p6_grid_profile or task40_v13_profile
+    )
     campaign_evidence_key = (
-        "task40_v10_campaign" if task40_v10_profile else "task40_v11_campaign"
+        "task40_v13_campaign"
+        if task40_v13_profile
+        else "task40_v10_campaign"
+        if task40_v10_profile
+        else "task40_v11_campaign"
     )
     if task40_v10_campaign_window is not None and not task40_campaign_profile:
         raise InputError("Task40 fixed campaign window is restricted to reviewed p6 cases")

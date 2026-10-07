@@ -211,6 +211,203 @@ def test_regular_inverse_passes_sector_action_map_and_petsc_to_recovery(
     assert callable(captured["operation_relative"])
 
 
+def test_v13_regular_inverse_continues_all_four_witnesses_after_bounded_first_state(
+    monkeypatch,
+):
+    from src.solvers.augmented_reference_correction import (
+        STRICT_THEN_BOUNDED_INEXACT_V13,
+    )
+
+    profile = TASK40_V10_P6_PROFILE
+    n = 2
+    mode_count = profile.mode_count
+    recovery_calls = []
+    marked = []
+    q_rows = [
+        {"q": q, "true_residual_relative": 1e-12, "rhs_norm": 1.0}
+        for q in range(4)
+    ]
+
+    class _Factors:
+        calls = 0
+
+    class _Inverse:
+        factors = _Factors()
+        last_solve_audit = []
+        call_initial = True
+
+        def apply_augmented(self, fe_rhs, *, port_rhs):
+            self.factors.calls += 4
+            self.last_solve_audit = [{"q_true_residuals": list(q_rows)}]
+            if self.call_initial:
+                self.call_initial = False
+                fe_rhs = np.asarray(fe_rhs, dtype=np.complex128)
+                port_rhs = np.asarray(port_rhs, dtype=np.complex128)
+                fe_delta = (
+                    2e-9 * fe_rhs / np.linalg.norm(fe_rhs)
+                    if np.linalg.norm(fe_rhs) > 0.0
+                    else np.zeros_like(fe_rhs)
+                )
+                alpha = port_rhs.copy()
+                if np.linalg.norm(port_rhs) > 0.0:
+                    alpha = port_rhs + 4e-10 * port_rhs / np.linalg.norm(port_rhs)
+                return fe_rhs + fe_delta, alpha
+            self.call_initial = True
+            return (
+                np.asarray(fe_rhs, dtype=np.complex128).copy(),
+                np.asarray(port_rhs, dtype=np.complex128).copy(),
+            )
+
+    class _PhysicalAction:
+        def apply(self, source, target):
+            _assign_vector_storage(target, np.asarray(source.array_r))
+
+    class _DtnAction:
+        carrier = SimpleNamespace(
+            entries=tuple(
+                SimpleNamespace(normalization_h=1.0) for _ in range(mode_count)
+            )
+        )
+
+        def recover_auxiliary(self, _solution):
+            return np.zeros(mode_count, dtype=np.complex128)
+
+        def apply_modal_rhs(self, _amplitudes, target):
+            target.set(0.0)
+
+    def recovery(*_args, **_kwargs):
+        recovery_calls.append(1)
+        zeros_n = np.zeros(n, dtype=np.complex128)
+        zeros_full = np.zeros(2 * n, dtype=np.complex128)
+        return {
+            "sector_facts": [
+                {
+                    "twist_index": 0,
+                    "native_residual_relative": 0.0,
+                    "native_rhs_operation_scale": 1.0,
+                },
+                {
+                    "twist_index": 1,
+                    "native_residual_relative": 0.0,
+                    "native_rhs_operation_scale": 1.0,
+                },
+            ],
+            "arrays": {
+                "internal_residuals": zeros_full,
+                "internal_effective_rhs": zeros_full,
+                "internal_saved_field_action": zeros_full,
+                "internal_original_rows": np.arange(2 * n, dtype=np.int64),
+                "internal_twist_indices": np.zeros(2 * n, dtype=np.int8),
+                "native_residuals": zeros_n,
+                "port_residuals": np.zeros(mode_count, dtype=np.complex128),
+                "native_identity_differences": zeros_n,
+                "schur_port_identity_differences": np.zeros(mode_count, dtype=np.complex128),
+                "projected_saved_field_differences": zeros_n,
+            },
+            "internal_residual_relative": 0.0,
+            "internal_operation_scale": 1.0,
+            "internal_row_count": 2 * n,
+            "local_native_residual_relative": 0.0,
+            "local_native_rhs_operation_scale": 1.0,
+            "port_residual_relative": 0.0,
+            "port_operation_scale": 1.0,
+            "port_mode_count": mode_count,
+            "native_identity_relative": 0.0,
+            "native_identity_operation_scale": 1.0,
+            "schur_port_identity_relative": 0.0,
+            "schur_port_identity_operation_scale": 1.0,
+            "projected_saved_field_recovery_relative": 0.0,
+            "recovered_field_ffcx_apply_count": 0,
+            "recovered_field_ffcx_apply_seconds": 0.0,
+        }
+
+    def gate_facts(**facts):
+        numeric_pass = facts["equation_relative"] <= 1e-10
+        gates = {
+            "original_regular_equation": numeric_pass,
+            "independent_sector_action_consistency": True,
+            "full_internal_recovery": True,
+            "two_local_original_equations": True,
+            "all_port_equations": True,
+            "native_action_recovery_identity": True,
+            "schur_port_recovery_identity": True,
+            "saved_field_local_recovery_identity": True,
+            "global_alpha_port_closure": facts["port_closure_relative"] <= 1e-11,
+            "all_four_q_true_residuals": facts["q_coverage_passed"]
+            and facts["q_residual_relative"] <= 1e-10,
+        }
+        return {
+            "gates": gates,
+            "failed_gates": [name for name, passed in gates.items() if not passed],
+            "passed": all(gates.values()),
+            "limits": {name: 1e-10 for name in gates},
+        }
+
+    monkeypatch.setattr(task40_v10_worker, "_runtime_interior_rows", lambda _ref: np.empty(0, dtype=np.int64))
+    monkeypatch.setattr(
+        task40_v10_worker,
+        "_sector_native_forward_action",
+        lambda _ref, values, *_args, **_kwargs: (
+            np.asarray(values, dtype=np.complex128).copy(),
+            {
+                0: {"full_storage": np.zeros(2 * n, dtype=np.complex128)},
+                1: {"full_storage": np.zeros(2 * n, dtype=np.complex128)},
+            },
+            {},
+        ),
+    )
+    monkeypatch.setattr(task40_v10_worker, "_regular_local_recovery_facts", recovery)
+    monkeypatch.setattr(task40_v10_worker, "_regular_inverse_gate_facts", gate_facts)
+    monkeypatch.setattr(
+        task40_v10_worker, "_save_packet", lambda _runtime, label, _payload: {"path": label}
+    )
+    runtime = SimpleNamespace(
+        sample=lambda _label: None,
+        marker=lambda label, facts: marked.append((label, facts)),
+    )
+    layout = SimpleNamespace(independent=np.arange(n, dtype=np.int64), full_rows=n)
+    reference = {
+        "profile": profile,
+        "inverse": _Inverse(),
+        "full_layout": layout,
+        "global_bundle": {
+            "modes": tuple(range(mode_count)),
+            "physical_action": _PhysicalAction(),
+            "dtn_action": _DtnAction(),
+        },
+    }
+    physical_rhs = PETSc.Vec().createSeq(n, comm=PETSc.COMM_SELF)
+    _assign_vector_storage(
+        physical_rhs, np.asarray([1.0 + 0.25j, -0.5 + 0.75j])
+    )
+    try:
+        result = task40_v10_worker._verify_regular_inverse(
+            runtime,
+            reference,
+            physical_rhs,
+            {},
+            allocation_gate=lambda _label, _facts: None,
+            reference_pc_strategy=STRICT_THEN_BOUNDED_INEXACT_V13,
+        )
+    finally:
+        physical_rhs.destroy()
+
+    assert [row["name"] for row in result["cases"]] == [
+        "generic_full_independent",
+        f"interior_only_all_{profile.global_interior_rows}",
+        "nonzero_all_mode_port_rhs",
+        "physical_regular_incident_rhs",
+    ]
+    assert len(recovery_calls) > len(result["cases"])
+    assert all(row["passed"] for row in result["cases"])
+    assert result["cases"][0]["reference_pc_initial_strict_gate_passed"] is False
+    assert all(
+        row["reference_pc_admission"] == "STRICT_REFERENCE_PASS"
+        for row in result["cases"]
+    )
+    assert any(row["reference_pc_initial_strict_gate_passed"] is False for row in result["cases"])
+
+
 def test_candidate_identity_packet_marker_and_summary_accept_readonly_audits(
     tmp_path,
 ):

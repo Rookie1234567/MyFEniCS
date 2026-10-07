@@ -8,9 +8,14 @@ import numpy as np
 from scipy import sparse
 
 from src.solvers.task40_v10_p6_yorbit import (
+    Q_ASSEMBLY_LEGACY,
+    Q_ASSEMBLY_PREALLOCATED_V13,
     TwoCellNativeTransport,
     YOrbitEntities,
+    assemble_task40_v10_sector_blocks,
     build_task40_v10_sector_contexts,
+    compare_task40_v10_sector_assembly,
+    _summarize_task40_b0_q_assembly_pairs,
     project_reduced_contribution,
     trace_layout_coordinates,
 )
@@ -35,6 +40,155 @@ class _IdentityEntities:
             "dual_from_canonical",
         }
         return np.asarray(values, dtype=np.complex128).copy()
+
+
+class _TwoBranchCoordinates:
+    def __init__(self):
+        self.maps = (
+            sparse.csr_matrix(np.asarray([[1.0], [0.0]], dtype=np.complex128)),
+            sparse.csr_matrix(np.asarray([[0.0], [1.0]], dtype=np.complex128)),
+        )
+
+    def q_map(self, branch, *, allocation_gate):
+        allocation_gate("fixture_q_map", {"branch": branch})
+        return self.maps[branch]
+
+
+class _ContributionAction:
+    def __init__(self, matrix):
+        self.matrix = np.asarray(matrix, dtype=np.complex128)
+
+    def iter_reduced_contribution_layouts(self):
+        yield np.asarray([0, 1], dtype=np.int32), np.asarray([0, 1], dtype=np.int32), "fixture"
+
+    def iter_reduced_contributions(self, *, allocation_gate):
+        allocation_gate("fixture_numeric_contribution", {"rows": 2})
+        yield (
+            np.asarray([0, 1], dtype=np.int32),
+            np.asarray([0, 1], dtype=np.int32),
+            self.matrix.copy(),
+            "fixture",
+        )
+
+
+def _assemble_small_q_fixture(matrix, strategy):
+    return assemble_task40_v10_sector_blocks(
+        _ContributionAction(matrix),
+        _TwoBranchCoordinates(),
+        SimpleNamespace(global_q_indices=(0, 2)),
+        allocation_gate=lambda *_args: None,
+        assembly_strategy=strategy,
+    )
+
+
+def test_public_preallocated_assembly_retains_four_blocks_and_matches_legacy_diagonal():
+    action = np.asarray(
+        [[2.0 + 0.2j, 0.0], [0.0, 3.0 - 0.4j]], dtype=np.complex128
+    )
+    legacy, legacy_audit = _assemble_small_q_fixture(action, Q_ASSEMBLY_LEGACY)
+    candidate, candidate_audit = _assemble_small_q_fixture(
+        action, Q_ASSEMBLY_PREALLOCATED_V13
+    )
+
+    assert set(candidate) == {0, 2}
+    assert set(candidate_audit["block_shapes"]) == {"00", "01", "10", "11"}
+    assert candidate_audit["off_diagonal_relative"] == {
+        "q0_q1_relative": 0.0,
+        "q1_q0_relative": 0.0,
+    }
+    assert candidate_audit["global_csr_reallocations_during_numeric_pass"] == 0
+    assert legacy_audit["assembly_strategy"] == Q_ASSEMBLY_LEGACY
+    assert candidate_audit["assembly_strategy"] == Q_ASSEMBLY_PREALLOCATED_V13
+    for audit in (legacy_audit, candidate_audit):
+        assert audit["local_projection_call_count"] == 4
+        assert audit["global_sparse_accumulation_call_count"] == 4
+        assert audit["contribution_generation_seconds"] >= 0.0
+        assert audit["local_projection_seconds"] >= 0.0
+        assert audit["global_sparse_accumulation_seconds"] >= 0.0
+        assert audit["timing_scope"]["child_intervals_are_nonoverlapping_and_already_inside_numeric_parent"]
+    for q in (0, 2):
+        np.testing.assert_array_equal(candidate[q].toarray(), legacy[q].toarray())
+    np.testing.assert_array_equal(candidate[0].toarray(), [[2.0 + 0.2j]])
+    np.testing.assert_array_equal(candidate[2].toarray(), [[3.0 - 0.4j]])
+
+
+def test_public_preallocated_assembly_rejects_uncancelled_off_diagonal_q_blocks():
+    matrix = np.asarray(
+        [[2.0, 0.25 - 0.1j], [0.25 + 0.1j, 3.0]], dtype=np.complex128
+    )
+    with np.testing.assert_raises_regex(ValueError, "not diagonal in local q branches"):
+        _assemble_small_q_fixture(matrix, Q_ASSEMBLY_PREALLOCATED_V13)
+
+
+def test_paired_q_assembly_compares_all_blocks_and_actions_with_staged_oracles():
+    matrix = np.asarray(
+        [[2.0 + 0.2j, 0.0], [0.0, 3.0 - 0.4j]], dtype=np.complex128
+    )
+    report = compare_task40_v10_sector_assembly(
+        _ContributionAction(matrix),
+        _TwoBranchCoordinates(),
+        SimpleNamespace(global_q_indices=(0, 2)),
+        allocation_gate=lambda *_args: None,
+    )
+
+    assert report["all_four_blocks_independently_compared"]
+    assert report["legacy_csr_oracle_released_before_candidate_assembly"]
+    assert set(report["block_comparisons"]) == {"00", "01", "10", "11"}
+    assert report["numerically_equivalent_at_original_operator_gate"]
+    assert report["max_csr_difference_relative_to_diagonal"] == 0.0
+    assert report["max_action_difference_relative_to_diagonal"] == 0.0
+    assert report["legacy_off_diagonal_relative"] == {
+        "q0_q1_relative": 0.0,
+        "q1_q0_relative": 0.0,
+    }
+    assert report["candidate_off_diagonal_relative"] == {
+        "q0_q1_relative": 0.0,
+        "q1_q0_relative": 0.0,
+    }
+
+
+def test_b0_comparison_only_summary_checks_q_coverage_and_four_block_shapes():
+    profile = SimpleNamespace(
+        q_count=4,
+        augmented_rows_per_q=(3, 4, 5, 6),
+        identity=lambda: {"name": "fixture-b0"},
+    )
+    comparisons = {key: {"shape": [1, 1]} for key in ("00", "01", "10", "11")}
+    reports = [
+        {
+            "global_q_indices": [0, 2],
+            "block_shapes": {
+                "00": [3, 3], "01": [3, 5], "10": [5, 3], "11": [5, 5]
+            },
+            "block_comparisons": comparisons,
+            "legacy_assembly_seconds": 2.0,
+            "candidate_assembly_seconds": 1.0,
+            "all_four_blocks_independently_compared": True,
+            "numerically_equivalent_at_original_operator_gate": True,
+        },
+        {
+            "global_q_indices": [1, 3],
+            "block_shapes": {
+                "00": [4, 4], "01": [4, 6], "10": [6, 4], "11": [6, 6]
+            },
+            "block_comparisons": comparisons,
+            "legacy_assembly_seconds": 2.0,
+            "candidate_assembly_seconds": 1.0,
+            "all_four_blocks_independently_compared": True,
+            "numerically_equivalent_at_original_operator_gate": True,
+        },
+    ]
+
+    summary = _summarize_task40_b0_q_assembly_pairs(profile, reports, {0, 1, 2, 3})
+
+    assert summary["covered_q"] == [0, 1, 2, 3]
+    assert summary["candidate_selected_for_formal_cases"]
+    assert summary["selected_strategy"] == Q_ASSEMBLY_PREALLOCATED_V13
+    assert not summary["mumps_factors_constructed"]
+    with np.testing.assert_raises_regex(ValueError, "does not cover every"):
+        _summarize_task40_b0_q_assembly_pairs(
+            profile, [{**reports[0], "block_shapes": {"00": [3, 3]}}, reports[1]], {0, 1, 2, 3}
+        )
 
 
 def test_two_cell_transport_is_the_dual_of_primal_lift():

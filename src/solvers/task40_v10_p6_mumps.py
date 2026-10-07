@@ -13,6 +13,7 @@ from typing import Callable, Mapping, Sequence
 import numpy as np
 from scipy import sparse
 
+from .augmented_reference_correction import STRICT_ONLY, q_solve_limit
 from .task40_v10_p6_periodic_profile import (
     TASK40_V10_P6_PROFILE,
     Task40V10P6PeriodicProfile,
@@ -149,6 +150,7 @@ class AllQExactMumps:
                  event: Callable[[str, Mapping[str, object]], None] | None = None,
                  expected_shapes: Sequence[int] | None = None,
                  profile: Task40V10P6PeriodicProfile = TASK40_V10_P6_PROFILE,
+                 reference_pc_strategy: str = STRICT_ONLY,
                  transform_bank=None,
                  inverse_borrowers: Mapping[str, object] | None = None,
                  full_storage_rows: int | None = None,
@@ -160,6 +162,8 @@ class AllQExactMumps:
         if not isinstance(profile, Task40V10P6PeriodicProfile):
             raise TypeError("all-q factors require an explicit Task40 p6 periodic profile")
         self.profile = profile
+        self.reference_pc_strategy = str(reference_pc_strategy)
+        self.q_solve_limit = q_solve_limit(self.reference_pc_strategy)
         self.event = event or (lambda _name, _facts: None)
         self.transform_bank = transform_bank
         self.inverse_borrowers = dict(inverse_borrowers or {})
@@ -190,6 +194,9 @@ class AllQExactMumps:
         self.audit = {
             "backend": "PETSc MUMPS exact",
             "profile": profile.name,
+            "reference_pc_strategy": self.reference_pc_strategy,
+            "q_true_residual_admission_limit": self.q_solve_limit,
+            "q_true_residual_strict_limit": 1.0e-10,
             "all_q_required": list(range(self.nq)),
             "factor_inputs": [],
             "factor_tests": [],
@@ -496,11 +503,20 @@ class AllQExactMumps:
                 solution = self._solve_once(q, rhs)
                 self._assert_input_identity(q, "after_probe_solve")
                 residual = float(np.linalg.norm(csr @ solution-rhs)/np.linalg.norm(rhs))
+                strict_passed = bool(np.isfinite(residual) and residual <= 1.0e-10)
+                residual_passed = bool(
+                    np.isfinite(residual) and residual <= self.q_solve_limit
+                )
                 test = {
                     "q": q,
                     "rows": n,
                     "relative_true_residual": residual,
-                    "limit": 1e-10,
+                    "strict_limit": 1.0e-10,
+                    "strict_passed": strict_passed,
+                    "limit": self.q_solve_limit,
+                    "admission_passed": residual_passed,
+                    "bounded_inexact_only": bool(residual_passed and not strict_passed),
+                    "reference_pc_strategy": self.reference_pc_strategy,
                     "symbolic_seconds": symbolic_seconds,
                     "numeric_seconds": numeric_seconds,
                     "ICNTL_10": factor.get_icntl(10),
@@ -508,7 +524,6 @@ class AllQExactMumps:
                     "process_tree_rss_bytes": None,
                 }
                 self.audit["factor_tests"].append(test)
-                residual_passed = bool(np.isfinite(residual) and residual <= 1e-10)
                 self.event("task40_v12_mumps_numeric_q_probe_complete", {
                     "q": q,
                     "matrix_shape": list(csr.shape),
@@ -521,13 +536,19 @@ class AllQExactMumps:
                     "raw_infog": native["raw_infog"],
                     "native_metrics": native,
                     "numeric_true_residual": residual,
-                    "numeric_true_residual_limit": 1e-10,
+                    "numeric_true_residual_limit": self.q_solve_limit,
                     "numeric_true_residual_passed": residual_passed,
+                    "numeric_true_residual_strict_limit": 1.0e-10,
+                    "numeric_true_residual_strict_passed": strict_passed,
+                    "bounded_inexact_only": bool(residual_passed and not strict_passed),
                     "process_tree_rss_bytes": None,
                     "checkpoint_semantics": "probe residual checkpoint before resource-gate evaluation",
                 })
                 if not residual_passed:
-                    raise ValueError(f"q={q} exact MUMPS true residual failed: {residual}")
+                    raise ValueError(
+                        f"q={q} exact MUMPS true residual failed under "
+                        f"{self.reference_pc_strategy}: {residual} > {self.q_solve_limit}"
+                    )
                 numeric_admission = self.gate("after_mumps_numeric_true_residual", {
                     "q": q,
                     "current_q_symbolic_estimate_bytes": int(
@@ -546,8 +567,11 @@ class AllQExactMumps:
                     "current_q_native_memory_observation": native["memory_observation"],
                     "resident_numeric_mumps_facts": self._resident_factor_evidence(),
                     "numeric_true_residual": residual,
-                    "numeric_true_residual_limit": 1e-10,
+                    "numeric_true_residual_limit": self.q_solve_limit,
                     "numeric_true_residual_passed": True,
+                    "numeric_true_residual_strict_limit": 1.0e-10,
+                    "numeric_true_residual_strict_passed": strict_passed,
+                    "bounded_inexact_only": bool(not strict_passed),
                 })
                 numeric_rss = (
                     int(numeric_admission["current_process_tree_rss_bytes"])
@@ -560,8 +584,11 @@ class AllQExactMumps:
                 self.event("task40_v12_mumps_numeric_q_admitted", {
                     "q": q,
                     "numeric_true_residual": residual,
-                    "numeric_true_residual_limit": 1e-10,
+                    "numeric_true_residual_limit": self.q_solve_limit,
                     "numeric_true_residual_passed": True,
+                    "numeric_true_residual_strict_limit": 1.0e-10,
+                    "numeric_true_residual_strict_passed": strict_passed,
+                    "bounded_inexact_only": bool(not strict_passed),
                     "process_tree_rss_bytes": numeric_rss,
                     "resource_admission": numeric_admission,
                     "native_metrics": native,
@@ -623,11 +650,12 @@ class AllQExactMumps:
                 all_four_numeric_factors_true_residual_passed=(
                     {int(row["q"]) for row in self.audit["factor_tests"]}
                     == set(range(self.nq))
-                    and all(
-                        np.isfinite(float(row["relative_true_residual"]))
-                        and float(row["relative_true_residual"]) <= float(row["limit"])
-                        for row in self.audit["factor_tests"]
-                    )
+                    and all(bool(row["admission_passed"]) for row in self.audit["factor_tests"])
+                ),
+                all_four_numeric_factors_strict_true_residual_passed=(
+                    {int(row["q"]) for row in self.audit["factor_tests"]}
+                    == set(range(self.nq))
+                    and all(bool(row["strict_passed"]) for row in self.audit["factor_tests"])
                 ),
                 all_four_factor_objects_live_simultaneously=(
                     self._max_simultaneous_factors == self.nq

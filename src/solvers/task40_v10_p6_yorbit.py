@@ -12,6 +12,8 @@ from typing import Any, Callable, Mapping
 import numpy as np
 from scipy import sparse
 
+from .augmented_reference_correction import STRICT_ONLY, q_solve_limit
+
 SCHEMA = "task40extra.y-orbit-full3d-reference.v1"
 LIMITS = {"mapping": 1e-12, "operator": 1e-11, "residual": 1e-10}
 SOURCE_LINEAGE = {
@@ -642,6 +644,7 @@ class CompleteTwoCellInverse:
         factors: Any,
         *,
         allocation_gate: Callable[[str, Mapping[str, Any]], None],
+        reference_pc_strategy: str = STRICT_ONLY,
     ) -> None:
         if len(sectors) != 2 or [s["context"].twist_index for s in sectors] != [0, 1]:
             raise ValueError("both ordered p6 twist sectors are required")
@@ -662,6 +665,8 @@ class CompleteTwoCellInverse:
         self.layout = full_layout
         self.factors = factors
         self.gate = allocation_gate
+        self.reference_pc_strategy = str(reference_pc_strategy)
+        self.q_solve_limit = q_solve_limit(self.reference_pc_strategy)
         self.mode_count = mode_count
         self.calls = 0
         self.last_port_solution = None
@@ -733,11 +738,11 @@ class CompleteTwoCellInverse:
                 )
                 if (
                     not np.isfinite(modal_residual_relative)
-                    or modal_residual_relative > LIMITS["residual"]
+                    or modal_residual_relative > self.q_solve_limit
                 ):
                     raise FloatingPointError(
                         f"Task40 V10 q={q} inverse residual failed: "
-                        f"{modal_residual_relative} > {LIMITS['residual']}"
+                        f"{modal_residual_relative} > {self.q_solve_limit}"
                     )
                 q_residual_records.append(
                     {
@@ -746,7 +751,13 @@ class CompleteTwoCellInverse:
                         "rows": int(modal_rhs.size),
                         "rhs_norm": modal_rhs_norm,
                         "true_residual_relative": modal_residual_relative,
-                        "limit": LIMITS["residual"],
+                        "limit": self.q_solve_limit,
+                        "strict_limit": 1.0e-10,
+                        "strict_passed": bool(modal_residual_relative <= 1.0e-10),
+                        "bounded_inexact_only": bool(
+                            modal_residual_relative > 1.0e-10
+                            and modal_residual_relative <= self.q_solve_limit
+                        ),
                     }
                 )
                 native_solution += np.asarray(q_map @ modal_solution, dtype=np.complex128)
@@ -993,30 +1004,222 @@ def build_task40_v10_sector_contexts(
     return tuple(contexts)
 
 
-def assemble_task40_v10_sector_blocks(
+Q_ASSEMBLY_LEGACY = "LEGACY_GLOBAL_CSR_SUM"
+Q_ASSEMBLY_PREALLOCATED_V13 = "PREALLOCATED_CSR_PATTERN_V13"
+Q_ASSEMBLY_STRATEGIES = frozenset(
+    {Q_ASSEMBLY_LEGACY, Q_ASSEMBLY_PREALLOCATED_V13}
+)
+
+
+def _pattern_block_shapes(q_maps):
+    return {
+        (p, q): (int(q_maps[p].shape[1]), int(q_maps[q].shape[1]))
+        for p in (0, 1)
+        for q in (0, 1)
+    }
+
+
+def _selected_csr_nnz(matrix: sparse.csr_matrix, rows: np.ndarray) -> int:
+    indptr = matrix.indptr
+    return sum(int(indptr[int(row) + 1] - indptr[int(row)]) for row in rows)
+
+
+def _accumulate_term_into_pattern(
+    target: sparse.csr_matrix,
+    term: sparse.csr_matrix,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    label: str,
+) -> None:
+    if target.shape != term.shape or not target.has_canonical_format:
+        raise ValueError("preallocated q matrix pattern is not canonical or shape matched")
+    index_bytes = int(target.indices.dtype.itemsize)
+    allocation_gate(
+        "task40_v13_q_pattern_value_accumulation/" + label,
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": 2 * int(term.nnz) * index_bytes,
+            "term_nnz": int(term.nnz),
+            "preallocated_target_nnz": int(target.nnz),
+            "global_csr_reallocation": False,
+        },
+    )
+    for row in range(term.shape[0]):
+        term_start, term_end = int(term.indptr[row]), int(term.indptr[row + 1])
+        if term_start == term_end:
+            continue
+        target_start, target_end = int(target.indptr[row]), int(target.indptr[row + 1])
+        target_columns = target.indices[target_start:target_end]
+        term_columns = term.indices[term_start:term_end]
+        positions = np.searchsorted(target_columns, term_columns)
+        if (
+            np.any(positions >= len(target_columns))
+            or not np.array_equal(target_columns[positions], term_columns)
+        ):
+            raise ValueError(f"q sparse pattern omitted a projected value at {label}")
+        target.data[target_start + positions] += term.data[term_start:term_end]
+
+
+def _assemble_preallocated_q_patterns(
     action: Any,
-    coordinates: TwoCellBranchCoordinates,
+    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
     context: Task40V10SectorContext,
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
-) -> tuple[dict[int, sparse.csr_matrix], dict[str, Any]]:
-    """Stream all four two-branch blocks and retain only the two diagonal blocks."""
-    q_maps = tuple(
-        coordinates.q_map(branch, allocation_gate=allocation_gate)
-        for branch in (0, 1)
+) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
+    import time
+
+    shapes = _pattern_block_shapes(q_maps)
+    container_rows = sum(shape[0] for shape in shapes.values())
+    allocation_gate(
+        "task40_v13_q_pattern_row_containers",
+        {
+            "additional_payload_bytes": 256 * int(container_rows),
+            "workspace_bytes": 256 * int(container_rows),
+            "row_set_count": int(container_rows),
+            "allocation_semantics": "conservative Python set containers for one CSR pattern pass",
+        },
+    )
+    row_columns = {
+        key: [set() for _ in range(shape[0])] for key, shape in shapes.items()
+    }
+    pattern_started = time.perf_counter()
+    layout_count = 0
+    projected_superset_pairs = {key: 0 for key in shapes}
+
+    for rows, columns, label in action.iter_reduced_contribution_layouts():
+        rows = np.asarray(rows)
+        columns = np.asarray(columns)
+        if (
+            rows.ndim != 1
+            or columns.ndim != 1
+            or rows.dtype.kind not in "iu"
+            or columns.dtype.kind not in "iu"
+            or (rows.size and (int(rows.min()) < 0 or int(rows.max()) >= q_maps[0].shape[0]))
+            or (columns.size and (int(columns.min()) < 0 or int(columns.max()) >= q_maps[0].shape[0]))
+        ):
+            raise ValueError(f"invalid q pattern contribution layout {label}")
+        layout_count += 1
+        for p in (0, 1):
+            left = q_maps[p]
+            left_nnz = _selected_csr_nnz(left, rows)
+            for q in (0, 1):
+                right = q_maps[q]
+                right_nnz = _selected_csr_nnz(right, columns)
+                row_ptr_bytes = (len(rows) + len(columns) + 2) * int(left.indptr.dtype.itemsize)
+                support_workspace = (
+                    left_nnz * (int(left.data.dtype.itemsize) + int(left.indices.dtype.itemsize))
+                    + right_nnz * (int(right.data.dtype.itemsize) + int(right.indices.dtype.itemsize))
+                    + row_ptr_bytes
+                    + (left_nnz + right_nnz) * int(left.indices.dtype.itemsize)
+                )
+                allocation_gate(
+                    "task40_v13_q_pattern_support/" + str(label) + f"/p{p}q{q}",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": support_workspace,
+                        "selected_left_nnz_upper": left_nnz,
+                        "selected_right_nnz_upper": right_nnz,
+                        "metadata_only_no_local_schur_solve": True,
+                    },
+                )
+                left_rows = left[rows, :].tocsr()
+                right_rows = right[columns, :].tocsr()
+                left_support = np.unique(left_rows.indices)
+                right_support = np.unique(right_rows.indices)
+                block_rows = row_columns[p, q]
+                new_entries = sum(
+                    1
+                    for row in left_support
+                    for column in right_support
+                    if int(column) not in block_rows[int(row)]
+                )
+                allocation_gate(
+                    "task40_v13_q_pattern_entries/" + str(label) + f"/p{p}q{q}",
+                    {
+                        "additional_payload_bytes": 128 * int(new_entries),
+                        "workspace_bytes": 0,
+                        "new_structural_entries_upper": int(new_entries),
+                        "support_rows": int(len(left_support)),
+                        "support_columns": int(len(right_support)),
+                        "pattern_is_conservative_superset": True,
+                    },
+                )
+                for row in left_support:
+                    block_rows[int(row)].update(map(int, right_support))
+                projected_superset_pairs[p, q] += int(len(left_support) * len(right_support))
+                del left_rows, right_rows, left_support, right_support
+        del rows, columns
+
+    pattern_seconds = time.perf_counter() - pattern_started
+    pattern_entries = {
+        key: sum(len(columns) for columns in rows)
+        for key, rows in row_columns.items()
+    }
+    index_dtype = np.int32 if max(max(shape) for shape in shapes.values()) < (1 << 31) else np.int64
+    index_bytes = int(np.dtype(index_dtype).itemsize)
+    total_pattern_bytes = sum(
+        nnz * (index_bytes + np.dtype(np.complex128).itemsize)
+        + (shapes[key][0] + 1) * index_bytes
+        for key, nnz in pattern_entries.items()
+    )
+    max_row_entries = max(
+        (len(columns) for rows in row_columns.values() for columns in rows), default=0
+    )
+    allocation_gate(
+        "task40_v13_q_pattern_csr_materialization",
+        {
+            "additional_payload_bytes": int(total_pattern_bytes),
+            "workspace_bytes": int(32 * max_row_entries),
+            "pattern_payload_bytes": int(total_pattern_bytes),
+            "row_set_python_overhead_already_live": True,
+            "pattern_entries_by_block": {f"{p}{q}": int(value) for (p, q), value in pattern_entries.items()},
+        },
     )
     blocks: dict[tuple[int, int], sparse.csr_matrix] = {}
-    for p in (0, 1):
-        for q in (0, 1):
-            blocks[p, q] = sparse.csr_matrix(
-                (q_maps[p].shape[1], q_maps[q].shape[1]),
-                dtype=np.complex128,
-            )
-    for rows, columns, values, label in action.iter_reduced_contributions(
-        allocation_gate=allocation_gate
-    ):
+    for key, shape in shapes.items():
+        rows = row_columns[key]
+        nnz = pattern_entries[key]
+        if nnz > int(np.iinfo(index_dtype).max):
+            raise OverflowError("Task40 V13 q pattern exceeds its CSR index dtype")
+        indptr = np.empty(shape[0] + 1, dtype=index_dtype)
+        indptr[0] = 0
+        for row, columns in enumerate(rows):
+            indptr[row + 1] = indptr[row] + len(columns)
+        indices = np.empty(nnz, dtype=index_dtype)
+        data = np.zeros(nnz, dtype=np.complex128)
+        cursor = 0
+        for columns in rows:
+            ordered = sorted(columns)
+            count = len(ordered)
+            indices[cursor : cursor + count] = ordered
+            cursor += count
+        blocks[key] = sparse.csr_matrix(
+            (data, indices, indptr), shape=shape, copy=False
+        )
+    del row_columns
+
+    numeric_started = time.perf_counter()
+    numeric_contribution_count = 0
+    contribution_generation_seconds = 0.0
+    local_projection_seconds = 0.0
+    global_accumulation_seconds = 0.0
+    projection_call_count = 0
+    accumulation_call_count = 0
+    contribution_iterator = iter(
+        action.iter_reduced_contributions(allocation_gate=allocation_gate)
+    )
+    while True:
+        generation_started = time.perf_counter()
+        try:
+            rows, columns, values, label = next(contribution_iterator)
+        except StopIteration:
+            break
+        contribution_generation_seconds += time.perf_counter() - generation_started
+        numeric_contribution_count += 1
         for p in (0, 1):
             for q in (0, 1):
+                projection_started = time.perf_counter()
                 term = project_reduced_contribution(
                     q_maps[p],
                     q_maps[q],
@@ -1026,9 +1229,126 @@ def assemble_task40_v10_sector_blocks(
                     allocation_gate=allocation_gate,
                     label=f"{label}/p{p}q{q}",
                 )
-                blocks[p, q] = (blocks[p, q] + term).tocsr()
+                local_projection_seconds += time.perf_counter() - projection_started
+                projection_call_count += 1
+                accumulation_started = time.perf_counter()
+                _accumulate_term_into_pattern(
+                    blocks[p, q],
+                    term,
+                    allocation_gate=allocation_gate,
+                    label=f"{label}/p{p}q{q}",
+                )
+                global_accumulation_seconds += time.perf_counter() - accumulation_started
+                accumulation_call_count += 1
                 del term
         del rows, columns, values
+
+    numeric_seconds = time.perf_counter() - numeric_started
+    return blocks, {
+        "assembly_strategy": Q_ASSEMBLY_PREALLOCATED_V13,
+        "pattern_layout_count": layout_count,
+        "numeric_contribution_count": numeric_contribution_count,
+        "pattern_entries_by_block": {f"{p}{q}": int(value) for (p, q), value in pattern_entries.items()},
+        "projected_superset_pairs_by_block": {
+            f"{p}{q}": int(value) for (p, q), value in projected_superset_pairs.items()
+        },
+        "pattern_seconds": float(pattern_seconds),
+        "numeric_projection_and_accumulation_seconds": float(numeric_seconds),
+        "contribution_generation_seconds": float(contribution_generation_seconds),
+        "local_projection_seconds": float(local_projection_seconds),
+        "global_sparse_accumulation_seconds": float(global_accumulation_seconds),
+        "local_projection_call_count": projection_call_count,
+        "global_sparse_accumulation_call_count": accumulation_call_count,
+        "global_csr_reallocations_during_numeric_pass": 0,
+        "conservative_pattern_preserves_all_contribution_values": True,
+    }
+
+
+def assemble_task40_v10_sector_blocks(
+    action: Any,
+    coordinates: TwoCellBranchCoordinates,
+    context: Task40V10SectorContext,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    assembly_strategy: str = Q_ASSEMBLY_LEGACY,
+    return_all_blocks: bool = False,
+) -> tuple[dict[Any, sparse.csr_matrix], dict[str, Any]]:
+    """Assemble all four q blocks using the explicit legacy or V13 strategy."""
+    import time
+
+    if not callable(allocation_gate):
+        raise TypeError("q-block assembly requires the live allocation gate")
+    if assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
+        raise ValueError(f"unknown Task40 q assembly strategy: {assembly_strategy!r}")
+    started = time.perf_counter()
+    q_maps = tuple(
+        coordinates.q_map(branch, allocation_gate=allocation_gate)
+        for branch in (0, 1)
+    )
+    if assembly_strategy == Q_ASSEMBLY_PREALLOCATED_V13:
+        blocks, strategy_audit = _assemble_preallocated_q_patterns(
+            action, q_maps, context, allocation_gate=allocation_gate
+        )
+    else:
+        blocks: dict[tuple[int, int], sparse.csr_matrix] = {}
+        for p in (0, 1):
+            for q in (0, 1):
+                blocks[p, q] = sparse.csr_matrix(
+                    (q_maps[p].shape[1], q_maps[q].shape[1]),
+                    dtype=np.complex128,
+                )
+        numeric_started = time.perf_counter()
+        contribution_count = 0
+        contribution_generation_seconds = 0.0
+        local_projection_seconds = 0.0
+        global_accumulation_seconds = 0.0
+        projection_call_count = 0
+        accumulation_call_count = 0
+        contribution_iterator = iter(
+            action.iter_reduced_contributions(allocation_gate=allocation_gate)
+        )
+        while True:
+            generation_started = time.perf_counter()
+            try:
+                rows, columns, values, label = next(contribution_iterator)
+            except StopIteration:
+                break
+            contribution_generation_seconds += time.perf_counter() - generation_started
+            contribution_count += 1
+            for p in (0, 1):
+                for q in (0, 1):
+                    projection_started = time.perf_counter()
+                    term = project_reduced_contribution(
+                        q_maps[p],
+                        q_maps[q],
+                        rows,
+                        columns,
+                        values,
+                        allocation_gate=allocation_gate,
+                        label=f"{label}/p{p}q{q}",
+                    )
+                    local_projection_seconds += time.perf_counter() - projection_started
+                    projection_call_count += 1
+                    accumulation_started = time.perf_counter()
+                    blocks[p, q] = (blocks[p, q] + term).tocsr()
+                    global_accumulation_seconds += time.perf_counter() - accumulation_started
+                    accumulation_call_count += 1
+                    del term
+            del rows, columns, values
+        strategy_audit = {
+            "assembly_strategy": Q_ASSEMBLY_LEGACY,
+            "numeric_contribution_count": contribution_count,
+            "numeric_projection_and_accumulation_seconds": float(
+                time.perf_counter() - numeric_started
+            ),
+            "contribution_generation_seconds": float(contribution_generation_seconds),
+            "local_projection_seconds": float(local_projection_seconds),
+            "global_sparse_accumulation_seconds": float(global_accumulation_seconds),
+            "local_projection_call_count": projection_call_count,
+            "global_sparse_accumulation_call_count": accumulation_call_count,
+            "global_csr_reallocation_count_upper": 4 * contribution_count,
+        }
+
     diagonal_scale = max(
         sparse.linalg.norm(blocks[0, 0]),
         sparse.linalg.norm(blocks[1, 1]),
@@ -1059,9 +1379,297 @@ def assemble_task40_v10_sector_blocks(
         "off_diagonal_relative": off_diagonal,
         "all_internal_channels_retained": True,
         "fourier_diagonalization_passed": True,
+        "assembly_total_seconds": float(time.perf_counter() - started),
+        "timing_scope": {
+            "assembly_total_seconds": "parent interval including q-map construction and selected strategy",
+            "numeric_projection_and_accumulation_seconds": "parent numeric interval including contribution generation, local projection, sparse accumulation, and loop overhead",
+            "child_intervals_are_nonoverlapping_and_already_inside_numeric_parent": True,
+            "pattern_seconds": "candidate-only pattern metadata and CSR construction before numeric contribution traversal",
+        },
+        **strategy_audit,
     }
+    if return_all_blocks:
+        return blocks, audit
     return result, audit
 
+
+def compare_task40_v10_sector_assembly(
+    action: Any,
+    coordinates: TwoCellBranchCoordinates,
+    context: Task40V10SectorContext,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+) -> dict[str, Any]:
+    """Compare both assemblers on one contribution stream without co-retaining CSR oracles."""
+    import gc
+    import hashlib
+    import tempfile
+    import time
+    from pathlib import Path
+
+    from scipy.linalg.blas import dznrm2
+
+    if not callable(allocation_gate):
+        raise TypeError("q-block comparison requires a live allocation gate")
+    pair_started = time.perf_counter()
+    with tempfile.TemporaryDirectory(prefix="task40-v13-b0-q-assembly-pair-") as scratch:
+        scratch_path = Path(scratch)
+        legacy, legacy_audit = assemble_task40_v10_sector_blocks(
+            action,
+            coordinates,
+            context,
+            allocation_gate=allocation_gate,
+            assembly_strategy=Q_ASSEMBLY_LEGACY,
+            return_all_blocks=True,
+        )
+        candidate_free_memory_payload = 0
+        legacy_payload = 0
+        legacy_hashes = {}
+        scratch_bytes = 0
+        block_keys = tuple((p, q) for p in (0, 1) for q in (0, 1))
+        for p, q in block_keys:
+            matrix = legacy[p, q]
+            if not matrix.has_canonical_format or not np.isfinite(matrix.data).all():
+                raise ValueError(f"legacy q block {(p, q)} is not finite canonical CSR")
+            legacy_payload += int(
+                matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes
+            )
+            candidate_free_memory_payload = max(
+                candidate_free_memory_payload,
+                int(matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes),
+            )
+            digest = hashlib.sha256()
+            digest.update(np.asarray(matrix.shape, dtype=np.int64).tobytes())
+            digest.update(np.asarray(matrix.indptr, dtype=np.int64).tobytes())
+            digest.update(np.asarray(matrix.indices, dtype=np.int64).tobytes())
+            digest.update(np.asarray(matrix.data, dtype=np.complex128).tobytes())
+            legacy_hashes[f"{p}{q}"] = digest.hexdigest()
+            path = scratch_path / f"legacy_{p}{q}.npz"
+            np.savez(
+                path,
+                data=matrix.data,
+                indices=matrix.indices,
+                indptr=matrix.indptr,
+                shape=np.asarray(matrix.shape, dtype=np.int64),
+            )
+            scratch_bytes += int(path.stat().st_size)
+        legacy_offdiagonal = dict(legacy_audit["off_diagonal_relative"])
+        del matrix, legacy
+        gc.collect()
+
+        allocation_gate(
+            "task40_v13_q_pair_single_legacy_block_reload",
+            {
+                "additional_payload_bytes": candidate_free_memory_payload,
+                "workspace_bytes": 2 * candidate_free_memory_payload,
+                "spooled_legacy_matrix_bytes": scratch_bytes,
+                "legacy_full_csr_oracle_released": True,
+                "comparison_memory_is_one_block_at_a_time": True,
+            },
+        )
+        candidate, candidate_audit = assemble_task40_v10_sector_blocks(
+            action,
+            coordinates,
+            context,
+            allocation_gate=allocation_gate,
+            assembly_strategy=Q_ASSEMBLY_PREALLOCATED_V13,
+            return_all_blocks=True,
+        )
+        candidate_offdiagonal = dict(candidate_audit["off_diagonal_relative"])
+        candidate_payload = sum(
+            int(matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes)
+            for matrix in candidate.values()
+        )
+        candidate_hashes = {}
+        branch_inputs = {
+            q: np.exp(1j * (np.arange(candidate[q, q].shape[1]) + 1) * np.sqrt(2.0))
+            for q in (0, 1)
+        }
+        legacy_branch_outputs = {
+            p: np.zeros(candidate[p, p].shape[0], dtype=np.complex128)
+            for p in (0, 1)
+        }
+        candidate_branch_outputs = {
+            p: np.zeros(candidate[p, p].shape[0], dtype=np.complex128)
+            for p in (0, 1)
+        }
+        diagonal_scale = max(
+            sparse.linalg.norm(candidate[0, 0]),
+            sparse.linalg.norm(candidate[1, 1]),
+            np.finfo(float).tiny,
+        )
+        block_facts = {}
+        max_numeric_relative = 0.0
+        max_action_relative = 0.0
+        for p, q in block_keys:
+            matrix = candidate[p, q]
+            digest = hashlib.sha256()
+            digest.update(np.asarray(matrix.shape, dtype=np.int64).tobytes())
+            digest.update(np.asarray(matrix.indptr, dtype=np.int64).tobytes())
+            digest.update(np.asarray(matrix.indices, dtype=np.int64).tobytes())
+            digest.update(np.asarray(matrix.data, dtype=np.complex128).tobytes())
+            candidate_hashes[f"{p}{q}"] = digest.hexdigest()
+
+            with np.load(scratch_path / f"legacy_{p}{q}.npz") as saved:
+                legacy_matrix = sparse.csr_matrix(
+                    (saved["data"], saved["indices"], saved["indptr"]),
+                    shape=tuple(map(int, saved["shape"])),
+                    copy=False,
+                )
+                difference = (matrix - legacy_matrix).tocsr()
+                difference.sum_duplicates()
+                difference.eliminate_zeros()
+                difference_norm = float(sparse.linalg.norm(difference))
+                numeric_relative = difference_norm / float(diagonal_scale)
+                x = branch_inputs[q]
+                legacy_y = legacy_matrix @ x
+                candidate_y = matrix @ x
+                action_delta = candidate_y - legacy_y
+                action_delta_norm = float(dznrm2(action_delta))
+                action_scale = max(
+                    float(sparse.linalg.norm(candidate[p, p])) * float(dznrm2(x)),
+                    float(diagonal_scale) * float(dznrm2(x)),
+                    np.finfo(float).tiny,
+                )
+                action_relative = action_delta_norm / action_scale
+                legacy_branch_outputs[p] += legacy_y
+                candidate_branch_outputs[p] += candidate_y
+                max_numeric_relative = max(max_numeric_relative, numeric_relative)
+                max_action_relative = max(max_action_relative, action_relative)
+                block_facts[f"{p}{q}"] = {
+                    "shape": list(matrix.shape),
+                    "legacy_nnz": int(legacy_matrix.nnz),
+                    "candidate_nnz": int(matrix.nnz),
+                    "legacy_csr_sha256": legacy_hashes[f"{p}{q}"],
+                    "candidate_csr_sha256": candidate_hashes[f"{p}{q}"],
+                    "max_abs_difference": float(
+                        np.max(np.abs(difference.data), initial=0.0)
+                    ),
+                    "difference_frobenius_norm": difference_norm,
+                    "difference_relative_to_diagonal": numeric_relative,
+                    "action_difference_norm": action_delta_norm,
+                    "action_difference_relative_to_diagonal": action_relative,
+                    "off_diagonal": p != q,
+                }
+            del legacy_matrix, difference, legacy_y, candidate_y, action_delta
+
+        branch_action_facts = {}
+        for p in (0, 1):
+            delta = candidate_branch_outputs[p] - legacy_branch_outputs[p]
+            delta_norm = float(dznrm2(delta))
+            scale = max(
+                float(dznrm2(legacy_branch_outputs[p])),
+                float(diagonal_scale)
+                * sum(float(dznrm2(branch_inputs[q])) for q in (0, 1)),
+                np.finfo(float).tiny,
+            )
+            relative = delta_norm / scale
+            max_action_relative = max(max_action_relative, relative)
+            branch_action_facts[str(p)] = {
+                "difference_norm": delta_norm,
+                "difference_relative_to_diagonal": relative,
+            }
+        equivalent = bool(
+            max_numeric_relative <= LIMITS["operator"]
+            and max_action_relative <= LIMITS["operator"]
+            and max(legacy_offdiagonal.values()) <= LIMITS["operator"]
+            and max(candidate_offdiagonal.values()) <= LIMITS["operator"]
+            and set(block_facts) == {"00", "01", "10", "11"}
+        )
+        legacy_seconds = float(legacy_audit["assembly_total_seconds"])
+        candidate_seconds = float(candidate_audit["assembly_total_seconds"])
+        faster = candidate_seconds < legacy_seconds
+        return {
+            "schema": "task40extra.review_v13_q_assembly_pair.v1",
+            "global_q_indices": list(context.global_q_indices),
+            "block_shapes": dict(candidate_audit["block_shapes"]),
+            "legacy_assembly_seconds": legacy_seconds,
+            "candidate_assembly_seconds": candidate_seconds,
+            "pair_wall_seconds": float(time.perf_counter() - pair_started),
+            "legacy_strategy_audit": legacy_audit,
+            "candidate_strategy_audit": candidate_audit,
+            "legacy_off_diagonal_relative": legacy_offdiagonal,
+            "candidate_off_diagonal_relative": candidate_offdiagonal,
+            "block_comparisons": block_facts,
+            "full_branch_action_comparisons": branch_action_facts,
+            "max_csr_difference_relative_to_diagonal": max_numeric_relative,
+            "max_action_difference_relative_to_diagonal": max_action_relative,
+            "legacy_csr_payload_bytes": legacy_payload,
+            "candidate_csr_payload_bytes": candidate_payload,
+            "staged_legacy_spool_bytes": scratch_bytes,
+            "legacy_csr_oracle_released_before_candidate_assembly": True,
+            "comparison_workspace_within_allocation_gate": True,
+            "all_four_blocks_independently_compared": set(block_facts)
+            == {"00", "01", "10", "11"},
+            "numerically_equivalent_at_original_operator_gate": equivalent,
+            "candidate_full_assembly_faster": faster,
+            "candidate_selected_for_next_formal_case": bool(equivalent and faster),
+            "selection_rule": (
+                "select the candidate only if complete four-block CSR/action and off-diagonal "
+                "gates pass and its paired full assembly elapsed is strictly lower"
+            ),
+        }
+
+
+def _summarize_task40_b0_q_assembly_pairs(
+    profile: Any,
+    reports: list[Mapping[str, Any]],
+    covered_q: set[int],
+) -> dict[str, Any]:
+    """Validate and aggregate two real sector-pair reports without FE objects."""
+    expected_qs = set(range(int(profile.q_count)))
+    if covered_q != expected_qs or len(reports) != 2:
+        raise ValueError(
+            "B0 paired q assembly did not independently cover all four global q blocks"
+        )
+    expected_shapes = tuple(map(int, profile.augmented_rows_per_q))
+    for pair in reports:
+        if not isinstance(pair.get("block_shapes"), Mapping):
+            raise ValueError("paired q assembly report omitted all four block shapes")
+        if set(pair["block_shapes"]) != {"00", "01", "10", "11"}:
+            raise ValueError("paired q assembly report does not cover every (p,q) block")
+        if set(pair.get("block_comparisons", {})) != {"00", "01", "10", "11"}:
+            raise ValueError("paired q assembly report omitted a numeric block comparison")
+        for branch, q in enumerate(pair["global_q_indices"]):
+            shape = pair["block_shapes"][f"{branch}{branch}"]
+            if shape != [expected_shapes[int(q)], expected_shapes[int(q)]]:
+                raise ValueError(
+                    f"paired q assembly shape for q={q} differs from B0 profile: {shape}"
+                )
+    legacy_seconds = float(sum(pair["legacy_assembly_seconds"] for pair in reports))
+    candidate_seconds = float(sum(pair["candidate_assembly_seconds"] for pair in reports))
+    numerically_equivalent = all(
+        pair.get("numerically_equivalent_at_original_operator_gate") is True
+        and pair.get("all_four_blocks_independently_compared") is True
+        for pair in reports
+    )
+    candidate_faster = candidate_seconds < legacy_seconds
+    return {
+        "schema": "task40extra.review_v13_b0_q_assembly_comparison.v1",
+        "profile": profile.identity(),
+        "global_q_count": int(profile.q_count),
+        "covered_q": sorted(covered_q),
+        "sector_pairs": reports,
+        "legacy_assembly_seconds": legacy_seconds,
+        "candidate_assembly_seconds": candidate_seconds,
+        "candidate_faster_for_complete_two_sector_build": candidate_faster,
+        "all_four_blocks_numerically_equivalent": numerically_equivalent,
+        "all_q_shapes_match_frozen_b0_profile": True,
+        "mumps_factors_constructed": False,
+        "candidate_selected_for_formal_cases": bool(
+            numerically_equivalent and candidate_faster
+        ),
+        "selected_strategy": (
+            Q_ASSEMBLY_PREALLOCATED_V13
+            if numerically_equivalent and candidate_faster
+            else Q_ASSEMBLY_LEGACY
+        ),
+        "selection_rule": (
+            "select the candidate only when all four CSR/action blocks, the original "
+            "off-diagonal gates, complete B0 q coverage, and profile shapes pass "
+            "and the total paired assembly time is strictly lower"
+        ),
+    }
 
 def _local_condensation_row_facts(local_system: Any) -> dict[str, int]:
     """Expose the local trace and eliminated-interior row axes as recorded."""
@@ -1083,8 +1691,11 @@ def build_task40_v10_p6_reference_inverse(
     jit_options: Mapping[str, Any] | None = None,
     share_transform_bank: bool = False,
     target_full_storage_rows: int | None = None,
+    reference_pc_strategy: str = STRICT_ONLY,
+    q_assembly_strategy: str = Q_ASSEMBLY_LEGACY,
+    q_assembly_comparison_only: bool = False,
 ) -> dict[str, Any]:
-    """Build the regular p6 full-reference inverse and all four live MUMPS factors."""
+    """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
     from dolfinx import fem
     from petsc4py import PETSc
@@ -1103,6 +1714,12 @@ def build_task40_v10_p6_reference_inverse(
     from .task40_v10_p6_mumps import AllQExactMumps
     if not callable(allocation_gate):
         raise TypeError("p6 reference construction requires a live allocation gate")
+    if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
+        raise ValueError(f"unknown Task40 q assembly strategy: {q_assembly_strategy!r}")
+    if type(q_assembly_comparison_only) is not bool:
+        raise TypeError("q-assembly comparison-only selection must be an explicit boolean")
+    if q_assembly_comparison_only and q_assembly_strategy != Q_ASSEMBLY_PREALLOCATED_V13:
+        raise ValueError("V13 q-assembly pairing requires the explicitly selected candidate strategy")
     if (
         MPI.COMM_SELF.Get_size() != 1
         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
@@ -1237,6 +1854,8 @@ def build_task40_v10_p6_reference_inverse(
         )
         all_q_matrices: dict[int, sparse.csr_matrix] = {}
         sector_audits = []
+        q_assembly_pair_reports = []
+        q_coverage: set[int] = set()
         for context in contexts:
             local_period_y = float(context.local_axes["y"][-1] - context.local_axes["y"][0])
             local_cfg = __import__("dataclasses").replace(
@@ -1376,12 +1995,24 @@ def build_task40_v10_p6_reference_inverse(
                 global_h=global_h,
                 allocation_gate=allocation_gate,
             )
-            sector_matrices, block_audit = assemble_task40_v10_sector_blocks(
-                action,
-                coordinates,
-                context,
-                allocation_gate=allocation_gate,
-            )
+            if q_assembly_comparison_only:
+                block_audit = compare_task40_v10_sector_assembly(
+                    action,
+                    coordinates,
+                    context,
+                    allocation_gate=allocation_gate,
+                )
+                q_assembly_pair_reports.append(block_audit)
+                q_coverage.update(map(int, context.global_q_indices))
+                sector_matrices = {}
+            else:
+                sector_matrices, block_audit = assemble_task40_v10_sector_blocks(
+                    action,
+                    coordinates,
+                    context,
+                    allocation_gate=allocation_gate,
+                    assembly_strategy=q_assembly_strategy,
+                )
             overlap = set(all_q_matrices).intersection(sector_matrices)
             if overlap:
                 raise ValueError(f"p6 q matrix supplied by more than one twist sector: {sorted(overlap)}")
@@ -1406,7 +2037,7 @@ def build_task40_v10_p6_reference_inverse(
                     },
                 )
             del compiled
-        if set(all_q_matrices) != set(range(4)):
+        if not q_assembly_comparison_only and set(all_q_matrices) != set(range(4)):
             raise ValueError("two p6 twist sectors did not produce all four global q matrices")
         if transform_bank is not None:
             transform_bank.seal()
@@ -1419,6 +2050,26 @@ def build_task40_v10_p6_reference_inverse(
             owner["transform_bank_receipt"] = receipt
             if event is not None:
                 event("task40_v12_transform_bank_ready", receipt)
+        if q_assembly_comparison_only:
+            comparison_report = _summarize_task40_b0_q_assembly_pairs(
+                profile, q_assembly_pair_reports, q_coverage
+            )
+            if event is not None:
+                event("task40_v13_b0_q_assembly_comparison_complete", comparison_report)
+            destroy_task40_v10_p6_reference_inverse(owner)
+            for sector in sectors:
+                sector.clear()
+            sectors.clear()
+            all_q_matrices.clear()
+            global_levels = None
+            global_bundle = None
+            global_entities = None
+            full_layout = None
+            transform_bank = None
+            return {
+                "comparison_only": True,
+                "q_assembly_comparison": comparison_report,
+            }
         expected_shapes = tuple(matrix.shape[0] for _q, matrix in sorted(all_q_matrices.items()))
         if expected_shapes != profile.augmented_rows_per_q:
             raise ValueError(
@@ -1484,6 +2135,7 @@ def build_task40_v10_p6_reference_inverse(
             target_reference_rows_match=bool(
                 owner["full_storage_dimensions"]["target_reference_rows_match"]
             ),
+            reference_pc_strategy=reference_pc_strategy,
         )
         owner["factors"] = factors
         owner["inverse"] = CompleteTwoCellInverse(
@@ -1491,6 +2143,7 @@ def build_task40_v10_p6_reference_inverse(
             full_layout,
             factors,
             allocation_gate=allocation_gate,
+            reference_pc_strategy=reference_pc_strategy,
         )
         owner["sector_audits"] = sector_audits
         owner["profile"] = profile

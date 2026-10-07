@@ -1195,6 +1195,46 @@ class P6CellCondensedAction:
             self._matrix.setUp()
         return self._matrix
 
+    def iter_reduced_contribution_layouts(self):
+        """Yield row/column metadata without computing any local Schur values.
+
+        This metadata-only walk lets the Task40 V13 q assembler build a sparse
+        superset pattern before its single numerical contribution pass.
+        """
+        if self._destroyed or getattr(self.condensed, "_destroyed", False):
+            raise RuntimeError("p6 contribution owner has been destroyed")
+        if self.condensed.comm.Get_size() != 1 or self.port_coupling_mode != "cached":
+            raise ValueError("reduced contribution layouts require MPI1 cached port terms")
+        trace_rows = int(self.condensed.active_rows)
+        total_rows = self.reduced_size
+        port_count = int(self.condensed.appended_rows)
+        if total_rows <= 0 or total_rows > int(np.iinfo(PETSc.IntType).max):
+            raise OverflowError("reduced matrix row range exceeds PETSc.IntType")
+
+        ports = np.arange(trace_rows, total_rows, dtype=PETSc.IntType)
+        yield ports, ports, "ports/Hhat"
+        del ports
+        for cell_index, cell in enumerate(self._cells):
+            yield cell.active_ids, cell.active_ids, f"volume/cell/{cell_index}"
+            if not len(cell.ports):
+                continue
+            if cell.Bhat is None or cell.Dhat is None:
+                raise ValueError("cached p6 trace/port formulas are unavailable")
+            port_indices = np.asarray(cell.ports, dtype=PETSc.IntType)
+            global_ports = trace_rows + port_indices
+            yield cell.active_ids, global_ports, f"cell/C_hat/{cell_index}"
+            yield global_ports, cell.active_ids, f"cell/-D_hat/{cell_index}"
+            del port_indices, global_ports
+
+        for port, (rows, _values) in sorted(self._direct_B_active.items()):
+            port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+            yield rows, port_id, f"direct/C/port/{port}"
+            del port_id
+        for port, (columns, values) in sorted(self._direct_D_active.items()):
+            port_id = np.asarray([trace_rows + port], dtype=PETSc.IntType)
+            yield port_id, columns, f"direct/-D/port/{port}"
+            del port_id
+
     def iter_reduced_contributions(self, *, allocation_gate: Callable[[str, Mapping[str, Any]], None]):
         """Yield the complete cached reduced matrix as one bounded block at a time.
 
