@@ -180,6 +180,29 @@ def test_v14_legacy_assembly_reaches_the_task40_dispatcher(monkeypatch, tmp_path
     assert captured["kwargs"]["share_transform_bank"] is True
 
 
+def test_v14_worker_selects_v13_path_before_building_profile_facts(monkeypatch, tmp_path: Path):
+    from src.io import physical_intermediate_profile
+    from src.runners import task40_v10_worker
+
+    payload = load_and_resolve(GX560_V14_LEGACY_INPUT).as_jsonable()
+    reached_profile_facts = RuntimeError("reached profile facts after V13 strategy selection")
+
+    def stop_after_strategy_selection(_profile_identity):
+        raise reached_profile_facts
+
+    monkeypatch.setattr(
+        physical_intermediate_profile, "profile_facts", stop_after_strategy_selection
+    )
+    with pytest.raises(RuntimeError, match="after V13 strategy selection"):
+        task40_v10_worker.run_task40_v10_p6_reference_worker(
+            payload,
+            tmp_path,
+            source_sha="f" * 40,
+            profile_identity=payload["solver"]["preconditioner"],
+            share_transform_bank=True,
+        )
+
+
 def test_worker_packet_refuses_duplicate_witness_name_without_changing_old_hashes(
     tmp_path: Path,
 ):

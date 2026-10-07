@@ -2371,7 +2371,10 @@ def run_task40_v10_p6_reference_worker(
         destroy_task40_v10_p6_reference_inverse,
         _destroy_task40_v10_levels,
     )
-    from src.geometry.task40_nonseparable_plan import task40_q_assembly_strategy_is_allowed
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_V13_REFERENCE_PC_STRATEGY,
+        task40_q_assembly_strategy_is_allowed,
+    )
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK40_P6_PERIODIC_PROFILES,
     )
@@ -2387,6 +2390,7 @@ def run_task40_v10_p6_reference_worker(
     )
     if reference_pc_strategy not in REFERENCE_PC_STRATEGIES:
         raise ValueError(f"unsupported Task40 reference-PC strategy: {reference_pc_strategy!r}")
+    is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     q_assembly_strategy = str(
         resolved_payload.get("solver", {}).get(
             "task40_q_assembly_strategy", Q_ASSEMBLY_LEGACY
