@@ -1,5 +1,5 @@
 {
-  "status": "PRE_DOCUMENTATION_SETTLEMENT_SNAPSHOT",
+  "status": "CLOSED_COMPLETE_EVIDENCE_DELIVERED",
   "clock": {
     "start_utc": "2026-10-07T16:52:06.864562+00:00",
     "start_monotonic": 1316921.72,
@@ -10,23 +10,26 @@
     "review_commit": "7514fbedf6253807966f0aad7b1b864e908efd8e",
     "intake_HEAD": "7e31cf67a23917b137e0867e1320919d6a951cb1",
     "contract_HEAD": "7514fbedf6253807966f0aad7b1b864e908efd8e",
-    "closed": false,
+    "closed": true,
     "first_work_start_never_refreshed": true,
     "monotonic_observation_precision_seconds": 0.01,
-    "observed_utc": "2026-10-07T21:36:42.338881+00:00",
-    "observed_monotonic": 1333997.199749853,
+    "closed_utc": "2026-10-07T21:42:56.214887+00:00",
+    "observed_utc": "2026-10-07T21:47:08.642248+00:00",
+    "observed_monotonic": 1334623.503115245,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 17075.479749853024,
-    "heavy_remaining_seconds": 15324.520250146976,
-    "total_remaining_seconds": 18924.520250146976
+    "elapsed_seconds": 17701.783115244936,
+    "heavy_remaining_seconds": 14698.216884755064,
+    "total_remaining_seconds": 18298.216884755064
   },
-  "ledger_closed": false,
+  "ledger_closed": true,
   "active": null,
-  "known_increment_loaded_lower_seconds": 12647.206364535748,
+  "known_increment_loaded_lower_seconds": 12739.778173685096,
   "historical_known_lower_seconds": 189008.77840458113,
-  "cumulative_known_lower_seconds": 201655.98476911688,
-  "unknown": "old unknown, unmeasured implementation/control CPU and uncaptured process tails retained; not zero",
+  "cumulative_known_lower_seconds": 201748.55657826623,
+  "unknown": "historical unknown and uncaptured control/implementation CPU retained; no invented zeros",
+  "scientific_loaded_guard_seconds": 28800,
+  "repair_elapsed_conservative_upper_seconds": 8294.29639,
   "scientific_global_numeric_attempts_including_failure": 3,
   "legal_complete_candidates": 2,
   "deployments": {
@@ -124,6 +127,13 @@
       "optional_local_research_included": false
     }
   },
+  "N1_observed_H2_restart_chain": 5843.071058,
+  "H2_fresh_numerical_cold_N1": "unknown",
+  "research_known_lower_seconds": 7950.532049937894,
+  "inclusive_stage_timers_not_added_again": true,
+  "sampled_tree_peak_bytes": 14272860160,
+  "own_swap_peak_bytes": 0,
+  "actual_max_sample_gap_seconds": 22.640704318881035,
   "samples": [
     {
       "role": "pre",
@@ -313,12 +323,47 @@
       "sampled_tree_peak_bytes": 299118592,
       "own_swap_peak_bytes": 0,
       "sampled_not_cgroup": true
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v60/aux_post_docs01",
+      "sample_count": 3,
+      "actual_max_sample_gap_seconds": 11.27075747679919,
+      "sampled_tree_peak_bytes": 103444480,
+      "own_swap_peak_bytes": 0,
+      "sampled_not_cgroup": true
     }
   ],
-  "actual_max_sample_gap_seconds": 22.640704318881035,
-  "sampled_tree_peak_bytes": 14272860160,
-  "own_swap_peak_bytes": 0,
-  "science_source": "f9b6d3886b59a3b1f549af62aec677347f2f8482",
-  "tail_pending": "final documentation, archive/closure and push metadata",
-  "no_new_scientific_actions_after_unique_VERIFY": true
+  "sampled_not_continuous_hard_peak": true,
+  "nominal_sample_seconds": 0.5,
+  "storage_final": {
+    "new_bytes": 16126421229,
+    "task_artifact_bytes": 93706679612,
+    "free_bytes": 3205832933376,
+    "reserve_bytes": 536870912
+  },
+  "own_actor_count": 0,
+  "own_lock_available_and_released": true,
+  "all_registered_descendants_cleared": true,
+  "numeric_source_C67": "e06d38742c64db261e6d6c30b91d6271965fb1f5",
+  "numeric_source_H2": "d42ac36b99bd758478da7ce42b34215826832676",
+  "final_scientific_consumer_source": "f9b6d3886b59a3b1f549af62aec677347f2f8482",
+  "checked_documentation_source": "f28e387943a7977e060f3d114336df6fc64fb773",
+  "no_scientific_replay_after_VERIFY": true,
+  "GitHub_visual": "NOT_VERIFIED",
+  "final_commit_push_delivery_control_tail": "recorded after publication; not numeric cost or a reopened window",
+  "final_metadata_byte_check": {
+    "status": "PASSED_FINAL_BYTES",
+    "reason": "conditional H2 full-FE and per-cell response scope clarified; no numerical code or array changed",
+    "source_mode": "metadata worktree snapshot after initial clean documentation commit",
+    "initial_clean_documentation_HEAD": "f28e387943a7977e060f3d114336df6fc64fb773",
+    "checker_path": "tmp/task042/v60/final_byte_check.py",
+    "checker_sha256": "21d618e91735dce426aad2f36286b405f04595733fdef0ebec46e55d01ac8abe",
+    "unit_test_replays": 0,
+    "new_scientific_actions": 0,
+    "elapsed_seconds": 0.03827296802774072
+  },
+  "publication_receipt_path": "tmp/task042/v60/publication_receipt.json",
+  "publication_control_fee_policy": "post-publication measured receipt; not scientific cost or a reopened ledger",
+  "final_metadata_storage_API_failure_cost": "preserved original stderr; observed upper35s, exact loaded control CPU unknown, not zero"
 }

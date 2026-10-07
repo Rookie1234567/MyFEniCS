@@ -298,5 +298,19 @@
   "one_run_dat_validate_count": 5,
   "full_repository_pytest": "NOT_RUN",
   "CI": "NOT_RUN",
-  "GitHub_visual": "NOT_VERIFIED"
+  "GitHub_visual": "NOT_VERIFIED",
+  "final_documentation": {
+    "source_sha": "f28e387943a7977e060f3d114336df6fc64fb773",
+    "tests": 15,
+    "record": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v60.json",
+    "sha256": "b4c21b10bbc46f0360b9146dde69a1e062300052e8c2d2f12768e61df1e98f43",
+    "response_and_outcome_final_bytes_unchanged": false,
+    "initial_15_tests_record": {
+      "path": "tmp/task042/v60/aux_post_docs01/documentation_checks.json",
+      "sha256": "b4c21b10bbc46f0360b9146dde69a1e062300052e8c2d2f12768e61df1e98f43"
+    },
+    "final_bytes_after_scope_clarification_verified": true,
+    "final_byte_record_sha256": "4fe6495dac8530cb2ee3073276cbb361df76fdb9225968c63190e98fc12dea69",
+    "context": "initial 15 tests once; final metadata-only byte/link/table recheck without scientific or unit-test replay"
+  }
 }

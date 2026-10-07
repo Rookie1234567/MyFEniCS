@@ -124,5 +124,13 @@
   ],
   "conservative_repair_elapsed_interval_seconds": 7994.29639,
   "conservative_control_allowance_seconds": 300,
-  "control_allowance_is_upper_not_measured_CPU": true
+  "control_allowance_is_upper_not_measured_CPU": true,
+  "final_metadata_storage_api_failure": {
+    "error": "KeyError: 'admitted'",
+    "raw_stderr": "tmp/task042/v60/finalize_delivery.failed_storage_api.stderr",
+    "actor_or_science_replay": 0,
+    "fix": "Use original storage rejection semantics plus explicit unchanged new/task/free/reserve inequalities; no made-up admitted flag",
+    "control_observed_elapsed_upper_seconds": 35,
+    "original_window_still_open": true
+  }
 }

@@ -84,6 +84,8 @@ H2在独立向量原子保存后触发新增存储预留停止。只把同V60成
 
 复用V59绑定目标情景，补实际图、局部缓存与接口作用数据。[目标缺口](outcomes/records/target_gap_v60.json)明确：接口Krylov只含trace+port；内部与完整微场在按块恢复阶段。restart32的V33+Z32在本有限接口上derived35006400B，不是实测分配；目标条件性约527.9GB接口库与1.726TB全FE库是不同scope，不能把全部内部送入Krylov。目标模式/mesh库存不是准确性下界；160宏精确类的有限成本不能假设目标免费复用。目标fill、迭代、RSS、完整172800s成本仍unknown，全球直接/局部LU存在，2TB/48h、连续准确性、NN20不授。
 
+上述1.726TB仅指父情景的宏p6完整FE库，不是H2。沿该同一Nx80/Ny80/Nz400条件情景，H2新增宏内部4356×2560000个；完整mixed FE为11658700800，单向量186539212800B，若误放65条完整库会达12125048832000B（约12.125TB）。仅每cell复制432²复Schur也会达7644119040000B。全部是派生库存，非目标实测或精度下界；因此接口Krylov、按块恢复和精确类共享/有界重算必须分开。
+
 只建议一次原物理Z2/828、保存H2/R7场的独立p7新增实体迹弱缺陷核验：用真实p7边/面泛函及物理切向尺度，完整保留体与DtN/载荷，检验p6接口外的缺陷是否对应已观察的空气/Si场差；不先指定p7为真解，不续内部p/h/M或新PC。本轮不实施。
 
 16项相关定点测试、24模块compile、相关Ruff关键错误与五dat validate通过；独立保存数组checker实际复算结论。一次紧凑15项文档检查和最终字节见[测试](outcomes/records/tests_v60.json)及文档收据；full pytest/CI未运行，GitHub精确页无视觉证据NOT_VERIFIED。旧task/review/response/raw逐字保留。[分组](outcomes/records/selective_merge_v60.json)仅提出依赖顺序，不是merge approval。

@@ -46,5 +46,27 @@
   "global_direct_factor_present": true,
   "NN_training": 0,
   "NN20": false,
-  "qualified_2TB_48h": false
+  "qualified_2TB_48h": false,
+  "conditional_H2_actual_scope_update": {
+    "parent_scenario": {
+      "scale_fraction": "135/135",
+      "modes": 268156,
+      "Nx": 80,
+      "Ny": 80,
+      "Nz": 400,
+      "not_accuracy_lower_bound": true
+    },
+    "macro_cells": 2560000,
+    "internal_per_macro": 4356,
+    "independent_trace": 507340800,
+    "internal": 11151360000,
+    "mixed_FE": 11658700800,
+    "complete_FE_one_vector_bytes": 186539212800,
+    "hypothetical_V33_Z32_full_FE_bytes": 12125048832000,
+    "trace_port_V33_Z32_bytes": 527913314240,
+    "parent_full_FE_library_is_uniform_macro_p6_not_H2": true,
+    "per_cell_dense_Schur_copy_bytes": 7644119040000,
+    "classification": "derived scenario, not measured target allocation or accuracy lower bound",
+    "class_sharing_and_streamed_or_recomputed_interiors_required": true
+  }
 }
