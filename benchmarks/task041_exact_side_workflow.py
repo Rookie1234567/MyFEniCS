@@ -14919,6 +14919,87 @@ def run_task041_consumer(
                 if contract["shortwave"]
                 else task041_consumer_iterative_config()
             )
+        exact_one_cell_strategy = None
+        if fixed_h6_is_w0p7_pilot:
+            registered_case = task041_balh_case(
+                TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+            )
+            try:
+                if not isinstance(registered_case, Mapping):
+                    raise TypeError("registered W0.7 case is unavailable")
+                geometry = normalized["geometry"]
+                materials = normalized["materials"]
+                discretization = normalized["discretization"]
+                method = normalized["method"]
+                registered_geometry = registered_case["profile_geometry"]
+                interfaces = tuple(registered_case["hybrid_interfaces_nm"])
+                geometry_matches_registration = all(
+                    geometry.get(key) == value
+                    for key, value in registered_geometry.items()
+                )
+                grating_index = np.asarray(
+                    materials["n_grating"], dtype=np.float64
+                )
+                substrate_index = np.asarray(
+                    materials["n_substrate"], dtype=np.float64
+                )
+                relative_permeability = np.asarray(
+                    materials["mu_r"], dtype=np.float64
+                )
+                registered_scope = (
+                    contract["balh"] is True
+                    and candidate is True
+                    and contract["p4_inverse_backend"] == "cell_condensed"
+                    and geometry_matches_registration
+                    and interfaces == (2.0, 22.0)
+                    and (
+                        float(method["bottom_interface_nm"]),
+                        float(method["top_interface_nm"]),
+                    )
+                    == interfaces
+                    and (
+                        float(profile.bottom_interface_nm),
+                        float(profile.top_interface_nm),
+                    )
+                    == interfaces
+                    and int(discretization["nedelec_degree"]) == 6
+                    and int(discretization["visualization_degree"]) == 6
+                    and float(discretization["mesh_target_nm"]) == 0.7
+                    and int(profile.degree) == 6
+                    and int(profile.modal_degree) == 6
+                    and int(profile.requested_modes)
+                    == int(registered_case["mode_count"])
+                    and float(profile.h_nm) == 0.7
+                    and float(profile.modal_h_nm) == 0.7
+                    and method["propagation_model"] == "full3d_uniform_cg"
+                    and method["traction_model"]
+                    == "full3d_one_cell_exact_schur"
+                    and int(method["requested_modes_per_direction"])
+                    == int(registered_case["mode_count"])
+                    and grating_index.shape == (2,)
+                    and substrate_index.shape == (2,)
+                    and np.isfinite(grating_index).all()
+                    and np.isfinite(substrate_index).all()
+                    and np.array_equal(grating_index, substrate_index)
+                    and float(method["bottom_interface_nm"])
+                    >= float(geometry["interface_z_nm"])
+                    and float(method["top_interface_nm"])
+                    <= float(geometry["interface_z_nm"])
+                    + float(geometry["grating_height_nm"])
+                    and relative_permeability.shape == (2,)
+                    and relative_permeability[0] == 1.0
+                    and relative_permeability[1] == 0.0
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise Task041ModePrepError(
+                    "registered W0.7 matched-cell scope is incomplete"
+                ) from exc
+            if not registered_scope:
+                raise Task041ModePrepError(
+                    "matched uniform axial cell is limited to the registered "
+                    "W0.7 p6/h0.70 fixed-H6 geometry and interfaces"
+                )
+            exact_one_cell_strategy = "matched_uniform_axial_cell"
         producer = {
             "producer_source_sha": packet_source_sha,
             "consumer_source_sha": source_sha,
@@ -14948,6 +15029,8 @@ def run_task041_consumer(
             "task041_balh_candidate" if candidate else "task041_balh_exact"
         ) if contract["balh"] else "task041_legacy"
         result["qualification_method"] = producer["qualification_method"]
+        if exact_one_cell_strategy is not None:
+            result["exact_one_cell_strategy"] = exact_one_cell_strategy
         result["qualification_status"] = (
             "research_only_approximate_candidate" if candidate else "exact_side"
         )
@@ -14981,24 +15064,46 @@ def run_task041_consumer(
         )
 
         current_stage = "system_setup"
+        setup_kwargs = {
+            "comm": comm,
+            "log": None,
+            "profile": profile,
+            "cfg_override": cfg,
+            "modal_cfg_override": modal_cfg,
+            "exact_one_cell_work_dir": root / "numerical_output" / "exact_one_cell",
+            "detail_stage_callback": callback,
+            "selected_mode_packet_manifest": manifest_path,
+            "selected_mode_packet_identity": packet_identity,
+            "selected_mode_packet_manifest_sha256": packet_manifest_sha256,
+            "sampled_column_contract": sampled_contract,
+        }
+        if exact_one_cell_strategy is not None:
+            setup_kwargs["exact_one_cell_strategy"] = exact_one_cell_strategy
         setup = build_frozen_m10_setup(
-            comm=comm,
-            log=None,
-            profile=profile,
-            cfg_override=cfg,
-            modal_cfg_override=modal_cfg,
-            exact_one_cell_work_dir=root / "numerical_output" / "exact_one_cell",
-            detail_stage_callback=callback,
-            selected_mode_packet_manifest=manifest_path,
-            selected_mode_packet_identity=packet_identity,
-            selected_mode_packet_manifest_sha256=packet_manifest_sha256,
-            sampled_column_contract=sampled_contract,
+            **setup_kwargs,
         )
         qep_release = dict(setup.qep_release)
         if qep_release.get("qep_calls") != 0 or qep_release.get(
             "consumer_qep_required"
         ) is not False:
             raise Task041ModePrepError("Task041 consumer packet path crossed the QEP boundary")
+        exact_one_cell_audit = setup.coupling.exact_one_cell_audit
+        exact_one_cell_summary = None
+        if isinstance(exact_one_cell_audit, Mapping):
+            exact_one_cell_summary = {
+                key: exact_one_cell_audit.get(key)
+                for key in (
+                    "one_cell_strategy",
+                    "numerical_source",
+                    "cell_geometry_z_nm",
+                    "cell_mesh_axis_z_profile",
+                    "cell_length_nm",
+                    "local_cell_h_nm",
+                    "global_propagation_length_nm",
+                    "global_propagation_axial_cell_count",
+                    "global_propagation_axial_h_nm",
+                )
+            }
         emit(
             "system_ready",
             {
@@ -15013,6 +15118,7 @@ def run_task041_consumer(
                     "actual_h_nm": setup.coupling.propagation_axial_h_nm,
                     "cell_count": setup.coupling.propagation_axial_cell_count,
                 },
+                "exact_one_cell": exact_one_cell_summary,
             },
         )
         layout = __import__(

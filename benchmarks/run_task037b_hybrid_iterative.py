@@ -1821,6 +1821,7 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
     detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None,
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None,
     sampled_column_contract: Mapping[str, Any] | None = None,
+    exact_one_cell_strategy: str | None = None,
 ) -> FrozenM10Setup:
     """Build the ordinary tail from a solver-free selected-mode packet."""
 
@@ -1963,6 +1964,9 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
         "bottom_top_action_dtn_systems": _max_elapsed(comm, started),
     }
     started = time.perf_counter()
+    coupling_kwargs: dict[str, Any] = {}
+    if exact_one_cell_strategy is not None:
+        coupling_kwargs["exact_one_cell_strategy"] = exact_one_cell_strategy
     coupling = build_hybrid_internal_mode_coupling(
         cfg,
         spaces,
@@ -1978,7 +1982,12 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
         post_destroy_cleanup=post_destroy_cleanup,
         sampled_column_contract=sampled_column_contract,
         log=log,
+        **coupling_kwargs,
     )
+    if coupling.exact_one_cell_audit is not None:
+        coupling.exact_one_cell_audit["numerical_source"] = (
+            "selected_mode_packet_consumer"
+        )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
     post_coupling_cleanup = collective_heap_cleanup(comm)
     if detail_stage_callback is not None:
@@ -2028,6 +2037,7 @@ def build_frozen_m10_setup(
     log=None,
     profile: FrozenM10Profile | Task37cProfile = FROZEN_M10,
     exact_one_cell_work_dir: Path | None = None,
+    exact_one_cell_strategy: str | None = None,
     cfg_override: Any | None = None,
     modal_cfg_override: Any | None = None,
     detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
@@ -2052,6 +2062,33 @@ def build_frozen_m10_setup(
     if sampled_column_contract is not None and selected_mode_packet_manifest is None:
         raise ValueError(
             "sampled_column_contract requires selected_mode_packet_manifest"
+        )
+    if exact_one_cell_strategy is not None and (
+        exact_one_cell_strategy != "matched_uniform_axial_cell"
+        or not all(
+            (
+                int(profile.degree) == 6,
+                int(profile.modal_degree) == 6,
+                int(profile.requested_modes) == 400,
+                int(profile.candidate_modes) == 800,
+                int(profile.mpi_size) == 8,
+                np.isclose(profile.wavelength_nm, 0.7, rtol=0.0, atol=1.0e-12),
+                np.isclose(profile.h_nm, 0.7, rtol=0.0, atol=1.0e-12),
+                np.isclose(profile.modal_h_nm, 0.7, rtol=0.0, atol=1.0e-12),
+                np.isclose(
+                    profile.bottom_interface_nm, 2.0, rtol=0.0, atol=1.0e-12
+                ),
+                np.isclose(
+                    profile.top_interface_nm, 22.0, rtol=0.0, atol=1.0e-12
+                ),
+                profile.internal_propagation_model == "full3d_uniform_cg",
+                profile.internal_traction_model == "full3d_one_cell_exact_schur",
+            )
+        )
+    ):
+        raise ValueError(
+            "matched_uniform_axial_cell requires the registered W0.7 "
+            "p6/h0.70 M400 MPI8 exact-Schur profile at interfaces 2/22"
         )
     cfg = (
         deepcopy(cfg_override)
@@ -2104,6 +2141,7 @@ def build_frozen_m10_setup(
             detail_stage_callback=detail_stage_callback,
             post_destroy_cleanup=post_destroy_cleanup,
             sampled_column_contract=sampled_column_contract,
+            exact_one_cell_strategy=exact_one_cell_strategy,
         )
 
     timings: dict[str, float] = {}
@@ -2267,6 +2305,9 @@ def build_frozen_m10_setup(
     timings["bottom_top_action_dtn_systems"] = _max_elapsed(comm, started)
 
     started = time.perf_counter()
+    coupling_kwargs: dict[str, Any] = {}
+    if exact_one_cell_strategy is not None:
+        coupling_kwargs["exact_one_cell_strategy"] = exact_one_cell_strategy
     coupling = build_hybrid_internal_mode_coupling(
         cfg,
         spaces,
@@ -2281,7 +2322,10 @@ def build_frozen_m10_setup(
         stage_callback=detail_stage_callback,
         post_destroy_cleanup=post_destroy_cleanup,
         log=log,
+        **coupling_kwargs,
     )
+    if coupling.exact_one_cell_audit is not None:
+        coupling.exact_one_cell_audit["numerical_source"] = "fresh_qep_basis"
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
     post_coupling_cleanup = collective_heap_cleanup(comm)
     if detail_stage_callback is not None:

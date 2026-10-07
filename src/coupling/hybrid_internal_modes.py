@@ -2057,6 +2057,96 @@ def _resolve_uniform_middle_propagation(
     return length / cell_count, cell_count
 
 
+def _resolve_exact_one_cell_local_cell_h(
+    cfg: SimulationConfig3D,
+    *,
+    strategy: str | None,
+    length_nm: float,
+    propagation_model: AxialPropagationModel,
+    modal_traction_model: ModalTractionModel,
+    global_axial_h_nm: float | None,
+    global_axial_cell_count: int | None,
+) -> tuple[str, float]:
+    """Resolve the local exact-traction cell without changing legacy defaults."""
+
+    if propagation_model != "full3d_uniform_cg":
+        raise ValueError("Exact one-cell traction requires full3d_uniform_cg.")
+    if modal_traction_model != "full3d_one_cell_exact_schur":
+        raise ValueError("An exact one-cell strategy requires exact Schur traction.")
+
+    if strategy is None:
+        if not np.isclose(float(length_nm), 100.0, rtol=0.0, atol=1.0e-12):
+            raise ValueError("Exact Hybrid coupling requires a 100 nm middle interval.")
+        return "historical_local10_global100", 10.0
+
+    if strategy != "matched_uniform_axial_cell":
+        raise ValueError(f"Unsupported exact one-cell strategy {strategy!r}.")
+
+    try:
+        target_h_nm = float(cfg.mesh_target_size)
+        degree = int(cfg.nedelec_degree)
+        global_length_nm = float(length_nm)
+        global_h_nm = float(global_axial_h_nm)
+        cell_count = int(global_axial_cell_count)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValueError(
+            "matched_uniform_axial_cell requires resolved p6/h0.70 global geometry"
+        ) from exc
+    resolved = np.asarray(
+        [target_h_nm, global_length_nm, global_h_nm], dtype=np.float64
+    )
+    if (
+        not np.isfinite(resolved).all()
+        or degree != 6
+        or cell_count != 29
+        or not np.isclose(target_h_nm, 0.7, rtol=0.0, atol=1.0e-12)
+        or not np.isclose(global_length_nm, 20.0, rtol=0.0, atol=1.0e-12)
+        or not np.isclose(
+            global_h_nm,
+            global_length_nm / cell_count,
+            rtol=0.0,
+            atol=1.0e-12,
+        )
+    ):
+        raise ValueError(
+            "matched_uniform_axial_cell is limited to the registered p6/h0.70 "
+            "L20/N29 resolved propagation geometry"
+        )
+    return strategy, global_h_nm
+
+
+def _build_exact_one_cell_local_propagation(
+    modes: Sequence[ClassifiedBiorthogonalMode],
+    cfg: SimulationConfig3D,
+    *,
+    strategy: str | None,
+    length_nm: float,
+    propagation_model: AxialPropagationModel,
+    modal_traction_model: ModalTractionModel,
+    global_axial_h_nm: float | None,
+    global_axial_cell_count: int | None,
+) -> tuple[str, float, TwoSidedPropagation]:
+    """Build local lam/mu factors from the selected global axial step."""
+
+    resolved_strategy, local_h_nm = _resolve_exact_one_cell_local_cell_h(
+        cfg,
+        strategy=strategy,
+        length_nm=length_nm,
+        propagation_model=propagation_model,
+        modal_traction_model=modal_traction_model,
+        global_axial_h_nm=global_axial_h_nm,
+        global_axial_cell_count=global_axial_cell_count,
+    )
+    local_propagation = build_two_sided_propagation(
+        modes,
+        local_h_nm,
+        propagation_model=propagation_model,
+        axial_fem_degree=int(cfg.nedelec_degree),
+        axial_h_nm=local_h_nm,
+    )
+    return resolved_strategy, local_h_nm, local_propagation
+
+
 def build_hybrid_internal_mode_coupling(
     cfg: SimulationConfig3D,
     spaces: CrossSectionSpaces,
@@ -2069,6 +2159,7 @@ def build_hybrid_internal_mode_coupling(
     propagation_model: AxialPropagationModel = "continuous_beta",
     modal_traction_model: ModalTractionModel = "continuous_qep_beta",
     exact_one_cell_work_dir=None,
+    exact_one_cell_strategy: str | None = None,
     canonical_trace_gate_policy: str | None = None,
     canonical_trace_family_sha256: str | None = None,
     stage_callback: Callable[[str, Mapping[str, object]], None] | None = None,
@@ -2091,6 +2182,13 @@ def build_hybrid_internal_mode_coupling(
         raise ValueError("The positive internal basis must contain forward modes.")
     if any(mode.direction != "backward" for mode in negative_basis.modes):
         raise ValueError("The negative internal basis must contain backward modes.")
+    if (
+        exact_one_cell_strategy is not None
+        and modal_traction_model != "full3d_one_cell_exact_schur"
+    ):
+        raise ValueError(
+            "exact_one_cell_strategy is only valid with exact Schur traction."
+        )
 
     if log is not None:
         log("Task32 internal coupling: building canonical modal projection")
@@ -2183,16 +2281,19 @@ def build_hybrid_internal_mode_coupling(
                 raise ValueError(
                     "Exact one-cell traction requires an explicit ignored work directory."
                 )
-            if not np.isclose(float(length_nm), 100.0, rtol=0.0, atol=1.0e-12):
-                raise ValueError(
-                    "Exact Hybrid coupling requires a 100 nm middle interval."
-                )
-            cell_propagation = build_two_sided_propagation(
+            (
+                resolved_one_cell_strategy,
+                local_cell_h_nm,
+                cell_propagation,
+            ) = _build_exact_one_cell_local_propagation(
                 [*positive_basis.modes, *negative_basis.modes],
-                10.0,
+                cfg,
+                strategy=exact_one_cell_strategy,
+                length_nm=float(length_nm),
                 propagation_model="full3d_uniform_cg",
-                axial_fem_degree=int(cfg.nedelec_degree),
-                axial_h_nm=10.0,
+                modal_traction_model=modal_traction_model,
+                global_axial_h_nm=propagation_axial_h_nm,
+                global_axial_cell_count=propagation_axial_cell_count,
             )
             from .hybrid_one_cell_exact_traction_builder import (
                 build_exact_one_cell_traction_matrices,
@@ -2208,6 +2309,10 @@ def build_hybrid_internal_mode_coupling(
                 top_system,
                 work_dir=exact_one_cell_work_dir,
                 coupling_propagation_length_nm=float(length_nm),
+                one_cell_strategy=resolved_one_cell_strategy,
+                local_cell_h_nm=local_cell_h_nm,
+                global_axial_h_nm=propagation_axial_h_nm,
+                global_axial_cell_count=propagation_axial_cell_count,
                 log=log,
                 stage_callback=stage_callback,
                 post_destroy_cleanup=post_destroy_cleanup,

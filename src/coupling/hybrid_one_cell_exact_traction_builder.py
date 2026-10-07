@@ -178,21 +178,54 @@ def _apply_columns_marker_detail(
     }
 
 
-def _one_cell_config(cfg, comm_size: int):
+def _one_cell_config(
+    cfg,
+    comm_size: int,
+    *,
+    cell_length_nm: float = 10.0,
+    strategy: str | None = None,
+):
     source_plan = stage4_axis_plan(cfg, int(comm_size))
     source_x_cells, source_y_cells, _ = source_plan.mesh_cells_resolved
+    cell_length = float(cell_length_nm)
+    if not np.isfinite(cell_length) or cell_length <= 0.0:
+        raise ValueError("Exact one-cell local length must be finite and positive.")
+    if strategy in (None, "historical_local10_global100"):
+        if not np.isclose(cell_length, 10.0, rtol=0.0, atol=1.0e-12):
+            raise ValueError(
+                "The historical exact one-cell strategy requires a 10 nm local cell."
+            )
+        case_suffix = "exact_one_cell"
+        z_profile = "task037c_x3_uniform_10nm_one_cell"
+    elif strategy == "matched_uniform_axial_cell":
+        if (
+            int(cfg.nedelec_degree) != 6
+            or not np.isclose(
+                float(cfg.mesh_target_size), 0.7, rtol=0.0, atol=1.0e-12
+            )
+            or not np.isclose(
+                cell_length, 20.0 / 29.0, rtol=0.0, atol=1.0e-12
+            )
+        ):
+            raise ValueError(
+                "Matched local geometry requires the registered p6/h0.70 L20/N29 cell."
+            )
+        case_suffix = "matched_uniform_axial_cell"
+        z_profile = "task041_w0p7_matched_uniform_axial_cell"
+    else:
+        raise ValueError(f"Unsupported exact one-cell strategy {strategy!r}.")
     return replace(
         cfg,
-        case_name=f"{cfg.case_name}_exact_one_cell",
+        case_name=f"{cfg.case_name}_{case_suffix}",
         z_min=0.0,
-        z_max=10.0,
-        air_height=10.0,
+        z_max=cell_length,
+        air_height=cell_length,
         substrate_thickness=0.0,
         interface_z=0.0,
-        grating_height=10.0,
+        grating_height=cell_length,
         mesh_axis_cell_counts=(source_x_cells, source_y_cells, 1),
-        mesh_axis_z_values=(0.0, 10.0),
-        mesh_axis_z_profile="task037c_x3_uniform_10nm_one_cell",
+        mesh_axis_z_values=(0.0, cell_length),
+        mesh_axis_z_profile=z_profile,
         mesh_cell_type="hexahedron",
         mesh_spacing_mode="boundary_fitted",
         stage4_full3d_assembly_backend=ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
@@ -815,6 +848,10 @@ def build_exact_one_cell_traction_matrices(
     *,
     work_dir: Path,
     coupling_propagation_length_nm: float,
+    one_cell_strategy: str | None = None,
+    local_cell_h_nm: float | None = None,
+    global_axial_h_nm: float | None = None,
+    global_axial_cell_count: int | None = None,
     log=None,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None = None,
@@ -829,12 +866,70 @@ def build_exact_one_cell_traction_matrices(
         lifted_endpoint_columns,
     )
 
-    if abs(float(cell_propagation.length_nm) - 10.0) > 1.0e-12:
-        raise ValueError("Exact one-cell propagation must have length 10 nm.")
-    if abs(float(coupling_propagation_length_nm) - 100.0) > 1.0e-12:
-        raise ValueError("Exact Hybrid coupling propagation must have length 100 nm.")
     if cell_propagation.propagation_model != "full3d_uniform_cg":
         raise ValueError("Exact one-cell traction requires full3d_uniform_cg.")
+    strategy = (
+        "historical_local10_global100"
+        if one_cell_strategy is None
+        else one_cell_strategy
+    )
+    if strategy == "historical_local10_global100":
+        resolved_local_h_nm = 10.0
+        if not np.isclose(
+            float(coupling_propagation_length_nm), 100.0, rtol=0.0, atol=1.0e-12
+        ):
+            raise ValueError("Exact Hybrid coupling propagation must have length 100 nm.")
+    elif strategy == "matched_uniform_axial_cell":
+        if (
+            local_cell_h_nm is None
+            or global_axial_h_nm is None
+            or global_axial_cell_count is None
+        ):
+            raise ValueError(
+                "Matched exact traction requires the resolved global axial grid."
+            )
+        resolved_local_h_nm = float(local_cell_h_nm)
+        resolved_global_h_nm = float(global_axial_h_nm)
+        if (
+            int(cfg.nedelec_degree) != 6
+            or not np.isclose(
+                float(cfg.mesh_target_size), 0.7, rtol=0.0, atol=1.0e-12
+            )
+            or int(global_axial_cell_count) != 29
+            or not np.isclose(
+                float(coupling_propagation_length_nm),
+                20.0,
+                rtol=0.0,
+                atol=1.0e-12,
+            )
+            or not np.isclose(
+                resolved_global_h_nm,
+                20.0 / 29.0,
+                rtol=0.0,
+                atol=1.0e-12,
+            )
+            or not np.isclose(
+                resolved_local_h_nm,
+                resolved_global_h_nm,
+                rtol=0.0,
+                atol=1.0e-12,
+            )
+        ):
+            raise ValueError(
+                "Matched exact traction requires registered p6/h0.70 L20/N29 "
+                "global and local propagation."
+            )
+    else:
+        raise ValueError(f"Unsupported exact one-cell strategy {strategy!r}.")
+    if not np.isclose(
+        float(cell_propagation.length_nm),
+        resolved_local_h_nm,
+        rtol=0.0,
+        atol=1.0e-12,
+    ):
+        raise ValueError(
+            "Exact one-cell propagation length must match its selected local cell."
+        )
     mode_count = len(positive_basis.modes)
     if mode_count == 0 or len(raw_negative_traces) != mode_count:
         raise ValueError("Exact one-cell sources must match the positive mode count.")
@@ -855,7 +950,12 @@ def build_exact_one_cell_traction_matrices(
     mesh_data = V = floquet = condensed = action = None
     matrices: dict[str, tuple[PETSc.Mat, PETSc.Mat]] = {}
     try:
-        one_cfg = _one_cell_config(cfg, comm.size)
+        one_cfg = _one_cell_config(
+            cfg,
+            comm.size,
+            cell_length_nm=resolved_local_h_nm,
+            strategy=strategy,
+        )
         mesh_data = build_airbox_mesh_3d(one_cfg, work_dir / "mesh")
         V = _create_nedelec_space(mesh_data.mesh, one_cfg)
         bilinear, _ = _build_variational_forms(mesh_data.mesh, mesh_data, one_cfg, V)
@@ -1222,8 +1322,31 @@ def build_exact_one_cell_traction_matrices(
             {
                 "research_only": True,
                 "production_qualified": False,
-                "cell_length_nm": float(cell_propagation.length_nm),
+                "one_cell_strategy": strategy,
+                "cell_geometry_z_nm": [
+                    float(one_cfg.z_min),
+                    float(one_cfg.z_max),
+                ],
+                "cell_mesh_axis_z_profile": str(
+                    one_cfg.mesh_axis_z_profile
+                ),
+                "cell_length_nm": float(resolved_local_h_nm),
+                "local_cell_h_nm": float(resolved_local_h_nm),
+                "global_propagation_length_nm": float(
+                    coupling_propagation_length_nm
+                ),
+                "global_propagation_axial_cell_count": (
+                    None
+                    if global_axial_cell_count is None
+                    else int(global_axial_cell_count)
+                ),
+                "global_propagation_axial_h_nm": (
+                    None
+                    if global_axial_h_nm is None
+                    else float(global_axial_h_nm)
+                ),
                 "coupling_propagation_length_nm": float(coupling_propagation_length_nm),
+                "propagation_axial_h_nm": float(resolved_local_h_nm),
                 "cell_propagation_factors": {
                     "forward": [
                         [float(value.real), float(value.imag)] for value in lam

@@ -715,6 +715,7 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     profile = captured["profile"]
     assert (profile.bottom_interface_nm, profile.top_interface_nm) == (2.0, 22.0)
     assert profile.top_interface_nm - profile.bottom_interface_nm == 20.0
+    assert captured["exact_one_cell_strategy"] == "matched_uniform_axial_cell"
     assert captured["cfg_override"].full3d_reference_plane_z == (
         2.0,
         7.0,
@@ -3711,13 +3712,16 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         source_sha=source_sha,
     )
     captured = {}
+    captured_setup_kwargs = {}
 
     def fresh_root(path, _comm):
         root = Path(path)
         root.mkdir(parents=True, exist_ok=True)
         return root
 
-    def fake_setup_builder(**_kwargs):
+    def fake_setup_builder(**setup_kwargs):
+        captured_setup_kwargs.clear()
+        captured_setup_kwargs.update(setup_kwargs)
         return SimpleNamespace(
             qep_release={"qep_calls": 0, "consumer_qep_required": False},
             coupling=SimpleNamespace(
@@ -3725,6 +3729,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
                 propagation_axial_target_h_nm=1.0,
                 propagation_axial_h_nm=1.0,
                 propagation_axial_cell_count=1,
+                exact_one_cell_audit=None,
             ),
             bottom=object(),
             top=object(),
@@ -4121,6 +4126,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["reuse_primal_route_plan"] is False
     assert captured["fixed_h6_modal_gmres_research"] is True
     assert captured["reuse_leading_ph_dual"] is False
+    assert "exact_one_cell_strategy" not in captured_setup_kwargs
 
     captured.clear()
     with pytest.raises(
@@ -4945,6 +4951,7 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
                 propagation_axial_target_h_nm=1.0,
                 propagation_axial_h_nm=1.0,
                 propagation_axial_cell_count=1,
+                exact_one_cell_audit=None,
             ),
             bottom=object(),
             top=object(),
