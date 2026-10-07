@@ -32,12 +32,14 @@ def qualified_task40_v10_abi(*, profile_identity: str) -> dict[str, object]:
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
         TASK40_V11_P6_PROFILES,
+        TASK40_V15_P6_PROFILES,
     )
 
     if profile_identity not in (
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
         *TASK40_V11_P6_PROFILES,
+        *TASK40_V15_P6_PROFILES,
     ):
         raise RuntimeError(
             "Task40 V10/V11 ABI gate accepts only an exact reviewed p4/p6 profile"
