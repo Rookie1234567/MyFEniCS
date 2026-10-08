@@ -681,7 +681,7 @@ def qualify_complete_ny_reference_operator(
                 diagonal_q_augmented = sparse.bmat(
                     [
                         [volume_block, C_block],
-                        [D_block, -sparse.eye(len(q_modes), dtype=np.complex128, format="csr")],
+                        [-D_block, sparse.eye(len(q_modes), dtype=np.complex128, format="csr")],
                     ],
                     format="csr",
                     dtype=np.complex128,
@@ -975,7 +975,7 @@ def qualify_complete_ny_reference_operator(
         "candidate_q_matrix_nnz": {
             str(q): int(candidates[q].nnz) for q in range(ny)
         },
-        "contributions": ["full native FE volume", "left C/sqrt(H)", "right D/sqrt(H)", "-I port normalization"],
+        "contributions": ["full native FE volume", "left C/sqrt(H)", "right D/sqrt(H)", "+I port normalization"],
     }
 
 

@@ -886,6 +886,94 @@ def test_nonunitary_complex_native_entities_preserve_primal_dual_work_and_two_tw
     np.testing.assert_allclose(recon, rhs, rtol=3e-13, atol=3e-13)
 
 
+def test_v18_augmented_oracle_sign_matches_production_condensation_and_rhs_recovery():
+    from src.solvers.p6_cell_condensed_action import condense_physical_cell_blocks
+
+    local_volume = np.asarray(
+        [[2.0 + 0.2j, 0.3 - 0.1j], [-0.2 + 0.15j, 3.0 + 0.5j]],
+        dtype=np.complex128,
+    )
+    Vtt = local_volume[:1, :1]
+    Vti = local_volume[:1, 1:]
+    Vit = local_volume[1:, :1]
+    Vii = local_volume[1:, 1:]
+    Bt = np.asarray([[0.2 + 0.03j]], dtype=np.complex128)
+    Bi = np.asarray([[-0.04 + 0.05j]], dtype=np.complex128)
+    Dt = np.asarray([[0.07 - 0.02j]], dtype=np.complex128)
+    Di = np.asarray([[-0.03 + 0.06j]], dtype=np.complex128)
+    H = np.asarray([[1.0]], dtype=np.complex128)
+
+    assert not np.allclose(local_volume, local_volume.conj().T)
+    B = np.vstack((Bt, Bi))
+    D = np.hstack((Dt, Di))
+    assert not np.allclose(D, B.conj().T)
+    production = condense_physical_cell_blocks(
+        Vii=Vii, Vit=Vit, Vti=Vti, Vtt=Vtt,
+        Bi=Bi, Bt=Bt, Di=Di, Dt=Dt, H=H,
+    )
+    production_schur = np.block(
+        [
+            [production.S_V, production.Bhat],
+            [-production.Dhat, production.Hhat],
+        ]
+    )
+
+    # Independently eliminate only the FE interior from the original augmented
+    # matrix. The lower row follows the production convention [[V, B], [-D, H]].
+    augmented = np.block(
+        [[Vtt, Vti, Bt], [Vit, Vii, Bi], [-Dt, -Di, H]]
+    )
+    retained = np.asarray([0, 2], dtype=np.int64)
+    interior = np.asarray([1], dtype=np.int64)
+    A_rr = augmented[np.ix_(retained, retained)]
+    A_ri = augmented[np.ix_(retained, interior)]
+    A_ir = augmented[np.ix_(interior, retained)]
+    A_ii = augmented[np.ix_(interior, interior)]
+    direct_schur = A_rr - A_ri @ np.linalg.solve(A_ii, A_ir)
+    np.testing.assert_allclose(
+        production_schur, direct_schur, rtol=2.0e-14, atol=2.0e-14
+    )
+
+    # The previous oracle negated the whole port row. That leaves the FE row
+    # untouched and makes the port equation alone fail for the correct solution.
+    old_wrong_sign = augmented.copy()
+    old_wrong_sign[-1, :] *= -1.0
+    old_wrong_schur = (
+        old_wrong_sign[np.ix_(retained, retained)]
+        - old_wrong_sign[np.ix_(retained, interior)]
+        @ np.linalg.solve(
+            old_wrong_sign[np.ix_(interior, interior)],
+            old_wrong_sign[np.ix_(interior, retained)],
+        )
+    )
+    assert np.allclose(old_wrong_sign[:-1], augmented[:-1])
+    np.testing.assert_allclose(old_wrong_sign[-1], -augmented[-1])
+    np.testing.assert_allclose(old_wrong_schur[:1], direct_schur[:1])
+    np.testing.assert_allclose(old_wrong_schur[1:], -direct_schur[1:])
+    old_sign_relative = np.linalg.norm(old_wrong_schur - direct_schur) / max(
+        np.linalg.norm(old_wrong_schur), np.linalg.norm(direct_schur)
+    )
+    assert old_sign_relative > 1.0e-3
+
+    rhs = np.asarray([0.7 + 0.2j, -0.31 + 0.47j, 0.24 - 0.19j])
+    assert np.all(np.abs(rhs) > 0.0)  # trace FE, interior FE, and port RHS are nonzero.
+    full_solution = np.linalg.solve(augmented, rhs)
+    reduced_rhs = rhs[retained] - A_ri @ np.linalg.solve(A_ii, rhs[interior])
+    retained_solution = np.linalg.solve(direct_schur, reduced_rhs)
+    recovered_interior = production.recover(
+        retained_solution[:1], retained_solution[1:], rhs_i=rhs[interior]
+    )
+    recovered_full = np.asarray(
+        [retained_solution[0], recovered_interior[0], retained_solution[1]],
+        dtype=np.complex128,
+    )
+    np.testing.assert_allclose(recovered_full, full_solution, rtol=3.0e-13, atol=3.0e-13)
+
+    old_sign_residual = old_wrong_sign @ full_solution - rhs
+    assert np.linalg.norm(old_sign_residual[:-1]) < 2.0e-14
+    assert np.linalg.norm(old_sign_residual[-1:]) > 1.0e-1
+
+
 def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -978,32 +1066,36 @@ def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks(
         format="csr",
     )
     carrier = SimpleNamespace(entries=entries, global_rows=2 * ny)
+    from src.solvers.p6_cell_condensed_action import condense_physical_cell_blocks
+
     candidate_q = {}
     interior_inverse = 1.0 / local_volume[1, 1]
+    s_trace = local_volume[0, 0] - (
+        local_volume[0, 1] * interior_inverse * local_volume[1, 0]
+    )
+    local_condensed = condense_physical_cell_blocks(
+        Vii=local_volume[1:2, 1:2],
+        Vit=local_volume[1:2, 0:1],
+        Vti=local_volume[0:1, 1:2],
+        Vtt=local_volume[0:1, 0:1],
+        Bi=np.asarray([[c_interior]], dtype=np.complex128),
+        Bt=np.asarray([[c_trace]], dtype=np.complex128),
+        Di=np.asarray([[d_interior]], dtype=np.complex128),
+        Dt=np.asarray([[d_trace]], dtype=np.complex128),
+        H=np.asarray([[1.0]], dtype=np.complex128),
+    )
+    production_local_schur = np.block(
+        [
+            [local_condensed.S_V, local_condensed.Bhat],
+            [-local_condensed.Dhat, local_condensed.Hhat],
+        ]
+    )
     for q in range(ny):
-        s_trace = local_volume[0, 0] - (
-            local_volume[0, 1] * interior_inverse * local_volume[1, 0]
+        candidate_q[q] = sparse.csr_matrix(
+            np.asarray([[s_trace]], dtype=np.complex128)
+            if q == 4
+            else production_local_schur.copy()
         )
-        if q == 4:
-            candidate_q[q] = sparse.csr_matrix(
-                np.asarray([[s_trace]], dtype=np.complex128)
-            )
-        else:
-            candidate_q[q] = sparse.csr_matrix(
-                np.asarray(
-                    [
-                        [
-                            s_trace,
-                            c_trace - local_volume[0, 1] * interior_inverse * c_interior,
-                        ],
-                        [
-                            d_trace - d_interior * interior_inverse * local_volume[1, 0],
-                            -1.0 - d_interior * interior_inverse * c_interior,
-                        ],
-                    ],
-                    dtype=np.complex128,
-                )
-            )
 
     allocation_events = []
     lift_refs = []
