@@ -1,0 +1,288 @@
+{
+  "physical_descriptor": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "memory_budget": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "assembly_row_cap": 1000000,
+  "historical_cost_unknown": "preserved; control CPU/Git and past unobserved costs unknown",
+  "schema": "task042.v65.coefficient-first-p6.v1",
+  "batch": "V65_COEFFICIENT_FIRST_AUDIT_AND_P6_COMPLETION",
+  "review_commit": "1cc254583559969b3fdeb9385104011d5f479a50",
+  "stages": [
+    "PREFLIGHT",
+    "PREPARE",
+    "SOLVE_COMPLETE",
+    "VERIFY_COST"
+  ],
+  "new_storage_bytes": 68719476736,
+  "task_storage_bytes": 369367187456,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "total_loaded_seconds": 39600,
+  "p6_cumulative_case_seconds": 36000,
+  "numeric_audit_output_reserve_seconds": 4500,
+  "maximum_new_solves": 2,
+  "maximum_body_builds": 1,
+  "maximum_p6_cell_pairs": 24,
+  "historical_loaded_known_lower_seconds": 245130.14639971292,
+  "case_wall_seconds": {
+    "PREFLIGHT": 3600,
+    "PREPARE": 36000,
+    "SOLVE_COMPLETE": 36000,
+    "VERIFY_COST": 6000
+  },
+  "cases": {
+    "P6": {
+      "case": "NOTCH",
+      "degree": 6,
+      "h_ratio": 2,
+      "cells": 7680,
+      "independent": 980352,
+      "rows": 981180,
+      "complete_modes": 828,
+      "triangle_backend": "reachable_owner_support",
+      "assembly_row_cap": 1000000,
+      "memory_budget": {
+        "planning_gib": 192,
+        "warning_gib": 224,
+        "sampled_stop_gib": 256,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    }
+  },
+  "memory_profiles": {
+    "default": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "P6": {
+      "planning_gib": 192,
+      "warning_gib": 224,
+      "sampled_stop_gib": 256,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    }
+  },
+  "prior_boundary": {
+    "arrays": {
+      "q47": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_tetra_same_mesh_p6_20261008T135044376775Z/triangle_q47.npz",
+        "sha256": "458e7c5b109b816b1b53a471f166e9f704ba2a84ae8340c2af22f38985a54493",
+        "members": {
+          "offsets": {
+            "shape": [
+              829
+            ],
+            "dtype": "int64",
+            "sha256": "26b931c6ad16bc33896e9ed1a08c188e7dcd83e354b619dd14f6cec3306c8cc6"
+          },
+          "rows": {
+            "shape": [
+              19713024
+            ],
+            "dtype": "int64",
+            "sha256": "21f0ac870a6e19421094ac9c910086ffb41c658b20b618c8bf8c9d1b6d71b422"
+          },
+          "C": {
+            "shape": [
+              19713024
+            ],
+            "dtype": "complex128",
+            "sha256": "d90b41a3aeb0bb7bd6c6ef1205cd78d9cdb5060b3139becfad577a539320c5e4"
+          },
+          "D": {
+            "shape": [
+              19713024
+            ],
+            "dtype": "complex128",
+            "sha256": "82ea905d61222af04f256fb489fd4fb2f0519a1835267197381b195e2945eb72"
+          },
+          "H": {
+            "shape": [
+              828
+            ],
+            "dtype": "float64",
+            "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+          },
+          "incident_traction": {
+            "shape": [
+              1005528
+            ],
+            "dtype": "complex128",
+            "sha256": "94143895b0b8eae2390aced369337126232b65ba8b7ec5af233bb16d48acfe3b"
+          }
+        },
+        "hash_first_recorded_at_saved_consumer": true
+      },
+      "q63": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_tetra_same_mesh_p6_20261008T135044376775Z/triangle_q63.npz",
+        "sha256": "12f0c97da871679ca1ff8211ccb7865214bc6402e60fa6983528a41084300721",
+        "members": {
+          "offsets": {
+            "shape": [
+              829
+            ],
+            "dtype": "int64",
+            "sha256": "26b931c6ad16bc33896e9ed1a08c188e7dcd83e354b619dd14f6cec3306c8cc6"
+          },
+          "rows": {
+            "shape": [
+              19713024
+            ],
+            "dtype": "int64",
+            "sha256": "21f0ac870a6e19421094ac9c910086ffb41c658b20b618c8bf8c9d1b6d71b422"
+          },
+          "C": {
+            "shape": [
+              19713024
+            ],
+            "dtype": "complex128",
+            "sha256": "c3df6993d3cac65ead6294793341ae98adb7a1f1b19cdee21a6b4d52f8ad2d34"
+          },
+          "D": {
+            "shape": [
+              19713024
+            ],
+            "dtype": "complex128",
+            "sha256": "129029a134f3b2ca64e6eb781114badeb55fa7b27b33e32af2c343546209a639"
+          },
+          "H": {
+            "shape": [
+              828
+            ],
+            "dtype": "float64",
+            "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+          },
+          "incident_traction": {
+            "shape": [
+              1005528
+            ],
+            "dtype": "complex128",
+            "sha256": "1ff8060d163316e6896688bd28df6557937b5b73d4b31881ec9003d853f19d0d"
+          }
+        },
+        "hash_first_recorded_at_saved_consumer": true
+      }
+    },
+    "mode_sha256": "bf05010061b89678fb14b493e5baff737108f3f36cce6f4c88fe6ef182ab153d",
+    "parent_record": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v64.json",
+      "sha256": "e0f76478ba0ae19bb141135771273b6616096bef26629593d39335dafab826c0"
+    },
+    "V64_source": "e28ce30b47797581176f2d5fa752b1f3539387c8"
+  },
+  "direct_inventory_check": {
+    "actual_directory": "benchmarks/artifacts/task042/v64/task042_v64_tetra_same_mesh_p6_20261008T135044376775Z",
+    "files": [
+      "events.jsonl",
+      "triangle_q47.npz",
+      "boundary_pair.json",
+      "triangle_q63.npz"
+    ],
+    "body_K_present": false,
+    "check_once_UTC": "2026-10-08T23:40:18.164570+00:00",
+    "classification": "READ_ONLY_ACTUAL_DIRECTORY_INVENTORY"
+  }
+}

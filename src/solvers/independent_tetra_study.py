@@ -51,7 +51,7 @@ def petsc_matrix(A):
     A=A.tocsr();return PETSc.Mat().createAIJ(size=A.shape,csr=(A.indptr.astype(PETSc.IntType),A.indices.astype(PETSc.IntType),A.data),comm=PETSc.COMM_SELF)
 
 
-def solve(role,folder,journal,state,*,scope_module=scope):
+def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,action_factory=None):
     scope=scope_module
     budget=scope.memory_budget(role) if hasattr(scope,"memory_budget") else scope.plan_record()["memory_budget"]
     from petsc4py import PETSc
@@ -70,7 +70,8 @@ def solve(role,folder,journal,state,*,scope_module=scope):
         b=load_boundary(s,old['boundary_arrays'],old['mode_sha256'])
         if not old.get('audit') or record.get('audit_recompute'):
             oracle=load_boundary(s,old['boundary_arrays'],old['mode_sha256'],q='q63')
-            aud,res,orrhs=core.audit(s,oracle,a['x'],a['rhs'],journal)
+            aud,res,orrhs=(core.audit(s,oracle,a['x'],a['rhs'],journal) if action_factory is None
+                else action_factory(s,oracle).audit(a['x'],a['rhs'],journal))
             aud['arrays']=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=a['x'])
             old.update(audit=aud,equation_pass=aud['pass_gate'])
         previous=record.get('completed_outputs')
@@ -86,31 +87,45 @@ def solve(role,folder,journal,state,*,scope_module=scope):
     scope.require_stage(role)
     s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal);cap=core.assembly_capacity(s,journal)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',capacity=cap,role=role)
-    b=core.boundary(s,47,journal,folder);oracle=core.boundary(s,63,journal,folder)
+    if prepared_provider is None:
+        b=core.boundary(s,47,journal,folder);oracle=core.boundary(s,63,journal,folder)
+        prepared=None
+    else:
+        prepared=prepared_provider(s,folder,journal)
+        K,form,b,oracle=tuple(prepared[k] for k in ('K','form','boundary','oracle'))
     pair=carrier_pair(b['carrier'],oracle['carrier'],b['identities'],expected_modes=s['spec']['complete_modes'])
     inc=relative(b['incident']-oracle['incident'],oracle['incident'])
     write_json(folder/'boundary_pair.json',dict(pair=pair,incident=inc))
     if not pair['pass'] or inc>1e-11:raise ValueError('complete fresh tetra q47/q63 boundary not qualified')
-    K,form=core.production_body(s,journal);C,D,H=core.boundary_matrices(s,b);n=K.shape[0]
+    if prepared_provider is None:K,form=core.production_body(s,journal)
+    C,D,H=core.boundary_matrices(s,b);n=K.shape[0]
     A=sparse.bmat([[K,C],[-D,sparse.diags(H)]],format='csr');rhs=core.rhs_vector(s,b)
     journal.owners('production_full_sparse_and_boundary',dict(K=K,C=C,D=D,A=A))
     # Two nonzero complex vectors certify all interior/edge/face and all ports.
     rng=np.random.default_rng(6207);columns=[];errors=[]
+    independent=action_factory(s,oracle) if action_factory is not None else None
     with journal.measured('two_standard_UFL_PUBLIC_BASIX_operator_pairs'):
-        for i in range(2):
-            z=rng.normal(size=A.shape[0])+1j*rng.normal(size=A.shape[0])
-            original=core.full_action(s,oracle,z,q=2*s['spec']['degree']+5);production=A@z
+        inputs=[rng.normal(size=A.shape[0])+1j*rng.normal(size=A.shape[0]) for _ in range(2)]
+        originals=independent(np.column_stack(inputs)) if independent is not None else None
+        for i,z in enumerate(inputs):
+            original=originals[:,i] if originals is not None else core.full_action(s,oracle,z,q=2*s['spec']['degree']+5)
+            production=A@z
             err=relative(production-original,original);errors.append(err);columns.append((z,production,original))
             journal.calls['A']+=1
     identity=save_arrays(folder/'full_operator_witness.npz',**{f'{name}{i}':col[j] for i,col in enumerate(columns) for j,name in enumerate(('input','production','original'))})
     write_json(folder/'original_operator_pairs.json',dict(errors=errors,arrays=identity,form=form))
     if max(errors)>1e-10:raise ValueError('independent complete original action gate')
+    if prepared is not None:
+        from .tetra_body_checkpoint import qualification_receipt
+        prepared['qualification']=qualification_receipt(prepared['checkpoint'],errors,identity,state,folder/'body_original_action_qualification.json')
     phases=[_mode_boundary_phase(m,s['cfg']) for m in b['modes']];left,right=port_coordinate_scales(n,H,phases)
     scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
     factor=None
     try:
-        reserve=6600 if scope.NAMESPACE=='v64' else 3000 if scope.NAMESPACE=='v63' else 1800
-        if min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.total-scope.window.charged_wall())<reserve:raise RuntimeError('full tetra audit/output/compare reserve before numeric')
+        reserve=scope.plan_record().get('numeric_audit_output_reserve_seconds',6600 if scope.NAMESPACE=='v64' else 3000 if scope.NAMESPACE=='v63' else 1800)
+        remaining=[scope.window.snapshot()['heavy_remaining_seconds'],scope.window.total-scope.window.charged_wall()]
+        if hasattr(scope.window,'case_remaining'):remaining.append(scope.window.case_remaining(active=True))
+        if min(remaining)<reserve:raise RuntimeError('full tetra cumulative audit/output/compare reserve before numeric')
         factor=AnalyzedDirectFactor(matrix,journal,folder,planning_limit_bytes=budget['planning_gib']*2**30)
         r=PETSc.Vec().createSeq(len(rhs),comm=PETSc.COMM_SELF);sol=r.duplicate();r.array[:]=left*rhs
         try:
@@ -129,8 +144,9 @@ def solve(role,folder,journal,state,*,scope_module=scope):
         pending=dict(status='AUDIT_PENDING',role=role,arrays=arrays,source=state,spec=s['spec'],physical=s['physical'],form=form,
             mode_sha256=b['digest'],boundary_arrays={'q47':b['arrays'],'q63':oracle['arrays']},nnz=A.nnz,capacity=cap,
             production_true=relative(rhs-A@x,rhs),new_numeric_factors=1,new_complete_solves=1)
+        if prepared is not None:pending.update(body_checkpoint=prepared['checkpoint'],body_qualification=prepared['qualification'],prepared_start=True)
         write_json(folder/'returned_audit_pending.json',pending)
-        aud,res,orrhs=core.audit(s,oracle,x,rhs,journal)
+        aud,res,orrhs=(core.audit(s,oracle,x,rhs,journal) if independent is None else independent.audit(x,rhs,journal))
         raw=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=x)
         aud['arrays']=raw;pending.update(audit=aud,equation_pass=aud['pass_gate'],original_operator_witness=identity)
         write_json(folder/'returned_audit_pending.json',pending)

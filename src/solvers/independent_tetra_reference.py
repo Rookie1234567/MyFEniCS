@@ -251,12 +251,16 @@ def production_body(s,journal):
     if q<2*V.element.basix_element.embedded_superdegree:raise ValueError('tet body degree does not cover actual superdegree')
     form=(ufl.inner(ck(u),ck(v))/cfg.mu_r-cfg.k0**2*eps*ufl.inner(u,v))*ufl.dx(metadata={'quadrature_degree':q})
     with journal.measured('standard_UFL_FFCx_full_uncondensed_body'):
-        a=fem.form(form,jit_options={'cache_dir':__import__('os').environ['FFCX_CACHE_DIR']})
-        K=fem.petsc.assemble_matrix(a);K.assemble()
+        with journal.measured('body_JIT_form'):
+            a=fem.form(form,jit_options={'cache_dir':__import__('os').environ['FFCX_CACHE_DIR']})
+        with journal.measured('body_PETSc_assembly'):
+            K=fem.petsc.assemble_matrix(a);K.assemble()
     try:
-        ia,ja,va=K.getValuesCSR();native=sparse.csr_matrix((va.copy(),ja.copy(),ia.copy()),shape=K.getSize())
+        with journal.measured('body_native_CSR_copy'):
+            ia,ja,va=K.getValuesCSR();native=sparse.csr_matrix((va.copy(),ja.copy(),ia.copy()),shape=K.getSize())
     finally:K.destroy()
-    P=s['P'];pulled=(P.conj().T@native@P).tocsr()
+    with journal.measured('body_MPC_Hermitian_pullback'):
+        P=s['P'];pulled=(P.conj().T@native@P).tocsr()
     return pulled,dict(q=q,embedded_superdegree=V.element.basix_element.embedded_superdegree,
         form='inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)',native_nnz=native.nnz,independent_nnz=pulled.nnz)
 

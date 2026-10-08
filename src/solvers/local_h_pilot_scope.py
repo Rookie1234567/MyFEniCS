@@ -30,12 +30,13 @@ class PilotWindow(TetraWindow):
         return seconds+one_run_overhead(self.TMP,self.ledger()['runs'])
 
 
-def one_run_overhead(folder,runs):
+def one_run_overhead(folder,runs,*,roles=None):
     """Include rejected entry calls; match retries by their actual UTC interval."""
     seconds=0.
     for path in folder.glob('*_one_run*/receipt.json'):
         receipt=json.loads(path.read_text());begin=datetime.fromisoformat(receipt['start_utc']);end=datetime.fromisoformat(receipt['end_utc'])
         role=path.parent.name.split('_one_run')[0]
+        if roles is not None and role not in roles:continue
         matched=[r for r in runs if r['role']==role and r['source_sha']==receipt['source_sha']
             and begin<=datetime.fromisoformat(r['before_clock']['observed_utc'])<=end]
         if len(matched)>1:raise ValueError('one-run receipt contains multiple stage entries')
