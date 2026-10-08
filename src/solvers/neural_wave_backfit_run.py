@@ -217,6 +217,7 @@ def run_backfit(
         state["visits"] += 1
         accepted = False
         reason = None
+        optimization = None
         # No whole QR rebuild is hidden here. rank-revealing inactive solve
         # and QR delete are a once-per-visit setup and are fully costed.
         F = InactiveComplement(
@@ -289,7 +290,13 @@ def run_backfit(
             else:
                 reason = "NO_EVALUATED_NONZERO_Q_IMPROVEMENT"
         except TrialRejected as error:
-            optimization = dict(message=str(error), complete_trial_calls=0)
+            # A QR insertion rejection can occur AFTER a complete optimization.
+            # Its already paid evaluations/iteration record must survive rollback.
+            if optimization is None:
+                optimization = dict(message=str(error), complete_trial_calls=0,
+                                    actual_nit="NOT_RETAINED")
+            else:
+                optimization["commit_rejection"] = str(error)
             delta = 0.0
             reason = str(error)
         finally:
