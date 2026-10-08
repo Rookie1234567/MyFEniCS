@@ -67,6 +67,9 @@ def preflight(folder,journal):
                 del new;gc.collect();break
             except (ValueError,RuntimeError) as exc:
                 attempts.append(dict(sync=sync,error=repr(exc)));write_json(folder/'mesh_attempts.json',attempts)
+                # Only a completed, failed periodic audit admits the one True
+                # fallback.  API/identity errors need a diagnosed repair.
+                raise
     # P6 is independent of the local-refinement capacity result.
     p6=core.make_setup(scope.case_spec('P6'),scope.physical_for('P6'),journal)
     cap=core.assembly_capacity(p6,journal)
