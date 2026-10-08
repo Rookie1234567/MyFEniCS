@@ -24,6 +24,7 @@ from src.solvers.augmented_reference_correction import (
     evaluate_complete_augmented_residual,
     evaluate_v15_non_cancelling_budget,
     q_solve_limit,
+    recompute_v15_candidate_facts,
     recheck_reference_pc_final_admission,
     select_reference_pc_candidate,
     select_v15_reference_pc_candidate,
@@ -59,17 +60,32 @@ def _candidate(metrics, *, frozen=None, state="candidate", structural=None):
     }
 
 
-def _v15_candidate(metrics, *, frozen=None, state="candidate", structural=None):
+def _v15_candidate(
+    metrics, *, frozen=None, state="candidate", structural=None,
+    profile_identity="task40extra_v15_p6_y_orbit_b0_reference_v1",
+):
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+    profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
     frozen_metrics = dict(metrics if frozen is None else frozen)
     alpha = float(metrics["alpha_closure"])
     frozen_alpha = float(frozen_metrics["alpha_closure"])
+    sectors = []
+    next_mode = 0
+    for twist, mode_count in enumerate(profile.sector_port_counts):
+        sectors.append({
+            "twist_index": twist,
+            "mode_indices": list(range(next_mode, next_mode + mode_count)),
+        })
+        next_mode += mode_count
     raw = {
+        "profile_identity": profile_identity,
         "effective_rhs_scale": 1.0,
         "eliminated_fe_residual_norm": float(metrics["eliminated_fe"]),
         "complete_augmented_fe_residual_norm": float(metrics["complete_augmented_fe"]),
         "budget_term_norms": {
             "d_b": float(metrics["noncancelling_budget"]),
-            "lifted_sector_errors": [0.0, 0.0],
+            "lifted_sector_errors": [0.0] * profile.replication_count,
             "d_A": 0.0,
             "B_delta_alpha": 0.0,
         },
@@ -85,13 +101,10 @@ def _v15_candidate(metrics, *, frozen=None, state="candidate", structural=None):
                 "true_residual_norm": float(metrics["q_solve"]),
                 "true_residual_relative": float(metrics["q_solve"]),
             }
-            for q in range(4)
+            for q in range(profile.q_count)
         ],
-        "retained_mode_count": 2,
-        "native_sector_facts": [
-            {"twist_index": 0, "mode_indices": [0]},
-            {"twist_index": 1, "mode_indices": [1]},
-        ],
+        "retained_mode_count": profile.mode_count,
+        "native_sector_facts": sectors,
         "decomposition_closure_norm": 1.0e-12,
         "decomposition_closure_scale": 1.0,
         "state_sha256": sha256(state.encode("utf-8")).hexdigest(),
@@ -105,8 +118,11 @@ def _v15_candidate(metrics, *, frozen=None, state="candidate", structural=None):
         "raw_facts": raw,
     }
 
-
 def _v15_candidate_from_budget(budget, *, q_relative=0.0, state="native-budget"):
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+    profile_identity = "task40extra_v15_p6_y_orbit_b0_reference_v1"
+    profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
     alpha_norm = 0.0
     alpha_scale = 1.0
     q_rows = [
@@ -116,7 +132,7 @@ def _v15_candidate_from_budget(budget, *, q_relative=0.0, state="native-budget")
             "true_residual_norm": float(q_relative),
             "true_residual_relative": float(q_relative),
         }
-        for q in range(4)
+        for q in range(profile.q_count)
     ]
     metrics = {
         "eliminated_fe": float(budget["eliminated_fe_relative"]),
@@ -129,7 +145,16 @@ def _v15_candidate_from_budget(budget, *, q_relative=0.0, state="native-budget")
         np.asarray([0.0j, 1.0j], dtype=np.complex128),
         np.asarray([0.5 + 0.25j, -0.5j], dtype=np.complex128),
     )
+    sectors = []
+    next_mode = 0
+    for twist, mode_count in enumerate(profile.sector_port_counts):
+        sectors.append({
+            "twist_index": twist,
+            "mode_indices": list(range(next_mode, next_mode + mode_count)),
+        })
+        next_mode += mode_count
     raw = {
+        "profile_identity": profile_identity,
         "effective_rhs_scale": float(budget["effective_rhs_scale"]),
         "eliminated_fe_residual_norm": float(budget["eliminated_fe_residual_norm"]),
         "complete_augmented_fe_residual_norm": float(
@@ -140,14 +165,8 @@ def _v15_candidate_from_budget(budget, *, q_relative=0.0, state="native-budget")
         "alpha_closure_original_scale": alpha_scale,
         "alpha_closure_frozen_scale": alpha_scale,
         "q_true_residuals": q_rows,
-        "retained_mode_count": 2,
-        "native_sector_facts": budget.get(
-            "sector_facts",
-            [
-                {"twist_index": 0, "mode_indices": [0]},
-                {"twist_index": 1, "mode_indices": [1]},
-            ],
-        ),
+        "retained_mode_count": profile.mode_count,
+        "native_sector_facts": sectors,
         "decomposition_closure_norm": float(budget["decomposition_closure_norm"]),
         "decomposition_closure_scale": float(budget["decomposition_closure_scale"]),
         "state_sha256": state_hash,
@@ -157,7 +176,7 @@ def _v15_candidate_from_budget(budget, *, q_relative=0.0, state="native-budget")
         "frozen_scale_metrics": dict(metrics),
         "structural_gates": {
             "startup_regular_inverse_gates_passed": True,
-            "all_four_q_phases_covered": True,
+            "all_q_phases_covered": True,
             "all_retained_modes_mapped_once": True,
             "native_decomposition_closure": True,
             "native_augmented_actions_finite": True,
@@ -419,6 +438,59 @@ def test_audit_rows_do_not_masquerade_as_a_real_factor_call_counter():
     assert result.audit["extra_mat_solve_count_status"] == "unknown_no_factor_counter"
 
 
+def test_profile_sized_correction_accepts_eight_calls_only_with_all_eight_q_rows():
+    q_rows = [
+        {"q": q, "rhs_norm": 1.0, "true_residual_norm": 1e-12,
+         "true_residual_relative": 1e-12}
+        for q in range(8)
+    ]
+
+    def raw_eight_q(_fe, _port):
+        return np.zeros(1, dtype=np.complex128), np.zeros(1, dtype=np.complex128), {
+            "counter_source": FACTOR_CALL_COUNTER_SOURCE,
+            "factor_calls_before": 3,
+            "factor_calls_after": 11,
+            "q_true_residuals": q_rows,
+        }
+
+    result = apply_one_augmented_residual_correction(
+        np.zeros(1, dtype=np.complex128),
+        np.zeros(1, dtype=np.complex128),
+        np.ones(1, dtype=np.complex128),
+        np.ones(1, dtype=np.complex128),
+        raw_inverse=raw_eight_q,
+        require_verified_solve_counter=True,
+        expected_q_count=8,
+    )
+
+    assert result.audit["extra_mat_solve_count"] == 8
+    assert result.audit["expected_q_count"] == 8
+    assert result.audit["q_phase_coverage"] == list(range(8))
+    assert result.audit["all_q_phases_covered"] is True
+    assert result.audit["all_four_q_phases_covered"] is False
+
+    duplicate_q = [*q_rows[:-1], {**q_rows[-1], "q": 6}]
+    with pytest.raises(ValueError, match="8-call factors.calls delta and coverage"):
+        apply_one_augmented_residual_correction(
+            np.zeros(1, dtype=np.complex128),
+            np.zeros(1, dtype=np.complex128),
+            np.ones(1, dtype=np.complex128),
+            np.ones(1, dtype=np.complex128),
+            raw_inverse=lambda *_: (
+                np.zeros(1, dtype=np.complex128),
+                np.zeros(1, dtype=np.complex128),
+                {
+                    "counter_source": FACTOR_CALL_COUNTER_SOURCE,
+                    "factor_calls_before": 3,
+                    "factor_calls_after": 11,
+                    "q_true_residuals": duplicate_q,
+                },
+            ),
+            require_verified_solve_counter=True,
+            expected_q_count=8,
+        )
+
+
 def test_production_counter_must_be_bounded_and_cover_all_q_phases():
     def raw_with_bad_delta(_fe, _port):
         return np.ones(1, dtype=np.complex128), np.ones(1, dtype=np.complex128), {
@@ -428,7 +500,7 @@ def test_production_counter_must_be_bounded_and_cover_all_q_phases():
             "q_true_residuals": _q_rows(),
         }
 
-    with pytest.raises(ValueError, match="four-extra-MatSolve"):
+    with pytest.raises(ValueError, match="4-extra-MatSolve"):
         apply_one_augmented_residual_correction(
             np.zeros(1, dtype=np.complex128),
             np.zeros(1, dtype=np.complex128),
@@ -440,7 +512,7 @@ def test_production_counter_must_be_bounded_and_cover_all_q_phases():
 
 
 def test_production_counter_rejects_missing_before_after_counter():
-    with pytest.raises(ValueError, match="verified four-call"):
+    with pytest.raises(ValueError, match="verified 4-call"):
         apply_one_augmented_residual_correction(
             np.zeros(1, dtype=np.complex128),
             np.zeros(1, dtype=np.complex128),
@@ -761,6 +833,7 @@ def test_v15_parent_recheck_recomputes_all_metrics_and_q_rows():
         "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
         "maximum_q_true_residual_relative": 9e-9,
         "port_identity_relative": 5e-10,
+        "all_q_used": True,
         "all_four_q_used": True,
         "q_true_residuals_selected": [
             {
@@ -998,6 +1071,102 @@ def test_v15_candidate_rejects_missing_q_missing_mode_and_nonfinite_budget():
     assert missing_mode_result["candidate_facts"][0]["structural_passed"] is False
     assert nonfinite_result["admitted"] is False
     assert nonfinite_result["candidate_facts"][0]["raw_facts_consistent"] is False
+
+
+def test_v18_v15_candidate_recomputes_registered_eight_q_four_twist_inventory():
+    candidate = _v15_candidate(
+        {
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 5e-10,
+            "q_solve": 9e-9,
+        },
+        profile_identity="task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+    )
+    recomputed = recompute_v15_candidate_facts(candidate)
+
+    assert recomputed["expected_q_count"] == 8
+    assert recomputed["expected_twist_count"] == 4
+    assert recomputed["q_phase_coverage"] is True
+    assert recomputed["sector_mode_mapping_valid"] is True
+    assert recomputed["raw_facts_consistent"] is True
+
+    old_style_raw = dict(candidate["raw_facts"])
+    old_style_raw.pop("profile_identity")
+    with pytest.raises(ValueError, match="explicitly record"):
+        recompute_v15_candidate_facts(
+            {**candidate, "raw_facts": old_style_raw},
+            profile_identity="task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+        )
+    with pytest.raises(ValueError, match="differs from its registered outer profile"):
+        recompute_v15_candidate_facts(
+            candidate, profile_identity="task40extra_v15_p6_y_orbit_b0_reference_v1"
+        )
+
+    bad_raw = dict(candidate["raw_facts"])
+    bad_raw["q_true_residuals"] = [
+        *bad_raw["q_true_residuals"][:-1],
+        {**bad_raw["q_true_residuals"][-1], "q": 6},
+    ]
+    duplicate_q = {**candidate, "raw_facts": bad_raw}
+    duplicate_result = select_v15_reference_pc_candidate([duplicate_q])
+    assert duplicate_result["admitted"] is False
+    assert duplicate_result["candidate_facts"][0]["q_phase_coverage"] is False
+
+    bad_raw = dict(candidate["raw_facts"])
+    bad_raw["native_sector_facts"] = bad_raw["native_sector_facts"][:-1]
+    missing_twist = {**candidate, "raw_facts": bad_raw}
+    assert select_v15_reference_pc_candidate([missing_twist])["admitted"] is False
+
+    bad_raw = dict(candidate["raw_facts"])
+    bad_raw["native_sector_facts"] = [dict(row) for row in bad_raw["native_sector_facts"]]
+    bad_raw["native_sector_facts"][2]["mode_indices"] = bad_raw["native_sector_facts"][2]["mode_indices"][:-1]
+    missing_mode = {**candidate, "raw_facts": bad_raw}
+    assert select_v15_reference_pc_candidate([missing_mode])["admitted"] is False
+
+    bad_raw = dict(candidate["raw_facts"])
+    bad_budget = dict(bad_raw["budget_term_norms"])
+    bad_budget["lifted_sector_errors"] = bad_budget["lifted_sector_errors"][:-1]
+    bad_raw["budget_term_norms"] = bad_budget
+    missing_lift = {**candidate, "raw_facts": bad_raw}
+    with pytest.raises(ValueError, match="every registered twist sector"):
+        select_v15_reference_pc_candidate([missing_lift])
+
+
+def test_v18_parent_final_gate_uses_all_eight_q_rows_not_four_q_alias():
+    candidate = _v15_candidate(
+        {
+            "eliminated_fe": 2e-9,
+            "complete_augmented_fe": 3e-9,
+            "noncancelling_budget": 5e-9,
+            "alpha_closure": 5e-10,
+            "q_solve": 9e-9,
+        },
+        profile_identity="task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+    )
+    q_rows = candidate["raw_facts"]["q_true_residuals"]
+    facts = {
+        "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+        "maximum_q_true_residual_relative": 9e-9,
+        "port_identity_relative": 5e-10,
+        "all_q_used": True,
+        "all_four_q_used": False,
+        "q_true_residuals_selected": q_rows,
+        "candidate_metrics": [candidate],
+        "candidate_selection": select_v15_reference_pc_candidate([candidate]),
+        "selected_decomposition_closure_relative": 1e-12,
+        "selected_v15_metrics": dict(candidate["metrics"]),
+        "selected_v15_raw_facts": dict(candidate["raw_facts"]),
+        "selected_state_sha256": candidate["raw_facts"]["state_sha256"],
+    }
+
+    result = recheck_reference_pc_final_admission(
+        facts, NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+    )
+    assert result["passed"] is True
+    assert result["all_q_phase_rows_covered"] is True
+    assert result["all_four_q_phase_rows_covered"] is False
 
 
 def test_parent_final_gate_recomputes_v13_admission_and_bounded_pc_limits():

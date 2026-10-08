@@ -1889,6 +1889,7 @@ def _verify_regular_inverse(
                 from src.solvers.augmented_reference_correction import augmented_state_sha256
 
                 v15_raw_facts = {
+                    "profile_identity": profile.name,
                     "effective_rhs_scale": float(v15_budget["effective_rhs_scale"]),
                     "eliminated_fe_residual_norm": float(
                         v15_budget["eliminated_fe_residual_norm"]
@@ -1930,7 +1931,7 @@ def _verify_regular_inverse(
                     },
                 }
                 v15_selection = select_v15_reference_pc_candidate(
-                    [reference_pc_candidate]
+                    [reference_pc_candidate], profile_identity=profile.name
                 )
             else:
                 bounded_numeric_gates = {
@@ -2317,7 +2318,9 @@ def _verify_regular_inverse(
                     corrected_row = corrected_checks["cases"][0]
                     candidate_rows.append(corrected_row)
                     candidate_states.append(corrected_row["reference_pc_candidate"])
-                    final_selection = select_v15_reference_pc_candidate(candidate_states)
+                    final_selection = select_v15_reference_pc_candidate(
+                        candidate_states, profile_identity=profile.name
+                    )
                     selected_index = int(final_selection["selected_candidate_index"])
                     row = candidate_rows[selected_index]
                     selected_candidate = candidate_states[selected_index]
@@ -2871,6 +2874,7 @@ class _P6ReferencePreconditioner:
         }
         state_hash = augmented_state_sha256(finite_element, port_amplitudes)
         raw_facts = {
+            "profile_identity": self.profile.name,
             "effective_rhs_scale": float(budget["effective_rhs_scale"]),
             "eliminated_fe_residual_norm": float(
                 budget["eliminated_fe_residual_norm"]
@@ -2936,7 +2940,9 @@ class _P6ReferencePreconditioner:
             "complete": complete,
             "budget": budget,
             "q_rows": copy.deepcopy(q_rows),
-            "selection": select_v15_reference_pc_candidate([candidate]),
+            "selection": select_v15_reference_pc_candidate(
+                [candidate], profile_identity=self.profile.name
+            ),
         }
 
     def _save_v15_pc_packet(
@@ -3100,7 +3106,6 @@ class _P6ReferencePreconditioner:
     def _apply_v15(self, source: Any, source_values: np.ndarray):
         from src.solvers.augmented_reference_correction import (
             FACTOR_CALL_COUNTER_SOURCE,
-            MAX_EXTRA_MAT_SOLVES,
             NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
             apply_one_augmented_residual_correction,
             select_v15_reference_pc_candidate,
@@ -3217,6 +3222,7 @@ class _P6ReferencePreconditioner:
                     raw_inverse=raw_nonrecursive_inverse,
                     allocation_gate=self.allocation_gate,
                     require_verified_solve_counter=True,
+                    expected_q_count=self.profile.q_count,
                 )
             except Exception as exc:
                 self._record_v15_pc_failure(
@@ -3235,8 +3241,10 @@ class _P6ReferencePreconditioner:
                 "delta": correction_audit.get("extra_mat_solve_count"),
             }
             if correction_audit.get("attempted"):
-                if correction_audit.get("extra_mat_solve_count") != MAX_EXTRA_MAT_SOLVES:
-                    raise RuntimeError("V15 PC correction did not use exactly four extra MatSolves")
+                if correction_audit.get("extra_mat_solve_count") != self.profile.q_count:
+                    raise RuntimeError(
+                        "V15 PC correction MatSolve count differs from its registered q inventory"
+                    )
                 try:
                     correction_eval = self._evaluate_v15_state(
                         correction.finite_element,
@@ -3287,7 +3295,9 @@ class _P6ReferencePreconditioner:
                     correction_eval,
                 )
             )
-            final_selection = select_v15_reference_pc_candidate(candidate_states)
+            final_selection = select_v15_reference_pc_candidate(
+                candidate_states, profile_identity=self.profile.name
+            )
             if not final_selection["admitted"]:
                 self._record_v15_pc_failure(
                     "initial_and_corrected_candidates_rejected",
@@ -3370,6 +3380,7 @@ class _P6ReferencePreconditioner:
                 "target_active_rows": int(self.target_condensed.active_rows),
                 "target_port_rows": int(self.target_condensed.appended_rows),
                 "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+                "profile_identity": self.profile.name,
                 "reference_pc_admission": final_selection["admission"],
                 "initial_candidate_passed": bool(initial_selection["admitted"]),
                 "selected_candidate_index": selected_index,
@@ -4994,6 +5005,44 @@ def run_task40_v10_p6_reference_worker(
 
         runtime.sample("v10_candidate_target_retained_and_fast_backend_complete")
 
+        operator_qualification_reuse = None
+        if is_v18:
+            from src.solvers.task40_v18_ny8_operator_reuse import (
+                reuse_v18_ny8_operator_qualification,
+            )
+
+            operator_reuse_receipt_path = (
+                Path(_repo_root())
+                / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/"
+                "v18_ny8_operator_reuse_receipt.json"
+            )
+            operator_reuse_receipt_sha256_path = operator_reuse_receipt_path.with_suffix(
+                ".sha256"
+            )
+
+            def operator_qualification_reuse(*, candidate_q_matrices, profile):
+                expected_receipt_sha256 = (
+                    operator_reuse_receipt_sha256_path.read_text(encoding="ascii").strip()
+                )
+                return reuse_v18_ny8_operator_qualification(
+                    repo_root=_repo_root(),
+                    receipt_path=operator_reuse_receipt_path,
+                    candidate_q_matrices=candidate_q_matrices,
+                    profile=profile,
+                    source_sha=source_sha,
+                    input_sha256=str(
+                        resolved_payload.get("provenance", {}).get("input_sha256", "")
+                    ),
+                    physical_model_sha256=str(
+                        resolved_payload.get("provenance", {}).get(
+                            "physical_model_sha256", ""
+                        )
+                    ),
+                    target_mode_sha256=str(target_bundle["mode_sha256"]),
+                    abi_identity=summary["abi"],
+                    expected_receipt_sha256=expected_receipt_sha256,
+                )
+
         reference = build_task40_v10_p6_reference_inverse(
             cfg,
             axes,
@@ -5006,6 +5055,7 @@ def run_task40_v10_p6_reference_worker(
             target_full_storage_rows=int(target_action.condensed.full_rows),
             reference_pc_strategy=reference_pc_strategy,
             q_assembly_strategy=q_assembly_strategy,
+            operator_qualification_reuse=operator_qualification_reuse,
         )
         if not mode_identity:
             raise RuntimeError("regular p6 physical identity callback did not run before q factors")
@@ -5069,6 +5119,15 @@ def run_task40_v10_p6_reference_worker(
             "retained_rhs_norm": reduced_rhs_norm,
             "reference_in_operator": False,
             "reference_in_initial_guess": False,
+            **(
+                {
+                    "complete_operator_qualification_reuse": copy.deepcopy(
+                        reference.get("complete_operator_qualification_reuse")
+                    )
+                }
+                if is_v18 and reference.get("complete_operator_qualification_reuse") is not None
+                else {}
+            ),
             **(
                 {
                     "complete_operator_qualification_sha256": hashlib.sha256(
@@ -5378,7 +5437,16 @@ def run_task40_v10_p6_reference_worker(
                 {
                     "complete_operator_qualification": copy.deepcopy(
                         reference.get("complete_operator_qualification")
-                    )
+                    ),
+                    **(
+                        {
+                            "complete_operator_qualification_reuse": copy.deepcopy(
+                                reference["complete_operator_qualification_reuse"]
+                            )
+                        }
+                        if reference.get("complete_operator_qualification_reuse") is not None
+                        else {}
+                    ),
                 }
                 if is_v18
                 else {}
@@ -5819,7 +5887,16 @@ def run_task40_v10_p6_reference_worker(
                             {
                                 "complete_operator_qualification": copy.deepcopy(
                                     reference.get("complete_operator_qualification")
-                                )
+                                ),
+                                **(
+                                    {
+                                        "complete_operator_qualification_reuse": copy.deepcopy(
+                                            reference["complete_operator_qualification_reuse"]
+                                        )
+                                    }
+                                    if reference.get("complete_operator_qualification_reuse") is not None
+                                    else {}
+                                ),
                             }
                             if is_v18
                             else {}

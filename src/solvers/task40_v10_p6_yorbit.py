@@ -3374,6 +3374,7 @@ def build_task40_v10_p6_reference_inverse(
     reference_pc_strategy: str = STRICT_ONLY,
     q_assembly_strategy: str = Q_ASSEMBLY_LEGACY,
     q_assembly_comparison_only: bool = False,
+    operator_qualification_reuse: Callable[..., tuple[Mapping[str, Any], Mapping[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -3404,6 +3405,10 @@ def build_task40_v10_p6_reference_inverse(
         Q_ASSEMBLY_ROW_TILE_V17,
     }:
         raise ValueError("q-assembly pairing requires an explicitly selected registered candidate")
+    if operator_qualification_reuse is not None and (
+        profile is None or profile.name != TASK40_V18_P6_B0_Y8_PROFILE.name
+    ):
+        raise ValueError("Ny8 operator qualification reuse is restricted to its exact registered profile")
     if (
         MPI.COMM_SELF.Get_size() != 1
         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
@@ -3902,22 +3907,43 @@ def build_task40_v10_p6_reference_inverse(
         }
         inventory_audit = profile.validate_runtime_inventory(runtime_inventory)
         if profile.name == TASK40_V18_P6_B0_Y8_PROFILE.name:
-            from .task40_v18_ny8_operator_qualification import (
-                assemble_and_qualify_complete_ny_reference_operator,
-            )
+            if operator_qualification_reuse is None:
+                from .task40_v18_ny8_operator_qualification import (
+                    assemble_and_qualify_complete_ny_reference_operator,
+                )
 
-            operator_qualification = assemble_and_qualify_complete_ny_reference_operator(
-                bundle=global_bundle,
-                entities=global_entities,
-                layout=full_layout,
-                sectors=contexts,
-                candidate_q_matrices=all_q_matrices,
-                expected_q_port_counts=profile.q_port_counts,
-                allocation_gate=allocation_gate,
-            )
-            owner["complete_operator_qualification"] = operator_qualification
-            if event is not None:
-                event("task40_v18_complete_ny_reference_operator", operator_qualification)
+                operator_qualification = assemble_and_qualify_complete_ny_reference_operator(
+                    bundle=global_bundle,
+                    entities=global_entities,
+                    layout=full_layout,
+                    sectors=contexts,
+                    candidate_q_matrices=all_q_matrices,
+                    expected_q_port_counts=profile.q_port_counts,
+                    allocation_gate=allocation_gate,
+                )
+                owner["complete_operator_qualification"] = operator_qualification
+                if event is not None:
+                    event("task40_v18_complete_ny_reference_operator", operator_qualification)
+            else:
+                reused = operator_qualification_reuse(
+                    candidate_q_matrices=all_q_matrices,
+                    profile=profile,
+                )
+                if (
+                    not isinstance(reused, tuple)
+                    or len(reused) != 2
+                    or not isinstance(reused[0], Mapping)
+                    or not isinstance(reused[1], Mapping)
+                ):
+                    raise TypeError("Ny8 operator reuse callback must return operator and receipt facts")
+                operator_qualification = dict(reused[0])
+                owner["complete_operator_qualification"] = operator_qualification
+                owner["complete_operator_qualification_reuse"] = dict(reused[1])
+                if event is not None:
+                    event(
+                        "task40_v18_operator_qualification_reuse_validated",
+                        owner["complete_operator_qualification_reuse"],
+                    )
             if not operator_qualification.get("passed"):
                 raise RuntimeError(
                     "Task40 V18 Ny8 complete FE/C/D/H and independent Schur qualification failed"

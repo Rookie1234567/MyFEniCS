@@ -148,6 +148,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         "mode_count": int(profile.mode_count),
         "q_count": int(profile.q_count),
         "q_port_counts": tuple(int(value) for value in profile.q_port_counts),
+        "twist_count": int(profile.replication_count),
         "sector_port_counts": tuple(int(value) for value in profile.sector_port_counts),
         "local_interior_rows": int(profile.local_interior_rows),
     }
@@ -1106,8 +1107,6 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
             float(raw_facts.get(key, np.nan)), stable_euclidean_norm(value)
         )
 
-    if inventory["q_count"] != 4:
-        raise ValueError("registered V15 profile does not declare the four-q contract")
     candidates_meta = record.get("candidate_facts")
     if not isinstance(candidates_meta, Sequence) or isinstance(candidates_meta, (str, bytes)):
         raise ValueError("V15 PC packet candidate_facts must be a sequence")
@@ -1142,26 +1141,39 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                 or computed_state_sha != raw_facts.get("state_sha256")
             ):
                 raise ValueError("V15 candidate state hash differs from its saved FE/alpha arrays")
+            raw_profile_identity = raw_facts.get("profile_identity")
+            if raw_profile_identity is not None and raw_profile_identity != inventory["identity"]:
+                raise ValueError("V15 candidate profile identity differs from its packet")
+            if inventory["q_count"] == 8 and raw_profile_identity != inventory["identity"]:
+                raise ValueError("V18 Ny8 candidate raw facts must explicitly record their profile")
             if int(raw_facts.get("retained_mode_count", -1)) != inventory["mode_count"]:
                 raise ValueError("V15 candidate retained mode count differs from profile")
 
             sector_facts = raw_facts.get("native_sector_facts")
-            if not isinstance(sector_facts, Sequence) or isinstance(sector_facts, (str, bytes)) or len(sector_facts) != 2:
-                raise ValueError("V15 candidate does not record both native sectors")
+            if (
+                not isinstance(sector_facts, Sequence)
+                or isinstance(sector_facts, (str, bytes))
+                or len(sector_facts) != inventory["twist_count"]
+            ):
+                raise ValueError("V15 candidate does not cover every registered native sector")
             sector_by_twist = {}
             for sector in sector_facts:
                 if not isinstance(sector, Mapping):
                     raise ValueError("V15 candidate sector identity must be a mapping")
-                twist = int(sector.get("twist_index", -1))
-                if twist not in (0, 1) or twist in sector_by_twist:
+                twist = sector.get("twist_index")
+                if type(twist) is not int or twist not in range(inventory["twist_count"]) or twist in sector_by_twist:
                     raise ValueError("V15 candidate sector identities are incomplete or duplicated")
                 sector_by_twist[twist] = sector
             all_mode_ids = []
             for twist, expected_count in enumerate(inventory["sector_port_counts"]):
                 ids = sector_by_twist[twist].get("mode_indices")
-                if not isinstance(ids, Sequence) or isinstance(ids, (str, bytes)):
+                if (
+                    not isinstance(ids, Sequence)
+                    or isinstance(ids, (str, bytes))
+                    or any(type(value) is not int for value in ids)
+                ):
                     raise ValueError("V15 candidate sector mode identities are missing")
-                ids = [int(value) for value in ids]
+                ids = list(ids)
                 if len(ids) != expected_count:
                     raise ValueError("V15 candidate sector mode count differs from profile")
                 all_mode_ids.extend(ids)
@@ -1174,7 +1186,8 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                 or isinstance(q_rows, (str, bytes))
                 or len(q_rows) != inventory["q_count"]
                 or any(not isinstance(row, Mapping) for row in q_rows)
-                or {int(row.get("q", -1)) for row in q_rows} != set(range(inventory["q_count"]))
+                or any(type(row.get("q")) is not int for row in q_rows)
+                or {row["q"] for row in q_rows} != set(range(inventory["q_count"]))
             ):
                 raise ValueError("V15 candidate does not cover every registered q phase")
 
@@ -1248,7 +1261,7 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                     f"candidate_{index}_lifted_sector_error_{twist}",
                     (inventory["global_independent_rows"],),
                 )
-                for twist in (0, 1)
+                for twist in range(inventory["twist_count"])
             ]
             lifted_sector_rhs = [
                 complex_array(
@@ -1256,7 +1269,7 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                     f"candidate_{index}_lifted_sector_effective_rhs_{twist}",
                     (inventory["global_independent_rows"],),
                 )
-                for twist in (0, 1)
+                for twist in range(inventory["twist_count"])
             ]
             lifted_sector_actions = [
                 complex_array(
@@ -1264,23 +1277,34 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                     f"candidate_{index}_lifted_sector_native_action_{twist}",
                     (inventory["global_independent_rows"],),
                 )
-                for twist in (0, 1)
+                for twist in range(inventory["twist_count"])
             ]
+            lifted_rhs_sum = np.zeros_like(effective_rhs)
+            lifted_action_sum = np.zeros_like(effective_rhs)
+            lifted_error_sum = np.zeros_like(effective_rhs)
+            for rhs_sector, action_sector, error_sector in zip(
+                lifted_sector_rhs, lifted_sector_actions, lifted_errors, strict=True
+            ):
+                lifted_rhs_sum += rhs_sector
+                lifted_action_sum += action_sector
+                lifted_error_sum += error_sector
             action_identity_defects = [
                 (effective_rhs, fe_rhs - port_elimination_action),
-                (sum_lifted_rhs, lifted_sector_rhs[0] + lifted_sector_rhs[1]),
-                (sum_lifted_actions, lifted_sector_actions[0] + lifted_sector_actions[1]),
+                (sum_lifted_rhs, lifted_rhs_sum),
+                (sum_lifted_actions, lifted_action_sum),
                 (d_b, effective_rhs - sum_lifted_rhs),
                 (d_a, sum_lifted_actions - global_action),
-                (lifted_errors[0], lifted_sector_rhs[0] - lifted_sector_actions[0]),
-                (lifted_errors[1], lifted_sector_rhs[1] - lifted_sector_actions[1]),
+                *[
+                    (lifted_errors[twist], lifted_sector_rhs[twist] - lifted_sector_actions[twist])
+                    for twist in range(inventory["twist_count"])
+                ],
                 (
                     eliminated_direct,
                     effective_rhs - global_action,
                 ),
                 (
                     eliminated_decomposed,
-                    d_b + lifted_errors[0] + lifted_errors[1] + d_a,
+                    d_b + lifted_error_sum + d_a,
                 ),
                 (eliminated_direct, eliminated_decomposed),
                 (complete_decomposed, eliminated_decomposed - b_delta),
@@ -1388,7 +1412,9 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
                 "state_sha256": computed_state_sha,
                 "raw_facts": raw_facts,
             }
-            rebuilt = recompute_v15_candidate_facts(candidate)
+            rebuilt = recompute_v15_candidate_facts(
+                candidate, profile_identity=inventory["identity"]
+            )
             if not rebuilt["raw_facts_consistent"]:
                 raise ValueError("V15 candidate raw metrics do not match independent recomputation")
             candidates.append(candidate)
@@ -1411,7 +1437,9 @@ def verify_v15_pc_state_packet(packet_json: str | Path) -> dict[str, Any]:
             "packet_integrity_passed": True,
             "passed": True,
         }
-    recomputed_selection = select_v15_reference_pc_candidate(candidates)
+    recomputed_selection = select_v15_reference_pc_candidate(
+        candidates, profile_identity=inventory["identity"]
+    )
     recorded_selection = record.get("candidate_selection")
     if not isinstance(recorded_selection, Mapping) or (
         recorded_selection.get("admission") != recomputed_selection["admission"]

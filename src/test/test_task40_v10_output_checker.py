@@ -317,27 +317,31 @@ def test_v15_regular_internal_checker_uses_registered_profile_rows_and_modes(
 
 def _v15_pc_packet_payload(
     *, bad_state_hash=False, short_rhs=False, tiny_residual=False,
-    bad_decomposition=False,
+    bad_decomposition=False, bad_lifted_norm=False,
+    profile_identity="task40extra_v15_p6_y_orbit_b0_reference_v1",
 ):
-    profile = "task40extra_v15_p6_y_orbit_b0_reference_v1"
-    independent_rows = 52_992
-    mode_count = 532
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+    profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
+    independent_rows = profile.global_independent_rows
+    mode_count = profile.mode_count
+    q_count = profile.q_count
+    twist_count = profile.replication_count
     fe_state = np.zeros(independent_rows, dtype=np.complex128)
     alpha = np.zeros(mode_count, dtype=np.complex128)
     fe_rhs = np.zeros(independent_rows, dtype=np.complex128)
     fe_rhs[0] = 1.0 + 0.0j
     port_elimination_action = np.zeros(independent_rows, dtype=np.complex128)
     effective_rhs = fe_rhs.copy()
-    lifted_rhs_0 = effective_rhs.copy()
-    lifted_rhs_1 = np.zeros(independent_rows, dtype=np.complex128)
-    lifted_action_0 = effective_rhs.copy()
+    lifted_rhs = [np.zeros(independent_rows, dtype=np.complex128) for _ in range(twist_count)]
+    lifted_actions = [np.zeros(independent_rows, dtype=np.complex128) for _ in range(twist_count)]
+    lifted_rhs[0] = effective_rhs.copy()
+    lifted_actions[0] = effective_rhs.copy()
     if tiny_residual:
-        lifted_action_0[0] -= 1.0e-12
-    lifted_action_1 = np.zeros(independent_rows, dtype=np.complex128)
-    lifted_error_0 = lifted_rhs_0 - lifted_action_0
-    lifted_error_1 = np.zeros(independent_rows, dtype=np.complex128)
-    sum_lifted_rhs = lifted_rhs_0 + lifted_rhs_1
-    sum_lifted_actions = lifted_action_0 + lifted_action_1
+        lifted_actions[0][0] -= 1.0e-12
+    lifted_errors = [rhs - action for rhs, action in zip(lifted_rhs, lifted_actions, strict=True)]
+    sum_lifted_rhs = np.sum(lifted_rhs, axis=0)
+    sum_lifted_actions = np.sum(lifted_actions, axis=0)
     global_action = sum_lifted_actions.copy()
     d_b = effective_rhs - sum_lifted_rhs
     d_a = sum_lifted_actions - global_action
@@ -346,14 +350,13 @@ def _v15_pc_packet_payload(
         d_a[0] -= 1.0e-16
     b_delta = np.zeros(independent_rows, dtype=np.complex128)
     eliminated_direct = effective_rhs - global_action
-    eliminated_decomposed = d_b + lifted_error_0 + lifted_error_1 + d_a
+    eliminated_decomposed = d_b + np.sum(lifted_errors, axis=0) + d_a
     complete_decomposed = eliminated_decomposed - b_delta
     complete_fe = complete_decomposed.copy()
     alpha_closure = np.zeros(mode_count, dtype=np.complex128)
-    lifted_error_norms = [
-        stable_euclidean_norm(lifted_error_0),
-        stable_euclidean_norm(lifted_error_1),
-    ]
+    lifted_error_norms = [stable_euclidean_norm(value) for value in lifted_errors]
+    if bad_lifted_norm:
+        lifted_error_norms[0] += 1.0
     budget_norms = {
         "d_b": stable_euclidean_norm(d_b),
         "lifted_sector_errors": lifted_error_norms,
@@ -370,10 +373,8 @@ def _v15_pc_packet_payload(
     closure_scale = (
         stable_euclidean_norm(effective_rhs)
         + stable_euclidean_norm(global_action)
-        + stable_euclidean_norm(lifted_rhs_0)
-        + stable_euclidean_norm(lifted_rhs_1)
-        + stable_euclidean_norm(lifted_action_0)
-        + stable_euclidean_norm(lifted_action_1)
+        + sum(stable_euclidean_norm(value) for value in lifted_rhs)
+        + sum(stable_euclidean_norm(value) for value in lifted_actions)
         + stable_euclidean_norm(complete_fe)
         + stable_euclidean_norm(b_delta)
         + stable_euclidean_norm(fe_rhs)
@@ -391,7 +392,13 @@ def _v15_pc_packet_payload(
     state_hash = augmented_state_sha256(fe_state, alpha)
     if bad_state_hash:
         state_hash = "0" * 64
+    mode_ids_by_twist = []
+    next_mode = 0
+    for count in profile.sector_port_counts:
+        mode_ids_by_twist.append(list(range(next_mode, next_mode + count)))
+        next_mode += count
     raw_facts = {
+        "profile_identity": profile_identity,
         "effective_rhs_scale": scale,
         "eliminated_fe_residual_norm": eliminated_norm,
         "complete_augmented_fe_residual_norm": complete_norm,
@@ -406,12 +413,12 @@ def _v15_pc_packet_payload(
                 "true_residual_norm": 0.0,
                 "true_residual_relative": 0.0,
             }
-            for q in range(4)
+            for q in range(q_count)
         ],
         "retained_mode_count": mode_count,
         "native_sector_facts": [
-            {"twist_index": 0, "mode_indices": list(range(0, 228))},
-            {"twist_index": 1, "mode_indices": list(range(228, mode_count))},
+            {"twist_index": twist, "mode_indices": mode_ids_by_twist[twist]}
+            for twist in range(twist_count)
         ],
         "decomposition_closure_norm": closure_norm,
         "decomposition_closure_scale": closure_scale,
@@ -433,7 +440,7 @@ def _v15_pc_packet_payload(
         },
         "structural_gates": {
             "startup_regular_inverse_gates_passed": True,
-            "all_four_q_phases_covered": True,
+            "all_q_phases_covered": True,
             "all_retained_modes_mapped_once": True,
             "native_decomposition_closure": True,
             "native_augmented_actions_finite": True,
@@ -443,11 +450,11 @@ def _v15_pc_packet_payload(
         "raw_facts": raw_facts,
     }
     selection = select_v15_reference_pc_candidate([candidate])
-    return {
+    payload = {
         "schema": "task40extra.review_v15_p6_pc_state_evidence.v1",
         "reference_pc_strategy": NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
-        "profile": profile,
-        "profile_identity": profile,
+        "profile": profile_identity,
+        "profile_identity": profile_identity,
         "status": "PASS",
         "failure": None,
         "candidate_selection": selection,
@@ -479,14 +486,12 @@ def _v15_pc_packet_payload(
         "candidate_0_complete_augmented_fe_residual": complete_fe,
         "candidate_0_complete_augmented_port_residual": np.zeros(mode_count, dtype=np.complex128),
         "candidate_0_alpha_closure_residual": alpha_closure,
-        "candidate_0_lifted_sector_error_0": lifted_error_0,
-        "candidate_0_lifted_sector_error_1": lifted_error_1,
-        "candidate_0_lifted_sector_effective_rhs_0": lifted_rhs_0,
-        "candidate_0_lifted_sector_effective_rhs_1": lifted_rhs_1,
-        "candidate_0_lifted_sector_native_action_0": lifted_action_0,
-        "candidate_0_lifted_sector_native_action_1": lifted_action_1,
     }
-
+    for twist in range(twist_count):
+        payload[f"candidate_0_lifted_sector_error_{twist}"] = lifted_errors[twist]
+        payload[f"candidate_0_lifted_sector_effective_rhs_{twist}"] = lifted_rhs[twist]
+        payload[f"candidate_0_lifted_sector_native_action_{twist}"] = lifted_actions[twist]
+    return payload
 
 def test_v15_pc_packet_checker_recomputes_hash_budget_and_selector(tmp_path):
     save_packet(tmp_path, "v15_pc", _v15_pc_packet_payload())
@@ -496,6 +501,60 @@ def test_v15_pc_packet_checker_recomputes_hash_budget_and_selector(tmp_path):
     assert result["passed"] is True
     assert result["numerically_admitted"] is True
     assert result["profile_identity"] == "task40extra_v15_p6_y_orbit_b0_reference_v1"
+
+
+def test_v18_ny8_pc_packet_checker_recomputes_all_q_and_twist_actions(tmp_path):
+    save_packet(
+        tmp_path,
+        "v18_ny8_pc",
+        _v15_pc_packet_payload(
+            profile_identity="task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+        ),
+    )
+
+    result = verify_v15_pc_state_packet(tmp_path / "v18_ny8_pc.json")
+
+    assert result["passed"] is True
+    assert result["numerically_admitted"] is True
+    assert result["profile_identity"] == "task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+
+
+def test_v15_packet_checker_uses_outer_ny4_identity_for_legacy_raw_facts(tmp_path):
+    payload = _v15_pc_packet_payload()
+    payload["candidate_facts"][0]["raw_facts"].pop("profile_identity")
+    save_packet(tmp_path, "v15_pc_legacy_raw", payload)
+
+    result = verify_v15_pc_state_packet(tmp_path / "v15_pc_legacy_raw.json")
+
+    assert result["passed"] is True
+    assert result["profile_identity"] == "task40extra_v15_p6_y_orbit_b0_reference_v1"
+
+
+def test_v18_ny8_pc_packet_checker_rejects_raw_profile_mismatch(tmp_path):
+    payload = _v15_pc_packet_payload(
+        profile_identity="task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+    )
+    payload["candidate_facts"][0]["raw_facts"]["profile_identity"] = (
+        "task40extra_v15_p6_y_orbit_b0_reference_v1"
+    )
+    save_packet(tmp_path, "v18_ny8_pc_wrong_profile", payload)
+
+    with pytest.raises(ValueError, match="profile identity differs"):
+        verify_v15_pc_state_packet(tmp_path / "v18_ny8_pc_wrong_profile.json")
+
+
+def test_v18_ny8_pc_packet_checker_rejects_wrong_twist_budget_norm(tmp_path):
+    save_packet(
+        tmp_path,
+        "v18_ny8_pc_bad_norm",
+        _v15_pc_packet_payload(
+            profile_identity="task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+            bad_lifted_norm=True,
+        ),
+    )
+
+    with pytest.raises(ValueError, match="raw metrics do not match|budget differs|lifted-sector budget norm"):
+        verify_v15_pc_state_packet(tmp_path / "v18_ny8_pc_bad_norm.json")
 
 
 def test_v15_pc_checker_cli_saves_pass_and_rejection_receipts(tmp_path, capsys):

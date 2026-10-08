@@ -110,6 +110,42 @@ def _zero_safe_relative(numerator: float, denominator: float) -> float:
     return numerator / denominator
 
 
+def _registered_v15_profile_inventory(profile_identity: Any) -> dict[str, Any]:
+    """Resolve q, twist, and mode counts from the registered periodic profile."""
+
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+    if not isinstance(profile_identity, str) or not profile_identity.startswith(
+        ("task40extra_v15_", "task40extra_v16_", "task40extra_v17_", "task40extra_v18_")
+    ):
+        raise ValueError("V15 candidate must name a registered V15-V18 profile")
+    profile = TASK40_P6_PERIODIC_PROFILES.get(profile_identity)
+    if profile is None:
+        raise ValueError(f"V15 candidate profile is not registered: {profile_identity!r}")
+    sector_counts = tuple(int(value) for value in profile.sector_port_counts)
+    if (
+        int(profile.q_count) != len(profile.q_port_counts)
+        or int(profile.replication_count) != len(sector_counts)
+        or int(profile.mode_count) != sum(sector_counts)
+    ):
+        raise ValueError("registered V15 profile q/twist/mode inventory does not close")
+    return {
+        "identity": profile_identity,
+        "q_count": int(profile.q_count),
+        "twist_count": int(profile.replication_count),
+        "mode_count": int(profile.mode_count),
+        "sector_port_counts": sector_counts,
+    }
+
+
+def _q_rows_cover_expected(q_rows: Sequence[Any], expected_q_count: int) -> bool:
+    return bool(
+        len(q_rows) == expected_q_count
+        and all(isinstance(row, Mapping) and type(row.get("q")) is int for row in q_rows)
+        and {row["q"] for row in q_rows} == set(range(expected_q_count))
+    )
+
+
 def evaluate_v15_non_cancelling_budget(
     *,
     effective_rhs: Any,
@@ -285,6 +321,8 @@ def evaluate_v15_non_cancelling_budget(
 
 def select_v15_reference_pc_candidate(
     candidates: Sequence[Mapping[str, Any]],
+    *,
+    profile_identity: str | None = None,
 ) -> dict[str, Any]:
     """Admit one whole V15 state only when every original/frozen gate passes."""
 
@@ -299,7 +337,9 @@ def select_v15_reference_pc_candidate(
             raise TypeError("V15 candidate metrics must be mappings")
         if not isinstance(structural, Mapping):
             raise TypeError("V15 candidate structural gates must be a mapping")
-        raw_recheck = recompute_v15_candidate_facts(candidate)
+        raw_recheck = recompute_v15_candidate_facts(
+            candidate, profile_identity=profile_identity
+        )
         original_exceedance = normalized_max_exceedance(
             raw_recheck["metrics"], V15_REFERENCE_PC_LIMITS
         )
@@ -557,7 +597,9 @@ def evaluate_complete_augmented_residual(
     }
 
 
-def _counter_facts(call_facts: Mapping[str, Any]) -> tuple[int | None, int | None, int | None]:
+def _counter_facts(
+    call_facts: Mapping[str, Any], maximum_extra_mat_solves: int
+) -> tuple[int | None, int | None, int | None]:
     """Read a real before/after factor-call counter; never infer it from rows."""
 
     before = call_facts.get("factor_calls_before")
@@ -565,9 +607,9 @@ def _counter_facts(call_facts: Mapping[str, Any]) -> tuple[int | None, int | Non
     if type(before) is not int or type(after) is not int:
         return None, None, None
     delta = after - before
-    if before < 0 or after < before or delta > MAX_EXTRA_MAT_SOLVES:
+    if before < 0 or after < before or delta > maximum_extra_mat_solves:
         raise ValueError(
-            "raw augmented inverse exceeded the four-extra-MatSolve counter limit"
+            f"raw augmented inverse exceeded the {maximum_extra_mat_solves}-extra-MatSolve counter limit"
         )
     return before, after, delta
 
@@ -591,8 +633,9 @@ def apply_one_augmented_residual_correction(
     raw_inverse: Callable[[np.ndarray, np.ndarray], Any],
     allocation_gate: Callable[[str, Mapping[str, Any]], Any] | None = None,
     require_verified_solve_counter: bool = False,
+    expected_q_count: int = MAX_EXTRA_MAT_SOLVES,
 ) -> AugmentedCorrectionResult:
-    """Apply one raw four-q inverse to both rows of an augmented error.
+    """Apply one raw profile-sized inverse to both rows of an augmented error.
 
     ``raw_inverse`` must not perform another correction. The caller supplies
     residuals from an independent complete augmented action, not from the q
@@ -614,6 +657,8 @@ def apply_one_augmented_residual_correction(
         raise ValueError("augmented correction state and residual shapes differ")
     if not callable(raw_inverse):
         raise TypeError("a raw non-recursive augmented inverse is required")
+    if type(expected_q_count) is not int or expected_q_count <= 0:
+        raise ValueError("expected_q_count must be a positive integer")
 
     input_array_bytes = int(
         state_fe_view.nbytes + state_port_view.nbytes
@@ -646,8 +691,9 @@ def apply_one_augmented_residual_correction(
                 "covers_explicit_copies_delta_and_updated_state": True,
                 "finite_element_and_port_updated_together": True,
                 "maximum_correction_calls": 1,
-                "maximum_extra_mat_solves": MAX_EXTRA_MAT_SOLVES,
-                "all_four_q_factors_reused": True,
+                "maximum_extra_mat_solves": expected_q_count,
+                "all_q_factors_reused": True,
+                "all_four_q_factors_reused": expected_q_count == 4,
             },
         )
 
@@ -677,6 +723,8 @@ def apply_one_augmented_residual_correction(
                 "extra_mat_solve_count": 0,
                 "extra_mat_solve_count_status": "verified_no_call_exact_zero_rhs",
                 "q_phase_coverage": [],
+                "expected_q_count": expected_q_count,
+                "all_q_phases_covered": False,
                 "all_four_q_phases_covered": False,
                 "solve_seconds": 0.0,
                 "scratch_bytes_estimate": simultaneous_live_array_bytes,
@@ -699,21 +747,25 @@ def apply_one_augmented_residual_correction(
     call_facts: Mapping[str, Any] = (
         raw_result[2] if len(raw_result) == 3 and isinstance(raw_result[2], Mapping) else {}
     )
-    factor_calls_before, factor_calls_after, solve_count = _counter_facts(call_facts)
+    factor_calls_before, factor_calls_after, solve_count = _counter_facts(
+        call_facts, expected_q_count
+    )
     q_rows = list(call_facts.get("q_true_residuals", ()))
     q_coverage = _q_phase_coverage(q_rows)
-    all_four_q_phases_covered = q_coverage == (0, 1, 2, 3)
+    all_q_phases_covered = _q_rows_cover_expected(q_rows, expected_q_count)
+    all_four_q_phases_covered = expected_q_count == 4 and all_q_phases_covered
     counter_source = call_facts.get("counter_source")
     if require_verified_solve_counter:
         if (
             solve_count is None
             or counter_source != FACTOR_CALL_COUNTER_SOURCE
-            or solve_count != MAX_EXTRA_MAT_SOLVES
-            or not all_four_q_phases_covered
+            or solve_count != expected_q_count
+            or not all_q_phases_covered
         ):
             raise ValueError(
-                "production augmented correction requires a verified four-call "
-                "factors.calls delta and coverage of q=0,1,2,3"
+                "production augmented correction requires a verified "
+                f"{expected_q_count}-call factors.calls delta and coverage of "
+                f"q=0..{expected_q_count - 1}"
             )
 
     updated_fe = state_fe + delta_fe
@@ -746,6 +798,8 @@ def apply_one_augmented_residual_correction(
             "counter_source": counter_source,
             "q_true_residuals": q_rows,
             "q_phase_coverage": list(q_coverage),
+            "expected_q_count": expected_q_count,
+            "all_q_phases_covered": all_q_phases_covered,
             "all_four_q_phases_covered": all_four_q_phases_covered,
             "solve_seconds": float(solve_seconds),
             "scratch_bytes_estimate": simultaneous_live_array_bytes,
@@ -774,7 +828,9 @@ def normalized_max_exceedance(
     return max(ratios, default=0.0)
 
 
-def recompute_v15_candidate_facts(candidate: Mapping[str, Any]) -> dict[str, Any]:
+def recompute_v15_candidate_facts(
+    candidate: Mapping[str, Any], *, profile_identity: str | None = None
+) -> dict[str, Any]:
     """Rebuild V15 admission metrics from saved raw norms and actual q rows."""
 
     raw = candidate.get("raw_facts", {})
@@ -786,11 +842,18 @@ def recompute_v15_candidate_facts(candidate: Mapping[str, Any]) -> dict[str, Any
     budget_terms = raw.get("budget_term_norms", {})
     if not isinstance(budget_terms, Mapping):
         raise TypeError("V15 candidate budget_term_norms must be a mapping")
+    raw_profile_identity = raw.get("profile_identity")
+    if raw_profile_identity is not None and profile_identity is not None and raw_profile_identity != profile_identity:
+        raise ValueError("V15 candidate raw profile identity differs from its registered outer profile")
+    trusted_profile_identity = raw_profile_identity or profile_identity
+    inventory = _registered_v15_profile_inventory(trusted_profile_identity)
+    if inventory["q_count"] == 8 and raw_profile_identity != inventory["identity"]:
+        raise ValueError("V18 Ny8 candidate raw facts must explicitly record their profile identity")
     sector_terms = budget_terms.get("lifted_sector_errors")
     if not isinstance(sector_terms, Sequence) or isinstance(sector_terms, (str, bytes)):
         raise TypeError("V15 candidate lifted-sector budget terms must be a sequence")
-    if len(sector_terms) != 2:
-        raise ValueError("V15 candidate budget must contain both twist-sector lift terms")
+    if len(sector_terms) != inventory["twist_count"]:
+        raise ValueError("V15 candidate budget does not cover every registered twist sector")
     budget_numerator = float(
         float(budget_terms.get("d_b", np.nan))
         + sum(float(value) for value in sector_terms)
@@ -803,11 +866,7 @@ def recompute_v15_candidate_facts(candidate: Mapping[str, Any]) -> dict[str, Any
     q_rows = raw.get("q_true_residuals")
     if not isinstance(q_rows, Sequence) or isinstance(q_rows, (str, bytes)):
         raise TypeError("V15 candidate q_true_residuals must be a sequence")
-    q_coverage = (
-        len(q_rows) == 4
-        and all(isinstance(row, Mapping) for row in q_rows)
-        and {int(row.get("q", -1)) for row in q_rows} == {0, 1, 2, 3}
-    )
+    q_coverage = _q_rows_cover_expected(q_rows, inventory["q_count"])
     q_relatives: list[float] = []
     q_rows_consistent = bool(q_coverage)
     for row in q_rows:
@@ -833,26 +892,41 @@ def recompute_v15_candidate_facts(candidate: Mapping[str, Any]) -> dict[str, Any
     retained_mode_count = int(raw.get("retained_mode_count", -1))
     sector_facts = raw.get("native_sector_facts")
     mode_ids: list[int] = []
+    sector_by_twist: dict[int, Mapping[str, Any]] = {}
     sector_mapping_valid = bool(
         isinstance(sector_facts, Sequence)
         and not isinstance(sector_facts, (str, bytes))
-        and len(sector_facts) == 2
+        and len(sector_facts) == inventory["twist_count"]
         and all(isinstance(row, Mapping) for row in sector_facts)
-        and {int(row.get("twist_index", -1)) for row in sector_facts} == {0, 1}
     )
     if sector_mapping_valid:
         for sector in sector_facts:
-            ids = sector.get("mode_indices")
-            if not isinstance(ids, Sequence) or isinstance(ids, (str, bytes)):
+            twist = sector.get("twist_index")
+            if type(twist) is not int or twist in sector_by_twist:
                 sector_mapping_valid = False
                 break
-            mode_ids.extend(int(value) for value in ids)
+            sector_by_twist[twist] = sector
+        sector_mapping_valid = sector_mapping_valid and set(sector_by_twist) == set(
+            range(inventory["twist_count"])
+        )
+    if sector_mapping_valid:
+        for twist, expected_mode_count in enumerate(inventory["sector_port_counts"]):
+            ids = sector_by_twist[twist].get("mode_indices")
+            if (
+                not isinstance(ids, Sequence)
+                or isinstance(ids, (str, bytes))
+                or any(type(value) is not int for value in ids)
+                or len(ids) != expected_mode_count
+            ):
+                sector_mapping_valid = False
+                break
+            mode_ids.extend(ids)
     sector_mapping_valid = bool(
         sector_mapping_valid
-        and retained_mode_count > 0
-        and len(mode_ids) == retained_mode_count
-        and len(set(mode_ids)) == retained_mode_count
-        and sorted(mode_ids) == list(range(retained_mode_count))
+        and retained_mode_count == inventory["mode_count"]
+        and len(mode_ids) == inventory["mode_count"]
+        and len(set(mode_ids)) == inventory["mode_count"]
+        and sorted(mode_ids) == list(range(inventory["mode_count"]))
     )
     closure_norm = float(raw.get("decomposition_closure_norm", np.nan))
     closure_scale = float(raw.get("decomposition_closure_scale", np.nan))
@@ -900,6 +974,8 @@ def recompute_v15_candidate_facts(candidate: Mapping[str, Any]) -> dict[str, Any
         "frozen_scale_metrics": recomputed_frozen,
         "budget_numerator": budget_numerator,
         "q_phase_coverage": q_coverage,
+        "expected_q_count": inventory["q_count"],
+        "expected_twist_count": inventory["twist_count"],
         "q_rows_consistent": q_rows_consistent,
         "sector_mode_mapping_valid": sector_mapping_valid,
         "decomposition_closure_relative": closure_relative,
@@ -1081,17 +1157,25 @@ def recheck_reference_pc_final_admission(
         try:
             if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes)):
                 raise TypeError("candidate_metrics is not a sequence")
-            recomputed = select_v15_reference_pc_candidate(candidates)
+            profile_identity = last_facts.get("profile_identity")
+            if profile_identity is None and candidates:
+                first_raw = candidates[0].get("raw_facts", {})
+                if isinstance(first_raw, Mapping):
+                    profile_identity = first_raw.get("profile_identity")
+            recomputed = select_v15_reference_pc_candidate(
+                candidates, profile_identity=profile_identity
+            )
             selected_index = int(recomputed["selected_candidate_index"])
             selected = candidates[selected_index]
             metrics = selected.get("metrics", {})
             selected_raw = selected.get("raw_facts", {})
-            raw_recheck = recompute_v15_candidate_facts(selected)
+            raw_recheck = recompute_v15_candidate_facts(
+                selected, profile_identity=profile_identity
+            )
             q_coverage = (
                 isinstance(q_rows, Sequence)
-                and len(q_rows) == 4
-                and all(isinstance(row, Mapping) for row in q_rows)
-                and {int(row.get("q", -1)) for row in q_rows} == {0, 1, 2, 3}
+                and not isinstance(q_rows, (str, bytes))
+                and _q_rows_cover_expected(q_rows, raw_recheck["expected_q_count"])
             )
             q_rows_pass = bool(q_coverage) and all(
                 np.isfinite(float(row.get("true_residual_relative", np.inf)))
@@ -1126,7 +1210,7 @@ def recheck_reference_pc_final_admission(
                 failure_reason = "recorded_reference_pc_strategy_mismatch"
             elif not recomputed["admitted"]:
                 failure_reason = "candidate_selection_rejected"
-            elif not q_coverage or last_facts.get("all_four_q_used") is not True:
+            elif not q_coverage or last_facts.get("all_q_used") is not True:
                 failure_reason = "selected_q_phase_coverage_failed"
             elif list(q_rows) != list(selected_raw.get("q_true_residuals", ())):
                 failure_reason = "selected_q_rows_mismatch"
@@ -1175,7 +1259,11 @@ def recheck_reference_pc_final_admission(
                 "port_identity_limit": alpha_limit,
                 "maximum_q_true_residual_relative": q_relative,
                 "q_true_residual_limit": q_limit,
-                "all_four_q_phase_rows_covered": bool(q_coverage),
+                "profile_identity": profile_identity,
+                "all_q_phase_rows_covered": bool(q_coverage),
+                "all_four_q_phase_rows_covered": (
+                    bool(q_coverage) and raw_recheck["expected_q_count"] == 4
+                ),
                 "selected_decomposition_closure_relative": selected_closure,
                 "decomposition_closure_limit": V15_DECOMPOSITION_CLOSURE_LIMIT,
                 "selected_state_sha256": selected_state_sha,
