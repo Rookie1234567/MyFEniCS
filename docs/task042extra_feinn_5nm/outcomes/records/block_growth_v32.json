@@ -1919,8 +1919,8 @@
   },
   "compact_csv": {
     "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.csv",
-    "bytes": 59452,
-    "sha256": "e0e89a555dbe7b0f1210dd04182cdce7482c82428b66d2214333aeeb97147ce5"
+    "bytes": 58964,
+    "sha256": "8e8beb56fd33db64583846b4d4658b9ee51d9dc9d9198d55df84beaf42f1760a"
   },
   "interpretation": "Accepted q changes show actual learning, not solver qualification or NN resource gain",
   "interrupted_uncommitted_trial_primitives": "NOT_RETAINED where no complete history was persisted; not replayed"

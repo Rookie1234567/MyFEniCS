@@ -294,7 +294,21 @@
       "scope": "prior corrected figure and records snapshot; final test-table addition checked separately",
       "numerical_source_unmodified": true,
       "new_numeric_work": false
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_seal_checks/result.json",
+        "bytes": 4274,
+        "sha256": "4e41421fd21a5aecbf87dc60e26fdd9078f529a373f089ee0a5f556151f373fd"
+      },
+      "scope": "Test-table addition and complete compact metadata; untracked CSV/SVG formatting was not covered until staging",
+      "new_numeric_work": false
     }
   ],
-  "later_delivery_check_and_exact_document_HEAD_in_receipt": true
+  "later_delivery_check_and_exact_document_HEAD_in_receipt": true,
+  "publication_format_failure_and_lossless_repair": {
+    "path": "tmp/task42extra/v32/publication_format_fix_receipt.json",
+    "bytes": 4172,
+    "sha256": "91bbc7e535ccb913921d2531a20fe7f25b41768fe4d4e8c01d53909ab718b822"
+  }
 }

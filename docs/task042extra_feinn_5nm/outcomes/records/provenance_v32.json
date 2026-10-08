@@ -3,13 +3,13 @@
   "records": [
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.csv",
-      "bytes": 59452,
-      "sha256": "e0e89a555dbe7b0f1210dd04182cdce7482c82428b66d2214333aeeb97147ce5"
+      "bytes": 58964,
+      "sha256": "8e8beb56fd33db64583846b4d4658b9ee51d9dc9d9198d55df84beaf42f1760a"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.json",
       "bytes": 55972,
-      "sha256": "0cfc4e47324906b593efe93b3473fcd56e4f3a71db2e3e4c12194f5d4f8aef50"
+      "sha256": "70df6e96a51793261c6c2ae6a555d60843f13a61a55e5c085777528789717701"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v32.csv",
@@ -48,8 +48,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/multiscale_growth_v32.svg",
-      "bytes": 122293,
-      "sha256": "4748afd1a6dca35857977da76ab0906b4f1b0c7e9a823fb99f8ef50edbabc40c"
+      "bytes": 120959,
+      "sha256": "24884e10cb6fd4797c68aa2b8bd46e25839af941dd01119994737c395a0583cf"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v32.csv",
@@ -58,13 +58,13 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v32.json",
-      "bytes": 3011,
-      "sha256": "ed80352d05a471238eec2546bce80452a8eb6c83d96b4e1e9ed59ec9de9e09e5"
+      "bytes": 7425,
+      "sha256": "d7b3ddfe2fc8582410721a2f23b614a42d3676b352fa6480fd1b3936aa16da07"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v32.json",
-      "bytes": 81497,
-      "sha256": "0717d018b1cd918ffd7043950af42e6b818b6236e0113b5d7f8192ba24b5de4b"
+      "bytes": 81944,
+      "sha256": "9c39d8a02f7e1755bed696d5022fd3205bff070c0be17d03a037e2dca701b442"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v32.json",
@@ -88,8 +88,8 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v32.json",
-      "bytes": 20681,
-      "sha256": "aec769485db884a3a5ddf2d81c166118fbad04addbd59fd09f3669788b80635b"
+      "bytes": 21295,
+      "sha256": "3d40a843fa5a27f4df2e3ee0d9d042fce622c7c0278546ebedfc70cb3cedf852"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/unlabelled_direction_witness_v32.json",
@@ -218,6 +218,11 @@
       "path": "tmp/task42extra/v32/publication_seal_prep.py",
       "bytes": 5043,
       "sha256": "6843c8901b8f7978cf84f12a9cda4c8bcc1970e22fa460e0b0f13a805e47c9cf"
+    },
+    {
+      "path": "tmp/task42extra/v32/publication_format_fix.py",
+      "bytes": 4979,
+      "sha256": "7d63e610c8ec5fc72a12094ddd86892fc7bf8ce800e59ac0e9e74fb23bf6cc91"
     }
   ]
 }

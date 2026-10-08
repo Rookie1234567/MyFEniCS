@@ -52,5 +52,111 @@
     }
   ],
   "ordinary_bug_handoff_limit_used": false,
-  "old_raw_failures_unchanged": true
+  "old_raw_failures_unchanged": true,
+  "publication_format_repair": {
+    "kind": "publication_format_only",
+    "source_document_HEAD_before_fix": "ba769b5fa11cecb2d803e08e707834fa86c436da",
+    "failure": "Generated CSV CRLF and SVG trailing spaces detected after staging; shell did not gate commit on failed check",
+    "failed_original_check": {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_format_failed_check.txt",
+        "bytes": 266973,
+        "sha256": "d8c02ab1b3873276ce0c848acd96afe03472885a774ee3a9d087ff320ae6bfd5"
+      },
+      "returncode": 2,
+      "diagnostic_lines": 3644
+    },
+    "hypothesis": "Formatting of generated compact publication files, not physical arrays or numerical algorithm",
+    "change": "CSV CRLF to LF; SVG line-end spaces removed; relevant compact hashes updated",
+    "test": "Exact CSV row equality and whitespace-normalized XML structure equality; staged check repeated before new commit",
+    "changes": [
+      {
+        "before": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.csv",
+          "bytes": 59452,
+          "sha256": "e0e89a555dbe7b0f1210dd04182cdce7482c82428b66d2214333aeeb97147ce5"
+        },
+        "after": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.csv",
+          "bytes": 58964,
+          "sha256": "8e8beb56fd33db64583846b4d4658b9ee51d9dc9d9198d55df84beaf42f1760a"
+        },
+        "parsed_rows_unchanged": true,
+        "data_rows": 487
+      },
+      {
+        "before": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v32.csv",
+          "bytes": 67341,
+          "sha256": "89bb544db4b3ed444a56cabc56d9b37400149e5028dc17b07f14422dfd4e0c7f"
+        },
+        "after": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v32.csv",
+          "bytes": 67341,
+          "sha256": "89bb544db4b3ed444a56cabc56d9b37400149e5028dc17b07f14422dfd4e0c7f"
+        },
+        "parsed_rows_unchanged": true,
+        "data_rows": 640
+      },
+      {
+        "before": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_v32.csv",
+          "bytes": 17653,
+          "sha256": "c1d41069b94ee5bef2902edadab7a06a3fd83259f82cab8af67cfd0605aa8348"
+        },
+        "after": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_v32.csv",
+          "bytes": 17653,
+          "sha256": "c1d41069b94ee5bef2902edadab7a06a3fd83259f82cab8af67cfd0605aa8348"
+        },
+        "parsed_rows_unchanged": true,
+        "data_rows": 136
+      },
+      {
+        "before": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_v32.csv",
+          "bytes": 22263,
+          "sha256": "2469a3c13743d46f085c80008c447e90ba53a82e7df1ed4d21a2093713f82a77"
+        },
+        "after": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_v32.csv",
+          "bytes": 22263,
+          "sha256": "2469a3c13743d46f085c80008c447e90ba53a82e7df1ed4d21a2093713f82a77"
+        },
+        "parsed_rows_unchanged": true,
+        "data_rows": 144
+      },
+      {
+        "before": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v32.csv",
+          "bytes": 9382,
+          "sha256": "68166efd8674eb052a007c0f9e95ec43fa5266d283da310a8bbd00540fa0c416"
+        },
+        "after": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v32.csv",
+          "bytes": 9382,
+          "sha256": "68166efd8674eb052a007c0f9e95ec43fa5266d283da310a8bbd00540fa0c416"
+        },
+        "parsed_rows_unchanged": true,
+        "data_rows": 160
+      },
+      {
+        "before": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/multiscale_growth_v32.svg",
+          "bytes": 122293,
+          "sha256": "4748afd1a6dca35857977da76ab0906b4f1b0c7e9a823fb99f8ef50edbabc40c"
+        },
+        "after": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/multiscale_growth_v32.svg",
+          "bytes": 120959,
+          "sha256": "24884e10cb6fd4797c68aa2b8bd46e25839af941dd01119994737c395a0583cf"
+        },
+        "SVG_normalized_structure_unchanged": true
+      }
+    ],
+    "numerical_source_unchanged": true,
+    "producer_repeated": false,
+    "all_prior_raw_and_original_commit_retained": true,
+    "monotonic": 1369165.113370665
+  }
 }

@@ -1671,6 +1671,18 @@
       "sampled_process_tree_rss_peak_bytes": 151764992,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_seal/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "44defb48e3818df37870ff414ca391c68754945480e75be27fc1ae48c6ebf351"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.9584578098729253,
+      "sampled_process_tree_rss_peak_bytes": 86892544,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
   "publication_final_calendar_is_in_delivery_receipt": true
