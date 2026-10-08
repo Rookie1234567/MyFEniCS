@@ -49,7 +49,12 @@ def verify(folder,journal):
             if p is not None:
                 efficiency[name]={key:(p['fields'][key]['difference_squared']/max(float(ref[i]),1e-24))**.5 for i,key in enumerate(('E_scattered','H_scattered'))}
         efficiency['P6_reference_squared']=ref;efficiency['A_P6_arrays']=a_p['arrays']
-    result=dict(status='COMPLETED',checks=checks,comparisons=pairs,efficiency_fixed_P6=efficiency,modal=modal,
+    partial=None
+    if not states and (scope.window.TMP/'P6_case_reserve_stop.json').exists():
+        from benchmarks.check_tetra_preparation import partial_saved_check
+        partial=partial_saved_check(scope,folder,journal)
+    result=dict(status='COMPLETED' if states else 'NO_NEW_RETURNED_FIELDS',checks=checks,comparisons=pairs,efficiency_fixed_P6=efficiency,modal=modal,
+        partial_preparation=partial,full_field_qualification=bool(states) and all(c['pass_gate'] for c in checks.values()),
         new_numeric_factors=0,new_complete_solves=0,NN_training=0,NN20=False,target_qualified=False,source=journal.source_state)
     write_json(folder/'verification_scientific_result.json',result);return result
 
@@ -86,7 +91,8 @@ def collect():
         scientific_checks_v64=dict(stages=stages,NN20=False,continuum_accuracy=False,target_qualified=False),
         resource_costs_v64=dict(runs=costs,source_hashes=sources,bindings=bindings,clock=scope.window.snapshot(),charged_known_lower_seconds=scope.window.charged_wall(),historical_lower_seconds=scope.plan_record()['historical_loaded_known_lower_seconds'],historical_unknown='preserved',nominal_sampling_seconds=.5,sampled_peak_not_continuous_hard_peak=True),
         storage_lifecycle_deployment_v64=dict(cases=lifecycle,L4_prerequisite_A_B_costs='V63 deployment receipts; not free'),
-        independent_saved_pair_checks_v64=dict(pairs=checks,new_FE=0,new_numeric=0,new_solve=0),
+        independent_saved_pair_checks_v64=dict(pairs=checks,new_numeric=0,new_solve=0,
+            field_checks_run=bool(checks),partial_preparation=stages.get('VERIFY_COST',{}).get('partial_preparation')),
         repair_journal_v64=dict(entries=[json.loads(line) for line in (scope.window.TMP/'repair_journal.jsonl').read_text().splitlines()],failures_preserved=True))
     for name,value in data.items():write_json(out/(name+'.json'),value)
     archive_increment(folder,out,runs,sources,active_scope=scope)

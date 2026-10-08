@@ -10,6 +10,17 @@ from src.solvers.tetra_local_marking import freeze_marking
 
 
 class LocalHPilotTests(unittest.TestCase):
+    def test_exact_oracle_cache_walk_preserves_unrounded_geometry(self):
+        from benchmarks.check_tetra_preparation import exact_cache_inventory
+        a=np.eye(3);b=a.copy();b[0,0]=np.nextafter(1.,2.)
+        r=exact_cache_inventory([a,a,b,a],[0,0,0,1],bytes_per_class=10,limit=20)
+        self.assertEqual((r['unique_exact_keys'],r['hits'],r['misses']),(3,1,3))
+        self.assertEqual(r['all_unique_table_bytes'],30)
+        self.assertEqual(r['new_body_actions'],0)
+        r=exact_cache_inventory([a,b,a,b],[0]*4,bytes_per_class=10,limit=10)
+        self.assertEqual((r['hits'],r['repeated_rebuilds']),(0,2))
+        with self.assertRaises(ValueError):exact_cache_inventory([a],[0],bytes_per_class=11,limit=10)
+
     def test_rejected_entry_and_same_source_retry_costs_are_paid_once(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);first=root/'PREFLIGHT_one_run01';second=root/'PREFLIGHT_one_run02'

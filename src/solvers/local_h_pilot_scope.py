@@ -118,5 +118,5 @@ def implementation_hashes():
     r=parent_hashes()
     paths=['src/solvers/local_h_pilot_scope.py','src/solvers/local_h_pilot.py','src/solvers/tetra_local_marking.py',
         'src/solvers/tetra_mesh_override.py','src/adaptivity/periodic_tetra_refinement.py','src/geometry/tetra_mesh_audit.py',
-        'benchmarks/qualify_local_h_pilot.py','benchmarks/collect_local_h_pilot.py','src/test/test_local_h_pilot.py',str(PLAN.relative_to(ROOT))]
+        'benchmarks/qualify_local_h_pilot.py','benchmarks/collect_local_h_pilot.py','benchmarks/check_tetra_preparation.py','src/test/test_local_h_pilot.py',str(PLAN.relative_to(ROOT))]
     r.update({n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in paths});return r

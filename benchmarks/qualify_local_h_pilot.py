@@ -15,7 +15,7 @@ def main():
     if PETSc.ScalarType!=np.complex128 or PETSc.IntType!=np.int64 or os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1':raise RuntimeError('V64 qualified ABI')
     paths=['src/solvers/local_h_pilot_scope.py','src/solvers/local_h_pilot.py','src/solvers/tetra_local_marking.py','src/solvers/tetra_mesh_override.py',
         'src/solvers/independent_tetra_reference.py','src/solvers/independent_tetra_study.py','src/adaptivity/periodic_tetra_refinement.py',
-        'src/runners/port_preparation.py','scripts/run_case.py','benchmarks/collect_local_h_pilot.py','src/test/test_local_h_pilot.py']
+        'src/runners/port_preparation.py','scripts/run_case.py','benchmarks/collect_local_h_pilot.py','benchmarks/check_tetra_preparation.py','src/test/test_local_h_pilot.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')
     commands=[[sys.executable,'-m','unittest','-q','src.test.test_local_h_pilot'],
         ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]
