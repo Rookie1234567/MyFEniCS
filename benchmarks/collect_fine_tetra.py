@@ -131,7 +131,7 @@ def verify(folder,journal):
 def collect():
     from benchmarks.collect_phase_deployment import cost_rows
     from benchmarks.collect_common_weak_phase import archive_increment
-    from benchmarks.check_independent_tetra import saved_pair
+    from benchmarks.check_independent_tetra import saved_pair,material_regions
     from src.solvers.independent_tetra_fields import selected_points
     scope.window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);out=folder/'records';out.mkdir(exist_ok=True)
     runs=scope.window.ledger()['runs'];costs,sources,bindings=cost_rows(runs,active_scope=scope)
@@ -143,13 +143,15 @@ def collect():
         if not r.get('arrays'):continue
         path=Path(r['arrays']['path']).parent
         symbolic=path/'h_symbolic_capacity.json';numeric=path/'h_numeric_factor_info.json'
+        events=[json.loads(line) for line in (path/'events.jsonl').read_text().splitlines()]
         receipts=[dict(path=str(p),sha256=digest(p),**json.loads(p.read_text())) for p in scope.window.TMP.glob(role+'_one_run*/receipt.json')]
         lifecycle[role]=dict(nnz=r['nnz'],actual_FE=r['spec']['independent'],actual_rows=r['spec']['rows'],actual_native=r['arrays']['members']['u_native']['shape'][0],
             capacity=r['capacity'],symbolic=json.loads(symbolic.read_text()) if symbolic.exists() else None,
             numeric=json.loads(numeric.read_text()) if numeric.exists() else None,deployment=deployment_from_parts(receipts,r) if receipts else {'status':'unknown'},
             global_finite_LU_present=True,static_condensation=False,solution_bytes=Path(r['arrays']['path']).stat().st_size,
+            ownership_and_release=[{k:v for k,v in e.items() if k!='clock'} for e in events if e['event'] in ('object_owner_snapshot','global_finite_factor_released','global_body_augmented_and_factor_released')],
             boundary_bytes={q:Path(a['path']).stat().st_size for q,a in r['boundary_arrays'].items()})
-    checks={}
+    checks={};regions={}
     if 'VERIFY_COST' in stages:
         from src.solvers import independent_tetra_scope as prior
         parents={**stages,**{r:prior.stage(r) for r in ('TH3','T5')}}
@@ -160,11 +162,17 @@ def collect():
                 first=json.loads(projected.read_text())
             checks[name]=saved_pair(p,first,parents[b],expected_points=selected_points(parents[b]['physical']))
             if not checks[name]['published_gate_matches_recalculation']:raise ValueError('V63 saved consumer verdict mismatch')
+            cfg=core.configuration(parents[b]['spec'],parents[b]['physical'])
+            regions[name]=material_regions(p,parents[b],parents[b]['physical']['geometry']['notch_box_nm'],
+                {cfg.tags.air:'air',cfg.tags.substrate:'substrate',cfg.tags.grating:'Si_grating'})
     data=dict(run_index_v63=dict(runs=runs,pointers={r:json.loads((scope.ARTIFACT/(r+'.json')).read_text()) for r in stages}),
         scientific_checks_v63=dict(stages=stages,NN20=False,continuum_accuracy=False,target_qualified=False),
         resource_costs_v63=dict(runs=costs,source_hashes=sources,bindings=bindings,clock=scope.window.snapshot(),charged_known_lower_seconds=scope.window.charged_wall(),historical_lower_seconds=scope.plan_record()['historical_loaded_known_lower_seconds'],historical_unknown='preserved',nominal_sampling_seconds=.5,sampled_peak_not_continuous_hard_peak=True),
         storage_lifecycle_deployment_v63=dict(cases=lifecycle,complete_cold_cost_and_research_separate=True),
         independent_saved_pair_checks_v63=dict(pairs=checks,new_FE=0,new_numeric=0,new_solve=0),
+        physical_error_regions_v63=dict(pairs=regions,new_FE=0,new_numeric=0,new_solve=0,
+            qualification='post-frozen physical error locality and selected vector components; not a continuum bound or refinement choice'),
+        repair_journal_v63=dict(entries=[json.loads(line) for line in (scope.window.TMP/'repair_journal.jsonl').read_text().splitlines()],failures_preserved=True),
         report_version_ruling_v63=json.loads((scope.window.TMP/'report_version_ruling.json').read_text()))
     for name,value in data.items():write_json(out/(name+'.json'),value)
     archive_increment(folder,out,runs,sources,active_scope=scope)

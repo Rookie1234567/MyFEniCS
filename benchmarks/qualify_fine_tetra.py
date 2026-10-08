@@ -16,7 +16,7 @@ def main():
     hashes=implementation_hashes()
     paths=[p for p in hashes if p.endswith('.py') and ('tetra' in p or p in ('scripts/run_case.py','src/runners/port_preparation.py'))]
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')
-    commands=[[sys.executable,'-m','unittest','-q','src.test.test_fine_tetra','src.test.test_independent_tetra_reference'],
+    commands=[[sys.executable,'-m','unittest','-q','src.test.test_fine_tetra','src.test.test_independent_tetra_reference','src.test.test_independent_tetra_saved_checks'],
         ['/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff','check','--select','E9,F63,F7,F82',*paths]]
     commands.extend([sys.executable,'scripts/run_case.py',str(p),'--validate-only'] for p in sorted((ROOT/'input/task042_neural_coarse_inverse').glob('v63_*.dat')))
     rows=[]
