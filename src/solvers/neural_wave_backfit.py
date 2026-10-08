@@ -71,14 +71,16 @@ class BackfitTrial:
     pairing: float
     active_rank: int
     stationarity: float
+    centered_change: np.ndarray | None = None
 
 
 class InactiveComplement:
-    def __init__(self, action, U, Q, R, first, last, *, rcond=1e-12):
+    def __init__(self, action, U, Q, R, first, last, *, rcond=1e-12, center=None):
         if not 0 <= first < last <= U.shape[1] or U.shape != Q.shape:
             raise ValueError("ACTIVE_BLOCK_LAYOUT_REQUIRED")
         self.action, self.U, self.first, self.last = action, U, first, last
         self.rcond, self.m = rcond, U.shape[1]
+        self.center = center
         self.indices = np.r_[np.arange(first), np.arange(last, self.m)]
         started = perf_counter()
         # qr_delete works in original column order, not a pivoted block order.
@@ -130,22 +132,47 @@ class InactiveComplement:
         Z = self.project(applied)
         zq, zr, pivot = linalg.qr(Z, mode="economic", pivoting=True)
         zs = SmallSVDSolve(zr, self.rcond)
-        b = np.empty(Z.shape[1], np.complex128)
-        b[pivot] = zs.solve(conjugate_product(zq, self.r_F))
-        rhs = self.action.f - applied @ b
-        a_F = self.solver.solve(conjugate_product(self.Q, rhs))
+        if self.center is None:
+            base_a = np.zeros(self.m, np.complex128)
+            base_c = np.zeros(self.action.size, np.complex128)
+            base_change = base_c
+        else:
+            base_a, saved_c = self.center
+            change = columns - self.U[:, self.first : self.last]
+            base_change = compensated_mixed_columns(
+                change, base_a[self.first : self.last]
+            )
+            base_c = saved_c + base_change
+        base_r = self.action.f - self.action.apply(base_c)
+        projected_rhs = self.project(base_r)
+        delta_b = np.empty(Z.shape[1], np.complex128)
+        delta_b[pivot] = zs.solve(conjugate_product(zq, projected_rhs))
+        rhs = base_r - compensated_mixed_columns(applied, delta_b)
+        delta_F = self.solver.solve(conjugate_product(self.Q, rhs))
+        correction_amplitudes = np.empty(self.m, np.complex128)
+        correction_amplitudes[self.indices] = delta_F
+        correction_amplitudes[self.first : self.last] = delta_b
+        b = base_a[self.first : self.last] + delta_b
         amplitudes = np.empty(self.m, np.complex128)
-        amplitudes[self.indices], amplitudes[self.first : self.last] = a_F, b
+        amplitudes[:] = base_a + correction_amplitudes
         # Retain original inactive order. Temporarily insert only the small
         # activity, never copy the full inactive U for each objective.
-        c = compensated_mixed_columns(
+        centered_change = base_change + compensated_mixed_columns(
+            self.U, correction_amplitudes, self.first, self.last, columns
+        )
+        c = centered_change if self.center is None else saved_c + centered_change
+        mapped = compensated_mixed_columns(
             self.U, amplitudes, self.first, self.last, columns
         )
+        mapping = float(np.linalg.norm(mapped - c) / max(np.linalg.norm(c), 1e-30))
+        if mapping > 1e-10:
+            raise TrialRejected("CENTERED_AMPLITUDE_FIELD_PAIR_FAILED: " + str(mapping))
         r = self.action.f - self.action.apply(c)
-        predicted = rhs - self.Q @ (self.R @ a_F)
+        predicted = rhs - self.Q @ (self.R @ delta_F)
         pairing = float(np.linalg.norm(r - predicted) / self.action.bnorm)
         stationarity = float(
-            np.linalg.norm(conjugate_product(zq, self.r_F - Z @ b)) / self.action.bnorm
+            np.linalg.norm(conjugate_product(zq, projected_rhs - Z @ delta_b))
+            / self.action.bnorm
         )
         if not np.isfinite(r).all() or pairing > 1e-10:
             raise TrialRejected(
@@ -167,6 +194,7 @@ class InactiveComplement:
             pairing,
             zs.rank,
             stationarity,
+            centered_change,
         )
 
 

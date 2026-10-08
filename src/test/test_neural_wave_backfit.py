@@ -123,6 +123,32 @@ def test_nonzero_complex_envelope_derivative_and_k0_chain():
     assert abs(fd - k0 * g) / abs(k0 * g) < 1e-5
 
 
+def test_centered_full_ls_and_stable_original_loss_difference():
+    action, U, Q, R = fixture()
+    a0 = linalg.lstsq(action.A @ U, action.f, cond=1e-12)[0]
+    c0 = U @ a0
+    F = InactiveComplement(action, U, Q, R, 2, 4, center=(a0, c0))
+    zero = F.solve_columns(np.zeros((1, 3)), U[:, 2:4], action.A @ U[:, 2:4])
+    np.testing.assert_allclose(zero.c, c0, atol=1e-12, rtol=1e-12)
+    h = 1e-5
+    x = np.arange(14)[:, None]
+    trials = []
+    for sign in (1, -1):
+        C = U[:, 2:4] * np.exp(sign * 1j * h * x)
+        t = F.solve_columns(np.zeros((1, 3)), C, action.A @ C)
+        allU = U.copy()
+        allU[:, 2:4] = C
+        a = linalg.lstsq(action.A @ allU, action.f, cond=1e-12)[0]
+        np.testing.assert_allclose(t.c, allU @ a, atol=1e-10, rtol=1e-10)
+        trials.append(t)
+    plus, minus = trials
+    stable = -np.vdot(
+        plus.r + minus.r, action.apply(plus.centered_change - minus.centered_change)
+    ).real / (4 * h * action.bnorm**2)
+    naive = (plus.objective - minus.objective) / (2 * h)
+    np.testing.assert_allclose(stable, naive, rtol=1e-8, atol=1e-10)
+
+
 def test_trial_calls_are_actually_guarded_and_no_result_replay():
     count = []
 

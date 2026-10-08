@@ -46,7 +46,9 @@ def qualify_real(
         started = perf_counter()
         b = blocks[block_id]
         first, last = b["start"], b["stop"]
-        F = InactiveComplement(action, space.U, space.Q, space.R, first, last)
+        F = InactiveComplement(
+            action, space.U, space.Q, space.R, first, last, center=(space.a, space.c)
+        )
         zero = F.trial(
             moments, b["patch"], b["wave_q"], b["amplitude_map"], gradient=True
         )
@@ -98,6 +100,16 @@ def qualify_real(
         for j, h in enumerate((1e-4, 1e-5, 1e-6)):
             direction = rng.normal(size=b["wave_q"].shape)
             direction /= np.linalg.norm(direction)
+            # Normalize a witness by its physical original-action sensitivity,
+            # not a reference error or a searched finite-difference step.
+            probe = 1e-6
+            cp = moments.columns(b["patch"], b["wave_q"] + probe * k0 * direction)
+            cm = moments.columns(b["patch"], b["wave_q"] - probe * k0 * direction)
+            tangent = ((cp - cm) @ b["amplitude_map"] @ zero.amplitudes[first:last]) / (
+                2 * probe
+            )
+            sensitivity = float(np.linalg.norm(action.apply(tangent)) / action.bnorm)
+            direction /= max(1.0, sensitivity)
             plus = F.trial(
                 moments,
                 b["patch"],
@@ -111,6 +123,9 @@ def qualify_real(
                     block_id=block_id,
                     direction_id=j,
                     h=h,
+                    physical_sensitivity_before_normalization=sensitivity,
+                    direction_norm=float(np.linalg.norm(direction)),
+                    additional_moment_only_probe_calls=2,
                     objective=plus.objective,
                     pairing=plus.pairing,
                 ),
@@ -122,13 +137,24 @@ def qualify_real(
                 b["amplitude_map"],
                 gradient=False,
             )
-            derivative = float((plus.objective - minus.objective) / (2 * h))
+            naive_derivative = float((plus.objective - minus.objective) / (2 * h))
+            # Same original quadratic objective, using the small field
+            # difference before adding its common large base. This avoids
+            # subtracting two independently rounded full losses/fields.
+            action_difference = action.apply(
+                plus.centered_change - minus.centered_change
+            )
+            derivative = float(
+                -np.vdot(plus.r + minus.r, action_difference).real
+                / (4 * h * action.bnorm**2)
+            )
             expected = float(np.sum(zero.gradient * direction) * k0)
             fd.append(
                 dict(
                     direction_id=j,
                     h=h,
                     finite_difference=derivative,
+                    naive_full_loss_finite_difference=naive_derivative,
                     analytic=expected,
                     absolute_error=abs(derivative - expected),
                     relative_error=abs(derivative - expected)

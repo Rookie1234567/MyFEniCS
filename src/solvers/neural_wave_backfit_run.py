@@ -177,7 +177,13 @@ def run_backfit(
         # No whole QR rebuild is hidden here. rank-revealing inactive solve
         # and QR delete are a once-per-visit setup and are fully costed.
         F = InactiveComplement(
-            action, space.U, space.Q, space.R, block["start"], block["stop"]
+            action,
+            space.U,
+            space.Q,
+            space.R,
+            block["start"],
+            block["stop"],
+            center=(space.a, space.c),
         )
 
         def evaluate(q, gradient):
