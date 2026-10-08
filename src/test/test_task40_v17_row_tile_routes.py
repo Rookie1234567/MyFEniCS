@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import os
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -188,6 +189,76 @@ def test_v17_run_case_reaches_fixed_window_launcher(
         "q_assembly_strategy": "ROW_TILE_BOUNDED_CSR_V17",
         "campaign_window": window,
     }
+
+
+@pytest.mark.parametrize("filename,profile_name,run_id,stage", CASES)
+def test_v17_launcher_admits_exact_fixed_window_before_fe(
+    monkeypatch, tmp_path: Path, filename, profile_name, run_id, stage
+):
+    from src.runners import task038_launcher, task40_v10_campaign
+
+    specification = load_and_resolve(INPUT_ROOT / filename)
+    reached = []
+
+    class FixedWindowReached(Exception):
+        pass
+
+    def stop_at_fixed_window(path):
+        reached.append(Path(path))
+        raise FixedWindowReached
+
+    monkeypatch.setattr(
+        task40_v10_campaign, "load_fixed_campaign_window", stop_at_fixed_window
+    )
+    window = tmp_path / "fixed-window.json"
+    with pytest.raises(FixedWindowReached):
+        task038_launcher.launch_specification(
+            specification, task40_v10_campaign_window=window
+        )
+
+    assert reached == [window]
+    assert specification.identity["run_id"] == run_id
+    assert specification.solver["preconditioner"] == profile_name
+    assert specification.solver["stage"] == stage
+
+
+@pytest.mark.parametrize("filename,profile_name,run_id,stage", CASES)
+@pytest.mark.parametrize(
+    "section,key,value",
+    (
+        ("identity", "run_id", "unreviewed_v17_run"),
+        ("identity", "model_id", "unreviewed_model"),
+        ("solver", "preconditioner", "unreviewed_v17_profile"),
+        ("solver", "stage", "UNREVIEWED_STAGE"),
+        ("solver", "task40_reference_pc_strategy", "STRICT_ONLY"),
+        ("solver", "task40_q_assembly_strategy", "BOUNDED_STAGING_CSR_V16"),
+    ),
+)
+def test_v17_launcher_rejects_unreviewed_fixed_window_scope(
+    monkeypatch, tmp_path: Path, filename, profile_name, run_id, stage,
+    section, key, value,
+):
+    from src.io.input_loader import InputError
+    from src.runners import task038_launcher, task40_v10_campaign
+
+    del profile_name, run_id, stage
+    specification = load_and_resolve(INPUT_ROOT / filename)
+    identity = dict(specification.identity)
+    solver = dict(specification.solver)
+    target = identity if section == "identity" else solver
+    target[key] = value
+    altered = replace(specification, identity=identity, solver=solver)
+    monkeypatch.setattr(
+        task40_v10_campaign,
+        "load_fixed_campaign_window",
+        lambda _path: pytest.fail("unreviewed V17 scope reached fixed-window loading"),
+    )
+
+    with pytest.raises(InputError, match="fixed campaign window is restricted"):
+        task038_launcher.launch_specification(
+            altered,
+            task40_v10_campaign_window=tmp_path / "fixed-window.json",
+        )
 
 
 def _valid_v17_sector(global_q_indices):
