@@ -1,0 +1,164 @@
+"""Thin fixed queue for complete uncondensed tetra Maxwell candidates."""
+import gc
+import hashlib
+import json
+from pathlib import Path
+import numpy as np
+from scipy import sparse
+from src.runners.task042_shared import write_json
+from . import independent_tetra_scope as scope
+from .scattering_anchor import Journal,save_arrays,relative
+from . import independent_tetra_reference as core
+
+
+def preflight(folder,journal):
+    s=core.make_setup(scope.case_spec('T4'),scope.physical_for('T4'),journal)
+    V=s['V'];ev=core.TetraEvaluator(V,0,s['kappa'],quadrature_tables=False)
+    determinants=np.array([g[2] for g in ev.geometry]);vol=np.abs(determinants)/6
+    ids=s['data'].cell_tags.values
+    material={str(int(t)):float(vol[ids==t].sum()) for t in np.unique(ids)}
+    full=float(np.prod([a[-1]-a[0] for a in [s['physical']['geometry']['axes_nm'][k] for k in ('x','y','z')]]))
+    if abs(vol.sum()-full)>1e-12*full:raise ValueError('periodic tetra physical volume')
+    cfg=s['cfg'];nc=V.dofmap.index_map.size_local
+    # A polynomial periodic envelope has a known Piola/curl independent of
+    # native cell direction and is interpolated by the public FE interface.
+    from dolfinx import fem
+    f=fem.Function(V);f.interpolate(lambda x:np.vstack((1+x[2],2+0*x[0],3+0*x[1])).astype(complex))
+    witness=[]
+    for c in (0,next((i for i,p in enumerate(ev.permutations) if p!=ev.permutations[0]),len(ev.geometry)-1)):
+        J,o,_=ev.geometry[c];points=np.array([[.1,.2,.15],[.2,.1,.25]])@J.T+o
+        actual=ev.at(f,c,points,cfg.k0)
+        ue=np.column_stack((1+points[:,2],np.full(len(points),2),np.full(len(points),3)))
+        curl=np.tile([0.,1.,0.],(len(points),1));known=ev.physical(points,ue,curl,cfg.k0)
+        errors={k:relative(actual[k]-known[k],known[k]) for k in actual};witness.append(dict(cell=c,permutation=int(ev.permutations[c]),errors=errors))
+        if max(errors.values())>1e-10:raise ValueError('actual tetra affine orientation field/curl')
+    P=s['P'];rng=np.random.default_rng(6201);x=rng.normal(size=P.shape[1])+1j*rng.normal(size=P.shape[1]);y=rng.normal(size=P.shape[0])+1j*rng.normal(size=P.shape[0])
+    dual=abs(np.vdot(P@x,y)-np.vdot(x,P.conj().T@y))/max(np.linalg.norm(P@x)*np.linalg.norm(y),1e-30)
+    from .independent_tetra_fields import selected_points,evaluate_selected,tangential_check
+    _,parents,evals=evaluate_selected(f,cfg,s['kappa'],selected_points(s['physical']))
+    cap=core.assembly_capacity(s,journal)
+    tangent=tangential_check(s,f,folder)
+    arrays=save_arrays(folder/'preflight.npz',determinants=determinants,permutations=ev.permutations,selected_parents=parents,
+        geometry_x=s['geometry']['geometry_x'],geometry_dofmap=s['geometry']['geometry_dofmap'],cell_tags=ids,masters=s['masters'],slaves=s['floquet'].mpc.slaves)
+    return dict(status='COMPLETED',pass_gate=dual<=1e-12 and max(evals)<=1e-11 and cap['admitted'] and tangent['pass_gate'],
+        family='FULL_UNCONDENSED_TETRA_N1CURL_PHASE_UFL',facts=dict(native=nc,independent=P.shape[1],cells=len(vol),local_dim=V.element.space_dimension),
+        geometry_volume=full,material_volumes=material,Piola_direction=witness,complex_dual=dual,tangential=tangent,capacity=cap,arrays=arrays,
+        new_numeric_factors=0,new_complete_solves=0,timings=journal.timings,source=journal.source_state)
+
+
+def petsc_matrix(A):
+    from petsc4py import PETSc
+    A=A.tocsr();return PETSc.Mat().createAIJ(size=A.shape,csr=(A.indptr.astype(PETSc.IntType),A.indices.astype(PETSc.IntType),A.data),comm=PETSc.COMM_SELF)
+
+
+def solve(role,folder,journal,state):
+    from petsc4py import PETSc
+    from .phase_explicit_accuracy_capacity import AnalyzedDirectFactor
+    from .fixed_phase_fem import port_coordinate_scales
+    from .dtn_port_3d import _mode_boundary_phase
+    from .scattering_accuracy_boundary import carrier_pair
+    from .independent_tetra_fields import complete_output
+    resume=state.get('postprocessing_resume')
+    if resume:
+        record=json.loads(Path(resume['path']).read_text())
+        if hashlib.sha256(Path(resume['path']).read_bytes()).hexdigest()!=resume['sha256']:raise ValueError('saved-only resume identity')
+        old=json.loads(Path(record['pending']).read_text());a=checked(old['arrays'])
+        s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal)
+        if not np.array_equal(a['geometry_x'],s['geometry']['geometry_x']) or not np.array_equal(a['geometry_dofmap'],s['geometry']['geometry_dofmap']):raise ValueError('saved tetra geometry differs')
+        b=load_boundary(s,old['boundary_arrays'],old['mode_sha256'])
+        if not old.get('audit'):
+            oracle=load_boundary(s,old['boundary_arrays'],old['mode_sha256'],q='q63')
+            aud,res,orrhs=core.audit(s,oracle,a['x'],a['rhs'],journal)
+            aud['arrays']=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=a['x'])
+            old.update(audit=aud,equation_pass=aud['pass_gate'])
+        output,accuracy=complete_output(s,b,a['x'],folder,journal)
+        return dict(old,output=output,accuracy=accuracy,accuracy_pass=False if accuracy is None else accuracy['pass_gate'],deployment_complete=True,
+            new_numeric_factors=0,new_complete_solves=0,post_only=True,timings=journal.timings)
+    scope.require_stage(role)
+    s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal);cap=core.assembly_capacity(s,journal)
+    if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',capacity=cap,role=role)
+    b=core.boundary(s,47,journal,folder);oracle=core.boundary(s,63,journal,folder)
+    pair=carrier_pair(b['carrier'],oracle['carrier'],b['identities'],expected_modes=828)
+    inc=relative(b['incident']-oracle['incident'],oracle['incident'])
+    write_json(folder/'boundary_pair.json',dict(pair=pair,incident=inc))
+    if not pair['pass'] or inc>1e-11:raise ValueError('complete fresh tetra q47/q63 boundary not qualified')
+    K,form=core.production_body(s,journal);C,D,H=core.boundary_matrices(s,b);n=K.shape[0]
+    A=sparse.bmat([[K,C],[-D,sparse.diags(H)]],format='csr');rhs=core.rhs_vector(s,b)
+    journal.owners('production_full_sparse_and_boundary',dict(K=K,C=C,D=D,A=A))
+    # Two nonzero complex vectors certify all interior/edge/face and all ports.
+    rng=np.random.default_rng(6207);columns=[];errors=[]
+    with journal.measured('two_standard_UFL_PUBLIC_BASIX_operator_pairs'):
+        for i in range(2):
+            z=rng.normal(size=A.shape[0])+1j*rng.normal(size=A.shape[0])
+            original=core.full_action(s,oracle,z,q=2*s['spec']['degree']+5);production=A@z
+            err=relative(production-original,original);errors.append(err);columns.append((z,production,original))
+            journal.calls['A']+=1
+    identity=save_arrays(folder/'full_operator_witness.npz',**{f'{name}{i}':col[j] for i,col in enumerate(columns) for j,name in enumerate(('input','production','original'))})
+    write_json(folder/'original_operator_pairs.json',dict(errors=errors,arrays=identity,form=form))
+    if max(errors)>1e-10:raise ValueError('independent complete original action gate')
+    phases=[_mode_boundary_phase(m,s['cfg']) for m in b['modes']];left,right=port_coordinate_scales(n,H,phases)
+    scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
+    factor=None
+    try:
+        if scope.window.snapshot()['heavy_remaining_seconds']<1800:raise RuntimeError('full tetra audit/output reserve before numeric')
+        factor=AnalyzedDirectFactor(matrix,journal,folder,planning_limit_bytes=64*2**30)
+        r=PETSc.Vec().createSeq(len(rhs),comm=PETSc.COMM_SELF);sol=r.duplicate();r.array[:]=left*rhs
+        try:
+            with journal.measured('full_uncondensed_tetra_direct_solve'):
+                factor.solve_repeated(r,sol);x=right*sol.array.copy()
+                for refinement in range(2):
+                    res=rhs-A@x
+                    if relative(res,rhs)<=1e-10:break
+                    r.array[:]=left*res;factor.solve_repeated(r,sol);x+=right*sol.array
+        finally:r.destroy();sol.destroy()
+        # Commit the unique legal returned vector before ANY derived field.
+        native=s['P']@x[:n]
+        arrays=save_arrays(folder/'solution.npz',x=x,u_independent=x[:n],u_native=native,port=x[n:],rhs=rhs,residual=rhs-A@x,
+            kappa=s['kappa'],masters=s['masters'],slaves=s['floquet'].mpc.slaves,P_data=s['P'].data,P_indices=s['P'].indices,P_indptr=s['P'].indptr,
+            **s['geometry'])
+        pending=dict(status='AUDIT_PENDING',role=role,arrays=arrays,source=state,spec=s['spec'],physical=s['physical'],form=form,
+            mode_sha256=b['digest'],boundary_arrays={'q47':b['arrays'],'q63':oracle['arrays']},nnz=A.nnz,capacity=cap,
+            production_true=relative(rhs-A@x,rhs),new_numeric_factors=1,new_complete_solves=1)
+        write_json(folder/'returned_audit_pending.json',pending)
+        aud,res,orrhs=core.audit(s,oracle,x,rhs,journal)
+        raw=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=x)
+        aud['arrays']=raw;pending.update(audit=aud,equation_pass=aud['pass_gate'],original_operator_witness=identity)
+        write_json(folder/'returned_audit_pending.json',pending)
+    finally:
+        if factor is not None:factor.destroy()
+        matrix.destroy()
+    del A,K,scaled,C,D;gc.collect();journal.event('global_body_augmented_and_factor_released')
+    output,accuracy=complete_output(s,b,x,folder,journal)
+    result=dict(pending,status='COMPLETED',output=output,accuracy=accuracy,
+        accuracy_pass=accuracy is not None and accuracy['pass_gate'],deployment_complete=True,timings=journal.timings,calls=journal.calls)
+    write_json(folder/'complete_scientific_result.json',result);return result
+
+
+def checked(receipt):
+    from .scattering_anchor_checks import checked_arrays
+    return checked_arrays(receipt)
+
+
+def load_boundary(s,receipts,digest,q='q47'):
+    from .fullspace_dtn_action import build_dynamic_mode_inventory,FullspaceDtnCarrier,FullspaceDtnModeFunctional
+    from .dtn_port_3d import _incident_projection_onto_top_mode
+    a=checked(receipts[q]);modes,ids,h=build_dynamic_mode_inventory(s['cfg'])
+    if h!=digest:raise ValueError('saved all828 identity')
+    entries=[]
+    for j,m in enumerate(modes):
+        sl=slice(a['offsets'][j],a['offsets'][j+1]);rr=a['rows'][sl];c=a['C'][sl];d=a['D'][sl]
+        entries.append(FullspaceDtnModeFunctional(mode_key=(j,m.side,m.m,m.n,m.polarization),coupling_rows=rr,coupling_values=c,
+            projection_rows=rr,projection_values=d,normalization_h=a['H'][j],mode_identity=ids[j]))
+    n=s['P'].shape[0];carrier=FullspaceDtnCarrier(entries,global_rows=n,ownership_range=(0,n),slave_rows=s['floquet'].mpc.slaves,batch_size=32,comm=s['mesh'].comm)
+    return dict(carrier=carrier,modes=modes,identities=ids,digest=h,incident=a['incident_traction'],projections=np.array([_incident_projection_onto_top_mode(m,s['cfg']) for m in modes]),q=int(q[1:]),arrays=receipts[q])
+
+
+def execute(role,folder,state):
+    journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=64*2**30);journal.source_state=state
+    if state.get('memory_budget')!=scope.plan_record()['memory_budget']:raise ValueError('V62 live memory propagation')
+    if role=='PREFLIGHT':return preflight(folder,journal)
+    if role in scope.SOLVES:return solve(role,folder,journal,state)
+    if role=='VERIFY_COST':
+        from benchmarks.collect_independent_tetra import verify
+        return verify(folder,journal)
+    raise ValueError('V62 one-run inventory')

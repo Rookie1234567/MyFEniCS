@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v62]
+stage = "TH3"
+run_id = "task042_v62_tetra_notch_h2_p3"
