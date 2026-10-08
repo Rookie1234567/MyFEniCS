@@ -14,7 +14,7 @@ def main():
     import numpy as np
     if PETSc.ScalarType!=np.complex128 or os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1':raise RuntimeError('V61 qualified ABI')
     paths=['src/solvers/face_trace_basis.py','src/solvers/face_trace_mapping.py','src/solvers/face_trace_response.py','src/solvers/face_trace_scope.py',
-        'src/solvers/face_trace_study.py','src/solvers/subcell_macro_deployment.py','src/test/test_face_trace_enrichment.py','src/io/phase_notch_hp.py',
+        'src/solvers/face_trace_study.py','src/solvers/macro_residual_partition.py','src/solvers/phase_notch_hp.py','src/solvers/subcell_macro_deployment.py','src/test/test_face_trace_enrichment.py','src/io/phase_notch_hp.py',
         'benchmarks/qualify_face_trace.py','benchmarks/collect_face_trace.py','benchmarks/collect_local_subcell.py',
         'benchmarks/collect_phase_explicit_accuracy.py','src/runners/port_preparation.py','scripts/run_case.py']
     for p in paths:compile((ROOT/p).read_bytes(),p,'exec')

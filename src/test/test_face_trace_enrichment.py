@@ -49,5 +49,21 @@ class FaceTraceTests(unittest.TestCase):
         np.testing.assert_allclose(m.pull_port(rows,v,dual=False),M[rows].T@v,rtol=1e-13,atol=1e-13)
         self.assertGreater(np.linalg.norm(m.pull_port(rows,v)-m.pull_port(rows,v,dual=False)),1.)
 
+    def test_exact_saved_entity_partition_and_complex_norms(self):
+        from src.solvers.macro_residual_partition import entity_group,coefficient_partition
+        axes=([0.,1.],[0.,1.],[0.,1.])
+        self.assertEqual(entity_group([[0,.2,.3],[0,.8,.3]],axes),1)
+        self.assertEqual(entity_group([[0,.2,0],[0,.8,0]],axes),4)
+        self.assertEqual(entity_group([[.2,.3,0],[.8,.3,0],[.2,.7,0],[.8,.7,0]],axes),3)
+        self.assertEqual(entity_group([[.2,.3,.4],[.8,.3,.4]],axes),0)
+        self.assertEqual(entity_group([[1e-15,.2,.3],[1e-15,.8,.3]],axes),0)
+        labels=np.array([0,1,2,3,4,-1]);r=np.array([1+2j,3-4j,2j,1j,-.5j,0]);b=np.ones(6,complex);b[-1]=0
+        out=coefficient_partition(labels,[5],r,b,b,-2*b)
+        self.assertLess(out['norm_sum_identity'],1e-12)
+        self.assertAlmostEqual(out['groups']['y_face']['absolute'],2.)
+        for bad in (np.array([0,1,2,3,-1,-1]),np.array([0,1,2,3,5,-1])):
+            with self.assertRaises(ValueError):coefficient_partition(bad,[5],r,b,b,b)
+        with self.assertRaises(ValueError):coefficient_partition(labels,[5,5],r,b,b,b)
+
 
 if __name__=='__main__':unittest.main()

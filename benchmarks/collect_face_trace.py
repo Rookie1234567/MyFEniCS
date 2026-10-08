@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from src.runners.task042_shared import write_json
@@ -31,11 +32,25 @@ def verify(folder,journal):
         if a in states and b in states:
             pairs[key]=comparison(states[a],states[b],folder/key,journal,live_scope=scope)
             write_json(folder/'incremental_pair_index.json',pairs)
+    from src.solvers.macro_residual_partition import saved_partitions
+    entity_defects=saved_partitions(states,folder,journal,scope)
+    available=scope.window.available_at_boundary('VERIFY_COST')-(time.perf_counter()-journal.began)
+    optional=dict(status='not_run',reason='frozen request absent or complete comparison reserve <1800s',remaining_case_seconds=available)
+    if f.get('optional_R7_FXY') and 'FXY' in states and available>=1800:
+        parent=scope.parent('R7')
+        if parent['arrays']['sha256']!=f['optional_R7_FXY']['parent_array_sha256']:raise ValueError('frozen optional R7 identity')
+        states['R7']=parent
+        pairs['R7_FXY']=comparison(parent,states['FXY'],folder/'R7_FXY',journal,live_scope=scope)
+        write_json(folder/'incremental_pair_index.json',pairs)
+        optional=dict(status='completed',parent_array_sha256=parent['arrays']['sha256'],independent_truth=False,
+            not_used_for_initialization_or_selection=True,additional_complete_solves=0,additional_factors=0)
+    write_json(folder/'optional_cross_representation.json',optional)
     _,regions,gates=saved_checks(states,pairs,scope=scope)
     for name,pair in pairs.items():
         gate=gates[name];passed=gate['field_max']<=1e-4 and gate['selected_max']<=1e-4 and gate['modal']['outgoing_amplitude_at_boundary_relative']<=1e-4 and gate['modal']['mode_power_max_absolute']<=1e-6 and max(gate['power'].values())<=1e-5 and max(gate['energies'])<=1e-5 and gate['quadrature_operation']<=1e-10
         if bool(passed)!=bool(pair['pass_gate']):raise ValueError('V61 independent saved comparison gate mismatch')
     r=dict(status='COMPLETED',role='VERIFY_COST',checks=checks,pairs=pairs,regions=regions,saved_pair_gates=gates,modal=modal,
+        ambient_entity_defects=entity_defects,optional_cross_representation=optional,
         new_factor_count=0,new_complete_solves=0,source=journal.source_state,timings=journal.timings)
     write_json(folder/'verification_scientific_result.json',r);return r
 

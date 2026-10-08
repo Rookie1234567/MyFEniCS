@@ -41,7 +41,7 @@ def configured_setup(spec,journal,*,scope=None):
     if scope is not None and hasattr(scope,'numerical_carrier'):
         numerical=scope.numerical_carrier(cfg,spec)
     cfg,setup,geometry=make_setup('NOTCH',spec['degree'],'SPEC',journal,configured=cfg,geometry_descriptor=geo,
-        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55','v56','v57','v58','v59','v60') and spec['degree']==7,
+        finite_authority_degree7=scope is not None and scope.NAMESPACE in ('v53','v54','v55','v56','v57','v58','v59','v60','v61') and spec['degree']==7,
         finite_authority_interior8=scope is not None and scope.NAMESPACE in ('v59','v60') and spec['degree']==8,
         numerical_carrier=numerical)
     return cfg,setup,geometry

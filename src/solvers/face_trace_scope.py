@@ -79,6 +79,6 @@ def require_stage(role):
 def implementation_hashes():
     from .local_subcell_scope import implementation_hashes as prior
     names=list(prior())+[str(PLAN.relative_to(ROOT)),'src/solvers/face_trace_scope.py','src/solvers/face_trace_basis.py',
-        'src/solvers/face_trace_mapping.py','src/solvers/face_trace_response.py','src/solvers/face_trace_study.py',
+        'src/solvers/face_trace_mapping.py','src/solvers/face_trace_response.py','src/solvers/face_trace_study.py','src/solvers/macro_residual_partition.py',
         'src/io/phase_notch_hp.py','src/test/test_face_trace_enrichment.py','benchmarks/qualify_face_trace.py','benchmarks/collect_face_trace.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}
