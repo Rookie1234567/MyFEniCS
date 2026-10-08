@@ -183,3 +183,29 @@ def test_filtered_repair_receipt_allowed_but_labels_rejected():
     assert not training_open_allowed(
         base / "v32_fixed_multiscale_wave/basis/reference_state.npz", design
     )
+
+
+def test_real_readout_stage_has_numeric_cap_while_pure_checker_keeps_light_cap():
+    import ast
+    from src.io.neural_wave_campaign import ROOT
+
+    tree = ast.parse((ROOT / "src/runners/neural_wave_campaign.py").read_text())
+    assignment = next(
+        n
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "hard" for t in n.targets)
+    )
+    expression = compile(ast.Expression(assignment.value), "actual-stage-cap", "eval")
+    assert (
+        eval(
+            expression,
+            {"__builtins__": {}},
+            {"spec": {"role": "readout_repair_checks"}},
+        )
+        == 16 * 2**30
+    )
+    assert (
+        eval(expression, {"__builtins__": {}}, {"spec": {"role": "multiscale_compare"}})
+        == 2 * 2**30
+    )

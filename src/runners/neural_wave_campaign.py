@@ -262,6 +262,7 @@ def launch(spec):
             "FIXED_WAVE_BLOCK_GREEDY",
             "LEARNED_WAVE_BLOCK_GREEDY",
             "multiscale_checks",
+            "readout_repair_checks",
             "support_witness",
             "early_validate",
             "multiscale_reconstruct",
