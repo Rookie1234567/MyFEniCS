@@ -427,3 +427,70 @@ def test_real_writer_reopen_exact_qr_restore_and_corrupt_state(tmp_path, monkeyp
         check_boundary(directory / "committed.json")
     parsed = json.loads((directory / "previous_committed.json").read_text())
     assert parsed["event"]["boolean"] is True
+
+
+@pytest.mark.parametrize("damage", [None, "c", "chunks", "rng_state", "node", "hash"])
+def test_scored_boundary_survives_only_exact_timed_metadata_update(tmp_path, damage):
+    import json
+    from src.solvers.neural_wave_backfit_run import validate_scalar_boundary
+    from src.solvers.neural_wave_greedy import atomic_json, atomic_npz, sha
+
+    arrays = dict(a=np.array([1 + 2j]), c=np.array([3 + 4j]),
+                  r=np.array([5 + 6j]), R=np.array([[7 + 8j]]))
+    old_state = tmp_path / "old.npz"
+    new_state = tmp_path / "new.npz"
+    atomic_npz(old_state, **arrays)
+    if damage == "c":
+        arrays["c"] = arrays["c"] + 1e-14
+    atomic_npz(new_state, **arrays)
+    algorithm = dict(visits=16, accepted=13, trials=458, nonzero_q_updates=13,
+                     queue=[], cursor=16, round_id=1, rng_state={"state": 42},
+                     validated_nodes=[])
+    old = dict(binding={"source": "source", "native": "native"},
+               chunks=[{"sha256": "model"}], qr_replay=[], columns=1377,
+               iteration=16, algorithm_state=algorithm,
+               state=dict(path=str(old_state), sha256=sha(old_state)),
+               event=dict(kind="scalar_validation_boundary", node=1))
+    previous = tmp_path / "previous_committed.json"
+    atomic_json(previous, old)
+    scalar = dict(boundary_sha256=sha(previous), node=1)
+    now = json.loads(json.dumps(old))
+    now["event"] = dict(kind="fixed_time_node", seconds=3600)
+    now["state"] = dict(path=str(new_state), sha256=sha(new_state))
+    # Time and paid action work may advance; optimization/model arrays may not.
+    now["algorithm_state"]["remaining_seconds"] = 100
+    if damage == "chunks":
+        now["chunks"][0]["sha256"] = "different model"
+    elif damage == "rng_state":
+        now["algorithm_state"]["rng_state"]["state"] = 43
+    elif damage == "node":
+        scalar["node"] = 2
+    elif damage == "hash":
+        scalar["boundary_sha256"] = "not a saved scored boundary"
+    current = tmp_path / "committed.json"
+    atomic_json(current, now)
+    events = []
+    if damage is None:
+        validate_scalar_boundary(scalar, current, lambda *v: events.append(v))
+        assert events[0][1]["a_c_r_R_bitwise_equal"] is True
+        assert sha(previous) == scalar["boundary_sha256"]
+    else:
+        with pytest.raises(ValueError, match="VALIDATION_"):
+            validate_scalar_boundary(scalar, current, lambda *v: events.append(v))
+        assert not events
+
+
+def test_qualification_reuse_is_bound_to_every_actual_mathematical_dependency():
+    from src.runners import backfit_wave_worker as worker
+
+    receipt = dict(implementation_qualified=True, bound_numerical_chain={
+        p: worker.digest(worker.ROOT / p) for p in worker.CHAIN
+    })
+    assert worker.receipt_matches(receipt, "implementation_qualified")
+    for path in worker.MATHEMATICS_CHAIN:
+        old = receipt["bound_numerical_chain"][path]
+        receipt["bound_numerical_chain"][path] = "modified numerical source"
+        assert not worker.receipt_matches(receipt, "implementation_qualified")
+        receipt["bound_numerical_chain"][path] = old
+    receipt["implementation_qualified"] = False
+    assert not worker.receipt_matches(receipt, "implementation_qualified")

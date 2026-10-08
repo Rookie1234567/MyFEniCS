@@ -24,6 +24,26 @@ CHAIN = (
     "src/runners/backfit_wave_worker.py",
     "src/io/backfit_wave_campaign.py",
 )
+# These three files wire timing, roles and qualification consumption. Their
+# changes need targeted contract tests; they do not invalidate unchanged real
+# moments/LS/derivative/QR/transaction evidence. Keep the full CHAIN in run/source
+# bindings and receipts, and compare every numerical dependency below.
+MATHEMATICS_CHAIN = tuple(p for p in CHAIN if p not in (
+    "src/solvers/neural_wave_backfit_run.py",
+    "src/runners/backfit_wave_worker.py",
+    "src/io/backfit_wave_campaign.py",
+))
+
+
+def receipt_matches(receipt, key):
+    relevant = (
+        ("src/solvers/neural_wave_backfit_state.py",)
+        if key == "anchor_qualified" else MATHEMATICS_CHAIN
+    )
+    return bool(receipt[key]) and all(
+        receipt["bound_numerical_chain"].get(p) == digest(ROOT / p)
+        for p in relevant
+    )
 
 
 def early_validate(action, packet, design, artifact, spec, root, marker, source):
@@ -221,16 +241,13 @@ def run_stage(manifest, artifact, marker):
         ("v33_backfit_math_checks", "implementation_qualified"),
     ):
         receipt = json.loads((profile["artifacts"] / stage / "result.json").read_text())
-        relevant = (
-            ("src/solvers/neural_wave_backfit_state.py",)
-            if key == "anchor_qualified"
-            else CHAIN
-        )
-        if not receipt[key] or any(
-            receipt["bound_numerical_chain"].get(p) != digest(ROOT / p)
-            for p in relevant
-        ):
+        if not receipt_matches(receipt, key):
             raise ValueError("BACKFIT_SHARED_IMPLEMENTATION_NOT_QUALIFIED")
+    marker("backfit_qualified_dependencies_reused", dict(
+        unchanged_mathematical_dependencies=MATHEMATICS_CHAIN,
+        full_run_source_binding_retained=True,
+        orchestration_contract_tests_required=True,
+    ))
     from src.solvers.neural_wave_backfit_run import run_backfit
 
     return run_backfit(

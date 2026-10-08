@@ -18,6 +18,49 @@ from src.solvers.neural_wave_moments import WaveMoments
 from src.solvers.neural_wave_greedy import atomic_json, sha
 
 
+def validate_scalar_boundary(value, current, marker):
+    """Accept a scoring receipt only for exactly the same committed arrays.
+
+    The original resume ordering could save a timed metadata boundary before
+    consuming its scalar receipt. Recover that specific case by proving exact
+    equality, without repeating scoring or changing any optimization state.
+    """
+    if value["boundary_sha256"] == sha(current):
+        return
+    previous = current.parent / "previous_committed.json"
+    if not previous.exists() or sha(previous) != value["boundary_sha256"]:
+        raise ValueError("VALIDATION_NOT_FOR_CURRENT_COMMITTED_STATE")
+    now, old = (json.loads(p.read_text()) for p in (current, previous))
+    if (
+        now["event"].get("kind") != "fixed_time_node"
+        or old["event"].get("kind") != "scalar_validation_boundary"
+        or old["event"].get("node") != value["node"]
+        or any(now[k] != old[k] for k in
+               ("binding", "chunks", "qr_replay", "columns", "iteration"))
+        or any(now["algorithm_state"][k] != old["algorithm_state"][k]
+               for k in ("visits", "accepted", "trials", "nonzero_q_updates",
+                         "queue", "cursor", "round_id", "rng_state",
+                         "validated_nodes"))
+    ):
+        raise ValueError("VALIDATION_STATE_CHANGED")
+    for entry in (now["state"], old["state"]):
+        if sha(entry["path"]) != entry["sha256"]:
+            raise ValueError("VALIDATION_ARRAY_HASH_FAILED")
+    with np.load(now["state"]["path"], allow_pickle=False) as a, np.load(
+        old["state"]["path"], allow_pickle=False
+    ) as b:
+        if not all(np.array_equal(a[k], b[k]) for k in ("a", "c", "r", "R")):
+            raise ValueError("VALIDATION_NUMERICAL_STATE_CHANGED")
+    marker("scalar_receipt_metadata_boundary_pair", dict(
+        scoring_boundary_sha256=value["boundary_sha256"],
+        current_boundary_sha256=sha(current),
+        a_c_r_R_bitwise_equal=True,
+        q_T_chunks_and_QR_replay_equal=True,
+        optimization_state_unchanged=True,
+        failed_attempt_cost_retained=True,
+    ))
+
+
 def run_backfit(
     action, packet, space, blocks, anchor, design, manifest, artifact, marker
 ):
@@ -93,17 +136,6 @@ def run_backfit(
             stop = "ROUTE_SAVE_RESERVE_REACHED"
             break
         elapsed = monotonic() - origin
-        for node in (1800, 3600, 7200, 10800):
-            if elapsed >= node and node not in state["time_nodes_saved"]:
-                state["time_nodes_saved"].append(node)
-                b = boundary(
-                    dict(
-                        kind="fixed_time_node",
-                        seconds=node,
-                        audit=action.audit(space.c),
-                    )
-                )
-                atomic_json(artifact / f"time_node_{node}.json", b)
         due = [
             n
             for n, v, t in ((1, 16, 3600), (2, 32, 7200))
@@ -116,8 +148,7 @@ def run_backfit(
             current = store.directory / "committed.json"
             if scalar.exists():
                 value = json.loads(scalar.read_text())
-                if value["boundary_sha256"] != sha(current):
-                    raise ValueError("VALIDATION_NOT_FOR_CURRENT_COMMITTED_STATE")
+                validate_scalar_boundary(value, current, marker)
                 state["validated_nodes"].append(node)
                 if not value["continuation_allowed"]:
                     stop = "BACKFIT_NO_USEFUL_PROGRESS"
@@ -142,6 +173,18 @@ def run_backfit(
                 )
                 stop = f"INDEPENDENT_VALIDATION_REQUESTED_{node}"
                 break
+        # Consume matching validation before publishing a new timed boundary.
+        for node in (1800, 3600, 7200, 10800):
+            if elapsed >= node and node not in state["time_nodes_saved"]:
+                state["time_nodes_saved"].append(node)
+                b = boundary(
+                    dict(
+                        kind="fixed_time_node",
+                        seconds=node,
+                        audit=action.audit(space.c),
+                    )
+                )
+                atomic_json(artifact / f"time_node_{node}.json", b)
         if np.linalg.norm(space.r) / action.bnorm <= manifest["spec"]["native_target"]:
             stop = "ORIGINAL_RESIDUAL_TARGET_REACHED_PENDING_JOINT_GATE"
             break
