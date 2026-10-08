@@ -2272,6 +2272,7 @@ def _verify_regular_inverse(
                         raw_inverse=raw_v15_nonrecursive_inverse,
                         allocation_gate=allocation_gate,
                         require_verified_solve_counter=True,
+                        expected_q_count=profile.q_count,
                     )
                     correction_packet = _save_packet(
                         runtime,
