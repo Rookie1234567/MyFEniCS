@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import weakref
 from types import SimpleNamespace
 
 import numpy as np
@@ -26,6 +27,7 @@ from src.solvers.task40_v10_p6_yorbit import (
     project_reduced_contribution,
     trace_layout_coordinates,
 )
+import src.solvers.task40_v18_ny8_operator_qualification as v18_operator
 from src.solvers.task40_v18_ny8_operator_qualification import (
     build_complete_q_primal_lift,
     qualify_complete_ny_reference_operator,
@@ -884,7 +886,9 @@ def test_nonunitary_complex_native_entities_preserve_primal_dual_work_and_two_tw
     np.testing.assert_allclose(recon, rhs, rtol=3e-13, atol=3e-13)
 
 
-def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks():
+def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks(
+    monkeypatch: pytest.MonkeyPatch,
+):
     ny = 8
     bases = (
         (2, ((0, 0, 0),)),
@@ -1001,6 +1005,69 @@ def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks():
                 )
             )
 
+    allocation_events = []
+    lift_refs = []
+    product_refs = []
+    expected_lift_shape = (len(entities.independent), entities.width)
+    original_pattern_sha256 = v18_operator._csr_pattern_sha256
+
+    def capture_allocation_event(label, facts):
+        allocation_events.append((str(label), dict(facts)))
+
+    def capture_pattern_owner(matrix):
+        if tuple(matrix.shape) == expected_lift_shape:
+            if len(lift_refs) == len(product_refs):
+                lift_refs.append(weakref.ref(matrix))
+            else:
+                product_refs.append(weakref.ref(matrix))
+        return original_pattern_sha256(matrix)
+
+    original_condense = v18_operator._static_condense_augmented_q
+
+    def verify_q_lifecycle_at_condense(q_matrix, condense_entities, q_mode_count, **kwargs):
+        q = int(kwargs["q"])
+        assert product_refs[q]() is None
+        assert lift_refs[q]() is None
+        left_c = [
+            index
+            for index, (label, _facts) in enumerate(allocation_events)
+            if label == "task40_v18_complete_left_C_q_block"
+        ]
+        right_d = [
+            index
+            for index, (label, _facts) in enumerate(allocation_events)
+            if label == "task40_v18_complete_right_D_q_block"
+        ]
+        last_use = [
+            (index, facts)
+            for index, (label, facts) in enumerate(allocation_events)
+            if label == "task40_v18_q_product_last_use_before_release"
+            and int(facts["q"]) == q
+        ]
+        released = [
+            (index, facts)
+            for index, (label, facts) in enumerate(allocation_events)
+            if label == "task40_v18_q_product_released_before_global_schur"
+            and int(facts["q"]) == q
+        ]
+        assert len(left_c) == len(right_d) == ny * (q + 1)
+        assert len(last_use) == len(released) == 1
+        assert max(left_c[-ny:] + right_d[-ny:]) < last_use[0][0]
+        assert last_use[0][0] < released[0][0]
+        assert last_use[0][1]["all_p_blocks_completed"] is True
+        assert released[0][1]["q_augmented_shares_volume_times_Uq_buffers"] is False
+        assert released[0][1]["q_augmented_shares_Uq_buffers"] is False
+        assert released[0][1]["q_augmented_shares_coupling_q_buffers"] is False
+        return original_condense(
+            q_matrix,
+            condense_entities,
+            q_mode_count,
+            **kwargs,
+        )
+
+    monkeypatch.setattr(v18_operator, "_csr_pattern_sha256", capture_pattern_owner)
+    monkeypatch.setattr(v18_operator, "_static_condense_augmented_q", verify_q_lifecycle_at_condense)
+
     audit = qualify_complete_ny_reference_operator(
         volume_matrix=volume,
         entities=entities,
@@ -1009,9 +1076,70 @@ def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks():
         sectors=sectors,
         candidate_q_matrices=candidate_q,
         expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
+        allocation_gate=capture_allocation_event,
     )
     assert audit["passed"] is True
     assert audit["full_q_block_coverage_count"] == 64
+    left_c_events = [
+        index
+        for index, (label, _facts) in enumerate(allocation_events)
+        if label == "task40_v18_complete_left_C_q_block"
+    ]
+    right_d_events = [
+        index
+        for index, (label, _facts) in enumerate(allocation_events)
+        if label == "task40_v18_complete_right_D_q_block"
+    ]
+    assert len(left_c_events) == len(right_d_events) == ny * ny
+    for q in range(ny):
+        last_use_events = [
+            (index, facts)
+            for index, (label, facts) in enumerate(allocation_events)
+            if label == "task40_v18_q_product_last_use_before_release"
+            and int(facts["q"]) == q
+        ]
+        release_events = [
+            (index, facts)
+            for index, (label, facts) in enumerate(allocation_events)
+            if label == "task40_v18_q_product_released_before_global_schur"
+            and int(facts["q"]) == q
+        ]
+        schur_events = [
+            index
+            for index, (label, facts) in enumerate(allocation_events)
+            if label == "task40_v18_independent_global_interior_schur"
+            and int(facts["q"]) == q
+        ]
+        completed_schur_events = [
+            index
+            for index, (label, facts) in enumerate(allocation_events)
+            if label == "task40_v18_independent_global_schur_complete"
+            and int(facts["q"]) == q
+        ]
+        assert len(last_use_events) == len(release_events) == 1
+        assert len(schur_events) == len(completed_schur_events) == 1
+        last_use_index, last_use_facts = last_use_events[0]
+        released_index, released_facts = release_events[0]
+        q_block_slice = slice(q * ny, (q + 1) * ny)
+        assert max(left_c_events[q_block_slice] + right_d_events[q_block_slice]) < last_use_index
+        assert last_use_index < released_index < schur_events[0]
+        assert schur_events[0] < completed_schur_events[0]
+        assert last_use_facts["all_p_blocks_completed"] is True
+        assert last_use_facts["p_blocks_completed"] == ny
+        for key in (
+            "q_augmented_shares_volume_times_Uq_buffers",
+            "q_augmented_shares_Uq_buffers",
+            "q_augmented_shares_coupling_q_buffers",
+        ):
+            assert last_use_facts[key] is released_facts[key] is False
+        for name in (
+            "volume_times_Uq",
+            "Uq",
+            "coupling_q",
+            "diagonal_q_augmented",
+        ):
+            assert last_use_facts[f"{name}_csr_payload_bytes"] > 0
+            assert type(last_use_facts[f"{name}_csr_component_buffers_own_data"]) is bool
     assert audit["empty_port_q_indices"] == [4]
     assert audit["q4_nonzero_fe_rhs_witness_passed"] is True
     assert audit["q4_zero_port_nonzero_fe_gate_passed"] is True
@@ -1022,6 +1150,7 @@ def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks():
     assert audit["maximum_complete_offdiagonal_relative"] < 1.0e-11
     assert audit["maximum_independent_schur_relative"] < 1.0e-11
 
+    monkeypatch.undo()
     bad_candidate = dict(candidate_q)
     bad_candidate[0] = candidate_q[0].copy()
     bad_candidate[0][0, 0] += 1.0e-4
@@ -1035,6 +1164,8 @@ def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks():
         expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
     )
     assert failed_audit["passed"] is False
+    assert failed_audit["full_q_block_coverage_count"] == 64
+    assert failed_audit["q4_nonzero_fe_rhs_witness_passed"] is True
     assert failed_audit["independent_schur_relative_by_q"][0] > 1.0e-11
     with pytest.raises(ValueError, match="every q matrix"):
         qualify_complete_ny_reference_operator(

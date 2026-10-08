@@ -30,6 +30,18 @@ def _finite_csr(value: Any, *, shape: tuple[int, int], label: str) -> sparse.csr
     return matrix
 
 
+def _csr_payload_bytes(matrix: sparse.csr_matrix) -> int:
+    return int(matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes)
+
+
+def _csr_shares_buffers(left: sparse.csr_matrix, right: sparse.csr_matrix) -> bool:
+    return any(
+        np.shares_memory(left_buffer, right_buffer)
+        for left_buffer in (left.data, left.indices, left.indptr)
+        for right_buffer in (right.data, right.indices, right.indptr)
+    )
+
+
 def _frobenius(matrix: sparse.spmatrix | np.ndarray) -> float:
     values = np.asarray(matrix.data if sparse.issparse(matrix) else matrix).reshape(-1)
     squared = np.longdouble(0.0)
@@ -553,6 +565,8 @@ def qualify_complete_ny_reference_operator(
                 },
             )
         coupling_q = coupling[:, q_modes].tocsr()
+        diagonal_q_augmented: sparse.csr_matrix | None = None
+        diagonal_q_shared_inputs: dict[str, bool] | None = None
         for p in range(ny):
             Up = Uq if p == q else build_complete_q_primal_lift(
                 entities, layout, p, allocation_gate=allocation_gate
@@ -664,7 +678,7 @@ def qualify_complete_ny_reference_operator(
                             "augmented_q_nnz_upper": q_augmented_nnz_upper,
                         },
                     )
-                q_augmented = sparse.bmat(
+                diagonal_q_augmented = sparse.bmat(
                     [
                         [volume_block, C_block],
                         [D_block, -sparse.eye(len(q_modes), dtype=np.complex128, format="csr")],
@@ -672,68 +686,47 @@ def qualify_complete_ny_reference_operator(
                     format="csr",
                     dtype=np.complex128,
                 )
-                q_augmented.sum_duplicates()
-                q_augmented.sort_indices()
-                if q_augmented.shape != (width + len(q_modes), width + len(q_modes)):
+                diagonal_q_augmented.sum_duplicates()
+                diagonal_q_augmented.sort_indices()
+                if diagonal_q_augmented.shape != (
+                    width + len(q_modes),
+                    width + len(q_modes),
+                ):
                     raise ValueError(f"q={q} independent augmented FE/port block shape mismatch")
+                diagonal_q_shared_inputs = {
+                    "q_augmented_shares_volume_times_Uq_buffers": _csr_shares_buffers(
+                        diagonal_q_augmented, volume_times_Uq
+                    ),
+                    "q_augmented_shares_Uq_buffers": _csr_shares_buffers(
+                        diagonal_q_augmented, Uq
+                    ),
+                    "q_augmented_shares_coupling_q_buffers": _csr_shares_buffers(
+                        diagonal_q_augmented, coupling_q
+                    ),
+                }
+                if any(diagonal_q_shared_inputs.values()):
+                    raise ValueError(
+                        "independent q augmented CSR unexpectedly borrows a released q owner"
+                    )
                 if allocation_gate is not None:
                     allocation_gate(
                         "task40_v18_nonhermitian_witness_difference",
                         {
                             "additional_payload_bytes": int(
-                                2 * q_augmented.nnz * 20
-                                + (q_augmented.shape[0] + 1) * 4
+                                2 * diagonal_q_augmented.nnz * 20
+                                + (diagonal_q_augmented.shape[0] + 1) * 4
                             ),
-                            "workspace_bytes": int(q_augmented.nnz * 24),
+                            "workspace_bytes": int(diagonal_q_augmented.nnz * 24),
                             "q": q,
-                            "augmented_q_nnz": int(q_augmented.nnz),
+                            "augmented_q_nnz": int(diagonal_q_augmented.nnz),
                         },
                     )
-                actual_nonhermitian = _frobenius(q_augmented - q_augmented.getH())
+                actual_nonhermitian = _frobenius(
+                    diagonal_q_augmented - diagonal_q_augmented.getH()
+                )
                 nonhermitian_relative[q] = actual_nonhermitian / max(
                     diagonal_norms[q], np.finfo(float).tiny
                 )
-                condensed = _static_condense_augmented_q(
-                    q_augmented,
-                    entities,
-                    len(q_modes),
-                    allocation_gate=allocation_gate,
-                    q=q,
-                )
-                candidate = candidates[q]
-                if condensed.shape != candidate.shape:
-                    raise ValueError(
-                        f"q={q} independent Schur shape {condensed.shape} differs from candidate {candidate.shape}"
-                    )
-                difference_nnz_upper = int(condensed.nnz + candidate.nnz)
-                if allocation_gate is not None:
-                    allocation_gate(
-                        "task40_v18_independent_candidate_schur_difference",
-                        {
-                            "additional_payload_bytes": int(
-                                difference_nnz_upper * 20
-                                + (condensed.shape[0] + 1) * 4
-                            ),
-                            "workspace_bytes": int(difference_nnz_upper * 16),
-                            "q": q,
-                            "independent_schur_nnz": int(condensed.nnz),
-                            "candidate_schur_nnz": int(candidate.nnz),
-                            "difference_nnz_upper": difference_nnz_upper,
-                        },
-                    )
-                difference = (condensed - candidate).tocsr()
-                schur_norm = _frobenius(condensed)
-                candidate_norm = _frobenius(candidate)
-                difference_norm = _frobenius(difference)
-                relative = difference_norm / max(
-                    schur_norm, candidate_norm, np.finfo(float).tiny
-                )
-                schur_errors[q] = relative
-                schur_norms[q] = {
-                    "independent_schur_frobenius": schur_norm,
-                    "candidate_csr_frobenius": candidate_norm,
-                    "complete_difference_frobenius": difference_norm,
-                }
                 if q == 4 and not len(q_modes):
                     if allocation_gate is not None:
                         allocation_gate(
@@ -746,7 +739,6 @@ def qualify_complete_ny_reference_operator(
                             },
                         )
                     q4_rhs_norm = _frobenius(volume_block.getcol(0))
-                del difference, condensed, candidate, q_augmented
             else:
                 off_sq = (
                     np.longdouble(volume_norm) ** 2
@@ -761,8 +753,138 @@ def qualify_complete_ny_reference_operator(
                     "complete_augmented_block_frobenius": float(np.sqrt(off_sq)),
                 }
             del volume_block, C_block, D_block, projection_p, Up_h, Up
-        del coupling_q
-        del volume_times_Uq, Uq
+        if diagonal_q_augmented is None:
+            raise ValueError(f"q={q} complete diagonal FE/port block was not constructed")
+        if diagonal_q_shared_inputs is None:
+            raise ValueError(f"q={q} diagonal backing independence was not checked")
+        owner_payloads = {
+            "volume_times_Uq_csr_payload_bytes": _csr_payload_bytes(volume_times_Uq),
+            "volume_times_Uq_csr_component_buffers_own_data": all(
+                buffer.flags.owndata
+                for buffer in (
+                    volume_times_Uq.data,
+                    volume_times_Uq.indices,
+                    volume_times_Uq.indptr,
+                )
+            ),
+            "Uq_csr_payload_bytes": _csr_payload_bytes(Uq),
+            "Uq_csr_component_buffers_own_data": all(
+                buffer.flags.owndata for buffer in (Uq.data, Uq.indices, Uq.indptr)
+            ),
+            "coupling_q_csr_payload_bytes": _csr_payload_bytes(coupling_q),
+            "coupling_q_csr_component_buffers_own_data": all(
+                buffer.flags.owndata
+                for buffer in (coupling_q.data, coupling_q.indices, coupling_q.indptr)
+            ),
+            "diagonal_q_augmented_csr_payload_bytes": _csr_payload_bytes(
+                diagonal_q_augmented
+            ),
+            "diagonal_q_augmented_csr_component_buffers_own_data": all(
+                buffer.flags.owndata
+                for buffer in (
+                    diagonal_q_augmented.data,
+                    diagonal_q_augmented.indices,
+                    diagonal_q_augmented.indptr,
+                )
+            ),
+        }
+        lifecycle_facts = {
+            "q": q,
+            "all_p_blocks_completed": True,
+            "p_blocks_completed": int(ny),
+            "full_q_block_coverage_for_q": int(ny),
+            "last_use_volume_times_Uq": f"complete FE volume block p={ny - 1}, q={q}",
+            "last_use_Uq": f"complete right-D block p={ny - 1}, q={q}",
+            "last_use_coupling_q": f"complete left-C block p={ny - 1}, q={q}",
+            "per_p_temporary_views_released": [
+                "projection_p",
+                "Up_h",
+                "Up",
+                "volume_block",
+                "C_block",
+                "D_block",
+            ],
+            **diagonal_q_shared_inputs,
+            **owner_payloads,
+        }
+        if allocation_gate is not None:
+            allocation_gate(
+                "task40_v18_q_product_last_use_before_release",
+                {
+                    "additional_payload_bytes": 0,
+                    "workspace_bytes": 0,
+                    "lifecycle_state": "all p blocks complete; local q owners still live",
+                    **lifecycle_facts,
+                },
+            )
+        del volume_times_Uq, Uq, coupling_q
+        if allocation_gate is not None:
+            allocation_gate(
+                "task40_v18_q_product_released_before_global_schur",
+                {
+                    "additional_payload_bytes": 0,
+                    "workspace_bytes": 0,
+                    "lifecycle_state": "local q product/lift/carrier owners released",
+                    **lifecycle_facts,
+                },
+            )
+        condensed = _static_condense_augmented_q(
+            diagonal_q_augmented,
+            entities,
+            len(q_modes),
+            allocation_gate=allocation_gate,
+            q=q,
+        )
+        if allocation_gate is not None:
+            allocation_gate(
+                "task40_v18_independent_global_schur_complete",
+                {
+                    "additional_payload_bytes": 0,
+                    "workspace_bytes": 0,
+                    "q": q,
+                    "lifecycle_state": "global Schur returned; diagonal q owner still live",
+                    "diagonal_q_augmented_csr_payload_bytes": owner_payloads[
+                        "diagonal_q_augmented_csr_payload_bytes"
+                    ],
+                    "condensed_schur_csr_payload_bytes": _csr_payload_bytes(condensed),
+                },
+            )
+        del diagonal_q_augmented
+        candidate = candidates[q]
+        if condensed.shape != candidate.shape:
+            raise ValueError(
+                f"q={q} independent Schur shape {condensed.shape} differs from candidate {candidate.shape}"
+            )
+        difference_nnz_upper = int(condensed.nnz + candidate.nnz)
+        if allocation_gate is not None:
+            allocation_gate(
+                "task40_v18_independent_candidate_schur_difference",
+                {
+                    "additional_payload_bytes": int(
+                        difference_nnz_upper * 20
+                        + (condensed.shape[0] + 1) * 4
+                    ),
+                    "workspace_bytes": int(difference_nnz_upper * 16),
+                    "q": q,
+                    "independent_schur_nnz": int(condensed.nnz),
+                    "candidate_schur_nnz": int(candidate.nnz),
+                    "difference_nnz_upper": difference_nnz_upper,
+                },
+            )
+        difference = (condensed - candidate).tocsr()
+        schur_norm = _frobenius(condensed)
+        candidate_norm = _frobenius(candidate)
+        difference_norm = _frobenius(difference)
+        relative = difference_norm / max(
+            schur_norm, candidate_norm, np.finfo(float).tiny
+        )
+        schur_errors[q] = relative
+        schur_norms[q] = {
+            "independent_schur_frobenius": schur_norm,
+            "candidate_csr_frobenius": candidate_norm,
+            "complete_difference_frobenius": difference_norm,
+        }
+        del difference, condensed, candidate
     if full_q_block_coverage != ny2 or set(diagonal_norms) != set(range(ny)):
         raise ValueError("complete ordered q-block coverage omitted one or more FE/port blocks")
     diagonal_scale = max(max(diagonal_norms.values()), np.finfo(float).tiny)
