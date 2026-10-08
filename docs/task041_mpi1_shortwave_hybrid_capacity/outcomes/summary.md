@@ -1,6 +1,21 @@
 # Task041 outcomes summary
 
-## 2026-10-08：W0.7 deferred-AMD 阶段组件收口与唯一warm run进度
+## 2026-10-08：W0.7 reduced pilot最新终态——numeric前预算拒绝
+
+| 范围 | 实测结果 | 状态/边界 |
+|---|---|---|
+| 唯一warm Invocation | `3d6b63c763414ad984beb60f1296458e`；unit `task041-v10r2-w0p7-deferred-amd-warm-20261008T082944Z.service`；runtime source `819ed980502783f4a11b8ea2c690dc8add44e81a`；MPI8，CPU `[10,11,12,14,15,16,17,18]`；QEP=0，复用既有packet | 唯一本次warm运行；没有第二dispatch |
+| one-cell factor | source matrix `15120×15120`；rank-local NNZ之和`7,123,680`；`INFOG(7/32)=4/1`，公开控制回读null | PORD numeric完成并销毁；`rows=17,280`是端口/输出行口径，`interior_rows=15,120`与factor source矩阵相符 |
+| bottom/top P4 | bottom/top均`64966×64966`；NNZ `27,929,686/39,242,250`；各自sequential AMD；`INFOG(16/17)=2766/19460`、`4193/19299` million bytes | 两侧symbolic完成；numeric均未调用；两个pending factor各destroy一次且无destroy错误 |
+| bottom numeric预算门 | fresh `B=35,915,554,816 B`；单份`INFOG(17)=19,460,000,000 B`；`W=5,322,116,301 B`；筛查合计`60,697,671,117 B`，cap `53,221,163,008 B`，筛查差`7,476,508,109 B` | before-numeric拒绝；不是实测所需峰，也不是算法数值失败证明 |
+| 服务结果与资源 | consumer `IMPLEMENTATION_FAILURE`；public `task041_public_command_nonzero` rc=3；finalizer `failed/service_boundary_failure`；wall `2395.81151869 s`；tree RSS峰`35,915,563,008 B`、dedicated cgroup峰`33,178,259,456 B`；V5 ledger 175项且本Invocation一条 | `controlled_stop.active=false`；finalizer 8/10，只有`public_result_completed`和`service_terminal_normal`为false；清理和计账通过。性能`performance_not_isolated` |
+| 尚未运行/资格 | fixed-H6反馈、outer、五真残差、recovery、physics、official observables均未到达 | 本缩减pilot未完成数值求解；不资格化50×25 nm、2 TB或48 h目标 |
+
+终态compact：[terminal record](../../../results/task041_v10r2_w0p7_deferred_amd_warm_run_20261008T082944Z/terminal_compact.json)。V5 ledger SHA `962d31d906d22ec39d6a0e534021caa5fbcc8d1f521a966f245129d6768985ba`。所有阶段数值、classification与raw SHA均按本Invocation单独记录；此前`10d761079d90473dadce79d3f7eb6457`的受控停止继续作为独立历史结果。
+
+## 历史快照：2026-10-08 deferred-AMD组件收口与warm run待执行
+
+以下是本次dispatch前的组件/准备阶段记录；其中“仍active/待执行”等状态只描述当时时点，不能覆盖上方终态。
 
 代码已普通提交并推送：HEAD `6caf43ebd52b14bf0c9423b33353e7fc8f38f27f`，parent `24b6431370f20510f795df75c38fa5d5a66f4296`。PETSc/MUMPS阶段桥把结构分析与数值分解分开，让预算可在大factor分配前检查；bottom/top仍须持有矩阵、端口及pending factor，因此tiny接口证据不能代替fresh容量门。
 

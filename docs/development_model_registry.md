@@ -1,6 +1,15 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 Review V10-r2：W0.7 reduced-p6首场资源受控停止（2026-10-08）
+## Task041 Review V10-r2：W0.7 reduced-p6 deferred-AMD warm场（2026-10-08）
+
+| 模型/阶段 | 当前实测 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，matched L20/N29/h20/29 warm consumer | one-cell PORD numeric完成并销毁；bottom/top P4均完成sequential AMD symbolic，NNZ `27,929,686/39,242,250` | 两侧numeric均未执行；one-cell source为`15120×15120`/NNZ `7,123,680`，其ready marker的17280是port/output行数 |
+| bottom numeric预算门 | fresh B `35,915,554,816 B` + 单份INFOG(17) `19,460,000,000 B` + W `5,322,116,301 B` = `60,697,671,117 B` | 高于cap `53,221,163,008 B` `7,476,508,109 B`；这是估算门拒绝，不是实测峰或数值算法失败证明 |
+| 服务终态 | consumer `IMPLEMENTATION_FAILURE`；public rc3 `task041_public_command_nonzero`；finalizer `failed/service_boundary_failure`，wall `2395.81151869 s` | `controlled_stop.active=false`；finalizer 8/10，两个false为`public_result_completed`和`service_terminal_normal`，清理与ledger checks通过；V5 ledger 175项，本Invocation一条 |
+| 正式数值资格 | fixed-H6反馈、outer、五真残差、recovery、physics均未到达 | 不构成缩减pilot数值通过或50×25 nm、2 TB、48 h资格；resource performance `performance_not_isolated`。见[Task041终态summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)与[compact](../results/task041_v10r2_w0p7_deferred_amd_warm_run_20261008T082944Z/terminal_compact.json) |
+
+## 历史：Task041 Review V10-r2 W0.7 reduced-p6首场资源受控停止（2026-10-07）
 
 | 模型/阶段 | 当前实测 | 资格边界与证据 |
 |---|---|---|

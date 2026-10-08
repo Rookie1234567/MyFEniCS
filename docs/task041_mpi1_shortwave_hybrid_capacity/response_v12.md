@@ -1,6 +1,24 @@
 # Task041 Response V12：Review V10-r2现场进度
 
-## 2026-10-08：W0.7 deferred-AMD 阶段组件与warm包准备
+## 2026-10-08：W0.7 deferred-AMD warm场终态
+
+唯一获准的warm consumer Invocation `3d6b63c763414ad984beb60f1296458e`已结束；没有第二次dispatch。此前组件和warm包准备段落是运行前快照，现由本节终态取代，历史raw及原分类不变。
+
+| 阶段/门 | 实际记录 | 结论 |
+|---|---|---|
+| one-cell exact factor | source matrix `15120×15120`；MPI8各rank `MatGetInfo.local_nnz_used`一次求和为`7,123,680`；`INFOG(7/32)=4/1`；`public_mumps_control_readback=null`；numeric完成并销毁 | PORD，保留one-cell原排序。ready marker的`rows=17,280`是端口/输出行口径；`interior_rows=15,120`才与source矩阵维数相符，不能把17280写成factor source rows |
+| bottom P4 | `64966×64966`、NNZ `27,929,686`；sequential AMD，`INFOG(16/17)=2766/19460` million bytes | symbolic完成；numeric未执行；清理销毁一次、error=0 |
+| top P4 | `64966×64966`、NNZ `39,242,250`；sequential AMD，`INFOG(16/17)=4193/19299` million bytes | symbolic完成；numeric未执行；清理销毁一次、error=0 |
+| bottom numeric预算门 | fresh `B=35,915,554,816 B`；单份`INFOG(17)=19,460,000,000 B`；政策预留`W=5,322,116,301 B`；合计筛查`60,697,671,117 B`，高于cap `53,221,163,008 B` `7,476,508,109 B` | 在numeric前拒绝。该差额是估算门的筛查缺口，不是实测所需峰，也不是算法数值失败证明 |
+| 整场数值/最终化 | 固定H6反馈门、outer、五项真实残差、recovery、physics均未到达；finalizer检查8/10 | 不得登记物理结果或通过；仅`public_result_completed`与`service_terminal_normal`为false，其余清理/账目检查通过 |
+
+原始状态必须保持为consumer `IMPLEMENTATION_FAILURE`、public `task041_public_command_nonzero`/rc `3`、finalizer `failed`/`service_boundary_failure`，且`controlled_stop.active=false`。这不是先前Invocation `10d761079d90473dadce79d3f7eb6457`的`controlled_stop/absolute_memory_limit`；两次run分类和账目分别保留。本Invocation的唯一service-finalizer wall为`2395.81151869 s`，V5 ledger共175项、本Invocation恰1项，SHA `962d31d906d22ec39d6a0e534021caa5fbcc8d1f521a966f245129d6768985ba`。tree RSS峰`35,915,563,008 B`、dedicated cgroup峰`33,178,259,456 B`分口径报告；numeric预测筛查总量不得称作实测峰。性能仍`performance_not_isolated`。
+
+最终hash-bound派生记录：[terminal compact](../../../results/task041_v10r2_w0p7_deferred_amd_warm_run_20261008T082944Z/terminal_compact.json)。它引用原始summary、service/finalizer、consumer markers、memory stages、stdout及ledger SHA；不修改这些raw。W0.7缩减pilot没有完成求解，不能外推为50×25 nm、2 TB容量或48 h冷启动资格。
+
+## 历史快照：2026-10-08 deferred-AMD组件与warm包准备
+
+以下文字记录dispatch前状态；其中“尚未启动/待准入”只适用于该快照时点，已由上方终态更新。
 
 **当前状态：组件小测试通过，下一步是重新绑定后的fresh准入；production warm场尚未启动。** 当前代码提交为 `6caf43ebd52b14bf0c9423b33353e7fc8f38f27f`，父提交 `24b6431370f20510f795df75c38fa5d5a66f4296`，已推送原分支。该阶段把大型LU拆成两个可检查的动作：先由MUMPS分析稀疏矩阵结构并估计工作区，再在同一个factor句柄上执行数值分解；这样可在数值分配前按实际阶段预算拒绝。代价是两侧矩阵、端口和pending symbolic对象会同时驻留，仍须以fresh资源采样和每阶段门判定。
 

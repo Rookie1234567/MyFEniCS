@@ -1,6 +1,16 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-08：Task041 W0.7 deferred-AMD组件收口与唯一warm run进行中
+## 2026-10-08：Task041 W0.7 deferred-AMD warm场终态
+
+W0.7 reduced-p6 matched-cell唯一warm Invocation `3d6b63c763414ad984beb60f1296458e`在bottom P4 numeric前被预算门拒绝。One-cell source factor `15120×15120`、NNZ一次跨rank求和`7,123,680`，按`INFOG(7/32)=4/1`为PORD；numeric已完成并销毁。Bottom/top P4分别为`64966×64966`、NNZ `27,929,686/39,242,250`，两侧sequential AMD symbolic完成，numeric调用均为0，pending handles各destroy一次、error=0。One-cell marker `rows=17,280`代表端口/输出口径；source矩阵行数及interior rows为`15,120`。
+
+Bottom numeric门使用fresh `B=35,915,554,816 B`，加单份MUMPS全rank估计`INFOG(17)=19,460,000,000 B`和政策预留`W=5,322,116,301 B`，筛查总额`60,697,671,117 B`，高于冻结cap `53,221,163,008 B` `7,476,508,109 B`。这是预测门拒绝，不是实测所需峰或算法错误证明。终态分类原样为consumer `IMPLEMENTATION_FAILURE`、public `task041_public_command_nonzero`/rc3、finalizer `failed/service_boundary_failure`；`controlled_stop.active=false`。Finalizer 8/10，false仅`public_result_completed`和`service_terminal_normal`，其余清理/账目检查通过。
+
+唯一service-finalizer wall `2395.81151869 s`，175项V5 ledger中本Invocation一次（SHA `962d31d906d22ec39d6a0e534021caa5fbcc8d1f521a966f245129d6768985ba`）；tree RSS峰`35,915,563,008 B`与dedicated cgroup峰`33,178,259,456 B`分列。没有fixed-H6 feedback、outer、五残差、recovery或physics结果；模型仍`performance_not_isolated`，不资格化50×25 nm、2 TB或48 h目标。详见[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)、[outcomes summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[阶段记录](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_measured_progress_v10.md)与[hash-bound compact](../results/task041_v10r2_w0p7_deferred_amd_warm_run_20261008T082944Z/terminal_compact.json)。本Invocation无新pytest attempt，test summary中的174项仍是上个测试阶段快照；本次service wall由finalizer唯一计账。
+
+## 历史快照：2026-10-08 deferred-AMD组件收口与warm run启动前
+
+以下内容记录本次运行前的组件与准入状态；其“进行中/待执行”只描述当时快照。
 
 代码提交`6caf43ebd52b14bf0c9423b33353e7fc8f38f27f`已推送至Task041原分支。为避免在大因子数值分解前才发现内存不足，注册的W0.7 P4路径将MUMPS流程拆为symbolic结构分析和同句柄numeric分解，并将PETSc 3.19.6 JOB_NULL缓存请求、版本推导输入及symbolic后的实际控制值分开核验。仅W0.7 deferred P4 opt-in启用AMD候选（ICNTL7=0/28=1、14=40）；普通KSP/default和one-cell路径不变。
 

@@ -1,4 +1,22 @@
-# Review V10-r2：W0.7 reduced-p6 warm consumer受控停止
+# Review V10-r2：W0.7现场证据
+
+## 2026-10-08 最新Invocation：numeric前预算拒绝
+
+唯一warm run为Invocation `3d6b63c763414ad984beb60f1296458e`，unit `task041-v10r2-w0p7-deferred-amd-warm-20261008T082944Z.service`，runtime source `819ed980502783f4a11b8ea2c690dc8add44e81a`。它复用已完成producer packet，本次QEP调用为0。数值条件为W0.7缩减`10×5 nm`、接口`2/22 nm`、p6/h0.70/M400/MPI8、全段L20/N29/h20/29、fixed-H6，P4 target `5e-13`/最多2次同因子修正；CPU为`[10,11,12,14,15,16,17,18]`，每rank一个数学线程。
+
+| 因子阶段 | 实测矩阵/分析 | 生命周期结论 |
+|---|---|---|
+| one-cell | source matrix `15120×15120`；8 rank的local NNZ一次求和`7,123,680`；`INFOG(7/32)=4/1`，公开控制回读为null | 顺序PORD，numeric已完成，随后destroy；marker `rows=17,280`是端口/输出行数，`interior_rows=15,120`，不能混为factor source rows |
+| bottom P4 | `64966×64966`、NNZ `27,929,686`；AMD；`INFOG(16/17)=2766/19460` million bytes | symbolic完成；numeric调用0；pending句柄清理destroy一次、error=0 |
+| top P4 | `64966×64966`、NNZ `39,242,250`；AMD；`INFOG(16/17)=4193/19299` million bytes | symbolic完成；numeric调用0；pending句柄清理destroy一次、error=0 |
+
+bottom numeric门读取当次fresh `B=35,915,554,816 B`，加单份全rank `INFOG(17)=19,460,000,000 B`和政策余量`W=5,322,116,301 B`，预测筛查值`60,697,671,117 B`，高于cap `53,221,163,008 B` `7,476,508,109 B`。它是numeric前预算拒绝，不是测得完整factor峰值或数值算法失败证明。INFOG(17)按MUMPS 5.6.2定义取全rank sum的一份；`W`是固定政策预留，不是对误差或RSS的数学上界。
+
+原始分类保持：consumer `IMPLEMENTATION_FAILURE`；public `task041_public_command_nonzero`、rc 3；service parent `pre_exit_failed`；finalizer `failed/service_boundary_failure`且`controlled_stop.active=false`。Finalizer 8/10；仅`public_result_completed`和`service_terminal_normal`为false，其余清理/账目检查通过。唯一public-to-finalizer wall `2395.81151869 s`，175项V5 ledger中本Invocation恰一次，ledger SHA `962d31d906d22ec39d6a0e534021caa5fbcc8d1f521a966f245129d6768985ba`。tree RSS峰`35,915,563,008 B`，dedicated cgroup峰`33,178,259,456 B`，不是预算预测值；performance为`performance_not_isolated`。outer、五残差、recovery及physics均未到达。原始摘要及所有阶段SHA见[compact](../../../results/task041_v10r2_w0p7_deferred_amd_warm_run_20261008T082944Z/terminal_compact.json)。
+
+## 历史：2026-10-07 首次warm consumer受控停止
+
+本节以下保留Invocation `10d761079d90473dadce79d3f7eb6457`的独立旧结果。该run确实是`controlled_stop/absolute_memory_limit`；不得与2026-10-08的`IMPLEMENTATION_FAILURE/service_boundary_failure`合并或互相改写。
 
 ## 2026-10-08 更新：deferred-AMD组件通过，warm consumer尚待fresh准入
 
