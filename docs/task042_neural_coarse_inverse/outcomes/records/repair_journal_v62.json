@@ -1,0 +1,59 @@
+{
+  "entries": [
+    {
+      "id": "R1",
+      "utc": "2026-10-08T04:38:50.963456+00:00",
+      "monotonic": 1359325.824347528,
+      "root_cause": "port_audit_denominator",
+      "failed_source": "8027ac9e680b2ba04c20f9977442d11f0f9daa12",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_flat_p4_20261008T043129805592Z/result.json",
+        "sha256": "3d5cb2e9f248209b8517ce57ae121fb01fb7ad2c87c1569c409d0837de3ef5a8"
+      },
+      "failed_port": 1.0,
+      "equation_not_modified": true,
+      "returned_array_sha256": "ee341608a9f802b922d2932e4472464fe1679ef1d5151b735f990fe29f263fbb",
+      "action": "fix original closed/augmented separation and projected port scale; saved-only original audit, unchanged output receipts",
+      "new_numeric_factors": 0,
+      "new_complete_solves": 0
+    },
+    {
+      "id": "R2",
+      "utc": "2026-10-08T05:11:20.670983+00:00",
+      "monotonic": 1361275.531872126,
+      "root_cause": "incremental_inventory_and_recovery_cost_scope",
+      "failed_source": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+      "evidence": "reader/collector inspection after T5 complete: legacy macro notch count, missing bare stdout/stderr archive selection, saved-only repair not a single cold solve",
+      "action": "split macro and actual tetra metadata; archive V62 streams; complete consumer dependency hashes; distinguish measured process sum and observed recovery envelope",
+      "mathematics_changed": false,
+      "new_numeric_factors": 0,
+      "new_complete_solves": 0,
+      "old_raw_unchanged": true
+    },
+    {
+      "id": "R3",
+      "utc": "2026-10-08T06:56:33.148103+00:00",
+      "monotonic": 1367588.008984897,
+      "root_cause": "saved_checker_and_flat_admission_closure",
+      "failed_source": "2c9fa66e9c320329bb630d3c28fdab1d01574915",
+      "evidence": "consumer inspection: fresh accuracy flag and require_stage did not explicitly combine independent equation and FLAT analytic qualifications; all actual NOTCH admission followed the successful saved F4 correction",
+      "action": "add both-gate guard and synthetic open-inventory regression; independently recalculate complete saved integrals/240 vectors/828 modes; no new FE or solve",
+      "new_numeric_factors": 0,
+      "new_complete_solves": 0,
+      "old_raw_unchanged": true
+    },
+    {
+      "id": "R3.1",
+      "utc": "2026-10-08T06:59:18.231197+00:00",
+      "monotonic": 1367753.092076041,
+      "root_cause": "optional_saved_power_path_eager_default",
+      "failed_source": "ad2e36268d2b2b692ab544c0ce55bb90015ba4d6",
+      "evidence": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/aux_pre_QUAL04/command0.stderr",
+      "action": "evaluate fallback fields path only when explicit mode_power_path is absent; preserve QUAL04 failure and fees, targeted checker rerun",
+      "mathematics_changed": false,
+      "new_numeric_factors": 0,
+      "new_complete_solves": 0
+    }
+  ],
+  "failures_preserved": true
+}

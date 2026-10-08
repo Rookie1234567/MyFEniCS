@@ -1,0 +1,647 @@
+{
+  "status": "pre-DOCS01 cost snapshot; final settlement follows once last stream exits",
+  "charged_known_lower_seconds": 7520.1778838285245,
+  "historical_loaded_known_lower_seconds": 212227.2468480551,
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v62/aux_pre_QUAL01",
+      "source_sha": "8027ac9e680b2ba04c20f9977442d11f0f9daa12",
+      "classification": "COMPLETED",
+      "supervised_seconds": 4.943040695041418,
+      "launch_seconds": 39.304998212028295,
+      "peak_bytes": 238219264,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 7,
+        "actual_max_sample_gap_seconds": 0.9475343369413167,
+        "sampled_tree_peak_bytes": 238219264,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {},
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "results/task042/task042_v62_tetra_reference_preflight_20261008T042941217995Z",
+      "source_sha": "8027ac9e680b2ba04c20f9977442d11f0f9daa12",
+      "classification": "COMPLETED",
+      "supervised_seconds": 7.463602888863534,
+      "launch_seconds": 42.08336595399305,
+      "peak_bytes": 268836864,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 8,
+        "actual_max_sample_gap_seconds": 1.250720074167475,
+        "sampled_tree_peak_bytes": 268836864,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 1.6410702168941498
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 1.6410702168941498
+        },
+        "root_measured_seconds": 1.6410702168941498,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "F4",
+      "folder": "results/task042/task042_v62_tetra_flat_p4_20261008T043129805592Z",
+      "source_sha": "8027ac9e680b2ba04c20f9977442d11f0f9daa12",
+      "classification": "COMPLETED",
+      "supervised_seconds": 260.19258845807053,
+      "launch_seconds": 295.63839993206784,
+      "peak_bytes": 2641973248,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 198,
+        "actual_max_sample_gap_seconds": 1.5849379401188344,
+        "sampled_tree_peak_bytes": 2641973248,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 1.647853353060782,
+          "fresh_triangle_all828_q47": 5.561639019986615,
+          "fresh_triangle_all828_q63": 6.1168789269868284,
+          "standard_UFL_FFCx_full_uncondensed_body": 133.54851154284552,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 27.644901434890926,
+          "h_sparse_symbolic_capacity": 0.9846331188455224,
+          "h_bounded_numeric_factor": 6.24665751401335,
+          "full_uncondensed_tetra_direct_solve": 0.35985395102761686,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 16.799682157114148,
+          "full_physical_E_H_curl_240_points": 0.1312757059931755,
+          "complete_tetra_volume_and_analytic_q23_q31": 41.513300247024745,
+          "all828_complex_channel_powers_and_output": 0.39296324201859534
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 1.647853353060782,
+          "fresh_triangle_all828_q47": 5.561639019986615,
+          "fresh_triangle_all828_q63": 6.1168789269868284,
+          "standard_UFL_FFCx_full_uncondensed_body": 133.54851154284552,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 27.644901434890926,
+          "h_sparse_symbolic_capacity": 0.9846331188455224,
+          "h_bounded_numeric_factor": 6.24665751401335,
+          "full_uncondensed_tetra_direct_solve": 0.35985395102761686,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 16.799682157114148,
+          "full_physical_E_H_curl_240_points": 0.1312757059931755,
+          "complete_tetra_volume_and_analytic_q23_q31": 41.513300247024745,
+          "all828_complex_channel_powers_and_output": 0.39296324201859534
+        },
+        "root_measured_seconds": 240.94815021380782,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 1,
+      "lifecycle": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 160.66772908507846,
+          "RSS_bytes": 1015177216,
+          "owner_role": "production_full_sparse_and_boundary",
+          "unique_visible_numpy_owner_bytes": 372773792,
+          "unique_owner_count": 12,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 196.10829875105992,
+          "RSS_bytes": 2151383040,
+          "backend": "PETSc_LU_MUMPS_SYMBOLIC_CAPACITY_BOUNDED",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 213.68798488099128,
+          "RSS_bytes": 1394417664
+        },
+        {
+          "event": "global_body_augmented_and_factor_released",
+          "elapsed_s": 213.86644743196666,
+          "RSS_bytes": 567754752
+        }
+      ],
+      "symbolic_numeric_capacity": {
+        "symbolic_estimate_mb": 990,
+        "numeric_memory_allocation_cap_mb": 1980,
+        "current_whole_tree_rss_bytes": 1583820800,
+        "factor_workspace_estimate_times_two_bytes": 1980000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 5711304448,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v62/aux_pre_QUAL02",
+      "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+      "classification": "COMPLETED",
+      "supervised_seconds": 6.246044657891616,
+      "launch_seconds": 41.35977275297046,
+      "peak_bytes": 223436800,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 6,
+        "actual_max_sample_gap_seconds": 1.355603258823976,
+        "sampled_tree_peak_bytes": 223436800,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {},
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "F4",
+      "folder": "results/task042/task042_v62_tetra_flat_p4_audit_repair_20261008T044057385763Z",
+      "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+      "classification": "COMPLETED",
+      "supervised_seconds": 32.24511571205221,
+      "launch_seconds": 68.85576748196036,
+      "peak_bytes": 950386688,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 21,
+        "actual_max_sample_gap_seconds": 1.9290764420293272,
+        "sampled_tree_peak_bytes": 950386688,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 1.9812687570229173,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 17.613873476162553
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 1.9812687570229173,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 17.613873476162553
+        },
+        "root_measured_seconds": 19.59514223318547,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "T4",
+      "folder": "results/task042/task042_v62_tetra_notch_p4_20261008T044337654518Z",
+      "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+      "classification": "COMPLETED",
+      "supervised_seconds": 286.94277368602343,
+      "launch_seconds": 323.20570425805636,
+      "peak_bytes": 2605821952,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 156,
+        "actual_max_sample_gap_seconds": 2.2741960817947984,
+        "sampled_tree_peak_bytes": 2605821952,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 1.8518892580177635,
+          "fresh_triangle_all828_q47": 6.323917796835303,
+          "fresh_triangle_all828_q63": 6.687116882065311,
+          "standard_UFL_FFCx_full_uncondensed_body": 146.20660828705877,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 30.2459257110022,
+          "h_sparse_symbolic_capacity": 0.48440183512866497,
+          "h_bounded_numeric_factor": 7.208230294054374,
+          "full_uncondensed_tetra_direct_solve": 0.5730904678348452,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 18.58967691194266,
+          "full_physical_E_H_curl_240_points": 0.2755838609300554,
+          "complete_tetra_volume_and_analytic_q23_q31": 44.79238648619503,
+          "all828_complex_channel_powers_and_output": 0.5451939317863435
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 1.8518892580177635,
+          "fresh_triangle_all828_q47": 6.323917796835303,
+          "fresh_triangle_all828_q63": 6.687116882065311,
+          "standard_UFL_FFCx_full_uncondensed_body": 146.20660828705877,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 30.2459257110022,
+          "h_sparse_symbolic_capacity": 0.48440183512866497,
+          "h_bounded_numeric_factor": 7.208230294054374,
+          "full_uncondensed_tetra_direct_solve": 0.5730904678348452,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 18.58967691194266,
+          "full_physical_E_H_curl_240_points": 0.2755838609300554,
+          "complete_tetra_volume_and_analytic_q23_q31": 44.79238648619503,
+          "all828_complex_channel_powers_and_output": 0.5451939317863435
+        },
+        "root_measured_seconds": 263.7840217228513,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 1,
+      "lifecycle": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 175.57812162092887,
+          "RSS_bytes": 1013350400,
+          "owner_role": "production_full_sparse_and_boundary",
+          "unique_visible_numpy_owner_bytes": 372773792,
+          "unique_owner_count": 12,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 214.59544722898863,
+          "RSS_bytes": 2149580800,
+          "backend": "PETSc_LU_MUMPS_SYMBOLIC_CAPACITY_BOUNDED",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 237.47413458605297,
+          "RSS_bytes": 1392590848
+        },
+        {
+          "event": "global_body_augmented_and_factor_released",
+          "elapsed_s": 237.68565023993142,
+          "RSS_bytes": 619409408
+        }
+      ],
+      "symbolic_numeric_capacity": {
+        "symbolic_estimate_mb": 990,
+        "numeric_memory_allocation_cap_mb": 1980,
+        "current_whole_tree_rss_bytes": 1581060096,
+        "factor_workspace_estimate_times_two_bytes": 1980000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 5708543744,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      }
+    },
+    {
+      "role": "T5",
+      "folder": "results/task042/task042_v62_tetra_notch_p5_20261008T045241486970Z",
+      "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+      "classification": "COMPLETED",
+      "supervised_seconds": 915.0199200210627,
+      "launch_seconds": 951.393759315135,
+      "peak_bytes": 5205315584,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 443,
+        "actual_max_sample_gap_seconds": 2.5675970721058547,
+        "sampled_tree_peak_bytes": 5205315584,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 2.353825535159558,
+          "fresh_triangle_all828_q47": 11.948067311896011,
+          "fresh_triangle_all828_q63": 12.738800428109244,
+          "standard_UFL_FFCx_full_uncondensed_body": 603.0584326118696,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 96.0074294519145,
+          "h_sparse_symbolic_capacity": 1.9327625459991395,
+          "h_bounded_numeric_factor": 19.648114626994357,
+          "full_uncondensed_tetra_direct_solve": 1.365765511058271,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 53.7860290161334,
+          "full_physical_E_H_curl_240_points": 0.14914801996201277,
+          "complete_tetra_volume_and_analytic_q23_q31": 72.38198214001022,
+          "all828_complex_channel_powers_and_output": 0.5056790630333126
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 2.353825535159558,
+          "fresh_triangle_all828_q47": 11.948067311896011,
+          "fresh_triangle_all828_q63": 12.738800428109244,
+          "standard_UFL_FFCx_full_uncondensed_body": 603.0584326118696,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 96.0074294519145,
+          "h_sparse_symbolic_capacity": 1.9327625459991395,
+          "h_bounded_numeric_factor": 19.648114626994357,
+          "full_uncondensed_tetra_direct_solve": 1.365765511058271,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 53.7860290161334,
+          "full_physical_E_H_curl_240_points": 0.14914801996201277,
+          "complete_tetra_volume_and_analytic_q23_q31": 72.38198214001022,
+          "all828_complex_channel_powers_and_output": 0.5056790630333126
+        },
+        "root_measured_seconds": 875.8760362621397,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 1,
+      "lifecycle": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 656.7732101290021,
+          "RSS_bytes": 1731387392,
+          "owner_role": "production_full_sparse_and_boundary",
+          "unique_visible_numpy_owner_bytes": 911169760,
+          "unique_owner_count": 12,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 776.3375408470165,
+          "RSS_bytes": 4537184256,
+          "backend": "PETSc_LU_MUMPS_SYMBOLIC_CAPACITY_BOUNDED",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 838.3749360889196,
+          "RSS_bytes": 2715717632
+        },
+        {
+          "event": "global_body_augmented_and_factor_released",
+          "elapsed_s": 838.6256791159976,
+          "RSS_bytes": 828395520
+        }
+      ],
+      "symbolic_numeric_capacity": {
+        "symbolic_estimate_mb": 2224,
+        "numeric_memory_allocation_cap_mb": 4448,
+        "current_whole_tree_rss_bytes": 3128328192,
+        "factor_workspace_estimate_times_two_bytes": 4448000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 9723811840,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v62/aux_pre_QUAL03",
+      "source_sha": "2c9fa66e9c320329bb630d3c28fdab1d01574915",
+      "classification": "COMPLETED",
+      "supervised_seconds": 6.943785341922194,
+      "launch_seconds": 43.53699205699377,
+      "peak_bytes": 222466048,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 4,
+        "actual_max_sample_gap_seconds": 2.554660046007484,
+        "sampled_tree_peak_bytes": 222466048,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {},
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "TH3",
+      "folder": "results/task042/task042_v62_tetra_notch_h2_p3_20261008T051340024957Z",
+      "source_sha": "2c9fa66e9c320329bb630d3c28fdab1d01574915",
+      "classification": "COMPLETED",
+      "supervised_seconds": 672.4588627559133,
+      "launch_seconds": 709.138751769904,
+      "peak_bytes": 7316295680,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 253,
+        "actual_max_sample_gap_seconds": 3.1638106489554048,
+        "sampled_tree_peak_bytes": 7316295680,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 10.896470087114722,
+          "fresh_triangle_all828_q47": 12.78991394280456,
+          "fresh_triangle_all828_q63": 15.177098297979683,
+          "standard_UFL_FFCx_full_uncondensed_body": 216.91193767008372,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 46.644487420795485,
+          "h_sparse_symbolic_capacity": 3.3292168430052698,
+          "h_bounded_numeric_factor": 54.42762227519415,
+          "full_uncondensed_tetra_direct_solve": 2.933756250888109,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 29.798215684015304,
+          "full_physical_E_H_curl_240_points": 0.8215635740198195,
+          "complete_tetra_volume_and_analytic_q23_q31": 233.56318267807364,
+          "all828_complex_channel_powers_and_output": 0.5747841650154442
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 10.896470087114722,
+          "fresh_triangle_all828_q47": 12.78991394280456,
+          "fresh_triangle_all828_q63": 15.177098297979683,
+          "standard_UFL_FFCx_full_uncondensed_body": 216.91193767008372,
+          "two_standard_UFL_PUBLIC_BASIX_operator_pairs": 46.644487420795485,
+          "h_sparse_symbolic_capacity": 3.3292168430052698,
+          "h_bounded_numeric_factor": 54.42762227519415,
+          "full_uncondensed_tetra_direct_solve": 2.933756250888109,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 29.798215684015304,
+          "full_physical_E_H_curl_240_points": 0.8215635740198195,
+          "complete_tetra_volume_and_analytic_q23_q31": 233.56318267807364,
+          "all828_complex_channel_powers_and_output": 0.5747841650154442
+        },
+        "root_measured_seconds": 627.8682488889899,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 1,
+      "lifecycle": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 285.0865288700443,
+          "RSS_bytes": 1793085440,
+          "owner_role": "production_full_sparse_and_boundary",
+          "unique_visible_numpy_owner_bytes": 782408608,
+          "unique_owner_count": 12,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "factor_present",
+          "elapsed_s": 391.32021596003324,
+          "RSS_bytes": 6529744896,
+          "backend": "PETSc_LU_MUMPS_SYMBOLIC_CAPACITY_BOUNDED",
+          "factor_class": "FINITE_AUTHORITY_EXACT_FACTOR_PRESENT"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 432.64939722884446,
+          "RSS_bytes": 2692493312
+        },
+        {
+          "event": "global_body_augmented_and_factor_released",
+          "elapsed_s": 432.7864828319289,
+          "RSS_bytes": 943112192
+        }
+      ],
+      "symbolic_numeric_capacity": {
+        "symbolic_estimate_mb": 4603,
+        "numeric_memory_allocation_cap_mb": 9206,
+        "current_whole_tree_rss_bytes": 2979131392,
+        "factor_workspace_estimate_times_two_bytes": 9206000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 14332615040,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      }
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "results/task042/task042_v62_compare_verify_cost_20261008T052702568554Z",
+      "source_sha": "2c9fa66e9c320329bb630d3c28fdab1d01574915",
+      "classification": "COMPLETED",
+      "supervised_seconds": 4461.76536909421,
+      "launch_seconds": 4497.852906201035,
+      "peak_bytes": 2069979136,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 651,
+        "actual_max_sample_gap_seconds": 19.25661456491798,
+        "sampled_tree_peak_bytes": 2069979136,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {
+        "exclusive_seconds": {
+          "tetra_mesh_materials_full_periodic_space": 42.06284387363121,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 129.44411605386995,
+          "independent_saved_original_consumer_F4": 10.474498423049226,
+          "independent_saved_original_consumer_T4": 7.475408439291641,
+          "independent_saved_original_consumer_T5": 11.360521731199697,
+          "independent_saved_original_consumer_TH3": 22.707574182888493,
+          "common_tetra_physical_integrals_q23": 223.53160403785296,
+          "common_tetra_physical_integrals_q31": 508.5645263029728,
+          "mesh_materials_envelope_MPC": 10.229806126095355,
+          "common_original_hex_tetra_q23": 1039.5745546920225,
+          "common_original_hex_tetra_q31": 2421.717159608146
+        },
+        "inclusive_seconds_do_not_sum": {
+          "tetra_mesh_materials_full_periodic_space": 42.06284387363121,
+          "independent_PUBLIC_BASIX_full_body_triangle_q63": 129.44411605386995,
+          "independent_saved_original_consumer_F4": 32.66876256396063,
+          "independent_saved_original_consumer_T4": 29.053812723141164,
+          "independent_saved_original_consumer_T5": 71.91413728799671,
+          "independent_saved_original_consumer_TH3": 65.90541463904083,
+          "common_tetra_physical_integrals_q23": 223.53160403785296,
+          "common_tetra_physical_integrals_q31": 508.5645263029728,
+          "mesh_materials_envelope_MPC": 10.229806126095355,
+          "common_original_hex_tetra_q23": 1039.5745546920225,
+          "common_original_hex_tetra_q31": 2421.717159608146
+        },
+        "root_measured_seconds": 4427.14261347102,
+        "complete": true,
+        "unclosed_suffix_seconds": null
+      },
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v62/aux_pre_QUAL04",
+      "source_sha": "ad2e36268d2b2b692ab544c0ce55bb90015ba4d6",
+      "classification": "WORKER_FAILED",
+      "supervised_seconds": 30.00371172116138,
+      "launch_seconds": 71.12952319020405,
+      "peak_bytes": 125620224,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 11.022764050867409,
+        "sampled_tree_peak_bytes": 125620224,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {},
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v62/aux_pre_QUAL05",
+      "source_sha": "fc5855eed95ae4298fadb6dc6646c8c83246ef8d",
+      "classification": "COMPLETED",
+      "supervised_seconds": 30.29153283103369,
+      "launch_seconds": 72.38702118303627,
+      "peak_bytes": 125984768,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 3,
+        "actual_max_sample_gap_seconds": 11.609828065149486,
+        "sampled_tree_peak_bytes": 125984768,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {},
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v62/aux_post_COLLECT01",
+      "source_sha": "fc5855eed95ae4298fadb6dc6646c8c83246ef8d",
+      "classification": "COMPLETED",
+      "supervised_seconds": 76.54445780999959,
+      "launch_seconds": 117.79415531503037,
+      "peak_bytes": 205463552,
+      "swap_bytes": 0,
+      "shared_workstation": true,
+      "sampling": {
+        "sample_count": 4,
+        "actual_max_sample_gap_seconds": 26.28692458802834,
+        "sampled_tree_peak_bytes": 205463552,
+        "own_swap_peak_bytes": 0,
+        "sampled_not_cgroup": true
+      },
+      "disjoint_timing": {},
+      "actual_global_numeric_factors": 0,
+      "lifecycle": [],
+      "symbolic_numeric_capacity": null
+    }
+  ],
+  "clock": {
+    "start_utc": "2026-10-08T04:03:39Z",
+    "start_monotonic": 1357214.39,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "b39df0051e6a0501528de54bf02987021188702e",
+    "intake_HEAD": "400acdc53944e9da6cbca931da6e31cdf7d76dd6",
+    "contract_HEAD": "b39df0051e6a0501528de54bf02987021188702e",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "monotonic_observation_precision_seconds": 0.01,
+    "observed_utc": "2026-10-08T07:12:31.348788+00:00",
+    "observed_monotonic": 1368546.209654787,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 11332.348787546158,
+    "heavy_remaining_seconds": 21067.651212453842,
+    "total_remaining_seconds": 24667.651212453842
+  },
+  "same_accuracy_performance": "NOT_QUALIFIED"
+}

@@ -1,3 +1,19 @@
+# V62最终定点与物理验收
+
+| actual本地检查 | 结果与证据 |
+|---|---|
+| 最终8个新增数学/consumer方法 | QUAL05通过；QUAL04的1个KeyError失败保留 |
+| 12模块compile/关键Ruff、8实际dat schema | QUAL05通过；不运行full pytest/CI |
+| actual tetra Piola/方向、complex MPC/双周期 | PREFLIGHT通过；不继承旧hex求值 |
+| 新完整原作用+828边界 | 四case两列生产/独立向量最大2.862e−14；formal pass；F4/T4独立direct1e−10未过 |
+| 完整物理/唯一VERIFY | FLAT解析PASS；四原式/能量/共享周期切向E通过；四场增量FAIL |
+| 独立保存数组判定 | COLLECT01重算四FAIL，零差/伪PASS/错库存测试通过 |
+| 最终字节文档 | 收口后单次紧凑合同与尾部见最终交付索引；GitHub视觉NOT_VERIFIED |
+
+[回应](../response_v62.md) · [独立checker](records/independent_saved_pair_checks_v62.json) · [费用](records/resource_costs_final_v62.json)。旧测试与负结果不改。
+
+---
+
 # Task042 V61：面接口扩充的完整场与实际成本
 
 保留宏内部r2-p6，只新增x/y面内部切向协商方向；两份独立完整三维解及原式/恢复/828模式/体吸收完成，未释放z面和宏边缺陷分列。不是NN训练，原尺寸/2TB48h/NN20未资格。

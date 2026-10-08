@@ -1,0 +1,170 @@
+{
+  "pairs": {
+    "T4_T5": {
+      "regions": {
+        "air": {
+          "cells": 480,
+          "error_squared": {
+            "E_total": 6.290995239201445e-06,
+            "H_total": 6.187077585046558e-06,
+            "curl_total": 0.0004984816992918931,
+            "E_scattered": 6.2909952392014445e-06,
+            "H_scattered": 6.187077585046557e-06,
+            "curl_scattered": 0.0004984816992918931
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.5247710983352194,
+            "H_total": 0.5200167024772199,
+            "curl_total": 0.5200167024772206,
+            "E_scattered": 0.5247710983352193,
+            "H_scattered": 0.5200167024772199,
+            "curl_scattered": 0.5200167024772206
+          }
+        },
+        "substrate": {
+          "cells": 192,
+          "error_squared": {
+            "E_total": 5.575339648144512e-07,
+            "H_total": 6.002846358354107e-07,
+            "curl_total": 4.83638521122245e-05,
+            "E_scattered": 5.575339648144512e-07,
+            "H_scattered": 6.002846358354108e-07,
+            "curl_scattered": 4.836385211222451e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.04650738078002548,
+            "H_total": 0.050453228132991,
+            "curl_total": 0.05045322813299109,
+            "E_scattered": 0.04650738078002548,
+            "H_scattered": 0.05045322813299101,
+            "curl_scattered": 0.05045322813299109
+          }
+        },
+        "Si_grating": {
+          "cells": 264,
+          "error_squared": {
+            "E_total": 4.631613110155748e-06,
+            "H_total": 4.618154741587077e-06,
+            "curl_total": 0.0003720764111222816,
+            "E_scattered": 4.631613110155748e-06,
+            "H_scattered": 4.618154741587077e-06,
+            "curl_scattered": 0.00037207641112228166
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.3863516989704091,
+            "H_total": 0.3881505552886287,
+            "curl_total": 0.38815055528862874,
+            "E_scattered": 0.3863516989704091,
+            "H_scattered": 0.3881505552886287,
+            "curl_scattered": 0.38815055528862874
+          }
+        },
+        "notch_air": {
+          "cells": 24,
+          "error_squared": {
+            "E_total": 5.079325991743239e-07,
+            "H_total": 4.923270021055135e-07,
+            "curl_total": 3.966589997351593e-05,
+            "E_scattered": 5.079325991743237e-07,
+            "H_scattered": 4.923270021055136e-07,
+            "curl_scattered": 3.966589997351593e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.04236982191434742,
+            "H_total": 0.041379514101159906,
+            "curl_total": 0.04137951410115988,
+            "E_scattered": 0.04236982191434741,
+            "H_scattered": 0.04137951410115991,
+            "curl_scattered": 0.04137951410115987
+          }
+        }
+      },
+      "physical_reference_cell_sha256": "4495550d412f5b2c8fcd3b5dea10922b100b27659e31b397fcedc6a83cb3ed4a",
+      "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+    },
+    "T5_TH3": {
+      "regions": {
+        "air": {
+          "cells": 3840,
+          "error_squared": {
+            "E_total": 3.3453912830286435e-07,
+            "H_total": 3.576292777757156e-07,
+            "curl_total": 2.881354688892736e-05,
+            "E_scattered": 3.345391283028644e-07,
+            "H_scattered": 3.5762927777571556e-07,
+            "curl_scattered": 2.8813546888927373e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.535184164558789,
+            "H_total": 0.5498672018354548,
+            "curl_total": 0.5498672018354526,
+            "E_scattered": 0.5351841645587893,
+            "H_scattered": 0.5498672018354546,
+            "curl_scattered": 0.5498672018354528
+          }
+        },
+        "substrate": {
+          "cells": 1536,
+          "error_squared": {
+            "E_total": 2.5549519790045834e-08,
+            "H_total": 2.7501812609958596e-08,
+            "curl_total": 2.2157715165157753e-06,
+            "E_scattered": 2.5549519790045844e-08,
+            "H_scattered": 2.7501812609958596e-08,
+            "curl_scattered": 2.2157715165157758e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.04087324096610571,
+            "H_total": 0.042284974091871805,
+            "curl_total": 0.0422849740918718,
+            "E_scattered": 0.04087324096610573,
+            "H_scattered": 0.04228497409187179,
+            "curl_scattered": 0.042284974091871805
+          }
+        },
+        "Si_grating": {
+          "cells": 2112,
+          "error_squared": {
+            "E_total": 2.4547936775486854e-07,
+            "H_total": 2.4655845616947437e-07,
+            "curl_total": 1.9864770809273843e-05,
+            "E_scattered": 2.4547936775486854e-07,
+            "H_scattered": 2.4655845616947437e-07,
+            "curl_scattered": 1.9864770809273843e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.3927094298798178,
+            "H_total": 0.37909202855534363,
+            "curl_total": 0.3790920285553437,
+            "E_scattered": 0.39270942987981783,
+            "H_scattered": 0.3790920285553435,
+            "curl_scattered": 0.3790920285553437
+          }
+        },
+        "notch_air": {
+          "cells": 192,
+          "error_squared": {
+            "E_total": 1.952358898074347e-08,
+            "H_total": 1.870254190175687e-08,
+            "curl_total": 1.506830121348063e-06,
+            "E_scattered": 1.952358898074346e-08,
+            "H_scattered": 1.8702541901756872e-08,
+            "curl_scattered": 1.506830121348064e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.03123316459529052,
+            "H_total": 0.028755795517331418,
+            "curl_total": 0.028755795517331376,
+            "E_scattered": 0.0312331645952905,
+            "H_scattered": 0.028755795517331414,
+            "curl_scattered": 0.028755795517331397
+          }
+        }
+      },
+      "physical_reference_cell_sha256": "3fccc441ed56f0a2dc3572366c981e8ad4bd202909b45970e9d51500ad2154d1",
+      "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+    }
+  },
+  "new_FE_calls": 0,
+  "mask": "frozen physical material and true NOTCH cell center, never selected from error"
+}

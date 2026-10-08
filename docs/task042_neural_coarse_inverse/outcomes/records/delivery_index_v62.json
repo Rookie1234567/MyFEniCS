@@ -1,0 +1,30 @@
+{
+  "status": "science complete; final-byte documentation and closure metadata to be sealed after single DOCS01",
+  "authority": "b39df0051e6a0501528de54bf02987021188702e",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "current_clean_consumer_source": "fc5855eed95ae4298fadb6dc6646c8c83246ef8d",
+  "original_producers": {
+    "F4": "8027ac9e680b2ba04c20f9977442d11f0f9daa12",
+    "T4": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+    "T5": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+    "TH3": "2c9fa66e9c320329bb630d3c28fdab1d01574915"
+  },
+  "records": [
+    "array_inventory_v62.json",
+    "decision_and_not_run_v62.json",
+    "independent_saved_pair_checks_v62.json",
+    "physical_error_regions_v62.json",
+    "raw_archive_index_v62.json",
+    "repair_journal_v62.json",
+    "resource_costs_v62.json",
+    "run_index_v62.json",
+    "scientific_checks_v62.json",
+    "selective_merge_v62.json",
+    "source_bindings_v62.json",
+    "storage_lifecycle_deployment_v62.json",
+    "target_gap_v62.json"
+  ],
+  "final_cost": "resource_costs_final_v62.json",
+  "final_live_tail": "final_settlement_tail_v62.json",
+  "GitHub_visual": "NOT_VERIFIED"
+}

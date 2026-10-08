@@ -1,0 +1,633 @@
+{
+  "cases": {
+    "F4": {
+      "nnz": 9307708,
+      "actual_independent_FE": 39616,
+      "actual_rows": 40444,
+      "actual_native_coefficients": 42568,
+      "local_basis_dimension": 84,
+      "numeric_plan": {
+        "symbolic_estimate_mb": 990,
+        "numeric_memory_allocation_cap_mb": 1980,
+        "current_whole_tree_rss_bytes": 1583820800,
+        "factor_workspace_estimate_times_two_bytes": 1980000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 5711304448,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "symbolic_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 0
+        },
+        "modified": false
+      },
+      "numeric_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 1980
+        },
+        "modified": false
+      },
+      "factor_info": {
+        "infog": {
+          "1": 0,
+          "2": 0,
+          "3": 39068328,
+          "4": 473248,
+          "5": 1652,
+          "6": 1310,
+          "7": 4,
+          "8": 100,
+          "9": 39069432,
+          "10": 473250,
+          "11": 1652,
+          "12": 178,
+          "13": 1,
+          "14": 0,
+          "15": 0,
+          "16": 990,
+          "17": 990,
+          "18": 1485,
+          "19": 1485,
+          "20": 39068328
+        },
+        "rinfog": {
+          "1": 32900078754.0,
+          "2": 59103901.0,
+          "3": 32902592010.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 625.093248,
+          "16": 0.0,
+          "17": 666.555914,
+          "18": 1336.817701,
+          "19": 7.874982753518678e-05,
+          "20": 7.874982753518678e-05
+        }
+      },
+      "backend_reported_factor_items": 39069432,
+      "backend_reported_factor_decimal_MB": 625.093248,
+      "factor_item_nnz_ratio_derived": 4.197535204155524,
+      "input_owner_snapshot": {
+        "event": "object_owner_snapshot",
+        "elapsed_s": 160.66772908507846,
+        "RSS_bytes": 1015177216,
+        "owner_role": "production_full_sparse_and_boundary",
+        "unique_visible_numpy_owner_bytes": 372773792,
+        "unique_owner_count": 12,
+        "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+      },
+      "release_snapshot": {
+        "event": "global_body_augmented_and_factor_released",
+        "elapsed_s": 213.86644743196666,
+        "RSS_bytes": 567754752
+      },
+      "persisted_solution_bytes": 4682018,
+      "persisted_boundary_bytes": {
+        "q47": 72764940,
+        "q63": 72764940
+      },
+      "deployment": {
+        "status": "measured_complete",
+        "T_N1_process_chain_seconds": 432.848144949181,
+        "T_N1_observed_start_to_final_cleanup_seconds": 670.654265,
+        "receipts": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/F4_one_run/receipt.json",
+            "sha256": "f912c2a526127352c37c47a61fc6b5ba484b1071b79f6ac3350c995e6464bf5b",
+            "role": "F4",
+            "command": [
+              "python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v62_tetra_flat_p4.dat"
+            ],
+            "source_sha": "8027ac9e680b2ba04c20f9977442d11f0f9daa12",
+            "start_utc": "2026-10-08T04:31:29.034314+00:00",
+            "end_utc": "2026-10-08T04:36:58.823557+00:00",
+            "elapsed_seconds": 329.78928003902547,
+            "exit_code": 0
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/F4_one_run_audit_repair/receipt.json",
+            "sha256": "a0dbd2fd2f653bd46491e23937e61eaa8c7cb369da90ed33b5a97f4460a11423",
+            "role": "F4",
+            "command": [
+              "python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v62_tetra_flat_p4_audit_repair.dat"
+            ],
+            "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+            "start_utc": "2026-10-08T04:40:56.629763+00:00",
+            "end_utc": "2026-10-08T04:42:39.688579+00:00",
+            "elapsed_seconds": 103.05886491015553,
+            "exit_code": 0
+          }
+        ],
+        "single_process_complete_N1": false,
+        "saved_vector_resume": true,
+        "initial_numerical_objects_fresh": true,
+        "post_resume_new_numeric_factors": 0,
+        "recovery_chain_includes_intervening_repair_and_wait": true,
+        "process_sum_excludes_intervening_control_CPU": "unknown; observed elapsed envelope is separate",
+        "OS_JIT_caches_not_cleared": true,
+        "full_N1_includes_independent_audit_outputs_IO_cleanup": true,
+        "recovery_no_condensation": "all native FE reconstructed with actual periodic P",
+        "research_comparisons_not_included": true,
+        "speed_ratio_same_accuracy": "not_granted_without_complete_matched_accuracy_control"
+      },
+      "global_finite_LU_present": true,
+      "static_condensation": false,
+      "symbolic_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_flat_p4_20261008T043129805592Z/h_symbolic_capacity.json",
+        "sha256": "391c2bfd9fe1ffb19676de44a601e4ab9f4e34359b0d0ed7c4ca54f0778fe0cd"
+      },
+      "numeric_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_flat_p4_20261008T043129805592Z/h_numeric_factor_info.json",
+        "sha256": "0cec0082c7bb30e738b03e4ed454745e1b736ae710843bba57e0869e800d447c"
+      },
+      "memory_scopes": "backend factor load, visible numpy unique owners, sampled whole-tree RSS and disk payload are distinct"
+    },
+    "T4": {
+      "nnz": 9307708,
+      "actual_independent_FE": 39616,
+      "actual_rows": 40444,
+      "actual_native_coefficients": 42568,
+      "local_basis_dimension": 84,
+      "numeric_plan": {
+        "symbolic_estimate_mb": 990,
+        "numeric_memory_allocation_cap_mb": 1980,
+        "current_whole_tree_rss_bytes": 1581060096,
+        "factor_workspace_estimate_times_two_bytes": 1980000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 5708543744,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "symbolic_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 0
+        },
+        "modified": false
+      },
+      "numeric_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 1980
+        },
+        "modified": false
+      },
+      "factor_info": {
+        "infog": {
+          "1": 0,
+          "2": 0,
+          "3": 39068328,
+          "4": 473248,
+          "5": 1652,
+          "6": 1310,
+          "7": 4,
+          "8": 100,
+          "9": 39070936,
+          "10": 473258,
+          "11": 1652,
+          "12": 177,
+          "13": 5,
+          "14": 0,
+          "15": 0,
+          "16": 990,
+          "17": 990,
+          "18": 1485,
+          "19": 1485,
+          "20": 39068328
+        },
+        "rinfog": {
+          "1": 32900078754.0,
+          "2": 59105057.0,
+          "3": 32903409018.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 625.093248,
+          "16": 0.0,
+          "17": 666.58001,
+          "18": 1336.817701,
+          "19": 8.565670015077157e-05,
+          "20": 8.565670015077157e-05
+        }
+      },
+      "backend_reported_factor_items": 39070936,
+      "backend_reported_factor_decimal_MB": 625.093248,
+      "factor_item_nnz_ratio_derived": 4.197696790659956,
+      "input_owner_snapshot": {
+        "event": "object_owner_snapshot",
+        "elapsed_s": 175.57812162092887,
+        "RSS_bytes": 1013350400,
+        "owner_role": "production_full_sparse_and_boundary",
+        "unique_visible_numpy_owner_bytes": 372773792,
+        "unique_owner_count": 12,
+        "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+      },
+      "release_snapshot": {
+        "event": "global_body_augmented_and_factor_released",
+        "elapsed_s": 237.68565023993142,
+        "RSS_bytes": 619409408
+      },
+      "persisted_solution_bytes": 4682018,
+      "persisted_boundary_bytes": {
+        "q47": 72764940,
+        "q63": 72764940
+      },
+      "deployment": {
+        "status": "measured_complete",
+        "T_N1_process_chain_seconds": 357.76129656797275,
+        "T_N1_observed_start_to_final_cleanup_seconds": 357.761251,
+        "receipts": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/T4_one_run/receipt.json",
+            "sha256": "3db1be87b0260f05316015711c324b5023a4e91fce8992d06a832dec367c2988",
+            "role": "T4",
+            "command": [
+              "python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v62_tetra_notch_p4.dat"
+            ],
+            "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+            "start_utc": "2026-10-08T04:43:36.902972+00:00",
+            "end_utc": "2026-10-08T04:49:34.664223+00:00",
+            "elapsed_seconds": 357.76129656797275,
+            "exit_code": 0
+          }
+        ],
+        "single_process_complete_N1": true,
+        "saved_vector_resume": false,
+        "initial_numerical_objects_fresh": true,
+        "post_resume_new_numeric_factors": null,
+        "recovery_chain_includes_intervening_repair_and_wait": false,
+        "process_sum_excludes_intervening_control_CPU": "unknown; observed elapsed envelope is separate",
+        "OS_JIT_caches_not_cleared": true,
+        "full_N1_includes_independent_audit_outputs_IO_cleanup": true,
+        "recovery_no_condensation": "all native FE reconstructed with actual periodic P",
+        "research_comparisons_not_included": true,
+        "speed_ratio_same_accuracy": "not_granted_without_complete_matched_accuracy_control"
+      },
+      "global_finite_LU_present": true,
+      "static_condensation": false,
+      "symbolic_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_notch_p4_20261008T044337654518Z/h_symbolic_capacity.json",
+        "sha256": "78dd414a85b12f734f9165db087f4e489b1b5400d2b3d28a80852cdae0535978"
+      },
+      "numeric_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_notch_p4_20261008T044337654518Z/h_numeric_factor_info.json",
+        "sha256": "d4ac8f3cb3a770c1a99308d7ac57ef92722ffc01a61bb848ab71f7abd572bc91"
+      },
+      "memory_scopes": "backend factor load, visible numpy unique owners, sampled whole-tree RSS and disk payload are distinct"
+    },
+    "T5": {
+      "nnz": 22757388,
+      "actual_independent_FE": 73680,
+      "actual_rows": 74508,
+      "actual_native_coefficients": 78170,
+      "local_basis_dimension": 140,
+      "numeric_plan": {
+        "symbolic_estimate_mb": 2224,
+        "numeric_memory_allocation_cap_mb": 4448,
+        "current_whole_tree_rss_bytes": 3128328192,
+        "factor_workspace_estimate_times_two_bytes": 4448000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 9723811840,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "symbolic_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 0
+        },
+        "modified": false
+      },
+      "numeric_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 4448
+        },
+        "modified": false
+      },
+      "factor_info": {
+        "infog": {
+          "1": 0,
+          "2": 0,
+          "3": 88709832,
+          "4": 844462,
+          "5": 2535,
+          "6": 1568,
+          "7": 4,
+          "8": 100,
+          "9": 88709832,
+          "10": 844462,
+          "11": 2535,
+          "12": 289,
+          "13": 0,
+          "14": 0,
+          "15": 0,
+          "16": 2224,
+          "17": 2224,
+          "18": 3336,
+          "19": 3336,
+          "20": 88709832
+        },
+        "rinfog": {
+          "1": 104137700018.0,
+          "2": 156812007.0,
+          "3": 104137700018.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 1419.357312,
+          "16": 0.0,
+          "17": 1518.00179,
+          "18": 2973.259265,
+          "19": 2.3677943234661733e-05,
+          "20": 2.3677943234661733e-05
+        }
+      },
+      "backend_reported_factor_items": 88709832,
+      "backend_reported_factor_decimal_MB": 1419.357312,
+      "factor_item_nnz_ratio_derived": 3.8980673880499817,
+      "input_owner_snapshot": {
+        "event": "object_owner_snapshot",
+        "elapsed_s": 656.7732101290021,
+        "RSS_bytes": 1731387392,
+        "owner_role": "production_full_sparse_and_boundary",
+        "unique_visible_numpy_owner_bytes": 911169760,
+        "unique_owner_count": 12,
+        "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+      },
+      "release_snapshot": {
+        "event": "global_body_augmented_and_factor_released",
+        "elapsed_s": 838.6256791159976,
+        "RSS_bytes": 828395520
+      },
+      "persisted_solution_bytes": 8571058,
+      "persisted_boundary_bytes": {
+        "q47": 125796652,
+        "q63": 125796652
+      },
+      "deployment": {
+        "status": "measured_complete",
+        "T_N1_process_chain_seconds": 985.8055474220309,
+        "T_N1_observed_start_to_final_cleanup_seconds": 985.805505,
+        "receipts": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/T5_one_run/receipt.json",
+            "sha256": "49e8dbad8c40b991baf287cdeb38bdff11f0a9eec14118952b577e0098284c13",
+            "role": "T5",
+            "command": [
+              "python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v62_tetra_notch_p5.dat"
+            ],
+            "source_sha": "40af0ff568ab6a5d221142a659a09c6b15fc026b",
+            "start_utc": "2026-10-08T04:52:40.720102+00:00",
+            "end_utc": "2026-10-08T05:09:06.525607+00:00",
+            "elapsed_seconds": 985.8055474220309,
+            "exit_code": 0
+          }
+        ],
+        "single_process_complete_N1": true,
+        "saved_vector_resume": false,
+        "initial_numerical_objects_fresh": true,
+        "post_resume_new_numeric_factors": null,
+        "recovery_chain_includes_intervening_repair_and_wait": false,
+        "process_sum_excludes_intervening_control_CPU": "unknown; observed elapsed envelope is separate",
+        "OS_JIT_caches_not_cleared": true,
+        "full_N1_includes_independent_audit_outputs_IO_cleanup": true,
+        "recovery_no_condensation": "all native FE reconstructed with actual periodic P",
+        "research_comparisons_not_included": true,
+        "speed_ratio_same_accuracy": "not_granted_without_complete_matched_accuracy_control"
+      },
+      "global_finite_LU_present": true,
+      "static_condensation": false,
+      "symbolic_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_notch_p5_20261008T045241486970Z/h_symbolic_capacity.json",
+        "sha256": "0aa7695853f9800f68c6638d972c15b326150cc8af6498c2ccdc6cd6b16298c1"
+      },
+      "numeric_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_notch_p5_20261008T045241486970Z/h_numeric_factor_info.json",
+        "sha256": "b2b636d3053bc82e69d6d7f8099df9a8ea71bf8ed0a3e2a689b7faa1102fbf7d"
+      },
+      "memory_scopes": "backend factor load, visible numpy unique owners, sampled whole-tree RSS and disk payload are distinct"
+    },
+    "TH3": {
+      "nnz": 19517436,
+      "actual_independent_FE": 143424,
+      "actual_rows": 144252,
+      "actual_native_coefficients": 150252,
+      "local_basis_dimension": 45,
+      "numeric_plan": {
+        "symbolic_estimate_mb": 4603,
+        "numeric_memory_allocation_cap_mb": 9206,
+        "current_whole_tree_rss_bytes": 2979131392,
+        "factor_workspace_estimate_times_two_bytes": 9206000000,
+        "future_workspace_reserve_bytes": 2147483648,
+        "planned_simultaneous_bytes": 14332615040,
+        "limit_bytes": 68719476736,
+        "admitted": true,
+        "estimate_units": "decimal MB",
+        "classification": "symbolic prediction plus bounded allocation, not measured peak"
+      },
+      "symbolic_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 0
+        },
+        "modified": false
+      },
+      "numeric_controls": {
+        "icntl": {
+          "7": 7,
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 9206
+        },
+        "modified": false
+      },
+      "factor_info": {
+        "infog": {
+          "1": 0,
+          "2": 0,
+          "3": 212452812,
+          "4": 1911474,
+          "5": 3795,
+          "6": 5361,
+          "7": 4,
+          "8": 100,
+          "9": 212453298,
+          "10": 1911476,
+          "11": 3795,
+          "12": 316,
+          "13": 1,
+          "14": 0,
+          "15": 0,
+          "16": 4603,
+          "17": 4603,
+          "18": 6904,
+          "19": 6904,
+          "20": 212452812
+        },
+        "rinfog": {
+          "1": 403841751468.0,
+          "2": 444639538.0,
+          "3": 403842840837.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 3399.244992,
+          "16": 0.0,
+          "17": 3493.243218,
+          "18": 6595.348981,
+          "19": 7.940776335824812e-05,
+          "20": 7.940776335824812e-05
+        }
+      },
+      "backend_reported_factor_items": 212453298,
+      "backend_reported_factor_decimal_MB": 3399.244992,
+      "factor_item_nnz_ratio_derived": 10.885307783255957,
+      "input_owner_snapshot": {
+        "event": "object_owner_snapshot",
+        "elapsed_s": 285.0865288700443,
+        "RSS_bytes": 1793085440,
+        "owner_role": "production_full_sparse_and_boundary",
+        "unique_visible_numpy_owner_bytes": 782408608,
+        "unique_owner_count": 12,
+        "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+      },
+      "release_snapshot": {
+        "event": "global_body_augmented_and_factor_released",
+        "elapsed_s": 432.7864828319289,
+        "RSS_bytes": 943112192
+      },
+      "persisted_solution_bytes": 16833622,
+      "persisted_boundary_bytes": {
+        "q47": 148676684,
+        "q63": 148676684
+      },
+      "deployment": {
+        "status": "measured_complete",
+        "T_N1_process_chain_seconds": 744.2073954700027,
+        "T_N1_observed_start_to_final_cleanup_seconds": 744.207364,
+        "receipts": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/TH3_one_run/receipt.json",
+            "sha256": "63bd74068e3863c1c37196136e5fce95a7dffe02ba3446e1b679f7b4835221bc",
+            "role": "TH3",
+            "command": [
+              "python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v62_tetra_notch_h2_p3.dat"
+            ],
+            "source_sha": "2c9fa66e9c320329bb630d3c28fdab1d01574915",
+            "start_utc": "2026-10-08T05:13:39.287158+00:00",
+            "end_utc": "2026-10-08T05:26:03.494522+00:00",
+            "elapsed_seconds": 744.2073954700027,
+            "exit_code": 0
+          }
+        ],
+        "single_process_complete_N1": true,
+        "saved_vector_resume": false,
+        "initial_numerical_objects_fresh": true,
+        "post_resume_new_numeric_factors": null,
+        "recovery_chain_includes_intervening_repair_and_wait": false,
+        "process_sum_excludes_intervening_control_CPU": "unknown; observed elapsed envelope is separate",
+        "OS_JIT_caches_not_cleared": true,
+        "full_N1_includes_independent_audit_outputs_IO_cleanup": true,
+        "recovery_no_condensation": "all native FE reconstructed with actual periodic P",
+        "research_comparisons_not_included": true,
+        "speed_ratio_same_accuracy": "not_granted_without_complete_matched_accuracy_control"
+      },
+      "global_finite_LU_present": true,
+      "static_condensation": false,
+      "symbolic_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_notch_h2_p3_20261008T051340024957Z/h_symbolic_capacity.json",
+        "sha256": "0c6d515e0c88cc523504fe39d683f29de2cc8f28d6966762992a95b3b22bc310"
+      },
+      "numeric_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v62/task042_v62_tetra_notch_h2_p3_20261008T051340024957Z/h_numeric_factor_info.json",
+        "sha256": "9d72f6a39f32f02bd06363a2bc6ef7ee4365d56f4be23098e95c181b4f31e633"
+      },
+      "memory_scopes": "backend factor load, visible numpy unique owners, sampled whole-tree RSS and disk payload are distinct"
+    }
+  },
+  "cold_N1_vs_research_separate": true,
+  "same_accuracy_speedup": "NOT_QUALIFIED"
+}

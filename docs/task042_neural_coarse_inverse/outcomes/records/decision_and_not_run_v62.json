@@ -1,0 +1,42 @@
+{
+  "classification": "NO_CROSS_REFERENCE_AGREEMENT",
+  "new_complete_solves": 4,
+  "new_numeric_factors": 4,
+  "science_queue_frozen": {
+    "path": "tmp/task042/v62/scientific_queue_frozen.json",
+    "sha256": "9b361c3863cbecb0d2093b0f29efa1f8fbf39de3bef8aace9904a5468ac04a83"
+  },
+  "not_run": [
+    {
+      "stage": "F5",
+      "reason": "F4 formal original and complete analytic gates passed after saved-only audit correction"
+    },
+    {
+      "stage": "fifth scientific repair solve",
+      "reason": "no confirmed equation error; no additional PDE needed"
+    },
+    {
+      "stage": "TH3 versus old R7/FXY",
+      "reason": "TH3 is not an accuracy-qualified best new reference; fixed two T5 historical comparisons completed"
+    },
+    {
+      "stage": "original-size PDE, training and adjacent worktrees",
+      "reason": "not authorized in V62"
+    }
+  ],
+  "ordinary_failures_preserved": true,
+  "same_accuracy_performance_ratio": false,
+  "NN20": false,
+  "accuracy_reference": "not established",
+  "next_unique_pilot": {
+    "name": "same 7680 tetra / p4 / 828 NOTCH h-p cross check",
+    "independent_FE_derived": 314624,
+    "full_rows_derived": 315452,
+    "current_200000_row_permission_exceeded": true,
+    "new_contract_and_actual_graph_symbolic_admission_required": true,
+    "factor_fill": "unknown",
+    "time": "unknown",
+    "RSS": "unknown",
+    "not_started": true
+  }
+}

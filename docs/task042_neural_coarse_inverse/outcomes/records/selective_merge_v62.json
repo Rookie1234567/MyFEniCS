@@ -1,0 +1,95 @@
+{
+  "merge_approved": false,
+  "ordinary_defaults_changed": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/independent_tetra_reference.py",
+        "src/solvers/independent_tetra_fields.py"
+      ],
+      "behavior": "explicit opt-in finite uncondensed tetra reference only; global LU present; no production accuracy qualification",
+      "dependencies": [
+        "Task035 tetra mesh/Floquet",
+        "PUBLIC_BASIX",
+        "fixed_phase_fem",
+        "scattering_anchor and independent modes"
+      ],
+      "tests": "8 targeted methods plus all four fresh full FE cases; FLAT analytic pass, NOTCH accuracy fails",
+      "order": 1
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py",
+        "src/io/independent_tetra_reference.py"
+      ],
+      "behavior": "V62 namespace/schema opt-in; default resource budgets unchanged; original watchdog retained",
+      "dependencies": [
+        "existing qualified activation and process tree supervision"
+      ],
+      "tests": "8 actual dat validations and 13 supervised runs before final document check",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_independent_tetra.py",
+        "benchmarks/collect_independent_tetra.py",
+        "benchmarks/qualify_independent_tetra.py",
+        "benchmarks/collect_common_weak_phase.py",
+        "src/test/test_independent_tetra_reference.py",
+        "src/test/test_independent_tetra_saved_checks.py"
+      ],
+      "behavior": "independent saved-array verdict; hashes, complete consumption, cost scopes and live tails; no PDE in checker",
+      "dependencies": [
+        "actual frozen integrals/240 points/828 physical modes",
+        "existing incremental archive and documentation consumer"
+      ],
+      "tests": "positive zero difference, credible negative, forged verdicts and wrong inventory; four actual saved pairs reproduced",
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v62.md",
+        "docs/task042_neural_coarse_inverse/outcomes/independent_tetra_reference_v62.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v62.json"
+      ],
+      "behavior": "preserve all history; full arrays and 17632-entry incremental raw index ignored; append current summaries only",
+      "dependencies": [
+        "hash-bound scientific producers and final settlement"
+      ],
+      "tests": "final-byte documentation contract after writing",
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/independent_tetra_scope.py",
+        "src/solvers/independent_tetra_study.py",
+        "input/task042_neural_coarse_inverse/v62_*.dat",
+        "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json"
+      ],
+      "behavior": "finite authority campaign; not a scalable target solve or ordinary default",
+      "dependencies": [
+        "frozen Review V60 and independent MPI1 source"
+      ],
+      "tests": "actual F4/T4/T5/TH3 complete results and unique VERIFY",
+      "order": 5
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "tmp/task042/v62",
+        "benchmarks/artifacts/task042/v62",
+        "results/task042/task042_v62_*"
+      ],
+      "behavior": "large original arrays, logs, JIT and transient workspaces; ignored evidence only",
+      "dependencies": [],
+      "tests": "inventory/digest in compact references",
+      "order": null
+    }
+  ]
+}

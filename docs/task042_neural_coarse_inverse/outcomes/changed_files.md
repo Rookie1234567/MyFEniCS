@@ -1,3 +1,11 @@
+# V62文件与依赖分组
+
+新的标准未凝聚tetra小核/物理求值/独立PUBLIC_BASIX在src/solvers；薄scope/study/dat/namespace接现有runner与监督。保存checker仅消费积分/240复向量/828物理模式，不重算PDE；轻量准入修复不改已返回物理解。主矩阵未用15表/raw/旧LU/宏迹。默认不变，有限reference全局LU存在，不授production资格。
+
+[依赖顺序与行为](records/selective_merge_v62.json) · [source](records/source_bindings_v62.json) · [交付](records/delivery_index_v62.json)。source与文档HEAD分列，旧全部历史逐字保留。
+
+---
+
 # Task042 V61：面接口扩充的完整场与实际成本
 
 保留宏内部r2-p6，只新增x/y面内部切向协商方向；两份独立完整三维解及原式/恢复/828模式/体吸收完成，未释放z面和宏边缺陷分列。不是NN训练，原尺寸/2TB48h/NN20未资格。

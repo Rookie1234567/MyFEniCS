@@ -1,0 +1,17 @@
+{
+  "new_representation": "FULL_UNCONDENSED_TETRA_N1CURL_PHASE_UFL",
+  "global_finite_factor_present": true,
+  "previous_target_planning": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v61.json",
+    "sha256": "58b8ca7de1a7c6117a655fee6842e953e9a1058f02549aeffe48c618989da199"
+  },
+  "target_accuracy_mesh": "unknown",
+  "target_modes": "unknown",
+  "target_PC_factor_fill": "unknown",
+  "target_iterations": "unknown",
+  "target_N1": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_2TB48h_qualified": false,
+  "NN20": false,
+  "next_pilot_basis": "actual independent field agreement, not fewer DOFs alone"
+}

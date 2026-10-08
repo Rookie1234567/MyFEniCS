@@ -1,0 +1,11 @@
+{
+  "full_incremental_index": {
+    "path": "tmp/task042/v62/aux_post_COLLECT01/records/raw_archive_index_v62.json",
+    "sha256": "c9803bfaef6a02a96c9d3c562d072edf566eca0b55e238a3519f9cedfdd60c99",
+    "bytes": 8528126,
+    "files": 17632
+  },
+  "raw_byte_archive_is_ignored": true,
+  "parent_indexes_not_repeated": true,
+  "live_tail": "final_settlement_tail_v62.json"
+}

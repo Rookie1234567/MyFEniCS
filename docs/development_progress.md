@@ -1,3 +1,11 @@
+# Task042 V62：独立完整四面体场已取得，准确性限制已实测
+
+用标准完整相位弱式和真实tetra Piola求F4/T4/T5/TH3，保留全部内部与828端口，仅压缩周期重复；绕开六面体15表/凝聚/宏迹链。解析FLAT约1e−7通过，formal原式均通过，T5/TH3散射E/H约8.82e−4/8.99e−4仍超1e−4；T5更近FXY但新空间仍不稳定。最高采样峰6.8138GiB，T4/T5/TH3完整N1=357.7613/985.8055/744.2074s，无同准确性性能比。无NN训练/邻支运行/目标资格。
+
+[完整回应](task042_neural_coarse_inverse/response_v62.md) · [专题](task042_neural_coarse_inverse/outcomes/independent_tetra_reference_v62.md) · [最终费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v62.json)。只建议一个下一h/p交叉pilot，不自动执行；以下历史逐字保留。
+
+---
+
 # Task042 V61：面接口扩充的完整场与实际成本
 
 保留宏内部r2-p6，只新增x/y面内部切向协商方向；两份独立完整三维解及原式/恢复/828模式/体吸收完成，未释放z面和宏边缺陷分列。不是NN训练，原尺寸/2TB48h/NN20未资格。

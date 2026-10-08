@@ -1,0 +1,424 @@
+{
+  "pairs": {
+    "T4_T5": {
+      "fields": {
+        "E_total": 0.0005546093489595366,
+        "H_total": 0.0005525684632327509,
+        "curl_total": 0.0005525684632327505,
+        "E_scattered": 0.003860795782969431,
+        "H_scattered": 0.003846640785186552,
+        "curl_scattered": 0.003846640785186552
+      },
+      "selected": {
+        "E_total": 0.0007412931223396558,
+        "H_total": 0.000954227430161891,
+        "curl_total": 0.0009542274301618866,
+        "E_scattered": 0.005123818108727862,
+        "H_scattered": 0.006595829506205014,
+        "curl_scattered": 0.006595829506204984
+      },
+      "selected_component_error_fractions": {
+        "E_total": [
+          0.024387105389757156,
+          0.9206785344303758,
+          0.05493436017986716
+        ],
+        "H_total": [
+          0.22106082384829231,
+          0.08782619083519597,
+          0.6911129853165117
+        ],
+        "curl_total": [
+          0.22106082384829442,
+          0.08782619083519681,
+          0.6911129853165088
+        ],
+        "E_scattered": [
+          0.02438710538975716,
+          0.9206785344303757,
+          0.054934360179867185
+        ],
+        "H_scattered": [
+          0.22106082384829234,
+          0.087826190835196,
+          0.6911129853165117
+        ],
+        "curl_scattered": [
+          0.22106082384829448,
+          0.08782619083519684,
+          0.6911129853165087
+        ]
+      },
+      "quadrature_operation_scaled": 6.902150843216044e-16,
+      "mode_amplitude_relative": 0.00034117767207671727,
+      "mode_power_max_absolute": 4.165663922139906e-06,
+      "power_differences": {
+        "R_total": 5.205464341656585e-07,
+        "T_total": 5.979145474288572e-07,
+        "A_balance": 1.1184609816083935e-06,
+        "A_volume": 1.1184643910235048e-06
+      },
+      "energies": [
+        9.28590537796481e-13,
+        4.338085446420337e-12
+      ],
+      "worst_modes": {
+        "outgoing_amplitude_at_boundary": {
+          "physical_key": [
+            "bottom",
+            -2,
+            0,
+            "s",
+            -0.5185185185185185
+          ],
+          "absolute": 0.0001892837692098461,
+          "difference": [
+            -6.918183360891471e-05,
+            -0.00017618802225121525
+          ]
+        },
+        "power": {
+          "physical_key": [
+            "bottom",
+            0,
+            0,
+            "s",
+            -0.5185185185185185
+          ],
+          "absolute": 4.165663922139906e-06,
+          "difference": [
+            4.165663922139906e-06,
+            0.0
+          ]
+        }
+      },
+      "pass_gate": false,
+      "published_gate_matches_recalculation": true,
+      "classification": "SPACE_INCREMENT_FAIL",
+      "full_integral_rows": 960,
+      "parent_array_sha256": [
+        "5c22ee4a4033e5ce59245734d7158aa18c83c4f055425f19a35594b673dc831f",
+        "4495550d412f5b2c8fcd3b5dea10922b100b27659e31b397fcedc6a83cb3ed4a"
+      ],
+      "new_FE_calls": 0,
+      "new_factor": 0,
+      "new_solve": 0
+    },
+    "T5_TH3": {
+      "fields": {
+        "E_total": 0.00012664393510897779,
+        "H_total": 0.000129193209181993,
+        "curl_total": 0.0001291932091819933,
+        "E_scattered": 0.0008816147058347806,
+        "H_scattered": 0.0008993733235893115,
+        "curl_scattered": 0.0008993733235893149
+      },
+      "selected": {
+        "E_total": 0.00022592014415198622,
+        "H_total": 0.00031113859722264073,
+        "curl_total": 0.000311138597222638,
+        "E_scattered": 0.001560694228520841,
+        "H_scattered": 0.0021523441668747424,
+        "curl_scattered": 0.0021523441668747237
+      },
+      "selected_component_error_fractions": {
+        "E_total": [
+          0.05195914860155974,
+          0.873253378803237,
+          0.07478747259520328
+        ],
+        "H_total": [
+          0.09290207882972513,
+          0.12309102998445601,
+          0.7840068911858189
+        ],
+        "curl_total": [
+          0.0929020788297268,
+          0.1230910299844582,
+          0.784006891185815
+        ],
+        "E_scattered": [
+          0.05195914860155972,
+          0.8732533788032371,
+          0.07478747259520332
+        ],
+        "H_scattered": [
+          0.09290207882972518,
+          0.12309102998445605,
+          0.7840068911858189
+        ],
+        "curl_scattered": [
+          0.09290207882972684,
+          0.12309102998445826,
+          0.7840068911858149
+        ]
+      },
+      "quadrature_operation_scaled": 5.469360948134639e-16,
+      "mode_amplitude_relative": 9.448900493574736e-05,
+      "mode_power_max_absolute": 4.395751782709789e-07,
+      "power_differences": {
+        "R_total": 2.442321882512033e-07,
+        "T_total": 6.271494390475141e-08,
+        "A_balance": 3.069471321559547e-07,
+        "A_volume": 3.069496293528484e-07
+      },
+      "energies": [
+        4.338085446420337e-12,
+        1.8407497748285095e-12
+      ],
+      "worst_modes": {
+        "outgoing_amplitude_at_boundary": {
+          "physical_key": [
+            "top",
+            -6,
+            0,
+            "s",
+            6.7407407407407405
+          ],
+          "absolute": 5.480719088022406e-05,
+          "difference": [
+            7.483933842057609e-06,
+            5.429382014952549e-05
+          ]
+        },
+        "power": {
+          "physical_key": [
+            "top",
+            0,
+            0,
+            "s",
+            6.7407407407407405
+          ],
+          "absolute": 4.395751782709789e-07,
+          "difference": [
+            4.395751782709789e-07,
+            0.0
+          ]
+        }
+      },
+      "pass_gate": false,
+      "published_gate_matches_recalculation": true,
+      "classification": "SPACE_INCREMENT_FAIL",
+      "full_integral_rows": 7680,
+      "parent_array_sha256": [
+        "4495550d412f5b2c8fcd3b5dea10922b100b27659e31b397fcedc6a83cb3ed4a",
+        "3fccc441ed56f0a2dc3572366c981e8ad4bd202909b45970e9d51500ad2154d1"
+      ],
+      "new_FE_calls": 0,
+      "new_factor": 0,
+      "new_solve": 0
+    },
+    "FXY_T5": {
+      "fields": {
+        "E_total": 0.00013218965649795266,
+        "H_total": 0.0001309305699756503,
+        "curl_total": 0.00013093056997565106,
+        "E_scattered": 0.0009202103594483569,
+        "H_scattered": 0.0009114578627045468,
+        "curl_scattered": 0.0009114578627045499
+      },
+      "selected": {
+        "E_total": 0.00012315111175802688,
+        "H_total": 0.00013158330478932928,
+        "curl_total": 0.0001315833047893249,
+        "E_scattered": 0.0008512204922988955,
+        "H_scattered": 0.0009095326929620752,
+        "curl_scattered": 0.0009095326929620454
+      },
+      "selected_component_error_fractions": {
+        "E_total": [
+          0.12304252997509799,
+          0.849329122688283,
+          0.027628347336618935
+        ],
+        "H_total": [
+          0.2806471002001408,
+          0.056423633765934955,
+          0.6629292660339242
+        ],
+        "curl_total": [
+          0.2806471002001595,
+          0.056423633765938674,
+          0.6629292660339018
+        ],
+        "E_scattered": [
+          0.12304252997509775,
+          0.8493291226882832,
+          0.027628347336618925
+        ],
+        "H_scattered": [
+          0.28064710020014094,
+          0.056423633765935,
+          0.662929266033924
+        ],
+        "curl_scattered": [
+          0.28064710020015965,
+          0.05642363376593871,
+          0.6629292660339018
+        ]
+      },
+      "quadrature_operation_scaled": 2.808529696443168e-15,
+      "mode_amplitude_relative": 0.00011180100682330295,
+      "mode_power_max_absolute": 4.6325107982969627e-07,
+      "power_differences": {
+        "R_total": 2.121952200756505e-07,
+        "T_total": 2.6052195956083324e-08,
+        "A_balance": 1.861430241056894e-07,
+        "A_volume": 1.8613839893738549e-07
+      },
+      "energies": [
+        2.87214696470528e-13,
+        4.338085446420337e-12
+      ],
+      "worst_modes": {
+        "outgoing_amplitude_at_boundary": {
+          "physical_key": [
+            "bottom",
+            -2,
+            0,
+            "s",
+            -0.5185185185185185
+          ],
+          "absolute": 6.194020291250754e-05,
+          "difference": [
+            -6.191610940164998e-05,
+            1.727464444067656e-06
+          ]
+        },
+        "power": {
+          "physical_key": [
+            "bottom",
+            0,
+            0,
+            "s",
+            -0.5185185185185185
+          ],
+          "absolute": 4.6325107982969627e-07,
+          "difference": [
+            -4.6325107982969627e-07,
+            0.0
+          ]
+        }
+      },
+      "pass_gate": false,
+      "published_gate_matches_recalculation": true,
+      "classification": "SPACE_INCREMENT_FAIL",
+      "full_integral_rows": 7680,
+      "parent_array_sha256": [
+        "4b666f329640b5567f5724a3859e9492c3b18fa4c0a2c3f8ea862423ef7198e1",
+        "4495550d412f5b2c8fcd3b5dea10922b100b27659e31b397fcedc6a83cb3ed4a"
+      ],
+      "new_FE_calls": 0,
+      "new_factor": 0,
+      "new_solve": 0
+    },
+    "R7_T5": {
+      "fields": {
+        "E_total": 0.004889436728885625,
+        "H_total": 0.004885182008293872,
+        "curl_total": 0.004885182008293876,
+        "E_scattered": 0.03403678055444158,
+        "H_scattered": 0.03400762368200419,
+        "curl_scattered": 0.03400762368200423
+      },
+      "selected": {
+        "E_total": 0.003882419426733255,
+        "H_total": 0.003929175974761323,
+        "curl_total": 0.00392917597476132,
+        "E_scattered": 0.02683528332434459,
+        "H_scattered": 0.02715932702228622,
+        "curl_scattered": 0.027159327022286205
+      },
+      "selected_component_error_fractions": {
+        "E_total": [
+          0.007976807938381182,
+          0.9916210331660449,
+          0.0004021588955739024
+        ],
+        "H_total": [
+          0.003678516373419198,
+          0.0005917926182903862,
+          0.9957296910082905
+        ],
+        "curl_total": [
+          0.0036785163734192067,
+          0.0005917926182903872,
+          0.9957296910082905
+        ],
+        "E_scattered": [
+          0.007976807938381182,
+          0.9916210331660449,
+          0.0004021588955739024
+        ],
+        "H_scattered": [
+          0.003678516373419197,
+          0.000591792618290386,
+          0.9957296910082905
+        ],
+        "curl_scattered": [
+          0.0036785163734192067,
+          0.0005917926182903872,
+          0.9957296910082905
+        ]
+      },
+      "quadrature_operation_scaled": 1.6225635517591063e-12,
+      "mode_amplitude_relative": 0.0009374343598681094,
+      "mode_power_max_absolute": 3.161430073969629e-05,
+      "power_differences": {
+        "R_total": 1.362544085260764e-05,
+        "T_total": 5.884093482122488e-06,
+        "A_balance": 1.950953433471625e-05,
+        "A_volume": 1.9509530250483298e-05
+      },
+      "energies": [
+        2.537969834293108e-13,
+        4.338085446420337e-12
+      ],
+      "worst_modes": {
+        "outgoing_amplitude_at_boundary": {
+          "physical_key": [
+            "bottom",
+            -7,
+            0,
+            "s",
+            -0.5185185185185185
+          ],
+          "absolute": 0.0008749017443851726,
+          "difference": [
+            -0.0008338521134625092,
+            -0.00026484658805112933
+          ]
+        },
+        "power": {
+          "physical_key": [
+            "top",
+            0,
+            0,
+            "s",
+            6.7407407407407405
+          ],
+          "absolute": 3.161430073969629e-05,
+          "difference": [
+            3.161430073969629e-05,
+            0.0
+          ]
+        }
+      },
+      "pass_gate": false,
+      "published_gate_matches_recalculation": true,
+      "classification": "SPACE_INCREMENT_FAIL",
+      "full_integral_rows": 960,
+      "parent_array_sha256": [
+        "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+        "4495550d412f5b2c8fcd3b5dea10922b100b27659e31b397fcedc6a83cb3ed4a"
+      ],
+      "new_FE_calls": 0,
+      "new_factor": 0,
+      "new_solve": 0
+    }
+  },
+  "new_FE_calls": 0,
+  "new_factor": 0,
+  "new_solve": 0,
+  "source_consumer": "saved actual integrals, six complex fields, 240 fixed points and 828 physical keys"
+}
