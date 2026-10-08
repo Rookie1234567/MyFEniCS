@@ -382,11 +382,16 @@ def _factor(
     matrix: PETSc.Mat,
     *,
     stage_factory: Callable[..., Any] | None = None,
+    stage_identity: str | None = None,
 ) -> Any:
     if stage_factory is not None:
         if not callable(stage_factory):
             raise TypeError("stage_factory must be callable or None")
-        return stage_factory(matrix, icntl14=100)
+        return stage_factory(
+            matrix,
+            icntl14=100,
+            stage_identity=stage_identity or "one_cell_trace_schur",
+        )
 
     ksp = PETSc.KSP().create(matrix.getComm())
     ksp.setType(PETSc.KSP.Type.PREONLY)
@@ -888,6 +893,7 @@ def build_one_cell_two_port_schur_action(
     rows: EndpointActiveRows,
     *,
     stage_factory: Callable[..., Any] | None = None,
+    stage_identity: str | None = None,
 ) -> OneCellTwoPortSchurAction:
     """Build the research-only exact action without a dense port square."""
 
@@ -898,7 +904,11 @@ def build_one_cell_two_port_schur_action(
     )
     factor = None
     try:
-        factor = _factor(A_ii, stage_factory=stage_factory)
+        factor = _factor(
+            A_ii,
+            stage_factory=stage_factory,
+            stage_identity=stage_identity,
+        )
         nnz = int(A_ii.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM).get("nz_used", 0.0))
         return OneCellTwoPortSchurAction(
             A_pp=A_pp,

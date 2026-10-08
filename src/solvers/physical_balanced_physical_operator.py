@@ -1097,6 +1097,13 @@ class P4CondensedExactFactor:
     def factor(self):
         return self.inverse.factor
 
+    def complete_numeric(self) -> Mapping[str, Any]:
+        """Complete an explicitly pending staged P4 factor on the same handle."""
+
+        if self._destroyed:
+            raise RuntimeError("P4 factor has been destroyed")
+        return self.factor.complete_numeric()
+
     @property
     def last_port_solution(self) -> np.ndarray:
         return np.array(self.inverse.last_port_solution, copy=True)
@@ -1271,6 +1278,14 @@ class P4CondensedExactFactor:
         The observer runs synchronously on every rank. PETSc vectors in its
         mapping are borrowed and must not be retained, modified, or destroyed.
         """
+
+        if self._destroyed:
+            raise RuntimeError("P4 factor has been destroyed")
+        factor_diagnostics = self.inverse.factor.diagnostics
+        if factor_diagnostics.get("factor_state") == "symbolic_live_pending_numeric":
+            raise RuntimeError(
+                "P4 factor is symbolic only; complete staged numeric before apply"
+            )
 
         diagnostic_correction_steps = _diagnostic_correction_count(
             diagnostic_correction_steps
@@ -1594,6 +1609,7 @@ class P4CondensedExactFactor:
                 "last_solve": dict(self._last_solve_audit),
                 "factor_solve_count": int(self.inverse.solve_count),
             }
+        factor_diagnostics = self.inverse.factor.diagnostics
         metadata = {
             "schema": "task041.h1c.p4_condensed_exact_factor.v1",
             "full_storage_rows": int(self.full_rows),
@@ -1603,6 +1619,11 @@ class P4CondensedExactFactor:
             "retained_matrix_rows": int(condensed.active_rows + condensed.appended_rows),
             "factor_creation_count": 1,
             "factor_solve_count": int(self.inverse.solve_count),
+            "factor_state": factor_diagnostics.get("factor_state"),
+            "stage_identity": factor_diagnostics.get("stage_identity"),
+            "numeric_factor_ready": factor_diagnostics.get(
+                "numeric_factor_ready"
+            ),
             "last_solve": dict(self._last_solve_audit),
             "physical_action": self.physical_action.audit,
             "condensed_build": dict(condensed.build_audit),
@@ -2470,6 +2491,9 @@ def _build_p4_condensed_from_physical(
     *,
     factor_solver_type: str = "mumps",
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    stage_factory: Callable[..., Any] | None = None,
+    stage_identity: str | None = None,
+    defer_numeric: bool = False,
     owns_physical_action: bool,
 ) -> P4CondensedExactFactor:
     """Build the opt-in p4 factor around an explicit physical action."""
@@ -2478,6 +2502,16 @@ def _build_p4_condensed_from_physical(
         raise TypeError("condensed p4 factor requires a physical p4 action")
     if int(physical_action.cfg.nedelec_degree) != 4:
         raise ValueError("condensed p4 factor requires a p4 physical action")
+    if type(defer_numeric) is not bool:
+        raise TypeError("defer_numeric must be an exact bool")
+    if defer_numeric and (
+        stage_factory is None
+        or stage_identity
+        not in {"task041.w0p7.p4.bottom", "task041.w0p7.p4.top"}
+    ):
+        raise ValueError(
+            "pending numeric is limited to explicitly staged registered W0.7 P4 sides"
+        )
 
     physical = physical_action
     condensed = None
@@ -2538,6 +2572,17 @@ def _build_p4_condensed_from_physical(
             factor_solver_type=factor_solver_type,
             factor_only_storage=True,
             lifecycle_callback=lifecycle,
+            stage_factory=(
+                None
+                if stage_factory is None
+                else lambda matrix, *, icntl14, defer_numeric=False: stage_factory(
+                    matrix,
+                    icntl14=icntl14,
+                    stage_identity=stage_identity,
+                    **({"defer_numeric": True} if defer_numeric else {}),
+                )
+            ),
+            allow_pending_numeric=defer_numeric,
         )
         inverse = P4CellCondensedInverse(
             condensed,
@@ -2571,6 +2616,9 @@ def build_p4_condensed_exact_factor_from_action(
     *,
     factor_solver_type: str = "mumps",
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    stage_factory: Callable[..., Any] | None = None,
+    stage_identity: str | None = None,
+    defer_numeric: bool = False,
     owns_physical_action: bool = False,
 ) -> P4CondensedExactFactor:
     """Build a condensed factor while explicitly borrowing or owning action."""
@@ -2579,6 +2627,9 @@ def build_p4_condensed_exact_factor_from_action(
         physical_action,
         factor_solver_type=factor_solver_type,
         lifecycle_callback=lifecycle_callback,
+        stage_factory=stage_factory,
+        stage_identity=stage_identity,
+        defer_numeric=defer_numeric,
         owns_physical_action=owns_physical_action,
     )
 
@@ -2588,6 +2639,9 @@ def build_p4_condensed_exact_factor(
     *,
     factor_solver_type: str = "mumps",
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    stage_factory: Callable[..., Any] | None = None,
+    stage_identity: str | None = None,
+    defer_numeric: bool = False,
 ) -> P4CondensedExactFactor:
     """Build the opt-in p4 factor without materializing a full FE matrix."""
 
@@ -2595,10 +2649,23 @@ def build_p4_condensed_exact_factor(
         raise TypeError("condensed p4 factor requires a p6 side system")
     if int(side_system.cfg.nedelec_degree) != 6:
         raise ValueError("condensed p4 factor requires a p6 side system")
+    if type(defer_numeric) is not bool:
+        raise TypeError("defer_numeric must be an exact bool")
+    if defer_numeric and (
+        stage_factory is None
+        or stage_identity
+        not in {"task041.w0p7.p4.bottom", "task041.w0p7.p4.top"}
+    ):
+        raise ValueError(
+            "pending numeric is limited to explicitly staged registered W0.7 P4 sides"
+        )
     physical = _build_matching_p4_action(side_system)
     return _build_p4_condensed_from_physical(
         physical,
         factor_solver_type=factor_solver_type,
         lifecycle_callback=lifecycle_callback,
+        stage_factory=stage_factory,
+        stage_identity=stage_identity,
+        defer_numeric=defer_numeric,
         owns_physical_action=True,
     )

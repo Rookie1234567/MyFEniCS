@@ -2505,9 +2505,28 @@ class SideBalancedInverse:
             result[name] = None if value is None or old is None else value - old
         return result
 
+    def complete_staged_p4_numeric(self) -> Mapping[str, Any]:
+        """Complete the registered W0.7 P4 factor on this side's same handle."""
+
+        if self._destroyed or self._p4_factor is None:
+            raise RuntimeError("BAL_H side inverse is destroyed")
+        if self._apply_in_progress:
+            raise RuntimeError("cannot complete P4 numeric during side apply")
+        if self._p4_inverse_backend != "cell_condensed":
+            raise RuntimeError("staged P4 numeric requires the cell-condensed backend")
+        if not callable(getattr(self._p4_factor, "complete_numeric", None)):
+            raise TypeError("BAL_H P4 factor lacks staged numeric completion")
+        return self._p4_factor.complete_numeric()
+
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._apply_in_progress:
             raise RuntimeError("BAL_H side inverse apply is already in progress")
+        if self._p4_factor is not None and self._p4_factor.diagnostics.get(
+            "factor_state"
+        ) == "symbolic_live_pending_numeric":
+            raise RuntimeError(
+                "BAL_H side P4 factor is symbolic only; complete staged numeric before apply"
+            )
         self._apply_in_progress = True
         self._active_ksp_iteration = None
         try:
@@ -2929,6 +2948,10 @@ class SideBalancedInverse:
                 else {}
             ),
             "p4_factor": p4_diagnostics,
+            "p4_factor_state": p4_diagnostics.get("factor_state"),
+            "p4_numeric_factor_ready": p4_diagnostics.get(
+                "numeric_factor_ready"
+            ),
             "destroyed": bool(self._destroyed),
             "ksp_destroyed": not bool(nested_ksp_live),
         }
@@ -3020,6 +3043,8 @@ def build_side_balanced_inverse(
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     performance_profile: str | None = None,
     p4_inverse_backend: str = "full",
+    factor_stage_factory: Callable[..., Any] | None = None,
+    defer_p4_numeric: bool = False,
     support_policy: str = "legacy",
     volume_action_context_factory: Callable[..., Any] | None = None,
     reuse_primal_route_plan: bool = False,
@@ -3031,6 +3056,8 @@ def build_side_balanced_inverse(
         raise TypeError("reuse_primal_route_plan must be a boolean")
     if not isinstance(reuse_leading_ph_dual, bool):
         raise TypeError("reuse_leading_ph_dual must be a boolean")
+    if type(defer_p4_numeric) is not bool:
+        raise TypeError("defer_p4_numeric must be an exact bool")
     if reuse_leading_ph_dual and diagnostic_callback is not None:
         raise ValueError(
             "leading PH reuse is incompatible with mutable vector diagnostics"
@@ -3039,6 +3066,22 @@ def build_side_balanced_inverse(
     if p4_inverse_backend not in _P4_INVERSE_BACKENDS:
         raise ValueError(
             "p4_inverse_backend must be 'full' or 'cell_condensed'"
+        )
+    if factor_stage_factory is not None and (
+        not callable(factor_stage_factory)
+        or p4_inverse_backend != "cell_condensed"
+        or side_system.side not in {"bottom", "top"}
+    ):
+        raise ValueError(
+            "staged factors are limited to registered cell-condensed BAL_H sides"
+        )
+    if defer_p4_numeric and (
+        factor_stage_factory is None
+        or p4_inverse_backend != "cell_condensed"
+        or side_system.side not in {"bottom", "top"}
+    ):
+        raise ValueError(
+            "pending P4 numeric is limited to explicitly staged cell-condensed bottom/top sides"
         )
     if performance_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
         raise ValueError("unsupported Task041 performance profile")
@@ -3115,6 +3158,13 @@ def build_side_balanced_inverse(
             p4_factor = build_p4_condensed_exact_factor(
                 side_system,
                 lifecycle_callback=nested_lifecycle_callback,
+                stage_factory=factor_stage_factory,
+                stage_identity=(
+                    f"task041.w0p7.p4.{side_system.side}"
+                    if factor_stage_factory is not None
+                    else None
+                ),
+                defer_numeric=defer_p4_numeric,
             )
         else:
             p4_factor = build_p4_exact_factor(

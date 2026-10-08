@@ -40,23 +40,32 @@ from benchmarks.task041_balh_workflow import (
     validate_balh_producer_packet,
 )
 from benchmarks.task041_exact_side_workflow import (
+    _TASK041_W0P7_STAGE_HISTORY,
     Task041ModePrepError,
+    _complete_w0p7_pending_p4_numeric_before_admission,
     _merge_representative_parts,
     _task041_backend_pair_layout_identity,
     _task041_case_contract,
     _task041_common_failure_details,
     _task041_form_p4_residual_identity,
+    _task041_latest_supervisor_memory_sample,
     _task041_p4_backend_matrix_source,
     _task041_p4_backend_release_audit,
     _task041_p4_correction_callback_stage,
     _task041_p4_cross_run_component_hashes_match,
     _task041_rank_numa_observed_backend,
     _task041_rank_numa_pair_sample_stage,
+    _task041_resolve_supervisor_memory_binding,
+    _task041_resource_tree_covers_ranks,
     _task041_selected_p4_pair_entries,
     _task041_stream_array_metadata,
     _task041_top_causal_node_gate_status,
     _task041_top_causal_packet_budget,
     _task041_top_causal_pc_indices,
+    _task041_w0p7_amd_control_errors,
+    _task041_w0p7_amd_symbolic_source_model,
+    _task041_w0p7_analysis_ordering_errors,
+    _task041_w0p7_stage_budget_projection,
     _task041_worker_time_stop_enforced,
     _Task041TopCausalPacketCapture,
     run_task041_consumer,
@@ -77,6 +86,8 @@ from src.io.input_loader import InputError
 from src.io.input_validation import (
     TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
     TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+    TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+    TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
     TASK041_BALH_W0P7NM_P6_PILOT_MATERIAL_RECORD_SHA256,
     TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
     load_and_resolve,
@@ -607,6 +618,551 @@ def test_task041_2nm_balh_case_uses_low_level_profile_without_v2_contract(tmp_pa
         _specification(old_path).as_jsonable()["output"]["diffraction_order_max_m"]
         == 25
     )
+
+
+def test_task041_w0p7_stage_sampler_binds_service_invocation_and_live_rank_tree(
+    tmp_path,
+):
+    results = tmp_path / "results"
+    service_root = results / "service-supervision"
+    consumer_root = results / "numerical-run" / "consumer"
+    service_root.mkdir(parents=True)
+    consumer_root.mkdir(parents=True)
+    invocation = "a" * 32
+    source_sha = "b" * 40
+    service_pid = 2800
+    rank_pids = list(range(2810, 2818))
+    outer_tree = [service_pid, *rank_pids]
+    manifest = {
+        "schema": "task041.service.launch.v1",
+        "supervision_root": str(service_root.resolve()),
+        "invocation_id": invocation,
+        "source_sha": source_sha,
+        "unit": "task041-w0p7-fixture.service",
+        "parent_pid": service_pid,
+    }
+    (service_root / "launch_manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True) + "\n"
+    )
+    old_wrong_path = consumer_root.parent / "memory_stages.jsonl"
+    old_wrong_path.write_bytes(b"")
+    sample = {
+        "phase": "public_command",
+        "sample_role": "phase_running",
+        "sample_root_pid": service_pid,
+        "process_tree_pids": outer_tree,
+        "process_tree_rss_bytes": 7_000_000_000,
+        "cgroup_memory_current_bytes": 6_000_000_000,
+        "memory_authority_bytes": 7_000_000_000,
+        "all_status_readable": True,
+        "cgroup_dedicated_job_cgroup": True,
+    }
+    service_log = service_root / "memory_stages.jsonl"
+    service_log.write_text(json.dumps(sample, sort_keys=True) + "\n")
+
+    binding = _task041_resolve_supervisor_memory_binding(
+        consumer_root,
+        expected_invocation_id=invocation,
+        expected_source_sha=source_sha,
+        results_root=results,
+    )
+    assert binding["supervision_root"] == str(service_root.resolve())
+    assert binding["memory_stages_path"] == str(service_log.resolve())
+    assert binding["memory_stages_path"] != str(old_wrong_path.resolve())
+    assert old_wrong_path.stat().st_size == 0
+
+    live_sample = _task041_latest_supervisor_memory_sample(
+        {**binding, "results_root": str(results.resolve())}
+    )
+    assert live_sample["invocation_id"] == invocation
+    assert live_sample["source_sha"] == source_sha
+    assert live_sample["sample_root_pid"] == service_pid
+    assert _task041_resource_tree_covers_ranks(
+        outer_tree, service_pid, rank_pids
+    )
+    assert not _task041_resource_tree_covers_ranks(
+        outer_tree[:-1], service_pid, rank_pids
+    )
+    assert not _task041_resource_tree_covers_ranks(
+        outer_tree, service_pid + 1, rank_pids
+    )
+    with pytest.raises(Task041ModePrepError, match="bound public supervisor service record"):
+        _task041_latest_supervisor_memory_sample(
+            {
+                **binding,
+                "results_root": str(results.resolve()),
+                "memory_stages_path": str(old_wrong_path.resolve()),
+            }
+        )
+    with pytest.raises(Task041ModePrepError, match="exactly one service root"):
+        _task041_resolve_supervisor_memory_binding(
+            consumer_root,
+            expected_invocation_id="c" * 32,
+            expected_source_sha=source_sha,
+            results_root=results,
+        )
+    with pytest.raises(Task041ModePrepError, match="does not bind this source"):
+        _task041_resolve_supervisor_memory_binding(
+            consumer_root,
+            expected_invocation_id=invocation,
+            expected_source_sha="d" * 40,
+            results_root=results,
+        )
+
+
+def test_task041_w0p7_stage_budget_uses_source_model_without_numeric_cycle():
+    """Check source-counted AMD phases and the no-double-count policy screen."""
+    cap = TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
+    warning = TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES
+    one_cell_history = _TASK041_W0P7_STAGE_HISTORY[
+        "task041.w0p7.one_cell_traction"
+    ]
+    bottom_history = _TASK041_W0P7_STAGE_HISTORY["task041.w0p7.p4.bottom"]
+    top_history = _TASK041_W0P7_STAGE_HISTORY["task041.w0p7.p4.top"]
+    n, p = bottom_history["rows"], 8
+
+    one_cell = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.one_cell_traction",
+        history=one_cell_history,
+        global_rows=None,
+        b_live_bytes=10_000_000_000,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=None,
+        mpi_size=p,
+    )
+    assert one_cell["pass"] is True
+    assert one_cell["projected_peak_bytes"] == one_cell_history["peak"]
+
+    bottom_model = _task041_w0p7_amd_symbolic_source_model(
+        rows=n, nnz=bottom_history["nnz"], mpi_size=p
+    )
+    top_model = _task041_w0p7_amd_symbolic_source_model(
+        rows=n, nnz=top_history["nnz"], mpi_size=p
+    )
+    assert (
+        bottom_model["rows_N"],
+        bottom_model["aggregated_nnz_Z"],
+        bottom_model["mpi_size_P"],
+    ) == (64_966, 27_929_686, 8)
+    assert (
+        top_model["rows_N"],
+        top_model["aggregated_nnz_Z"],
+        top_model["mpi_size_P"],
+    ) == (64_966, 39_242_250, 8)
+    assert bottom_model["descriptor_bytes_aggregate_P_N"] == 72 * n * p
+    assert bottom_model["deterministic_parallel_graph_workspace_bytes_if_enabled"] == (
+        4 * (n + p) * p
+    )
+    assert bottom_model["phase_source_counted_bytes"]["root_graph_gather"] == (
+        48 * bottom_history["nnz"] + 4_937_660 + 72 * n * p
+    )
+    assert bottom_model["phase_formulas"]["root_graph_gather"] == (
+        "48*Z + 4937660 + 72*N*P"
+    )
+    assert bottom_model["predicted_increment_bytes"] == 1_382_983_004
+    assert bottom_model["maximum_phase"] == "root_graph_gather"
+    assert top_model["predicted_increment_bytes"] == 1_925_986_076
+    assert top_model["maximum_phase"] == "root_graph_gather"
+
+    bottom_before = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.bottom",
+        history=bottom_history,
+        global_rows=n,
+        b_live_bytes=bottom_history["before"],
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=bottom_history["nnz"],
+        mpi_size=p,
+    )
+    assert bottom_before["pass"] is True
+    assert bottom_before["stage_delta_bytes"] == 1_382_983_004
+    assert bottom_before["projected_peak_bytes"] == (
+        bottom_history["before"] + 1_382_983_004
+    )
+
+    # Top can be evaluated while bottom remains pending. The result is decided
+    # by B+Delta+W arithmetic, not by bottom numeric completion/INFOG(19).
+    top_pending_b = 45_000_000_000
+    top_pending_bottom = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=top_pending_b,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert top_pending_bottom["source_derived_symbolic_model"] == top_model
+    assert top_pending_bottom["stage_delta_bytes"] == 1_925_986_076
+    assert top_pending_bottom["bottom_INFOG19_sum_ranks_bytes_one_copy"] is None
+    assert (
+        top_pending_bottom["completed_bottom_numeric_required_for_this_gate"]
+        is False
+    )
+    assert top_pending_bottom["bottom_calibration_observation"] is None
+    assert top_pending_bottom["pass"] is (
+        top_pending_b
+        + top_pending_bottom["stage_delta_bytes"]
+        + top_pending_bottom["W_policy_reserve_bytes"]
+        <= cap
+    )
+    assert top_pending_bottom["W_policy_reserve_bytes"] == 5_322_116_301
+    assert top_pending_bottom["W_is_mumps_error_bound"] is False
+    assert top_pending_bottom["projected_peak_is_upper_bound"] is False
+
+    # Exercise the exact arithmetic boundary and one byte beyond it.
+    top_boundary_b = cap - (cap - warning) - top_model["predicted_increment_bytes"]
+    top_at_boundary = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=top_boundary_b,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    top_one_byte_over = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=top_boundary_b + 1,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert top_at_boundary["pass"] is True
+    assert top_at_boundary["screened_peak_plus_W_bytes"] == cap
+    assert top_one_byte_over["pass"] is False
+    assert top_one_byte_over["screened_peak_plus_W_bytes"] == cap + 1
+
+    # Historical top B is not substituted for fresh B and is currently too
+    # high for this predicted delta plus W; it must be rejected.
+    top_historical_b = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=top_history["before"],
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert top_historical_b["pass"] is False
+    assert top_historical_b["projected_peak_bytes"] == (
+        top_history["before"] + top_model["predicted_increment_bytes"]
+    )
+    assert top_historical_b["screened_peak_plus_W_bytes"] > cap
+
+    top_pending_too_large_b = 46_000_000_000
+    top_pending_rejected = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=top_pending_too_large_b,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert top_pending_rejected["bottom_INFOG19_sum_ranks_bytes_one_copy"] is None
+    assert (
+        top_pending_rejected["completed_bottom_numeric_required_for_this_gate"]
+        is False
+    )
+    assert top_pending_rejected["pass"] is False
+    assert top_pending_rejected["screened_peak_plus_W_bytes"] > cap
+
+    # Numeric admission is fresh B plus this factor's INFOG(17) once and W;
+    # completed-bottom INFOG(19) is not a precondition or a second addition.
+    top_numeric = _task041_w0p7_stage_budget_projection(
+        stage="after_symbolic_before_numeric",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=40_000_000_000,
+        fresh_numeric_b_bytes=40_000_000_000,
+        info17_sum_ranks_raw=7_000,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert top_numeric["pass"] is True
+    assert top_numeric["projected_peak_bytes"] == 47_000_000_000
+    assert top_numeric["fresh_numeric_B_bytes"] == 40_000_000_000
+    assert top_numeric["INFOG17_sum_ranks_bytes_one_copy"] == 7_000_000_000
+    assert top_numeric["bottom_INFOG19_sum_ranks_bytes_one_copy"] is None
+    assert "INFOG(19) is recorded only after numeric" in top_numeric[
+        "stage_delta_basis"
+    ]
+    numeric_b_mismatch = _task041_w0p7_stage_budget_projection(
+        stage="after_symbolic_before_numeric",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=39_000_000_000,
+        fresh_numeric_b_bytes=40_000_000_000,
+        info17_sum_ranks_raw=7_000,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=True,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert numeric_b_mismatch["pass"] is False
+    assert "fresh_numeric_B does not match the current live authority" in (
+        numeric_b_mismatch["reasons"]
+    )
+
+    invalid = [
+        {"rows": 0, "nnz": 1, "mpi_size": p},
+        {"rows": n + 1, "nnz": top_history["nnz"], "mpi_size": p},
+        {"rows": n, "nnz": 0, "mpi_size": p},
+        {"rows": n, "nnz": top_history["nnz"], "mpi_size": 7},
+        {"rows": n, "nnz": top_history["nnz"], "mpi_size": 17},
+    ]
+    for values in invalid:
+        with pytest.raises(Task041ModePrepError):
+            _task041_w0p7_amd_symbolic_source_model(**values)
+
+    factor_profile = {
+        "schema": "task041.w0p7.factor_mumps_options.v1",
+        "status": "queried",
+        "options_database": "PETSc active options database via public PetscOptionsGetInt/GetReal/HasName",
+        "factor_options_prefix": "",
+        "factor_solver": "MATSOLVERMUMPS",
+        "requested_factor_kind": "MAT_FACTOR_LU",
+        "comm_size": 8,
+        "comm_rank": 0,
+        "factor_prefix_error_code": 0,
+        "source_type_error_code": 0,
+        "factor_type_error_code": 0,
+        "mpi_size_error_code": 0,
+        "mpi_rank_error_code": 0,
+        "query_error_code": 0,
+        "source_matrix_type": "mpiaij",
+        "factor_matrix_type": "mumps",
+        "checked_option_count": 56,
+        "options": [],
+        "runtime_petsc_version": [3, 19, 6],
+        "bridge_compile_petsc_version": [3, 19, 6],
+        "bridge_compile_mumps_version": [5, 6, 2],
+    }
+    derived_controls = {
+        "ICNTL5": 0,
+        "ICNTL6": 7,
+        "ICNTL7": 0,
+        "ICNTL8": 77,
+        "ICNTL14": 40,
+        "ICNTL18": 3,
+        "ICNTL19": 0,
+        "ICNTL28": 1,
+        "ICNTL35": 0,
+    }
+    controls = {
+        "schema": "task041.w0p7.public_mumps_controls.v2",
+        "profile": "sequential_amd_deferred_p4",
+        "status": "explicit_requests_and_JOB_NULL_cache_readback",
+        "set_calls": {"ICNTL28": 1, "ICNTL7": 0},
+        "requested_controls": {"ICNTL7": 0, "ICNTL14": 40, "ICNTL28": 1},
+        "requested_via_factor_constructor": {
+            "ICNTL14": 40,
+            "source": "create_lu_stage(icntl14) public MatMumpsSetIcntl",
+        },
+        "cached_readback": {
+            "ICNTL7": {"value": 0, "query_error": None},
+            "ICNTL14": {"value": 40, "query_error": None},
+            "ICNTL28": {"value": 1, "query_error": None},
+        },
+        "source_derived_effective_inputs": {
+            "status": "source_derived_not_measured",
+            "controls": derived_controls,
+            "basis": "fixture-bound PETSc/MUMPS source derivation",
+        },
+        "factor_profile": factor_profile,
+        "errors": [],
+    }
+    assert _task041_w0p7_amd_control_errors(controls) == []
+    wrong_icntl28 = copy.deepcopy(controls)
+    wrong_icntl28["cached_readback"]["ICNTL28"]["value"] = 0
+    assert _task041_w0p7_amd_control_errors(wrong_icntl28)
+    wrong_distributed_input = copy.deepcopy(controls)
+    wrong_distributed_input["source_derived_effective_inputs"]["controls"][
+        "ICNTL18"
+    ] = 1
+    assert _task041_w0p7_amd_control_errors(wrong_distributed_input)
+    wrong_control_timing = copy.deepcopy(controls)
+    wrong_control_timing["status"] = "measured_before_symbolic"
+    assert _task041_w0p7_amd_control_errors(wrong_control_timing)
+    uncached_job_null_zero = copy.deepcopy(controls)
+    uncached_job_null_zero["cached_readback"]["ICNTL6"] = {
+        "value": 0,
+        "query_error": None,
+    }
+    assert _task041_w0p7_amd_control_errors(uncached_job_null_zero)
+    option_conflict = copy.deepcopy(controls)
+    option_conflict["factor_profile"]["options"] = [
+        {
+            "name": "-mat_mumps_icntl_28",
+            "kind": "icntl",
+            "index": 28,
+            "factor_prefix_present": False,
+            "factor_prefix_query_error_code": 0,
+            "factor_prefix_value": None,
+            "global_present": True,
+            "global_query_error_code": 0,
+            "global_value": 2,
+        }
+    ]
+    assert _task041_w0p7_amd_control_errors(option_conflict)
+
+    post = {
+        "schema": "task041.w0p7.post_symbolic_mumps_controls.v1",
+        "status": "measured_after_symbolic_initialization",
+        "controls": {
+            name: {"actual": value, "query_error": None}
+            for name, value in derived_controls.items()
+        },
+        "errors": [],
+    }
+    analysis = {
+        "public_mumps_control_readback": controls,
+        "post_symbolic_mumps_control_readback": post,
+        "INFOG_api_raw_by_rank": [
+            {"index": 7, "query_error_code": 0, "raw_value": 0},
+            {"index": 32, "query_error_code": 0, "raw_value": 1},
+        ],
+    }
+    assert _task041_w0p7_analysis_ordering_errors(analysis) == []
+    wrong_info32 = copy.deepcopy(analysis)
+    wrong_info32["INFOG_api_raw_by_rank"][1]["raw_value"] = 2
+    assert _task041_w0p7_analysis_ordering_errors(wrong_info32)
+    wrong_actual = copy.deepcopy(analysis)
+    wrong_actual["post_symbolic_mumps_control_readback"]["controls"][
+        "ICNTL7"
+    ]["actual"] = 7
+    assert _task041_w0p7_analysis_ordering_errors(wrong_actual)
+
+    unknown_source_path = _task041_w0p7_stage_budget_projection(
+        stage="before_symbolic",
+        identity="task041.w0p7.p4.top",
+        history=top_history,
+        global_rows=n,
+        b_live_bytes=45_000_000_000,
+        fresh_numeric_b_bytes=None,
+        info17_sum_ranks_raw=None,
+        bottom_calibration=None,
+        cap_bytes=cap,
+        warning_bytes=warning,
+        workspace_audit_complete=False,
+        global_nnz=top_history["nnz"],
+        mpi_size=p,
+    )
+    assert unknown_source_path["pass"] is False
+    assert "source path or caller-workspace audit is not complete" in (
+        unknown_source_path["reasons"]
+    )
+
+def test_task041_w0p7_pending_p4_factors_complete_bottom_top_before_admission():
+    """Check ordering with small stateful adapters, not real side operators."""
+    order = []
+
+    class PendingSide:
+        def __init__(self, side):
+            self.side = side
+            self.state = "symbolic_live_pending_numeric"
+            self.ready = False
+            order.append(f"{side}:symbolic_built")
+
+        @property
+        def diagnostics(self):
+            return {
+                "p4_factor": {
+                    "stage_identity": f"task041.w0p7.p4.{self.side}",
+                    "factor_state": self.state,
+                    "numeric_factor_ready": self.ready,
+                }
+            }
+
+        def complete_staged_p4_numeric(self):
+            order.append(f"{self.side}:numeric")
+            self.state = "numeric_ready"
+            self.ready = True
+
+        def admission_audit(self):
+            assert self.ready is True
+            order.append(f"{self.side}:admission")
+
+    # Reverse insertion order so the helper, not dict order, owns numeric order.
+    side_inverses = {
+        "top": PendingSide("top"),
+        "bottom": PendingSide("bottom"),
+    }
+    markers = []
+    completed = _complete_w0p7_pending_p4_numeric_before_admission(
+        side_inverses,
+        marker_callback=lambda event, detail: markers.append((event, dict(detail))),
+    )
+    for side in ("bottom", "top"):
+        side_inverses[side].admission_audit()
+
+    assert completed["bottom"]["numeric_factor_ready"] is True
+    assert completed["top"]["numeric_factor_ready"] is True
+    assert order == [
+        "top:symbolic_built",
+        "bottom:symbolic_built",
+        "bottom:numeric",
+        "top:numeric",
+        "bottom:admission",
+        "top:admission",
+    ]
+    assert [
+        detail["side"]
+        for event, detail in markers
+        if event == "p4_numeric_completion"
+    ] == ["bottom", "top"]
 
 
 def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypatch):

@@ -849,6 +849,7 @@ def build_exact_one_cell_traction_matrices(
     work_dir: Path,
     coupling_propagation_length_nm: float,
     one_cell_strategy: str | None = None,
+    stage_factory: Callable[..., Any] | None = None,
     local_cell_h_nm: float | None = None,
     global_axial_h_nm: float | None = None,
     global_axial_cell_count: int | None = None,
@@ -986,7 +987,16 @@ def build_exact_one_cell_traction_matrices(
             left_facets=left_facets,
             right_facets=right_facets,
         )
-        action = build_one_cell_two_port_schur_action(condensed.matrix, one_rows)
+        action = build_one_cell_two_port_schur_action(
+            condensed.matrix,
+            one_rows,
+            stage_factory=stage_factory,
+            stage_identity=(
+                "task041.w0p7.one_cell_traction"
+                if stage_factory is not None
+                else None
+            ),
+        )
         if stage_callback is not None:
             stage_callback(
                 "one_cell_factor_ready",

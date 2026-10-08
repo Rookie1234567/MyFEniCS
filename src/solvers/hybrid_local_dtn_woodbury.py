@@ -797,7 +797,10 @@ class ResearchExactFactorInverse:
         compressed_factor_profile: str | None = None,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
         stage_factory: Callable[..., Any] | None = None,
+        allow_pending_numeric: bool = False,
     ) -> None:
+        if type(allow_pending_numeric) is not bool:
+            raise TypeError("allow_pending_numeric must be an exact bool")
         if not isinstance(matrix, PETSc.Mat):
             raise TypeError("Exact research factor requires a PETSc matrix")
         if str(matrix.getType()).lower() == "python":
@@ -820,8 +823,11 @@ class ResearchExactFactorInverse:
         self.compressed_factor_profile = compressed_factor_profile
         self.factor_matrix: Any | None = None
         self._staged_factor: Any | None = None
+        self._stage_identity: str | None = None
         self._stage_analysis_info: dict[str, Any] | None = None
         self._stage_numeric_info: dict[str, Any] | None = None
+        self._stage_numeric_ready = False
+        self._allow_pending_numeric = allow_pending_numeric
         self._factor_matrix_stats: dict[str, Any] | None = None
         self._factor_matrix_owned = False
         self._ksp_created = False
@@ -842,7 +848,12 @@ class ResearchExactFactorInverse:
                 },
             )
         factor_inventory: dict[str, Any] | None = None
+        stage_pending_numeric = False
         if stage_factory is None:
+            if allow_pending_numeric:
+                raise ValueError(
+                    "pending numeric requires the explicit staged-factor path"
+                )
             # Keep the qualified default path intact: KSP/PC setup owns the
             # factor and retains its historical convergence-reason contract.
             self.ksp = PETSc.KSP().create(matrix.getComm())
@@ -870,6 +881,7 @@ class ResearchExactFactorInverse:
                 elif configured_factor is not None:
                     self._mumps_controls_requested = expected_mumps_controls
                 self.ksp.setUp()
+                self._stage_numeric_ready = True
                 if configured_factor is not None:
                     if compressed_factor_profile is None:
                         self._mumps_controls_observed = {
@@ -925,11 +937,19 @@ class ResearchExactFactorInverse:
                 "icntl_14": MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
             }
             try:
-                staged = stage_factory(
-                    matrix,
-                    icntl14=MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT,
-                )
+                if allow_pending_numeric:
+                    staged = stage_factory(
+                        matrix,
+                        icntl14=MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT,
+                        defer_numeric=True,
+                    )
+                else:
+                    staged = stage_factory(
+                        matrix,
+                        icntl14=MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT,
+                    )
                 self._staged_factor = staged
+                self._stage_identity = getattr(staged, "stage_identity", None)
                 if getattr(staged, "explicit_staged_direct_factor", False) is not True:
                     raise TypeError(
                         "stage_factory must return an explicit staged direct factor"
@@ -946,7 +966,15 @@ class ResearchExactFactorInverse:
                         "staged direct factor lacks the solve/cleanup contract"
                     )
                 self._stage_analysis_info = dict(staged.analysis_info_raw)
-                self._stage_numeric_info = dict(staged.numeric_info_raw)
+                numeric_ready = getattr(staged, "numeric_ready", None)
+                if type(numeric_ready) is not bool:
+                    raise TypeError("staged factor does not expose numeric readiness")
+                staged_numeric_info = getattr(staged, "numeric_info_raw", None)
+                self._stage_numeric_info = (
+                    None
+                    if staged_numeric_info is None
+                    else dict(staged_numeric_info)
+                )
                 get_icntl = getattr(staged, "get_mumps_icntl", None)
                 if not callable(get_icntl):
                     raise TypeError("staged factor cannot read back MUMPS ICNTL")
@@ -960,48 +988,23 @@ class ResearchExactFactorInverse:
                     raise RuntimeError(
                         "staged MUMPS ICNTL(14) was not read back exactly"
                     )
-                numeric_entries = self._stage_numeric_info.get(
-                    "INFOG_api_raw_by_rank"
-                )
-                info1 = next(
-                    (
-                        entry
-                        for entry in numeric_entries or ()
-                        if isinstance(entry, Mapping)
-                        and entry.get("index") == 1
-                    ),
-                    None,
-                )
-                if (
-                    not isinstance(info1, Mapping)
-                    or info1.get("query_error_code") != 0
-                    or isinstance(info1.get("raw_value"), bool)
-                    or not isinstance(info1.get("raw_value"), int)
-                ):
-                    raise RuntimeError("staged MUMPS INFOG(1) status is unknown")
-                self._mumps_infog["1"] = int(info1["raw_value"])
-                info2 = next(
-                    (
-                        entry
-                        for entry in numeric_entries or ()
-                        if isinstance(entry, Mapping)
-                        and entry.get("index") == 2
-                    ),
-                    None,
-                )
-                if (
-                    isinstance(info2, Mapping)
-                    and info2.get("query_error_code") == 0
-                    and isinstance(info2.get("raw_value"), int)
-                    and not isinstance(info2.get("raw_value"), bool)
-                ):
-                    self._mumps_infog["2"] = int(info2["raw_value"])
-                if self._mumps_infog["1"] < 0:
-                    raise RuntimeError(
-                        "MUMPS staged numeric factorization failed: "
-                        f"INFOG(1)={self._mumps_infog['1']}, "
-                        f"INFOG(2)={self._mumps_infog['2']}"
-                    )
+                if numeric_ready:
+                    if self._stage_numeric_info is None:
+                        raise TypeError("numeric-ready factor omitted numeric INFO")
+                    self._record_staged_numeric_info(self._stage_numeric_info)
+                else:
+                    lifecycle = staged.lifecycle
+                    if (
+                        not allow_pending_numeric
+                        or self._stage_numeric_info is not None
+                        or lifecycle.get("symbolic_completed") is not True
+                        or lifecycle.get("numeric_attempts") != 0
+                        or lifecycle.get("numeric_completed") is True
+                    ):
+                        raise RuntimeError(
+                            "staged factor returned pending numeric outside its explicit W0.7 side route"
+                        )
+                    stage_pending_numeric = True
                 if factor_only_storage:
                     self.factor_matrix = staged
                     self._factor_matrix_owned = True
@@ -1047,7 +1050,11 @@ class ResearchExactFactorInverse:
             self._ksp_destroyed = True
         if lifecycle_callback is not None:
             lifecycle_callback(
-                "factor_ready",
+                (
+                    "factor_symbolic_pending_numeric"
+                    if stage_pending_numeric
+                    else "factor_ready"
+                ),
                 {
                     "factor_solver_type": factor_solver_type,
                     "factor_inventory": factor_inventory,
@@ -1064,6 +1071,14 @@ class ResearchExactFactorInverse:
                     ),
                     "factor_matrix_owned": self._factor_matrix_owned,
                     "staged_direct_factor": self._staged_factor is not None,
+                    "factor_state": (
+                        "symbolic_live_pending_numeric"
+                        if stage_pending_numeric
+                        else "numeric_ready"
+                        if self._stage_numeric_ready
+                        else "default_ksp_ready"
+                    ),
+                    "numeric_factor_ready": bool(self._stage_numeric_ready),
                     "stage_analysis_info_raw": self._stage_analysis_info,
                     "stage_numeric_info_raw": self._stage_numeric_info,
                 },
@@ -1080,11 +1095,109 @@ class ResearchExactFactorInverse:
     def release_borrowed_matrix(self) -> None:
         if not self._factor_only_storage:
             raise ValueError("Only factor-only storage can release its borrowed matrix")
+        if self._uses_staged_factor and not self._stage_numeric_ready:
+            raise RuntimeError(
+                "source matrix keepalive cannot be released while numeric is pending"
+            )
         self.matrix = None
+
+    def complete_numeric(self) -> Mapping[str, Any]:
+        """Complete one explicitly pending numeric stage on the retained handle."""
+
+        if self._destroyed:
+            raise RuntimeError("Exact research factor has been destroyed")
+        if not self._uses_staged_factor or not self._allow_pending_numeric:
+            raise RuntimeError("this exact factor was not created for pending numeric")
+        if self._stage_numeric_ready:
+            raise RuntimeError("Exact research numeric stage is already complete")
+        if self._staged_factor is None:
+            raise RuntimeError("pending staged factor handle is unavailable")
+        numeric_info = self._staged_factor.complete_numeric()
+        self._record_staged_numeric_info(numeric_info)
+        self._stage_numeric_ready = True
+        if self._lifecycle_callback is not None:
+            self._lifecycle_callback(
+                "factor_ready",
+                {
+                    "factor_solver_type": self.factor_solver_type,
+                    "factor_only_storage": self._factor_only_storage,
+                    "factor_state": "numeric_ready",
+                    "numeric_factor_ready": True,
+                    "mumps_controls_requested": self._mumps_controls_requested,
+                    "mumps_controls_observed": self._mumps_controls_observed,
+                    "mumps_controls_verified": self._mumps_controls_verified,
+                    "stage_analysis_info_raw": self._stage_analysis_info,
+                    "stage_numeric_info_raw": self._stage_numeric_info,
+                    "factor_matrix_layout": (
+                        dict(self._staged_factor.factor_layout)
+                        if self._factor_only_storage
+                        else None
+                    ),
+                },
+            )
+        return dict(self._stage_numeric_info or {})
+
+    def _record_staged_numeric_info(
+        self, numeric_info: Mapping[str, Any]
+    ) -> None:
+        self._stage_numeric_info = dict(numeric_info)
+        numeric_entries = self._stage_numeric_info.get("INFOG_api_raw_by_rank")
+        info1 = next(
+            (
+                entry
+                for entry in numeric_entries or ()
+                if isinstance(entry, Mapping) and entry.get("index") == 1
+            ),
+            None,
+        )
+        if (
+            not isinstance(info1, Mapping)
+            or info1.get("query_error_code") != 0
+            or isinstance(info1.get("raw_value"), bool)
+            or not isinstance(info1.get("raw_value"), int)
+        ):
+            raise RuntimeError("staged MUMPS INFOG(1) status is unknown")
+        self._mumps_infog["1"] = int(info1["raw_value"])
+        info2 = next(
+            (
+                entry
+                for entry in numeric_entries or ()
+                if isinstance(entry, Mapping) and entry.get("index") == 2
+            ),
+            None,
+        )
+        if (
+            isinstance(info2, Mapping)
+            and info2.get("query_error_code") == 0
+            and isinstance(info2.get("raw_value"), int)
+            and not isinstance(info2.get("raw_value"), bool)
+        ):
+            self._mumps_infog["2"] = int(info2["raw_value"])
+        if self._mumps_infog["1"] < 0:
+            raise RuntimeError(
+                "MUMPS staged numeric factorization failed: "
+                f"INFOG(1)={self._mumps_infog['1']}, "
+                f"INFOG(2)={self._mumps_infog['2']}"
+            )
+        if self._factor_only_storage and self._staged_factor is not None:
+            self.factor_matrix = self._staged_factor
+            self._factor_matrix_owned = True
+            self._factor_matrix_stats = {
+                "source": "public PETSc Mat layout queries; not MatInfo/RSS",
+                "layout": dict(self._staged_factor.factor_layout),
+            }
+        self._stage_numeric_ready = True
+
+    def _require_numeric_ready(self) -> None:
+        if self._uses_staged_factor and not self._stage_numeric_ready:
+            raise RuntimeError(
+                "exact factor is symbolic only; complete_numeric is required before solve"
+            )
 
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
             raise RuntimeError("Exact research factor has been destroyed")
+        self._require_numeric_ready()
         operator = self.operator
         if operator is None:
             raise RuntimeError("Exact research factor has no solve operator")
@@ -1112,6 +1225,7 @@ class ResearchExactFactorInverse:
 
         if self._destroyed:
             raise RuntimeError("Exact research factor has been destroyed")
+        self._require_numeric_ready()
         if not self._factor_only_storage or self.factor_matrix is None:
             raise RuntimeError(
                 "Exact research solve_many requires a retained factor-only matrix"
@@ -1197,6 +1311,19 @@ class ResearchExactFactorInverse:
             "logical_rhs_count": int(self._logical_rhs_count),
             "mat_solve_call_count": int(self._mat_solve_call_count),
             "factor_destroyed": bool(self._destroyed),
+            "factor_state": (
+                "destroyed"
+                if self._destroyed
+                else "symbolic_live_pending_numeric"
+                if self._uses_staged_factor and not self._stage_numeric_ready
+                else "numeric_ready"
+                if self._stage_numeric_ready
+                else "default_ksp_ready"
+            ),
+            "stage_identity": (
+                self._stage_identity if self._uses_staged_factor else None
+            ),
+            "numeric_factor_ready": bool(self._stage_numeric_ready),
         }
 
         if self._uses_staged_factor:

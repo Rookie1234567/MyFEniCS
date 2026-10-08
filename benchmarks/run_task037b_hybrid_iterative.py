@@ -1822,6 +1822,7 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None,
     sampled_column_contract: Mapping[str, Any] | None = None,
     exact_one_cell_strategy: str | None = None,
+    factor_stage_factory: Callable[..., Any] | None = None,
 ) -> FrozenM10Setup:
     """Build the ordinary tail from a solver-free selected-mode packet."""
 
@@ -1979,6 +1980,7 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
         modal_traction_model=profile.internal_traction_model,
         exact_one_cell_work_dir=exact_one_cell_work_dir,
         stage_callback=detail_stage_callback,
+        stage_factory=factor_stage_factory,
         post_destroy_cleanup=post_destroy_cleanup,
         sampled_column_contract=sampled_column_contract,
         log=log,
@@ -2038,6 +2040,7 @@ def build_frozen_m10_setup(
     profile: FrozenM10Profile | Task37cProfile = FROZEN_M10,
     exact_one_cell_work_dir: Path | None = None,
     exact_one_cell_strategy: str | None = None,
+    factor_stage_factory: Callable[..., Any] | None = None,
     cfg_override: Any | None = None,
     modal_cfg_override: Any | None = None,
     detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
@@ -2089,6 +2092,13 @@ def build_frozen_m10_setup(
         raise ValueError(
             "matched_uniform_axial_cell requires the registered W0.7 "
             "p6/h0.70 M400 MPI8 exact-Schur profile at interfaces 2/22"
+        )
+    if factor_stage_factory is not None and (
+        not callable(factor_stage_factory)
+        or exact_one_cell_strategy != "matched_uniform_axial_cell"
+    ):
+        raise ValueError(
+            "a factor stage factory is limited to the registered matched W0.7 profile"
         )
     cfg = (
         deepcopy(cfg_override)
@@ -2142,6 +2152,7 @@ def build_frozen_m10_setup(
             post_destroy_cleanup=post_destroy_cleanup,
             sampled_column_contract=sampled_column_contract,
             exact_one_cell_strategy=exact_one_cell_strategy,
+            factor_stage_factory=factor_stage_factory,
         )
 
     timings: dict[str, float] = {}
@@ -2308,6 +2319,8 @@ def build_frozen_m10_setup(
     coupling_kwargs: dict[str, Any] = {}
     if exact_one_cell_strategy is not None:
         coupling_kwargs["exact_one_cell_strategy"] = exact_one_cell_strategy
+    if factor_stage_factory is not None:
+        coupling_kwargs["stage_factory"] = factor_stage_factory
     coupling = build_hybrid_internal_mode_coupling(
         cfg,
         spaces,

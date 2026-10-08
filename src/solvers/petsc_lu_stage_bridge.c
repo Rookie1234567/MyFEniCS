@@ -2,9 +2,13 @@
 #include <Python.h>
 #include <limits.h>
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <petscmat.h>
+#include <petscoptions.h>
+#include <petscpkg_version.h>
+#include <petscversion.h>
 #include <petsc4py/petsc4py.h>
 
 /*
@@ -538,6 +542,194 @@ static PyObject *LUStageFactor_get_mumps_icntl(LUStageFactor *self,
   return PyLong_FromLongLong((long long)value);
 }
 
+static int append_option_lookup(PyObject *entry, const char *scope,
+                                const char *prefix, const char *option,
+                                int is_real, int is_name)
+{
+  PetscBool found = PETSC_FALSE;
+  PetscErrorCode ierr;
+  PetscInt integer_value = 0;
+  PetscReal real_value = 0.0;
+  char key[96];
+  int key_length;
+  PyObject *value = NULL;
+
+  key_length = snprintf(key, sizeof(key), "%s_present", scope);
+  if (key_length < 0 || (size_t)key_length >= sizeof(key)) return -1;
+  if (is_name)
+    ierr = PetscOptionsHasName(NULL, prefix, option, &found);
+  else if (is_real)
+    ierr = PetscOptionsGetReal(NULL, prefix, option, &real_value, &found);
+  else
+    ierr = PetscOptionsGetInt(NULL, prefix, option, &integer_value, &found);
+  if (dict_set_bool(entry, key, found) < 0) return -1;
+
+  key_length = snprintf(key, sizeof(key), "%s_query_error_code", scope);
+  if (key_length < 0 || (size_t)key_length >= sizeof(key) ||
+      dict_set_long(entry, key, (long)ierr) < 0) return -1;
+
+  if (ierr || !found) {
+    value = Py_None;
+    Py_INCREF(value);
+  } else if (is_name) {
+    value = Py_None;
+    Py_INCREF(value);
+  } else if (is_real) {
+    value = PyFloat_FromDouble((double)real_value);
+  } else {
+    value = PyLong_FromLongLong((long long)integer_value);
+  }
+  if (!value) return -1;
+  key_length = snprintf(key, sizeof(key), "%s_value", scope);
+  if (key_length < 0 || (size_t)key_length >= sizeof(key) ||
+      PyDict_SetItemString(entry, key, value) < 0) {
+    Py_DECREF(value);
+    return -1;
+  }
+  Py_DECREF(value);
+  return 0;
+}
+
+static int append_mumps_option(PyObject *rows, const char *factor_prefix,
+                               const char *kind, PetscInt index,
+                               int is_real, const char *suffix)
+{
+  char option[64];
+  PyObject *row = NULL;
+  PetscBool factor_present = PETSC_FALSE;
+  PetscBool global_present = PETSC_FALSE;
+  long factor_error = 0;
+  long global_error = 0;
+  int option_length;
+  int status = -1;
+
+  if (suffix) {
+    option_length = snprintf(option, sizeof(option), "-%s", suffix);
+  } else {
+    option_length = snprintf(option, sizeof(option), "-mat_mumps_%s_%d", kind,
+                             (int)index);
+  }
+  if (option_length < 0 || (size_t)option_length >= sizeof(option)) return -1;
+
+  row = PyDict_New();
+  if (!row) return -1;
+  if (dict_set_string(row, "name", option) < 0 ||
+      dict_set_string(row, "kind", suffix ? "thread_setting" : kind) < 0 ||
+      dict_set_petsc_int(row, "index", suffix ? 0 : index) < 0) goto done;
+
+    if (append_option_lookup(row, "factor_prefix",
+                           factor_prefix && factor_prefix[0] ? factor_prefix : NULL,
+                             option, is_real, suffix != NULL) < 0) goto done;
+  factor_present = PyObject_IsTrue(
+      PyDict_GetItemString(row, "factor_prefix_present"));
+  if (factor_present < 0) goto done;
+  factor_error = PyLong_AsLong(
+      PyDict_GetItemString(row, "factor_prefix_query_error_code"));
+  if (PyErr_Occurred()) goto done;
+  if (append_option_lookup(row, "global", NULL, option, is_real,
+                           suffix != NULL) < 0) goto done;
+  global_present = PyObject_IsTrue(PyDict_GetItemString(row, "global_present"));
+  if (global_present < 0) goto done;
+  global_error = PyLong_AsLong(
+      PyDict_GetItemString(row, "global_query_error_code"));
+  if (PyErr_Occurred()) goto done;
+
+  if (factor_present || global_present || factor_error || global_error) {
+    if (PyList_Append(rows, row) < 0) goto done;
+  }
+  status = 0;
+
+done:
+  Py_DECREF(row);
+  return status;
+}
+
+static PyObject *LUStageFactor_mumps_options_raw(
+    LUStageFactor *self, PyObject *Py_UNUSED(ignored))
+{
+  const char *prefix = NULL;
+  MatType source_type = NULL, factor_type = NULL;
+  MPI_Comm comm;
+  PetscErrorCode prefix_error, source_type_error, factor_type_error;
+  int mpi_size = -1, mpi_rank = -1;
+  int mpi_size_error, mpi_rank_error;
+  PyObject *result = NULL, *rows = NULL;
+  PetscInt i;
+  PetscErrorCode ierr;
+  PetscInt checked = 0;
+
+  if (!self->factor || !self->source) {
+    PyErr_SetString(PyExc_RuntimeError, "factor/source handle has been destroyed");
+    return NULL;
+  }
+  prefix_error = MatGetOptionsPrefix(self->factor, &prefix);
+  source_type_error = MatGetType(self->source, &source_type);
+  factor_type_error = MatGetType(self->factor, &factor_type);
+  comm = PetscObjectComm((PetscObject)self->factor);
+  mpi_size_error = MPI_Comm_size(comm, &mpi_size);
+  mpi_rank_error = MPI_Comm_rank(comm, &mpi_rank);
+
+  result = PyDict_New();
+  rows = PyList_New(0);
+  if (!result || !rows) goto fail;
+  if (dict_set_string(result, "schema",
+                      "task041.w0p7.factor_mumps_options.v1") < 0 ||
+      dict_set_string(result, "options_database",
+                      "PETSc active options database via public PetscOptionsGetInt/GetReal/HasName") < 0 ||
+      dict_set_string(result, "factor_options_prefix",
+                      prefix && !prefix_error ? prefix : "") < 0 ||
+      dict_set_string(result, "factor_solver", "MATSOLVERMUMPS") < 0 ||
+      dict_set_string(result, "requested_factor_kind", "MAT_FACTOR_LU") < 0 ||
+      dict_set_long(result, "comm_size", (long)mpi_size) < 0 ||
+      dict_set_long(result, "comm_rank", (long)mpi_rank) < 0 ||
+      dict_set_long(result, "factor_prefix_error_code", (long)prefix_error) < 0 ||
+      dict_set_long(result, "source_type_error_code", (long)source_type_error) < 0 ||
+      dict_set_long(result, "factor_type_error_code", (long)factor_type_error) < 0 ||
+      dict_set_long(result, "mpi_size_error_code", (long)mpi_size_error) < 0 ||
+      dict_set_long(result, "mpi_rank_error_code", (long)mpi_rank_error) < 0 ||
+      dict_set_string(result, "source_matrix_type",
+                      source_type && !source_type_error ? source_type : "") < 0 ||
+      dict_set_string(result, "factor_matrix_type",
+                      factor_type && !factor_type_error ? factor_type : "") < 0) goto fail;
+
+  for (i = 1; i <= 40; ++i) {
+    if (append_mumps_option(rows, prefix, "icntl", i, 0, NULL) < 0) goto fail;
+    ++checked;
+  }
+  for (i = 1; i <= 15; ++i) {
+    if (append_mumps_option(rows, prefix, "cntl", i, 1, NULL) < 0) goto fail;
+    ++checked;
+  }
+  if (append_mumps_option(rows, prefix, "", 0, 0,
+                          "mat_mumps_use_omp_threads") < 0) goto fail;
+  ++checked;
+
+  if (prefix_error) {
+    ierr = prefix_error;
+  } else if (source_type_error) {
+    ierr = source_type_error;
+  } else if (factor_type_error) {
+    ierr = factor_type_error;
+  } else if (mpi_size_error != MPI_SUCCESS) {
+    ierr = (PetscErrorCode)mpi_size_error;
+  } else if (mpi_rank_error != MPI_SUCCESS) {
+    ierr = (PetscErrorCode)mpi_rank_error;
+  } else {
+    ierr = 0;
+  }
+  if (dict_set_long(result, "checked_option_count", (long)checked) < 0 ||
+      PyDict_SetItemString(result, "options", rows) < 0 ||
+      dict_set_string(result, "status", ierr ? "query_error" : "queried") < 0 ||
+      dict_set_long(result, "query_error_code", (long)ierr) < 0) goto fail;
+  Py_DECREF(rows);
+  return result;
+
+fail:
+  Py_XDECREF(rows);
+  Py_XDECREF(result);
+  return NULL;
+}
+
 static PyObject *LUStageFactor_set_mumps_cntl(LUStageFactor *self,
                                               PyObject *args)
 {
@@ -611,6 +803,7 @@ static const char *info_label(int infog_api, int index)
     return "global_numeric_max_rank_allocated_memory";
   if (infog_api && index == 19)
     return "global_numeric_sum_ranks_allocated_memory";
+  if (infog_api && index == 32) return "global_analysis_strategy";
   return "meaning_not_bound_by_this_record";
 }
 
@@ -624,6 +817,8 @@ static const char *info_unit(int infog_api, int index)
   if ((!infog_api && index == 15) ||
       (infog_api && (index == 16 || index == 17 || index == 18 || index == 19)))
     return "million_bytes_10^6_bytes; raw integer retained";
+  if (infog_api && index == 32)
+    return "enum; 1=sequential,2=parallel; raw integer retained";
   return "unknown; raw integer retained; no conversion";
 }
 
@@ -631,7 +826,8 @@ static const char *info_meaning_status(int infog_api, int index)
 {
   if ((!infog_api && (index == 3 || index == 4 || index == 15)) ||
       (infog_api && (index == 1 || index == 2 || index == 3 || index == 4 ||
-                     index == 16 || index == 17 || index == 18 || index == 19)))
+                     index == 16 || index == 17 || index == 18 || index == 19 ||
+                     index == 32)))
     return "verified_against_MUMPS_5.6.2_user_guide";
   return "unknown_index_meaning_raw_preserved";
 }
@@ -693,7 +889,7 @@ static PyObject *LUStageFactor_analysis_info_raw(LUStageFactor *self,
                                                  PyObject *Py_UNUSED(ignored))
 {
   static const int info_indices[] = {3, 4, 15};
-  static const int infog_indices[] = {3, 4, 5, 6, 7, 16, 17};
+  static const int infog_indices[] = {3, 4, 5, 6, 7, 16, 17, 32};
   PyObject *result = NULL;
   PyObject *info = NULL;
   PyObject *infog = NULL;
@@ -753,9 +949,9 @@ static PyObject *LUStageFactor_analysis_info_raw(LUStageFactor *self,
       dict_set_long(result, "icntl14_query_error_code",
                     (long)icntl_error) < 0 ||
       dict_set_string(result, "ordering_input",
-                      "rowperm=NULL,colperm=NULL; MUMPS/PETSc backend default") < 0 ||
+                      "rowperm=NULL,colperm=NULL; actual public ICNTL(7)/(28) and post-analysis INFOG(7)/(32) are recorded separately") < 0 ||
       dict_set_string(result, "index_documentation_status",
-                      "analysis indices INFO(3,4,15) and INFOG(3,4,16,17), plus numeric INFOG(18,19), are verified against MUMPS 5.6.2 User Guide; all returned raw values are retained") < 0 ||
+                      "analysis indices INFO(3,4,15), INFOG(3,4,7,16,17,32), plus numeric INFOG(18,19), are verified against MUMPS 5.6.2 User Guide; all returned raw values are retained") < 0 ||
       dict_set_string(result, "documentation_source",
                       "MUMPS 5.6.2 User Guide pp. 93-94 and 97-99; Ubuntu source package mumps_5.6.2.orig.tar.gz SHA256 13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a; PDF SHA256 32acdd3e09fb69f9fab16c94ae67768d15c61ac9c27abf66eb1e0e6ecd904050") < 0 ||
       dict_set_long(result, "numeric_attempts", self->numeric_attempts) < 0 ||
@@ -890,6 +1086,9 @@ static PyMethodDef LUStageFactor_methods[] = {
    METH_VARARGS, "Set one explicit MUMPS ICNTL before symbolic analysis."},
   {"get_mumps_icntl", (PyCFunction)LUStageFactor_get_mumps_icntl,
    METH_VARARGS, "Read back one MUMPS ICNTL from the live factor."},
+  {"mumps_options_raw", (PyCFunction)LUStageFactor_mumps_options_raw,
+   METH_NOARGS,
+   "Read the factor prefix, matrix types, communicator, and MUMPS option overrides through public PETSc APIs."},
   {"set_mumps_cntl", (PyCFunction)LUStageFactor_set_mumps_cntl,
    METH_VARARGS, "Set one explicit MUMPS CNTL before symbolic analysis."},
   {"get_mumps_cntl", (PyCFunction)LUStageFactor_get_mumps_cntl,
@@ -1031,7 +1230,19 @@ PyMODINIT_FUNC PyInit_petsc_lu_stage_bridge(void)
   if (PyModule_AddIntConstant(module, "petsc_int_sizeof",
                               (long)sizeof(PetscInt)) < 0 ||
       PyModule_AddIntConstant(module, "petsc_scalar_sizeof",
-                              (long)sizeof(PetscScalar)) < 0) {
+                              (long)sizeof(PetscScalar)) < 0 ||
+      PyModule_AddIntConstant(module, "petsc_version_major",
+                              PETSC_VERSION_MAJOR) < 0 ||
+      PyModule_AddIntConstant(module, "petsc_version_minor",
+                              PETSC_VERSION_MINOR) < 0 ||
+      PyModule_AddIntConstant(module, "petsc_version_subminor",
+                              PETSC_VERSION_SUBMINOR) < 0 ||
+      PyModule_AddIntConstant(module, "mumps_package_version_major",
+                              PETSC_PKG_MUMPS_VERSION_MAJOR) < 0 ||
+      PyModule_AddIntConstant(module, "mumps_package_version_minor",
+                              PETSC_PKG_MUMPS_VERSION_MINOR) < 0 ||
+      PyModule_AddIntConstant(module, "mumps_package_version_subminor",
+                              PETSC_PKG_MUMPS_VERSION_SUBMINOR) < 0) {
     goto fail;
   }
 #if defined(PETSC_USE_COMPLEX)

@@ -35,6 +35,9 @@ from benchmarks.task039_v4_selected_mode_packet import (
     task041_shortwave_selected_mode_scope,
 )
 from src.io.input_validation import (
+    TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+    TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+    TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
     TASK041_BALH_MPI_SIZE,
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MPI_SIZE,
@@ -66,6 +69,7 @@ TASK041_SHORTWAVE_CONSUMER_PROFILE = (
     "task041_3nm_exact_side_hybrid_iterative_consumer"
 )
 TASK041_CONSUMER_PHASE = "consumer"
+TASK041_W0P7_STAGE_BRIDGE_PATH_ENV = "TASK041_W0P7_STAGE_BRIDGE_PATH"
 TASK041_INPUT = "input/official/task041/5nm_p6h4_m480_mpi1.dat"
 TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
@@ -1259,9 +1263,1718 @@ def build_task041_shortwave_mode_prep_command(
     ]
 
 
-def _resource_snapshot() -> dict[str, Any]:
-    return _jsonable(resource_authority_sample(os.getpid()))
+def _resource_snapshot(root_pid: int | None = None) -> dict[str, Any]:
+    return _jsonable(resource_authority_sample(os.getpid() if root_pid is None else root_pid))
 
+
+def _task041_node0_memfree_bytes() -> int:
+    for line in Path("/sys/devices/system/node/node0/meminfo").read_text().splitlines():
+        if line.startswith("Node 0 MemFree:"):
+            fields = line.split(":", 1)[1].split()
+            if len(fields) == 2 and fields[1] == "kB":
+                return int(fields[0]) * 1024
+            break
+    raise Task041ModePrepError("node0 MemFree is unavailable or malformed")
+
+
+def _task041_infog_positive_int(
+    info_raw: Mapping[str, Any] | None, index: int
+) -> int | None:
+    entries = (
+        info_raw.get("INFOG_api_raw_by_rank") if isinstance(info_raw, Mapping) else None
+    )
+    if not isinstance(entries, list):
+        return None
+    matches = [
+        row
+        for row in entries
+        if isinstance(row, Mapping)
+        and type(row.get("index")) is int
+        and row.get("index") == index
+    ]
+    if len(matches) != 1 or type(matches[0].get("query_error_code")) is not int:
+        return None
+    entry = matches[0]
+    value = entry.get("raw_value") if entry.get("query_error_code") == 0 else None
+    return int(value) if type(value) is int and value > 0 else None
+
+
+_W0P7_RUN = "results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261007T180353.062546Z"
+_TASK041_W0P7_STAGE_HISTORY = {
+    "task041.w0p7.one_cell_traction": {
+        "icntl14": 100,
+        "rows": 15120,
+        "nnz": None,
+        "before": 852201472,
+        "peak": 34677788672,
+        "after": 34677788672,
+        "before_tree_cgroup_bytes": (852201472, 400494592),
+        "peak_tree_cgroup_bytes": (34677788672, 32707203072),
+        "after_tree_cgroup_bytes": (34677788672, 32707203072),
+        "times": (1.983604, 973.651268, 973.651268),
+        "sample_sources": ("consumer_inner_memory_stages",) * 3,
+        "window": "packet consumed to factor destroy; includes assembly and M400 column actions",
+        "budget_basis": "absolute broad-phase envelope; do not add its delta to the assembled live B",
+    },
+    "task041.w0p7.p4.bottom": {
+        "icntl14": 40,
+        "rows": 64966,
+        "nnz": 27929686,
+        "before": 24933023744,
+        "peak": 42015506432,
+        "after": 42015506432,
+        "before_tree_cgroup_bytes": (24933023744, 22888779776),
+        "peak_tree_cgroup_bytes": (42015506432, 39661305856),
+        "after_tree_cgroup_bytes": (42015506432, 39662280704),
+        "times": (1946.187205, 2237.430156, 2262.221182),
+        "sample_sources": ("consumer_inner_memory_stages",) * 3,
+        "window": "bottom port ready to factor ready",
+        "budget_basis": "observed growth after the assembled port matrix",
+    },
+    "task041.w0p7.p4.top": {
+        "icntl14": 40,
+        "rows": 64966,
+        "nnz": 39242250,
+        "before": 46439280640,
+        "peak": 53541888000,
+        "after": None,
+        "before_tree_cgroup_bytes": (46439280640, 44137930752),
+        "peak_tree_cgroup_bytes": (53541888000, 51219562496),
+        "times": (2329.231413, 2348.701744, None),
+        "sample_sources": (
+            "consumer_inner_memory_stages",
+            "service_outer_memory_stages",
+            None,
+        ),
+        "window": "top port ready to controlled stop during incomplete factor construction",
+        "budget_basis": "observed growth is a lower bound, not a full factor/numeric peak",
+        "last_sample": (52890804224, 2347.906314),
+        "port_marker": (
+            2329.365189,
+            44159320064,
+            "consumer marker cgroup sample; separate timestamp",
+        ),
+    },
+}
+_TASK041_W0P7_STAGE_EVIDENCE = {
+    "invocation": "10d761079d90473dadce79d3f7eb6457",
+    "source_sha": "5025fdd31a1edc4ce34a8df3150a12ca90009c01",
+    "consumer_markers": {
+        "path": f"{_W0P7_RUN}/consumer/markers.jsonl",
+        "sha256": "b1f338ca12f9abf8c6fd5f8e9e03112086b29c4d2007a8f73e18074989121996",
+    },
+    "consumer_inner_memory_stages": {
+        "path": f"{_W0P7_RUN}/numerical_output/log/memory_stages.jsonl",
+        "sha256": "1519477ff8d8f31f246295c0505a3e0dbacc7ec5d22ba2aa7493727018056fb7",
+    },
+    "service_outer_memory_stages": {
+        "path": "results/task041_w0p7_matched_cell_warm_consumer_run_map10_11_12_14_15_16_17_18_20261007T174630Z/memory_stages.jsonl",
+        "sha256": "592de00a7d693770fe095d231f3ff995440e73f3ee6ed1abf4b9903d110b201d",
+    },
+    "controlled_stop": {
+        "path": "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_v10_controlled_stop_20261007.json",
+        "sha256": "8d3684acb2dabed44125d26eabd1da14ba01672366df7c4ccba1cd1d391f72b4",
+    },
+    "scope": "one Invocation; B=max(supervisor-root process-tree RSS, dedicated cgroup memory.current)",
+    "bridge_ordering": "same matrices/requested ICNTL14; staged-vs-ordinary KSP ordering equivalence is not established",
+}
+
+
+def _task041_resolve_supervisor_memory_binding(
+    consumer_run_directory: str | Path,
+    *,
+    expected_invocation_id: str | None,
+    expected_source_sha: str,
+    results_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Find the unique service log bound to this consumer's systemd invocation."""
+
+    consumer_root = Path(consumer_run_directory).resolve(strict=True)
+    repository_results = (
+        Path(results_root).resolve(strict=True)
+        if results_root is not None
+        else Path(__file__).resolve().parents[1] / "results"
+    )
+    if not isinstance(expected_invocation_id, str) or not expected_invocation_id:
+        raise Task041ModePrepError("systemd InvocationID is required for stage sampling")
+    if not _valid_sha(expected_source_sha, 40):
+        raise Task041ModePrepError("stage sampler source SHA is invalid")
+    if repository_results not in consumer_root.parents:
+        raise Task041ModePrepError("consumer run directory is outside repository results")
+    matches: list[tuple[Path, Path, dict[str, Any]]] = []
+    for manifest_path in repository_results.rglob("launch_manifest.json"):
+        if not manifest_path.is_file():
+            continue
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            # Unrelated old roots may contain partial records.  A matching
+            # InvocationID is required below; a missing/malformed current
+            # record consequently fails the exact-one-match check.
+            continue
+        if not isinstance(manifest, Mapping):
+            continue
+        if manifest.get("invocation_id") != expected_invocation_id:
+            continue
+        service_root = manifest_path.parent.resolve(strict=True)
+        if (
+            manifest.get("schema") != "task041.service.launch.v1"
+            or Path(str(manifest.get("supervision_root", ""))).resolve()
+            != service_root
+            or manifest.get("source_sha") != expected_source_sha
+            or not isinstance(manifest.get("unit"), str)
+            or not manifest["unit"]
+            or type(manifest.get("parent_pid")) is not int
+            or manifest["parent_pid"] <= 0
+            or service_root == consumer_root
+            or repository_results not in service_root.parents
+        ):
+            raise Task041ModePrepError(
+                "service launch manifest does not bind this source, InvocationID, and results root"
+            )
+        matches.append((service_root, manifest_path.resolve(), manifest))
+    if len(matches) != 1:
+        raise Task041ModePrepError(
+            "expected exactly one service root for this InvocationID"
+        )
+    service_root, manifest_path, manifest = matches[0]
+    memory_path = service_root / "memory_stages.jsonl"
+    if not memory_path.is_file() or memory_path.stat().st_size <= 0:
+        raise Task041ModePrepError(
+            f"bound service-root memory log is absent or empty: {memory_path}"
+        )
+    return {
+        "schema": "task041.w0p7.supervisor_memory_binding.v1",
+        "supervision_root": str(service_root),
+        "memory_stages_path": str(memory_path.resolve()),
+        "launch_manifest_path": str(manifest_path),
+        "launch_manifest_sha256": hashlib.sha256(
+            manifest_path.read_bytes()
+        ).hexdigest(),
+        "invocation_id": expected_invocation_id,
+        "source_sha": expected_source_sha,
+        "unit": manifest["unit"],
+        "supervisor_root_pid": manifest["parent_pid"],
+        "consumer_root": str(consumer_root),
+        "results_root": str(repository_results),
+        "binding_method": "unique launch_manifest match by InvocationID and source SHA",
+    }
+
+
+def _task041_latest_supervisor_memory_sample(
+    binding: Mapping[str, Any],
+) -> dict[str, Any]:
+    if binding.get("schema") != "task041.w0p7.supervisor_memory_binding.v1":
+        raise Task041ModePrepError("service-root memory binding has an unknown schema")
+    service_root = Path(str(binding.get("supervision_root", ""))).resolve(strict=True)
+    path = Path(str(binding.get("memory_stages_path", ""))).resolve(strict=True)
+    manifest_path = Path(str(binding.get("launch_manifest_path", ""))).resolve(strict=True)
+    consumer_root = Path(str(binding.get("consumer_root", ""))).resolve(strict=True)
+    results_root = Path(str(binding.get("results_root", ""))).resolve(strict=True)
+    if (
+        path != service_root / "memory_stages.jsonl"
+        or manifest_path != service_root / "launch_manifest.json"
+        or results_root not in service_root.parents
+        or results_root not in consumer_root.parents
+        or consumer_root == service_root
+    ):
+        raise Task041ModePrepError(
+            "memory log/root path is not the bound public supervisor service record"
+        )
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError) as exc:
+        raise Task041ModePrepError(f"bound service launch manifest is unreadable: {exc}") from exc
+    if not isinstance(manifest, Mapping):
+        raise Task041ModePrepError("bound service launch manifest is not an object")
+    current_manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    if (
+        manifest.get("schema") != "task041.service.launch.v1"
+        or manifest.get("supervision_root") != str(service_root)
+        or manifest.get("invocation_id") != binding.get("invocation_id")
+        or manifest.get("source_sha") != binding.get("source_sha")
+        or manifest.get("unit") != binding.get("unit")
+        or manifest.get("parent_pid") != binding.get("supervisor_root_pid")
+        or current_manifest_sha != binding.get("launch_manifest_sha256")
+    ):
+        raise Task041ModePrepError(
+            "service launch manifest changed or no longer matches the active binding"
+        )
+    age = time.time() - path.stat().st_mtime
+    if not -1.0 <= age <= 2.0:
+        raise Task041ModePrepError(f"service-root memory log is stale ({age:.3f}s)")
+    with path.open("rb") as stream:
+        stream.seek(0, os.SEEK_END)
+        stream.seek(max(0, stream.tell() - 1024 * 1024))
+        lines = stream.read().splitlines()
+    for raw in reversed(lines):
+        try:
+            row = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if (
+            not isinstance(row, Mapping)
+            or row.get("phase") != "public_command"
+            or row.get("sample_role") != "phase_running"
+            or row.get("sample_root_pid") != binding.get("supervisor_root_pid")
+        ):
+            continue
+        root_pid, pids = row.get("sample_root_pid"), row.get("process_tree_pids")
+        tree, cgroup = (
+            row.get("process_tree_rss_bytes"),
+            row.get("cgroup_memory_current_bytes"),
+        )
+        if (
+            type(root_pid) is int
+            and root_pid > 0
+            and isinstance(pids, list)
+            and all(type(pid) is int and pid > 0 for pid in pids)
+            and row.get("all_status_readable") is True
+            and type(tree) is int
+            and tree >= 0
+            and type(cgroup) is int
+            and cgroup >= 0
+            and row.get("cgroup_dedicated_job_cgroup") is True
+            and type(row.get("memory_authority_bytes")) is int
+            and row.get("memory_authority_bytes") == max(tree, cgroup)
+        ):
+            return {
+                **dict(row),
+                "file_age_seconds": age,
+                "path": str(path),
+                "supervision_root": str(service_root),
+                "invocation_id": binding["invocation_id"],
+                "source_sha": binding["source_sha"],
+                "unit": binding["unit"],
+                "supervisor_root_pid": binding["supervisor_root_pid"],
+                "launch_manifest_sha256": current_manifest_sha,
+                "sample_row_sha256": hashlib.sha256(raw).hexdigest(),
+                "freshness_semantics": "file mtime is freshness only; live resource sample is the admission authority",
+            }
+    raise Task041ModePrepError(
+        "no fresh complete public-command authority for the bound service InvocationID"
+    )
+
+
+def _task041_resource_tree_covers_ranks(
+    tree_pids: Any, supervisor_root_pid: Any, rank_pids: Sequence[Any]
+) -> bool:
+    unique_ranks = set(rank_pids) if all(type(pid) is int and pid > 0 for pid in rank_pids) else set()
+    return bool(
+        isinstance(tree_pids, list)
+        and all(type(pid) is int and pid > 0 for pid in tree_pids)
+        and len(set(tree_pids)) == len(tree_pids)
+        and type(supervisor_root_pid) is int
+        and supervisor_root_pid > 0
+        and supervisor_root_pid in tree_pids
+        and len(unique_ranks) == len(rank_pids)
+        and all(pid in tree_pids for pid in unique_ranks)
+    )
+
+
+def _task041_w0p7_bottom_factor_calibration(
+    live_factors: Any,
+) -> dict[str, Any]:
+    """Read the completed bottom factor's existing source and MUMPS records."""
+
+    if not isinstance(live_factors, list):
+        return {"status": "unknown", "reason": "live factor inventory is unavailable"}
+    matches = [
+        row
+        for row in live_factors
+        if isinstance(row, Mapping)
+        and row.get("stage_identity") == "task041.w0p7.p4.bottom"
+        and row.get("status") == "live"
+    ]
+    if len(matches) != 1:
+        return {
+            "status": "unknown",
+            "reason": "expected exactly one live completed bottom factor",
+        }
+    factor = matches[0]
+    source = factor.get("source_matrix_inventory")
+    analysis = factor.get("analysis_info_raw")
+    numeric = factor.get("numeric_info_raw")
+    size = source.get("global_size") if isinstance(source, Mapping) else None
+    nnz = source.get("local_nnz_used") if isinstance(source, Mapping) else None
+    info17 = _task041_infog_positive_int(analysis, 17)
+    info19 = _task041_infog_positive_int(numeric, 19)
+    requested = analysis.get("icntl14_requested") if isinstance(analysis, Mapping) else None
+    actual = analysis.get("icntl14_actual") if isinstance(analysis, Mapping) else None
+    analysis_stage = analysis.get("stage") if isinstance(analysis, Mapping) else None
+    numeric_stage = numeric.get("stage") if isinstance(numeric, Mapping) else None
+    analysis_attempts = analysis.get("numeric_attempts") if isinstance(analysis, Mapping) else None
+    complete = bool(
+        isinstance(size, list)
+        and len(size) == 2
+        and type(size[0]) is int
+        and size[0] > 0
+        and size[0] == size[1]
+        and type(nnz) is int
+        and nnz > 0
+        and info17 is not None
+        and info19 is not None
+        and type(requested) is int
+        and requested == 40
+        and type(actual) is int
+        and actual == requested
+        and analysis_stage == "after_MatLUFactorSymbolic_before_numeric"
+        and numeric_stage == "after_MatLUFactorNumeric_attempt"
+        and type(analysis_attempts) is int
+        and analysis_attempts == 0
+    )
+    if not complete:
+        return {
+            "status": "unknown",
+            "reason": "bottom dimensions, ICNTL(14), INFOG, or stage identity is incomplete",
+            "rows": size[0] if isinstance(size, list) and size else None,
+            "local_nnz": nnz,
+            "icntl14_requested": requested,
+            "icntl14_actual": actual,
+            "INFOG17_sum_ranks_raw_one_copy": info17,
+            "INFOG19_sum_ranks_raw_one_copy": info19,
+        }
+    return {
+        "status": "measured_completed_bottom_factor",
+        "stage_identity": "task041.w0p7.p4.bottom",
+        "rows": size[0],
+        "local_nnz": nnz,
+        "icntl14_requested": requested,
+        "icntl14_actual": actual,
+        "info17_sum_ranks_raw": info17,
+        "info19_sum_ranks_raw": info19,
+        "INFOG17_sum_ranks_raw_one_copy": info17,
+        "INFOG19_sum_ranks_raw_one_copy": info19,
+        "INFOG_scope": "replicated all-rank query of global sum; take one value, do not multiply by MPI size",
+        "factor_status": factor.get("status"),
+    }
+
+
+_TASK041_W0P7_MUMPS_MEMORY_AUDIT = {
+    "mumps_version": "5.6.2",
+    "manual_path": (
+        "results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/"
+        "mumps_5.6.2_reference/userguide_5.6.2.pdf"
+    ),
+    "manual_sha256": "32acdd3e09fb69f9fab16c94ae67768d15c61ac9c27abf66eb1e0e6ecd904050",
+    "manual_pages": "93-94,97-99",
+    "INFOG17": (
+        "after analysis; estimated all MUMPS internal data for full-rank in-core "
+        "factorization at the configured ICNTL(14); million decimal bytes; INFOG(17) "
+        "is already the sum across ranks and is consumed once"
+    ),
+    "INFOG19": (
+        "after factorization; actual MUMPS internal allocated data; million decimal "
+        "bytes; INFOG(19) is already the sum across ranks and is consumed once"
+    ),
+    "INFOG19_exclusion": "user WK_USER memory is excluded; this bridge supplies no WK_USER",
+    "wk_user_supplied": False,
+    "factor_call_has_separate_caller_workspace": False,
+    "pivot_growth": (
+        "MUMPS documents that numerical pivoting may trigger dynamic storage beyond "
+        "analysis estimates; INFOG17 is not an RSS upper bound"
+    ),
+    "caller_side_large_workspace": (
+        "the staged numeric call is MatLUFactorNumeric on the existing PETSc factor; "
+        "the bridge creates no separate factor-sized caller buffer; resident source "
+        "matrix, port terms, and retained factors are already in live B"
+    ),
+    "other_known_factor_sized_caller_allocations": [],
+    "numeric_pivot_growth": (
+        "MUMPS may dynamically allocate internal pivot workspace beyond its estimate; "
+        "INFOG(17)+W is a policy screen, not a hard upper bound"
+    ),
+    "source_derived_internal_keeps": {
+        "status": "source_derived_not_runtime_measured",
+        "source_archive_sha256": "13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a",
+        "source_sha256": {
+            "src/ana_blk.F": "131d05faa3739dd0f3ad60824108c67d457dc2224f6ce6fdc93741766c5e3b0a",
+            "src/ana_blk_m.F": "1922114e25f483752b993c9fc0426c0f012a6d8140a1b327958a2df67021c1af",
+            "src/ana_orderings.F": "0e6cf68d0a04081823ce76b2fd7006fb50d018716a8fb0259ea22d4a8cb2ac3a",
+            "src/tools_common.F": "b6a0055ffca2d1507fd5bb0760114955377f2e6151fbff5c219cbe074239a80f",
+            "src/zana_aux.F": "6b402bc802a5437538e43c3b019060ff2605dfe3c2aa028317948ef6c6f555c2",
+            "src/zana_driver.F": "8fb47c69a5689a8bc0c5a32e428f6de98a8894cba2651c80e69ec3a00159d211",
+            "src/zana_reordertree.F": "8ffadcbb935f5fc1118550bfee301cf9b8b006c7533d62cba8dbe57c3848517e",
+            "src/zini_defaults.F": "ddf42f430b73a662773b9d35471b9c3837ac5f67e0a048fd3baa07a2d14f8b06",
+        },
+        "public_input_derivation": (
+            "ICNTL(5)=0, ICNTL(18)=3, ICNTL(28)=1 and ICNTL(7)=0 select the "
+            "assembled distributed input with sequential in-package AMD path. "
+            "The actual public ICNTL(6) value is retained per rank; this exact "
+            "distributed source route normalizes maximum transversal to zero. "
+            "For this exact source/version, sequential distributed input derives "
+            "KEEP(13)=-1/NBLK=N; KEEP(487)=1 retains LUMAT through graph gathering; "
+            "NSLAVES=8<=16 follows source default KEEP(39)=160000; ICNTL(35)=0 "
+            "derives KEEP(494)=0; ICNTL(19)=0 derives no Schur allocation/KEEP(60)=0; "
+            "sequential distributed input with P>1 derives GCOMP_PROVIDED=true. "
+            "These KEEP/GCOMP values are source-derived assumptions, not runtime reads."
+        ),
+        "descriptor_probe": {
+            "path": "results/task041_w0p7_mumps_amd_descriptor_probe_20261008/manifest.json",
+            "sha256": "4b804cb39483a3727426ee7317db7fa3736264aaf72bbfc8a522d4f039909735",
+            "bytes_per_COL_LMATRIX_T": 72,
+            "applicability": (
+                "GNU Fortran 13.3 STORAGE_SIZE of source-matched derived type; "
+                "assumes installed Ubuntu MUMPS package uses compatible GNU Fortran "
+                "descriptor ABI and default 32-bit INTEGER"
+            ),
+        },
+        "residual_uncertainty": (
+            "MPI internal scratch, allocator fragmentation, compiler ABI portability "
+            "and RSS residency remain policy-W uncertainty; W is not an error bound"
+        ),
+    },
+}
+
+
+_TASK041_W0P7_P4_STAGE_IDENTITIES = frozenset(
+    {"task041.w0p7.p4.bottom", "task041.w0p7.p4.top"}
+)
+_TASK041_W0P7_AMD_ICNTL_EXPECTED = {
+    "ICNTL5": 0,
+    "ICNTL6": 7,
+    "ICNTL7": 0,
+    "ICNTL8": 77,
+    "ICNTL14": 40,
+    "ICNTL18": 3,
+    "ICNTL19": 0,
+    "ICNTL28": 1,
+    "ICNTL35": 0,
+}
+_TASK041_W0P7_DESCRIPTOR_BYTES = 72
+
+
+def _task041_w0p7_mumps_factor_profile_errors(
+    factor_profile: Mapping[str, Any] | None,
+    *,
+    expected_comm_size: int = 8,
+    expected_comm_rank: int | None = None,
+) -> list[str]:
+    if not isinstance(factor_profile, Mapping) or factor_profile.get("schema") != (
+        "task041.w0p7.factor_mumps_options.v1"
+    ):
+        return ["public factor/options profile is absent or has unknown schema"]
+    errors: list[str] = []
+    if factor_profile.get("status") != "queried":
+        errors.append("public factor/options query did not complete")
+    for field in (
+        "query_error_code",
+        "factor_prefix_error_code",
+        "source_type_error_code",
+        "factor_type_error_code",
+        "mpi_size_error_code",
+        "mpi_rank_error_code",
+    ):
+        if factor_profile.get(field) != 0:
+            errors.append(f"public factor/options query field {field} is not clean")
+    if factor_profile.get("factor_solver") != "MATSOLVERMUMPS":
+        errors.append("factor solver is not the audited MUMPS backend")
+    if factor_profile.get("requested_factor_kind") != "MAT_FACTOR_LU":
+        errors.append("factor kind is not the audited LU factor")
+    if factor_profile.get("options_database") != (
+        "PETSc active options database via public PetscOptionsGetInt/GetReal/HasName"
+    ):
+        errors.append("MUMPS options database is not identified through public APIs")
+    if not isinstance(factor_profile.get("factor_options_prefix"), str):
+        errors.append("factor options prefix was not reported")
+    if (
+        type(expected_comm_size) is not int
+        or expected_comm_size <= 1
+        or factor_profile.get("comm_size") != expected_comm_size
+    ):
+        errors.append("sequential AMD source model requires the bound MPI communicator")
+    if factor_profile.get("source_matrix_type") != "mpiaij":
+        errors.append("source matrix is not PETSc MPIAIJ")
+    if not isinstance(factor_profile.get("factor_matrix_type"), str) or not factor_profile.get(
+        "factor_matrix_type"
+    ):
+        errors.append("factor matrix type was not reported")
+    if expected_comm_rank is not None and factor_profile.get(
+        "comm_rank"
+    ) != expected_comm_rank:
+        errors.append("factor communicator rank differs from the active rank")
+    expected_versions = {
+        "runtime_petsc_version": [3, 19, 6],
+        "bridge_compile_petsc_version": [3, 19, 6],
+        "bridge_compile_mumps_version": [5, 6, 2],
+    }
+    for name, expected in expected_versions.items():
+        if factor_profile.get(name) != expected:
+            errors.append(f"{name} does not match the audited PETSc/MUMPS source")
+
+    options = factor_profile.get("options")
+    if (
+        factor_profile.get("checked_option_count") != 56
+        or not isinstance(options, list)
+    ):
+        return errors + ["factor MUMPS option scan is incomplete"]
+    seen: set[str] = set()
+    for row in options:
+        if not isinstance(row, Mapping):
+            errors.append("factor MUMPS option row is malformed")
+            continue
+        name = row.get("name")
+        kind = row.get("kind")
+        if not isinstance(name, str) or name in seen:
+            errors.append("factor MUMPS option name is absent or duplicated")
+            continue
+        seen.add(name)
+        scopes = []
+        for scope in ("factor_prefix", "global"):
+            query_error = row.get(f"{scope}_query_error_code")
+            if query_error != 0:
+                errors.append(f"{name} {scope} option query failed")
+            present = row.get(f"{scope}_present")
+            if type(present) is not bool:
+                errors.append(f"{name} {scope} option presence is unknown")
+                continue
+            if present:
+                scopes.append((scope, row.get(f"{scope}_value")))
+        if not scopes:
+            errors.append(f"{name} was reported without a present option value")
+            continue
+        expected = None
+        if kind == "icntl":
+            index = row.get("index")
+            if type(index) is int:
+                expected = _TASK041_W0P7_AMD_ICNTL_EXPECTED.get(
+                    f"ICNTL{index}"
+                )
+        if expected is None:
+            errors.append(f"unmodeled MUMPS override is not allowed: {name}")
+            continue
+        for scope, value in scopes:
+            if type(value) is not int or value != expected:
+                errors.append(
+                    f"{name} {scope} override conflicts with the audited effective input"
+                )
+    return errors
+
+
+def _task041_w0p7_amd_control_errors(
+    readback: Mapping[str, Any] | None,
+    *,
+    expected_comm_size: int = 8,
+    expected_comm_rank: int | None = None,
+) -> list[str]:
+    if not isinstance(readback, Mapping) or readback.get("schema") != (
+        "task041.w0p7.public_mumps_controls.v2"
+    ):
+        return ["public MUMPS control readback is absent or has unknown schema"]
+    if readback.get("profile") != "sequential_amd_deferred_p4":
+        return ["public MUMPS control profile is not registered deferred P4 AMD"]
+    if readback.get("status") != "explicit_requests_and_JOB_NULL_cache_readback":
+        return ["explicit controls/cache record has an unknown initialization stage"]
+    errors = ["public MUMPS control API reported an error"] if readback.get("errors") else []
+    set_calls = readback.get("set_calls")
+    if set_calls != {"ICNTL28": 1, "ICNTL7": 0}:
+        errors.append("sequential AMD must explicitly set ICNTL(28)=1 and ICNTL(7)=0")
+    requested = {"ICNTL7": 0, "ICNTL14": 40, "ICNTL28": 1}
+    if readback.get("requested_controls") != requested:
+        errors.append("explicit MUMPS API requests do not match the registered W0.7 values")
+    constructor_request = readback.get("requested_via_factor_constructor")
+    if (
+        not isinstance(constructor_request, Mapping)
+        or constructor_request.get("ICNTL14") != 40
+        or constructor_request.get("source")
+        != "create_lu_stage(icntl14) public MatMumpsSetIcntl"
+    ):
+        errors.append("ICNTL(14)=40 constructor request is not source-bound")
+    cached = readback.get("cached_readback")
+    if not isinstance(cached, Mapping):
+        errors.append("explicit JOB_NULL cached values are absent")
+    else:
+        if set(cached) != set(requested):
+            errors.append("JOB_NULL cache record contains unread or unrequested ICNTL values")
+        for name, expected in requested.items():
+            row = cached.get(name)
+            if (
+                not isinstance(row, Mapping)
+                or row.get("query_error") is not None
+                or type(row.get("value")) is not int
+                or row.get("value") != expected
+            ):
+                errors.append(f"explicit {name} cache readback does not match its request")
+    derived = readback.get("source_derived_effective_inputs")
+    if (
+        not isinstance(derived, Mapping)
+        or derived.get("status") != "source_derived_not_measured"
+        or derived.get("controls") != _TASK041_W0P7_AMD_ICNTL_EXPECTED
+        or not isinstance(derived.get("basis"), str)
+    ):
+        errors.append("backend effective inputs lack the bound PETSc/MUMPS source derivation")
+    errors.extend(
+        _task041_w0p7_mumps_factor_profile_errors(
+            readback.get("factor_profile"),
+            expected_comm_size=expected_comm_size,
+            expected_comm_rank=expected_comm_rank,
+        )
+    )
+    return errors
+
+
+def _task041_w0p7_post_symbolic_control_errors(
+    readback: Mapping[str, Any] | None,
+) -> list[str]:
+    if not isinstance(readback, Mapping) or readback.get("schema") != (
+        "task041.w0p7.post_symbolic_mumps_controls.v1"
+    ):
+        return ["post-symbolic actual MUMPS controls are absent or have unknown schema"]
+    if readback.get("status") != "measured_after_symbolic_initialization":
+        return ["MUMPS controls are not actual post-initialization readbacks"]
+    errors = ["post-symbolic MUMPS control query failed"] if readback.get("errors") else []
+    controls = readback.get("controls")
+    if not isinstance(controls, Mapping):
+        return errors + ["post-symbolic MUMPS control values are absent"]
+    for name, expected in _TASK041_W0P7_AMD_ICNTL_EXPECTED.items():
+        row = controls.get(name)
+        if (
+            not isinstance(row, Mapping)
+            or row.get("query_error") is not None
+            or type(row.get("actual")) is not int
+            or row.get("actual") != expected
+        ):
+            errors.append(f"actual post-symbolic {name} differs from source-derived input")
+    return errors
+
+
+def _task041_w0p7_analysis_ordering_errors(
+    analysis: Mapping[str, Any] | None,
+    *,
+    expected_comm_size: int = 8,
+    expected_comm_rank: int | None = None,
+) -> list[str]:
+    if not isinstance(analysis, Mapping):
+        return ["post-analysis MUMPS record is absent"]
+    errors = _task041_w0p7_amd_control_errors(
+        analysis.get("public_mumps_control_readback"),
+        expected_comm_size=expected_comm_size,
+        expected_comm_rank=expected_comm_rank,
+    )
+    errors.extend(
+        _task041_w0p7_post_symbolic_control_errors(
+            analysis.get("post_symbolic_mumps_control_readback")
+        )
+    )
+    entries = analysis.get("INFOG_api_raw_by_rank")
+    if not isinstance(entries, list):
+        return errors + ["post-analysis INFOG records are absent"]
+    for index, expected in ((7, 0), (32, 1)):
+        rows = [
+            row
+            for row in entries
+            if isinstance(row, Mapping)
+            and type(row.get("index")) is int
+            and row.get("index") == index
+        ]
+        if (
+            len(rows) != 1
+            or rows[0].get("query_error_code") != 0
+            or type(rows[0].get("raw_value")) is not int
+            or rows[0].get("raw_value") != expected
+        ):
+            errors.append(f"post-analysis INFOG({index}) does not confirm sequential AMD")
+    return errors
+
+
+def _task041_w0p7_amd_symbolic_source_model(
+    *, rows: int, nnz: int, mpi_size: int
+) -> dict[str, Any]:
+    """Source-counted phase maxima for the registered W0.7 MPI8 MUMPS path."""
+
+    if any(type(value) is not int or value <= 0 for value in (rows, nnz, mpi_size)):
+        raise Task041ModePrepError("AMD source model requires positive measured N, Z, and P")
+    if mpi_size != 8:
+        raise Task041ModePrepError(
+            "AMD source model is bound to the audited W0.7 MPI8 allocation constants"
+        )
+    if rows != 64_966:
+        raise Task041ModePrepError(
+            "AMD source-count constants are bound to the audited N=64966 rows"
+        )
+    n, z, p = rows, nnz, mpi_size
+    descriptor_bytes = _TASK041_W0P7_DESCRIPTOR_BYTES * n * p
+    deterministic_graph_bytes = 4 * (n + p) * p
+    graph_o_np_bytes = 20 * n * p + 4 * (2 * n + 1) + 8 * (n + p)
+    phases = {
+        "lmat_cleaning": 32 * z + descriptor_bytes + 20 * n * p,
+        "distributed_graph_build": (
+            40 * z
+            + graph_o_np_bytes
+            + descriptor_bytes
+            + deterministic_graph_bytes
+        ),
+        "redistribution": 36 * z + 181_096_908 + descriptor_bytes,
+        "root_graph_gather": 48 * z + 4_937_660 + descriptor_bytes,
+        "amd_root": 40 * z + (80 * n + 20) + descriptor_bytes,
+        "tree_postprocessing": 40 * n * p + 88 * n + descriptor_bytes,
+    }
+    formulas = {
+        "lmat_cleaning": "32*Z + 72*N*P + 20*N*P",
+        "distributed_graph_build": (
+            "40*Z + [20*N*P + 4*(2*N+1) + 8*(N+P)] + 72*N*P "
+            "+ 4*(N+P)*P"
+        ),
+        "redistribution": "36*Z + 181096908 + 72*N*P",
+        "root_graph_gather": "48*Z + 4937660 + 72*N*P",
+        "amd_root": "40*Z + (80*N+20) + 72*N*P",
+        "tree_postprocessing": "40*N*P + 88*N + 72*N*P",
+    }
+    phase, predicted = max(phases.items(), key=lambda item: item[1])
+    return {
+        "status": "source_counted_prediction",
+        "rows_N": n,
+        "aggregated_nnz_Z": z,
+        "mpi_size_P": p,
+        "descriptor_bytes_per_column": _TASK041_W0P7_DESCRIPTOR_BYTES,
+        "descriptor_bytes_aggregate_P_N": descriptor_bytes,
+        "descriptor_evidence": _TASK041_W0P7_MUMPS_MEMORY_AUDIT[
+            "source_derived_internal_keeps"
+        ]["descriptor_probe"],
+        "deterministic_parallel_graph_workspace_bytes_if_enabled": deterministic_graph_bytes,
+        "deterministic_parallel_graph_treatment": "included_conservatively in distributed_graph_build",
+        "known_O_NP_graph_arrays_bytes": graph_o_np_bytes,
+        "phase_formulas": formulas,
+        "phase_source_counted_bytes": phases,
+        "predicted_increment_bytes": predicted,
+        "maximum_phase": phase,
+        "policy_scope": (
+            "source-counted MPI aggregate payload plus bounded COL_LMATRIX_T descriptors; "
+            "not an RSS upper bound. Compiler/allocator/MPI residual uncertainty is kept in W."
+        ),
+        "source_derived_internal_keeps": _TASK041_W0P7_MUMPS_MEMORY_AUDIT[
+            "source_derived_internal_keeps"
+        ],
+    }
+
+
+def _task041_w0p7_stage_budget_projection(
+    *,
+    stage: str,
+    identity: str,
+    history: Mapping[str, Any] | None,
+    global_rows: int | None,
+    b_live_bytes: int | None,
+    fresh_numeric_b_bytes: int | None,
+    info17_sum_ranks_raw: int | None,
+    bottom_calibration: Mapping[str, Any] | None,
+    cap_bytes: int,
+    warning_bytes: int,
+    workspace_audit_complete: bool,
+    global_nnz: int | None = None,
+    mpi_size: int = 8,
+) -> dict[str, Any]:
+    """Screen the next stage from fresh B plus one source-derived increment."""
+
+    reasons: list[str] = []
+    source_model: dict[str, Any] | None = None
+    stage_delta_bytes = None
+    projected_bytes = None
+    info17_bytes = None
+    basis = "unknown stage budget"
+    calibration_status = "not_applicable"
+    live_known = type(b_live_bytes) is int and b_live_bytes >= 0
+    fresh_numeric_known = (
+        type(fresh_numeric_b_bytes) is int and fresh_numeric_b_bytes >= 0
+    )
+    if not live_known:
+        reasons.append("current whole-job B is unknown")
+    if history is None:
+        reasons.append("stage lacks registered matrix identity")
+    if workspace_audit_complete is not True:
+        reasons.append("source path or caller-workspace audit is not complete")
+    if (
+        type(cap_bytes) is not int
+        or type(warning_bytes) is not int
+        or cap_bytes <= 0
+        or warning_bytes < 0
+        or warning_bytes >= cap_bytes
+    ):
+        reasons.append("cap/warning policy values are invalid")
+
+    if stage == "before_symbolic" and history is not None and live_known:
+        if identity == "task041.w0p7.one_cell_traction":
+            peak = history.get("peak")
+            if type(peak) is int and peak >= 0:
+                projected_bytes = max(b_live_bytes, peak)
+                stage_delta_bytes = max(0, projected_bytes - b_live_bytes)
+                basis = (
+                    "completed one-cell absolute window; use max with current B, "
+                    "never add its full assembly/action window to live B"
+                )
+                if b_live_bytes > peak:
+                    reasons.append("fresh B exceeds the completed one-cell envelope")
+            else:
+                reasons.append("one-cell completed window peak is unavailable")
+        elif identity in _TASK041_W0P7_P4_STAGE_IDENTITIES:
+            try:
+                if global_rows != history.get("rows"):
+                    raise Task041ModePrepError(
+                        "live matrix row count differs from the registered P4 identity"
+                    )
+                source_model = _task041_w0p7_amd_symbolic_source_model(
+                    rows=global_rows,
+                    nnz=global_nnz,
+                    mpi_size=mpi_size,
+                )
+            except (Task041ModePrepError, TypeError) as exc:
+                reasons.append(f"AMD source-counted symbolic model unavailable: {exc}")
+            if source_model is not None:
+                stage_delta_bytes = source_model["predicted_increment_bytes"]
+                projected_bytes = b_live_bytes + stage_delta_bytes
+                basis = (
+                    "max source-counted phase for this matrix using actual N, one "
+                    "rank-summed Z, P, measured COL_LMATRIX_T descriptor size, and "
+                    "DETERMINISTIC_PARALLEL_GRAPH included conservatively; no prior "
+                    "numeric factor calibration is required"
+                )
+        else:
+            reasons.append("unrecognized pre-symbolic stage")
+    elif stage == "after_symbolic_before_numeric":
+        if type(info17_sum_ranks_raw) is not int or info17_sum_ranks_raw <= 0:
+            reasons.append("sum-ranks INFOG(17) is unknown")
+        elif not fresh_numeric_known:
+            reasons.append("fresh_numeric_B is unknown")
+        elif fresh_numeric_b_bytes != b_live_bytes:
+            reasons.append("fresh_numeric_B does not match the current live authority")
+        else:
+            info17_bytes = info17_sum_ranks_raw * 1_000_000
+            projected_bytes = fresh_numeric_b_bytes + info17_bytes
+            stage_delta_bytes = info17_bytes
+            basis = (
+                "fresh_numeric_B already includes both live/pending matrices, ports, "
+                "xiB, H6/transfer and all factors; add one target INFOG(17) sum-ranks "
+                "estimate once. INFOG(19) is recorded only after numeric and is not a gate."
+            )
+            calibration_status = (
+                "source-derived caller path has no separate factor-sized numeric buffer; "
+                "MUMPS pivot growth and runtime allocation uncertainty remain in policy W"
+            )
+    else:
+        reasons.append("unsupported factor budget stage")
+
+    policy_reserve_bytes = (
+        cap_bytes - warning_bytes
+        if type(cap_bytes) is int
+        and type(warning_bytes) is int
+        and cap_bytes > 0
+        and 0 <= warning_bytes < cap_bytes
+        else None
+    )
+    screened_peak_plus_reserve = (
+        None
+        if projected_bytes is None or policy_reserve_bytes is None
+        else projected_bytes + policy_reserve_bytes
+    )
+    if (
+        screened_peak_plus_reserve is None
+        or type(cap_bytes) is not int
+        or screened_peak_plus_reserve > cap_bytes
+    ):
+        reasons.append("fresh B plus predicted delta plus W exceeds cap or is unknown")
+    return {
+        "pass": bool(not reasons and projected_bytes is not None),
+        "reasons": reasons,
+        "projected_peak_bytes": projected_bytes,
+        "stage_delta_bytes": stage_delta_bytes,
+        "source_derived_symbolic_model": source_model,
+        "INFOG17_sum_ranks_raw_one_copy": info17_sum_ranks_raw,
+        "INFOG17_sum_ranks_bytes_one_copy": info17_bytes,
+        "bottom_INFOG19_sum_ranks_bytes_one_copy": None,
+        "fresh_numeric_B_bytes": (
+            fresh_numeric_b_bytes
+            if stage == "after_symbolic_before_numeric"
+            else None
+        ),
+        "calibration_status": calibration_status,
+        "completed_bottom_numeric_required_for_this_gate": False,
+        "bottom_calibration_observation": bottom_calibration,
+        "stage_delta_basis": basis,
+        "screened_peak_plus_W_bytes": screened_peak_plus_reserve,
+        "W_policy_reserve_bytes": policy_reserve_bytes,
+        "W_is_mumps_error_bound": False,
+        "projected_peak_is_upper_bound": False,
+        "workspace_audit_complete": workspace_audit_complete is True,
+        "numeric_budget_scope": (
+            "fresh_numeric_B includes all currently resident caller objects and both "
+            "pending/live factors; add one target INFOG(17) global sum estimate and W "
+            "once; INFOG(19) is post-numeric evidence only"
+            if stage == "after_symbolic_before_numeric"
+            else "source-counted phase maximum plus measured descriptor term and policy W"
+        ),
+        "top_history_lower_bound_only_screen_bytes": None,
+    }
+
+
+def _build_task041_w0p7_stage_factory(
+    extension_path: str | Path,
+    *,
+    supervisor_memory_binding: Mapping[str, Any],
+    comm: MPI.Intracomm,
+    limits: Mapping[str, Any],
+    expected_rank_cpus: Sequence[int],
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    failure_evidence: dict[str, Any],
+) -> tuple[Callable[..., Any], dict[str, Any]]:
+    """Load the explicit bridge and gate one-cell/bottom/top factor stages."""
+    from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
+    from src.solvers.petsc_lu_stage import (
+        StagedFactorRejected,
+        StagedMumpsLUFactory,
+        load_lu_stage_bridge,
+    )
+
+    bridge_path = Path(extension_path).expanduser().resolve(strict=True)
+    bridge_sha = hashlib.sha256(bridge_path.read_bytes()).hexdigest()
+    bridge = load_lu_stage_bridge(bridge_path)
+    if (
+        not isinstance(supervisor_memory_binding, Mapping)
+        or supervisor_memory_binding.get("schema")
+        != "task041.w0p7.supervisor_memory_binding.v1"
+    ):
+        raise Task041ModePrepError("W0.7 stage gate requires an explicit service memory binding")
+    if (
+        not isinstance(supervisor_memory_binding.get("invocation_id"), str)
+        or not isinstance(supervisor_memory_binding.get("source_sha"), str)
+        or not isinstance(supervisor_memory_binding.get("unit"), str)
+        or type(supervisor_memory_binding.get("supervisor_root_pid")) is not int
+    ):
+        raise Task041ModePrepError("service memory binding is incomplete")
+    cap, warning, floor = (
+        limits.get("hard_memory_bytes"),
+        limits.get("process_tree_rss_warning_bytes"),
+        limits.get("min_memavailable_bytes"),
+    )
+    if (cap, warning, floor, limits.get("process_tree_rss_cap_bytes")) != (
+        TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+        TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES,
+        TASK041_BALH_CELL_CONDENSED_RESERVE_BYTES,
+        TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES,
+    ):
+        raise Task041ModePrepError(
+            "W0.7 stage limits differ from registered cap/warning/floor"
+        )
+    if (
+        int(comm.size) != 8
+        or len(expected_rank_cpus) != 8
+        or any(type(cpu) is not int for cpu in expected_rank_cpus)
+        or len(set(expected_rank_cpus)) != 8
+    ):
+        raise Task041ModePrepError("staged factors require the frozen MPI8 CPU map")
+
+    icntl14_by_stage = {
+        identity: row["icntl14"]
+        for identity, row in _TASK041_W0P7_STAGE_HISTORY.items()
+    }
+
+    def resource_from(raw: Mapping[str, Any]) -> dict[str, Any]:
+        tree, cg, host = (
+            raw.get("process_tree"),
+            raw.get("job_cgroup"),
+            raw.get("host_memory"),
+        )
+        if not isinstance(tree, Mapping) or not isinstance(cg, Mapping):
+            raise Task041ModePrepError("whole-job tree/cgroup authority is unreadable")
+        tree_rss, cgroup_current = tree.get("rss_bytes"), cg.get("memory_current_bytes")
+        authority = raw.get("memory_authority_bytes")
+        if (
+            tree.get("all_status_readable") is not True
+            or cg.get("dedicated_job_cgroup") is not True
+            or type(tree_rss) is not int
+            or type(cgroup_current) is not int
+            or authority != max(tree_rss, cgroup_current)
+        ):
+            raise Task041ModePrepError("whole-job tree/cgroup authority is incomplete")
+        return {
+            "B_bytes": max(tree_rss, cgroup_current),
+            "tree_rss_bytes": tree_rss,
+            "tree_pids": tree.get("pids"),
+            "cgroup_current_bytes": cgroup_current,
+            "cgroup_headroom_bytes": cg.get("ancestor_memory_headroom_bytes"),
+            "cgroup_limit_state": cg.get("ancestor_hard_limit_state"),
+            "host_available_bytes": host.get("mem_available_bytes")
+            if isinstance(host, Mapping)
+            else None,
+        }
+
+    def stage_gate(context: Mapping[str, Any]) -> bool:
+        stage, identity = context.get("stage"), context.get("stage_identity")
+        history = _TASK041_W0P7_STAGE_HISTORY.get(str(identity))
+        top_before_symbolic = (
+            stage == "before_symbolic" and identity == "task041.w0p7.p4.top"
+        )
+        errors: list[str] = []
+        resource = before_cleanup = cleanup = monitor = None
+        root_pid = sample_age = node0_free = None
+
+        def capture_resource(pid: int) -> tuple[dict[str, Any], int]:
+            measured = resource_from(_resource_snapshot(pid))
+            measured["root_pid"] = pid
+            measured["sampled_unix_seconds"] = time.time()
+            return measured, _task041_node0_memfree_bytes()
+
+        if comm.rank == 0:
+            try:
+                monitor = _task041_latest_supervisor_memory_sample(
+                    supervisor_memory_binding
+                )
+                root_pid = monitor["sample_root_pid"]
+                sample_age = monitor["file_age_seconds"]
+                if not top_before_symbolic:
+                    resource, node0_free = capture_resource(root_pid)
+                else:
+                    before_cleanup, _ = capture_resource(root_pid)
+            except Exception as exc:  # noqa: BLE001 - all ranks reject after consensus
+                errors.append(f"{type(exc).__name__}: {exc}")
+
+        if top_before_symbolic:
+            cleanup = collective_heap_cleanup(comm)
+            if comm.rank == 0 and type(root_pid) is int:
+                try:
+                    resource, node0_free = capture_resource(root_pid)
+                except Exception as exc:  # noqa: BLE001 - all ranks reject after consensus
+                    errors.append(f"{type(exc).__name__}: {exc}")
+
+        matrix = context.get("source_matrix_inventory")
+        row_range = matrix.get("row_ownership") if isinstance(matrix, Mapping) else None
+        column_range = matrix.get("column_ownership") if isinstance(matrix, Mapping) else None
+        global_size = matrix.get("global_size") if isinstance(matrix, Mapping) else None
+        nnz = matrix.get("local_nnz_used") if isinstance(matrix, Mapping) else None
+        matrix_type = matrix.get("matrix_type") if isinstance(matrix, Mapping) else None
+        live = context.get("live_factor_inventory")
+        releases = context.get("factor_release_history")
+        analysis_info = context.get("analysis_info_raw")
+        control_readback = context.get("public_mumps_control_readback")
+        if control_readback is None and isinstance(analysis_info, Mapping):
+            control_readback = analysis_info.get("public_mumps_control_readback")
+        post_control_readback = context.get("post_symbolic_mumps_control_readback")
+        if post_control_readback is None and isinstance(analysis_info, Mapping):
+            post_control_readback = analysis_info.get(
+                "post_symbolic_mumps_control_readback"
+            )
+        is_p4_stage = identity in _TASK041_W0P7_P4_STAGE_IDENTITIES
+        control_errors = (
+            _task041_w0p7_amd_control_errors(
+                control_readback,
+                expected_comm_rank=int(comm.rank),
+            )
+            if is_p4_stage
+            else []
+        )
+        if is_p4_stage and stage == "after_symbolic_before_numeric":
+            control_errors.extend(
+                _task041_w0p7_post_symbolic_control_errors(post_control_readback)
+            )
+        ordering_errors = (
+            _task041_w0p7_analysis_ordering_errors(
+                analysis_info,
+                expected_comm_rank=int(comm.rank),
+            )
+            if is_p4_stage and stage == "after_symbolic_before_numeric"
+            else []
+        )
+        live_states = {
+            str(item.get("stage_identity")): item.get("factor_state")
+            for item in live
+            if isinstance(item, Mapping)
+            and item.get("status") == "live"
+            and isinstance(item.get("stage_identity"), str)
+        } if isinstance(live, list) else None
+        local = {
+            "rank": int(comm.rank),
+            "pid": os.getpid(),
+            "expected_cpu": expected_rank_cpus[int(comm.rank)],
+            "stage": stage,
+            "identity": identity,
+            "icntl14": context.get("icntl14_requested"),
+            "global_size": global_size,
+            "row_ownership": row_range,
+            "column_ownership": column_range,
+            "nnz": nnz,
+            "matrix_type": matrix_type,
+            "public_mumps_control_readback": control_readback,
+            "post_symbolic_mumps_control_readback": post_control_readback,
+            "control_errors": control_errors,
+            "analysis_ordering_errors": ordering_errors,
+            "analysis_info_raw": analysis_info,
+            "live": sorted(live_states) if isinstance(live_states, dict) else None,
+            "live_states": live_states,
+            "one_cell_released": any(
+                isinstance(item, Mapping)
+                and item.get("stage_identity") == "task041.w0p7.one_cell_traction"
+                and isinstance(item.get("destroy_status"), Mapping)
+                and item["destroy_status"].get("factor_released") is True
+                and item["destroy_status"].get("destroy_error_code") == 0
+                for item in releases
+            )
+            if isinstance(releases, list)
+            else False,
+            "bottom_calibration": _task041_w0p7_bottom_factor_calibration(live),
+            "info17": _task041_infog_positive_int(
+                context.get("analysis_info_raw"), 17
+            ),
+            "resource": resource if comm.rank == 0 else None,
+            "monitor_root_pid": root_pid if comm.rank == 0 else None,
+            "monitor_sample_age_seconds": sample_age if comm.rank == 0 else None,
+            "monitor_sample_row_sha256": (
+                monitor.get("sample_row_sha256")
+                if comm.rank == 0 and isinstance(monitor, Mapping)
+                else None
+            ),
+            "supervisor_log_sample": (
+                {
+                    key: monitor.get(key)
+                    for key in (
+                        "phase",
+                        "sample_role",
+                        "sample_root_pid",
+                        "process_tree_pids",
+                        "process_tree_rss_bytes",
+                        "cgroup_memory_current_bytes",
+                        "memory_authority_bytes",
+                        "file_age_seconds",
+                        "path",
+                        "invocation_id",
+                        "source_sha",
+                        "unit",
+                        "launch_manifest_sha256",
+                        "sample_row_sha256",
+                    )
+                }
+                if comm.rank == 0 and isinstance(monitor, Mapping)
+                else None
+            ),
+            "before_cleanup": before_cleanup if comm.rank == 0 else None,
+            "cleanup": cleanup if comm.rank == 0 else None,
+            "node0_free": node0_free if comm.rank == 0 else None,
+            "errors": errors,
+        }
+        ranks = sorted(comm.allgather(local), key=lambda row: row["rank"])
+        rank_pass = [row.get("rank") for row in ranks] == list(range(int(comm.size)))
+        stage_pass = all(
+            (row.get("stage"), row.get("identity"), row.get("icntl14"))
+            == (stage, identity, context.get("icntl14_requested"))
+            for row in ranks
+        )
+        shapes = [tuple(row.get("global_size") or ()) for row in ranks]
+        shape = shapes[0] if len(set(shapes)) == 1 else ()
+
+        def ownership_covers(name: str, size: int) -> bool:
+            ranges = [row.get(name) for row in ranks]
+            if len(ranges) != int(comm.size) or any(
+                not isinstance(pair, list)
+                or len(pair) != 2
+                or any(type(value) is not int for value in pair)
+                for pair in ranges
+            ):
+                return False
+            ordered = sorted((pair[0], pair[1]) for pair in ranges)
+            return (
+                ordered[0][0] == 0
+                and ordered[-1][1] == size
+                and all(
+                    ordered[index][1] == ordered[index + 1][0]
+                    for index in range(len(ordered) - 1)
+                )
+            )
+
+        nnz_values = [row.get("nnz") for row in ranks]
+        nnz_known = all(type(value) is int and value >= 0 for value in nnz_values)
+        global_nnz = sum(nnz_values) if nnz_known else None
+        expected_nnz = history.get("nnz") if history is not None else None
+        matrix_pass = bool(
+            history is not None
+            and len(shape) == 2
+            and shape == (history["rows"], history["rows"])
+            and ownership_covers("row_ownership", shape[0])
+            and ownership_covers("column_ownership", shape[1])
+            and all(row.get("matrix_type") == "mpiaij" for row in ranks)
+            and global_nnz is not None
+            and global_nnz > 0
+            and (expected_nnz is None or global_nnz == expected_nnz)
+        )
+        if stage == "before_symbolic":
+            expected_states = {
+                "task041.w0p7.one_cell_traction": {},
+                "task041.w0p7.p4.bottom": {},
+                "task041.w0p7.p4.top": {
+                    "task041.w0p7.p4.bottom": "symbolic_live_pending_numeric"
+                },
+            }.get(str(identity))
+        elif stage == "after_symbolic_before_numeric":
+            expected_states = {
+                "task041.w0p7.one_cell_traction": {
+                    "task041.w0p7.one_cell_traction": "symbolic_live_pending_numeric"
+                },
+                "task041.w0p7.p4.bottom": {
+                    "task041.w0p7.p4.bottom": "symbolic_live_pending_numeric",
+                    "task041.w0p7.p4.top": "symbolic_live_pending_numeric",
+                },
+                "task041.w0p7.p4.top": {
+                    "task041.w0p7.p4.bottom": "numeric_ready",
+                    "task041.w0p7.p4.top": "symbolic_live_pending_numeric",
+                },
+            }.get(str(identity))
+        else:
+            expected_states = None
+        live_pass = expected_states is not None and all(
+            row.get("live_states") == expected_states for row in ranks
+        )
+        release_pass = identity != "task041.w0p7.p4.bottom" or all(
+            row.get("one_cell_released") is True for row in ranks
+        )
+        bottom_rows = [row.get("bottom_calibration") for row in ranks]
+        bottom_calibration = None
+        if len(bottom_rows) == int(comm.size) and all(
+            isinstance(row, Mapping)
+            and row.get("status") == "measured_completed_bottom_factor"
+            for row in bottom_rows
+        ):
+            replicated = (
+                "stage_identity",
+                "rows",
+                "icntl14_requested",
+                "icntl14_actual",
+                "info17_sum_ranks_raw",
+                "info19_sum_ranks_raw",
+            )
+            replicated_values = [
+                tuple(row.get(key) for key in replicated) for row in bottom_rows
+            ]
+            local_nnz_values = [row.get("local_nnz") for row in bottom_rows]
+            base_records_complete = bool(
+                len(set(replicated_values)) == 1
+                and all(type(value) is int and value > 0 for value in local_nnz_values)
+            )
+            bottom_global_nnz = sum(local_nnz_values) if base_records_complete else None
+            bottom_history = _TASK041_W0P7_STAGE_HISTORY[
+                "task041.w0p7.p4.bottom"
+            ]
+            bottom_calibration_pass = bool(
+                base_records_complete
+                and bottom_rows[0].get("stage_identity")
+                == "task041.w0p7.p4.bottom"
+                and bottom_rows[0].get("rows") == bottom_history["rows"]
+                and bottom_global_nnz == bottom_history["nnz"]
+                and bottom_rows[0].get("icntl14_actual") == 40
+            )
+            if bottom_calibration_pass:
+                bottom_calibration = {
+                    **{
+                        key: bottom_rows[0].get(key)
+                        for key in replicated
+                    },
+                    "icntl14": bottom_rows[0].get("icntl14_actual"),
+                    "nnz": bottom_global_nnz,
+                    "rank_local_nnz": local_nnz_values,
+                    "rank_count": int(comm.size),
+                    "INFOG_scope": bottom_rows[0].get("INFOG_scope"),
+                    "status": "measured_completed_bottom_factor",
+                    "calibration_basis": (
+                        "registered rows/ICNTL match; INFOG fields replicated; "
+                        "rank-local NNZ summed once"
+                    ),
+                }
+        root_record = next((row for row in ranks if row.get("rank") == 0), {})
+        resource = root_record.get("resource")
+        monitor = root_record.get("supervisor_log_sample")
+        tree_pids = resource.get("tree_pids") if isinstance(resource, Mapping) else None
+        rank_pids = [row.get("pid") for row in ranks]
+        bound_root_pid = supervisor_memory_binding.get("supervisor_root_pid")
+        samples_complete = bool(
+            isinstance(resource, Mapping)
+            and type(resource.get("B_bytes")) is int
+            and type(resource.get("tree_rss_bytes")) is int
+            and type(resource.get("cgroup_current_bytes")) is int
+            and type(resource.get("host_available_bytes")) is int
+            and isinstance(tree_pids, list)
+            and all(type(pid) is int for pid in tree_pids)
+            and type(root_record.get("monitor_root_pid")) is int
+            and root_record.get("monitor_root_pid") == bound_root_pid
+            and resource.get("root_pid") == bound_root_pid
+            and type(root_record.get("monitor_sample_age_seconds")) in (int, float)
+            and 0 <= root_record["monitor_sample_age_seconds"] <= 2
+            and isinstance(monitor, Mapping)
+            and monitor.get("phase") == "public_command"
+            and monitor.get("sample_role") == "phase_running"
+            and monitor.get("sample_root_pid") == bound_root_pid
+            and monitor.get("invocation_id")
+            == supervisor_memory_binding.get("invocation_id")
+            and monitor.get("source_sha") == supervisor_memory_binding.get("source_sha")
+            and monitor.get("unit") == supervisor_memory_binding.get("unit")
+        )
+        pids_in_tree = samples_complete and _task041_resource_tree_covers_ranks(
+            tree_pids, bound_root_pid, rank_pids
+        )
+        errors_complete = all(not row.get("errors") for row in ranks)
+        resources_complete = bool(samples_complete and pids_in_tree and errors_complete)
+        b_live = resource.get("B_bytes") if resources_complete else None
+        host_available = (
+            resource.get("host_available_bytes") if resources_complete else None
+        )
+        node0_free = (
+            root_record.get("node0_free")
+            if type(root_record.get("node0_free")) is int
+            and root_record["node0_free"] >= 0
+            else None
+        )
+        cgroup_state = resource.get("cgroup_limit_state") if resources_complete else None
+        cgroup_headroom = (
+            resource.get("cgroup_headroom_bytes") if resources_complete else None
+        )
+        cgroup_known = cgroup_state == "max_or_unlimited" or (
+            cgroup_state == "finite"
+            and type(cgroup_headroom) is int
+            and cgroup_headroom >= 0
+        )
+        cleanup_pass = not top_before_symbolic or (
+            isinstance(root_record.get("cleanup"), Mapping)
+            and root_record["cleanup"].get("collective_call_completed") is True
+        )
+
+        info17_values = [row.get("info17") for row in ranks]
+        info17 = (
+            info17_values[0]
+            if info17_values
+            and all(type(value) is int and value > 0 for value in info17_values)
+            and len(set(info17_values)) == 1
+            else None
+        )
+        control_signatures = []
+        control_records_complete = len(ranks) == int(comm.size)
+        for row in ranks:
+            readback = row.get("public_mumps_control_readback")
+            post_readback = row.get("post_symbolic_mumps_control_readback")
+            if not isinstance(readback, Mapping):
+                control_records_complete = False
+                continue
+            profile = readback.get("factor_profile")
+            if isinstance(profile, Mapping):
+                profile = {
+                    key: value for key, value in profile.items() if key != "comm_rank"
+                }
+            signature_record: dict[str, Any] = {
+                "requested_controls": readback.get("requested_controls"),
+                "cached_readback": readback.get("cached_readback"),
+                "source_derived_effective_inputs": readback.get(
+                    "source_derived_effective_inputs"
+                ),
+                "factor_profile": profile,
+            }
+            if stage == "after_symbolic_before_numeric":
+                signature_record["post_symbolic_actual"] = post_readback
+            try:
+                control_signatures.append(
+                    json.dumps(
+                        signature_record,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        allow_nan=False,
+                    )
+                )
+            except (TypeError, ValueError):
+                control_records_complete = False
+        source_control_pass = not is_p4_stage or bool(
+            control_records_complete
+            and all(not row.get("control_errors") for row in ranks)
+            and len(control_signatures) == int(comm.size)
+            and len(set(control_signatures)) == 1
+        )
+        analysis_ordering_required = stage == "after_symbolic_before_numeric"
+        analysis_ordering_pass = (
+            all(not row.get("analysis_ordering_errors") for row in ranks)
+            if analysis_ordering_required
+            else None
+        )
+        workspace_audit_complete = bool(
+            identity == "task041.w0p7.one_cell_traction"
+            or (
+                is_p4_stage
+                and source_control_pass
+                and (
+                    not analysis_ordering_required
+                    or analysis_ordering_pass is True
+                )
+            )
+        )
+        numeric_gate_b_live = (
+            b_live if stage == "after_symbolic_before_numeric" else None
+        )
+        budget = _task041_w0p7_stage_budget_projection(
+            stage=str(stage),
+            identity=str(identity),
+            history=history,
+            global_rows=shape[0] if shape else None,
+            b_live_bytes=b_live,
+            fresh_numeric_b_bytes=numeric_gate_b_live,
+            info17_sum_ranks_raw=info17,
+            bottom_calibration=bottom_calibration,
+            cap_bytes=cap,
+            warning_bytes=warning,
+            workspace_audit_complete=workspace_audit_complete,
+            global_nnz=global_nnz,
+            mpi_size=int(comm.size),
+        )
+        estimate_bytes = budget.get("stage_delta_bytes")
+        basis = budget.get("stage_delta_basis")
+        margin = budget.get("W_policy_reserve_bytes")
+        screened_peak = budget.get("screened_peak_plus_W_bytes")
+        required = (
+            None
+            if type(screened_peak) is not int or type(b_live) is not int
+            else max(0, screened_peak - b_live)
+        )
+        node0_headroom = None if node0_free is None else node0_free - int(floor)
+        host_headroom = None if host_available is None else host_available - int(floor)
+        cgroup_room = required is not None and cgroup_known and (
+            cgroup_state == "max_or_unlimited" or cgroup_headroom >= required
+        )
+        reasons = []
+        if not rank_pass or not stage_pass:
+            reasons.append("rank_or_stage_identity_mismatch")
+        if context.get("icntl14_requested") != icntl14_by_stage.get(str(identity)):
+            reasons.append("ICNTL14_mismatch")
+        if is_p4_stage and not source_control_pass:
+            reasons.append("public_MUMPS_inputs_do_not_match_source_derived_AMD_path")
+        if (
+            is_p4_stage
+            and analysis_ordering_required
+            and analysis_ordering_pass is not True
+        ):
+            reasons.append("INFOG7_or_INFOG32_did_not_confirm_sequential_AMD")
+        if not matrix_pass:
+            reasons.append("matrix_rows_ownership_or_NNZ_mismatch")
+        if not live_pass or not release_pass:
+            reasons.append("factor_lifecycle_mismatch")
+        if not resources_complete:
+            reasons.append("fresh whole-job resource authority unknown")
+        if not cleanup_pass:
+            reasons.append("top heap cleanup was not confirmed")
+        if budget.get("pass") is not True:
+            reasons.extend(budget.get("reasons", ["stage budget is unknown or rejected"]))
+        if (
+            required is None
+            or node0_headroom is None
+            or node0_headroom < required
+            or host_headroom is None
+            or host_headroom < required
+        ):
+            reasons.append("host/node0 reserve headroom is insufficient")
+        if not cgroup_room:
+            reasons.append("cgroup ancestor headroom is insufficient or unknown")
+        passed = not reasons
+        rank_records = [
+            {
+                key: row.get(key)
+                for key in (
+                    "rank",
+                    "pid",
+                    "expected_cpu",
+                    "stage",
+                    "identity",
+                    "icntl14",
+                    "global_size",
+                    "row_ownership",
+                    "column_ownership",
+                    "nnz",
+                    "matrix_type",
+                    "public_mumps_control_readback",
+                    "post_symbolic_mumps_control_readback",
+                    "control_errors",
+                    "analysis_ordering_errors",
+                    "live",
+                    "live_states",
+                    "one_cell_released",
+                    "info17",
+                    "bottom_calibration",
+                    "errors",
+                )
+            }
+            for row in ranks
+        ]
+        report = {
+            "schema": "task041.w0p7.factor_budget_gate.v2",
+            "stage": stage,
+            "stage_identity": identity,
+            "pass": bool(passed),
+            "reasons": reasons,
+            "matrix": {
+                "rows": shape[0] if shape else None,
+                "nnz_sum_ranks": global_nnz,
+                "expected_nnz": expected_nnz,
+                "ownership_pass": bool(matrix_pass),
+            },
+            "rank_records": rank_records,
+            "supervisor_memory_binding": {
+                key: supervisor_memory_binding.get(key)
+                for key in (
+                    "supervision_root",
+                    "memory_stages_path",
+                    "launch_manifest_path",
+                    "launch_manifest_sha256",
+                    "results_root",
+                    "invocation_id",
+                    "source_sha",
+                    "unit",
+                    "supervisor_root_pid",
+                    "binding_method",
+                )
+            },
+            "supervisor_log_sample": monitor,
+            "live_pid_tree_covers_supervisor_and_all_ranks": bool(
+                resources_complete and rank_pass
+            ),
+            "bottom_factor_calibration": bottom_calibration,
+            "workspace_audit": {
+                **_TASK041_W0P7_MUMPS_MEMORY_AUDIT,
+                "complete_for_registered_stage": workspace_audit_complete,
+                "analysis_ordering_runtime_status": (
+                    "confirmed_before_numeric"
+                    if analysis_ordering_pass is True
+                    else "pending_until_after_symbolic"
+                    if is_p4_stage and not analysis_ordering_required
+                    else "failed"
+                    if is_p4_stage
+                    else "not_applicable"
+                ),
+                "source_derived_symbolic_model": budget.get(
+                    "source_derived_symbolic_model"
+                ),
+                "known_unmodeled_caller_workspace": [],
+                "unmodeled_large_algorithm_workspace": (
+                    "none identified in the source-bound symbolic call path; if a new "
+                    "factor-sized caller allocation appears, reject until source-counted"
+                ),
+                "INFOG17_plus_W_is_upper_bound": False,
+            },
+            "factor_lifecycle_pass": bool(live_pass and release_pass),
+            "authority": "one rank-0 sample: max(supervisor-root process-tree RSS, dedicated job cgroup memory.current)",
+            "resource_snapshot": resource,
+            "node0_free_bytes": node0_free,
+            "host_headroom_after_floor_bytes": host_headroom,
+            "node0_headroom_after_floor_bytes": node0_headroom,
+            "top_cleanup": (
+                {
+                    "before": root_record.get("before_cleanup"),
+                    "after": resource,
+                    "cleanup": root_record.get("cleanup"),
+                }
+                if top_before_symbolic
+                else None
+            ),
+            "stage_delta_bytes": estimate_bytes,
+            "stage_delta_basis": basis,
+            "INFOG17_sum_ranks_raw_one_copy": info17,
+            "fresh_numeric_B_bytes": numeric_gate_b_live,
+            "cap_headroom_bytes": (
+                None if b_live is None else int(cap) - b_live
+            ),
+            "growth_allowance_after_W_bytes": (
+                None if b_live is None else max(0, int(cap) - margin - b_live)
+            ),
+            "screened_peak_plus_W_bytes": screened_peak,
+            "required_additional_bytes": required,
+            "W_policy_reserve_bytes": margin,
+            "W_is_mumps_error_bound": False,
+            "unmodeled_factor_sized_workspace": (
+                "none in the reviewed bridge call path; any discovered external allocation rejects"
+                if workspace_audit_complete
+                else "unknown; stage rejects"
+            ),
+            "mumps_numeric_pivot_growth": "not a hard bound; W is a policy reserve, not a MUMPS error bound",
+            "full_numeric_peak_upper_bound": "not claimed",
+            "cap_bytes": int(cap),
+            "warning_bytes": int(warning),
+            "node0_floor_bytes": int(floor),
+            "historical_stage": (
+                {
+                    key: history.get(key)
+                    for key in (
+                        "rows",
+                        "nnz",
+                        "before",
+                        "peak",
+                        "after",
+                        "before_tree_cgroup_bytes",
+                        "peak_tree_cgroup_bytes",
+                        "after_tree_cgroup_bytes",
+                        "times",
+                        "sample_sources",
+                        "window",
+                        "budget_basis",
+                    )
+                }
+                if history is not None
+                else None
+            ),
+            "history_evidence_ref": "factor_stage_factory.history_source",
+        }
+        failure_evidence["staged_factor_budget_gate"] = report
+        marker_callback("factor_stage_budget_gate", report)
+        return bool(passed)
+
+    factory = StagedMumpsLUFactory(
+        bridge,
+        pre_symbolic_gate=stage_gate,
+        pre_numeric_gate=stage_gate,
+        factor_released_callback=lambda identity, status: marker_callback(
+            "factor_stage_release",
+            {
+                "rank": int(comm.rank),
+                "stage_identity": identity,
+                "destroy_status": _jsonable(dict(status)),
+            },
+        ),
+        stage_event_callback=lambda event, detail: marker_callback(
+            "factor_stage_event",
+            {
+                "rank": int(comm.rank),
+                "event": event,
+                "detail": _jsonable(detail),
+                "live_factors": _jsonable(factory.live_factor_inventory),
+            },
+        ),
+        deferred_numeric_stage_identities=(
+            "task041.w0p7.p4.bottom",
+            "task041.w0p7.p4.top",
+        ),
+        sequential_amd_stage_identities=(
+            "task041.w0p7.p4.bottom",
+            "task041.w0p7.p4.top",
+        ),
+    )
+
+    def gated_stage_factory(
+        matrix: Any,
+        *,
+        icntl14: int,
+        stage_identity: str | None,
+        defer_numeric: bool = False,
+    ) -> Any:
+        try:
+            return factory(
+                matrix,
+                icntl14=icntl14,
+                stage_identity=stage_identity,
+                defer_numeric=defer_numeric,
+            )
+        except StagedFactorRejected as exc:
+            exc.failure_classification = "TASK041_STAGED_FACTOR_BUDGET_REJECTED"
+            exc.failure_evidence = failure_evidence.get("staged_factor_budget_gate", {})
+            raise
+
+    return gated_stage_factory, {
+        "bridge_path": str(bridge_path),
+        "bridge_sha256": bridge_sha,
+        "bridge_module_path": str(Path(bridge.__file__).resolve()),
+        "expected_rank_cpus": list(expected_rank_cpus),
+        "deferred_numeric_stage_identities": [
+            "task041.w0p7.p4.bottom",
+            "task041.w0p7.p4.top",
+        ],
+        "supervisor_memory_binding": dict(supervisor_memory_binding),
+        "history_source": dict(_TASK041_W0P7_STAGE_EVIDENCE),
+    }
 
 def _memavailable_bytes() -> int:
     for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
@@ -5297,6 +7010,61 @@ def _task041_gather_primal_route_plan_release_snapshot(
     }
 
 
+def _complete_w0p7_pending_p4_numeric_before_admission(
+    side_inverses: Mapping[str, Any],
+    *,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+) -> dict[str, dict[str, Any]]:
+    """Complete both registered P4 handles, bottom then top, before any admission."""
+
+    if set(side_inverses) != {"bottom", "top"}:
+        raise Task041ModePrepError(
+            "deferred W0.7 P4 completion requires both bottom and top side adapters"
+        )
+    for side in ("bottom", "top"):
+        diagnostics = side_inverses[side].diagnostics
+        p4 = diagnostics.get("p4_factor")
+        expected_identity = f"task041.w0p7.p4.{side}"
+        if (
+            not isinstance(p4, Mapping)
+            or p4.get("stage_identity") != expected_identity
+            or p4.get("factor_state") != "symbolic_live_pending_numeric"
+            or p4.get("numeric_factor_ready") is not False
+        ):
+            raise Task041ModePrepError(
+                f"{side} P4 factor is not the expected live symbolic handle"
+            )
+
+    completed: dict[str, dict[str, Any]] = {}
+    for side in ("bottom", "top"):
+        inverse = side_inverses[side]
+        inverse.complete_staged_p4_numeric()
+        p4 = inverse.diagnostics.get("p4_factor")
+        if (
+            not isinstance(p4, Mapping)
+            or p4.get("stage_identity") != f"task041.w0p7.p4.{side}"
+            or p4.get("factor_state") != "numeric_ready"
+            or p4.get("numeric_factor_ready") is not True
+        ):
+            raise Task041ModePrepError(
+                f"{side} P4 same-handle numeric completion was not confirmed"
+            )
+        completed[side] = {
+            "stage_identity": p4.get("stage_identity"),
+            "factor_state": p4.get("factor_state"),
+            "numeric_factor_ready": p4.get("numeric_factor_ready"),
+        }
+        marker_callback(
+            "p4_numeric_completion",
+            {
+                "side": side,
+                "order": len(completed),
+                **completed[side],
+            },
+        )
+    return completed
+
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -5338,6 +7106,7 @@ def _run_task041_balh_candidate_setup(
     fixed_h6_modal_gmres_research: bool = False,
     reuse_primal_route_plan: bool = False,
     reuse_leading_ph_dual: bool = False,
+    factor_stage_factory: Callable[..., Any] | None = None,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
     same_g_modal_metric_pair: Mapping[str, Any] | None = None,
@@ -5352,6 +7121,7 @@ def _run_task041_balh_candidate_setup(
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID,
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
@@ -5388,6 +7158,31 @@ def _run_task041_balh_candidate_setup(
     if not isinstance(fixed_h6_modal_gmres_research, bool):
         raise Task041ModePrepError(
             "fixed_h6_modal_gmres_research must be a boolean"
+        )
+    if factor_stage_factory is not None and (
+        not callable(factor_stage_factory)
+        or not fixed_h6_modal_gmres_research
+        or not isinstance(identity, Mapping)
+        or str(identity.get("model_id"))
+        != TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+    ):
+        raise Task041ModePrepError(
+            "staged LU factors are limited to the registered W0.7 fixed-H6 pilot"
+        )
+    defer_w0p7_p4_numeric = factor_stage_factory is not None
+    if defer_w0p7_p4_numeric and (
+        p4_inverse_backend != "cell_condensed"
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or representative_rhs_contract is not None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or p4_backend_pair_side is not None
+        or a6_response_pair
+    ):
+        raise Task041ModePrepError(
+            "deferred W0.7 P4 factors require the normal dual-side setup path; "
+            "sequential probes/replays are unsupported"
         )
     if not isinstance(reuse_primal_route_plan, bool):
         raise Task041ModePrepError("reuse_primal_route_plan must be a boolean")
@@ -6069,6 +7864,7 @@ def _run_task041_balh_candidate_setup(
         p4_backend_override: str | None = None,
         support_policy_override: str | None = None,
         construction_audit_override: str | None = None,
+        defer_p4_numeric: bool = False,
     ) -> Any:
         selected_backend = p4_backend_override or p4_inverse_backend
         selected_support_policy = support_policy_override or support_policy
@@ -6111,6 +7907,8 @@ def _run_task041_balh_candidate_setup(
                 else performance_profile
             ),
             p4_inverse_backend=selected_backend,
+            factor_stage_factory=factor_stage_factory,
+            defer_p4_numeric=defer_p4_numeric,
             support_policy=selected_support_policy,
             reuse_primal_route_plan=reuse_primal_route_plan,
             reuse_leading_ph_dual=reuse_leading_ph_dual,
@@ -13230,7 +15028,25 @@ def _run_task041_balh_candidate_setup(
             )
 
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
-            build_side(side, system)
+            build_side(
+                side,
+                system,
+                defer_p4_numeric=defer_w0p7_p4_numeric,
+            )
+
+        if defer_w0p7_p4_numeric:
+            completion = _complete_w0p7_pending_p4_numeric_before_admission(
+                side_inverses,
+                marker_callback=marker_callback,
+            )
+            marker_callback(
+                "p4_numeric_completion_sequence",
+                {
+                    "status": "completed_before_admission",
+                    "side_order": ["bottom", "top"],
+                    "sides": completion,
+                },
+            )
 
         for side, inverse in side_inverses.items():
             admission_audits[side] = inverse.admission_audit(identity=identity)
@@ -15000,6 +16816,69 @@ def run_task041_consumer(
                     "W0.7 p6/h0.70 fixed-H6 geometry and interfaces"
                 )
             exact_one_cell_strategy = "matched_uniform_axial_cell"
+        factor_stage_factory = None
+        factor_stage_binding = None
+        stage_bridge_path = os.environ.get(
+            TASK041_W0P7_STAGE_BRIDGE_PATH_ENV
+        )
+        if fixed_h6_is_w0p7_pilot:
+            if exact_one_cell_strategy != "matched_uniform_axial_cell":
+                raise Task041ModePrepError(
+                    "W0.7 staged factors require the registered matched-cell strategy"
+                )
+            local_stage_error = None
+            try:
+                if not stage_bridge_path:
+                    raise Task041ModePrepError(
+                        f"{TASK041_W0P7_STAGE_BRIDGE_PATH_ENV} is required; "
+                        "the W0.7 consumer may not fall back to ordinary KSP setup"
+                    )
+                factor_stage_factory, factor_stage_binding = (
+                    _build_task041_w0p7_stage_factory(
+                        stage_bridge_path,
+                        supervisor_memory_binding=(
+                            _task041_resolve_supervisor_memory_binding(
+                                root,
+                                expected_invocation_id=os.environ.get("INVOCATION_ID"),
+                                expected_source_sha=source_sha,
+                            )
+                        ),
+                        comm=comm,
+                        limits=contract["limits"],
+                        expected_rank_cpus=rank_numa_expected_cpus,
+                        marker_callback=callback,
+                        failure_evidence=candidate_failure_evidence,
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 - synchronize before factor collectives
+                local_stage_error = f"{type(exc).__name__}: {exc}"
+            stage_load_records = comm.allgather(
+                {
+                    "rank": int(comm.rank),
+                    "error": local_stage_error,
+                    "binding": factor_stage_binding,
+                }
+            )
+            stage_load_records.sort(key=lambda row: row.get("rank", -1))
+            bindings = [row.get("binding") for row in stage_load_records]
+            if (
+                any(row.get("error") is not None for row in stage_load_records)
+                or any(binding != bindings[0] for binding in bindings[1:])
+                or bindings[0] is None
+            ):
+                candidate_failure_evidence["staged_factor_bridge_load"] = {
+                    "status": "rejected_before_factor_creation",
+                    "rank_records": stage_load_records,
+                }
+                raise Task041ModePrepError(
+                    "W0.7 native staged-factor bridge failed the all-rank load identity check"
+                )
+            factor_stage_binding = dict(bindings[0])
+            result["factor_stage_factory"] = factor_stage_binding
+        elif stage_bridge_path is not None:
+            raise Task041ModePrepError(
+                "the W0.7 staged-factor bridge path is outside its registered pilot scope"
+            )
         producer = {
             "producer_source_sha": packet_source_sha,
             "consumer_source_sha": source_sha,
@@ -15077,6 +16956,8 @@ def run_task041_consumer(
             "selected_mode_packet_manifest_sha256": packet_manifest_sha256,
             "sampled_column_contract": sampled_contract,
         }
+        if factor_stage_factory is not None:
+            setup_kwargs["factor_stage_factory"] = factor_stage_factory
         if exact_one_cell_strategy is not None:
             setup_kwargs["exact_one_cell_strategy"] = exact_one_cell_strategy
         setup = build_frozen_m10_setup(
@@ -15568,6 +17449,7 @@ def run_task041_consumer(
                 fixed_h6_modal_gmres_research=(
                     fixed_h6_modal_gmres_research
                 ),
+                factor_stage_factory=factor_stage_factory,
                 reuse_primal_route_plan=reuse_primal_route_plan,
                 reuse_leading_ph_dual=reuse_leading_ph_dual,
                 complex_qr_research=complex_qr_research,
@@ -16173,7 +18055,13 @@ def run_task041_consumer(
         }
         if a6_response_pair:
             classified_failures.add("REPRESENTATIVE_RHS_NUMERICAL_GATE")
-        if isinstance(classified_failure, str) and classified_failure in classified_failures:
+        if classified_failure == "TASK041_STAGED_FACTOR_BUDGET_REJECTED":
+            result["status"] = "task041_staged_factor_budget_rejected"
+            result["classification"] = classified_failure
+            failure_payload = getattr(exc, "failure_evidence", None)
+            if isinstance(failure_payload, Mapping):
+                result["failure_evidence"] = _jsonable(dict(failure_payload))
+        elif isinstance(classified_failure, str) and classified_failure in classified_failures:
             result["status"] = (
                 "task041_common_layout_equivalence_failed"
                 if comparison_mode == "common_layout_equivalence"

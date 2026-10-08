@@ -19,6 +19,10 @@ import pytest
 from petsc4py import PETSc
 from petsc_lu_stage_bridge import create_lu_stage, numeric_event_count_raw
 
+from benchmarks.task041_exact_side_workflow import (
+    _task041_w0p7_amd_control_errors,
+    _task041_w0p7_analysis_ordering_errors,
+)
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 from src.solvers.petsc_lu_stage import (
     StagedFactorRejected,
@@ -114,6 +118,62 @@ def _count(event_snapshot: dict[str, Any]) -> int | None:
     return value if isinstance(value, int) and not isinstance(value, bool) else None
 
 
+def _w0p7_amd_context_check(
+    context: dict[str, Any], *, after_symbolic: bool
+) -> tuple[bool, str | None]:
+    """Check the registered side controls and, after analysis, its strategy."""
+    comm_size = int(PETSc.COMM_WORLD.getSize())
+    analysis = context.get("analysis_info_raw")
+    readback = context.get("public_mumps_control_readback")
+    if readback is None and isinstance(analysis, dict):
+        readback = analysis.get("public_mumps_control_readback")
+    errors = _task041_w0p7_amd_control_errors(
+        readback,
+        expected_comm_size=comm_size,
+        expected_comm_rank=int(PETSc.COMM_WORLD.tompi4py().rank),
+    )
+    if context.get("icntl14_requested") != 40:
+        errors.append("context ICNTL(14) does not match the tiny deferred P4 case")
+    if after_symbolic:
+        if (
+            context.get("stage") != "after_symbolic_before_numeric"
+            or not isinstance(analysis, dict)
+            or analysis.get("stage") != "after_MatLUFactorSymbolic_before_numeric"
+            or analysis.get("numeric_attempts") != 0
+        ):
+            errors.append("analysis record is not the pending numeric stage")
+        errors.extend(
+            _task041_w0p7_analysis_ordering_errors(
+                analysis,
+                expected_comm_size=comm_size,
+                expected_comm_rank=int(PETSc.COMM_WORLD.tompi4py().rank),
+            )
+        )
+    elif context.get("stage") != "before_symbolic":
+        errors.append("pre-symbolic record has the wrong lifecycle stage")
+    if errors or not isinstance(readback, dict):
+        return False, None
+    signature_record = dict(readback)
+    profile = signature_record.get("factor_profile")
+    if isinstance(profile, dict):
+        profile = {key: value for key, value in profile.items() if key != "comm_rank"}
+        signature_record["factor_profile"] = profile
+    if after_symbolic and isinstance(analysis, dict):
+        signature_record["post_symbolic_mumps_control_readback"] = analysis.get(
+            "post_symbolic_mumps_control_readback"
+        )
+    try:
+        signature = json.dumps(
+            signature_record,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+    except (TypeError, ValueError):
+        return False, None
+    return True, signature
+
+
 def _destroy_owned(owned: list[Any]) -> list[dict[str, Any]]:
     cleanup: list[dict[str, Any]] = []
     while owned:
@@ -183,6 +243,10 @@ def test_lu_stage_symbolic_only_keeps_raw_info_and_releases_in_call_order() -> N
             factor = _own(owned, create_lu_stage(matrix, icntl14=icntl14))
             event_before = numeric_event_count_raw()
             factor.symbolic()
+            ordinary_controls = {
+                "ICNTL7": factor.get_mumps_icntl(7),
+                "ICNTL28": factor.get_mumps_icntl(28),
+            }
             analysis = factor.analysis_info_raw()
             event_after = numeric_event_count_raw()
             lifecycle_before_destroy = factor.lifecycle()
@@ -199,6 +263,7 @@ def test_lu_stage_symbolic_only_keeps_raw_info_and_releases_in_call_order() -> N
                 "numeric_event_before": event_before,
                 "numeric_event_after_symbolic": event_after,
                 "numeric_event_delta": delta,
+                "ordinary_default_controls": ordinary_controls,
                 "analysis_info_raw": analysis,
                 "analysis_only_decision": "do_not_call_numeric",
                 "lifecycle_before_destroy": lifecycle_before_destroy,
@@ -223,7 +288,7 @@ def test_lu_stage_symbolic_only_keeps_raw_info_and_releases_in_call_order() -> N
                 and analysis.get("numeric_attempts") == 0
                 and lifecycle_before_destroy.get("numeric_attempts") == 0
                 and len(analysis.get("INFO_api_raw_by_rank", [])) == 3
-                and len(analysis.get("INFOG_api_raw_by_rank", [])) == 7
+                and len(analysis.get("INFOG_api_raw_by_rank", [])) == 8
                 and all(
                     item.get("query_error_code") == 0
                     and "raw_value" in item
@@ -240,8 +305,13 @@ def test_lu_stage_symbolic_only_keeps_raw_info_and_releases_in_call_order() -> N
                 == "million_bytes_10^6_bytes; raw integer retained"
                 and infog_by_index[17].get("unit")
                 == "million_bytes_10^6_bytes; raw integer retained"
+                and infog_by_index[32].get("unit")
+                == "enum; 1=sequential,2=parallel; raw integer retained"
+                and infog_by_index[32].get("meaning_status")
+                == "verified_against_MUMPS_5.6.2_user_guide"
                 and 18 not in infog_by_index
                 and 19 not in infog_by_index
+                and ordinary_controls == {"ICNTL7": 7, "ICNTL28": 1}
                 and analysis.get("byte_estimate") is None
                 and tuple(layout.get("source", {}).get("global_size", ()))
                 == (8, 8)
@@ -793,3 +863,376 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
         all(item.get("released") is True for item in record.get("cleanup", []))
         for record in ranks
     ), ranks
+
+
+
+def test_w0p7_pending_p4_handles_reject_solves_until_same_handle_numeric() -> None:
+    """Exercise pending side handles on the existing distributed 8x8 matrix."""
+    comm = PETSc.COMM_WORLD.tompi4py()
+    owned: list[Any] = []
+    factors: dict[str, ResearchExactFactorInverse] = {}
+    local: dict[str, Any] = {"rank": comm.rank, "local_pass": True, "cleanup": []}
+    event_deltas: dict[str, int | None] = {}
+    matrix = None
+
+    def consensus(value: bool) -> bool:
+        return all(comm.allgather(bool(value)))
+
+    def gate(context: Any) -> bool:
+        identity = context.get("stage_identity")
+        after_symbolic = context.get("stage") == "after_symbolic_before_numeric"
+        amd_ok, signature = _w0p7_amd_context_check(
+            context, after_symbolic=after_symbolic
+        )
+        live = {
+            row.get("stage_identity"): row.get("factor_state")
+            for row in context.get("live_factor_inventory", [])
+            if isinstance(row, dict)
+        }
+        if context.get("stage") == "before_symbolic":
+            expected = (
+                {}
+                if identity.endswith("bottom")
+                else {"task041.w0p7.p4.bottom": "symbolic_live_pending_numeric"}
+            )
+            valid = (
+                context.get("icntl14_requested") == 40
+                and live == expected
+                and amd_ok
+            )
+        else:
+            expected = (
+                {
+                    "task041.w0p7.p4.bottom": "symbolic_live_pending_numeric",
+                    "task041.w0p7.p4.top": "symbolic_live_pending_numeric",
+                }
+                if identity.endswith("bottom")
+                else {
+                    "task041.w0p7.p4.bottom": "numeric_ready",
+                    "task041.w0p7.p4.top": "symbolic_live_pending_numeric",
+                }
+            )
+            valid = (
+                context.get("stage") == "after_symbolic_before_numeric"
+                and context.get("lifecycle", {}).get("numeric_attempts") == 0
+                and live == expected
+                and amd_ok
+            )
+        rank_checks = comm.allgather((bool(valid), signature))
+        return bool(
+            all(row[0] for row in rank_checks)
+            and all(row[1] is not None for row in rank_checks)
+            and len({row[1] for row in rank_checks}) == 1
+        )
+
+    try:
+        matrix = _tiny_complex_matrix(owned)
+        factory = StagedMumpsLUFactory(
+            petsc_lu_stage_bridge,
+            pre_symbolic_gate=gate,
+            pre_numeric_gate=gate,
+            deferred_numeric_stage_identities=(
+                "task041.w0p7.p4.bottom",
+                "task041.w0p7.p4.top",
+            ),
+            sequential_amd_stage_identities=(
+                "task041.w0p7.p4.bottom",
+                "task041.w0p7.p4.top",
+            ),
+        )
+        event_before = numeric_event_count_raw()
+
+        for side in ("bottom", "top"):
+            identity = f"task041.w0p7.p4.{side}"
+
+            def make_stage(source, *, icntl14, defer_numeric=False, _id=identity):
+                return factory(
+                    source,
+                    icntl14=icntl14,
+                    stage_identity=_id,
+                    defer_numeric=defer_numeric,
+                )
+
+            factors[side] = ResearchExactFactorInverse(
+                matrix,
+                factor_only_storage=True,
+                stage_factory=make_stage,
+                allow_pending_numeric=True,
+            )
+
+        handles = {side: factor._staged_factor for side, factor in factors.items()}
+        event_symbolic = numeric_event_count_raw()
+        before_count, symbolic_count = _count(event_before), _count(event_symbolic)
+        event_deltas["both_symbolic"] = (
+            None if before_count is None or symbolic_count is None
+            else symbolic_count - before_count
+        )
+
+        exact = _own(owned, matrix.createVecRight())
+        rhs = _own(owned, matrix.createVecLeft())
+        solution = _own(owned, matrix.createVecRight())
+        residual = _own(owned, matrix.createVecLeft())
+        first, last = map(int, exact.getOwnershipRange())
+        for row in range(first, last):
+            exact.setValue(row, PETSc.ScalarType(0.75 + 0.2 * row + 0.125j))
+        exact.assemble()
+        matrix.mult(exact, rhs)
+
+        dense, _, ownership_ok = _distributed_dense_columns(
+            matrix,
+            np.column_stack(
+                (np.arange(1, 9) + 0.125j, np.arange(3, 11) - 0.25j)
+            ).astype(np.complex128),
+            owned,
+        )
+        batch_rhs = _own(owned, matrix.matMult(dense))
+        batch_solution = _own(owned, batch_rhs.duplicate(copy=False))
+        if not consensus(ownership_ok):
+            raise RuntimeError("dense RHS ownership does not match the 8x8 matrix")
+
+        rejections: dict[str, list[bool]] = {}
+        for side, factor in factors.items():
+            staged = handles[side]
+            outcomes = []
+            for method, args in (
+                (factor.solve, (rhs, solution)),
+                (factor.solve_many, (batch_rhs, batch_solution)),
+                (staged.solve, (rhs, solution)),
+                (staged.solveTranspose, (rhs, solution)),
+                (staged.matSolve, (batch_rhs, batch_solution)),
+                (staged.matSolveTranspose, (batch_rhs, batch_solution)),
+                (factor.release_borrowed_matrix, ()),
+            ):
+                try:
+                    method(*args)
+                except RuntimeError:
+                    outcomes.append(True)
+                else:
+                    outcomes.append(False)
+            rejections[side] = outcomes
+            local["local_pass"] &= (
+                all(outcomes)
+                and factor.matrix is matrix
+                and factor.diagnostics["factor_state"]
+                == "symbolic_live_pending_numeric"
+            )
+
+        for side in ("bottom", "top"):
+            before = _count(numeric_event_count_raw())
+            factors[side].complete_numeric()
+            after = _count(numeric_event_count_raw())
+            event_deltas[side] = (
+                None if before is None or after is None else after - before
+            )
+            local.setdefault("same_handles", {})[side] = (
+                factors[side]._staged_factor is handles[side]
+                and handles[side].numeric_ready is True
+            )
+            if side == "bottom":
+                local["top_still_pending"] = (
+                    factors["top"].diagnostics["factor_state"]
+                    == "symbolic_live_pending_numeric"
+                )
+
+        rhs_norm = float(rhs.norm())
+        for side, factor in factors.items():
+            factor.solve(rhs, solution)
+            matrix.mult(solution, residual)
+            residual.axpy(PETSc.ScalarType(-1), rhs)
+            residual_norm = float(residual.norm())
+            relative = residual_norm / rhs_norm if rhs_norm > 0 else None
+            local.setdefault("relative_residuals", {})[side] = relative
+            factor_row_ownership = tuple(
+                map(
+                    int,
+                    factor._staged_factor.factor_layout[
+                        "row_ownership"
+                    ],
+                )
+            )
+            batch_ownership_ok = (
+                tuple(map(int, batch_rhs.getOwnershipRange()))
+                == factor_row_ownership
+                and tuple(map(int, batch_solution.getOwnershipRange()))
+                == factor_row_ownership
+            )
+            batch_ownership_ok = consensus(batch_ownership_ok)
+            if not batch_ownership_ok:
+                raise RuntimeError(
+                    f"{side} distributed batch rows do not match factor ownership"
+                )
+            factor.solve_many(batch_rhs, batch_solution)
+            batch_residual = _dense_original_residual(
+                matrix, batch_rhs, batch_solution, owned
+            )
+            batch_residual["factor_row_ownership"] = list(
+                factor_row_ownership
+            )
+            batch_residual["ownership_matches_factor"] = batch_ownership_ok
+            local.setdefault("batch_relative_frobenius_residuals", {})[
+                side
+            ] = batch_residual
+            factor.release_borrowed_matrix()
+            local["local_pass"] &= (
+                math.isfinite(rhs_norm)
+                and rhs_norm > 0
+                and math.isfinite(residual_norm)
+                and relative is not None
+                and math.isfinite(relative)
+                and relative <= 5.0e-9
+                and batch_residual["finite"] is True
+                and batch_residual["rhs_frobenius_norm"] is not None
+                and batch_residual["rhs_frobenius_norm"] > 0.0
+                and batch_residual["relative_frobenius_residual"] is not None
+                and batch_residual["relative_frobenius_residual"] <= 5.0e-9
+                and batch_residual["ownership_matches_factor"] is True
+                and factor.matrix is None
+            )
+
+        local["numeric_event_deltas"] = event_deltas
+        local["pending_operation_rejections"] = rejections
+        local["local_pass"] &= (
+            event_deltas["both_symbolic"] == 0
+            and event_deltas["bottom"] == 1
+            and event_deltas["top"] == 1
+            and all(all(values) for values in rejections.values())
+            and all(local["same_handles"].values())
+            and local["top_still_pending"] is True
+        )
+    except Exception as exc:  # noqa: BLE001 - persist each rank result after cleanup
+        local["local_pass"] = False
+        local["exception"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        for factor in reversed(tuple(factors.values())):
+            staged = factor._staged_factor
+            try:
+                factor.destroy()
+                status = dict(staged.lifecycle)
+                local["cleanup"].append(status)
+                local["local_pass"] &= (
+                    status.get("factor_released") is True
+                    and status.get("destroy_error_code") == 0
+                )
+            except Exception as exc:  # noqa: BLE001 - preserve cleanup evidence
+                local["local_pass"] = False
+                local["cleanup"].append({"exception": f"{type(exc).__name__}: {exc}"})
+        local["cleanup"].extend(_destroy_owned(owned))
+
+    ranks = _emit_rank_records("W0P7_PENDING_P4_LIFECYCLE_JSON=", local)
+    assert all(record.get("local_pass") is True for record in ranks), ranks
+
+
+def test_w0p7_pending_p4_numeric_budget_rejection_destroys_without_numeric() -> None:
+    """An unknown pre-numeric budget rejects and destroys the pending handle."""
+    comm = PETSc.COMM_WORLD.tompi4py()
+    owned: list[Any] = []
+    local: dict[str, Any] = {"rank": comm.rank, "local_pass": True}
+    factor = None
+    pending_destroy = None
+
+    def gate(context: Any) -> bool:
+        amd_ok, signature = _w0p7_amd_context_check(
+            context, after_symbolic=False
+        )
+        valid = (
+            context.get("stage") == "before_symbolic"
+            and context.get("stage_identity") == "task041.w0p7.p4.bottom"
+            and amd_ok
+        )
+        rank_checks = comm.allgather((bool(valid), signature))
+        return bool(
+            all(row[0] for row in rank_checks)
+            and all(row[1] is not None for row in rank_checks)
+            and len({row[1] for row in rank_checks}) == 1
+        )
+
+    def reject_unknown(context: Any) -> bool:
+        amd_ok, signature = _w0p7_amd_context_check(
+            context, after_symbolic=True
+        )
+        lifecycle = context.get("lifecycle", {})
+        rank_checks = comm.allgather((amd_ok, signature))
+        controls_consistent = bool(
+            all(row[0] for row in rank_checks)
+            and all(row[1] is not None for row in rank_checks)
+            and len({row[1] for row in rank_checks}) == 1
+        )
+        local["unknown_budget"] = (
+            context.get("stage") == "after_symbolic_before_numeric"
+            and context.get("analysis_info_raw", {}).get("byte_estimate") is None
+            and lifecycle.get("numeric_attempts") == 0
+            and controls_consistent
+        )
+        return False
+
+    try:
+        matrix = _tiny_complex_matrix(owned)
+        before = _count(numeric_event_count_raw())
+        factory = StagedMumpsLUFactory(
+            petsc_lu_stage_bridge,
+            pre_symbolic_gate=gate,
+            pre_numeric_gate=reject_unknown,
+            deferred_numeric_stage_identities=("task041.w0p7.p4.bottom",),
+            sequential_amd_stage_identities=("task041.w0p7.p4.bottom",),
+        )
+        # Explicit user destruction of a pending handle must stay symbolic-only.
+        pending_destroy = factory(
+            matrix,
+            icntl14=40,
+            stage_identity="task041.w0p7.p4.bottom",
+            defer_numeric=True,
+        )
+        destroy_status = dict(pending_destroy.destroy())
+        after_pending_destroy = _count(numeric_event_count_raw())
+        local["pending_destroy"] = destroy_status
+        local["pending_destroy_numeric_delta"] = (
+            None
+            if before is None or after_pending_destroy is None
+            else after_pending_destroy - before
+        )
+        factor = _own(
+            owned,
+            factory(
+                matrix,
+                icntl14=40,
+                stage_identity="task041.w0p7.p4.bottom",
+                defer_numeric=True,
+            ),
+        )
+        symbolic = _count(numeric_event_count_raw())
+        try:
+            factor.complete_numeric()
+            local["rejected"] = False
+        except StagedFactorRejected as exc:
+            local["rejected"] = True
+            local["cleanup_status"] = dict(exc.cleanup_status)
+        after = _count(numeric_event_count_raw())
+        local["symbolic_event_delta"] = (
+            None if before is None or symbolic is None else symbolic - before
+        )
+        local["rejected_event_delta"] = (
+            None if before is None or after is None else after - before
+        )
+        status = local.get("cleanup_status", {})
+        local["local_pass"] = bool(
+            local["rejected"] is True
+            and local.get("unknown_budget") is True
+            and local["symbolic_event_delta"] == 0
+            and local["rejected_event_delta"] == 0
+            and local["pending_destroy_numeric_delta"] == 0
+            and destroy_status.get("factor_released") is True
+            and destroy_status.get("destroy_error_code") == 0
+            and destroy_status.get("numeric_attempts") == 0
+            and status.get("numeric_attempts") == 0
+            and status.get("factor_released") is True
+            and status.get("destroy_error_code") == 0
+            and factor.destroyed is True
+        )
+    except Exception as exc:  # noqa: BLE001 - persist each rank result after cleanup
+        local["local_pass"] = False
+        local["exception"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        local["cleanup"] = _destroy_owned(owned)
+
+    ranks = _emit_rank_records("W0P7_PENDING_BUDGET_REJECT_JSON=", local)
+    assert all(record.get("local_pass") is True for record in ranks), ranks
