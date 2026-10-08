@@ -230,6 +230,22 @@ def test_0p7_p3_hp_optin_keeps_its_own_material_and_component_identity(tmp_path)
     assert "five_nm_material" not in facts["campaign_authorization"]
     assert facts["component_options"]["exact_carrier_diagonal_hp"] is True
     assert facts["component_options"]["omit_structural_zero_hlocal"] is True
+    assert facts["component_options"]["reuse_dtn_surface_vector"] is True
+    assert facts["component_options"]["reuse_dtn_surface_geometry_cache"] is True
+    assert facts["component_options"]["dtn_surface_geometry_cache_limit_bytes"] == 4 * 1024**3
+    assert facts["component_options"]["dtn_component_cache_last_use_release"] is True
+    assert facts["component_options"]["dtn_mode_progress_interval"] == 1024
+    assert facts["component_options"]["dtn_surface_assembly_backend_by_degree"] == {
+        "p6": "q160_affine_hex_pointwise_weighted_legendre_component_pair_v1",
+        "p3": "native_ffcx",
+    }
+    assert facts["resources"]["rss_hard_limit_bytes"] == 1_950_000_000_000
+    assert facts["campaign_authorization"]["resource_policy"]["rss_hard_limit_bytes"] == (
+        1_950_000_000_000
+    )
+    assert facts["campaign_authorization"]["memory_override"][
+        "parent_and_worker_cap_bytes"
+    ] == 1_950_000_000_000
 
     manifest = _base_manifest(
         spec,
@@ -256,3 +272,10 @@ def test_0p7_p3_hp_optin_keeps_its_own_material_and_component_identity(tmp_path)
         old_facts = native_profile_facts(old_identity)
         assert "exact_carrier_diagonal_hp" not in old_facts["component_options"]
         assert "omit_structural_zero_hlocal" not in old_facts["component_options"]
+        assert "reuse_dtn_surface_vector" not in old_facts["component_options"]
+        assert "reuse_dtn_surface_geometry_cache" not in old_facts["component_options"]
+        assert "dtn_surface_geometry_cache_limit_bytes" not in old_facts["component_options"]
+        assert "dtn_surface_assembly_backend_by_degree" not in old_facts[
+            "component_options"
+        ]
+        assert old_facts["resources"]["rss_hard_limit_bytes"] == 1_300_000_000_000

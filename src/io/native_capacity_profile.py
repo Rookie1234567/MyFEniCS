@@ -197,10 +197,42 @@ def native_profile_facts(identity):
         if identity in V6_0P7_P3_HP_OPTIN_PROFILES:
             facts['wavelength_nm'] = 0.7
             facts['allowed_mesh_targets_nm'] = [0.7]
+            rss_hard_limit_bytes = 1_950_000_000_000
+            facts['resources'].update(
+                absolute_cap_bytes=rss_hard_limit_bytes,
+                planning_cap_bytes=rss_hard_limit_bytes,
+                rss_hard_limit_bytes=rss_hard_limit_bytes,
+            )
+            facts['campaign_authorization']['resource_policy'].update(
+                rss_hard_limit_bytes=rss_hard_limit_bytes,
+            )
+            facts['campaign_authorization']['memory_override'] = {
+                'source': 'user_authorized_h0p7_followup_resource_policy',
+                'whole_process_tree_rss_cap_bytes': rss_hard_limit_bytes,
+                'parent_and_worker_cap_bytes': rss_hard_limit_bytes,
+                'pss_uss_sampling': 'disabled',
+                'swap_prediction_eta': 'observe_only',
+                'time_limit_mode': 'none',
+            }
             facts['component_options'].update(
                 exact_carrier_diagonal_hp=True,
                 omit_structural_zero_hlocal=True,
+                reuse_dtn_surface_vector=True,
+                reuse_dtn_surface_geometry_cache=True,
+                dtn_surface_geometry_cache_limit_bytes=4 * 1024**3,
+                dtn_surface_weighted_moment_contraction=(
+                    'q160_weighted_moment_x_then_y_v1'
+                ),
+                dtn_component_cache_last_use_release=True,
+                dtn_mode_progress_interval=1024,
+                dtn_surface_assembly_backend_by_degree={
+                    'p6': (
+                        'q160_affine_hex_pointwise_weighted_legendre_component_pair_v1'
+                    ),
+                    'p3': 'native_ffcx',
+                },
             )
+            facts['component_options'].pop('dtn_surface_assembly_backend', None)
             facts['condensed_route'] = dict(
                 facts['condensed_route'],
                 hp_storage_policy='exact_carrier_diagonal',

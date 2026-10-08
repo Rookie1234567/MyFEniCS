@@ -226,6 +226,129 @@ class RetainedCondensedRuntime:
             raise ValueError("the D2 retained route is qualified for MPI1 only")
         coarse_degree = int(coarse_degree)
         options = dict(component_options or {})
+        reuse_surface_vector = bool(options.get('reuse_dtn_surface_vector', False))
+        surface_assembly_backend = options.get('dtn_surface_assembly_backend')
+        surface_assembly_backend_by_degree = options.get(
+            'dtn_surface_assembly_backend_by_degree'
+        )
+        release_component_cache = bool(
+            options.get('dtn_component_cache_last_use_release', False)
+        )
+        reuse_surface_geometry_cache = bool(
+            options.get('reuse_dtn_surface_geometry_cache', False)
+        )
+        surface_weighted_moment_contraction = options.get(
+            'dtn_surface_weighted_moment_contraction'
+        )
+        surface_geometry_cache_limit_bytes = int(
+            options.get('dtn_surface_geometry_cache_limit_bytes', 0)
+        )
+        surface_progress_interval = int(
+            options.get('dtn_mode_progress_interval', 1024)
+        )
+        surface_backend_by_degree = {
+            6: surface_assembly_backend,
+            coarse_degree: surface_assembly_backend,
+        }
+        if (
+            reuse_surface_vector
+            or release_component_cache
+            or reuse_surface_geometry_cache
+            or surface_weighted_moment_contraction is not None
+        ):
+            from src.io.native_capacity_profile import (
+                V6_0P7_P3_HP_OPTIN_PROFILES,
+                native_profile_facts,
+            )
+
+            if (
+                profile_identity not in V6_0P7_P3_HP_OPTIN_PROFILES
+                or coarse_degree != 3
+                or not reuse_surface_vector
+                or not release_component_cache
+                or not reuse_surface_geometry_cache
+            ):
+                raise ValueError(
+                    'reused DtN surface vectors and last-use cache release are '
+                    'restricted to the explicit 0.7 nm p3 profile'
+                )
+            if surface_progress_interval != 1024:
+                raise ValueError(
+                    'the 0.7 nm p3 profile fixes sparse mode progress at 1024 modes'
+                )
+            expected_component_options = native_profile_facts(profile_identity)[
+                'component_options'
+            ]
+            expected_moment_contraction = expected_component_options.get(
+                'dtn_surface_weighted_moment_contraction'
+            )
+            if surface_weighted_moment_contraction != expected_moment_contraction:
+                raise ValueError(
+                    'weighted-moment contraction must match the resolved explicit profile'
+                )
+            if (
+                expected_component_options.get(
+                    'reuse_dtn_surface_geometry_cache'
+                )
+                is not True
+                or expected_component_options.get(
+                    'dtn_surface_geometry_cache_limit_bytes'
+                )
+                != 4 * 1024**3
+                or surface_geometry_cache_limit_bytes != 4 * 1024**3
+            ):
+                raise ValueError(
+                    'geometry caching is not enabled by the resolved 0.7 nm profile'
+                )
+            expected_backend_route = expected_component_options.get(
+                'dtn_surface_assembly_backend_by_degree'
+            )
+            if expected_backend_route is not None:
+                expected_route = {
+                    'p6': (
+                        'q160_affine_hex_pointwise_weighted_legendre_component_pair_v1'
+                    ),
+                    'p3': 'native_ffcx',
+                }
+                if (
+                    profile_identity not in V6_0P7_P3_HP_OPTIN_PROFILES
+                    or coarse_degree != 3
+                    or surface_assembly_backend is not None
+                    or not isinstance(surface_assembly_backend_by_degree, Mapping)
+                    or dict(surface_assembly_backend_by_degree) != expected_route
+                    or dict(expected_backend_route) != expected_route
+                ):
+                    raise ValueError(
+                        'the explicit 0.7 nm profile requires its exact p6-paired/'
+                        'p3-native surface backend route'
+                    )
+                surface_backend_by_degree = {
+                    6: expected_route['p6'],
+                    3: None,
+                }
+            elif surface_assembly_backend_by_degree is not None:
+                raise ValueError(
+                    'degree-specific surface backends are restricted to the '
+                    'explicit 0.7 nm profile'
+                )
+            else:
+                expected_surface_backend = expected_component_options.get(
+                    'dtn_surface_assembly_backend'
+                )
+                if surface_assembly_backend != expected_surface_backend:
+                    raise ValueError(
+                        'the selected profile must explicitly select its resolved '
+                        'surface assembly backend'
+                    )
+        elif (
+            surface_assembly_backend is not None
+            or surface_assembly_backend_by_degree is not None
+            or surface_weighted_moment_contraction is not None
+        ):
+            raise ValueError(
+                'the alternative surface assembly backend is restricted to the '
+                'explicit 0.7 nm p3 profile'
+            )
         trace_map_policy = options.get("same_mesh_trace_map_policy")
         if trace_map_policy is not None:
             from src.io.native_capacity_profile import (
@@ -250,6 +373,20 @@ class RetainedCondensedRuntime:
                     "resolved profile does not explicitly enable canonical P3 traces"
                 )
         notify = (lambda name, facts: marker(name, dict(facts))) if marker else (lambda *_: None)
+        if surface_assembly_backend_by_degree is not None:
+            notify(
+                'retained_surface_backend_route_selected',
+                {
+                    'profile_identity': str(profile_identity),
+                    'backend_by_degree': {
+                        f'p{degree}': (
+                            surface_backend_by_degree.get(degree)
+                            or 'native_ffcx'
+                        )
+                        for degree in (6, coarse_degree)
+                    },
+                },
+            )
         levels = _build_same_mesh_levels(
             cfg, comm, (6, coarse_degree), include_positive_coefficients=True
         )
@@ -257,6 +394,22 @@ class RetainedCondensedRuntime:
         if coarse_degree == 3:
             shared_mesh_facts.update(
                 coarse_operator="A3", p4_internal_names_are_compatibility_aliases=True
+            )
+        if reuse_surface_vector:
+            mesh = levels['mesh']
+            tdim = int(mesh.topology.dim)
+            shared_mesh_facts.update(
+                actual_global_cell_count=int(
+                    mesh.topology.index_map(tdim).size_global
+                ),
+                actual_space_global_rows={
+                    f'p{degree}': int(
+                        levels['spaces'][degree].dofmap.index_map.size_global
+                        * levels['spaces'][degree].dofmap.index_map_bs
+                    )
+                    for degree in (6, coarse_degree)
+                },
+                actual_space_rows_are_mpc_independent_rows=False,
             )
         notify("retained_shared_mesh_complete", shared_mesh_facts)
         volume_quadrature_metadata, quadrature_records = fine_volume_quadrature_metadata(
@@ -271,6 +424,14 @@ class RetainedCondensedRuntime:
             cfg,
             6,
             volume_quadrature_metadata=volume_quadrature_metadata,
+            reuse_surface_vector=reuse_surface_vector,
+            surface_assembly_backend=surface_backend_by_degree[6],
+            reuse_surface_geometry_cache=reuse_surface_geometry_cache,
+            surface_geometry_cache_limit_bytes=surface_geometry_cache_limit_bytes,
+            surface_weighted_moment_contraction=surface_weighted_moment_contraction,
+            collect_surface_timings=False,
+            stage_callback=notify if reuse_surface_vector else None,
+            surface_progress_interval=surface_progress_interval,
         )
         p4 = None
         pc_physical = None
@@ -282,8 +443,20 @@ class RetainedCondensedRuntime:
                 coarse_degree,
                 mode_inventory=(fine["modes"], fine["mode_rows"], fine["mode_sha256"]),
                 volume_quadrature_metadata=volume_quadrature_metadata,
+                reuse_surface_vector=reuse_surface_vector,
+                surface_assembly_backend=surface_backend_by_degree[coarse_degree],
+                reuse_surface_geometry_cache=False,
+                surface_geometry_cache_limit_bytes=0,
+                collect_surface_timings=False,
+                stage_callback=notify if reuse_surface_vector else None,
+                surface_progress_interval=surface_progress_interval,
             )
             if sum_factorized_work:
+                if reuse_surface_vector:
+                    notify(
+                        'retained_packed_a6_action_started',
+                        {'mode_count': len(fine['modes']), 'mode_sha256': fine['mode_sha256']},
+                    )
                 pc_physical = build_packed_physical_action(
                     {"levels": levels, "fine": fine},
                     cfg,
@@ -294,7 +467,17 @@ class RetainedCondensedRuntime:
                     share_readonly_geometry=options.get('shared_readonly_geometry', False),
                 )
                 notify("retained_sum_factorized_physical_action_complete", pc_physical["facts"])
+                if reuse_surface_vector:
+                    notify(
+                        'retained_packed_a6_action_complete',
+                        {'component_count': len(pc_physical['facts'].get('components', ()))},
+                    )
             if options.get('fast_complete_a4'):
+                if reuse_surface_vector:
+                    notify(
+                        'retained_packed_a3_action_started',
+                        {'mode_count': len(fine['modes']), 'mode_sha256': fine['mode_sha256']},
+                    )
                 fast_a4 = build_packed_physical_action(
                     {"levels": levels, "fine": fine, "p4": p4}, cfg,
                     degree=coarse_degree, sum_factorized_work=True,
@@ -310,6 +493,11 @@ class RetainedCondensedRuntime:
                         operator_identity='A3',
                         p4_internal_alias=True,
                     ))
+                    if reuse_surface_vector:
+                        notify(
+                            'retained_packed_a3_action_complete',
+                            {'operator_identity': 'A3', 'p4_internal_alias': True},
+                        )
                 else:
                     notify(marker_name, fast_a4['facts'])
             cell_tags = levels["mesh_data"].cell_tags

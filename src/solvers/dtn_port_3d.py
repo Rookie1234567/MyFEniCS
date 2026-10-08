@@ -1,26 +1,24 @@
 from __future__ import annotations
 
-from .condensed_reference_preflight import CondensedPreflightExit
-
 import copy
 import csv
-from dataclasses import dataclass
 import hashlib
 import json
 import time
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Callable, Mapping
-
-import numpy as np
-import ufl
-from mpi4py import MPI
-from petsc4py import PETSc
+from typing import Any
 
 import dolfinx_mpc
+import numpy as np
+import ufl
 from dolfinx import fem
 from dolfinx.fem import petsc as fem_petsc
 from dolfinx.la.petsc import _ghost_update, create_vector
+from mpi4py import MPI
+from petsc4py import PETSc
 
 from ..common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
@@ -40,6 +38,7 @@ from .common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
+from .common_3d_utils import _write_progress_event
 from .condensed_dtn import (
     DtnBlockAssembler,
     MatrixFreeDtnProbe,
@@ -47,13 +46,10 @@ from .condensed_dtn import (
     combine_petsc_augmented_solution,
     create_matrix_free_augmented_operator,
 )
-from .common_3d_utils import _write_progress_event
-from .hcurl_cell_static_condensation import (
-    build_explicit_cell_static_condensation,
-    build_floquet_independent_trace_system,
-    expand_floquet_independent_trace_solution,
-    owned_hcurl_cell_interior_dofs,
-    recover_full_solution,
+from .condensed_reference_preflight import CondensedPreflightExit
+from .fullspace_surface_legendre import (
+    SURFACE_COMPONENT_PAIR_BACKEND,
+    SURFACE_WEIGHTED_MOMENT_CONTRACTION,
 )
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
@@ -63,6 +59,13 @@ from .hcurl_assembly_time_condensation import (
     owned_active_support_groups,
     recover_owned_cell_interiors,
 )
+from .hcurl_cell_static_condensation import (
+    build_explicit_cell_static_condensation,
+    build_floquet_independent_trace_system,
+    expand_floquet_independent_trace_solution,
+    owned_hcurl_cell_interior_dofs,
+    recover_full_solution,
+)
 from .hcurl_variable_p_reduction import (
     VariablePAssemblyTimeReduction,
     VariablePRecoveredSolution,
@@ -71,7 +74,6 @@ from .hcurl_variable_p_reduction import (
 from .mpc_form_action import MpcFormActionContext
 from .solve_vector_maxwell import _json_default
 from .static_local_schur_action import create_static_local_schur_action
-
 
 DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
@@ -834,11 +836,46 @@ def _vec_nonzero_owned_entries(
     vec: PETSc.Vec,
     *,
     relative_tol: float = 1.0e-13,
+    support: np.ndarray | None = None,
+    timing_totals: dict[str, float] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return owned significant entries using one collective cutoff."""
 
     start, end = vec.getOwnershipRange()
     values = np.asarray(vec.getArray(readonly=True), dtype=np.complex128)
+    if support is not None:
+        started = time.perf_counter() if timing_totals is not None else None
+        local_support = np.asarray(support, dtype=np.int64).reshape(-1)
+        if local_support.size and (
+            int(local_support.min()) < 0 or int(local_support.max()) >= values.size
+        ):
+            raise ValueError("surface support contains a non-owned vector entry")
+        supported_values = values[local_support]
+        if not np.isfinite(supported_values).all():
+            raise ValueError("surface support vector contains non-finite entries")
+        magnitudes = np.abs(supported_values)
+        local_maximum = float(np.max(magnitudes, initial=0.0))
+        global_maximum = float(
+            vec.getComm()
+            .tompi4py()
+            .allreduce(
+                local_maximum,
+                op=MPI.MAX,
+            )
+        )
+        cutoff = max(1.0e-30, relative_tol * global_maximum)
+        nz = np.flatnonzero(magnitudes > cutoff)
+        rows = _idx(np.asarray(start + local_support[nz], dtype=np.int64))
+        result = rows, supported_values[nz].copy()
+        if started is not None:
+            timing_totals["owned_support_extract_seconds"] = (
+                timing_totals.get("owned_support_extract_seconds", 0.0)
+                + time.perf_counter() - started
+            )
+        return result
+
+    if not np.isfinite(values).all():
+        raise ValueError("surface vector contains non-finite owned entries")
     local_maximum = float(np.max(np.abs(values), initial=0.0))
     global_maximum = float(
         vec.getComm()
@@ -851,6 +888,66 @@ def _vec_nonzero_owned_entries(
     cutoff = max(1.0e-30, relative_tol * global_maximum)
     nz = np.flatnonzero(np.abs(values) > cutoff)
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
+
+
+def _surface_mpc_local_support(
+    function_space: Any,
+    mpc: Any,
+    cells: Sequence[int],
+    local_storage_size: int,
+) -> np.ndarray:
+    """Build the structural local write set for MPC exterior-facet assembly."""
+
+    if int(function_space.dofmap.index_map_bs) != 1:
+        raise ValueError("surface support opt-in requires block size one")
+    cell_to_slaves = mpc.cell_to_slaves
+    masters = mpc.masters
+    support: set[int] = set()
+    for cell_value in cells:
+        cell = int(cell_value)
+        cell_dofs = np.asarray(function_space.dofmap.cell_dofs(cell), dtype=np.int64)
+        if cell_dofs.size and (
+            int(cell_dofs.min()) < 0 or int(cell_dofs.max()) >= local_storage_size
+        ):
+            raise ValueError("surface cell DOF exceeds the MPC vector local storage")
+        cell_dof_set = {int(dof) for dof in cell_dofs}
+        support.update(cell_dof_set)
+        for slave_value in cell_to_slaves.links(cell):
+            slave = int(slave_value)
+            if slave not in cell_dof_set:
+                raise ValueError("MPC cell slave is absent from the form cell DOF map")
+            for master_value in masters.links(slave):
+                master = int(master_value)
+                if master < 0 or master >= local_storage_size:
+                    raise ValueError("MPC master exceeds the vector local/ghost storage")
+                support.add(master)
+    return np.asarray(sorted(support), dtype=np.int32)
+
+
+def _surface_array_sha256(array: np.ndarray) -> str:
+    """Hash an existing contiguous numeric array without making a byte copy."""
+
+    value = np.asarray(array)
+    if not value.flags.c_contiguous:
+        raise ValueError("surface identity arrays must be C-contiguous")
+    digest = hashlib.sha256()
+    digest.update(memoryview(value).cast("B"))
+    return digest.hexdigest()
+
+
+def _require_surface_support_superset(
+    required_support: Sequence[int], proposed_support: Sequence[int]
+) -> None:
+    """Reject a support mask that omits any structurally writable local row."""
+
+    required = {int(value) for value in required_support}
+    proposed = {int(value) for value in proposed_support}
+    missing = sorted(required.difference(proposed))
+    if missing:
+        raise ValueError(
+            "surface support omits structurally writable local rows: "
+            f"{missing[:8]}"
+        )
 
 
 def _combine_owned_entries(
@@ -1126,6 +1223,10 @@ class _ReusableSurfaceComponentAssembler:
             raise ValueError(
                 "Stage-4 DtN port component assembly only supports x/y tangential components."
             )
+        self.function_space = V
+        self.tag = int(tag)
+        self.mesh_data = mesh_data
+        self.component = int(component)
         self.comm = mesh_data.mesh.comm
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
@@ -1151,21 +1252,2299 @@ class _ReusableSurfaceComponentAssembler:
             **jit_kwargs,
         )
 
-    def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
+    def assemble_entries(
+        self,
+        mode: PortMode3D,
+        mpc,
+        *,
+        workspace: Any | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
         _set_scalar_constant(self.alpha, mode.alpha)
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
-        vec = _assemble_mpc_form_vector(self.form, mpc)
+        vec = (
+            _assemble_mpc_form_vector(self.form, mpc)
+            if workspace is None
+            else workspace.assemble(self.form, mpc)
+        )
         try:
-            return _vec_nonzero_owned_entries(vec)
+            if workspace is None:
+                return _vec_nonzero_owned_entries(vec)
+            return _vec_nonzero_owned_entries(
+                vec,
+                support=workspace.owned_support,
+                timing_totals=workspace.timing_totals,
+            )
         finally:
-            vec.destroy()
+            if workspace is None:
+                vec.destroy()
 
     def assemble_unconstrained_vector(self, mode: PortMode3D) -> PETSc.Vec:
         _set_scalar_constant(self.alpha, mode.alpha)
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
         return _assemble_unconstrained_form_vector(self.form)
+
+
+class _SurfaceMpcVectorWorkspace:
+    """One opt-in reusable Vec for the four same-space exterior port forms."""
+
+    EXPECTED_ASSEMBLERS = frozenset(
+        {("top", 0), ("top", 1), ("bottom", 0), ("bottom", 1)}
+    )
+
+    def __init__(
+        self,
+        function_space: Any,
+        mesh_data: Any,
+        mpc: Any,
+        surface_assemblers: Mapping[tuple[str, int], Any],
+        *,
+        collect_timings: bool = False,
+    ) -> None:
+        if int(mesh_data.mesh.comm.size) != 1:
+            raise ValueError("reused surface-vector assembly is restricted to MPI1")
+        if set(surface_assemblers) != self.EXPECTED_ASSEMBLERS:
+            raise ValueError("reused surface-vector assembly requires top/bottom x/y forms")
+        if int(function_space.dofmap.index_map_bs) != 1:
+            raise ValueError("reused surface-vector assembly requires block size one")
+        mpc_space = mpc.function_space
+        if int(mpc_space.dofmap.index_map_bs) != 1:
+            raise ValueError("reused MPC vector requires block size one")
+        if function_space.mesh is not mpc_space.mesh:
+            raise ValueError("surface form and MPC use different mesh objects")
+        form_index_map = function_space.dofmap.index_map
+        mpc_index_map = mpc_space.dofmap.index_map
+        if (
+            int(form_index_map.size_local) != int(mpc_index_map.size_local)
+            or int(form_index_map.size_global) != int(mpc_index_map.size_global)
+            or int(form_index_map.num_ghosts) != int(mpc_index_map.num_ghosts)
+            or tuple(form_index_map.local_range) != tuple(mpc_index_map.local_range)
+        ):
+            raise ValueError("surface form and MPC dofmap owned/global layouts differ")
+        for assembler in surface_assemblers.values():
+            if assembler.function_space is not function_space:
+                raise ValueError("surface assemblers do not share one function space")
+            if assembler.mesh_data.mesh is not mesh_data.mesh:
+                raise ValueError("surface assemblers do not share one mesh")
+        self._vector: PETSc.Vec | None = None
+        self._destroyed = False
+        self._mpc = mpc
+        self._function_space = function_space
+        self._mesh_data = mesh_data
+        self._allowed_assembler_ids = {id(assembler) for assembler in surface_assemblers.values()}
+        self._allowed_form_ids = {
+            id(assembler.form)
+            for assembler in surface_assemblers.values()
+            if hasattr(assembler, "form")
+        }
+        self.timing_totals: dict[str, float] | None = (
+            {
+                "scratch_initial_full_clear_seconds": 0.0,
+                "scratch_support_clear_seconds": 0.0,
+                "cpp_assembly_mpc_seconds": 0.0,
+                "ghost_update_seconds": 0.0,
+                "owned_support_extract_seconds": 0.0,
+                "carrier_combine_seconds": 0.0,
+                "carrier_normalize_validate_seconds": 0.0,
+                "legendre_moment_local_seconds": 0.0,
+            }
+            if collect_timings
+            else None
+        )
+
+        index_map = mpc_space.dofmap.index_map
+        self._owned_size = int(index_map.size_local)
+        local_storage_size = int(index_map.size_local + index_map.num_ghosts)
+        self._vector = create_vector(
+            [(index_map, int(mpc_space.dofmap.index_map_bs))]
+        )
+        try:
+            started = time.perf_counter() if self.timing_totals is not None else None
+            with self._vector.localForm() as local_form:
+                local_values = local_form.array_w
+                if int(local_values.size) != local_storage_size:
+                    raise ValueError(
+                        "MPC Vec local storage differs from its index-map owned+ghost size"
+                    )
+                # PETSc Vec storage is uninitialized; this is the sole full clear.
+                local_form.set(0.0)
+            if started is not None:
+                self.timing_totals["scratch_initial_full_clear_seconds"] += (
+                    time.perf_counter() - started
+                )
+
+            mesh = mesh_data.mesh
+            topology = mesh.topology
+            tdim = int(topology.dim)
+            fdim = tdim - 1
+            topology.create_connectivity(fdim, tdim)
+            facet_to_cell = topology.connectivity(fdim, tdim)
+            active_cells: set[int] = set()
+            tags = {int(assembler.tag) for assembler in surface_assemblers.values()}
+            for tag in tags:
+                facets = np.asarray(mesh_data.facet_tags.find(tag), dtype=np.int32)
+                if facets.size == 0:
+                    raise ValueError(f"surface tag {tag} has no local facets")
+                for facet_value in facets:
+                    adjacent = np.asarray(
+                        facet_to_cell.links(int(facet_value)), dtype=np.int32
+                    )
+                    if adjacent.size != 1:
+                        raise ValueError(
+                            "surface-vector opt-in accepts exterior facets only"
+                        )
+                    active_cells.add(int(adjacent[0]))
+            if not active_cells:
+                raise ValueError("surface-vector support contains no adjacent cells")
+            cell_index_map = topology.index_map(tdim)
+            if any(
+                cell < 0
+                or cell >= int(cell_index_map.size_local + cell_index_map.num_ghosts)
+                for cell in active_cells
+            ):
+                raise ValueError("surface facet references a cell outside local topology storage")
+            for cell in active_cells:
+                form_dofs = np.asarray(
+                    function_space.dofmap.cell_dofs(cell), dtype=np.int64
+                )
+                mpc_dofs = np.asarray(mpc_space.dofmap.cell_dofs(cell), dtype=np.int64)
+                if not np.array_equal(form_dofs, mpc_dofs):
+                    raise ValueError(
+                        "surface form and MPC cell DOF maps are incompatible"
+                    )
+            self.local_support = _surface_mpc_local_support(
+                function_space,
+                mpc,
+                sorted(active_cells),
+                local_storage_size,
+            )
+            form_global_rows = form_index_map.local_to_global(self.local_support)
+            mpc_global_rows = mpc_index_map.local_to_global(self.local_support)
+            if not np.array_equal(form_global_rows, mpc_global_rows):
+                raise ValueError("surface form and MPC local-to-global row maps differ")
+            self.local_support.flags.writeable = False
+            self.owned_support = np.ascontiguousarray(
+                self.local_support[self.local_support < self._owned_size],
+                dtype=np.int32,
+            )
+            self.owned_support.flags.writeable = False
+            start, end = self._vector.getOwnershipRange()
+            if int(end - start) != self._owned_size:
+                raise ValueError("MPC Vec ownership differs from its local index map")
+            self.facts = {
+                "support_local_rows": int(self.local_support.size),
+                "support_owned_rows": int(self.owned_support.size),
+                "support_ghost_rows": int(
+                    self.local_support.size - self.owned_support.size
+                ),
+                "support_index_bytes": int(self.local_support.nbytes),
+                "vector_owned_rows": int(self._owned_size),
+                "vector_local_storage_rows": int(local_storage_size),
+                "scratch_vector_count": 1,
+            }
+        except BaseException:
+            self.destroy()
+            raise
+
+    @property
+    def vector(self) -> PETSc.Vec:
+        if self._vector is None or self._destroyed:
+            raise RuntimeError("surface MPC Vec workspace is destroyed")
+        return self._vector
+
+    def assemble(self, linear_form: Any, mpc: Any) -> PETSc.Vec:
+        vector = self.vector
+        if mpc is not self._mpc:
+            raise ValueError("surface workspace was used with a different MPC")
+        if id(linear_form) not in self._allowed_form_ids:
+            raise ValueError("surface workspace was used with an unregistered form")
+        started = time.perf_counter() if self.timing_totals is not None else None
+        with vector.localForm() as local_form:
+            local_values = local_form.array_w
+            local_values[self.local_support] = 0.0
+            if started is not None:
+                self.timing_totals["scratch_support_clear_seconds"] += (
+                    time.perf_counter() - started
+                )
+            started = time.perf_counter() if self.timing_totals is not None else None
+            # Use the same qualified nanobind C++ function as the Python wrapper,
+            # bypassing only its unconditional full-vector b_local.set(0.0).
+            dolfinx_mpc.cpp.mpc.assemble_vector(
+                local_values, linear_form._cpp_object, mpc._cpp_object
+            )
+        if started is not None:
+            self.timing_totals["cpp_assembly_mpc_seconds"] += (
+                time.perf_counter() - started
+            )
+        started = time.perf_counter() if self.timing_totals is not None else None
+        vector.ghostUpdate(
+            addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+        )
+        vector.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD
+        )
+        if started is not None:
+            self.timing_totals["ghost_update_seconds"] += (
+                time.perf_counter() - started
+            )
+        return vector
+
+    def assemble_custom(
+        self,
+        assembler: Any,
+        mpc: Any,
+        assemble_into: Callable[[PETSc.Vec], None],
+    ) -> PETSc.Vec:
+        """Clear the exact shared support and run a registered local backend."""
+
+        vector = self.vector
+        if mpc is not self._mpc:
+            raise ValueError("surface workspace was used with a different MPC")
+        if id(assembler) not in self._allowed_assembler_ids:
+            raise ValueError("surface workspace was used with an unregistered assembler")
+        if (
+            assembler.function_space is not self._function_space
+            or assembler.mesh_data is not self._mesh_data
+        ):
+            raise ValueError("custom surface assembler does not match workspace identity")
+        started = time.perf_counter() if self.timing_totals is not None else None
+        with vector.localForm() as local_form:
+            local_form.array_w[self.local_support] = 0.0
+        if started is not None:
+            self.timing_totals["scratch_support_clear_seconds"] += (
+                time.perf_counter() - started
+            )
+        started = time.perf_counter() if self.timing_totals is not None else None
+        assemble_into(vector)
+        if started is not None:
+            self.timing_totals["legendre_moment_local_seconds"] += (
+                time.perf_counter() - started
+            )
+        started = time.perf_counter() if self.timing_totals is not None else None
+        vector.ghostUpdate(
+            addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+        )
+        vector.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD
+        )
+        if started is not None:
+            self.timing_totals["ghost_update_seconds"] += (
+                time.perf_counter() - started
+            )
+        return vector
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        vector, self._vector = self._vector, None
+        if vector is not None:
+            vector.destroy()
+
+
+@dataclass(frozen=True)
+class _SurfaceCellMpcPlan:
+    cell_dofs: np.ndarray
+    slave_positions: np.ndarray
+    master_rows: tuple[np.ndarray, ...]
+    coefficient_rows: tuple[np.ndarray, ...]
+
+
+@dataclass(frozen=True)
+class _SurfaceFacetRecord:
+    cell: int
+    geometry_dofs: np.ndarray | None
+    local_facet: int
+    zeta_face: float
+    x0: float
+    y0: float
+    hx: float
+    hy: float
+    z_face: float
+    cell_plan: _SurfaceCellMpcPlan
+
+
+class _SurfacePointwiseGeometryCache:
+    """One-carrier cache of exact pointwise geometry for the p6 paired path."""
+
+    def __init__(self, context: Any, *, max_bytes: int) -> None:
+        from .fullspace_surface_legendre import (
+            SURFACE_COMPONENT_PAIR_BACKEND,
+            SURFACE_GEOMETRY_CACHE_MAX_BYTES,
+            surface_geometry_cache_payload_bytes,
+        )
+
+        if (
+            context.backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or int(context.degree) != 6
+            or int(context.quadrature_degree) != 160
+        ):
+            raise ValueError("geometry caching requires the p6 paired q160 context")
+        if not context._geometry_cache_enabled:
+            raise ValueError("geometry cache was not enabled by the explicit profile")
+        limit = int(max_bytes)
+        if limit <= 0 or limit > SURFACE_GEOMETRY_CACHE_MAX_BYTES:
+            raise ValueError("geometry cache limit exceeds the fixed 4 GiB cap")
+        records_by_side = context._records_by_side
+        if set(records_by_side) != {"bottom", "top"}:
+            raise ValueError("geometry cache requires the two validated exterior sides")
+        ordered_records = []
+        seen: set[int] = set()
+        for side in ("bottom", "top"):
+            records = records_by_side[side]
+            if not isinstance(records, tuple):
+                raise ValueError("geometry cache records must be immutable ordered tuples")
+            for position, record in enumerate(records):
+                record_id = id(record)
+                if record_id in seen:
+                    raise ValueError("a geometry facet record occurs more than once")
+                seen.add(record_id)
+                if (
+                    record.zeta_face != (0.0 if side == "bottom" else 1.0)
+                    or record.local_facet
+                    != context._geometry_face_local_facets[side]
+                ):
+                    raise ValueError("geometry cache side/facet metadata is inconsistent")
+                ordered_records.append((side, position, record))
+        point_count = int(context.quadrilateral_weights.size)
+        predicted_bytes = surface_geometry_cache_payload_bytes(
+            point_count=point_count, facet_count=len(ordered_records)
+        )
+        # This guard is before any per-facet geometry mapping or cache-array
+        # allocation. It is a numeric-array cap, not an RSS estimate.
+        if predicted_bytes > limit:
+            raise MemoryError(
+                f"surface geometry cache needs {predicted_bytes} bytes, over {limit}"
+            )
+
+        self._context = context
+        self._mesh = context.mesh_data.mesh
+        self._geometry_coordinates = context._geometry_coordinates
+        self._records_by_side = records_by_side
+        self._record_sequences = dict(records_by_side)
+        self._quadrilateral_points = context.quadrilateral_points
+        self._quadrilateral_weights = context.quadrilateral_weights
+        self._polynomial_x = context._polynomial_x
+        self._polynomial_y = context._polynomial_y
+        self._weighted_moment_contraction = (
+            context._weighted_moment_contraction
+        )
+        self._polynomial_values = (
+            context.polynomial_values
+            if self._weighted_moment_contraction is not None
+            else None
+        )
+        self._geometry_face_tables = {
+            side: context._geometry_face_tables[side]
+            for side in ("bottom", "top")
+        }
+        self._geometry_face_table_mapping = context._geometry_face_tables
+        self._geometry_face_local_facets = context._geometry_face_local_facets
+        self._geometry_face_local_facet_values = dict(
+            context._geometry_face_local_facets
+        )
+        self._facet_jacobians = dict(context._facet_jacobians_by_side)
+        self._facet_jacobian_mapping = context._facet_jacobians_by_side
+        self._geometry_dofmap = context._geometry_dofmap
+        self._coordinate_element_identity = dict(context._coordinate_element_identity)
+        self._formatter_identity = dict(context._ffcx_coordinate_table_options)
+        self._quadrature_identity = dict(context.facts["quadrature_array_hashes"])
+        self._degree = int(context.degree)
+        self._quadrature_degree = int(context.quadrature_degree)
+        self._entries: dict[int, tuple[Any, ...]] | None = {}
+        self._expected_record_count = len(ordered_records)
+        self._predicted_numeric_payload_bytes = predicted_bytes
+        self._numeric_payload_bytes = 0
+        self._coordinate_snapshot_bytes = 0
+        self._geometry_build_count = 0
+        self._lookup_count = 0
+        self._released = False
+        self._numeric_payload_peak_bytes = 0
+        self._coordinate_snapshot_peak_bytes = 0
+        try:
+            for side, position, record in ordered_records:
+                if record.geometry_dofs is None:
+                    raise ValueError("geometry cache record has no coordinate DOFs")
+                geometry_dofs = np.asarray(record.geometry_dofs)
+                if (
+                    geometry_dofs.shape != (8,)
+                    or not np.issubdtype(geometry_dofs.dtype, np.integer)
+                    or np.unique(geometry_dofs).size != geometry_dofs.size
+                    or not np.array_equal(
+                        geometry_dofs,
+                        np.asarray(context._geometry_dofmap[record.cell]),
+                    )
+                ):
+                    raise ValueError("geometry cache coordinate DOF identity is malformed")
+                coordinate_snapshot, physical, determinant, cofactors, measure = (
+                    context._build_pointwise_geometry_entry(side, record)
+                )
+                arrays = (physical, determinant, cofactors, measure)
+                expected_shapes = (
+                    (point_count, 3),
+                    (point_count,),
+                    (point_count, 3, 3),
+                    (point_count,),
+                )
+                if any(
+                    array.dtype != np.dtype(np.float64)
+                    or array.shape != shape
+                    or not array.flags.c_contiguous
+                    or not np.isfinite(array).all()
+                    for array, shape in zip(arrays, expected_shapes, strict=True)
+                ):
+                    raise ValueError("mapped geometry cache arrays are malformed")
+                if (
+                    coordinate_snapshot.dtype != np.dtype(np.float64)
+                    or coordinate_snapshot.shape != (8, 3)
+                    or not np.isfinite(coordinate_snapshot).all()
+                    or not np.array_equal(
+                        coordinate_snapshot,
+                        self._geometry_coordinates[geometry_dofs],
+                    )
+                ):
+                    raise ValueError("raw geometry snapshot differs from the live mesh")
+                coordinate_snapshot.flags.writeable = False
+                for array in arrays:
+                    array.flags.writeable = False
+                self._entries[id(record)] = (
+                    side,
+                    position,
+                    record,
+                    tuple(int(value) for value in geometry_dofs),
+                    coordinate_snapshot,
+                    *arrays,
+                )
+                self._numeric_payload_bytes += sum(int(array.nbytes) for array in arrays)
+                self._coordinate_snapshot_bytes += int(coordinate_snapshot.nbytes)
+                self._numeric_payload_peak_bytes = max(
+                    self._numeric_payload_peak_bytes, self._numeric_payload_bytes
+                )
+                self._coordinate_snapshot_peak_bytes = max(
+                    self._coordinate_snapshot_peak_bytes,
+                    self._coordinate_snapshot_bytes,
+                )
+                self._geometry_build_count += 1
+                if self._numeric_payload_bytes > limit:
+                    raise MemoryError("actual geometry cache arrays exceed the 4 GiB cap")
+            if self._numeric_payload_bytes != predicted_bytes:
+                raise ValueError("actual geometry cache payload differs from preflight")
+        except Exception:
+            self.release()
+            raise
+
+    def _assert_context_binding(self, context: Any) -> None:
+        if (
+            context is not self._context
+            or context.mesh_data.mesh is not self._mesh
+            or context._geometry_coordinates is not self._geometry_coordinates
+            or context._records_by_side is not self._records_by_side
+            or context.quadrilateral_points is not self._quadrilateral_points
+            or context.quadrilateral_weights is not self._quadrilateral_weights
+            or context._polynomial_x is not self._polynomial_x
+            or context._polynomial_y is not self._polynomial_y
+            or context._weighted_moment_contraction
+            != self._weighted_moment_contraction
+            or (
+                self._weighted_moment_contraction is not None
+                and (
+                    context.polynomial_values is not self._polynomial_values
+                    or context.polynomial_values.flags.writeable
+                )
+            )
+            or context._geometry_dofmap is not self._geometry_dofmap
+            or context._geometry_face_tables is not self._geometry_face_table_mapping
+            or context._geometry_face_local_facets
+            is not self._geometry_face_local_facets
+            or dict(context._geometry_face_local_facets)
+            != self._geometry_face_local_facet_values
+            or context._facet_jacobians_by_side is not self._facet_jacobian_mapping
+            or context.degree != self._degree
+            or context.quadrature_degree != self._quadrature_degree
+            or dict(context._coordinate_element_identity) != self._coordinate_element_identity
+            or dict(context._ffcx_coordinate_table_options) != self._formatter_identity
+            or dict(context.facts["quadrature_array_hashes"])
+            != self._quadrature_identity
+        ):
+            raise ValueError("surface geometry cache context or quadrature identity changed")
+        if self._entries is None or self._released:
+            raise RuntimeError("surface geometry cache is no longer active")
+
+    def get(
+        self,
+        context: Any,
+        side: str,
+        position: int,
+        record: _SurfaceFacetRecord,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        self._assert_context_binding(context)
+        side = str(side)
+        position = int(position)
+        sequence = self._record_sequences.get(side)
+        if (
+            sequence is None
+            or context._records_by_side.get(side) is not sequence
+            or position < 0
+            or position >= len(sequence)
+            or sequence[position] is not record
+        ):
+            raise ValueError("surface geometry cache side/facet/order binding changed")
+        entry = self._entries.get(id(record))
+        if entry is None or entry[0] != side or entry[1] != position or entry[2] is not record:
+            raise ValueError("surface geometry cache record identity is not present")
+        dof_values = tuple(int(value) for value in np.asarray(record.geometry_dofs))
+        if (
+            dof_values != entry[3]
+            or not np.array_equal(
+                record.geometry_dofs,
+                np.asarray(context._geometry_dofmap[record.cell]),
+            )
+            or not np.array_equal(
+            context._geometry_coordinates[record.geometry_dofs],
+            entry[4],
+            )
+        ):
+            raise ValueError("surface geometry cache raw coordinates or DOFs changed")
+        coordinate_values, coordinate_derivatives = context._geometry_face_tables[side]
+        bound_values, bound_derivatives = self._geometry_face_tables[side]
+        if (
+            coordinate_values is not bound_values
+            or coordinate_derivatives is not bound_derivatives
+            or context._facet_jacobians_by_side[side] is not self._facet_jacobians[side]
+            or record.zeta_face != (0.0 if side == "bottom" else 1.0)
+            or record.local_facet != context._geometry_face_local_facets[side]
+            or self._quadrilateral_points.flags.writeable
+            or self._quadrilateral_weights.flags.writeable
+            or self._polynomial_x.flags.writeable
+            or self._polynomial_y.flags.writeable
+            or coordinate_values.flags.writeable
+            or coordinate_derivatives.flags.writeable
+            or self._facet_jacobians[side].flags.writeable
+        ):
+            raise ValueError("surface geometry cache face identity changed")
+        self._lookup_count += 1
+        return entry[5], entry[6], entry[7], entry[8]
+
+    def facts(self) -> dict[str, int | str | bool]:
+        return {
+            "enabled": True,
+            "eligible_facet_count": self._expected_record_count,
+            "geometry_build_count": self._geometry_build_count,
+            "geometry_lookup_count": self._lookup_count,
+            "predicted_numeric_array_payload_bytes": self._predicted_numeric_payload_bytes,
+            "actual_numeric_array_payload_bytes": self._numeric_payload_bytes,
+            "peak_numeric_array_payload_bytes": self._numeric_payload_peak_bytes,
+            "numeric_payload_limit_bytes": 4 * 1024**3,
+            "raw_coordinate_identity_snapshot_peak_bytes": self._coordinate_snapshot_peak_bytes,
+            "python_metadata_and_allocator_bytes": "not counted in numeric payload",
+            "jacobians_retained": False,
+            "readonly_arrays": True,
+            "release_count": int(self._released),
+            "payload_after_release_bytes": 0 if self._released else self._numeric_payload_bytes,
+            "payload_is_rss": False,
+        }
+
+    def release(self) -> dict[str, int | str | bool]:
+        if not self._released:
+            self._released = True
+            if self._entries is not None:
+                self._entries.clear()
+                self._entries = None
+            self._numeric_payload_bytes = 0
+            self._coordinate_snapshot_bytes = 0
+        return self.facts()
+
+
+class _SurfaceLegendreMomentContext:
+    """Bounded reference-cell data shared by one degree's four face forms."""
+
+    def __init__(
+        self,
+        function_space: Any,
+        mesh_data: Any,
+        mpc: Any,
+        cfg: Any,
+        quadrature_degree: int,
+        *,
+        backend: str,
+        reuse_geometry_cache: bool = False,
+        geometry_cache_limit_bytes: int = 0,
+        weighted_moment_contraction: str | None = None,
+    ) -> None:
+        import basix
+        from basix import polynomials
+        from ffcx.element_interface import map_facet_points
+        from ffcx.options import get_options as get_ffcx_options
+
+        from .fullspace_surface_legendre import (
+            SURFACE_COMPONENT_PAIR_BACKEND,
+            SURFACE_GEOMETRY_CACHE_MAX_BYTES,
+            SURFACE_LEGENDRE_BACKEND,
+            SURFACE_MOMENT_CACHE_LIMIT,
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+            borrow_readonly_array_view,
+            clamp_ffcx_coordinate_table,
+            face_trace_reference_tensor,
+            face_trace_table,
+            ffcx_float64_formatter_facts,
+            roundtrip_ffcx_float64_array,
+            scalar_hex_coordinate_basix_element,
+            validate_q160_expanded_interval_tables,
+            validate_component_pair_degree,
+            validate_weighted_moment_contraction,
+        )
+
+        if int(mesh_data.mesh.comm.size) != 1:
+            raise NotImplementedError("Legendre surface backend is qualified for MPI1 only")
+        if int(quadrature_degree) != 160:
+            raise NotImplementedError("Legendre surface backend is fixed to quadrature degree 160")
+        if backend not in {
+            SURFACE_LEGENDRE_BACKEND,
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            SURFACE_COMPONENT_PAIR_BACKEND,
+        }:
+            raise ValueError(f"unsupported explicit Legendre backend: {backend}")
+        if mpc is None or mpc.function_space.mesh is not mesh_data.mesh:
+            raise ValueError("Legendre surface backend requires the finalized same-mesh MPC")
+        element = function_space.element.basix_element
+        if (
+            element.family != basix.ElementFamily.N1E
+            or element.cell_type != basix.CellType.hexahedron
+            or element.map_type != basix.MapType.covariantPiola
+            or element.polyset_type != basix.PolysetType.standard
+            or int(element.value_size) != 3
+        ):
+            raise NotImplementedError("Legendre surface backend requires actual standard N1E hex")
+        variant = getattr(element, "lagrange_variant", None)
+        variant_name = getattr(variant, "name", "unknown").lower()
+        if variant_name != "legendre":
+            raise NotImplementedError(
+                f"Legendre surface backend rejects element variant {variant_name!r}"
+            )
+        degree = int(element.degree)
+        if degree not in (3, 6) or int(element.embedded_superdegree) != degree:
+            raise NotImplementedError("Legendre surface backend supports only actual p3/p6 elements")
+        validate_component_pair_degree(backend, degree)
+        validate_weighted_moment_contraction(
+            weighted_moment_contraction,
+            backend=backend,
+            degree=degree,
+            quadrature_degree=int(quadrature_degree),
+            reuse_geometry_cache=bool(reuse_geometry_cache),
+        )
+        if reuse_geometry_cache and (
+            backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or degree != 6
+            or int(geometry_cache_limit_bytes) != SURFACE_GEOMETRY_CACHE_MAX_BYTES
+        ):
+            raise ValueError("surface geometry caching is restricted to the explicit p6 pair")
+        if not reuse_geometry_cache and int(geometry_cache_limit_bytes) != 0:
+            raise ValueError("surface geometry cache limit requires its explicit opt-in")
+        width = degree + 1
+        raw_coefficient_matrix = element.coefficient_matrix
+        coefficient_matrix = np.asarray(raw_coefficient_matrix)
+        expected_rows = int(function_space.dofmap.cell_dofs(0).size)
+        if (
+            coefficient_matrix.dtype != np.dtype(np.float64)
+            or not coefficient_matrix.flags.c_contiguous
+            or coefficient_matrix.shape != (expected_rows, 3 * width**3)
+            or int(element.dim) != expected_rows
+        ):
+            raise NotImplementedError("live Basix C matrix has an unsupported N1E tensor layout")
+        if not np.isfinite(coefficient_matrix).all():
+            raise ValueError("live Basix C matrix contains non-finite values")
+        coefficient_matrix_sha256 = _surface_array_sha256(coefficient_matrix)
+
+        interval_points, interval_weights = basix.make_quadrature(
+            basix.CellType.interval,
+            int(quadrature_degree),
+            rule=basix.QuadratureType.default,
+        )
+        quadrilateral_points, quadrilateral_weights = basix.make_quadrature(
+            basix.CellType.quadrilateral,
+            int(quadrature_degree),
+            rule=basix.QuadratureType.default,
+        )
+        interval_points = np.asarray(interval_points, dtype=np.float64).reshape(-1, 1)
+        interval_weights = np.asarray(interval_weights, dtype=np.float64).reshape(-1)
+        quadrilateral_points = np.asarray(quadrilateral_points, dtype=np.float64)
+        quadrilateral_weights = np.asarray(quadrilateral_weights, dtype=np.float64)
+        if interval_points.shape != (81, 1) or interval_weights.shape != (81,):
+            raise NotImplementedError("q160 interval rule is not the qualified 81-point rule")
+        expected_points = np.asarray(
+            [(float(x[0]), float(y[0])) for x in interval_points for y in interval_points],
+            dtype=np.float64,
+        )
+        expected_weights = np.asarray(
+            [float(wx * wy) for wx in interval_weights for wy in interval_weights],
+            dtype=np.float64,
+        )
+        if (
+            quadrilateral_points.shape != expected_points.shape
+            or quadrilateral_weights.shape != expected_weights.shape
+            or not np.array_equal(quadrilateral_points, expected_points)
+            or not np.array_equal(quadrilateral_weights, expected_weights)
+        ):
+            raise NotImplementedError("Basix q160 quad rule ordering/product is unsupported")
+        basix_quadrilateral_weights_sha256 = _surface_array_sha256(
+            quadrilateral_weights
+        )
+        pointwise_formatter_facts = None
+        if backend in {
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            SURFACE_COMPONENT_PAIR_BACKEND,
+        }:
+            quadrilateral_weights = roundtrip_ffcx_float64_array(
+                quadrilateral_weights,
+                name="Basix quadrilateral weights",
+            )
+            pointwise_formatter_facts = ffcx_float64_formatter_facts()
+        interval_points_sha256 = _surface_array_sha256(interval_points)
+        interval_weights_sha256 = _surface_array_sha256(interval_weights)
+        quadrilateral_points_sha256 = _surface_array_sha256(quadrilateral_points)
+        quadrilateral_weights_sha256 = _surface_array_sha256(quadrilateral_weights)
+        point_table = np.asarray(
+            polynomials.tabulate_polynomials(
+                basix.PolynomialType.legendre,
+                basix.CellType.interval,
+                degree,
+                interval_points,
+            ),
+            dtype=np.float64,
+        )
+        endpoint_table = np.asarray(
+            polynomials.tabulate_polynomials(
+                basix.PolynomialType.legendre,
+                basix.CellType.interval,
+                degree,
+                np.asarray([[0.0], [1.0]], dtype=np.float64),
+            ),
+            dtype=np.float64,
+        )
+        if point_table.shape != (width, 81) or endpoint_table.shape != (width, 2):
+            raise NotImplementedError("Basix Legendre table ordering is unsupported")
+        self.polynomial_values = np.ascontiguousarray(point_table.T)
+        self.interval_points = np.ascontiguousarray(interval_points[:, 0])
+        self.interval_weights = np.ascontiguousarray(interval_weights)
+        self.degree = degree
+        self.quadrature_degree = int(quadrature_degree)
+        self.backend = str(backend)
+        self._geometry_cache_enabled = bool(reuse_geometry_cache)
+        self._geometry_cache_limit_bytes = int(geometry_cache_limit_bytes)
+        self._geometry_cache: _SurfacePointwiseGeometryCache | None = None
+        self._geometry_cache_last_facts: dict[str, Any] | None = None
+        self._weighted_moment_contraction = weighted_moment_contraction
+        self._weighted_moment_basis_validation: dict[str, Any] | None = None
+        self.function_space = function_space
+        self.mesh_data = mesh_data
+        self.mpc = mpc
+        self.quadrilateral_points = np.ascontiguousarray(quadrilateral_points)
+        self.quadrilateral_weights = np.ascontiguousarray(quadrilateral_weights)
+        coefficient_source, offset_source = mpc.coefficients()
+        self._mpc_coefficients = borrow_readonly_array_view(
+            coefficient_source, name="MPC coefficients"
+        )
+        self._mpc_offsets = borrow_readonly_array_view(
+            offset_source, name="MPC offsets"
+        )
+        # These are borrowed views into the finalized MPC. Do not cast/diff the
+        # global adjacency offsets: for the 0.7 nm p6 space that can create a
+        # multi-GB int64 copy and scan. Only rows reached from boundary cells
+        # are validated below and copied into immutable per-cell plans.
+        is_slave_source = mpc.is_slave
+        self._mpc_is_slave = borrow_readonly_array_view(
+            is_slave_source, name="MPC slave flags"
+        )
+        self._mpc_array_view_identity = {
+            "coefficients_shares_source": bool(
+                isinstance(coefficient_source, np.ndarray)
+                and np.shares_memory(self._mpc_coefficients, coefficient_source)
+            ),
+            "offsets_shares_source": bool(
+                isinstance(offset_source, np.ndarray)
+                and np.shares_memory(self._mpc_offsets, offset_source)
+            ),
+            "is_slave_shares_source": bool(
+                isinstance(is_slave_source, np.ndarray)
+                and np.shares_memory(self._mpc_is_slave, is_slave_source)
+            ),
+        }
+        if (
+            self._mpc_coefficients.ndim != 1
+            or not np.issubdtype(self._mpc_coefficients.dtype, np.complexfloating)
+            or self._mpc_offsets.ndim != 1
+            or not np.issubdtype(self._mpc_offsets.dtype, np.integer)
+            or self._mpc_is_slave.ndim != 1
+            or not np.issubdtype(self._mpc_is_slave.dtype, np.integer)
+        ):
+            raise ValueError("finalized MPC coefficient/offset views are malformed")
+        self._cell_to_slaves = mpc.cell_to_slaves
+        self._masters = mpc.masters
+        self._cell_plans: dict[int, _SurfaceCellMpcPlan] = {}
+        self._trace_tables: dict[tuple[str, int], np.ndarray] = {}
+        self._geometry_face_tables: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+        self._geometry_face_local_facets: dict[str, int] = {}
+        self._facet_jacobians_by_side: dict[str, np.ndarray] = {}
+        self._geometry_dofmap = mesh_data.mesh.geometry.dofmap
+        self._geometry_coordinates = np.asarray(
+            mesh_data.mesh.geometry.x, dtype=np.float64
+        )
+        self._polynomial_x = np.empty((0, width), dtype=np.float64)
+        self._polynomial_y = np.empty((0, width), dtype=np.float64)
+        if backend in {
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            SURFACE_COMPONENT_PAIR_BACKEND,
+        }:
+            self._polynomial_x = np.ascontiguousarray(
+                np.repeat(self.polynomial_values, 81, axis=0)
+            )
+            self._polynomial_y = np.ascontiguousarray(
+                np.tile(self.polynomial_values, (81, 1))
+            )
+            coordinate_element, coordinate_identity = (
+                scalar_hex_coordinate_basix_element(
+                    mesh_data.mesh,
+                    hexahedron_cell_type=basix.CellType.hexahedron,
+                )
+            )
+            ffcx_options = get_ffcx_options()
+            table_rtol = float(ffcx_options["table_rtol"])
+            table_atol = float(ffcx_options["table_atol"])
+            reference_vertices = np.asarray(
+                basix.cell.geometry(basix.CellType.hexahedron), dtype=np.float64
+            )
+            facet_topology = basix.cell.topology(basix.CellType.hexahedron)[2]
+            facet_jacobians = np.asarray(
+                basix.cell.facet_jacobians(basix.CellType.hexahedron),
+                dtype=np.float64,
+            )
+            if facet_jacobians.shape != (6, 3, 2) or len(facet_topology) != 6:
+                raise NotImplementedError(
+                    "live Basix hex facet Jacobian layout is unsupported"
+                )
+            derivative_indices = (
+                basix.index(1, 0, 0),
+                basix.index(0, 1, 0),
+                basix.index(0, 0, 1),
+            )
+            self._geometry_tabulation_bytes_by_side: dict[str, int] = {}
+            for side, endpoint_index in (("bottom", 0), ("top", 1)):
+                facet_candidates = [
+                    facet_index
+                    for facet_index, vertices in enumerate(facet_topology)
+                    if np.all(
+                        reference_vertices[np.asarray(vertices, dtype=np.int64), 2]
+                        == float(endpoint_index)
+                    )
+                ]
+                if len(facet_candidates) != 1:
+                    raise NotImplementedError(
+                        f"hex has no unique canonical z={endpoint_index} face"
+                    )
+                face_index = int(facet_candidates[0])
+                reference_points = np.asarray(
+                    map_facet_points(
+                        quadrilateral_points,
+                        face_index,
+                        "hexahedron",
+                    ),
+                    dtype=np.float64,
+                )
+                if reference_points.shape != (len(quadrilateral_points), 3):
+                    raise NotImplementedError(
+                        "FFCx reference-facet quadrature mapping has an unsupported shape"
+                    )
+                tabulation = np.asarray(
+                    coordinate_element.tabulate(1, reference_points),
+                    dtype=np.float64,
+                )
+                expected_shape = (
+                    4,
+                    len(quadrilateral_points),
+                    int(coordinate_element.dim),
+                    1,
+                )
+                if tabulation.shape != expected_shape or int(coordinate_element.dim) != 8:
+                    raise NotImplementedError(
+                        "live coordinate Basix tabulation has an unsupported shape"
+                    )
+                tabulation = clamp_ffcx_coordinate_table(
+                    tabulation,
+                    rtol=table_rtol,
+                    atol=table_atol,
+                )
+                tabulation = roundtrip_ffcx_float64_array(
+                    tabulation,
+                    name=f"{side} FFCx coordinate table",
+                )
+                coordinate_values = np.ascontiguousarray(
+                    tabulation[0, :, :, 0]
+                )
+                coordinate_derivatives = np.ascontiguousarray(
+                    np.stack(
+                        [tabulation[index, :, :, 0] for index in derivative_indices],
+                        axis=2,
+                    )
+                )
+                coordinate_values.flags.writeable = False
+                coordinate_derivatives.flags.writeable = False
+                self._geometry_face_tables[side] = (
+                    coordinate_values,
+                    coordinate_derivatives,
+                )
+                face_jacobian = np.array(
+                    facet_jacobians[face_index], dtype=np.float64, copy=True
+                )
+                face_jacobian.flags.writeable = False
+                self._geometry_face_local_facets[side] = face_index
+                self._facet_jacobians_by_side[side] = face_jacobian
+                self._geometry_tabulation_bytes_by_side[side] = int(
+                    tabulation.nbytes
+                )
+                del tabulation, reference_points
+            self._coordinate_element_identity = coordinate_identity
+            self._ffcx_coordinate_table_options = {
+                "table_rtol": table_rtol,
+                "table_atol": table_atol,
+                "clamp_function": "ffcx.ir.elementtables.clamp_table_small_numbers",
+                "clamp_targets_in_order": [-1.0, 0.0, 1.0],
+                "float_roundtrip": "ffcx.codegeneration.C.c_implementation.CFormatter(np.float64)._format_number",
+                "formatter_identity": pointwise_formatter_facts,
+            }
+            self._facet_jacobians_sha256 = _surface_array_sha256(
+                np.ascontiguousarray(facet_jacobians)
+            )
+        if self._geometry_cache_enabled:
+            for array in (
+                self.quadrilateral_points,
+                self.quadrilateral_weights,
+                self._polynomial_x,
+                    self._polynomial_y,
+            ):
+                array.flags.writeable = False
+        if self._weighted_moment_contraction is not None:
+            self.polynomial_values.flags.writeable = False
+            self._weighted_moment_basis_validation = (
+                validate_q160_expanded_interval_tables(
+                    self.polynomial_values,
+                    self._polynomial_x,
+                    self._polynomial_y,
+                )
+            )
+        for side, endpoint_index in (("bottom", 0), ("top", 1)):
+            if backend in {
+                SURFACE_POINTWISE_WEIGHTED_BACKEND,
+                SURFACE_COMPONENT_PAIR_BACKEND,
+            }:
+                table = face_trace_reference_tensor(
+                    coefficient_matrix,
+                    degree,
+                    float(endpoint_index),
+                    endpoint_values=endpoint_table[:, endpoint_index],
+                )
+                table.flags.writeable = False
+                self._trace_tables[(side, 0)] = table
+                self._trace_tables[(side, 1)] = table
+            else:
+                for component in (0, 1):
+                    table = face_trace_table(
+                        coefficient_matrix,
+                        degree,
+                        component,
+                        float(endpoint_index),
+                        endpoint_values=endpoint_table[:, endpoint_index],
+                    )
+                    table.flags.writeable = False
+                    self._trace_tables[(side, component)] = table
+        coefficient_matrix_bytes = int(coefficient_matrix.nbytes)
+        coefficient_property_owns_array = bool(coefficient_matrix.flags.owndata)
+        coefficient_property_aliases_basix_return = bool(
+            isinstance(raw_coefficient_matrix, np.ndarray)
+            and np.shares_memory(coefficient_matrix, raw_coefficient_matrix)
+        )
+        del coefficient_matrix, raw_coefficient_matrix
+
+        self._records_by_side = self._build_facet_records(basix, cfg)
+        boundary_plan_payload_bytes = int(
+            sum(
+                plan.cell_dofs.nbytes
+                + plan.slave_positions.nbytes
+                + sum(row.nbytes for row in plan.master_rows)
+                + sum(row.nbytes for row in plan.coefficient_rows)
+                for plan in self._cell_plans.values()
+            )
+        )
+        boundary_slave_rows = int(
+            sum(plan.slave_positions.size for plan in self._cell_plans.values())
+        )
+        self._moment_cache: dict[
+            tuple[tuple[Any, ...], float, float], tuple[np.ndarray, np.ndarray]
+        ] = {}
+        self._moment_cache_limit = (
+            SURFACE_MOMENT_CACHE_LIMIT
+            if backend == SURFACE_LEGENDRE_BACKEND
+            else 0
+        )
+        self._component_pair_stats = {
+            "backend": backend,
+            "degree": int(degree),
+            "pair_call_count": 0,
+            "paired_facet_count": 0,
+            "max_staging_bytes": 0,
+            "max_staging_facets": 0,
+            "staging_release_count": 0,
+            "staging_buffer_count_max": 0,
+            "max_explicit_numpy_payload_upper_bytes": 0,
+            "staging_max_bytes_limit": 64 * 1024 * 1024,
+            "staging_max_facet_limit": 4096,
+        }
+        self.facts = {
+            "backend": backend,
+            "degree": degree,
+            "element_family": "N1E",
+            "element_variant": variant_name,
+            "map_type": "covariantPiola",
+            "polyset_type": "standard",
+            "quadrature_degree": self.quadrature_degree,
+            "quadrature_shape": [81, 81],
+            "quadrature_order": "x-major/y-minor; exact Basix interval outer product",
+                "quadrature_array_hashes": {
+                    "interval_points_sha256": interval_points_sha256,
+                    "interval_weights_sha256": interval_weights_sha256,
+                    "quadrilateral_points_sha256": quadrilateral_points_sha256,
+                    "quadrilateral_weights_sha256": quadrilateral_weights_sha256,
+                    "hash_basis": "canonical float64 arrays consumed by this backend",
+                },
+            "quadrature_array_layout": {
+                "interval_points_shape": list(self.interval_points.shape),
+                "interval_weights_shape": list(self.interval_weights.shape),
+                "polynomial_values_shape": list(self.polynomial_values.shape),
+                "quadrilateral_points_shape": list(quadrilateral_points.shape),
+                "quadrilateral_weights_shape": list(quadrilateral_weights.shape),
+                "dtype": "float64",
+            },
+            "coefficient_matrix_shape": [expected_rows, 3 * width**3],
+            "coefficient_matrix_bytes": coefficient_matrix_bytes,
+            "coefficient_matrix_sha256": coefficient_matrix_sha256,
+            "coefficient_array_owns_data": coefficient_property_owns_array,
+            "coefficient_array_aliases_property_return": coefficient_property_aliases_basix_return,
+            "coefficient_extra_copy_after_property": False,
+            "mpc_global_arrays": {
+                "storage_policy": "borrowed original-dtype ndarray views; no int64 cast, full diff, or full finite scan",
+                "coefficients_dtype": self._mpc_coefficients.dtype.str,
+                "coefficients_bytes_borrowed": int(self._mpc_coefficients.nbytes),
+                "offsets_dtype": self._mpc_offsets.dtype.str,
+                "offsets_bytes_borrowed": int(self._mpc_offsets.nbytes),
+                "is_slave_dtype": self._mpc_is_slave.dtype.str,
+                "is_slave_bytes_borrowed": int(self._mpc_is_slave.nbytes),
+                "views_share_property_sources": dict(self._mpc_array_view_identity),
+                "views_are_read_only": all(
+                    not array.flags.writeable
+                    for array in (
+                        self._mpc_coefficients,
+                        self._mpc_offsets,
+                        self._mpc_is_slave,
+                    )
+                ),
+                "boundary_context_fetches_global_slaves_array": False,
+                "carrier_slave_inventory": "existing downstream carrier path, separate from this boundary plan",
+                "validation_scope": "only boundary cell_to_slaves rows, corresponding offset pairs, masters, and coefficients",
+            },
+            "boundary_mpc_metadata": {
+                "validated_cell_plan_count": int(len(self._cell_plans)),
+                "validated_boundary_slave_rows": boundary_slave_rows,
+                "newly_owned_array_payload_bytes": boundary_plan_payload_bytes,
+                "cell_dofs_cached_once_per_boundary_cell": True,
+                "master_and_coefficient_rows_cached_once": True,
+                "offset_pairs_checked_individually": True,
+                "empty_master_rows_rejected": True,
+                "nonboundary_offset_rows_scanned": False,
+            },
+            "trace_table_bytes": int(
+                sum(
+                    value.nbytes
+                    for value in {
+                        id(array): array for array in self._trace_tables.values()
+                    }.values()
+                )
+            ),
+            "trace_table_entry_count": int(len(self._trace_tables)),
+            "trace_table_unique_array_count": int(
+                len({id(array) for array in self._trace_tables.values()})
+            ),
+            "moment_cache_entries_cap": self._moment_cache_limit,
+            "moment_cache_numeric_array_payload_bytes_cap": int(
+                self._moment_cache_limit
+                * 2
+                * width
+                * np.dtype(np.complex128).itemsize
+            ),
+            "moment_cache_metadata_bytes": "python key/dict overhead not included",
+            "candidate_memory_accounting": {
+                "trace_tables_are_partial_not_total": True,
+                "new_boundary_mpc_metadata_array_bytes": boundary_plan_payload_bytes,
+                "borrowed_global_mpc_payload_bytes": int(
+                    self._mpc_coefficients.nbytes
+                    + self._mpc_offsets.nbytes
+                    + self._mpc_is_slave.nbytes
+                ),
+                "c_property_array_bytes_during_table_build": coefficient_matrix_bytes,
+                "c_property_array_released_after_table_build": True,
+                "interval_and_legendre_arrays_owned_by_context_bytes": int(
+                    self.interval_points.nbytes
+                    + self.interval_weights.nbytes
+                    + self.polynomial_values.nbytes
+                ),
+            },
+            "face_facet_counts": {
+                side: int(len(records)) for side, records in self._records_by_side.items()
+            },
+            "geometry_policy": "raw exact axis-aligned affine hex; unsupported maps reject",
+            "standard_transform": "live element T_apply on real/imag lanes once per facet",
+            "mpc_scatter": "qualified complex conjugate coefficient scatter; ghost reverse-add/forward-insert",
+            "c_acquisition": "one live Basix C property read per degree; release local reference after trace tables",
+            "construction_peak_arrays": {
+                "persistent_C_if_property_allocates": coefficient_property_owns_array,
+                "C_property_temporary_bytes": coefficient_matrix_bytes,
+                "persistent_trace_tables_bytes": int(
+                    sum(
+                        array.nbytes
+                        for array in {
+                            id(value): value
+                            for value in self._trace_tables.values()
+                        }.values()
+                    )
+                ),
+                "largest_single_local_complex_vector_bytes": int(expected_rows * 16),
+                "local_MPC_scratch_vector_bytes": int(expected_rows * 16),
+                "cell_mpc_plan_count": int(len(self._cell_plans)),
+                "cell_mpc_plan_new_array_bytes": boundary_plan_payload_bytes,
+            },
+        }
+        if self._weighted_moment_contraction is not None:
+            self.facts["weighted_moment_contraction"] = {
+                "algorithm": self._weighted_moment_contraction,
+                "enabled_only_for_explicit_p6_q160_geometry_cache": True,
+                "reduction_order": "T[a,j]=sum_i Px[i,a]*W[i,j]; M[a,b]=sum_j T[a,j]*Py[j,b]",
+                "pointwise_weight_order": "(cofactor/determinant)*phase, then surface_measure, then full product weight once",
+                "expanded_basis_validation": dict(
+                    self._weighted_moment_basis_validation or {}
+                ),
+                "basis_hashes": {
+                    "interval_values_sha256": _surface_array_sha256(
+                        self.polynomial_values
+                    ),
+                    "expanded_x_sha256": _surface_array_sha256(
+                        self._polynomial_x
+                    ),
+                    "expanded_y_sha256": _surface_array_sha256(
+                        self._polynomial_y
+                    ),
+                    "quadrilateral_weights_sha256": self.facts[
+                        "quadrature_array_hashes"
+                    ]["quadrilateral_weights_sha256"],
+                },
+                "named_array_payload_bytes": {
+                    "inverse_piola_values": 81 * 81 * 8,
+                    "weighted_q_values": 81 * 81 * 16,
+                    "x_contraction": 7 * 81 * 16,
+                    "phase": 81 * 81 * 16,
+                    "pair_output": 2 * 3 * 7 * 7 * 16,
+                    "named_total": 276_216,
+                    "scope": "named arrays only; finite-check masks, other temporaries, and BLAS workspace are not included; not RSS",
+                },
+                "legacy_full_q_path_preserved": True,
+                "ordinary_default_and_p3_routes_changed": False,
+                "existing_numerical_gates_changed": False,
+            }
+        if self._geometry_cache_enabled:
+            from .fullspace_surface_legendre import (
+                SURFACE_GEOMETRY_CACHE_MAX_BYTES,
+                surface_geometry_cache_payload_bytes,
+            )
+
+            cache_facet_count = sum(
+                len(records) for records in self._records_by_side.values()
+            )
+            self.facts["pointwise_geometry_cache"] = {
+                "explicit_profile_opt_in": True,
+                "lifecycle": "one p6 carrier call; shared by all four side/component assemblers; finally released",
+                "eligible_facet_count": cache_facet_count,
+                "numeric_array_payload_bytes_preflight": surface_geometry_cache_payload_bytes(
+                    point_count=int(self.quadrilateral_weights.size),
+                    facet_count=cache_facet_count,
+                ),
+                "numeric_payload_limit_bytes": SURFACE_GEOMETRY_CACHE_MAX_BYTES,
+                "payload_scope": "physical_coordinates+determinant+cofactors+surface_measure; excludes identity metadata and is not RSS",
+                "jacobians_retained": False,
+                "ordinary_and_p3_routes_changed": False,
+            }
+        if backend in {
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            SURFACE_COMPONENT_PAIR_BACKEND,
+        }:
+            geometry_dof_payload_bytes = int(
+                sum(
+                    record.geometry_dofs.nbytes
+                    for records in self._records_by_side.values()
+                    for record in records
+                    if record.geometry_dofs is not None
+                )
+            )
+            geometry_face_table_bytes = int(
+                sum(
+                    values.nbytes + derivatives.nbytes
+                    for values, derivatives in self._geometry_face_tables.values()
+                )
+            )
+            self.facts["quadrature_array_hashes"].update(
+                {
+                    "basix_quadrilateral_weights_source_sha256": basix_quadrilateral_weights_sha256,
+                    "ffcx_cformatter_consumed_quadrilateral_weights_sha256": quadrilateral_weights_sha256,
+                }
+            )
+            self.facts.update(
+                pointwise_weight_formula=(
+                    "sum_q quad_weight*cofactor_surface_measure*phase_at_live_"
+                    "physical_point*inverseJ[reference_component,physical_component]"
+                    "*Lx*Ly; q weight exactly once"
+                ),
+                pointwise_phase=(
+                    "exp(i*(alpha*x(q)+gamma*y(q)+kz*z(q))); no origin phase"
+                ),
+                pointwise_piola_and_measure=(
+                    "generated-kernel cofactor inverse of live coordinate-element "
+                    "J(q); measure is the generated reference-facet-Jacobian "
+                    "tangent cross-product norm; no extra width scale"
+                ),
+                reference_components_in_trace=(0, 1, 2),
+                live_coordinate_element={
+                    **self._coordinate_element_identity,
+                    "tabulation_points": "FFCx map_facet_points for canonical z face",
+                    "tabulation_clamp": dict(self._ffcx_coordinate_table_options),
+                    "facet_jacobians_sha256": self._facet_jacobians_sha256,
+                    "facet_jacobian_by_side": {
+                        side: self._facet_jacobians_by_side[side].tolist()
+                        for side in ("bottom", "top")
+                    },
+                },
+                fixed_face_workspace_bytes={
+                    "geometry_basis_values_and_derivatives": geometry_face_table_bytes,
+                    "expanded_interval_polynomial_values": int(
+                        self._polynomial_x.nbytes + self._polynomial_y.nbytes
+                    ),
+                    "owned_geometry_dof_indices_per_surface_facet": geometry_dof_payload_bytes,
+                    "temporary_coordinate_tabulation_bytes_per_face": int(
+                        max(self._geometry_tabulation_bytes_by_side.values(), default=0)
+                    ),
+                    "cached_pointwise_moments": False,
+                    "moment_array_per_call_bytes": int(
+                        3 * width * width * np.dtype(np.complex128).itemsize
+                    ),
+                    "moment_metadata_bytes": "NumPy/BLAS allocator overhead not included",
+                },
+                pointwise_selected_temporary_array_shapes={
+                    "physical_coordinates": [6561, 3],
+                    "jacobians": [6561, 3, 3],
+                    "cofactor_jacobians": [6561, 3, 3],
+                    "selected_inverse_column": [6561, 3],
+                    "surface_measure": [6561],
+                    "phase": [6561],
+                    "weighted_basis": [width, 6561],
+                    "moments": (
+                        [2, 3, width, width]
+                        if backend == SURFACE_COMPONENT_PAIR_BACKEND
+                        else [3, width, width]
+                    ),
+                },
+                pointwise_selected_temporary_numeric_payload_bytes={
+                    "physical_coordinates": int(6561 * 3 * 8),
+                    "jacobians": int(6561 * 9 * 8),
+                    "cofactor_jacobians": int(6561 * 9 * 8),
+                    "selected_inverse_column": int(6561 * 3 * 8),
+                    "surface_measure": int(6561 * 8),
+                    "phase": int(6561 * 16),
+                    "quadrature_phase_weight": int(6561 * 16),
+                    "weighted_basis": int(width * 6561 * 16),
+                    "moments": int(
+                        (6 if backend == SURFACE_COMPONENT_PAIR_BACKEND else 3)
+                        * width
+                        * width
+                        * 16
+                    ),
+                    "payload_scope": (
+                        "selected arrays only; determinant, adjugate, tangent, cross-product, "
+                        "phase intermediates and other temporary arrays are not included"
+                    ),
+                    "other_temporary_array_payload_bytes": "unknown",
+                },
+                component_pair_staging_policy=(
+                    {
+                        "one_complex128_array_per_unique_phase_and_side": True,
+                        "staging_bytes_formula": (
+                            "actual_side_facet_count*local_cell_dof_count*16"
+                        ),
+                        "maximum_supported_staging_bytes": (
+                            _SURFACE_COMPONENT_PAIR_STAGING_MAX_BYTES
+                        ),
+                        "maximum_supported_side_facets": (
+                            _SURFACE_COMPONENT_PAIR_STAGING_MAX_FACETS
+                        ),
+                        "allocation_guard_precedes_numpy_allocation": True,
+                        "record_key": "ordered_side_record_position_not_cell_id",
+                        "release": "finally after component-one extraction or any exception",
+                        "payload_scope": (
+                            "staging value and bool flags only; does not represent RSS"
+                        ),
+                    }
+                    if backend == SURFACE_COMPONENT_PAIR_BACKEND
+                    else "not_applicable"
+                ),
+            )
+
+    def _cell_mpc_plan(self, cell: int) -> _SurfaceCellMpcPlan:
+        from .fullspace_surface_legendre import validate_boundary_mpc_row
+
+        cell = int(cell)
+        cached = self._cell_plans.get(cell)
+        if cached is not None:
+            return cached
+        form_dofs = np.asarray(self.function_space.dofmap.cell_dofs(cell))
+        mpc_dofs = np.asarray(self.mpc.function_space.dofmap.cell_dofs(cell))
+        if (
+            form_dofs.ndim != 1
+            or mpc_dofs.ndim != 1
+            or not np.issubdtype(form_dofs.dtype, np.integer)
+            or not np.issubdtype(mpc_dofs.dtype, np.integer)
+        ):
+            raise ValueError("surface/MPC cell DOF arrays are malformed")
+        cell_dofs = np.array(form_dofs, dtype=np.int32, copy=True)
+        index_map = self.mpc.function_space.dofmap.index_map
+        local_storage_size = int(index_map.size_local + index_map.num_ghosts)
+        if (
+            not np.array_equal(cell_dofs, mpc_dofs)
+            or np.unique(cell_dofs).size != cell_dofs.size
+            or (
+                cell_dofs.size
+                and (cell_dofs.min() < 0 or cell_dofs.max() >= local_storage_size)
+            )
+        ):
+            raise ValueError("surface/MPC cell DOF maps are incompatible")
+        local_positions = {int(dof): position for position, dof in enumerate(cell_dofs)}
+        slaves = np.asarray(self._cell_to_slaves.links(cell))
+        if slaves.ndim != 1 or not np.issubdtype(slaves.dtype, np.integer):
+            raise ValueError("surface cell_to_slaves row is malformed")
+        positions: list[int] = []
+        master_rows: list[np.ndarray] = []
+        coefficient_rows: list[np.ndarray] = []
+        seen_slaves: set[int] = set()
+        for slave_value in slaves:
+            slave = int(slave_value)
+            if (
+                slave < 0
+                or slave in seen_slaves
+                or slave not in local_positions
+            ):
+                raise ValueError("surface cell_to_slaves metadata is inconsistent")
+            seen_slaves.add(slave)
+            masters_source = np.asarray(self._masters.links(slave))
+            try:
+                masters, coefficients = validate_boundary_mpc_row(
+                    slave,
+                    self._mpc_offsets,
+                    self._mpc_coefficients,
+                    self._mpc_is_slave,
+                    masters_source,
+                    local_storage_size,
+                )
+            except ValueError as exc:
+                raise NotImplementedError(str(exc)) from exc
+            positions.append(local_positions[slave])
+            master_rows.append(masters)
+            coefficient_rows.append(coefficients)
+        cell_dofs.flags.writeable = False
+        slave_positions = np.asarray(positions, dtype=np.int32)
+        slave_positions.flags.writeable = False
+        plan = _SurfaceCellMpcPlan(
+            cell_dofs=cell_dofs,
+            slave_positions=slave_positions,
+            master_rows=tuple(master_rows),
+            coefficient_rows=tuple(coefficient_rows),
+        )
+        self._cell_plans[cell] = plan
+        return plan
+
+    def _build_facet_records(self, basix: Any, cfg: Any) -> dict[str, tuple[_SurfaceFacetRecord, ...]]:
+        from .fullspace_surface_legendre import (
+            SURFACE_COMPONENT_PAIR_BACKEND,
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+        )
+
+        mesh = self.mesh_data.mesh
+        topology = mesh.topology
+        tdim = int(topology.dim)
+        if tdim != 3:
+            raise NotImplementedError("Legendre surface backend requires a 3D mesh")
+        fdim = tdim - 1
+        topology.create_connectivity(fdim, tdim)
+        topology.create_connectivity(tdim, fdim)
+        topology.create_entity_permutations()
+        self._cell_permutations = np.asarray(
+            topology.get_cell_permutation_info(), dtype=np.uint32
+        )
+        facet_to_cell = topology.connectivity(fdim, tdim)
+        cell_to_facet = topology.connectivity(tdim, fdim)
+        reference_vertices = np.asarray(
+            basix.cell.geometry(basix.CellType.hexahedron), dtype=np.float64
+        )
+        facet_topology = basix.cell.topology(basix.CellType.hexahedron)[fdim]
+        if reference_vertices.shape != (8, 3) or len(facet_topology) != 6:
+            raise NotImplementedError("Basix hexahedron reference topology is unsupported")
+        geometry_dofmap = mesh.geometry.dofmap
+        geometry_coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
+        local_cell_count = int(topology.index_map(tdim).size_local)
+        records_by_side: dict[str, tuple[_SurfaceFacetRecord, ...]] = {}
+        for side, tag, endpoint in (
+            ("bottom", int(cfg.tags.z_min), 0.0),
+            ("top", int(cfg.tags.z_max), 1.0),
+        ):
+            facets = np.asarray(self.mesh_data.facet_tags.find(tag), dtype=np.int32)
+            if not facets.size:
+                raise ValueError(f"Legendre surface tag {tag} has no local facets")
+            records: list[_SurfaceFacetRecord] = []
+            seen_facets: set[int] = set()
+            for facet_value in facets:
+                facet = int(facet_value)
+                if facet in seen_facets:
+                    raise ValueError("surface facet tag contains duplicate facets")
+                seen_facets.add(facet)
+                adjacent = np.asarray(facet_to_cell.links(facet), dtype=np.int32)
+                if adjacent.size != 1:
+                    raise NotImplementedError("Legendre surface backend accepts exterior facets only")
+                cell = int(adjacent[0])
+                if cell < 0 or cell >= local_cell_count:
+                    raise NotImplementedError("Legendre surface backend requires owned exterior cells")
+                cell_facets = np.asarray(cell_to_facet.links(cell), dtype=np.int32)
+                local_matches = np.flatnonzero(cell_facets == facet)
+                if local_matches.size != 1:
+                    raise ValueError("surface facet has no unique local hex facet index")
+                local_facet = int(local_matches[0])
+                if (
+                    self.backend
+                    in {
+                        SURFACE_POINTWISE_WEIGHTED_BACKEND,
+                        SURFACE_COMPONENT_PAIR_BACKEND,
+                    }
+                    and local_facet != self._geometry_face_local_facets[side]
+                ):
+                    raise NotImplementedError(
+                        "tagged surface facet does not use the validated FFCx z-face map"
+                    )
+                geometry_dofs = np.asarray(geometry_dofmap[cell], dtype=np.int64)
+                if geometry_dofs.shape != (8,):
+                    raise NotImplementedError("Legendre surface backend requires linear hex geometry")
+                raw_vertices = geometry_coordinates[geometry_dofs]
+                if raw_vertices.shape != reference_vertices.shape or not np.isfinite(raw_vertices).all():
+                    raise ValueError("raw affine hex coordinates are malformed")
+                low = np.min(raw_vertices, axis=0)
+                high = np.max(raw_vertices, axis=0)
+                if np.any(high <= low):
+                    raise NotImplementedError("Legendre surface backend rejects degenerate hex cells")
+                for axis in range(3):
+                    expected_axis = np.where(reference_vertices[:, axis] == 0.0, low[axis], high[axis])
+                    if not np.array_equal(raw_vertices[:, axis], expected_axis):
+                        raise NotImplementedError(
+                            "Legendre surface backend rejects noncanonical/skew raw hex geometry"
+                        )
+                ref_face_vertices = np.asarray(facet_topology[local_facet], dtype=np.int64)
+                ref_face_z = reference_vertices[ref_face_vertices, 2]
+                if ref_face_z.size != 4 or not np.all(ref_face_z == endpoint):
+                    raise NotImplementedError(
+                        f"{side} tagged facet is not the canonical reference z={endpoint:g} face"
+                    )
+                z_face = float(low[2] if endpoint == 0.0 else high[2])
+                physical_face_z = raw_vertices[ref_face_vertices, 2]
+                if not np.all(physical_face_z == z_face):
+                    raise NotImplementedError("raw tagged face does not map to one physical z plane")
+                record_geometry_dofs = None
+                if self.backend in {
+                    SURFACE_POINTWISE_WEIGHTED_BACKEND,
+                    SURFACE_COMPONENT_PAIR_BACKEND,
+                }:
+                    record_geometry_dofs = np.asarray(
+                        geometry_dofs, dtype=np.int32
+                    ).copy()
+                    record_geometry_dofs.flags.writeable = False
+                records.append(
+                    _SurfaceFacetRecord(
+                        cell=cell,
+                        geometry_dofs=record_geometry_dofs,
+                        local_facet=local_facet,
+                        zeta_face=endpoint,
+                        x0=float(low[0]),
+                        y0=float(low[1]),
+                        hx=float(high[0] - low[0]),
+                        hy=float(high[1] - low[1]),
+                        z_face=z_face,
+                        cell_plan=self._cell_mpc_plan(cell),
+                    )
+                )
+            records_by_side[side] = tuple(records)
+        return records_by_side
+
+    def trace_table(self, side: str, component: int) -> np.ndarray:
+        try:
+            return self._trace_tables[(str(side), int(component))]
+        except KeyError as exc:
+            raise ValueError("unsupported Legendre surface side/component") from exc
+
+    def records(self, side: str) -> tuple[_SurfaceFacetRecord, ...]:
+        return self._records_by_side[str(side)]
+
+    def begin_geometry_cache(self, *, max_bytes: int | None = None) -> None:
+        if not self._geometry_cache_enabled:
+            raise ValueError("surface geometry cache is not enabled for this context")
+        if self._geometry_cache is not None:
+            raise RuntimeError("surface geometry cache is already active")
+        self._geometry_cache_last_facts = None
+        limit = (
+            self._geometry_cache_limit_bytes
+            if max_bytes is None
+            else int(max_bytes)
+        )
+        self._geometry_cache = _SurfacePointwiseGeometryCache(
+            self, max_bytes=limit
+        )
+
+    def end_geometry_cache(self) -> None:
+        cache = self._geometry_cache
+        if cache is None:
+            return
+        try:
+            self._geometry_cache_last_facts = cache.release()
+        finally:
+            self._geometry_cache = None
+
+    def geometry_cache_facts(self) -> dict[str, Any] | str:
+        if self._geometry_cache is not None:
+            return self._geometry_cache.facts()
+        if self._geometry_cache_last_facts is not None:
+            return dict(self._geometry_cache_last_facts)
+        return "not_started"
+
+    def _build_pointwise_geometry_entry(
+        self, side: str, record: _SurfaceFacetRecord
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        from .fullspace_surface_legendre import (
+            _pointwise_surface_geometry_terms,
+            map_coordinate_quadrature,
+        )
+
+        if side not in {"bottom", "top"} or record.geometry_dofs is None:
+            raise ValueError("surface geometry cache received an unsupported facet")
+        if record.local_facet != self._geometry_face_local_facets[side]:
+            raise ValueError("surface geometry cache facet differs from its bound side")
+        coordinate_values, coordinate_derivatives = self._geometry_face_tables[side]
+        coordinate_snapshot = np.array(
+            self._geometry_coordinates[record.geometry_dofs],
+            dtype=np.float64,
+            copy=True,
+            order="C",
+        )
+        physical_coordinates, jacobians = map_coordinate_quadrature(
+            coordinate_snapshot, coordinate_values, coordinate_derivatives
+        )
+        determinant, cofactors, surface_measure = _pointwise_surface_geometry_terms(
+            jacobians, self._facet_jacobians_by_side[side]
+        )
+        return (
+            coordinate_snapshot,
+            physical_coordinates,
+            determinant,
+            cofactors,
+            surface_measure,
+        )
+
+    def moments(self, mode: PortMode3D, record: _SurfaceFacetRecord) -> tuple[np.ndarray, np.ndarray]:
+        from .fullspace_surface_legendre import fourier_legendre_moment
+
+        phase_key = (
+            str(mode.side),
+            int(mode.m),
+            int(mode.n),
+            complex(mode.alpha),
+            complex(mode.gamma),
+            complex(mode.k_vector[2]),
+        )
+        key = (phase_key, float(record.hx), float(record.hy))
+        cached = self._moment_cache.get(key)
+        if cached is not None:
+            return cached
+        if len(self._moment_cache) >= self._moment_cache_limit:
+            self._moment_cache.pop(next(iter(self._moment_cache)))
+        x_moment = fourier_legendre_moment(
+            self.interval_points,
+            self.interval_weights,
+            self.degree,
+            complex(mode.alpha),
+            record.hx,
+            polynomial_values=self.polynomial_values,
+        )
+        y_moment = fourier_legendre_moment(
+            self.interval_points,
+            self.interval_weights,
+            self.degree,
+            complex(mode.gamma),
+            record.hy,
+            polynomial_values=self.polynomial_values,
+        )
+        cached = (x_moment, y_moment)
+        self._moment_cache[key] = cached
+        return cached
+
+    def pointwise_moments(
+        self, mode: PortMode3D, record: _SurfaceFacetRecord, physical_component: int
+    ) -> np.ndarray:
+        from .fullspace_surface_legendre import SURFACE_POINTWISE_WEIGHTED_BACKEND
+
+        if self.backend != SURFACE_POINTWISE_WEIGHTED_BACKEND:
+            raise ValueError("pointwise moments are unavailable for the old backend")
+        from .fullspace_surface_legendre import (
+            map_coordinate_quadrature,
+            pointwise_weighted_legendre_moments,
+        )
+
+        side = "bottom" if record.zeta_face == 0.0 else "top"
+        if record.local_facet != self._geometry_face_local_facets[side]:
+            raise NotImplementedError(
+                "surface record differs from the validated FFCx local face"
+            )
+        coordinate_values, coordinate_derivatives = self._geometry_face_tables[side]
+        if record.geometry_dofs is None:
+            raise RuntimeError("pointwise surface record has no geometry DOF map")
+        coordinate_dofs = self._geometry_coordinates[record.geometry_dofs]
+        physical_coordinates, jacobians = map_coordinate_quadrature(
+            coordinate_dofs,
+            coordinate_values,
+            coordinate_derivatives,
+        )
+        return pointwise_weighted_legendre_moments(
+            physical_coordinates,
+            jacobians,
+            self.quadrilateral_weights,
+            self._polynomial_x,
+            self._polynomial_y,
+            facet_jacobian=self._facet_jacobians_by_side[side],
+            alpha=complex(mode.alpha),
+            gamma=complex(mode.gamma),
+            kz=complex(mode.k_vector[2]),
+            physical_component=int(physical_component),
+        )
+
+    def pointwise_moments_pair(
+        self,
+        mode: PortMode3D,
+        record: _SurfaceFacetRecord,
+        *,
+        record_position: int | None = None,
+    ) -> np.ndarray:
+        from .fullspace_surface_legendre import (
+            SURFACE_COMPONENT_PAIR_BACKEND,
+            map_coordinate_quadrature,
+            pointwise_weighted_legendre_moments_pair_from_geometry,
+            pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y,
+            pointwise_weighted_legendre_moments_pair,
+        )
+
+        if self.backend != SURFACE_COMPONENT_PAIR_BACKEND:
+            raise ValueError("paired moments require the component-pair backend")
+        side = "bottom" if record.zeta_face == 0.0 else "top"
+        if str(mode.side) != side:
+            raise ValueError("paired surface mode side differs from its facet record")
+        if record.local_facet != self._geometry_face_local_facets[side]:
+            raise NotImplementedError(
+                "surface record differs from the validated FFCx local face"
+            )
+        if record.geometry_dofs is None:
+            raise RuntimeError("pointwise surface record has no geometry DOF map")
+        if self._geometry_cache is not None:
+            if record_position is None:
+                raise ValueError("cached geometry access requires the ordered record position")
+            physical, determinant, cofactors, surface_measure = self._geometry_cache.get(
+                self, side, record_position, record
+            )
+            if self._weighted_moment_contraction is not None:
+                if (
+                    self._weighted_moment_contraction
+                    != SURFACE_WEIGHTED_MOMENT_CONTRACTION
+                ):
+                    raise RuntimeError(
+                        "bound weighted-moment contraction identity changed"
+                    )
+                return pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y(
+                    physical,
+                    self.quadrilateral_weights,
+                    self.polynomial_values,
+                    determinant,
+                    cofactors,
+                    surface_measure,
+                    alpha=complex(mode.alpha),
+                    gamma=complex(mode.gamma),
+                    kz=complex(mode.k_vector[2]),
+                )
+            return pointwise_weighted_legendre_moments_pair_from_geometry(
+                physical,
+                self.quadrilateral_weights,
+                self._polynomial_x,
+                self._polynomial_y,
+                determinant,
+                cofactors,
+                surface_measure,
+                alpha=complex(mode.alpha),
+                gamma=complex(mode.gamma),
+                kz=complex(mode.k_vector[2]),
+            )
+        coordinate_values, coordinate_derivatives = self._geometry_face_tables[side]
+        coordinate_dofs = self._geometry_coordinates[record.geometry_dofs]
+        physical_coordinates, jacobians = map_coordinate_quadrature(
+            coordinate_dofs, coordinate_values, coordinate_derivatives
+        )
+        return pointwise_weighted_legendre_moments_pair(
+            physical_coordinates,
+            jacobians,
+            self.quadrilateral_weights,
+            self._polynomial_x,
+            self._polynomial_y,
+            facet_jacobian=self._facet_jacobians_by_side[side],
+            alpha=complex(mode.alpha),
+            gamma=complex(mode.gamma),
+            kz=complex(mode.k_vector[2]),
+        )
+
+    def component_pair_stats_facts(self) -> dict[str, Any]:
+        facts = dict(self._component_pair_stats)
+        if self._geometry_cache_enabled:
+            facts["geometry_cache"] = self.geometry_cache_facts()
+        return facts
+
+    def release_mode(self, mode: PortMode3D) -> None:
+        phase_key = (
+            str(mode.side),
+            int(mode.m),
+            int(mode.n),
+            complex(mode.alpha),
+            complex(mode.gamma),
+            complex(mode.k_vector[2]),
+        )
+        for key in tuple(self._moment_cache):
+            if key[0] == phase_key:
+                del self._moment_cache[key]
+
+
+_SURFACE_COMPONENT_PAIR_STAGING_MAX_BYTES = 64 * 1024 * 1024
+_SURFACE_COMPONENT_PAIR_STAGING_MAX_FACETS = 4096
+
+
+def _surface_pair_phase_key(mode: PortMode3D) -> tuple[Any, ...]:
+    return (
+        str(mode.side),
+        int(mode.m),
+        int(mode.n),
+        complex(mode.alpha),
+        complex(mode.gamma),
+        complex(mode.k_vector[2]),
+    )
+
+
+class _SurfaceComponentPairStaging:
+    """Record-position staging for the already transformed second component."""
+
+    def __init__(
+        self,
+        records: Sequence[_SurfaceFacetRecord],
+        *,
+        primary: Any,
+        companion: Any,
+        mode: PortMode3D,
+        mpc: Any,
+        workspace: Any,
+    ) -> None:
+        self.records = tuple(records)
+        if (
+            primary is companion
+            or primary.context is not companion.context
+            or primary.context.backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or str(primary.side) != str(companion.side)
+            or str(mode.side) != str(primary.side)
+            or int(primary.component) != 0
+            or int(companion.component) != 1
+            or primary.function_space is not companion.function_space
+            or primary.mesh_data is not companion.mesh_data
+            or getattr(primary.context, "mpc", None) is not mpc
+            or getattr(workspace, "_mpc", None) is not mpc
+            or getattr(workspace, "_function_space", None)
+            is not primary.function_space
+            or getattr(workspace, "_mesh_data", None) is not primary.mesh_data
+            or int(primary.tag) != int(companion.tag)
+            or id(primary) not in getattr(workspace, "_allowed_assembler_ids", set())
+            or id(companion) not in getattr(workspace, "_allowed_assembler_ids", set())
+        ):
+            raise ValueError("component-pair assembler or workspace identity differs")
+        if not self.records:
+            raise ValueError("component-pair staging requires at least one facet")
+        if len(self.records) > _SURFACE_COMPONENT_PAIR_STAGING_MAX_FACETS:
+            raise ValueError("component-pair facet count exceeds the supported bound")
+        dimensions = tuple(
+            int(np.asarray(record.cell_plan.cell_dofs).size)
+            for record in self.records
+        )
+        if not dimensions or min(dimensions) <= 0 or len(set(dimensions)) != 1:
+            raise ValueError("component-pair cells must have one positive local dimension")
+        self.local_dimension = dimensions[0]
+        self.staging_bytes = (
+            len(self.records)
+            * self.local_dimension
+            * int(np.dtype(np.complex128).itemsize)
+        )
+        if self.staging_bytes > _SURFACE_COMPONENT_PAIR_STAGING_MAX_BYTES:
+            raise ValueError("component-pair staging bytes exceed the supported bound")
+        if tuple(map(id, self.records)) != tuple(
+            map(id, primary.context.records(primary.side))
+        ):
+            raise ValueError("component-pair records differ from the bound side order")
+        self.record_ids = tuple(id(record) for record in self.records)
+        self.primary_assembler_id = id(primary)
+        self.companion_assembler_id = id(companion)
+        self.context_id = id(primary.context)
+        self.side = str(primary.side)
+        self.phase_key = _surface_pair_phase_key(mode)
+        self.mpc_id = id(mpc)
+        self.workspace_id = id(workspace)
+        self.workspace = workspace
+        self.degree = int(primary.context.degree)
+        self.component_ids = (int(primary.component), int(companion.component))
+        self.values: np.ndarray | None = np.empty(
+            (len(self.records), self.local_dimension), dtype=np.complex128
+        )
+        self._filled: np.ndarray | None = np.zeros(len(self.records), dtype=np.bool_)
+
+    def assert_binding(
+        self,
+        *,
+        primary: Any,
+        companion: Any,
+        mode: PortMode3D,
+        mpc: Any,
+        workspace: Any,
+        records: Sequence[_SurfaceFacetRecord],
+    ) -> None:
+        actual_records = tuple(records)
+        if (
+            primary.context is not companion.context
+            or id(primary) != self.primary_assembler_id
+            or id(companion) != self.companion_assembler_id
+            or id(primary.context) != self.context_id
+            or primary.context.backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or getattr(primary.context, "mpc", None) is not mpc
+            or str(primary.side) != self.side
+            or str(companion.side) != self.side
+            or str(mode.side) != self.side
+            or int(primary.component) != 0
+            or int(companion.component) != 1
+            or self.component_ids != (0, 1)
+            or id(mpc) != self.mpc_id
+            or id(workspace) != self.workspace_id
+            or getattr(workspace, "_function_space", None)
+            is not primary.function_space
+            or getattr(workspace, "_mesh_data", None) is not primary.mesh_data
+            or int(primary.tag) != int(companion.tag)
+            or int(primary.context.degree) != self.degree
+            or int(companion.context.degree) != self.degree
+            or _surface_pair_phase_key(mode) != self.phase_key
+            or tuple(id(record) for record in actual_records) != self.record_ids
+        ):
+            raise ValueError("component-pair staging identity, phase or record order differs")
+        if self.values is None or self._filled is None:
+            raise RuntimeError("component-pair staging was already released")
+
+    def store(
+        self, record_position: int, record: _SurfaceFacetRecord, values: np.ndarray
+    ) -> None:
+        position = int(record_position)
+        if position < 0 or position >= len(self.record_ids):
+            raise IndexError("component-pair record position is out of range")
+        if id(record) != self.record_ids[position]:
+            raise ValueError("component-pair staging record position differs")
+        array = np.asarray(values, dtype=np.complex128)
+        if array.shape != (self.local_dimension,) or not np.isfinite(array).all():
+            raise ValueError("component-pair local vector is invalid")
+        if self.values is None or self._filled is None:
+            raise RuntimeError("component-pair staging was already released")
+        self.values[position] = array
+        self._filled[position] = True
+
+    def assert_complete(self) -> None:
+        if self._filled is None or not bool(np.all(self._filled)):
+            raise RuntimeError("component-pair staging has missing record positions")
+
+    def get(self, record_position: int, record: _SurfaceFacetRecord) -> np.ndarray:
+        position = int(record_position)
+        if position < 0 or position >= len(self.record_ids):
+            raise IndexError("component-pair record position is out of range")
+        if id(record) != self.record_ids[position]:
+            raise ValueError("component-pair replay record order differs")
+        if (
+            self.values is None
+            or self._filled is None
+            or not bool(self._filled[position])
+        ):
+            raise RuntimeError("component-pair record was not staged")
+        return self.values[position]
+
+    def release(self) -> None:
+        self.values = None
+        self._filled = None
+        self.record_ids = ()
+        self.records = ()
+        self.workspace = None
+
+
+class _SurfaceLegendreMomentAssembler:
+    """Opt-in q160 Legendre face functional for one side/component."""
+
+    surface_backend = "q160_affine_hex_fourier_legendre_v1"
+
+    def __init__(
+        self,
+        context: _SurfaceLegendreMomentContext,
+        side: str,
+        tag: int,
+        component: int,
+    ) -> None:
+        if side not in {"top", "bottom"} or component not in {0, 1}:
+            raise ValueError("Legendre surface assembler supports top/bottom x/y only")
+        self.context = context
+        self.function_space = context.function_space
+        self.mesh_data = context.mesh_data
+        self.comm = context.mesh_data.mesh.comm
+        self.side = str(side)
+        self.tag = int(tag)
+        self.component = int(component)
+        self.surface_backend = context.backend
+        self.call_count = 0
+        self.facet_count = 0
+
+    def _assemble_to_vector(self, mode: PortMode3D, mpc: Any, vector: PETSc.Vec) -> None:
+        from .fullspace_surface_legendre import (
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            add_prevalidated_complex_mpc_cell_contribution,
+            apply_standard_dof_transform,
+            assemble_face_from_prevalidated_moments,
+            assemble_face_from_weighted_moments,
+        )
+
+        if self.surface_backend == SURFACE_COMPONENT_PAIR_BACKEND:
+            raise RuntimeError(
+                "paired pointwise backend must enter through assemble_pair_entries"
+            )
+        if mpc is not self.context.mpc:
+            raise ValueError("Legendre assembler was used with a different MPC")
+        element = self.function_space.element
+        cell_info = self.context._cell_permutations
+        table = self.context.trace_table(self.side, self.component)
+        with vector.localForm() as local_form:
+            local_values = local_form.array_w
+            for record in self.context.records(self.side):
+                plan = record.cell_plan
+                if self.surface_backend == SURFACE_POINTWISE_WEIGHTED_BACKEND:
+                    moments = self.context.pointwise_moments(
+                        mode, record, self.component
+                    )
+                    local_vector = assemble_face_from_weighted_moments(
+                        table, moments
+                    )
+                else:
+                    x_moment, y_moment = self.context.moments(mode, record)
+                    h_component = record.hx if self.component == 0 else record.hy
+                    phase_origin = np.exp(
+                        1j
+                        * (
+                            complex(mode.alpha) * record.x0
+                            + complex(mode.gamma) * record.y0
+                            + complex(mode.k_vector[2]) * record.z_face
+                        )
+                    )
+                    local_vector = assemble_face_from_prevalidated_moments(
+                        table,
+                        x_moment,
+                        y_moment,
+                        hx=record.hx,
+                        hy=record.hy,
+                        h_component=h_component,
+                        phase_origin=phase_origin,
+                    )
+                if local_vector.shape != plan.cell_dofs.shape:
+                    raise ValueError("surface trace vector and cell DOF count differ")
+                local_vector = apply_standard_dof_transform(
+                    element,
+                    local_vector,
+                    int(cell_info[record.cell]),
+                    check_finite=False,
+                )
+                add_prevalidated_complex_mpc_cell_contribution(
+                    local_vector,
+                    local_values,
+                    plan.cell_dofs,
+                    plan.slave_positions,
+                    plan.master_rows,
+                    plan.coefficient_rows,
+                )
+        self.call_count += 1
+        self.facet_count += len(self.context.records(self.side))
+
+    def assemble_entries(
+        self,
+        mode: PortMode3D,
+        mpc: Any,
+        *,
+        workspace: Any | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if self.surface_backend == SURFACE_COMPONENT_PAIR_BACKEND:
+            raise RuntimeError(
+                "paired pointwise backend cannot silently use the unpaired assembler"
+            )
+        if mpc is not self.context.mpc:
+            raise ValueError("Legendre assembler was used with a different MPC")
+        if workspace is not None:
+            vector = workspace.assemble_custom(
+                self,
+                mpc,
+                lambda output: self._assemble_to_vector(mode, mpc, output),
+            )
+            return _vec_nonzero_owned_entries(
+                vector,
+                support=workspace.owned_support,
+                timing_totals=workspace.timing_totals,
+            )
+        index_map = mpc.function_space.dofmap.index_map
+        vector = create_vector(
+            [(index_map, int(mpc.function_space.dofmap.index_map_bs))]
+        )
+        try:
+            with vector.localForm() as local_form:
+                local_form.set(0.0)
+            self._assemble_to_vector(mode, mpc, vector)
+            vector.ghostUpdate(
+                addv=PETSc.InsertMode.ADD_VALUES,
+                mode=PETSc.ScatterMode.REVERSE,
+            )
+            vector.ghostUpdate(
+                addv=PETSc.InsertMode.INSERT_VALUES,
+                mode=PETSc.ScatterMode.FORWARD,
+            )
+            return _vec_nonzero_owned_entries(vector)
+        finally:
+            vector.destroy()
+
+    def _assemble_pair_to_vector(
+        self,
+        companion: _SurfaceLegendreMomentAssembler,
+        mode: PortMode3D,
+        mpc: Any,
+        vector: PETSc.Vec,
+        staging: _SurfaceComponentPairStaging,
+    ) -> None:
+        from .fullspace_surface_legendre import (
+            add_prevalidated_complex_mpc_cell_contribution,
+            apply_standard_dof_transform,
+            assemble_face_from_weighted_moments,
+        )
+
+        if self.component != 0 or companion.component != 1:
+            raise ValueError("paired surface assembly requires component order x then y")
+        if (
+            self.surface_backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or companion.surface_backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or self.context is not companion.context
+            or mpc is not self.context.mpc
+        ):
+            raise ValueError("paired surface assembly identities differ")
+        records = self.context.records(self.side)
+        staging.assert_binding(
+            primary=self,
+            companion=companion,
+            mode=mode,
+            mpc=mpc,
+            workspace=staging.workspace,
+            records=records,
+        )
+        element = self.function_space.element
+        cell_info = self.context._cell_permutations
+        trace_table = self.context.trace_table(self.side, 0)
+        with vector.localForm() as local_form:
+            local_values = local_form.array_w
+            for position, record in enumerate(records):
+                plan = record.cell_plan
+                pair_moments = self.context.pointwise_moments_pair(
+                    mode, record, record_position=position
+                )
+                local_primary = assemble_face_from_weighted_moments(
+                    trace_table, pair_moments[0]
+                )
+                local_companion = assemble_face_from_weighted_moments(
+                    trace_table, pair_moments[1]
+                )
+                if (
+                    local_primary.shape != plan.cell_dofs.shape
+                    or local_companion.shape != plan.cell_dofs.shape
+                ):
+                    raise ValueError("paired surface trace and cell DOF counts differ")
+                cell_permutation = int(cell_info[record.cell])
+                local_primary = apply_standard_dof_transform(
+                    element, local_primary, cell_permutation, check_finite=False
+                )
+                local_companion = apply_standard_dof_transform(
+                    element, local_companion, cell_permutation, check_finite=False
+                )
+                staging.store(position, record, local_companion)
+                add_prevalidated_complex_mpc_cell_contribution(
+                    local_primary,
+                    local_values,
+                    plan.cell_dofs,
+                    plan.slave_positions,
+                    plan.master_rows,
+                    plan.coefficient_rows,
+                )
+        staging.assert_complete()
+
+    def _replay_staged_component_to_vector(
+        self,
+        primary: _SurfaceLegendreMomentAssembler,
+        mode: PortMode3D,
+        mpc: Any,
+        vector: PETSc.Vec,
+        staging: _SurfaceComponentPairStaging,
+        workspace: Any,
+    ) -> None:
+        from .fullspace_surface_legendre import (
+            add_prevalidated_complex_mpc_cell_contribution,
+        )
+
+        if (
+            self.component != 1
+            or self.surface_backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or mpc is not self.context.mpc
+        ):
+            raise ValueError("staged replay requires the bound paired y-component")
+        records = self.context.records(self.side)
+        staging.assert_binding(
+            primary=primary,
+            companion=self,
+            mode=mode,
+            mpc=mpc,
+            workspace=workspace,
+            records=records,
+        )
+        with vector.localForm() as local_form:
+            local_values = local_form.array_w
+            for position, record in enumerate(records):
+                plan = record.cell_plan
+                local_vector = staging.get(position, record)
+                add_prevalidated_complex_mpc_cell_contribution(
+                    local_vector,
+                    local_values,
+                    plan.cell_dofs,
+                    plan.slave_positions,
+                    plan.master_rows,
+                    plan.coefficient_rows,
+                )
+
+    def assemble_pair_entries(
+        self,
+        companion: _SurfaceLegendreMomentAssembler,
+        mode: PortMode3D,
+        mpc: Any,
+        *,
+        workspace: Any,
+    ) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
+        if workspace is None:
+            raise ValueError("paired surface backend requires the one-Vec workspace")
+        records = self.context.records(self.side)
+        staging = _SurfaceComponentPairStaging(
+            records,
+            primary=self,
+            companion=companion,
+            mode=mode,
+            mpc=mpc,
+            workspace=workspace,
+        )
+        stats = self.context._component_pair_stats
+        try:
+            stats["pair_call_count"] += 1
+            stats["max_staging_bytes"] = max(
+                int(stats["max_staging_bytes"]), staging.staging_bytes
+            )
+            stats["max_staging_facets"] = max(
+                int(stats["max_staging_facets"]), len(records)
+            )
+            stats["staging_buffer_count_max"] = max(
+                int(stats["staging_buffer_count_max"]), 1
+            )
+            from .fullspace_surface_legendre import (
+                component_pair_explicit_array_payload_bounds,
+            )
+
+            payload_bounds = component_pair_explicit_array_payload_bounds(
+                point_count=int(self.context.quadrilateral_weights.size),
+                polynomial_width=int(self.context.degree + 1),
+                local_dof_count=staging.local_dimension,
+                facet_count=len(records),
+                owned_support_rows=int(workspace.owned_support.size),
+                row_index_bytes=int(np.dtype(PETSc.IntType).itemsize),
+            )
+            stats["max_explicit_numpy_payload_upper_bytes"] = max(
+                int(stats.get("max_explicit_numpy_payload_upper_bytes", 0)),
+                int(payload_bounds["explicit_numpy_payload_upper_bytes"]),
+            )
+            stats["last_payload_bounds"] = payload_bounds
+            primary_vector = workspace.assemble_custom(
+                self,
+                mpc,
+                lambda output: self._assemble_pair_to_vector(
+                    companion, mode, mpc, output, staging
+                ),
+            )
+            staging.assert_complete()
+            primary_entries = _vec_nonzero_owned_entries(
+                primary_vector,
+                support=workspace.owned_support,
+                timing_totals=workspace.timing_totals,
+            )
+            # _vec_nonzero_owned_entries returns an owned sparse value copy
+            # before the shared Vec is cleared for component one.
+            companion_vector = workspace.assemble_custom(
+                companion,
+                mpc,
+                lambda output: companion._replay_staged_component_to_vector(
+                    self, mode, mpc, output, staging, workspace
+                ),
+            )
+            companion_entries = _vec_nonzero_owned_entries(
+                companion_vector,
+                support=workspace.owned_support,
+                timing_totals=workspace.timing_totals,
+            )
+            self.call_count += 1
+            companion.call_count += 1
+            self.facet_count += len(records)
+            companion.facet_count += len(records)
+            stats["paired_facet_count"] += len(records)
+            return primary_entries, companion_entries
+        finally:
+            staging.release()
+            stats["staging_release_count"] += 1
 
 
 class DtnTraceAliasError(RuntimeError):

@@ -34,10 +34,61 @@ def _surface_assemblers(
     cfg: Any,
     qdegree: int,
     *,
+    mpc: Any | None = None,
+    surface_assembly_backend: str | None = None,
+    reuse_surface_geometry_cache: bool = False,
+    surface_geometry_cache_limit_bytes: int = 0,
+    surface_weighted_moment_contraction: str | None = None,
     jit_options: Mapping[str, Any] | None = None,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
 
+    if surface_weighted_moment_contraction is not None and surface_assembly_backend is None:
+        raise ValueError(
+            "weighted-moment contraction requires an explicit Legendre surface backend"
+        )
+    if surface_assembly_backend is not None:
+        from .dtn_port_3d import (
+            _SurfaceLegendreMomentAssembler,
+            _SurfaceLegendreMomentContext,
+        )
+        from .fullspace_surface_legendre import (
+            SURFACE_COMPONENT_PAIR_BACKEND,
+            SURFACE_LEGENDRE_BACKEND,
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+        )
+
+        if surface_assembly_backend not in {
+            SURFACE_LEGENDRE_BACKEND,
+            SURFACE_POINTWISE_WEIGHTED_BACKEND,
+            SURFACE_COMPONENT_PAIR_BACKEND,
+        }:
+            raise ValueError(
+                f"unsupported explicit surface assembly backend: {surface_assembly_backend}"
+            )
+        if mpc is None:
+            raise ValueError("Legendre surface assembly requires the finalized MPC")
+        context = _SurfaceLegendreMomentContext(
+            function_space,
+            mesh_data,
+            mpc,
+            cfg,
+            int(qdegree),
+            backend=surface_assembly_backend,
+            reuse_geometry_cache=reuse_surface_geometry_cache,
+            geometry_cache_limit_bytes=surface_geometry_cache_limit_bytes,
+            weighted_moment_contraction=surface_weighted_moment_contraction,
+        )
+        return {
+            (side, component): _SurfaceLegendreMomentAssembler(
+                context,
+                side,
+                cfg.tags.z_max if side == "top" else cfg.tags.z_min,
+                component,
+            )
+            for side in ("top", "bottom")
+            for component in (0, 1)
+        }
     return {
         (side, component): _ReusableSurfaceComponentAssembler(
             function_space,
@@ -98,6 +149,14 @@ def build_same_mesh_physical_action(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
+    reuse_surface_vector: bool = False,
+    reuse_surface_geometry_cache: bool = False,
+    surface_geometry_cache_limit_bytes: int = 0,
+    surface_weighted_moment_contraction: str | None = None,
+    surface_assembly_backend: str | None = None,
+    collect_surface_timings: bool = False,
+    stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    surface_progress_interval: int = 1024,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -121,6 +180,24 @@ def build_same_mesh_physical_action(
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
     degree = int(degree)
+    if collect_surface_timings and not reuse_surface_vector:
+        raise ValueError("surface timing requires the reused-vector opt-in")
+    if surface_assembly_backend is not None and not reuse_surface_vector:
+        raise ValueError("opt-in surface backend requires the reused-vector path")
+    if reuse_surface_geometry_cache and (
+        degree != 6
+        or not reuse_surface_vector
+        or int(surface_geometry_cache_limit_bytes) != 4 * 1024**3
+        or surface_assembly_backend
+        != "q160_affine_hex_pointwise_weighted_legendre_component_pair_v1"
+    ):
+        raise ValueError(
+            "surface geometry caching requires the explicit p6 paired backend and reused-vector path"
+        )
+    if not reuse_surface_geometry_cache and int(surface_geometry_cache_limit_bytes) != 0:
+        raise ValueError("surface geometry cache limit requires its explicit p6 opt-in")
+    if int(surface_progress_interval) <= 0:
+        raise ValueError("surface progress interval must be positive")
     _validate_physical_split_profile(cfg)
     try:
         function_space = setup["spaces"][degree]
@@ -131,7 +208,19 @@ def build_same_mesh_physical_action(
         raise ValueError("same-mesh physical action requires a finalized Floquet MPC")
 
     if mode_inventory is None:
+        if reuse_surface_vector and stage_callback is not None:
+            stage_callback("physical_mode_inventory_started", {"space_degree": degree})
         modes, mode_rows, mode_sha = build_dynamic_mode_inventory(cfg)
+        if reuse_surface_vector and stage_callback is not None:
+            stage_callback(
+                "physical_mode_inventory_complete",
+                {
+                    "space_degree": degree,
+                    "mode_count": int(len(modes)),
+                    "mode_sha256": str(mode_sha),
+                    "inventory_generated_here": True,
+                },
+            )
     else:
         if len(mode_inventory) != 3:
             raise ValueError("mode_inventory must contain modes, rows, and SHA")
@@ -139,26 +228,113 @@ def build_same_mesh_physical_action(
         modes = tuple(modes)
         mode_rows = tuple(mode_rows)
         mode_sha = str(mode_sha)
+        if reuse_surface_vector and stage_callback is not None:
+            stage_callback(
+                "physical_mode_inventory_reused",
+                {
+                    "space_degree": degree,
+                    "mode_count": int(len(modes)),
+                    "mode_sha256": str(mode_sha),
+                    "inventory_generated_here": False,
+                },
+            )
     modes = tuple(modes)
     if not modes or len(mode_rows) != len(modes):
         raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
     qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
+    if surface_weighted_moment_contraction is not None:
+        from .fullspace_surface_legendre import validate_weighted_moment_contraction
+
+        validate_weighted_moment_contraction(
+            surface_weighted_moment_contraction,
+            backend=surface_assembly_backend or "",
+            degree=degree,
+            quadrature_degree=qdegree,
+            reuse_geometry_cache=reuse_surface_geometry_cache,
+        )
+    if (
+        reuse_surface_vector
+        and stage_callback is not None
+        and surface_assembly_backend is None
+    ):
+        stage_callback(
+            "physical_surface_forms_compile_started",
+            {"space_degree": degree, "form_count": 4, "quadrature_degree": int(qdegree)},
+        )
     assemblers = _surface_assemblers(
         function_space,
         setup["mesh_data"],
         cfg,
         qdegree,
+        mpc=floquet.mpc,
+        surface_assembly_backend=surface_assembly_backend,
+        reuse_surface_geometry_cache=reuse_surface_geometry_cache,
+        surface_geometry_cache_limit_bytes=surface_geometry_cache_limit_bytes,
+        surface_weighted_moment_contraction=surface_weighted_moment_contraction,
         jit_options=options,
     )
+    if (
+        reuse_surface_vector
+        and stage_callback is not None
+        and surface_assembly_backend is None
+    ):
+        stage_callback(
+            "physical_surface_forms_compile_complete",
+            {"space_degree": degree, "form_count": len(assemblers), "quadrature_degree": int(qdegree)},
+        )
+    if surface_assembly_backend is not None and stage_callback is not None:
+        context = next(iter(assemblers.values())).context
+        stage_callback(
+            "physical_surface_legendre_backend_ready",
+            {
+                "space_degree": degree,
+                "form_count": len(assemblers),
+                "backend": surface_assembly_backend,
+                "context_facts": dict(context.facts),
+            },
+        )
     carrier = None
     dtn_action = None
     volume_action = None
     physical_action = None
     try:
+        if reuse_surface_vector and stage_callback is not None:
+            stage_callback(
+                "physical_surface_carrier_build_started",
+                {
+                    "space_degree": degree,
+                    "mode_count": int(len(modes)),
+                    "mode_sha256": str(mode_sha),
+                    "scratch_vectors_shared_across_forms": 1,
+                },
+            )
         carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg
+            modes,
+            assemblers,
+            floquet.mpc,
+            cfg,
+            reuse_surface_vector=reuse_surface_vector,
+            reuse_surface_geometry_cache=reuse_surface_geometry_cache,
+            collect_surface_timings=collect_surface_timings,
+            stage_callback=stage_callback if reuse_surface_vector else None,
+            degree=degree,
+            progress_interval=surface_progress_interval,
         )
+        if reuse_surface_vector and stage_callback is not None:
+            completion_facts = {
+                "space_degree": degree,
+                "mode_count": int(len(modes)),
+                "mode_sha256": str(mode_sha),
+            }
+            if reuse_surface_geometry_cache:
+                completion_facts["surface_geometry_cache"] = (
+                    next(iter(assemblers.values())).context.geometry_cache_facts()
+                )
+            stage_callback(
+                "physical_surface_carrier_build_complete",
+                completion_facts,
+            )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the
         # temporary compiled surface forms and their phase constants.

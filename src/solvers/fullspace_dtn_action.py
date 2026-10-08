@@ -10,10 +10,12 @@ applied exactly once.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
 import hashlib
 import json
+import time
+from collections import Counter
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
 
@@ -21,10 +23,10 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
-
 FULLSPACE_DTN_PROFILE = "full3d_scalable_v1"
 FULLSPACE_DTN_BATCH_SIZE = 8
 FULLSPACE_DTN_MANIFEST_SCHEMA = "fullspace-dtn.mode-manifest.v1"
+_SURFACE_PROGRESS_MAX_INTERVAL_SECONDS = 300.0
 
 _MODE_IDENTITY_FIELDS = frozenset(
     {
@@ -622,15 +624,32 @@ def build_fullspace_dtn_carrier_from_surface(
     surface_assemblers: Mapping[tuple[str, int], Any],
     mpc: Any,
     cfg: Any,
+    *,
+    reuse_surface_vector: bool = False,
+    reuse_surface_geometry_cache: bool = False,
+    collect_surface_timings: bool = False,
+    stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    degree: int | None = None,
+    progress_interval: int = 1024,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
     if mpc is None:
         raise ValueError("dynamic DtN surface carrier requires the finalized MPC")
+    if int(progress_interval) <= 0:
+        raise ValueError("surface carrier progress interval must be positive")
+    if collect_surface_timings and stage_callback is None:
+        raise ValueError("surface timings require a scalar stage callback")
+    if collect_surface_timings and not reuse_surface_vector:
+        raise ValueError("surface timings require the reused-vector opt-in")
+    if reuse_surface_geometry_cache and (
+        not reuse_surface_vector or degree != 6
+    ):
+        raise ValueError("surface geometry caching requires the p6 reused-vector route")
     from .dtn_port_3d import _combine_owned_entries
 
     modes = tuple(modes)
-    manifest_rows, _manifest_bytes, _manifest_sha = build_ordered_mode_manifest(
+    manifest_rows, _manifest_bytes, manifest_sha = build_ordered_mode_manifest(
         modes, cfg
     )
     comm = mpc.function_space.mesh.comm
@@ -642,65 +661,270 @@ def build_fullspace_dtn_carrier_from_surface(
         tuple[str, int, int, complex, complex, complex],
         tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
     ] = {}
+    remaining_uses = (
+        Counter(_dtn_component_phase_key(mode) for mode in modes)
+        if reuse_surface_vector
+        else None
+    )
+    surface_contexts = {
+        id(context): context
+        for assembler in surface_assemblers.values()
+        if (context := getattr(assembler, "context", None)) is not None
+    }
+    geometry_cache_context = None
+    if reuse_surface_geometry_cache:
+        from .fullspace_surface_legendre import SURFACE_COMPONENT_PAIR_BACKEND
+
+        if len(surface_assemblers) != 4 or len(surface_contexts) != 1:
+            raise ValueError(
+                "geometry cache requires four assemblers sharing one p6 context"
+            )
+        geometry_cache_context = next(iter(surface_contexts.values()))
+        if (
+            getattr(geometry_cache_context, "backend", None)
+            != SURFACE_COMPONENT_PAIR_BACKEND
+            or not getattr(geometry_cache_context, "_geometry_cache_enabled", False)
+            or any(
+                getattr(assembler, "context", None) is not geometry_cache_context
+                or getattr(assembler, "surface_backend", None)
+                != SURFACE_COMPONENT_PAIR_BACKEND
+                for assembler in surface_assemblers.values()
+            )
+        ):
+            raise ValueError(
+                "all four p6 surface assemblers must share the opted-in paired context"
+            )
+    workspace = None
+
+    def notify(name: str, facts: Mapping[str, Any]) -> None:
+        if stage_callback is not None:
+            payload = dict(facts)
+            if degree is not None:
+                payload["space_degree"] = int(degree)
+            stage_callback(name, payload)
 
     def components_for(mode: Any):
-        key = (
-            str(mode.side),
-            int(mode.m),
-            int(mode.n),
-            complex(mode.alpha),
-            complex(mode.gamma),
-            complex(mode.k_vector[2]),
-        )
+        key = _dtn_component_phase_key(mode)
         components = component_cache.get(key)
         if components is None:
+            left_assembler = surface_assemblers[(mode.side, 0)]
+            right_assembler = surface_assemblers[(mode.side, 1)]
+            from .fullspace_surface_legendre import SURFACE_COMPONENT_PAIR_BACKEND
+
+            left_is_pair = (
+                getattr(left_assembler, "surface_backend", None)
+                == SURFACE_COMPONENT_PAIR_BACKEND
+            )
+            right_is_pair = (
+                getattr(right_assembler, "surface_backend", None)
+                == SURFACE_COMPONENT_PAIR_BACKEND
+            )
+            if left_is_pair or right_is_pair:
+                if not left_is_pair or not right_is_pair:
+                    raise RuntimeError(
+                        "component-pair backend is not selected for both surface components"
+                    )
+                if workspace is None:
+                    raise RuntimeError(
+                        "component-pair backend requires the one-Vec workspace"
+                    )
+                pair_assemble = getattr(left_assembler, "assemble_pair_entries", None)
+                if not callable(pair_assemble):
+                    raise RuntimeError(
+                        "component-pair backend has no paired assembly entry point"
+                    )
+                left, right = pair_assemble(
+                    right_assembler, mode, mpc, workspace=workspace
+                )
+            elif workspace is None:
+                left = left_assembler.assemble_entries(mode, mpc)
+                right = right_assembler.assemble_entries(mode, mpc)
+            else:
+                left = left_assembler.assemble_entries(
+                    mode, mpc, workspace=workspace
+                )
+                right = right_assembler.assemble_entries(
+                    mode, mpc, workspace=workspace
+                )
             components = (
-                surface_assemblers[(mode.side, 0)].assemble_entries(mode, mpc),
-                surface_assemblers[(mode.side, 1)].assemble_entries(mode, mpc),
+                left,
+                right,
             )
             component_cache[key] = components
         return components
 
     entries: list[FullspaceDtnModeFunctional] = []
-    for index, mode in enumerate(modes):
-        components = components_for(mode)
-        projection_rows, projection_values = _combine_owned_entries(
-            components,
-            (mode.e_vector[0], mode.e_vector[1]),
-            comm=comm,
-        )
-        from .dtn_port_3d import _mode_projection_denominator, _traction_vector
+    try:
+        if geometry_cache_context is not None:
+            geometry_cache_context.begin_geometry_cache()
+        if reuse_surface_vector:
+            from .dtn_port_3d import _SurfaceMpcVectorWorkspace
 
-        denominator = _mode_projection_denominator(mode, cfg)
-        traction = _traction_vector(mode, cfg)
-        coupling_rows, coupling_values = _combine_owned_entries(
-            components,
-            (-traction[0], -traction[1]),
+            first_assembler = next(iter(surface_assemblers.values()))
+            workspace = _SurfaceMpcVectorWorkspace(
+                first_assembler.function_space,
+                first_assembler.mesh_data,
+                mpc,
+                surface_assemblers,
+                collect_timings=collect_surface_timings,
+            )
+        if workspace is not None:
+            notify("surface_carrier_workspace_ready", workspace.facts)
+        notify(
+            "surface_carrier_assembly_started",
+            {"mode_count": len(modes), "mode_sha256": manifest_sha},
+        )
+        last_progress_time = (
+            time.monotonic()
+            if workspace is not None and stage_callback is not None
+            else None
+        )
+        for index, mode in enumerate(modes):
+            key = _dtn_component_phase_key(mode)
+            components = components_for(mode)
+            combine_started = (
+                time.perf_counter()
+                if workspace is not None and workspace.timing_totals is not None
+                else None
+            )
+            projection_rows, projection_values = _combine_owned_entries(
+                components,
+                (mode.e_vector[0], mode.e_vector[1]),
+                comm=comm,
+            )
+            from .dtn_port_3d import _mode_projection_denominator, _traction_vector
+
+            denominator = _mode_projection_denominator(mode, cfg)
+            traction = _traction_vector(mode, cfg)
+            coupling_rows, coupling_values = _combine_owned_entries(
+                components,
+                (-traction[0], -traction[1]),
+                comm=comm,
+            )
+            if combine_started is not None:
+                workspace.timing_totals["carrier_combine_seconds"] += (
+                    time.perf_counter() - combine_started
+                )
+            entries.append(
+                FullspaceDtnModeFunctional(
+                    mode_key=(int(index), str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)),
+                    coupling_rows=coupling_rows,
+                    coupling_values=_readonly(coupling_values, np.dtype(np.complex128)),
+                    projection_rows=projection_rows,
+                    projection_values=_readonly(
+                        np.conjugate(projection_values), np.dtype(np.complex128)
+                    ),
+                    normalization_h=float(denominator),
+                    mode_identity=manifest_rows[index],
+                )
+            )
+            if remaining_uses is not None:
+                remaining_uses[key] -= 1
+                if remaining_uses[key] == 0:
+                    del remaining_uses[key]
+                    component_cache.pop(key, None)
+                    for context in surface_contexts.values():
+                        context.release_mode(mode)
+                # The carrier arrays are copies from concatenate; no cached
+                # component array is needed after this mode's two combines.
+                del components
+            completed = index + 1
+            time_due = False
+            if last_progress_time is not None:
+                completed_at = time.monotonic()
+                time_due = (
+                    completed_at - last_progress_time
+                    >= _SURFACE_PROGRESS_MAX_INTERVAL_SECONDS
+                )
+            if (
+                completed % int(progress_interval) == 0
+                or completed == len(modes)
+                or time_due
+            ):
+                notify(
+                    "surface_carrier_mode_progress",
+                    {
+                        "completed_modes": completed,
+                        "total_modes": len(modes),
+                        "mode_sha256": manifest_sha,
+                    },
+                )
+                if last_progress_time is not None:
+                    last_progress_time = completed_at
+
+        notify(
+            "surface_carrier_assembly_complete",
+            {
+                "completed_modes": len(modes),
+                "mode_count": len(modes),
+                "mode_sha256": manifest_sha,
+                "component_pair_stats_by_degree": {
+                    f"p{int(context.degree)}": context.component_pair_stats_facts()
+                    for context in surface_contexts.values()
+                    if getattr(context, "backend", None)
+                    == "q160_affine_hex_pointwise_weighted_legendre_component_pair_v1"
+                },
+            },
+        )
+        slaves = np.asarray(mpc.slaves, dtype=np.int32)
+        owned_slaves = slaves[slaves < int(index_map.size_local)]
+        slave_rows = np.asarray(
+            index_map.local_to_global(owned_slaves), dtype=PETSc.IntType
+        )
+        normalization_started = (
+            time.perf_counter()
+            if workspace is not None and workspace.timing_totals is not None
+            else None
+        )
+        notify(
+            "surface_carrier_normalize_validate_started",
+            {"mode_count": len(modes), "mode_sha256": manifest_sha},
+        )
+        carrier = FullspaceDtnCarrier(
+            entries,
+            global_rows=global_rows,
+            ownership_range=(owned_start, owned_end),
+            slave_rows=slave_rows,
+            batch_size=FULLSPACE_DTN_BATCH_SIZE,
             comm=comm,
         )
-        entries.append(
-            FullspaceDtnModeFunctional(
-                mode_key=(int(index), str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)),
-                coupling_rows=coupling_rows,
-                coupling_values=_readonly(coupling_values, np.dtype(np.complex128)),
-                projection_rows=projection_rows,
-                projection_values=_readonly(
-                    np.conjugate(projection_values), np.dtype(np.complex128)
-                ),
-                normalization_h=float(denominator),
-                mode_identity=manifest_rows[index],
+        if normalization_started is not None:
+            workspace.timing_totals["carrier_normalize_validate_seconds"] += (
+                time.perf_counter() - normalization_started
             )
+        notify(
+            "surface_carrier_normalize_validate_complete",
+            {
+                "mode_count": len(modes),
+                "mode_sha256": manifest_sha,
+                "normalized_entries": len(carrier.entries),
+                **(
+                    {"timing_seconds": dict(workspace.timing_totals)}
+                    if workspace is not None and workspace.timing_totals is not None
+                    else {}
+                ),
+            },
         )
-    slaves = np.asarray(mpc.slaves, dtype=np.int32)
-    owned_slaves = slaves[slaves < int(index_map.size_local)]
-    slave_rows = np.asarray(index_map.local_to_global(owned_slaves), dtype=PETSc.IntType)
-    return FullspaceDtnCarrier(
-        entries,
-        global_rows=global_rows,
-        ownership_range=(owned_start, owned_end),
-        slave_rows=slave_rows,
-        batch_size=FULLSPACE_DTN_BATCH_SIZE,
-        comm=comm,
+        return carrier
+    finally:
+        try:
+            if geometry_cache_context is not None:
+                geometry_cache_context.end_geometry_cache()
+        finally:
+            if workspace is not None:
+                workspace.destroy()
+
+
+def _dtn_component_phase_key(mode: Any) -> tuple[str, int, int, complex, complex, complex]:
+    """Return the existing phase-cache identity for one polarization mode."""
+
+    return (
+        str(mode.side),
+        int(mode.m),
+        int(mode.n),
+        complex(mode.alpha),
+        complex(mode.gamma),
+        complex(mode.k_vector[2]),
     )
 
 
