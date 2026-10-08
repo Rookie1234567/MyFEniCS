@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <limits.h>
+#include <math.h>
 #include <string.h>
 
 #include <petscmat.h>
@@ -21,6 +22,9 @@ typedef struct {
   MatFactorInfo factor_info;     /* public PETSc factor-info value */
   PyObject *source_keepalive;
   PetscInt icntl14_requested;
+  PetscInt icntl14_actual;
+  PetscErrorCode icntl14_error_code;
+  int source_keepalive_released;
   int symbolic_attempts;
   PetscErrorCode symbolic_error_code;
   int symbolic_completed;
@@ -44,6 +48,35 @@ static int dict_set_long(PyObject *dict, const char *key, long value)
   status = PyDict_SetItemString(dict, key, item);
   Py_DECREF(item);
   return status;
+}
+
+static int dict_set_petsc_int(PyObject *dict, const char *key, PetscInt value)
+{
+  PyObject *item = PyLong_FromLongLong((long long)value);
+  int status;
+  if (!item) return -1;
+  status = PyDict_SetItemString(dict, key, item);
+  Py_DECREF(item);
+  return status;
+}
+
+static PyObject *petsc_int_pair(PetscInt first, PetscInt second)
+{
+  PyObject *result = PyTuple_New(2);
+  PyObject *left = NULL;
+  PyObject *right = NULL;
+  if (!result) return NULL;
+  left = PyLong_FromLongLong((long long)first);
+  right = PyLong_FromLongLong((long long)second);
+  if (!left || !right) {
+    Py_XDECREF(left);
+    Py_XDECREF(right);
+    Py_DECREF(result);
+    return NULL;
+  }
+  PyTuple_SET_ITEM(result, 0, left);
+  PyTuple_SET_ITEM(result, 1, right);
+  return result;
 }
 
 static int dict_set_bool(PyObject *dict, const char *key, int value)
@@ -87,8 +120,16 @@ static PyObject *lifecycle_dict(const LUStageFactor *self)
                       "borrowed; Python wrapper retained as keepalive") < 0 ||
       dict_set_string(result, "factor_ownership",
                       "owned from MatGetFactor until destroy") < 0 ||
-      dict_set_long(result, "icntl14_requested",
-                    (long)self->icntl14_requested) < 0 ||
+      dict_set_petsc_int(result, "icntl14_requested",
+                         self->icntl14_requested) < 0 ||
+      (self->icntl14_error_code
+           ? dict_set_none(result, "icntl14_actual")
+           : dict_set_petsc_int(result, "icntl14_actual",
+                                self->icntl14_actual)) < 0 ||
+      dict_set_long(result, "icntl14_error_code",
+                    (long)self->icntl14_error_code) < 0 ||
+      dict_set_bool(result, "source_keepalive_released",
+                    self->source_keepalive_released) < 0 ||
       dict_set_long(result, "symbolic_attempts", self->symbolic_attempts) < 0 ||
       dict_set_long(result, "symbolic_error_code",
                     (long)self->symbolic_error_code) < 0 ||
@@ -109,7 +150,7 @@ static PyObject *lifecycle_dict(const LUStageFactor *self)
 
 static void release_source_keepalive_if_factor_gone(LUStageFactor *self)
 {
-  if (!self->factor && self->source_keepalive) {
+  if (!self->factor) {
     self->source = NULL;
     Py_CLEAR(self->source_keepalive);
     self->factor_released = 1;
@@ -122,6 +163,9 @@ static void LUStageFactor_dealloc(LUStageFactor *self)
     self->destroy_attempts += 1;
     self->destroy_error_code = MatDestroy(&self->factor);
   }
+  /* If PETSc leaves the factor alive after a failed final MatDestroy, keep
+   * the source Python reference's owned reference alive rather than expose
+   * a dangling borrowed Mat to the still-live backend factor. */
   release_source_keepalive_if_factor_gone(self);
   Py_TYPE(self)->tp_free((PyObject *)self);
 }
@@ -129,6 +173,107 @@ static void LUStageFactor_dealloc(LUStageFactor *self)
 static PyObject *LUStageFactor_lifecycle(LUStageFactor *self,
                                          PyObject *Py_UNUSED(ignored))
 {
+  return lifecycle_dict(self);
+}
+
+static PyObject *matrix_layout_dict(Mat matrix)
+{
+  PetscInt global_rows = 0, global_columns = 0;
+  PetscInt local_rows = 0, local_columns = 0;
+  PetscInt row_first = 0, row_last = 0;
+  PetscInt column_first = 0, column_last = 0;
+  PetscErrorCode ierr;
+  PyObject *result = NULL;
+  PyObject *global_size = NULL;
+  PyObject *local_size = NULL;
+  PyObject *row_ownership = NULL;
+  PyObject *column_ownership = NULL;
+
+  ierr = MatGetSize(matrix, &global_rows, &global_columns);
+  if (!ierr) ierr = MatGetLocalSize(matrix, &local_rows, &local_columns);
+  if (!ierr) ierr = MatGetOwnershipRange(matrix, &row_first, &row_last);
+  if (!ierr) ierr = MatGetOwnershipRangeColumn(
+      matrix, &column_first, &column_last);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "PETSc factor layout query failed: error %d", (int)ierr);
+    return NULL;
+  }
+
+  result = PyDict_New();
+  global_size = petsc_int_pair(global_rows, global_columns);
+  local_size = petsc_int_pair(local_rows, local_columns);
+  row_ownership = petsc_int_pair(row_first, row_last);
+  column_ownership = petsc_int_pair(column_first, column_last);
+  if (!result || !global_size || !local_size || !row_ownership ||
+      !column_ownership ||
+      PyDict_SetItemString(result, "global_size", global_size) < 0 ||
+      PyDict_SetItemString(result, "local_size", local_size) < 0 ||
+      PyDict_SetItemString(result, "row_ownership", row_ownership) < 0 ||
+      PyDict_SetItemString(result, "column_ownership", column_ownership) < 0) {
+    Py_XDECREF(result);
+    Py_XDECREF(global_size);
+    Py_XDECREF(local_size);
+    Py_XDECREF(row_ownership);
+    Py_XDECREF(column_ownership);
+    return NULL;
+  }
+  Py_DECREF(global_size);
+  Py_DECREF(local_size);
+  Py_DECREF(row_ownership);
+  Py_DECREF(column_ownership);
+  return result;
+}
+
+static PyObject *LUStageFactor_layout_raw(LUStageFactor *self,
+                                          PyObject *Py_UNUSED(ignored))
+{
+  PyObject *result = NULL;
+  PyObject *source_layout = NULL;
+  PyObject *factor_layout = NULL;
+  if (!self->factor) {
+    PyErr_SetString(PyExc_RuntimeError, "factor handle has been destroyed");
+    return NULL;
+  }
+  result = PyDict_New();
+  if (!result) return NULL;
+  if (self->source) source_layout = matrix_layout_dict(self->source);
+  else {
+    Py_INCREF(Py_None);
+    source_layout = Py_None;
+  }
+  if (self->symbolic_completed) {
+    factor_layout = matrix_layout_dict(self->factor);
+  } else {
+    /* Before symbolic analysis the backend factor's final ownership layout
+     * is not yet evidence.  Expose the borrowed source layout only. */
+    Py_INCREF(Py_None);
+    factor_layout = Py_None;
+  }
+  if (!source_layout || !factor_layout ||
+      PyDict_SetItemString(result, "source", source_layout) < 0 ||
+      PyDict_SetItemString(result, "factor", factor_layout) < 0) {
+    Py_XDECREF(source_layout);
+    Py_XDECREF(factor_layout);
+    Py_DECREF(result);
+    return NULL;
+  }
+  Py_DECREF(source_layout);
+  Py_DECREF(factor_layout);
+  return result;
+}
+
+static PyObject *LUStageFactor_release_source_keepalive(
+    LUStageFactor *self, PyObject *Py_UNUSED(ignored))
+{
+  if (!self->factor || !self->numeric_completed) {
+    PyErr_SetString(PyExc_RuntimeError,
+                    "source release requires a live factor after numeric stage");
+    return NULL;
+  }
+  self->source = NULL;
+  Py_CLEAR(self->source_keepalive);
+  self->source_keepalive_released = 1;
   return lifecycle_dict(self);
 }
 
@@ -220,16 +365,275 @@ static PyObject *LUStageFactor_solve(LUStageFactor *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static const char *info_label(int index)
+static PyObject *LUStageFactor_solve_transpose(LUStageFactor *self,
+                                                PyObject *args)
 {
-  (void)index;
-  return "unknown; raw index/value retained pending installed-version documentation";
+  PyObject *rhs_object = NULL;
+  PyObject *solution_object = NULL;
+  Vec rhs;
+  Vec solution;
+  PetscErrorCode ierr;
+  if (!PyArg_ParseTuple(args, "OO:solve_transpose", &rhs_object,
+                        &solution_object))
+    return NULL;
+  if (!self->factor || !self->numeric_completed) {
+    PyErr_SetString(PyExc_RuntimeError,
+                    "transpose solve requires a live factor after numeric stage");
+    return NULL;
+  }
+  if (!PyObject_TypeCheck(rhs_object, petsc_vec_python_type) ||
+      !PyObject_TypeCheck(solution_object, petsc_vec_python_type)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "rhs and solution must be petsc4py Vec objects");
+    return NULL;
+  }
+  rhs = PyPetscVec_Get(rhs_object);
+  solution = PyPetscVec_Get(solution_object);
+  if (!rhs || !solution) {
+    PyErr_SetString(PyExc_ValueError,
+                    "rhs or solution PETSc Vec has been destroyed");
+    return NULL;
+  }
+  ierr = MatSolveTranspose(self->factor, rhs, solution);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "MatSolveTranspose failed: PETSc error %d", (int)ierr);
+    return NULL;
+  }
+  Py_RETURN_NONE;
 }
 
-static const char *info_unit(int index)
+static PyObject *LUStageFactor_mat_solve_common(
+    LUStageFactor *self, PyObject *args, int transpose)
 {
-  (void)index;
-  return "unknown; raw integer only, no byte conversion";
+  PyObject *rhs_object = NULL;
+  PyObject *solution_object = NULL;
+  Mat rhs;
+  Mat solution;
+  PetscErrorCode ierr;
+  const char *method_name = transpose ? "mat_solve_transpose" : "mat_solve";
+  if (!PyArg_ParseTuple(args, "OO", &rhs_object, &solution_object))
+    return NULL;
+  if (!self->factor || !self->numeric_completed) {
+    PyErr_SetString(PyExc_RuntimeError,
+                    "matrix solve requires a live factor after numeric stage");
+    return NULL;
+  }
+  if (!PyObject_TypeCheck(rhs_object, petsc_mat_python_type) ||
+      !PyObject_TypeCheck(solution_object, petsc_mat_python_type)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "rhs and solution must be petsc4py Mat objects");
+    return NULL;
+  }
+  rhs = PyPetscMat_Get(rhs_object);
+  solution = PyPetscMat_Get(solution_object);
+  if (!rhs || !solution) {
+    PyErr_SetString(PyExc_ValueError,
+                    "rhs or solution PETSc Mat has been destroyed");
+    return NULL;
+  }
+  ierr = transpose ? MatMatSolveTranspose(self->factor, rhs, solution)
+                   : MatMatSolve(self->factor, rhs, solution);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "%s failed: PETSc error %d", method_name, (int)ierr);
+    return NULL;
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject *LUStageFactor_mat_solve(LUStageFactor *self, PyObject *args)
+{
+  return LUStageFactor_mat_solve_common(self, args, 0);
+}
+
+static PyObject *LUStageFactor_mat_solve_transpose(LUStageFactor *self,
+                                                    PyObject *args)
+{
+  return LUStageFactor_mat_solve_common(self, args, 1);
+}
+
+static int mumps_control_index(PyObject *object, const char *name,
+                               PetscInt *index)
+{
+  long long value;
+  if (PyBool_Check(object) || !PyLong_Check(object)) {
+    PyErr_Format(PyExc_TypeError, "%s index must be a non-bool integer", name);
+    return -1;
+  }
+  value = PyLong_AsLongLong(object);
+  if (PyErr_Occurred()) return -1;
+  if (value < 1 || value > (long long)PETSC_MAX_INT) {
+    PyErr_Format(PyExc_ValueError, "%s index is outside the PetscInt range", name);
+    return -1;
+  }
+  *index = (PetscInt)value;
+  return 0;
+}
+
+static PyObject *LUStageFactor_set_mumps_icntl(LUStageFactor *self,
+                                               PyObject *args)
+{
+  PyObject *index_object = NULL;
+  PyObject *value_object = NULL;
+  PetscInt index = 0;
+  PetscInt value;
+  PetscErrorCode ierr;
+  if (!PyArg_ParseTuple(args, "OO:set_mumps_icntl", &index_object,
+                        &value_object))
+    return NULL;
+  if (!self->factor) {
+    PyErr_SetString(PyExc_RuntimeError, "factor handle has been destroyed");
+    return NULL;
+  }
+  if (self->symbolic_attempts) {
+    PyErr_SetString(PyExc_RuntimeError,
+                    "MUMPS controls cannot change after symbolic has started");
+    return NULL;
+  }
+  if (mumps_control_index(index_object, "ICNTL", &index) < 0) return NULL;
+  if (PyBool_Check(value_object) || !PyLong_Check(value_object)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "ICNTL value must be a non-bool integer");
+    return NULL;
+  }
+  {
+    long long parsed = PyLong_AsLongLong(value_object);
+    if (PyErr_Occurred()) return NULL;
+    if (parsed < (long long)PETSC_MIN_INT ||
+        parsed > (long long)PETSC_MAX_INT) {
+      PyErr_SetString(PyExc_ValueError, "ICNTL value is outside PetscInt range");
+      return NULL;
+    }
+    value = (PetscInt)parsed;
+  }
+  ierr = MatMumpsSetIcntl(self->factor, index, value);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "MatMumpsSetIcntl failed: PETSc error %d", (int)ierr);
+    return NULL;
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject *LUStageFactor_get_mumps_icntl(LUStageFactor *self,
+                                               PyObject *args)
+{
+  PyObject *index_object = NULL;
+  PetscInt index = 0;
+  PetscInt value = 0;
+  PetscErrorCode ierr;
+  if (!PyArg_ParseTuple(args, "O:get_mumps_icntl", &index_object)) return NULL;
+  if (!self->factor) {
+    PyErr_SetString(PyExc_RuntimeError, "factor handle has been destroyed");
+    return NULL;
+  }
+  if (mumps_control_index(index_object, "ICNTL", &index) < 0) return NULL;
+  ierr = MatMumpsGetIcntl(self->factor, index, &value);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "MatMumpsGetIcntl failed: PETSc error %d", (int)ierr);
+    return NULL;
+  }
+  return PyLong_FromLongLong((long long)value);
+}
+
+static PyObject *LUStageFactor_set_mumps_cntl(LUStageFactor *self,
+                                              PyObject *args)
+{
+  PyObject *index_object = NULL;
+  PyObject *value_object = NULL;
+  PetscInt index = 0;
+  PetscReal value;
+  PetscErrorCode ierr;
+  if (!PyArg_ParseTuple(args, "OO:set_mumps_cntl", &index_object,
+                        &value_object))
+    return NULL;
+  if (!self->factor) {
+    PyErr_SetString(PyExc_RuntimeError, "factor handle has been destroyed");
+    return NULL;
+  }
+  if (self->symbolic_attempts) {
+    PyErr_SetString(PyExc_RuntimeError,
+                    "MUMPS controls cannot change after symbolic has started");
+    return NULL;
+  }
+  if (mumps_control_index(index_object, "CNTL", &index) < 0) return NULL;
+  value = (PetscReal)PyFloat_AsDouble(value_object);
+  if (PyErr_Occurred()) return NULL;
+  if (!isfinite((double)value)) {
+    PyErr_SetString(PyExc_ValueError, "CNTL value must be finite");
+    return NULL;
+  }
+  ierr = MatMumpsSetCntl(self->factor, index, value);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "MatMumpsSetCntl failed: PETSc error %d", (int)ierr);
+    return NULL;
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject *LUStageFactor_get_mumps_cntl(LUStageFactor *self,
+                                              PyObject *args)
+{
+  PyObject *index_object = NULL;
+  PetscInt index = 0;
+  PetscReal value = 0.0;
+  PetscErrorCode ierr;
+  if (!PyArg_ParseTuple(args, "O:get_mumps_cntl", &index_object)) return NULL;
+  if (!self->factor) {
+    PyErr_SetString(PyExc_RuntimeError, "factor handle has been destroyed");
+    return NULL;
+  }
+  if (mumps_control_index(index_object, "CNTL", &index) < 0) return NULL;
+  ierr = MatMumpsGetCntl(self->factor, index, &value);
+  if (ierr) {
+    PyErr_Format(PyExc_RuntimeError,
+                 "MatMumpsGetCntl failed: PETSc error %d", (int)ierr);
+    return NULL;
+  }
+  return PyFloat_FromDouble((double)value);
+}
+
+static const char *info_label(int infog_api, int index)
+{
+  if (!infog_api && index == 3) return "local_complex_factor_entries";
+  if (!infog_api && index == 4) return "local_integer_factor_entries";
+  if (!infog_api && index == 15) return "local_symbolic_in_core_work_estimate";
+  if (infog_api && index == 1) return "global_mumps_error_status";
+  if (infog_api && index == 2) return "global_mumps_error_detail";
+  if (infog_api && index == 3) return "global_complex_factor_entries";
+  if (infog_api && index == 4) return "global_integer_factor_entries";
+  if (infog_api && index == 16) return "global_max_symbolic_in_core_work_estimate";
+  if (infog_api && index == 17) return "global_sum_symbolic_in_core_work_estimate";
+  if (infog_api && index == 18)
+    return "global_numeric_max_rank_allocated_memory";
+  if (infog_api && index == 19)
+    return "global_numeric_sum_ranks_allocated_memory";
+  return "meaning_not_bound_by_this_record";
+}
+
+static const char *info_unit(int infog_api, int index)
+{
+  if ((!infog_api && index == 3) || (infog_api && index == 3))
+    return "raw_entry_count_with_negative_million_encoding";
+  if ((!infog_api && index == 4) || (infog_api && index == 4))
+    return infog_api ? "raw_entry_count_with_negative_million_encoding"
+                     : "raw_integer_entry_count";
+  if ((!infog_api && index == 15) ||
+      (infog_api && (index == 16 || index == 17 || index == 18 || index == 19)))
+    return "million_bytes_10^6_bytes; raw integer retained";
+  return "unknown; raw integer retained; no conversion";
+}
+
+static const char *info_meaning_status(int infog_api, int index)
+{
+  if ((!infog_api && (index == 3 || index == 4 || index == 15)) ||
+      (infog_api && (index == 1 || index == 2 || index == 3 || index == 4 ||
+                     index == 16 || index == 17 || index == 18 || index == 19)))
+    return "verified_against_MUMPS_5.6.2_user_guide";
+  return "unknown_index_meaning_raw_preserved";
 }
 
 static PyObject *info_entry(LUStageFactor *self, int infog_api, int index)
@@ -260,11 +664,14 @@ static PyObject *info_entry(LUStageFactor *self, int infog_api, int index)
   if (dict_set_long(entry, "index", index) < 0 ||
       dict_set_long(entry, "query_error_code", (long)ierr) < 0 ||
       dict_set_string(entry, "api", infog_api ? "MatMumpsGetInfog" : "MatMumpsGetInfo") < 0 ||
-      dict_set_string(entry, "label", info_label(index)) < 0 ||
-      dict_set_string(entry, "unit", info_unit(index)) < 0 ||
-      dict_set_string(entry, "meaning_status", "unknown_for_installed_MUMPS_version") < 0 ||
+      dict_set_string(entry, "label", info_label(infog_api, index)) < 0 ||
+      dict_set_string(entry, "unit", info_unit(infog_api, index)) < 0 ||
+      dict_set_string(entry, "meaning_status",
+                      info_meaning_status(infog_api, index)) < 0 ||
       dict_set_string(entry, "scope",
-                      "raw value returned by the named API on the calling MPI rank") < 0) {
+                      infog_api
+                          ? "MUMPS global field returned on this rank; do not sum replicated INFOG values across ranks"
+                          : "MUMPS rank-local field queried from this calling rank") < 0) {
     Py_DECREF(entry);
     return NULL;
   }
@@ -285,7 +692,7 @@ static int append_info_entry(PyObject *list, LUStageFactor *self,
 static PyObject *LUStageFactor_analysis_info_raw(LUStageFactor *self,
                                                  PyObject *Py_UNUSED(ignored))
 {
-  static const int info_indices[] = {3, 4};
+  static const int info_indices[] = {3, 4, 15};
   static const int infog_indices[] = {3, 4, 5, 6, 7, 16, 17};
   PyObject *result = NULL;
   PyObject *info = NULL;
@@ -341,19 +748,21 @@ static PyObject *LUStageFactor_analysis_info_raw(LUStageFactor *self,
                       "after_MatLUFactorSymbolic_before_numeric") < 0 ||
       dict_set_string(result, "solver", "MATSOLVERMUMPS") < 0 ||
       dict_set_string(result, "factor_type", "MAT_FACTOR_LU") < 0 ||
-      dict_set_long(result, "icntl14_requested",
-                    (long)self->icntl14_requested) < 0 ||
+      dict_set_petsc_int(result, "icntl14_requested",
+                         self->icntl14_requested) < 0 ||
       dict_set_long(result, "icntl14_query_error_code",
                     (long)icntl_error) < 0 ||
       dict_set_string(result, "ordering_input",
                       "rowperm=NULL,colperm=NULL; MUMPS/PETSc backend default") < 0 ||
       dict_set_string(result, "index_documentation_status",
-                      "raw indices requested; per-index meaning not bound to installed MUMPS 5.6.2 documentation") < 0 ||
+                      "analysis indices INFO(3,4,15) and INFOG(3,4,16,17), plus numeric INFOG(18,19), are verified against MUMPS 5.6.2 User Guide; all returned raw values are retained") < 0 ||
+      dict_set_string(result, "documentation_source",
+                      "MUMPS 5.6.2 User Guide pp. 93-94 and 97-99; Ubuntu source package mumps_5.6.2.orig.tar.gz SHA256 13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a; PDF SHA256 32acdd3e09fb69f9fab16c94ae67768d15c61ac9c27abf66eb1e0e6ecd904050") < 0 ||
       dict_set_long(result, "numeric_attempts", self->numeric_attempts) < 0 ||
       dict_set_bool(result, "numeric_completed", self->numeric_completed) < 0 ||
       dict_set_none(result, "byte_estimate") < 0 ||
       dict_set_string(result, "interpretation_note",
-                      "INFO/INFOG index meanings and units are not bound without installed-version documentation; raw values are preserved, zero is not called 0B, and no byte estimate is derived.") < 0) {
+                      "MUMPS 5.6.2 INFO(15)/INFOG(16,17) are documented in million bytes; raw integers remain unchanged and are not RSS upper bounds. Entry-count encodings are retained without decoding. No byte estimate is synthesized from unknown fields.") < 0) {
     goto fail;
   }
   Py_DECREF(info);
@@ -418,6 +827,46 @@ static PyObject *module_numeric_event_count(PyObject *module,
   return result;
 }
 
+static PyObject *LUStageFactor_numeric_info_raw(LUStageFactor *self,
+                                                PyObject *Py_UNUSED(ignored))
+{
+  static const int infog_indices[] = {1, 2, 18, 19};
+  PyObject *result = NULL;
+  PyObject *infog = NULL;
+  size_t i;
+  if (!self->factor || self->numeric_attempts < 1) {
+    PyErr_SetString(PyExc_RuntimeError,
+                    "numeric INFO requires a live factor after a numeric attempt");
+    return NULL;
+  }
+  infog = PyList_New(0);
+  result = PyDict_New();
+  if (!infog || !result) goto fail;
+  for (i = 0; i < sizeof(infog_indices) / sizeof(infog_indices[0]); ++i) {
+    if (append_info_entry(infog, self, 1, infog_indices[i]) < 0) goto fail;
+  }
+  if (PyDict_SetItemString(result, "INFOG_api_raw_by_rank", infog) < 0 ||
+      dict_set_string(result, "stage",
+                      "after_MatLUFactorNumeric_attempt") < 0 ||
+      dict_set_bool(result, "numeric_completed", self->numeric_completed) < 0 ||
+      dict_set_long(result, "numeric_attempts", self->numeric_attempts) < 0 ||
+      dict_set_long(result, "numeric_error_code",
+                    (long)self->numeric_error_code) < 0 ||
+      dict_set_string(result, "documentation_source",
+                      "MUMPS 5.6.2 User Guide pp. 93-94 and 97-99; Ubuntu source package mumps_5.6.2.orig.tar.gz SHA256 13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a; PDF SHA256 32acdd3e09fb69f9fab16c94ae67768d15c61ac9c27abf66eb1e0e6ecd904050") < 0 ||
+      dict_set_string(result, "interpretation_note",
+                      "MUMPS 5.6.2 INFOG(18) is numeric allocated memory on the maximum-memory rank and INFOG(19) is the sum across ranks, both in million bytes. Values are returned on each rank and must not be summed again across ranks. Raw values are retained; they are not process RSS or a hard memory bound.") < 0) {
+    goto fail;
+  }
+  Py_DECREF(infog);
+  return result;
+
+fail:
+  Py_XDECREF(infog);
+  Py_XDECREF(result);
+  return NULL;
+}
+
 static PyMethodDef LUStageFactor_methods[] = {
   {"symbolic", (PyCFunction)LUStageFactor_symbolic, METH_NOARGS,
    "Run MatLUFactorSymbolic only."},
@@ -425,8 +874,30 @@ static PyMethodDef LUStageFactor_methods[] = {
    "Run MatLUFactorNumeric explicitly after symbolic."},
   {"solve", (PyCFunction)LUStageFactor_solve, METH_VARARGS,
    "Solve with an explicitly numerically factored matrix."},
+  {"solve_transpose", (PyCFunction)LUStageFactor_solve_transpose, METH_VARARGS,
+   "Solve the transposed system with the existing numeric factor."},
+  {"mat_solve", (PyCFunction)LUStageFactor_mat_solve, METH_VARARGS,
+   "Solve multiple RHS columns with the existing numeric factor."},
+  {"mat_solve_transpose", (PyCFunction)LUStageFactor_mat_solve_transpose,
+   METH_VARARGS,
+   "Solve multiple transposed RHS columns with the existing numeric factor."},
+  {"layout_raw", (PyCFunction)LUStageFactor_layout_raw, METH_NOARGS,
+   "Read public PETSc global/local sizes and ownership ranges."},
+  {"release_source_keepalive",
+   (PyCFunction)LUStageFactor_release_source_keepalive, METH_NOARGS,
+   "Drop the retained source Python wrapper after numeric factorization."},
+  {"set_mumps_icntl", (PyCFunction)LUStageFactor_set_mumps_icntl,
+   METH_VARARGS, "Set one explicit MUMPS ICNTL before symbolic analysis."},
+  {"get_mumps_icntl", (PyCFunction)LUStageFactor_get_mumps_icntl,
+   METH_VARARGS, "Read back one MUMPS ICNTL from the live factor."},
+  {"set_mumps_cntl", (PyCFunction)LUStageFactor_set_mumps_cntl,
+   METH_VARARGS, "Set one explicit MUMPS CNTL before symbolic analysis."},
+  {"get_mumps_cntl", (PyCFunction)LUStageFactor_get_mumps_cntl,
+   METH_VARARGS, "Read back one MUMPS CNTL from the live factor."},
   {"analysis_info_raw", (PyCFunction)LUStageFactor_analysis_info_raw, METH_NOARGS,
    "Read raw MUMPS INFO/INFOG values after symbolic and before numeric."},
+  {"numeric_info_raw", (PyCFunction)LUStageFactor_numeric_info_raw, METH_NOARGS,
+   "Read raw MUMPS INFOG numeric-stage memory fields after numeric attempt."},
   {"lifecycle", (PyCFunction)LUStageFactor_lifecycle, METH_NOARGS,
    "Return factor ownership and staged-call status."},
   {"destroy", (PyCFunction)LUStageFactor_destroy, METH_NOARGS,
@@ -441,6 +912,7 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
   PyObject *source_object = NULL;
   PyObject *icntl_object = NULL;
   long long icntl14;
+  PetscInt actual_icntl14 = 0;
   PetscBool available = PETSC_FALSE;
   PetscErrorCode ierr;
   LUStageFactor *factor;
@@ -490,12 +962,25 @@ static PyObject *module_create_lu_stage(PyObject *module, PyObject *args,
     ierr = MatMumpsSetIcntl(factor->factor, 14,
                             factor->icntl14_requested);
   }
+  if (!ierr) {
+    ierr = MatMumpsGetIcntl(factor->factor, 14, &actual_icntl14);
+    factor->icntl14_error_code = ierr;
+    if (!ierr) {
+      factor->icntl14_actual = actual_icntl14;
+      if (actual_icntl14 != factor->icntl14_requested) {
+        factor->icntl14_error_code = PETSC_ERR_ARG_INCOMP;
+        ierr = PETSC_ERR_ARG_INCOMP;
+      }
+    }
+  } else {
+    factor->icntl14_error_code = ierr;
+  }
   if (ierr) {
     if (factor->factor) MatDestroy(&factor->factor);
     if (!factor->factor) release_source_keepalive_if_factor_gone(factor);
     Py_DECREF((PyObject *)factor);
     PyErr_Format(PyExc_RuntimeError,
-                 "MUMPS LU factor creation/ICNTL(14) setup failed: PETSc error %d",
+                 "MUMPS LU factor creation/ICNTL(14) setup or read-back failed: PETSc error %d",
                  (int)ierr);
     return NULL;
   }
@@ -543,6 +1028,19 @@ PyMODINIT_FUNC PyInit_petsc_lu_stage_bridge(void)
     Py_DECREF(&LUStageFactorType);
     goto fail;
   }
+  if (PyModule_AddIntConstant(module, "petsc_int_sizeof",
+                              (long)sizeof(PetscInt)) < 0 ||
+      PyModule_AddIntConstant(module, "petsc_scalar_sizeof",
+                              (long)sizeof(PetscScalar)) < 0) {
+    goto fail;
+  }
+#if defined(PETSC_USE_COMPLEX)
+  if (PyModule_AddIntConstant(module, "petsc_complex_scalar", 1) < 0)
+    goto fail;
+#else
+  if (PyModule_AddIntConstant(module, "petsc_complex_scalar", 0) < 0)
+    goto fail;
+#endif
   return module;
 
 fail:

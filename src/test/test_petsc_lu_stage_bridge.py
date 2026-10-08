@@ -9,11 +9,22 @@ from __future__ import annotations
 
 import json
 import math
+import os
+from pathlib import Path
 from typing import Any
 
+import numpy as np
+import petsc_lu_stage_bridge
 import pytest
 from petsc4py import PETSc
 from petsc_lu_stage_bridge import create_lu_stage, numeric_event_count_raw
+
+from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
+from src.solvers.petsc_lu_stage import (
+    StagedFactorRejected,
+    StagedMumpsLUFactory,
+    load_lu_stage_bridge,
+)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -24,6 +35,56 @@ def _begin_petsc_log_once() -> None:
 def _own(owned: list[Any], obj: Any) -> Any:
     owned.append(obj)
     return obj
+
+
+def _distributed_dense_columns(
+    matrix: PETSc.Mat, global_values: np.ndarray, owned: list[Any]
+) -> tuple[PETSc.Mat, tuple[int, int], bool]:
+    """Build a small dense matrix from only the rows owned by ``matrix`` columns."""
+
+    values = np.asarray(global_values, dtype=np.complex128)
+    _, global_columns = map(int, matrix.getSize())
+    if values.ndim != 2 or values.shape[0] != global_columns:
+        raise ValueError("dense column fixture must match the matrix column count")
+    first, last = map(int, matrix.getOwnershipRangeColumn())
+    dense = _own(
+        owned,
+        PETSc.Mat().createDense(
+            size=((last - first, global_columns), values.shape[1]),
+            comm=matrix.getComm(),
+        ),
+    )
+    dense.getDenseArray()[:, :] = values[first:last, :]
+    dense.assemble()
+    ownership = tuple(map(int, dense.getOwnershipRange()))
+    return dense, ownership, ownership == (first, last)
+
+
+def _dense_original_residual(
+    matrix: PETSc.Mat,
+    rhs: PETSc.Mat,
+    solution: PETSc.Mat,
+    owned: list[Any],
+) -> dict[str, Any]:
+    residual = _own(owned, matrix.matMult(solution))
+    residual.axpy(PETSc.ScalarType(-1.0), rhs)
+    rhs_norm = float(rhs.norm(PETSc.NormType.FROBENIUS))
+    residual_norm = float(residual.norm(PETSc.NormType.FROBENIUS))
+    relative = residual_norm / rhs_norm if rhs_norm > 0.0 else None
+    return {
+        "rhs_frobenius_norm": rhs_norm if math.isfinite(rhs_norm) else None,
+        "residual_frobenius_norm": (
+            residual_norm if math.isfinite(residual_norm) else None
+        ),
+        "relative_frobenius_residual": (
+            relative if relative is not None and math.isfinite(relative) else None
+        ),
+        "finite": math.isfinite(rhs_norm) and math.isfinite(residual_norm),
+        "rhs_row_ownership": list(map(int, rhs.getOwnershipRange())),
+        "solution_row_ownership": list(map(int, solution.getOwnershipRange())),
+        "residual_row_ownership": list(map(int, residual.getOwnershipRange())),
+        "limit": 5.0e-9,
+    }
 
 
 def _tiny_complex_matrix(owned: list[Any]) -> PETSc.Mat:
@@ -147,21 +208,46 @@ def test_lu_stage_symbolic_only_keeps_raw_info_and_releases_in_call_order() -> N
                 analysis.get("INFO_api_raw_by_rank", [])
                 + analysis.get("INFOG_api_raw_by_rank", [])
             )
+            info_by_index = {
+                item.get("index"): item
+                for item in analysis.get("INFO_api_raw_by_rank", [])
+            }
+            infog_by_index = {
+                item.get("index"): item
+                for item in analysis.get("INFOG_api_raw_by_rank", [])
+            }
+            layout = factor.layout_raw()
             stage_ok = (
                 analysis.get("stage") == "after_MatLUFactorSymbolic_before_numeric"
                 and analysis.get("icntl14_actual") == icntl14
                 and analysis.get("numeric_attempts") == 0
                 and lifecycle_before_destroy.get("numeric_attempts") == 0
-                and len(analysis.get("INFO_api_raw_by_rank", [])) == 2
+                and len(analysis.get("INFO_api_raw_by_rank", [])) == 3
                 and len(analysis.get("INFOG_api_raw_by_rank", [])) == 7
                 and all(
                     item.get("query_error_code") == 0
-                    and item.get("unit") == "unknown; raw integer only, no byte conversion"
-                    and item.get("meaning_status")
-                    == "unknown_for_installed_MUMPS_version"
                     and "raw_value" in item
                     for item in info_entries
                 )
+                and info_by_index[15].get("unit")
+                == "million_bytes_10^6_bytes; raw integer retained"
+                and info_by_index[15].get("meaning_status")
+                == "verified_against_MUMPS_5.6.2_user_guide"
+                and info_by_index[4].get("unit") == "raw_integer_entry_count"
+                and info_by_index[4].get("meaning_status")
+                == "verified_against_MUMPS_5.6.2_user_guide"
+                and infog_by_index[16].get("unit")
+                == "million_bytes_10^6_bytes; raw integer retained"
+                and infog_by_index[17].get("unit")
+                == "million_bytes_10^6_bytes; raw integer retained"
+                and 18 not in infog_by_index
+                and 19 not in infog_by_index
+                and analysis.get("byte_estimate") is None
+                and tuple(layout.get("source", {}).get("global_size", ()))
+                == (8, 8)
+                and tuple(layout.get("factor", {}).get("global_size", ()))
+                == (8, 8)
+                and factor.get_mumps_icntl(14) == icntl14
                 and event_before.get("compiled_with_logging") is True
                 and event_before.get("query_error_code") == 0
                 and event_after.get("query_error_code") == 0
@@ -209,6 +295,279 @@ def test_lu_stage_symbolic_only_keeps_raw_info_and_releases_in_call_order() -> N
     ), ranks
 
 
+def test_lu_stage_factory_gates_one_factor_and_research_factor_uses_direct_api() -> None:
+    owned: list[Any] = []
+    comm = PETSc.COMM_WORLD.tompi4py()
+    local: dict[str, Any] = {
+        "rank": comm.rank,
+        "local_pass": True,
+        "callback_order": [],
+        "solve_residuals": {},
+        "cleanup": [],
+    }
+    research_factor = None
+    staged_factor = None
+    loaded_bridge = None
+
+    def unanimous(local_value: bool) -> bool:
+        return all(bool(value) for value in comm.allgather(local_value))
+
+    def pre_symbolic(context: Any) -> bool:
+        local["callback_order"].append("pre_symbolic")
+        return unanimous(
+            context.get("stage") == "before_symbolic"
+            and context.get("layout_raw", {}).get("source") is not None
+            and context.get("layout_raw", {}).get("factor") is None
+            and context.get("lifecycle", {}).get("symbolic_attempts") == 0
+            and context.get("lifecycle", {}).get("numeric_attempts") == 0
+        )
+
+    def pre_numeric(context: Any) -> bool:
+        local["callback_order"].append("pre_numeric_budget_consensus")
+        return unanimous(
+            context.get("stage") == "after_symbolic_before_numeric"
+            and context.get("layout_raw", {}).get("factor", {}).get(
+                "global_size"
+            ) == (8, 8)
+            and context.get("analysis_info_raw", {}).get("numeric_attempts") == 0
+            and context.get("lifecycle", {}).get("symbolic_completed") is True
+            and context.get("lifecycle", {}).get("numeric_attempts") == 0
+        )
+
+    try:
+        bridge_path = Path(petsc_lu_stage_bridge.__file__).resolve(strict=True)
+        loaded_bridge = load_lu_stage_bridge(bridge_path)
+        explicit_loader = {
+            "requested_path": str(bridge_path),
+            "loaded_path": str(Path(loaded_bridge.__file__).resolve(strict=True)),
+            "same_module": loaded_bridge is petsc_lu_stage_bridge,
+            "native_activation_marker": os.environ.get(
+                "MYFENICS_NATIVE_COMPLEX_ENV"
+            ),
+            "scalar_type": str(np.dtype(PETSc.ScalarType)),
+            "scalar_sizeof": np.dtype(PETSc.ScalarType).itemsize,
+            "bridge_scalar_sizeof": getattr(
+                loaded_bridge, "petsc_scalar_sizeof", None
+            ),
+            "int_type": str(np.dtype(PETSc.IntType)),
+            "int_sizeof": np.dtype(PETSc.IntType).itemsize,
+            "bridge_int_sizeof": getattr(loaded_bridge, "petsc_int_sizeof", None),
+            "complex_scalar": getattr(loaded_bridge, "petsc_complex_scalar", None),
+        }
+        local["explicit_loader"] = explicit_loader
+        explicit_loader_ok = bool(
+            loaded_bridge is petsc_lu_stage_bridge
+            and Path(loaded_bridge.__file__).resolve(strict=True) == bridge_path
+            and explicit_loader["native_activation_marker"] == "1"
+            and np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)
+            and explicit_loader["complex_scalar"] == 1
+            and explicit_loader["bridge_scalar_sizeof"]
+            == explicit_loader["scalar_sizeof"]
+            and explicit_loader["bridge_int_sizeof"] == explicit_loader["int_sizeof"]
+        )
+        matrix = _tiny_complex_matrix(owned)
+        stage_factory = StagedMumpsLUFactory(
+            loaded_bridge,
+            pre_symbolic_gate=pre_symbolic,
+            pre_numeric_gate=pre_numeric,
+        )
+        research_factor = ResearchExactFactorInverse(
+            matrix,
+            factor_only_storage=True,
+            stage_factory=stage_factory,
+        )
+        staged_factor = research_factor._staged_factor
+        if staged_factor is None:
+            raise RuntimeError("Research factor did not retain staged direct handle")
+
+        exact = _own(owned, matrix.createVecRight())
+        rhs = _own(owned, matrix.createVecLeft())
+        solution = _own(owned, matrix.createVecRight())
+        residual = _own(owned, matrix.createVecLeft())
+        transpose_rhs = _own(owned, matrix.createVecLeft())
+        transpose_solution = _own(owned, matrix.createVecRight())
+        transpose_residual = _own(owned, matrix.createVecLeft())
+        first, last = map(int, exact.getOwnershipRange())
+        for index in range(first, last):
+            exact.setValue(index, PETSc.ScalarType(0.5 + index + 0.125j * (index + 1)))
+        exact.assemble()
+        matrix.mult(exact, rhs)
+        matrix.multTranspose(exact, transpose_rhs)
+        research_factor.release_borrowed_matrix()
+        research_factor.solve(rhs, solution)
+        staged_factor.solveTranspose(transpose_rhs, transpose_solution)
+        matrix.mult(solution, residual)
+        residual.axpy(PETSc.ScalarType(-1.0), rhs)
+        matrix.multTranspose(transpose_solution, transpose_residual)
+        transpose_residual.axpy(PETSc.ScalarType(-1.0), transpose_rhs)
+        rhs_norm = float(rhs.norm())
+        residual_norm = float(residual.norm())
+        transpose_rhs_norm = float(transpose_rhs.norm())
+        transpose_residual_norm = float(transpose_residual.norm())
+        local["solve_residuals"] = {
+            "MatSolve_relative": residual_norm / rhs_norm,
+            "MatSolveTranspose_relative": (
+                transpose_residual_norm / transpose_rhs_norm
+            ),
+            "source_borrow_released": research_factor.matrix is None,
+        }
+
+        exact_columns = np.column_stack(
+            (np.arange(1, 9) + 0.25j, np.arange(2, 10) - 0.5j)
+        ).astype(np.complex128)
+        dense_exact, exact_ownership, exact_layout_ok = _distributed_dense_columns(
+            matrix, exact_columns, owned
+        )
+        exact_layout_ok = all(comm.allgather(exact_layout_ok))
+        if not exact_layout_ok:
+            raise RuntimeError("distributed dense input rows do not match A columns")
+        dense_rhs = _own(owned, matrix.matMult(dense_exact))
+        dense_solution = _own(owned, dense_rhs.duplicate(copy=False))
+        factor_row_ownership = tuple(
+            map(int, staged_factor.factor_layout["row_ownership"])
+        )
+        solve_many_ownership_ok = (
+            tuple(map(int, dense_rhs.getOwnershipRange())) == factor_row_ownership
+            and tuple(map(int, dense_solution.getOwnershipRange()))
+            == factor_row_ownership
+        )
+        solve_many_ownership_ok = all(comm.allgather(solve_many_ownership_ok))
+        if not solve_many_ownership_ok:
+            raise RuntimeError("distributed RHS rows do not match factor ownership")
+        research_factor.solve_many(dense_rhs, dense_solution)
+        batch_residual = _dense_original_residual(
+            matrix, dense_rhs, dense_solution, owned
+        )
+
+        diagnostics = research_factor.diagnostics
+        local["solve_residuals"]["distributed_two_column_solve_many"] = {
+            **batch_residual,
+            "exact_column_ownership": list(exact_ownership),
+            "factor_row_ownership": list(factor_row_ownership),
+            "ownership_matches_factor": solve_many_ownership_ok,
+            "api": "ResearchExactFactorInverse.solve_many->MatMatSolve",
+        }
+        local["factor_diagnostics_before_destroy"] = diagnostics
+        local["local_pass"] = bool(
+            local["callback_order"]
+            == ["pre_symbolic", "pre_numeric_budget_consensus"]
+            and explicit_loader_ok
+            and solve_many_ownership_ok
+            and diagnostics.get("ksp_created") is False
+            and diagnostics.get("ksp_destroyed") is None
+            and diagnostics.get("factor_execution_mode")
+            == "staged_direct_MatSolve_no_KSP_reason"
+            and not hasattr(staged_factor, "getConvergedReason")
+            and rhs_norm > 0.0
+            and transpose_rhs_norm > 0.0
+            and residual_norm / rhs_norm <= 5.0e-9
+            and transpose_residual_norm / transpose_rhs_norm <= 5.0e-9
+            and batch_residual["finite"] is True
+            and batch_residual["rhs_frobenius_norm"] is not None
+            and batch_residual["rhs_frobenius_norm"] > 0.0
+            and batch_residual["relative_frobenius_residual"] is not None
+            and batch_residual["relative_frobenius_residual"] <= 5.0e-9
+        )
+    except Exception as exc:  # noqa: BLE001 - all ranks record before assertions
+        local["local_pass"] = False
+        local["exception"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        if research_factor is not None:
+            try:
+                research_factor.destroy()
+                local["cleanup"].append(
+                    {
+                        "factor_execution_mode": research_factor.diagnostics.get(
+                            "factor_execution_mode"
+                        ),
+                        "factor_destroyed": research_factor.diagnostics.get(
+                            "factor_destroyed"
+                        ),
+                        "staged_lifecycle": (
+                            None if staged_factor is None else dict(staged_factor.lifecycle)
+                        ),
+                    }
+                )
+            except Exception as exc:  # noqa: BLE001 - preserve cleanup evidence
+                local["local_pass"] = False
+                local["cleanup"].append(
+                    {"exception": f"{type(exc).__name__}: {exc}"}
+                )
+        local["cleanup"].extend(_destroy_owned(owned))
+
+    ranks = _emit_rank_records("PETSC_LU_FACTORY_DIRECT_JSON=", local)
+    assert all(record.get("local_pass") is True for record in ranks), ranks
+    assert all(
+        record.get("cleanup", [{}])[0].get("staged_lifecycle", {}).get(
+            "factor_released"
+        )
+        is True
+        for record in ranks
+    ), ranks
+
+
+def test_lu_stage_factory_rejects_unknown_pre_numeric_budget_and_cleans_factor() -> None:
+    comm = PETSc.COMM_WORLD.tompi4py()
+    local: dict[str, Any] = {
+        "rank": comm.rank,
+        "local_pass": True,
+        "callback_order": [],
+        "numeric_event_delta": None,
+        "cleanup_status": None,
+    }
+
+    def pre_symbolic(context: Any) -> bool:
+        local["callback_order"].append("pre_symbolic")
+        return all(comm.allgather(context.get("stage") == "before_symbolic"))
+
+    def reject_unknown_budget(context: Any) -> bool:
+        local["callback_order"].append("pre_numeric_budget")
+        unknown = context.get("analysis_info_raw", {}).get("byte_estimate") is None
+        return all(comm.allgather(not unknown))
+
+    owned: list[Any] = []
+    try:
+        matrix = _tiny_complex_matrix(owned)
+        event_before = numeric_event_count_raw()
+        factory = StagedMumpsLUFactory(
+            petsc_lu_stage_bridge,
+            pre_symbolic_gate=pre_symbolic,
+            pre_numeric_gate=reject_unknown_budget,
+        )
+        try:
+            factory(matrix, icntl14=40)
+            local["local_pass"] = False
+            local["exception"] = "unknown analysis budget unexpectedly passed"
+        except StagedFactorRejected as exc:
+            local["cleanup_status"] = exc.cleanup_status
+        event_after = numeric_event_count_raw()
+        before_count = _count(event_before)
+        after_count = _count(event_after)
+        local["numeric_event_delta"] = (
+            None
+            if before_count is None or after_count is None
+            else after_count - before_count
+        )
+        local["local_pass"] = bool(
+            local["local_pass"]
+            and local["callback_order"]
+            == ["pre_symbolic", "pre_numeric_budget"]
+            and isinstance(local["cleanup_status"], dict)
+            and local["cleanup_status"].get("numeric_attempts") == 0
+            and local["cleanup_status"].get("factor_released") is True
+            and local["cleanup_status"].get("destroy_error_code") == 0
+            and local["numeric_event_delta"] == 0
+        )
+    except Exception as exc:  # noqa: BLE001 - serialize before all-rank assertion
+        local["local_pass"] = False
+        local["exception"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        local["cleanup"] = _destroy_owned(owned)
+
+    ranks = _emit_rank_records("PETSC_LU_REJECT_UNKNOWN_BUDGET_JSON=", local)
+    assert all(record.get("local_pass") is True for record in ranks), ranks
+
+
 def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> None:
     """A separate 8x8 case proves the PETSc numeric event advances on request."""
     owned: list[Any] = []
@@ -228,6 +587,9 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
         rhs = _own(owned, matrix.createVecLeft())
         solution = _own(owned, matrix.createVecRight())
         residual = _own(owned, matrix.createVecLeft())
+        transpose_rhs = _own(owned, matrix.createVecLeft())
+        transpose_solution = _own(owned, matrix.createVecRight())
+        transpose_residual = _own(owned, matrix.createVecLeft())
         factor = _own(owned, create_lu_stage(matrix, icntl14=40))
 
         row_start, row_end = exact.getOwnershipRange()
@@ -246,6 +608,7 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
         event_after_symbolic = numeric_event_count_raw()
         factor.numeric()
         event_after_numeric = numeric_event_count_raw()
+        numeric_info = factor.numeric_info_raw()
         before_count = _count(event_before)
         symbolic_count = _count(event_after_symbolic)
         after_count = _count(event_after_numeric)
@@ -272,6 +635,44 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
         residual_norm = float(residual.norm())
         relative_residual = residual_norm / rhs_norm if rhs_norm > 0.0 else None
         finite_residual = math.isfinite(rhs_norm) and math.isfinite(residual_norm)
+        matrix.multTranspose(exact, transpose_rhs)
+        factor.solve_transpose(transpose_rhs, transpose_solution)
+        matrix.multTranspose(transpose_solution, transpose_residual)
+        transpose_residual.axpy(PETSc.ScalarType(-1.0), transpose_rhs)
+        transpose_rhs_norm = float(transpose_rhs.norm())
+        transpose_residual_norm = float(transpose_residual.norm())
+        transpose_relative = (
+            transpose_residual_norm / transpose_rhs_norm
+            if transpose_rhs_norm > 0.0
+            else None
+        )
+        exact_columns = np.column_stack(
+            (np.arange(1, 9) + 0.25j, np.arange(2, 10) - 0.5j)
+        ).astype(np.complex128)
+        exact_dense, exact_ownership, exact_layout_ok = _distributed_dense_columns(
+            matrix, exact_columns, owned
+        )
+        comm = PETSc.COMM_WORLD.tompi4py()
+        exact_layout_ok = all(comm.allgather(exact_layout_ok))
+        if not exact_layout_ok:
+            raise RuntimeError("distributed dense input rows do not match A columns")
+        batch_rhs = _own(owned, matrix.matMult(exact_dense))
+        batch_solution = _own(owned, batch_rhs.duplicate(copy=False))
+        factor_row_ownership = tuple(
+            map(int, factor.layout_raw()["factor"]["row_ownership"])
+        )
+        batch_ownership_ok = (
+            tuple(map(int, batch_rhs.getOwnershipRange())) == factor_row_ownership
+            and tuple(map(int, batch_solution.getOwnershipRange()))
+            == factor_row_ownership
+        )
+        batch_ownership_ok = all(comm.allgather(batch_ownership_ok))
+        if not batch_ownership_ok:
+            raise RuntimeError("distributed RHS rows do not match factor ownership")
+        factor.mat_solve(batch_rhs, batch_solution)
+        batch_residual = _dense_original_residual(
+            matrix, batch_rhs, batch_solution, owned
+        )
         lifecycle = factor.lifecycle()
         local["analysis_info_raw"] = symbolic_analysis
         local["numeric_event"] = {
@@ -282,6 +683,15 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
             "numeric_delta": numeric_delta,
             "analysis_rejected_after_numeric": analysis_rejected_after_numeric,
             "lifecycle": lifecycle,
+            "numeric_info_raw": numeric_info,
+            "layout_raw": factor.layout_raw(),
+            "two_column_MatMatSolve": {
+                **batch_residual,
+                "exact_column_ownership": list(exact_ownership),
+                "factor_row_ownership": list(factor_row_ownership),
+                "ownership_matches_factor": batch_ownership_ok,
+                "api": "MatMatSolve",
+            },
         }
         local["original_A_residual"] = {
             "rhs_norm": rhs_norm if math.isfinite(rhs_norm) else None,
@@ -295,6 +705,14 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
             "finite": finite_residual,
             "limit": 5.0e-9,
         }
+        local["solve_api_modes"] = {
+            "single_vector_MatSolve_relative_residual": relative_residual,
+            "single_vector_MatSolveTranspose_relative_residual": transpose_relative,
+            "two_column_MatMatSolve_relative_frobenius_residual": batch_residual[
+                "relative_frobenius_residual"
+            ],
+            "two_column_MatMatSolve_status": "measured_on_active_comm",
+        }
         local["local_pass"] = bool(
             event_before.get("compiled_with_logging") is True
             and event_before.get("query_error_code") == 0
@@ -306,10 +724,53 @@ def test_lu_stage_numeric_is_explicit_and_checks_original_matrix_residual() -> N
             and analysis_rejected_after_numeric
             and lifecycle.get("numeric_attempts") == 1
             and lifecycle.get("numeric_completed") is True
+            and numeric_info.get("numeric_completed") is True
+            and numeric_info.get("numeric_attempts") == 1
+            and {
+                item.get("index")
+                for item in numeric_info.get("INFOG_api_raw_by_rank", [])
+            }
+            == {1, 2, 18, 19}
+            and all(
+                item.get("query_error_code") == 0
+                and "raw_value" in item
+                for item in numeric_info.get("INFOG_api_raw_by_rank", [])
+            )
+            and {
+                item.get("index"): item
+                for item in numeric_info.get("INFOG_api_raw_by_rank", [])
+            }[18].get("label")
+            == "global_numeric_max_rank_allocated_memory"
+            and {
+                item.get("index"): item
+                for item in numeric_info.get("INFOG_api_raw_by_rank", [])
+            }[19].get("label")
+            == "global_numeric_sum_ranks_allocated_memory"
+            and all(
+                item.get("unit")
+                == "million_bytes_10^6_bytes; raw integer retained"
+                and item.get("meaning_status")
+                == "verified_against_MUMPS_5.6.2_user_guide"
+                for item in numeric_info.get("INFOG_api_raw_by_rank", [])
+                if item.get("index") in (18, 19)
+            )
+            and "must not be summed again across ranks"
+            in numeric_info.get("interpretation_note", "")
             and finite_residual
             and rhs_norm > 0.0
             and relative_residual is not None
             and relative_residual <= 5.0e-9
+            and math.isfinite(transpose_rhs_norm)
+            and math.isfinite(transpose_residual_norm)
+            and transpose_rhs_norm > 0.0
+            and transpose_relative is not None
+            and transpose_relative <= 5.0e-9
+            and batch_ownership_ok
+            and batch_residual["finite"] is True
+            and batch_residual["rhs_frobenius_norm"] is not None
+            and batch_residual["rhs_frobenius_norm"] > 0.0
+            and batch_residual["relative_frobenius_residual"] is not None
+            and batch_residual["relative_frobenius_residual"] <= 5.0e-9
         )
     except Exception as exc:  # noqa: BLE001 - serialize the failure before asserting on all ranks
         local["local_pass"] = False

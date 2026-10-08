@@ -7,17 +7,17 @@ applies the exact two-port operator to a small number of trace columns.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
-from typing import Any, Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from dolfinx import cpp, fem
 from petsc4py import PETSc
 
-from .hcurl_assembly_time_condensation import AssemblyTimeCondensedSystem
 from ..coupling.hybrid_internal_modes import _DistributedTwoDimensionalEvaluator
-
+from .hcurl_assembly_time_condensation import AssemblyTimeCondensedSystem
 
 RESEARCH_STATUS = "research_only_correctness_oracle"
 
@@ -378,7 +378,16 @@ def identify_endpoint_active_rows(
     )
 
 
-def _factor(matrix: PETSc.Mat) -> PETSc.KSP:
+def _factor(
+    matrix: PETSc.Mat,
+    *,
+    stage_factory: Callable[..., Any] | None = None,
+) -> Any:
+    if stage_factory is not None:
+        if not callable(stage_factory):
+            raise TypeError("stage_factory must be callable or None")
+        return stage_factory(matrix, icntl14=100)
+
     ksp = PETSc.KSP().create(matrix.getComm())
     ksp.setType(PETSc.KSP.Type.PREONLY)
     ksp.setErrorIfNotConverged(True)
@@ -393,6 +402,24 @@ def _factor(matrix: PETSc.Mat) -> PETSc.KSP:
         pass
     ksp.setUp()
     return ksp
+
+
+def _check_factor_solve_status(factor: Any, context: str) -> None:
+    """Check KSP status only when the factor actually owns a KSP.
+
+    The staged bridge calls PETSc MatSolve directly and intentionally has no
+    fabricated KSP reason. Its call errors propagate from the bridge; the
+    caller's existing explicit residual/physics gates remain authoritative.
+    """
+
+    if getattr(factor, "explicit_staged_direct_factor", False) is True:
+        return
+    get_reason = getattr(factor, "getConvergedReason", None)
+    if not callable(get_reason):
+        raise TypeError("one-cell factor exposes neither staged-direct nor KSP status")
+    reason = int(get_reason())
+    if reason < 0:
+        raise RuntimeError(f"{context} failed with KSP reason {reason}")
 
 
 def _partition_sparse_matrix(
@@ -482,7 +509,7 @@ class OneCellTwoPortSchurAction:
     A_pi: PETSc.Mat
     A_ip: PETSc.Mat
     A_ii: PETSc.Mat
-    factor: PETSc.KSP
+    factor: Any
     left_rows: int
     right_rows: int
     interior_rows: int
@@ -549,10 +576,9 @@ class OneCellTwoPortSchurAction:
                 port_vector.assemble()
                 self.A_ip.mult(port_vector, interior_rhs)
                 self.factor.solve(interior_rhs, interior_solution)
-                if int(self.factor.getConvergedReason()) < 0:
-                    raise RuntimeError(
-                        "The homogeneous interior recovery did not converge."
-                    )
+                _check_factor_solve_status(
+                    self.factor, "The homogeneous interior recovery"
+                )
                 recovered[self.interior_active, column] = -self._replicated_values(
                     interior_solution
                 )
@@ -592,10 +618,9 @@ class OneCellTwoPortSchurAction:
             interior_rhs = self.A_ip.matMult(dense_port)
             interior_solution = interior_rhs.duplicate(copy=False)
             self.factor.matSolve(interior_rhs, interior_solution)
-            if int(self.factor.getConvergedReason()) < 0:
-                raise RuntimeError(
-                    "The one-cell interior Schur solve did not converge."
-                )
+            _check_factor_solve_status(
+                self.factor, "The one-cell interior Schur solve"
+            )
             port_action = self.A_pp.matMult(dense_port)
             port_correction = self.A_pi.matMult(interior_solution)
             port_action.axpy(PETSc.ScalarType(-1.0), port_correction)
@@ -649,10 +674,9 @@ class OneCellTwoPortSchurAction:
                     transpose_rhs,
                     transpose_solution,
                 )
-                if int(self.factor.getConvergedReason()) < 0:
-                    raise RuntimeError(
-                        "The Hermitian-transpose interior Schur solve did not converge."
-                    )
+                _check_factor_solve_status(
+                    self.factor, "The Hermitian-transpose interior Schur solve"
+                )
                 transpose_solution.getArray()[:] = np.conj(
                     transpose_solution.getArray(readonly=True)
                 )
@@ -675,6 +699,7 @@ class OneCellTwoPortSchurAction:
     def destroy(self) -> None:
         if self._destroyed:
             return
+        factor_cleanup_error = None
         for obj in (
             self.factor,
             self.A_ii,
@@ -682,8 +707,24 @@ class OneCellTwoPortSchurAction:
             self.A_pi,
             self.A_pp,
         ):
-            obj.destroy()
+            status = obj.destroy()
+            if (
+                obj is self.factor
+                and getattr(self.factor, "explicit_staged_direct_factor", False)
+                is True
+                and (
+                    not isinstance(status, dict)
+                    or status.get("factor_released") is not True
+                    or status.get("destroy_error_code") != 0
+                )
+            ):
+                factor_cleanup_error = repr(status)
         self._destroyed = True
+        if factor_cleanup_error is not None:
+            raise RuntimeError(
+                "Staged one-cell factor cleanup did not confirm release: "
+                f"{factor_cleanup_error!r}"
+            )
 
 
 def endpoint_cauchy_columns(
@@ -845,6 +886,8 @@ def endpoint_cauchy_balance(
 def build_one_cell_two_port_schur_action(
     matrix: PETSc.Mat,
     rows: EndpointActiveRows,
+    *,
+    stage_factory: Callable[..., Any] | None = None,
 ) -> OneCellTwoPortSchurAction:
     """Build the research-only exact action without a dense port square."""
 
@@ -855,7 +898,7 @@ def build_one_cell_two_port_schur_action(
     )
     factor = None
     try:
-        factor = _factor(A_ii)
+        factor = _factor(A_ii, stage_factory=stage_factory)
         nnz = int(A_ii.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM).get("nz_used", 0.0))
         return OneCellTwoPortSchurAction(
             A_pp=A_pp,
@@ -872,8 +915,22 @@ def build_one_cell_two_port_schur_action(
                 rows.interior_active, dtype=PETSc.IntType
             ).copy(),
         )
-    except Exception:
+    except Exception as primary:
+        factor_cleanup_error = None
         for obj in (factor, A_ii, A_ip, A_pi, A_pp):
             if obj is not None:
-                obj.destroy()
+                result = obj.destroy()
+                if obj is factor and getattr(
+                    factor, "explicit_staged_direct_factor", False
+                ) is True and (
+                    not isinstance(result, dict)
+                    or result.get("factor_released") is not True
+                    or result.get("destroy_error_code") != 0
+                ):
+                    factor_cleanup_error = repr(result)
+        if factor_cleanup_error is not None:
+            primary.add_note(
+                "staged one-cell factor cleanup did not confirm release: "
+                f"{factor_cleanup_error!r}"
+            )
         raise

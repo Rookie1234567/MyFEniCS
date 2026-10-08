@@ -46,6 +46,7 @@ from src.modes.cross_section_spaces import (
     build_matching_cross_section,
 )
 from src.modes.stable_propagation import build_two_sided_propagation
+from src.solvers import one_cell_trace_schur as one_cell_trace_schur_module
 from src.solvers.common_3d_forms import _build_variational_forms
 from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
@@ -59,6 +60,87 @@ from src.solvers.one_cell_trace_schur import (
     build_one_cell_two_port_schur_action,
     identify_endpoint_active_rows,
 )
+from src.solvers.one_cell_trace_schur import (
+    _factor as factor_one_cell_interior,
+)
+
+
+def test_one_cell_interior_factor_forwards_explicit_stage_factory() -> None:
+    matrix = object()
+    expected_factor = object()
+    calls: list[tuple[object, int]] = []
+
+    def stage_factory(source: object, *, icntl14: int) -> object:
+        calls.append((source, icntl14))
+        return expected_factor
+
+    factor = factor_one_cell_interior(matrix, stage_factory=stage_factory)
+    assert factor is expected_factor
+    assert calls == [(matrix, 100)]
+
+
+def test_one_cell_schur_builder_forwards_stage_factory_to_same_interior_block(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeBlock:
+        def __init__(self, *, nnz: int = 0) -> None:
+            self.nnz = nnz
+            self.destroyed = False
+
+        def getInfo(self, _info_type: object) -> dict[str, float]:
+            return {"nz_used": float(self.nnz)}
+
+        def destroy(self) -> None:
+            self.destroyed = True
+
+    class FakeStageFactor:
+        explicit_staged_direct_factor = True
+
+        def __init__(self) -> None:
+            self.destroyed = False
+
+        def destroy(self) -> dict[str, object]:
+            self.destroyed = True
+            return {
+                "factor_released": True,
+                "destroy_error_code": 0,
+            }
+
+    blocks = tuple(FakeBlock(nnz=4 if index == 3 else 0) for index in range(4))
+    expected_factor = FakeStageFactor()
+    calls: list[tuple[object, int]] = []
+    matrix = object()
+    rows = SimpleNamespace(
+        port_active=np.asarray([0, 1], dtype=np.int64),
+        interior_active=np.asarray([2], dtype=np.int64),
+        left_active=np.asarray([0], dtype=np.int64),
+        right_active=np.asarray([1], dtype=np.int64),
+    )
+
+    def partition(
+        _matrix: object,
+        _port_active: object,
+        _interior_active: object,
+    ) -> tuple[FakeBlock, ...]:
+        return blocks
+
+    def stage_factory(source: object, *, icntl14: int) -> FakeStageFactor:
+        calls.append((source, icntl14))
+        return expected_factor
+
+    monkeypatch.setattr(
+        one_cell_trace_schur_module,
+        "_partition_sparse_matrix",
+        partition,
+    )
+    action = build_one_cell_two_port_schur_action(
+        matrix, rows, stage_factory=stage_factory  # type: ignore[arg-type]
+    )
+    assert calls == [(blocks[3], 100)]
+    assert action.factor is expected_factor
+    action.destroy()
+    assert expected_factor.destroyed is True
+    assert all(block.destroyed for block in blocks)
 
 
 def test_exact_model_is_explicit_and_not_production_qualified() -> None:

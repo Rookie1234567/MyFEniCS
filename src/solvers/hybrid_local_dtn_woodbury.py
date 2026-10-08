@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from time import perf_counter
-from typing import Any, Callable, Mapping
+from typing import Any
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy.linalg import lu_factor, lu_solve
 
-from .condensed_dtn import gather_small_petsc_matrix
 from .common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
-
+from .condensed_dtn import gather_small_petsc_matrix
 
 HYBRID_DTN_WOODBURY_MODE_COUNT = 40
 MUMPS_BLR_V5_H4_PROFILE = "mumps_blr_v5_h4"
@@ -796,6 +796,7 @@ class ResearchExactFactorInverse:
         factor_only_storage: bool = False,
         compressed_factor_profile: str | None = None,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+        stage_factory: Callable[..., Any] | None = None,
     ) -> None:
         if not isinstance(matrix, PETSc.Mat):
             raise TypeError("Exact research factor requires a PETSc matrix")
@@ -806,6 +807,7 @@ class ResearchExactFactorInverse:
         self.matrix = matrix
         self.factor_solver_type = factor_solver_type
         self._factor_only_storage = bool(factor_only_storage)
+        self._uses_staged_factor = stage_factory is not None
         expected_mumps_controls = None
         if compressed_factor_profile is not None:
             expected_mumps_controls = mumps_blr_v5_h4_controls(
@@ -816,9 +818,13 @@ class ResearchExactFactorInverse:
         if compressed_factor_profile is not None and factor_solver_type != "mumps":
             raise ValueError("V5 h4 BLR profile requires factor_solver_type='mumps'")
         self.compressed_factor_profile = compressed_factor_profile
-        self.factor_matrix: PETSc.Mat | None = None
+        self.factor_matrix: Any | None = None
+        self._staged_factor: Any | None = None
+        self._stage_analysis_info: dict[str, Any] | None = None
+        self._stage_numeric_info: dict[str, Any] | None = None
         self._factor_matrix_stats: dict[str, Any] | None = None
         self._factor_matrix_owned = False
+        self._ksp_created = False
         self._ksp_destroyed = False
         self._lifecycle_callback = lifecycle_callback
         self._factor_inventory: dict[str, Any] | None = None
@@ -826,14 +832,7 @@ class ResearchExactFactorInverse:
         self._mumps_controls_observed: dict[str, Any] | None = None
         self._mumps_controls_verified: bool | None = None
         self._mumps_infog: dict[str, int | None] = {"1": None, "2": None}
-        self.ksp = PETSc.KSP().create(matrix.getComm())
-        self.ksp.setOperators(matrix)
-        self.ksp.setType("preonly")
-        self.ksp.setErrorIfNotConverged(True)
-        pc = self.ksp.getPC()
-        pc.setType("lu")
-        if factor_solver_type is not None:
-            pc.setFactorSolverType(str(factor_solver_type))
+        self.ksp = None
         if lifecycle_callback is not None:
             lifecycle_callback(
                 "factor_setup_begin",
@@ -843,63 +842,200 @@ class ResearchExactFactorInverse:
                 },
             )
         factor_inventory: dict[str, Any] | None = None
-        try:
-            configured_factor = _configure_v5_blr_factor(pc, compressed_factor_profile)
-            if configured_factor is None and factor_solver_type == "mumps":
-                pc.setFactorSetUpSolverType()
-                configured_factor = pc.getFactorMatrix()
-                configured_factor.setMumpsIcntl(
-                    14, MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
+        if stage_factory is None:
+            # Keep the qualified default path intact: KSP/PC setup owns the
+            # factor and retains its historical convergence-reason contract.
+            self.ksp = PETSc.KSP().create(matrix.getComm())
+            self._ksp_created = True
+            self.ksp.setOperators(matrix)
+            self.ksp.setType("preonly")
+            self.ksp.setErrorIfNotConverged(True)
+            pc = self.ksp.getPC()
+            pc.setType("lu")
+            if factor_solver_type is not None:
+                pc.setFactorSolverType(str(factor_solver_type))
+            try:
+                configured_factor = _configure_v5_blr_factor(
+                    pc, compressed_factor_profile
                 )
-                self._mumps_controls_requested = {
-                    "icntl_14": MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
-                }
-            elif configured_factor is not None:
-                self._mumps_controls_requested = expected_mumps_controls
-            self.ksp.setUp()
-            if configured_factor is not None:
-                if compressed_factor_profile is None:
-                    self._mumps_controls_observed = {
-                        "icntl_14": configured_factor.getMumpsIcntl(14)
+                if configured_factor is None and factor_solver_type == "mumps":
+                    pc.setFactorSetUpSolverType()
+                    configured_factor = pc.getFactorMatrix()
+                    configured_factor.setMumpsIcntl(
+                        14, MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
+                    )
+                    self._mumps_controls_requested = {
+                        "icntl_14": MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
                     }
-                else:
-                    self._mumps_controls_observed = {
-                        "icntl_35": configured_factor.getMumpsIcntl(35),
-                        "cntl_7": configured_factor.getMumpsCntl(7),
-                        "icntl_14": configured_factor.getMumpsIcntl(14),
+                elif configured_factor is not None:
+                    self._mumps_controls_requested = expected_mumps_controls
+                self.ksp.setUp()
+                if configured_factor is not None:
+                    if compressed_factor_profile is None:
+                        self._mumps_controls_observed = {
+                            "icntl_14": configured_factor.getMumpsIcntl(14)
+                        }
+                    else:
+                        self._mumps_controls_observed = {
+                            "icntl_35": configured_factor.getMumpsIcntl(35),
+                            "cntl_7": configured_factor.getMumpsCntl(7),
+                            "icntl_14": configured_factor.getMumpsIcntl(14),
+                        }
+                    self._mumps_controls_verified = bool(
+                        self._mumps_controls_observed
+                        == self._mumps_controls_requested
+                    )
+                    if not self._mumps_controls_verified:
+                        raise RuntimeError(
+                            "MUMPS workspace controls were not read back exactly"
+                        )
+                factor_inventory = _petsc_factor_inventory(self.ksp)
+                self._factor_inventory = factor_inventory
+                if factor_solver_type == "mumps" and factor_inventory.get(
+                    "mumps_api_available"
+                ):
+                    raw_infog = factor_inventory["mumps_raw_infog"]
+                    self._mumps_infog = {
+                        "1": raw_infog.get("1"),
+                        "2": raw_infog.get("2"),
                     }
+                    if (
+                        self._mumps_infog["1"] is not None
+                        and self._mumps_infog["1"] < 0
+                    ):
+                        raise RuntimeError(
+                            "MUMPS exact factorization failed: "
+                            f"INFOG(1)={self._mumps_infog['1']}, "
+                            f"INFOG(2)={self._mumps_infog['2']}"
+                        )
+            except Exception:
+                self.ksp.destroy()
+                self.ksp = None
+                raise
+        else:
+            if not callable(stage_factory):
+                raise TypeError("stage_factory must be callable or None")
+            if factor_solver_type != "mumps":
+                raise ValueError("staged exact factor requires factor_solver_type='mumps'")
+            if compressed_factor_profile is not None:
+                raise ValueError(
+                    "staged exact factor does not combine with compressed BLR"
+                )
+            self._mumps_controls_requested = {
+                "icntl_14": MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
+            }
+            try:
+                staged = stage_factory(
+                    matrix,
+                    icntl14=MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT,
+                )
+                self._staged_factor = staged
+                if getattr(staged, "explicit_staged_direct_factor", False) is not True:
+                    raise TypeError(
+                        "stage_factory must return an explicit staged direct factor"
+                    )
+                required_methods = (
+                    "solve",
+                    "solveTranspose",
+                    "matSolve",
+                    "matSolveTranspose",
+                    "destroy",
+                )
+                if any(not callable(getattr(staged, name, None)) for name in required_methods):
+                    raise TypeError(
+                        "staged direct factor lacks the solve/cleanup contract"
+                    )
+                self._stage_analysis_info = dict(staged.analysis_info_raw)
+                self._stage_numeric_info = dict(staged.numeric_info_raw)
+                get_icntl = getattr(staged, "get_mumps_icntl", None)
+                if not callable(get_icntl):
+                    raise TypeError("staged factor cannot read back MUMPS ICNTL")
+                observed_icntl14 = int(get_icntl(14))
+                self._mumps_controls_observed = {"icntl_14": observed_icntl14}
                 self._mumps_controls_verified = bool(
-                    self._mumps_controls_observed == self._mumps_controls_requested
+                    self._mumps_controls_observed
+                    == self._mumps_controls_requested
                 )
                 if not self._mumps_controls_verified:
                     raise RuntimeError(
-                        "MUMPS workspace controls were not read back exactly"
+                        "staged MUMPS ICNTL(14) was not read back exactly"
                     )
-            factor_inventory = _petsc_factor_inventory(self.ksp)
-            self._factor_inventory = factor_inventory
-            if factor_solver_type == "mumps" and factor_inventory.get(
-                "mumps_api_available"
-            ):
-                raw_infog = factor_inventory["mumps_raw_infog"]
-                self._mumps_infog = {
-                    "1": raw_infog.get("1"),
-                    "2": raw_infog.get("2"),
-                }
-                if self._mumps_infog["1"] is not None and self._mumps_infog["1"] < 0:
+                numeric_entries = self._stage_numeric_info.get(
+                    "INFOG_api_raw_by_rank"
+                )
+                info1 = next(
+                    (
+                        entry
+                        for entry in numeric_entries or ()
+                        if isinstance(entry, Mapping)
+                        and entry.get("index") == 1
+                    ),
+                    None,
+                )
+                if (
+                    not isinstance(info1, Mapping)
+                    or info1.get("query_error_code") != 0
+                    or isinstance(info1.get("raw_value"), bool)
+                    or not isinstance(info1.get("raw_value"), int)
+                ):
+                    raise RuntimeError("staged MUMPS INFOG(1) status is unknown")
+                self._mumps_infog["1"] = int(info1["raw_value"])
+                info2 = next(
+                    (
+                        entry
+                        for entry in numeric_entries or ()
+                        if isinstance(entry, Mapping)
+                        and entry.get("index") == 2
+                    ),
+                    None,
+                )
+                if (
+                    isinstance(info2, Mapping)
+                    and info2.get("query_error_code") == 0
+                    and isinstance(info2.get("raw_value"), int)
+                    and not isinstance(info2.get("raw_value"), bool)
+                ):
+                    self._mumps_infog["2"] = int(info2["raw_value"])
+                if self._mumps_infog["1"] < 0:
                     raise RuntimeError(
-                        "MUMPS exact factorization failed: "
+                        "MUMPS staged numeric factorization failed: "
                         f"INFOG(1)={self._mumps_infog['1']}, "
                         f"INFOG(2)={self._mumps_infog['2']}"
                     )
-        except Exception:
-            self.ksp.destroy()
-            self.ksp = None
-            raise
+                if factor_only_storage:
+                    self.factor_matrix = staged
+                    self._factor_matrix_owned = True
+                    self._factor_matrix_stats = {
+                        "source": "public PETSc Mat layout queries; not MatInfo/RSS",
+                        "layout": dict(staged.factor_layout),
+                    }
+            except Exception as primary:
+                if self._staged_factor is not None:
+                    destroy = getattr(self._staged_factor, "destroy", None)
+                    if callable(destroy):
+                        try:
+                            cleanup = destroy()
+                            if (
+                                cleanup.get("factor_released") is not True
+                                or cleanup.get("destroy_error_code") != 0
+                            ):
+                                primary.add_note(
+                                    "staged factor cleanup did not confirm release: "
+                                    f"{cleanup!r}"
+                                )
+                            else:
+                                self._staged_factor = None
+                        except Exception as cleanup_error:  # noqa: BLE001 - preserve the primary failure
+                            primary.add_note(
+                                "staged factor cleanup raised: "
+                                f"{type(cleanup_error).__name__}: {cleanup_error}"
+                            )
+                raise
         self._destroyed = False
         self._solve_count = 0
         self._logical_rhs_count = 0
         self._mat_solve_call_count = 0
-        if self._factor_only_storage:
+        if self._factor_only_storage and stage_factory is None:
             self.factor_matrix = pc.getFactorMatrix()
             self.factor_matrix.incRef()
             self._factor_matrix_owned = True
@@ -920,8 +1056,16 @@ class ResearchExactFactorInverse:
                     "mumps_controls_requested": self._mumps_controls_requested,
                     "mumps_controls_observed": self._mumps_controls_observed,
                     "mumps_controls_verified": self._mumps_controls_verified,
-                    "ksp_destroyed": self._ksp_destroyed,
+                    "ksp_created": bool(self._ksp_created),
+                    "ksp_destroyed": (
+                        bool(self._ksp_destroyed)
+                        if self._ksp_created
+                        else None
+                    ),
                     "factor_matrix_owned": self._factor_matrix_owned,
+                    "staged_direct_factor": self._staged_factor is not None,
+                    "stage_analysis_info_raw": self._stage_analysis_info,
+                    "stage_numeric_info_raw": self._stage_numeric_info,
                 },
             )
 
@@ -930,7 +1074,7 @@ class ResearchExactFactorInverse:
         return self._factor_only_storage
 
     @property
-    def operator(self) -> PETSc.Mat | None:
+    def operator(self) -> Any | None:
         return self.factor_matrix if self._factor_only_storage else self.matrix
 
     def release_borrowed_matrix(self) -> None:
@@ -951,6 +1095,8 @@ class ResearchExactFactorInverse:
         target.set(0.0)
         if self._factor_only_storage:
             self.factor_matrix.solve(source, target)
+        elif self._staged_factor is not None:
+            self._staged_factor.solve(source, target)
         else:
             self.ksp.solve(source, target)
             reason = int(self.ksp.getConvergedReason())
@@ -1009,7 +1155,10 @@ class ResearchExactFactorInverse:
         ):
             raise ValueError("Exact research solve_many communicator size mismatch")
 
-        factor_matrix.matSolve(sources, targets)
+        if self._staged_factor is not None:
+            self._staged_factor.matSolve(sources, targets)
+        else:
+            factor_matrix.matSolve(sources, targets)
         self._logical_rhs_count += source_size[1]
         self._mat_solve_call_count += 1
 
@@ -1030,8 +1179,10 @@ class ResearchExactFactorInverse:
                 else "research_exact_side_lu"
             ),
             "factor_solver_type": self.factor_solver_type,
-            "ksp_created": True,
-            "ksp_destroyed": bool(self._ksp_destroyed),
+            "ksp_created": bool(self._ksp_created),
+            "ksp_destroyed": (
+                bool(self._ksp_destroyed) if self._ksp_created else None
+            ),
             "factor_only_storage": bool(self._factor_only_storage),
             "factor_matrix_owned": bool(self._factor_matrix_owned),
             "factor_matrix_alive": self.factor_matrix is not None,
@@ -1047,6 +1198,17 @@ class ResearchExactFactorInverse:
             "mat_solve_call_count": int(self._mat_solve_call_count),
             "factor_destroyed": bool(self._destroyed),
         }
+
+        if self._uses_staged_factor:
+            diagnostics.update(
+                {
+                    "factor_execution_mode": "staged_direct_MatSolve_no_KSP_reason",
+                    "staged_factor_owned": self._staged_factor is not None,
+                    "factor_matrix_alive": self._staged_factor is not None,
+                    "stage_analysis_info_raw": self._stage_analysis_info,
+                    "stage_numeric_info_raw": self._stage_numeric_info,
+                }
+            )
 
         if not compressed and self.factor_solver_type == "mumps":
             diagnostics.update(
@@ -1084,7 +1246,19 @@ class ResearchExactFactorInverse:
     def destroy(self) -> None:
         if self._destroyed:
             return
-        if self._factor_only_storage:
+        if self._staged_factor is not None:
+            cleanup = self._staged_factor.destroy()
+            if (
+                cleanup.get("factor_released") is not True
+                or cleanup.get("destroy_error_code") != 0
+            ):
+                raise RuntimeError(
+                    "Staged MUMPS factor cleanup did not confirm release: "
+                    f"{cleanup!r}"
+                )
+            self._staged_factor = None
+            self.factor_matrix = None
+        elif self._factor_only_storage:
             if self.factor_matrix is not None:
                 self.factor_matrix.destroy()
                 self.factor_matrix = None
@@ -1110,6 +1284,7 @@ class ResearchExactSideLuAction:
         compressed_factor_profile: str | None = None,
         streaming_w_batch_size: int | None = None,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+        stage_factory: Callable[..., Any] | None = None,
     ) -> None:
         if getattr(components, "F", None) is not explicit_f:
             raise ValueError("Research exact-side action must use components.F itself")
@@ -1123,6 +1298,7 @@ class ResearchExactSideLuAction:
             factor_only_storage=factor_only_storage,
             compressed_factor_profile=compressed_factor_profile,
             lifecycle_callback=lifecycle_callback,
+            stage_factory=stage_factory,
         )
         try:
             self.woodbury = HybridLocalDtnWoodburyOracle(
@@ -1171,12 +1347,17 @@ class ResearchExactSideLuAction:
         diagnostics = {
             "research_only": not self.explicit_opt_in,
             "operator_identity": (
-                "research_mumps_blr_compressed_side_lu_woodbury"
-                if self.factor.compressed_factor_profile is not None
-                else "research_exact_side_lu_woodbury"
+                "research_staged_mumps_side_lu_woodbury"
+                if factor.get("factor_execution_mode")
+                == "staged_direct_MatSolve_no_KSP_reason"
+                else (
+                    "research_mumps_blr_compressed_side_lu_woodbury"
+                    if self.factor.compressed_factor_profile is not None
+                    else "research_exact_side_lu_woodbury"
+                )
             ),
             "factor_solver_type": factor["factor_solver_type"],
-            "ksp_created": True,
+            "ksp_created": factor["ksp_created"],
             "ksp_destroyed": factor["ksp_destroyed"],
             "factor_only_storage": factor["factor_only_storage"],
             "factor_matrix_owned": factor["factor_matrix_owned"],
@@ -1216,11 +1397,19 @@ class ResearchExactSideLuAction:
                     "ordinary_default": False,
                     "ordinary_default_changed": False,
                     "nested_iterative_ksp_count": 0,
-                    "local_direct_preonly_ksp_count": 1,
+                    "local_direct_preonly_ksp_count": int(
+                        bool(factor["ksp_created"])
+                    ),
                     "local_direct_solve_count": int(factor["solve_count"]),
-                    "local_ksp_role": "preonly_lu_direct_factor",
+                    "local_ksp_role": (
+                        "preonly_lu_direct_factor"
+                        if factor["ksp_created"]
+                        else "explicit_staged_direct_factor_no_KSP_reason"
+                    ),
                 }
             )
+            if "factor_execution_mode" in factor:
+                diagnostics["factor_execution_mode"] = factor["factor_execution_mode"]
         if self.factor.compressed_factor_profile is not None:
             diagnostics.update(
                 {
@@ -1254,6 +1443,7 @@ def create_research_exact_side_lu_action(
     compressed_factor_profile: str | None = None,
     streaming_w_batch_size: int | None = None,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    stage_factory: Callable[..., Any] | None = None,
 ) -> ResearchExactSideLuAction:
     """Create the historical research action or an explicit case qualification.
 
@@ -1273,6 +1463,7 @@ def create_research_exact_side_lu_action(
         compressed_factor_profile=compressed_factor_profile,
         streaming_w_batch_size=streaming_w_batch_size,
         lifecycle_callback=lifecycle_callback,
+        stage_factory=stage_factory,
     )
 
 
