@@ -1,4 +1,52 @@
-# Task40extra Review V16 当前结果：Gx560 完整求解通过，E1 未获预构建准入，P4 组件门失败
+# Task40extra Review V17 结果总账：Gx560 p6 通过，Ny=8 组件部分通过，E1 保持证据未闭合
+
+V17 在既有 0.7 nm 非可分三维 Maxwell 几何上完成了 Gx560 p6 anchor，并补齐了保存局部恢复、两个端口的独立 D 读回、Ny=8 原生映射/RHS 组件及 B0 行分块稀疏构建证据。Gx560 是原尺寸 `50×25×140 nm` 几何按 `7/135` 缩小后的解析模型；冻结输入周期 x/y 为 `2.5925925926/1.2962962963 nm`，z 范围 `[-0.5185185185, 6.7407407407] nm`。因此这次是缩小模型的离散场，不是原尺寸模型的场。Gx560 的完整离散解和官方物理输出通过；Ny=8 的 mapping 与真实 FE 右端项通过，但 maps/action 仍部分资格；原尺寸目标的数值 CSR、因子、完整时间和 2 TB/48 h 能力仍未闭合。
+
+## 一级账：模型、方法和数值结果
+
+| 模型 / 阶段 | 模型与方法 | 实测结果 | 状态与边界 | 证据 |
+|---|---|---|---|---|
+| Gx560 V17 p6 target | 原尺寸 `50×25×140 nm` 按 `7/135` 缩小（x/y 周期 `2.5925925926/1.2962962963 nm`，z=`[-0.5185185185,6.7407407407] nm`）；560 cells（10×4×14）、p6、340 ordered modes、4 q；行分块 bounded CSR；四个 q 实测 rows=`28508/28508/28576/28508`、NNZ=`15457680/15483524/15600060/15483524`，合计 62,024,788 | 3 次外层迭代；A6=`4.7044300024e-9`、native witness=`4.7043098759e-9`（限值 `1e-6`）；R/T/A_balance/A_volume=`0.07612406709/0.90576922010/0.01810671281/0.01810671258`；`R00_s/p/total=0.07612359351/7.34e-22/0.07612359351` | Full3D 离散解、官方输出 checker、物理输出通过；不代表连续极限或原尺寸资格 | [formal results](records/review_v17_formal_results.json) |
+| Gx560 对 V16 保存场 | 同模型的共同 560 个子单元比较；输入文件字节 SHA 不同，物理/网格/MPC/有序模式身份一致 | E/H/scaled curl 最大相对差 0；全 340 模式功率差 0；冻结显著模式振幅差 0；R/T/A/A_volume 差 0 | 同离散实现比较通过；不是网格收敛测试 | [formal results](records/review_v17_formal_results.json) |
+| S2 saved local recovery | 两个既存 complex128 局部方程；同因子，最多每面 3 次，以原 `Vii` 重算残差并只接受改善更新 | 直接 LU forward `2.203e-11 / 2.424e-11`，高于原 `1e-11`；top 2 次尝试/1 次接受，bottom 3 次/3 次接受；修正后 `5.352e-14 / 5.143e-14` | 直接 LU 负值保留；逐次原矩阵 residual trace 绑定 raw replay；只资格化保存的小系统 | [component closure](records/review_v17_component_closure.json) |
+| P4 原始 D / plane 读回 | 每面 16,030 ordered modes、完整 882 个原生行；两面合计 32,060 face-mode pairs；独立解析 D 和保存 RHS 端口方程，之后重核保存向量 gauge | top/bottom q60 action 相对差 `4.33e-14 / 2.29e-14`；端口方程 `6.47e-15 / 5.08e-15`；plane phase/Hp 逐 key 最大误差 `<4.55e-16` | 两面组件证据通过；不等于全局目标矩阵 | [component closure](records/review_v17_component_closure.json) |
+| Ny=8 maps/action | `Ny=8, ell=2, K=4`；实测 global 160 cells、每个 twist 40 local cells、532 modes；所有 8 个 FE q 和有序模式均覆盖一次 | q 端口计数 `[76,76,76,76,0,76,76,76]`；原生 mapping 门 `1e-12` 通过；q=4 是空端口集合，不是缺失 FE q | maps/action raw `PARTIAL_COMPONENT`，worker `WORKER_FAILED`；完整 off-diagonal operator 门未资格化 | [component closure](records/review_v17_component_closure.json) |
+| Ny=8 actual FE RHS | 独立 p6 Floquet MPC spaces 上测量 production traction 与 streamed C alpha；独立复开保存数组重算 | 26 项通过；最大 source-fold defect `3.944e-15`、work defect `3.771e-18`、四 twist reconstruction defect `6.235e-16` | RHS fold/lift/gauge 组件通过；固定 `C alpha` 向量不等于全 C 列，Ny=8 target KSP、完整矩阵和 R/T/A 未运行 | [component closure](records/review_v17_component_closure.json) |
+| B0 row-tile q 四块组件与 50k 边界 fixture | B0 为 80 cells、p6、532 modes、4 q；另有 50,000-row 软件结构 fixture | B0 四块与 legacy 等价；candidate `60.538 s`、legacy `59.266 s`；最大同时 scratch `53,684,424 B`，staging limit `268,435,456 B`。50k fixture 四块 PASS，`1 passed in 0.48 s` | B0 本例没有速度提升；50k fixture 无 FE/全局因子，只证明 software builder 跨过旧 shape 限制，不证明目标容量 | [sparse capacity](records/review_v17_sparse_capacity.json) |
+| 原尺寸 geometry/support | 目标规则几何 272×4×14=15,232 cells 与拓扑实测；p6 full-storage rows `10,228,620` 和 periodic-independent rows `9,948,672` 为拓扑+224-cell native 校准派生，非目标 FE 实测 | 224-cell native 校准推导每 q 保守结构 NNZ 上界约 1.767–1.788 billion；四 q payload 上界合计 142.503 GB；上界 int32 检查通过 | 目标 FE 空间、实际数值 NNZ/CSR/indptr、Schur 和因子均未构造；这些是 derived bound，不是容量通过 | [sparse capacity](records/review_v17_sparse_capacity.json) |
+| E1 760-cell | 当前几何/owner inventory 为 156 raw、231 oriented classes | stage workspace formula 5.559 GB；assembly 后 retained owner formula 2.877 GB；没有 OS/cgroup 释放 credit | `HELD_INCOMPLETE_CURRENT_OWNER_EVIDENCE`；没有新 E1 求解或 resource stop；历史 V15 19.193 GB 不是本轮测量 | [cost/readiness](records/review_v17_cost_and_readiness.json) |
+| 原尺寸目标 | λ=0.7 nm、50×25×140 nm 非可分模型；资源目标 2 TB 十进制 / 48 h | 完整目标场、最终模式资格、目标因子和冷启动总时间均无本轮实测 | `NOT_QUALIFIED`；不是“数学上不可计算”的结论 | [cost/readiness](records/review_v17_cost_and_readiness.json) |
+
+Gx560 三次 reference-PC 调用都通过原 V15 合同：每次最多一次整体增广修正，实际均选初始状态、未增广；逐 q true residual、native complete FE 与 alpha closure 均从正式事件中登记。各次 q0/q1/q2/q3 residual 为 `2.930e-11/2.322e-13/7.951e-14/3.021e-13`、`2.964e-11/4.894e-13/2.024e-13/4.145e-13`、`3.857e-12/5.942e-13/4.636e-15/5.977e-13`；native complete FE 为 `1.144e-10/7.559e-11/7.600e-12`，alpha closure 为 `9.848e-14/1.852e-13/1.709e-13`。全部逐 q strict residual 低于 `1e-10`。四 q live 因子库存按 native INFOG19/22 为 allocated upper `4.692 GB`、used upper `4.118 GB`；destroy 前最后 live tree RSS 为 `10,022,801,408 B`。KSP.solve-only 为 `71.630558198 s`；q0/q1/q2/q3 numeric factorization 为 `4.063932/3.953524/4.011221/4.408180 s`，numeric true residual 均绑定于原始 q 收据。attempt04 checker guard 通过但未重放数值 operator；两个顺序 sector 的 staging peak 均为 `69,154,421 B`，四块 CSR payload 分别为 `1,242,673,808/1,239,138,064 B`，其合计不是同时 owner peak；allocation ledger 完整 admission `19,379`、incomplete `0`。历史基础 checker guard 为空。
+
+## 二级账：时间、峰值内存与 owner 生命周期
+
+| 实际运行 | 时间口径 | simultaneous tree RSS / cgroup peak | swap / 其他边界 |
+|---|---|---|---|
+| B0 row-tile 组件 | worker 720.832 s；watchdog 722.823 s | 1.523 / 1.899 GB | task/cgroup swap 0；不是 target solve |
+| Ny=8 maps/action | worker 35.950 s；watchdog 37.893 s，分列、不相加 | 0.939 / 1.131 GB | task/cgroup swap 0；保留 WORKER_FAILED 与 partial raw |
+| Ny=8 FE RHS | worker 18.102 s；watchdog 19.995 s，分列、不相加 | 0.849 / 1.045 GB | task/cgroup swap 0；单独 component |
+| Gx560 V17 formal worker | run_case parent 2112.682 s；watchdog 2112.560 s，二者不相加；KSP.solve-only 71.631 s | 10.134 / 11.170 GB | task/cgroup swap 0；PSS 未采样；WSL global swap delta `+106/+8774` 页，无法归属到任务 |
+
+单次同范围 V16→V17 观察：parent interval `2274.267412469/2112.681948589 s`，V17 少 `161.585464 s`（`7.10%`）；树 RSS 峰 `10,204,880,896/10,133,843,968 B`，少 `71,036,928 B`（`0.70%`）；cgroup peak `11,907,702,784/11,170,443,264 B`，少 `737,259,520 B`（`6.19%`）；allocated factor upper 均为 `4,692,000,000 B`。CPU 供给和主机状态未受控，host-global swap 不可归属，V17 checker/readback 及保存场比较在 worker 外；不据单次差值归因 row-tile 提速或宣称完整 cold path。
+
+campaign API 窗口 observation（sequence `11474`）记录于 `2026-10-08T06:54:16.097512Z`：累计保守 charge `22,569.02541851903 s`，remaining numerical budget `63,230.97458148097 s`。这是同一固定窗口的相邻时钟预算账，包含工程、等待、运行经过时间，不代表 PDE CPU 或各个 run 的总和；observation 后仍有文档/审查耗时继续计入。历史 V16 window 记录累计 `85,892.89690395721 s`、remaining `0`；窗口外准备成本保持 `unknown`。
+
+Gx560 worker 区间之后的必需 checker/readback 修复与场比较没有被完整归入一个冷启动关键路径，所以单场总关键路径仍为 `unknown`。E1 的 workspace 与 retained-owner 公式是不同生命周期数量；缺少全部 live owner 的阶段交叠和 post-destroy OS/cgroup 释放数据，不能将它们直接相加或当作当前 RSS projection。历史 19.193 GB 只保留为 V15 历史投影。
+
+## 后续判断与选择性合并
+
+| 依赖组 | V17 判断 | 下一步 / 边界 |
+|---|---|---|
+| production numerical/core | row-tile 路线已在 B0 四块组件和 Gx560 正式求解中使用；改变 sparse build path，不改 ordinary default | 先审 source/owner 生命周期与大 shape boundary test 证据，再单独决定 selective migration；不整体合并分支 |
+| reusable runner/watchdog | Gx560 的 V17 launcher route 已实际接通；第一次 route fail 保留 | 只评估可复用的 route/ABI 接线，不把路由通过说成 E1 admission |
+| checker/benchmark | Gx560 独立输出 checker通过；S2、D、plane readback有独立 checker | 保留来源 identity 与检查范围，不把有限见证扩为全算子范数 |
+| compact evidence/docs | V17 四份 compact、response、summary、test summary、run index、项目登记同步 | 主控集中审阅、提交和推送；文档闭环不改变数值行为 |
+| research-only | Ny=8 partial maps/action、固定 `C alpha` RHS witness、派生目标 support 上界 | 保持显式研究资格，不升级为 production default |
+| do-not-merge / do-not-claim | E1、原尺寸 2 TB/48 h、Ny=8 full target KSP 仍未资格化 | 不合并 master，不称旧 19.193 GB 为 V17 实测，不声称全仓 pytest/MPI4/Ruff/CI 通过 |
+
+证据入口：[Review V17 response](../response_v17.md)、[四份 compact](records/review_v17_component_closure.json)、[测试摘要](test_summary.md)、[run index](records/run_index.json)。V15/V16 历史段落保留在下方，不由 V17 结果覆盖。
+# Task40extra Review V16 历史总账（原文保留）
 
 V16 的 BOUNDED_STAGING_CSR_V16 路线在 560-cell Gx560 上完成了 p6 target 求解：3 次外层迭代，A6 真残差 `4.704430002e-9`，native witness `4.704309876e-9`，均低于 `1e-6`。与 V15 保存场的同离散场、模式和功率比较通过。这个结果支持 Gx560 离散解，不表示连续收敛或目标尺寸资格。
 
@@ -635,7 +683,7 @@ outer adapter 已包含 KSP-only；这些时长不能相加当作独立阶段总
 
 direct reference 启动时未使用要求的 user-service wrapper，观察到 cgroup /init.scope。发现偏差后未重启或迁移这唯一运行；独立 subreaper watchdog 完成了后代身份跟踪与清场。该流程偏差在 [execution-context 记录](records/r5_execution_context.json) 中单独保留。
 
-下轮唯一建议候选是任务书 §8.1 的有界局部问题加多层全局波动纠错，重点是新传播/接口/粗空间机制与有界总因子预算；不是重做旧 42 宏块 complete-PC。需在下一 review 冻结机制和准确 p4 对照顺序后再决定是否实施。R5 未执行 Phase II；没有新增 PDE。
+下轮唯一建议候选是任务书 `8.1 的有界局部问题加多层全局波动纠错，重点是新传播/接口/粗空间机制与有界总因子预算；不是重做旧 42 宏块 complete-PC。需在下一 review 冻结机制和准确 p4 对照顺序后再决定是否实施。R5 未执行 Phase II；没有新增 PDE。
 
 ## 先前 N6 快照（review_v1 正式运行前）
 

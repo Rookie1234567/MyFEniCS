@@ -1,0 +1,371 @@
+{
+  "schema": "task40extra.review_v17_formal_results.v1",
+  "review": "V17",
+  "classification": "GX560_DISCRETE_TARGET_AND_PHYSICAL_OUTPUT_PASS_WITH_QUALIFICATIONS",
+  "run": {
+    "run_id": "task40extra_0p7nm_nonseparable_gx560_p6_reference_v17",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z",
+    "numeric_source_sha": "cbdcc12812b439f5252949ad1279331b86a2dbb6",
+    "source_at_closeout_head": "23626f44243d19d58af41d15a8ccafcba41ee54b",
+    "input_sha256": "fbe888b0b3dc6050911417271c835b130159e5d316ecbead0d8e75daa2a859da",
+    "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+    "environment": "WSL2, PETSc complex128/int32, MPICH, MPI1, one mathematical thread",
+    "mesh_cells": 560,
+    "mesh_axes": [
+      10,
+      4,
+      14
+    ],
+    "degree": 6,
+    "ordered_modes": 340,
+    "target_full_storage_rows": 380040,
+    "q_rows": [
+      28508,
+      28508,
+      28576,
+      28508
+    ],
+    "q_nnz": [
+      15457680,
+      15483524,
+      15600060,
+      15483524
+    ],
+    "q_nnz_total": 62024788,
+    "row_tile_strategy": "ROW_TILE_BOUNDED_CSR_V17"
+  },
+  "numerical_and_physical_results": {
+    "status": "worker_exit0",
+    "official_result": true,
+    "outer_iterations": 3,
+    "A6_true_residual": 4.70443000240316e-09,
+    "A6_native_witness": 4.704309875855315e-09,
+    "A6_limit": 1e-06,
+    "R": 0.0761240670863029,
+    "T": 0.9057692200997514,
+    "A_balance": 0.018106712813945713,
+    "A_volume": 0.01810671257728056,
+    "A_balance_minus_A_volume": 2.366651527530017e-10,
+    "energy_closure_error": -2.3666513193632e-10,
+    "R00_s": 0.0761235935066231,
+    "R00_p": 7.341919406880154e-22,
+    "R00_total": 0.0761235935066231,
+    "official_port_power_source": "dtn_port_modal_amplitudes"
+  },
+  "same_discrete_v16_comparison": {
+    "status": "PASS",
+    "physical_model_signature_exact_equal": true,
+    "mesh_axes_exact_equal": true,
+    "target_MPC_sha256_equal": true,
+    "carrier_payload_sha256_equal": true,
+    "ordered_physical_modes_equal": true,
+    "input_file_sha_equal": false,
+    "common_subcells": 560,
+    "field_and_scaled_curl_gate": 0.0001,
+    "maximum_field_relative_difference": 0.0,
+    "all_mode_power_absolute_gate": 1e-06,
+    "maximum_mode_power_difference": 0.0,
+    "significant_mode_amplitude_relative_gate": 0.0001,
+    "maximum_significant_mode_amplitude_relative_difference": 0.0,
+    "R_T_A_Avolume_absolute_gate": 1e-05,
+    "maximum_R_T_A_Avolume_difference": 0.0,
+    "comparison_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/gx560_v17_v16_saved_field_comparison_attempt02.json",
+    "comparison_sha256": "61efa7fe84a9aff31afd598083f8905db1c730d6f38c7ca53e98bc097f6d64cf"
+  },
+  "independent_output_checker": {
+    "status": "PASS",
+    "checker_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z/v17_row_tile_checker_recheck_attempt04.json",
+    "checker_sha256": "3131b1618ac5a6c788e490bd435d126c411c9c3f65907fdba79cea5243637492",
+    "assembly_guard": {
+      "field": "v17_row_tile_assembly",
+      "present": true,
+      "passed": true,
+      "covered_all_q": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "complete_four_blocks_checked_per_sector": true,
+      "offdiagonal_metrics_recomputed_from_saved_complete_csr_norms": true,
+      "maximum_staging_bytes": 69154421,
+      "sector_checks": [
+        {
+          "sector_index": 0,
+          "global_q_indices": [
+            0,
+            2
+          ],
+          "all_four_blocks_checked": true,
+          "staging_peak_bytes": 69154421,
+          "final_four_block_csr_payload_bytes": 1242673808,
+          "off_diagonal_relative_recomputed_from_saved_norms": {
+            "q0_q1_relative": 3.602180855227053e-16,
+            "q1_q0_relative": 3.4654583896283925e-16
+          }
+        },
+        {
+          "sector_index": 1,
+          "global_q_indices": [
+            1,
+            3
+          ],
+          "all_four_blocks_checked": true,
+          "staging_peak_bytes": 69154421,
+          "final_four_block_csr_payload_bytes": 1239138064,
+          "off_diagonal_relative_recomputed_from_saved_norms": {
+            "q0_q1_relative": 3.542854321048561e-16,
+            "q1_q0_relative": 3.543049121053553e-16
+          }
+        }
+      ],
+      "sum_across_sequential_sectors_bytes": 2481811872,
+      "sum_is_simultaneous_owner_peak": false
+    },
+    "allocation_ledger_guard": {
+      "field": "v17_row_tile_allocation_admission_ledger",
+      "present": true,
+      "passed": true,
+      "ledger_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z/v17_row_tile_p6_reference_events.jsonl",
+      "ledger_sha256": "df1c2c5ac771f32494536db0301852f80a4f983ce9332c42fd067d318bd70152",
+      "admission_event_count": 19379,
+      "incomplete_admission_count": 0,
+      "allocation_admission_complete_event_count": 19379,
+      "record_count": 58279,
+      "raw_receipt_ledger_path": "v17_row_tile_p6_reference_events.jsonl",
+      "ledger_path_resolution": "Repo-relative path resolved by prefixing run.run_directory; raw_receipt_ledger_path preserves the receipt value."
+    },
+    "operator_reapplied_by_checker": false,
+    "checker_scope": "independent readback of saved solution/output plus row-tile assembly and allocation-ledger guards; it recomputes guard metrics from saved CSR evidence and does not reapply the numerical operator",
+    "post_release_A6_receipt_sha256": "bff62df22ad9702e7943a0e88218259d07d3f7f0d57c6882490ca07353d7a399",
+    "official_output_receipt_sha256": "32025ca560b637eb3d75d72ccc08d8ac312fc6ef4428050cc8a5ef0c6f8ea7c5"
+  },
+  "time_and_resource": {
+    "run_case_parent_workflow_monotonic_seconds": 2112.6819485890446,
+    "watchdog_elapsed_seconds": 2112.5595620619133,
+    "these_intervals_are_distinct_and_not_added": true,
+    "sampled_process_tree_rss_peak_bytes": 10133843968,
+    "dedicated_cgroup_memory_peak_bytes": 11170443264,
+    "dedicated_cgroup_memory_limit_bytes": 17179869184,
+    "process_tree_swap_peak_bytes": 0,
+    "dedicated_cgroup_swap_peak_bytes": 0,
+    "PSS": "not_sampled_by_profile",
+    "WSL_global_swap_delta_pages": {
+      "in": 106,
+      "out": 8774,
+      "attribution": "unknown; host-global diagnostic, not attributable to this job"
+    },
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "ksp_solve_only_seconds": 71.630558198,
+    "ksp_solve_only_scope": "PETSc.KSP.solve_only; not a full workflow or setup time",
+    "q_numeric_factorization": [
+      {
+        "q": 0,
+        "numeric_seconds": 4.063932026969269,
+        "numeric_true_residual": 1.521871683305634e-11
+      },
+      {
+        "q": 1,
+        "numeric_seconds": 3.9535235130460933,
+        "numeric_true_residual": 2.630867002059187e-12
+      },
+      {
+        "q": 2,
+        "numeric_seconds": 4.011221484979615,
+        "numeric_true_residual": 9.170847667258265e-13
+      },
+      {
+        "q": 3,
+        "numeric_seconds": 4.408179771970026,
+        "numeric_true_residual": 2.766980725709692e-12
+      }
+    ],
+    "same_scope_v16_v17_observed_worker_comparison": {
+      "scope": "Gx560 formal worker parent monotonic interval, process-tree RSS peak, and dedicated cgroup memory peak",
+      "v16": {
+        "source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
+        "parent_monotonic_seconds": 2274.267412469024,
+        "process_tree_rss_peak_bytes": 10204880896,
+        "cgroup_memory_peak_bytes": 11907702784,
+        "allocated_factor_upper_bytes": 4692000000
+      },
+      "v17": {
+        "source_sha": "cbdcc12812b439f5252949ad1279331b86a2dbb6",
+        "parent_monotonic_seconds": 2112.6819485890446,
+        "process_tree_rss_peak_bytes": 10133843968,
+        "cgroup_memory_peak_bytes": 11170443264,
+        "allocated_factor_upper_bytes": 4692000000
+      },
+      "v17_minus_v16": {
+        "parent_monotonic_seconds": -161.58546387997922,
+        "parent_monotonic_percent": -7.1049456626807315,
+        "process_tree_rss_bytes": -71036928,
+        "process_tree_rss_percent": -0.6961073698355882,
+        "cgroup_memory_bytes": -737259520,
+        "cgroup_memory_percent": -6.191450470116134
+      },
+      "attribution_limits": [
+        "single-run comparison does not establish causality or attribute observed change to row-tile assembly speed",
+        "CPU supply and host conditions are not controlled/recorded comparably; host-global swap is not attributable",
+        "V17 checker repair/readback and saved-field comparison are outside the worker interval",
+        "full single-case cold critical path remains unknown"
+      ]
+    }
+  },
+  "negative_and_incomplete_records": {
+    "launcher_route_attempt01": {
+      "classification": "FE_NOT_STARTED",
+      "reason": "V17 fixed-window route registration was absent at the prelaunch gate",
+      "route_receipt": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/gx560_v17_route_gate_failure_attempt01.json",
+      "numeric_failure": false
+    },
+    "attempt02": "formal Gx560 completed after the exact V17 launcher route was registered and frozen",
+    "full_single_case_cold_critical_path": "UNKNOWN: required checker repair/readback and saved-field comparison were not fully bounded to the worker interval"
+  },
+  "evidence_hashes": {
+    "run_summary": "441b5f55e73194590432998d950e6268c2d65c4a3e8f8839bd9bfa5c46a202ca",
+    "watchdog_summary": "2b295696b28720607d32e3f8ba806077d178b786af020adff416b8c5e54f35d6",
+    "row_tile_inventory": "c1722abee540f960c80eb3b844ccdd2e50933607e5c1bfc83f76214e28963ab3"
+  },
+  "historical_basic_output_checker": {
+    "status": "PASS",
+    "checker_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_gx560_independent_output_checker.json",
+    "checker_sha256": "9e3f64e0bd12d54492269bd280bdd0a7a5621538543014c9967e5e225df3f1b1",
+    "v17_row_tile_assembly_guard": null,
+    "v17_row_tile_allocation_ledger_guard": null,
+    "interpretation": "historical basic saved-output check only; its V17 guard slots are null and do not establish assembly/allocation-guard pass"
+  },
+  "reference_pc_application_contract_and_residuals": {
+    "strategy": "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15",
+    "original_scale_limits": {
+      "q_solve": 1e-08,
+      "alpha_closure": 1e-09,
+      "complete_augmented_fe": 1e-08,
+      "eliminated_fe": 1e-08,
+      "noncancelling_budget": 1e-08
+    },
+    "frozen_scale_limits": {
+      "alpha_closure": 1e-09,
+      "complete_augmented_fe": 1e-08,
+      "eliminated_fe": 1e-08,
+      "noncancelling_budget": 1e-08
+    },
+    "decomposition_closure_limit": 1e-10,
+    "per_q_strict_true_residual_limit": 1e-10,
+    "per_q_bounded_solve_limit": 1e-08,
+    "maximum_additional_augmented_corrections_per_application": 1,
+    "admission_rule": "select the initial whole state if all original, frozen-scale, and structural gates pass; otherwise at most one whole corrected state may qualify",
+    "applications": [
+      {
+        "call": 1,
+        "status": "PASS",
+        "selected_state": "initial_pc_1",
+        "additional_augmentation_applied": false,
+        "q_true_residual_relative": {
+          "q0": 2.9295898382957245e-11,
+          "q1": 2.322295969693563e-13,
+          "q2": 7.950725211064953e-14,
+          "q3": 3.0208870488461843e-13
+        },
+        "q_strict_all_pass": true,
+        "native_complete_augmented_fe_relative": 1.144107637555331e-10,
+        "native_eliminated_fe_relative": 1.1515230614443161e-10,
+        "alpha_closure_relative": 9.847864333562539e-14,
+        "noncancelling_budget_relative": 1.6140740460921422e-10
+      },
+      {
+        "call": 2,
+        "status": "PASS",
+        "selected_state": "initial_pc_2",
+        "additional_augmentation_applied": false,
+        "q_true_residual_relative": {
+          "q0": 2.96424897597849e-11,
+          "q1": 4.894493943704513e-13,
+          "q2": 2.0239954751109747e-13,
+          "q3": 4.1454941850818604e-13
+        },
+        "q_strict_all_pass": true,
+        "native_complete_augmented_fe_relative": 7.558924717027681e-11,
+        "native_eliminated_fe_relative": 7.75713496689133e-11,
+        "alpha_closure_relative": 1.8522161593218003e-13,
+        "noncancelling_budget_relative": 1.187399519178435e-10
+      },
+      {
+        "call": 3,
+        "status": "PASS",
+        "selected_state": "initial_pc_3",
+        "additional_augmentation_applied": false,
+        "q_true_residual_relative": {
+          "q0": 3.857443029570228e-12,
+          "q1": 5.942301674044677e-13,
+          "q2": 4.63609170120468e-15,
+          "q3": 5.97741555723333e-13
+        },
+        "q_strict_all_pass": true,
+        "native_complete_augmented_fe_relative": 7.59988156542364e-12,
+        "native_eliminated_fe_relative": 7.785848961714442e-12,
+        "alpha_closure_relative": 1.7094217239748388e-13,
+        "noncancelling_budget_relative": 1.2330997741815127e-11
+      }
+    ],
+    "evidence": {
+      "events_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z/v17_row_tile_p6_reference_events.jsonl",
+      "events_sha256": "df1c2c5ac771f32494536db0301852f80a4f983ce9332c42fd067d318bd70152",
+      "first_apply_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z/v15_pc_first_apply.json",
+      "first_apply_sha256": "4eee798ae029a2b146360ff43909bec8a5325b1e715840130f3499899a12f957",
+      "last_apply_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z/v15_pc_last_apply.json",
+      "last_apply_sha256": "71f4466c042d509b7d56dece030beb118cd2edd211c29d72b13172417d7c33af"
+    }
+  },
+  "all_q_live_factor_inventory": {
+    "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_p6_reference_v17__full3d_iterative__mpi1__Mna/20261008T040417.995985Z/task40_v12_p6_all_q_live_before_destroy.json",
+    "record_sha256": "f0057c1657c233891d1591c95ebcabac4b224f01e1ad39cb1c9621cb486cb925",
+    "factor_live_count": 4,
+    "factor_q_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "factor_inventory_source": "native MUMPS INFOG19 allocated-byte upper and INFOG22 used-byte upper, read from each still-live factor immediately before destroy",
+    "per_q": [
+      {
+        "q": 0,
+        "allocated_bytes_upper": 1156000000,
+        "used_bytes_upper": 1015000000
+      },
+      {
+        "q": 1,
+        "allocated_bytes_upper": 1177000000,
+        "used_bytes_upper": 1033000000
+      },
+      {
+        "q": 2,
+        "allocated_bytes_upper": 1182000000,
+        "used_bytes_upper": 1037000000
+      },
+      {
+        "q": 3,
+        "allocated_bytes_upper": 1177000000,
+        "used_bytes_upper": 1033000000
+      }
+    ],
+    "allocated_bytes_upper_sum": 4692000000,
+    "used_bytes_upper_sum": 4118000000,
+    "last_live_process_tree_rss_sample_bytes": 10022801408,
+    "last_live_sample_label": "v12_all_q_live_before_destroy",
+    "all_q_factors_live_at_sample": true,
+    "post_destroy_zero_substituted": false,
+    "last_live_tree_rss_sample_before_destroy_bytes": 10022801408
+  },
+  "geometry_scale": {
+    "scale_vs_original_target": "7/135",
+    "period_x_nm": 2.5925925925925926,
+    "period_y_nm": 1.2962962962962963,
+    "z_min_nm": -0.5185185185185185,
+    "z_max_nm": 6.7407407407407405,
+    "z_span_nm": 7.2592592592592595,
+    "classification": "Gx560 is a scaled analytical 0.7 nm model, not the original 50×25×140 nm target field"
+  }
+}

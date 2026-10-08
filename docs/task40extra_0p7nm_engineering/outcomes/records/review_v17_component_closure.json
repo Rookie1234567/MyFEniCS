@@ -1,0 +1,206 @@
+{
+  "schema": "task40extra.review_v17_component_closure.v1",
+  "review": "V17",
+  "classification": "PASS_WITH_QUALIFICATIONS",
+  "checkout_at_documentation_start": {
+    "branch": "task40extra_0p7nm_engineering",
+    "head": "23626f44243d19d58af41d15a8ccafcba41ee54b",
+    "tracked_worktree_clean": true
+  },
+  "p1_same_array_local_recovery": {
+    "classification": "SAME_ARRAY_REPLAY_PASS",
+    "scope": "existing S2 saved complex128 matrices and RHS; no volume reassembly, global factor, or PDE",
+    "input_s2_arrays_sha256": "d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273",
+    "direct_lu_negative_result_preserved": {
+      "forward_tolerance": 1e-11,
+      "top_forward_relative": 2.202932653970648e-11,
+      "bottom_forward_relative": 2.42442721473547e-11,
+      "top_original_equation_relative": 9.733379503721583e-16,
+      "bottom_original_equation_relative": 1.1109276940915558e-15,
+      "status": "PRESERVED_DIRECT_LU_FAILURE"
+    },
+    "same_factor_residual_correction": {
+      "method": "recompute residual with complex256 accumulation against original complex128 Vii, reuse the existing factor, and accept only residual-improving updates; the reference state is validation-only",
+      "top_forward_relative": 5.3524732442130614e-14,
+      "bottom_forward_relative": 5.143310794873929e-14,
+      "top_original_equation_relative": 4.771522785641245e-16,
+      "bottom_original_equation_relative": 6.4138936400822925e-16,
+      "forward_tolerance": 1e-11,
+      "equation_tolerance": 1e-10,
+      "status": "PASS",
+      "max_extra_refinement_steps_per_face": 3,
+      "correction_trace": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_p1_s2_recovery_replay.json",
+        "sha256": "2a0d74d9ffb1ef93bc1a5d3ee9011e427fca8feff3bac59473bf0e635771b0c4",
+        "residual_matrix": "each residual is recomputed against the original saved complex128 Vii identified by the bound S2 arrays SHA d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273",
+        "faces": {
+          "top": {
+            "attempts": 2,
+            "accepted_updates": 1,
+            "trace": [
+              {
+                "iteration": 1,
+                "raw_Vii_relative_before": 9.151728203901806e-16,
+                "raw_Vii_relative_after": 3.3937974302632456e-17,
+                "accepted": true
+              },
+              {
+                "iteration": 2,
+                "raw_Vii_relative_before": 3.3937974302632456e-17,
+                "raw_Vii_relative_after": 3.51423409443378e-17,
+                "accepted": false
+              }
+            ],
+            "stop_reason": "second update did not improve the original-matrix residual"
+          },
+          "bottom": {
+            "attempts": 3,
+            "accepted_updates": 3,
+            "trace": [
+              {
+                "iteration": 1,
+                "raw_Vii_relative_before": 9.495669974614927e-16,
+                "raw_Vii_relative_after": 3.5843535991354405e-17,
+                "accepted": true
+              },
+              {
+                "iteration": 2,
+                "raw_Vii_relative_before": 3.5843535991354405e-17,
+                "raw_Vii_relative_after": 3.5528688228691424e-17,
+                "accepted": true
+              },
+              {
+                "iteration": 3,
+                "raw_Vii_relative_before": 3.5528688228691424e-17,
+                "raw_Vii_relative_after": 3.519514686938762e-17,
+                "accepted": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "independent_checker": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_p1_s2_recovery_independent_check.json",
+      "sha256": "c085e8f031385286c0e651fb5eeb25e8078986380a199707509a77fcc1f4a0af",
+      "checker_source_sha256": "1962cc96810c8838467b9d883240234e5781e7bd5217df1234f2ac65c012dfd6",
+      "status": "PASS",
+      "scope": "reopened original S2 arrays and recomputed direct/refined checks without importing the recovery helper"
+    },
+    "replay_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_p1_s2_recovery_replay.json",
+    "replay_sha256": "2a0d74d9ffb1ef93bc1a5d3ee9011e427fca8feff3bac59473bf0e635771b0c4",
+    "refined_vectors_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_p1_s2_recovery_vectors.npz",
+    "refined_vectors_sha256": "f7a853d1f79765734960a72bbc406b8e86744052c2d3bb7fab06a586d64137e4"
+  },
+  "p4_raw_D_and_plane_readback": {
+    "raw_D_status": "PASS",
+    "scope": "independent analytic D on all 882 native rows and 16,030 ordered keys on each of top and bottom (32,060 face-mode pairs total); saved-RHS original/reduced port equations",
+    "top_q60_action_relative": 4.325468935680353e-14,
+    "bottom_q60_action_relative": 2.2866019572437855e-14,
+    "top_port_equation_relative": 6.468632249722775e-15,
+    "bottom_port_equation_relative": 5.082139715645546e-15,
+    "raw_D_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_d_raw_rows_and_port_replay_attempt01.json",
+    "raw_D_sha256": "9003be06d24c4f38afa010abd73d83cd33b2d961b174e2e09b589c9a7a628439",
+    "plane_readback_status": "PASS",
+    "plane_readback_scope": "saved-vector phase/Hp readback; no area integration, volume reassembly, or target solve",
+    "phase_max_per_key_relative": 3.725717876730251e-16,
+    "HpT_max_per_key_relative": 4.547473508864643e-16,
+    "plane_gate": 1e-12,
+    "plane_readback_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/review_v17_d_plane_scale_readback_attempt02.json",
+    "plane_readback_sha256": "edd1257598526da8e697ab3b18797688ce62bfedcb6e09c8a0dcbdc34642d9b8",
+    "ordered_mode_count_per_face": 16030,
+    "ordered_mode_count_across_both_faces": 32060,
+    "mode_count_semantics": "16,030 modes on top plus 16,030 modes on bottom; 32,060 face-mode pairs total"
+  },
+  "p2_ny8_native_maps_and_action": {
+    "source_head": "d790964079628e7fadaa84354bc209db4262ecb9",
+    "component_driver_sha256": "1076f70ac083182c671c42e9e8f5de1b46511bdf1528b037e4d4241da3418919",
+    "geometry": {
+      "global_Ny": 8,
+      "local_ell": 2,
+      "K": 4,
+      "global_cells": 160,
+      "local_cells_per_twist": [
+        40,
+        40,
+        40,
+        40
+      ],
+      "mode_count": 532,
+      "mapping_tolerance": 1e-12
+    },
+    "native_map_inventory": {
+      "global_q_coverage": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "all_FE_q_covered": true,
+      "all_ordered_modes_covered_once": true,
+      "interior_edge_face_maps_complete": true,
+      "q_port_counts": [
+        76,
+        76,
+        76,
+        76,
+        0,
+        76,
+        76,
+        76
+      ],
+      "empty_port_q_indices": [
+        4
+      ],
+      "interpretation": "q=4 has an empty port-mode set; it is not a missing FE q sector. No threshold change is justified by this inventory."
+    },
+    "saved_action_component": {
+      "worker_classification": "WORKER_FAILED",
+      "raw_component_status": "PARTIAL_COMPONENT",
+      "scope": "regular reference only; finite action witness, no global matrix, factor, KSP, void action, or target solve",
+      "full_offdiagonal_operator_gate": "NOT_QUALIFIED",
+      "raw_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/ny8_fe_component_attempt02/review_v17_ny8_fe_component.json",
+      "raw_sha256": "feeaeff40494d9a8b14262d70781b17100a1e39a18f987ac48d95b24a6c271a2",
+      "arrays_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/ny8_fe_component_attempt02/review_v17_ny8_fe_component_arrays.npz",
+      "arrays_sha256": "95e72213d0aea313674a6b052e839c24d9f233c00940420bed3114ddc0979a74",
+      "saved_raw_offline_readback": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/ny8_fe_component_attempt02/offline_readback_v1.json",
+        "sha256": "02084e384a90533f53ad33b27bc231bec125c5b03cd624b86a1deab8969d61af",
+        "status": "PASS"
+      }
+    },
+    "separate_FE_rhs_component": {
+      "status": "PASS_ACTUAL_RHS_FOLD_LIFT_GAUGE",
+      "driver_sha256": "e0fb09aa2f38785c99b7c512d6d13109bd632e0317863d5c1229b0cff38366e9",
+      "all_mode_C_alpha_scope": "one fixed nonzero vector witness, not complete operator-column qualification",
+      "q_port_counts": [
+        76,
+        76,
+        76,
+        76,
+        0,
+        76,
+        76,
+        76
+      ],
+      "independent_saved_vector_recheck": {
+        "passed_checks": 26,
+        "scope": "16 FE source-fold, 8 adjoint-work, and 2 reconstruction checks; no FE/operator replay",
+        "max_source_fold_defect": 3.94437317395915e-15,
+        "max_work_defect": 3.7705259620309634e-18,
+        "max_four_twist_reconstruction_defect": 6.234604217492644e-16,
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/ny8_fe_rhs_attempt02/controller_saved_vector_recheck.json",
+        "sha256": "8b01c7280161a4084100a838a886fe0c42421a7ed9dfe5988b1078fc2918b306"
+      },
+      "result_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/ny8_fe_rhs_attempt02/ny8_fe_rhs_result.json",
+      "result_sha256": "d9fb4e5945a2c44894256c1eb80d636c932e96d5b380a680f90485dadca318cd",
+      "arrays_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/ny8_fe_rhs_attempt02/ny8_fe_rhs_arrays.npz",
+      "arrays_sha256": "5bf99b7e5ce6e6ed0706416cdbabd00692542eab6de91e5c981c2eca52c3bee1"
+    },
+    "qualification_boundary": "Ny8 mapping and RHS fold/lift/gauge evidence are useful component results; the maps/action component remains partial, and no Ny8 target KSP, full matrix equivalence, full C columns, or official R/T/A were run."
+  }
+}

@@ -1,4 +1,35 @@
-# Task40extra 当前进展：Review V16 的 Gx560 完整解通过，E1 未准入，端口恢复组件失败
+# Task40extra Review V17 项目进展：Gx560 p6 通过，Ny=8 得到部分组件资格，E1 保持待核验
+
+Task40 的目标仍是 0.7 nm 波长、50×25×140 nm 的真实非可分三维 Maxwell 问题，使用 p6 Nédélec 空间、x/y Floquet 周期和 z Fourier-DtN 边界；工程目标是让一场完整计算能在约 2 TB 十进制物理内存和 48 h 内完成。V16 已在较小 Gx560 网格上得到稳定完整解，但 E1 没有进入数值因子，原尺寸的 q 矩阵、同时存活对象、精度和完整耗时仍缺证据。V17 因此同时补构建方法、一般 Ny 组件和一个必要 Gx560 anchor。
+
+## V17 实施和证据
+
+稀疏矩阵只存非零项。旧 pattern 做法先为完整行列形状分配位图，即使最终矩阵很稀疏，位图仍随行列乘积增长。V17 的 row-tile 路线改为分段处理输出行，再将本段的实际列位置写入 CSR。B0 p6 组件实际比较了两个 sector 的 00/01/10/11 全块，结果与 legacy 数值等价；candidate 总装配 `60.538 s`，legacy `59.266 s`，因此没有把这次功能通过称为性能提升。B0 没有因子或完整 target solve。另有 hash-bound 50,000-row software fixture：00/01/10/11 四块全过，`1 passed`；旧 full-shape 位图每块需 312.5 MB，高于 256 MiB staging 合同。该 fixture 不构造 FE/全局因子，只证明 builder 的软件形状能力，不证明目标容量。
+
+S2 的局部恢复问题也在同一组保存矩阵和右端项上重新核验。直接 LU 的方程残差很小，但 top/bottom 已知态前向误差 `2.203e-11/2.424e-11` 超过 `1e-11`；残差修正复用同一因子，每面最多三次，仅当更高精度累计的原始 `Vii` 残差下降时才接受更新。top 尝试 2 次、接受 1 次，bottom 接受 3 次；最后前向误差为 `5.352e-14/5.143e-14`。逐次 raw-matrix 残差轨迹绑定在 replay receipt。原直接 LU 负值仍保留，因此这一结果只关闭两个已保存小系统的恢复路径。
+
+P4 的 independent D checker 对 top/bottom 两面各 16,030 个有序通道（两面共 32,060 face-mode pairs）和每面全部 882 个本地原生行重算；端口方程通过。plane phase 与 Hp 读回的最大逐 key 相对误差不到 `4.55e-16`。这些是全保存代表面读回结果，不是目标全局作用矩阵或完整 PDE。
+
+Ny=8 使用两个 y 单元作为局部窗。实际 FE 映射读回得到四个平移副本（`K=4`），总共八个 global q，所有 FE q 均覆盖。每 q 的端口模式数量中 q=4 为 0，但 inventory 显示这是空端口集合，不是 FE q 缺失；冻结 source `d790964079628e7fadaa84354bc209db4262ecb9` 已处理空端口分支，FE q=0…7 全覆盖，原 `1e-12` mapping 门继续适用。实际 FE RHS 的 fold/lift/gauge 和独立保存向量复算通过。不过 maps/action worker 的整体记录仍是 `WORKER_FAILED` / `PARTIAL_COMPONENT`，全 off-diagonal 算子门未关闭；一个固定 `C alpha` RHS 也不代表完整 C 算子列。没有 Ny=8 target KSP、因子或官方 R/T/A。
+
+V17 在冻结 row-tile 路线上运行了必要 Gx560 p6 anchor，完成 560-cell、340-mode Full3D 解。该 Gx560 是原尺寸 `50×25×140 nm` 按 `7/135` 缩小后的解析模型，实际 x/y 周期为 `2.5925925926/1.2962962963 nm`，z 范围为 `[-0.5185185185,6.7407407407] nm`，不代表原尺寸场。A6 `4.7044300024e-9` 与独立 native witness `4.7043098759e-9` 通过 `1e-6` 门；官方 R/T/A、体吸收一致性、V16 同离散比较和 attempt04 checker 均通过。attempt04 的 assembly 与 allocation-ledger guards 非空且通过，checker 未重放 operator；旧基础输出 receipt 的 guard 槽为空，不替代该检查。R00 分开报告 s、p 和合计，避免把极小 p 通道与 s 通道合并成无说明的单值。这个 anchor 验证真实 production path 的小尺寸物理解，不证明连续收敛或 E1 容量。
+
+## 资源与未闭合项
+
+Gx560 run_case parent worker interval 为 `2112.6819 s`，watchdog interval 为 `2112.5596 s`；它们不是可直接相加的时间。该 run tree RSS 峰为 `10.134 GB`，专用 cgroup peak 为 `11.170 GB`，任务 tree/cgroup swap 均为 0，PSS 未采样。WSL 全局 swap 页数变化不能归属到本任务。worker 后的 checker/readback 修复和保存场对比没有完整纳入单场 cold key path，所以完整单场时间仍 unknown。
+
+目标拓扑按当前几何 recipe 实测为 15,232 cells，但没有建立目标 p6 FE space 或数值矩阵。full-storage rows `10,228,620` 与 periodic-independent rows `9,948,672` 是基于实测拓扑和 224-cell native 校准派生的计数，不是目标 FE DoF 实测。一个 224-cell native p6/MPC 校准支持按 q 推导保守结构 nnz 上界；int32 安全只针对该结构上界，真实数值 nnz、CSR indptr 和 factors 仍 unknown。E1 记录当前有 156 raw 和 231 oriented geometry classes、5.559 GB assembly workspace formula 和 2.877 GB retained-owner formula；这些公式分属不同生命周期，不能替代同时峰值。没有 E1 完整 phase-overlap owner ledger 或 post-destroy OS/cgroup 测量，因此 E1 保持 `HELD_INCOMPLETE_CURRENT_OWNER_EVIDENCE`。旧 V15 `19.193 GB` projection 是历史值，不是本轮新实测，也没有因 V17 产生新的资源停止。
+
+## 最终判断与下一步
+
+V17 通过 Gx560 离散求解和物理输出，关闭了 S2 保存数组的局部恢复回退，补齐了 P4 保存数据的独立 D/plane 读回，并取得 Ny=8 map/RHS 组件证据。row-tile 构建在 B0 四块组件中通过数值等价门，但本模型下没有速度优势。E1、全尺寸因子与冷启动成本尚未资格化，原 2 TB / 48 h 目标仍 `NOT_QUALIFIED`。ordinary default 未改，未批准 master 合并。
+
+下一轮应先补全当前 owner 阶段交叠账，覆盖 volume、raw/oriented tensor、Schur/cache、factor、恢复和输出对象，再决定是否有足够当前余量进入 E1 的原路线。目标结构 NNZ 仍是保守派生上界；V17 已有 50,000-row hash-bound fixture 跨过旧位图形状限制，但它只验证软件结构能力，不替代目标 FE/容量证据。Ny=8 继续工作应处理全 off-diagonal gate 和完整 C 作用范围，不因 q=4 端口为空而放宽 FE 映射门。
+
+V17 固定窗口的 API observation（sequence `11474`，`2026-10-08T06:54:16.097512Z`）记累计 charge `22,569.02541851903 s`、remaining numerical budget `63,230.97458148097 s`；它是包含工程/等待/执行的相邻时钟预算 as-of snapshot，不是 PDE CPU。V16 历史窗口累计 `85,892.89690395721 s`、剩余 0，窗外准备成本仍 unknown。
+
+完整结果见 [Task40 V17 response](task40extra_0p7nm_engineering/response_v17.md)、[结果总账](task40extra_0p7nm_engineering/outcomes/summary.md)、[测试摘要](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json) 和 [模型登记](development_model_registry.md)。这些记录只整理当前 Task40 执行分支；执行者未 commit/push，由主控集中审核和处理。
+# Task40extra Review V16 历史进展（原文保留）
 
 **任务身份。** Task40extra_0p7nm_engineering，分支 `task40extra_0p7nm_engineering`。V16 review base 为 `f59884b1a98b329cfce2a3de8307dd3db8560520`；P5 离线收口开始时本地 HEAD 为 `3fffbddc3ebdf597cf25eed5600095d09f24d918`。Gx560 正式计算绑定数值源码 `54b98a871632a1eef1c34e3542788f5859ee255c`，P4 的 Hhat 向量 helper 是另一项独立组件。当前 classification 是“Gx560 离散解及物理输出通过；V16/V15 同离散场比较通过；E1 未获预构建准入；P4 组件门失败；原尺寸目标仍未资格化”。V16 review 尚待主控最终审查；没有合入 master，也没有改变 ordinary default。
 
@@ -88,7 +119,7 @@ S5使用完整882行，在top/bottom两个冻结代表面覆盖全部32,060个�
 ---
 # Task40extra 历史进展：Review V10 B0 p6残差通过、物理能量门失败；目标仍未资格化
 
-V10完成了A边界V1/V2复核及B0 p6真实三维小模型的逆算子分量检查、物理解和保存输出恢复。B0模型为80 cells、两单元三维void、y方向四个q相位；p6只用于预条件器背景填回缺口，target与RHS不变。四个完整p6准确LU同时保留，为缺口target修正方向，并恢复36,000个内部未知量，成本是额外factor内存与setup。三步true residual `1.6089774391665316e-8`通过`1e-6`，但energy closure `6.581916436299018e-5`高于`1e-5`，所以没有official R/T/A，C依Review V10 §5为`HELD_NOT_RUN`。
+V10完成了A边界V1/V2复核及B0 p6真实三维小模型的逆算子分量检查、物理解和保存输出恢复。B0模型为80 cells、两单元三维void、y方向四个q相位；p6只用于预条件器背景填回缺口，target与RHS不变。四个完整p6准确LU同时保留，为缺口target修正方向，并恢复36,000个内部未知量，成本是额外factor内存与setup。三步true residual `1.6089774391665316e-8`通过`1e-6`，但energy closure `6.581916436299018e-5`高于`1e-5`，所以没有official R/T/A，C依Review V10 `5为`HELD_NOT_RUN`。
 
 A方面，旧checker因32,060/16,030通道数混淆误将p4 top判为FAIL，原记录保留；V1 frozen-scale recheck纠正该项为PASS，p6 top仍FAIL，V2补齐bottom。p4上下恢复前向误差均低于`1e-11`；p6两侧分别`2.202932653970648e-11`与`2.42442721473547e-11`，超限的是已知场恢复前向误差，不是原方程残差。q60五类有限见证通过；旧q30结果不自动否决q60。A当前不资格化仅因p6恢复门。
 

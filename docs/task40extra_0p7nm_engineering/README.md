@@ -1,6 +1,22 @@
 # Task40extra：0.7 nm工程方法（笔记本起步）
 
-## Review V16 当前交付
+## Review V17 当前交付
+
+V17 在 Gx560 p6 上完成必要的 Full3D 离散解，官方物理输出和 V16 同离散保存场比较通过。该 Gx560 几何是原尺寸 `50×25×140 nm` 按 `7/135` 缩小后的 0.7 nm 解析模型（x/y 周期约 `2.59259/1.29630 nm`，z=`[-0.51852,6.74074] nm`），不是原尺寸场。Ny=8 的映射和 FE RHS 有组件证据，但 maps/action 仍为部分资格；E1 与原尺寸目标仍 `NOT_QUALIFIED`。
+
+| 文件 | 内容 |
+|---|---|
+| [Response V17](response_v17.md) | P1–P5 结果、缩小模型身份、成本/资源、负结果与资格边界 |
+| [Review V17](review_report_v17.md) | 本轮执行合同、资源/数值 Gate 与交付要求 |
+| [V17 component closure](outcomes/records/review_v17_component_closure.json) | S2 恢复、P4 D/plane、Ny=8 maps/RHS 组件 |
+| [V17 sparse capacity](outcomes/records/review_v17_sparse_capacity.json) | B0 row-tile、50k 行 fixture、目标结构上界与容量边界 |
+| [V17 formal results](outcomes/records/review_v17_formal_results.json) | Gx560 正式结果、attempt04 checker、KSP/factor 和对照 |
+| [V17 cost and readiness](outcomes/records/review_v17_cost_and_readiness.json) | 固定窗口、V16/V17 观察比较、E1 与原尺寸 readiness |
+| [V17 outcomes summary](outcomes/summary.md) | 结果、资源成本、负结果和选择性审查边界 |
+| [V17 test summary](outcomes/test_summary.md) | 按 source/范围分列的测试与文档检查 |
+| [V17 run index](outcomes/records/run_index.json) | V17 正式运行、收口测试、文档/原始证据哈希索引 |
+
+## Review V16 历史交付
 
 V16 在 Gx560 上完成了新的有界 CSR 构建路线和完整 p6 target 求解；与 V15 的同离散场/模式比较通过。E1 未获预构建准入。P4 完成两个保存面上的 32,060 模式向量作用，但原 known-state forward recovery gate 失败。目标 2 TB / 48 h、一般 Ny 与 y/z 精度仍未资格化。
 

@@ -1,0 +1,175 @@
+{
+  "schema": "task40extra.review_v17_cost_and_readiness.v1",
+  "review": "V17",
+  "classification": "E1_HELD_INCOMPLETE_CURRENT_OWNER_EVIDENCE",
+  "fixed_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/campaign_window_v17.json",
+    "sha256": "83f47e542dc28309d398a55c6b7e1b1ca76dab25dead854d88cc6feb6758ed24",
+    "t0_utc": "2026-10-08T00:38:07.073088478Z",
+    "deadline_utc": "2026-10-09T00:38:07.073088478Z",
+    "note": "fixed V17 window; T0/deadline remain unchanged, and the separately recorded API observation below is only an as-of snapshot"
+  },
+  "measured_run_costs": [
+    {
+      "stage": "B0 p6 four-block row-tile component",
+      "worker_seconds": 720.831887189,
+      "watchdog_seconds": 722.8225857069483,
+      "tree_rss_peak_bytes": 1523130368,
+      "cgroup_memory_peak_bytes": 1899237376,
+      "task_and_cgroup_swap_peak_bytes": 0,
+      "status": "PASS_COMPONENT; no factor or target solve"
+    },
+    {
+      "stage": "Ny8 regular-reference FE maps/action component",
+      "worker_seconds": 35.949983139988035,
+      "tree_rss_peak_bytes": 939491328,
+      "cgroup_memory_peak_bytes": 1131442176,
+      "task_and_cgroup_swap_peak_bytes": 0,
+      "status": "WORKER_FAILED with saved PARTIAL_COMPONENT evidence; full off-diagonal gate not qualified",
+      "watchdog_seconds": 37.89311057294253,
+      "time_intervals_are_distinct_and_not_added": true
+    },
+    {
+      "stage": "Ny8 actual FE RHS fold/lift/gauge component",
+      "worker_seconds": 18.101627569063567,
+      "tree_rss_peak_bytes": 848908288,
+      "cgroup_memory_peak_bytes": 1045168128,
+      "task_and_cgroup_swap_peak_bytes": 0,
+      "status": "PASS_ACTUAL_RHS_FOLD_LIFT_GAUGE; overall Ny8 qualification remains false",
+      "watchdog_seconds": 19.994534377008677,
+      "time_intervals_are_distinct_and_not_added": true
+    },
+    {
+      "stage": "Gx560 V17 formal worker",
+      "run_case_parent_monotonic_seconds": 2112.6819485890446,
+      "watchdog_elapsed_seconds": 2112.5595620619133,
+      "tree_rss_peak_bytes": 10133843968,
+      "cgroup_memory_peak_bytes": 11170443264,
+      "task_and_cgroup_swap_peak_bytes": 0,
+      "PSS": "not sampled",
+      "status": "PASS; parent workflow and watchdog intervals reported separately",
+      "ksp_solve_only_seconds": 71.630558198,
+      "ksp_solve_only_scope": "PETSc.KSP.solve_only; separate from parent workflow and setup",
+      "q_numeric_factorization_seconds": [
+        4.063932026969269,
+        3.9535235130460933,
+        4.011221484979615,
+        4.408179771970026
+      ],
+      "q_numeric_true_residual": [
+        1.521871683305634e-11,
+        2.630867002059187e-12,
+        9.170847667258265e-13,
+        2.766980725709692e-12
+      ],
+      "all_q_live_factor_allocated_upper_bytes": 4692000000,
+      "all_q_live_factor_used_upper_bytes": 4118000000,
+      "last_live_tree_rss_sample_before_destroy_bytes": 10022801408
+    }
+  ],
+  "target_and_E1_inventory": {
+    "target_geometry_only": {
+      "cells": 15232,
+      "p6_full_storage_rows": 10228620,
+      "p6_periodic_independent_rows": 9948672,
+      "status": "measured geometry/topology only; target FE space and operator not built",
+      "p6_row_counts_classification": "derived from measured target topology plus the measured 224-cell native P6/MPC calibration; target P6 FE space was not built",
+      "target_p6_rows_measured": false
+    },
+    "target_q_support": {
+      "status": "derived conservative bound from a measured 224-cell native calibration",
+      "q_rows": [
+        781500,
+        781604,
+        781624,
+        781604
+      ],
+      "structural_nnz_upper": [
+        1766802960,
+        1784757520,
+        1788212800,
+        1784757520
+      ],
+      "four_q_distinct_payload_upper_bytes": 142503121344,
+      "four_q_total_is_simultaneous_owner_peak": false,
+      "int32_structural_upper_bound_gate": "PASS",
+      "numerical_CSR_or_factor": "not_run"
+    },
+    "E1_geometry_owner_inventory": {
+      "cells": 760,
+      "raw_geometry_classes": 156,
+      "oriented_geometry_classes": 231,
+      "assembly_workspace_payload_upper_bytes": 5559442632,
+      "retained_numeric_owner_formula_after_assembly_bytes": 2877242904,
+      "retained_bytes_per_oriented_class": 12448584,
+      "release_credit_bytes": 0,
+      "classification": "derived stage payload formulas; no current total simultaneous RSS projection"
+    },
+    "held_reason": "the current record still lacks a complete phase-overlap ledger for all live volume, raw/oriented tensor, Schur/cache, factor, recovery, and output owners; no current E1 post-destroy OS/cgroup release measurement is available",
+    "historical_projection": {
+      "bytes": 19192602560,
+      "classification": "historical V15 projection only; not a V17 measurement or updated E1 estimate"
+    }
+  },
+  "production_readiness": {
+    "E1_status": "HELD_INCOMPLETE_CURRENT_OWNER_EVIDENCE",
+    "E1_run": "not_run",
+    "E1_new_resource_stop": false,
+    "full_target_q_csr_and_numeric_factor": "not_run",
+    "full_single_case_cold_critical_path": "unknown because required checker/readback and field-comparison time were not fully bounded to the worker interval",
+    "2_TB_48_h_target": "NOT_QUALIFIED",
+    "ordinary_solver_default_changed": false,
+    "master_merge_approved": false
+  },
+  "campaign_accounting": {
+    "api": "src.runners.task40_v10_campaign.load_fixed_campaign_window(...).observe(label=controller_v17_final_documentation_observation)",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_campaign_closeout_observation_v17.json",
+    "receipt_sha256": "f0a2e82cb181ca55f8846a4f018b52c4cb16d76111671308a5709692b1be0040",
+    "observation_utc": "2026-10-08T06:54:16.097512+00:00",
+    "accounting_sequence": 11474,
+    "fixed_window_sha256": "83f47e542dc28309d398a55c6b7e1b1ca76dab25dead854d88cc6feb6758ed24",
+    "cumulative_charge_seconds": 22569.02541851903,
+    "remaining_numerical_seconds": 63230.97458148097,
+    "charge_semantics": "conservative adjacent-clock budget charge for the whole fixed window, including engineering, waiting, and execution elapsed; not PDE CPU and not the sum of formal run times",
+    "observation_status": "as_of_snapshot; documentation and approval work after the observation continues accruing in the same fixed window"
+  },
+  "historical_v16_campaign_accounting": {
+    "observation_label": "review_v16_p5_closeout",
+    "cumulative_charge_seconds": 85892.89690395721,
+    "remaining_numerical_seconds": 0,
+    "historical_preparation_outside_bound_windows": "unknown_preserved",
+    "source": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v16_cost_and_readiness.json#fixed_campaign_window.final_observation"
+  },
+  "same_scope_v16_v17_observed_worker_comparison": {
+    "scope": "Gx560 formal worker parent monotonic interval, process-tree RSS peak, and dedicated cgroup memory peak",
+    "v16": {
+      "source_sha": "54b98a871632a1eef1c34e3542788f5859ee255c",
+      "parent_monotonic_seconds": 2274.267412469024,
+      "process_tree_rss_peak_bytes": 10204880896,
+      "cgroup_memory_peak_bytes": 11907702784,
+      "allocated_factor_upper_bytes": 4692000000
+    },
+    "v17": {
+      "source_sha": "cbdcc12812b439f5252949ad1279331b86a2dbb6",
+      "parent_monotonic_seconds": 2112.6819485890446,
+      "process_tree_rss_peak_bytes": 10133843968,
+      "cgroup_memory_peak_bytes": 11170443264,
+      "allocated_factor_upper_bytes": 4692000000
+    },
+    "v17_minus_v16": {
+      "parent_monotonic_seconds": -161.58546387997922,
+      "parent_monotonic_percent": -7.1049456626807315,
+      "process_tree_rss_bytes": -71036928,
+      "process_tree_rss_percent": -0.6961073698355882,
+      "cgroup_memory_bytes": -737259520,
+      "cgroup_memory_percent": -6.191450470116134
+    },
+    "attribution_limits": [
+      "single-run comparison does not establish causality or attribute observed change to row-tile assembly speed",
+      "CPU supply and host conditions are not controlled/recorded comparably; host-global swap is not attributable",
+      "V17 checker repair/readback and saved-field comparison are outside the worker interval",
+      "full single-case cold critical path remains unknown"
+    ],
+    "factor_inventory_note": "V17 all-q allocated/used inventory is independently recorded in the factor receipt; no setup time or residual phase duration is inferred by subtracting from parent workflow."
+  }
+}

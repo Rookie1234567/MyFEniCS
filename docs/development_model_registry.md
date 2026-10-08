@@ -1,4 +1,19 @@
-# Task40extra 当前模型登记：Review V16 Gx560 target 通过，E1 未准入，P4 组件门失败
+# Task40extra 当前模型登记：Review V17 Gx560 p6 正式解通过，Ny=8 组件部分通过，E1 未准入
+
+| 模型 / 阶段 | source 与身份 | 实测 / 派生结果 | 当前资格边界 |
+|---|---|---|---|
+| Gx560 V17 Full3D p6 target | numeric source `cbdcc12812b439f5252949ad1279331b86a2dbb6`；原尺寸按 `7/135` 缩小（x/y 周期 `2.5925925926/1.2962962963 nm`，z=`[-0.5185185185,6.7407407407] nm`），不是原尺寸场；560 cells（10×4×14）、p6、340 ordered modes、4 q；输入 SHA `fbe888b0b3dc6050911417271c835b130159e5d316ecbead0d8e75daa2a859da`；physical model SHA `d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98` | q rows `28508/28508/28576/28508`；NNZ 总计 62,024,788；A6/native `4.704430002e-9/4.704309876e-9`；R/T/A_balance/A_volume `0.07612406709/0.90576922010/0.01810671281/0.01810671258`；3 步；V16 同离散比较通过；attempt04 checker SHA `3131b161…3637492` | 完整离散求解、物理输出和非空 assembly/allocation guards 通过；checker 不重放 operator；不是 continuum convergence 或目标容量资格 |
+| B0 V17 p6 row-tile 四块组件及 50k 软件边界 fixture | component source `ca913307d3cdd5a455c2718138bf2089151b3887`；80 cells（4×4×5）、p6、532 modes、4 q；fixture source/builder SHA 由 receipt 绑定 | 两 sector 00/01/10/11 全块与 legacy 等价；candidate `60.538 s`、legacy `59.266 s`；最大同时 scratch `53,684,424 B` / 限值 `268,435,456 B`；50,000-row boundary fixture 四块通过，`1 passed` | `PASS_COMPONENT`；无 factor/KSP/target solve；50k fixture 只证明软件 shape 能力，不证明目标容量 |
+| S2 保存局部恢复 | 原始 S2 数组 SHA `d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273`；独立 checker source SHA `1962cc96810c8838467b9d883240234e5781e7bd5217df1234f2ac65c012dfd6` | 直接 LU 前向误差 `2.203e-11/2.424e-11`；top 2 次尝试/1 次接受，bottom 最多 3 次/3 次接受；同因子修正后 `5.352e-14/5.143e-14` | 每次残差都重算于原始 `Vii`；保存局部 refined candidate 通过；直接 LU 失败保留，不推广至全部 production cells |
+| P4 D 与 plane/Hp | raw D、plane checker 使用已存 S2/S5/V16 arrays；每面 16,030 modes、两面共 32,060 face-mode pairs；每面完整 882 native rows | 独立 D/q60 与端口方程通过；phase/Hp 最大逐 key 相对差 `<4.55e-16` | 全代表面和现有有序模式的组件读回，不是全目标全局矩阵或 operator norm |
+| Ny=8 native maps/action | source `d790964079628e7fadaa84354bc209db4262ecb9`；`Ny=8, ell=2, K=4`、160 global cells、532 modes | 所有 FE q=0…7、ordered mode keys 均有唯一覆盖；q 端口数 `[76,76,76,76,0,76,76,76]`；mapping `1e-12` 通过 | q=4 端口集为空，不是 FE sector 缺失；maps/action `PARTIAL_COMPONENT` 且 worker `WORKER_FAILED`，全 off-diagonal 门未关闭 |
+| Ny=8 actual FE RHS | driver SHA `e0fb09aa2f38785c99b7c512d6d13109bd632e0317863d5c1229b0cff38366e9`；PETSc complex128/int32、MPI1 | independent readback 26 项通过；source fold/work/reconstruction 最大误差分别 `3.944e-15/3.771e-18/6.235e-16` | 真实 RHS fold/lift/gauge 组件通过；一个固定 C alpha 向量不是 full C columns，也没有 Ny=8 target KSP 或 R/T/A |
+| 原尺寸拓扑与 q support | target receipt `target_p4_topology_support_attempt02.json`；15232-cell geometry/topology 实测；224-cell native calibration | p6 full-storage/independent rows `10,228,620/9,948,672` 为拓扑与校准派生，非目标 FE DoF 实测；结构 support 派生 bounds；int32 upper-bound check pass | 实际目标 p6 space、数值 q CSR/NNZ、Schur、factor 和 PDE 均未构造；support 值是 derived upper bounds |
+| E1 V17 owner/readiness | 原 E1 760 cells；当前 measured geometry class counts 156 raw、231 oriented | workspace payload 上界 5.559 GB；assembly 后 retained-owner 公式 2.877 GB；release credit 0 | `HELD_INCOMPLETE_CURRENT_OWNER_EVIDENCE`；缺完整 simultaneous live-owner 生命周期账；V15 的 19.193 GB 不是 V17 新测量 |
+| 原尺寸目标与 production default | 0.7 nm，50×25×140 nm 非可分三维模型；资源目标 2 TB 十进制 / 48 h | V17 未跑全目标求解；没有全流程精度和 cold critical path | `NOT_QUALIFIED`；ordinary default 未改，master 未合并 |
+
+详细数值、计时口径、原始证据路径与 hash 见 [Review V17 response](task40extra_0p7nm_engineering/response_v17.md)、[outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。V16 及更早登记留在下方历史部分。
+# Task40extra V16 历史模型登记（原文保留）
 
 | 模型 / 阶段 | source 与身份 | 实测/派生结果 | 当前资格边界 |
 |---|---|---|---|
@@ -191,7 +206,7 @@ G0/G1/direct 的 watchdog process-tree swap 峰均为0，PSS按profile禁用；d
 
 R1 定位的缺陷是局部算子缓存键把精确单元宽度舍入到12位；修复按精确几何键索引，未更改方程或 strict Gate。attempt4的负分类不重写。新 G0/G1 与 direct 的官方结果支持本缩小离散模型，不外推约2TB目标。80-mode截断仍未资格化，continuum convergence也未建立。
 
-下一轮唯一主候选按任务书 §8.1 选择有界局部问题加多层全局波动纠错，新增传播/接口/粗空间修正并把全部局部因子总量设上限；不把 Task39 已有42宏块 complete-PC 换名重做。Task39 V11 fresh complete-PC residual/field negative evidence 已将旧方向排除为 production candidate，见 [Task39 selective manifest V11](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v11.md)。具体粗空间和传播机制、局部边界与p4比较次序需下一 review 冻结；本轮不执行 Phase II、不选 production default、不合并 master。
+下一轮唯一主候选按任务书 `8.1 选择有界局部问题加多层全局波动纠错，新增传播/接口/粗空间修正并把全部局部因子总量设上限；不把 Task39 已有42宏块 complete-PC 换名重做。Task39 V11 fresh complete-PC residual/field negative evidence 已将旧方向排除为 production candidate，见 [Task39 selective manifest V11](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v11.md)。具体粗空间和传播机制、局部边界与p4比较次序需下一 review 冻结；本轮不执行 Phase II、不选 production default、不合并 master。
 
 ---
 
@@ -1812,11 +1827,11 @@ MPI8 direct MUMPS、assembly-time static condensation、zero swap：
 最小 `76,205` DoF 候选仍高于 preferred `75,000` 上界，并且物理 Gate
 失败；不得因资源正信号将其登记为 same-error hp success。
 
-Task035d `task.md` §3.2 的统一控制组没有遗漏：global p6/p5 h10、
+Task035d `task.md` `3.2 的统一控制组没有遗漏：global p6/p5 h10、
 Task035 p4→p5 DWR theta0.7、Task035b fixed h15/h14/h13，以及 Task035d
 p-only、h-only、combined resource best 和 final discriminator 的
 DoF/rows/NNZ/peak/channel/status 对照集中登记在 Task035d
-`outcomes/summary.md` §4.1。Task035 tetra DWR 与 global p5 缺少同一
+`outcomes/summary.md` `4.1。Task035 tetra DWR 与 global p5 缺少同一
 Case095 12-channel/peak 口径的字段均明确写为未记录，不由其他量推断。
 
 ### 3.39.3 弱通道失败总账

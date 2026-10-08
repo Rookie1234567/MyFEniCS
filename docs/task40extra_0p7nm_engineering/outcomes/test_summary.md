@@ -1,4 +1,22 @@
-# Task40extra Review V16 测试与文档检查摘要
+# Task40extra Review V17 测试与文档检查摘要
+
+| 阶段 / source | 收据与身份 | 结果 | 证据边界 |
+|---|---|---|---|
+| V17 launcher/run_case 定向测试 | `controller_launcher_fix_targeted_tests.log`，SHA-256 `96dab9f740872a28a33c77003b581f80e67774e93344bafafb58bf2302d2e0da`；针对精确 V17 launcher route 修复，之后冻结于 `cbdcc12812b439f5252949ad1279331b86a2dbb6` | 24 passed、18 deselected，0.16 s | 只测 launcher/run_case 路由；不是 solver 或完整 V17 suite |
+| Ny=8 ABI/import preflight | 资格化 Task40 C1 activation；PETSc complex128/int32、MPI1；receipt `executor_v17_p2_final_targeted_preflight.json` | `IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION` | 只检查 import/scalar/MPI API；无 FE 构造或 action |
+| P1 S2 independent saved-vector checker | checker source SHA `1962cc96810c8838467b9d883240234e5781e7bd5217df1234f2ac65c012dfd6`；原 S2 arrays SHA `d656ff94510836a0592ff36f3579c2c46cbfbd5ae77695228488b5cc25024273`；replay SHA `2a0d74d9ffb1ef93bc1a5d3ee9011e427fca8feff3bac59473bf0e635771b0c4` | direct LU top/bottom forward `2.2029e-11/2.4244e-11` 超过 `1e-11`；top 2 次尝试/1 次接受，bottom 3/3；refined `5.3525e-14/5.1433e-14` 通过 | 只重算保存 S2 数组并对原 complex128 `Vii` 重算残差；保留直接 LU 负结果，不是新 PDE |
+| P4 D / plane readback checker | raw D receipt SHA `9003be06d24c4f38afa010abd73d83cd33b2d961b174e2e09b589c9a7a628439`；plane receipt SHA `edd1257598526da8e697ab3b18797688ce62bfedcb6e09c8a0dcbdc34642d9b8` | top/bottom 各 16,030 ordered modes、每面 882 原生行（32,060 face-mode pairs）；两面 D/端口门与逐 key plane gate PASS | 保存数据组件；不是目标全局矩阵或 operator-norm 证明 |
+| Ny=8 FE RHS 独立 readback | `controller_saved_vector_recheck.json` SHA `8b01c7280161a4084100a838a886fe0c42421a7ed9dfe5988b1078fc2918b306` | FE q=0…7 均覆盖一次，q=4 端口数为 0 但 FE sector 存在；RHS readback 26 项通过 | 只验证一个固定向量 witness；no FE/operator replay，不代表 full C columns |
+| B0 row-tile 四块组件 | B0 source `ca913307d3cdd5a455c2718138bf2089151b3887`；component receipt SHA `c97673c446648bd7492c7c9e4ba10ed8dbbd465f88293ac9cdd6a70b21223a26` | 两 sector 的 00/01/10/11 candidate/legacy 数值比较通过；worker `720.832 s`，watchdog `722.823 s`；最大 simultaneous staging `53,684,424 B` / contract `268,435,456 B` | `PASS_COMPONENT`；没有因子、KSP 或 target solve；组件结果不计入 pytest 数量 |
+| 50,000-row row-tile boundary fixture | receipt `controller_50k_boundary_fixture_v17.json` SHA `39a8d324fd58b37ea4c0d2486eb0b8d8ca19cc8e0bac5052e115103ba0346737`；log SHA `4f6fee855d10b7336ea784561e8ef9a5be55a0fb52e4a7fe8685f76aa7eb010c`；HEAD `23626f44243d19d58af41d15a8ccafcba41ee54b`；test/builder SHA 分别 `881c9b92d145dac538db2cd1f3395bc53db5f44df6e833b5d635e9bd4465f44a` / `563ee409a3e4064bf4fd7d4b0a420d6b3d7731021ab74adb7d1d54598d7171aa` | `1 passed in 0.48 s`；wrapper `0.623586 s`；四块 00/01/10/11 比较通过 | 软件 fixture 跨过旧 43,344 行形状限制；无 FE 或全局因子，不代表目标容量 |
+| Gx560 V17 formal run and checkers | solver source `cbdcc12812b439f5252949ad1279331b86a2dbb6`；current attempt04 checker SHA `3131b1618ac5a6c788e490bd435d126c411c9c3f65907fdba79cea5243637492` | full A6、physical output、同离散 comparison、row-tile assembly 与 allocation-ledger guards PASS；KSP.solve-only `71.630558198 s`；q numeric factorization `4.063932/3.953524/4.011221/4.408180 s` | 数值运行/独立 readback，不计入软件测试数；checker 从保存 CSR 复算 guard，未重放 operator；不能外推到 E1/目标 |
+| V17 doc-closeout ABI preflight | qualified Task40 C1 activation；receipt `review_v17_doc_closeout_abi_preflight_final.json` SHA `ecf98e40c1adfb3e14bbf7f87ff837f480f5e082b6a8ef8bbe9ec4566d5d373e`；log SHA `a658137fd5c3d320dcfa8a984e21dda52e050e3be955271c0593f10751a6bb15` | `IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION`；PETSc complex128/int32，MPICH 5.0.1 rank 1；C1 not_run | imports/scalar/MPI API only；no FE action |
+| V17 文档合同套件 | qualified Task40 C1 activation；source HEAD `23626f44243d19d58af41d15a8ccafcba41ee54b`；log SHA `5f0c619eed932c73d3a7549d674b3fbcb707e633a566cd324a79e02d1454c218` | `29 passed, 134 subtests passed in 0.22 s` | 文档、模型登记、回顾与 Markdown 合同测试；不含 FE/PDE |
+| V17 初次文档合同尝试（修复前） | preserved log `review_v17_doc_closeout_pytest_attempt01_failed.log` SHA `8bb872439ef9d4486ebf82da5ea80e848318132879a11b5502949d6812e665bb` | `27 passed, 2 failed in 0.27 s` | 两项 Markdown 历史文本合同在临时文档编辑后失败；恢复历史反引号后同一套件最终通过；失败日志保留 |
+| full repository pytest / MPI4 / Ruff / CI | 本轮 | not_run | 不声称全仓或 CI 通过 |
+
+旧基础 output checker SHA `9e3f64e0bd12d54492269bd280bdd0a7a5621538543014c9967e5e225df3f1b1` 的 V17 guard 槽为空，只作为历史 saved-output check；当前 guard 结论来自 attempt04。各测试和组件分别按源码、输入及范围记账，不累加成覆盖率。数值运行、输出 checker 与 document-contract pytest 是不同证据类别。
+# Task40extra Review V16 历史测试摘要（原文保留）
 
 | 阶段 / source | 收据与身份 | 结果 | 证据边界 |
 |---|---|---|---|
@@ -94,7 +112,7 @@
 | 原始 A 定向测试，Git source `45a388fa12afb69a29afaa0240a72018a0069967` | V10 原 A 测试记录 | 44 passed，按该次原A源回执；保留为旧源测试结果 |
 | A checker相关测试，Git source `b2c5ae94ebec1394e4b659dd6b8aef26866b5b38` | Task40 qualified activation下既有记录 | 30 passed in 2.96 s；不与其他source的fixtures合并 |
 | A V2输出目录守卫fixtures，冻结source `a4ac46a8d796f9c101a0b4b9364bf01e9101dd50` | V2 runner fixture既有记录 | 3 passed in 0.52 s；与前两组分开，不求和宣称统一覆盖 |
-| V10 ABI preflight（最终文档收口） | V10 §4.2 qualified activation；解析`runtime_prefix`下解释器与petsc4py/slepc4py/dolfinx/mpi4py | PASS；Linux；PETSc complex128/int32；全部模块来自同一runtime_prefix。较早一次探针错误地要求root/.venv，断言失败只反映路径条件不适用于Task40，不是ABI环境失败；随后按真实runtime_prefix resolve重跑通过 |
+| V10 ABI preflight（最终文档收口） | V10 `4.2 qualified activation；解析`runtime_prefix`下解释器与petsc4py/slepc4py/dolfinx/mpi4py | PASS；Linux；PETSc complex128/int32；全部模块来自同一runtime_prefix。较早一次探针错误地要求root/.venv，断言失败只反映路径条件不适用于Task40，不是ABI环境失败；随后按真实runtime_prefix resolve重跑通过 |
 | V10文档合同测试 | `python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py` | 24 passed，134 subtests passed in 0.17 s；文档/registry/retrospective contracts only，无PDE |
 | V10数值 / 全仓范围 | 本次收口 | 本次未追加FE/PDE或数值测试；此前V10的A边界与B0运行及负结果按Response/records登记。全仓pytest、MPI4、Ruff、CI未运行 |
 

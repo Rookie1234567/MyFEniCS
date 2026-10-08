@@ -1,0 +1,202 @@
+{
+  "schema": "task40extra.review_v17_sparse_capacity.v1",
+  "review": "V17",
+  "classification": "B0_ROW_TILE_COMPONENT_PASS_TARGET_CAPACITY_NOT_QUALIFIED",
+  "row_tile_builder": {
+    "strategy": "ROW_TILE_BOUNDED_CSR_V17",
+    "source_sha": "ca913307d3cdd5a455c2718138bf2089151b3887",
+    "driver_sha256": "57816a61c8b510d625ddd4ae965d5a40ee216ace0486e0e2316f202c56022b4c",
+    "input_sha256": "928d5fea0d6e51f0e276ac96693fe192a81e34137643c1992be2319392ff5765",
+    "model": {
+      "cells": 80,
+      "cell_axes": [
+        4,
+        4,
+        5
+      ],
+      "degree": 6,
+      "ordered_modes": 532,
+      "q_count": 4,
+      "augmented_rows_per_q": [
+        4324,
+        4400,
+        4400,
+        4400
+      ]
+    },
+    "component_result": {
+      "status": "PASS_COMPONENT",
+      "all_four_blocks_numerically_equivalent": true,
+      "all_q_shapes_match_selected_profile": true,
+      "candidate_assembly_seconds": 60.53755003993865,
+      "legacy_assembly_seconds": 59.26588193397038,
+      "candidate_faster_for_complete_two_sector_build": false,
+      "mumps_factors_constructed": false,
+      "target_solve": "not_run",
+      "component_worker_seconds": 720.831887189,
+      "component_watchdog_seconds": 722.8225857069483,
+      "tree_rss_peak_bytes": 1523130368,
+      "cgroup_memory_peak_bytes": 1899237376,
+      "task_and_cgroup_swap_peak_bytes": 0,
+      "row_tile_scratch_gate": {
+        "maximum_simultaneous_staging_bytes": 53684424,
+        "staging_contract_bytes": 268435456,
+        "classification": "measured from B0 component receipt; excludes final CSR owner, which is separately allocation-gated",
+        "candidate_strategy": "ROW_TILE_BOUNDED_CSR_V17",
+        "sector_audits": [
+          {
+            "global_q_indices": [
+              0,
+              2
+            ],
+            "candidate_assembly_seconds": 27.111010559950955,
+            "legacy_assembly_seconds": 26.21104537206702,
+            "pattern_seconds": 3.3260567230172455,
+            "pattern_layout_count": 516,
+            "pattern_layout_pass_count": 1,
+            "numeric_contribution_count": 516,
+            "numeric_contribution_pass_count": 1,
+            "numeric_parent_seconds": 21.027953105047345,
+            "contribution_generation_seconds": 2.337461960269138,
+            "local_projection_calls": 2064,
+            "local_projection_seconds": 8.146034671110101,
+            "global_sparse_accumulation_calls": 2064,
+            "global_sparse_accumulation_seconds": 1.5993292921921238,
+            "support_route_flush_count": 40,
+            "support_descriptor_logical_bytes_read": 24140016,
+            "support_descriptor_logical_bytes_written": 1322896,
+            "support_route_spool_peak_file_bytes": 5320704,
+            "final_four_block_csr_payload_bytes": 184059968
+          },
+          {
+            "global_q_indices": [
+              1,
+              3
+            ],
+            "candidate_assembly_seconds": 33.426539479987696,
+            "legacy_assembly_seconds": 33.05483656190336,
+            "pattern_seconds": 3.578152228030376,
+            "pattern_layout_count": 669,
+            "pattern_layout_pass_count": 1,
+            "numeric_contribution_count": 669,
+            "numeric_contribution_pass_count": 1,
+            "numeric_parent_seconds": 26.35488377592992,
+            "contribution_generation_seconds": 2.949587710900232,
+            "local_projection_calls": 2676,
+            "local_projection_seconds": 9.84028306370601,
+            "global_sparse_accumulation_calls": 2676,
+            "global_sparse_accumulation_seconds": 1.9331823290558532,
+            "support_route_flush_count": 51,
+            "support_descriptor_logical_bytes_read": 29054640,
+            "support_descriptor_logical_bytes_written": 1680096,
+            "support_route_spool_peak_file_bytes": 6795264,
+            "final_four_block_csr_payload_bytes": 187948496
+          }
+        ],
+        "timing_and_memory_semantics": {
+          "assembly_parent_includes_q_map_and_selected_strategy": true,
+          "pattern_seconds_outside_numeric_parent": true,
+          "projection_and_accumulation_seconds_are_children_of_numeric_parent": true,
+          "do_not_add_parent_and_child_intervals": true,
+          "staging_peak_is_simultaneous_scratch_not_four_csr_payload": true,
+          "sectors_are_reported_separately": true
+        },
+        "raw_component_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/b0_row_tile_component_attempt01/v17_b0_row_tile_component.json",
+        "raw_component_receipt_sha256": "c97673c446648bd7492c7c9e4ba10ed8dbbd465f88293ac9cdd6a70b21223a26"
+      }
+    },
+    "four_block_comparison_scope": "two sectors, each comparing 00/01/10/11 including off-diagonal blocks; candidate and legacy assembled results were independently compared",
+    "boundary_shape_test_over_old_43344_row_bitset_limit": {
+      "status": "PASS",
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_50k_boundary_fixture_v17.json",
+      "receipt_sha256": "39a8d324fd58b37ea4c0d2486eb0b8d8ca19cc8e0bac5052e115103ba0346737",
+      "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_50k_boundary_fixture_v17.log",
+      "log_sha256": "4f6fee855d10b7336ea784561e8ef9a5be55a0fb52e4a7fe8685f76aa7eb010c",
+      "pytest_result": "1 passed in 0.48 s",
+      "parent_wrapper_elapsed_seconds": 0.6235862129833549,
+      "source_head": "23626f44243d19d58af41d15a8ccafcba41ee54b",
+      "test_source_sha256": "881c9b92d145dac538db2cd1f3395bc53db5f44df6e833b5d635e9bd4465f44a",
+      "builder_source_sha256": "563ee409a3e4064bf4fd7d4b0a420d6b3d7731021ab74adb7d1d54598d7171aa",
+      "command": "python -m pytest -q -vv src/test/test_task40_v10_p6_yorbit.py::test_v17_row_tiles_cross_old_shape_limit_and_match_all_four_legacy_blocks",
+      "fixture_rows": 50000,
+      "legacy_full_shape_bitset_bytes_per_block": 312500000,
+      "total_staging_contract_bytes": 268435456,
+      "covered_blocks": [
+        "00",
+        "01",
+        "10",
+        "11"
+      ],
+      "FE_or_global_factor_constructed": false,
+      "scope": "proves software sparse structure/action handling past the old shape boundary only; it is not target FE or physical resource qualification"
+    },
+    "component_json_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/b0_row_tile_component_attempt01/v17_b0_row_tile_component.json",
+    "component_json_sha256": "c97673c446648bd7492c7c9e4ba10ed8dbbd465f88293ac9cdd6a70b21223a26",
+    "raw_json_sha256": "8803753b816a04caa7d369cd9163be60c1928631eab3775e08f7910578982917",
+    "readback_json_sha256": "23025449f9c0921922abdde5ebe05910d35df3fe5f6efbae3e133112a89c41a1",
+    "watchdog_summary_sha256": "7c14acc9f14f6c28ef5a16719fc98a2def7f4ee412329ce014b181bc6446450d"
+  },
+  "target_structural_support": {
+    "status": "PASS_DERIVED_BOUND_ONLY",
+    "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/target_p4_topology_support_attempt02.json",
+    "receipt_sha256": "b96701fdde169d91ee8659a63c72528986adac20ec273ab84da7eae7f6ee189c",
+    "target_geometry": {
+      "classification": "measured_geometry_only_native_structured_hexa_topology",
+      "cell_axes": [
+        272,
+        4,
+        14
+      ],
+      "cells": 15232,
+      "full_storage_p6_rows": 10228620,
+      "periodic_independent_p6_rows": 9948672,
+      "interior_p6_rows": 6854400,
+      "trace_p6_rows": 3094272
+    },
+    "native_calibration": {
+      "classification": "measured_actual_native_p6_entity_mpc_and_y_orbit_support_small_calibration_only",
+      "calibration_cells": 224,
+      "global_q_representative_cells": 56,
+      "folded_cell_trace_support_rows_per_q_cell": 348,
+      "measured_native_map_covers_all_xz_representatives_and_y_layers": true,
+      "target_p6_space_or_operator_built": false
+    },
+    "derived_target_q_upper_bounds": {
+      "q_rows": [
+        781500,
+        781604,
+        781624,
+        781604
+      ],
+      "structural_nnz_upper": [
+        1766802960,
+        1784757520,
+        1788212800,
+        1784757520
+      ],
+      "csr_payload_upper_bytes": [
+        35339185204,
+        35698276820,
+        35767382500,
+        35698276820
+      ],
+      "four_q_distinct_matrix_payload_upper_bytes": 142503121344,
+      "four_q_sum_is_simultaneous_owner_claim": false,
+      "all_q_structural_upper_bounds_fit_int32": true,
+      "maximum_indptr_terminal_upper": 1788212800,
+      "classification": "derived conservative structural support upper bounds; exact numerical NNZ and target CSR remain unmeasured"
+    },
+    "geometry_and_local_class_inventory": {
+      "target_raw_classes": 29,
+      "target_oriented_classes": 60,
+      "target_exact_classes_measured": true,
+      "cell_permutation_code_set_matches_native_calibration": true
+    }
+  },
+  "not_run_or_unknown": [
+    "full target p6 function space, target q CSR, global Schur, or target PDE",
+    "actual target q NNZ, numerical zero removal, complete indptr, and any target factor",
+    "a full simultaneous memory claim from summing the four distinct-q payload upper bounds",
+    "target FE space, actual numerical NNZ/CSR, or physical resource qualification remain not_run; the 50,000-row software fixture is not target capacity evidence"
+  ]
+}
