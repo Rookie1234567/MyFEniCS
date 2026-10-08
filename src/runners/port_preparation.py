@@ -474,6 +474,10 @@ def launch(
         is_fe = role in NATIVE
     if namespace in ("v43", "v44", "v45", "v47", "v49", "v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63"):
         is_fe = specification is not None
+    if namespace == "v63" and role in ("compare_A", "compare_gate"):
+        # These saved consumers rebuild only mesh/space and evaluate fields.
+        # They use the default FE profile, never B's larger reference budget.
+        is_fe = True
     if is_fe or (
         namespace in ("v41", "v42", "v43", "v44", "v45", "v47", "v49", "v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") and specification is not None
     ):
@@ -623,6 +627,8 @@ def launch(
         subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())], check=True)
         write_json(folder / "resource_baseline.json", baseline)
         hashes = implementation_hashes()
+        if namespace == "v63" and is_fe:
+            from src.solvers.fine_tetra_scope import memory_budget
         state = {
             "source_sha": source,
             "stage": namespace.upper() + "-" + role,
@@ -634,12 +640,15 @@ def launch(
             "cpu": baseline["cpu"],
             "rank_cpus": cpus,
             "MPI_size": ranks,
-            "planned_bytes": (specification.execution["planning_memory_gib"]*2**30 if namespace=="v63" and is_fe else 64*2**30) if namespace in ("v55","v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") and is_fe else 32*2**30 if namespace in ("v53","v54") and is_fe else 16*2**30 if namespace in ("v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") and is_fe else 8*2**30 if namespace == "v49" and is_fe else int(1.8 * 2**30) if namespace in ("v47", "v48") else 6 * 2**30 if is_fe else 2 * 2**30,
+            "planned_bytes": (memory_budget(role)["planning_gib"]*2**30 if namespace=="v63" and is_fe else 64*2**30) if namespace in ("v55","v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") and is_fe else 32*2**30 if namespace in ("v53","v54") and is_fe else 16*2**30 if namespace in ("v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") and is_fe else 8*2**30 if namespace == "v49" and is_fe else int(1.8 * 2**30) if namespace in ("v47", "v48") else 6 * 2**30 if is_fe else 2 * 2**30,
             "new_volume_action_count": None if namespace in ("v49", "v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") else 0,
             "new_factor_count": None if namespace in ("v49", "v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") else 0,
             "numeric_object_inventory_status": "actual stage inventory in result/events; launcher unknown" if namespace in ("v49", "v50", "v51", "v52", "v53", "v54", "v55", "v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63") else "historical scope inventory",
             "storage_limits": limits,
         }
+        if namespace == "v63" and is_fe:
+            state["memory_budget"] = memory_budget(role)
+            state["planned_bytes"] = state["memory_budget"]["planning_gib"] * 2**30
         if specification is not None:
             write_json(folder / "resolved_config.json", specification.as_jsonable())
             (folder / "input_original.dat").write_bytes(specification.raw_input_bytes)

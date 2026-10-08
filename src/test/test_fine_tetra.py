@@ -11,6 +11,17 @@ from src.io.independent_tetra_reference import load_tetra_reference
 
 
 class FineTetraTests(unittest.TestCase):
+    def test_saved_increment_reuse_keeps_exact_parent_and_consumer_budget(self):
+        from benchmarks.collect_fine_tetra import bound_comparison
+        first={'arrays':{'sha256':'A'}};second={'arrays':{'sha256':'B'}}
+        negative={'parent_array_sha256':['A','B'],'pass_gate':False}
+        self.assertIs(bound_comparison(negative,first,second),negative)
+        with self.assertRaisesRegex(ValueError,'parent identity'):
+            bound_comparison(negative,second,first)
+        for role in ('compare_A','compare_gate'):
+            self.assertEqual(scope.memory_budget(role)['planning_gib'],64)
+            self.assertEqual(scope.memory_budget(role)['sampled_stop_gib'],96)
+
     def test_capacity_includes_multi_master_periodic_moments(self):
         from scipy import sparse
         from src.solvers.tetra_boundary_support import expanded_cell_graph

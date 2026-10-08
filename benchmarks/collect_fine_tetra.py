@@ -68,6 +68,26 @@ def compare_gate():
     print(json.dumps(dict(status='A_B_GATE_SAVED',pass_gate=result['pass_gate'])))
 
 
+def compare_a():
+    """Publish A's two required increments before the independent B solve."""
+    from src.solvers.scattering_anchor import Journal
+    from src.solvers import independent_tetra_scope as prior
+    scope.window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY'])
+    journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=64*2**30)
+    journal.source_state=json.loads((folder/'run_manifest.json').read_text())
+    results={}
+    for parent in ('TH3','T5'):
+        results[parent+'_A']=pair(prior.stage(parent),scope.stage('A'),folder/(parent+'_A'),journal)
+        write_json(scope.ARTIFACT/'A_comparisons.json',results)
+    print(json.dumps(dict(status='A_INCREMENTS_SAVED',pass_gates={k:v['pass_gate'] for k,v in results.items()})))
+
+
+def bound_comparison(result,first,second):
+    if result['parent_array_sha256']!=[first['arrays']['sha256'],second['arrays']['sha256']]:
+        raise ValueError('saved comparison parent identity changed')
+    return result
+
+
 def verify(folder,journal):
     from src.solvers.independent_tetra_study import load_boundary
     from src.solvers.independent_tetra_fields import tangential_check
@@ -93,10 +113,13 @@ def verify(folder,journal):
     modal=modal_recalculation(scope=shim,role_names=tuple(states),output_folder=folder)
     from src.solvers import independent_tetra_scope as prior
     endpoints={r:prior.stage(r) for r in ('TH3','T5')}
+    a_comparisons=json.loads((scope.ARTIFACT/'A_comparisons.json').read_text()) if (scope.ARTIFACT/'A_comparisons.json').exists() else {}
     for a,b in (('TH3','A'),('T5','A'),('A','B'),('T5','B'),('A','M')):
         if b not in states or a not in states and a not in endpoints:continue
-        if a=='A' and b=='B' and (scope.ARTIFACT/'A_B_gate.json').exists():result=json.loads((scope.ARTIFACT/'A_B_gate.json').read_text())
+        if a+'_'+b in a_comparisons:result=a_comparisons[a+'_'+b]
+        elif a=='A' and b=='B' and (scope.ARTIFACT/'A_B_gate.json').exists():result=json.loads((scope.ARTIFACT/'A_B_gate.json').read_text())
         else:result=pair(states.get(a,endpoints.get(a)),states[b],folder/(a+'_'+b),journal)
+        bound_comparison(result,states.get(a,endpoints.get(a)),states[b])
         pairs[a+'_'+b]=result;write_json(folder/'comparison_progress.json',pairs)
     # Historical hex comparison is optional after all selection/solver freeze.
     result=dict(status='COMPLETED',checks=checks,comparisons=pairs,modal=modal,
@@ -131,7 +154,11 @@ def collect():
         from src.solvers import independent_tetra_scope as prior
         parents={**stages,**{r:prior.stage(r) for r in ('TH3','T5')}}
         for name,p in stages['VERIFY_COST']['comparisons'].items():
-            a,b=name.split('_');checks[name]=saved_pair(p,parents[a],parents[b],expected_points=selected_points(parents[b]['physical']))
+            a,b=name.split('_');first=parents[a]
+            if p['modes'].get('mode_count',828)==1188:
+                projected=Path(p['arrays']['path']).parent/'projected_parent.json'
+                first=json.loads(projected.read_text())
+            checks[name]=saved_pair(p,first,parents[b],expected_points=selected_points(parents[b]['physical']))
             if not checks[name]['published_gate_matches_recalculation']:raise ValueError('V63 saved consumer verdict mismatch')
     data=dict(run_index_v63=dict(runs=runs,pointers={r:json.loads((scope.ARTIFACT/(r+'.json')).read_text()) for r in stages}),
         scientific_checks_v63=dict(stages=stages,NN20=False,continuum_accuracy=False,target_qualified=False),
@@ -147,6 +174,7 @@ def collect():
 if __name__=='__main__':
     import sys
     if sys.argv[1:]==['--gate']:compare_gate()
+    elif sys.argv[1:]==['--a']:compare_a()
     elif sys.argv[1:]==['--docs']:
         from benchmarks.collect_phase_notch_hp import documents
         documents(scope=scope,review_name='review_report_v61.md',response_name='response_v63.md',outcome_name='fine_tetra_accuracy_bounded_cost_v63.md')
