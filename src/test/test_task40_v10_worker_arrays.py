@@ -1,3 +1,4 @@
+import hashlib
 import json
 from types import MappingProxyType, SimpleNamespace
 
@@ -12,6 +13,8 @@ from src.runners.task40_v10_worker import (
     _packet_array_bytes,
     _regular_inverse_gate_facts,
     _save_packet,
+    _v18_full_native_matrix_admission_facts,
+    _v18_preproject_native_matrix_gate,
 )
 from src.solvers.task40_v10_p6_periodic_profile import (
     TASK40_V10_P6_PROFILE,
@@ -54,6 +57,80 @@ def test_assign_vector_storage_uses_public_writable_petsc_array_api():
         )
     finally:
         vector.destroy()
+
+
+def test_v18_full_native_matrix_admission_keeps_header_bound_facts(tmp_path):
+    header = tmp_path / "dolfinx_mpc" / "utils.h"
+    header.parent.mkdir()
+    header.write_text("MPC raw pattern plus appended masters\n", encoding="utf-8")
+    facts = {
+        "allocated_nnz": 1_867_992,
+        "legacy_upper": 1_557_528,
+        "backend_union_upper": 1_950_328,
+        "nz_used_after_assembly": 1_867_992,
+    }
+
+    recorded = _v18_full_native_matrix_admission_facts(
+        "task40_v18_full_native_volume_matrix_preassembly_actual_inventory",
+        facts,
+        header_path=header,
+    )
+
+    assert recorded is not None
+    assert recorded["admission_facts"] == facts
+    assert recorded["header_path"] == str(header)
+    assert recorded["header_sha256"] == hashlib.sha256(header.read_bytes()).hexdigest()
+    assert recorded["header_source_range"] == "dolfinx_mpc/utils.h:create_sparsity_pattern"
+    assert (
+        _v18_full_native_matrix_admission_facts(
+            "task40_v17_q_row_tile_layout/p1q1",
+            facts,
+            header_path=header,
+        )
+        is None
+    )
+
+
+def test_v18_native_matrix_facts_are_marked_before_projected_gate_can_raise(tmp_path):
+    header = tmp_path / "utils.h"
+    header.write_text("MPC pattern rule\n", encoding="utf-8")
+
+    class _Runtime:
+        def __init__(self):
+            self.markers = []
+
+        def marker(self, name, facts):
+            self.markers.append((name, dict(facts)))
+
+        @staticmethod
+        def check_projected(_label, _amount, *, workspace_bytes):
+            assert workspace_bytes == 0
+            raise RuntimeError("controlled dynamic-cap rejection")
+
+    runtime = _Runtime()
+    actual_facts = {
+        "matrix_shape": [1680, 1680],
+        "allocated_nnz": 1_867_992,
+        "nz_used_before_assembly": 0,
+        "legacy_constraint_replaced_nnz_upper": 1_557_528,
+        "admitted_backend_pattern_nnz_upper": 1_950_328,
+    }
+
+    with pytest.raises(RuntimeError, match="dynamic-cap rejection"):
+        _v18_preproject_native_matrix_gate(
+            runtime,
+            "task40_v18_full_native_volume_matrix_preassembly_actual_inventory",
+            actual_facts,
+            amount_bytes=0,
+            workspace_bytes=0,
+            header_path=header,
+        )
+
+    assert len(runtime.markers) == 1
+    name, marker_facts = runtime.markers[0]
+    assert name == "v18_full_native_matrix_admission_input"
+    assert marker_facts["admission_facts"] == actual_facts
+    assert marker_facts["header_sha256"] == hashlib.sha256(header.read_bytes()).hexdigest()
 
 
 def test_regular_inverse_equation_gate_is_distinct_from_action_gate():

@@ -12,6 +12,7 @@ import json
 import os
 import signal
 import shutil
+import sys
 import time
 import copy
 from pathlib import Path
@@ -204,6 +205,59 @@ def _allocation_gate_summary_key(label: str) -> str:
     if "target" in text:
         return "target_other"
     return text.split("/", 1)[0][:64]
+
+
+def _v18_full_native_matrix_admission_facts(
+    label: str, facts: Mapping[str, Any], *, header_path: Path
+) -> dict[str, Any] | None:
+    """Keep the narrow V18 native-matrix admission facts in raw evidence."""
+    text = str(label)
+    if not text.startswith("task40_v18_full_native_volume_matrix_"):
+        return None
+    path = Path(header_path)
+    header_exists = path.is_file()
+    return {
+        "schema": "task40extra.review_v18_mpc_sparsity_basis.v1",
+        "backend_pattern_rule": (
+            "retain raw cell row/column dofs and append MPC masters to the cell pattern"
+        ),
+        "header_path": str(path),
+        "header_sha256": (
+            hashlib.sha256(path.read_bytes()).hexdigest() if header_exists else None
+        ),
+        "header_exists": header_exists,
+        "header_source_range": "dolfinx_mpc/utils.h:create_sparsity_pattern",
+        "admission_facts": dict(facts),
+    }
+
+
+def _v18_preproject_native_matrix_gate(
+    runtime: Any,
+    label: str,
+    facts: Mapping[str, Any],
+    *,
+    amount_bytes: int,
+    workspace_bytes: int,
+    header_path: Path,
+) -> tuple[dict[str, Any], Mapping[str, Any]]:
+    """Write V18 matrix facts before projected admission can raise."""
+    snapshot = _v18_full_native_matrix_admission_facts(
+        label, facts, header_path=header_path
+    )
+    if snapshot is None:
+        raise ValueError("V18 preprojection recorder received a non-matrix gate")
+    runtime.marker(
+        "v18_full_native_matrix_admission_input",
+        {"label": str(label), **snapshot},
+    )
+    if not snapshot["header_exists"]:
+        raise FileNotFoundError(
+            f"V18 MPC sparsity contract header is missing: {snapshot['header_path']}"
+        )
+    checked = runtime.check_projected(
+        f"v10_{label}", int(amount_bytes), workspace_bytes=int(workspace_bytes)
+    )
+    return snapshot, checked
 
 
 def _event_file_identity(path: Path) -> dict[str, int | str]:
@@ -4418,9 +4472,24 @@ def run_task40_v10_p6_reference_worker(
                 facts.get("matrix_payload_bytes", facts.get("workspace_bytes", 0)),
             ))
             workspace = int(facts.get("workspace_bytes", 0))
-            checked = runtime.check_projected(
-                f"v10_{label}", amount, workspace_bytes=workspace
-            )
+            v18_matrix_facts = None
+            if is_v18 and label.startswith(
+                "task40_v18_full_native_volume_matrix_"
+            ):
+                v18_matrix_facts, checked = _v18_preproject_native_matrix_gate(
+                    runtime,
+                    label,
+                    facts,
+                    amount_bytes=amount,
+                    workspace_bytes=workspace,
+                    header_path=(
+                        Path(sys.prefix) / "include/dolfinx_mpc/utils.h"
+                    ),
+                )
+            else:
+                checked = runtime.check_projected(
+                    f"v10_{label}", amount, workspace_bytes=workspace
+                )
             future = 0
             future_components: dict[str, int] = {}
             if label == "all_q_symbolic_before_any_numeric":
@@ -4537,6 +4606,8 @@ def run_task40_v10_p6_reference_worker(
                     "selected_future_nonfactor_co_resident_phase"
                 ),
             }
+            if v18_matrix_facts is not None:
+                admission["v18_full_native_matrix_facts"] = v18_matrix_facts
             if is_v16 or is_v17:
                 if label.startswith(("task40_v16_q_", "task40_v17_q_")) or label.startswith(
                     "p6_reduced_contribution/"

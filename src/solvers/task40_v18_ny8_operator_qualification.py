@@ -49,6 +49,15 @@ def _imaginary_nonzero_count(values: np.ndarray) -> int:
     return count
 
 
+def _owned_array_or_copy(values: Any, *, dtype: Any) -> np.ndarray:
+    """Reuse a matching owning NumPy array; copy only borrowed or mismatched data."""
+    expected_dtype = np.dtype(dtype)
+    array = np.asarray(values)
+    if array.dtype == expected_dtype and array.flags.owndata:
+        return array
+    return np.array(array, dtype=expected_dtype, copy=True)
+
+
 def _csr_product_nnz_upper(
     left: sparse.csr_matrix,
     right: sparse.csr_matrix,
@@ -848,6 +857,114 @@ def qualify_complete_ny_reference_operator(
     }
 
 
+def _mpc_cell_pattern_support_upper(space: Any, mpc: Any) -> dict[str, int]:
+    """Bound MPC matrix support as raw cell dofs plus appended master dofs.
+
+    DOLFINx-MPC keeps the original cell dofs in its sparsity pattern and adds
+    master dofs for constrained rows and columns.  This is a storage pattern,
+    not the smaller mathematical support obtained by replacing each slave.
+    The temporary support buffer is limited to one owned cell at a time.
+    """
+    slaves = np.asarray(mpc.slaves, dtype=np.int64).reshape(-1)
+    master_count_by_slave: dict[int, int] = {}
+    maximum_slave_master_count = 0
+    for slave in slaves:
+        masters = np.asarray(mpc.masters.links(int(slave)), dtype=np.int64).reshape(-1)
+        if masters.size == 0:
+            raise ValueError("finalized Floquet MPC contains a slave without master support")
+        master_count_by_slave[int(slave)] = len(masters)
+        maximum_slave_master_count = max(maximum_slave_master_count, len(masters))
+
+    cell_count = int(space.mesh.topology.index_map(3).size_local)
+    max_support_buffer_entries = 0
+    for cell in range(cell_count):
+        dofs = np.asarray(space.dofmap.cell_dofs(cell), dtype=np.int64).reshape(-1)
+        appended_master_count = sum(
+            master_count_by_slave.get(int(dof), 0) for dof in dofs
+        )
+        max_support_buffer_entries = max(
+            max_support_buffer_entries, len(dofs) + appended_master_count
+        )
+
+    support_buffer = np.empty(max_support_buffer_entries, dtype=np.int64)
+    raw_support_pairs = 0
+    constraint_replaced_support_pairs = 0
+    backend_union_support_pairs = 0
+    raw_cell_dof_sum = 0
+    constraint_replaced_cell_dof_sum = 0
+    backend_union_cell_dof_sum = 0
+    maximum_raw_cell_dof_count = 0
+    maximum_constraint_replaced_cell_dof_count = 0
+    maximum_backend_union_cell_dof_count = 0
+    for cell in range(cell_count):
+        dofs = np.asarray(space.dofmap.cell_dofs(cell), dtype=np.int64).reshape(-1)
+        raw_count = len(dofs)
+        support_buffer[:raw_count] = dofs
+        cursor = raw_count
+        constraint_replaced_count = 0
+        for dof in dofs:
+            master_count = master_count_by_slave.get(int(dof), 0)
+            if master_count == 0:
+                constraint_replaced_count += 1
+                continue
+            masters = np.asarray(
+                mpc.masters.links(int(dof)), dtype=np.int64
+            ).reshape(-1)
+            if len(masters) != master_count:
+                raise ValueError("finalized MPC master support changed during counting")
+            constraint_replaced_count += master_count
+            next_cursor = cursor + master_count
+            support_buffer[cursor:next_cursor] = masters
+            cursor = next_cursor
+
+        backend_support = support_buffer[:cursor]
+        backend_support.sort()
+        backend_union_count = 1 + int(
+            np.count_nonzero(backend_support[1:] != backend_support[:-1])
+        ) if cursor else 0
+
+        raw_support_pairs += raw_count * raw_count
+        constraint_replaced_support_pairs += (
+            constraint_replaced_count * constraint_replaced_count
+        )
+        backend_union_support_pairs += backend_union_count * backend_union_count
+        raw_cell_dof_sum += raw_count
+        constraint_replaced_cell_dof_sum += constraint_replaced_count
+        backend_union_cell_dof_sum += backend_union_count
+        maximum_raw_cell_dof_count = max(maximum_raw_cell_dof_count, raw_count)
+        maximum_constraint_replaced_cell_dof_count = max(
+            maximum_constraint_replaced_cell_dof_count,
+            constraint_replaced_count,
+        )
+        maximum_backend_union_cell_dof_count = max(
+            maximum_backend_union_cell_dof_count, backend_union_count
+        )
+
+    return {
+        "owned_cell_count": cell_count,
+        "slave_dof_count": len(slaves),
+        "raw_cell_support_pairs_sum": raw_support_pairs,
+        "constraint_replaced_cell_support_pairs_sum": (
+            constraint_replaced_support_pairs
+        ),
+        "backend_raw_plus_masters_union_pairs_sum": backend_union_support_pairs,
+        "raw_cell_dof_sum": raw_cell_dof_sum,
+        "constraint_replaced_cell_dof_sum": constraint_replaced_cell_dof_sum,
+        "backend_union_cell_dof_sum": backend_union_cell_dof_sum,
+        "maximum_raw_cell_dof_count": maximum_raw_cell_dof_count,
+        "maximum_constraint_replaced_cell_dof_count": (
+            maximum_constraint_replaced_cell_dof_count
+        ),
+        "maximum_backend_union_cell_dof_count": (
+            maximum_backend_union_cell_dof_count
+        ),
+        "support_count_workspace_upper_bytes": int(
+            support_buffer.nbytes
+            + maximum_slave_master_count * np.dtype(np.int64).itemsize
+        ),
+    }
+
+
 def assemble_and_qualify_complete_ny_reference_operator(
     *,
     bundle: Mapping[str, Any],
@@ -885,23 +1002,13 @@ def assemble_and_qualify_complete_ny_reference_operator(
     ):
         raise OverflowError("full native FE storage shape exceeds the qualified PetscInt range")
     mpc = floquet.mpc
-    slaves = np.asarray(mpc.slaves, dtype=np.int64).reshape(-1)
-    slave_master_counts = {}
-    for slave in slaves:
-        masters = np.asarray(mpc.masters.links(int(slave)), dtype=np.int64).reshape(-1)
-        if len(masters) == 0:
-            raise ValueError("finalized Floquet MPC contains a slave without master support")
-        slave_master_counts[int(slave)] = len(masters)
-    cell_count = int(space.mesh.topology.index_map(3).size_local)
-    expanded_cell_dof_max = 0
-    structural_nnz_upper = int(storage_rows)
-    for cell in range(cell_count):
-        dofs = np.asarray(space.dofmap.cell_dofs(cell), dtype=np.int64).reshape(-1)
-        expanded_dof_count = sum(
-            slave_master_counts.get(int(dof), 1) for dof in dofs
-        )
-        expanded_cell_dof_max = max(expanded_cell_dof_max, expanded_dof_count)
-        structural_nnz_upper += expanded_dof_count * expanded_dof_count
+    support = _mpc_cell_pattern_support_upper(space, mpc)
+    mathematical_constraint_nnz_upper = int(
+        storage_rows + support["constraint_replaced_cell_support_pairs_sum"]
+    )
+    structural_nnz_upper = int(
+        storage_rows + support["backend_raw_plus_masters_union_pairs_sum"]
+    )
     if structural_nnz_upper > int32_limit:
         raise OverflowError("preassembly full FE structural NNZ upper bound exceeds PetscInt range")
     index_bytes = np.dtype(PETSc.IntType).itemsize
@@ -914,12 +1021,22 @@ def assemble_and_qualify_complete_ny_reference_operator(
         "task40_v18_full_native_volume_matrix_preallocation_admission",
         {
             "additional_payload_bytes": int(csr_payload_upper),
-            "workspace_bytes": int(csr_payload_upper),
+            "workspace_bytes": int(
+                csr_payload_upper + support["support_count_workspace_upper_bytes"]
+            ),
+            "backend_pattern_nnz_upper_from_raw_cell_and_MPC_master_union": (
+                structural_nnz_upper
+            ),
+            "legacy_constraint_replaced_nnz_upper": (
+                mathematical_constraint_nnz_upper
+            ),
             "structural_nnz_upper_from_actual_cell_MPC_support": structural_nnz_upper,
-            "owned_cell_count": cell_count,
-            "maximum_expanded_cell_dof_count": expanded_cell_dof_max,
+            **support,
             "full_storage_rows": storage_rows,
             "matrix_payload_upper_bytes": csr_payload_upper,
+            "support_bound_semantics": (
+                "per-owned-cell union of original cell dofs and appended MPC masters"
+            ),
             "independent_oracle": "full_native_dolfinx_mpc_matrix_then_compact_independent_rows",
             "preallocation_admitted_before_create_matrix": True,
         },
@@ -931,32 +1048,96 @@ def assemble_and_qualify_complete_ny_reference_operator(
         )
         preallocation = matrix.getInfo()
         allocated_nnz = int(preallocation.get("nz_allocated", 0))
-        if matrix.getSize() != (storage_rows, storage_rows):
-            raise ValueError("preallocated full FE matrix has unexpected storage dimensions")
-        if allocated_nnz > structural_nnz_upper:
-            raise MemoryError(
-                "actual PETSc preallocation exceeds the admitted actual-cell/MPC structural upper bound"
-            )
+        matrix_shape = tuple(map(int, matrix.getSize()))
+        actual_payload_bytes = int(
+            (storage_rows + 1) * index_bytes
+            + allocated_nnz * (index_bytes + scalar_bytes)
+        )
         allocation_gate(
             "task40_v18_full_native_volume_matrix_preassembly_actual_inventory",
             {
                 "additional_payload_bytes": 0,
                 "workspace_bytes": 0,
+                "allocated_nnz": allocated_nnz,
                 "allocated_structural_nnz": allocated_nnz,
-                "admitted_structural_nnz_upper": structural_nnz_upper,
-                "full_storage_rows": storage_rows,
-                "matrix_payload_bytes": int(
-                    (storage_rows + 1) * index_bytes
-                    + allocated_nnz * (index_bytes + scalar_bytes)
+                "nz_used_before_assembly": int(preallocation.get("nz_used", 0)),
+                "admitted_backend_pattern_nnz_upper": structural_nnz_upper,
+                "legacy_constraint_replaced_nnz_upper": (
+                    mathematical_constraint_nnz_upper
                 ),
-                "preallocation_within_admitted_upper": True,
+                "raw_cell_support_pairs_sum": support[
+                    "raw_cell_support_pairs_sum"
+                ],
+                "constraint_replaced_cell_support_pairs_sum": support[
+                    "constraint_replaced_cell_support_pairs_sum"
+                ],
+                "backend_raw_plus_masters_union_pairs_sum": support[
+                    "backend_raw_plus_masters_union_pairs_sum"
+                ],
+                "matrix_shape": list(matrix_shape),
+                "full_storage_rows": storage_rows,
+                "matrix_payload_bytes": actual_payload_bytes,
+                "preallocation_within_admitted_upper": (
+                    allocated_nnz <= structural_nnz_upper
+                ),
                 "independent_oracle": "full_native_dolfinx_mpc_matrix_then_compact_independent_rows",
             },
         )
+        if matrix_shape != (storage_rows, storage_rows):
+            raise ValueError(
+                "preallocated full FE matrix has unexpected storage dimensions; "
+                f"actual_allocated_nnz={allocated_nnz}, "
+                f"backend_pattern_nnz_upper={structural_nnz_upper}, "
+                f"legacy_constraint_replaced_nnz_upper={mathematical_constraint_nnz_upper}"
+            )
+        if allocated_nnz > structural_nnz_upper:
+            raise MemoryError(
+                "actual PETSc preallocation exceeds the admitted raw-cell/MPC-master "
+                f"union upper bound: allocated_nnz={allocated_nnz}, "
+                f"backend_union_nnz_upper={structural_nnz_upper}, "
+                f"legacy_constraint_replaced_nnz_upper={mathematical_constraint_nnz_upper}, "
+                f"raw_cell_support_pairs_sum={support['raw_cell_support_pairs_sum']}, "
+                "constraint_replaced_cell_support_pairs_sum="
+                f"{support['constraint_replaced_cell_support_pairs_sum']}, "
+                "backend_raw_plus_masters_union_pairs_sum="
+                f"{support['backend_raw_plus_masters_union_pairs_sum']}"
+            )
         dolfinx_mpc.assemble_matrix(compiled, floquet.mpc, bcs=[], A=matrix)
         matrix.assemble()
         postassembly = matrix.getInfo()
         used_nnz = int(postassembly.get("nz_used", allocated_nnz))
+        allocation_gate(
+            "task40_v18_full_native_volume_matrix_postassembly_actual_inventory",
+            {
+                "additional_payload_bytes": 0,
+                "workspace_bytes": 0,
+                "allocated_nnz": allocated_nnz,
+                "used_nnz": used_nnz,
+                "admitted_backend_pattern_nnz_upper": structural_nnz_upper,
+                "legacy_constraint_replaced_nnz_upper": (
+                    mathematical_constraint_nnz_upper
+                ),
+                "raw_cell_support_pairs_sum": support[
+                    "raw_cell_support_pairs_sum"
+                ],
+                "constraint_replaced_cell_support_pairs_sum": support[
+                    "constraint_replaced_cell_support_pairs_sum"
+                ],
+                "backend_raw_plus_masters_union_pairs_sum": support[
+                    "backend_raw_plus_masters_union_pairs_sum"
+                ],
+                "matrix_shape": list(matrix_shape),
+                "full_storage_rows": storage_rows,
+                "matrix_payload_bytes": int(
+                    (storage_rows + 1) * index_bytes
+                    + used_nnz * (index_bytes + scalar_bytes)
+                ),
+                "used_within_allocated_and_integer_range": (
+                    used_nnz <= allocated_nnz and used_nnz <= int32_limit
+                ),
+                "independent_oracle": "full_native_dolfinx_mpc_matrix_then_compact_independent_rows",
+            },
+        )
         if used_nnz > allocated_nnz or used_nnz > int32_limit:
             raise OverflowError("assembled native FE CSR NNZ exceeds its admitted PetscInt inventory")
         full_csr_payload = int(
@@ -1009,9 +1190,9 @@ def assemble_and_qualify_complete_ny_reference_operator(
             or not np.isfinite(native_data).all()
         ):
             raise ValueError("independent full FE matrix CSR storage is incomplete or non-finite")
-        indptr = np.array(native_indptr, dtype=np.int32, copy=True)
-        indices = np.array(native_indices, dtype=np.int32, copy=True)
-        data = np.array(native_data, dtype=np.complex128, copy=True)
+        indptr = _owned_array_or_copy(native_indptr, dtype=np.int32)
+        indices = _owned_array_or_copy(native_indices, dtype=np.int32)
+        data = _owned_array_or_copy(native_data, dtype=np.complex128)
         del native_indptr, native_indices, native_data
         if len(independent) and (
             int(independent.min()) < 0 or int(independent.max()) >= storage_rows
@@ -1069,6 +1250,7 @@ def assemble_and_qualify_complete_ny_reference_operator(
             "full_volume_matrix_shape": list(volume.shape),
             "full_volume_matrix_structural_nnz": int(volume.nnz),
             "full_volume_pattern_allocated_nnz": allocated_nnz,
+            "full_volume_pattern_used_nnz": used_nnz,
             "full_volume_pattern_structural_nnz_upper": structural_nnz_upper,
             "full_volume_csr_payload_bytes": int(volume.data.nbytes + volume.indices.nbytes + volume.indptr.nbytes),
             "full_volume_row_count_including_mpc_slaves": int(storage_rows),
