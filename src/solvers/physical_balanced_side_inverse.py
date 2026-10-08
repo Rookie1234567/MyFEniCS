@@ -3344,13 +3344,31 @@ def build_side_balanced_inverse(
         if lifecycle_callback is None:
             emit("full_action_ready")
         else:
+            object_inventory = _full_action_inventory(
+                full_action,
+                owner="side.full_action",
+            )
+            condensed = getattr(
+                getattr(side_system, "static_condensation", None),
+                "condensed",
+                None,
+            )
+            condensed_build_audit = getattr(
+                condensed,
+                "build_audit",
+                None,
+            )
+            if isinstance(condensed_build_audit, Mapping):
+                object_inventory[
+                    "p6_assembly_time_condensation_build_audit"
+                ] = dict(condensed_build_audit)
+                object_inventory[
+                    "p6_assembly_time_condensation_payload_semantics"
+                ] = "array payload only; not RSS"
             emit(
                 "full_action_ready",
                 {
-                    "object_inventory": _full_action_inventory(
-                        full_action,
-                        owner="side.full_action",
-                    )
+                    "object_inventory": object_inventory,
                 },
             )
         if p4_inverse_backend == "cell_condensed":

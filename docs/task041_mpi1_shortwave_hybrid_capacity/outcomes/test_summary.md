@@ -407,3 +407,14 @@ consumer接线pytest父wall总计`15.245187369175255 s`，三条按独立attempt
 此前三个runner/preflight attempt均在pytest启动前退出，不计入pytest账目：首次源码路径identity不匹配；retry1缺`BLIS_NUM_THREADS=1`；retry2词法解释器/CPU ABI复用身份不匹配。它们的raw分别在`results/task041_w0p7_numeric_gate_cleanup_serial_20261008T142200Z/`、`results/task041_w0p7_numeric_gate_cleanup_serial_retry1_20261008T142000Z/`、`results/task041_w0p7_numeric_gate_cleanup_serial_retry2_20261008T142500Z/`，均保留。通过attempt raw位于`results/task041_w0p7_numeric_gate_cleanup_serial_retry3_20261008T143000Z/`。
 
 本节点只验证合成rank入口、清理调用顺序及清理后资源样本被预算逻辑采用；不证明真实PETSc pending factor清理、allocator/RSS释放或大因子容量。没有MPI2、FE或dispatch；不据此改变历史容量缺口。
+
+## 2026-10-09：P6 identity projection 共享存储
+
+测试检查凝聚器三个投影映射是否在同一次builder调用中共享一个只读单位矩阵，并覆盖复数小FE凝聚/内部恢复、MPI2分布式对照和单cell empty-owner不分配。payload是按对象身份去重的NumPy buffer字节，不是RSS；构建时增加一次小型标量汇总，不在每次apply中通信。
+
+| Attempt / selector | 源码SHA（该attempt工作树） | 结果 | 父wall | 原始证据 |
+|---|---|---|---:|---|
+| serial `task035b_projection_identity_serial_mpi2_20261008T232208Z:serial:post_assembly_reference_recovery`：`test_matches_post_assembly_reference_and_recovers_interiors` | condensation `85c5b70ca420b448396bd28d45b09856447e94529f6befe54a1dfd35ea15baf0`；side inverse `30932e60882e5ae71da2c529074a68ac5482f2b55a3c3f38ddecc03c3d409a88`；test `8888d9cc32c8f18b26903d932cac570807034117c97485d6c53884dbde8052a9` | 1 passed | `10.659502683905885 s` | stdout `72b2c4cc16e81f88f61c2cc56d622ef552ebe589c3fc26e8a1972639997960f7`；attempt `ff6ae7e856ff27bc2a31c8c6c65a053f0c1250bfdb473927529ce206a323bdeb` |
+| MPI2 `task035b_projection_identity_serial_mpi2_20261008T232208Z:mpi2:distributed_reference_and_empty_owner`：`test_mpi2_matches_post_assembly_reference`、`test_mpi2_single_cell_empty_owner_has_no_identity_payload` | 同上三SHA | 两个rank各报告2 passed | `6.456301460042596 s` | stdout `a20534be89ec9a7debc5c0dd12cf8a12e826ee6237778ec47893895d34ccdd67`；attempt `bb499975a7123113929f8df18a9c58fed0aca5ed149aed131b26b24668e8bebd` |
+
+两个pytest父wall各按独立attempt唯一计账，合计`17.11580414394848 s`；V5 ledger 183→185项，SHA `cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e`→`d5390d12f2fe362b675205f3758672429be7c20b19fafdafa64fd0b4aa15d28b`。append receipt分别为`36af30f433f3c42add7f5da65f418fc1574152ccc1bdcaa8e718fdf22905e3e2`与`89fed62e00bef370a4b98c3567511190a7e260355322d926f252a8bc9826c75e`。ABI和preflight不计账。该组件结果不意味着W0.7真实RSS下降、numeric门可支付或FE资格。

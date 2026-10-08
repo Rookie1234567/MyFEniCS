@@ -85,6 +85,71 @@ def _two_cell_problem(*, distinct_materials: bool):
     return msh, cell_tags, V, fem.form(a)
 
 
+def _assert_identity_projection_storage(
+    test_case: unittest.TestCase,
+    condensed,
+) -> None:
+    projection_maps = (
+        condensed.interior_rhs_projection_by_class,
+        condensed.interior_solution_embedding_by_class,
+        condensed.interior_residual_projection_by_class,
+    )
+    class_keys = set(projection_maps[0])
+    for projection_map in projection_maps[1:]:
+        test_case.assertEqual(set(projection_map), class_keys)
+
+    arrays_by_id = {
+        id(array): array
+        for projection_map in projection_maps
+        for array in projection_map.values()
+    }
+    audit = condensed.build_audit
+    class_count = len(class_keys)
+    n_i = int(audit["identity_projection_n_i"])
+    bytes_per_identity = n_i * n_i * np.dtype(np.float64).itemsize
+    test_case.assertEqual(
+        audit["identity_projection_class_count_local"],
+        class_count,
+    )
+    test_case.assertEqual(
+        audit["identity_projection_unique_object_count_local"],
+        len(arrays_by_id),
+    )
+    test_case.assertEqual(len(arrays_by_id), int(class_count > 0))
+    test_case.assertEqual(
+        audit["identity_projection_unique_payload_bytes_local"],
+        sum(int(array.nbytes) for array in arrays_by_id.values()),
+    )
+    test_case.assertEqual(
+        audit["identity_projection_legacy_perclass_payload_bytes_local"],
+        class_count * bytes_per_identity,
+    )
+    test_case.assertEqual(
+        audit["identity_projection_saved_payload_bytes_local"],
+        class_count * bytes_per_identity
+        - sum(int(array.nbytes) for array in arrays_by_id.values()),
+    )
+    test_case.assertEqual(
+        audit["identity_projection_payload_semantics"],
+        "rank-local/rank-sum unique NumPy buffer payload; not RSS",
+    )
+    test_case.assertTrue(
+        audit["identity_projection_arrays_readonly_when_present"]
+    )
+    for array in arrays_by_id.values():
+        test_case.assertEqual(array.dtype, np.dtype(np.float64))
+        test_case.assertEqual(array.shape, (n_i, n_i))
+        test_case.assertFalse(array.flags.writeable)
+        with test_case.assertRaises(ValueError):
+            array[0, 0] = np.float64(-1.0)
+    for class_key in class_keys:
+        rhs = condensed.interior_rhs_projection_by_class[class_key]
+        embedding = condensed.interior_solution_embedding_by_class[class_key]
+        residual = condensed.interior_residual_projection_by_class[class_key]
+        test_case.assertIs(rhs, embedding)
+        test_case.assertIs(rhs, residual)
+
+
 class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
     def test_fixed_p5_trace_p6_interior_kernel_condenses_exactly(
         self,
@@ -167,6 +232,43 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             V,
             cell_tags,
         )
+        _assert_identity_projection_storage(self, candidate)
+        self.assertEqual(
+            candidate.build_audit["identity_projection_class_count_local"],
+            2,
+        )
+        self.assertEqual(
+            candidate.build_audit[
+                "identity_projection_unique_object_count_local"
+            ],
+            1,
+        )
+        self.assertEqual(
+            candidate.build_audit["identity_projection_class_count_sum"],
+            2,
+        )
+        self.assertEqual(
+            candidate.build_audit[
+                "identity_projection_unique_object_count_sum"
+            ],
+            1,
+        )
+        first_identity = next(
+            iter(candidate.interior_rhs_projection_by_class.values())
+        )
+        second_candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+        )
+        _assert_identity_projection_storage(self, second_candidate)
+        second_identity = next(
+            iter(
+                second_candidate.interior_rhs_projection_by_class.values()
+            )
+        )
+        self.assertIsNot(first_identity, second_identity)
+        second_candidate.destroy()
         full = fem_petsc.assemble_matrix(compiled, bcs=[])
         full.assemble()
         zero_rhs = full.createVecRight()
@@ -773,6 +875,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             V,
             cell_tags,
         )
+        _assert_identity_projection_storage(self, candidate)
         full = fem_petsc.assemble_matrix(compiled, bcs=[])
         full.assemble()
         manual_full = PETSc.Mat().createAIJ(
@@ -882,6 +985,50 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                 "raw_tensor_policy_signatures_identical"
             ]
         )
+        self.assertEqual(
+            comm.allreduce(
+                candidate.build_audit[
+                    "identity_projection_class_count_local"
+                ],
+                op=MPI.SUM,
+            ),
+            candidate.build_audit[
+                "identity_projection_class_count_sum"
+            ],
+        )
+        self.assertEqual(
+            comm.allreduce(
+                candidate.build_audit[
+                    "identity_projection_unique_object_count_local"
+                ],
+                op=MPI.SUM,
+            ),
+            candidate.build_audit[
+                "identity_projection_unique_object_count_sum"
+            ],
+        )
+        self.assertEqual(
+            comm.allreduce(
+                candidate.build_audit[
+                    "identity_projection_saved_payload_bytes_local"
+                ],
+                op=MPI.SUM,
+            ),
+            candidate.build_audit[
+                "identity_projection_saved_payload_bytes_sum"
+            ],
+        )
+        self.assertEqual(
+            comm.allreduce(
+                candidate.build_audit[
+                    "identity_projection_legacy_perclass_payload_bytes_local"
+                ],
+                op=MPI.SUM,
+            ),
+            candidate.build_audit[
+                "identity_projection_legacy_perclass_payload_bytes_sum"
+            ],
+        )
         matrix_info = candidate.matrix.getInfo(
             PETSc.Mat.InfoType.GLOBAL_SUM
         )
@@ -937,6 +1084,82 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         reference.destroy()
         zero_rhs.destroy()
         full.destroy()
+        candidate.destroy()
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 one-cell empty-owner identity storage check",
+    )
+    def test_mpi2_single_cell_empty_owner_has_no_identity_payload(self) -> None:
+        comm = MPI.COMM_WORLD
+        msh = mesh.create_unit_cube(
+            comm,
+            1,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        tdim = msh.topology.dim
+        owned_cells = int(msh.topology.index_map(tdim).size_local)
+        self.assertEqual(comm.allreduce(owned_cells, op=MPI.SUM), 1)
+        self.assertEqual(
+            comm.allreduce(int(owned_cells == 0), op=MPI.SUM),
+            comm.size - 1,
+        )
+        cell_tags = mesh.meshtags(
+            msh,
+            tdim,
+            np.arange(owned_cells, dtype=np.int32),
+            np.ones(owned_cells, dtype=np.int32),
+        )
+        V = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                2,
+                dtype=default_real_type,
+            ),
+        )
+        u = ufl.TrialFunction(V)
+        v = ufl.TestFunction(V)
+        dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+        compiled = fem.form(
+            (
+                ufl.inner(ufl.curl(u), ufl.curl(v))
+                + PETSc.ScalarType(2.5 - 0.2j) * ufl.inner(u, v)
+            )
+            * dx(1)
+        )
+        candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+        )
+        _assert_identity_projection_storage(self, candidate)
+        audit = candidate.build_audit
+        local_payload_is_correct = (
+            audit["identity_projection_class_count_local"] == owned_cells
+            and audit["identity_projection_unique_object_count_local"]
+            == int(owned_cells > 0)
+            and audit["identity_projection_unique_payload_bytes_local"]
+            == int(owned_cells > 0)
+            * int(audit["identity_projection_n_i"])
+            ** 2
+            * np.dtype(np.float64).itemsize
+        )
+        self.assertEqual(
+            comm.allreduce(int(local_payload_is_correct), op=MPI.MIN),
+            1,
+        )
+        self.assertEqual(
+            audit["identity_projection_class_count_sum"],
+            1,
+        )
+        self.assertEqual(
+            audit["identity_projection_unique_object_count_sum"],
+            1,
+        )
         candidate.destroy()
 
     @unittest.skipUnless(

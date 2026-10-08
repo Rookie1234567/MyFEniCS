@@ -1127,6 +1127,10 @@ def build_unconstrained_assembly_time_condensation(
     ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
     per local class for a later owner-computes action.
 
+    The three per-class interior projection maps share one readonly float64
+    identity array within this builder call.  These internal arrays are not
+    writable by consumers.
+
     ``appended_support_include_group_rows`` is a p4-only opt-in for reserving
     every appended column in each support group.  The default preserves the
     older support-trace-plus-own-diagonal allocation.
@@ -1328,6 +1332,7 @@ def build_unconstrained_assembly_time_condensation(
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    interior_identity: np.ndarray | None = None
     recovery_maps: list[CellRecoveryMap] = []
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
@@ -1372,10 +1377,12 @@ def build_unconstrained_assembly_time_condensation(
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = interior_lu
-            interior_identity = np.eye(
-                len(interior_positions),
-                dtype=np.float64,
-            )
+            if interior_identity is None:
+                interior_identity = np.eye(
+                    len(interior_positions),
+                    dtype=np.float64,
+                )
+                interior_identity.setflags(write=False)
             rhs_projection_cache[class_key] = interior_identity
             solution_embedding_cache[class_key] = interior_identity
             rhs_trace_cache[class_key] = trace_from_interior_rhs
@@ -1447,6 +1454,58 @@ def build_unconstrained_assembly_time_condensation(
         retained_bytes_local = 0
         retained_class_count_sum = 0
         retained_bytes_sum = 0
+    identity_projection_class_count_local = len(rhs_projection_cache)
+    identity_projection_arrays_by_id = {
+        id(array): array
+        for projection_map in (
+            rhs_projection_cache,
+            solution_embedding_cache,
+            residual_projection_cache,
+        )
+        for array in projection_map.values()
+    }
+    identity_projection_unique_object_count_local = len(
+        identity_projection_arrays_by_id
+    )
+    identity_projection_unique_payload_bytes_local = sum(
+        int(array.nbytes)
+        for array in identity_projection_arrays_by_id.values()
+    )
+    identity_projection_array_bytes = int(
+        len(interior_positions) * len(interior_positions)
+        * np.dtype(np.float64).itemsize
+    )
+    identity_projection_legacy_payload_bytes_local = (
+        identity_projection_class_count_local * identity_projection_array_bytes
+    )
+    identity_projection_rank_totals = comm.allgather(
+        (
+            identity_projection_class_count_local,
+            identity_projection_unique_object_count_local,
+            identity_projection_unique_payload_bytes_local,
+            identity_projection_legacy_payload_bytes_local,
+        )
+    )
+    identity_projection_class_count_sum = sum(
+        int(values[0]) for values in identity_projection_rank_totals
+    )
+    identity_projection_unique_object_count_sum = sum(
+        int(values[1]) for values in identity_projection_rank_totals
+    )
+    identity_projection_unique_payload_bytes_sum = sum(
+        int(values[2]) for values in identity_projection_rank_totals
+    )
+    identity_projection_legacy_payload_bytes_sum = sum(
+        int(values[3]) for values in identity_projection_rank_totals
+    )
+    identity_projection_saved_payload_bytes_local = (
+        identity_projection_legacy_payload_bytes_local
+        - identity_projection_unique_payload_bytes_local
+    )
+    identity_projection_saved_payload_bytes_sum = (
+        identity_projection_legacy_payload_bytes_sum
+        - identity_projection_unique_payload_bytes_sum
+    )
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1518,6 +1577,43 @@ def build_unconstrained_assembly_time_condensation(
             "retained_local_schur_class_count_sum": retained_class_count_sum,
             "retained_local_schur_bytes_local": retained_bytes_local,
             "retained_local_schur_bytes_sum": retained_bytes_sum,
+            "identity_projection_n_i": len(interior_positions),
+            "identity_projection_dtype": "float64",
+            "identity_projection_arrays_readonly_when_present": True,
+            "identity_projection_payload_semantics": (
+                "rank-local/rank-sum unique NumPy buffer payload; not RSS"
+            ),
+            "identity_projection_class_count_local": (
+                identity_projection_class_count_local
+            ),
+            "identity_projection_class_count_sum": (
+                identity_projection_class_count_sum
+            ),
+            "identity_projection_unique_object_count_local": (
+                identity_projection_unique_object_count_local
+            ),
+            "identity_projection_unique_object_count_sum": (
+                identity_projection_unique_object_count_sum
+            ),
+            "identity_projection_unique_payload_bytes_local": (
+                identity_projection_unique_payload_bytes_local
+            ),
+            "identity_projection_unique_payload_bytes_sum": (
+                identity_projection_unique_payload_bytes_sum
+            ),
+            "identity_projection_legacy_perclass_payload_bytes_local": (
+                identity_projection_legacy_payload_bytes_local
+            ),
+            "identity_projection_legacy_perclass_payload_bytes_sum": (
+                identity_projection_legacy_payload_bytes_sum
+            ),
+            "identity_projection_saved_payload_bytes_local": (
+                identity_projection_saved_payload_bytes_local
+            ),
+            "identity_projection_saved_payload_bytes_sum": (
+                identity_projection_saved_payload_bytes_sum
+            ),
+            "identity_projection_legacy_payload_counted_once_across_maps": True,
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(

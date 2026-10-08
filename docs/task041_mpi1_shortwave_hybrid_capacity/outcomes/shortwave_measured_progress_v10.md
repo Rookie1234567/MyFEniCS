@@ -194,3 +194,16 @@ V5 append receipt见[reconciliation record](../../../results/task041_petsc_lu_st
 合成serial attempt `task041_w0p7_numeric_gate_cleanup_serial_retry3_20261008T143000Z:serial:two_selectors`在exact-side SHA `632c0a5e79e3a6c6441462d7556a85b8d161792efc7faaea87a171d01e06f7dd`、test351 SHA `90f1866734be47bad1610e1068e32f8ac81e06dc0911aa22cdfdf31df13edd1e`下两项通过，父wall `3.2357035228051245 s`，attempt SHA `7f32831ff60e0fe0bf1832c03602733f5adbbdaa4c263d44a1552581af4ea476`。该wall仅在V5记一次；账本182项，SHA `e0bf2619c9f0f851b06cab44caa9b702df168a1ac793328fa556bd7fdfb3e13b`。三个更早的启动前错误均未启动pytest且不计wall，原记录仍在各自attempt目录。
 
 这不是实际MPI8/PETSc清理或RSS回收实测，不证明历史numeric缺口已缩小，也不证明bottom/top numeric可支付。该记录没有启动新的W0.7 consumer、FE或dispatch；原停止raw、数值门和容量口径保持不变。
+
+## 2026-10-09：P6 identity projection 共享组件验证
+
+本次在assembly-time condensation builder内减少重复单位映射数组：同一次builder调用中的各类别，以及RHS projection / solution embedding / residual projection三个映射，共用一个只读`float64` identity；不同builder调用仍各自持有独立对象，empty-owner rank不创建数组。收益口径是去重后的NumPy payload，不是RSS；build audit只在一次构建期间执行小型标量`allgather`，不在每次apply通信。普通路径及其他构造器行为未改。
+
+| 模式 | 实际验证 | 父wall / runner authority peak | 结果边界 |
+|---|---|---|---|
+| serial | `test_matches_post_assembly_reference_and_recovers_interiors` | `10.659502683905885 s` / `450416640 B` | 1 passed；小型复数FE凝聚与内部恢复，不代表W0.7真实规模 |
+| MPI2 | `test_mpi2_matches_post_assembly_reference`及`test_mpi2_single_cell_empty_owner_has_no_identity_payload` | `6.456301460042596 s` / `618975232 B` | 两个rank各2 passed；分布式装配对照与empty-owner检查，不是MPI8资源资格 |
+
+两次pytest父wall各按唯一attempt计账，共`17.11580414394848 s`。V5 ledger由183项/SHA `cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e`更新为185项/SHA `d5390d12f2fe362b675205f3758672429be7c20b19fafdafa64fd0b4aa15d28b`；ABI、host preflight和静态检查不计。receipt SHA：serial `36af30f433f3c42add7f5da65f418fc1574152ccc1bdcaa8e718fdf22905e3e2`，MPI2 `89fed62e00bef370a4b98c3567511190a7e260355322d926f252a8bc9826c75e`。三文件SHA及stdout/attempt SHA见[Response V12](../response_v12.md)。
+
+本组件尚未在真实P6两侧测量identity payload与进程树RSS，也未运行production consumer。历史numeric预算缺口没有因本测试改变；下一步仅按授权派生identity-sharing warm准备包，保留matched-cell、compact transfer、deferred AMD、numeric cleanup、原cap/warn/W/floor与数值门，并重新做fresh宿主准入。当前没有FE资格、dispatch或新Invocation。
