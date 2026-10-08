@@ -154,6 +154,41 @@ def collect():
     scope.window.guard_worker_parent();folder=Path(os.environ['TASK042_V36_AUX_DIRECTORY']);out=folder/'records';out.mkdir(exist_ok=True)
     runs=scope.window.ledger()['runs'];costs,sources,bindings=cost_rows(runs,active_scope=scope)
     stages={r:scope.stage(r) for r in scope.STAGES if (scope.ARTIFACT/(r+'.json')).exists()};ptr={r:json.loads((scope.ARTIFACT/(r+'.json')).read_text()) for r in stages}
+    from benchmarks.check_independent_tetra import saved_pair,material_regions
+    from src.solvers.independent_tetra_fields import selected_points
+    from src.solvers import face_trace_scope as old
+    if not (scope.window.TMP/'scientific_queue_frozen.json').exists():raise ValueError('no frozen V62 scientific inventory')
+    allstates=dict(stages,FXY=old.stage('FXY'),R7=old.parent('R7'))
+    checked={};regions={}
+    for name,pair in stages['VERIFY_COST']['comparisons'].items():
+        first,second=name.split('_');r=allstates[second]
+        checked[name]=saved_pair(pair,allstates[first],r,expected_points=selected_points(r['physical']))
+        if not checked[name]['published_gate_matches_recalculation']:raise ValueError('published V62 physical verdict disagrees with saved arrays')
+        if first in ('T4','T5'):
+            cfg=core.configuration(r['spec'],r['physical'])
+            regions[name]=material_regions(pair,r,r['physical']['geometry']['notch_box_nm'],
+                {cfg.tags.air:'air',cfg.tags.substrate:'substrate',cfg.tags.grating:'Si_grating'})
+    lifecycle={}
+    for role in ('F4','T4','T5','TH3'):
+        r=stages[role];d=Path(r['arrays']['path']).parent
+        symbolic=json.loads((d/'h_symbolic_capacity.json').read_text());numeric=json.loads((d/'h_numeric_factor_info.json').read_text())
+        events=[json.loads(s) for s in (d/'events.jsonl').read_text().splitlines()]
+        released=next(e for e in events if e['event']=='global_body_augmented_and_factor_released')
+        owner=next(e for e in events if e['event']=='object_owner_snapshot')
+        lifecycle[role]=dict(nnz=r['nnz'],actual_independent_FE=r['spec']['independent'],actual_rows=r['spec']['rows'],
+            actual_native_coefficients=r['arrays']['members']['u_native']['shape'][0],local_basis_dimension={3:45,4:84,5:140}[r['spec']['degree']],
+            numeric_plan=symbolic['plan'],symbolic_controls=symbolic['controls'],numeric_controls=numeric['controls'],
+            factor_info=numeric['info'],backend_reported_factor_items=numeric['info']['infog']['9'],
+            backend_reported_factor_decimal_MB=numeric['info']['rinfog']['15'],
+            factor_item_nnz_ratio_derived=numeric['info']['infog']['9']/r['nnz'],
+            input_owner_snapshot={k:v for k,v in owner.items() if k!='clock'},
+            release_snapshot={k:v for k,v in released.items() if k!='clock'},
+            persisted_solution_bytes=Path(r['arrays']['path']).stat().st_size,
+            persisted_boundary_bytes={q:Path(a['path']).stat().st_size for q,a in r['boundary_arrays'].items()},
+            deployment=deployment(role),global_finite_LU_present=True,static_condensation=False,
+            symbolic_receipt=dict(path=str(d/'h_symbolic_capacity.json'),sha256=digest(d/'h_symbolic_capacity.json')),
+            numeric_receipt=dict(path=str(d/'h_numeric_factor_info.json'),sha256=digest(d/'h_numeric_factor_info.json')),
+            memory_scopes='backend factor load, visible numpy unique owners, sampled whole-tree RSS and disk payload are distinct')
     repairs=scope.window.TMP/'repair_journal.jsonl'
     data=dict(run_index_v62=dict(runs=runs,pointers=ptr,old_windows_closed=True),
         scientific_checks_v62=dict(stages=stages,NN_training=0,NN20=False,continuum_accuracy=False,target_qualified=False),
@@ -161,6 +196,9 @@ def collect():
             historical_lower_seconds=scope.plan_record()['historical_loaded_known_lower_seconds'],historical_unknown='preserved',deployments={r:deployment(r) for r in scope.SOLVES if r in stages},
             nominal_sampling_seconds=.5,sampled_peak_not_continuous_hard_peak=True,inclusive_N1_not_added_to_nested_timers=True),
         repair_journal_v62=dict(entries=[json.loads(x) for x in repairs.read_text().splitlines()] if repairs.exists() else [],failures_preserved=True),
+        independent_saved_pair_checks_v62=dict(pairs=checked,new_FE_calls=0,new_factor=0,new_solve=0,source_consumer='saved actual integrals, six complex fields, 240 fixed points and 828 physical keys'),
+        physical_error_regions_v62=dict(pairs=regions,new_FE_calls=0,mask='frozen physical material and true NOTCH cell center, never selected from error'),
+        storage_lifecycle_deployment_v62=dict(cases=lifecycle,cold_N1_vs_research_separate=True,same_accuracy_speedup='NOT_QUALIFIED'),
         target_gap_v62=dict(new_representation='FULL_UNCONDENSED_TETRA_N1CURL_PHASE_UFL',global_finite_factor_present=True,
             previous_target_planning=dict(path='docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v61.json',
                 sha256=digest(scope.ROOT/'docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v61.json')),

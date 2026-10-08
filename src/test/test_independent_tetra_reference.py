@@ -2,6 +2,7 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 import numpy as np
@@ -65,6 +66,17 @@ class TetraReferenceTests(unittest.TestCase):
         self.assertEqual(r['T_N1_observed_start_to_final_cleanup_seconds'],200)
         self.assertFalse(r['single_process_complete_N1'])
         self.assertEqual(r['post_resume_new_numeric_factors'],0)
+
+    def test_notch_admission_requires_flat_equation_and_accuracy(self):
+        # Synthetic open inventory; never depend on a real old closed window.
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);(root/'F4.json').write_text('{}')
+            flat=dict(accuracy_pass=True,equation_pass=False)
+            def fixture(role):return dict(pass_gate=True) if role=='PREFLIGHT' else flat
+            with patch.object(scope,'ARTIFACT',root),patch.object(scope.window,'TMP',root),patch.object(scope,'stage',fixture),patch.object(scope.window,'available_at_boundary',return_value=100000):
+                with self.assertRaisesRegex(RuntimeError,'FLAT accuracy gate'):scope.require_stage('T4')
+                flat['equation_pass']=True
+                scope.require_stage('T4')
 
 
 if __name__=='__main__':unittest.main()

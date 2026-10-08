@@ -71,7 +71,7 @@ def require_stage(role):
     if count>=5:raise RuntimeError('V62 maximum five numeric/complete attempts')
     if not stage('PREFLIGHT')['pass_gate']:raise RuntimeError('tetra preflight not qualified')
     if role=='F5' and stage('F4').get('accuracy_pass'):raise RuntimeError('F5 not admitted: F4 accurate')
-    if role in ('T4','T5','TH3') and not any((ARTIFACT/(f+'.json')).exists() and stage(f).get('accuracy_pass') for f in ('F4','F5')):
+    if role in ('T4','T5','TH3') and not any((ARTIFACT/(f+'.json')).exists() and stage(f).get('accuracy_pass') and stage(f).get('equation_pass') for f in ('F4','F5')):
         raise RuntimeError('new tetra FLAT accuracy gate not passed')
     if role=='TH3' and not all(stage(r).get('equation_pass') for r in ('T4','T5')):raise RuntimeError('TH3 main fields not algebraically legal')
     if (ARTIFACT/(role+'.json')).exists() and stage(role).get('arrays'):raise RuntimeError('returned field: saved consumer only')
@@ -86,7 +86,8 @@ def implementation_hashes():
     names=['scripts/run_case.py','scripts/activate_task042.sh','src/runners/port_preparation.py','src/runners/task042_shared.py',
         'src/solvers/independent_tetra_reference.py','src/solvers/independent_tetra_fields.py','src/solvers/independent_tetra_scope.py',
         'src/solvers/independent_tetra_study.py','src/io/independent_tetra_reference.py','src/test/test_independent_tetra_reference.py',
-        'benchmarks/qualify_independent_tetra.py','benchmarks/collect_independent_tetra.py',str(PLAN.relative_to(ROOT)),
+        'benchmarks/qualify_independent_tetra.py','benchmarks/collect_independent_tetra.py','benchmarks/check_independent_tetra.py',
+        'src/test/test_independent_tetra_saved_checks.py',str(PLAN.relative_to(ROOT)),
         'src/geometry/mesh_builder_3d.py','src/constraints/floquet_3d.py','src/constraints/floquet_3d_high_order.py',
         'src/constraints/high_order_floquet_trace.py','src/solvers/target_boundary_witness.py','src/solvers/fixed_phase_fem.py',
         'src/solvers/scattering_anchor.py','src/solvers/scattering_accuracy_fields.py','src/solvers/scattering_accuracy_boundary.py',

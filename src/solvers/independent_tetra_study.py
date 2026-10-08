@@ -137,7 +137,7 @@ def solve(role,folder,journal,state):
     del A,K,scaled,C,D;gc.collect();journal.event('global_body_augmented_and_factor_released')
     output,accuracy=complete_output(s,b,x,folder,journal)
     result=dict(pending,status='COMPLETED',output=output,accuracy=accuracy,
-        accuracy_pass=accuracy is not None and accuracy['pass_gate'],deployment_complete=True,timings=journal.timings,calls=journal.calls)
+        accuracy_pass=accuracy is not None and accuracy['pass_gate'] and aud['pass_gate'],deployment_complete=True,timings=journal.timings,calls=journal.calls)
     write_json(folder/'complete_scientific_result.json',result);return result
 
 
