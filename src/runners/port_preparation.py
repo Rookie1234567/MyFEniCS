@@ -381,6 +381,15 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
+    if namespace=='v62' and previous.get('arrays'):
+        from src.solvers.independent_tetra_scope import window
+        path=window.TMP/(role+'_post_resume.json')
+        if path.exists():
+            item=json.loads(path.read_text());old=item.get('completed_outputs',{})
+            producer=Path(old.get('path','/not_present'))
+            return (item.get('root_cause')=='port_audit_denominator' and item.get('audit_recompute') is True
+                and producer.is_file() and hashlib.sha256(producer.read_bytes()).hexdigest()==old.get('sha256')
+                and json.loads(producer.read_text())['arrays']['sha256']==previous['arrays']['sha256'])
     if namespace=='v57' and role=='K' and previous.get('status')=='COMPLETED' and not previous.get('p6_pass'):
         from src.solvers.common_weak_phase_scope import window
         fix=window.TMP/'K_checker_resume.json'

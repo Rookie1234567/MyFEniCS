@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import numpy as np
 from scipy import sparse
-from src.solvers.independent_tetra_reference import periodic_expansion
+from src.solvers.independent_tetra_reference import periodic_expansion,complete_residual_metrics
 from src.io.independent_tetra_reference import load_tetra_reference
 from src.solvers import independent_tetra_scope as scope
 
@@ -34,6 +34,12 @@ class TetraReferenceTests(unittest.TestCase):
         self.assertGreater(np.linalg.norm(D-C.conj().T),1.)
         self.assertGreater(np.linalg.norm(b[6:]),1.)
         self.assertLess(np.linalg.norm((-D@x[:6]+H@x[6:])-b[6:]),1e-12)
+        metrics,_,_=complete_residual_metrics(C,D,np.diag(H),x,b,b-A@x)
+        self.assertLess(max(metrics.values()),1e-12)
+        b[6:]=0;x=np.linalg.solve(A,b);r=b-A@x
+        metrics,_,_=complete_residual_metrics(C,D,np.diag(H),x,b,r)
+        self.assertLess(metrics['port'],1e-12)
+        self.assertAlmostEqual(np.linalg.norm(r[6:])/np.linalg.norm((A@x)[6:]),1.)
 
     def test_actual_one_run_descriptor_not_hex_template(self):
         with tempfile.TemporaryDirectory() as td:

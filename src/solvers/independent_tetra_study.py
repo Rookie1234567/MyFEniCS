@@ -66,14 +66,21 @@ def solve(role,folder,journal,state):
         s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal)
         if not np.array_equal(a['geometry_x'],s['geometry']['geometry_x']) or not np.array_equal(a['geometry_dofmap'],s['geometry']['geometry_dofmap']):raise ValueError('saved tetra geometry differs')
         b=load_boundary(s,old['boundary_arrays'],old['mode_sha256'])
-        if not old.get('audit'):
+        if not old.get('audit') or record.get('audit_recompute'):
             oracle=load_boundary(s,old['boundary_arrays'],old['mode_sha256'],q='q63')
             aud,res,orrhs=core.audit(s,oracle,a['x'],a['rhs'],journal)
             aud['arrays']=save_arrays(folder/'independent_original.npz',residual=res,rhs=orrhs,action=orrhs-res,x=a['x'])
             old.update(audit=aud,equation_pass=aud['pass_gate'])
-        output,accuracy=complete_output(s,b,a['x'],folder,journal)
-        return dict(old,output=output,accuracy=accuracy,accuracy_pass=False if accuracy is None else accuracy['pass_gate'],deployment_complete=True,
-            new_numeric_factors=0,new_complete_solves=0,post_only=True,timings=journal.timings)
+        previous=record.get('completed_outputs')
+        if previous:
+            if hashlib.sha256(Path(previous['path']).read_bytes()).hexdigest()!=previous['sha256']:raise ValueError('unchanged completed outputs producer hash')
+            result=json.loads(Path(previous['path']).read_text())
+            if result['arrays']['sha256']!=old['arrays']['sha256']:raise ValueError('field outputs belong to different returned coefficients')
+            checked(result['output']['fields']);output,accuracy=result['output'],result['accuracy']
+        else:output,accuracy=complete_output(s,b,a['x'],folder,journal)
+        return dict(old,status='COMPLETED',output=output,accuracy=accuracy,accuracy_pass=accuracy is not None and accuracy['pass_gate'] and old['equation_pass'],deployment_complete=True,
+            new_numeric_factors=0,new_complete_solves=0,post_only=True,timings=journal.timings,postprocessing_source=state,
+            original_producer=previous or resume)
     scope.require_stage(role)
     s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal);cap=core.assembly_capacity(s,journal)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',capacity=cap,role=role)

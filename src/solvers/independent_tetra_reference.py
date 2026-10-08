@@ -297,20 +297,34 @@ def restore_field(s,x):
     f=fem.Function(s['V']);f.x.array[:]=s['P']@x;f.x.scatter_forward();return f
 
 
+def complete_residual_metrics(C,D,H,x,b,r):
+    """Original closed equation, augmented equation and projected port scale.
+
+    A zero physical port RHS must be measured against the nonzero projected
+    field, never against its almost-zero balance residual.
+    """
+    n=D.shape[1];projected=D@x[:n]+b[n:]
+    closed=r[:n]-C@(r[n:]/H)
+    return dict(true=relative(closed,b[:n]),native=relative(closed,b[:n]),
+        augmented=relative(r[:n],b[:n]),port=relative(r[n:],projected),
+        full_augmented=relative(r,b)),closed,projected
+
+
 def audit(s,oracle,x,rhs,journal):
     with journal.measured('independent_PUBLIC_BASIX_full_body_triangle_q63'):
         a=full_action(s,oracle,x,q=2*s['spec']['degree']+5);b=rhs_vector(s,oracle);r=b-a
     n=s['P'].shape[1];bn=max(np.linalg.norm(b),1e-300)
-    identity=relative(rhs-b,rhs);native=relative(r,b)
-    port=relative(r[n:],np.r_[b[n:],a[n:]])
+    identity=relative(rhs-b,rhs);C,D,H=boundary_matrices(s,oracle)
+    metrics,closed,projected=complete_residual_metrics(C,D,H,x,b,r)
     coefficients,offsets=s['floquet'].mpc.coefficients();field=s['P']@x[:n];defects=[]
     for slave in s['floquet'].mpc.slaves:
         masters=s['floquet'].mpc.masters.links(int(slave))
         defects.append(field[slave]-np.dot(coefficients[offsets[slave]:offsets[slave+1]],field[masters]))
     constraint=float(np.linalg.norm(defects)/max(np.linalg.norm(field),1e-300))
-    result=dict(true=native,native=native,augmented=native,port=port,direct_target=native<=1e-10,
+    result=dict(**metrics,direct_target=max(metrics[k] for k in ('true','native','augmented','port'))<=1e-10,
         rhs_q47_q63=identity,MPC_identity=constraint,
         absolute_residual=float(np.linalg.norm(r)),original_rhs_norm=float(bn),backend='PUBLIC_BASIX_FULL_TETRA_VECTOR_Q'+str(2*s['spec']['degree']+5)+'_TRIANGLE63',
-        pass_gate=native<=1e-6 and port<=1e-6 and identity<=1e-10 and constraint<=1e-10)
+        closed_physical_residual_norm=float(np.linalg.norm(closed)),projected_port_norm=float(np.linalg.norm(projected)),
+        pass_gate=max(metrics[k] for k in ('true','native','augmented','port'))<=1e-6 and identity<=1e-10 and constraint<=1e-10)
     journal.calls['A']+=1;return result,r,b
 
