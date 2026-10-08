@@ -163,7 +163,7 @@ def load_boundary(s,receipts,digest,q='q47'):
 
 
 def execute(role,folder,state):
-    journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=budget['planning_gib']*2**30);journal.source_state=state
+    journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=64*2**30);journal.source_state=state
     if state.get('memory_budget')!=scope.plan_record()['memory_budget']:raise ValueError('V62 live memory propagation')
     if role=='PREFLIGHT':return preflight(folder,journal)
     if role in scope.SOLVES:return solve(role,folder,journal,state)
