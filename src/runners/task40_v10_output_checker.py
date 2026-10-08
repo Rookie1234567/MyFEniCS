@@ -520,6 +520,35 @@ def _verify_v18_ny8_operator_qualification(
     }
 
 
+def _verify_v18_packet_operator_qualification_binding(
+    packet_identity: Mapping[str, Any] | None,
+    checked_operator: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind the checked operator hash to the official packet's run identity."""
+    expected = checked_operator.get("complete_operator_qualification_sha256")
+    if (
+        not isinstance(expected, str)
+        or len(expected) != 64
+        or any(character not in "0123456789abcdef" for character in expected)
+    ):
+        raise ValueError("V18 checker did not produce a valid complete-operator SHA256")
+    recorded = (
+        packet_identity.get("complete_operator_qualification_sha256")
+        if isinstance(packet_identity, Mapping)
+        else None
+    )
+    if recorded != expected:
+        raise ValueError(
+            "V18 official output identity is not bound to the checked complete-operator record"
+        )
+    return {
+        "schema": "task40extra.review_v18_packet_operator_identity_binding.v1",
+        "identity_field": "identity.complete_operator_qualification_sha256",
+        "complete_operator_qualification_sha256": expected,
+        "passed": True,
+    }
+
+
 def _close_float(actual: float, expected: float, *, rtol: float = 2.0e-12) -> bool:
     actual = float(actual)
     expected = float(expected)
@@ -1569,6 +1598,7 @@ def verify_v10_output_bundle(
     v17_row_tile_allocation_ledger = None
     v17_dispatch_binding = None
     v18_ny8_operator_qualification = None
+    v18_ny8_packet_operator_binding = None
     v18_ny8_row_tile_allocation_ledger = None
     v18_ny8_dispatch_binding = None
     packet_identity_map = (
@@ -1681,15 +1711,11 @@ def verify_v10_output_bundle(
             v18_ny8_operator_qualification = _verify_v18_ny8_operator_qualification(
                 worker_summary, inventory
             )
-            if (
-                identity.get("complete_operator_qualification_sha256")
-                != v18_ny8_operator_qualification[
-                    "complete_operator_qualification_sha256"
-                ]
-            ):
-                raise ValueError(
-                    "V18 official output identity is not bound to the checked complete-operator record"
+            v18_ny8_packet_operator_binding = (
+                _verify_v18_packet_operator_qualification_binding(
+                    packet_identity_map, v18_ny8_operator_qualification
                 )
+            )
             v18_ny8_row_tile_allocation_ledger = _verify_q_assembly_allocation_admission_ledger(
                 path.parent, worker_summary, version="v18_ny8_row_tile"
             )
@@ -1704,6 +1730,7 @@ def verify_v10_output_bundle(
                 "worker_summary_binding_passed": True,
                 "run_manifest_binding_passed": True,
                 "complete_operator_checker_passed": True,
+                "packet_operator_qualification_binding_passed": True,
             }
         else:
             v17_row_tile_assembly = row_tile_assembly
@@ -1744,6 +1771,7 @@ def verify_v10_output_bundle(
         "v18_ny8_row_tile_assembly": (
             row_tile_assembly if has_registered_v18_profile else None
         ),
+        "v18_ny8_packet_operator_binding": v18_ny8_packet_operator_binding,
         "v18_ny8_row_tile_allocation_admission_ledger": v18_ny8_row_tile_allocation_ledger,
         "v18_ny8_dispatch_binding": v18_ny8_dispatch_binding,
         "operator_reapplied_by_checker": False,

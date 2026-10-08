@@ -10,6 +10,7 @@ import pytest
 from src.runners.physical_diagnosis_worker import save_packet
 from src.runners.task40_v10_worker import _save_packet
 from src.runners.task40_v10_output_checker import (
+    _verify_v18_packet_operator_qualification_binding,
     main as output_checker_main,
     verify_v10_dtn_port_mode_table,
     verify_v10_output_bundle,
@@ -627,6 +628,50 @@ def test_v15_pc_packet_checker_rejects_bad_hash_or_unregistered_rows(tmp_path, c
 
 _V17_OUTPUT_PROFILE = "task40extra_v17_p6_y_orbit_gx560_reference_v1"
 _V17_OUTPUT_STRATEGY = "ROW_TILE_BOUNDED_CSR_V17"
+_V18_OPERATOR_QUALIFICATION_SHA = "d" * 64
+
+
+def test_v18_packet_operator_binding_accepts_standard_run_identity():
+    packet_identity = {
+        "complete_operator_qualification_sha256": _V18_OPERATOR_QUALIFICATION_SHA
+    }
+    checked_operator = {
+        "complete_operator_qualification_sha256": _V18_OPERATOR_QUALIFICATION_SHA,
+        "passed": True,
+    }
+
+    result = _verify_v18_packet_operator_qualification_binding(
+        packet_identity, checked_operator
+    )
+
+    assert result["passed"] is True
+    assert result["identity_field"] == "identity.complete_operator_qualification_sha256"
+    assert result["complete_operator_qualification_sha256"] == (
+        _V18_OPERATOR_QUALIFICATION_SHA
+    )
+
+
+@pytest.mark.parametrize(
+    "packet_identity",
+    (
+        {},
+        {"complete_operator_qualification_sha256": "e" * 64},
+    ),
+    ids=("missing-hash", "wrong-hash"),
+)
+def test_v18_packet_operator_binding_rejects_missing_or_wrong_hash(packet_identity):
+    checked_operator = {
+        "complete_operator_qualification_sha256": _V18_OPERATOR_QUALIFICATION_SHA,
+        "passed": True,
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="official output identity is not bound to the checked complete-operator record",
+    ):
+        _verify_v18_packet_operator_qualification_binding(
+            packet_identity, checked_operator
+        )
 
 
 def _make_v17_output_bundle_fixture(tmp_path):
