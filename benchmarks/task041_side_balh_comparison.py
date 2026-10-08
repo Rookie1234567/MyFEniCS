@@ -37,7 +37,16 @@ from benchmarks.task039_hybrid_direct_identity import (
 from benchmarks.task039_v4_selected_mode_packet import (
     TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
 )
-from src.io.input_validation import TASK041_BALH_MODEL_IDS, task041_balh_case
+from benchmarks.task041_balh_workflow import (
+    TASK041_P4_REFINEMENT_TARGET_TOLERANCE,
+    TASK041_V8_SWAP_OBSERVE_CONTINUE,
+    task041_p4_registered_formal_target_scope,
+)
+from src.io.input_validation import (
+    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+    TASK041_BALH_MODEL_IDS,
+    task041_balh_case,
+)
 from src.modes.selected_mode_packet import _json_bytes as _selected_mode_json_bytes
 from src.solvers.hybrid_interface_basis import canonical_mode_keys_sha256
 
@@ -51,6 +60,11 @@ _CONTRACT_PATH = (
     / "task041_side_balh_comparison_contract_v1.json"
 )
 _AUTHORITY_SCHEMA = "task039.v3-7-hybrid-authority.v1"
+_CANDIDATE_SIDE_INVERSE_METHOD = "task041_balh_side_inverse_response_fgmres32"
+_FIXED_H6_CANDIDATE_METHOD = (
+    "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+)
+_FIXED_H6_CANDIDATE_SUMMARY_METHOD = "fixed_h6_modal_gmres_research"
 _PACKET_IDENTITY_SCHEMA = TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA
 _GRID_SCHEMA = "task037b.m10-own-grid-EH-modal-q.v1"
 _PAYLOAD_KEYS = (
@@ -1944,6 +1958,129 @@ def _resources(
     }
 
 
+def _validate_registered_fixed_h6_candidate_scope(
+    summary: Mapping[str, Any], identity: Mapping[str, Any]
+) -> None:
+    """Bind fixed-H6 comparison support to the registered W5 candidate scope."""
+
+    model_id = identity.get("model_id")
+    if model_id != TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID:
+        _fail(
+            "fixed-H6 comparison method is not registered for this candidate scope",
+            category="identity",
+        )
+    case = task041_balh_case(str(model_id))
+    target_scope = task041_p4_registered_formal_target_scope(str(model_id))
+    descriptor = summary.get("fixed_h6_modal_gmres_research")
+    if not isinstance(descriptor, Mapping) or case is None or target_scope is None:
+        _fail(
+            "fixed-H6 candidate summary lacks its registered research binding",
+            category="identity",
+        )
+
+    expected_strings = {
+        "method": _FIXED_H6_CANDIDATE_SUMMARY_METHOD,
+        "model_id": model_id,
+        "p4_inverse_backend": case.get("p4_inverse_backend"),
+        "p4_refinement_target_scope": target_scope,
+        "task041_resource_policy": TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        "rank_cpu_map_source": "explicit_frozen_expected_rank_cpus",
+    }
+    for field, expected in expected_strings.items():
+        if descriptor.get(field) != expected:
+            _fail(
+                f"fixed-H6 candidate {field} does not match its registered scope",
+                category="identity",
+            )
+
+    expected_integers = {
+        "mpi_size": identity.get("mpi_size"),
+        "mode_count": identity.get("mode_count"),
+    }
+    for field, expected in expected_integers.items():
+        actual = descriptor.get(field)
+        if type(actual) is not int or actual != expected:
+            _fail(
+                f"fixed-H6 candidate {field} does not match consumer identity",
+                category="identity",
+            )
+
+    expected_numbers = {
+        "wavelength_nm": case.get("wavelength_nm"),
+        "mesh_target_nm": case.get("mesh_target_nm"),
+        "p4_refinement_target_tolerance": TASK041_P4_REFINEMENT_TARGET_TOLERANCE,
+    }
+    for field, expected in expected_numbers.items():
+        actual = descriptor.get(field)
+        if (
+            isinstance(actual, bool)
+            or not isinstance(actual, (int, float))
+            or not math.isfinite(float(actual))
+            or expected is None
+            or float(actual) != float(expected)
+        ):
+            _fail(
+                f"fixed-H6 candidate {field} does not match its registered scope",
+                category="identity",
+            )
+
+    cpu_map = descriptor.get("expected_rank_cpus")
+    if (
+        not isinstance(cpu_map, list)
+        or len(cpu_map) != identity.get("mpi_size")
+        or any(type(cpu) is not int or cpu < 0 for cpu in cpu_map)
+        or len(set(cpu_map)) != len(cpu_map)
+    ):
+        _fail("fixed-H6 candidate CPU map is missing or invalid", category="identity")
+
+
+def _validate_qualification_method(
+    method: str,
+    summary: Mapping[str, Any],
+    authority: Mapping[str, Any],
+    identity: Mapping[str, Any],
+) -> None:
+    """Require consumer and authority method identities to agree exactly."""
+
+    summary_method = summary.get("qualification_method")
+    authority_method = authority.get("qualification_method")
+    if not isinstance(summary_method, str) or not summary_method:
+        _fail(
+            "Task041 consumer summary qualification method is missing",
+            category="identity",
+        )
+    if summary_method != authority_method:
+        _fail(
+            "Task041 summary and authority qualification methods disagree",
+            category="identity",
+        )
+
+    if method == "exact":
+        if summary_method != "task041_exact_side_full_formal":
+            _fail(
+                "Task041 exact-side qualification method is unsupported",
+                category="identity",
+            )
+        if summary.get("fixed_h6_modal_gmres_research") is not None:
+            _fail(
+                "exact-side result unexpectedly declares a fixed-H6 candidate scope",
+                category="identity",
+            )
+        return
+
+    if summary_method == _CANDIDATE_SIDE_INVERSE_METHOD:
+        if summary.get("fixed_h6_modal_gmres_research") is not None:
+            _fail(
+                "legacy candidate unexpectedly declares a fixed-H6 scope",
+                category="identity",
+            )
+        return
+    if summary_method == _FIXED_H6_CANDIDATE_METHOD:
+        _validate_registered_fixed_h6_candidate_scope(summary, identity)
+        return
+    _fail("Task041 candidate qualification method is unsupported", category="identity")
+
+
 def _load_task041_side_balh_result(
     run_directory: str | Path,
     *,
@@ -1968,11 +2105,6 @@ def _load_task041_side_balh_result(
     )
     expected_status = (
         "research_only_approximate_candidate" if method == "candidate" else "exact_side"
-    )
-    expected_method = (
-        "task041_balh_side_inverse_response_fgmres32"
-        if method == "candidate"
-        else "task041_exact_side_full_formal"
     )
     if summary.get("schema") != expected_profile or summary.get("profile") != expected_profile:
         _fail(f"Task041 {method} consumer profile is not the registered new profile")
@@ -2049,8 +2181,7 @@ def _load_task041_side_balh_result(
         "requested_modes": identity["mode_count"],
     }:
         _fail("Task041 authority identity differs from consumer identity")
-    if authority.get("qualification_method") != expected_method:
-        _fail("Task041 authority qualification method is not the registered route")
+    _validate_qualification_method(method, summary, authority, identity)
     packet = _packet_binding(summary, producer_identity, consumer_root, public_root)
     consumer_count, consumer_sha = _parse_identity_external(
         identity, "consumer_identity"
@@ -2787,8 +2918,13 @@ def _side_error(
 
 
 def _side_success(result: Task041Result) -> dict[str, Any]:
+    fixed_h6_scope = result.summary.get("fixed_h6_modal_gmres_research")
     return {
         "method": result.method,
+        "qualification_method": result.summary.get("qualification_method"),
+        "candidate_research_scope": (
+            dict(fixed_h6_scope) if isinstance(fixed_h6_scope, Mapping) else None
+        ),
         "root": str(result.root),
         "source_sha": result.identity["source_sha"],
         "identity": dict(result.identity),

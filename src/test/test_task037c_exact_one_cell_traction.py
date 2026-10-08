@@ -1466,8 +1466,14 @@ def test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control(
     the historical h=10 cell is reported without a model-equivalence gate.
     """
     comm = MPI.COMM_WORLD
-    if comm.size != 1:
-        pytest.skip("normal-incidence local-cell stitch diagnostic is serial-scoped")
+    if comm.size not in (1, 2):
+        pytest.skip("normal-incidence local-cell stitch diagnostic supports MPI1/2")
+    shared_root = Path(
+        comm.bcast(str(tmp_path / "normal_incidence_control_shared"), root=0)
+    )
+    if comm.rank == 0:
+        shared_root.mkdir(parents=True, exist_ok=True)
+    comm.Barrier()
 
     pilot_path = (
         Path(__file__).resolve().parents[2]
@@ -1545,7 +1551,7 @@ def test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control(
     trace_norm = None
     matched_response_pass = None
     try:
-        reference = build_box(reference_cfg, tmp_path / "normal_reference_L20")
+        reference = build_box(reference_cfg, shared_root / "normal_reference_L20")
         build_action(reference)
         cross_section = build_matching_cross_section(
             reference_cfg, "stage4_xy", comm=comm
@@ -1610,7 +1616,7 @@ def test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control(
                     label, z_bottom_nm, z_bottom_nm + local_h_nm, 1
                 )
                 local_box = build_box(
-                    local_cfg, tmp_path / f"normal_{label}"
+                    local_cfg, shared_root / f"normal_{label}"
                 )
                 build_action(local_box)
                 local_lifter = EndpointModeLifter(
@@ -1815,6 +1821,7 @@ def test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control(
     assert reference_audit is not None
     report = {
         "scenario": "normal_incidence_homogeneous_W_diagnostic",
+        "mpi_size": int(comm.size),
         "qep_mode_selected": False,
         "input_dat_modified": False,
         "incidence": {
@@ -1893,10 +1900,11 @@ def test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control(
             "No production guard, input, packet, QEP, or FE workflow is modified or qualified by this diagnostic test.",
         ],
     }
-    print(
-        "normal_incidence_control_test_only_json="
-        + json.dumps(report, sort_keys=True, allow_nan=False)
-    )
+    if comm.rank == 0:
+        print(
+            "normal_incidence_control_test_only_json="
+            + json.dumps(report, sort_keys=True, allow_nan=False)
+        )
     assert matched_response_pass is True
 
 

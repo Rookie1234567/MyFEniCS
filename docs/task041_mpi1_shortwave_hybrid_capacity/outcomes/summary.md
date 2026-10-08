@@ -2,11 +2,17 @@
 
 ## Task041 Review V10-r2：W0.7 reduced-p6 matched-cell warm consumer受控停止（2026-10-07）
 
-唯一warm consumer Invocation `10d761079d90473dadce79d3f7eb6457`以`absolute_memory_limit`受控停止。service public-to-finalizer wall为`2350.819163285 s`，V5 ledger 160项中该Invocation恰一条。process-tree RSS峰`53,541,888,000 B`超过冻结cap`53,221,163,008 B`共`320,724,992 B`；dedicated cgroup峰`51,229,249,536 B`另列，不能替代tree资源权威。Finalizer为`controlled_stop`、常规检查7/10，进程组清场与RSS下降检查通过。
+唯一warm consumer Invocation `10d761079d90473dadce79d3f7eb6457`以`absolute_memory_limit`受控停止。service public-to-finalizer wall为`2350.819163285 s`，V5 ledger 160项中该Invocation恰一条。process-tree RSS峰`53,541,888,000 B`超过冻结cap`53,221,163,008 B`共`320,724,992 B`；dedicated cgroup峰`51,229,249,536 B`另列，不能替代tree资源权威。Finalizer `status=completed`、`result_classification=controlled_stop`，常规检查7/10；进程清场记录如原始检查表列示，不代表service正常完成。
 
 外层markers只记录public command开始/结束；绑定的consumer内部284,367 B marker（SHA `b1f338ca…`）有44条事件，已显示one-cell factor、bottom P4/Woodbury、top full action和top P4 trace/port均已实际到达。Bottom P4矩阵为64966×64966、NNZ 27,929,686，factor ready并live；top矩阵为同维度、NNZ 39,242,250，但factor-ready未记录。port-ready后源码立即进入顶侧`ResearchExactFactorInverse`构造，其`ksp.setUp()`包含symbolic/numeric，factor生命周期事件没有转发到consumer markers。因此资源峰只能定位到顶侧factor构造区间，不能断言精确symbolic/numeric停止点或factor已完成，也不能把所有RSS都归因于因子。
 
-固定H6反馈门、outer、五项残差、recovery及physics均`not_reached/not_evaluated`；这不是数值通过或数值失败。顶侧factor fill/字节、symbolic内存估计、下一笔分配上界仍unknown，故不得原样重跑跨入numeric。完整阶段、采样、finalizer、ledger及SHA见[本轮实测进度](shortwave_measured_progress_v10.md)、[派生记录](records/task041_v10_controlled_stop_20261007.json)和[Response V12](../response_v12.md)。匹配h控制仅有serial pass，当前节点对MPI size≠1明确skip；MPI2为not_run。
+固定H6反馈门、outer、五项残差、recovery及physics均`not_reached/not_evaluated`；这不是数值通过或数值失败。顶侧factor fill/字节、symbolic内存估计、下一笔分配上界仍unknown，故不得原样重跑跨入numeric。完整阶段、采样、finalizer、ledger及SHA见[本轮实测进度](shortwave_measured_progress_v10.md)、[派生记录](records/task041_v10_controlled_stop_20261007.json)和[Response V12](../response_v12.md)。匹配h控制已有serial与MPI2 pass：serial历史父wall`237.46574084204622 s`，MPI2两rank各`1 passed`、父wall`189.02536411304027 s`；MPI2 compact SHA `7cffe5c742f14c91001d6175ffa3f37d67e35615f8ac0828b21b6ced6f7c8c1e`见[记录](../../../results/task037c_matched_h_stitch_control_mpi2_20261007T232353Z/mpi2_test_compact.json)。只支持均匀W正入射控制，不是光栅pilot资格。
+
+## 2026-10-08 后续离线比较与桥测试账目
+
+W5旧explicit-Schur候选与fixed-H6候选的完整离线产物比较中，18项身份和两侧输入封套通过；R/T/A/A_volume、selected E/H、四个canonical角色和法向通量通过。600个外部key中26个显著，唯一失败项`["bottom",-15,0,"s"]`的幅度/功率相对差为`1.0880143757234042e-6 / 2.074050200051092e-6`，超过原`1e-6`门，因此`numeric_gate_fail`，不是两场各自public/service门的改写。完整两侧复幅值、分母、绝对差和阈值见[失败行记录](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_significant_external_failure_record.json)（SHA `9fe88ab05dfb1b448935e127103a3d871b5d07f4626133ef23943f51ebf7cb3a`）。其前另有一次method identity拒绝，numeric未评估、wall`122.18274498195387 s`，旧raw保留。资源/workflow可比性`inconclusive`，raw-Q跨场比较`not_run_not_defined`，integrated checker和solver/FE未运行。原compact SHA `c088bd14872e924d990cdb4e1eed94af96c3f9bbf477cbc376389815ae96a032`保留；带正确R/T/A/A_volume符号的[更正compact](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_offline_comparison_compact_corrected.json) SHA `f9505f6b92cc14cec3da9b863f21cb6bbbaacf98393db9eed56ad56c94b70f63`，回执SHA `21320f82533a74bcfb066e9d207a24b2189759a289122dd9a176a505a03e724e`。
+
+PETSc LU薄桥测试的三次parent pytest attempt（一次失败、serial/MPI2重试通过）合计仅新增父wall`3.026434561004862 s`，各 attempt 独立计费；V5 ledger从162项变为165项，SHA `b983f17697a2b17e9fd6d7ef2141a3945a9b86689d2f6b048e36a51aa947711e`。W5离线checker的534秒不记入FE账。此次MUMPS 5.6.2手册来源及INFO/INFOG语义仅形成ignored派生参考；不能回填旧raw里的unknown，也不是因子峰值或RSS上界。
 
 ## Task041 Review V9 H0历史快照与当前进度（截至2026-10-07）
 

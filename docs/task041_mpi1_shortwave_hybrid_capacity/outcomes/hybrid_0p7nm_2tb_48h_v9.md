@@ -200,6 +200,20 @@ NIST来源为[元素钨密度表](https://physics.nist.gov/cgi-bin/Star/compos.p
 
 同一Invocation的consumer、side audit、marker、run/resource、service及finalizer文件SHA见[W5 machine record](records/task041_v9_fixed_h6_public_5nm.json)，record SHA `498e898e2e789daa392281b13c70e0b582def3032b5776b2af296c735796fb47`。该record绑定finalizer唯一ledger增量`59914.951233018 s`；不再重计consumer/阶段/rank墙钟。完整secondary checker、W2、0.7 nm、2 TB容量和目标48 h资格仍未建立。
 
+### W5 fixed-H6与explicit-Schur候选的离线产物对照（2026-10-08）
+
+这次只读checker把W5 fixed-H6结果与既有explicit-Schur candidate artifact按原阈值比较；右侧“reference”仍是candidate角色，不是exact truth。此前一次调用因候选method不属于注册route而在artifact identity处被拒，numeric未评估，checker wall`122.18274498195387 s`；保留其attempt与raw，不计入FE账。旧reference summary SHA为`bd8cf3d9696c17a54c64239334acab90de3e9dc1cae383c4b9fe537991eb332d`，fixed-H6 candidate SHA为`4257b309c5381498c6a84110d5c49e86eb0e3ca78272b09b7bb6ee731dd18526`；两侧input/resolved身份相同，18项artifact identity和public input envelopes均通过。该派生比较不会撤销上节W5 public/service自身已通过的残差与物理门；它回答的是两组保存产物是否满足逐项等价阈值。
+
+| 比较项 | 差值/误差 | 判定 |
+|---|---:|---|
+| R/T/A/A_volume（fixed-H6−explicit-Schur） | `+3.543842996833746e-11 / −2.6720737168056674e-13 / −3.5171199286310184e-11 / +1.7145174169286292e-12`，各限`1e-8` | 通过 |
+| selected E/H相对L2 | `5.688326111234493e-10 / 5.742838138430747e-10`，各限`1e-6` | 两项通过 |
+| 四canonical角色相对系数L2 | bottom active/full `1.7128976856531144e-8 / 1.6977718026171218e-8`；top active/full `1.1038152408073086e-10 / 1.102299390456392e-10`，限`1e-5` | 通过 |
+| 外部通道 | 600个ordered keys完全一致，其中26个显著；唯一失败项`["bottom",-15,0,"s"]`幅度/功率相对差`1.0880143757234042e-6 / 2.074050200051092e-6`，限`1e-6` | 其余25个显著项通过；这一项超限，external gate与整体numeric comparison失败 |
+| 法向通量 | relative L2 `1.7488283863630695e-11`，限`1e-4` | 通过 |
+
+比较器status为`numeric_gate_fail`、full comparison false；raw-Q跨场逐向量比较`not_run_not_defined`，资源/workflow可比性`inconclusive`，integrated full-3D checker和solver/FE均`not_run`。失败项参考功率`2.2419065611486787e-8`高于显著性floor`1e-8`，因此其幅度绝对差`2.4738743521870602e-11`和功率绝对差`4.6498267516462735e-14`虽小，仍须遵守原`1e-6`相对门。candidate/reference复幅值、分母和所有差值见[失败行记录](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_significant_external_failure_record.json)，SHA `9fe88ab05dfb1b448935e127103a3d871b5d07f4626133ef23943f51ebf7cb3a`。实际读取了双方32个canonical shards，共`1,313,610,614 B`。唯一完整checker调用wall`533.9173726618756 s`，Python父wall`534.6402724480722 s`，单Python进程`ru_maxrss=5,691,043,840 B`（不是process-tree或cgroup峰），`performance_not_isolated`；该离线时间不进入FE ledger。原compact [`w5_offline_comparison_compact.json`](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_offline_comparison_compact.json) SHA `c088bd14872e924d990cdb4e1eed94af96c3f9bbf477cbc376389815ae96a032`原样保留；带正确有符号R/T/A/A_volume差值的[更正compact](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_offline_comparison_compact_corrected.json) SHA `f9505f6b92cc14cec3da9b863f21cb6bbbaacf98393db9eed56ad56c94b70f63`，更正回执SHA `21320f82533a74bcfb066e9d207a24b2189759a289122dd9a176a505a03e724e`；原始derived JSON SHA `b65537515682987ea7e5eac15e655cf231af885eb66ea9170dbb4669231e9fcc`。两侧run与输入产物未修改。
+
 ## 尚未执行与下一步
 
 | 阶段 | 当前状态 | 退出前必须提供 |

@@ -22,6 +22,9 @@ from benchmarks.canonical_vector_artifacts import (
 from benchmarks.run_task037b_hybrid_iterative import _write_frozen_m10_grid_payload
 from benchmarks.task039_v3_7_orchestration import _write_v3_7_candidate_authority
 from benchmarks.task041_balh_workflow import (
+    TASK041_P4_REFINEMENT_TARGET_TOLERANCE,
+    TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
+    TASK041_V8_SWAP_OBSERVE_CONTINUE,
     build_task041_balh_packet_identity,
     task041_balh_time_stop_override_record,
 )
@@ -55,6 +58,7 @@ from benchmarks.task041_side_balh_comparison import (
 )
 from src.io.execution_plan import TASK041_PUBLIC_SUPERVISOR_ADAPTER
 from src.io.input_validation import (
+    TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
     load_and_resolve,
     task041_balh_phase_limits_for_model,
 )
@@ -70,6 +74,10 @@ EXACT_INPUT = (
 CANDIDATE_INPUT = (
     REPOSITORY_ROOT
     / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_balh.dat"
+)
+W5_CANDIDATE_INPUT = (
+    REPOSITORY_ROOT
+    / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_cell_condensed.dat"
 )
 LEGACY_NATIVE_INPUT = (
     REPOSITORY_ROOT
@@ -263,6 +271,9 @@ def _write_run(
     canonical: dict[str, dict[str, object]],
     orders: list[dict[str, object]],
     producer_summary_sha: str | None,
+    *,
+    qualification_method: str | None = None,
+    fixed_h6_descriptor: dict[str, object] | None = None,
 ) -> None:
     root.mkdir(parents=True, exist_ok=True)
     consumer_root = root / "consumer"
@@ -332,6 +343,11 @@ def _write_run(
         order_audit={},
         canonical=canonical,
     )
+    actual_qualification_method = qualification_method or (
+        "task041_balh_side_inverse_response_fgmres32"
+        if method == "candidate"
+        else "task041_exact_side_full_formal"
+    )
     producer = {
         "consumer_model_id": consumer_identity["model_id"],
         "consumer_source_sha": consumer_identity["source_sha"],
@@ -339,11 +355,7 @@ def _write_run(
         "mpi_size": 8,
         "requested_modes": consumer_identity["mode_count"],
         "qualification_scope": producer_identity["scope"],
-        "qualification_method": (
-            "task041_balh_side_inverse_response_fgmres32"
-            if method == "candidate"
-            else "task041_exact_side_full_formal"
-        ),
+        "qualification_method": actual_qualification_method,
         "canonical_authority": True,
     }
     authority_path = _write_v3_7_candidate_authority(
@@ -367,6 +379,7 @@ def _write_run(
         "qualification_status": (
             "research_only_approximate_candidate" if method == "candidate" else "exact_side"
         ),
+        "qualification_method": actual_qualification_method,
         "source_sha": consumer_identity["source_sha"],
         "identity": consumer_identity,
         "producer_identity": producer_identity,
@@ -400,6 +413,8 @@ def _write_run(
             },
         },
     }
+    if fixed_h6_descriptor is not None:
+        summary["fixed_h6_modal_gmres_research"] = fixed_h6_descriptor
     (consumer_root / "consumer_summary.json").write_text(
         json.dumps(summary, sort_keys=True, indent=2) + "\n", encoding="utf-8"
     )
@@ -565,6 +580,68 @@ def candidate_artifact_pair(tmp_path: Path) -> dict[str, Path]:
     return {"candidate": roots[0], "reference": roots[1]}
 
 
+@pytest.fixture
+def fixed_h6_w5_artifact_pair(tmp_path: Path) -> dict[str, Path]:
+    specification = _specification(W5_CANDIDATE_INPUT)
+    normalized = specification.as_jsonable()
+    producer_identity = build_task041_balh_packet_identity(
+        specification,
+        normalized,
+        "a" * 40,
+        resolved_config_sha256(specification),
+    )
+    identities = [
+        build_task041_balh_packet_identity(
+            specification,
+            normalized,
+            source_sha,
+            resolved_config_sha256(specification),
+        )
+        for source_sha in ("b" * 40, "c" * 40)
+    ]
+    packet = _packet_fixture(tmp_path, producer_identity)
+    canonical = _canonical_fixture(tmp_path)
+    orders = _external_orders(normalized)
+    descriptor = {
+        "method": "fixed_h6_modal_gmres_research",
+        "model_id": TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        "mpi_size": 8,
+        "mode_count": 480,
+        "wavelength_nm": 5.0,
+        "mesh_target_nm": 4.0,
+        "p4_inverse_backend": "cell_condensed",
+        "p4_refinement_target_scope": TASK041_P4_REGISTERED_5NM_TARGET_SCOPE,
+        "p4_refinement_target_tolerance": TASK041_P4_REFINEMENT_TARGET_TOLERANCE,
+        "task041_resource_policy": TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        "rank_cpu_map_source": "explicit_frozen_expected_rank_cpus",
+        "expected_rank_cpus": list(range(11, 19)),
+    }
+    roots = (tmp_path / "fixed_h6_candidate", tmp_path / "explicit_schur_reference")
+    methods = (
+        "fixed_h6_modal_gmres_research_with_original_outer_fgmres",
+        "task041_balh_side_inverse_response_fgmres32",
+    )
+    for index, (root, identity, method_name) in enumerate(
+        zip(roots, identities, methods, strict=True)
+    ):
+        _write_run(
+            root,
+            specification,
+            "candidate",
+            identity,
+            producer_identity,
+            packet,
+            canonical,
+            orders,
+            None,
+            qualification_method=method_name,
+            fixed_h6_descriptor=descriptor if index == 0 else None,
+        )
+        for filename in ("run_manifest.json", "input_original.dat", "resolved_config.json"):
+            (root / filename).unlink()
+    return {"candidate": roots[0], "reference": roots[1]}
+
+
 def test_task041_comparison_real_writer_pair_and_workflow_peak(comparison_pair):
     result = compare_task041_side_balh_pair(
         comparison_pair["candidate"], comparison_pair["exact"]
@@ -628,6 +705,86 @@ def test_task041_candidate_artifact_pair_keeps_missing_envelope_inconclusive(
         load_task041_side_balh_result(
             candidate_artifact_pair["candidate"], method="candidate"
         )
+
+
+def test_task041_fixed_h6_candidate_artifact_pair_keeps_method_and_scope_bound(
+    fixed_h6_w5_artifact_pair,
+):
+    result = compare_task041_candidate_artifact_pair(
+        fixed_h6_w5_artifact_pair["candidate"],
+        fixed_h6_w5_artifact_pair["reference"],
+    )
+
+    assert result["candidate"]["method"] == "candidate"
+    assert result["reference"]["method"] == "candidate"
+    assert result["reference"]["display_name"] == "explicit-Schur reference"
+    assert result["candidate"]["qualification_method"] == (
+        "fixed_h6_modal_gmres_research_with_original_outer_fgmres"
+    )
+    assert result["candidate"]["candidate_research_scope"]["model_id"] == (
+        TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID
+    )
+    assert result["candidate"]["candidate_research_scope"][
+        "p4_refinement_target_scope"
+    ] == TASK041_P4_REGISTERED_5NM_TARGET_SCOPE
+    assert result["reference"]["qualification_method"] == (
+        "task041_balh_side_inverse_response_fgmres32"
+    )
+    assert result["reference"]["candidate_research_scope"] is None
+    assert result["artifact_identity"]["status"] == "verified"
+    assert result["numerical_comparison"]["pass"] is True
+    assert result["resource_comparability"]["status"] == "inconclusive"
+    assert result["workflow_comparability"]["status"] == "inconclusive"
+    assert result["full_comparison"] == {"status": "inconclusive", "pass": False}
+    assert result["pass"] is False
+
+
+@pytest.mark.parametrize(
+    ("tamper", "expected_error"),
+    (
+        ("missing_summary_method", "summary qualification method is missing"),
+        ("method_mismatch", "summary and authority qualification methods disagree"),
+        (
+            "wrong_registered_scope",
+            "p4_refinement_target_scope does not match its registered scope",
+        ),
+    ),
+)
+def test_task041_fixed_h6_candidate_artifact_pair_rejects_method_or_scope_mismatch(
+    fixed_h6_w5_artifact_pair, tamper, expected_error
+):
+    summary_path = (
+        fixed_h6_w5_artifact_pair["candidate"]
+        / "consumer"
+        / "consumer_summary.json"
+    )
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    if tamper == "missing_summary_method":
+        summary.pop("qualification_method")
+    elif tamper == "method_mismatch":
+        summary["qualification_method"] = "task041_balh_side_inverse_response_fgmres32"
+    else:
+        summary["fixed_h6_modal_gmres_research"][
+            "p4_refinement_target_scope"
+        ] = "unregistered_scope"
+    summary_path.write_text(
+        json.dumps(summary, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+
+    result = compare_task041_candidate_artifact_pair(
+        fixed_h6_w5_artifact_pair["candidate"],
+        fixed_h6_w5_artifact_pair["reference"],
+    )
+
+    candidate_error = result["load_errors"]["candidate"]
+    assert candidate_error["error_category"] == "identity"
+    assert expected_error in candidate_error["errors"][0]
+    assert result["numerical_comparison"]["status"] == (
+        "not_evaluated_due_to_artifact_validation_failure"
+    )
+    assert result["numerical_comparison"]["pass"] is False
+    assert result["full_comparison"] == {"status": "failed", "pass": False}
+    assert result["pass"] is False
 
 
 @pytest.mark.parametrize(

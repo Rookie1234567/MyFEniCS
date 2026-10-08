@@ -67,4 +67,39 @@ consumer内部sample在顶侧最后marker附近（elapsed `2329.231413 s`）为p
 
 ## 后续只读/小阶段
 
-匹配轴向步长的真实FE控制selector已有serial raw：父wall`237.46574084204622 s`；测试代码对MPI size≠1明确`skip`，没有MPI2 pass。下一步只审原helper是否能保持同一oracle和残差门并通过既有分布式trace/坐标路径运行MPI2，不新建测试框架。另从公开PETSc C API与当前native headers定位可执行symbolic-only最薄桥；不得把生产`ksp.setUp()`当symbolic-only或用大矩阵numeric试探。W0.7下一场和W2 numeric均不在本阶段启动。
+匹配轴向步长的真实FE控制selector已有serial和MPI2 raw：serial父wall`237.46574084204622 s`；后续MPI2两rank各`1 passed`，父wall`189.02536411304027 s`。MPI2 test源SHA `a718ee1af1ebfb6f4527b84d7928219faf24fa4c10b1a3954f17ef04cecdf731`，stdout SHA `7b08cbbd15b2214be8c2f448fafaf080fbf682cbfc08fc584cef973fb00deaed`，attempt SHA `9e031df580d64100a101dedb26f312cad5b390dc171348635ca0fc510bc21d97`，compact SHA `7cffe5c742f14c91001d6175ffa3f37d67e35615f8ac0828b21b6ced6f7c8c1e`见[MPI2结果](../../../results/task037c_matched_h_stitch_control_mpi2_20261007T232353Z/mpi2_test_compact.json)。串行attempt仍绑定其当时SHA/wall；其旧skip逻辑不代表后续MPI2 skip。该控制只覆盖均匀W正入射，不是光栅pilot资格。另从公开PETSc C API与当前native headers定位可执行symbolic-only最薄桥；不得把生产`ksp.setUp()`当symbolic-only或用大矩阵numeric试探。W0.7下一场和W2 numeric均不在本阶段启动。
+
+## 2026-10-08：PETSc桥attempt收口、W5离线比较与MUMPS 5.6.2来源
+
+### PETSc LU薄桥pytest父wall补账
+
+检查桥目录的`pytest.attempt.started.json`、`pytest.attempt.json`、argv、stdout/stderr和清场字段，确认有三次实际启动，且这些ID此前不在V5 ledger。第一次serial attempt rc1，失败点是测试试图让mpi4py pickle PETSc Mat；`-x`后第二selector未执行。修正后的serial两项通过；MPI2两rank各两项通过。桥C SHA为`7b365663b6e4278dc0a089671bf144e566efa9f9674ab66d4ca5ad864e42af9e`，最终测试SHA `2aea4200bf7db9b0382ba9c2392738964154cd3afead045d578b37e77a9f012f`；首次失败绑定当时test SHA `e415c6f42ccdfa4e730ed1725138b0a6fbafe7490f145df2db0f9fc687f226d1`。
+
+| attempt ID | rc/结果 | 唯一父wall |
+|---|---|---:|
+| `task041_petsc_lu_stage_bridge_20261008T000055Z:serial:pytest` | 1；首个symbolic-only节点测试收集时失败，原因是PETSc Mat不可pickle；第二selector未运行 | `1.0088105599861592 s` |
+| `task041_petsc_lu_stage_bridge_retry_20261008T000705Z:serial:pytest` | 0；两个8×8桥节点通过 | `1.0088530050124973 s` |
+| `task041_petsc_lu_stage_bridge_retry_20261008T000705Z:mpi2:pytest` | 0；rank0/rank1各两个8×8节点通过 | `1.0087709960062057 s` |
+
+V5 append receipt见[reconciliation record](../../../results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/v5_ledger_reconcile_20261008T003131Z/v5_ledger_reconciliation_receipt.json)，SHA `a8e400ed3a35f0a49c7da8e1e51667783465cb8dc978749cd349806d12e3302c`。ledger从162项/SHA `32479e18035e341633073a0982b798e7fdca5208dda0d1b79677f2a6faa2a47c`变为165项/SHA `b983f17697a2b17e9fd6d7ef2141a3945a9b86689d2f6b048e36a51aa947711e`，只加上述3个父wall，共`3.026434561004862 s`；ABI、compile、static不计。此测试只验证小矩阵stage API与调用/所有权，不证明生产规模factor的内存值。
+
+### W5离线artifact-only对照
+
+本次完整比较前有一次identity拒绝：`task041_w5_candidate_artifact_comparison_20261007T235317Z`因candidate authority method不是注册route而停止，numeric `not_evaluated_due_to_artifact_validation_failure`，checker/parent wall分别`122.18274498195387/122.91199241997674 s`；该attempt及raw保留。之后完整比较器调用一次；左侧为W5 fixed-H6 candidate，右侧为explicit-Schur candidate reference，两者不是exact和approximate真值关系。reference/candidate consumer summary SHA分别为`bd8cf3d9696c17a54c64239334acab90de3e9dc1cae383c4b9fe537991eb332d`与`4257b309c5381498c6a84110d5c49e86eb0e3ca78272b09b7bb6ee731dd18526`；同一W5/p6/h4/M480/MPI8/cell-condensed input/resolved，18项身份和输入封套通过。R/T/A/A_volume差值为`+3.543842996833746e-11 / −2.6720737168056674e-13 / −3.5171199286310184e-11 / +1.7145174169286292e-12`（限`1e-8`）；选定E/H相对L2=`5.688326111234493e-10/5.742838138430747e-10`（限`1e-6`）；canonical四角色相对系数L2分别为bottom active/full `1.7128976856531144e-8 / 1.6977718026171218e-8`和top active/full `1.1038152408073086e-10 / 1.102299390456392e-10`（限`1e-5`）；法向通量相对L2=`1.7488283863630695e-11`（限`1e-4`）。这些比较门均通过。
+
+26个显著外部行中的唯一失败项`["bottom",-15,0,"s"]`幅度/功率相对差为`1.0880143757234042e-6 / 2.074050200051092e-6`，高于`1e-6`，所以结果为`numeric_gate_fail`、full comparison false。该行参考功率`2.2419065611486787e-8`超过显著性floor`1e-8`；candidate/reference复幅值、分母与绝对差均见[失败行记录](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_significant_external_failure_record.json)，SHA `9fe88ab05dfb1b448935e127103a3d871b5d07f4626133ef23943f51ebf7cb3a`。资源与workflow仍`inconclusive`，raw-Q跨场向量`not_run_not_defined`，integrated full-3D checker及solver/FE未运行。双方共64个canonical shards、`1,313,610,614 B`；checker调用wall`533.9173726618756 s`，Python父wall`534.6402724480722 s`，单进程`ru_maxrss=5,691,043,840 B`（非tree/cgroup）。输入未修改；performance=`not_isolated`；offline checker不计FE ledger。完整[derived comparison](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/derived_comparison.json) SHA `b65537515682987ea7e5eac15e655cf231af885eb66ea9170dbb4669231e9fcc`；原compact [w5_offline_comparison_compact.json](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_offline_comparison_compact.json) SHA `c088bd14872e924d990cdb4e1eed94af96c3f9bbf477cbc376389815ae96a032`保持封存；[更正compact](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_offline_comparison_compact_corrected.json) SHA `f9505f6b92cc14cec3da9b863f21cb6bbbaacf98393db9eed56ad56c94b70f63`及[更正回执](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_compact_correction_receipt.json) SHA `21320f82533a74bcfb066e9d207a24b2189759a289122dd9a176a505a03e724e`保留有符号差值及派生链。
+
+### MUMPS 5.6.2手册字段解释（派生说明；旧raw不回填）
+
+本机dpkg安装版本为`5.6.2-2.1build2`。对应Ubuntu source归档及归档内手册原文已复制到[ignored来源目录](../../../results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/mumps_5.6.2_reference/)，上游URL为`https://archive.ubuntu.com/ubuntu/pool/universe/m/mumps/mumps_5.6.2.orig.tar.gz`。tar SHA `13a2c1aff2bd1aa92fe84b7b35d88f43434019963ca09ef7e8c90821a8f1d59a`，PDF SHA `32acdd3e09fb69f9fab16c94ae67768d15c61ac9c27abf66eb1e0e6ecd904050`，纯文本 SHA `6228d0dd158a2a3a677664760c58c3297c52733fb88212e7c66a0b468b7dc941`；读取手册印刷页93–94及97–99。来源record SHA `9f2e93cf0e31410715db2d912bfef7f876ad9d050845c1fd1621c037720a4af1`，目录SHA256SUMS文件SHA `6ca047db5d54954b086174891a1cc476cdeafc15ddf1961cf91dc5c51b3f47f1`。
+
+| 字段 | 本机版本手册含义 | 使用限制 |
+|---|---|---|
+| `INFO(3)` | 本rank因子复数entries；若为负，取绝对值乘`1e6`解码entries | 不是内存字节数 |
+| `INFO(4)` | 本rank整数entries | 手册未给本地负值编码，不套用`INFOG(4)`规则 |
+| `INFO(15)` | 分析后的本rank in-core工作内存估计，million bytes；依赖当前`ICNTL(14)` | estimate，不是RSS或保证上界 |
+| `INFOG(16)` / `(17)` | 分别是上述估计的rank最大值 / rank总和 | `(17)`已经是全局总和，不能再把各rank副本相加 |
+| `INFOG(3)` / `(4)` | 因子复数entries / 整数entries的全rank总量；若为负，分别取绝对值乘`1e6`解码entries | `(4)`全局规则不适用于本rank `INFO(4)` |
+| `INFOG(18)` / `(19)` | numeric后实际已分配内部数据的rank最大值 / 总和 | numeric后实分配，不是analysis-only estimate |
+
+因此，旧symbolic-only raw里尚未解释的INFO值继续保持`unknown`，本段只是有精确MUMPS版本、原文哈希和页码支持的后续释义；没有matrix/factor运行，也没有从entries或estimate换算大因子RSS。

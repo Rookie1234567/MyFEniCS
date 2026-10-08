@@ -1,5 +1,25 @@
 # Test and evidence summary
 
+## Review V10-r2：PETSc LU桥与fixed-H6比较器合同测试（2026-10-08）
+
+三次PETSc桥pytest attempt均保留并按父`CLOCK_MONOTONIC` wall唯一入V5；第一次测试层MPI汇总不可pickle PETSc Mat，`-x`使第二selector未运行。后续修复后的serial与MPI2各自按批准selector运行并通过。这里是8×8复矩阵接口/生命周期证据，不是大因子内存预测，也没有运行FE。
+
+| attempt | 结果 | 父wall | 证据与边界 |
+|---|---|---:|---|
+| `task041_petsc_lu_stage_bridge_20261008T000055Z:serial:pytest` | rc1；首selector因尝试allgather不可pickle的PETSc Mat失败，第二项未执行 | `1.0088105599861592 s` | [stdout](../../../results/task041_petsc_lu_stage_bridge_20261008T000055Z/serial/pytest.stdout.log)、[attempt](../../../results/task041_petsc_lu_stage_bridge_20261008T000055Z/serial/pytest.attempt.json)，test SHA `e415c6f42ccdfa4e730ed1725138b0a6fbafe7490f145df2db0f9fc687f226d1` |
+| `task041_petsc_lu_stage_bridge_retry_20261008T000705Z:serial:pytest` | 2 passed | `1.0088530050124973 s` | [stdout](../../../results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/serial/pytest.stdout.log)，final test SHA `2aea4200bf7db9b0382ba9c2392738964154cd3afead045d578b37e77a9f012f` |
+| `task041_petsc_lu_stage_bridge_retry_20261008T000705Z:mpi2:pytest` | 两rank各2 passed | `1.0087709960062057 s` | [stdout](../../../results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/mpi2/pytest.stdout.log)；桥C SHA `7b365663b6e4278dc0a089671bf144e566efa9f9674ab66d4ca5ad864e42af9e` |
+
+V5桥测试补账receipt为[此文件](../../../results/task041_petsc_lu_stage_bridge_retry_20261008T000705Z/v5_ledger_reconcile_20261008T003131Z/v5_ledger_reconciliation_receipt.json)，SHA `a8e400ed3a35f0a49c7da8e1e51667783465cb8dc978749cd349806d12e3302c`；补账后ledger 165项、SHA `b983f17697a2b17e9fd6d7ef2141a3945a9b86689d2f6b048e36a51aa947711e`。W5离线产物对照是单独checker调用，不是pytest或FE，故不计入此FE ledger。
+
+同日fixed-H6比较器合同serial attempt [6 passed](../../../results/task041_fixed_h6_comparison_serial_20261008T001620Z/serial/pytest.stdout.log)，父wall`4.386075769085437 s`，唯一账目在V5 ledger。最终比较器源/test SHA分别为`dbf183acb617d8665b92331917b206f5fff3ccb026fbec72c6c015d8da7ed7f2` / `3794c26b333efdea483973e57fafd03052de65a5ea4bf14f890292f9a54db2a0`；[六case stdout](../../../results/task041_fixed_h6_comparison_serial_20261008T001620Z/serial/pytest.stdout.log)记录通过的合同测试，不等于离线数值比较通过。
+
+## Matched-h均匀W拼接控制：MPI2证据
+
+`test_proposed_normal_incidence_homogeneous_w_matched_h_stitch_control`的MPI2运行由两rank各完成`1 passed`，父wall`189.02536411304027 s`。test源SHA为`a718ee1af1ebfb6f4527b84d7928219faf24fa4c10b1a3954f17ef04cecdf731`，stdout SHA `7b08cbbd15b2214be8c2f448fafaf080fbf682cbfc08fc584cef973fb00deaed`，attempt SHA `9e031df580d64100a101dedb26f312cad5b390dc171348635ca0fc510bc21d97`；[MPI2 compact](../../../results/task037c_matched_h_stitch_control_mpi2_20261007T232353Z/mpi2_test_compact.json) SHA `7cffe5c742f14c91001d6175ffa3f37d67e35615f8ac0828b21b6ced6f7c8c1e`，[诊断JSON](../../../results/task037c_matched_h_stitch_control_mpi2_20261007T232353Z/normal_incidence_control_diagnostic.json) SHA `8610309812a6657843737131c40dd3cbd43b8ec76199b6a436506bcd38ec00d7`。这是均匀W、正入射、常切向场的拼接控制，不是W光栅QEP模态或pilot资格；serial attempt保留独立source SHA与`237.46574084204622 s`历史wall。
+
+W5离线比较仍由原阈值判为`numeric_gate_fail`：600个外部通道中26个达到显著性floor，唯一失败行的完整值见[窄失败记录](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_significant_external_failure_record.json)。原compact与[签名更正compact](../../../results/task041_w5_candidate_artifact_comparison_retry_20261008T002033Z/w5_offline_comparison_compact_corrected.json)分别保持原SHA `c088bd14872e924d990cdb4e1eed94af96c3f9bbf477cbc376389815ae96a032`与`f9505f6b92cc14cec3da9b863f21cb6bbbaacf98393db9eed56ad56c94b70f63`；更正只修compact的signed delta字段，不重读shards、不改raw或checker门。
+
 ## Review V9 CPU-map接线fixture分批验证（2026-10-05；非MPI/FE）
 
 这些serial节点检查固定rank→CPU映射怎样进入worker资格函数，不实际启动MPI8数值worker；CPU映射正确不等于完成NUMA或FE资格。
