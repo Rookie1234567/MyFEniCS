@@ -1,0 +1,48 @@
+{
+  "files": [
+    {
+      "path": "tmp/task042/v64/docs_once.py",
+      "bytes": 748,
+      "sha256": "0191c0b8fdf0ebd511f9aa12014838f67ee236e315b037063d68f67215499cc6",
+      "archived": "benchmarks/artifacts/task042/v64/raw_final_tail_v64/0191c0b8fdf0ebd511f9aa12014838f67ee236e315b037063d68f67215499cc6",
+      "byte_snapshot": true,
+      "identity": "ignored control script byte snapshot; not claimed tracked solver source"
+    },
+    {
+      "path": "tmp/task042/v64/run_once.py",
+      "bytes": 1326,
+      "sha256": "6ca1453d31a710f43250452afb44750bbcf9ab26604a62b6886aecb86d64f8d4",
+      "archived": "benchmarks/artifacts/task042/v64/raw_final_tail_v64/6ca1453d31a710f43250452afb44750bbcf9ab26604a62b6886aecb86d64f8d4",
+      "byte_snapshot": true,
+      "identity": "ignored control script byte snapshot; not claimed tracked solver source"
+    },
+    {
+      "path": "tmp/task042/v64/seal_delivery.py",
+      "bytes": 9428,
+      "sha256": "df8b1120d3873999242b87ccb58669af0ca207727372ee611c534035ff853637",
+      "archived": "benchmarks/artifacts/task042/v64/raw_final_tail_v64/df8b1120d3873999242b87ccb58669af0ca207727372ee611c534035ff853637",
+      "byte_snapshot": true,
+      "identity": "ignored control script byte snapshot; not claimed tracked solver source"
+    },
+    {
+      "path": "tmp/task042/v64/stop_for_case_reserve.py",
+      "bytes": 3681,
+      "sha256": "f0b4210952af0f29324504bf14dd8df6f63ff773ae4faaa12863bcfc411114f5",
+      "archived": "benchmarks/artifacts/task042/v64/raw_final_tail_v64/f0b4210952af0f29324504bf14dd8df6f63ff773ae4faaa12863bcfc411114f5",
+      "byte_snapshot": true,
+      "identity": "ignored control script byte snapshot; not claimed tracked solver source"
+    },
+    {
+      "path": "tmp/task042/v64/write_delivery.py",
+      "bytes": 30852,
+      "sha256": "0d2651ac149449b65985b7f6856bd13767755e3bc10b5e3cd296d74810249f89",
+      "archived": "benchmarks/artifacts/task042/v64/raw_final_tail_v64/0d2651ac149449b65985b7f6856bd13767755e3bc10b5e3cd296d74810249f89",
+      "byte_snapshot": true,
+      "identity": "ignored control script byte snapshot; not claimed tracked solver source"
+    }
+  ],
+  "actual_formal_solver_source": "e28ce30b47797581176f2d5fa752b1f3539387c8",
+  "actual_saved_consumer_source": "687663e2f7210c62808dfc54b7951369469ba520",
+  "document_check_source": "791b9c1e4be599b11be67646ba2e2fb09e59b508",
+  "temporary_metadata_hashes_are_not_solver_HEAD": true
+}

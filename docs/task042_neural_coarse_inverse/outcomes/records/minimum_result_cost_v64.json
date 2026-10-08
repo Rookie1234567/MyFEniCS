@@ -1,8 +1,12 @@
 {
-  "status": "DELIVERY_SETTLEMENT_PENDING",
-  "result": "partial preparation + rejected fixed local mesh; zero new complete physical fields",
-  "failed_P6_full_process_seconds": 15056.33501556702,
-  "known_snapshot_seconds": 15798.778658858355,
-  "final_bill": "resource_costs_final_v64.json includes collector, documentation and final measured metadata",
-  "unknown_costs": "unmetered control/Git CPU; no invented zero"
+  "status": "SETTLED_CLOSED",
+  "result": "NO_NEW_RETURNED_FIELDS",
+  "current_known_lower_seconds": 15918.406050777616,
+  "cumulative_known_lower_seconds": 245130.14639971292,
+  "failed_complete_P6_entry_seconds": 15056.33501556702,
+  "field_equation_recovery_modes_power_energy": "NOT_RUN",
+  "L4": "CAPACITY_NOT_ADMITTED",
+  "unknown_cost": "preserved; see resource_costs_final_v64.json",
+  "closed": true,
+  "active": null
 }
