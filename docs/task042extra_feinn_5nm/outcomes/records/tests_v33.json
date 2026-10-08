@@ -372,8 +372,8 @@
   "old_expensive_qualifications_replayed": false,
   "publication_metadata_checks": {
     "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v33.json",
-    "bytes": 194936,
-    "sha256": "3db497fae92a96ac5c89ef90c9fdcb58b4fcc5db6eb6d23eb537c8c91c8ddeb1"
+    "bytes": 1454,
+    "sha256": "0e12a035d35bd2a24b9bf6d3cbeb95b2594dd5dff7bfcd7775d4269594ccd6ba"
   },
   "counts_are_check_assertions_not_new_PDE_tests": true
 }

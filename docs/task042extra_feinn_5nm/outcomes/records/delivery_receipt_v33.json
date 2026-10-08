@@ -1,0 +1,64 @@
+{
+  "phase": "EVIDENCE_SEAL_BEFORE_FINAL_GIT_COMMIT",
+  "classification": "NUMERICAL_GATE_NOT_REACHED",
+  "published_document_head": "f9dddb8172f99ea56bb34a98800aeb208463c0fd",
+  "final_numeric_source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+  "original_base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "review_publish_sha": "7aa0df9b41ee1722e7a29cafbaa4e02314f063f0",
+  "saved_array_checker_replayed": false,
+  "producer_or_FE_verifier_replayed": false,
+  "actual_lossless_hash_clearance_check": {
+    "pass_all": true,
+    "lossless_numerical_records_verified": true,
+    "provenance_file_count": 22,
+    "source_closure": 44,
+    "recorded_formal_and_auxiliary_summaries": 37,
+    "all_recorded_descendants_cleared": true,
+    "all_recorded_own_sampled_swap_zero": true,
+    "numerical_lock": "FREE",
+    "own_numerical_and_browser_processes": [],
+    "calendar_seconds": 21598.338197165867,
+    "remaining_seconds": 21601.661802834133,
+    "single_window_limit_seconds": 43200,
+    "numeric_source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+    "published_docs_sha": "f9dddb8172f99ea56bb34a98800aeb208463c0fd"
+  },
+  "successful_seal_check": {
+    "path": "tmp/task42extra/v33/final_seal_check.json",
+    "bytes": 598,
+    "sha256": "635546b327cf4c69275e6a88906669c87c3af34225e26ed8407c69431c7ba0d0"
+  },
+  "actual_seal_check_watchdog": {
+    "path": "tmp/task42extra/v33/seal_check/watchdog/summary.json",
+    "bytes": 2051,
+    "sha256": "2b7faaa53e914b23a8ab2598774bd7acc423035aea151b0a6ec206ef38bf17c2"
+  },
+  "actual_compaction_watchdog": {
+    "path": "tmp/task42extra/v33/record_close/watchdog/summary.json",
+    "bytes": 2052,
+    "sha256": "cfd159ae4da959c5862a2d3c340d96702cfa3ab89b7742d7f096adef0461881e"
+  },
+  "final_metadata_2173_receipt": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/final_metadata_checks_v33.json",
+    "bytes": 662,
+    "sha256": "b0d3b912d576bc8485c6e15b10f1252a18164e76d0ee4f8458ad9d3cf5f08852"
+  },
+  "visual_scope": "Three first viewports plus four topic equations only; full pages NOT_VERIFIED",
+  "historical_failures_and_expanded_records_retained": true,
+  "final_git_identity_receipt_location": "tmp/task42extra/v33/delivery_receipt.json",
+  "final_git_identity": "TO_BE_MEASURED_AFTER_THIS_METADATA_COMMIT_AND_EXACT_FETCH",
+  "end_of_batch": "Stop after final push, exact identity verification and own clearance; no adjacent notification",
+  "final_receipt_writer_watchdog": {
+    "path": "tmp/task42extra/v33/delivery_seal/watchdog/summary.json",
+    "bytes": 2052,
+    "sha256": "f9b117a20d37d004bb67176aed12e38fd9f35f4ba27e6e00a2e87faa14df8243"
+  },
+  "completed_formal_and_auxiliary_summary_count": 39,
+  "final_precommit_resource_snapshot": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v33.json",
+    "bytes": 10896,
+    "sha256": "8a7f356f86aaac5de0519a48db35bbdb15d6b14ba9f349a6768e624f62354028"
+  },
+  "final_precommit_calendar_seconds": 22353.202761934837,
+  "final_precommit_remaining_seconds": 20846.797238065163
+}

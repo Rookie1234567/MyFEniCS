@@ -1,0 +1,16 @@
+{
+  "checks": 2173,
+  "all_passed": true,
+  "scope": "Frozen compact metadata/coverage/hash/current-doc structure only; no new FE/forward/optimizer",
+  "actual_helper_summary": {
+    "path": "tmp/task42extra/v33/final_metadata_checks/watchdog/summary.json",
+    "bytes": 2051,
+    "sha256": "a85d56bd744410ce85bfd0d847388673efe61fc4935aeef76fea0348e339dbb3"
+  },
+  "check_implementation": {
+    "path": "tmp/task42extra/v33/check_publication_v33.py",
+    "bytes": 5940,
+    "sha256": "a6fb3a6928afb43b6de1e8fc7e1e523f6b62190d62b42aa81cc5b1c687b2ceee"
+  },
+  "stage": "Final metadata2173 assertions before lossless presentation compaction; no numerical replay"
+}

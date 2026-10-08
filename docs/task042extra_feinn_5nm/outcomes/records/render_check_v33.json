@@ -1,6 +1,69 @@
 {
-  "status": "PENDING_ONE_FINITE_PUBLISHED_VIEW_CHECK",
+  "actual_browser": "qualified isolated CPU-only headless Firefox,2GiB own tree,one finite attempt/page",
+  "attempts": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/7aa0df9b41ee1722e7a29cafbaa4e02314f063f0/docs/task042extra_feinn_5nm/review_report_v32.md",
+      "published_source_sha": "7aa0df9b41ee1722e7a29cafbaa4e02314f063f0",
+      "screenshot": {
+        "path": "tmp/task42extra/v33/render_check/review/page.png",
+        "bytes": 432762,
+        "sha256": "37f246ecc0b9899e861b5c32d81c9e3c3051a35abbd9d58fc67992d70d588ec8"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v33/render_check/review/watchdog/summary.json",
+        "bytes": 2375,
+        "sha256": "8a1ae9b101d84ac8ab9fcd68037cae0d2c45cd2944b706a5e5170784234cfa2f"
+      },
+      "actual_visual_status": "PASS_VISIBLE_FIRST_VIEWPORT_ONLY",
+      "observed": "Chinese title/current conclusion/identity block readable",
+      "full_page_visual_status": "NOT_VERIFIED"
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/f9dddb8172f99ea56bb34a98800aeb208463c0fd/docs/task042extra_feinn_5nm/response_v33.md",
+      "published_source_sha": "f9dddb8172f99ea56bb34a98800aeb208463c0fd",
+      "screenshot": {
+        "path": "tmp/task42extra/v33/render_check/response/page.png",
+        "bytes": 316597,
+        "sha256": "493843599d5de81d242ce0480223bbf079ebd03c16250923dac42899cb64b0a1"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v33/render_check/response/watchdog/summary.json",
+        "bytes": 2369,
+        "sha256": "d31ea9796d55b125314f65db3db06e8f4dcfae4000215687d779f0c651d7210d"
+      },
+      "actual_visual_status": "PASS_VISIBLE_FIRST_VIEWPORT_ONLY",
+      "observed": "Chinese title/current conclusion and visible first table rows aligned; table remainder unviewed",
+      "full_page_visual_status": "NOT_VERIFIED"
+    },
+    {
+      "name": "topic",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/f9dddb8172f99ea56bb34a98800aeb208463c0fd/docs/task042extra_feinn_5nm/outcomes/fixed_capacity_backfit_v33.md",
+      "published_source_sha": "f9dddb8172f99ea56bb34a98800aeb208463c0fd",
+      "screenshot": {
+        "path": "tmp/task42extra/v33/render_check/topic/page.png",
+        "bytes": 423203,
+        "sha256": "caf9c574187c8bf04e4da068bf09a0b5fd32331ac3691514345b9ec3da67c646"
+      },
+      "resource_summary": {
+        "path": "tmp/task42extra/v33/render_check/topic/watchdog/summary.json",
+        "bytes": 2393,
+        "sha256": "1d2d3539858ea662d326b08dff30479ee1ab72b26e3d9042e84c0563558d0e62"
+      },
+      "actual_visual_status": "PASS_VISIBLE_FIRST_VIEWPORT_ONLY",
+      "observed": "Chinese title/current conclusion and all4 fenced equations visually rendered without raw LaTeX or broken headings",
+      "full_page_visual_status": "NOT_VERIFIED"
+    }
+  ],
+  "raw_receipt": {
+    "path": "tmp/task42extra/v33/render_check/attempts.json",
+    "bytes": 9546,
+    "sha256": "9e6ef855839c88666da0a8afc438f7d349a9424f42abab4fd81ed59d7b9be68e"
+  },
   "full_page_visual_pass": false,
   "old_failed_render_records_retained": true,
-  "numerical_work_not_blocked_by_rendering": true
+  "numerical_work_not_blocked_by_rendering": true,
+  "published_docs_source_sha": "f9dddb8172f99ea56bb34a98800aeb208463c0fd",
+  "seal_changes": "Only compact metadata/resource/visual receipts; viewed Markdown bytes unchanged"
 }
