@@ -1,0 +1,6 @@
+{
+  "status": "PENDING_FINAL_DOCUMENT_AND_CLEANUP_FEES",
+  "will_be_replaced_only_for_new_V64_final_settlement": true,
+  "prior_collector_snapshot": "resource_costs_v64.json",
+  "historical_lower_seconds": 229211.7403489353
+}

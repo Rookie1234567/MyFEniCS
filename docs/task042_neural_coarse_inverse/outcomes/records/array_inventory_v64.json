@@ -1,0 +1,211 @@
+{
+  "files": [
+    {
+      "path": "benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/mesh_mate.npz",
+      "bytes": 943778,
+      "sha256": "c470274ab6c64cee0b8eef09dbcdadadfac4c6ca229d7fc2b6e608ded62f540c",
+      "members": {
+        "geometry_x": {
+          "shape": [
+            5168,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "b9ea4991759723ee9dd8d60911210d10970a1cba97022e882bbfff9a0e341922"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            25576,
+            4
+          ],
+          "dtype": "int32",
+          "sha256": "15636635cd32d6044a23a1f0cfc1fb4fa705499d616f779883bf8ff53fe92161"
+        },
+        "cell_tags": {
+          "shape": [
+            25576
+          ],
+          "dtype": "int32",
+          "sha256": "3735ebf585ff18f52f473dab1dfded80f8b551246152f7b3f054baf70a95c6a5"
+        },
+        "regular_tags": {
+          "shape": [
+            25576
+          ],
+          "dtype": "int32",
+          "sha256": "c66232ef0de0c2ead460034ab774e2760978741ac0335c7e7b46e7c7a31a2f5c"
+        },
+        "original_parent_cell": {
+          "shape": [
+            25576
+          ],
+          "dtype": "int64",
+          "sha256": "700a08daf6ff3c8b91139a8d2533a909c57268a7fa06f9a34dc6e0035a839a24"
+        }
+      }
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/frozen_marking.npz",
+      "bytes": 329550,
+      "sha256": "778145da61c21d0ff79ebf573f20e960c10a4b0d8603ee22cd281abf3cae6c09",
+      "members": {
+        "indices": {
+          "shape": [
+            1267
+          ],
+          "dtype": "int64",
+          "sha256": "87318c81fcec1cd1ce56b9fadc754199dcdf92584498b34c004a749858fb17f3"
+        },
+        "eta_squared": {
+          "shape": [
+            7680
+          ],
+          "dtype": "float64",
+          "sha256": "2b4c05c4263fa6b9f23511bf4f0fbeed4ebf6846ede51731f3ebe367d456d9a9"
+        },
+        "order": {
+          "shape": [
+            7680
+          ],
+          "dtype": "int64",
+          "sha256": "f957001c72e3246a0d4f54201d5fa6118ada77f27261c3eb38c10d9e0ea3f674"
+        },
+        "reference_squared": {
+          "shape": [
+            2
+          ],
+          "dtype": "float64",
+          "sha256": "5abee7f64bbac21ff64f7608bd18ebcaef9fd5b24f9341a09631c0ea0108a330"
+        },
+        "denominator_squared": {
+          "shape": [
+            2
+          ],
+          "dtype": "float64",
+          "sha256": "5abee7f64bbac21ff64f7608bd18ebcaef9fd5b24f9341a09631c0ea0108a330"
+        },
+        "geometry_x": {
+          "shape": [
+            1701,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "39008022f6cf54892209d198d180c95baa82905dded06216f39027b2715f3026"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            7680,
+            4
+          ],
+          "dtype": "int32",
+          "sha256": "e0449ff09f3362c561a888eafbb33c0b25198cb524392aeeee1d005bcd123c14"
+        },
+        "parent_cell_tags": {
+          "shape": [
+            7680
+          ],
+          "dtype": "int32",
+          "sha256": "b8d08e479645ca1c9a2f11c72e5a8565029b68973df33f383f8312fd7705ff2a"
+        }
+      }
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v64/task042_v64_tetra_same_mesh_p6_20261008T135044376775Z/triangle_q47.npz",
+      "bytes": 804624140,
+      "sha256": "458e7c5b109b816b1b53a471f166e9f704ba2a84ae8340c2af22f38985a54493",
+      "members": {
+        "offsets": {
+          "shape": [
+            829
+          ],
+          "dtype": "int64",
+          "sha256": "26b931c6ad16bc33896e9ed1a08c188e7dcd83e354b619dd14f6cec3306c8cc6"
+        },
+        "rows": {
+          "shape": [
+            19713024
+          ],
+          "dtype": "int64",
+          "sha256": "21f0ac870a6e19421094ac9c910086ffb41c658b20b618c8bf8c9d1b6d71b422"
+        },
+        "C": {
+          "shape": [
+            19713024
+          ],
+          "dtype": "complex128",
+          "sha256": "d90b41a3aeb0bb7bd6c6ef1205cd78d9cdb5060b3139becfad577a539320c5e4"
+        },
+        "D": {
+          "shape": [
+            19713024
+          ],
+          "dtype": "complex128",
+          "sha256": "82ea905d61222af04f256fb489fd4fb2f0519a1835267197381b195e2945eb72"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        },
+        "incident_traction": {
+          "shape": [
+            1005528
+          ],
+          "dtype": "complex128",
+          "sha256": "94143895b0b8eae2390aced369337126232b65ba8b7ec5af233bb16d48acfe3b"
+        }
+      }
+    },
+    {
+      "path": "benchmarks/artifacts/task042/v64/task042_v64_tetra_same_mesh_p6_20261008T135044376775Z/triangle_q63.npz",
+      "bytes": 804624140,
+      "sha256": "12f0c97da871679ca1ff8211ccb7865214bc6402e60fa6983528a41084300721",
+      "members": {
+        "offsets": {
+          "shape": [
+            829
+          ],
+          "dtype": "int64",
+          "sha256": "26b931c6ad16bc33896e9ed1a08c188e7dcd83e354b619dd14f6cec3306c8cc6"
+        },
+        "rows": {
+          "shape": [
+            19713024
+          ],
+          "dtype": "int64",
+          "sha256": "21f0ac870a6e19421094ac9c910086ffb41c658b20b618c8bf8c9d1b6d71b422"
+        },
+        "C": {
+          "shape": [
+            19713024
+          ],
+          "dtype": "complex128",
+          "sha256": "c3df6993d3cac65ead6294793341ae98adb7a1f1b19cdee21a6b4d52f8ad2d34"
+        },
+        "D": {
+          "shape": [
+            19713024
+          ],
+          "dtype": "complex128",
+          "sha256": "129029a134f3b2ca64e6eb781114badeb55fa7b27b33e32af2c343546209a639"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        },
+        "incident_traction": {
+          "shape": [
+            1005528
+          ],
+          "dtype": "complex128",
+          "sha256": "1ff8060d163316e6896688bd28df6557937b5b73d4b31881ec9003d853f19d0d"
+        }
+      }
+    }
+  ]
+}

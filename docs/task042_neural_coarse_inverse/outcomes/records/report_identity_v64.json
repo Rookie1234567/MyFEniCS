@@ -1,0 +1,28 @@
+{
+  "review_commit": "b2cf084ee0269b87acfacef314475a70702f4266",
+  "blob": "875eeacad19c9cc4c1862242e040a3e0ac98f37c",
+  "sha256": "b68ed6e8338ae3ed62707b72270a7071ea996ab1a3c47f3031c681e63ac60184",
+  "intake_HEAD": "17e953f12502b0dfded7778e751d2274d12e5295",
+  "remote_and_local_HEAD_after_ff": "b2cf084ee0269b87acfacef314475a70702f4266",
+  "old_V61_identity_conflict": "closed; no attachment reimport",
+  "own_actor_at_intake": false,
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "common_git_dir": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "report_path": "docs/task042_neural_coarse_inverse/review_report_v62.md",
+  "report_worktree_sha256": "b68ed6e8338ae3ed62707b72270a7071ea996ab1a3c47f3031c681e63ac60184",
+  "formal_preflight_and_P6_source": "e28ce30b47797581176f2d5fa752b1f3539387c8",
+  "independent_consumer_source": "687663e2f7210c62808dfc54b7951369469ba520",
+  "first_work_clock": {
+    "schema": "Task042-first-work-clock-v1",
+    "namespace": "v64",
+    "first_utc": "2026-10-08T13:13:11.457752329Z",
+    "first_monotonic": 1390186.31,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_deadline_utc": "2026-10-09T01:13:11.457752329Z",
+    "heavy_stop_utc": "2026-10-09T00:13:11.457752329Z",
+    "source": "first actual read-only identity check; includes subsequent reading/fetch/implementation"
+  },
+  "historical_identity_conflict_not_reopened": true,
+  "report_not_modified": true
+}

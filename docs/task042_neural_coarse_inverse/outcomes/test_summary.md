@@ -1,3 +1,11 @@
+# V64相关验证
+
+最终source687663e2f7210c62808dfc54b7951369469ba520的6项targeted测试、改动路径Ruff/compile和4dat validate通过。覆盖真实父映射/材料、最小固定标记、周期失败才准True同步、角色容量贯通、拒绝入口计费及精确几何cache库存。失败fixture/API/计费记录保留，同轮最小修复；未重跑旧FE或full pytest/CI。
+
+保存consumer核对4NPZ/25成员、父体积/材料和完整828q47/q63；完整体作用gate未完成，新解方程/恢复/场/功率全部NOT_RUN。一次紧凑文档检查及最终字节记录见[交付](records/delivery_index_v64.json)，不能拿测试通过替代物理场。
+
+---
+
 # V63最终定点与完整物理验收
 
 | actual本地检查 | 结果/边界 |

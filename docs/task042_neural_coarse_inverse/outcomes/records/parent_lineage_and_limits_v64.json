@@ -1,0 +1,31 @@
+{
+  "parent_reviewed_HEAD": "17e953f12502b0dfded7778e751d2274d12e5295",
+  "A": {
+    "source": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+    "array_sha256": "8b62d15c074fe3c0c348630817ff54c9138121cf3664636a1b3164f33cca512e",
+    "successful_T_N1_seconds": 2270.285875603091,
+    "failed_entry_seconds": 91.234595,
+    "full_observed_cost_chain_seconds": 2361.520470603091,
+    "formal_true": 2.156588276e-10,
+    "direct_target_pass": false
+  },
+  "B": {
+    "source": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+    "array_sha256": "68933f0bee9cc1382be2a7c3bf45321bb1ce2d7fac5d0a444ef1659793862862",
+    "successful_T_N1_seconds": 5645.946988187963,
+    "formal_true": 2.162758944e-10,
+    "direct_target_pass": false
+  },
+  "prerequisite_cost_chain_seconds": 8016.232863791054,
+  "costs_already_in_historical_lower_not_added_twice": true,
+  "parent_pair_sha256": "3d12a716ff3d484400c3a86d05c3e307605d61439e7fd8a79488583a77eee44b",
+  "A_B_scattered_E": 0.0004894867596561363,
+  "A_B_scattered_H": 0.0005085759517257697,
+  "A_B_selected_six_vector_max": 0.00232882331334446,
+  "field_limit": 0.0001,
+  "original_negative_results_unchanged": true,
+  "historical_lower_seconds": 229211.7403489353,
+  "unobserved_historical_cost": "unknown",
+  "no_old_PDE_replayed": true,
+  "neural_gain_required": "same complete correctness, total cold time or simultaneous peak >=20% improvement versus best qualified non-neural baseline; other resource compliant"
+}

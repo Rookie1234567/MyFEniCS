@@ -1,3 +1,11 @@
+# V64变更范围
+
+新增local_h_pilot scope/薄队列、固定差分标记、真实mesh_override保存/重载、partial checker/collector与4dat。周期refinement仅增加可选parent返回，原默认保持；完整tetra核使用显式mesh_override与actual counts，数学弱式未改。新增PUBLIC_BASIX cache库存只做已停准备的静态消费，没有优化原数值核。
+
+新空间/预算/祖先组合和消费资格为研究opt-in，不提升为生产默认。源、监督、checker、证据、研究与do-not-merge按[依赖组](records/selective_merge_v64.json)列出；旧task/review/response/raw不改。
+
+---
+
 # V63最小opt-in依赖与行为
 
 新src数学核只负责真实三角owner/MPC可写支撑及同实κ多项式差分分子；既有tetra完整UFL、独立PUBLIC_BASIX与默认路径保留。薄scope/study/5dat接原runner和角色资源，不复制求解器；B128额度不向默认扩散。保存consumer独立重算四对FAIL及全成本/lifecycle，没有新PDE。完整raw/数组ignored、旧task/review/response不改。

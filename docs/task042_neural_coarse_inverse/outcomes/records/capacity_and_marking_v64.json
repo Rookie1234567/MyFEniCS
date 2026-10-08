@@ -1,0 +1,179 @@
+{
+  "marking": {
+    "theta": 0.5,
+    "parents": "V63 A/B saved per-cell differences",
+    "formula": "D_E,K / N_E + D_H,K / N_H",
+    "N_E": 0.8042647476533107,
+    "N_H": 0.8040966375803122,
+    "D_E": 1.926996522741515e-07,
+    "D_H": 2.0797919219541386e-07,
+    "floors": "unchanged frozen parent scale",
+    "sum_indicator": 4.98246786552436e-07,
+    "selected": 1267,
+    "parent_cells": 7680,
+    "selected_fraction": 0.16497395833333334,
+    "coverage": 0.5001897305326463,
+    "top_10_percent_coverage": 0.3556726286231306,
+    "selected_tag_counts": {
+      "1": 907,
+      "2": 0,
+      "3": 360
+    },
+    "curl_not_used": true,
+    "marking_before_P6": true,
+    "numerator_reproduction_operation": 0.0
+  },
+  "periodic": {
+    "mate_only_false_pass": true,
+    "full_boundary_true_fallback_attempts": 0,
+    "initial_edges": 2596,
+    "closed_edges": 2598,
+    "additional_periodic_mates": 2
+  },
+  "local_mesh": {
+    "selected": 1267,
+    "coverage": 0.5001897305326463,
+    "minimum_prefix": true,
+    "cells": 25576,
+    "actual_rows": 1043792,
+    "parent_volume_operation": 2.75111235144608e-15,
+    "tags_equal": true,
+    "capacity_admitted": false,
+    "independent_FE": 1042964,
+    "notch_tetrahedra": 1000,
+    "limits": {
+      "tetrahedra": 19200,
+      "complete_rows": 800000
+    },
+    "memory_plan_gib": 21.778370052576065,
+    "row_or_cell_cap_not_overridden": true,
+    "mesh_pointer": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v64/task042_v64_resolution_preflight_20261008T134653003445Z/local_mesh_spec.json",
+      "sha256": "7e3aab7b2458ec65db37762fcab0dee84ad3c4f060a46fbab3a27fbe33dcea1e"
+    }
+  },
+  "P6": {
+    "tetrahedra": 7680,
+    "degree": 6,
+    "independent_FE": 980352,
+    "native": 1005528,
+    "complete_rows": 981180,
+    "basis_dimension": 216,
+    "actual_superdegree": 6,
+    "complete_modes": 828,
+    "conservative_graph_items": 397744956,
+    "cell_contribution_items": 358318080,
+    "boundary_reachable_rows_per_side": 23808,
+    "max_MPC_masters_per_row": 10,
+    "assembly_plan_bytes": 43460677152,
+    "actual_nnz": "unknown; no completed saved matrix receipt",
+    "symbolic": "not_run",
+    "numeric": "not_run",
+    "fill": "unknown",
+    "planning_warning_sampled_stop_gib": [
+      192,
+      224,
+      256
+    ],
+    "row_cap": 1000000
+  },
+  "physical": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "partial_checker": {
+    "path": "benchmarks/artifacts/task042/v64/task042_v64_compare_verify_cost_20261008T181307868314Z/partial_preparation_checker.json",
+    "sha256": "c51004cf6236e26ea48c0d53b8e6ac06628af4cc3e834a523e62e6b955187fef"
+  }
+}

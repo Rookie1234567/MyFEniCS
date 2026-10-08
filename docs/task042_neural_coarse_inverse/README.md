@@ -1,3 +1,11 @@
+# 当前V64：两个新场未取得，准备和停止证据已交付
+
+Review V62授权的固定局部标记真实生成25576tet/1043792行，超L4上限而不求解；P6完整体/828边界准备后，在独立原式核对阶段达到单例审核输出预留边界，未factor/solve。没有新准确性、2TB48h或NN20资格。唯一下一pilot建议先降低独立原式向量积分的几何变换开销，再在新合同下完成同空间P6；当前不自动执行。
+
+[回应](response_v64.md) · [专题](outcomes/p6_reference_local_h_v64.md) · [正式Review V62](review_report_v62.md) · [分类](outcomes/records/decision_and_not_run_v64.json) · [最终费用](outcomes/records/resource_costs_final_v64.json)。旧历史逐字保留。
+
+---
+
 # Task042 V63当前入口：细四面体完整解与有费用负结果
 
 两份同fine网格完整tetra p4/p5场和独立原式已完成，全部内部/828端口保留；边界按实际可写Γ精确压缩，比较仅简化同实载波差分分子。A/B散射E/H=4.89487e−4/5.08576e−4、240点2.32882e−3超过1e−4，p增量未闭合，M不准入；能量/通道通过不能覆盖场FAIL。没有NN训练/目标/2TB48h资格。

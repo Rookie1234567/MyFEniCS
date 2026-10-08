@@ -1,0 +1,131 @@
+{
+  "P6": {
+    "outer_receipt": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v64_tetra_same_mesh_p6.dat"
+      ],
+      "source_sha": "e28ce30b47797581176f2d5fa752b1f3539387c8",
+      "start_utc": "2026-10-08T13:50:44.044349+00:00",
+      "end_utc": "2026-10-08T18:01:40.379346+00:00",
+      "elapsed_seconds": 15056.33501556702,
+      "exit_code": 3,
+      "input_sha256": "e3ab0adb596822a71ce841b8add2569853dff309e8294be1d102010d6f1f42bc",
+      "wrapper_sha256": "6ca1453d31a710f43250452afb44750bbcf9ab26604a62b6886aecb86d64f8d4",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "cold_successful_T_N1_seconds": null,
+    "complete_successful_T_N1_status": "unavailable: no returned field",
+    "failed_complete_process_seconds": 15056.33501556702,
+    "stages_seconds": {
+      "mesh_MPC": 17.92494343710132,
+      "q47": 60.58320099883713,
+      "q63": 63.998702259967104,
+      "standard_UFL_full_body": 12203.710182526847
+    },
+    "independent_operator_gate_begin_monotonic": 1404963.879778503,
+    "unfinished_original_gate_consumption_lower_seconds": 2490.8030515499413,
+    "incomplete_inner_timing_not_added_to_outer": true,
+    "oracle_cache_inventory": {
+      "cells": 7680,
+      "unique_exact_keys": 1118,
+      "hits": 1748,
+      "misses": 5932,
+      "repeated_rebuilds": 4814,
+      "bytes_per_class": 11337408,
+      "limit_bytes": 536870912,
+      "resident_class_capacity": 47,
+      "all_unique_table_bytes": 12675222144,
+      "classification": "DERIVED_EXACT_CACHE_WALK_NOT_RUNTIME_PROFILE",
+      "rounding": false,
+      "new_body_actions": 0,
+      "new_numeric_factors": 0,
+      "new_complete_solves": 0,
+      "degree": 6,
+      "basis_dimension": 216,
+      "actual_quadrature_points": 729,
+      "quadrature_degree": 17,
+      "body_kernel_sha256": "669e1992d858ad7ffd97834d4d018b82abdbbf3a89278d4351a8fd52a1eb8033",
+      "whole_original_gate_pass": false,
+      "causal_runtime_attribution": "not measured; exact-key churn is a candidate cost explanation"
+    },
+    "cache_walk_is_not_measured_profile": true,
+    "unique_numpy_owner_bytes": 14530397344,
+    "opaque_PETSc_MPI_CFFI_bytes": "unknown; included in measured RSS",
+    "sampled_process_tree_peak_bytes": 35811266560,
+    "own_swap_observed_peak_bytes": 0,
+    "actual_max_sample_gap_seconds": 2.0084119790699333,
+    "nominal_sample_seconds": 0.5,
+    "sampled_RSS_is_not_continuous_hard_peak": true,
+    "stop": {
+      "status": "CONTROLLED_STOP",
+      "reason": "P6_COMPLETE_CASE_ORIGINAL_AUDIT_OUTPUT_RESERVE",
+      "source_sha": "e28ce30b47797581176f2d5fa752b1f3539387c8",
+      "utc": "2026-10-08T18:00:59.850159+00:00",
+      "monotonic": 1407454.682830053,
+      "complete_case_elapsed_seconds": 15016.172830052907,
+      "complete_case_remaining_seconds": 2983.8271699470934,
+      "original_audit_output_minimum_seconds": 3000,
+      "budget_refreshed": false,
+      "worker_pid": 3240901,
+      "worker_pgid": 3240901,
+      "worker_birth_monotonic": 1392478.26,
+      "last_saved_event": {
+        "event": "two_standard_UFL_PUBLIC_BASIX_operator_pairs_begin",
+        "elapsed_s": 12485.31903492799,
+        "RSS_bytes": 18582155264,
+        "clock": {
+          "start_utc": "2026-10-08T13:13:11.457752329Z",
+          "start_monotonic": 1390186.31,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "heavy_limit_seconds": 39600,
+          "total_limit_seconds": 43200,
+          "scientific_loaded_limit_seconds": 36000,
+          "review_commit": "b2cf084ee0269b87acfacef314475a70702f4266",
+          "intake_HEAD": "17e953f12502b0dfded7778e751d2274d12e5295",
+          "contract_HEAD": "b2cf084ee0269b87acfacef314475a70702f4266",
+          "closed": false,
+          "first_work_start_never_refreshed": true,
+          "observed_utc": "2026-10-08T17:19:29.018912+00:00",
+          "observed_monotonic": 1404963.879778503,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 14777.569778502919,
+          "heavy_remaining_seconds": 24822.43022149708,
+          "total_remaining_seconds": 28422.43022149708
+        }
+      },
+      "events_sha256": "d2fee31b8359348034c5dea1e4a5f3ceefe13793393beab05a7c45a69c95539e",
+      "new_numeric_factors": 0,
+      "returned_complete_solutions": 0,
+      "original_action_calls_bounds": [
+        1,
+        2
+      ],
+      "production_action_calls_bounds": [
+        0,
+        2
+      ],
+      "signal": "SIGTERM own verified worker process group only",
+      "control_source_sha256": "f0b4210952af0f29324504bf14dd8df6f63ff773ae4faaa12863bcfc411114f5"
+    },
+    "supervisor_classification": "WORKER_FAILED",
+    "supervisor_exit_code": -15,
+    "semantic_controlled_stop_does_not_rewrite_raw_failure": true,
+    "numeric_factors": 0,
+    "complete_returned_solutions": 0,
+    "global_factor_present": false
+  },
+  "L4": {
+    "frozen_mesh_actual_cells": 25576,
+    "full_rows": 1043792,
+    "status": "NOT_RUN_L4_CAPACITY_NOT_ADMITTED",
+    "successful_T_N1_seconds": null,
+    "failed_PDE_seconds": 0,
+    "PDE_attempts": 0,
+    "marking_mesh_and_A_B_prerequisites_are_not_free": true
+  },
+  "no_speed_or_memory_ratio_qualification": true
+}

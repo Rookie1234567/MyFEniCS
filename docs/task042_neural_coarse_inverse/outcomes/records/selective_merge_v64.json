@@ -1,0 +1,84 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/adaptivity/periodic_tetra_refinement.py",
+        "src/solvers/independent_tetra_reference.py",
+        "src/solvers/independent_tetra_study.py"
+      ],
+      "behavior": "optional parent return + explicit mesh override and truthful actual counts + numeric output reserve; existing defaults remain",
+      "dependency": "same qualified high-order MPC, standard Ckappa UFL and tetra assembly",
+      "tests": "test_local_h_pilot; focused Ruff/compile",
+      "fresh_PDE": "no newly solved field; P6 preparation only",
+      "merge_status": "requires review; not production qualification"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py"
+      ],
+      "behavior": "opt-in V64 routes and role-specific explicit caps",
+      "tests": "all four schema/dat validation + budget regression",
+      "fresh_PDE": "P6 controlled preparation stop; no factor",
+      "merge_status": "after core only if approved"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_tetra_preparation.py",
+        "benchmarks/qualify_local_h_pilot.py",
+        "benchmarks/collect_local_h_pilot.py",
+        "src/test/test_local_h_pilot.py"
+      ],
+      "behavior": "saved preparation inventory + exact cache walk and explicit absent-field failure classification",
+      "tests": "6 final targeted tests + actual saved VERIFY",
+      "merge_status": "research checker; independent from original operator"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v64.md",
+        "docs/task042_neural_coarse_inverse/outcomes/p6_reference_local_h_v64.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v64.json"
+      ],
+      "behavior": "new negative result and incurred cost only",
+      "tests": "one compact document check",
+      "merge_status": "preserve negative scientific record"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/local_h_pilot_scope.py",
+        "src/solvers/local_h_pilot.py",
+        "src/solvers/tetra_local_marking.py",
+        "src/solvers/tetra_mesh_override.py",
+        "input/task042_neural_coarse_inverse/v64_*.dat",
+        "input/task042_neural_coarse_inverse/p6_reference_local_h_v64.json"
+      ],
+      "behavior": "fixed one-batch namespace and a rejected local-h pilot",
+      "tests": "fixed marker, true parent-volume and mesh roundtrip",
+      "merge_status": "not a general adaptive production solver"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v64/",
+        "tmp/task042/v64/",
+        "results/task042/task042_v64_*"
+      ],
+      "behavior": "ignored arrays/logs/partial prepared objects + local control wrappers",
+      "merge_status": "content-addressed evidence archive only; no large blobs or global factors in Git"
+    }
+  ],
+  "suggested_dependency_order": [
+    "production numerical/core",
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs",
+    "research-only",
+    "do-not-merge"
+  ],
+  "merge_approval": false
+}

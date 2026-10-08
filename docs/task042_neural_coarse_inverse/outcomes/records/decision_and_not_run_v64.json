@@ -1,0 +1,45 @@
+{
+  "queue_freeze": {
+    "path": "tmp/task042/v64/scientific_queue_frozen.json",
+    "sha256": "02f32bbfc19c2f912262225c792eb56c3b50c2b935862b579be6806ba07d91fa"
+  },
+  "status": "NO_NEW_RETURNED_FIELDS",
+  "P6": "CONTROLLED_STOP_BEFORE_ORIGINAL_GATE_AND_SYMBOLIC_NUMERIC",
+  "L4": "CAPACITY_NOT_ADMITTED",
+  "original_complete_operator_gate": "NOT_COMPLETED",
+  "actual_original_action_started_bounds": [
+    1,
+    2
+  ],
+  "actual_production_action_bounds": [
+    0,
+    2
+  ],
+  "symbolic_attempts": 0,
+  "numeric_attempts": 0,
+  "complete_solve_attempts": 0,
+  "returned_fields": 0,
+  "mode_components": 828,
+  "boundary_q47_q63_pass": true,
+  "field_equation_recovery_modes_power_energy": "NOT_RUN: no solution coefficients",
+  "comparisons": {
+    "B/P6": "NOT_RUN: required newly returned field absent",
+    "A/L4": "NOT_RUN: required newly returned field absent",
+    "B/L4": "NOT_RUN: required newly returned field absent",
+    "P6/L4": "NOT_RUN: required newly returned field absent"
+  },
+  "efficiency_fixed_P6": "NOT_RUN",
+  "P6_repeat": "NOT_ADMITTED: remaining complete-case budget insufficient",
+  "L4_repeat": "NOT_AUTHORIZED: cannot change theta or shape caps",
+  "full_0p7nm_accuracy": false,
+  "continuum_accuracy": false,
+  "target_2TB_48h": false,
+  "NN_training": 0,
+  "NN20": false,
+  "next_pilot": "Qualify coefficient-first PUBLIC_BASIX original vector integration, then one fresh same-space P6 under a new complete contract; no execution in V64",
+  "next_pilot_causal_claim": "candidate cost remedy; no measured benefit or sole-root-cause claim",
+  "target_factor_fill": "unknown",
+  "target_iterations": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_T_N1": "unknown"
+}

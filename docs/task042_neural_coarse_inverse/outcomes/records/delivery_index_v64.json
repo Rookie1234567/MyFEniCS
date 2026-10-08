@@ -1,0 +1,18 @@
+{
+  "status": "PENDING_FINAL_SEAL",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "review_commit": "b2cf084ee0269b87acfacef314475a70702f4266",
+  "formal_source": "e28ce30b47797581176f2d5fa752b1f3539387c8",
+  "saved_consumer_source": "687663e2f7210c62808dfc54b7951369469ba520",
+  "response": "docs/task042_neural_coarse_inverse/response_v64.md",
+  "outcome": "docs/task042_neural_coarse_inverse/outcomes/p6_reference_local_h_v64.md",
+  "source_bindings": "source_bindings_v64.json",
+  "arrays": "array_inventory_v64.json",
+  "raw_archive": "raw_archive_index_v64.json",
+  "final_costs": "resource_costs_final_v64.json",
+  "scientific_queue": {
+    "path": "tmp/task042/v64/scientific_queue_frozen.json",
+    "sha256": "02f32bbfc19c2f912262225c792eb56c3b50c2b935862b579be6806ba07d91fa"
+  },
+  "closed": false
+}

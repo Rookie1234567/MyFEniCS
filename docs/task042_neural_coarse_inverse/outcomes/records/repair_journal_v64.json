@@ -1,0 +1,53 @@
+{
+  "entries": [
+    {
+      "id": "R01",
+      "root": "DOLFINx refine parent array is in input cell order",
+      "evidence": "ancestry_debug.stdout: direct_equal False, reordered_equal True",
+      "change": "compose parent_cells with refined original_cell_index before final positive rebuild",
+      "tests": "initial_targeted -> targeted_repair01 -> targeted_repair02; per-parent volume reproduced",
+      "source_HEAD": "b2cf084ee0269b87acfacef314475a70702f4266",
+      "tracked_clean": false,
+      "initial_worktree_hash": "unknown; do not claim clean source"
+    },
+    {
+      "id": "R02",
+      "root": "test API needs explicit high-order Basix variant and an independent fixture timer",
+      "evidence": [
+        "initial_targeted.stderr",
+        "targeted_repair01.stderr"
+      ],
+      "change": "legendre variant; test uses a fixture measured context, no historical window",
+      "tests": "targeted_repair02: 4 passed",
+      "source_HEAD": "b2cf084ee0269b87acfacef314475a70702f4266",
+      "tracked_clean": false
+    },
+    {
+      "id": "R03",
+      "utc": "2026-10-08T13:35:58.475249+00:00",
+      "root_cause": "mesh fallback catch included API/identity errors",
+      "evidence": "local_h_pilot.preflight exception branch previously tried True after any ValueError/RuntimeError",
+      "repair": "exceptions preserve evidence and propagate; only completed periodic audit failure permits True",
+      "prior_source": "8ce292ba2aa6ee9f6a4e457d797d26e4c30ffe1d"
+    },
+    {
+      "id": "R04",
+      "utc": "2026-10-08T13:41:57.557802+00:00",
+      "root_cause": "zero-actor admission failures missing measured one-run overhead; repeated source made receipt matching ambiguous",
+      "repair": "UTC-bound matching includes failed entry work and subtracts already charged probes",
+      "test": "rejected call plus same-source successful retry conserved 41s overhead",
+      "prior_source": "d61048cde87d5a5ef8a4e1a4b066e3c62e4770d6"
+    },
+    {
+      "id": "R05",
+      "utc": "2026-10-08T18:09:51.440381+00:00",
+      "root_cause": "Stopped preparation has no returned field; its saved inputs and cache inventory require an explicit partial-only checker, never an empty-list field PASS",
+      "change": "Saved q47/q63 and exact geometry-key inventory; no kernel/cache-cap change; no numerical replay",
+      "test_receipt": "/home/fenics/Projects/NN-Lab/tmp/task042/v64/repair05_targeted_receipt.json",
+      "test_receipt_sha256": "f60b3c3767ce507e65d610dce65053fce621e9abf2ea471de1223beaa87a64e5",
+      "source": "e28ce30b47797581176f2d5fa752b1f3539387c8 plus preserved working-tree hashes",
+      "numerical_replay": 0
+    }
+  ],
+  "failures_preserved": true
+}

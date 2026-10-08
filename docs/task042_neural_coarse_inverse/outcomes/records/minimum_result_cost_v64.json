@@ -1,0 +1,8 @@
+{
+  "status": "DELIVERY_SETTLEMENT_PENDING",
+  "result": "partial preparation + rejected fixed local mesh; zero new complete physical fields",
+  "failed_P6_full_process_seconds": 15056.33501556702,
+  "known_snapshot_seconds": 15798.778658858355,
+  "final_bill": "resource_costs_final_v64.json includes collector, documentation and final measured metadata",
+  "unknown_costs": "unmetered control/Git CPU; no invented zero"
+}
