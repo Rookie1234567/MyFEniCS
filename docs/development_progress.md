@@ -1,6 +1,14 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-08：Task041 W0.7 compact-transfer warm场终态
+## 2026-10-08：Task041 W0.7 compact-transfer warm场终态（Invocation a6a67fc93a1d45cfa69cce0469cb0672）
+
+本场在bottom P4 numeric前由预算门拒绝：fresh B从31,398,424,576 B经既有collective cleanup实测降至30,729,564,160 B，再加单份INFOG(17) 18,004,000,000 B及政策W 5,322,116,301 B，筛查总额54,055,680,461 B，超过cap 53,221,163,008 B共834,517,453 B。清理降低668,860,416 B是本次观测，不是未来可保证收益。bottom/top numeric均未调用，pending句柄各销毁一次。top后续门需fresh B≤32,298,046,707 B，但bottom numeric后的B/INFOG(19)未知。
+
+唯一Invocation a6a67fc93a1d45cfa69cce0469cb0672，source 47b8b655ee9a9cc72dc1f89928b770f7061b22ea；W0.7 reduced 10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29，复用既有packet、QEP=0。终态原样为consumer IMPLEMENTATION_FAILURE、public task041_public_command_nonzero/rc3、finalizer failed/service_boundary_failure且controlled_stop.active=false；finalizer 8/10，仅public_result_completed与service_terminal_normal为false。唯一service wall 1,979.603254005 s，V5 ledger 183项、SHA cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e；runroot恰一条记录，但entry自身不含Invocation字段。没有反馈门、outer、五真残差、recovery或physics，不登记数值pass；不资格化50×25 nm、2 TB或48 h。finalizer SHA完整值为7c00774e836ce40b322ee3472e6c913706781135cc1552c0ac8bdd40869a55f4，已更正先前漏末位4的通知。
+
+只读对象审计没有找到足以承诺跨过缺口的已知可释放大对象：P6 retained local Schur的unique bytes未进入本场raw；P4 top报告13个带端口cell但Bi/Di/xiB逐rank shapes未持久化；ModalTraceProjection trace数组按layout推导rank-sum 185,651,200 B，小于门缺口且不等于RSS。top factors和H6/transfer/P4恢复项在求解/恢复前仍有用途，不能提前释放。细项及原始文件SHA见[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)与[Task041 outcomes summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)。保护stash和raw/ledger未改；本轮无测试、ABI、QEP、FE或第二dispatch。
+
+## 历史快照：上一场Task041 W0.7 compact-transfer warm场（Invocation c38a11ae711846599601ac3c06286327）
 
 唯一Invocation c38a11ae711846599601ac3c06286327（MPI8、W0.7 reduced p6/h0.70/M400、matched L20/N29/h20/29）在bottom P4 numeric前被阶段预算门拒绝。此前compact表示把方向变换矩阵改为共享canonical矩阵与实体方向块；本场bottom/top K_local跨rank总数733/766，对应rank-sum payload 133,147,520/150,893,696 B。这些对象字节不等于RSS，也不能把跨场RSS变化全部归因于该表示。
 

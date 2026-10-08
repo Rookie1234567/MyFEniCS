@@ -1,6 +1,23 @@
 # Review V10-r2：W0.7现场证据
 
-## 2026-10-08 当前唯一Invocation：compact transfer warm场终态
+## 2026-10-08 当前唯一Invocation：compact-transfer warm场终态
+
+本场Invocation a6a67fc93a1d45cfa69cce0469cb0672，unit task041-v10r2-w0p7-compact-transfer-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261008T142600Z.service，runroot results/task041_w0p7_compact_transfer_warm_run_20261008T142600Z，运行source 47b8b655ee9a9cc72dc1f89928b770f7061b22ea。模型为W0.7 reduced 10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29、fixed-H6；复用既有producer，QEP=0。
+
+| 阶段 | 实测 | 边界 |
+|---|---|---|
+| one-cell | source 15120×15120、NNZ 7,123,680、PORD；numeric完成并销毁 | ready marker rows=17280是port/output数，不是source rows |
+| bottom/top P4 | 64966²；NNZ 27,929,686/39,242,250；sequential AMD symbolic完成；INFOG(17)=18,004/15,601 million decimal bytes | 两侧numeric attempts=0，pending各销毁一次 |
+| bottom numeric门 | authority fresh B由31,398,424,576降至30,729,564,160 B（max(tree RSS, dedicated cgroup current）；对应cgroup current为28,504,768,512/27,921,858,560 B）；单份INFOG(17)=18,004,000,000 B；W=5,322,116,301 B；合计54,055,680,461 B | 超cap 53,221,163,008 B共834,517,453 B，numeric前拒绝；清理实测降低authority 668,860,416 B，不保证复现 |
+| 后续top门 | 以本次top INFOG(17)和W计算，fresh B需≤32,298,046,707 B | bottom numeric未运行，bottom后的top B/INFOG(19)未知 |
+| 运行终态 | consumer IMPLEMENTATION_FAILURE；public task041_public_command_nonzero/rc3；finalizer failed/service_boundary_failure；controlled_stop.active=false | finalizer 8/10，仅public_result_completed与service_terminal_normal为false；反馈门、outer、五真残差、恢复与physics未到达 |
+| 唯一计费 | service-finalizer wall 1,979.603254005 s；ledger 183项、SHA cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e | runroot恰一条账目；账目自身无Invocation字段，通过launch/finalizer/runroot绑定；不重复加内部阶段 |
+
+本场top P4转移每侧K=766；compact方向缓存的canonical矩阵、方向实体块和索引rank-sum payload各侧共150,893,696 B。它是数组payload，不是RSS节省。对象审计显示P6 retained-local-Schur字节未持久化；P4 top记录13个带端口cell，但逐rank Bi/Di/xiB shapes缺失；ModalTraceProjection trace payload按截面layout推导为185,651,200 B MPI8 rank-sum，mass矩阵字节未知。可审的窄候选是W0.7固定H6路径在projection最后使用后释放trace引用，但已知payload小于本次834,517,453 B拒绝差额，因此单独不足以支持重跑。细节见[Response V12](../response_v12.md)和[Task041 summary](summary.md)。
+
+raw未修改。service summary SHA 5311cfa56d0643e3e91fafb6d33451af7f9c335d39972995ec662a6ac4fac366；finalizer summary SHA 7c00774e836ce40b322ee3472e6c913706781135cc1552c0ac8bdd40869a55f4；consumer markers SHA ce821d82fb0eb79e11315d427f856efd78c71e9ae865862a7e037217e0fbeb16。此前消息遗漏的finalizer SHA末位4已按实际文件更正。没有pilot数值pass或50×25 nm、2 TB、48 h资格。
+
+## 历史快照：上一Invocation c38a11ae711846599601ac3c06286327（compact-transfer warm场终态）
 
 Invocation c38a11ae711846599601ac3c06286327，unit task041-v10r2-w0p7-compact-transfer-warm-cpu10-11-14-15-16-17-18-19-20261008T125520Z.service，runroot results/task041_w0p7_compact_transfer_warm_run_20261008T125520Z，运行source e890c1c12feb90dd4f7695d31402d63ff788d186。此为W0.7 reduced 10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29、fixed-H6、P4 target 5e-13/max2。复用已资格producer packet，producer source为2708214386d38bd69f73e6b196c8ed843bb53d81，本次QEP=0。
 

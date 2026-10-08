@@ -1,6 +1,48 @@
 # Task041 Response V12：Review V10-r2现场进度
 
-## 2026-10-08：W0.7 compact-orientation warm场终态
+## 2026-10-08：W0.7 compact-transfer warm场终态（Invocation a6a67fc93a1d45cfa69cce0469cb0672）
+
+本场是W0.7缩减pilot：10×5 nm，Hybrid接口z=2/22 nm，p6/h0.70、M400、MPI8，matched全段L=20 nm/N=29/h=20/29 nm，fixed-H6，P4目标5e-13且最多2次同因子修正。复用既有合格producer packet，本Invocation的QEP=0。compact orientation把每个方向重复保存的整幅插值矩阵改为共享canonical矩阵并保存方向实体块；它减少了数组payload，但payload不是RSS，也不能单独解释跨场RSS变化。
+
+| 身份/资源 | 实际记录 | 说明 |
+|---|---|---|
+| Invocation与unit | Invocation a6a67fc93a1d45cfa69cce0469cb0672；unit task041-v10r2-w0p7-compact-transfer-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261008T142600Z.service；MainPID 3255582 | 唯一dispatch；runroot为 results/task041_w0p7_compact_transfer_warm_run_20261008T142600Z |
+| 运行源码与封套 | source 47b8b655ee9a9cc72dc1f89928b770f7061b22ea；config SHA ab0be17b8980c19b8511a05cae5347874afd4da15d36d74416dde3bb470f29ec；argv SHA 3eaaae8eb92d92d0d09e4385e8c1f0a45484dfad9626329c0254e618574314b7；source binding SHA 251cdf04a93629aaadd625e015183921c95d8c279a267183d2137a6b7efc6b94 | MPI8 rank map [10,11,14,15,16,17,18,19]；exact bridge .so SHA 7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b |
+| Producer身份 | 复用source 2708214386d38bd69f73e6b196c8ed843bb53d81的既有packet；manifest SHA 63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2；identity SHA 73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6 | 原producer raw保留；本Invocation QEP=0 |
+| 数值与资源合同 | cap/warning/floor为53,221,163,008/47,899,046,707/412,316,860,416 B；swap observe-only，无elapsed强停 | 真实ABI、native complex128/Int32、membind0、每rank六线程1通过；performance_not_isolated |
+
+| 阶段/门 | 实际记录 | 结论 |
+|---|---|---|
+| one-cell | source矩阵15,120×15,120；MPI rank-local NNZ一次求和7,123,680；INFOG(7/32)=4/1，PORD；numeric完成后因子销毁 | marker rows=17,280是端口/输出行口径，不能误写成source矩阵行数 |
+| bottom P4 | 64,966×64,966、NNZ 27,929,686；sequential AMD symbolic完成；INFOG(17)=18,004 million decimal bytes | pending factor保留到预算门，numeric未调用 |
+| top P4 | 64,966×64,966、NNZ 39,242,250；sequential AMD symbolic完成；INFOG(17)=15,601 million decimal bytes | pending factor保留到预算门，numeric未调用 |
+| bottom numeric门 | cleanup前/后authority fresh B=31,398,424,576/30,729,564,160 B（max(process-tree RSS, dedicated cgroup current)）；对应dedicated cgroup current为28,504,768,512/27,921,858,560 B；单份INFOG(17)=18,004,000,000 B；W=5,322,116,301 B；合计54,055,680,461 B | 高于cap 53,221,163,008 B共834,517,453 B，故numeric前预算拒绝。清理实测降低authority 668,860,416 B；不保证下次同量释放 |
+| top numeric条件门 | 若沿本次top INFOG(17)与W，fresh B必须不超过32,298,046,707 B | bottom numeric未执行，故bottom之后的top fresh B及INFOG(19)均unknown；不是已通过的后续门 |
+| pending清理 | bottom与top各destroy一次，numeric attempts均为0，destroy error=0 | pending handle已清理，不存在同场因子重建或第二dispatch |
+
+## 只读驻留对象审计
+
+下表把内存字段按它代表的内容区分：数组payload是程序可见的数组字节；fresh B是当前整组进程树与专属cgroup的authority；二者不能相加或互相替代。一个rank持有的共享对象只在该rank计一次，跨rank总和按raw已有语义报告，不把记录引用重复加总。
+
+| 对象与证据 | 字节/形状 | 所有者、后续用途和释放边界 |
+|---|---|---|
+| P6 retained local Schur及同类恢复缓存 | 本场consumer raw未持久化P6 condensed.build_audit、oriented class counts或retained_local_schur_bytes_sum；not_persisted。不能用P4 audit中的retained_local_schur_bytes_sum=0替代 | hybrid_local_dtn_action.py:331-339调用hcurl_assembly_time_condensation.py；该调用启用retain_local_schur_for_matrix_free。hcurl_assembly_time_condensation.py:1436-1473对同一class-key持有Schur、LU、恢复与投影缓存。full action/外层BAL-H仍用局部Schur；HybridLocalDtnActionSystem.destroy沿condensed.destroy释放。当前没有可信P6 unique nbytes，因而无法把它列为可兑现节省 |
+| P6 mode-projection/traction暴露数组 | consumer markers的full_action_ready.object_inventory：rank-local payload汇总为bottom 27,128,520 B、top 23,844,560 B，每侧array_count=2,584；native workspace仍unknown | FullSpacePhysicalDtnAction与H6/外层作用会继续使用；side.full_action持有至side inverse/action销毁。marker不提供每数组shape，因此这里只报汇总，不把它当factor或RSS |
+| compact orientation transfer | consumer markers的transfer_ready.object_inventory.compact_orientation_storage.cross_rank_total：每侧K_local跨rank求和为766（不是全局唯一键数）；canonical R 33,868,800 B、方向实体块116,949,248 B、索引75,648 B，总unique array payload 150,893,696 B。bottom和top各有自己的adapter；records对同key共享，不重复加总 | P/PH transfer仍供side action使用，安全释放点是对应SideBalancedInverse销毁。它是跨rank payload和对象库存，不是本场测得的RSS节省 |
+| P4 CellPortTerms与xiB | consumer markers的p4_condensed_port_ready.port_audit报告bottom cells_with_port_terms=0、top=13；Bi/Di/ports的逐cell shape及MPI逐rank向量没有持久化。基于源码的条件上界：若该记录所指rank的13个cell各取n_i=108、p_i=646，Bi、Di、xiB各自每cell至多1,116,288 B，ports索引至多2,584 B；合计三数组+索引至多43,568,824 B。此为shape上界，不是实测值，也不乘8 | physical_balanced_physical_operator.py:884-1020构造Bi/Di；p4_cell_condensed_inverse.py:514-548在P4CellCondensedInverse构造时另以共享class LU生成独立xiB_by_cell。p4_cell_condensed_inverse.py:1010-1013的回代使用xiB @ port_values，且Bi/Di参与凝聚端口矩阵；bottom/top数值求解与恢复前不能释放。top实际unique bytes和各rank合计仍unknown |
+| ModalTraceProjection（modal_trace_projection.py:508-523创建，hybrid_internal_modes.py:2303-2318传入one-cell builder，后续2375-2435构建两侧blocks） | 每rank 400个right和400个left复数trace；按已绑定截面layout每rank 1,813个local+ghost条目及complex128推导为23,206,400 B/rank，MPI8 rank-sum为185,651,200 B；derived payload，不是RSS。稀疏mass矩阵字节未记录 | traces由packet模态向量复制成fem.Function；HybridInternalModeCoupling还持有正/负basis用于后续路径。one-cell builder和bottom/top block构建期间需要projection；src/solvers/hybrid_strong_trace_direct.py:369,398的强迹direct路径也读取它。ModalTraceProjection.destroy只销毁mass，不清空trace tuple。一个窄候选是仅对W0.7 fixed-H6在该调用链最后一次projection用途完成后显式detach trace引用；强迹默认路径必须保留。即使释放已知trace payload，也比本次834,517,453 B门缺口少648,866,253 B，mass与实际可回收RSS未知，单独不足以支持重跑 |
+| P4/H6装配临时项 | _prepare_physical_p4_port_terms中的cell_b/cell_d/interior_locations与assemble_port_condensed_terms中的xib、b_hat/d_hat/h_hat为局部暂存；返回后Python引用退出，但allocator是否向OS归还未测 | 顶侧13个端口cell的临时区间位于p4 port assembly；之后已有numeric前cleanup。没有对象级释放样本，不把cleanup前后RSS变化归因于这些临时数组 |
+| H6 window/runtime与basis | raw显示window_action在runtime action安装时destroy、seed在构建后离开局部作用域；runtime仍持有约11 MB values、11 MB curls及系数/输出向量等本地buffer；P6 basis底层数组完整nbytes未暴露 | window与seed生命周期已结束，但RSS变化不能归因到这些对象。runtime数组在H6/side action和外层迭代期间仍使用；P6正负basis在恢复前仍由coupling持有 |
+
+可继续审的单一候选是W0.7专属地在projection最后使用后解除其trace引用，而不是同时改Bi、Schur和allocator策略。它的已知trace payload约185.7 MB process-tree rank-sum，小于本次834.5 MB预算拒绝差额；稀疏mass大小、basis/allocator影响及实际RSS下降未知，所以该候选本身不能形成足够的重跑依据。当前证据不支持再次构建：P6 retained Schur准确字节缺失，P4逐rank缓存形状缺失，top numeric后的B/INFOG(19)也未测。任何后续实施需另审窄hunk，并仍按新的fresh资源与分阶段门判断。
+
+本场原始分类不改：consumer IMPLEMENTATION_FAILURE，public task041_public_command_nonzero/rc3，finalizer status=failed、classification=service_boundary_failure，controlled_stop.active=false；finalizer 8/10，false项仅public_result_completed和service_terminal_normal。没有固定H6反馈、outer、五真残差、recovery、physics或official observables，故无pilot数值通过，不资格化50×25 nm、2 TB或48 h。
+
+唯一service-finalizer wall为1,979.603254005 s。V5 ledger共183项，SHA cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e；该runroot恰有一条对应记录。ledger entry自身没有Invocation字段，runroot与Invocation的绑定由launch/finalizer证据建立；不称entry直接保存Invocation。原始文件均保留且未重写：summary SHA 5311cfa56d0643e3e91fafb6d33451af7f9c335d39972995ec662a6ac4fac366；service_parent_summary SHA 5037bdfe05ccd90f54a5cb37352ac22cfeecdc7af1465f0dae612c6a7a27e058；finalizer_summary SHA 7c00774e836ce40b322ee3472e6c913706781135cc1552c0ac8bdd40869a55f4；artifact_hashes SHA 26093e1128527828ffa402b205ed0170439d4f6c4ed8fc144381e91ddfacfe09；consumer markers SHA ce821d82fb0eb79e11315d427f856efd78c71e9ae865862a7e037217e0fbeb16；consumer memory stages SHA 2e6d73cabd5b6bc1d80f14190f18bd9d31985ea403c20c40545b8675ada143db；rank NUMA SHA a319c3fd7883d142eb0fc2c1bca594a365a497c2c4dde2609da7bfe72a18c1af。finalizer SHA以原文件重算值为准，前一通知漏掉的末位4在此更正。
+
+原始证据入口：[service summary](../../results/task041_w0p7_compact_transfer_warm_run_20261008T142600Z/summary.json)、[finalizer summary](../../results/task041_w0p7_compact_transfer_warm_run_20261008T142600Z/finalizer/finalizer_summary.json)、[artifact hashes](../../results/task041_w0p7_compact_transfer_warm_run_20261008T142600Z/finalizer/artifact_hashes.json)、[consumer markers](../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261008T144717.194059Z/consumer/markers.jsonl)。本轮没有测试、ABI、QEP、FE或第二dispatch。
+
+## 历史快照：W0.7 compact-transfer warm场终态（Invocation c38a11ae711846599601ac3c06286327）
 
 唯一compact-transfer warm Invocation 为 c38a11ae711846599601ac3c06286327，unit 为 task041-v10r2-w0p7-compact-transfer-warm-cpu10-11-14-15-16-17-18-19-20261008T125520Z.service，source HEAD 为 e890c1c12feb90dd4f7695d31402d63ff788d186。本场复用已验证 producer packet，QEP=0；没有第二次dispatch。
 

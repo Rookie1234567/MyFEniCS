@@ -2,6 +2,22 @@
 
 ## 2026-10-08：W0.7 compact-transfer warm场终态——numeric前预算拒绝
 
+compact方向缓存把每个单元重复的整幅方向矩阵换成共享canonical插值矩阵和方向实体块，减少数组重复存储；它不保证同等数量的RSS下降。本场在bottom numeric前由预算门拒绝，数值求解、物理验收尚未开始。
+
+| 模型/阶段 | 当前实测 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8、matched L20/N29/h20/29 warm consumer | Invocation a6a67fc93a1d45cfa69cce0469cb0672；source 47b8b655ee9a9cc72dc1f89928b770f7061b22ea；复用packet，QEP=0；one-cell 15120²/NNZ 7,123,680/PORD并完成numeric后销毁 | unit task041-v10r2-w0p7-compact-transfer-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261008T142600Z.service；唯一warm场 |
+| bottom/top P4 | 64966²；NNZ 27,929,686/39,242,250；sequential AMD symbolic完成；INFOG(17)=18,004/15,601 million decimal bytes | 两侧numeric均未调用，pending各destroy一次、error=0 |
+| compact transfer对象 | bottom/top K=766；每侧rank-sum payload 150,893,696 B | canonical R、方向块和索引的对象payload，不是RSS/已测节省 |
+| bottom numeric门 | cleanup前/后authority fresh B=31,398,424,576/30,729,564,160 B（对应dedicated cgroup current 28,504,768,512/27,921,858,560 B）；单份INFOG(17)=18,004,000,000 B；W=5,322,116,301 B；预算合计54,055,680,461 B | 比cap 53,221,163,008 B高834,517,453 B，numeric前拒绝；cleanup实测降低668,860,416 B，非未来收益保证 |
+| top numeric后续门 | 按top INFOG(17)=15,601,000,000 B与W计算，fresh B需≤32,298,046,707 B | bottom numeric未执行，故后续top fresh B与INFOG(19)未知 |
+| 服务终态/账目 | consumer IMPLEMENTATION_FAILURE；public task041_public_command_nonzero/rc3；finalizer failed/service_boundary_failure；wall 1,979.603254005 s；ledger 183项，本runroot一条，SHA cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e | controlled_stop.active=false；finalizer 8/10，只有public_result_completed、service_terminal_normal为false；其他清理/账目检查通过 |
+| 正式结果与目标资格 | fixed-H6反馈、outer、五真残差、recovery、physics均未到达 | 无缩减pilot数值pass；不资格化50×25 nm、2 TB或48 h。finalizer SHA 7c00774e836ce40b322ee3472e6c913706781135cc1552c0ac8bdd40869a55f4；consumer markers SHA ce821d82fb0eb79e11315d427f856efd78c71e9ae865862a7e037217e0fbeb16 |
+
+唯一账目按runroot与launch/finalizer绑定Invocation；ledger entry本身没有Invocation字段。bottom/top pending因子清理及对象所有权审计见[Response V12](../response_v12.md)。其中P6 retained local Schur实际bytes未持久化；P4 top有13个带端口cell但逐rank Bi/Di/xiB shape缺失；ModalTraceProjection的trace payload为基于已存layout推导值，不能当RSS。可审的W0.7专属projection trace释放候选最多覆盖约185.7 MB已知payload，小于0.835 GB本次门缺口；当前证据不支持据此安排重跑。
+
+## 历史快照：前一场 W0.7 compact-transfer warm Invocation c38a11ae711846599601ac3c06286327
+
 | 范围 | 实测结果 | 状态/资格边界 |
 |---|---|---|
 | Invocation与身份 | 唯一Invocation c38a11ae711846599601ac3c06286327；unit task041-v10r2-w0p7-compact-transfer-warm-cpu10-11-14-15-16-17-18-19-20261008T125520Z.service；source e890c1c12feb90dd4f7695d31402d63ff788d186；复用既有producer，QEP=0 | warm consumer单场，没有第二次dispatch |

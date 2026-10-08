@@ -1,6 +1,19 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 Review V10-r2：W0.7 compact-transfer warm场（2026-10-08）
+## Task041 Review V10-r2：W0.7 compact-transfer warm场终态（2026-10-08）
+
+| 模型/阶段 | 当前实测 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8、matched L20/N29/h20/29 | Invocation a6a67fc93a1d45cfa69cce0469cb0672；source 47b8b655ee9a9cc72dc1f89928b770f7061b22ea；复用既有producer、QEP=0；one-cell 15120²/NNZ 7,123,680/PORD numeric完成并销毁 | one-cell marker的17280 rows是端口/输出口径，不是source matrix rows |
+| bottom/top P4 | 64966²；NNZ 27,929,686/39,242,250；sequential AMD symbolic；INFOG(17)=18,004/15,601 million decimal bytes | 两侧numeric均未调用；pending factors各destroy一次、error=0 |
+| bottom numeric预算门 | fresh B cleanup前/后31,398,424,576/30,729,564,160 B + 单份INFOG(17) 18,004,000,000 B + W 5,322,116,301 B = 54,055,680,461 B | 高于cap 53,221,163,008 B 834,517,453 B，故numeric前拒绝；cleanup本次降低668,860,416 B，不作未来保证 |
+| 传递与对象审计 | 每侧compact transfer K=766、rank-sum payload 150,893,696 B；P6 Schur unique bytes not_persisted；top记录port cell=13但Bi/Di/xiB逐rank shapes缺失 | payload不等于RSS；ModalTraceProjection trace payload按已存layout推导185,651,200 B MPI8 rank-sum，小于预算差额 |
+| 服务终态/账目 | consumer IMPLEMENTATION_FAILURE；public task041_public_command_nonzero/rc3；finalizer failed/service_boundary_failure；wall 1,979.603254005 s；V5 ledger 183项且本runroot一条，SHA cd4c69f03e89b67350478b6c37655bc03ca77893ef5f6d96959fae32dcaaaa6e | controlled_stop.active=false；finalizer 8/10，只有public_result_completed、service_terminal_normal为false；entry自身无Invocation字段，靠launch/finalizer/runroot绑定 |
+| 正式结果与目标资格 | fixed-H6反馈、outer、五真残差、recovery、physics均未到达 | 不构成W0.7数值pass；不资格化50×25 nm、2 TB或48 h。consumer markers SHA ce821d82fb0eb79e11315d427f856efd78c71e9ae865862a7e037217e0fbeb16；finalizer SHA 7c00774e836ce40b322ee3472e6c913706781135cc1552c0ac8bdd40869a55f4 |
+
+bottom numeric后top numeric门的条件式fresh-B上限为32,298,046,707 B；该值不表示实际后续门通过，因为bottom numeric未执行。对象所有权、最后使用与释放边界见[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)。
+
+## 历史：Task041 Review V10-r2 compact-transfer warm场（Invocation c38a11ae711846599601ac3c06286327）
 
 | 模型/阶段 | 当前实测 | 资格边界与证据 |
 |---|---|---|
