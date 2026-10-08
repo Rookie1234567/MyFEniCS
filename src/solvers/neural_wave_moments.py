@@ -94,11 +94,29 @@ class WaveMoments:
 
     def columns(self, patch, q):
         """Three amplitude columns per neuron; not a parameter Jacobian."""
+        return self._columns(patch, q)
+
+    def delta_columns(self, patch, q, base_q):
+        """Same complete moments of exp(i q.x)-exp(i base_q.x), stably."""
+        return self._columns(patch, q, base_q)
+
+    def _columns(self, patch, q, base_q=None):
         start = perf_counter()
         q = np.asarray(q, dtype=np.float64).reshape(-1, 3)
+        if base_q is not None:
+            base_q = np.asarray(base_q, dtype=np.float64).reshape(-1, 3)
+            if base_q.shape != q.shape:
+                raise ValueError("FIXED_WAVE_WIDTH_REQUIRED_FOR_PHASE_DIFFERENCE")
         result = np.zeros((self.size, len(q), 3), dtype=np.complex128)
         for cell, jac, displacement, window in self.blocks(patch):
-            phase = window[:, None] * np.exp(1j * displacement @ q.T)
+            if base_q is None:
+                phase = window[:, None] * np.exp(1j * displacement @ q.T)
+            else:
+                phase = (
+                    window[:, None]
+                    * np.exp(1j * displacement @ base_q.T)
+                    * np.expm1(1j * displacement @ (q - base_q).T)
+                )
             maps = self.maps[self.a["orientation_ids"][cell]]
             pulled = np.stack([matrix @ phase for matrix in maps], axis=-1)
             physical = np.einsum("dja,ka->djk", pulled, jac)

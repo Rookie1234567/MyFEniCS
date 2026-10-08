@@ -75,12 +75,15 @@ class BackfitTrial:
 
 
 class InactiveComplement:
-    def __init__(self, action, U, Q, R, first, last, *, rcond=1e-12, center=None):
+    def __init__(
+        self, action, U, Q, R, first, last, *, rcond=1e-12, center=None, base_q=None
+    ):
         if not 0 <= first < last <= U.shape[1] or U.shape != Q.shape:
             raise ValueError("ACTIVE_BLOCK_LAYOUT_REQUIRED")
         self.action, self.U, self.first, self.last = action, U, first, last
         self.rcond, self.m = rcond, U.shape[1]
         self.center = center
+        self.base_q = None if base_q is None else np.array(base_q, copy=True)
         self.indices = np.r_[np.arange(first), np.arange(last, self.m)]
         started = perf_counter()
         # qr_delete works in original column order, not a pivoted block order.
@@ -107,15 +110,26 @@ class InactiveComplement:
         return result
 
     def trial(self, moments, patch, q, amplitude_map, *, gradient):
-        raw = moments.columns(patch, q)
-        columns = raw @ amplitude_map
+        column_change = None
+        if self.base_q is None:
+            columns = moments.columns(patch, q) @ amplitude_map
+        else:
+            column_change = moments.delta_columns(patch, q, self.base_q) @ amplitude_map
+            columns = self.U[:, self.first : self.last] + column_change
         if columns.shape[1] != self.last - self.first:
             raise ValueError("FIXED_RETAINED_CAPACITY_VIOLATED")
         applied = np.column_stack(
             [self.action.apply(columns[:, j]) for j in range(columns.shape[1])]
         )
         return self.solve_columns(
-            q, columns, applied, moments, patch, amplitude_map, gradient=gradient
+            q,
+            columns,
+            applied,
+            moments,
+            patch,
+            amplitude_map,
+            gradient=gradient,
+            column_change=column_change,
         )
 
     def solve_columns(
@@ -128,6 +142,7 @@ class InactiveComplement:
         amplitude_map=None,
         *,
         gradient=False,
+        column_change=None,
     ):
         Z = self.project(applied)
         zq, zr, pivot = linalg.qr(Z, mode="economic", pivoting=True)
@@ -138,7 +153,11 @@ class InactiveComplement:
             base_change = base_c
         else:
             base_a, saved_c = self.center
-            change = columns - self.U[:, self.first : self.last]
+            change = (
+                columns - self.U[:, self.first : self.last]
+                if column_change is None
+                else column_change
+            )
             base_change = compensated_mixed_columns(
                 change, base_a[self.first : self.last]
             )

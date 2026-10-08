@@ -47,7 +47,14 @@ def qualify_real(
         b = blocks[block_id]
         first, last = b["start"], b["stop"]
         F = InactiveComplement(
-            action, space.U, space.Q, space.R, first, last, center=(space.a, space.c)
+            action,
+            space.U,
+            space.Q,
+            space.R,
+            first,
+            last,
+            center=(space.a, space.c),
+            base_q=b["wave_q"],
         )
         zero = F.trial(
             moments, b["patch"], b["wave_q"], b["amplitude_map"], gradient=True
@@ -65,7 +72,10 @@ def qualify_real(
             ),
         )
         mapping = float(
-            np.linalg.norm(zero.columns - space.U[:, first:last])
+            np.linalg.norm(
+                moments.columns(b["patch"], b["wave_q"]) @ b["amplitude_map"]
+                - space.U[:, first:last]
+            )
             / max(np.linalg.norm(space.U[:, first:last]), 1e-30)
         )
         coefficient = float(
@@ -148,7 +158,9 @@ def qualify_real(
                 -np.vdot(plus.r + minus.r, action_difference).real
                 / (4 * h * action.bnorm**2)
             )
-            expected = float(np.sum(zero.gradient * direction) * k0)
+            planned_expected = float(np.sum(zero.gradient * direction) * k0)
+            represented_direction = (plus.q - minus.q) / (2 * h)
+            expected = float(np.sum(zero.gradient * represented_direction))
             fd.append(
                 dict(
                     direction_id=j,
@@ -156,6 +168,8 @@ def qualify_real(
                     finite_difference=derivative,
                     naive_full_loss_finite_difference=naive_derivative,
                     analytic=expected,
+                    planned_unrounded_analytic=planned_expected,
+                    represented_parameter_direction=represented_direction,
                     absolute_error=abs(derivative - expected),
                     relative_error=abs(derivative - expected)
                     / max(abs(expected), 1e-14),

@@ -184,6 +184,7 @@ def run_backfit(
             block["start"],
             block["stop"],
             center=(space.a, space.c),
+            base_q=block["wave_q"],
         )
 
         def evaluate(q, gradient):

@@ -39,6 +39,36 @@ def test_complete_complex_cancellation_including_active_slot():
     )
 
 
+@pytest.mark.parametrize("kind", ["local", "global"])
+def test_stable_phase_difference_all_entity_moments_and_derivative(kind):
+    from src.test.test_neural_wave import tensor_fixture, direct
+    from src.solvers.neural_wave_moments import WaveMoments
+
+    rng, packet = tensor_fixture()
+    patch = Patch((0.8, 0.5, 0.2), (2.0, 1.8, 1.5), kind=kind)
+    q = rng.normal(size=(2, 3))
+    p = rng.normal(size=(2, 3)) + 1j * rng.normal(size=(2, 3))
+    v = rng.normal(size=q.shape)
+    cotangent = rng.normal(size=288) + 1j * rng.normal(size=288)
+    m = WaveMoments(packet, 8)
+    np.testing.assert_array_equal(m.delta_columns(patch, q, q), np.zeros((288, 6)))
+    h = 1e-6
+    dp = m.delta_columns(patch, q + h * v, q)
+    dm = m.delta_columns(patch, q - h * v, q)
+    np.testing.assert_allclose(
+        dp, WaveMoments(packet, 1).delta_columns(patch, q + h * v, q), rtol=0, atol=0
+    )
+    np.testing.assert_allclose(
+        m.forward(patch, q, p) + dp @ p.ravel(),
+        direct(packet, patch, q + h * v, p),
+        rtol=1e-10,
+        atol=1e-10,
+    )
+    fd = np.vdot(cotangent, (dp - dm) @ p.ravel()).real / (2 * h)
+    g, _ = m.vjp(patch, q, p, cotangent)
+    assert abs(fd - np.sum(g * v)) / max(abs(fd), 1e-14) <= 1e-5
+
+
 def fixture(seed=4213301):
     rng = np.random.default_rng(seed)
     A = rng.normal(size=(14, 14)) + 1j * rng.normal(size=(14, 14))
