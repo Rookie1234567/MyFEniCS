@@ -11,6 +11,22 @@ from src.io.independent_tetra_reference import load_tetra_reference
 
 
 class FineTetraTests(unittest.TestCase):
+    def test_failed_start_cost_is_not_a_saved_vector_resume(self):
+        from benchmarks.collect_fine_tetra import deployment_accounting
+        parts=[dict(start_utc='2026-01-01T00:00:00+00:00',end_utc='2026-01-01T00:00:03+00:00',elapsed_seconds=3.,exit_code=1),
+            dict(start_utc='2026-01-01T00:00:20+00:00',end_utc='2026-01-01T00:00:40+00:00',elapsed_seconds=20.,exit_code=0)]
+        r=deployment_accounting(parts,dict(deployment_complete=True))
+        self.assertEqual(r['T_N1_process_chain_seconds'],23.)
+        self.assertEqual(r['successful_final_process_T_N1_seconds'],20.)
+        self.assertEqual(r['T_N1_observed_start_to_final_cleanup_seconds'],40.)
+        self.assertEqual(r['prior_failed_process_count'],1)
+        self.assertFalse(r['saved_vector_resume'])
+        self.assertFalse(r['single_process_complete_N1'])
+        self.assertIsNone(r['post_resume_new_numeric_factors'])
+        post=deployment_accounting(parts,dict(deployment_complete=True,post_only=True))
+        self.assertTrue(post['saved_vector_resume'])
+        self.assertIsNone(post['successful_final_process_T_N1_seconds'])
+
     def test_saved_increment_reuse_keeps_exact_parent_and_consumer_budget(self):
         from benchmarks.collect_fine_tetra import bound_comparison
         first={'arrays':{'sha256':'A'}};second={'arrays':{'sha256':'B'}}

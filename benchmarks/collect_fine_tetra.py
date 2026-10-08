@@ -88,6 +88,20 @@ def bound_comparison(result,first,second):
     return result
 
 
+def deployment_accounting(receipts,record):
+    """A failed entry followed by a fresh solve is not a saved-vector resume."""
+    result=deployment_from_parts(receipts,record)
+    post_only=bool(record.get('post_only'))
+    successful=[r for r in receipts if r['exit_code']==0]
+    result.update(saved_vector_resume=post_only,
+        prior_failed_process_count=sum(r['exit_code']!=0 for r in receipts),
+        successful_final_process_complete_N1=bool(record.get('deployment_complete') and not post_only and successful),
+        successful_final_process_T_N1_seconds=successful[-1]['elapsed_seconds'] if successful and not post_only else None,
+        post_resume_new_numeric_factors=0 if post_only else None,
+        complete_process_and_failed_start_chain_are_distinct=True)
+    return result
+
+
 def verify(folder,journal):
     from src.solvers.independent_tetra_study import load_boundary
     from src.solvers.independent_tetra_fields import tangential_check
@@ -147,7 +161,7 @@ def collect():
         receipts=[dict(path=str(p),sha256=digest(p),**json.loads(p.read_text())) for p in scope.window.TMP.glob(role+'_one_run*/receipt.json')]
         lifecycle[role]=dict(nnz=r['nnz'],actual_FE=r['spec']['independent'],actual_rows=r['spec']['rows'],actual_native=r['arrays']['members']['u_native']['shape'][0],
             capacity=r['capacity'],symbolic=json.loads(symbolic.read_text()) if symbolic.exists() else None,
-            numeric=json.loads(numeric.read_text()) if numeric.exists() else None,deployment=deployment_from_parts(receipts,r) if receipts else {'status':'unknown'},
+            numeric=json.loads(numeric.read_text()) if numeric.exists() else None,deployment=deployment_accounting(receipts,r) if receipts else {'status':'unknown'},
             global_finite_LU_present=True,static_condensation=False,solution_bytes=Path(r['arrays']['path']).stat().st_size,
             ownership_and_release=[{k:v for k,v in e.items() if k!='clock'} for e in events if e['event'] in ('object_owner_snapshot','global_finite_factor_released','global_body_augmented_and_factor_released')],
             boundary_bytes={q:Path(a['path']).stat().st_size for q,a in r['boundary_arrays'].items()})
