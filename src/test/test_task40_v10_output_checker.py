@@ -1,9 +1,11 @@
 import csv
 import hashlib
 import json
+from pathlib import Path
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
-from types import SimpleNamespace
 
 from src.runners.physical_diagnosis_worker import save_packet
 from src.runners.task40_v10_worker import _save_packet
@@ -99,6 +101,9 @@ def test_v10_output_checker_reopens_field_identity_and_recomputes_residual(
     residual_record = json.loads((tmp_path / "residual.json").read_text())
     output_record = json.loads((tmp_path / "output.json").read_text())
     assert result["status"] == "PASS"
+    assert result["v17_row_tile_assembly"] is None
+    assert result["v17_row_tile_allocation_admission_ledger"] is None
+    assert result["v17_dispatch_binding"] is None
     assert all(row["passed"] for row in result["residual_checks"])
     assert result["field_mode_and_diffraction_file_checks"][0]["passed"]
     assert result["full_dtn_port_mode_table_check"]["actual_channel_count"] == (
@@ -559,3 +564,265 @@ def test_v15_pc_packet_checker_rejects_bad_hash_or_unregistered_rows(tmp_path, c
 
     with pytest.raises(ValueError, match="state hash|profile shape|action scale"):
         verify_v15_pc_state_packet(tmp_path / "v15_pc_bad.json")
+
+
+_V17_OUTPUT_PROFILE = "task40extra_v17_p6_y_orbit_gx560_reference_v1"
+_V17_OUTPUT_STRATEGY = "ROW_TILE_BOUNDED_CSR_V17"
+
+
+def _make_v17_output_bundle_fixture(tmp_path):
+    from src.io.physical_intermediate_profile import profile_facts
+
+    source_sha = "c" * 40
+    input_sha = "d" * 64
+    physical_sha = "e" * 64
+    profile = profile_facts(_V17_OUTPUT_PROFILE)
+    run_id = profile["run_id"]
+    stage = profile["stage"]
+    field_path = tmp_path / "field.vtu"
+    field_path.write_bytes(b"synthetic V17 field fixture")
+    port_table_path = tmp_path / "dtn_port_diffraction_orders_3d.csv"
+    with port_table_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(
+            stream, fieldnames=("side", "m", "n", "polarization")
+        )
+        writer.writeheader()
+        for side in ("top", "bottom"):
+            for mode_index in range(170):
+                writer.writerow(
+                    {"side": side, "m": mode_index, "n": 0, "polarization": "s"}
+                )
+    rhs = np.array([3 + 0j, 4 + 0j], dtype=np.complex128)
+    applied = np.array([1 + 0j, 0 + 0j], dtype=np.complex128)
+    residual = rhs - applied
+    relative = float(np.linalg.norm(residual) / np.linalg.norm(rhs))
+    save_packet(
+        tmp_path,
+        "residual",
+        {
+            "relative_residual": relative,
+            "native_witness_relative_residual": relative,
+            "limit": 1.0,
+            "full_physical_rhs_storage": rhs,
+            "full_solution_storage": np.array([0.5 + 0j, 0.25 + 0j]),
+            "target_backend_applied_storage": applied,
+            "target_backend_residual_storage": residual,
+            "native_witness_applied_storage": applied,
+            "native_witness_residual_storage": residual,
+        },
+    )
+    output_identity = {
+        "source_sha": source_sha,
+        "profile_identity": _V17_OUTPUT_PROFILE,
+        "q_assembly_strategy": _V17_OUTPUT_STRATEGY,
+        "stage": stage,
+        "run_id": run_id,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+    }
+    scientific_identity = {
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "full_solution_packet_json": str(tmp_path / "residual.json"),
+        "full_solution_storage_sha256": "a" * 64,
+        "ordered_physical_mode_sha256": "b" * 64,
+        "field_mode_and_diffraction_files": [
+            {
+                "path": str(field_path),
+                "sha256": hashlib.sha256(field_path.read_bytes()).hexdigest(),
+            },
+            {
+                "path": str(port_table_path),
+                "sha256": hashlib.sha256(port_table_path.read_bytes()).hexdigest(),
+            },
+        ],
+    }
+    output_path = tmp_path / "official_output.json"
+    output_path.write_text(
+        json.dumps(
+            {
+                "identity": output_identity,
+                "scientific_identity": scientific_identity,
+                "passed": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "run_manifest.json").write_text(
+        json.dumps({"source_sha": source_sha, "run_id": run_id}), encoding="utf-8"
+    )
+    allocation_events = tmp_path / "allocation_events.jsonl"
+    allocation_bytes = (
+        b'{"event":"v10_strict_allocation_admission"}\n'
+        b'{"event":"v10_strict_allocation_admission_complete"}\n'
+    )
+    allocation_events.write_bytes(allocation_bytes)
+    allocation_sha = hashlib.sha256(allocation_bytes).hexdigest()
+    summary = {
+        "source_sha": source_sha,
+        "profile": _V17_OUTPUT_PROFILE,
+        "q_assembly_strategy": _V17_OUTPUT_STRATEGY,
+        "stage": stage,
+        "status": "PASS",
+        "allocation_gate_invocation_count": 1,
+        "allocation_admission_raw_validation": {"passed": True},
+        "allocation_admission_raw": {
+            "path": "allocation_events.jsonl",
+            "size_bytes": len(allocation_bytes),
+            "sha256": allocation_sha,
+            "record_count": 2,
+            "allocation_admission_event_count": 1,
+            "allocation_admission_complete_event_count": 1,
+        },
+        "reference_audit_snapshot": {
+            "sector_audits_before_destroy": [
+                _valid_v17_bundle_sector([0, 1]),
+                _valid_v17_bundle_sector([2, 3]),
+            ]
+        },
+        "scientific_identity": {
+            "source_sha": source_sha,
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+        },
+    }
+    summary_path = tmp_path / "task40_v10_p6_candidate_summary.json"
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    return output_path, summary_path, output_identity
+
+
+def _valid_v17_bundle_sector(global_q_indices):
+    shapes = {
+        "00": [2, 2],
+        "01": [2, 3],
+        "10": [3, 2],
+        "11": [3, 3],
+    }
+    norms = {"00": 2.0, "01": 1.0e-12, "10": 2.0e-12, "11": 3.0}
+    diagonal_scale = max(norms["00"], norms["11"])
+    patterns = {
+        key: {
+            "shape": shape,
+            "wide_counts_and_prefix_checked_before_cast": True,
+            "full_shape_bitset_bytes": 0,
+            "full_coo_list_count": 0,
+        }
+        for key, shape in shapes.items()
+    }
+    return {
+        "global_q_indices": global_q_indices,
+        "assembly_strategy": _V17_OUTPUT_STRATEGY,
+        "block_shapes": shapes,
+        "pattern_facts_by_block": patterns,
+        "complete_csr_frobenius_norm_by_block": norms,
+        "off_diagonal_relative": {
+            "q0_q1_relative": norms["01"] / diagonal_scale,
+            "q1_q0_relative": norms["10"] / diagonal_scale,
+        },
+        "pattern_layout_pass_count": 1,
+        "numeric_contribution_pass_count": 1,
+        "cartesian_support_pairs_materialized": 0,
+        "full_shape_bitset_bytes": 0,
+        "full_coo_list_count": 0,
+        "global_python_row_set_count": 0,
+        "route_query_uses_temporary_sort": False,
+        "support_route_spool_removed_after_pattern": True,
+        "row_tiles_are_materialized_in_two_descriptor_passes": True,
+        "descriptor_replay_regenerates_no_FE_or_Hhat_values": True,
+        "all_four_complete_csr_owners_retained_through_norm_gate": True,
+        "staging_peak_bytes_total_all_blocks": 4096,
+        "staging_budget_bytes_total_all_q_blocks": 256 * 1024**2,
+        "final_four_block_csr_payload_bytes": 8192,
+        "final_csr_payload_bytes_total": 8192,
+        "temporary_filesystem_free_space_reserve_bytes": 256 * 1024**2,
+        "temporary_filesystem_free_bytes_minimum_observed": 2 * 1024**3,
+    }
+
+
+def test_v17_output_bundle_dispatches_from_bound_run_identity(tmp_path):
+    output_path, _summary_path, expected_identity = _make_v17_output_bundle_fixture(tmp_path)
+    result = verify_v10_output_bundle(output_path, expected_channel_count=340)
+
+    assert result["status"] == "PASS"
+    assert result["v17_row_tile_assembly"]["passed"] is True
+    assert result["v17_row_tile_assembly"]["covered_q"] == [0, 1, 2, 3]
+    assert result["v17_row_tile_allocation_admission_ledger"]["passed"] is True
+    assert (
+        result["v17_row_tile_allocation_admission_ledger"][
+            "allocation_gate_invocation_count"
+        ]
+        == 1
+    )
+    assert result["v17_dispatch_binding"] == {
+        "identity_source": (
+            "official_output.identity + adjacent run_manifest.json + "
+            "task40_v10_p6_candidate_summary.json"
+        ),
+        "source_sha": expected_identity["source_sha"],
+        "profile_identity": expected_identity["profile_identity"],
+        "run_id": expected_identity["run_id"],
+        "stage": expected_identity["stage"],
+        "q_assembly_strategy": _V17_OUTPUT_STRATEGY,
+        "registered_profile_contract_passed": True,
+        "packet_scientific_identity_match_passed": True,
+        "worker_summary_binding_passed": True,
+        "run_manifest_binding_passed": True,
+    }
+
+
+@pytest.mark.parametrize(
+    ("field", "bad_value"),
+    (
+        ("source_sha", "f" * 40),
+        ("profile", "task40extra_v17_p6_y_orbit_b0_reference_v1"),
+        ("q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM"),
+        ("stage", "B0_CANDIDATE"),
+    ),
+)
+def test_v17_output_bundle_rejects_worker_summary_identity_mismatch(
+    tmp_path, field, bad_value
+):
+    output_path, summary_path, _identity = _make_v17_output_bundle_fixture(tmp_path)
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary[field] = bad_value
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    with pytest.raises(
+        ValueError,
+        match="worker summary differs from the output source/profile/run/strategy",
+    ):
+        verify_v10_output_bundle(output_path, expected_channel_count=340)
+
+
+def test_v17_output_bundle_rejects_run_manifest_identity_mismatch(tmp_path):
+    output_path, _summary_path, _identity = _make_v17_output_bundle_fixture(tmp_path)
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["run_id"] = "other-run"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(
+        ValueError, match="run manifest differs from the output source/run identity"
+    ):
+        verify_v10_output_bundle(output_path, expected_channel_count=340)
+
+
+@pytest.mark.parametrize(
+    ("identity_field", "error_match"),
+    (
+        ("q_assembly_strategy", "packet strategy identity is incomplete"),
+        ("profile_identity", "omits its registered profile"),
+        ("source_sha", "omits a valid frozen source SHA"),
+    ),
+)
+def test_v17_output_bundle_rejects_missing_route_identity_fields(
+    tmp_path, identity_field, error_match
+):
+    output_path, _summary_path, _identity = _make_v17_output_bundle_fixture(tmp_path)
+    output = json.loads(output_path.read_text(encoding="utf-8"))
+    del output["identity"][identity_field]
+    output_path.write_text(json.dumps(output), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=error_match):
+        verify_v10_output_bundle(output_path, expected_channel_count=340)

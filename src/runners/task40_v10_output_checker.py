@@ -1203,6 +1203,7 @@ def verify_v10_output_bundle(
     """
     path = Path(packet_json).resolve()
     record = json.loads(path.read_text(encoding="utf-8"))
+    packet_identity = record.get("identity")
     identity = record.get("scientific_identity")
     if not isinstance(identity, Mapping):
         raise ValueError("V10 output packet has no scientific identity")
@@ -1290,7 +1291,27 @@ def verify_v10_output_bundle(
     v16_allocation_ledger = None
     v17_row_tile_assembly = None
     v17_row_tile_allocation_ledger = None
-    if identity.get("q_assembly_strategy") == "BOUNDED_STAGING_CSR_V16":
+    v17_dispatch_binding = None
+    packet_identity_map = (
+        packet_identity if isinstance(packet_identity, Mapping) else {}
+    )
+    packet_strategy = packet_identity_map.get("q_assembly_strategy")
+    scientific_strategy = identity.get("q_assembly_strategy")
+    from src.io.physical_intermediate_profile import TASK40_V17_P6_PROFILES
+
+    packet_profile = packet_identity_map.get("profile_identity")
+    has_registered_v17_profile = (
+        isinstance(packet_profile, str) and packet_profile in TASK40_V17_P6_PROFILES
+    )
+    if (
+        packet_strategy is not None
+        and scientific_strategy is not None
+        and packet_strategy != scientific_strategy
+    ):
+        raise ValueError(
+            "V10 packet and scientific identities disagree on q assembly strategy"
+        )
+    if scientific_strategy == "BOUNDED_STAGING_CSR_V16":
         summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
         if not summary_path.is_file():
             raise ValueError("V16 official output is missing its candidate worker summary")
@@ -1298,22 +1319,95 @@ def verify_v10_output_bundle(
         v16_allocation_ledger = _verify_v16_allocation_admission_ledger(
             path.parent, worker_summary
         )
-    elif identity.get("q_assembly_strategy") == "ROW_TILE_BOUNDED_CSR_V17":
+    elif (
+        packet_strategy == "ROW_TILE_BOUNDED_CSR_V17"
+        or scientific_strategy == "ROW_TILE_BOUNDED_CSR_V17"
+        or has_registered_v17_profile
+    ):
+        if not isinstance(packet_identity, Mapping):
+            raise ValueError("V17 row-tile output is missing its run identity")
+        strategy = "ROW_TILE_BOUNDED_CSR_V17"
+        source_sha = packet_identity.get("source_sha")
+        profile_identity = packet_identity.get("profile_identity")
+        run_id = packet_identity.get("run_id")
+        stage = packet_identity.get("stage")
+        if packet_strategy != strategy or scientific_strategy not in (None, strategy):
+            raise ValueError("V17 packet strategy identity is incomplete or inconsistent")
+        if (
+            not isinstance(source_sha, str)
+            or len(source_sha) != 40
+            or any(c not in "0123456789abcdef" for c in source_sha.lower())
+        ):
+            raise ValueError("V17 output identity omits a valid frozen source SHA")
+        if not isinstance(profile_identity, str):
+            raise ValueError("V17 output identity omits its registered profile")
+        if not isinstance(run_id, str) or not isinstance(stage, str):
+            raise ValueError("V17 output identity omits run or stage")
+        from src.io.physical_intermediate_profile import profile_facts
+
+        profile_contract = profile_facts(profile_identity)
+        if (
+            profile_contract.get("q_assembly_strategy") != strategy
+            or profile_contract.get("run_id") != run_id
+            or profile_contract.get("stage") != stage
+        ):
+            raise ValueError(
+                "V17 output identity does not match its registered profile/run/stage contract"
+            )
+        for field in ("source_sha", "input_sha256", "physical_model_sha256"):
+            packet_value = packet_identity.get(field)
+            scientific_value = identity.get(field)
+            if not isinstance(packet_value, str) or packet_value != scientific_value:
+                raise ValueError(f"V17 packet/scientific {field} identities disagree")
+        run_manifest_path = path.parent / "run_manifest.json"
+        if not run_manifest_path.is_file():
+            raise ValueError("V17 official output is missing its run manifest")
+        run_manifest = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+        if (
+            run_manifest.get("source_sha") != source_sha
+            or run_manifest.get("run_id") != run_id
+        ):
+            raise ValueError("V17 run manifest differs from the output source/run identity")
         summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
         if not summary_path.is_file():
             raise ValueError("V17 row-tile output is missing its candidate worker summary")
         worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary_scientific_identity = worker_summary.get("scientific_identity")
         if (
-            worker_summary.get("source_sha") != identity.get("source_sha")
-            or worker_summary.get("profile") != identity.get("profile_identity")
+            worker_summary.get("source_sha") != source_sha
+            or worker_summary.get("profile") != profile_identity
+            or worker_summary.get("q_assembly_strategy") != strategy
+            or worker_summary.get("stage") != stage
+            or not isinstance(summary_scientific_identity, Mapping)
+            or any(
+                summary_scientific_identity.get(field) != identity.get(field)
+                for field in ("source_sha", "input_sha256", "physical_model_sha256")
+            )
         ):
-            raise ValueError("V17 worker summary differs from the output packet source/profile identity")
+            raise ValueError(
+                "V17 worker summary differs from the output source/profile/run/strategy identity"
+            )
         v17_row_tile_assembly = _verify_v17_row_tile_assembly_summary(
             path.parent, worker_summary
         )
         v17_row_tile_allocation_ledger = _verify_v17_row_tile_allocation_admission_ledger(
             path.parent, worker_summary
         )
+        v17_dispatch_binding = {
+            "identity_source": (
+                "official_output.identity + adjacent run_manifest.json + "
+                "task40_v10_p6_candidate_summary.json"
+            ),
+            "source_sha": source_sha,
+            "profile_identity": profile_identity,
+            "run_id": run_id,
+            "stage": stage,
+            "q_assembly_strategy": strategy,
+            "registered_profile_contract_passed": True,
+            "packet_scientific_identity_match_passed": True,
+            "worker_summary_binding_passed": True,
+            "run_manifest_binding_passed": True,
+        }
     return {
         "schema": "task40extra.review_v10_output_packet_recheck.v1",
         "packet_json": str(path),
@@ -1328,6 +1422,7 @@ def verify_v10_output_bundle(
         "v16_allocation_admission_ledger": v16_allocation_ledger,
         "v17_row_tile_assembly": v17_row_tile_assembly,
         "v17_row_tile_allocation_admission_ledger": v17_row_tile_allocation_ledger,
+        "v17_dispatch_binding": v17_dispatch_binding,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }
