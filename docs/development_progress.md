@@ -6,7 +6,7 @@
 
 serial两selector通过，父wall`3.040390633046627 s`；MPI2三个selector每rank各3 passed，父wall`2.0312472369987518 s`。两个pytest attempt合计`5.071637870045379 s`，各唯一记入V5；ledger 174项SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2`。这只证明8×8复矩阵桥接口、预算分支和同句柄生命周期，不是生产因子容量、完整FE或0.7 nm目标资格。扩展SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。
 
-准备包使用预测阶段门`sym: fresh B + Δ + W <= cap`和`numeric: fresh_numeric_B + one INFOG(17) × 1e6 + W <= cap`；INFOG(17)为rank总和，只取一份。`W=5,322,116,301 B`是政策预留而非误差上界，源码预测Δ也不是RSS保证。当前ignored warm包需封存修前字节并重绑最终clean HEAD、所有源码、编译扩展、旧producer packet和实际argv，然后fresh复核node0/host资源与unit并运行MPI8 native ABI。此前唯一W0.7 warm场仍是top P4构造超cap的`controlled_stop`；该失败不改写，且本组件没有新production dispatch、QEP或FE。
+准备包使用预测阶段门`sym: fresh B + Δ + W <= cap`和`numeric: fresh_numeric_B + one INFOG(17) × 1e6 + W <= cap`；INFOG(17)为rank总和，只取一份。`W=5,322,116,301 B`是政策预留而非误差上界，源码预测Δ也不是RSS保证。当前ignored warm包已保留原字节归档，正重绑最终clean HEAD、所有源码、编译扩展、旧producer packet和实际argv；随后fresh复核node0/host资源与unit并运行MPI8 native ABI，所有门通过后按用户授权唯一dispatch一次。此前唯一W0.7 warm场仍是top P4构造超cap的`controlled_stop`；该失败不改写，且本组件没有新production dispatch、QEP或FE。
 
 cap/warning/floor保持`53,221,163,008/47,899,046,707/412,316,860,416 B`，swap仅观察，W2不执行。W0.7 reduced pilot尚未到outer、五真残差、recovery或physics；50×25 nm、2 TB及48 h目标均未达。详情见[Task041 Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)、[outcomes summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)和[测试摘要](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)。
 

@@ -11,7 +11,7 @@
 | 测试 | serial 2 passed/父wall`3.040390633046627 s`；MPI2每rank 3 passed/父wall`2.0312472369987518 s` | 8×8生命周期/控制合同；不是大factor、FE或W0.7数值资格 |
 | V5计费 | 两个成功attempt唯一合计`5.071637870045379 s`；ledger 174项，SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2` | compile、ABI与static不计；早期脚手架在pytest启动前失败，没有wall、不入账 |
 | 既有pilot负结果 | 唯一warm consumer在top P4因子构造阶段`controlled_stop/absolute_memory_limit`；tree峰`53,541,888,000 B`对cap`53,221,163,008 B` | 保留原raw与`2,350.819163285 s`唯一账目；不是本轮tiny测试改写或数值门失败 |
-| 下一门 | ignored warm包需重绑最终clean HEAD/source/.so/packet/argv，之后fresh host/unit/resource门及MPI8 native ABI | 目前尚未dispatch、未跑QEP、未完成feedback/outer/五残差/recovery/physics；W2不执行 |
+| 下一门 | ignored warm包需重绑最终clean HEAD/source/.so/packet/argv，之后fresh host/unit/resource门及MPI8 native ABI | 用户已授权全部fresh门通过后唯一dispatch一次；目前尚未dispatch、未跑QEP、未完成feedback/outer/五残差/recovery/physics；W2不执行 |
 
 本机扩展SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`，由词法`/usr/bin/mpicc`构建。serial/MPI2 raw与V5 receipt在`results/task041_petsc_lu_stage_bridge_jobnull_tests_retry_20261008T081956Z/`；准备包位于`results/task041_w0p7_deferred_amd_warm_preparation_20261008T082944Z/`。包在代码提交前生成，后续必须封存旧字节并重绑；其当前`started=false`不表示准入通过。Ruff相对HEAD无新增告警；相关文件存在23条原有baseline告警。
 

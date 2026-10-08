@@ -9,7 +9,7 @@
 | PETSc/MUMPS控制 | 仅注册W0.7 deferred P4、MPI>1、MPIAIJ、PETSc 3.19.6/MUMPS 5.6.2路径使用AMD候选ICNTL7=0、ICNTL28=1、ICNTL14=40；JOB_NULL请求缓存、版本推导值和symbolic后的真实读值分开记录；MUMPS options冲突会在分析前拒绝 | 普通KSP/default与one-cell原排序不变；没有调用私有初始化函数或普通KSP setup冒充symbolic阶段 |
 | 分阶段预算 | symbolic：`fresh B + source-counted Δ + W <= cap`；numeric：`fresh_numeric_B + INFOG(17) × 1,000,000 + W <= cap`，INFOG(17)只取一份；`W=5,322,116,301 B`是政策预留，不是误差上界 | bottom/top预测Δ `1,382,983,004/1,925,986,076 B`是源码计数模型，不是RSS上界。每一步仍需fresh B与真实MUMPS报告 |
 | tiny验证 | serial `2 passed`，父wall `3.040390633046627 s`；MPI2每rank `3 passed`，父wall `2.0312472369987518 s`；V5合计唯一新增`5.071637870045379 s`，ledger 174项、SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2` | 仅8×8桥、预算和同句柄生命周期证据，不是大factor容量或W0.7数值资格 |
-| 当前唯一下一门 | 已准备ignored warm包，待重绑到最终文档HEAD，再做fresh宿主资源/unit门与MPI8 native ABI | 不复用旧资源样本作准入，不再重跑QEP；未授权过门前dispatch |
+| 当前唯一下一门 | 已准备ignored warm包，待重绑到最终文档HEAD，再做fresh宿主资源/unit门与MPI8 native ABI | 不复用旧资源样本作准入，不再重跑QEP；当前授权规定这些门通过后直接执行sealed argv一次 |
 
 PETSc扩展由词法`/usr/bin/mpicc`构建并从精确`.so`路径加载，SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。MPI2中one-cell/bottom/top symbolic的`MatLUFactorNum`事件增量均为0，显式numeric正例为1；预算拒绝不进入numeric并完成清理。向量相对残差约`2.46e-16`，两列分布式全局Frobenius相对残差约`1.68e-16`。原生扩展源码、构建命令、`.so`与测试raw由ignored准备包绑定；这些小矩阵数字不能外推到64966阶因子。
 
@@ -17,7 +17,7 @@ PETSc扩展由词法`/usr/bin/mpicc`构建并从精确`.so`路径加载，SHA `7
 
 当前W0.7范围仍是W材料缩减pilot（10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched全段L20/N29/h20/29、fixed-H6/P4目标5e-13最多2次修正）。拟复用producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`的既有packet，producer manifest SHA `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`、identity SHA `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`；该producer阶段已完成并写出packet，本次QEP=0。route-plan和leading-PH保持false。先前唯一warm consumer仍是top P4构造阶段`controlled_stop/absolute_memory_limit`：tree峰`53,541,888,000 B`高于cap`53,221,163,008 B`，其最终因子/残差/physics未完成；本次tiny组件测试没有改变该失败分类，也没有证明新的大因子可支付。Full 50×25 nm目标、2 TB容量与48 h冷启动目标均未达。
 
-已在`results/task041_w0p7_deferred_amd_warm_preparation_20261008T082944Z/`生成ignored准备包；它在当前代码提交前生成，所以下一步先封存其原字节，再绑定最终clean HEAD、源码、编译扩展、producer与完整argv。当前runroot不存在，尚无fresh production MPI8 ABI、service dispatch或FE。W2不执行。
+已在`results/task041_w0p7_deferred_amd_warm_preparation_20261008T082944Z/`生成ignored准备包；原字节已单独tar封存。当前代码与五份文档分别以普通提交推送，下一步把包重绑到最终clean HEAD、源码、编译扩展、producer与完整argv，再做fresh宿主门和MPI8 ABI。当前runroot不存在，尚无fresh production MPI8 ABI、service dispatch或FE；fresh门和ABI通过后按当前授权直接唯一dispatch。W2不执行。
 
 **状态：进行中。** 本轮基于执行分支HEAD `899b0acbd9fda3bc55f9bc1d7cd7fe0774ef0b50`完成一次W5离线候选产物比较、复核PETSc薄桥serial/MPI2小矩阵测试attempt与账目，并封存本机MUMPS 5.6.2原文说明；没有新增求解、QEP或FE。W0.7运行的数学源码仍为`5025fdd31a1edc4ce34a8df3150a12ca90009c01`，V10-r2同步review为`174ad73a78dcb8a584ea9739007ddbd1e2ef39cc`。保护stash `90e50393831cf8a9da6fe223ef8cae4d3cfa3976`保留，旧raw不改。
 
