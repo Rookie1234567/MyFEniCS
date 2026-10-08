@@ -1,0 +1,3623 @@
+{
+  "status": "FINAL_BYTES_STRUCTURES_PASSED_LOCAL",
+  "observed_utc": "2026-10-08T12:19:27.107805+00:00",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "de8d90e2434cddae5f5f508832445a3329672e83c9c85510cb0759abffcae18b",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        },
+        {
+          "line": 18,
+          "columns": 5
+        },
+        {
+          "line": 37,
+          "columns": 6
+        },
+        {
+          "line": 56,
+          "columns": 6
+        },
+        {
+          "line": 116,
+          "columns": 4
+        },
+        {
+          "line": 135,
+          "columns": 3
+        },
+        {
+          "line": 165,
+          "columns": 3
+        },
+        {
+          "line": 210,
+          "columns": 5
+        },
+        {
+          "line": 246,
+          "columns": 3
+        },
+        {
+          "line": 272,
+          "columns": 8
+        },
+        {
+          "line": 302,
+          "columns": 8
+        },
+        {
+          "line": 354,
+          "columns": 3
+        },
+        {
+          "line": 382,
+          "columns": 3
+        },
+        {
+          "line": 410,
+          "columns": 3
+        },
+        {
+          "line": 439,
+          "columns": 3
+        },
+        {
+          "line": 466,
+          "columns": 3
+        },
+        {
+          "line": 533,
+          "columns": 3
+        },
+        {
+          "line": 638,
+          "columns": 2
+        },
+        {
+          "line": 666,
+          "columns": 7
+        },
+        {
+          "line": 701,
+          "columns": 7
+        },
+        {
+          "line": 709,
+          "columns": 8
+        },
+        {
+          "line": 825,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "review_report_v61.md",
+        "response_v63.md",
+        "outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "outcomes/records/scientific_checks_v63.json",
+        "outcomes/records/resource_costs_final_v63.json",
+        "outcomes/records/delivery_index_v63.json",
+        "response_v62.md",
+        "outcomes/independent_tetra_reference_v62.md",
+        "review_report_v60.md",
+        "outcomes/records/scientific_checks_v62.json",
+        "outcomes/records/resource_costs_final_v62.json",
+        "outcomes/records/delivery_index_v62.json",
+        "response_v61.md",
+        "outcomes/face_trace_enrichment_v61.md",
+        "outcomes/records/scientific_checks_v61.json",
+        "outcomes/records/resource_costs_final_v61.json",
+        "outcomes/records/delivery_index_v61.json",
+        "review_report_v59.md",
+        "response_v60.md",
+        "outcomes/local_assembly_subcell_response_v60.md",
+        "review_report_v58.md",
+        "outcomes/records/run_index_v60.json",
+        "outcomes/records/resource_costs_final_v60.json",
+        "response_v59.md",
+        "outcomes/trace_fixed_interior_enrichment_v59.md",
+        "outcomes/records/scientific_checks_v59.json",
+        "outcomes/records/delivery_index_v59.json",
+        "review_report_v57.md",
+        "response_v58.md",
+        "outcomes/deployment_cost_paired_gauge_v58.md",
+        "outcomes/records/scientific_checks_v58.json",
+        "outcomes/records/resource_costs_final_v58.json",
+        "outcomes/records/delivery_index_v58.json",
+        "review_report_v56.md",
+        "review_report_v55.md",
+        "response_v57.md",
+        "outcomes/common_weak_phase_preparation_v57.md",
+        "outcomes/records/delivery_index_v57.json",
+        "outcomes/records/scientific_checks_v57.json",
+        "outcomes/records/resource_costs_v57.json",
+        "response_v56.md",
+        "outcomes/saved_field_closure_target_bridge_v56.md",
+        "outcomes/records/gate_verdict_v56.json",
+        "outcomes/records/delivery_index_v56.json",
+        "response_v55.md",
+        "outcomes/spatial_resolution_audit_v55.md",
+        "outcomes/records/gate_verdict_v55.json",
+        "outcomes/records/delivery_index_v55.json",
+        "response_v54.md",
+        "outcomes/p_order_dtn_separation_v54.md",
+        "outcomes/records/resource_costs_final_v54.json",
+        "response_v53.md",
+        "outcomes/phase_hp_completion_v53.md",
+        "review_report_v51.md",
+        "response_v52.md",
+        "outcomes/phase_notch_hp_accuracy_v52.md",
+        "review_report_v50.md",
+        "response_v51.md",
+        "outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "review_report_v49.md",
+        "outcomes/records/delivery_index_v51.json",
+        "response_v50.md",
+        "outcomes/complete_physics_accuracy_cost_v50.md",
+        "outcomes/records/delivery_index_v50.json",
+        "outcomes/records/resource_costs_final_v50.json",
+        "review_report_v48.md",
+        "outcomes/records/review_v48_independent_checks.json",
+        "outcomes/records/review_v48_documentation_checks.json",
+        "outcomes/complete_scattering_engine_anchor_v49.md",
+        "review_report_v47.md",
+        "response_v49.md",
+        "outcomes/complete_scattering_engine_anchor_v49.md",
+        "outcomes/records/delivery_index_v49.json",
+        "outcomes/records/resource_costs_final_v49.json",
+        "review_report_v46.md",
+        "outcomes/records/review_v46_independent_checks.json",
+        "outcomes/records/review_v46_documentation_checks.json",
+        "response_v48.md",
+        "review_report_v45.md",
+        "outcomes/lossless_vector_storage_v48.md",
+        "outcomes/records/delivery_index_v48.json",
+        "outcomes/records/resource_costs_final_v48.json",
+        "review_report_v45.md",
+        "outcomes/records/review_v45_independent_checks.json",
+        "outcomes/records/review_v45_documentation_checks.json",
+        "outcomes/records/resource_costs_v47.json",
+        "response_v47.md",
+        "outcomes/trace_subspace_selection_v47.md",
+        "review_report_v44.md",
+        "outcomes/records/review_v44_execution_revision_checks.json",
+        "review_report_v44.md",
+        "outcomes/records/review_v44_independent_checks.json",
+        "outcomes/records/review_v44_documentation_checks.json",
+        "response_v46.md",
+        "outcomes/records/cold_n1_cost_contract_v46.json",
+        "outcomes/records/engine_matching_v46.json",
+        "outcomes/records/critical_path_v46.json",
+        "outcomes/neural_deployment_decision_v46.md",
+        "review_report_v43.md",
+        "outcomes/records/review_v43_independent_checks.json",
+        "outcomes/records/review_v43_documentation_checks.json",
+        "response_v45.md",
+        "outcomes/full_moment_hierarchy_v45.md",
+        "outcomes/records/resource_costs_v45.json",
+        "outcomes/records/array_inventory_v45.json",
+        "review_report_v42.md",
+        "outcomes/records/review_v42_independent_checks.json",
+        "outcomes/records/review_v42_documentation_checks.json",
+        "response_v44.md",
+        "outcomes/late_error_learning_v44.md",
+        "outcomes/records/resource_costs_v44.json",
+        "review_report_v41.md",
+        "outcomes/records/review_v41_independent_checks.json",
+        "outcomes/records/review_v41_documentation_checks.json",
+        "response_v43.md",
+        "outcomes/neighborhood_residual_correction_v43.md",
+        "outcomes/records/neural_heldout_checker_v43.json",
+        "outcomes/records/resource_costs_v43.json",
+        "outcomes/records/integration_readiness_v43.json",
+        "review_report_v40.md",
+        "review_report_v40.md",
+        "outcomes/records/review_v40_independent_checks.json",
+        "outcomes/records/review_v40_documentation_checks.json",
+        "review_report_v39.md",
+        "response_v42.md",
+        "outcomes/distributed_volume_recovery_v42.md",
+        "outcomes/records/component_checker_v42.json",
+        "outcomes/records/resource_costs_v42.json",
+        "outcomes/records/integration_readiness_v42.json",
+        "review_report_v39.md",
+        "outcomes/records/review_v39_independent_checks.json",
+        "outcomes/records/review_v39_documentation_checks.json",
+        "outcomes/native_entity_owner_topology_v41.md",
+        "response_v41.md",
+        "outcomes/records/component_checker_v41.json",
+        "outcomes/records/resource_costs_v41.json",
+        "outcomes/records/integration_readiness_v41.json",
+        "review_report_v38.md",
+        "outcomes/records/review_v38_independent_checks.json",
+        "outcomes/records/review_v38_documentation_checks.json",
+        "review_report_v37.md",
+        "response_v40.md",
+        "outcomes/native_volume_affine_recovery_v40.md",
+        "outcomes/records/component_checker_v40.json",
+        "outcomes/records/resource_costs_v40.json",
+        "outcomes/records/original_size_integration_capacity_v40.json",
+        "review_report_v37.md",
+        "outcomes/records/review_v37_independent_checks.json",
+        "outcomes/records/review_v37_documentation_checks.json",
+        "review_report_v36.md",
+        "response_v39.md",
+        "outcomes/native_boundary_volume_integration_v39.md",
+        "outcomes/records/run_index_v39.json",
+        "outcomes/records/raw_evidence_index_v39.json",
+        "outcomes/records/resource_costs_v39.json",
+        "outcomes/records/integration_readiness_v39.json",
+        "review_report_v36.md",
+        "outcomes/records/review_v36_independent_checks.json",
+        "outcomes/records/review_v36_documentation_checks.json",
+        "review_report_v35.md",
+        "response_v38.md",
+        "outcomes/directional_boundary_structure_v38.md",
+        "outcomes/records/raw_evidence_index_v38.json",
+        "review_report_v35.md",
+        "outcomes/records/review_v35_independent_checks.json",
+        "outcomes/records/review_v35_documentation_checks.json",
+        "review_report_v34.md",
+        "response_v37.md",
+        "outcomes/target_p6_boundary_tiles_v37.md",
+        "outcomes/records/run_index_v37.json",
+        "outcomes/records/component_checker_v37.json",
+        "outcomes/records/resource_costs_v37.json",
+        "outcomes/records/raw_evidence_index_v37.json",
+        "outcomes/records/deployment_package_v37.json",
+        "review_report_v34.md",
+        "outcomes/records/review_v34_independent_checks.json",
+        "outcomes/records/review_v34_documentation_checks.json",
+        "review_report_v33.md",
+        "response_v36.md",
+        "outcomes/original_size_port_preparation_v36.md",
+        "outcomes/records/run_index_v36.json",
+        "outcomes/records/component_checker_v36.json",
+        "outcomes/records/resource_costs_v36.json",
+        "outcomes/records/raw_evidence_index_v36.json",
+        "review_report_v33.md",
+        "outcomes/records/review_v33_independent_checks.json",
+        "outcomes/records/review_v33_documentation_checks.json",
+        "review_report_v32.md",
+        "response_v35.md",
+        "outcomes/online_full_input_qualification_v35.md",
+        "outcomes/original_scale_bridge_v35.md",
+        "outcomes/records/run_index_v35.json",
+        "review_report_v32.md",
+        "outcomes/records/review_v32_independent_checks.json",
+        "review_report_v31.md",
+        "response_v34.md",
+        "outcomes/full_input_block_correction_v34.md",
+        "outcomes/records/run_index_v34.json",
+        "outcomes/records/full_input_checker_v34.json",
+        "outcomes/records/raw_evidence_index_v34.json",
+        "outcomes/records/resource_costs_v34.json",
+        "review_report_v31.md",
+        "outcomes/records/review_v31_independent_checks.json",
+        "review_report_v30.md",
+        "response_v33.md",
+        "outcomes/full_input_block_correction_v33.md",
+        "outcomes/records/run_index_v33.json",
+        "outcomes/records/raw_evidence_index_v33.json",
+        "outcomes/records/resource_costs_v33.json",
+        "review_report_v30.md",
+        "outcomes/records/review_v30_independent_checks.json",
+        "review_report_v29.md",
+        "response_v32.md",
+        "outcomes/return_direction_execution_v32.md",
+        "outcomes/records/run_index_v32.json",
+        "review_report_v29.md",
+        "outcomes/records/review_v29_independent_checks.json",
+        "review_report_v28.md",
+        "response_v31.md",
+        "outcomes/return_direction_workflow_v31.md",
+        "outcomes/records/run_index_v31.json",
+        "review_report_v28.md",
+        "outcomes/records/review_v28_independent_checks.json",
+        "review_report_v27.md",
+        "response_v30.md",
+        "outcomes/light_entry_acceptance_v30.md",
+        "outcomes/records/run_index_v30.json",
+        "review_report_v27.md",
+        "outcomes/records/review_v27_independent_checks.json",
+        "review_report_v26.md",
+        "response_v29.md",
+        "outcomes/checker_full_space_cost_v29.md",
+        "outcomes/records/admission_stop_v29.json",
+        "outcomes/records/run_index_v29.json",
+        "review_report_v26.md",
+        "outcomes/records/review_v26_independent_checks.json",
+        "review_report_v25.md",
+        "response_v28.md",
+        "outcomes/return_direction_v28.md",
+        "outcomes/records/return_direction_checker_v28.json",
+        "outcomes/records/admission_checker_v28.json",
+        "outcomes/records/run_index_v28.json",
+        "review_report_v25.md",
+        "outcomes/records/review_v25_independent_checks.json",
+        "response_v27.md",
+        "outcomes/return_direction_v27.md",
+        "outcomes/records/resource_costs_v27.json",
+        "outcomes/records/run_index_v27.json",
+        "review_report_v24.md",
+        "outcomes/records/review_v24_independent_checks.json",
+        "response_v26.md",
+        "outcomes/joint_block_direction_v26.md",
+        "outcomes/records/run_index_v26.json",
+        "outcomes/records/resource_costs_v26.json",
+        "review_report_v23.md",
+        "outcomes/records/review_v23_independent_checks.json",
+        "response_v25.md",
+        "outcomes/block_residual_direction_diagnostic_v25.md",
+        "review_report_v22.md",
+        "outcomes/records/review_v22_independent_checks.json",
+        "response_v24.md",
+        "review_report_v21.md",
+        "response_v24.md",
+        "outcomes/local_block_coarse_pair_v24.md",
+        "outcomes/records/qualification_and_dispatch_v24.json",
+        "outcomes/records/run_index_v24.json",
+        "outcomes/records/approval_block_v24.json",
+        "review_report_v20.md",
+        "response_v23.md",
+        "outcomes/p1_image_minres_comparison_v23.md",
+        "outcomes/records/qualification_and_dispatch_v23.json",
+        "outcomes/records/run_index_v23.json",
+        "review_report_v19.md",
+        "response_v22.md",
+        "outcomes/p1_trace_galerkin_correction_v22.md",
+        "outcomes/records/qualification_and_dispatch_v22.json",
+        "outcomes/records/run_index_v22.json",
+        "review_report_v18.md",
+        "response_v21.md",
+        "outcomes/exact_action_recycled_correction_v21.md",
+        "outcomes/records/qualification_and_dispatch_v21.json",
+        "outcomes/records/run_index_v21.json",
+        "outcomes/records/resource_costs_v21.json",
+        "review_report_v17.md",
+        "response_v20.md",
+        "outcomes/fixed_p3_ilu0_port_v20.md",
+        "outcomes/records/qualification_and_dispatch_v20.json",
+        "outcomes/records/run_index_v20.json",
+        "outcomes/records/resource_costs_v20.json",
+        "review_report_v16.md",
+        "response_v19.md",
+        "outcomes/post_lsqr_residual_polish_v19.md",
+        "outcomes/records/qualification_and_dispatch_v19.json",
+        "outcomes/records/run_index_v19.json",
+        "outcomes/records/resource_costs_v19.json",
+        "review_report_v15.md",
+        "response_v18.md",
+        "outcomes/gmres_repair_residual_completion_v18.md",
+        "outcomes/records/qualification_and_dispatch_v18.json",
+        "outcomes/records/run_index_v18.json",
+        "outcomes/records/resource_costs_v18.json",
+        "review_report_v14.md",
+        "response_v17.md",
+        "outcomes/resumable_full_trace_campaign_v17.md",
+        "outcomes/records/run_index_v17.json",
+        "response_v16.md",
+        "review_report_v13.md",
+        "outcomes/augmented_full_trace_lsqr_v16.md",
+        "outcomes/records/run_index_v16.json",
+        "outcomes/records/resource_costs_v16.json",
+        "review_report_v12.md",
+        "response_v15.md",
+        "outcomes/local_trace_representation_v15.md",
+        "outcomes/summary.md",
+        "outcomes/records/run_index_v15.json",
+        "review_report_v11.md",
+        "response_v14.md",
+        "outcomes/orthonormal_trace_reprofile_v14.md",
+        "outcomes/summary.md",
+        "outcomes/records/qualification_and_dispatch_v14.json",
+        "outcomes/records/run_index_v14.json",
+        "review_report_v10.md",
+        "response_v13.md",
+        "outcomes/tangent_scale_head_compensation_v13.md",
+        "outcomes/summary.md",
+        "outcomes/records/run_index_v13.json",
+        "review_report_v9.md",
+        "response_v12.md",
+        "outcomes/actual_loss_block_descent_v12.md",
+        "outcomes/summary.md",
+        "outcomes/records/run_index_v12.json",
+        "review_report_v8.md",
+        "response_v11.md",
+        "outcomes/stable_head_varpro_v11.md",
+        "outcomes/summary.md",
+        "outcomes/records/run_index_v11.json",
+        "response_v8.md",
+        "outcomes/scaling_and_execution_v8.md",
+        "outcomes/summary.md",
+        "review_report_v4.md",
+        "review_report_v3.md",
+        "../../input/materials/si_optical_constants_v1.json",
+        "response_v7.md",
+        "outcomes/neural_fe_single_solve_v7.md",
+        "outcomes/summary.md",
+        "outcomes/records/run_index_v7.json",
+        "outcomes/records/resource_costs_v7.json",
+        "task.md",
+        "review_report_v6.md",
+        "response_v9.md",
+        "outcomes/frozen_error_localization_v9.md",
+        "review_report_v7.md",
+        "response_v10.md",
+        "outcomes/autonomous_neural_head_v10.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "7b518344b5a6d85977d4722f50871aac78e8f3dc55537ca4cab00dec5b1a6e6f",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        },
+        {
+          "line": 10,
+          "columns": 6
+        },
+        {
+          "line": 25,
+          "columns": 5
+        },
+        {
+          "line": 44,
+          "columns": 6
+        },
+        {
+          "line": 57,
+          "columns": 3
+        },
+        {
+          "line": 73,
+          "columns": 6
+        },
+        {
+          "line": 84,
+          "columns": 3
+        },
+        {
+          "line": 102,
+          "columns": 3
+        },
+        {
+          "line": 118,
+          "columns": 4
+        },
+        {
+          "line": 134,
+          "columns": 3
+        },
+        {
+          "line": 144,
+          "columns": 3
+        },
+        {
+          "line": 158,
+          "columns": 12
+        },
+        {
+          "line": 163,
+          "columns": 10
+        },
+        {
+          "line": 176,
+          "columns": 9
+        },
+        {
+          "line": 182,
+          "columns": 9
+        },
+        {
+          "line": 194,
+          "columns": 4
+        },
+        {
+          "line": 215,
+          "columns": 3
+        },
+        {
+          "line": 233,
+          "columns": 3
+        },
+        {
+          "line": 250,
+          "columns": 3
+        },
+        {
+          "line": 267,
+          "columns": 5
+        },
+        {
+          "line": 283,
+          "columns": 3
+        },
+        {
+          "line": 299,
+          "columns": 8
+        },
+        {
+          "line": 319,
+          "columns": 8
+        },
+        {
+          "line": 341,
+          "columns": 3
+        },
+        {
+          "line": 359,
+          "columns": 3
+        },
+        {
+          "line": 377,
+          "columns": 3
+        },
+        {
+          "line": 395,
+          "columns": 3
+        },
+        {
+          "line": 414,
+          "columns": 3
+        },
+        {
+          "line": 431,
+          "columns": 3
+        },
+        {
+          "line": 450,
+          "columns": 3
+        },
+        {
+          "line": 470,
+          "columns": 3
+        },
+        {
+          "line": 489,
+          "columns": 3
+        },
+        {
+          "line": 506,
+          "columns": 3
+        },
+        {
+          "line": 523,
+          "columns": 3
+        },
+        {
+          "line": 540,
+          "columns": 3
+        },
+        {
+          "line": 548,
+          "columns": 3
+        },
+        {
+          "line": 556,
+          "columns": 2
+        },
+        {
+          "line": 569,
+          "columns": 3
+        },
+        {
+          "line": 582,
+          "columns": 3
+        },
+        {
+          "line": 597,
+          "columns": 2
+        },
+        {
+          "line": 614,
+          "columns": 2
+        },
+        {
+          "line": 631,
+          "columns": 2
+        },
+        {
+          "line": 651,
+          "columns": 7
+        },
+        {
+          "line": 666,
+          "columns": 6
+        },
+        {
+          "line": 686,
+          "columns": 7
+        },
+        {
+          "line": 694,
+          "columns": 8
+        },
+        {
+          "line": 713,
+          "columns": 2
+        },
+        {
+          "line": 736,
+          "columns": 9
+        },
+        {
+          "line": 746,
+          "columns": 7
+        },
+        {
+          "line": 756,
+          "columns": 6
+        },
+        {
+          "line": 772,
+          "columns": 9
+        },
+        {
+          "line": 782,
+          "columns": 8
+        },
+        {
+          "line": 807,
+          "columns": 8
+        },
+        {
+          "line": 814,
+          "columns": 8
+        },
+        {
+          "line": 835,
+          "columns": 8
+        },
+        {
+          "line": 842,
+          "columns": 8
+        },
+        {
+          "line": 861,
+          "columns": 6
+        },
+        {
+          "line": 869,
+          "columns": 7
+        },
+        {
+          "line": 891,
+          "columns": 8
+        },
+        {
+          "line": 914,
+          "columns": 10
+        },
+        {
+          "line": 932,
+          "columns": 5
+        },
+        {
+          "line": 949,
+          "columns": 6
+        },
+        {
+          "line": 957,
+          "columns": 2
+        },
+        {
+          "line": 972,
+          "columns": 4
+        },
+        {
+          "line": 980,
+          "columns": 2
+        },
+        {
+          "line": 995,
+          "columns": 4
+        },
+        {
+          "line": 1006,
+          "columns": 2
+        },
+        {
+          "line": 1019,
+          "columns": 4
+        },
+        {
+          "line": 1033,
+          "columns": 5
+        },
+        {
+          "line": 1051,
+          "columns": 4
+        },
+        {
+          "line": 1073,
+          "columns": 3
+        },
+        {
+          "line": 1095,
+          "columns": 3
+        },
+        {
+          "line": 1112,
+          "columns": 3
+        },
+        {
+          "line": 1122,
+          "columns": 6
+        },
+        {
+          "line": 1140,
+          "columns": 3
+        },
+        {
+          "line": 1160,
+          "columns": 3
+        },
+        {
+          "line": 1177,
+          "columns": 3
+        },
+        {
+          "line": 1189,
+          "columns": 6
+        },
+        {
+          "line": 1204,
+          "columns": 3
+        },
+        {
+          "line": 1216,
+          "columns": 3
+        },
+        {
+          "line": 1227,
+          "columns": 3
+        },
+        {
+          "line": 1237,
+          "columns": 7
+        },
+        {
+          "line": 1247,
+          "columns": 3
+        },
+        {
+          "line": 1257,
+          "columns": 6
+        },
+        {
+          "line": 1266,
+          "columns": 3
+        },
+        {
+          "line": 1276,
+          "columns": 3
+        },
+        {
+          "line": 1289,
+          "columns": 3
+        },
+        {
+          "line": 1304,
+          "columns": 3
+        },
+        {
+          "line": 1316,
+          "columns": 7
+        }
+      ],
+      "links": [
+        "../response_v63.md",
+        "fine_tetra_accuracy_bounded_cost_v63.md",
+        "records/independent_saved_pair_checks_v63.json",
+        "records/resource_costs_final_v63.json",
+        "../response_v62.md",
+        "independent_tetra_reference_v62.md",
+        "../review_report_v60.md",
+        "records/scientific_checks_v62.json",
+        "records/resource_costs_final_v62.json",
+        "records/delivery_index_v62.json",
+        "../response_v61.md",
+        "face_trace_enrichment_v61.md",
+        "records/scientific_checks_v61.json",
+        "records/resource_costs_final_v61.json",
+        "records/delivery_index_v61.json",
+        "local_assembly_subcell_response_v60.md",
+        "records/scientific_checks_v60.json",
+        "records/resource_costs_final_v60.json",
+        "records/selective_merge_v60.json",
+        "trace_fixed_interior_enrichment_v59.md",
+        "records/resource_costs_final_v59.json",
+        "records/physical_saved_checker_v59.json",
+        "deployment_cost_paired_gauge_v58.md",
+        "records/scientific_checks_v58.json",
+        "records/resource_costs_final_v58.json",
+        "records/target_gap_v58.json",
+        "records/selective_merge_manifest_v58.json",
+        "../response_v57.md",
+        "common_weak_phase_preparation_v57.md",
+        "records/scientific_checks_v57.json",
+        "records/resource_costs_v57.json",
+        "records/target_gap_v57.json",
+        "records/scientific_checks_v56.json",
+        "saved_field_closure_target_bridge_v56.md",
+        "saved_field_closure_target_bridge_v56.md",
+        "records/gate_verdict_v56.json",
+        "records/target_gap_final_v56.json",
+        "records/resource_costs_final_v56.json",
+        "spatial_resolution_audit_v55.md",
+        "../response_v55.md",
+        "records/resource_costs_final_v55.json",
+        "p_order_dtn_separation_v54.md",
+        "../response_v54.md",
+        "../response_v53.md",
+        "phase_hp_completion_v53.md",
+        "records/hp_accuracy_checks_v53.json",
+        "records/resource_costs_final_v53.json",
+        "../response_v52.md",
+        "phase_notch_hp_accuracy_v52.md",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_final_v52.json",
+        "../response_v51.md",
+        "phase_explicit_full3d_accuracy_v51.md",
+        "records/phase_accuracy_checks_v51.json",
+        "records/modal_power_recalculation_v51.json",
+        "records/resource_costs_final_v51.json",
+        "records/next_scale_capacity_v51.json",
+        "records/selective_merge_manifest_v51.json",
+        "../response_v50.md",
+        "complete_physics_accuracy_cost_v50.md",
+        "records/delivery_index_v50.json",
+        "records/resource_costs_final_v50.json",
+        "../response_v49.md",
+        "complete_scattering_engine_anchor_v49.md",
+        "records/finite_independent_checks_v49.json",
+        "records/complete_physical_results_v49.json",
+        "records/resource_costs_final_v49.json",
+        "../response_v48.md",
+        "lossless_vector_storage_v48.md",
+        "records/resource_costs_final_v48.json",
+        "records/lossless_checker_v48.json",
+        "records/conditional_cost_bounds_v48.json",
+        "records/resource_costs_v47.json",
+        "../response_v47.md",
+        "trace_subspace_selection_v47.md",
+        "../response_v46.md",
+        "records/cold_n1_cost_contract_v46.json",
+        "records/engine_matching_v46.json",
+        "records/critical_path_v46.json",
+        "neural_deployment_decision_v46.md",
+        "../response_v45.md",
+        "full_moment_hierarchy_v45.md",
+        "records/resource_costs_v45.json",
+        "records/array_inventory_v45.json",
+        "../response_v44.md",
+        "late_error_learning_v44.md",
+        "records/resource_costs_v44.json",
+        "../review_report_v40.md",
+        "../response_v43.md",
+        "neighborhood_residual_correction_v43.md",
+        "records/neural_heldout_checker_v43.json",
+        "records/resource_costs_v43.json",
+        "records/run_index_v43.json",
+        "../review_report_v39.md",
+        "../response_v42.md",
+        "distributed_volume_recovery_v42.md",
+        "records/component_checker_v42.json",
+        "records/resource_costs_v42.json",
+        "records/integration_readiness_v42.json",
+        "native_entity_owner_topology_v41.md",
+        "../response_v41.md",
+        "records/component_checker_v41.json",
+        "records/resource_costs_v41.json",
+        "records/integration_readiness_v41.json",
+        "../review_report_v37.md",
+        "../response_v40.md",
+        "native_volume_affine_recovery_v40.md",
+        "records/component_checker_v40.json",
+        "records/resource_costs_v40.json",
+        "records/original_size_integration_capacity_v40.json",
+        "../review_report_v36.md",
+        "../response_v39.md",
+        "native_boundary_volume_integration_v39.md",
+        "records/run_index_v39.json",
+        "records/raw_evidence_index_v39.json",
+        "records/resource_costs_v39.json",
+        "records/integration_readiness_v39.json",
+        "../response_v38.md",
+        "directional_boundary_structure_v38.md",
+        "records/resource_costs_v38.json",
+        "records/component_checker_v38.json",
+        "../response_v37.md",
+        "target_p6_boundary_tiles_v37.md",
+        "records/component_checker_v37.json",
+        "records/resource_costs_v37.json",
+        "records/run_index_v37.json",
+        "../response_v36.md",
+        "original_size_port_preparation_v36.md",
+        "records/resource_costs_v36.json",
+        "records/component_checker_v36.json",
+        "../response_v35.md",
+        "online_full_input_qualification_v35.md",
+        "records/resource_costs_v35.json",
+        "records/online_checker_v35.json",
+        "original_scale_bridge_v35.md",
+        "../response_v34.md",
+        "records/full_input_checker_v34.json",
+        "records/tests_v34.json",
+        "records/resource_costs_v34.json",
+        "records/actual_consumption_v34.json",
+        "records/storage_v34.json",
+        "full_input_block_correction_v34.md",
+        "records/dot_identity_gap_v34.json",
+        "records/neural_cost_assessment_v34.json",
+        "records/run_index_v34.json",
+        "records/run_index_v33.json",
+        "records/tests_v33.json",
+        "records/cpu_exclusions_v33.csv",
+        "records/resource_costs_v33.json",
+        "../response_v33.md",
+        "full_input_block_correction_v33.md",
+        "records/run_index_v32.json",
+        "records/direction_analysis_v32.json",
+        "records/resource_costs_v32.json",
+        "../response_v32.md",
+        "return_direction_execution_v32.md",
+        "records/tests_v32.json",
+        "records/raw_evidence_index_v32.json",
+        "records/tests_v31.json",
+        "records/resource_costs_v31.json",
+        "../response_v31.md",
+        "return_direction_workflow_v31.md",
+        "records/run_index_v31.json",
+        "../response_v30.md",
+        "light_entry_acceptance_v30.md",
+        "records/run_index_v30.json",
+        "records/checker_acceptance_v30.json",
+        "records/full_space_algebra_v30.json",
+        "records/complete_cost_ledger_v30.json",
+        "records/resource_costs_v30.json",
+        "../response_v29.md",
+        "checker_full_space_cost_v29.md",
+        "records/tests_v29.json",
+        "records/resource_costs_v29.json",
+        "records/run_index_v29.json",
+        "../response_v28.md",
+        "return_direction_v28.md",
+        "records/resource_costs_v28.json",
+        "records/run_index_v28.json",
+        "../response_v27.md",
+        "return_direction_v27.md",
+        "records/resource_costs_v27.json",
+        "records/run_index_v27.json",
+        "../response_v26.md",
+        "joint_block_direction_v26.md",
+        "records/run_index_v26.json",
+        "records/resource_costs_v26.json",
+        "../response_v25.md",
+        "block_residual_direction_diagnostic_v25.md",
+        "records/run_index_v25.json",
+        "records/numerical_gates_v25.json",
+        "records/resource_costs_v25.json",
+        "../response_v24.md",
+        "../response_v24.md",
+        "local_block_coarse_pair_v24.md",
+        "records/resource_costs_v24.json",
+        "../response_v23.md",
+        "p1_image_minres_comparison_v23.md",
+        "records/qualification_and_dispatch_v23.json",
+        "records/resource_costs_v23.json",
+        "../response_v22.md",
+        "p1_trace_galerkin_correction_v22.md",
+        "records/qualification_and_dispatch_v22.json",
+        "records/resource_costs_v22.json",
+        "records/cycle_history_v21.csv",
+        "records/checkpoint_inventory_v21.json",
+        "records/qualification_and_dispatch_v21.json",
+        "../response_v20.md",
+        "fixed_p3_ilu0_port_v20.md",
+        "records/resource_costs_v20.json",
+        "records/channel_observables_v20.csv",
+        "records/deadline_stop_v20.json",
+        "../response_v19.md",
+        "post_lsqr_residual_polish_v19.md",
+        "records/qualification_and_dispatch_v19.json",
+        "records/run_index_v19.json",
+        "records/resource_costs_v19.json",
+        "gmres_repair_residual_completion_v18.md",
+        "../response_v18.md",
+        "records/candidate_comparison_v18.csv",
+        "records/resource_costs_v18.json",
+        "records/run_index_v18.json",
+        "../response_v17.md",
+        "resumable_full_trace_campaign_v17.md",
+        "records/candidate_comparison_v17.csv",
+        "records/resource_costs_v17.json",
+        "../response_v16.md",
+        "augmented_full_trace_lsqr_v16.md",
+        "records/candidate_comparison_v16.csv",
+        "records/resource_costs_v16.json",
+        "records/qualification_and_dispatch_v16.json",
+        "../response_v15.md",
+        "local_trace_representation_v15.md",
+        "records/qualification_and_dispatch_v15.json",
+        "records/local_candidate_comparison_v15.csv",
+        "records/channel_observables_v15.csv",
+        "records/resource_costs_v15.json",
+        "records/run_index_v15.json",
+        "changed_files.md",
+        "../response_v14.md",
+        "orthonormal_trace_reprofile_v14.md",
+        "records/decoder_checks_v14.json",
+        "records/candidate_comparison_v14.csv",
+        "records/plan_and_input_identity_v14.json",
+        "../response_v13.md",
+        "tangent_scale_head_compensation_v13.md",
+        "records/candidate_comparison_v13.csv",
+        "records/tangent_identity_checks_v13.json",
+        "records/directional_scale_v13.csv",
+        "records/coupled_step_history_v13.jsonl",
+        "records/qualification_and_dispatch_v13.json",
+        "records/channel_observables_v13.csv",
+        "records/resource_costs_v13.json",
+        "../response_v12.md",
+        "actual_loss_block_descent_v12.md",
+        "records/qualification_and_dispatch_v12.json",
+        "records/candidate_comparison_v12.csv",
+        "records/roundoff_decomposition_v12.json",
+        "records/fixed_head_gradient_checks_v12.json",
+        "records/block_descent_progress_v12.jsonl",
+        "records/run_index_v12.json",
+        "records/resource_costs_v12.json",
+        "../response_v11.md",
+        "stable_head_varpro_v11.md",
+        "records/candidate_comparison_v10.csv",
+        "records/manufactured_recovery_v11.json",
+        "records/qualification_and_dispatch_v11.json",
+        "records/channel_observables_v11.csv",
+        "records/candidate_comparison_v11.csv",
+        "records/resource_costs_v11.json",
+        "records/run_index_v11.json",
+        "records/candidate_comparison_v10.csv",
+        "records/channel_observables_v10.csv",
+        "records/resource_costs_v10.json",
+        "records/run_index_v10.json",
+        "../response_v10.md",
+        "autonomous_neural_head_v10.md",
+        "records/qualification_and_dispatch_v10.json",
+        "records/progress_journal_v10.jsonl",
+        "../response_v9.md",
+        "frozen_error_localization_v9.md",
+        "records/frozen_state_inventory_v9.json",
+        "records/error_identity_checks_v9.json",
+        "records/gate_decisions_v9.json",
+        "records/field_error_components_v9.csv",
+        "records/region_error_integrals_v9.csv",
+        "records/port_error_components_v9.csv",
+        "records/equation_components_v9.csv",
+        "records/run_index_v9.json",
+        "records/resource_costs_v9.json",
+        "records/independent_blind_validation_v7.json",
+        "records/scaled_blind_validation_v8.json",
+        "records/gate_decisions_v9.json",
+        "records/run_index_v8.json",
+        "records/optimizer_stop_semantics_v8.json",
+        "records/scaled_lsqr_comparison_v8.csv",
+        "records/scaled_blind_validation_v8.json",
+        "records/batch_costs_v8.csv",
+        "records/resource_costs_v8.json",
+        "scaling_and_execution_v8.md",
+        "records/gate_decisions_v8.json",
+        "../response_v8.md",
+        "records/material_loaded_v7.json",
+        "records/material_geometry_identity_v7.json",
+        "records/channel_inventory_v7.csv",
+        "records/adjoint_gradient_checks_v7.json",
+        "records/neural_fe_comparison_v7.csv",
+        "records/neural_fe_gate_decisions_v7.json",
+        "records/independent_blind_validation_v7.json",
+        "records/run_index_v7.json",
+        "records/resource_costs_v7.json",
+        "records/target_48h_budget_v7.json",
+        "records/channel_observables_v7.csv",
+        "../response_v7.md",
+        "neural_fe_single_solve_v7.md",
+        "records/dataset_model_provenance_v7.json",
+        "../response_v6.md",
+        "records/material_geometry_identity_v6.json",
+        "records/material_source_audit_v6.json",
+        "records/adjoint_gradient_checks_v6.json",
+        "records/neural_fe_comparison_v6.csv",
+        "records/neural_fe_gate_decisions_v6.json",
+        "records/run_index_v6.json",
+        "records/target_48h_budget_v6.json",
+        "neural_fe_single_solve_v6.md",
+        "../response_v5.md",
+        "records/localization_design_v5.json",
+        "records/coverage_v5.csv",
+        "records/same_residual_actions_v5.csv",
+        "records/complement_probes_v5.json",
+        "records/localization_decisions_v5.json",
+        "records/run_index_v5.json",
+        "records/pre_run_checks_v5.json",
+        "failure_localization_v5.md",
+        "../response_v4.md",
+        "records/coarse_space_algebra_v4.json",
+        "records/gate_decisions_v4.json",
+        "records/two_level_comparison_v4.csv",
+        "records/fresh_qualification_v4.json",
+        "records/coarse_space_algebra_v4.json",
+        "records/run_index_v4.json",
+        "two_level_global_error_v4.md",
+        "records/gate_decisions_v3.json",
+        "bounded_diagnostic_design_v3.md",
+        "records/run_index_v3.json",
+        "../response_v2.md",
+        "records/strict_rhs_metrics_v2.csv",
+        "records/reused_diagnostics_v3.json",
+        "records/structure_complete_v3.json",
+        "records/unconsumed_test_plan_v3.json",
+        "records/full_residual_history_v3.csv",
+        "records/pc_probes_v3.csv",
+        "records/structure_complete_v3.json",
+        "records/cpu_provenance_v3.json",
+        "records/structure_complete_v3.json",
+        "records/gate_decisions_v3.json",
+        "records/gate_decisions_v2.json",
+        "shared_authorization_v2.md",
+        "environment_and_isolation.md",
+        "records/f1_real_components_v2.json",
+        "records/run_index_v2.json",
+        "records/run_index_v2.json",
+        "architecture_and_oracle.md",
+        "environment_and_isolation.md",
+        "accuracy_performance_memory.md",
+        "../response_v1.md",
+        "records/strict_rhs_metrics_v2.csv",
+        "accuracy_performance_memory.md",
+        "records/full_p6_comparison_v2.csv",
+        "environment_and_isolation.md",
+        "changed_files.md",
+        "test_summary.md",
+        "dataset_and_model_provenance.md",
+        "../response_v2.md"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "bdf21c644a4117546db727b7ed8b55ed46daaa36bb7d6c584e1a0ec66a68ca2d",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 2
+        },
+        {
+          "line": 19,
+          "columns": 2
+        },
+        {
+          "line": 39,
+          "columns": 6
+        },
+        {
+          "line": 82,
+          "columns": 3
+        },
+        {
+          "line": 124,
+          "columns": 3
+        },
+        {
+          "line": 150,
+          "columns": 8
+        },
+        {
+          "line": 180,
+          "columns": 8
+        },
+        {
+          "line": 252,
+          "columns": 3
+        },
+        {
+          "line": 267,
+          "columns": 3
+        },
+        {
+          "line": 307,
+          "columns": 2
+        },
+        {
+          "line": 321,
+          "columns": 2
+        },
+        {
+          "line": 339,
+          "columns": 2
+        },
+        {
+          "line": 354,
+          "columns": 2
+        },
+        {
+          "line": 373,
+          "columns": 7
+        },
+        {
+          "line": 381,
+          "columns": 8
+        },
+        {
+          "line": 400,
+          "columns": 2
+        },
+        {
+          "line": 418,
+          "columns": 2
+        },
+        {
+          "line": 430,
+          "columns": 2
+        },
+        {
+          "line": 447,
+          "columns": 2
+        },
+        {
+          "line": 474,
+          "columns": 3
+        },
+        {
+          "line": 493,
+          "columns": 3
+        },
+        {
+          "line": 508,
+          "columns": 3
+        },
+        {
+          "line": 527,
+          "columns": 2
+        },
+        {
+          "line": 540,
+          "columns": 2
+        },
+        {
+          "line": 554,
+          "columns": 3
+        },
+        {
+          "line": 569,
+          "columns": 3
+        },
+        {
+          "line": 583,
+          "columns": 3
+        },
+        {
+          "line": 609,
+          "columns": 3
+        },
+        {
+          "line": 628,
+          "columns": 3
+        },
+        {
+          "line": 645,
+          "columns": 3
+        },
+        {
+          "line": 669,
+          "columns": 3
+        },
+        {
+          "line": 701,
+          "columns": 3
+        },
+        {
+          "line": 716,
+          "columns": 3
+        },
+        {
+          "line": 731,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/tests_v63.json",
+        "records/scientific_checks_v63.json",
+        "records/resource_costs_final_v63.json",
+        "../response_v62.md",
+        "records/independent_saved_pair_checks_v62.json",
+        "records/resource_costs_final_v62.json",
+        "records/tests_v61.json",
+        "records/documentation_checks_v61.json",
+        "records/scientific_checks_v61.json",
+        "records/tests_v60.json",
+        "records/scientific_checks_v60.json",
+        "records/raw_archive_index_v60.json",
+        "records/resource_costs_final_v60.json",
+        "records/scientific_checks_v59.json",
+        "records/raw_archive_index_v59.json",
+        "records/source_bindings_v59.json",
+        "records/resource_costs_final_v59.json",
+        "records/tests_v58.json",
+        "records/scientific_checks_v58.json",
+        "../response_v58.md",
+        "records/tests_v57.json",
+        "records/scientific_checks_v57.json",
+        "../response_v57.md",
+        "records/targeted_tests_v56.json",
+        "records/physical_identity_bindings_v56.json",
+        "records/gate_verdict_v56.json",
+        "records/documentation_checks_v56.json",
+        "records/targeted_tests_v55.json",
+        "records/documentation_checks_v55.json",
+        "records/gate_verdict_v55.json",
+        "records/targeted_tests_v54.json",
+        "records/tests_v53.json",
+        "../response_v53.md",
+        "phase_hp_completion_v53.md",
+        "records/hp_accuracy_checks_v53.json",
+        "records/resource_costs_final_v53.json",
+        "records/tests_v52.json",
+        "../response_v52.md",
+        "phase_notch_hp_accuracy_v52.md",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_final_v52.json",
+        "records/tests_v51.json",
+        "records/tests_v51.json",
+        "records/phase_accuracy_checks_v51.json",
+        "records/modal_power_recalculation_v51.json",
+        "records/documentation_checks_v51.json",
+        "records/tests_v46.json",
+        "../response_v45.md",
+        "full_moment_hierarchy_v45.md",
+        "records/resource_costs_v45.json",
+        "records/array_inventory_v45.json",
+        "../response_v44.md",
+        "late_error_learning_v44.md",
+        "records/resource_costs_v44.json",
+        "records/tests_v43.json",
+        "records/saved_gradient_vector_audit_v43.json",
+        "records/documentation_checks_v43.json",
+        "records/tests_v42.json",
+        "records/documentation_checks_v42.json",
+        "records/tests_v41.json",
+        "records/documentation_checks_v41.json",
+        "records/tests_v39.json",
+        "records/tests_v38.json",
+        "records/raw_evidence_index_v38.json",
+        "records/component_checker_v38.json",
+        "records/tests_v37.json",
+        "records/raw_evidence_index_v37.json",
+        "records/component_checker_v37.json",
+        "records/tests_v36.json",
+        "records/tests_v35.json",
+        "records/tests_v34.json",
+        "records/raw_evidence_index_v34.json",
+        "records/source_inventory_v34.json",
+        "records/repairs_v34.json",
+        "records/render_check_v34.json",
+        "records/tests_v33.json",
+        "records/compilation_final_v33.json",
+        "records/raw_evidence_index_v33.json",
+        "records/render_check_v33.json",
+        "records/tests_v32.json",
+        "records/raw_evidence_index_v32.json",
+        "records/return_direction_checker_v32.json",
+        "records/tests_v31.json",
+        "records/tests_stdout_v31.txt.gz",
+        "records/tests_junit_v31.xml.gz",
+        "records/compilation_after_v31.json",
+        "records/compilation_v30.json",
+        "records/minimal_stdout_v30.txt",
+        "records/full_scope_stdout_v30.txt",
+        "records/full_scope_junit_v30.xml",
+        "records/entry_result_v30.json",
+        "records/supervision_v30.json",
+        "records/tests_v29.json",
+        "records/admission_stop_v29.json",
+        "records/tests_v28.json",
+        "records/admission_checker_v28.json",
+        "records/run_index_v28.json",
+        "records/tests_v27.json",
+        "records/admission_checker_v27.json",
+        "records/run_index_v26.json",
+        "records/cached_array_checker_v26.json",
+        "records/resource_costs_v26.json",
+        "records/checker_inventory_v25.json",
+        "records/cached_array_checker_v25.json",
+        "records/failures_and_not_run_v25.json",
+        "../response_v24.md",
+        "records/test_results_v24.json",
+        "records/static_checks_v24.json",
+        "records/resource_costs_v24.json",
+        "records/test_results_v23.json",
+        "records/static_checks_v23.json",
+        "records/tests_v22.json",
+        "records/static_checks_v22.json",
+        "records/resource_costs_v22.json",
+        "records/test_results_v21.json",
+        "records/data_loading_boundary_v21.json",
+        "records/resource_costs_v21.json",
+        "records/legacy_registry_check_v21.json",
+        "records/static_checks_v21.json",
+        "records/test_results_v20.json",
+        "records/deadline_stop_v20.json",
+        "records/qualification_and_dispatch_v20.json",
+        "records/tests_v19.json",
+        "records/repair_reentry_v19.json",
+        "records/qualification_and_dispatch_v19.json",
+        "records/run_index_v19.json",
+        "records/test_records_v18.json",
+        "records/qualification_and_dispatch_v18.json",
+        "records/static_checks_v18.json",
+        "records/resume_qualification_v17.json",
+        "records/qualification_and_dispatch_v17.json",
+        "records/repair_journal_v17.json",
+        "records/gmres_interface_stop_v17.json",
+        "records/final_checks_v17.json",
+        "records/static_checks_v17.json",
+        "records/protected_history_v17.json",
+        "records/publication_checks_v17.json",
+        "records/final_checks_v16.json",
+        "records/static_checks_v16.json",
+        "records/publication_checks_v16.json",
+        "records/publication_checks_v15.json",
+        "records/static_checks_v15.json",
+        "records/final_checks_v15.json",
+        "records/resource_costs_v14.json",
+        "records/qualification_and_dispatch_v14.json",
+        "records/static_checks_v14.json",
+        "records/final_checks_v13.json",
+        "records/final_checks_v13.json",
+        "records/qualification_and_dispatch_v13.json",
+        "records/tangent_identity_checks_v13.json",
+        "records/coupled_step_history_v13.jsonl",
+        "records/run_index_v13.json",
+        "records/static_checks_v13.json",
+        "records/protected_history_v13.json",
+        "records/review_render_check_v13.json",
+        "records/publication_checks_v13.json",
+        "records/final_checks_v2.json",
+        "records/f1_real_components_v2.json",
+        "records/shared_preimplementation_checks_v2.json",
+        "records/teacher_complete_v2.json",
+        "records/oracle_complete_v2.json",
+        "records/training_complete_v2.json",
+        "records/strict_rhs_metrics_v2.csv",
+        "records/final_checks_v2.json",
+        "records/static_checks_v2.json",
+        "records/publication_checks_v2.json",
+        "records/shared_preimplementation_checks_v2.json",
+        "records/auxiliary_costs_v2.json",
+        "records/run_index_v2.json",
+        "records/bounded_f0_runs.json",
+        "records/static_checks.json",
+        "records/publication_checks.json",
+        "records/registry_contract_baseline_v2.json",
+        "records/auxiliary_costs_v3.json",
+        "environment_and_isolation.md",
+        "records/schema_lint_baseline_v3.json",
+        "records/watchdog_test_evidence_v3.json",
+        "records/static_checks_v3.json",
+        "records/gate_decisions_v3.json",
+        "records/full_residual_history_v3.csv",
+        "records/static_checks_v3.json",
+        "records/registry_contract_baseline_v3.json",
+        "records/publication_checks_v3.json",
+        "records/pre_run_checks_v4.json",
+        "records/p4_privacy_repair_v4.json",
+        "records/coarse_space_algebra_v4.json",
+        "records/training_snapshot_manifest_v4.json",
+        "records/gate_decisions_v4.json",
+        "records/static_checks_v4.json",
+        "records/registry_contract_baseline_v4.json",
+        "records/review_render_check_v4.json",
+        "records/post_checks_v4.json",
+        "records/pre_run_checks_v5.json",
+        "records/common_state_manifest_v5.json",
+        "records/teacher_exception_v5.json",
+        "records/independent_checks_v5.json",
+        "records/static_checks_v5.json",
+        "records/registry_contract_baseline_v5.json",
+        "records/review_render_check_v5.json",
+        "records/publication_checks_v5.json",
+        "records/post_checks_v5.json",
+        "records/pre_run_checks_v6.json",
+        "records/precommit_static_v6.json",
+        "records/centered_geometry_fix_v6.json",
+        "records/centered_fix_static_v6.json",
+        "records/adjoint_gradient_checks_v6.json",
+        "records/run_index_v6.json",
+        "records/independent_evidence_checks_v6.json",
+        "records/adjoint_gradient_checks_v7.json",
+        "records/independent_blind_validation_v7.json",
+        "records/neural_fe_gate_decisions_v7.json",
+        "records/review_render_check_v7.json",
+        "records/run_index_v7.json",
+        "records/resource_costs_v7.json",
+        "records/gate_decisions_v9.json",
+        "records/resource_costs_v9.json",
+        "records/static_checks_v9.json",
+        "records/qualification_and_dispatch_v11.json",
+        "records/varpro_progress_v11.jsonl",
+        "records/manufactured_recovery_v11.json",
+        "stable_head_varpro_v11.md",
+        "records/run_index_v11.json",
+        "records/static_checks_v11.json",
+        "records/review_render_check_v11.json",
+        "records/static_checks_v11.json",
+        "records/fixed_head_gradient_checks_v12.json",
+        "records/qualification_and_dispatch_v12.json",
+        "records/run_index_v12.json",
+        "records/qualification_and_dispatch_v12.json",
+        "records/run_index_v12.json",
+        "records/review_render_check_v12.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "d6f68c1564efb17738d43c640575e393edbf35ff58777ad9edddec87a2ebd8a6",
+      "tables": [
+        {
+          "line": 23,
+          "columns": 6
+        },
+        {
+          "line": 68,
+          "columns": 3
+        },
+        {
+          "line": 110,
+          "columns": 3
+        },
+        {
+          "line": 135,
+          "columns": 8
+        },
+        {
+          "line": 165,
+          "columns": 8
+        },
+        {
+          "line": 237,
+          "columns": 3
+        },
+        {
+          "line": 252,
+          "columns": 3
+        },
+        {
+          "line": 267,
+          "columns": 3
+        },
+        {
+          "line": 294,
+          "columns": 3
+        },
+        {
+          "line": 307,
+          "columns": 2
+        },
+        {
+          "line": 320,
+          "columns": 2
+        },
+        {
+          "line": 333,
+          "columns": 2
+        },
+        {
+          "line": 346,
+          "columns": 2
+        },
+        {
+          "line": 359,
+          "columns": 2
+        },
+        {
+          "line": 377,
+          "columns": 7
+        },
+        {
+          "line": 385,
+          "columns": 8
+        },
+        {
+          "line": 404,
+          "columns": 2
+        },
+        {
+          "line": 418,
+          "columns": 2
+        },
+        {
+          "line": 491,
+          "columns": 3
+        },
+        {
+          "line": 507,
+          "columns": 2
+        },
+        {
+          "line": 522,
+          "columns": 3
+        },
+        {
+          "line": 536,
+          "columns": 3
+        },
+        {
+          "line": 620,
+          "columns": 3
+        },
+        {
+          "line": 637,
+          "columns": 2
+        },
+        {
+          "line": 650,
+          "columns": 3
+        },
+        {
+          "line": 664,
+          "columns": 3
+        },
+        {
+          "line": 677,
+          "columns": 4
+        },
+        {
+          "line": 691,
+          "columns": 4
+        },
+        {
+          "line": 706,
+          "columns": 2
+        },
+        {
+          "line": 731,
+          "columns": 3
+        },
+        {
+          "line": 744,
+          "columns": 3
+        },
+        {
+          "line": 759,
+          "columns": 3
+        },
+        {
+          "line": 773,
+          "columns": 3
+        },
+        {
+          "line": 787,
+          "columns": 3
+        },
+        {
+          "line": 802,
+          "columns": 3
+        },
+        {
+          "line": 816,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/selective_merge_v63.json",
+        "records/source_bindings_v63.json",
+        "records/repair_journal_v63.json",
+        "records/selective_merge_v62.json",
+        "records/source_bindings_v62.json",
+        "records/delivery_index_v62.json",
+        "records/selective_merge_v61.json",
+        "records/source_bindings_v61.json",
+        "records/delivery_index_v61.json",
+        "records/selective_merge_v60.json",
+        "records/source_bindings_v60.json",
+        "records/run_index_v60.json",
+        "records/selective_merge_manifest_v59.json",
+        "records/repair_journal_v59.json",
+        "records/delivery_index_v59.json",
+        "records/selective_merge_manifest_v58.json",
+        "records/selective_merge_manifest_v57.json",
+        "records/delivery_index_v56.json",
+        "saved_field_closure_target_bridge_v56.md",
+        "records/selective_merge_manifest_v55.json",
+        "records/dependency_groups_v54.json",
+        "records/selective_merge_manifest_v53.json",
+        "../response_v53.md",
+        "phase_hp_completion_v53.md",
+        "records/hp_accuracy_checks_v53.json",
+        "records/resource_costs_final_v53.json",
+        "records/selective_merge_manifest_v52.json",
+        "../response_v52.md",
+        "phase_notch_hp_accuracy_v52.md",
+        "records/hp_accuracy_checks_v52.json",
+        "records/resource_costs_final_v52.json",
+        "records/changed_files_v51.json",
+        "records/minimal_migration_v51.json",
+        "records/selective_merge_manifest_v51.json",
+        "phase_explicit_full3d_accuracy_v51.md",
+        "records/selective_merge_manifest_v46.json",
+        "../response_v45.md",
+        "full_moment_hierarchy_v45.md",
+        "records/resource_costs_v45.json",
+        "records/array_inventory_v45.json",
+        "../response_v44.md",
+        "late_error_learning_v44.md",
+        "records/resource_costs_v44.json",
+        "records/changed_files_v43.json",
+        "records/selective_merge_manifest_v43.json",
+        "records/run_index_v43.json",
+        "records/changed_files_v42.json",
+        "records/selective_merge_manifest_v42.json",
+        "records/changed_files_v41.json",
+        "records/selective_merge_manifest_v41.json",
+        "records/changed_files_v39.json",
+        "records/selective_merge_manifest_v39.json",
+        "records/changed_files_v38.json",
+        "records/selective_merge_manifest_v38.json",
+        "records/changed_files_v37.json",
+        "records/selective_merge_manifest_v37.json",
+        "records/run_index_v36.json",
+        "records/selective_merge_v36.json",
+        "records/changed_files_v36.json",
+        "records/source_inventory_v35.json",
+        "records/selective_manifest_v35.json",
+        "records/source_inventory_v34.json",
+        "records/repairs_v34.json",
+        "records/run_index_v34.json",
+        "records/source_inventory_v33.json",
+        "records/tests_v33.json",
+        "records/source_inventory_v32.json",
+        "../response_v32.md",
+        "records/source_inventory_v31.json",
+        "records/tests_v31.json",
+        "../response_v31.md",
+        "records/run_index_v30.json",
+        "records/tests_v30.json",
+        "../response_v24.md",
+        "records/source_inventory_v24.json",
+        "records/source_inventory_v22.json",
+        "records/tests_v22.json",
+        "records/static_checks_v22.json",
+        "records/selective_merge_v21.json",
+        "records/run_index_v20.json",
+        "records/selective_merge_v19.json",
+        "records/selective_merge_manifest_v18.json",
+        "records/run_index_v18.json",
+        "records/protected_history_v18.json",
+        "records/changed_manifest_v17.json",
+        "records/run_index_v17.json",
+        "records/run_index_v13.json",
+        "tangent_scale_head_compensation_v13.md",
+        "architecture_and_oracle.md",
+        "dataset_and_model_provenance.md",
+        "records/run_index_v2.json",
+        "records/run_index_v3.json",
+        "../response_v7.md",
+        "records/run_index_v7.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "8001a95f2f83d2b1792dc34bfaed67d40ef172f2b563e47a71e4b1beb607037f",
+      "tables": [
+        {
+          "line": 25,
+          "columns": 6
+        },
+        {
+          "line": 46,
+          "columns": 6
+        },
+        {
+          "line": 75,
+          "columns": 2
+        },
+        {
+          "line": 118,
+          "columns": 4
+        },
+        {
+          "line": 139,
+          "columns": 3
+        },
+        {
+          "line": 157,
+          "columns": 3
+        },
+        {
+          "line": 174,
+          "columns": 3
+        },
+        {
+          "line": 191,
+          "columns": 5
+        },
+        {
+          "line": 207,
+          "columns": 3
+        },
+        {
+          "line": 223,
+          "columns": 8
+        },
+        {
+          "line": 243,
+          "columns": 8
+        },
+        {
+          "line": 265,
+          "columns": 3
+        },
+        {
+          "line": 283,
+          "columns": 3
+        },
+        {
+          "line": 301,
+          "columns": 3
+        },
+        {
+          "line": 319,
+          "columns": 3
+        },
+        {
+          "line": 338,
+          "columns": 3
+        },
+        {
+          "line": 355,
+          "columns": 3
+        },
+        {
+          "line": 374,
+          "columns": 3
+        },
+        {
+          "line": 394,
+          "columns": 3
+        },
+        {
+          "line": 413,
+          "columns": 3
+        },
+        {
+          "line": 430,
+          "columns": 2
+        },
+        {
+          "line": 480,
+          "columns": 2
+        },
+        {
+          "line": 495,
+          "columns": 2
+        },
+        {
+          "line": 508,
+          "columns": 2
+        },
+        {
+          "line": 528,
+          "columns": 7
+        },
+        {
+          "line": 553,
+          "columns": 7
+        },
+        {
+          "line": 561,
+          "columns": 8
+        },
+        {
+          "line": 584,
+          "columns": 2
+        },
+        {
+          "line": 607,
+          "columns": 7
+        },
+        {
+          "line": 631,
+          "columns": 9
+        },
+        {
+          "line": 653,
+          "columns": 8
+        },
+        {
+          "line": 660,
+          "columns": 8
+        },
+        {
+          "line": 684,
+          "columns": 6
+        },
+        {
+          "line": 692,
+          "columns": 7
+        },
+        {
+          "line": 714,
+          "columns": 3
+        },
+        {
+          "line": 727,
+          "columns": 10
+        },
+        {
+          "line": 743,
+          "columns": 5
+        },
+        {
+          "line": 756,
+          "columns": 3
+        },
+        {
+          "line": 765,
+          "columns": 3
+        },
+        {
+          "line": 777,
+          "columns": 2
+        },
+        {
+          "line": 803,
+          "columns": 2
+        },
+        {
+          "line": 822,
+          "columns": 2
+        },
+        {
+          "line": 841,
+          "columns": 2
+        },
+        {
+          "line": 859,
+          "columns": 2
+        },
+        {
+          "line": 874,
+          "columns": 2
+        },
+        {
+          "line": 888,
+          "columns": 2
+        },
+        {
+          "line": 900,
+          "columns": 2
+        },
+        {
+          "line": 910,
+          "columns": 3
+        },
+        {
+          "line": 930,
+          "columns": 3
+        },
+        {
+          "line": 960,
+          "columns": 3
+        },
+        {
+          "line": 986,
+          "columns": 3
+        },
+        {
+          "line": 1014,
+          "columns": 3
+        },
+        {
+          "line": 1091,
+          "columns": 2
+        },
+        {
+          "line": 1114,
+          "columns": 3
+        },
+        {
+          "line": 1132,
+          "columns": 3
+        },
+        {
+          "line": 1155,
+          "columns": 3
+        },
+        {
+          "line": 1177,
+          "columns": 3
+        },
+        {
+          "line": 1199,
+          "columns": 3
+        },
+        {
+          "line": 1240,
+          "columns": 3
+        },
+        {
+          "line": 1263,
+          "columns": 2
+        },
+        {
+          "line": 1334,
+          "columns": 3
+        },
+        {
+          "line": 1464,
+          "columns": 4
+        },
+        {
+          "line": 2571,
+          "columns": 4
+        },
+        {
+          "line": 2858,
+          "columns": 3
+        },
+        {
+          "line": 2930,
+          "columns": 3
+        },
+        {
+          "line": 2943,
+          "columns": 3
+        },
+        {
+          "line": 2973,
+          "columns": 5
+        },
+        {
+          "line": 2990,
+          "columns": 5
+        },
+        {
+          "line": 3009,
+          "columns": 3
+        },
+        {
+          "line": 3033,
+          "columns": 3
+        },
+        {
+          "line": 3196,
+          "columns": 4
+        },
+        {
+          "line": 3223,
+          "columns": 7
+        },
+        {
+          "line": 3328,
+          "columns": 3
+        },
+        {
+          "line": 3343,
+          "columns": 7
+        },
+        {
+          "line": 3449,
+          "columns": 2
+        },
+        {
+          "line": 3464,
+          "columns": 3
+        },
+        {
+          "line": 3480,
+          "columns": 2
+        },
+        {
+          "line": 3493,
+          "columns": 2
+        },
+        {
+          "line": 3521,
+          "columns": 2
+        },
+        {
+          "line": 3532,
+          "columns": 2
+        },
+        {
+          "line": 3559,
+          "columns": 3
+        },
+        {
+          "line": 3613,
+          "columns": 3
+        },
+        {
+          "line": 3621,
+          "columns": 3
+        },
+        {
+          "line": 3643,
+          "columns": 3
+        },
+        {
+          "line": 3660,
+          "columns": 7
+        },
+        {
+          "line": 3675,
+          "columns": 6
+        },
+        {
+          "line": 3731,
+          "columns": 2
+        },
+        {
+          "line": 3770,
+          "columns": 2
+        },
+        {
+          "line": 3785,
+          "columns": 8
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/response_v63.md",
+        "task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v63.json",
+        "task042_neural_coarse_inverse/response_v62.md",
+        "task042_neural_coarse_inverse/outcomes/independent_tetra_reference_v62.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v62.json",
+        "task042_neural_coarse_inverse/response_v61.md",
+        "task042_neural_coarse_inverse/outcomes/face_trace_enrichment_v61.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v61.json",
+        "task042_neural_coarse_inverse/response_v60.md",
+        "task042_neural_coarse_inverse/outcomes/local_assembly_subcell_response_v60.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v60.json",
+        "task042_neural_coarse_inverse/outcomes/trace_fixed_interior_enrichment_v59.md",
+        "task042_neural_coarse_inverse/response_v59.md",
+        "task042_neural_coarse_inverse/response_v58.md",
+        "task042_neural_coarse_inverse/outcomes/deployment_cost_paired_gauge_v58.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v58.json",
+        "task042_neural_coarse_inverse/response_v57.md",
+        "task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+        "task042_neural_coarse_inverse/outcomes/records/delivery_index_v57.json",
+        "task042_neural_coarse_inverse/outcomes/saved_field_closure_target_bridge_v56.md",
+        "task042_neural_coarse_inverse/response_v56.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v56.json",
+        "task042_neural_coarse_inverse/response_v55.md",
+        "task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md",
+        "task042_neural_coarse_inverse/response_v54.md",
+        "task042_neural_coarse_inverse/response_v53.md",
+        "task042_neural_coarse_inverse/outcomes/phase_hp_completion_v53.md",
+        "task042_neural_coarse_inverse/response_v52.md",
+        "task042_neural_coarse_inverse/outcomes/phase_notch_hp_accuracy_v52.md",
+        "task042_neural_coarse_inverse/response_v51.md",
+        "task042_neural_coarse_inverse/outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v51.json",
+        "task042_neural_coarse_inverse/outcomes/records/next_scale_capacity_v51.json",
+        "task042_neural_coarse_inverse/response_v50.md",
+        "task042_neural_coarse_inverse/outcomes/complete_physics_accuracy_cost_v50.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v50.json",
+        "task042_neural_coarse_inverse/response_v49.md",
+        "task042_neural_coarse_inverse/outcomes/complete_scattering_engine_anchor_v49.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v49.json",
+        "task042_neural_coarse_inverse/response_v48.md",
+        "task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v48.json",
+        "task042_neural_coarse_inverse/outcomes/records/lossless_checker_v48.json",
+        "task042_neural_coarse_inverse/outcomes/records/conditional_cost_bounds_v48.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v47.json",
+        "task042_neural_coarse_inverse/response_v47.md",
+        "task042_neural_coarse_inverse/outcomes/trace_subspace_selection_v47.md",
+        "task042_neural_coarse_inverse/response_v46.md",
+        "task042_neural_coarse_inverse/outcomes/records/cold_n1_cost_contract_v46.json",
+        "task042_neural_coarse_inverse/outcomes/records/engine_matching_v46.json",
+        "task042_neural_coarse_inverse/outcomes/records/critical_path_v46.json",
+        "task042_neural_coarse_inverse/outcomes/neural_deployment_decision_v46.md",
+        "task042_neural_coarse_inverse/response_v45.md",
+        "task042_neural_coarse_inverse/outcomes/full_moment_hierarchy_v45.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+        "task042_neural_coarse_inverse/outcomes/records/array_inventory_v45.json",
+        "task042_neural_coarse_inverse/response_v44.md",
+        "task042_neural_coarse_inverse/outcomes/late_error_learning_v44.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+        "task042_neural_coarse_inverse/review_report_v40.md",
+        "task042_neural_coarse_inverse/response_v43.md",
+        "task042_neural_coarse_inverse/outcomes/neighborhood_residual_correction_v43.md",
+        "task042_neural_coarse_inverse/outcomes/records/neural_heldout_checker_v43.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v43.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v43.json",
+        "task042_neural_coarse_inverse/review_report_v39.md",
+        "task042_neural_coarse_inverse/response_v42.md",
+        "task042_neural_coarse_inverse/outcomes/distributed_volume_recovery_v42.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v42.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v42.json",
+        "task042_neural_coarse_inverse/outcomes/records/integration_readiness_v42.json",
+        "task042_neural_coarse_inverse/outcomes/native_entity_owner_topology_v41.md",
+        "task042_neural_coarse_inverse/response_v41.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v41.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v41.json",
+        "task042_neural_coarse_inverse/outcomes/records/integration_readiness_v41.json",
+        "task042_neural_coarse_inverse/review_report_v37.md",
+        "task042_neural_coarse_inverse/response_v40.md",
+        "task042_neural_coarse_inverse/outcomes/native_volume_affine_recovery_v40.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v40.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v40.json",
+        "task042_neural_coarse_inverse/outcomes/records/original_size_integration_capacity_v40.json",
+        "task042_neural_coarse_inverse/review_report_v36.md",
+        "task042_neural_coarse_inverse/response_v39.md",
+        "task042_neural_coarse_inverse/outcomes/native_boundary_volume_integration_v39.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v39.json",
+        "task042_neural_coarse_inverse/outcomes/records/raw_evidence_index_v39.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v39.json",
+        "task042_neural_coarse_inverse/outcomes/records/integration_readiness_v39.json",
+        "task042_neural_coarse_inverse/response_v38.md",
+        "task042_neural_coarse_inverse/outcomes/directional_boundary_structure_v38.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v38.json",
+        "task042_neural_coarse_inverse/response_v37.md",
+        "task042_neural_coarse_inverse/outcomes/target_p6_boundary_tiles_v37.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v37.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v37.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v37.json",
+        "task042_neural_coarse_inverse/response_v36.md",
+        "task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+        "task042_neural_coarse_inverse/outcomes/records/deployment_package_v36.json",
+        "task042_neural_coarse_inverse/response_v35.md",
+        "task042_neural_coarse_inverse/outcomes/original_scale_bridge_v35.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v35.json",
+        "task042_neural_coarse_inverse/response_v34.md",
+        "task042_neural_coarse_inverse/outcomes/full_input_block_correction_v34.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v34.json",
+        "task042_neural_coarse_inverse/response_v33.md",
+        "task042_neural_coarse_inverse/outcomes/full_input_block_correction_v33.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v33.json",
+        "task042_neural_coarse_inverse/response_v32.md",
+        "task042_neural_coarse_inverse/outcomes/return_direction_execution_v32.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v32.json",
+        "task042_neural_coarse_inverse/response_v31.md",
+        "task042_neural_coarse_inverse/outcomes/return_direction_workflow_v31.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v31.json",
+        "task042_neural_coarse_inverse/response_v30.md",
+        "task042_neural_coarse_inverse/outcomes/light_entry_acceptance_v30.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v30.json",
+        "task042_neural_coarse_inverse/response_v29.md",
+        "task042_neural_coarse_inverse/outcomes/checker_full_space_cost_v29.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v29.json",
+        "task042_neural_coarse_inverse/response_v28.md",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v28.json",
+        "task042_neural_coarse_inverse/response_v27.md",
+        "task042_neural_coarse_inverse/outcomes/return_direction_v27.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v27.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v27.json",
+        "task042_neural_coarse_inverse/response_v26.md",
+        "task042_neural_coarse_inverse/outcomes/joint_block_direction_v26.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v26.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v26.json",
+        "task042_neural_coarse_inverse/response_v25.md",
+        "task042_neural_coarse_inverse/outcomes/block_residual_direction_diagnostic_v25.md",
+        "task042_neural_coarse_inverse/response_v24.md",
+        "task042_neural_coarse_inverse/response_v24.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v24.json",
+        "task042_neural_coarse_inverse/response_v23.md",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v23.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v23.json",
+        "task042_neural_coarse_inverse/response_v22.md",
+        "task042_neural_coarse_inverse/outcomes/p1_trace_galerkin_correction_v22.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json",
+        "task042_neural_coarse_inverse/outcomes/records/cycle_history_v21.csv",
+        "task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v21.json",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v21.json",
+        "task042_neural_coarse_inverse/outcomes/exact_action_recycled_correction_v21.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v21.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v21.json",
+        "task042_neural_coarse_inverse/response_v19.md",
+        "task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v19.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v19.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json",
+        "task042_neural_coarse_inverse/response_v18.md",
+        "task042_neural_coarse_inverse/outcomes/gmres_repair_residual_completion_v18.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v18.json",
+        "task042_neural_coarse_inverse/response_v17.md",
+        "task042_neural_coarse_inverse/outcomes/resumable_full_trace_campaign_v17.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v17.json",
+        "task042_neural_coarse_inverse/response_v16.md",
+        "task042_neural_coarse_inverse/outcomes/augmented_full_trace_lsqr_v16.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v16.json",
+        "task042_neural_coarse_inverse/response_v15.md",
+        "task042_neural_coarse_inverse/outcomes/local_trace_representation_v15.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v15.json",
+        "task042_neural_coarse_inverse/response_v14.md",
+        "task042_neural_coarse_inverse/outcomes/orthonormal_trace_reprofile_v14.md",
+        "task039_extra_physical_multilevel/outcomes/coarse_inverse_replacement_v6.md",
+        "task039_extra_physical_multilevel/outcomes/balanced_coupling_v5.md",
+        "task039_extra_physical_multilevel/outcomes/actual_error_diagnosis_v5.md",
+        "task039_extra_physical_multilevel/outcomes/records/actual_error_diagnosis_v5.json",
+        "task039_extra_physical_multilevel/response_v6.md",
+        "task039_extra_physical_multilevel/outcomes/diagnostic_completion_v4.md",
+        "task039_extra_physical_multilevel/outcomes/records/diagnostic_completion_v4.json",
+        "task039_extra_physical_multilevel/response_v5.md",
+        "task039_extra_physical_multilevel/outcomes/nonconvergence_diagnosis_v3.md",
+        "task039_extra_physical_multilevel/response_v4.md",
+        "task039_extra_physical_multilevel/outcomes/nonconvergence_diagnosis_v3.md",
+        "task039_extra_physical_multilevel/response_v4.md",
+        "task039_extra_physical_multilevel/outcomes/packed_and_joint_mr_v2.md",
+        "task039_extra_physical_multilevel/response_v3.md",
+        "task039_extra_physical_multilevel/outcomes/cost_and_contribution_v1.md",
+        "task039_extra_physical_multilevel/response_v2.md",
+        "task039_extra_physical_multilevel/outcomes/summary.md",
+        "task039_extra_physical_multilevel/outcomes/records/run_index.json",
+        "task039_extra_physical_multilevel/outcomes/workstation_handoff.md",
+        "task039_extra_physical_multilevel/outcomes/summary.md",
+        "task039_extra_physical_multilevel/outcomes/records/run_index.json",
+        "task039_extra_physical_multilevel/outcomes/test_summary.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/pml_double_sweep_real_structure_v19.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/pml_double_sweep_real_structure_v19.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/restart64_physical_checkpoint_v18.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/restart64_physical_checkpoint_v18.json",
+        "task038_extra_full3d_iterative_0p7nm/response_v16.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/physical_pcoarse_q1_qualification_v16.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/physical_pcoarse_checkpoint_v16.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/wave_aware_dd_preflight_v16.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/physical_pcoarse_oracle_v16.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/physical_pcoarse_q1_authority_v16.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/restart64_physical_eventual_v18.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/restart64_physical_eventual_v18.json",
+        "../benchmarks/cases/101_hybrid_iterative_block_solver/README.md",
+        "../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_mpi8_traction_aligned_full_qualification_v1.json",
+        "../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json",
+        "task037_static_condensed_full3d_iterative/outcomes/summary.md",
+        "task036_forward_solver_bugfix_hardening/outcomes/final_summary.md",
+        "task036_forward_solver_bugfix_hardening/review_report_v8.md",
+        "task035c_hybrid_channel_memory_closure/outcomes/summary.md",
+        "../benchmarks/cases/096_hybrid_channel_memory_closure/README.md",
+        "task035b_high_order_local_hp_resource_envelope/response_v3.md",
+        "task035b_high_order_local_hp_resource_envelope/outcomes/summary.md",
+        "../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md",
+        "task035b_high_order_local_hp_resource_envelope/response_v2.md",
+        "task034_workstation_wsl_adaptive_scalability/outcomes/summary.md",
+        "task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md",
+        "task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md",
+        "task032_hybrid_fem_modal_direct_baseline/response_v1_review_followup.md",
+        "task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md",
+        "project_service_requirements_and_forward_model_roadmap.md",
+        "project_service_requirements_phase1_scope.md",
+        "iterative_solver_ports.md",
+        "task029_stage4_direct_memory_forensics/outcomes/summary.md",
+        "task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md",
+        "task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md",
+        "task029_stage4_direct_memory_forensics/review_report_v1.md",
+        "task029_stage4_direct_memory_forensics/response_v1.md",
+        "task029_stage4_direct_memory_forensics/review_report_v2.md",
+        "task029_stage4_direct_memory_forensics/response_v2.md",
+        "../benchmarks/cases/050_stage4_direct_memory_forensics/README.md",
+        "task_retrospective_standard.md",
+        "../benchmarks/run_direct_memory_forensics.py",
+        "../notes/reference/code_walkthrough/30_direct_solver_profiles.md",
+        "task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md",
+        "../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md",
+        "task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/candidate_funnel.csv",
+        "task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/transfer_validation.md",
+        "task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/h2_launch_decision.md",
+        "task031_compact_physical_slab_memory_optimization/task.md",
+        "task031_compact_physical_slab_memory_optimization/outcomes/summary.md",
+        "iterative_solver_ports.md",
+        "../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md",
+        "task031_compact_physical_slab_memory_optimization/outcomes/h2_memory_prediction.md",
+        "task031_compact_physical_slab_memory_optimization/outcomes/negative_results.md",
+        "task031_compact_physical_slab_memory_optimization/outcomes/matrix_free_validation.md",
+        "../notes/theory/iterative_solver_and_preconditioner.md",
+        "../notes/reference/code_walkthrough/33_workstation_fgmres_runtime.md",
+        "task038_input_driven_configuration/outcomes/summary.md",
+        "task038_input_driven_configuration/response_v1.md",
+        "task038_input_driven_configuration/review_report_v1.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/summary.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/lor_edge_geometric_mg_oracle_v1.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/lor_edge_geometric_mg_p6_capacity_v1.md",
+        "task038_extra_full3d_iterative_0p7nm/response_v11.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/interlevel_route_selection_v1.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/next_pc_architecture_after_v12.md",
+        "task038_extra_full3d_iterative_0p7nm/response_v12.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p0_physical_v1_watchdog.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p0_physical_v1_paths_ready.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/p6_physical_v13.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/p6_positive_v13.md",
+        "task038_extra_full3d_iterative_0p7nm/response_v13.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/jit_staging_physical_memory_v14.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/p6_physical_v14.md",
+        "task038_extra_full3d_iterative_0p7nm/response_v14.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/j5_full_cold_staged_v3_controlled_stop_v14.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/floquet_wave_small_oracle_v15.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/next_wave_aware_dd_after_v15.md",
+        "task038_extra_full3d_iterative_0p7nm/response_v15.md",
+        "task39extra_para_workstation_capacity/outcomes/summary.md",
+        "task39extra_para_workstation_capacity/response_v1.md",
+        "task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json",
+        "task39extra_para_workstation_capacity/response_v4.md",
+        "task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json",
+        "task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/response_v1.md",
+        "task042_neural_coarse_inverse/outcomes/environment_and_isolation.md",
+        "task042_neural_coarse_inverse/outcomes/architecture_and_oracle.md",
+        "task042_neural_coarse_inverse/outcomes/dataset_and_model_provenance.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index.json",
+        "task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/response_v2.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v2.json",
+        "task042_neural_coarse_inverse/response_v3.md",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/outcomes/records/full_residual_history_v3.csv",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v3.json",
+        "task042_neural_coarse_inverse/response_v4.md",
+        "task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v4.json",
+        "task042_neural_coarse_inverse/response_v5.md",
+        "task042_neural_coarse_inverse/outcomes/failure_localization_v5.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v5.json",
+        "task042_neural_coarse_inverse/response_v6.md",
+        "task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v6.json",
+        "task042_neural_coarse_inverse/response_v7.md",
+        "task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v7.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v7.json",
+        "task042_neural_coarse_inverse/response_v8.md",
+        "task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json",
+        "task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md",
+        "task042_neural_coarse_inverse/response_v9.md",
+        "task042_neural_coarse_inverse/response_v10.md",
+        "task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json",
+        "task042_neural_coarse_inverse/response_v11.md",
+        "task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v11.json",
+        "task042_neural_coarse_inverse/response_v12.md",
+        "task042_neural_coarse_inverse/outcomes/actual_loss_block_descent_v12.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v12.json",
+        "task042_neural_coarse_inverse/response_v13.md",
+        "task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v13.json",
+        "task042_neural_coarse_inverse/response_v20.md",
+        "task042_neural_coarse_inverse/outcomes/fixed_p3_ilu0_port_v20.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v20.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "a4a9c05fc775d41df875d46e63b85f9b10fac6e5ae1986e1391dd4ebbd5d1a98",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        },
+        {
+          "line": 20,
+          "columns": 5
+        },
+        {
+          "line": 39,
+          "columns": 6
+        },
+        {
+          "line": 50,
+          "columns": 4
+        },
+        {
+          "line": 63,
+          "columns": 6
+        },
+        {
+          "line": 74,
+          "columns": 3
+        },
+        {
+          "line": 88,
+          "columns": 5
+        },
+        {
+          "line": 101,
+          "columns": 3
+        },
+        {
+          "line": 114,
+          "columns": 4
+        },
+        {
+          "line": 124,
+          "columns": 3
+        },
+        {
+          "line": 136,
+          "columns": 12
+        },
+        {
+          "line": 141,
+          "columns": 10
+        },
+        {
+          "line": 153,
+          "columns": 9
+        },
+        {
+          "line": 159,
+          "columns": 9
+        },
+        {
+          "line": 171,
+          "columns": 4
+        },
+        {
+          "line": 192,
+          "columns": 3
+        },
+        {
+          "line": 210,
+          "columns": 3
+        },
+        {
+          "line": 227,
+          "columns": 3
+        },
+        {
+          "line": 244,
+          "columns": 5
+        },
+        {
+          "line": 260,
+          "columns": 3
+        },
+        {
+          "line": 276,
+          "columns": 8
+        },
+        {
+          "line": 296,
+          "columns": 8
+        },
+        {
+          "line": 318,
+          "columns": 3
+        },
+        {
+          "line": 336,
+          "columns": 3
+        },
+        {
+          "line": 354,
+          "columns": 3
+        },
+        {
+          "line": 372,
+          "columns": 3
+        },
+        {
+          "line": 391,
+          "columns": 3
+        },
+        {
+          "line": 408,
+          "columns": 3
+        },
+        {
+          "line": 427,
+          "columns": 3
+        },
+        {
+          "line": 447,
+          "columns": 3
+        },
+        {
+          "line": 466,
+          "columns": 3
+        },
+        {
+          "line": 483,
+          "columns": 3
+        },
+        {
+          "line": 497,
+          "columns": 3
+        },
+        {
+          "line": 512,
+          "columns": 3
+        },
+        {
+          "line": 524,
+          "columns": 3
+        },
+        {
+          "line": 537,
+          "columns": 3
+        },
+        {
+          "line": 548,
+          "columns": 2
+        },
+        {
+          "line": 563,
+          "columns": 2
+        },
+        {
+          "line": 576,
+          "columns": 2
+        },
+        {
+          "line": 596,
+          "columns": 7
+        },
+        {
+          "line": 609,
+          "columns": 3
+        },
+        {
+          "line": 621,
+          "columns": 7
+        },
+        {
+          "line": 629,
+          "columns": 8
+        },
+        {
+          "line": 648,
+          "columns": 2
+        },
+        {
+          "line": 677,
+          "columns": 7
+        },
+        {
+          "line": 701,
+          "columns": 8
+        },
+        {
+          "line": 726,
+          "columns": 8
+        },
+        {
+          "line": 733,
+          "columns": 8
+        },
+        {
+          "line": 757,
+          "columns": 6
+        },
+        {
+          "line": 774,
+          "columns": 3
+        },
+        {
+          "line": 787,
+          "columns": 10
+        },
+        {
+          "line": 801,
+          "columns": 3
+        },
+        {
+          "line": 810,
+          "columns": 3
+        },
+        {
+          "line": 819,
+          "columns": 3
+        },
+        {
+          "line": 831,
+          "columns": 2
+        },
+        {
+          "line": 859,
+          "columns": 2
+        },
+        {
+          "line": 927,
+          "columns": 7
+        },
+        {
+          "line": 936,
+          "columns": 2
+        },
+        {
+          "line": 963,
+          "columns": 2
+        },
+        {
+          "line": 993,
+          "columns": 13
+        },
+        {
+          "line": 1011,
+          "columns": 13
+        },
+        {
+          "line": 1027,
+          "columns": 13
+        },
+        {
+          "line": 1041,
+          "columns": 13
+        },
+        {
+          "line": 1056,
+          "columns": 13
+        },
+        {
+          "line": 1088,
+          "columns": 13
+        },
+        {
+          "line": 1110,
+          "columns": 10
+        },
+        {
+          "line": 1133,
+          "columns": 15
+        },
+        {
+          "line": 1148,
+          "columns": 6
+        },
+        {
+          "line": 1166,
+          "columns": 13
+        },
+        {
+          "line": 1183,
+          "columns": 4
+        },
+        {
+          "line": 1189,
+          "columns": 10
+        },
+        {
+          "line": 1200,
+          "columns": 7
+        },
+        {
+          "line": 1223,
+          "columns": 12
+        },
+        {
+          "line": 1231,
+          "columns": 11
+        },
+        {
+          "line": 1239,
+          "columns": 11
+        },
+        {
+          "line": 1251,
+          "columns": 3
+        },
+        {
+          "line": 1263,
+          "columns": 13
+        },
+        {
+          "line": 1279,
+          "columns": 8
+        },
+        {
+          "line": 1287,
+          "columns": 9
+        },
+        {
+          "line": 1297,
+          "columns": 7
+        },
+        {
+          "line": 1305,
+          "columns": 7
+        },
+        {
+          "line": 1313,
+          "columns": 4
+        },
+        {
+          "line": 1325,
+          "columns": 7
+        },
+        {
+          "line": 1347,
+          "columns": 7
+        },
+        {
+          "line": 1372,
+          "columns": 4
+        },
+        {
+          "line": 1395,
+          "columns": 4
+        },
+        {
+          "line": 1411,
+          "columns": 4
+        },
+        {
+          "line": 1421,
+          "columns": 2
+        },
+        {
+          "line": 1434,
+          "columns": 7
+        },
+        {
+          "line": 1442,
+          "columns": 7
+        },
+        {
+          "line": 1450,
+          "columns": 7
+        },
+        {
+          "line": 1459,
+          "columns": 7
+        },
+        {
+          "line": 1468,
+          "columns": 7
+        },
+        {
+          "line": 1477,
+          "columns": 7
+        },
+        {
+          "line": 1487,
+          "columns": 7
+        },
+        {
+          "line": 1497,
+          "columns": 7
+        },
+        {
+          "line": 1507,
+          "columns": 7
+        },
+        {
+          "line": 1516,
+          "columns": 7
+        },
+        {
+          "line": 1526,
+          "columns": 7
+        },
+        {
+          "line": 1535,
+          "columns": 7
+        },
+        {
+          "line": 1545,
+          "columns": 7
+        },
+        {
+          "line": 1556,
+          "columns": 7
+        },
+        {
+          "line": 1564,
+          "columns": 7
+        },
+        {
+          "line": 1573,
+          "columns": 7
+        },
+        {
+          "line": 1582,
+          "columns": 7
+        },
+        {
+          "line": 1591,
+          "columns": 7
+        },
+        {
+          "line": 1600,
+          "columns": 7
+        },
+        {
+          "line": 1609,
+          "columns": 7
+        },
+        {
+          "line": 1618,
+          "columns": 7
+        },
+        {
+          "line": 1626,
+          "columns": 7
+        },
+        {
+          "line": 1634,
+          "columns": 7
+        },
+        {
+          "line": 1642,
+          "columns": 7
+        },
+        {
+          "line": 1650,
+          "columns": 7
+        },
+        {
+          "line": 1659,
+          "columns": 7
+        },
+        {
+          "line": 1667,
+          "columns": 7
+        },
+        {
+          "line": 1675,
+          "columns": 7
+        },
+        {
+          "line": 1686,
+          "columns": 7
+        },
+        {
+          "line": 1690,
+          "columns": 4
+        },
+        {
+          "line": 1700,
+          "columns": 7
+        },
+        {
+          "line": 1710,
+          "columns": 7
+        },
+        {
+          "line": 1714,
+          "columns": 5
+        },
+        {
+          "line": 1731,
+          "columns": 7
+        },
+        {
+          "line": 1735,
+          "columns": 4
+        },
+        {
+          "line": 1747,
+          "columns": 7
+        },
+        {
+          "line": 1751,
+          "columns": 4
+        },
+        {
+          "line": 1764,
+          "columns": 7
+        },
+        {
+          "line": 1768,
+          "columns": 4
+        },
+        {
+          "line": 1781,
+          "columns": 7
+        },
+        {
+          "line": 1787,
+          "columns": 4
+        },
+        {
+          "line": 1802,
+          "columns": 7
+        },
+        {
+          "line": 1808,
+          "columns": 7
+        },
+        {
+          "line": 1840,
+          "columns": 3
+        },
+        {
+          "line": 1860,
+          "columns": 7
+        },
+        {
+          "line": 1865,
+          "columns": 4
+        },
+        {
+          "line": 1876,
+          "columns": 7
+        },
+        {
+          "line": 1886,
+          "columns": 5
+        },
+        {
+          "line": 1899,
+          "columns": 4
+        },
+        {
+          "line": 1907,
+          "columns": 5
+        },
+        {
+          "line": 1916,
+          "columns": 4
+        },
+        {
+          "line": 1931,
+          "columns": 7
+        },
+        {
+          "line": 1958,
+          "columns": 2
+        },
+        {
+          "line": 1988,
+          "columns": 2
+        },
+        {
+          "line": 1994,
+          "columns": 7
+        },
+        {
+          "line": 1998,
+          "columns": 8
+        },
+        {
+          "line": 2013,
+          "columns": 3
+        },
+        {
+          "line": 2038,
+          "columns": 3
+        },
+        {
+          "line": 2067,
+          "columns": 8
+        },
+        {
+          "line": 2077,
+          "columns": 6
+        },
+        {
+          "line": 2100,
+          "columns": 5
+        },
+        {
+          "line": 2110,
+          "columns": 3
+        },
+        {
+          "line": 2125,
+          "columns": 6
+        },
+        {
+          "line": 2142,
+          "columns": 3
+        },
+        {
+          "line": 2153,
+          "columns": 2
+        },
+        {
+          "line": 2211,
+          "columns": 7
+        },
+        {
+          "line": 2263,
+          "columns": 2
+        },
+        {
+          "line": 2281,
+          "columns": 2
+        },
+        {
+          "line": 2294,
+          "columns": 2
+        },
+        {
+          "line": 2308,
+          "columns": 3
+        },
+        {
+          "line": 2316,
+          "columns": 3
+        },
+        {
+          "line": 2330,
+          "columns": 4
+        },
+        {
+          "line": 2340,
+          "columns": 5
+        },
+        {
+          "line": 2348,
+          "columns": 4
+        },
+        {
+          "line": 2361,
+          "columns": 5
+        },
+        {
+          "line": 2372,
+          "columns": 7
+        },
+        {
+          "line": 2391,
+          "columns": 28
+        },
+        {
+          "line": 2397,
+          "columns": 17
+        },
+        {
+          "line": 2403,
+          "columns": 13
+        },
+        {
+          "line": 2409,
+          "columns": 9
+        },
+        {
+          "line": 2434,
+          "columns": 6
+        },
+        {
+          "line": 2449,
+          "columns": 5
+        },
+        {
+          "line": 2460,
+          "columns": 5
+        },
+        {
+          "line": 2469,
+          "columns": 6
+        },
+        {
+          "line": 2482,
+          "columns": 4
+        },
+        {
+          "line": 2493,
+          "columns": 7
+        },
+        {
+          "line": 2508,
+          "columns": 7
+        },
+        {
+          "line": 2521,
+          "columns": 7
+        },
+        {
+          "line": 2534,
+          "columns": 5
+        },
+        {
+          "line": 2548,
+          "columns": 5
+        },
+        {
+          "line": 2569,
+          "columns": 4
+        },
+        {
+          "line": 2578,
+          "columns": 2
+        },
+        {
+          "line": 2591,
+          "columns": 3
+        },
+        {
+          "line": 2607,
+          "columns": 4
+        },
+        {
+          "line": 2617,
+          "columns": 3
+        },
+        {
+          "line": 2629,
+          "columns": 3
+        },
+        {
+          "line": 2643,
+          "columns": 8
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v63.json",
+        "task042_neural_coarse_inverse/outcomes/records/storage_lifecycle_deployment_v63.json",
+        "task042_neural_coarse_inverse/outcomes/independent_tetra_reference_v62.md",
+        "task042_neural_coarse_inverse/outcomes/records/storage_lifecycle_deployment_v62.json",
+        "task042_neural_coarse_inverse/outcomes/face_trace_enrichment_v61.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v61.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v61.json",
+        "task042_neural_coarse_inverse/outcomes/local_assembly_subcell_response_v60.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v60.json",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v59.json",
+        "task042_neural_coarse_inverse/outcomes/trace_fixed_interior_enrichment_v59.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v58.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v58.json",
+        "task042_neural_coarse_inverse/response_v58.md",
+        "task042_neural_coarse_inverse/outcomes/common_weak_phase_preparation_v57.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v57.json",
+        "task042_neural_coarse_inverse/outcomes/saved_field_closure_target_bridge_v56.md",
+        "task042_neural_coarse_inverse/outcomes/records/delivery_index_v56.json",
+        "task042_neural_coarse_inverse/outcomes/spatial_resolution_audit_v55.md",
+        "task042_neural_coarse_inverse/outcomes/p_order_dtn_separation_v54.md",
+        "task042_neural_coarse_inverse/response_v53.md",
+        "task042_neural_coarse_inverse/outcomes/phase_hp_completion_v53.md",
+        "task042_neural_coarse_inverse/response_v52.md",
+        "task042_neural_coarse_inverse/outcomes/phase_notch_hp_accuracy_v52.md",
+        "task042_neural_coarse_inverse/response_v51.md",
+        "task042_neural_coarse_inverse/outcomes/phase_explicit_full3d_accuracy_v51.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v51.json",
+        "task042_neural_coarse_inverse/outcomes/records/next_scale_capacity_v51.json",
+        "task042_neural_coarse_inverse/outcomes/records/complete_accuracy_checks_v50.json",
+        "task042_neural_coarse_inverse/outcomes/complete_physics_accuracy_cost_v50.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v50.json",
+        "task042_neural_coarse_inverse/outcomes/records/complete_physical_results_v49.json",
+        "task042_neural_coarse_inverse/outcomes/complete_scattering_engine_anchor_v49.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v49.json",
+        "task042_neural_coarse_inverse/response_v48.md",
+        "task042_neural_coarse_inverse/outcomes/lossless_vector_storage_v48.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v48.json",
+        "task042_neural_coarse_inverse/outcomes/records/lossless_checker_v48.json",
+        "task042_neural_coarse_inverse/outcomes/records/conditional_cost_bounds_v48.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v47.json",
+        "task042_neural_coarse_inverse/response_v47.md",
+        "task042_neural_coarse_inverse/outcomes/trace_subspace_selection_v47.md",
+        "task042_neural_coarse_inverse/response_v46.md",
+        "task042_neural_coarse_inverse/outcomes/records/cold_n1_cost_contract_v46.json",
+        "task042_neural_coarse_inverse/outcomes/records/engine_matching_v46.json",
+        "task042_neural_coarse_inverse/outcomes/records/critical_path_v46.json",
+        "task042_neural_coarse_inverse/outcomes/neural_deployment_decision_v46.md",
+        "task042_neural_coarse_inverse/response_v45.md",
+        "task042_neural_coarse_inverse/outcomes/full_moment_hierarchy_v45.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+        "task042_neural_coarse_inverse/outcomes/records/array_inventory_v45.json",
+        "task042_neural_coarse_inverse/response_v44.md",
+        "task042_neural_coarse_inverse/outcomes/late_error_learning_v44.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+        "task042_neural_coarse_inverse/review_report_v40.md",
+        "task042_neural_coarse_inverse/response_v43.md",
+        "task042_neural_coarse_inverse/outcomes/neighborhood_residual_correction_v43.md",
+        "task042_neural_coarse_inverse/outcomes/records/neural_heldout_checker_v43.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v43.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v43.json",
+        "task042_neural_coarse_inverse/review_report_v39.md",
+        "task042_neural_coarse_inverse/response_v42.md",
+        "task042_neural_coarse_inverse/outcomes/distributed_volume_recovery_v42.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v42.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v42.json",
+        "task042_neural_coarse_inverse/outcomes/records/integration_readiness_v42.json",
+        "task042_neural_coarse_inverse/outcomes/native_entity_owner_topology_v41.md",
+        "task042_neural_coarse_inverse/response_v41.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v41.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v41.json",
+        "task042_neural_coarse_inverse/outcomes/records/integration_readiness_v41.json",
+        "task042_neural_coarse_inverse/review_report_v37.md",
+        "task042_neural_coarse_inverse/response_v40.md",
+        "task042_neural_coarse_inverse/outcomes/native_volume_affine_recovery_v40.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v40.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v40.json",
+        "task042_neural_coarse_inverse/outcomes/records/original_size_integration_capacity_v40.json",
+        "task042_neural_coarse_inverse/review_report_v36.md",
+        "task042_neural_coarse_inverse/response_v39.md",
+        "task042_neural_coarse_inverse/outcomes/native_boundary_volume_integration_v39.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v39.json",
+        "task042_neural_coarse_inverse/outcomes/records/raw_evidence_index_v39.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v39.json",
+        "task042_neural_coarse_inverse/outcomes/records/integration_readiness_v39.json",
+        "task042_neural_coarse_inverse/response_v38.md",
+        "task042_neural_coarse_inverse/outcomes/directional_boundary_structure_v38.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v38.json",
+        "task042_neural_coarse_inverse/response_v37.md",
+        "task042_neural_coarse_inverse/outcomes/target_p6_boundary_tiles_v37.md",
+        "task042_neural_coarse_inverse/outcomes/records/component_checker_v37.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v37.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v37.json",
+        "task042_neural_coarse_inverse/response_v36.md",
+        "task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+        "task042_neural_coarse_inverse/outcomes/records/deployment_package_v36.json",
+        "task042_neural_coarse_inverse/response_v35.md",
+        "task042_neural_coarse_inverse/outcomes/records/online_checker_v35.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v35.json",
+        "task042_neural_coarse_inverse/response_v34.md",
+        "task042_neural_coarse_inverse/outcomes/records/full_input_checker_v34.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v34.json",
+        "task042_neural_coarse_inverse/response_v33.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v33.json",
+        "task042_neural_coarse_inverse/response_v32.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v32.json",
+        "task042_neural_coarse_inverse/response_v31.md",
+        "task042_neural_coarse_inverse/outcomes/records/tests_v31.json",
+        "task042_neural_coarse_inverse/response_v30.md",
+        "task042_neural_coarse_inverse/outcomes/records/checker_acceptance_v30.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v30.json",
+        "task042_neural_coarse_inverse/response_v29.md",
+        "task042_neural_coarse_inverse/outcomes/checker_full_space_cost_v29.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v29.json",
+        "task042_neural_coarse_inverse/response_v28.md",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v28.json",
+        "task042_neural_coarse_inverse/response_v27.md",
+        "task042_neural_coarse_inverse/outcomes/return_direction_v27.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v27.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v27.json",
+        "task042_neural_coarse_inverse/response_v26.md",
+        "task042_neural_coarse_inverse/outcomes/joint_block_direction_v26.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v26.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v26.json",
+        "task042_neural_coarse_inverse/response_v25.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v25.json",
+        "task042_neural_coarse_inverse/response_v24.md",
+        "task042_neural_coarse_inverse/response_v24.md",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v24.json",
+        "task042_neural_coarse_inverse/response_v23.md",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v23.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v23.json",
+        "task042_neural_coarse_inverse/response_v22.md",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json",
+        "task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json",
+        "task042_neural_coarse_inverse/outcomes/records/cycle_history_v21.csv",
+        "task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v21.json",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v21.json",
+        "task042_neural_coarse_inverse/outcomes/exact_action_recycled_correction_v21.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v21.json",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v21.json",
+        "task042_neural_coarse_inverse/response_v19.md",
+        "task042_neural_coarse_inverse/outcomes/post_lsqr_residual_polish_v19.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v19.json",
+        "task042_neural_coarse_inverse/response_v18.md",
+        "task042_neural_coarse_inverse/outcomes/gmres_repair_residual_completion_v18.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v18.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v17.json",
+        "task042_neural_coarse_inverse/response_v17.md",
+        "task042_neural_coarse_inverse/outcomes/records/basis_identity_v16.json",
+        "task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v16.csv",
+        "task042_neural_coarse_inverse/response_v16.md",
+        "task042_neural_coarse_inverse/outcomes/records/basis_inventory_v15.json",
+        "task042_neural_coarse_inverse/outcomes/records/local_candidate_comparison_v15.csv",
+        "task042_neural_coarse_inverse/response_v15.md",
+        "task042_neural_coarse_inverse/outcomes/records/plan_and_input_identity_v14.json",
+        "task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v14.csv",
+        "task042_neural_coarse_inverse/response_v14.md",
+        "task039_extra_physical_multilevel/outcomes/coarse_inverse_replacement_v6.md",
+        "task039_extra_physical_multilevel/outcomes/balanced_coupling_v5.md",
+        "task039_extra_physical_multilevel/outcomes/records/diagnostic_completion_v4.json",
+        "task039_extra_physical_multilevel/outcomes/diagnostic_completion_v4.md",
+        "task039_extra_physical_multilevel/response_v5.md",
+        "task036_forward_solver_bugfix_hardening/outcomes/final_summary.md",
+        "task036_forward_solver_bugfix_hardening/outcomes/fix_report.md",
+        "task036_forward_solver_bugfix_hardening/review_report_v8.md",
+        "task036_forward_solver_bugfix_hardening/outcomes/final_summary.md",
+        "task037_static_condensed_full3d_iterative/outcomes/summary.md",
+        "task039_extra_physical_multilevel/outcomes/nonconvergence_diagnosis_v3.md",
+        "task039_extra_physical_multilevel/outcomes/nonconvergence_diagnosis_v3.md",
+        "task039_extra_physical_multilevel/outcomes/packed_and_joint_mr_v2.md",
+        "task039_extra_physical_multilevel/outcomes/cost_and_contribution_v1.md",
+        "task039_extra_physical_multilevel/outcomes/records/run_index.json",
+        "task039_extra_physical_multilevel/outcomes/summary.md",
+        "task39extra_para_workstation_capacity/outcomes/records/r1_attempt1.json",
+        "task39extra_para_workstation_capacity/outcomes/records/r1_attempt2.json",
+        "task39extra_para_workstation_capacity/outcomes/records/5nm_formal_attempt1.json",
+        "task39extra_para_workstation_capacity/outcomes/records/5nm_dtn_600_channels.csv",
+        "task39extra_para_workstation_capacity/outcomes/records/5nm_checker_recheck.json",
+        "task39extra_para_workstation_capacity/outcomes/summary.md",
+        "task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_retry_v1.json",
+        "task39extra_para_workstation_capacity/response_v3.md",
+        "task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_running_snapshot_v1.json",
+        "task39extra_para_workstation_capacity/response_v4.md",
+        "task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/outcomes/records/full_p6_comparison.csv",
+        "task042_neural_coarse_inverse/outcomes/records/pure_component_audit.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index.json",
+        "task042_neural_coarse_inverse/outcomes/records/f1_real_components_v2.json",
+        "task042_neural_coarse_inverse/outcomes/records/teacher_complete_v2.json",
+        "task042_neural_coarse_inverse/outcomes/records/oracle_complete_v2.json",
+        "task042_neural_coarse_inverse/outcomes/records/training_complete_v2.json",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/summary.md",
+        "task042_neural_coarse_inverse/response_v2.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/pml_double_sweep_real_structure_v19.md",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/pml_double_sweep_real_structure_v19.json",
+        "task038_extra_full3d_iterative_0p7nm/outcomes/records/pml_double_sweep_real_structure_v19.json",
+        "task39extra_para_workstation_capacity/outcomes/records/f5_5nm_q4_terminal_compact_v1.json",
+        "task39extra_para_workstation_capacity/outcomes/records/v5_5nm_geometry_105_component_v1.json",
+        "task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json",
+        "task042_neural_coarse_inverse/response_v3.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v3.json",
+        "task042_neural_coarse_inverse/outcomes/records/structure_complete_v3.json",
+        "task042_neural_coarse_inverse/outcomes/records/strict_rhs_metrics_v2.csv",
+        "task042_neural_coarse_inverse/outcomes/records/training_snapshot_manifest_v4.json",
+        "task042_neural_coarse_inverse/outcomes/records/gate_decisions_v4.json",
+        "task042_neural_coarse_inverse/outcomes/two_level_global_error_v4.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v4.json",
+        "task042_neural_coarse_inverse/outcomes/failure_localization_v5.md",
+        "task042_neural_coarse_inverse/outcomes/failure_localization_v5.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v5.json",
+        "task042_neural_coarse_inverse/outcomes/records/independent_checks_v5.json",
+        "task042_neural_coarse_inverse/outcomes/neural_fe_single_solve_v6.md",
+        "task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v6.csv",
+        "task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v6.json",
+        "task042_neural_coarse_inverse/outcomes/records/target_48h_budget_v6.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v6.json",
+        "task042_neural_coarse_inverse/response_v6.md",
+        "task042_neural_coarse_inverse/outcomes/records/neural_fe_comparison_v7.csv",
+        "task042_neural_coarse_inverse/outcomes/records/convergence_checkpoints_v7.csv",
+        "task042_neural_coarse_inverse/outcomes/records/neural_fe_gate_decisions_v7.json",
+        "task042_neural_coarse_inverse/outcomes/records/independent_blind_validation_v7.json",
+        "task042_neural_coarse_inverse/outcomes/records/channel_observables_v7.csv",
+        "task042_neural_coarse_inverse/response_v7.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v7.json",
+        "task042_neural_coarse_inverse/response_v8.md",
+        "task042_neural_coarse_inverse/outcomes/scaling_and_execution_v8.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v8.json",
+        "task042_neural_coarse_inverse/outcomes/frozen_error_localization_v9.md",
+        "task042_neural_coarse_inverse/response_v9.md",
+        "task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v10.csv",
+        "task042_neural_coarse_inverse/outcomes/records/channel_observables_v10.csv",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v10.json",
+        "task042_neural_coarse_inverse/response_v10.md",
+        "task042_neural_coarse_inverse/outcomes/autonomous_neural_head_v10.md",
+        "task042_neural_coarse_inverse/outcomes/records/manufactured_recovery_v11.json",
+        "task042_neural_coarse_inverse/outcomes/stable_head_varpro_v11.md",
+        "task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v11.json",
+        "task042_neural_coarse_inverse/response_v11.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v11.json",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v12.json",
+        "task042_neural_coarse_inverse/response_v12.md",
+        "task042_neural_coarse_inverse/outcomes/actual_loss_block_descent_v12.md",
+        "task042_neural_coarse_inverse/outcomes/records/channel_observables_v13.csv",
+        "task042_neural_coarse_inverse/response_v13.md",
+        "task042_neural_coarse_inverse/outcomes/tangent_scale_head_compensation_v13.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v13.json",
+        "task042_neural_coarse_inverse/response_v20.md",
+        "task042_neural_coarse_inverse/outcomes/fixed_p3_ilu0_port_v20.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v20.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v61.md",
+      "sha256": "7a36d595b8d5edd2bc181dee58feb93886b9ac671d203e6e904761f65795df30",
+      "tables": [
+        {
+          "line": 39,
+          "columns": 4
+        },
+        {
+          "line": 52,
+          "columns": 4
+        },
+        {
+          "line": 71,
+          "columns": 5
+        },
+        {
+          "line": 142,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "response_v62.md",
+        "outcomes/independent_tetra_reference_v62.md",
+        "outcomes/records/scientific_checks_v62.json",
+        "outcomes/records/independent_saved_pair_checks_v62.json",
+        "outcomes/records/storage_lifecycle_deployment_v62.json",
+        "outcomes/records/resource_costs_final_v62.json",
+        "outcomes/records/decision_and_not_run_v62.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v63.md",
+      "sha256": "e17aed33756f10b3b1ed38fc8444fd3f50f5707cd13fa7c302d7c042b35d96a0",
+      "tables": [
+        {
+          "line": 19,
+          "columns": 6
+        },
+        {
+          "line": 28,
+          "columns": 4
+        },
+        {
+          "line": 40,
+          "columns": 6
+        }
+      ],
+      "links": [
+        "outcomes/records/report_version_ruling_v63.json",
+        "outcomes/records/resource_costs_final_v63.json",
+        "outcomes/records/independent_saved_pair_checks_v63.json",
+        "outcomes/records/resource_costs_final_v63.json",
+        "outcomes/records/physical_error_regions_v63.json",
+        "outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "outcomes/records/scientific_checks_v63.json",
+        "outcomes/records/run_index_v63.json",
+        "outcomes/records/source_bindings_v63.json",
+        "outcomes/records/array_inventory_v63.json",
+        "outcomes/records/raw_archive_index_v63.json",
+        "outcomes/records/delivery_index_v63.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+      "sha256": "a13711130c1983028379fadb470cc0a0d036aee6b22db817729f2d6bfdd225ae",
+      "tables": [
+        {
+          "line": 7,
+          "columns": 6
+        },
+        {
+          "line": 12,
+          "columns": 4
+        },
+        {
+          "line": 24,
+          "columns": 6
+        },
+        {
+          "line": 36,
+          "columns": 4
+        },
+        {
+          "line": 54,
+          "columns": 3
+        },
+        {
+          "line": 72,
+          "columns": 3
+        },
+        {
+          "line": 96,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/storage_lifecycle_deployment_v63.json",
+        "records/physical_error_regions_v63.json",
+        "../response_v63.md",
+        "records/scientific_checks_v63.json",
+        "records/independent_saved_pair_checks_v63.json",
+        "records/raw_archive_index_v63.json",
+        "records/resource_costs_final_v63.json",
+        "records/target_gap_v63.json",
+        "records/selective_merge_v63.json",
+        "records/delivery_index_v63.json"
+      ]
+    }
+  ],
+  "source_contract_test_receipt": "documentation_checks_v63.json",
+  "unittest_reused_15_passes_no_math_or_checker_source_change": true,
+  "change": "two added reader definitions of FE/nnz/residual/power; no science or thresholds changed",
+  "seconds": 0.06976649700663984,
+  "GitHub_visual": "NOT_VERIFIED"
+}

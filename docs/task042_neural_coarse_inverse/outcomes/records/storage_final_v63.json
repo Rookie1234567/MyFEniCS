@@ -1,0 +1,13 @@
+{
+  "new_bytes": 2379921899,
+  "task_artifact_bytes": 106792148346,
+  "free_bytes": 3180365664256,
+  "reserve_bytes": 536870912,
+  "scope": "unique inode bytes of current V63 ignored and Task042 artifact/TMP/results/docs; not resident RSS",
+  "observed_utc": "2026-10-08T12:15:47.099709+00:00",
+  "new_limit_bytes": 34359738368,
+  "task_limit_bytes": 257698037760,
+  "free_limit_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "same_accuracy_memory_improvement": "NOT_QUALIFIED"
+}

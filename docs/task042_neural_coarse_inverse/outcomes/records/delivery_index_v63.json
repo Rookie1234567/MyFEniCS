@@ -1,5 +1,5 @@
 {
-  "status": "COMPLETED_SCIENCE_AND_SAVED_CHECKER_FINAL_DOC_CHECK_PENDING",
+  "status": "FULL_DELIVERY_LOCAL_CHECKS_COMPLETE",
   "review_commit": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
   "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
   "producer_sources": {
@@ -33,5 +33,68 @@
   ],
   "final_cost": "resource_costs_final_v63.json",
   "final_streams": "final_settlement_tail_v63.json",
-  "GitHub_visual": "NOT_VERIFIED"
+  "GitHub_visual": "NOT_VERIFIED",
+  "document_source_sha": "d081395162e67f4da58434e7f492a52cf724ce9f",
+  "final_bytes": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_final_bytes_v63.json",
+    "sha256": "21c920c28f6288cec7f7ab2a595935127bf58bcf21112c3bc19af9fa29d8721d"
+  },
+  "ledger_closed": true,
+  "active": null,
+  "own_lock_released": true,
+  "scientific_queue_status": "frozen and closed",
+  "total_supervised_runs": 15,
+  "actual_new_complete_solves": 2,
+  "actual_numeric_factors": 2,
+  "new_storage": "storage_final_v63.json",
+  "final_source_bindings": "source_bindings_final_v63.json",
+  "final_record_paths": [
+    "array_inventory_v63.json",
+    "decision_and_not_run_v63.json",
+    "delivery_index_v63.json",
+    "documentation_checks_v63.json",
+    "documentation_final_bytes_v63.json",
+    "final_settlement_tail_v63.json",
+    "independent_saved_pair_checks_v63.json",
+    "physical_error_regions_v63.json",
+    "raw_archive_index_v63.json",
+    "repair_journal_v63.json",
+    "report_version_ruling_v63.json",
+    "resource_costs_final_v63.json",
+    "resource_costs_v63.json",
+    "run_index_v63.json",
+    "scientific_checks_v63.json",
+    "selective_merge_v63.json",
+    "source_bindings_final_v63.json",
+    "source_bindings_v63.json",
+    "storage_final_v63.json",
+    "storage_lifecycle_deployment_v63.json",
+    "target_gap_v63.json",
+    "tests_v63.json"
+  ],
+  "stop_reason": "ALL_FIXED_REACHABLE_STAGES_COMPLETE_AND_CONDITIONAL_M_NOT_ADMITTED",
+  "array_file_count": 99,
+  "logical_array_members": 261,
+  "raw_earlier_archive_versions": 558,
+  "raw_final_stream_versions": 430,
+  "metadata_controller_source": {
+    "path": "tmp/task042/v63/seal_delivery.py",
+    "sha256": "4056198c95fa3297647cc8fa1d3c8375de52bd142c6f648d2b564b85e5adeb17",
+    "not_scientific_producer": true
+  },
+  "publication_post_push_receipt": "tmp/task042/v63/publication_receipt.json",
+  "single_15_test_document_contract_reused": true,
+  "final_structure_only_recheck": true,
+  "metadata_settlement_source": [
+    {
+      "path": "tmp/task042/v63/seal_delivery.py",
+      "sha256": "4056198c95fa3297647cc8fa1d3c8375de52bd142c6f648d2b564b85e5adeb17",
+      "new_PDE": 0
+    },
+    {
+      "path": "tmp/task042/v63/seal_tail.py",
+      "sha256": "c4979549f6295d85b585cb6a9eba26e555cfc424dc6ecb0195d2ec85184b156e",
+      "new_PDE": 0
+    }
+  ]
 }

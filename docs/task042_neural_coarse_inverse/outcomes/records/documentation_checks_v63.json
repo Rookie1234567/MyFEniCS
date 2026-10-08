@@ -1,0 +1,231 @@
+{
+  "status": "PASSED_LOCAL",
+  "final_bytes": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "de8d90e2434cddae5f5f508832445a3329672e83c9c85510cb0759abffcae18b",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        }
+      ],
+      "links": [
+        "review_report_v61.md",
+        "response_v63.md",
+        "outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "outcomes/records/scientific_checks_v63.json",
+        "outcomes/records/resource_costs_final_v63.json",
+        "outcomes/records/delivery_index_v63.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "7b518344b5a6d85977d4722f50871aac78e8f3dc55537ca4cab00dec5b1a6e6f",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        },
+        {
+          "line": 10,
+          "columns": 6
+        }
+      ],
+      "links": [
+        "../response_v63.md",
+        "fine_tetra_accuracy_bounded_cost_v63.md",
+        "records/independent_saved_pair_checks_v63.json",
+        "records/resource_costs_final_v63.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "bdf21c644a4117546db727b7ed8b55ed46daaa36bb7d6c584e1a0ec66a68ca2d",
+      "tables": [
+        {
+          "line": 3,
+          "columns": 2
+        }
+      ],
+      "links": [
+        "records/tests_v63.json",
+        "records/scientific_checks_v63.json",
+        "records/resource_costs_final_v63.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "d6f68c1564efb17738d43c640575e393edbf35ff58777ad9edddec87a2ebd8a6",
+      "tables": [],
+      "links": [
+        "records/selective_merge_v63.json",
+        "records/source_bindings_v63.json",
+        "records/repair_journal_v63.json"
+      ]
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "8001a95f2f83d2b1792dc34bfaed67d40ef172f2b563e47a71e4b1beb607037f",
+      "tables": [],
+      "links": [
+        "task042_neural_coarse_inverse/response_v63.md",
+        "task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v63.json"
+      ]
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "a4a9c05fc775d41df875d46e63b85f9b10fac6e5ae1986e1391dd4ebbd5d1a98",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        }
+      ],
+      "links": [
+        "task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "task042_neural_coarse_inverse/outcomes/records/scientific_checks_v63.json",
+        "task042_neural_coarse_inverse/outcomes/records/storage_lifecycle_deployment_v63.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v61.md",
+      "sha256": "7a36d595b8d5edd2bc181dee58feb93886b9ac671d203e6e904761f65795df30",
+      "tables": [
+        {
+          "line": 39,
+          "columns": 4
+        },
+        {
+          "line": 52,
+          "columns": 4
+        },
+        {
+          "line": 71,
+          "columns": 5
+        },
+        {
+          "line": 142,
+          "columns": 4
+        }
+      ],
+      "links": [
+        "response_v62.md",
+        "outcomes/independent_tetra_reference_v62.md",
+        "outcomes/records/scientific_checks_v62.json",
+        "outcomes/records/independent_saved_pair_checks_v62.json",
+        "outcomes/records/storage_lifecycle_deployment_v62.json",
+        "outcomes/records/resource_costs_final_v62.json",
+        "outcomes/records/decision_and_not_run_v62.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v63.md",
+      "sha256": "0379f2e8765fab561b62bf06ddf2af8f7dc54fb3e2874d5682713a06414a4185",
+      "tables": [
+        {
+          "line": 17,
+          "columns": 6
+        },
+        {
+          "line": 26,
+          "columns": 4
+        },
+        {
+          "line": 38,
+          "columns": 6
+        }
+      ],
+      "links": [
+        "outcomes/records/report_version_ruling_v63.json",
+        "outcomes/records/resource_costs_final_v63.json",
+        "outcomes/records/independent_saved_pair_checks_v63.json",
+        "outcomes/records/resource_costs_final_v63.json",
+        "outcomes/records/physical_error_regions_v63.json",
+        "outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+        "outcomes/records/scientific_checks_v63.json",
+        "outcomes/records/run_index_v63.json",
+        "outcomes/records/source_bindings_v63.json",
+        "outcomes/records/array_inventory_v63.json",
+        "outcomes/records/raw_archive_index_v63.json",
+        "outcomes/records/delivery_index_v63.json"
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md",
+      "sha256": "666739cc1b577b63a5d52d855b569b0c5ab6c7b2eba3024f7864c786af79d208",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 6
+        },
+        {
+          "line": 10,
+          "columns": 4
+        },
+        {
+          "line": 22,
+          "columns": 6
+        },
+        {
+          "line": 34,
+          "columns": 4
+        },
+        {
+          "line": 52,
+          "columns": 3
+        },
+        {
+          "line": 70,
+          "columns": 3
+        },
+        {
+          "line": 94,
+          "columns": 3
+        }
+      ],
+      "links": [
+        "records/storage_lifecycle_deployment_v63.json",
+        "records/physical_error_regions_v63.json",
+        "../response_v63.md",
+        "records/scientific_checks_v63.json",
+        "records/independent_saved_pair_checks_v63.json",
+        "records/raw_archive_index_v63.json",
+        "records/resource_costs_final_v63.json",
+        "records/target_gap_v63.json",
+        "records/selective_merge_v63.json",
+        "records/delivery_index_v63.json"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "0af1c5d5acc5c881693af0bb35e991e93183457a8721aa11679cee6bb0fec820"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "98cfcd279cd98e30c2e2bbabafc1f194b715f6fdf445b41f45364bf73789b66d"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "9e1ca532631517686096f2b535e7e6acd12951c7621706f0ac87e8fb437b8cdc"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "1303da8f9bd97d0616b3b2e3b616a59f43d6dbc4fc902247684ed7492820be50"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "f20b3749cc928f8c842b8363441e7277826c6e67586fb311c0b1fedb9cde3579"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "61dc75581a8379ed56b475fec394d27943d9c5af901efe81c801649cc039e834"
+    }
+  ],
+  "test_seconds": 0.2386211238335818,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN"
+}
