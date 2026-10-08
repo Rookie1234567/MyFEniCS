@@ -38,6 +38,15 @@ def compensated_mixed_columns(matrix, amplitudes, first=0, last=0, active=None):
 
 class SmallSVDSolve:
     def __init__(self, matrix, rcond=1e-12):
+        if min(matrix.shape) == 0:
+            # Some qualified LAPACK builds reject the empty workspace query.
+            # The empty subspace has an exact empty solve and projection.
+            self.left = np.empty((matrix.shape[0], 0), np.complex128)
+            self.singular = np.empty(0, np.float64)
+            self.right = np.empty((0, matrix.shape[1]), np.complex128)
+            self.keep = np.empty(0, bool)
+            self.rank = 0
+            return
         self.left, self.singular, self.right = linalg.svd(
             matrix, full_matrices=False, check_finite=True
         )
@@ -233,6 +242,8 @@ def insert_block_qr(complement, applied):
 
 def commit_replacement(space, block, complement, trial):
     """Build all trial-dependent objects before changing a committed state."""
+    if "decay_kappa" in block and trial.q.shape != (len(block["wave_q"]), 6):
+        raise ValueError("EXPLICIT_COMPLEX_WAVE_REPLACEMENT_LAYOUT")
     before = float(np.linalg.norm(space.r) / space.action.bnorm)
     after = float(np.linalg.norm(trial.r) / space.action.bnorm)
     if after > before + 1e-10 or trial.pairing > 1e-10:
@@ -247,7 +258,11 @@ def commit_replacement(space, block, complement, trial):
     space.U[:, block["start"] : block["stop"]] = trial.columns
     space.Q, space.R = q, r
     space.a, space.c, space.r = trial.amplitudes, trial.c, trial.r
-    block["wave_q"] = trial.q.copy()
+    if "decay_kappa" in block:
+        block["wave_q"] = trial.q[:, :3].copy()
+        block["decay_kappa"] = trial.q[:, 3:].copy()
+    else:
+        block["wave_q"] = trial.q.copy()
     return dict(before_native=before, after_native=after, pair_relative=pair)
 
 
@@ -291,24 +306,30 @@ def optimize_active(
     visit_id,
     max_evaluations=32,
     seed_trial=None,
+    parameter_scale=None,
+    parameter_bounds=None,
+    physical_seeds=(),
 ):
     from scipy.optimize import minimize
 
     calls, best = [], [seed_trial]
     rank = seed_trial.active_rank if seed_trial is not None else None
+    scale = k0 if parameter_scale is None else np.asarray(parameter_scale)
+    bounds = parameter_bounds or [(-4.0, 4.0)] * q0.size
+    lower, upper = np.asarray(bounds).T
 
     def objective(flat):
         if len(calls) >= max_evaluations:
             raise CompleteTrialLimit
         try:
-            trial = evaluate(flat.reshape(q0.shape) * k0, route == "learned")
+            trial = evaluate(flat.reshape(q0.shape) * scale, route == "learned")
         except TrialRejected as error:
             calls.append(dict(complete=True, accepted=False, failure=str(error)))
             raise
         calls.append(
             dict(
                 objective=trial.objective,
-                gradient_norm=float(np.linalg.norm(trial.gradient * k0))
+                gradient_norm=float(np.linalg.norm(trial.gradient * scale))
                 if trial.gradient is not None
                 else None,
                 q=trial.q.tolist(),
@@ -321,18 +342,24 @@ def optimize_active(
         if best[0] is None or trial.objective < best[0].objective:
             best[0] = trial
         return trial.objective, (
-            trial.gradient.ravel() * k0 if trial.gradient is not None else None
+            (trial.gradient * scale).ravel() if trial.gradient is not None else None
         )
 
-    status, message, nit = -1, "ACTUAL_EVALUATION_LIMIT", 0
+    status, message = -1, "ACTUAL_EVALUATION_LIMIT"
+    nit = 0 if parameter_scale is None else "NOT_RETAINED"
     try:
+        for physical in physical_seeds:
+            try:
+                objective((physical / scale).ravel())
+            except TrialRejected:
+                continue
         if route == "learned":
             result = minimize(
                 objective,
-                q0.ravel() / k0,
+                ((best[0].q if physical_seeds and best[0] is not None else q0) / scale).ravel(),
                 jac=True,
                 method="L-BFGS-B",
-                bounds=[(-4.0, 4.0)] * q0.size,
+                bounds=bounds,
                 options=dict(
                     maxiter=20,
                     maxfun=max_evaluations,
@@ -348,12 +375,13 @@ def optimize_active(
                 int(result.nit),
             )
         else:
-            delta = (1 / 8, 1 / 16, 1 / 32, 1 / 64)[min(round_id, 3)]
+            delta = (1 / 8, 1 / 16, 1 / 32, 1 / 64)[
+                round_id % 4 if parameter_scale is not None else min(round_id, 3)]
             for j in range(max_evaluations):
-                flat = (best[0].q if best[0] is not None else q0).ravel() / k0
+                flat = ((best[0].q if best[0] is not None else q0) / scale).ravel()
                 axis = (block_id + visit_id + j // 2) % q0.size
                 flat[axis] += (-1 if j % 2 == 0 else 1) * delta
-                objective(np.clip(flat, -4, 4))
+                objective(np.clip(flat, lower, upper))
             status, message = 0, "FIXED_PATTERN_COMPLETE"
     except (CompleteTrialLimit, TrialRejected) as error:
         message = str(error) or type(error).__name__
@@ -366,4 +394,6 @@ def optimize_active(
         evaluated_trajectory=calls,
         extra_result_evaluations=0,
         seed_and_zero_audits_counted_separately=True,
+        physical_seed_evaluations_in_limit=len(physical_seeds),
+        parameter_coordinates="q/k0,eta=kappa*R" if parameter_scale is not None else "q/k0",
     )

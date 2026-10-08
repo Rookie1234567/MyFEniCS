@@ -122,6 +122,10 @@ def restore_backfit(space, blocks, directory, binding):
         with np.load(entry["path"], allow_pickle=False) as z:
             space.U[:, block["start"] : block["stop"]] = z["u"]
             block["wave_q"] = np.array(z["wave_q"])
+            if "decay_kappa" in block:
+                block["decay_kappa"] = (np.array(z["decay_kappa"])
+                                         if "decay_kappa" in z.files
+                                         else np.zeros_like(block["wave_q"]))
             if not np.array_equal(block["amplitude_map"], z["amplitude_map"]):
                 raise ValueError("FROZEN_MAP_CHANGED_ON_RESTORE")
     with np.load(boundary["state"]["path"], allow_pickle=False) as z:

@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600, 33: 43200}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -40,6 +40,12 @@ def window(spec=None):
 
 def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
+    if spec.get("campaign_version") == 34:
+        reserve = 7200 if spec["role"] in (
+            "DETERMINISTIC_COMPLEX_WAVE_BACKFIT", "LEARNED_COMPLEX_WAVE_BACKFIT"
+        ) else 1800
+        return min(allocation["deadline_monotonic"],
+                   campaign["deadline_monotonic"] - reserve), reserve
     if spec.get("campaign_version") == 33:
         reserve = 5400 if spec["role"] in (
             "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT"
@@ -124,8 +130,9 @@ def durable(spec, *, origin, attempt=1):
             raise ValueError("RECOVERY_REQUIRES_PRIOR_TREE_CLEARED")
         repairs = root / "repair_journal.jsonl"
         scalar_continuation = False
-        if spec.get("campaign_version") == 33 and spec["role"] in (
-            "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT"
+        if spec.get("campaign_version") in (33, 34) and spec["role"] in (
+            "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT",
+            "DETERMINISTIC_COMPLEX_WAVE_BACKFIT", "LEARNED_COMPLEX_WAVE_BACKFIT"
         ):
             route_artifact = profile["artifacts"] / stage
             result_file = route_artifact / "result.json"
@@ -236,7 +243,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33)
+        if spec.get("campaign_version") in (32,33,34)
         else None,
     )
 
@@ -296,6 +303,15 @@ def launch(spec):
             "backfit_transfer_compare",
             "DETERMINISTIC_WAVE_BACKFIT",
             "LEARNED_VARPRO_BACKFIT",
+            "complex_wave_checks",
+            "complex_wave_calibration",
+            "complex_reconstruct",
+            "complex_early_validate",
+            "complex_pilot_prepare",
+            "complex_pilot_solve",
+            "complex_pilot_compare",
+            "DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
+            "LEARNED_COMPLEX_WAVE_BACKFIT",
         )
         else 2
     ) * 2**30
@@ -313,7 +329,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") in (31, 32, 33):
+            if spec.get("campaign_version") in (31, 32, 33, 34):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -379,7 +395,7 @@ def launch(spec):
                             "src/solvers/neural_wave_block_qualification.py",
                             "src/postprocessing/neural_wave_roundoff.py",
                         )
-                        if spec.get("campaign_version") in (31, 32, 33)
+                        if spec.get("campaign_version") in (31, 32, 33, 34)
                         else ()
                     )
                 },
@@ -472,6 +488,17 @@ def launch(spec):
                                 continuation_uses_validation_scalars=True,
                                 pde_only_solve=spec["role"] in (
                                     "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT"))
+            if spec.get("campaign_version") == 34:
+                from src.runners.complex_wave_worker import CHAIN
+
+                manifest["binding_source_files"].update(
+                    {path: digest(ROOT / path) for path in CHAIN})
+                manifest.update(
+                    wave_representation="oscillation+decay.v1",
+                    reference_used_for_validation=True,
+                    continuation_uses_validation_scalars=True,
+                    pde_only_solve=spec["role"] in (
+                        "DETERMINISTIC_COMPLEX_WAVE_BACKFIT", "LEARNED_COMPLEX_WAVE_BACKFIT"))
             atomic_json(directory / "run_manifest.json", manifest)
             atomic_json(artifact / f"run_manifest_{directory.name}.json", manifest)
             shutil.copyfile(ROOT / spec["input"], directory / "input_original.dat")

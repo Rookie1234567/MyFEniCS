@@ -28,6 +28,8 @@ class BackfitStore:
             chunk = self.directory / f"replacement_{tag}_{block_id:03d}.npz"
             if chunk.exists():
                 raise ValueError("IMMUTABLE_BACKFIT_REPLACEMENT_EXISTS")
+            decay = ({"q_real": block["wave_q"], "decay_kappa": block["decay_kappa"]}
+                     if "decay_kappa" in block else {})
             atomic_npz(
                 chunk,
                 u=trial.columns,
@@ -38,6 +40,7 @@ class BackfitStore:
                 radius=np.asarray(block["patch"].radius),
                 patch_level=np.asarray(block["patch"].level),
                 patch_kind=np.asarray(block["patch"].kind),
+                **decay,
             )
             entry = dict(
                 path=str(chunk.resolve()),
@@ -58,7 +61,9 @@ class BackfitStore:
             raise ValueError("IMMUTABLE_BACKFIT_STATE_EXISTS")
         atomic_npz(state, a=space.a, c=space.c, r=space.r, R=space.R)
         value = dict(
-            schema="neural-wave.backfit-boundary.v1",
+            schema=("neural-wave.complex-backfit-boundary.v1"
+                    if self.binding.get("wave_representation") == "oscillation+decay.v1"
+                    else "neural-wave.backfit-boundary.v1"),
             committed=True,
             binding=self.binding,
             anchor=self.anchor,
@@ -77,6 +82,11 @@ class BackfitStore:
             continuation_uses_validation_scalars=True,
             production_initialization_allowed=False,
             optimizer_state="fresh bounded block optimization per visit; full amplitude/QR/queue/RNG saved",
+            parameter_representation=(
+                "explicit real q_real and decay_kappa arrays; legacy anchor means kappa=0"
+                if self.binding.get("wave_representation") == "oscillation+decay.v1"
+                else "real wave_q; no decay parameter"
+            ),
         )
         with np.load(state, allow_pickle=False) as z:
             if not all(
@@ -105,7 +115,8 @@ class BackfitStore:
 def check_boundary(path):
     path = Path(path)
     value = json.loads(path.read_text())
-    if value["schema"] != "neural-wave.backfit-boundary.v1" or not value["committed"]:
+    if value["schema"] not in ("neural-wave.backfit-boundary.v1",
+                               "neural-wave.complex-backfit-boundary.v1") or not value["committed"]:
         raise ValueError("BACKFIT_COMPLETE_BOUNDARY_REQUIRED")
     first = 0
     for entry in value["chunks"]:
@@ -113,6 +124,20 @@ def check_boundary(path):
             raise ValueError("BACKFIT_BLOCK_COVERAGE_CORRUPT")
         if sha(entry["path"]) != entry["sha256"]:
             raise ValueError("BACKFIT_MODEL_HASH_FAILED")
+        if value["schema"] == "neural-wave.complex-backfit-boundary.v1":
+            legacy = any(entry["path"] == x["path"] and entry["sha256"] == x["sha256"]
+                         for x in value["anchor"]["chunks"])
+            with np.load(entry["path"], allow_pickle=False) as arrays:
+                q = arrays["wave_q"]
+                if not legacy and not {"q_real", "decay_kappa"} <= set(arrays.files):
+                    raise ValueError("COMPLEX_REPLACEMENT_DECAY_NOT_SAVED")
+                if "decay_kappa" in arrays.files:
+                    k = arrays["decay_kappa"]
+                    if (q.shape != k.shape or np.iscomplexobj(q) or np.iscomplexobj(k)
+                            or not np.array_equal(q, arrays["q_real"])
+                            or q.dtype != np.float64 or k.dtype != np.float64
+                            or not np.isfinite(k).all() or not np.isfinite(q).all()):
+                        raise ValueError("COMPLEX_REPLACEMENT_PARAMETER_LAYOUT_CORRUPT")
         first = entry["stop"]
     if (
         first != value["columns"]
@@ -125,7 +150,8 @@ def check_boundary(path):
     return value
 
 
-def accept_and_save(space, blocks, block_id, complement, trial, store, event, state):
+def accept_and_save(space, blocks, block_id, complement, trial, store, event, state,
+                    *, refresh_costs=None):
     from src.solvers.neural_wave_backfit import commit_replacement
 
     block = blocks[block_id]
@@ -138,14 +164,19 @@ def accept_and_save(space, blocks, block_id, complement, trial, store, event, st
         space.c,
         space.r,
         block["wave_q"].copy(),
+        block.get("decay_kappa", None),
     )
     try:
         pair = commit_replacement(space, block, complement, trial)
+        if refresh_costs is not None:
+            refresh_costs()
         boundary = store.save(
             space, blocks, event, state, replacement=(block_id, trial)
         )
         return pair, boundary
     except BaseException:
-        u, space.Q, space.R, space.a, space.c, space.r, block["wave_q"] = old
+        u, space.Q, space.R, space.a, space.c, space.r, block["wave_q"], decay = old
         space.U[:, first:last] = u
+        if decay is not None:
+            block["decay_kappa"] = decay
         raise

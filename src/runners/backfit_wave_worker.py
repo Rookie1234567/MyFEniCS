@@ -46,7 +46,8 @@ def receipt_matches(receipt, key):
     )
 
 
-def early_validate(action, packet, design, artifact, spec, root, marker, source):
+def early_validate(action, packet, design, artifact, spec, root, marker, source,
+                   *, routes=None):
     from src.solvers.neural_wave_block_reconstruction import rebuild_stable
     from src.solvers.feinn_fem import build_model
     from src.postprocessing.neural_wave_audit import (
@@ -59,7 +60,7 @@ def early_validate(action, packet, design, artifact, spec, root, marker, source)
 
     route = "learned" if "learned" in spec["stage"] else "deterministic"
     node = int(spec["stage"][-1])
-    directory = root / ROUTES[route == "learned"][0]
+    directory = root / (ROUTES if routes is None else routes)[route == "learned"][0]
     request = json.loads((directory / f"validation_requested_{node}.json").read_text())
     boundary = directory / "basis/committed.json"
     if digest(boundary) != request["boundary_sha256"]:
@@ -122,6 +123,7 @@ def early_validate(action, packet, design, artifact, spec, root, marker, source)
                 scattered_E_relative=errors["E"]["relative"],
                 scattered_H_relative=errors["curl"]["relative"],
                 continuation_allowed=result["continuation_allowed"],
+                ineffective=ineffective,
                 source_sha=source,
                 scoring_result_sha256=digest(artifact / "scoring_record.json"),
             ),

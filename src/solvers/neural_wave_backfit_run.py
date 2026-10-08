@@ -65,9 +65,13 @@ def run_backfit(
     action, packet, space, blocks, anchor, design, manifest, artifact, marker
 ):
     route = manifest["spec"]["role"]
-    kind = "learned" if route == "LEARNED_VARPRO_BACKFIT" else "deterministic"
+    complex_wave = design.get("campaign_version") == 34
+    kind = "learned" if route in ("LEARNED_VARPRO_BACKFIT",
+                                  "LEARNED_COMPLEX_WAVE_BACKFIT") else "deterministic"
     origin = manifest["route_origin_monotonic"]
-    deadline = min(manifest["worker_stop_monotonic"], origin + 10800 - 150)
+    route_cap = 14400 if complex_wave else 10800
+    trial_cap = 3072 if complex_wave else 2048
+    deadline = min(manifest["worker_stop_monotonic"], origin + route_cap - 150)
     binding = dict(
         route=route,
         source_sha=manifest["source_sha"],
@@ -77,9 +81,11 @@ def run_backfit(
         anchor_sha256=design["anchor"]["boundary_sha256"],
         route_origin_monotonic=origin,
     )
+    if complex_wave:
+        binding["wave_representation"] = "oscillation+decay.v1"
     store = BackfitStore(artifact / "basis", binding, anchor)
     resumed = restore_backfit(space, blocks, store.directory, binding)
-    rng = np.random.default_rng(4213301)
+    rng = np.random.default_rng(4213401 if complex_wave else 4213301)
     state = (
         json.loads(json.dumps(resumed["algorithm_state"]))
         if resumed
@@ -87,6 +93,7 @@ def run_backfit(
             visits=0,
             accepted=0,
             nonzero_q_updates=0,
+            nonzero_decay_updates=0,
             trials=0,
             zero_audits=0,
             full_AU_refreshes=0,
@@ -103,11 +110,24 @@ def run_backfit(
         )
     )
     if resumed:
+        state.setdefault("nonzero_decay_updates", 0)
         rng.bit_generator.state = state["rng_state"]
         for k, v in state["action_counts"].items():
             action.counts[k] += v
             action.costs[k] += state["action_seconds"][k]
-    moments = WaveMoments(packet, 8)
+    if complex_wave:
+        from src.solvers.neural_wave_decay import (
+            ComplexActivityMoments, block_parameters, coordinate_contract,
+            normalized_complex_gradients, physical_decay_seeds,
+        )
+        moments = ComplexActivityMoments(packet, 8)
+    else:
+        moments = WaveMoments(packet, 8)
+    if resumed and complex_wave:
+        for key, value in state.get("moments_counts", {}).items():
+            moments.counts[key] += value
+        for key, value in state.get("moments_seconds", {}).items():
+            moments.seconds[key] += value
     k0 = 2 * np.pi / design["model"]["wavelength_nm"]
     history = artifact / "visit_history.jsonl"
 
@@ -131,14 +151,19 @@ def run_backfit(
     if not resumed:
         boundary(dict(kind="shared_anchor", audit=action.audit(space.c)))
     stop = "BACKFIT_VISIT_OR_TRIAL_LIMIT"
-    while state["visits"] < 64 and state["trials"] < 2048:
+    while state["visits"] < 64 and state["trials"] < trial_cap:
         if monotonic() >= deadline:
             stop = "ROUTE_SAVE_RESERVE_REACHED"
             break
         elapsed = monotonic() - origin
+        nodes = ((1, 16, 3600), (2, 32, 7200))
+        if complex_wave:
+            nodes = [(1, 32, 7200)]
+            if "confirmation_visit" in state:
+                nodes.append((2, state["confirmation_visit"], state["confirmation_time"]))
         due = [
             n
-            for n, v, t in ((1, 16, 3600), (2, 32, 7200))
+            for n, v, t in nodes
             if n not in state["validated_nodes"]
             and (state["visits"] >= v or elapsed >= t)
         ]
@@ -150,8 +175,12 @@ def run_backfit(
                 value = json.loads(scalar.read_text())
                 validate_scalar_boundary(value, current, marker)
                 state["validated_nodes"].append(node)
+                if complex_wave and node == 1 and value["ineffective"]:
+                    state["confirmation_visit"] = state["visits"] + 8
+                    state["confirmation_time"] = elapsed + 1800
                 if not value["continuation_allowed"]:
-                    stop = "BACKFIT_NO_USEFUL_PROGRESS"
+                    stop = ("COMPLEX_WAVE_NO_USEFUL_PROGRESS" if complex_wave
+                            else "BACKFIT_NO_USEFUL_PROGRESS")
                     break
             else:
                 b = boundary(
@@ -174,7 +203,7 @@ def run_backfit(
                 stop = f"INDEPENDENT_VALIDATION_REQUESTED_{node}"
                 break
         # Consume matching validation before publishing a new timed boundary.
-        for node in (1800, 3600, 7200, 10800):
+        for node in (1800, 3600, 7200, 10800, *([14400] if complex_wave else [])):
             if elapsed >= node and node not in state["time_nodes_saved"]:
                 state["time_nodes_saved"].append(node)
                 b = boundary(
@@ -190,7 +219,9 @@ def run_backfit(
             break
         if not state["queue"]:
             start = perf_counter()
-            scores = normalized_block_gradients(action, moments, space, blocks, k0)
+            scores = (normalized_complex_gradients(action, moments, space, blocks, k0)
+                      if complex_wave else normalized_block_gradients(
+                          action, moments, space, blocks, k0))
             state["queue"], state["cursor"] = select_active_round(
                 scores, blocks, state["cursor"]
             )
@@ -202,6 +233,7 @@ def run_backfit(
                     scores=scores,
                     seconds=perf_counter() - start,
                     all_parameter_q_groups_scored=True,
+                    all_parameter_decay_groups_scored=complex_wave,
                     shared_AH_count=1,
                 ),
             )
@@ -211,7 +243,14 @@ def run_backfit(
             state["round_id"] += 1
         block = blocks[block_id]
         before_native = float(np.linalg.norm(space.r) / action.bnorm)
-        old_q = block["wave_q"].copy()
+        old_q = block_parameters(block) if complex_wave else block["wave_q"].copy()
+        coordinate_options, seed_record = {}, None
+        if complex_wave:
+            scale, bounds, R = coordinate_contract(block, moments, k0)
+            seeds, seed_record = physical_decay_seeds(
+                block, moments, k0, complex(*design["decay"]["beta_si_nm_inverse"]))
+            coordinate_options = dict(parameter_scale=scale, parameter_bounds=bounds,
+                                      physical_seeds=seeds)
         started = perf_counter()
         visit = state["visits"]
         state["visits"] += 1
@@ -228,7 +267,7 @@ def run_backfit(
             block["start"],
             block["stop"],
             center=(space.a, space.c),
-            base_q=block["wave_q"],
+            base_q=old_q,
         )
 
         def evaluate(q, gradient):
@@ -249,21 +288,28 @@ def run_backfit(
                 round_id=round_for_visit,
                 block_id=block_id,
                 visit_id=visit,
-                max_evaluations=min(32, 2048 - state["trials"]),
+                max_evaluations=min(48 if complex_wave else 32,
+                                    trial_cap - state["trials"]),
                 seed_trial=zero,
+                **coordinate_options,
             )
             state["trials"] += optimization["complete_trial_calls"]
             delta = float(np.linalg.norm(best.q - old_q))
+            q_delta = float(np.linalg.norm(best.q[:, :3] - old_q[:, :3])) if complex_wave else delta
+            decay_delta = float(np.linalg.norm(best.q[:, 3:] - old_q[:, 3:])) if complex_wave else 0.
             if best.objective < before_native**2 / 2 and delta > 0:
                 state["accepted"] += 1
-                state["nonzero_q_updates"] += 1
+                state["nonzero_q_updates"] += int(q_delta > 0)
+                state["nonzero_decay_updates"] += int(decay_delta > 0)
                 costs()
                 event = dict(
                     kind="accepted_replacement",
                     visit=visit,
                     block_id=block_id,
                     before_native=before_native,
-                    q_delta=delta,
+                    q_delta=q_delta,
+                    decay_delta=decay_delta,
+                    physical_seeds=seed_record,
                     native_relative=float(np.linalg.norm(best.r) / action.bnorm),
                     optimization=optimization,
                     rank=best.active_rank,
@@ -272,11 +318,13 @@ def run_backfit(
                 )
                 try:
                     pair, b = accept_and_save(
-                        space, blocks, block_id, F, best, store, event, state
+                        space, blocks, block_id, F, best, store, event, state,
+                        refresh_costs=costs,
                     )
                 except BaseException:
                     state["accepted"] -= 1
-                    state["nonzero_q_updates"] -= 1
+                    state["nonzero_q_updates"] -= int(q_delta > 0)
+                    state["nonzero_decay_updates"] -= int(decay_delta > 0)
                     raise
                 marker(
                     "committed_backfit_replacement",
@@ -298,6 +346,7 @@ def run_backfit(
             else:
                 optimization["commit_rejection"] = str(error)
             delta = 0.0
+            q_delta, decay_delta = 0., 0.
             reason = str(error)
         finally:
             del F
@@ -306,7 +355,9 @@ def run_backfit(
             block_id=block_id,
             accepted=accepted,
             reason=reason,
-            q_delta=delta,
+            q_delta=q_delta,
+            decay_delta=decay_delta,
+            physical_seeds=seed_record,
             before_native=before_native,
             after_native=float(np.linalg.norm(space.r) / action.bnorm),
             columns=space.m,
@@ -331,6 +382,7 @@ def run_backfit(
         accepted=state["accepted"],
         visits=state["visits"],
         nonzero_q_updates=state["nonzero_q_updates"],
+        nonzero_decay_updates=state["nonzero_decay_updates"],
         complete_q_trial_calls=state["trials"],
         zero_audits=state["zero_audits"],
         audit=action.audit(space.c),

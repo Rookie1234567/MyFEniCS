@@ -92,16 +92,22 @@ class WaveMoments:
                 displacement = x - np.asarray(patch.center)
                 yield cell, jac, displacement, patch.window(x)
 
-    def columns(self, patch, q):
+    def columns(self, patch, q, *, decay_kappa=None):
         """Three amplitude columns per neuron; not a parameter Jacobian."""
-        return self._columns(patch, q)
+        return self._columns(patch, q, decay_kappa=decay_kappa)
 
-    def delta_columns(self, patch, q, base_q):
+    def delta_columns(self, patch, q, base_q, *, decay_kappa=None, base_kappa=None):
         """Same complete moments of exp(i q.x)-exp(i base_q.x), stably."""
-        return self._columns(patch, q, base_q)
+        return self._columns(patch, q, base_q, decay_kappa=decay_kappa, base_kappa=base_kappa)
 
-    def _columns(self, patch, q, base_q=None):
+    def _columns(self, patch, q, base_q=None, *, decay_kappa=None, base_kappa=None):
         start = perf_counter()
+        if decay_kappa is not None:
+            from src.solvers.neural_wave_decay import real_waves
+
+            q = real_waves(q, "Q")
+            if base_q is not None:
+                base_q = real_waves(base_q, "BASE_Q")
         q = np.asarray(q, dtype=np.float64).reshape(-1, 3)
         if base_q is not None:
             base_q = np.asarray(base_q, dtype=np.float64).reshape(-1, 3)
@@ -109,7 +115,11 @@ class WaveMoments:
                 raise ValueError("FIXED_WAVE_WIDTH_REQUIRED_FOR_PHASE_DIFFERENCE")
         result = np.zeros((self.size, len(q), 3), dtype=np.complex128)
         for cell, jac, displacement, window in self.blocks(patch):
-            if base_q is None:
+            if decay_kappa is not None:
+                from src.solvers.neural_wave_decay import decay_phase
+
+                phase = decay_phase(displacement, window, q, decay_kappa, base_q, base_kappa)
+            elif base_q is None:
                 phase = window[:, None] * np.exp(1j * displacement @ q.T)
             else:
                 phase = (
@@ -128,18 +138,28 @@ class WaveMoments:
         self.seconds["forward"] += perf_counter() - start
         return result.reshape(self.size, -1)
 
-    def forward(self, patch, q, amplitude):
+    def forward(self, patch, q, amplitude, *, decay_kappa=None):
         p = np.asarray(amplitude, dtype=np.complex128).reshape(-1, 3)
-        return self.columns(patch, q) @ p.ravel()
+        return self.columns(patch, q, decay_kappa=decay_kappa) @ p.ravel()
 
     def vjp(self, patch, q, amplitude, cotangent):
         """Real convention dL=Re(g^H dc); no mesh-wide AD graph or J."""
+        return self._vjp(patch, q, amplitude, cotangent)
+
+    def vjp_decay(self, patch, q, kappa, amplitude, cotangent):
+        from src.solvers.neural_wave_decay import real_waves
+
+        q, kappa = real_waves(q, "Q"), real_waves(kappa, "KAPPA")
+        return self._vjp(patch, q, amplitude, cotangent, kappa)
+
+    def _vjp(self, patch, q, amplitude, cotangent, kappa=None):
         start = perf_counter()
         q = np.asarray(q, dtype=np.float64).reshape(-1, 3)
         p = np.asarray(amplitude, dtype=np.complex128).reshape(-1, 3)
         g = np.asarray(cotangent, dtype=np.complex128)
         gp = np.zeros_like(p)
         gq = np.zeros_like(q)
+        gk = np.zeros_like(q) if kappa is not None else None
         for cell, jac, displacement, window in self.blocks(patch):
             rows = self.rows[cell]
             local = np.zeros(len(rows), dtype=np.complex128)
@@ -149,16 +169,24 @@ class WaveMoments:
             # Original numeric interpolation matrices are real.
             pulled = np.stack([matrix.T @ local for matrix in maps], axis=-1)
             field_g = pulled @ jac.T
-            phase = window[:, None] * np.exp(1j * displacement @ q.T)
+            if kappa is None:
+                phase = window[:, None] * np.exp(1j * displacement @ q.T)
+            else:
+                from src.solvers.neural_wave_decay import decay_phase
+
+                phase = decay_phase(displacement, window, q, kappa)
             gp += phase.conj().T @ field_g
             scalar = field_g.conj() @ p.T
             for axis in range(3):
                 gq[:, axis] += np.real(
                     np.sum(scalar * phase * (1j * displacement[:, axis, None]), axis=0)
                 )
+                if gk is not None:
+                    gk[:, axis] += np.real(np.sum(
+                        scalar * phase * (-displacement[:, axis, None]), axis=0))
         self.counts["vjp"] += 1
         self.seconds["vjp"] += perf_counter() - start
-        return gq, gp
+        return (gq, gp) if gk is None else (gq, gk, gp)
 
 
 def score_and_cotangent(z, residual):

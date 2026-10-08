@@ -1,0 +1,6 @@
+schema_version = 5
+
+[neural_wave]
+stage = "v34_0p7_complex_solve"
+design_sha256 = "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+native_target = 1e-8

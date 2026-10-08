@@ -1,0 +1,35 @@
+{
+  "batches": [
+    {
+      "path": "tmp/task42extra/v34/targeted_01/junit.xml",
+      "sha256": "175c6ffd6ac9cc2a4a6e3a87b908e085cf2acfa68072b2144aeaa7325835cf54",
+      "tests": 41,
+      "failures": 1,
+      "errors": 0,
+      "scope": "targeted only, pure single-core2GiB watchdog",
+      "uncommitted_source_diff_sha256": "NOT_RETAINED"
+    },
+    {
+      "path": "tmp/task42extra/v34/targeted_02/junit.xml",
+      "sha256": "d16a0f6610cb97b38632a788e319c05692660df5f5178a45504859b69a3cf93e",
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "scope": "targeted only, pure single-core2GiB watchdog",
+      "uncommitted_source_diff_sha256": "NOT_RETAINED"
+    },
+    {
+      "path": "tmp/task42extra/v34/targeted_03/junit.xml",
+      "sha256": "15e1c2a521ab1c78ab1114f5aa124a7fd3350d72fc7cd6eb9e6608713df3336a",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "scope": "targeted only, pure single-core2GiB watchdog",
+      "uncommitted_source_diff_sha256": "206636d6b4850bc71187769c6d99608143f0fa53c106c0665ab1bb77f27ead32"
+    }
+  ],
+  "old_failure_retained": true,
+  "full_pytest_run": false,
+  "ABI": "existing qualified native complex128/int64; no installation",
+  "source_binding": "actual formal source recorded by future run_manifest; precommit targeted edits were explicit"
+}
