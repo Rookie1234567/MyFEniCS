@@ -1,6 +1,19 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 Review V10-r2：W0.7 reduced-p6 deferred-AMD warm场（2026-10-08）
+## Task041 Review V10-r2：W0.7 compact-transfer warm场（2026-10-08）
+
+| 模型/阶段 | 当前实测 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8、matched L20/N29/h20/29 warm consumer | Invocation c38a11ae711846599601ac3c06286327；复用既有producer，QEP=0；one-cell 15120×15120/NNZ 7,123,680/PORD numeric完成并销毁 | source e890c1c12feb90dd4f7695d31402d63ff788d186；one-cell marker的17280 rows是端口/输出口径 |
+| bottom/top P4 | 64966²；NNZ 27,929,686/39,242,250；sequential AMD symbolic；INFOG(17)=20,150/15,697 million bytes | 两侧numeric均未调用；pending factors各destroy一次、error=0 |
+| compact transfer对象 | bottom/top K_local跨rank总数733/766；rank-sum payload 133,147,520/150,893,696 B | 是数组payload而非RSS/已测RSS节省；不可按记录引用重复求和 |
+| bottom numeric预算门 | fresh B 30,895,177,728 B + 单份INFOG(17) 20,150,000,000 B + W 5,322,116,301 B = 56,367,294,029 B | 高于cap 53,221,163,008 B 3,146,131,021 B，故numeric前拒绝；不是实测numeric峰或算法数值失败证明 |
+| 服务终态/账目 | consumer IMPLEMENTATION_FAILURE；public task041_public_command_nonzero/rc3；finalizer failed/service_boundary_failure；wall 1,956.390568298 s；V5 ledger 181项、本Invocation一条，SHA fc930c8c8c689cf61d08948e4aa768c2bd307bb24e61068a64833bf4f66af7d5 | controlled_stop.active=false；finalizer 8/10，只有public_result_completed、service_terminal_normal为false；tree RSS峰35,009,921,024 B与dedicated cgroup peak 32,935,227,392 B分列 |
+| 正式结果与目标资格 | fixed-H6反馈、outer、五真残差、recovery、physics均未到达 | 无缩减pilot数值pass；不资格化50×25 nm、2 TB或48 h。marker SHA bb2a466b84bd98216e2120938d9679c90cf2e81ef71f09b97d80db937a6703aa，finalizer SHA 8c987379232be4ebd2dea1f159118cd99fc4efcd8fe11f2995541c20a9e7e981。见[Task041 summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md) |
+
+跨Invocation同阶段的描述性对照：fresh B减少5,020,377,088 B，bottom INFOG(17)增加690,000,000 B，筛查缺口从7,476,508,109降至3,146,131,021 B。不能据此将B变化全部归因于compact orientation。当前top numeric未来fresh-B限额32,202,046,707 B，本场未测。
+
+## 历史：Task041 Review V10-r2 deferred-AMD warm场（2026-10-08）
 
 | 模型/阶段 | 当前实测 | 资格边界与证据 |
 |---|---|---|

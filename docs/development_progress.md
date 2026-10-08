@@ -1,6 +1,14 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-08：Task041 W0.7 deferred-AMD warm场终态
+## 2026-10-08：Task041 W0.7 compact-transfer warm场终态
+
+唯一Invocation c38a11ae711846599601ac3c06286327（MPI8、W0.7 reduced p6/h0.70/M400、matched L20/N29/h20/29）在bottom P4 numeric前被阶段预算门拒绝。此前compact表示把方向变换矩阵改为共享canonical矩阵与实体方向块；本场bottom/top K_local跨rank总数733/766，对应rank-sum payload 133,147,520/150,893,696 B。这些对象字节不等于RSS，也不能把跨场RSS变化全部归因于该表示。
+
+one-cell source matrix为15120×15120、NNZ一次跨rank求和7,123,680，按INFOG(7/32)=4/1为PORD；numeric完成并销毁。bottom/top P4矩阵均64966×64966、NNZ 27,929,686/39,242,250，sequential AMD symbolic完成；INFOG(17)分别20150/15697 million bytes。bottom numeric筛查为fresh B 30,895,177,728 B + 单份INFOG(17) 20,150,000,000 B + W 5,322,116,301 B，共56,367,294,029 B，比cap 53,221,163,008 B高3,146,131,021 B。两侧pending handles各销毁一次、numeric attempts均0。
+
+原始终态为consumer IMPLEMENTATION_FAILURE、public task041_public_command_nonzero/rc3、finalizer failed/service_boundary_failure、controlled_stop.active=false；finalizer 8/10，只有public_result_completed和service_terminal_normal为false。唯一service wall 1,956.390568298 s，V5 ledger 181项、本Invocation一次，SHA fc930c8c8c689cf61d08948e4aa768c2bd307bb24e61068a64833bf4f66af7d5。tree RSS峰35,009,921,024 B、dedicated cgroup peak 32,935,227,392 B分列。反馈门、outer、五真残差、recovery与physics未到达；不构成pilot数值pass、50×25 nm、2 TB或48 h资格。W2本轮不执行，保护stash和raw未改。完整阶段、跨场对照与marker/finalizer SHA见[Task041 Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)、[outcomes summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)及[实测进度](task041_mpi1_shortwave_hybrid_capacity/outcomes/shortwave_measured_progress_v10.md)。
+
+## 历史快照：2026-10-08 前一场 Task041 W0.7 deferred-AMD warm场
 
 W0.7 reduced-p6 matched-cell唯一warm Invocation `3d6b63c763414ad984beb60f1296458e`在bottom P4 numeric前被预算门拒绝。One-cell source factor `15120×15120`、NNZ一次跨rank求和`7,123,680`，按`INFOG(7/32)=4/1`为PORD；numeric已完成并销毁。Bottom/top P4分别为`64966×64966`、NNZ `27,929,686/39,242,250`，两侧sequential AMD symbolic完成，numeric调用均为0，pending handles各destroy一次、error=0。One-cell marker `rows=17,280`代表端口/输出口径；source矩阵行数及interior rows为`15,120`。
 

@@ -1,6 +1,34 @@
 # Task041 Response V12：Review V10-r2现场进度
 
-## 2026-10-08：W0.7 deferred-AMD warm场终态
+## 2026-10-08：W0.7 compact-orientation warm场终态
+
+唯一compact-transfer warm Invocation 为 c38a11ae711846599601ac3c06286327，unit 为 task041-v10r2-w0p7-compact-transfer-warm-cpu10-11-14-15-16-17-18-19-20261008T125520Z.service，source HEAD 为 e890c1c12feb90dd4f7695d31402d63ff788d186。本场复用已验证 producer packet，QEP=0；没有第二次dispatch。
+
+compact orientation把各单元方向变换重复存下的稠密矩阵改为共享canonical插值矩阵和每个方向所需的实体块。它减少了可见的数组payload，但数组字节不等于RSS，也不能单独解释整场B变化。此次实际consumer marker SHA为 bb2a466b84bd98216e2120938d9679c90cf2e81ef71f09b97d80db937a6703aa；finalizer SHA为 8c987379232be4ebd2dea1f159118cd99fc4efcd8fe11f2995541c20a9e7e981。
+
+| 阶段/门 | 实际记录 | 结论 |
+|---|---|---|
+| one-cell | source matrix 15120×15120、NNZ 7,123,680；INFOG(7/32)=4/1，PORD；numeric完成后销毁 | ready marker的rows=17,280是端口/输出行口径，不是source矩阵行数 |
+| bottom P4 | 64,966×64,966、NNZ 27,929,686；sequential AMD symbolic完成，INFOG(17)=20,150 million bytes | numeric未调用，factor保持pending至预算拒绝 |
+| top P4 | 64,966×64,966、NNZ 39,242,250；sequential AMD symbolic完成，INFOG(17)=15,697 million bytes | numeric未调用；top numeric门未评估 |
+| bottom numeric门 | fresh B=30,895,177,728 B；单份INFOG(17)=20,150,000,000 B；W=5,322,116,301 B；合计56,367,294,029 B，对cap 53,221,163,008 B超3,146,131,021 B | before-numeric预算筛查拒绝；这不是实测numeric峰或算法数值失败证明 |
+| pending清理 | bottom与top各destroy一次，destroy error=0；两侧numeric attempts均为0 | 同一Invocation无遗留pending因子 |
+
+两侧transfer的对象统计另列，不与RSS混加：bottom K_local合计733、rank-sum payload 133,147,520 B；top K_local合计766、rank-sum payload 150,893,696 B。两者均为canonical R、方向实体块和索引的rank-local对象总量；ghost重复按各rank实际持有统计，不是可回收RSS的实测差值。全run process-tree RSS峰35,009,921,024 B，专属cgroup peak 32,935,227,392 B，口径不同。
+
+| 跨场描述性对照 | 前一场 | 本场 | 差值 |
+|---|---:|---:|---:|
+| bottom numeric门fresh B | 35,915,554,816 B | 30,895,177,728 B | −5,020,377,088 B |
+| bottom INFOG(17) | 19,460,000,000 B | 20,150,000,000 B | +690,000,000 B |
+| numeric筛查缺口 | 7,476,508,109 B | 3,146,131,021 B | −4,330,377,088 B |
+
+该表只描述不同Invocation的门读数，不能将B的全部下降归因于compact表示。对当前top的INFOG(17)与同一政策W计算，未来top numeric门要求fresh B不超过32,202,046,707 B；本场没有测得该fresh B，也没有进入top numeric。
+
+最终raw分类保持原值：consumer IMPLEMENTATION_FAILURE；public task041_public_command_nonzero、rc=3；finalizer status=failed、result_classification=service_boundary_failure；controlled_stop.active=false。finalizer为8/10，只有public_result_completed与service_terminal_normal为false，其余清理和账目检查通过。fixed-H6反馈、outer、五项真残差、recovery、physics及official observables均未到达；本缩减pilot没有数值结果，不能资格化50×25 nm目标、2 TB容量或48 h冷启动。
+
+唯一service-finalizer wall为1,956.390568298 s。V5 ledger共181项，本Invocation恰有一条，SHA fc930c8c8c689cf61d08948e4aa768c2bd307bb24e61068a64833bf4f66af7d5；不另计嵌套consumer阶段。原始summary、service、finalizer、consumer markers和ledger均保留，未改写raw。证据入口：[consumer markers](../../results/task041_w0p7nm_balh_hybrid_iterative_p6h0p70_m400_mpi8_cell_condensed_pilot/task041_w0p7_p6_h0p70_m400_mpi8_cell_condensed_pilot__hybrid_iterative__mpi8__M400/20261008T131610.846014Z/consumer/markers.jsonl)、[service summary](../../results/task041_w0p7_compact_transfer_warm_run_20261008T125520Z/summary.json)、[finalizer summary](../../results/task041_w0p7_compact_transfer_warm_run_20261008T125520Z/finalizer/finalizer_summary.json)。
+
+## 历史：前一场 W0.7 deferred-AMD warm Invocation 3d6b63c763414ad984beb60f1296458e
 
 唯一获准的warm consumer Invocation `3d6b63c763414ad984beb60f1296458e`已结束；没有第二次dispatch。此前组件和warm包准备段落是运行前快照，现由本节终态取代，历史raw及原分类不变。
 

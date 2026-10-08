@@ -1,6 +1,20 @@
 # Task041 outcomes summary
 
-## 2026-10-08：W0.7 reduced pilot最新终态——numeric前预算拒绝
+## 2026-10-08：W0.7 compact-transfer warm场终态——numeric前预算拒绝
+
+| 范围 | 实测结果 | 状态/资格边界 |
+|---|---|---|
+| Invocation与身份 | 唯一Invocation c38a11ae711846599601ac3c06286327；unit task041-v10r2-w0p7-compact-transfer-warm-cpu10-11-14-15-16-17-18-19-20261008T125520Z.service；source e890c1c12feb90dd4f7695d31402d63ff788d186；复用既有producer，QEP=0 | warm consumer单场，没有第二次dispatch |
+| one-cell | source matrix 15120×15120，NNZ跨rank一次求和7,123,680；INFOG(7/32)=4/1、PORD | numeric完成并销毁；ready marker rows=17,280是端口/输出口径 |
+| bottom/top P4 symbolic | 均为64,966×64,966；NNZ 27,929,686/39,242,250；sequential AMD；INFOG(17)=20,150/15,697 million bytes | 两侧symbolic完成，numeric attempts均0；pending handles各destroy一次、error=0 |
+| compact transfer对象 | bottom/top K_local跨rank合计733/766；rank-sum payload 133,147,520/150,893,696 B | 是数组对象统计，不是RSS或已测RSS节省；canonical R、方向实体块和索引分列见Response V12 |
+| bottom numeric门 | fresh B 30,895,177,728 B + 单份INFOG(17) 20,150,000,000 B + W 5,322,116,301 B = 56,367,294,029 B | 高于cap 53,221,163,008 B 3,146,131,021 B；before-numeric预算拒绝，不是实测峰或算法数值失败证明 |
+| 服务终态与计费 | consumer IMPLEMENTATION_FAILURE；public task041_public_command_nonzero/rc3；finalizer failed/service_boundary_failure；service wall 1,956.390568298 s；V5 ledger 181项、本Invocation一条 | controlled_stop.active=false；finalizer 8/10，仅public_result_completed与service_terminal_normal为false，其余清理/计账检查通过。tree RSS峰35,009,921,024 B与dedicated cgroup peak 32,935,227,392 B分列 |
+| 尚未到达 | fixed-H6反馈、outer、五真残差、recovery、physics、official observables | 本缩减pilot未完成求解，不资格化50×25 nm、2 TB容量或48 h目标 |
+
+与上一场同阶段的描述性差值：fresh B减少5,020,377,088 B；bottom INFOG(17)增加690,000,000 B；预算缺口从7,476,508,109缩小到3,146,131,021 B（缩小4,330,377,088 B）。这些跨Invocation数字不能把B变化全归因于compact orientation。按当前top INFOG(17)与W计算的后续top numeric fresh-B限额为32,202,046,707 B；本场未测。consumer marker SHA bb2a466b84bd98216e2120938d9679c90cf2e81ef71f09b97d80db937a6703aa，finalizer SHA 8c987379232be4ebd2dea1f159118cd99fc4efcd8fe11f2995541c20a9e7e981。详见[Response V12](../response_v12.md)、[本轮实测进度](shortwave_measured_progress_v10.md)及[原始runroot](../../../results/task041_w0p7_compact_transfer_warm_run_20261008T125520Z/)。
+
+## 历史快照：前一场 W0.7 reduced pilot（Invocation 3d6b63c763414ad984beb60f1296458e）
 
 | 范围 | 实测结果 | 状态/边界 |
 |---|---|---|
