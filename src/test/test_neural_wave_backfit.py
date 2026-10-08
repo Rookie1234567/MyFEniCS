@@ -25,6 +25,20 @@ class DenseAction:
         return (self.A.conj().T if adjoint else self.A) @ c
 
 
+def test_complete_complex_cancellation_including_active_slot():
+    from src.solvers.neural_wave_backfit import compensated_mixed_columns
+
+    U = np.array([[1e16 + 1e16j, 1 + 2j, -1e16 - 1e16j]], complex)
+    amplitude = np.ones(3, complex)
+    np.testing.assert_array_equal(
+        compensated_mixed_columns(U, amplitude), np.array([1 + 2j])
+    )
+    np.testing.assert_array_equal(
+        compensated_mixed_columns(U, amplitude, 1, 2, np.array([[3 + 4j]])),
+        np.array([3 + 4j]),
+    )
+
+
 def fixture(seed=4213301):
     rng = np.random.default_rng(seed)
     A = rng.normal(size=(14, 14)) + 1j * rng.normal(size=(14, 14))

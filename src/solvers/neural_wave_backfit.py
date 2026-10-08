@@ -21,6 +21,21 @@ class CompleteTrialLimit(Exception):
     pass
 
 
+def compensated_mixed_columns(matrix, amplitudes, first=0, last=0, active=None):
+    """Complex128 Neumaier accumulation, including cancellation inside blocks."""
+    value = np.zeros(matrix.shape[0], dtype=np.complex128)
+    correction = np.zeros_like(value)
+    for j, coefficient in enumerate(amplitudes):
+        column = active[:, j - first] if first <= j < last else matrix[:, j]
+        term = column * coefficient
+        new = value + term
+        correction += np.where(
+            abs(value) >= abs(term), (value - new) + term, (term - new) + value
+        )
+        value = new
+    return value + correction
+
+
 class SmallSVDSolve:
     def __init__(self, matrix, rcond=1e-12):
         self.left, self.singular, self.right = linalg.svd(
@@ -123,24 +138,9 @@ class InactiveComplement:
         amplitudes[self.indices], amplitudes[self.first : self.last] = a_F, b
         # Retain original inactive order. Temporarily insert only the small
         # activity, never copy the full inactive U for each objective.
-        c = np.zeros(self.action.size, np.complex128)
-        correction = np.zeros_like(c)
-        for first in range(0, self.m, 32):
-            last = min(first + 32, self.m)
-            section = self.U[:, first:last]
-            if first < self.last and last > self.first:
-                section = section.copy()
-                lo, hi = max(first, self.first), min(last, self.last)
-                section[:, lo - first : hi - first] = columns[
-                    :, lo - self.first : hi - self.first
-                ]
-            value = section @ amplitudes[first:last]
-            new = c + value
-            correction += np.where(
-                abs(c) >= abs(value), (c - new) + value, (value - new) + c
-            )
-            c = new
-        c += correction
+        c = compensated_mixed_columns(
+            self.U, amplitudes, self.first, self.last, columns
+        )
         r = self.action.f - self.action.apply(c)
         predicted = rhs - self.Q @ (self.R @ a_F)
         pairing = float(np.linalg.norm(r - predicted) / self.action.bnorm)
@@ -148,7 +148,9 @@ class InactiveComplement:
             np.linalg.norm(conjugate_product(zq, self.r_F - Z @ b)) / self.action.bnorm
         )
         if not np.isfinite(r).all() or pairing > 1e-10:
-            raise TrialRejected("REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED")
+            raise TrialRejected(
+                "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: " + str(pairing)
+            )
         grad = None
         if gradient:
             cotangent = -self.action.apply(r, adjoint=True) / self.action.bnorm**2

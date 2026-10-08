@@ -50,6 +50,18 @@ def qualify_real(
         zero = F.trial(
             moments, b["patch"], b["wave_q"], b["amplitude_map"], gradient=True
         )
+        marker(
+            "real_backfit_zero_retained",
+            dict(
+                block_id=block_id,
+                q=b["wave_q"],
+                objective=zero.objective,
+                native=float(np.linalg.norm(zero.r) / action.bnorm),
+                reduced_complete_pair=zero.pairing,
+                amplitude_norm=float(np.linalg.norm(zero.amplitudes)),
+                gradient=zero.gradient,
+            ),
+        )
         mapping = float(
             np.linalg.norm(zero.columns - space.U[:, first:last])
             / max(np.linalg.norm(space.U[:, first:last]), 1e-30)
@@ -93,6 +105,16 @@ def qualify_real(
                 b["amplitude_map"],
                 gradient=False,
             )
+            marker(
+                "real_backfit_fd_plus_retained",
+                dict(
+                    block_id=block_id,
+                    direction_id=j,
+                    h=h,
+                    objective=plus.objective,
+                    pairing=plus.pairing,
+                ),
+            )
             minus = F.trial(
                 moments,
                 b["patch"],
@@ -113,6 +135,7 @@ def qualify_real(
                     / max(abs(expected), 1e-14),
                 )
             )
+            marker("real_backfit_fd_retained", dict(block_id=block_id, **fd[-1]))
             trials += 2
             for trial in (plus, minus):
                 if trial.objective < best.objective:

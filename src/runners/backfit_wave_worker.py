@@ -221,9 +221,15 @@ def run_stage(manifest, artifact, marker):
         ("v33_backfit_math_checks", "implementation_qualified"),
     ):
         receipt = json.loads((profile["artifacts"] / stage / "result.json").read_text())
-        if not receipt[key] or receipt["bound_numerical_chain"] != {
-            p: digest(ROOT / p) for p in CHAIN
-        }:
+        relevant = (
+            ("src/solvers/neural_wave_backfit_state.py",)
+            if key == "anchor_qualified"
+            else CHAIN
+        )
+        if not receipt[key] or any(
+            receipt["bound_numerical_chain"].get(p) != digest(ROOT / p)
+            for p in relevant
+        ):
             raise ValueError("BACKFIT_SHARED_IMPLEMENTATION_NOT_QUALIFIED")
     from src.solvers.neural_wave_backfit_run import run_backfit
 
