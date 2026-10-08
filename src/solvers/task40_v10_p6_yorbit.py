@@ -3393,6 +3393,11 @@ def build_task40_v10_p6_reference_inverse(
     from .retained_port_block_layout import RESEARCH_PORT_LAYOUT
     from .fresh_c1_p6_component import _boundary_support
     from .task40_v10_p6_mumps import AllQExactMumps
+    from .task40_v10_p6_periodic_profile import (
+        TASK40_V10_P6_PROFILE,
+        TASK40_V18_P6_B0_Y8_PROFILE,
+        Task40V10P6PeriodicProfile,
+    )
     if not callable(allocation_gate):
         raise TypeError("p6 reference construction requires a live allocation gate")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
@@ -3463,11 +3468,6 @@ def build_task40_v10_p6_reference_inverse(
         if identity_gate is not None:
             identity_gate(global_bundle, global_levels)
         modes = tuple(global_bundle["modes"])
-        from .task40_v10_p6_periodic_profile import (
-            TASK40_V10_P6_PROFILE,
-            TASK40_V18_P6_B0_Y8_PROFILE,
-            Task40V10P6PeriodicProfile,
-        )
 
         if profile is None:
             profile = TASK40_V10_P6_PROFILE

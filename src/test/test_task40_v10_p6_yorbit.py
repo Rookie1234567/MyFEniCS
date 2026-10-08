@@ -729,6 +729,65 @@ def test_v18_ny8_profile_inventory_keeps_zero_port_q4_and_all_eight_factors():
     assert profile.validate_runtime_inventory(observed)["status"] == "RUNTIME_INVENTORY_MATCH"
 
 
+def test_ny8_reference_builder_resolves_profile_before_any_fe_or_factor_work(monkeypatch):
+    from dataclasses import make_dataclass
+    from importlib import import_module
+
+    pytest.importorskip("mpi4py")
+    pytest.importorskip("dolfinx")
+    pytest.importorskip("petsc4py")
+    from mpi4py import MPI
+    from petsc4py import PETSc
+
+    if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
+        pytest.skip("Ny8 reference builder requires the qualified complex PETSc ABI")
+    if np.dtype(PETSc.IntType) != np.dtype(np.int32) or MPI.COMM_SELF.Get_size() != 1:
+        pytest.skip("Ny8 reference builder requires the qualified serial int32 ABI")
+
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_V18_P6_B0_Y8_PROFILE,
+    )
+    from src.solvers.task40_v10_p6_yorbit import (
+        build_task40_v10_p6_reference_inverse,
+    )
+
+    cfg_type = make_dataclass(
+        "Ny8ReferenceBuilderConfig",
+        [
+            ("nedelec_degree", int),
+            ("mesh_axis_cell_counts_requested", object),
+            ("air_void_box_nm", object),
+            ("cell_notch", object),
+            ("geometry_identity", str),
+        ],
+    )
+    cfg = cfg_type(6, TASK40_V18_P6_B0_Y8_PROFILE.global_cell_axes, None, None, "test")
+    reached_global_mesh_build = []
+
+    class _ReachedGlobalMeshBuild(Exception):
+        pass
+
+    def stop_before_mesh(*_args, **_kwargs):
+        reached_global_mesh_build.append(True)
+        raise _ReachedGlobalMeshBuild
+
+    mesh_module = import_module(
+        "src.solvers.fullspace_same_mesh_hcurl_pmg_global"
+    )
+    monkeypatch.setattr(mesh_module, "_build_same_mesh_levels", stop_before_mesh)
+
+    with pytest.raises(_ReachedGlobalMeshBuild):
+        build_task40_v10_p6_reference_inverse(
+            cfg,
+            {"y": tuple(float(value) for value in range(9))},
+            allocation_gate=lambda *_args, **_kwargs: None,
+            profile=TASK40_V18_P6_B0_Y8_PROFILE,
+            operator_qualification_reuse=lambda **_kwargs: ({}, {}),
+        )
+
+    assert reached_global_mesh_build == [True]
+
+
 def test_streamed_contribution_projection_matches_dense_congruence():
     rng = np.random.default_rng(23)
     left = sparse.csr_matrix(
