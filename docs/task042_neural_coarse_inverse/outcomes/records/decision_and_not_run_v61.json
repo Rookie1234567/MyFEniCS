@@ -1,0 +1,27 @@
+{
+  "primary_pair_pass": {
+    "H2_FX": true,
+    "FX_FXY": false,
+    "H2_FXY": false
+  },
+  "cross_representation_pass": false,
+  "ambient_is_diagnostic": true,
+  "old_negative_results_unchanged": true,
+  "new_solves": 2,
+  "new_numeric_factors": 2,
+  "new_child_secondary_LU": 0,
+  "NN_training": 0,
+  "NN20": false,
+  "next_pilot": "在同一有限NOTCH/0.7nm/828物理问题上，以不共用现有p6/p7张量与凝聚的独立H(curl)离散完成一份完整场authority，判别两簇场的离散/稳定性分歧；事前固定空间与全场/功率门，先容量再执行。不得自动追加FXYZ、宏边升阶或内部r。",
+  "not_run": {
+    "new_z_faces": "not authorized",
+    "new_macro_edges": "not authorized",
+    "new_p_r_or_modes": "not authorized",
+    "fresh_numerical_cold_N1": "not measured; parent H2 factors reused",
+    "matched_cost_speed_ratio": "no balanced cold control",
+    "target_PDE": "not authorized/not qualified",
+    "CI": "not run",
+    "GitHub_visual": "NOT_VERIFIED"
+  },
+  "stop": "fixed scientific queue complete"
+}

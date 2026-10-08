@@ -1,0 +1,348 @@
+{
+  "batch": "V61_FACE_TRACE_ENRICHMENT",
+  "records": {
+    "array_inventory_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/array_inventory_v61.json",
+      "bytes": 458618,
+      "sha256": "6386e21bb56bfc0fe0993072739ff831364db07ff130c0f97f44ca38059eb86c"
+    },
+    "face_inventory_and_action_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/face_inventory_and_action_v61.json",
+      "bytes": 74939,
+      "sha256": "2e694293966ad540a7ebede547d5c88af7a5c186807e7e0a5532945ffa716bcb"
+    },
+    "raw_archive_index_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_archive_index_v61.json",
+      "bytes": 23193,
+      "sha256": "559eb95835cdc1913b1638117b6e4816725eed19000c3fed3a9850b62efbf254"
+    },
+    "repair_journal_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v61.json",
+      "bytes": 297,
+      "sha256": "7d39b0e31d0dc422e137addc74083f8fbee6f91a158f9fef0c24cab13050f0f8"
+    },
+    "resource_costs_final_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v61.json",
+      "bytes": 72156,
+      "sha256": "a7db12021314f2dbc902fea0580f22693c5646d446df8f0aef1f636e5259f367"
+    },
+    "resource_costs_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v61.json",
+      "bytes": 68031,
+      "sha256": "b1b4d66f62b11d8aab4631b7dd3ed57779fdac9e55f1c00e82980c51812b6b70"
+    },
+    "run_index_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v61.json",
+      "bytes": 13939,
+      "sha256": "a66a81f80f8da94a4cae7cd3c1ee356cf9db157895cced3bddab316974f3091c"
+    },
+    "scientific_checks_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v61.json",
+      "bytes": 353686,
+      "sha256": "ed8d01161b1eea245e5e14aef9637288ada07a69147c43b27710f6d67b1e8ee2"
+    },
+    "selective_merge_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_v61.json",
+      "bytes": 2552,
+      "sha256": "d4c6a1d0c86dc23b985aa72af77789d6461bf0cf38bc887f76fdeb37737fbc05"
+    },
+    "source_bindings_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v61.json",
+      "bytes": 140492,
+      "sha256": "d29d59e52a705428d8690a5fba319ca350a72ced9b7816e58c66b60e4708a1b2"
+    },
+    "storage_lifecycle_deployment_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/storage_lifecycle_deployment_v61.json",
+      "bytes": 15332,
+      "sha256": "ba67f0ec86bacc2d1b248eeec547a0af8284603b4c0c5db471c7e43d65da7647"
+    },
+    "target_gap_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v61.json",
+      "bytes": 749,
+      "sha256": "58b8ca7de1a7c6117a655fee6842e953e9a1058f02549aeffe48c618989da199"
+    },
+    "tests_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/tests_v61.json",
+      "bytes": 93927,
+      "sha256": "5326b38a0bd6cab3b8ce89b8ec69efcad5685fd37d48d3eb29620cd158fc41e8"
+    }
+  },
+  "parent": {
+    "H2": {
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_subcell2_macro_trace6_20261007T193335592506Z/solution.npz",
+        "sha256": "d0b4079a8db99fcaffcd56393febf6ce4765fdaf00171fa9e38e61700afd5cdd",
+        "members": {
+          "u_storage": {
+            "shape": [
+              857304
+            ],
+            "dtype": "complex128",
+            "sha256": "b2f162dabd3e99af18819b7feee88b2a56ebb7426ee3b33da1d5f979182cf541"
+          },
+          "port": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "cd2d9f502215e6eb625c3ace5eb7f474fca2d32240cd1ae212a261d8f49d230d"
+          },
+          "rhs": {
+            "shape": [
+              857304
+            ],
+            "dtype": "complex128",
+            "sha256": "1cdc36fefcacff85548b199071a96df80fde09b7adaee2e72c1d541c50ed5c50"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          },
+          "low_trace": {
+            "shape": [
+              32832
+            ],
+            "dtype": "complex128",
+            "sha256": "f26e39213a1b22c8c14c82e008ae562f54f8568f1bed2ace0b054e3b7e516e70"
+          },
+          "slaves": {
+            "shape": [
+              23256
+            ],
+            "dtype": "int64",
+            "sha256": "8011c3e2638b728223d5a3009956778ddfd34c4243b4304b5da10072b05a52fa"
+          },
+          "cell_centers": {
+            "shape": [
+              1280,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "325115e1594eb3c674467efab9dc6c96ab96a3a96f60b3d81e1361fcd0007de5"
+          },
+          "cell_tags": {
+            "shape": [
+              1280
+            ],
+            "dtype": "int32",
+            "sha256": "ec4e6f85f1dc4889ca0071cd7c2c736b72a9eab111dfea4acb82d94a9adc14e2"
+          },
+          "regular_tags": {
+            "shape": [
+              1280
+            ],
+            "dtype": "int32",
+            "sha256": "230c6c732f355d307a267864c89e8104668a642772f94810368459dabb64858e"
+          },
+          "geometry_x": {
+            "shape": [
+              1701,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "f2e2b564f3b857ee8fba5ad456ae8511e0d7d06ae41a6240fff53691af191faf"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              1280,
+              8
+            ],
+            "dtype": "int32",
+            "sha256": "342cd4624512fe6a4a035cdb1432d8e14c623c749d3951e1867dfa7f531fd8fd"
+          },
+          "residual": {
+            "shape": [
+              857304
+            ],
+            "dtype": "complex128",
+            "sha256": "3fea128bd8d7c93f2d1643bcc051e95069668a28a14235937b78ecc0505d9226"
+          },
+          "volume_action": {
+            "shape": [
+              857304
+            ],
+            "dtype": "complex128",
+            "sha256": "d90a99983a630878a5c2dbd8ff9f8de61335554b0e1103f4000f39258f45ab24"
+          },
+          "coupling_action": {
+            "shape": [
+              857304
+            ],
+            "dtype": "complex128",
+            "sha256": "6138a1f562e5059261564325d2e40b6bb75d39da96b383519b2e2f69cfe00cbc"
+          },
+          "augmented_residual": {
+            "shape": [
+              857304
+            ],
+            "dtype": "complex128",
+            "sha256": "1bfc21f820e51b69944f2d3a4b649e82dcbe03f0bd74852ba64e21ef3f0abd7a"
+          },
+          "port_residual": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "afe9613872cba9cfeebc49d99a9947f3f729ff01913dfc943405bc270ec56ee9"
+          },
+          "projected": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "f5182d1e56c2f83601c4278b22cc0db8bef255f6392306d599bdf3073c6f67c9"
+          },
+          "H": {
+            "shape": [
+              828
+            ],
+            "dtype": "float64",
+            "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+          }
+        }
+      },
+      "producer_source": "d42ac36b99bd758478da7ce42b34215826832676"
+    },
+    "R7": {
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v54/task042_v54_notch_z2_p7_m828_20261006T083249322552Z/solution.npz",
+        "sha256": "1c9859e0ddcb83134202b0a980bc1ab2adc18b24f94cc7e075bbb148e56f6b74",
+        "members": {
+          "u_storage": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "071b96f62f952e5480fdfe1f1649253ea74e55ff6348834211a79cd653bfe401"
+          },
+          "port": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "561f7758894b8a07fc56cbd5c3b929e8836179f17efc2343b7f837b5dff22642"
+          },
+          "rhs": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "ef9e3cefda6434a4fefcc5de380a11a2b98b4bb446629777b07663e56c71c53b"
+          },
+          "kappa": {
+            "shape": [
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+          },
+          "slaves": {
+            "shape": [
+              7966
+            ],
+            "dtype": "int32",
+            "sha256": "c88cbd08be21ace1358d044bb3f9ef2710a1bd5ff821b55fd432259028402bf0"
+          },
+          "cell_centers": {
+            "shape": [
+              160,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "a6450af7a140dfe330d40107aba58ec88cfa42d58d9f84cc4a22be6d943c890c"
+          },
+          "cell_tags": {
+            "shape": [
+              160
+            ],
+            "dtype": "int32",
+            "sha256": "6aec2cf5344a1fa9d668da349ea4025633ed19af9a742cf2c10d27b0fe889efb"
+          },
+          "regular_tags": {
+            "shape": [
+              160
+            ],
+            "dtype": "int32",
+            "sha256": "dedccffcc31c1e934aae3d98c9c7244b817f29a31f771ba4e3fda04162a77a4a"
+          },
+          "geometry_x": {
+            "shape": [
+              275,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "c4d2e7ec21a1f34da7215abb382b3b70e4f32e0684c988be107bf49bf20d0638"
+          },
+          "geometry_dofmap": {
+            "shape": [
+              160,
+              8
+            ],
+            "dtype": "int32",
+            "sha256": "b21359559b5884d8eb427c8302953de41e903f36c29e52667aba66f22b8f6f36"
+          },
+          "residual": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "e457d05ba71638d7c5f61220e047e06134dd00a55ba19efe07a182cee236109f"
+          },
+          "volume_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "ca1011717c8b4aefdd7f3540ea8333d014c7091570a066580765b8e90b0ee96f"
+          },
+          "coupling_action": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "f76c73a864e5946854549710522e0f082b4b5b10a3c8fec793e51a7fb014612a"
+          },
+          "augmented_residual": {
+            "shape": [
+              174174
+            ],
+            "dtype": "complex128",
+            "sha256": "26582f43aeff88bdea544f372ff80ebbafee3084c60c810d790f9e2930400807"
+          },
+          "port_residual": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "bfc68b4dc8c87b3585eddeb80cdd169aea0aec9b6f9366dde172c605b9031c54"
+          },
+          "projected": {
+            "shape": [
+              828
+            ],
+            "dtype": "complex128",
+            "sha256": "e57250c17a16ccc6b18a969f3e6a72cc3c6cd2417a8e1c8cb7fbe2f039fc5bc9"
+          },
+          "H": {
+            "shape": [
+              828
+            ],
+            "dtype": "float64",
+            "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+          }
+        }
+      },
+      "producer_source": "65484196065491b4714068b7472aa34f815ae299"
+    }
+  },
+  "source_science": "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+  "source_saved_consumer": "2681258fe60745bb06d30dea9f88d60fbebf751c",
+  "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "raw_archive_index": "raw_archive_index_v61.json",
+  "array_inventory": "array_inventory_v61.json",
+  "documentation_and_cost_records_finalized_after_scientific_freeze": true
+}

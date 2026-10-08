@@ -1,0 +1,357 @@
+{
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v61/aux_pre_targeted01",
+      "source_sha": "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-07T23:47:45.800014+00:00",
+        "observed_monotonic": 1341860.660881338,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 1348.281412601471,
+        "heavy_remaining_seconds": 31051.71858739853,
+        "total_remaining_seconds": 34651.71858739853
+      },
+      "elapsed_seconds": 6.216228052042425,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 220827648,
+      "swap_bytes": 0
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v61_face_trace_preflight_20261007T234832087039Z",
+      "source_sha": "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-07T23:48:59.874791+00:00",
+        "observed_monotonic": 1341934.735657488,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 1422.356188774109,
+        "heavy_remaining_seconds": 30977.64381122589,
+        "total_remaining_seconds": 34577.64381122589
+      },
+      "elapsed_seconds": 324.8441389729269,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 5231202304,
+      "swap_bytes": 0
+    },
+    {
+      "role": "FX",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v61_face_x_enrichment_20261007T235515809503Z",
+      "source_sha": "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-07T23:55:45.141154+00:00",
+        "observed_monotonic": 1342340.002020604,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 1827.6225519180298,
+        "heavy_remaining_seconds": 30572.37744808197,
+        "total_remaining_seconds": 34172.37744808197
+      },
+      "elapsed_seconds": 2243.1283106419723,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 23267786752,
+      "swap_bytes": 0
+    },
+    {
+      "role": "FXY",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v61_face_xy_enrichment_20261008T003405881306Z",
+      "source_sha": "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T00:34:34.774835+00:00",
+        "observed_monotonic": 1344669.635702207,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 4157.256233453751,
+        "heavy_remaining_seconds": 28242.74376654625,
+        "total_remaining_seconds": 31842.74376654625
+      },
+      "elapsed_seconds": 3143.7277984940447,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 44284882944,
+      "swap_bytes": 0
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v61/aux_pre_targeted02",
+      "source_sha": "2681258fe60745bb06d30dea9f88d60fbebf751c",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T01:29:25.807634+00:00",
+        "observed_monotonic": 1347960.668500786,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 7448.289031982422,
+        "heavy_remaining_seconds": 24951.710968017578,
+        "total_remaining_seconds": 28551.710968017578
+      },
+      "elapsed_seconds": 18.555056343087927,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 112476160,
+      "swap_bytes": 0
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v61_compare_verify_cost_20261008T013109445020Z",
+      "source_sha": "2681258fe60745bb06d30dea9f88d60fbebf751c",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T01:31:40.772830+00:00",
+        "observed_monotonic": 1348095.633697342,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 7583.254228591919,
+        "heavy_remaining_seconds": 24816.74577140808,
+        "total_remaining_seconds": 28416.74577140808
+      },
+      "elapsed_seconds": 4043.179675403051,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 1219809280,
+      "swap_bytes": 0
+    }
+  ],
+  "pointers": {
+    "PREFLIGHT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v61/task042_v61_face_trace_preflight_20261007T234832087039Z/result.json",
+      "sha256": "76ccd2a0c51af6907b7b125fd412d1a667e6f279771ba5a10212892a73191321"
+    },
+    "FX": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v61/task042_v61_face_x_enrichment_20261007T235515809503Z/result.json",
+      "sha256": "c4c5631ff4320aba7f604cf9bf888ad434381aaf2fc5e62bc4508bf4d9a1912f"
+    },
+    "FXY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v61/task042_v61_face_xy_enrichment_20261008T003405881306Z/result.json",
+      "sha256": "367cff3c0d41615bf51d4e85c867a0467492cbcaa25bb4ab8bbb042aa76aeff5"
+    },
+    "VERIFY_COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v61/task042_v61_compare_verify_cost_20261008T013109445020Z/result.json",
+      "sha256": "7510b98b27907e621ce3c156696476a259614696c7cf7a1eeabe95a707bb642b"
+    }
+  },
+  "parent_H2": {
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_subcell2_macro_trace6_20261007T193335592506Z/solution.npz",
+      "sha256": "d0b4079a8db99fcaffcd56393febf6ce4765fdaf00171fa9e38e61700afd5cdd",
+      "members": {
+        "u_storage": {
+          "shape": [
+            857304
+          ],
+          "dtype": "complex128",
+          "sha256": "b2f162dabd3e99af18819b7feee88b2a56ebb7426ee3b33da1d5f979182cf541"
+        },
+        "port": {
+          "shape": [
+            828
+          ],
+          "dtype": "complex128",
+          "sha256": "cd2d9f502215e6eb625c3ace5eb7f474fca2d32240cd1ae212a261d8f49d230d"
+        },
+        "rhs": {
+          "shape": [
+            857304
+          ],
+          "dtype": "complex128",
+          "sha256": "1cdc36fefcacff85548b199071a96df80fde09b7adaee2e72c1d541c50ed5c50"
+        },
+        "kappa": {
+          "shape": [
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "3f07549f277388b020cfc9b7c19ab8054c328cf2557e202b7e4a0b9f1ae938ae"
+        },
+        "low_trace": {
+          "shape": [
+            32832
+          ],
+          "dtype": "complex128",
+          "sha256": "f26e39213a1b22c8c14c82e008ae562f54f8568f1bed2ace0b054e3b7e516e70"
+        },
+        "slaves": {
+          "shape": [
+            23256
+          ],
+          "dtype": "int64",
+          "sha256": "8011c3e2638b728223d5a3009956778ddfd34c4243b4304b5da10072b05a52fa"
+        },
+        "cell_centers": {
+          "shape": [
+            1280,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "325115e1594eb3c674467efab9dc6c96ab96a3a96f60b3d81e1361fcd0007de5"
+        },
+        "cell_tags": {
+          "shape": [
+            1280
+          ],
+          "dtype": "int32",
+          "sha256": "ec4e6f85f1dc4889ca0071cd7c2c736b72a9eab111dfea4acb82d94a9adc14e2"
+        },
+        "regular_tags": {
+          "shape": [
+            1280
+          ],
+          "dtype": "int32",
+          "sha256": "230c6c732f355d307a267864c89e8104668a642772f94810368459dabb64858e"
+        },
+        "geometry_x": {
+          "shape": [
+            1701,
+            3
+          ],
+          "dtype": "float64",
+          "sha256": "f2e2b564f3b857ee8fba5ad456ae8511e0d7d06ae41a6240fff53691af191faf"
+        },
+        "geometry_dofmap": {
+          "shape": [
+            1280,
+            8
+          ],
+          "dtype": "int32",
+          "sha256": "342cd4624512fe6a4a035cdb1432d8e14c623c749d3951e1867dfa7f531fd8fd"
+        },
+        "residual": {
+          "shape": [
+            857304
+          ],
+          "dtype": "complex128",
+          "sha256": "3fea128bd8d7c93f2d1643bcc051e95069668a28a14235937b78ecc0505d9226"
+        },
+        "volume_action": {
+          "shape": [
+            857304
+          ],
+          "dtype": "complex128",
+          "sha256": "d90a99983a630878a5c2dbd8ff9f8de61335554b0e1103f4000f39258f45ab24"
+        },
+        "coupling_action": {
+          "shape": [
+            857304
+          ],
+          "dtype": "complex128",
+          "sha256": "6138a1f562e5059261564325d2e40b6bb75d39da96b383519b2e2f69cfe00cbc"
+        },
+        "augmented_residual": {
+          "shape": [
+            857304
+          ],
+          "dtype": "complex128",
+          "sha256": "1bfc21f820e51b69944f2d3a4b649e82dcbe03f0bd74852ba64e21ef3f0abd7a"
+        },
+        "port_residual": {
+          "shape": [
+            828
+          ],
+          "dtype": "complex128",
+          "sha256": "afe9613872cba9cfeebc49d99a9947f3f729ff01913dfc943405bc270ec56ee9"
+        },
+        "projected": {
+          "shape": [
+            828
+          ],
+          "dtype": "complex128",
+          "sha256": "f5182d1e56c2f83601c4278b22cc0db8bef255f6392306d599bdf3073c6f67c9"
+        },
+        "H": {
+          "shape": [
+            828
+          ],
+          "dtype": "float64",
+          "sha256": "fc8bf271da287cb70f0728bd59eef9dee008b9b716fd0f236ad1a362dc5a0f7b"
+        }
+      }
+    },
+    "bank": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v60/task042_v60_subcell2_macro_trace6_20261007T193335592506Z/local_schur_bank/manifest.json",
+      "sha256": "c2501dd07f709dfe6a001a290caa2842016695af1d520a603a6b54164eb19e24",
+      "source_sha": "d42ac36b99bd758478da7ce42b34215826832676"
+    }
+  },
+  "old_window_closed": true
+}

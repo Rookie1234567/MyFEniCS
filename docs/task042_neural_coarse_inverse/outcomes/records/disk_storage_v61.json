@@ -1,0 +1,44 @@
+{
+  "measured": {
+    "new_bytes": 9415501865,
+    "task_artifact_bytes": 103125590499,
+    "free_bytes": 3193986068480,
+    "reserve_bytes": 536870912
+  },
+  "clock": {
+    "start_utc": "2026-10-07T23:25:17.518602+00:00",
+    "start_monotonic": 1340512.38,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+    "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "monotonic_observation_precision_seconds": 0.01,
+    "observed_utc": "2026-10-08T02:52:19.175024+00:00",
+    "observed_monotonic": 1352934.035894888,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12421.656421899796,
+    "heavy_remaining_seconds": 19978.343578100204,
+    "total_remaining_seconds": 23578.343578100204
+  },
+  "plan": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "limits": {
+    "new_storage_bytes": 34359738368,
+    "task_storage_bytes": 193273528320,
+    "free_bytes": 53687091200,
+    "evidence_reserve_bytes": 536870912
+  },
+  "method": "all Task042 resource-scope file stat sizes, unique inode ownership; no historical payload rehash",
+  "snapshot_before_small_final_document_and_tail_versions": true
+}

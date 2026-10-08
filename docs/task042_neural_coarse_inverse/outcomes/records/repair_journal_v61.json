@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "event": "INTAKE_SANDBOX_MPI_PROBE",
+      "classif": "sandbox_socket_denied",
+      "elapsed_lower_seconds": 0.617407451,
+      "host_ABI_probe_pass": true,
+      "probe_seconds": 1.084375021,
+      "scientific_actor": false
+    }
+  ],
+  "failures_preserved": true
+}

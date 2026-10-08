@@ -1,3 +1,20 @@
+# Task042 V61：面接口扩充的完整场与实际成本
+
+保留宏内部r2-p6，只新增x/y面内部切向协商方向；两份独立完整三维解及原式/恢复/828模式/体吸收完成，未释放z面和宏边缺陷分列。不是NN训练，原尺寸/2TB48h/NN20未资格。
+
+H2_FX散射E/H 4.74295e-05/4.94671e-05（PASS）；FX_FXY散射E/H 0.000188643/0.000186652（FAIL）；H2_FXY散射E/H 0.000195458/0.000194016（FAIL）；R7_FXY散射E/H 0.0336585/0.0336982（FAIL）。场门1e−4保持，不以小残差或功率通过覆盖。
+
+| 模型 | 含port行 | 实际nnz | mixed独立true | R/T/A_volume | 有限资格 |
+|---|---|---|---|---|---|
+| FX：x面补空间 | 66300 | 99404541 | 3.074892e-11 | 0.07621846271/0.9056651484/0.01811638885 | 原式/恢复/828输出通过；场增量单列 |
+| FXY：x+y面补空间 | 98940 | 223567101 | 3.064346e-11 | 0.07621845199/0.9056651521/0.01811639593 | 原式/恢复/828输出通过；场增量单列 |
+
+新面基/映射/只读内部服务/薄scope在src；复用原局部两级响应、低迹装配、无JIT输出与PUBLIC_BASIX。默认数学未改，新增路线仅opt-in；保存consumer无factor/PDE。旧task/review/response/raw不改，不merge。
+
+[依赖分组与改动](records/selective_merge_v61.json) · [source/hash](records/source_bindings_v61.json) · [交付](records/delivery_index_v61.json)。全部历史逐字保留，closed/清场/推送后暂停，不通知邻窗。
+
+---
+
 # V60增量及依赖分组
 
 数值核在src/solvers：entity-supported local restriction、两级subcell response/恢复/部署、只读准备checkpoint与body-only Schur bank。薄scope/study/五dat及run_case复用原runner/监督；边界provider仅显式entity支持，原普通默认不改。独立checker、saved-only consumer及仅同V60成功副本的hash-bound archive接口有targeted回归；数学/源/数组与完整C67/H2均保留。

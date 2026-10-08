@@ -1,3 +1,18 @@
+# Task042 V61：面接口扩充的完整场与实际成本
+
+保留宏内部r2-p6，只新增x/y面内部切向协商方向；两份独立完整三维解及原式/恢复/828模式/体吸收完成，未释放z面和宏边缺陷分列。不是NN训练，原尺寸/2TB48h/NN20未资格。
+
+H2_FX散射E/H 4.74295e-05/4.94671e-05（PASS）；FX_FXY散射E/H 0.000188643/0.000186652（FAIL）；H2_FXY散射E/H 0.000195458/0.000194016（FAIL）；R7_FXY散射E/H 0.0336585/0.0336982（FAIL）。场门1e−4保持，不以小残差或功率通过覆盖。
+
+| 模型 | 含port行 | 实际nnz | mixed独立true | R/T/A_volume | 有限资格 |
+|---|---|---|---|---|---|
+| FX：x面补空间 | 66300 | 99404541 | 3.074892e-11 | 0.07621846271/0.9056651484/0.01811638885 | 原式/恢复/828输出通过；场增量单列 |
+| FXY：x+y面补空间 | 98940 | 223567101 | 3.064346e-11 | 0.07621845199/0.9056651521/0.01811639593 | 原式/恢复/828输出通过；场增量单列 |
+
+[回应](response_v61.md) · [完整场/成本](outcomes/face_trace_enrichment_v61.md) · [科学](outcomes/records/scientific_checks_v61.json) · [最终费用](outcomes/records/resource_costs_final_v61.json) · [交付索引](outcomes/records/delivery_index_v61.json) · [权威Review](review_report_v59.md)。全部历史逐字保留，closed/清场/推送后暂停，不通知邻窗。
+
+---
+
 # 最新入口：V60完成，等待审阅
 
 [Response V60](response_v60.md) · [完整物理/费用](outcomes/local_assembly_subcell_response_v60.md) · [Review V58](review_report_v58.md) · [run/source](outcomes/records/run_index_v60.json) · [最终结算](outcomes/records/resource_costs_final_v60.json)。C67同M67严格再现，存储项28510524/峰8.855GiB；H2全球33660行、完整微场及独立mixed原式通过，但R6/H2、M68/H2散射场/240点仍FAIL。L仅一个单元稳定，不授全域准确性；NN/原尺寸/2TB48h未资格。所有历史继续保留，不merge、不通知邻支、不自动新窗口。

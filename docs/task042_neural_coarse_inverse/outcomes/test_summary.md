@@ -1,3 +1,20 @@
+# Task042 V61：面接口扩充的完整场与实际成本
+
+保留宏内部r2-p6，只新增x/y面内部切向协商方向；两份独立完整三维解及原式/恢复/828模式/体吸收完成，未释放z面和宏边缺陷分列。不是NN训练，原尺寸/2TB48h/NN20未资格。
+
+H2_FX散射E/H 4.74295e-05/4.94671e-05（PASS）；FX_FXY散射E/H 0.000188643/0.000186652（FAIL）；H2_FXY散射E/H 0.000195458/0.000194016（FAIL）；R7_FXY散射E/H 0.0336585/0.0336982（FAIL）。场门1e−4保持，不以小残差或功率通过覆盖。
+
+| 模型 | 含port行 | 实际nnz | mixed独立true | R/T/A_volume | 有限资格 |
+|---|---|---|---|---|---|
+| FX：x面补空间 | 66300 | 99404541 | 3.074892e-11 | 0.07621846271/0.9056651484/0.01811638885 | 原式/恢复/828输出通过；场增量单列 |
+| FXY：x+y面补空间 | 98940 | 223567101 | 3.064346e-11 | 0.07621845199/0.9056651521/0.01811639593 | 原式/恢复/828输出通过；场增量单列 |
+
+最终消费者6项定点测试、相关Ruff/compile及4dat validate通过；P真实映射/复对偶/非零载荷、两完整PDE和独立保存数组审核分列。仅一次15项文档合同，无全库pytest/CI/旧资格重跑，GitHub视觉NOT_VERIFIED。
+
+[最终定点/接线](records/tests_v61.json) · [文档字节检查](records/documentation_checks_v61.json) · [原式/全场独立消费](records/scientific_checks_v61.json)。全部历史逐字保留，closed/清场/推送后暂停，不通知邻窗。
+
+---
+
 # V60最终相关检查
 
 16项新增实体支撑/合法edge→face、复双层消元/非零内部port源、真实工作流、恢复checkpoint/作用bank、saved-only与archive负例；24模块compile、关键错误Ruff、五one-run dat validate通过，最终代码source f9b6d3886b59a3b1f549af62aec677347f2f8482。C67/H2实际独立PUBLIC_BASIX原式、3776切向面和保存checker分别判门。最终15项文档检查绑定真实交付字节，full pytest/CI未运行；GitHub视觉NOT_VERIFIED，不掩盖两组场增量FAIL。

@@ -1,0 +1,81 @@
+{
+  "groups": {
+    "production numerical/core": {
+      "default_changed": false,
+      "files": [
+        "src/solvers/hcurl_affine_phase_tensor.py",
+        "src/solvers/local_trace_assembly.py"
+      ],
+      "recommendation": "existing kernels reused, new face family not production default"
+    },
+    "reusable runner/watchdog": {
+      "default_changed": false,
+      "files": [
+        "scripts/run_case.py",
+        "src/runners/port_preparation.py",
+        "src/io/port_preparation.py"
+      ],
+      "depends_on": [
+        "face_trace_scope.py",
+        "v61 dat and plan"
+      ],
+      "tests": "4 real schemas and qualified C3 auxiliary",
+      "fresh_evidence": [
+        "PREFLIGHT",
+        "FX",
+        "FXY",
+        "VERIFY_COST"
+      ]
+    },
+    "checker/benchmark": {
+      "default_changed": false,
+      "files": [
+        "src/solvers/macro_residual_partition.py",
+        "benchmarks/collect_face_trace.py",
+        "benchmarks/qualify_face_trace.py",
+        "src/test/test_face_trace_enrichment.py"
+      ],
+      "tests": "6 targeted tests plus saved original vectors, fields, modes",
+      "order": "after numerical opt-in core"
+    },
+    "compact evidence/docs": {
+      "files": [
+        "response_v61.md",
+        "outcomes/face_trace_enrichment_v61.md",
+        "outcomes/records/*_v61.json"
+      ],
+      "order": "preserve scientific negative results and source identity"
+    },
+    "research-only": {
+      "default_changed": false,
+      "files": [
+        "src/solvers/face_trace_basis.py",
+        "src/solvers/face_trace_mapping.py",
+        "src/solvers/face_trace_response.py",
+        "src/solvers/face_trace_scope.py",
+        "src/solvers/face_trace_study.py",
+        "input/task042_neural_coarse_inverse/face_trace_enrichment_v61.json"
+      ],
+      "depends_on": [
+        "subcell_response_kernel",
+        "subcell_macro_deployment",
+        "local_trace_assembly",
+        "PUBLIC_BASIX audit"
+      ],
+      "tests": "6 targeted plus actual macro/periodic witnesses and two PDEs",
+      "recommendation": "finite authority only; unchanged old defaults"
+    },
+    "do-not-merge": {
+      "files": [
+        "benchmarks/artifacts/task042/v61",
+        "tmp/task042/v61",
+        "results/task042/*v61*"
+      ],
+      "includes": "large arrays, factor caches, temporary budgets and all neighbour work",
+      "merge_approval": false
+    }
+  },
+  "source_C2": "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+  "source_C3": "2681258fe60745bb06d30dea9f88d60fbebf751c",
+  "merge_approval": false
+}

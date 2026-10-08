@@ -1,0 +1,32 @@
+{
+  "interface_payload_bytes": {
+    "FX": 68952000,
+    "FXY": 102897600
+  },
+  "V33_Z32_65_vectors_derived_not_RSS": true,
+  "internal_rows_not_in_interface_Krylov": 696960,
+  "local_cache_bytes": 17179869184,
+  "scenario": {
+    "Nx": 80,
+    "Ny": 80,
+    "Nz": 400,
+    "modes": 268156,
+    "accuracy_unqualified": true
+  },
+  "H2_interface_TB": 0.528,
+  "FX_interface_TB": 1.071,
+  "FXY_interface_TB": 1.614,
+  "all_micro_FE_65_vectors_TB": 12.125,
+  "per_cell_dense_Schur_copy_TB": 7.644,
+  "missing": [
+    "original action/PC",
+    "x/b/r/workspace",
+    "recovery and MPI copies",
+    "system reserve",
+    "target fill/iterations/time/RSS"
+  ],
+  "target_N1": "unknown",
+  "qualified_2TB48h": false,
+  "NN_training": 0,
+  "NN20": false
+}
