@@ -171,12 +171,25 @@ class TwoCellNyOrbitTransport:
             raise ValueError("complete full/local native interior-edge-face inventories do not match")
         widths = np.asarray(full.y_widths, dtype=np.float64)
         local_widths = np.asarray(local.y_widths, dtype=np.float64)
+        expected_widths = np.tile(local_widths, K)
         if (
             widths.shape != (full.ny,)
             or local_widths.shape != (ell,)
-            or not np.array_equal(widths, np.tile(local_widths, K))
+            or not np.isfinite(widths).all()
+            or not np.isfinite(local_widths).all()
+            or np.any(widths <= 0.0)
+            or np.any(local_widths <= 0.0)
         ):
-            raise ValueError("the physical y mesh is not an exact translated repetition of the local window")
+            raise ValueError("the physical y mesh widths must be finite positive full/local vectors")
+        width_relative_difference = np.abs(widths - expected_widths) / np.maximum(
+            np.abs(expected_widths), np.finfo(np.float64).tiny
+        )
+        width_max_relative_metric_difference = float(
+            np.max(width_relative_difference, initial=0.0)
+        )
+        if width_max_relative_metric_difference > MAPPING_LIMIT:
+            raise ValueError("the physical y mesh is not a translated repetition within the mapping gate")
+        widths_bitwise_equal = bool(np.array_equal(widths, expected_widths))
         if type(twist_index) is not int:
             raise ValueError("twist index must be an integer")
         self.full, self.local = full, local
@@ -204,7 +217,11 @@ class TwoCellNyOrbitTransport:
             "full_native_dimension": int(len(full.independent)),
             "local_native_dimension": int(len(local.independent)),
             "interior_edge_face_maps_complete": True,
-            "uniform_translated_y_cells_exact": True,
+            "uniform_translated_y_cells_exact": widths_bitwise_equal,
+            "uniform_translated_y_cells_mapping_gate_passed": True,
+            "y_widths_bitwise_equal": widths_bitwise_equal,
+            "y_widths_max_relative_metric_difference": width_max_relative_metric_difference,
+            "mapping_limit": MAPPING_LIMIT,
             "fourier_normalization": "1/sqrt(K)",
         }
 

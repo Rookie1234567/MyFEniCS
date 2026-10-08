@@ -106,6 +106,22 @@ def test_ny8_two_cell_native_fold_lift_and_duality_with_nonunitary_entities():
     assert transport.audit["translation_count_K"] == 4
 
 
+def test_ny8_transport_accepts_only_mapping_tolerance_for_float_width_roundoff():
+    full, local = _ToyEntities(8), _ToyEntities(2)
+    full.y_widths = np.asarray([3.125, 3.125 + 1e-13] * 4, dtype=np.float64)
+    theta = 0.37 * 25.0
+    cfg = SimpleNamespace(ky=0.37 + 0j, period_y=25.0, floquet_phase_y=np.exp(1j * theta))
+    eta = np.exp(1j * (theta + 2 * np.pi) / 8)
+    transport = TwoCellNyOrbitTransport(full, local, twist_index=1, eta=eta, cfg=cfg)
+    assert transport.audit["uniform_translated_y_cells_mapping_gate_passed"] is True
+    assert transport.audit["y_widths_bitwise_equal"] is False
+    assert transport.audit["y_widths_max_relative_metric_difference"] > 0.0
+
+    full.y_widths[1] += 1e-8
+    with pytest.raises(ValueError, match="translated repetition"):
+        TwoCellNyOrbitTransport(full, local, twist_index=1, eta=eta, cfg=cfg)
+
+
 def test_ny8_assigns_all_physical_modes_once_to_four_twists_and_eight_qs():
     ny, ell, period, ky = 8, 2, 25.0, 0.41
     modes = []
