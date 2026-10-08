@@ -143,7 +143,10 @@ def _v16_unique_array_owner_inventory(named_arrays: Mapping[str, Any]) -> dict[s
 
 
 def _v16_csr_owner_inventory(
-    matrices: Mapping[Any, Any], *, numeric_nonzero_by_key: Mapping[str, int] | None = None
+    matrices: Mapping[Any, Any],
+    *,
+    numeric_nonzero_by_key: Mapping[str, int] | None = None,
+    version: str = "v16",
 ) -> dict[str, Any]:
     """Report stored slots, numerical nonzeros, visible payload, and unique backing owners."""
     named_arrays: dict[str, np.ndarray] = {}
@@ -174,7 +177,7 @@ def _v16_csr_owner_inventory(
             "canonical": bool(matrix.has_canonical_format and matrix.has_sorted_indices),
         }
     return {
-        "schema": "task40extra.review_v16_csr_owner_inventory.v1",
+        "schema": f"task40extra.review_{version}_csr_owner_inventory.v1",
         "by_block": by_block,
         "unique_array_backings": _v16_unique_array_owner_inventory(named_arrays),
         "zero_cleanup": "not_applied; no array owner copy or RSS reduction claimed",
@@ -3835,7 +3838,11 @@ def _candidate_contract(
         TASK40_GX560_V15_RUN_ID,
         TASK40_E1_V16_RUN_ID,
         TASK40_GX560_V16_RUN_ID,
+        TASK40_B0_P6_V17_RUN_ID,
+        TASK40_GX560_V17_RUN_ID,
+        TASK40_E1_V17_RUN_ID,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
+        TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         TASK40_GX784_V11_P6_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
@@ -3853,6 +3860,9 @@ def _candidate_contract(
         TASK40_V15_P6_E1_PROFILE,
         TASK40_V16_P6_GX560_PROFILE,
         TASK40_V16_P6_E1_PROFILE,
+        TASK40_V17_P6_B0_PROFILE,
+        TASK40_V17_P6_GX560_PROFILE,
+        TASK40_V17_P6_E1_PROFILE,
     )
     from src.runners.physical_v14_budget import V14_TIME_POLICY_ENFORCE
     from src.runners.task40_v10_campaign import CAMPAIGN_SECONDS, CLOSEOUT_RESERVE_SECONDS
@@ -3872,6 +3882,7 @@ def _candidate_contract(
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
     is_v16 = q_assembly_strategy == TASK40_Q_ASSEMBLY_BOUNDED_V16
+    is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
     case_identity = {
         TASK40_V10_P6_REFERENCE_PROFILE: (
             (TASK40_B0_P6_CANDIDATE_RUN_ID, "B0_CANDIDATE", 16.0),
@@ -3906,13 +3917,35 @@ def _candidate_contract(
         TASK40_V16_P6_E1_PROFILE: (
             None, None, None, (TASK40_E1_V16_RUN_ID, "Q4_ORIGINAL", 16.0),
         ),
+        TASK40_V17_P6_B0_PROFILE: (None, None, None, None),
+        TASK40_V17_P6_GX560_PROFILE: (None, None, None, None),
+        TASK40_V17_P6_E1_PROFILE: (None, None, None, None),
     }
     try:
         strict_identity, v13_identity, v15_identity, v16_identity = case_identity[profile_identity]
     except KeyError as exc:
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}") from exc
+    v17_identity = {
+        TASK40_V17_P6_B0_PROFILE: (
+            TASK40_B0_P6_V17_RUN_ID, "B0_CANDIDATE", 16.0
+        ),
+        TASK40_V17_P6_GX560_PROFILE: (
+            TASK40_GX560_V17_RUN_ID, "Q4_ORIGINAL", 16.0
+        ),
+        TASK40_V17_P6_E1_PROFILE: (
+            TASK40_E1_V17_RUN_ID, "Q4_ORIGINAL", 16.0
+        ),
+    }.get(profile_identity)
     expected_identity = (
-        v16_identity if is_v16 else v15_identity if is_v15 else v13_identity if is_v13 else strict_identity
+        v17_identity
+        if is_v17
+        else v16_identity
+        if is_v16
+        else v15_identity
+        if is_v15
+        else v13_identity
+        if is_v13
+        else strict_identity
     )
     if expected_identity is None:
         raise ValueError(
@@ -3970,7 +4003,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
-            "task40extra.review_v16_p6_reference_worker_contract.v1"
+            "task40extra.review_v17_row_tile_p6_reference_worker_contract.v1"
+            if is_v17
+            else "task40extra.review_v16_p6_reference_worker_contract.v1"
             if is_v16
             else "task40extra.review_v15_p6_reference_worker_contract.v1"
             if is_v15
@@ -4067,6 +4102,9 @@ def run_task40_v10_p6_reference_worker(
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK40_P6_PERIODIC_PROFILES,
     )
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+    )
     from src.solvers.physical_retained_fgmres import run_retained_fgmres
     from src.solvers.task40_v10_p6_mumps import full_p6_pre_release_output_inventory
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
@@ -4086,6 +4124,7 @@ def run_task40_v10_p6_reference_worker(
             "task40_q_assembly_strategy", Q_ASSEMBLY_LEGACY
         )
     )
+    is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
         raise ValueError(f"unsupported Task40 q assembly strategy: {q_assembly_strategy!r}")
     if not task40_q_assembly_strategy_is_allowed(
@@ -4106,8 +4145,13 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_E1_PROFILE,
         TASK40_V16_P6_GX560_PROFILE,
         TASK40_V16_P6_E1_PROFILE,
+        "task40extra_v17_p6_y_orbit_b0_reference_v1",
+        "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+        "task40extra_v17_p6_y_orbit_e1_reference_v1",
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
+    if is_v17 and not profile_identity.startswith("task40extra_v17_p6_y_orbit_"):
+        raise ValueError("V17 row-tile CSR requires a registered V17 p6 profile")
     if type(share_transform_bank) is not bool:
         raise TypeError("V12 transform-bank selection must be an explicit boolean")
     periodic_profile = TASK40_P6_PERIODIC_PROFILES[profile_identity]
@@ -4122,9 +4166,15 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_E1_PROFILE: "e1",
         TASK40_V16_P6_GX560_PROFILE: "gx560",
         TASK40_V16_P6_E1_PROFILE: "e1",
+        "task40extra_v17_p6_y_orbit_b0_reference_v1": "b0",
+        "task40extra_v17_p6_y_orbit_gx560_reference_v1": "gx560",
+        "task40extra_v17_p6_y_orbit_e1_reference_v1": "e1",
     }
     case_label = case_labels[profile_identity]
     evidence_prefix = (
+        "v17_row_tile_p6_reference"
+        if is_v17
+        else
         "v16_p6_reference"
         if is_v16
         else "v15_p6_reference"
@@ -4138,6 +4188,9 @@ def run_task40_v10_p6_reference_worker(
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
+            "task40extra.review_v17_row_tile_p6_reference_worker_summary.v1"
+            if is_v17
+            else
             "task40extra.review_v16_p6_reference_worker_summary.v1"
             if is_v16
             else "task40extra.review_v15_p6_reference_worker_summary.v1"
@@ -4197,7 +4250,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v16_{case_label}_p6_reference"
+                f"task40_review_v17_{case_label}_p6_reference"
+                if is_v17
+                else f"task40_review_v16_{case_label}_p6_reference"
                 if is_v16
                 else f"task40_review_v15_{case_label}_p6_reference"
                 if is_v15
@@ -4432,11 +4487,13 @@ def run_task40_v10_p6_reference_worker(
                     "selected_future_nonfactor_co_resident_phase"
                 ),
             }
-            if is_v16:
-                if label.startswith("task40_v16_q_") or label.startswith(
+            if is_v16 or is_v17:
+                if label.startswith(("task40_v16_q_", "task40_v17_q_")) or label.startswith(
                     "p6_reduced_contribution/"
                 ):
-                    admission["v16_staging_facts"] = dict(facts)
+                    admission[
+                        "v17_row_tile_staging_facts" if is_v17 else "v16_staging_facts"
+                    ] = dict(facts)
                 key = _allocation_gate_summary_key(label)
                 if key not in allocation_gate_summary and len(allocation_gate_summary) >= 32:
                     key = "other_bounded_groups"
@@ -4505,7 +4562,7 @@ def run_task40_v10_p6_reference_worker(
             strict_local_checks=True,
             materialize_global_matrix=False,
             retain_local_schur_for_matrix_free=True,
-            share_identity_cache=is_v16,
+            share_identity_cache=is_v16 or is_v17,
             preserve_exact_geometry=True,
             allocation_gate=allocation_gate,
         )
@@ -4530,9 +4587,21 @@ def run_task40_v10_p6_reference_worker(
                 target_bundle["dtn_action"].carrier.entries
             ),
         )
-        if is_v16:
+        if is_v16 or is_v17:
+            owner_version = "v17_row_tile" if is_v17 else "v16"
+            owner_key = "v17_target_owner_inventory" if is_v17 else "v16_target_owner_inventory"
+            owner_marker = (
+                "v17_row_tile_target_condensed_action_owner_inventory"
+                if is_v17
+                else "v16_target_condensed_action_owner_inventory"
+            )
+            owner_sample = (
+                "v17_row_tile_target_condensed_action_complete"
+                if is_v17
+                else "v16_target_condensed_action_complete"
+            )
             target_owner_inventory = {
-                "schema": "task40extra.review_v16_target_owner_inventory.v1",
+                "schema": f"task40extra.review_{owner_version}_target_owner_inventory.v1",
                 "target_condensation_identity_cache": target_identity_cache_audit,
                 "target_action_buffer_inventory": dict(target_action.buffer_inventory),
                 "identity_cache_scope": (
@@ -4541,9 +4610,9 @@ def run_task40_v10_p6_reference_worker(
                 ),
                 "source_owner": "target_condensed transferred to target_action.condensed",
             }
-            summary["v16_target_owner_inventory"] = target_owner_inventory
-            runtime.marker("v16_target_condensed_action_owner_inventory", target_owner_inventory)
-            runtime.sample("v16_target_condensed_action_complete")
+            summary[owner_key] = target_owner_inventory
+            runtime.marker(owner_marker, target_owner_inventory)
+            runtime.sample(owner_sample)
         target_condensed = None
         _validate_target_p6_inventory(target_action.condensed, periodic_profile)
         target_fast_bundle = build_packed_physical_action(
@@ -4599,6 +4668,55 @@ def run_task40_v10_p6_reference_worker(
             return saved
 
         def reference_event(name: str, facts: Mapping[str, Any]) -> None:
+            if is_v17 and name == "task40_v17_reference_global_ready":
+                saved = dict(facts)
+                named_arrays = saved.pop("_named_arrays", {})
+                saved["global_entity_backing_inventory"] = (
+                    _v16_unique_array_owner_inventory(named_arrays)
+                )
+                saved["stage_resource_sample"] = runtime.sample(
+                    "v17_row_tile_reference_global_ready", enforce=False
+                )
+                runtime.marker(name, saved)
+                return
+            if is_v17 and name == "task40_v17_q_csr_all_ready":
+                saved = dict(facts)
+                q_matrices = saved.pop("_q_matrices", {})
+                saved["q_matrix_owner_inventory"] = _v16_csr_owner_inventory(
+                    q_matrices, version="v17_row_tile"
+                )
+                saved["stage_resource_sample"] = runtime.sample(
+                    "v17_row_tile_q_csr_all_ready_before_symbolic", enforce=False
+                )
+                runtime.marker(name, saved)
+                return
+            if is_v17 and name == "task40_v17_p6_sector_ready":
+                saved = dict(facts)
+                q_matrices = saved.pop("_q_matrices", {})
+                saved["q_matrix_owner_inventory"] = _v16_csr_owner_inventory(
+                    q_matrices, version="v17_row_tile"
+                )
+                twist_index = str(saved.get("twist_index", "unknown"))
+                saved["stage_resource_sample"] = runtime.sample(
+                    f"v17_row_tile_reference_sector{twist_index}_q_csr_ready",
+                    enforce=False,
+                )
+                runtime.marker(name, saved)
+                return
+            if is_v17 and name in {
+                "task40_v12_transform_bank_ready",
+                "task40_v10_p6_reference_inverse_ready",
+                "task40_v17_q_assembly_comparison_complete",
+            }:
+                saved = dict(facts)
+                label = {
+                    "task40_v12_transform_bank_ready": "v17_row_tile_all_spaces_transform_bank_ready",
+                    "task40_v10_p6_reference_inverse_ready": "v17_row_tile_reference_inverse_ready",
+                    "task40_v17_q_assembly_comparison_complete": "v17_row_tile_q_assembly_comparison_complete",
+                }[name]
+                saved["stage_resource_sample"] = runtime.sample(label, enforce=False)
+                runtime.marker(name, saved)
+                return
             if is_v16 and name == "task40_v16_reference_global_ready":
                 saved = dict(facts)
                 named_arrays = saved.pop("_named_arrays", {})
@@ -4849,7 +4967,7 @@ def run_task40_v10_p6_reference_worker(
             target_condensed_action_audit=dict(target_action.audit),
             allocation_admission_gates=allocation_gate_records,
             allocation_admission_gate_summary=(
-                allocation_gate_summary if is_v16 else None
+                allocation_gate_summary if is_v16 or is_v17 else None
             ),
         )
 
@@ -5465,13 +5583,14 @@ def run_task40_v10_p6_reference_worker(
         }
         return worker_result
     except V16StagingLimitError as exc:
+        gate_key = "v17_row_tile_staging_gate" if is_v17 else "v16_staging_gate"
         summary.update(
             status="CONTROLLED_STOP",
             official_result=False,
             result_classification="RESOURCE_CONTROLLED_STOP",
-            v16_staging_gate=exc.evidence(),
             error={"type": type(exc).__name__, "message": str(exc)},
         )
+        summary[gate_key] = exc.evidence()
         worker_result = {"passed": False, "errors": [str(exc)], "summary": summary}
         return worker_result
     except V14ResourceStop as exc:
@@ -5594,7 +5713,7 @@ def run_task40_v10_p6_reference_worker(
                 ).append({"type": type(exc).__name__, "message": str(exc)})
             try:
                 summary["allocation_admission_gates"] = allocation_gate_records
-                if is_v16:
+                if is_v16 or is_v17:
                     summary["allocation_admission_gate_summary"] = allocation_gate_summary
                     summary["allocation_admission_gate_storage"] = (
                         "full per-gate records are durably appended to the raw events file; "
@@ -5605,7 +5724,7 @@ def run_task40_v10_p6_reference_worker(
                     )
                 _write_json(directory / "task40_v10_p6_candidate_summary.json", summary)
                 runtime.marker("v10_candidate_worker_complete", summary)
-                if is_v16:
+                if is_v16 or is_v17:
                     events_path = Path(runtime.events_path)
                     raw_identity = _event_file_identity(events_path)
                     summary["allocation_admission_raw"] = {
@@ -5640,7 +5759,7 @@ def run_task40_v10_p6_reference_worker(
                     }
                     if not ledger_passed:
                         error = {
-                            "type": "V16AllocationLedgerMismatch",
+                            "type": "V17AllocationLedgerMismatch" if is_v17 else "V16AllocationLedgerMismatch",
                             "message": (
                                 "raw allocation admission/complete event counts do not "
                                 "match recorded gate invocations and result status"
@@ -5650,17 +5769,19 @@ def run_task40_v10_p6_reference_worker(
                             status="FAILED",
                             official_result=False,
                             result_classification="V16_ADMISSION_LEDGER_INCONSISTENT",
-                            v16_admission_ledger_error=error,
+                            **{
+                                "v17_admission_ledger_error" if is_v17 else "v16_admission_ledger_error": error
+                            },
                         )
                         if worker_result is not None:
                             worker_result["passed"] = False
                             worker_result.setdefault("errors", []).append(error["message"])
                     _write_json(directory / "task40_v10_p6_candidate_summary.json", summary)
             except Exception as exc:
-                if is_v16:
+                if is_v16 or is_v17:
                     prior_status = str(summary.get("status", ""))
                     error = {
-                        "type": "V16AllocationLedgerEvidenceWriteFailure",
+                        "type": "V17AllocationLedgerEvidenceWriteFailure" if is_v17 else "V16AllocationLedgerEvidenceWriteFailure",
                         "cause_type": type(exc).__name__,
                         "message": str(exc),
                     }
@@ -5673,7 +5794,9 @@ def run_task40_v10_p6_reference_worker(
                             "status_at_closeout": prior_status,
                             "error": error,
                         },
-                        v16_admission_ledger_error=error,
+                        **{
+                            "v17_admission_ledger_error" if is_v17 else "v16_admission_ledger_error": error
+                        },
                     )
                     if worker_result is not None:
                         worker_result["passed"] = False
@@ -5685,7 +5808,7 @@ def run_task40_v10_p6_reference_worker(
                             {
                                 "type": type(write_exc).__name__,
                                 "message": str(write_exc),
-                                "while_persisting_v16_ledger_failure": True,
+                                "while_persisting_v17_ledger_failure" if is_v17 else "while_persisting_v16_ledger_failure": True,
                             }
                         )
         for signum, handler in handlers.items():

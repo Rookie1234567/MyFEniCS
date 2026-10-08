@@ -23,22 +23,22 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _verify_v16_allocation_admission_ledger(
-    run_directory: str | Path, summary: Mapping[str, Any]
+def _verify_q_assembly_allocation_admission_ledger(
+    run_directory: str | Path, summary: Mapping[str, Any], *, version: str
 ) -> dict[str, Any]:
-    """Independently bind the V16 worker's raw gate events to its invocation count."""
+    """Independently bind a bounded q-assembly worker's raw gate events."""
     root = Path(run_directory).resolve()
     raw = summary.get("allocation_admission_raw")
     if not isinstance(raw, Mapping) or not isinstance(raw.get("path"), str):
-        raise ValueError("V16 candidate summary omits its raw allocation event identity")
+        raise ValueError(f"{version} candidate summary omits its raw allocation event identity")
     relative_path = Path(str(raw["path"]))
     if relative_path.is_absolute():
-        raise ValueError("V16 allocation event path must be relative to its run directory")
+        raise ValueError(f"{version} allocation event path must be relative to its run directory")
     event_path = (root / relative_path).resolve(strict=True)
     try:
         event_path.relative_to(root)
     except ValueError as exc:
-        raise ValueError("V16 allocation event path escapes its run directory") from exc
+        raise ValueError(f"{version} allocation event path escapes its run directory") from exc
 
     digest = hashlib.sha256()
     record_count = admission_count = completion_count = 0
@@ -60,7 +60,7 @@ def _verify_v16_allocation_admission_ledger(
     }
     for field, value in actual.items():
         if field != "path" and raw.get(field) != value:
-            raise ValueError(f"V16 raw allocation event {field} differs from its saved identity")
+            raise ValueError(f"{version} raw allocation event {field} differs from its saved identity")
 
     invocation_count = int(summary.get("allocation_gate_invocation_count", -1))
     completion_gap = admission_count - completion_count
@@ -76,17 +76,33 @@ def _verify_v16_allocation_admission_ledger(
         passed = False
     if not passed:
         raise ValueError(
-            "V16 raw admission/complete counts do not match the recorded invocation count "
+            f"{version} raw admission/complete counts do not match the recorded invocation count "
             "and worker result"
         )
     return {
-        "schema": "task40extra.review_v16_allocation_admission_ledger_check.v1",
+        "schema": f"task40extra.review_{version}_allocation_admission_ledger_check.v1",
         **actual,
         "allocation_gate_invocation_count": invocation_count,
         "incomplete_admission_count": completion_gap,
         "worker_status": status,
         "passed": True,
     }
+
+
+def _verify_v16_allocation_admission_ledger(
+    run_directory: str | Path, summary: Mapping[str, Any]
+) -> dict[str, Any]:
+    return _verify_q_assembly_allocation_admission_ledger(
+        run_directory, summary, version="v16"
+    )
+
+
+def _verify_v17_row_tile_allocation_admission_ledger(
+    run_directory: str | Path, summary: Mapping[str, Any]
+) -> dict[str, Any]:
+    return _verify_q_assembly_allocation_admission_ledger(
+        run_directory, summary, version="v17_row_tile"
+    )
 
 
 def _raw_array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarray:
@@ -104,16 +120,21 @@ def _array_ref(record: Mapping[str, Any], key: str, arrays: Any) -> np.ndarray:
 
 
 def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
-    """Resolve only registered V15 identities; never trust packet row counts."""
+    """Resolve registered V15/V16/V17 identities; never trust packet row counts."""
 
     from src.io.physical_intermediate_profile import (
         TASK40_V15_P6_PROFILES,
         TASK40_V16_P6_PROFILES,
+        TASK40_V17_P6_PROFILES,
     )
     from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
 
-    if not isinstance(identity, str) or identity not in (*TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES):
-        raise ValueError(f"unknown registered Task40 V15/V16 profile identity: {identity!r}")
+    if not isinstance(identity, str) or identity not in (
+        *TASK40_V15_P6_PROFILES,
+        *TASK40_V16_P6_PROFILES,
+        *TASK40_V17_P6_PROFILES,
+    ):
+        raise ValueError(f"unknown registered Task40 V15/V16/V17 profile identity: {identity!r}")
     profile = TASK40_P6_PERIODIC_PROFILES.get(identity)
     if profile is None:
         raise ValueError(f"registered Task40 V15/V16 profile has no periodic inventory: {identity}")
@@ -127,6 +148,145 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         "q_port_counts": tuple(int(value) for value in profile.q_port_counts),
         "sector_port_counts": tuple(int(value) for value in profile.sector_port_counts),
         "local_interior_rows": int(profile.local_interior_rows),
+    }
+
+
+def _verify_v17_row_tile_assembly_summary(
+    run_directory: str | Path, summary: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Recompute the structural acceptance gates from the saved worker summary."""
+    strategy = "ROW_TILE_BOUNDED_CSR_V17"
+    if summary.get("q_assembly_strategy") != strategy:
+        raise ValueError("V17 worker summary does not select the registered row-tile strategy")
+    profile_identity = summary.get("profile")
+    from src.io.physical_intermediate_profile import TASK40_V17_P6_PROFILES
+
+    if not isinstance(profile_identity, str) or profile_identity not in TASK40_V17_P6_PROFILES:
+        raise ValueError("V17 row-tile summary is not bound to an exact registered V17 profile")
+    profile_inventory = _registered_v15_profile_inventory(profile_identity)
+    if int(profile_inventory["q_count"]) != 4:
+        raise ValueError("V17 row-tile profile does not match the registered four-q inventory")
+    if not isinstance(summary.get("source_sha"), str) or len(summary["source_sha"]) != 40:
+        raise ValueError("V17 row-tile worker summary omits its frozen source SHA")
+    snapshot = summary.get("reference_audit_snapshot")
+    if not isinstance(snapshot, Mapping):
+        raise ValueError("V17 row-tile summary omits the pre-destroy reference audit snapshot")
+    sectors = snapshot.get("sector_audits_before_destroy")
+    if not isinstance(sectors, list) or len(sectors) != 2:
+        raise ValueError("V17 row-tile summary must contain both physical p6 sector audits")
+
+    block_keys = {"00", "01", "10", "11"}
+    covered_q: set[int] = set()
+    all_sector_facts = []
+    final_payload_total = 0
+    maximum_sector_payload = 0
+    max_staging = 0
+    for index, sector in enumerate(sectors):
+        if not isinstance(sector, Mapping):
+            raise ValueError(f"V17 sector audit {index} is not a mapping")
+        covered_q.update(int(q) for q in sector.get("global_q_indices", ()))
+        if sector.get("assembly_strategy") != strategy:
+            raise ValueError(f"V17 sector audit {index} has a different assembly strategy")
+        shapes = sector.get("block_shapes")
+        patterns = sector.get("pattern_facts_by_block")
+        norms = sector.get("complete_csr_frobenius_norm_by_block")
+        if not isinstance(shapes, Mapping) or set(shapes) != block_keys:
+            raise ValueError(f"V17 sector audit {index} omits one or more q blocks")
+        if not isinstance(patterns, Mapping) or set(patterns) != block_keys:
+            raise ValueError(f"V17 sector audit {index} omits one or more tile patterns")
+        if not isinstance(norms, Mapping) or set(norms) != block_keys:
+            raise ValueError(f"V17 sector audit {index} omits a complete-CSR norm")
+        if sector.get("pattern_layout_pass_count") != 1:
+            raise ValueError(f"V17 sector audit {index} regenerated contribution layout")
+        if sector.get("numeric_contribution_pass_count") != 1:
+            raise ValueError(f"V17 sector audit {index} regenerated numeric FE/Hhat contributions")
+        if sector.get("cartesian_support_pairs_materialized") != 0:
+            raise ValueError(f"V17 sector audit {index} materialized Cartesian support pairs")
+        if sector.get("full_shape_bitset_bytes") != 0:
+            raise ValueError(f"V17 sector audit {index} materialized a full-shape bitset")
+        if sector.get("full_coo_list_count") != 0 or sector.get("global_python_row_set_count") != 0:
+            raise ValueError(f"V17 sector audit {index} materialized a full COO or global row set")
+        if sector.get("route_query_uses_temporary_sort") is not False:
+            raise ValueError(f"V17 sector audit {index} used a SQLite temporary sort")
+        if sector.get("support_route_spool_removed_after_pattern") is not True:
+            raise ValueError(f"V17 sector audit {index} did not remove its temporary support spool")
+        if sector.get("row_tiles_are_materialized_in_two_descriptor_passes") is not True:
+            raise ValueError(f"V17 sector audit {index} does not show bounded tile replay")
+        if sector.get("descriptor_replay_regenerates_no_FE_or_Hhat_values") is not True:
+            raise ValueError(f"V17 sector audit {index} does not preserve one numeric generation pass")
+        if sector.get("all_four_complete_csr_owners_retained_through_norm_gate") is not True:
+            raise ValueError(f"V17 sector audit {index} lacks the four-block simultaneous-owner statement")
+        stage = int(sector.get("staging_peak_bytes_total_all_blocks", -1))
+        budget = int(sector.get("staging_budget_bytes_total_all_q_blocks", -1))
+        if stage < 0 or budget != 256 * 1024**2 or stage > budget:
+            raise ValueError(f"V17 sector audit {index} violates its 256 MiB staging gate")
+        max_staging = max(max_staging, stage)
+        final_payload = int(sector.get("final_four_block_csr_payload_bytes", -1))
+        if final_payload < 0 or final_payload != int(sector.get("final_csr_payload_bytes_total", -2)):
+            raise ValueError(f"V17 sector audit {index} has inconsistent four-block CSR payload accounting")
+        final_payload_total += final_payload
+        maximum_sector_payload = max(maximum_sector_payload, final_payload)
+        reserve = int(sector.get("temporary_filesystem_free_space_reserve_bytes", -1))
+        observed_free = int(sector.get("temporary_filesystem_free_bytes_minimum_observed", -1))
+        if reserve <= 0 or observed_free < reserve:
+            raise ValueError(f"V17 sector audit {index} fell below its temporary filesystem reserve")
+        for key in block_keys:
+            pattern = patterns[key]
+            if not isinstance(pattern, Mapping):
+                raise ValueError(f"V17 sector audit {index} pattern {key} is malformed")
+            if pattern.get("shape") != shapes[key]:
+                raise ValueError(f"V17 sector audit {index} pattern {key} shape disagrees")
+            if pattern.get("wide_counts_and_prefix_checked_before_cast") is not True:
+                raise ValueError(f"V17 sector audit {index} pattern {key} lacks checked PETSc index casts")
+            if int(pattern.get("full_shape_bitset_bytes", -1)) != 0:
+                raise ValueError(f"V17 pattern {key} records a full-shape bitset")
+            if int(pattern.get("full_coo_list_count", -1)) != 0:
+                raise ValueError(f"V17 pattern {key} records a full COO list")
+            norm = float(norms[key])
+            if not np.isfinite(norm) or norm < 0.0:
+                raise ValueError(f"V17 sector audit {index} has an invalid CSR norm for {key}")
+        diagonal_scale = max(
+            float(norms["00"]), float(norms["11"]), np.finfo(float).tiny
+        )
+        recomputed_off_diagonal = {
+            "q0_q1_relative": float(norms["01"]) / diagonal_scale,
+            "q1_q0_relative": float(norms["10"]) / diagonal_scale,
+        }
+        recorded_off_diagonal = sector.get("off_diagonal_relative")
+        if not isinstance(recorded_off_diagonal, Mapping):
+            raise ValueError(f"V17 sector audit {index} omits its off-diagonal ratios")
+        for key, relative in recomputed_off_diagonal.items():
+            if not _close_float(float(recorded_off_diagonal.get(key, float("nan"))), relative):
+                raise ValueError(
+                    f"V17 sector audit {index} off-diagonal {key} differs from saved complete-CSR norms"
+                )
+            if not np.isfinite(relative) or relative > 1.0e-11:
+                raise ValueError(f"V17 sector audit {index} fails the original 1e-11 operator gate")
+        all_sector_facts.append(
+            {
+                "sector_index": index,
+                "global_q_indices": sorted(int(q) for q in sector["global_q_indices"]),
+                "staging_peak_bytes": stage,
+                "final_four_block_csr_payload_bytes": final_payload,
+                "off_diagonal_relative_recomputed_from_saved_norms": recomputed_off_diagonal,
+                "all_four_blocks_checked": True,
+            }
+        )
+    if covered_q != {0, 1, 2, 3}:
+        raise ValueError("V17 row-tile summary does not cover all four global q branches")
+    return {
+        "schema": "task40extra.review_v17_row_tile_assembly_checker.v1",
+        "profile": profile_identity,
+        "sector_count": len(sectors),
+        "covered_q": sorted(covered_q),
+        "sector_checks": all_sector_facts,
+        "maximum_staging_bytes": max_staging,
+        "sum_final_four_block_csr_payload_bytes_across_sequential_sectors": final_payload_total,
+        "maximum_single_sector_final_four_block_csr_payload_bytes": maximum_sector_payload,
+        "off_diagonal_recomputed_from_saved_complete_csr_norms": True,
+        "operator_reapplied_by_checker": False,
+        "checker_scope": "recomputed off-diagonal ratios from saved complete-CSR Frobenius norms; did not reapply the numerical operator",
+        "passed": True,
     }
 
 
@@ -1128,12 +1288,30 @@ def verify_v10_output_bundle(
     if not all(row["passed"] for row in residual_checks):
         raise ValueError("V10 independently recomputed saved residual did not pass")
     v16_allocation_ledger = None
+    v17_row_tile_assembly = None
+    v17_row_tile_allocation_ledger = None
     if identity.get("q_assembly_strategy") == "BOUNDED_STAGING_CSR_V16":
         summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
         if not summary_path.is_file():
             raise ValueError("V16 official output is missing its candidate worker summary")
         worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
         v16_allocation_ledger = _verify_v16_allocation_admission_ledger(
+            path.parent, worker_summary
+        )
+    elif identity.get("q_assembly_strategy") == "ROW_TILE_BOUNDED_CSR_V17":
+        summary_path = path.parent / "task40_v10_p6_candidate_summary.json"
+        if not summary_path.is_file():
+            raise ValueError("V17 row-tile output is missing its candidate worker summary")
+        worker_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if (
+            worker_summary.get("source_sha") != identity.get("source_sha")
+            or worker_summary.get("profile") != identity.get("profile_identity")
+        ):
+            raise ValueError("V17 worker summary differs from the output packet source/profile identity")
+        v17_row_tile_assembly = _verify_v17_row_tile_assembly_summary(
+            path.parent, worker_summary
+        )
+        v17_row_tile_allocation_ledger = _verify_v17_row_tile_allocation_admission_ledger(
             path.parent, worker_summary
         )
     return {
@@ -1148,6 +1326,8 @@ def verify_v10_output_bundle(
         "full_dtn_port_mode_table_check": port_mode_table_check,
         "residual_checks": residual_checks,
         "v16_allocation_admission_ledger": v16_allocation_ledger,
+        "v17_row_tile_assembly": v17_row_tile_assembly,
+        "v17_row_tile_allocation_admission_ledger": v17_row_tile_allocation_ledger,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }

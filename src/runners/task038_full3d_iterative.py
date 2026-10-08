@@ -49,7 +49,11 @@ def run_full3d_iterative(
         TASK40_GX560_V15_RUN_ID,
         TASK40_E1_V16_RUN_ID,
         TASK40_GX560_V16_RUN_ID,
+        TASK40_B0_P6_V17_RUN_ID,
+        TASK40_E1_V17_RUN_ID,
+        TASK40_GX560_V17_RUN_ID,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
+        TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
         TASK40_COMPARISON_GROUP,
@@ -63,6 +67,9 @@ def run_full3d_iterative(
         PHYSICAL_MEMORY_POLICY_V23,
         TASK40_V10_P4_CONTROL_PROFILE,
         TASK40_V10_P6_REFERENCE_PROFILE,
+        TASK40_V17_P6_B0_PROFILE,
+        TASK40_V17_P6_GX560_PROFILE,
+        TASK40_V17_P6_E1_PROFILE,
     )
     reference_pc_strategy = str(
         solver.get(
@@ -208,6 +215,38 @@ def run_full3d_iterative(
             ) != profile
         ):
             raise ValueError("Task40 V16 route requires its exact registered case identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=profile,
+            share_transform_bank=True,
+        )
+
+    if profile in {
+        TASK40_V17_P6_B0_PROFILE,
+        TASK40_V17_P6_GX560_PROFILE,
+        TASK40_V17_P6_E1_PROFILE,
+    }:
+        cases = {
+            TASK40_V17_P6_B0_PROFILE: (TASK40_B0_P6_V17_RUN_ID, "B0_CANDIDATE"),
+            TASK40_V17_P6_GX560_PROFILE: (TASK40_GX560_V17_RUN_ID, "Q4_ORIGINAL"),
+            TASK40_V17_P6_E1_PROFILE: (TASK40_E1_V17_RUN_ID, "Q4_ORIGINAL"),
+        }
+        expected_run_id, expected_stage = cases[profile]
+        if (
+            reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
+            or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            or resolved_payload.get("run_id") != expected_run_id
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != expected_stage
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            ) != profile
+        ):
+            raise ValueError("Task40 V17 row-tile route requires its exact registered case identity")
         from .task40_v10_worker import run_task40_v10_p6_reference_worker
 
         return run_task40_v10_p6_reference_worker(

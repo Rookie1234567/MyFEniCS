@@ -14,6 +14,7 @@ from scipy import sparse
 
 from src.geometry.task40_nonseparable_plan import (
     TASK40_Q_ASSEMBLY_BOUNDED_V16,
+    TASK40_Q_ASSEMBLY_ROW_TILE_V17,
     TASK40_Q_ASSEMBLY_LEGACY,
     TASK40_Q_ASSEMBLY_PREALLOCATED_V13,
     TASK40_V13_Q_ASSEMBLY_STRATEGIES,
@@ -1028,8 +1029,9 @@ def build_task40_v10_sector_contexts(
 Q_ASSEMBLY_LEGACY = TASK40_Q_ASSEMBLY_LEGACY
 Q_ASSEMBLY_PREALLOCATED_V13 = TASK40_Q_ASSEMBLY_PREALLOCATED_V13
 Q_ASSEMBLY_BOUNDED_V16 = TASK40_Q_ASSEMBLY_BOUNDED_V16
+Q_ASSEMBLY_ROW_TILE_V17 = TASK40_Q_ASSEMBLY_ROW_TILE_V17
 Q_ASSEMBLY_STRATEGIES = TASK40_V13_Q_ASSEMBLY_STRATEGIES | frozenset(
-    {Q_ASSEMBLY_BOUNDED_V16}
+    {Q_ASSEMBLY_BOUNDED_V16, Q_ASSEMBLY_ROW_TILE_V17}
 )
 V16_Q_STAGING_BUDGET_BYTES = 256 * 1024**2
 V16_PYTHON_OVERHEAD_RESERVE_BYTES = 32 * 1024**2
@@ -1781,31 +1783,809 @@ def _project_accumulate_v16(
     del left_rows, right_rows, left_support_ids, right_support_ids
     return projection_seconds, accumulation_seconds, max(support_discovery_stage, staging)
 
-def _assemble_bounded_v16_q_patterns(
+
+V17_ROW_TILE_ROWS = 64
+V17_SQLITE_CACHE_BYTES = 8 * 1024**2
+V17_SQLITE_FREE_SPACE_RESERVE_BYTES = 256 * 1024**2
+V17_SUPPORT_BITS_CHUNK = 1 << 16
+V17_DECODE_CHUNK_BYTES = 1 << 16
+V17_FROBENIUS_CHUNK_NNZ = 1 << 16
+
+
+def _v17_decode_scratch_bytes(chunk_bytes: int, index_itemsize: int) -> int:
+    """Bound unpackbits plus flatnonzero/global-column/PETSc-index temporaries."""
+    chunk_bytes = int(chunk_bytes)
+    index_itemsize = int(index_itemsize)
+    if chunk_bytes < 0 or index_itemsize not in (4, 8):
+        raise ValueError("invalid V17 decode chunk or signed index width")
+    unpacked_bytes = 8 * chunk_bytes
+    flatnonzero_bytes = 8 * unpacked_bytes
+    global_column_bytes = 8 * unpacked_bytes
+    narrowed_index_bytes = index_itemsize * unpacked_bytes
+    return int(
+        unpacked_bytes
+        + flatnonzero_bytes
+        + global_column_bytes
+        + narrowed_index_bytes
+    )
+
+
+def _v17_csr_frobenius_norm(
+    matrix: sparse.csr_matrix,
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    label: str,
+) -> tuple[float, int]:
+    """Compute the norm from every completed CSR value with one bounded real buffer."""
+    import math
+
+    if np.dtype(matrix.data.dtype) != np.dtype(np.complex128):
+        raise TypeError("V17 Frobenius check requires complex128 completed CSR values")
+    values = np.asarray(matrix.data)
+    chunk_nnz = int(V17_FROBENIUS_CHUNK_NNZ)
+    partial_count = (int(values.size) + chunk_nnz - 1) // chunk_nnz
+    partial_list_bytes = 40 * partial_count
+    scratch_bytes = (
+        min(int(values.size), chunk_nnz) * np.dtype(np.float64).itemsize
+        + partial_list_bytes
+    )
+    if scratch_bytes > V16_Q_STAGING_BUDGET_BYTES:
+        raise V16StagingLimitError(
+            f"row_tile_frobenius/{label}",
+            scratch_bytes,
+            V16_Q_STAGING_BUDGET_BYTES,
+        )
+    allocation_gate(
+        f"task40_v17_q_row_tile_frobenius/{label}",
+        {
+            "additional_payload_bytes": 0,
+            "workspace_bytes": scratch_bytes,
+            "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+            "staging_live_bytes_upper": scratch_bytes,
+            "complete_csr_nnz": int(values.size),
+            "real_square_buffer_bytes": min(int(values.size), chunk_nnz)
+            * np.dtype(np.float64).itemsize,
+            "partial_sum_list_bytes_upper": partial_list_bytes,
+            "norm_source": "all values in the completed CSR block, chunked by NNZ",
+        },
+    )
+    if values.size == 0:
+        return 0.0, scratch_bytes
+    squares = np.empty(min(int(values.size), chunk_nnz), dtype=np.float64)
+    partials = []
+    for start in range(0, int(values.size), chunk_nnz):
+        chunk = values[start : start + chunk_nnz]
+        output = squares[: len(chunk)]
+        np.absolute(chunk, out=output)
+        np.square(output, out=output)
+        partials.append(float(np.sum(output, dtype=np.float64)))
+    return math.sqrt(math.fsum(partials)), scratch_bytes
+
+
+def _v17_checked_row_tile_csr_layout(
+    shape: tuple[int, int], row_counts: Any, index_dtype: Any
+) -> tuple[int, int]:
+    """Check dimensions, row counts, Python-int prefix sums, and CSR bytes."""
+    dtype = np.dtype(index_dtype)
+    if dtype.kind != "i":
+        raise TypeError("row-tile CSR requires a signed PETSc.IntType")
+    limit = int(np.iinfo(dtype).max)
+    rows, columns = (int(shape[0]), int(shape[1]))
+    if min(rows, columns) < 0 or max(rows, columns) > limit:
+        raise OverflowError("V17 row-tile CSR shape exceeds qualified PETSc.IntType")
+    if len(row_counts) != rows:
+        raise ValueError("V17 row-tile row-count inventory does not match CSR rows")
+    total_nnz = 0
+    for row, raw_count in enumerate(row_counts):
+        count = int(raw_count)
+        if count < 0 or count > columns or count > limit:
+            raise ValueError(f"V17 row-tile CSR row {row} count is outside its checked range")
+        total_nnz += count
+        if total_nnz > limit:
+            raise OverflowError("V17 row-tile CSR NNZ/indptr exceeds PETSc.IntType")
+    payload = (rows + 1) * dtype.itemsize + total_nnz * (
+        dtype.itemsize + np.dtype(np.complex128).itemsize
+    )
+    return total_nnz, int(payload)
+
+
+def _assemble_v17_row_tile_patterns(
     action: Any,
     q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
     *,
     allocation_gate: Callable[[str, Mapping[str, Any]], None],
-) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
-    """Bounded V16 pattern staging followed by direct CSR value accumulation."""
-    import time
+) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any], float]:
+    """Build four sparse patterns from compact support descriptors and row routes.
 
+    The SQLite spill stores only one pair of compressed support arrays per
+    contribution/branch plus contribution-to-row-tile references. It never
+    expands their Cartesian product into a COO or row/column key list. Each
+    routed tile temporarily owns a bounded bitset, then contributes sorted
+    unique columns to CSR after wide counts and prefix sums have been checked.
+    """
+    import sqlite3
+    import shutil
+    import tempfile
+    import time
+    from pathlib import Path
+
+    from petsc4py import PETSc
+
+    started = time.perf_counter()
+    index_dtype = np.dtype(PETSc.IntType)
+    if index_dtype.kind != "i" or index_dtype.itemsize not in (4, 8):
+        raise TypeError("V17 row-tile CSR requires signed int32/int64 PETSc indices")
+    if any(np.dtype(matrix.indices.dtype) != index_dtype for matrix in q_maps):
+        raise TypeError("V17 q-map indices must use the qualified PETSc.IntType")
+    index_limit = int(np.iinfo(index_dtype).max)
+    block_keys = ((0, 0), (0, 1), (1, 0), (1, 1))
+    block_id = {(p, q): p * 2 + q for p, q in block_keys}
+    shapes = {
+        key: (int(q_maps[key[0]].shape[1]), int(q_maps[key[1]].shape[1]))
+        for key in block_keys
+    }
+    for shape in shapes.values():
+        if max(shape) > index_limit:
+            raise OverflowError("V17 q block shape exceeds PETSc.IntType before routing")
+    byte_columns_by_block = {
+        key: (shape[1] + 7) // 8 for key, shape in shapes.items()
+    }
+    reserve = V16_PYTHON_OVERHEAD_RESERVE_BYTES
+    sqlite_cache = V17_SQLITE_CACHE_BYTES
+    index_bytes = index_dtype.itemsize
+    layout_count = 0
+    route_count = 0
+    descriptor_bytes_written = 0
+    route_flush_count = 0
+    sqlite_peak_bytes = 0
+    spool_initial_free_bytes = 0
+    spool_minimum_free_bytes = 0
+    max_staging = 0
+    highest_routed_tile_by_block = {f"{p}{q}": -1 for p, q in block_keys}
+    route_records_read_by_block = {f"{p}{q}": 0 for p, q in block_keys}
+    cartesian_support_pair_cardinality = {f"{p}{q}": 0 for p, q in block_keys}
+    pattern_facts: dict[str, Any] = {}
     blocks: dict[tuple[int, int], sparse.csr_matrix] = {}
-    patterns: dict[str, Any] = {}
-    pattern_started = time.perf_counter()
-    for key in ((0, 0), (0, 1), (1, 0), (1, 1)):
-        matrix, facts = _assemble_v16_bitset_pattern(
-            action, q_maps, key, allocation_gate=allocation_gate
-        )
-        blocks[key] = matrix
-        patterns[f"{key[0]}{key[1]}"] = facts
+
+    with tempfile.TemporaryDirectory(prefix="task40-v17-q-row-tile-") as scratch:
+        database_path = Path(scratch) / "support_routes.sqlite3"
+        initial_disk = shutil.disk_usage(database_path.parent)
+        spool_initial_free_bytes = int(initial_disk.free)
+        if spool_initial_free_bytes < V17_SQLITE_FREE_SPACE_RESERVE_BYTES:
+            raise OSError(
+                "V17 row-tile temporary filesystem has less than the required "
+                f"{V17_SQLITE_FREE_SPACE_RESERVE_BYTES} byte free-space reserve"
+            )
+        spool_minimum_free_bytes = spool_initial_free_bytes
+        connection = sqlite3.connect(database_path)
+        try:
+            connection.execute("PRAGMA journal_mode=OFF")
+            connection.execute("PRAGMA synchronous=OFF")
+            connection.execute("PRAGMA temp_store=FILE")
+            connection.execute("PRAGMA mmap_size=0")
+            connection.execute(f"PRAGMA cache_size=-{sqlite_cache // 1024}")
+            connection.execute("PRAGMA cache_spill=ON")
+            connection.execute(
+                "CREATE TABLE support ("
+                "contribution_id INTEGER NOT NULL, side TEXT NOT NULL, "
+                "branch INTEGER NOT NULL, ids BLOB NOT NULL, "
+                "PRIMARY KEY(contribution_id, side, branch)) WITHOUT ROWID"
+            )
+            connection.execute(
+                "CREATE TABLE routes ("
+                "block INTEGER NOT NULL, tile INTEGER NOT NULL, "
+                "contribution_id INTEGER NOT NULL, left_branch INTEGER NOT NULL, "
+                "left_offset INTEGER NOT NULL, left_count INTEGER NOT NULL, "
+                "right_branch INTEGER NOT NULL, "
+                "PRIMARY KEY(block, tile, contribution_id)) WITHOUT ROWID"
+            )
+            connection.commit()
+
+            route_query = (
+                "SELECT r.left_offset, r.left_count, l.ids, s.ids "
+                "FROM routes AS r "
+                "JOIN support AS l ON "
+                "l.contribution_id=r.contribution_id AND l.side='L' "
+                "AND l.branch=r.left_branch "
+                "JOIN support AS s ON "
+                "s.contribution_id=r.contribution_id AND s.side='R' "
+                "AND s.branch=r.right_branch "
+                "WHERE r.block=? AND r.tile=? ORDER BY r.contribution_id"
+            )
+            route_query_plan = [
+                str(row[3])
+                for row in connection.execute(
+                    "EXPLAIN QUERY PLAN " + route_query, (0, 0)
+                )
+            ]
+            if any("TEMP B-TREE" in detail.upper() for detail in route_query_plan):
+                raise RuntimeError(
+                    "V17 compact route lookup requires an unbounded SQLite sort"
+                )
+
+            def check_spool_space(stage: str) -> None:
+                nonlocal sqlite_peak_bytes, spool_minimum_free_bytes
+                current_size = int(
+                    sum(
+                        path.stat().st_size
+                        for path in database_path.parent.iterdir()
+                        if path.is_file()
+                    )
+                )
+                usage = shutil.disk_usage(database_path.parent)
+                spool_minimum_free_bytes = min(
+                    spool_minimum_free_bytes, int(usage.free)
+                )
+                sqlite_peak_bytes = max(sqlite_peak_bytes, current_size)
+                allocation_gate(
+                    f"task40_v17_q_row_tile_spool_space/{stage}",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": sqlite_cache + reserve,
+                        "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                        "staging_live_bytes_upper": sqlite_cache + reserve,
+                        "sqlite_spool_file_bytes": current_size,
+                        "temporary_filesystem_free_bytes": int(usage.free),
+                        "temporary_filesystem_free_reserve_bytes": (
+                            V17_SQLITE_FREE_SPACE_RESERVE_BYTES
+                        ),
+                        "temporary_filesystem_device_id": int(
+                            database_path.parent.stat().st_dev
+                        ),
+                    },
+                )
+                if int(usage.free) < V17_SQLITE_FREE_SPACE_RESERVE_BYTES:
+                    raise OSError(
+                        "V17 row-tile temporary filesystem fell below its "
+                        "required free-space reserve"
+                    )
+
+            layout_started = time.perf_counter()
+            for contribution_id, (rows_raw, columns_raw, label) in enumerate(
+                action.iter_reduced_contribution_layouts(
+                    hhat_block_columns=V16_HHAT_BLOCK_COLUMNS
+                )
+            ):
+                rows = np.asarray(rows_raw)
+                columns = np.asarray(columns_raw)
+                if (
+                    rows.ndim != 1
+                    or columns.ndim != 1
+                    or rows.dtype.kind not in "iu"
+                    or columns.dtype.kind not in "iu"
+                    or (
+                        rows.size
+                        and (
+                            int(rows.min()) < 0
+                            or int(rows.max()) >= q_maps[0].shape[0]
+                        )
+                    )
+                    or (
+                        columns.size
+                        and (
+                            int(columns.min()) < 0
+                            or int(columns.max()) >= q_maps[0].shape[0]
+                        )
+                    )
+                ):
+                    raise ValueError(f"invalid V17 row-tile contribution layout {label}")
+
+                selected_left_nnz = [
+                    _selected_csr_nnz(matrix, rows) for matrix in q_maps
+                ]
+                selected_right_nnz = [
+                    _selected_csr_nnz(matrix, columns) for matrix in q_maps
+                ]
+                selected_bytes = sum(
+                    count
+                    * (
+                        int(matrix.data.dtype.itemsize)
+                        + int(matrix.indices.dtype.itemsize)
+                    )
+                    + (len(rows) + 1) * int(matrix.indptr.dtype.itemsize)
+                    for count, matrix in zip(selected_left_nnz, q_maps, strict=True)
+                ) + sum(
+                    count
+                    * (
+                        int(matrix.data.dtype.itemsize)
+                        + int(matrix.indices.dtype.itemsize)
+                    )
+                    + (len(columns) + 1) * int(matrix.indptr.dtype.itemsize)
+                    for count, matrix in zip(selected_right_nnz, q_maps, strict=True)
+                )
+                descriptor_workspace = (
+                    selected_bytes
+                    + rows.nbytes
+                    + columns.nbytes
+                    + 4
+                    * (sum(selected_left_nnz) + sum(selected_right_nnz))
+                    * index_bytes
+                    + 2 * sum(selected_right_nnz) * index_bytes
+                    + sum(selected_right_nnz)
+                    + 3
+                    * (
+                        sum(selected_left_nnz) + sum(selected_right_nnz)
+                    )
+                    * index_bytes
+                    + reserve
+                    + sqlite_cache
+                )
+                max_staging = max(max_staging, descriptor_workspace)
+                if descriptor_workspace > V16_Q_STAGING_BUDGET_BYTES:
+                    raise V16StagingLimitError(
+                        f"row_tile_layout/{label}",
+                        descriptor_workspace,
+                        V16_Q_STAGING_BUDGET_BYTES,
+                    )
+                allocation_gate(
+                    f"task40_v17_q_row_tile_layout/{label}",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": descriptor_workspace - reserve,
+                        "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                        "staging_live_bytes_upper": descriptor_workspace,
+                        "support_representation": "compressed branch support arrays plus contribution-to-row-tile routes",
+                        "cartesian_row_column_records_materialized": 0,
+                    },
+                )
+
+                left_supports: list[np.ndarray] = []
+                right_supports: list[np.ndarray] = []
+                for branch, matrix in enumerate(q_maps):
+                    selected_rows = matrix[rows, :].tocsr()
+                    support = np.unique(selected_rows.indices)
+                    if support.size and int(support[-1]) >= matrix.shape[1]:
+                        raise ValueError("V17 left q support exceeds its reduced columns")
+                    left_supports.append(support)
+                    del selected_rows
+                    selected_columns = matrix[columns, :].tocsr()
+                    support = np.unique(selected_columns.indices)
+                    if support.size and int(support[-1]) >= matrix.shape[1]:
+                        raise ValueError("V17 right q support exceeds its reduced columns")
+                    right_supports.append(support)
+                    del selected_columns
+
+                for branch, support in enumerate(left_supports):
+                    contiguous = np.ascontiguousarray(support, dtype=index_dtype)
+                    connection.execute(
+                        "INSERT INTO support VALUES (?, 'L', ?, ?)",
+                        (contribution_id, branch, memoryview(contiguous).cast("B")),
+                    )
+                    descriptor_bytes_written += int(contiguous.nbytes)
+                for branch, support in enumerate(right_supports):
+                    contiguous = np.ascontiguousarray(support, dtype=index_dtype)
+                    connection.execute(
+                        "INSERT INTO support VALUES (?, 'R', ?, ?)",
+                        (contribution_id, branch, memoryview(contiguous).cast("B")),
+                    )
+                    descriptor_bytes_written += int(contiguous.nbytes)
+
+                for p, q in block_keys:
+                    left_support = left_supports[p]
+                    right_support = right_supports[q]
+                    if not left_support.size or not right_support.size:
+                        continue
+                    cartesian_support_pair_cardinality[f"{p}{q}"] += int(
+                        len(left_support) * len(right_support)
+                    )
+                    tile_start_index = 0
+                    while tile_start_index < len(left_support):
+                        tile = int(left_support[tile_start_index]) // V17_ROW_TILE_ROWS
+                        tile_end_index = tile_start_index + 1
+                        tile_limit = (tile + 1) * V17_ROW_TILE_ROWS
+                        while (
+                            tile_end_index < len(left_support)
+                            and int(left_support[tile_end_index]) < tile_limit
+                        ):
+                            tile_end_index += 1
+                        connection.execute(
+                            "INSERT INTO routes VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                block_id[p, q],
+                                tile,
+                                contribution_id,
+                                p,
+                                tile_start_index,
+                                tile_end_index - tile_start_index,
+                                q,
+                            ),
+                        )
+                        route_count += 1
+                        highest_routed_tile_by_block[f"{p}{q}"] = max(
+                            highest_routed_tile_by_block[f"{p}{q}"], tile
+                        )
+                        if route_count % 256 == 0:
+                            connection.commit()
+                            route_flush_count += 1
+                            check_spool_space(f"routes_{route_count}")
+                        tile_start_index = tile_end_index
+                layout_count += 1
+                if layout_count % 64 == 0:
+                    connection.commit()
+                    route_flush_count += 1
+                    check_spool_space(f"layout_{layout_count}")
+                del left_supports, right_supports, rows, columns
+
+            connection.commit()
+            route_flush_count += 1
+            check_spool_space("layout_complete")
+            layout_seconds = time.perf_counter() - layout_started
+            max_left_blob = int(
+                connection.execute(
+                    "SELECT COALESCE(MAX(length(ids)), 0) FROM support WHERE side='L'"
+                ).fetchone()[0]
+            )
+            max_right_blob = int(
+                connection.execute(
+                    "SELECT COALESCE(MAX(length(ids)), 0) FROM support WHERE side='R'"
+                ).fetchone()[0]
+            )
+            max_descriptor_bytes = max_left_blob + max_right_blob
+            bit_chunk_scratch = V17_SUPPORT_BITS_CHUNK * (
+                2 * index_bytes + 2
+            )
+            decode_scratch = _v17_decode_scratch_bytes(
+                V17_DECODE_CHUNK_BYTES, index_bytes
+            )
+            sqlite_blob_overlap = 2 * max_descriptor_bytes
+            pattern_started = time.perf_counter()
+
+            def fill_pattern_tile(
+                key: tuple[int, int],
+                tile: int,
+                *,
+                row_pointer_temporary_bytes: int,
+                phase: str,
+            ) -> tuple[np.ndarray, int]:
+                p, q = key
+                shape = shapes[key]
+                tile_start = tile * V17_ROW_TILE_ROWS
+                tile_stop = min(tile_start + V17_ROW_TILE_ROWS, shape[0])
+                active_rows = max(0, tile_stop - tile_start)
+                bitset_bytes = active_rows * byte_columns_by_block[key]
+                stage = (
+                    sqlite_cache
+                    + reserve
+                    + row_pointer_temporary_bytes
+                    + bitset_bytes
+                    + sqlite_blob_overlap
+                    + bit_chunk_scratch
+                    + decode_scratch
+                )
+                if stage > V16_Q_STAGING_BUDGET_BYTES:
+                    raise V16StagingLimitError(
+                        f"row_tile_{phase}/p{p}q{q}/tile{tile}",
+                        stage,
+                        V16_Q_STAGING_BUDGET_BYTES,
+                    )
+                allocation_gate(
+                    f"task40_v17_q_row_tile_{phase}/p{p}q{q}/tile{tile}",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": stage - reserve,
+                        "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                        "staging_live_bytes_upper": stage,
+                        "row_tile_start": tile_start,
+                        "row_tile_stop": tile_stop,
+                        "row_tile_rows": active_rows,
+                        "row_tile_bitset_bytes": bitset_bytes,
+                        "sqlite_page_cache_bytes": sqlite_cache,
+                        "support_descriptor_bytes_upper": max_descriptor_bytes,
+                        "sqlite_blob_read_overlap_bytes_upper": sqlite_blob_overlap,
+                        "support_bit_chunk_scratch_bytes": bit_chunk_scratch,
+                        "decode_and_column_cast_scratch_bytes": decode_scratch,
+                        "sorted_row_tile_support_merge": True,
+                    },
+                )
+                pattern = np.zeros(
+                    (active_rows, byte_columns_by_block[key]), dtype=np.uint8
+                )
+                for offset, count, left_blob, right_blob in connection.execute(
+                    route_query, (block_id[key], tile)
+                ):
+                    left_all = np.frombuffer(left_blob, dtype=index_dtype)
+                    right_ids = np.frombuffer(right_blob, dtype=index_dtype)
+                    left_rows = left_all[int(offset): int(offset) + int(count)]
+                    descriptor_bytes_read_local = len(left_blob) + len(right_blob)
+                    nonlocal_descriptor_bytes[0] += descriptor_bytes_read_local
+                    route_records_read_by_block[f"{p}{q}"] += 1
+                    for support_start in range(
+                        0, len(right_ids), V17_SUPPORT_BITS_CHUNK
+                    ):
+                        support = right_ids[
+                            support_start: support_start + V17_SUPPORT_BITS_CHUNK
+                        ]
+                        byte_ids = np.right_shift(support, 3)
+                        bit_values = np.left_shift(
+                            np.uint8(1),
+                            np.bitwise_and(support, 7).astype(np.uint8, copy=False),
+                        )
+                        for global_row_value in left_rows:
+                            local_row = int(global_row_value) - tile_start
+                            if local_row < 0 or local_row >= active_rows:
+                                raise ValueError("V17 routed row escaped its output row tile")
+                            np.bitwise_or.at(
+                                pattern[local_row], byte_ids, bit_values
+                            )
+                return pattern, stage
+
+            nonlocal_descriptor_bytes = [0]
+            for key in block_keys:
+                p, q = key
+                shape = shapes[key]
+                pointer_bytes = (shape[0] + 1) * np.dtype(np.int64).itemsize
+                pointer_stage = (
+                    sqlite_cache
+                    + reserve
+                    + pointer_bytes
+                    + max_descriptor_bytes
+                    + bit_chunk_scratch
+                    + decode_scratch
+                )
+                max_staging = max(max_staging, pointer_stage)
+                if pointer_stage > V16_Q_STAGING_BUDGET_BYTES:
+                    raise V16StagingLimitError(
+                        f"row_tile_wide_row_counts/p{p}q{q}",
+                        pointer_stage,
+                        V16_Q_STAGING_BUDGET_BYTES,
+                    )
+                allocation_gate(
+                    f"task40_v17_q_row_tile_wide_row_counts/p{p}q{q}",
+                    {
+                        "additional_payload_bytes": 0,
+                        "workspace_bytes": pointer_stage - reserve,
+                        "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                        "staging_live_bytes_upper": pointer_stage,
+                        "row_count_dtype": "int64",
+                        "prefix_sum_dtype": "Python int, checked against PETSc.IntType",
+                    },
+                )
+                wide_indptr = np.zeros(shape[0] + 1, dtype=np.int64)
+                rows_with_pattern = 0
+                routed_tile_count = int(
+                    connection.execute(
+                        "SELECT COUNT(*) FROM ("
+                        "SELECT tile FROM routes WHERE block=? GROUP BY tile"
+                        ")",
+                        (block_id[key],),
+                    ).fetchone()[0]
+                )
+                tile_cursor = connection.execute(
+                    "SELECT tile FROM routes WHERE block=? GROUP BY tile ORDER BY tile",
+                    (block_id[key],),
+                )
+                for (tile,) in tile_cursor:
+                    tile = int(tile)
+                    pattern, stage = fill_pattern_tile(
+                        key,
+                        tile,
+                        row_pointer_temporary_bytes=wide_indptr.nbytes,
+                        phase="count",
+                    )
+                    max_staging = max(max_staging, stage)
+                    tile_start = tile * V17_ROW_TILE_ROWS
+                    tile_stop = min(tile_start + V17_ROW_TILE_ROWS, shape[0])
+                    for row in range(tile_start, tile_stop):
+                        count = 0
+                        local_row = row - tile_start
+                        row_bits = pattern[local_row]
+                        for byte_start in range(
+                            0, len(row_bits), V17_DECODE_CHUNK_BYTES
+                        ):
+                            byte_stop = min(
+                                byte_start + V17_DECODE_CHUNK_BYTES, len(row_bits)
+                            )
+                            decoded = np.unpackbits(
+                                row_bits[byte_start:byte_stop], bitorder="little"
+                            )
+                            valid = min(
+                                len(decoded), max(0, shape[1] - 8 * byte_start)
+                            )
+                            count += int(np.count_nonzero(decoded[:valid]))
+                        if count > index_limit:
+                            raise OverflowError(
+                                "V17 row-tile row count exceeds PETSc.IntType"
+                            )
+                        wide_indptr[row + 1] = count
+                        rows_with_pattern += int(count > 0)
+                    del pattern
+                total_nnz, csr_payload = _v17_checked_row_tile_csr_layout(
+                    shape, wide_indptr[1:], index_dtype
+                )
+                running = 0
+                for row in range(shape[0]):
+                    running += int(wide_indptr[row + 1])
+                    if running > index_limit:
+                        raise OverflowError(
+                            "V17 row-tile Python prefix exceeds PETSc.IntType"
+                        )
+                    wide_indptr[row + 1] = running
+
+                materialize_workspace = (
+                    sqlite_cache
+                    + reserve
+                    + wide_indptr.nbytes
+                    + max_descriptor_bytes
+                    + bit_chunk_scratch
+                    + decode_scratch
+                )
+                max_staging = max(max_staging, materialize_workspace)
+                if materialize_workspace > V16_Q_STAGING_BUDGET_BYTES:
+                    raise V16StagingLimitError(
+                        f"row_tile_csr_materialize/p{p}q{q}",
+                        materialize_workspace,
+                        V16_Q_STAGING_BUDGET_BYTES,
+                    )
+                allocation_gate(
+                    f"task40_v17_q_row_tile_csr_materialize/p{p}q{q}",
+                    {
+                        "additional_payload_bytes": csr_payload,
+                        "workspace_bytes": materialize_workspace - reserve,
+                        "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+                        "staging_live_bytes_upper": materialize_workspace,
+                        "final_csr_payload_bytes": csr_payload,
+                        "final_nnz_python_integer": total_nnz,
+                        "indptr_terminal_python_integer": running,
+                        "indptr_dtype_after_checked_cast": index_dtype.str,
+                        "support_descriptor_spool_bytes": sqlite_peak_bytes,
+                    },
+                )
+                indptr = wide_indptr.astype(index_dtype, copy=True)
+                del wide_indptr
+                indices = np.empty(total_nnz, dtype=index_dtype)
+                data = np.zeros(total_nnz, dtype=np.complex128)
+                tile_cursor = connection.execute(
+                    "SELECT tile FROM routes WHERE block=? GROUP BY tile ORDER BY tile",
+                    (block_id[key],),
+                )
+                for (tile,) in tile_cursor:
+                    tile = int(tile)
+                    pattern, stage = fill_pattern_tile(
+                        key,
+                        tile,
+                        row_pointer_temporary_bytes=0,
+                        phase="write",
+                    )
+                    max_staging = max(max_staging, stage)
+                    tile_start = tile * V17_ROW_TILE_ROWS
+                    tile_stop = min(tile_start + V17_ROW_TILE_ROWS, shape[0])
+                    for row in range(tile_start, tile_stop):
+                        local_row = row - tile_start
+                        write = int(indptr[row])
+                        row_stop = int(indptr[row + 1])
+                        row_bits = pattern[local_row]
+                        for byte_start in range(
+                            0, len(row_bits), V17_DECODE_CHUNK_BYTES
+                        ):
+                            byte_stop = min(
+                                byte_start + V17_DECODE_CHUNK_BYTES, len(row_bits)
+                            )
+                            decoded = np.unpackbits(
+                                row_bits[byte_start:byte_stop], bitorder="little"
+                            )
+                            valid = min(
+                                len(decoded), max(0, shape[1] - 8 * byte_start)
+                            )
+                            local_columns = np.flatnonzero(decoded[:valid])
+                            count = len(local_columns)
+                            if count:
+                                global_columns = (
+                                    local_columns.astype(np.int64, copy=False)
+                                    + 8 * byte_start
+                                )
+                                stop = write + count
+                                if stop > row_stop:
+                                    raise RuntimeError(
+                                        "V17 row-tile CSR write exceeded its checked row prefix"
+                                    )
+                                indices[write:stop] = global_columns.astype(
+                                    index_dtype, copy=False
+                                )
+                                write = stop
+                        if write != row_stop:
+                            raise RuntimeError(
+                                "V17 row-tile CSR materialization differs from wide row counts"
+                            )
+                    del pattern
+                matrix = sparse.csr_matrix(
+                    (data, indices, indptr), shape=shape, copy=False
+                )
+                if not matrix.has_canonical_format or not matrix.has_sorted_indices:
+                    raise RuntimeError(
+                        "V17 row-tile materialization did not produce canonical sorted CSR"
+                    )
+                blocks[key] = matrix
+                pattern_facts[f"{p}{q}"] = {
+                    "shape": list(shape),
+                    "row_tile_rows": V17_ROW_TILE_ROWS,
+                    "routed_row_tile_count": routed_tile_count,
+                    "highest_routed_row_tile_index": int(
+                        highest_routed_tile_by_block[f"{p}{q}"]
+                    ),
+                    "row_tile_count_for_shape": (
+                        shape[0] + V17_ROW_TILE_ROWS - 1
+                    ) // V17_ROW_TILE_ROWS,
+                    "rows_with_nonzero_pattern": rows_with_pattern,
+                    "pattern_nnz": total_nnz,
+                    "indptr_terminal": total_nnz,
+                    "csr_payload_bytes": csr_payload,
+                    "csr_index_dtype": index_dtype.str,
+                    "wide_counts_and_prefix_checked_before_cast": True,
+                    "tile_support_rebuild_passes": 2,
+                    "maximum_staging_bytes": max_staging,
+                    "full_shape_bitset_bytes": 0,
+                    "full_coo_list_count": 0,
+                    "global_python_row_set_count": 0,
+                }
+            sqlite_peak_bytes = max(
+                sqlite_peak_bytes,
+                sum(
+                    path.stat().st_size
+                    for path in database_path.parent.iterdir()
+                    if path.is_file()
+                ),
+            )
+        finally:
+            connection.close()
+
     pattern_seconds = time.perf_counter() - pattern_started
+    total_unique_routes = int(route_count)
+    return blocks, {
+        "pattern_facts_by_block": pattern_facts,
+        "pattern_layout_pass_count": 1,
+        "pattern_layout_count": layout_count,
+        "contribution_to_tile_route_count": total_unique_routes,
+        "support_descriptor_logical_bytes_written": descriptor_bytes_written,
+        "support_descriptor_logical_bytes_read": nonlocal_descriptor_bytes[0],
+        "route_records_read_by_block": route_records_read_by_block,
+        "cartesian_support_pair_cardinality_by_block": (
+            cartesian_support_pair_cardinality
+        ),
+        "cartesian_support_pairs_materialized": 0,
+        "route_query_plan": route_query_plan,
+        "route_query_uses_temporary_sort": False,
+        "temporary_filesystem_free_bytes_at_start": spool_initial_free_bytes,
+        "temporary_filesystem_free_bytes_minimum_observed": spool_minimum_free_bytes,
+        "temporary_filesystem_free_space_reserve_bytes": (
+            V17_SQLITE_FREE_SPACE_RESERVE_BYTES
+        ),
+        "support_route_flush_count": route_flush_count,
+        "support_route_spool_peak_file_bytes": sqlite_peak_bytes,
+        "support_route_spool_removed_after_pattern": True,
+        "sqlite_page_cache_bytes": sqlite_cache,
+        "row_tile_rows": V17_ROW_TILE_ROWS,
+        "full_shape_bitset_bytes": 0,
+        "full_coo_list_count": 0,
+        "global_python_row_set_count": 0,
+        "max_staging_bytes": max_staging,
+        "staging_budget_bytes": V16_Q_STAGING_BUDGET_BYTES,
+        "row_tiles_are_materialized_in_two_descriptor_passes": True,
+        "descriptor_replay_regenerates_no_FE_or_Hhat_values": True,
+        "pattern_algorithm": "one_compact_support_route_pass_then_bounded_per_tile_bitset_and_sorted_CSR_write",
+        "pattern_seconds": pattern_seconds,
+    }, pattern_seconds
+
+
+def _accumulate_bounded_q_pattern_values(
+    action: Any,
+    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    blocks: dict[tuple[int, int], sparse.csr_matrix],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+    assembly_strategy: str,
+    pattern_algorithm: str,
+    patterns: Mapping[str, Any],
+    pattern_seconds: float,
+    pattern_metadata: Mapping[str, Any] | None = None,
+) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
+    import time
 
     numeric_started = time.perf_counter()
     contribution_generation_seconds = 0.0
     projection_seconds = 0.0
     accumulation_seconds = 0.0
     contribution_count = 0
+    hhat_contribution_count = 0
     projection_call_count = 0
     accumulation_call_count = 0
     numeric_staging_peak = 0
@@ -1815,7 +2595,7 @@ def _assemble_bounded_v16_q_patterns(
     projection_tile_count = 0
     projection_left_product_count = 0
 
-    def v16_projection_gate(label: str, facts: Mapping[str, Any]) -> None:
+    def bounded_projection_gate(label: str, facts: Mapping[str, Any]) -> None:
         nonlocal projection_support_discovery_gate_count
         nonlocal projection_tile_plan_count, projection_tile_count
         nonlocal projection_left_product_count
@@ -1827,7 +2607,7 @@ def _assemble_bounded_v16_q_patterns(
             projection_left_product_count += int(facts.get("projection_left_product_count", 0))
         allocation_gate(label, facts)
 
-    def v16_contribution_gate(label: str, facts: Mapping[str, Any]) -> None:
+    def bounded_contribution_gate(label: str, facts: Mapping[str, Any]) -> None:
         nonlocal contribution_staging_peak
         payload = int(facts.get("matrix_payload_bytes", facts.get("additional_payload_bytes", 0)))
         workspace = int(facts.get("workspace_bytes", 0))
@@ -1849,7 +2629,7 @@ def _assemble_bounded_v16_q_patterns(
 
     contribution_iterator = iter(
         action.iter_reduced_contributions(
-            allocation_gate=v16_contribution_gate,
+            allocation_gate=bounded_contribution_gate,
             hhat_block_columns=V16_HHAT_BLOCK_COLUMNS,
         )
     )
@@ -1861,23 +2641,24 @@ def _assemble_bounded_v16_q_patterns(
             break
         contribution_generation_seconds += time.perf_counter() - generation_started
         contribution_count += 1
-        for p in (0, 1):
-            for q in (0, 1):
-                projection_s, accumulation_s, staging_peak = _project_accumulate_v16(
-                    blocks[p, q],
-                    q_maps[p],
-                    q_maps[q],
-                    rows,
-                    columns,
-                    values,
-                    allocation_gate=v16_projection_gate,
-                    label=f"{label}/p{p}q{q}",
-                )
-                projection_seconds += projection_s
-                accumulation_seconds += accumulation_s
-                numeric_staging_peak = max(numeric_staging_peak, staging_peak)
-                projection_call_count += 1
-                accumulation_call_count += 1
+        if str(label).startswith("ports/Hhat"):
+            hhat_contribution_count += 1
+        for p, q in ((0, 0), (0, 1), (1, 0), (1, 1)):
+            projection_s, accumulation_s, staging_peak = _project_accumulate_v16(
+                blocks[p, q],
+                q_maps[p],
+                q_maps[q],
+                rows,
+                columns,
+                values,
+                allocation_gate=bounded_projection_gate,
+                label=f"{label}/p{p}q{q}",
+            )
+            projection_seconds += projection_s
+            accumulation_seconds += accumulation_s
+            numeric_staging_peak = max(numeric_staging_peak, staging_peak)
+            projection_call_count += 1
+            accumulation_call_count += 1
         del rows, columns, values
 
     stored_pattern_slots = {
@@ -1891,46 +2672,48 @@ def _assemble_bounded_v16_q_patterns(
         key: int(stored_pattern_slots[key] - numeric_nonzero_entries[key])
         for key in stored_pattern_slots
     }
-    # Keep the preallocated backing arrays unchanged. SciPy's prune may retain
-    # the old owner or copy depending on its size heuristic; that copy path has
-    # not been admitted here, so report exact zeros and stored owners separately.
-    final_nnz = {
-        f"{p}{q}": int(matrix.nnz) for (p, q), matrix in blocks.items()
-    }
     final_csr_bytes = {
         f"{p}{q}": _v16_csr_payload_bytes(matrix)
         for (p, q), matrix in blocks.items()
     }
     numeric_parent_seconds = float(time.perf_counter() - numeric_started)
-    max_staging = max(
-        max(int(row["staging_peak_bytes"]) for row in patterns.values()),
-        contribution_staging_peak,
-        numeric_staging_peak,
+    pattern_peak = max(
+        (int(row.get("staging_peak_bytes", row.get("maximum_staging_bytes", 0)))
+         for row in patterns.values()),
+        default=0,
     )
+    if pattern_metadata:
+        pattern_peak = max(
+            pattern_peak,
+            int(pattern_metadata.get("max_staging_bytes", 0)),
+        )
+    max_staging = max(pattern_peak, contribution_staging_peak, numeric_staging_peak)
     if max_staging > V16_Q_STAGING_BUDGET_BYTES:
         raise V16StagingLimitError(
             "four_block_peak", max_staging, V16_Q_STAGING_BUDGET_BYTES
         )
-    return blocks, {
-        "assembly_strategy": Q_ASSEMBLY_BOUNDED_V16,
-        "pattern_algorithm": "one_row_bitset_per_q_block_then_direct_preallocated_csr_accumulation",
+    audit = {
+        "assembly_strategy": assembly_strategy,
+        "pattern_algorithm": pattern_algorithm,
         "staging_budget_bytes_total_all_q_blocks": V16_Q_STAGING_BUDGET_BYTES,
-        "staging_budget_scope": "maximum_concurrent_across_all_four_blocks_including_support_and_projection_temporaries",
+        "staging_budget_scope": "maximum simultaneous routing/support, row-tile bitset, prefix, query/decode, contribution and projection scratch; final CSR is separately allocation-gated",
         "pattern_seconds": float(pattern_seconds),
         "numeric_parent_seconds": numeric_parent_seconds,
         "pattern_stage_peak_bytes_by_block": {
-            key: int(value["staging_peak_bytes"]) for key, value in patterns.items()
+            key: int(value.get("staging_peak_bytes", value.get("maximum_staging_bytes", 0)))
+            for key, value in patterns.items()
         },
+        "pattern_stage_peak_bytes_total": pattern_peak,
         "contribution_generation_stage_peak_bytes": int(contribution_staging_peak),
         "projection_stage_peak_bytes": int(numeric_staging_peak),
         "staging_peak_bytes_total_all_blocks": int(max_staging),
-        "pattern_facts_by_block": patterns,
+        "pattern_facts_by_block": dict(patterns),
         "final_csr_payload_bytes_by_block": final_csr_bytes,
         "final_csr_payload_bytes_total": int(sum(final_csr_bytes.values())),
         "stored_pattern_slots_by_block": stored_pattern_slots,
         "numeric_nonzero_entries_by_block": numeric_nonzero_entries,
         "exact_zero_slots_retained_by_block": exact_zero_slots_retained,
-        "final_nnz_by_block": final_nnz,
+        "final_nnz_by_block": stored_pattern_slots,
         "exact_zero_cleanup": "not_applied; original CSR backing arrays retained",
         "no_compaction_owner_copy_created": True,
         "flush_merge_temporary_bytes": 0,
@@ -1938,6 +2721,10 @@ def _assemble_bounded_v16_q_patterns(
         "python_row_set_count": 0,
         "global_csr_reallocations_during_numeric_pass": 0,
         "numeric_contribution_count": contribution_count,
+        "numeric_contribution_pass_count": 1,
+        "hhat_numeric_contribution_count": hhat_contribution_count,
+        "local_projection_call_count": projection_call_count,
+        "global_sparse_accumulation_call_count": accumulation_call_count,
         "projection_support_discovery_gate_count": projection_support_discovery_gate_count,
         "projection_tile_plan_count": projection_tile_plan_count,
         "projection_tile_count": projection_tile_count,
@@ -1947,19 +2734,76 @@ def _assemble_bounded_v16_q_patterns(
         "contribution_generation_seconds": float(contribution_generation_seconds),
         "local_projection_seconds": float(projection_seconds),
         "global_sparse_accumulation_seconds": float(accumulation_seconds),
-        "local_projection_call_count": projection_call_count,
-        "global_sparse_accumulation_call_count": accumulation_call_count,
         "block_shapes": {
             f"{p}{q}": list(matrix.shape) for (p, q), matrix in blocks.items()
         },
         "timing_scope": {
-            "assembly_total_seconds": "parent interval including q-map construction and bounded pattern generation",
-            "pattern_seconds": "pattern metadata/pattern CSR parent interval, outside numeric_parent_seconds",
-            "numeric_parent_seconds": "parent interval including contribution generation, projection, accumulation, exact-zero cleanup, and loop overhead",
+            "assembly_total_seconds": "parent interval including q-map construction and selected strategy",
+            "pattern_seconds": "layout, compact support routing, row-tile pattern and CSR construction; outside numeric_parent_seconds",
+            "numeric_parent_seconds": "one numeric contribution traversal including FE/Hhat generation, projection, and accumulation",
             "child_intervals_are_nonoverlapping_and_already_inside_numeric_parent": True,
             "parent_and_child_intervals_must_not_be_added": True,
         },
     }
+    if pattern_metadata:
+        audit.update(dict(pattern_metadata))
+    return blocks, audit
+
+
+def _assemble_bounded_v16_q_patterns(
+    action: Any,
+    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
+    """Historical V16 full-shape bitset pattern followed by shared numeric pass."""
+    import time
+
+    blocks: dict[tuple[int, int], sparse.csr_matrix] = {}
+    patterns: dict[str, Any] = {}
+    pattern_started = time.perf_counter()
+    for key in ((0, 0), (0, 1), (1, 0), (1, 1)):
+        matrix, facts = _assemble_v16_bitset_pattern(
+            action, q_maps, key, allocation_gate=allocation_gate
+        )
+        blocks[key] = matrix
+        patterns[f"{key[0]}{key[1]}"] = facts
+    pattern_seconds = time.perf_counter() - pattern_started
+    return _accumulate_bounded_q_pattern_values(
+        action,
+        q_maps,
+        blocks,
+        allocation_gate=allocation_gate,
+        assembly_strategy=Q_ASSEMBLY_BOUNDED_V16,
+        pattern_algorithm="one_full_shape_row_bitset_per_q_block_then_direct_preallocated_csr_accumulation",
+        patterns=patterns,
+        pattern_seconds=pattern_seconds,
+    )
+
+
+def _assemble_bounded_v17_row_tile_q_patterns(
+    action: Any,
+    q_maps: tuple[sparse.csr_matrix, sparse.csr_matrix],
+    *,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None],
+) -> tuple[dict[tuple[int, int], sparse.csr_matrix], dict[str, Any]]:
+    blocks, pattern_metadata, pattern_seconds = _assemble_v17_row_tile_patterns(
+        action, q_maps, allocation_gate=allocation_gate
+    )
+    patterns = dict(pattern_metadata.pop("pattern_facts_by_block"))
+    return _accumulate_bounded_q_pattern_values(
+        action,
+        q_maps,
+        blocks,
+        allocation_gate=allocation_gate,
+        assembly_strategy=Q_ASSEMBLY_ROW_TILE_V17,
+        pattern_algorithm=str(pattern_metadata["pattern_algorithm"]),
+        patterns=patterns,
+        pattern_seconds=pattern_seconds,
+        pattern_metadata=pattern_metadata,
+    )
+
+
 def assemble_task40_v10_sector_blocks(
     action: Any,
     coordinates: TwoCellBranchCoordinates,
@@ -1969,7 +2813,7 @@ def assemble_task40_v10_sector_blocks(
     assembly_strategy: str = Q_ASSEMBLY_LEGACY,
     return_all_blocks: bool = False,
 ) -> tuple[dict[Any, sparse.csr_matrix], dict[str, Any]]:
-    """Assemble all four q blocks using the explicit legacy, V13, or V16 strategy."""
+    """Assemble all four q blocks using the explicit legacy, V13, V16, or V17 strategy."""
     import time
 
     if not callable(allocation_gate):
@@ -1983,6 +2827,10 @@ def assemble_task40_v10_sector_blocks(
     )
     if assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
         blocks, strategy_audit = _assemble_bounded_v16_q_patterns(
+            action, q_maps, allocation_gate=allocation_gate
+        )
+    elif assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17:
+        blocks, strategy_audit = _assemble_bounded_v17_row_tile_q_patterns(
             action, q_maps, allocation_gate=allocation_gate
         )
     elif assembly_strategy == Q_ASSEMBLY_PREALLOCATED_V13:
@@ -2049,14 +2897,59 @@ def assemble_task40_v10_sector_blocks(
             "global_csr_reallocation_count_upper": 4 * contribution_count,
         }
 
-    diagonal_scale = max(
-        sparse.linalg.norm(blocks[0, 0]),
-        sparse.linalg.norm(blocks[1, 1]),
-        np.finfo(float).tiny,
-    )
+    if assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17:
+        complete_csr_frobenius_norms = {}
+        frobenius_staging_peak = 0
+        for p, q in ((0, 0), (0, 1), (1, 0), (1, 1)):
+            norm, scratch_bytes = _v17_csr_frobenius_norm(
+                blocks[p, q],
+                allocation_gate=allocation_gate,
+                label=f"p{p}q{q}",
+            )
+            complete_csr_frobenius_norms[f"{p}{q}"] = norm
+            frobenius_staging_peak = max(frobenius_staging_peak, scratch_bytes)
+        diagonal_scale = max(
+            complete_csr_frobenius_norms["00"],
+            complete_csr_frobenius_norms["11"],
+            np.finfo(float).tiny,
+        )
+        off_diagonal_norms = {
+            "q0_q1_relative": complete_csr_frobenius_norms["01"],
+            "q1_q0_relative": complete_csr_frobenius_norms["10"],
+        }
+        strategy_audit.update(
+            {
+                "complete_csr_frobenius_norm_by_block": (
+                    complete_csr_frobenius_norms
+                ),
+                "off_diagonal_norm_source": (
+                    "exact Frobenius norms of all completed CSR entries after "
+                    "the single numeric contribution pass"
+                ),
+                "frobenius_staging_peak_bytes": frobenius_staging_peak,
+                "final_four_block_csr_payload_bytes": int(
+                    sum(_v16_csr_payload_bytes(matrix) for matrix in blocks.values())
+                ),
+                "all_four_complete_csr_owners_retained_through_norm_gate": True,
+            }
+        )
+        strategy_audit["staging_peak_bytes_total_all_blocks"] = max(
+            int(strategy_audit.get("staging_peak_bytes_total_all_blocks", 0)),
+            frobenius_staging_peak,
+        )
+    else:
+        diagonal_scale = max(
+            sparse.linalg.norm(blocks[0, 0]),
+            sparse.linalg.norm(blocks[1, 1]),
+            np.finfo(float).tiny,
+        )
+        off_diagonal_norms = {
+            "q0_q1_relative": sparse.linalg.norm(blocks[0, 1]),
+            "q1_q0_relative": sparse.linalg.norm(blocks[1, 0]),
+        }
     off_diagonal = {
-        "q0_q1_relative": float(sparse.linalg.norm(blocks[0, 1]) / diagonal_scale),
-        "q1_q0_relative": float(sparse.linalg.norm(blocks[1, 0]) / diagonal_scale),
+        key: float(value / diagonal_scale)
+        for key, value in off_diagonal_norms.items()
     }
     if max(off_diagonal.values()) > LIMITS["operator"]:
         raise ValueError(f"regular p6 action is not diagonal in local q branches: {off_diagonal}")
@@ -2113,9 +3006,19 @@ def compare_task40_v10_sector_assembly(
 
     if not callable(allocation_gate):
         raise TypeError("q-block comparison requires a live allocation gate")
-    if candidate_strategy not in {Q_ASSEMBLY_PREALLOCATED_V13, Q_ASSEMBLY_BOUNDED_V16}:
+    if candidate_strategy not in {
+        Q_ASSEMBLY_PREALLOCATED_V13,
+        Q_ASSEMBLY_BOUNDED_V16,
+        Q_ASSEMBLY_ROW_TILE_V17,
+    }:
         raise ValueError(f"unsupported q-assembly comparison strategy: {candidate_strategy!r}")
-    candidate_version = "v16" if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 else "v13"
+    candidate_version = (
+        "v17"
+        if candidate_strategy == Q_ASSEMBLY_ROW_TILE_V17
+        else "v16"
+        if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16
+        else "v13"
+    )
     pair_started = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix=f"task40-{candidate_version}-q-assembly-pair-") as scratch:
         scratch_path = Path(scratch)
@@ -2311,10 +3214,17 @@ def compare_task40_v10_sector_assembly(
             "candidate_full_assembly_faster": faster,
             "candidate_selected_for_next_formal_case": bool(
                 equivalent
-                and (candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 or faster)
+                and (
+                    candidate_strategy
+                    in {Q_ASSEMBLY_BOUNDED_V16, Q_ASSEMBLY_ROW_TILE_V17}
+                    or faster
+                )
             ),
             "selection_rule": (
-                "V16 is retained when complete four-block CSR/action and off-diagonal gates pass; "
+                "V17 remains an explicit row-tile strategy when complete four-block CSR/action and off-diagonal gates pass; "
+                "ordinary defaults remain unchanged"
+                if candidate_strategy == Q_ASSEMBLY_ROW_TILE_V17
+                else "V16 is retained when complete four-block CSR/action and off-diagonal gates pass; "
                 "paired time is reported independently"
                 if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16
                 else "select V13 only when complete four-block CSR/action and off-diagonal "
@@ -2358,12 +3268,26 @@ def _summarize_task40_b0_q_assembly_pairs(
         for pair in reports
     )
     candidate_faster = candidate_seconds < legacy_seconds
-    if candidate_strategy not in {Q_ASSEMBLY_PREALLOCATED_V13, Q_ASSEMBLY_BOUNDED_V16}:
+    if candidate_strategy not in {
+        Q_ASSEMBLY_PREALLOCATED_V13,
+        Q_ASSEMBLY_BOUNDED_V16,
+        Q_ASSEMBLY_ROW_TILE_V17,
+    }:
         raise ValueError(f"unsupported q-assembly comparison strategy: {candidate_strategy!r}")
-    candidate_version = "v16" if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 else "v13"
+    candidate_version = (
+        "v17"
+        if candidate_strategy == Q_ASSEMBLY_ROW_TILE_V17
+        else "v16"
+        if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16
+        else "v13"
+    )
     selected = bool(
         numerically_equivalent
-        and (candidate_strategy == Q_ASSEMBLY_BOUNDED_V16 or candidate_faster)
+        and (
+            candidate_strategy
+            in {Q_ASSEMBLY_BOUNDED_V16, Q_ASSEMBLY_ROW_TILE_V17}
+            or candidate_faster
+        )
     )
     return {
         "schema": f"task40extra.review_{candidate_version}_q_assembly_comparison.v1",
@@ -2381,7 +3305,9 @@ def _summarize_task40_b0_q_assembly_pairs(
         "candidate_selected_for_formal_cases": selected,
         "selected_strategy": candidate_strategy if selected else Q_ASSEMBLY_LEGACY,
         "selection_rule": (
-            "retain V16 after exact four-block CSR/action and off-diagonal equivalence; "
+            "retain explicit V17 row-tile strategy after exact four-block CSR/action and off-diagonal equivalence; ordinary defaults remain unchanged"
+            if candidate_strategy == Q_ASSEMBLY_ROW_TILE_V17
+            else "retain V16 after exact four-block CSR/action and off-diagonal equivalence; "
             "report paired time separately"
             if candidate_strategy == Q_ASSEMBLY_BOUNDED_V16
             else "select V13 only when all four CSR/action blocks, the original "
@@ -2440,6 +3366,7 @@ def build_task40_v10_p6_reference_inverse(
     if q_assembly_comparison_only and q_assembly_strategy not in {
         Q_ASSEMBLY_PREALLOCATED_V13,
         Q_ASSEMBLY_BOUNDED_V16,
+        Q_ASSEMBLY_ROW_TILE_V17,
     }:
         raise ValueError("q-assembly pairing requires an explicitly selected registered candidate")
     if (
@@ -2574,9 +3501,17 @@ def build_task40_v10_p6_reference_inverse(
             global_entities=global_entities,
             full_layout=full_layout,
         )
-        if event is not None and q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+        if event is not None and q_assembly_strategy in {
+            Q_ASSEMBLY_BOUNDED_V16,
+            Q_ASSEMBLY_ROW_TILE_V17,
+        }:
+            global_ready_event = (
+                "task40_v17_reference_global_ready"
+                if q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
+                else "task40_v16_reference_global_ready"
+            )
             event(
-                "task40_v16_reference_global_ready",
+                global_ready_event,
                 {
                     "profile": profile.identity(),
                     "global_storage_rows": int(full_layout.full_rows),
@@ -2775,7 +3710,10 @@ def build_task40_v10_p6_reference_inverse(
                     "local_inventory": list(actual_inventory),
                     "block_audit": block_audit,
                 }
-                if q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+                if q_assembly_strategy in {
+                    Q_ASSEMBLY_BOUNDED_V16,
+                    Q_ASSEMBLY_ROW_TILE_V17,
+                }:
                     sector_facts.update(
                         condensation_owner_audit={
                             key: action.condensed.build_audit.get(key)
@@ -2797,13 +3735,29 @@ def build_task40_v10_p6_reference_inverse(
                         ),
                         _q_matrices=sector_matrices,
                     )
-                event("task40_v10_p6_sector_ready", sector_facts)
+                    sector_facts["_q_matrices"] = sector_matrices
+                sector_ready_event = (
+                    "task40_v17_p6_sector_ready"
+                    if q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
+                    else "task40_v10_p6_sector_ready"
+                )
+                event(sector_ready_event, sector_facts)
             del compiled
         if not q_assembly_comparison_only and set(all_q_matrices) != set(range(4)):
             raise ValueError("two p6 twist sectors did not produce all four global q matrices")
-        if event is not None and q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16:
+        if (
+            event is not None
+            and not q_assembly_comparison_only
+            and q_assembly_strategy
+            in {Q_ASSEMBLY_BOUNDED_V16, Q_ASSEMBLY_ROW_TILE_V17}
+        ):
+            all_ready_event = (
+                "task40_v17_q_csr_all_ready"
+                if q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
+                else "task40_v16_q_csr_all_ready"
+            )
             event(
-                "task40_v16_q_csr_all_ready",
+                all_ready_event,
                 {
                     "q_count": len(all_q_matrices),
                     "all_four_q_matrices": set(all_q_matrices) == set(range(4)),
@@ -2830,7 +3784,9 @@ def build_task40_v10_p6_reference_inverse(
             )
             if event is not None:
                 candidate_version = (
-                    "v16"
+                    "v17"
+                    if q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
+                    else "v16"
                     if q_assembly_strategy == Q_ASSEMBLY_BOUNDED_V16
                     else "v13"
                 )

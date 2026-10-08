@@ -1054,6 +1054,9 @@ FIELD_SPECS: Final = (
             "task40extra_v15_p6_y_orbit_e1_reference_v1",
             "task40extra_v16_p6_y_orbit_gx560_reference_v1",
             "task40extra_v16_p6_y_orbit_e1_reference_v1",
+            "task40extra_v17_p6_y_orbit_b0_reference_v1",
+            "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+            "task40extra_v17_p6_y_orbit_e1_reference_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),
@@ -1089,9 +1092,10 @@ FIELD_SPECS: Final = (
             "LEGACY_GLOBAL_CSR_SUM",
             "PREALLOCATED_CSR_PATTERN_V13",
             "BOUNDED_STAGING_CSR_V16",
+            "ROW_TILE_BOUNDED_CSR_V17",
         ),
         constraints=(
-            "V15 profiles keep legacy CSR; V16 profiles require bounded staging; PREALLOCATED_CSR_PATTERN_V13 is V13-only",
+            "V17 row-tile CSR is an explicit B0 p6 candidate; V15 defaults to legacy CSR; V16 profiles retain bounded staging; PREALLOCATED_CSR_PATTERN_V13 is V13-only",
         ),
     ),
     _f(

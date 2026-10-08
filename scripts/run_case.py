@@ -172,12 +172,16 @@ def main(argv: list[str] | None = None) -> int:
             TASK40_GX560_V15_RUN_ID,
             TASK40_GX560_V16_RUN_ID,
             TASK40_E1_V16_RUN_ID,
+            TASK40_B0_P6_V17_RUN_ID,
+            TASK40_GX560_V17_RUN_ID,
+            TASK40_E1_V17_RUN_ID,
             TASK40_GX784_V11_P6_RUN_ID,
             TASK40_GX784_V13_RUN_ID,
             TASK40_Q_ASSEMBLY_LEGACY,
             TASK40_V13_REFERENCE_PC_STRATEGY,
             TASK40_V15_REFERENCE_PC_STRATEGY,
             TASK40_Q_ASSEMBLY_BOUNDED_V16,
+            TASK40_Q_ASSEMBLY_ROW_TILE_V17,
             task40_q_assembly_strategy_is_allowed,
         )
         from src.io.physical_intermediate_profile import (
@@ -189,6 +193,9 @@ def main(argv: list[str] | None = None) -> int:
             TASK40_V15_P6_E1_PROFILE,
             TASK40_V16_P6_GX560_PROFILE,
             TASK40_V16_P6_E1_PROFILE,
+            TASK40_V17_P6_B0_PROFILE,
+            TASK40_V17_P6_GX560_PROFILE,
+            TASK40_V17_P6_E1_PROFILE,
         )
 
         v10_identity = (
@@ -269,6 +276,25 @@ def main(argv: list[str] | None = None) -> int:
                 str(specification.solver.get('task40_q_assembly_strategy')),
             )
         )
+        v17_case_identity = (
+            specification.identity.get('run_id'),
+            specification.solver.get('preconditioner'),
+        ) in {
+            (TASK40_B0_P6_V17_RUN_ID, TASK40_V17_P6_B0_PROFILE),
+            (TASK40_GX560_V17_RUN_ID, TASK40_V17_P6_GX560_PROFILE),
+            (TASK40_E1_V17_RUN_ID, TASK40_V17_P6_E1_PROFILE),
+        }
+        v17_campaign_identity = (
+            v17_case_identity
+            and specification.solver.get('task40_reference_pc_strategy')
+            == TASK40_V15_REFERENCE_PC_STRATEGY
+            and specification.solver.get('task40_q_assembly_strategy')
+            == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            and task40_q_assembly_strategy_is_allowed(
+                str(specification.solver.get('task40_reference_pc_strategy')),
+                str(specification.solver.get('task40_q_assembly_strategy')),
+            )
+        )
         v15_b0_candidate_identity = (
             v15_campaign_identity
             and specification.identity.get('run_id') == TASK40_B0_P6_V15_RUN_ID
@@ -276,7 +302,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         task40_campaign_identity = (
             v10_identity or v11_grid_identity or v13_campaign_identity
-            or v15_campaign_identity or v16_campaign_identity
+            or v15_campaign_identity or v16_campaign_identity or v17_campaign_identity
         )
         from src.runners.task038_launcher import _validate_task40_v10_postprocess_request
 
@@ -287,12 +313,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.task40_v10_campaign_window is not None and not task40_campaign_identity:
             raise InputError(
-                '--task40-v10-campaign-window is restricted to reviewed Task40 V10/V11 identities or exact V13/V15/V16 p6 run/profile/strategy combinations'
+                '--task40-v10-campaign-window is restricted to reviewed Task40 V10/V11 identities or exact V13/V15/V16/V17 p6 run/profile/strategy combinations'
             )
         if task40_campaign_identity and not args.task40_v10_campaign_window and not (
             args.validate_only or args.dry_run
         ):
-            raise InputError('Task40 V10/V11/V13/V15/V16 p6 launches require --task40-v10-campaign-window')
+            raise InputError('Task40 V10/V11/V13/V15/V16/V17 p6 launches require --task40-v10-campaign-window')
         if args.task40_v10_campaign_window is not None and (args.validate_only or args.dry_run):
             from src.runners.task40_v10_campaign import load_fixed_campaign_window
             load_fixed_campaign_window(args.task40_v10_campaign_window)

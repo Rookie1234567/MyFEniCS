@@ -1,0 +1,110 @@
+schema_version = 1
+model_id = "task40extra_nonseparable_0p7nm"
+run_id = "task40extra_0p7nm_nonseparable_e1_p6_reference_v17"
+comparison_group = "task40extra_0p7nm_nonseparable_n0_n6"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+model_variant = "original"
+geometry_identity = "task40extra_nonseparable_0p7nm_e1_q1p25_v1"
+period_x_nm = 3.2407407407407405
+period_y_nm = 1.6203703703703702
+z_min_nm = -0.6481481481481481
+z_max_nm = 8.425925925925926
+interface_z_nm = 0.0
+air_height_nm = 8.425925925925926
+substrate_thickness_nm = 0.6481481481481481
+grating_width_x_nm = 1.1018518518518519
+grating_width_y_nm = 1.6203703703703702
+grating_height_nm = 7.777777777777778
+air_void_box_nm = [1.6203703703703702,2.1712962962962963,0.40509259259259256,1.2152777777777777,2.5925925925925926,5.185185185185185]
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.99988517036884961, 4.3236152269189515e-06]
+grating_name = "Si / silicon"
+n_grating = [0.99988517036884961, 4.3236152269189515e-06]
+
+[incidence]
+wavelength_nm = 0.7
+grazing_angle_deg = 1.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "manual"
+dtn_manual_order_max_m = 10
+dtn_manual_order_max_n = 3
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[execution]
+mpi_size = 1
+warning_memory_gib = 14.0
+terminate_memory_gib = 16.0
+timeout_seconds = 86400
+memory_limit_gb = 16.0
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [0.6481481481481481,1.9444444444444444,3.888888888888889,5.833333333333334,7.129629629629629]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 24
+top_probe_z_nm = 8.26388888888889
+bottom_probe_z_nm = -0.4861111111111111
+probe_fraction = 0.75
+diffraction_order_max_m = 10
+diffraction_order_max_n = 3
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 0.5185185185185185
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+mesh_plan_id = "task40extra.e1.electrical_size_exact_planes.v1"
+mesh_plan_sha256 = "b266e571b422d176521f42296739358092dc32d5c9b22a16c9f854d84c659e4e"
+mesh_axis_z_profile = "task40extra.e1.electrical_size_exact_planes.v1"
+mesh_axis_cell_counts = [10,4,19]
+mesh_axis_x_values = [0.0,0.35648148148148145,0.7129629629629629,1.0694444444444444,1.3449074074074074,1.6203703703703705,1.8958333333333333,2.1712962962962963,2.5277777777777777,2.884259259259259,3.240740740740741]
+mesh_axis_y_values = [0.0,0.4050925925925926,0.8101851851851852,1.2152777777777777,1.6203703703703705]
+mesh_axis_z_values = [-0.6481481481481481,-0.32407407407407407,0.0,0.5185185185185185,1.037037037037037,1.5555555555555556,2.074074074074074,2.5925925925925926,3.111111111111111,3.6296296296296298,4.148148148148148,4.666666666666667,5.185185185185185,5.703703703703703,6.222222222222222,6.7407407407407405,7.2592592592592595,7.777777777777778,8.101851851851851,8.425925925925926]
+
+[method]
+kind = "full3d_iterative"
+
+[solver]
+linear_solver = "iterative"
+ksp_type = "fgmres"
+preconditioner = "task40extra_v17_p6_y_orbit_e1_reference_v1"
+stage = "Q4_ORIGINAL"
+coarse_degree = 4
+memory_policy = "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23"
+physical_operator_backend = "isotropic_sum_factorized_n1e_v26"
+h6_backend_rule = "direct_selected_backend_same_apply_and_power10"
+thread_contract = "mpi1_omp1_blas1_v26"
+numeric_cache_mode = "build"
+outer_restart = 0
+restart = 32
+max_iterations = 2048
+task40_reference_pc_strategy = "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+task40_q_assembly_strategy = "ROW_TILE_BOUNDED_CSR_V17"

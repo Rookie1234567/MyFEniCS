@@ -569,6 +569,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             from src.geometry.task40_nonseparable_plan import (
                 TASK40_Q_ASSEMBLY_LEGACY,
+                TASK40_Q_ASSEMBLY_ROW_TILE_V17,
                 TASK40_STRICT_REFERENCE_PC_STRATEGY,
                 TASK40_V13_REFERENCE_PC_STRATEGY,
                 TASK40_V15_REFERENCE_PC_STRATEGY,
@@ -592,15 +593,29 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v15_p6_y_orbit_e1_reference_v1",
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v16_p6_y_orbit_e1_reference_v1",
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
             }
             v15_profiles = {
                 "task40extra_v15_p6_y_orbit_b0_reference_v1",
                 "task40extra_v15_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v15_p6_y_orbit_e1_reference_v1",
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
+            }
+            v17_profiles = {
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
             }
             v16_profiles = {
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v16_p6_y_orbit_e1_reference_v1",
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
             }
             if (
                 reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
@@ -625,6 +640,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(
                     "solver.task40_q_assembly_strategy",
                     "bounded V16 CSR staging requires an exact V16 profile",
+                )
+            if (
+                q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+                and preconditioner not in v17_profiles
+            ):
+                raise _error(
+                    "solver.task40_q_assembly_strategy",
+                    "V17 row-tile CSR requires an exact V17 B0, Gx560, or E1 p6 profile",
                 )
             if (
                 q_assembly_strategy != TASK40_Q_ASSEMBLY_LEGACY
@@ -683,6 +706,9 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v15_p6_y_orbit_e1_reference_v1",
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v16_p6_y_orbit_e1_reference_v1",
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1234,13 +1260,20 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v15_p6_y_orbit_b0_reference_v1",
                 "task40extra_v15_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v15_p6_y_orbit_e1_reference_v1",
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
             }:
                 from src.geometry.task40_nonseparable_plan import (
                     TASK40_B0_P6_V15_RUN_ID,
+                    TASK40_B0_P6_V17_RUN_ID,
                     TASK40_COMPARISON_GROUP,
                     TASK40_E1_V15_RUN_ID,
+                    TASK40_E1_V17_RUN_ID,
                     TASK40_GX560_V15_RUN_ID,
+                    TASK40_GX560_V17_RUN_ID,
                     TASK40_Q_ASSEMBLY_LEGACY,
+                    TASK40_Q_ASSEMBLY_ROW_TILE_V17,
                     TASK40_V15_REFERENCE_PC_STRATEGY,
                     validate_task40_input,
                 )
@@ -1255,19 +1288,33 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "task40extra_v15_p6_y_orbit_e1_reference_v1": (
                         TASK40_E1_V15_RUN_ID, "Q4_ORIGINAL", 4,
                     ),
+                    "task40extra_v17_p6_y_orbit_b0_reference_v1": (
+                        TASK40_B0_P6_V17_RUN_ID, "B0_CANDIDATE", None,
+                    ),
+                    "task40extra_v17_p6_y_orbit_gx560_reference_v1": (
+                        TASK40_GX560_V17_RUN_ID, "Q4_ORIGINAL", 4,
+                    ),
+                    "task40extra_v17_p6_y_orbit_e1_reference_v1": (
+                        TASK40_E1_V17_RUN_ID, "Q4_ORIGINAL", 4,
+                    ),
                 }
                 expected_run, expected_stage, expected_coarse_degree = cases[
                     preconditioner
                 ]
+                expected_q_assembly_strategy = (
+                    TASK40_Q_ASSEMBLY_ROW_TILE_V17
+                    if preconditioner.startswith("task40extra_v17_")
+                    else TASK40_Q_ASSEMBLY_LEGACY
+                )
                 if (
                     config.get("run_id") != expected_run
                     or config.get("comparison_group") != TASK40_COMPARISON_GROUP
                     or reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
-                    or q_assembly_strategy != TASK40_Q_ASSEMBLY_LEGACY
+                    or q_assembly_strategy != expected_q_assembly_strategy
                 ):
                     raise _error(
                         "identity",
-                        f"{preconditioner} requires its exact V15 run, strategy, and legacy q assembly",
+                        f"{preconditioner} requires its exact run and registered q assembly strategy",
                     )
                 if solver.get("stage") != expected_stage:
                     raise _error("solver.stage", f"{preconditioner} requires {expected_stage}")
@@ -1297,13 +1344,13 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     fixed.append(("solver", "coarse_degree", solver.get("coarse_degree"), expected_coarse_degree))
                 for section, key, actual, expected in fixed:
                     if actual != expected:
-                        raise _error(f"{section}.{key}", f"V15 p6 profile fixes {key}={expected}")
+                        raise _error(f"{section}.{key}", f"V15/V17 p6 profile fixes {key}={expected}")
                 if geometry.get("model_variant") != "original" or geometry.get("cell_notch") is not None:
                     raise _error("geometry", f"{preconditioner} requires the original Task40 geometry")
                 try:
                     validate_task40_input(config)
                 except (TypeError, ValueError, KeyError) as exc:
-                    raise _error("Task40 V15 p6 physical identity", str(exc)) from exc
+                    raise _error("Task40 V15/V17 p6 physical identity", str(exc)) from exc
             elif preconditioner in {
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v16_p6_y_orbit_e1_reference_v1",
@@ -1796,6 +1843,9 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v15_p6_y_orbit_e1_reference_v1",
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v16_p6_y_orbit_e1_reference_v1",
+                "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
             }
             if task40_0p7nm:
                 if not isclose(

@@ -12,6 +12,7 @@ from src.solvers.task40_v10_p6_yorbit import (
     Q_ASSEMBLY_LEGACY,
     Q_ASSEMBLY_PREALLOCATED_V13,
     Q_ASSEMBLY_BOUNDED_V16,
+    Q_ASSEMBLY_ROW_TILE_V17,
     V16StagingLimitError,
     _v16_checked_csr_layout,
     _assemble_v16_bitset_pattern,
@@ -77,6 +78,68 @@ class _ContributionAction:
             self.matrix.copy(),
             "fixture",
         )
+
+
+class _LargeShapeRowTileCoordinates:
+    def __init__(self, branch_size=50_000):
+        self.branch_size = int(branch_size)
+        source_size = 2 * self.branch_size
+        branch0 = np.arange(self.branch_size, dtype=np.int32)
+        branch1 = np.arange(self.branch_size, dtype=np.int32)
+        self.maps = (
+            sparse.csr_matrix(
+                (
+                    np.ones(self.branch_size, dtype=np.complex128),
+                    (branch0, branch0),
+                ),
+                shape=(source_size, self.branch_size),
+            ),
+            sparse.csr_matrix(
+                (
+                    np.ones(self.branch_size, dtype=np.complex128),
+                    (branch1 + self.branch_size, branch1),
+                ),
+                shape=(source_size, self.branch_size),
+            ),
+        )
+
+    def q_map(self, branch, *, allocation_gate):
+        allocation_gate("fixture_large_q_map", {"branch": branch})
+        return self.maps[branch]
+
+
+class _LargeShapeRowTileAction:
+    def __init__(self, branch_size=50_000):
+        n = int(branch_size)
+        self.contributions = (
+            (
+                np.asarray([0, 20_000], dtype=np.int32),
+                np.asarray([1, 30_000], dtype=np.int32),
+                np.asarray([[2.0 + 0.5j, 0.0], [0.0, 3.0 - 0.25j]]),
+                "branch0",
+            ),
+            (
+                np.asarray([n + 5, n + 40_000], dtype=np.int32),
+                np.asarray([n + 10, n + 45_000], dtype=np.int32),
+                np.asarray([[4.0 - 0.75j, 0.0], [0.0, 5.0 + 0.125j]]),
+                "branch1",
+            ),
+        )
+        self.layout_passes = 0
+        self.numeric_passes = 0
+
+    def iter_reduced_contribution_layouts(self, *, hhat_block_columns=None):
+        del hhat_block_columns
+        self.layout_passes += 1
+        for rows, columns, _values, label in self.contributions:
+            yield rows, columns, label
+
+    def iter_reduced_contributions(self, *, allocation_gate, hhat_block_columns=None):
+        del hhat_block_columns
+        self.numeric_passes += 1
+        for rows, columns, values, label in self.contributions:
+            allocation_gate("fixture_large_numeric_contribution", {"label": label})
+            yield rows, columns, values.copy(), label
 
 
 def _assemble_small_q_fixture(matrix, strategy):
@@ -167,6 +230,90 @@ def test_v16_exact_zero_cleanup_preserves_small_finite_nonzero_values():
     assert tiny in bounded[0].data
     assert audit["numeric_nonzero_entries_by_block"]["00"] == 1
     assert audit["exact_zero_cleanup"].startswith("not_applied")
+
+
+def test_v17_row_tiles_cross_old_shape_limit_and_match_all_four_legacy_blocks():
+    import src.solvers.task40_v10_p6_yorbit as yorbit
+
+    n = 50_000
+    action = _LargeShapeRowTileAction(n)
+    coordinates = _LargeShapeRowTileCoordinates(n)
+    context = SimpleNamespace(global_q_indices=(0, 1))
+    gates = []
+    candidate, audit = assemble_task40_v10_sector_blocks(
+        action,
+        coordinates,
+        context,
+        allocation_gate=lambda name, facts: gates.append((name, dict(facts))),
+        assembly_strategy=Q_ASSEMBLY_ROW_TILE_V17,
+        return_all_blocks=True,
+    )
+    full_shape_bitset_bytes = n * ((n + 7) // 8)
+
+    assert full_shape_bitset_bytes > 256 * 1024**2
+    assert set(candidate) == {(0, 0), (0, 1), (1, 0), (1, 1)}
+    assert all(matrix.shape == (n, n) for matrix in candidate.values())
+    assert candidate[0, 0].nnz == 4
+    assert candidate[1, 1].nnz == 4
+    assert candidate[0, 1].nnz == candidate[1, 0].nnz == 0
+    assert candidate[0, 0][0, 1] == 2.0 + 0.5j
+    assert candidate[0, 0][20_000, 30_000] == 3.0 - 0.25j
+    assert candidate[1, 1][5, 10] == 4.0 - 0.75j
+    assert candidate[1, 1][40_000, 45_000] == 5.0 + 0.125j
+    assert action.layout_passes == action.numeric_passes == 1
+    assert audit["assembly_strategy"] == Q_ASSEMBLY_ROW_TILE_V17
+    assert audit["pattern_layout_pass_count"] == 1
+    assert audit["numeric_contribution_pass_count"] == 1
+    assert audit["numeric_contribution_count"] == 2
+    assert audit["cartesian_support_pairs_materialized"] == 0
+    assert audit["cartesian_support_pair_cardinality_by_block"] == {
+        "00": 4, "01": 0, "10": 0, "11": 4,
+    }
+    assert audit["route_query_uses_temporary_sort"] is False
+    assert audit["support_route_spool_removed_after_pattern"] is True
+    assert audit["temporary_filesystem_free_space_reserve_bytes"] == (
+        yorbit.V17_SQLITE_FREE_SPACE_RESERVE_BYTES
+    )
+    assert audit["staging_peak_bytes_total_all_blocks"] <= audit["staging_budget_bytes_total_all_q_blocks"]
+    assert audit["full_shape_bitset_bytes"] == 0
+    assert audit["full_coo_list_count"] == 0
+    assert audit["global_python_row_set_count"] == 0
+    assert audit["all_four_complete_csr_owners_retained_through_norm_gate"] is True
+    assert audit["complete_csr_frobenius_norm_by_block"]["00"] == pytest.approx(
+        np.sqrt(13.3125)
+    )
+    assert audit["complete_csr_frobenius_norm_by_block"]["11"] == pytest.approx(
+        np.sqrt(41.578125)
+    )
+    assert audit["off_diagonal_relative"] == {
+        "q0_q1_relative": 0.0,
+        "q1_q0_relative": 0.0,
+    }
+    assert all(facts.get("staging_live_bytes_upper", 0) <= 256 * 1024**2 for _, facts in gates)
+
+    report = compare_task40_v10_sector_assembly(
+        action,
+        coordinates,
+        context,
+        allocation_gate=lambda *_args: None,
+        candidate_strategy=Q_ASSEMBLY_ROW_TILE_V17,
+    )
+    assert report["all_four_blocks_independently_compared"] is True
+    assert report["numerically_equivalent_at_original_operator_gate"] is True
+    assert report["candidate_selected_for_next_formal_case"] is True
+    assert set(report["block_comparisons"]) == {"00", "01", "10", "11"}
+
+
+def test_v17_csr_layout_checks_inttype_before_narrowing():
+    from src.solvers.task40_v10_p6_yorbit import _v17_checked_row_tile_csr_layout
+
+    limit = int(np.iinfo(np.int32).max)
+    with pytest.raises(OverflowError, match="shape"):
+        _v17_checked_row_tile_csr_layout((limit + 1, 0), [], np.int32)
+    with pytest.raises(OverflowError, match="NNZ/indptr"):
+        _v17_checked_row_tile_csr_layout((2, limit), [limit, 1], np.int32)
+    with pytest.raises(ValueError, match="outside its checked range"):
+        _v17_checked_row_tile_csr_layout((2, 1), [2, 0], np.int32)
 
 
 def _v16_target_with_support(rows_count, columns_count, row_support, column_support):

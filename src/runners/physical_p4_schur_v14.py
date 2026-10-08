@@ -454,6 +454,21 @@ class _V14Runtime:
                     "review_v16_e1_full_p6_y_orbit_reference_inverse",
                     "task40extra_v16_p6_y_orbit_e1_reference_v1",
                 ),
+                (
+                    "B0_CANDIDATE",
+                    "review_v17_row_tile_b0_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v17_p6_y_orbit_b0_reference_v1",
+                ),
+                (
+                    "Q4_ORIGINAL",
+                    "review_v17_row_tile_gx560_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+                ),
+                (
+                    "Q4_ORIGINAL",
+                    "review_v17_row_tile_e1_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v17_p6_y_orbit_e1_reference_v1",
+                ),
             }
             worker_identity = (
                 self.stage,
@@ -492,10 +507,14 @@ class _V14Runtime:
             self.infrastructure_recovery = False
             self.workflow_clock_start = dict(state["sample"])
             self.workflow_reserved_seconds = remaining
-            is_v10_campaign = str(contract.get("scope", "")).startswith(
+            campaign_scope = str(contract.get("scope", ""))
+            is_v17_campaign = campaign_scope.startswith("review_v17_row_tile_")
+            is_v10_campaign = campaign_scope.startswith(
                 ("review_v10_", "task40_review_v10_")
             )
-            campaign_version = "v10" if is_v10_campaign else "v11"
+            campaign_version = (
+                "v17" if is_v17_campaign else "v10" if is_v10_campaign else "v11"
+            )
             self.workflow_clock_source = (
                 f"task40_{campaign_version}_fixed_campaign_read_only_projection"
             )
