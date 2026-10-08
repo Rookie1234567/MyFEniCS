@@ -1,0 +1,68 @@
+{
+  "routes": {
+    "deterministic": {
+      "actual_candidate_attempt_seconds": 6606.024586184183,
+      "actual_early_scoring_seconds": 227.90912038320675,
+      "sum_distinct_attempts_and_scoring_seconds": 6833.93370656739,
+      "new_allocation_span_seconds": 7629.764735980891,
+      "inherited_fixed_prefix_attributed_seconds": 10186.178641493432,
+      "prefix_plus_new_span_plus_all_shared_verification_seconds": 19194.66603984032,
+      "new_C_span_within10800": true,
+      "sampled_simultaneous_tree_peak_bytes": 4170592256,
+      "inherited_project_cost_not_recharged": true,
+      "reference_setup_cold_not_remeasured": true
+    },
+    "learned": {
+      "actual_candidate_attempt_seconds": 4602.503980292939,
+      "actual_early_scoring_seconds": 225.50866199005395,
+      "sum_distinct_attempts_and_scoring_seconds": 4828.012642282993,
+      "new_allocation_span_seconds": 5196.904656689148,
+      "inherited_fixed_prefix_attributed_seconds": 10186.178641493432,
+      "prefix_plus_new_span_plus_all_shared_verification_seconds": 16761.805960548576,
+      "new_C_span_within10800": true,
+      "sampled_simultaneous_tree_peak_bytes": 4186972160,
+      "inherited_project_cost_not_recharged": true,
+      "reference_setup_cold_not_remeasured": true
+    }
+  },
+  "shared_independent_verification_seconds": 1378.7226623659953,
+  "shared_project_charge_once": true,
+  "shared_qualification_and_repairs_seconds": 1323.5066277941223,
+  "historical_qualified_traditional_reference": {
+    "seconds": 672.462895,
+    "tree_peak_bytes": 1245822976,
+    "scope": "Historical saved accurate reference; not a fresh cold benchmark"
+  },
+  "same_precision_20_percent_gain_qualified": false,
+  "complete_cold_N1": "UNKNOWN",
+  "project_exact_cumulative_seconds": "UNKNOWN",
+  "old_LEARNED_prefix_not_required_for_new_routes": true,
+  "historical_fixed_prefix_project_charged_once": true,
+  "dense_U_Q_bytes_formula": "32*N*m",
+  "real_temporary_capacity_plan_derived": {
+    "N": 31968,
+    "m": 1377,
+    "bytes": 8024739968,
+    "limit": 12884901888,
+    "formula": "128*N*m+128*m*m+2GiB; conservative array/copy plan, not measured RSS"
+  },
+  "shape_example_not_actual_target_DoF": {
+    "N": 10000000,
+    "m": 1377,
+    "U_Q_bytes": 440640000000,
+    "excludes_A_R_temporaries_system": true
+  },
+  "original_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "complete_cold_seconds": 172800,
+    "ownswap_bytes": 0,
+    "OOC_bytes": 0,
+    "qualified": false
+  }
+}

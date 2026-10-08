@@ -1,0 +1,379 @@
+{
+  "targeted_runs": [
+    {
+      "name": "tests_cancel_repair",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_cancel_repair/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "67660b40a7d004b19ef3624e3e1f588911a2f6c8edee74a7b214cfc30bf1b7c3"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.993910765973851,
+      "peak_bytes": 85921792,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "e9bed328380916a2498d894148cd8b7dbe46649d",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "junit": {
+        "path": "tmp/task42extra/v33/tests_cancel_repair/junit.xml",
+        "bytes": 3324,
+        "sha256": "632c187dfa984c576231b206e453e655df3059daf8b4ee7a4bf971ac123e6e89"
+      },
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_backfit::test_complete_complex_cancellation_including_active_slot",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state"
+      ],
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_cancel_repair/watchdog/worker.log",
+        "bytes": 205,
+        "sha256": "cc5aeef9366c454c58a71e73a93d333dea45f948a1ca3531c7a81b93db8d3828"
+      },
+      "actual_pytest_summary": "23 passed in 0.37s"
+    },
+    {
+      "name": "tests_centered_repair",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_centered_repair/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "1151ae927b0c0bc06ec4cd3daf63cad1b8e0f72612504e52c416a95f705346bd"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.6398996030911803,
+      "peak_bytes": 86036480,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "eb956a8390272c0b3abf2d9a4048cb05a2e19cf9",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "junit": {
+        "path": "tmp/task42extra/v33/tests_centered_repair/junit.xml",
+        "bytes": 3460,
+        "sha256": "1193d8807e27869c0054548f34a712b3abc6921e0f44d0df13679e0203b7cdb0"
+      },
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_backfit::test_complete_complex_cancellation_including_active_slot",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_centered_full_ls_and_stable_original_loss_difference",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state"
+      ],
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_centered_repair/watchdog/worker.log",
+        "bytes": 207,
+        "sha256": "80279c0a1821e39b80903c8847a66fcb959772df70d3036654fb3c49e7b8952f"
+      },
+      "actual_pytest_summary": "24 passed in 0.40s"
+    },
+    {
+      "name": "tests_final",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_final/watchdog/summary.json",
+        "bytes": 2055,
+        "sha256": "292474dcb23dcd79965b9d1e6db0bf0a546ada07588d1ae5263c8df9b18b1f0f"
+      },
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 1.980604707961902,
+      "peak_bytes": 85921792,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "7aa0df9b41ee1722e7a29cafbaa4e02314f063f0",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "junit": {
+        "path": "tmp/task42extra/v33/tests_final/junit.xml",
+        "bytes": 7291,
+        "sha256": "39003aa85818a363290da24ca9f745d647e17673f45dfba9f994ec0b1e3c317f"
+      },
+      "tests": 22,
+      "failures": 1,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state"
+      ],
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_final/watchdog/worker.log",
+        "bytes": 4543,
+        "sha256": "62b0a7f7a353ef7e77e64e6bbd8d39f91b091156af892997a257b81421734518"
+      },
+      "actual_pytest_summary": "1 failed, 21 passed in 0.37s"
+    },
+    {
+      "name": "tests_initial",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_initial/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "e4fcc95c17bc0e8ce40e5f6d386242c7b387d1088f62e49ff5a9f22e35bf26a3"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.953865476185456,
+      "peak_bytes": 85327872,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "7aa0df9b41ee1722e7a29cafbaa4e02314f063f0",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "junit": {
+        "path": "tmp/task42extra/v33/tests_initial/junit.xml",
+        "bytes": 2638,
+        "sha256": "0f60ea80d7060210d42215ebf18686343a6eab056d7dcce5f3cdef2c168a14ce"
+      },
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap"
+      ],
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_initial/watchdog/worker.log",
+        "bytes": 199,
+        "sha256": "36e7b2046fb76e40110d20fb9929d08c00ce7bd039b1c874bd6347adaba95b5f"
+      },
+      "actual_pytest_summary": "18 passed in 0.29s"
+    },
+    {
+      "name": "tests_phase_delta_repair",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_phase_delta_repair/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "eb2f9d0cd2286075a3e51243677146acebf405e31ac68c3a90852509b8c3e7f8"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 5.959545144112781,
+      "peak_bytes": 145608704,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "d8abf9c68313eac79091943ae51f90046a9833d4",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "junit": {
+        "path": "tmp/task42extra/v33/tests_phase_delta_repair/junit.xml",
+        "bytes": 3973,
+        "sha256": "abd4d671347ddf65ef006c25b0950cf8414331342437bb34ce6b3288e034d771"
+      },
+      "tests": 28,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_backfit::test_complete_complex_cancellation_including_active_slot",
+        "src.test.test_neural_wave_backfit::test_stable_phase_difference_all_entity_moments_and_derivative[local]",
+        "src.test.test_neural_wave_backfit::test_stable_phase_difference_all_entity_moments_and_derivative[global]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_centered_full_ls_and_stable_original_loss_difference",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state",
+        "src.test.test_neural_wave::test_full_complex_forward_and_real_vjp",
+        "src.test.test_neural_wave::test_original_pointwise_accepted_map"
+      ],
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_phase_delta_repair/watchdog/worker.log",
+        "bytes": 210,
+        "sha256": "951cecbd5a2e1178c98709eb4648ae4304bd8175e0a19d2bf013ba710d2404f9"
+      },
+      "actual_pytest_summary": "28 passed in 0.73s"
+    },
+    {
+      "name": "tests_rejected_work_retention",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_rejected_work_retention/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "186d2a818b90618f642cb5571dba6ec9fbfc37e01ed23e22aff6adca6bca6082"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.916309936903417,
+      "peak_bytes": 84967424,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "86417820b04a5abd56892d37a1ce15279d783c7a",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_rejected_work_retention/watchdog/worker.log",
+        "bytes": 113,
+        "sha256": "d6749bea0b11cfcfe4c7ec9e2a3d3e46ac5e31f5bc5958bb9fd149632dac6579"
+      },
+      "actual_pytest_summary": "3 passed, 30 deselected in 0.23s"
+    },
+    {
+      "name": "tests_store_repair",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_store_repair/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "e1b25076a6d1d6c7d946e1cec5d1dd45110eeafb87ae5f12bf24f03973b8f14a"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.9416595450602472,
+      "peak_bytes": 85295104,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "7aa0df9b41ee1722e7a29cafbaa4e02314f063f0",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "junit": {
+        "path": "tmp/task42extra/v33/tests_store_repair/junit.xml",
+        "bytes": 3189,
+        "sha256": "5620c93ac9d18844b067f818cca5f7181b5278725f8667b81caec866cd09b39c"
+      },
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state"
+      ],
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_store_repair/watchdog/worker.log",
+        "bytes": 204,
+        "sha256": "09b81626d46c22157c5d85270d69e21a9b6188aa278f0fb2993876296a220160"
+      },
+      "actual_pytest_summary": "22 passed in 0.33s"
+    },
+    {
+      "name": "tests_validation_boundary_repair",
+      "summary": {
+        "path": "tmp/task42extra/v33/tests_validation_boundary_repair/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "5239c4a3f64a6e18ab0d16a403e0a32464efb2e807ae67755cc0c10564ac0141"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.961154188029468,
+      "peak_bytes": 85454848,
+      "swap_bytes": 0,
+      "cleared": true,
+      "tested_parent_source": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+      "tested_patch_committed_source": "See repair journal: dirty targeted test bytes committed before corresponding formal run",
+      "actual_test_stdout": {
+        "path": "tmp/task42extra/v33/tests_validation_boundary_repair/watchdog/worker.log",
+        "bytes": 114,
+        "sha256": "4ca1cfae13da24f17732608b55a6ba1379c8f05dd531698077c010cd5bc6170d"
+      },
+      "actual_pytest_summary": "10 passed, 23 deselected in 0.36s"
+    }
+  ],
+  "full_pytest": "NOT_RUN_BY_CONTRACT",
+  "CI": "NOT_CLAIMED",
+  "source_reuse": "Only unchanged hash-bound mathematical dependencies reuse real anchor/math evidence; orchestration and telemetry changed files have targeted actual writer/dependency tests",
+  "old_expensive_qualifications_replayed": false,
+  "publication_metadata_checks": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v33.json",
+    "bytes": 194936,
+    "sha256": "3db497fae92a96ac5c89ef90c9fdcb58b4fcc5db6eb6d23eb537c8c91c8ddeb1"
+  },
+  "counts_are_check_assertions_not_new_PDE_tests": true
+}

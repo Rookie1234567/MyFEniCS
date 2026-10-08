@@ -1,0 +1,34 @@
+{
+  "binding": {
+    "path": "benchmarks/artifacts/task42extra/v33/v33_backfit_anchor_checks/result.json",
+    "bytes": 1712,
+    "sha256": "1f10104cbc8d36e22486e3e1b5284f79305523fe2c2abad65b0a20bb5b792196"
+  },
+  "anchor_qualified": true,
+  "anchor": {
+    "native": 0.15743176704993547,
+    "columns": 1377,
+    "blocks": 246,
+    "residual_pair": 0.0,
+    "U_amplitude_pair": 0.0
+  },
+  "anchor_sha256": "737dd067f2cc3ebe021f3c7f445992c87d993e562213c62cc7a40b148a33501e",
+  "reference_read_count": 0,
+  "bound_numerical_chain": {
+    "src/solvers/neural_wave_backfit.py": "486dc5ad202f96ed6ef674633192434c91b4824623405e2517066c382facc430",
+    "src/solvers/neural_wave_backfit_state.py": "e4d53e0a6025cfb1d9133255fad320981eaeadfa6d1bce9b20b92375e2060bac",
+    "src/solvers/neural_wave_backfit_run.py": "eaf380761207949dc0f94951e760f6a6d42749be3c8ee75bc5756700cefe3232",
+    "src/solvers/neural_wave_backfit_qualification.py": "68ad9cb47a00b081002e359fe4f03de266bd16aed5a222288e71a9a5f53658b1",
+    "src/io/neural_wave_backfit_store.py": "cf2305dd7b384f7efd4dc0c3f9017eb3589782c221d9bbf5ecd70f2e905d612d",
+    "src/solvers/neural_wave_moments.py": "5ce7ba22b3fc7cdaf2890c56630f262cff9346c8ddf4a042c9ccdfc5ba54be3b",
+    "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db",
+    "src/runners/backfit_wave_worker.py": "f110ffa8280eecd56ba481f5bf830ff60694c9c7b5f94c6d01eaa2a0a144a7e4",
+    "src/io/backfit_wave_campaign.py": "d131ba803cd0bc8344c1fc0326ec3308b1ee3ef9df8125eb2d892eedace01fac"
+  },
+  "source_sha": "e9bed328380916a2498d894148cd8b7dbe46649d",
+  "input_sha256": "4c35ef89637b95ca0f521e5a83ef55691c6fc2d61f890ab9f6fe8e1bb0a99353",
+  "design_sha256": "959761663c5dc2e2d2c613bc08d15a0c91184d1d912353fdade0797d4def47db",
+  "worker_elapsed_seconds": 15.090498603181913,
+  "route_elapsed_seconds": 79.1995730609633,
+  "full_size_0p7_target_qualified": false
+}

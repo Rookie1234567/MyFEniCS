@@ -1,0 +1,172 @@
+{
+  "journal": {
+    "path": "tmp/task42extra/v33/repair_journal.jsonl",
+    "bytes": 9613,
+    "sha256": "2c3a08ec9f4192db0546a2288bde141fc720981a48880e5d7f8b6d57d2564e6b"
+  },
+  "entries": [
+    {
+      "id": "V33_PAIRING_01",
+      "monotonic": 1375215.494449978,
+      "failure": "Math attempt1 strict reduced/full original action pair rejected during first block FD minus; actual magnitude NOT_RETAINED by old exception",
+      "source": "e9bed328380916a2498d894148cd8b7dbe46649d",
+      "hypothesis": "Uncompensated within-32-column BLAS accumulation may amplify strong complex cancellation; unproven until real pairing retest",
+      "change": "Per-column complex128 Neumaier accumulation; preserve actual rejected pairing and zero/FD intermediate audit markers; reuse healthy anchor only under unchanged anchor loader hash and original frozen files",
+      "test": "23 targeted tests and actual real block retest pending",
+      "resume": "same math allocation; source commit before attempt2",
+      "old_failure_retained": true,
+      "threshold": 1e-10
+    },
+    {
+      "id": "V33_PAIRING_01_TEST",
+      "monotonic": 1375294.707440141,
+      "test": "23/23 targeted tests; Ruff/compileall PASS",
+      "junit": "tmp/task42extra/v33/tests_cancel_repair/junit.xml",
+      "source": "eb956a8390272c0b3abf2d9a4048cb05a2e19cf9",
+      "resume": "math attempt2 same original allocation; anchor evidence reused only unchanged physical anchor loader"
+    },
+    {
+      "id": "V33_CENTERED_LS_02",
+      "monotonic": 1375915.066866276,
+      "failure": "Math attempt2 completed but zero-state original residual pairs and real FD strict relative qualification failed",
+      "source": "eb956a8390272c0b3abf2d9a4048cb05a2e19cf9",
+      "failure_record": "benchmarks/artifacts/task42extra/v33/v33_backfit_math_checks/result_attempt2_failed_qualification.json",
+      "hypothesis": "Solving absolute large cancelling coefficients amplifies numerical loss differences; global unit-q probes also leave the local finite-difference region",
+      "change": "Algebraically equivalent delta-amplitude solves about the same saved unlabelled state; stable original quadratic FD via action on pre-base field differences; physical-sensitivity normalized nonzero witness directions with explicit norms and extra moment/A counts",
+      "no_loss_or_rcond_change": true,
+      "qualification_thresholds_unchanged": true,
+      "test": "Independent centered complex full-LS and stable objective-difference test plus existing targeted suite pending",
+      "resume": "same allocation attempt3 after clean implementation commit"
+    },
+    {
+      "id": "V33_CENTERED_LS_02_TEST",
+      "monotonic": 1376005.800575493,
+      "source": "d8abf9c68313eac79091943ae51f90046a9833d4",
+      "test": "24/24 targeted tests, Ruff/compileall/diff check PASS",
+      "test_record": "tmp/task42extra/v33/tests_centered_repair/junit.xml",
+      "resume": "math attempt3 same original allocation",
+      "reference_read_count": 0
+    },
+    {
+      "id": "V33_STABLE_PHASE_03",
+      "monotonic": 1376742.466721604,
+      "source": "d8abf9c68313eac79091943ae51f90046a9833d4",
+      "failure": "Real coarse/mid/fine qualified; global FD and zero original residual reproduction failed",
+      "hypothesis": "Small full-phase differences and regenerated anchor columns amplify cancellation with global sensitivity 51019..146578",
+      "change": "Complete moment difference via exp(i q0.x)*expm1(i delta_q.x), same frozen original T; retain actual representable q direction and planned direction separately",
+      "legacy_forward_unchanged": true,
+      "old_qualification_record": "benchmarks/artifacts/task42extra/v33/v33_backfit_math_checks/result_attempt3_failed_global_qualification.json",
+      "test": "28 targeted cases pending",
+      "resume": "same stage allocation attempt4; no threshold/loss/capacity change"
+    },
+    {
+      "id": "V33_STABLE_PHASE_03_TEST",
+      "monotonic": 1376928.908011744,
+      "source": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+      "test": "28/28 targeted tests PASS including original forward/VJP regressions and all-entity global/local delta moments; Ruff/compileall PASS",
+      "test_record": "tmp/task42extra/v33/tests_phase_delta_repair/junit.xml",
+      "resume": "math attempt4 retains old allocation and all earlier costs"
+    },
+    {
+      "id": "V33_STABLE_PHASE_03_REAL_RESULT",
+      "monotonic": 1377531.191798313,
+      "source": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+      "test": "four real block rows qualified; 28 complete q calls; actual save/reopen/rebuild mapping <=1e-10; independent real original action/gradient passed",
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_backfit_math_checks/result.json",
+        "sha256": "ddb0a54bd30b5e71aefbbcf5e1be41d7cdf7a505c703a4a424d04512759a578c"
+      },
+      "resume": "deterministic C begun; learned still must start from same untouched V32 anchor",
+      "old_failures_retained": true
+    },
+    {
+      "time_monotonic": 1381158.05976223,
+      "failure": "deterministic attempt2 VALIDATION_NOT_FOR_CURRENT_COMMITTED_STATE; cleared, own swap0",
+      "hypothesis": "Timed 3600s metadata save preceded matching scalar consumption on resume",
+      "change": "Consume scalar before timed save; legacy metadata-only recovery requires exact a/c/r/R equality, model/QR/optimization identity and original scored hash; unchanged numerical dependency receipts reused explicitly",
+      "test": "New 6 matched/mutated boundary tests plus numerical dependency refusal test and existing actual writer/label tests; formal actual boundary check before resume",
+      "actual_proof": {
+        "current_sha256": "7f7bbf4d46156ab8a2d5844c774ce5b5a14ba62af02e3f5a19e360e6195f0278",
+        "previous_scored_sha256": "98d518fed3d81fe3a46028bfbac8c578984f96ab0c5cccc402f433627bcc3756",
+        "a_c_r_R_bitwise_equal": true,
+        "chunks_QR_binding_equal": true
+      },
+      "resume": "same deterministic route attempt3, inherited deadline unchanged; no rescoring or prefix retraining",
+      "failed_cost_retained_s": 163.1792455201503,
+      "old_source": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+      "numerical_formula_changed": false,
+      "ordinary_defaults_changed": false
+    },
+    {
+      "time_monotonic": 1381298.328479601,
+      "test_result": "10 passed,23 deselected in0.36s; watchdog COMPLETED/1.961154188029468s/RSS85454848B/swap0/cleared; PSI60s separate",
+      "tested_parent_source": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+      "tested_patch_committed_source": "86417820b04a5abd56892d37a1ce15279d783c7a",
+      "same_mathematical_files_reused": true,
+      "formal_resume_attempt": 3,
+      "route_deadline_not_reset": true
+    },
+    {
+      "time_monotonic": 1387495.029280021,
+      "failure": "On QR insertion rejection after completed optimization, visit history replaced optimizer detail by zero; cumulative trial budget retained actual paid total",
+      "hypothesis": "Outer TrialRejected handler overwrote the already complete optimization record",
+      "change": "Preserve record and append commit_rejection; zero only when optimizer was never entered",
+      "test": "2 passed/31 deselected actual writer+numerical dependency gate, Ruff/compile/diffcheck; watchdog1.916309936903417s/peak84967424B/swap0",
+      "old_missing_detail": "learned attempt1 visits13/14 per-visit evaluation count and nit NOT_RETAINED; global count312 retained, raw history sum286, no replay",
+      "new_source": "see clean Git commit; numerical core fingerprints unchanged",
+      "resume": "learned attempt2 from same16-visit boundary, original allocation deadline inherited"
+    },
+    {
+      "time_monotonic": 1387536.425039153,
+      "kind": "record_correction",
+      "corrects_previous_test_count_only": true,
+      "actual_stdout": "3 passed,30 deselected in0.23s",
+      "test_directory": "tmp/task42extra/v33/tests_rejected_work_retention",
+      "test_source_parent": "86417820b04a5abd56892d37a1ce15279d783c7a",
+      "tested_bytes_committed_source": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+      "old_typed_2_count_preserved_as_logging_error": true,
+      "numerical_source_or_result_unchanged": true
+    },
+    {
+      "monotonic": 1391874.586632931,
+      "failure": "Compact metadata collection KeyError pairing on an intentionally rejected trial entry",
+      "hypothesis": "Rejected trajectory has no completed pairing field; old aggregation assumed every attempt was complete",
+      "change": "Count missing pairing entries explicitly and aggregate measured pairing only; missing is NOT_RETAINED, never zero",
+      "test": "Saved metadata-only rerun with no producer/forward/FE/optimizer imports",
+      "old_failed_source": "tmp/task42extra/v33/collect_v33_attempt1_failed.py",
+      "failed_cost_seconds": 2.168861747952178,
+      "resume": "Only collector over frozen arrays/JSON; healthy formal runs remain untouched"
+    },
+    {
+      "monotonic": 1392030.210845078,
+      "failure": "Document-only template parse rejected LaTeX braces inside Python f-string",
+      "change": "Use a fixed literal math string; no formulas/math algorithm or frozen numerical files changed",
+      "test": "ast.parse all three metadata scripts passes",
+      "old_source": "tmp/task42extra/v33/generate_docs_v33_parse_failed.py",
+      "cost": "NOT_RETAINED individually; single continuous calendar charged",
+      "resume": "Generate docs from already frozen compact records only"
+    },
+    {
+      "monotonic": 1392149.813600369,
+      "failure": "Docs generator requested detailed scalar_checks from intentionally compact route comparison",
+      "change": "Read original detailed replacement record instead; no data or numeric change",
+      "test": "Regenerate docs only, published numerical records already healthy and reused",
+      "old_source": "tmp/task42extra/v33/generate_docs_v33_field_failed.py",
+      "failed_cost_seconds": 2.131756627932191,
+      "resume": "No republish or rerun of frozen numerical producer/checker"
+    },
+    {
+      "monotonic": 1392540.045979229,
+      "failure": "Publication consistency check caught typed missing-evaluation count26 contradicting frozen cumulative counter/actual visit history",
+      "evidence": "First16 global312 minus retained history258=54; final608 minus retained554=54",
+      "change": "Correct compact explanation/docs/assertion to actual54; old typed26/sum286 remains in previous journal entry as logging error",
+      "per_visit_allocation": "NOT_RETAINED; not inferred",
+      "test": "Repeat metadata coverage/hash/source/doc checks only",
+      "failed_check_cost_seconds": 2.0080389089416713,
+      "numeric_producer_or_optimizer_replay": 0
+    }
+  ],
+  "ordinary_bug_handoff_limit_used": false,
+  "old_failures_retained": true,
+  "missing_history_not_replayed": true
+}

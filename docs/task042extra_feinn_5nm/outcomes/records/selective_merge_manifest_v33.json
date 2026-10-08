@@ -1,0 +1,126 @@
+{
+  "source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+  "groups": {
+    "production numerical/core": {
+      "files": [],
+      "numerical_boundary": "Research opt-in only; original production defaults unchanged; no joint qualified solver",
+      "dependencies": "Original M5 native/full moments/MPC/40 modes; full actual source closures in run_index; mathematical reuse bound by unchanged hashes",
+      "tests": "tests_v33.json/backfit_math_checks_v33.json/full_numerical_gates_v33.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v33.json",
+      "merge_recommendation": "No production or merge approval"
+    },
+    "research-only": {
+      "files": [
+        "src/solvers/neural_wave_backfit.py",
+        "src/solvers/neural_wave_backfit_qualification.py",
+        "src/solvers/neural_wave_backfit_run.py",
+        "src/solvers/neural_wave_backfit_state.py",
+        "src/solvers/neural_wave_block_reconstruction.py",
+        "src/solvers/neural_wave_greedy.py",
+        "src/solvers/neural_wave_moments.py",
+        "src/solvers/neural_wave_multiscale.py"
+      ],
+      "numerical_boundary": "Research opt-in only; original production defaults unchanged; no joint qualified solver",
+      "dependencies": "Original M5 native/full moments/MPC/40 modes; full actual source closures in run_index; mathematical reuse bound by unchanged hashes",
+      "tests": "tests_v33.json/backfit_math_checks_v33.json/full_numerical_gates_v33.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v33.json",
+      "merge_recommendation": "No production or merge approval"
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "src/io/backfit_wave_campaign.py",
+        "src/io/neural_wave_backfit_store.py",
+        "src/io/neural_wave_campaign.py",
+        "src/runners/backfit_wave_worker.py",
+        "src/runners/block_wave_admission.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/runners/neural_wave_dependencies.py",
+        "src/runners/neural_wave_worker.py"
+      ],
+      "numerical_boundary": "Research opt-in only; original production defaults unchanged; no joint qualified solver",
+      "dependencies": "Original M5 native/full moments/MPC/40 modes; full actual source closures in run_index; mathematical reuse bound by unchanged hashes",
+      "tests": "tests_v33.json/backfit_math_checks_v33.json/full_numerical_gates_v33.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v33.json",
+      "merge_recommendation": "No production or merge approval"
+    },
+    "checker/benchmark": {
+      "files": [
+        "input/task042extra_feinn_5nm/design_v33.json",
+        "input/task042extra_feinn_5nm/v33_0p7_transfer_backfit.dat",
+        "input/task042extra_feinn_5nm/v33_0p7_transfer_compare.dat",
+        "input/task042extra_feinn_5nm/v33_0p7_transfer_prepare.dat",
+        "input/task042extra_feinn_5nm/v33_backfit_anchor_checks.dat",
+        "input/task042extra_feinn_5nm/v33_backfit_compare.dat",
+        "input/task042extra_feinn_5nm/v33_backfit_math_checks.dat",
+        "input/task042extra_feinn_5nm/v33_backfit_reconstruct.dat",
+        "input/task042extra_feinn_5nm/v33_deterministic_backfit.dat",
+        "input/task042extra_feinn_5nm/v33_deterministic_validate_1.dat",
+        "input/task042extra_feinn_5nm/v33_deterministic_validate_2.dat",
+        "input/task042extra_feinn_5nm/v33_learned_validate_1.dat",
+        "input/task042extra_feinn_5nm/v33_learned_validate_2.dat",
+        "input/task042extra_feinn_5nm/v33_learned_varpro_backfit.dat",
+        "src/test/test_neural_wave_backfit.py"
+      ],
+      "numerical_boundary": "Research opt-in only; original production defaults unchanged; no joint qualified solver",
+      "dependencies": "Original M5 native/full moments/MPC/40 modes; full actual source closures in run_index; mathematical reuse bound by unchanged hashes",
+      "tests": "tests_v33.json/backfit_math_checks_v33.json/full_numerical_gates_v33.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v33.json",
+      "merge_recommendation": "No production or merge approval"
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042extra_feinn_5nm/README.md",
+        "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "docs/task042extra_feinn_5nm/outcomes/design_backfit_v33.md",
+        "docs/task042extra_feinn_5nm/outcomes/fixed_capacity_backfit_v33.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/anchor_identity_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/backfit_math_checks_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v33.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/cost_and_capacity_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/design_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_v33.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_v33.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v33.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/provenance_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/render_check_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/replacement_visits_v33.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/replacement_visits_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/run_index_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/six_complex_field_points_v33.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/tests_v33.json",
+        "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "docs/task042extra_feinn_5nm/response_v33.md"
+      ],
+      "numerical_boundary": "Research opt-in only; original production defaults unchanged; no joint qualified solver",
+      "dependencies": "Original M5 native/full moments/MPC/40 modes; full actual source closures in run_index; mathematical reuse bound by unchanged hashes",
+      "tests": "tests_v33.json/backfit_math_checks_v33.json/full_numerical_gates_v33.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v33.json",
+      "merge_recommendation": "No production or merge approval"
+    },
+    "do-not-merge": {
+      "files": [],
+      "numerical_boundary": "Research opt-in only; original production defaults unchanged; no joint qualified solver",
+      "dependencies": "Original M5 native/full moments/MPC/40 modes; full actual source closures in run_index; mathematical reuse bound by unchanged hashes",
+      "tests": "tests_v33.json/backfit_math_checks_v33.json/full_numerical_gates_v33.json",
+      "fresh_PDE_evidence": "full_numerical_gates_v33.json",
+      "merge_recommendation": "No production or merge approval"
+    }
+  },
+  "do_not_merge_artifacts": "Ignored arrays/checkpoints/U/Q/R/fields/logs/environments; no other branches",
+  "review_order": [
+    "research-only",
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs"
+  ],
+  "ordinary_default_unchanged": true,
+  "merge_approved": false
+}

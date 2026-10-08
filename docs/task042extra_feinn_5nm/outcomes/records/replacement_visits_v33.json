@@ -1,0 +1,413 @@
+{
+  "routes": {
+    "deterministic": {
+      "route": "DETERMINISTIC_WAVE_BACKFIT",
+      "result_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/result.json",
+        "bytes": 2839,
+        "sha256": "5463a0c5172880168444bcff3343182ec12ebff9791b6e4f3a9e9d0ab8b0a57c"
+      },
+      "terminal_source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+      "committed_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/basis/committed.json",
+        "bytes": 280232,
+        "sha256": "7c3b6b1c784f0e26bc03d81f79cab4af9128bff9c6a7a377285db5a9e3038958"
+      },
+      "state_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/basis/state_032_026_1384827182759024.npz",
+        "bytes": 31384030,
+        "sha256": "7039717aa5cdfff85a20ed457edb258e330cd9dc00d838f817301cd6b3bd0b47"
+      },
+      "model_chunk_count": 246,
+      "complete_model_and_QR_recipe_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/basis/committed.json",
+        "bytes": 280232,
+        "sha256": "7c3b6b1c784f0e26bc03d81f79cab4af9128bff9c6a7a377285db5a9e3038958"
+      },
+      "columns": 1377,
+      "visits": 32,
+      "accepted": 26,
+      "nonzero_q_updates": 26,
+      "optimization_q_calls": 970,
+      "zero_audits": 32,
+      "retained_per_visit_q_calls": 970,
+      "charged_q_calls_missing_per_visit_detail": 0,
+      "missing_detail": "NONE",
+      "scipy_interrupted_nit": "NOT_RETAINED where status=-1; raw initialized zero is not actual iteration count",
+      "full_AU_refreshes": 0,
+      "action_counts": {
+        "A": 5661,
+        "AH": 34,
+        "audit": 6,
+        "port_solve": 5711
+      },
+      "action_seconds": {
+        "A": 174.6689515276812,
+        "AH": 2.1335976999253035,
+        "audit": 0.444566858233884,
+        "port_solve": 0.09764677425846457
+      },
+      "terminal_only_process_moment_counts": {
+        "forward": 0,
+        "vjp": 0,
+        "cells": 0
+      },
+      "terminal_moment_count_semantics": "Zero only in terminal persistence process, NOT lifetime zero; each earlier process in archived result receipts",
+      "archived_process_counters": [
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/result_attempt1_validation_request1.json",
+            "bytes": 2850,
+            "sha256": "3a00eeaa07c4e4644b3236e47b3c2781091ed9d2bcb74765eb061c2a36afc79b"
+          },
+          "source_sha": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+          "status": "INDEPENDENT_VALIDATION_REQUESTED_1",
+          "visits": 16,
+          "actual_optimization_calls": 458,
+          "moments_counts": {
+            "forward": 474,
+            "vjp": 262,
+            "cells": 182016
+          },
+          "moments_seconds": {
+            "forward": 347.2124913209118,
+            "vjp": 173.19092112057842
+          },
+          "action_counts": {
+            "A": 2619,
+            "AH": 17,
+            "audit": 3,
+            "port_solve": 2643
+          },
+          "action_seconds": {
+            "A": 85.38775562797673,
+            "AH": 1.2375940100755543,
+            "audit": 0.25339963007718325,
+            "port_solve": 0.05500373966060579
+          }
+        },
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/result_attempt3_validation_request2.json",
+            "bytes": 2877,
+            "sha256": "f94249bd0bdc4cb95c5c13d6371ed4b6ff29e32cf8c264d76ca990cd23de4297"
+          },
+          "source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+          "status": "INDEPENDENT_VALIDATION_REQUESTED_2",
+          "visits": 32,
+          "actual_optimization_calls": 970,
+          "moments_counts": {
+            "forward": 528,
+            "vjp": 262,
+            "cells": 202752
+          },
+          "moments_seconds": {
+            "forward": 374.6831820725929,
+            "vjp": 81.45157703547738
+          },
+          "action_counts": {
+            "A": 5659,
+            "AH": 34,
+            "audit": 5,
+            "port_solve": 5706
+          },
+          "action_seconds": {
+            "A": 174.57245649164543,
+            "AH": 2.1335976999253035,
+            "audit": 0.34753882233053446,
+            "port_solve": 0.09757392830215394
+          }
+        }
+      ],
+      "scalar_checks": [
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/validation_scalars_1.json",
+            "bytes": 520,
+            "sha256": "cb160c6e6ff59b9363da967e645dde536eccbb27647a515e357ddd9997676573"
+          },
+          "scalar_fields": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 1,
+            "boundary_sha256": "98d518fed3d81fe3a46028bfbac8c578984f96ab0c5cccc402f433627bcc3756",
+            "native_relative": 0.14824794420146145,
+            "augmented_relative": 0.14824794420146145,
+            "scattered_E_relative": 0.019891080530990063,
+            "scattered_H_relative": 0.019998825978531407,
+            "continuation_allowed": true,
+            "source_sha": "ac1bc4ea6db2317d65442b360956b38a31af76e7",
+            "scoring_result_sha256": "738ed01ca1a1438701a3e773f4f0a09fcd775abfa7ac0f3eb187bc2b6d7501a5"
+          }
+        },
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/validation_scalars_2.json",
+            "bytes": 519,
+            "sha256": "f482f243eb0a8d7cbe6cb7eabebecfbcedc6ef6a370af14d6c0d6c3e59110658"
+          },
+          "scalar_fields": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 2,
+            "boundary_sha256": "e1878ed3e2f36197d6fd0c0a0b0f01451243956555f19fbc98f5dc162cfad849",
+            "native_relative": 0.14526776056629512,
+            "augmented_relative": 0.14526776056629512,
+            "scattered_E_relative": 0.016908598230604203,
+            "scattered_H_relative": 0.0170339038992628,
+            "continuation_allowed": false,
+            "source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+            "scoring_result_sha256": "6bcaff70fc305490234644a7ae84e7078900ea734dc341890f5ae6c0b0d816f0"
+          }
+        }
+      ],
+      "route_new_allocation_span_seconds": 7629.764735980891,
+      "required_prefix_attributed_seconds": 10186.178641493432,
+      "original_allocation": {
+        "route": "DETERMINISTIC_WAVE_BACKFIT",
+        "source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+        "design_sha256": "959761663c5dc2e2d2c613bc08d15a0c91184d1d912353fdade0797d4def47db",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "anchor_sha256": "737dd067f2cc3ebe021f3c7f445992c87d993e562213c62cc7a40b148a33501e",
+        "route_origin_monotonic": 1377197.988128992
+      },
+      "status": "BACKFIT_NO_USEFUL_PROGRESS",
+      "final_original_audit": {
+        "native_relative": 0.145267760564495,
+        "augmented_relative": 0.145267760564495,
+        "original_total_augmented_relative": 0.06881359402591276,
+        "port_absolute": 1.7902353759538446e-15,
+        "port_full_rhs_relative": 6.151123754722124e-15,
+        "port_operation_relative": 5.1558546203095165e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 10.354099304994568,
+        "full_coefficient_norm": 15.096496347879578,
+        "port_unknown_norm": 0.24945135499525248,
+        "strict_pass": false
+      },
+      "raw_visit_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/visit_history.jsonl",
+        "bytes": 198210,
+        "sha256": "03fc4b037a9e158b1c4ae1436ca134bf2a272eee05a22ffe91f8427ed973ac4e"
+      },
+      "reference_used_for_training": false,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "global_Maxwell_factor_count": 0,
+      "global_Gram_factor_count": 0
+    },
+    "learned": {
+      "route": "LEARNED_VARPRO_BACKFIT",
+      "result_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/result.json",
+        "bytes": 2840,
+        "sha256": "e66049cea5b9323518d2609766d5dd1483978a0ea5d8d6a6f34f86a4ca68213f"
+      },
+      "terminal_source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+      "committed_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/basis/committed.json",
+        "bytes": 278045,
+        "sha256": "84fe1e011c59fc6f3507ea234bbbb8e1ebd5d9d8d946b139c84079d87786cf73"
+      },
+      "state_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/basis/state_032_016_1390087437731791.npz",
+        "bytes": 31384030,
+        "sha256": "7e9e58d516af16d090d9da0752d7919d3a0da0b241bf64a6314267d312b3978e"
+      },
+      "model_chunk_count": 246,
+      "complete_model_and_QR_recipe_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/basis/committed.json",
+        "bytes": 278045,
+        "sha256": "84fe1e011c59fc6f3507ea234bbbb8e1ebd5d9d8d946b139c84079d87786cf73"
+      },
+      "columns": 1377,
+      "visits": 32,
+      "accepted": 16,
+      "nonzero_q_updates": 16,
+      "optimization_q_calls": 608,
+      "zero_audits": 32,
+      "retained_per_visit_q_calls": 554,
+      "charged_q_calls_missing_per_visit_detail": 54,
+      "missing_detail": "Visits13/14 per-visit allocation NOT_RETAINED. Actual frozen prefix total312 minus retained per-visit258 leaves54 charged evaluations; prior typed26/sum286 was a logging error, preserved in journal. No replay.",
+      "scipy_interrupted_nit": "NOT_RETAINED where status=-1; raw initialized zero is not actual iteration count",
+      "full_AU_refreshes": 0,
+      "action_counts": {
+        "A": 3838,
+        "AH": 632,
+        "audit": 6,
+        "port_solve": 4485
+      },
+      "action_seconds": {
+        "A": 111.24048425164074,
+        "AH": 34.91514659114182,
+        "audit": 0.32979546627029777,
+        "port_solve": 0.05273214681074023
+      },
+      "terminal_only_process_moment_counts": {
+        "forward": 0,
+        "vjp": 0,
+        "cells": 0
+      },
+      "terminal_moment_count_semantics": "Zero only in terminal persistence process, NOT lifetime zero; each earlier process in archived result receipts",
+      "archived_process_counters": [
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/result_attempt1_validation_request1.json",
+            "bytes": 2848,
+            "sha256": "4754619118b1d1397674efb5fa0172a0662f467740e9af6f91c2ee6fa1c597f0"
+          },
+          "source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+          "status": "INDEPENDENT_VALIDATION_REQUESTED_1",
+          "visits": 16,
+          "actual_optimization_calls": 312,
+          "moments_counts": {
+            "forward": 328,
+            "vjp": 570,
+            "cells": 125952
+          },
+          "moments_seconds": {
+            "forward": 216.36781744542532,
+            "vjp": 324.9344154128339
+          },
+          "action_counts": {
+            "A": 1815,
+            "AH": 325,
+            "audit": 3,
+            "port_solve": 2147
+          },
+          "action_seconds": {
+            "A": 52.72795271594077,
+            "AH": 18.004068384412676,
+            "audit": 0.16334297531284392,
+            "port_solve": 0.02305096574127674
+          }
+        },
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/result_attempt2_validation_request2.json",
+            "bytes": 2877,
+            "sha256": "919ea3a36dfd9141f1001dff2956a11a9663e4d787487f2afd76e606b10d6756"
+          },
+          "source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+          "status": "INDEPENDENT_VALIDATION_REQUESTED_2",
+          "visits": 32,
+          "actual_optimization_calls": 608,
+          "moments_counts": {
+            "forward": 312,
+            "vjp": 552,
+            "cells": 119808
+          },
+          "moments_seconds": {
+            "forward": 234.94549169554375,
+            "vjp": 327.16500443033874
+          },
+          "action_counts": {
+            "A": 3836,
+            "AH": 632,
+            "audit": 5,
+            "port_solve": 4480
+          },
+          "action_seconds": {
+            "A": 111.18289572163485,
+            "AH": 34.91514659114182,
+            "audit": 0.2661609931383282,
+            "port_solve": 0.05266450974158943
+          }
+        }
+      ],
+      "scalar_checks": [
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/validation_scalars_1.json",
+            "bytes": 517,
+            "sha256": "18ae49f257359c8b697690b09c5d21ec961cd28a34f91b7b4626fed9dd63a44e"
+          },
+          "scalar_fields": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 1,
+            "boundary_sha256": "cc74e9918e5d94ab9212385a33ee6b4fcc4f6bd852bfb14b67344b99cf51e2e1",
+            "native_relative": 0.1548832993514982,
+            "augmented_relative": 0.1548832993514982,
+            "scattered_E_relative": 0.025142128365093417,
+            "scattered_H_relative": 0.02522010685761604,
+            "continuation_allowed": true,
+            "source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+            "scoring_result_sha256": "b3b3e1d9b9d44f76e4bef7f641c06015763222f96ddc0e3f29dc04ae36ff66d4"
+          }
+        },
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/validation_scalars_2.json",
+            "bytes": 521,
+            "sha256": "dc044678292448ef4f1aa28590ef0e5814d579f71abd5505a5df2102c399ce12"
+          },
+          "scalar_fields": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 2,
+            "boundary_sha256": "f9259e44b3a1154220b0e9e1b5e92239359c1b35df3438886037bd7068368e6f",
+            "native_relative": 0.15342284826364305,
+            "augmented_relative": 0.15342284826364305,
+            "scattered_E_relative": 0.026145064198557784,
+            "scattered_H_relative": 0.026214732085891607,
+            "continuation_allowed": false,
+            "source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+            "scoring_result_sha256": "f39d9c0ff0d5df81aff62a4d27ab32dec2dae0f1641a3eab40d58e03eb32e572"
+          }
+        }
+      ],
+      "route_new_allocation_span_seconds": 5196.904656689148,
+      "required_prefix_attributed_seconds": 10186.178641493432,
+      "original_allocation": {
+        "route": "LEARNED_VARPRO_BACKFIT",
+        "source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+        "design_sha256": "959761663c5dc2e2d2c613bc08d15a0c91184d1d912353fdade0797d4def47db",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "anchor_sha256": "737dd067f2cc3ebe021f3c7f445992c87d993e562213c62cc7a40b148a33501e",
+        "route_origin_monotonic": 1384891.069943277
+      },
+      "status": "BACKFIT_NO_USEFUL_PROGRESS",
+      "final_original_audit": {
+        "native_relative": 0.15342284826459662,
+        "augmented_relative": 0.15342284826459662,
+        "original_total_augmented_relative": 0.07267667343224629,
+        "port_absolute": 7.343469268527033e-18,
+        "port_full_rhs_relative": 2.5231647674061553e-17,
+        "port_operation_relative": 2.1026351047507967e-19,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 10.420047057239906,
+        "full_coefficient_norm": 15.192549719404353,
+        "port_unknown_norm": 0.25100664624117164,
+        "strict_pass": false
+      },
+      "raw_visit_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/visit_history.jsonl",
+        "bytes": 143608,
+        "sha256": "0a9fdd60c212516f75f2a3daa5bb75775dd2ae05a45293167e29c77871b688a0"
+      },
+      "reference_used_for_training": false,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "global_Maxwell_factor_count": 0,
+      "global_Gram_factor_count": 0
+    }
+  },
+  "compact_visits": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/replacement_visits_v33.csv",
+    "bytes": 19035,
+    "sha256": "7f9b7ae53baf027ef9fbb65ca3a5c0929662fb737ca7fc78044337a3c5f4cb87"
+  },
+  "old_missing_information_not_replayed": true,
+  "evaluation_limit32_held": true
+}

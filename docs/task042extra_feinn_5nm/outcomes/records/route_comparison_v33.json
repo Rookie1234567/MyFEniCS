@@ -1,0 +1,597 @@
+{
+  "routes": {
+    "deterministic": {
+      "route": "DETERMINISTIC_WAVE_BACKFIT",
+      "result_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/result.json",
+        "bytes": 2839,
+        "sha256": "5463a0c5172880168444bcff3343182ec12ebff9791b6e4f3a9e9d0ab8b0a57c"
+      },
+      "terminal_source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+      "committed_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/basis/committed.json",
+        "bytes": 280232,
+        "sha256": "7c3b6b1c784f0e26bc03d81f79cab4af9128bff9c6a7a377285db5a9e3038958"
+      },
+      "state_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/basis/state_032_026_1384827182759024.npz",
+        "bytes": 31384030,
+        "sha256": "7039717aa5cdfff85a20ed457edb258e330cd9dc00d838f817301cd6b3bd0b47"
+      },
+      "model_chunk_count": 246,
+      "complete_model_and_QR_recipe_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/basis/committed.json",
+        "bytes": 280232,
+        "sha256": "7c3b6b1c784f0e26bc03d81f79cab4af9128bff9c6a7a377285db5a9e3038958"
+      },
+      "columns": 1377,
+      "visits": 32,
+      "accepted": 26,
+      "nonzero_q_updates": 26,
+      "optimization_q_calls": 970,
+      "zero_audits": 32,
+      "retained_per_visit_q_calls": 970,
+      "charged_q_calls_missing_per_visit_detail": 0,
+      "missing_detail": "NONE",
+      "scipy_interrupted_nit": "NOT_RETAINED where status=-1; raw initialized zero is not actual iteration count",
+      "full_AU_refreshes": 0,
+      "terminal_only_process_moment_counts": {
+        "forward": 0,
+        "vjp": 0,
+        "cells": 0
+      },
+      "terminal_moment_count_semantics": "Zero only in terminal persistence process, NOT lifetime zero; each earlier process in archived result receipts",
+      "route_new_allocation_span_seconds": 7629.764735980891,
+      "required_prefix_attributed_seconds": 10186.178641493432,
+      "original_allocation": {
+        "route": "DETERMINISTIC_WAVE_BACKFIT",
+        "source_sha": "86417820b04a5abd56892d37a1ce15279d783c7a",
+        "design_sha256": "959761663c5dc2e2d2c613bc08d15a0c91184d1d912353fdade0797d4def47db",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "anchor_sha256": "737dd067f2cc3ebe021f3c7f445992c87d993e562213c62cc7a40b148a33501e",
+        "route_origin_monotonic": 1377197.988128992
+      },
+      "status": "BACKFIT_NO_USEFUL_PROGRESS",
+      "final_original_audit": {
+        "native_relative": 0.145267760564495,
+        "augmented_relative": 0.145267760564495,
+        "original_total_augmented_relative": 0.06881359402591276,
+        "port_absolute": 1.7902353759538446e-15,
+        "port_full_rhs_relative": 6.151123754722124e-15,
+        "port_operation_relative": 5.1558546203095165e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 10.354099304994568,
+        "full_coefficient_norm": 15.096496347879578,
+        "port_unknown_norm": 0.24945135499525248,
+        "strict_pass": false
+      },
+      "raw_visit_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_deterministic_backfit/visit_history.jsonl",
+        "bytes": 198210,
+        "sha256": "03fc4b037a9e158b1c4ae1436ca134bf2a272eee05a22ffe91f8427ed973ac4e"
+      },
+      "reference_used_for_training": false,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "global_Maxwell_factor_count": 0,
+      "global_Gram_factor_count": 0,
+      "actual_network_checker": {
+        "equation_audit": {
+          "native_relative": 0.14526776056629512,
+          "augmented_relative": 0.14526776056629512,
+          "original_total_augmented_relative": 0.06881359402676822,
+          "port_absolute": 7.849851001832799e-18,
+          "port_full_rhs_relative": 2.697153995332951e-17,
+          "port_operation_relative": 2.2607468883792733e-19,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 10.354099304994431,
+          "full_coefficient_norm": 15.096496347879352,
+          "port_unknown_norm": 0.24945135499524868,
+          "strict_pass": false
+        },
+        "independent_total_native": {
+          "absolute": 0.04227901995172057,
+          "denominator": 0.6143992411628639,
+          "relative": 0.06881359402674346
+        },
+        "port_recovery_relative": 2.697153995332951e-17,
+        "MPC_relative": 0.0,
+        "channel_definition_checks": {
+          "scattered": {
+            "absolute": 0.0,
+            "denominator": 0.24945135499524868,
+            "relative": 0.0
+          },
+          "total": {
+            "absolute": 0.0,
+            "denominator": 0.4355209932804348,
+            "relative": 0.0
+          },
+          "outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9115503011270433,
+            "relative": 0.0
+          },
+          "boundary_outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9079716780680657,
+            "relative": 0.0
+          }
+        },
+        "A_volume": 0.1539396707826289,
+        "power_absolute_differences": {
+          "R_total": 0.002919690963834265,
+          "T_total": 2.6025241492450002e-05,
+          "A_balance": 0.002945716205326715,
+          "A_volume": 0.0011714340647527854
+        },
+        "energy_closure": 0.004117150270377068,
+        "max_per_mode_power_absolute": 0.0028511582023637017,
+        "original_equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "quadrature_pass": true,
+        "model_rebuild_pass": true,
+        "m5_full_discrete_numerical_gate": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "field_norm_errors": {
+          "scattered_E": {
+            "absolute": 0.08327431816249324,
+            "denominator": 4.924968765995545,
+            "relative": 0.016908598230604203
+          },
+          "total_E": {
+            "absolute": 0.08327431816249324,
+            "denominator": 7.181828746565669,
+            "relative": 0.01159514116823167
+          },
+          "scattered_curl": {
+            "absolute": 0.08401374267354483,
+            "denominator": 4.932148447613399,
+            "relative": 0.017033903899262796
+          },
+          "scattered_H_code": {
+            "absolute": 0.08401374267354483,
+            "denominator": 4.932148447613399,
+            "relative": 0.017033903899262796
+          },
+          "total_curl": {
+            "absolute": 0.08401374267354483,
+            "denominator": 7.212948437953144,
+            "relative": 0.011647628344531166
+          },
+          "total_H_code": {
+            "absolute": 0.08401374267354483,
+            "denominator": 7.212948437953144,
+            "relative": 0.011647628344531166
+          }
+        },
+        "complete_field_metric_count": 34,
+        "failed_field_metric_count": 34,
+        "worst_field_metric": "selected_scattered_H_code_3",
+        "worst_field_relative": 0.024991420183537092
+      },
+      "producer_checker": {
+        "equation_audit": {
+          "native_relative": 0.145267760564495,
+          "augmented_relative": 0.145267760564495,
+          "original_total_augmented_relative": 0.06881359402591276,
+          "port_absolute": 1.7902353759538446e-15,
+          "port_full_rhs_relative": 6.151123754722124e-15,
+          "port_operation_relative": 5.1558546203095165e-17,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 10.354099304994568,
+          "full_coefficient_norm": 15.096496347879578,
+          "port_unknown_norm": 0.24945135499525248,
+          "strict_pass": false
+        },
+        "independent_total_native": {
+          "absolute": 0.0422790199511964,
+          "denominator": 0.6143992411628639,
+          "relative": 0.06881359402589032
+        },
+        "port_recovery_relative": 6.151123754722124e-15,
+        "MPC_relative": 0.0,
+        "channel_definition_checks": {
+          "scattered": {
+            "absolute": 0.0,
+            "denominator": 0.24945135499525248,
+            "relative": 0.0
+          },
+          "total": {
+            "absolute": 0.0,
+            "denominator": 0.43552099328043137,
+            "relative": 0.0
+          },
+          "outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9115503011270428,
+            "relative": 0.0
+          },
+          "boundary_outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.907971678068065,
+            "relative": 0.0
+          }
+        },
+        "A_volume": 0.15393967078262644,
+        "power_absolute_differences": {
+          "R_total": 0.002919690963834709,
+          "T_total": 2.6025241493310425e-05,
+          "A_balance": 0.0029457162053280195,
+          "A_volume": 0.0011714340647552557
+        },
+        "energy_closure": 0.004117150270380954,
+        "max_per_mode_power_absolute": 0.002851158202364368,
+        "original_equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "quadrature_pass": true,
+        "model_rebuild_pass": true,
+        "m5_full_discrete_numerical_gate": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "field_norm_errors": {
+          "scattered_E": {
+            "absolute": 0.08327431816253432,
+            "denominator": 4.924968765995545,
+            "relative": 0.016908598230612543
+          },
+          "total_E": {
+            "absolute": 0.08327431816253432,
+            "denominator": 7.181828746565669,
+            "relative": 0.011595141168237389
+          },
+          "scattered_curl": {
+            "absolute": 0.08401374267357926,
+            "denominator": 4.932148447613399,
+            "relative": 0.017033903899269776
+          },
+          "scattered_H_code": {
+            "absolute": 0.08401374267357926,
+            "denominator": 4.932148447613399,
+            "relative": 0.017033903899269776
+          },
+          "total_curl": {
+            "absolute": 0.08401374267357926,
+            "denominator": 7.212948437953144,
+            "relative": 0.011647628344535938
+          },
+          "total_H_code": {
+            "absolute": 0.08401374267357926,
+            "denominator": 7.212948437953144,
+            "relative": 0.011647628344535938
+          }
+        },
+        "complete_field_metric_count": 34,
+        "failed_field_metric_count": 34,
+        "worst_field_metric": "selected_scattered_H_code_3",
+        "worst_field_relative": 0.024991420183044993
+      }
+    },
+    "learned": {
+      "route": "LEARNED_VARPRO_BACKFIT",
+      "result_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/result.json",
+        "bytes": 2840,
+        "sha256": "e66049cea5b9323518d2609766d5dd1483978a0ea5d8d6a6f34f86a4ca68213f"
+      },
+      "terminal_source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+      "committed_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/basis/committed.json",
+        "bytes": 278045,
+        "sha256": "84fe1e011c59fc6f3507ea234bbbb8e1ebd5d9d8d946b139c84079d87786cf73"
+      },
+      "state_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/basis/state_032_016_1390087437731791.npz",
+        "bytes": 31384030,
+        "sha256": "7e9e58d516af16d090d9da0752d7919d3a0da0b241bf64a6314267d312b3978e"
+      },
+      "model_chunk_count": 246,
+      "complete_model_and_QR_recipe_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/basis/committed.json",
+        "bytes": 278045,
+        "sha256": "84fe1e011c59fc6f3507ea234bbbb8e1ebd5d9d8d946b139c84079d87786cf73"
+      },
+      "columns": 1377,
+      "visits": 32,
+      "accepted": 16,
+      "nonzero_q_updates": 16,
+      "optimization_q_calls": 608,
+      "zero_audits": 32,
+      "retained_per_visit_q_calls": 554,
+      "charged_q_calls_missing_per_visit_detail": 54,
+      "missing_detail": "Learned visits13/14 allocation NOT_RETAINED; total26 paid q calls retained; no replay",
+      "scipy_interrupted_nit": "NOT_RETAINED where status=-1; raw initialized zero is not actual iteration count",
+      "full_AU_refreshes": 0,
+      "terminal_only_process_moment_counts": {
+        "forward": 0,
+        "vjp": 0,
+        "cells": 0
+      },
+      "terminal_moment_count_semantics": "Zero only in terminal persistence process, NOT lifetime zero; each earlier process in archived result receipts",
+      "route_new_allocation_span_seconds": 5196.904656689148,
+      "required_prefix_attributed_seconds": 10186.178641493432,
+      "original_allocation": {
+        "route": "LEARNED_VARPRO_BACKFIT",
+        "source_sha": "f1ae5d7b7319836c802aad548e02e0f016798bef",
+        "design_sha256": "959761663c5dc2e2d2c613bc08d15a0c91184d1d912353fdade0797d4def47db",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+        "anchor_sha256": "737dd067f2cc3ebe021f3c7f445992c87d993e562213c62cc7a40b148a33501e",
+        "route_origin_monotonic": 1384891.069943277
+      },
+      "status": "BACKFIT_NO_USEFUL_PROGRESS",
+      "final_original_audit": {
+        "native_relative": 0.15342284826459662,
+        "augmented_relative": 0.15342284826459662,
+        "original_total_augmented_relative": 0.07267667343224629,
+        "port_absolute": 7.343469268527033e-18,
+        "port_full_rhs_relative": 2.5231647674061553e-17,
+        "port_operation_relative": 2.1026351047507967e-19,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 10.420047057239906,
+        "full_coefficient_norm": 15.192549719404353,
+        "port_unknown_norm": 0.25100664624117164,
+        "strict_pass": false
+      },
+      "raw_visit_binding": {
+        "path": "benchmarks/artifacts/task42extra/v33/v33_learned_varpro_backfit/visit_history.jsonl",
+        "bytes": 143608,
+        "sha256": "0a9fdd60c212516f75f2a3daa5bb75775dd2ae05a45293167e29c77871b688a0"
+      },
+      "reference_used_for_training": false,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "global_Maxwell_factor_count": 0,
+      "global_Gram_factor_count": 0,
+      "actual_network_checker": {
+        "equation_audit": {
+          "native_relative": 0.15342284826364305,
+          "augmented_relative": 0.15342284826364305,
+          "original_total_augmented_relative": 0.07267667343179395,
+          "port_absolute": 4.440988896188914e-16,
+          "port_full_rhs_relative": 1.5258927770461562e-15,
+          "port_operation_relative": 1.2715759828881366e-17,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 10.420047057239094,
+          "full_coefficient_norm": 15.192549719403093,
+          "port_unknown_norm": 0.251006646241148,
+          "strict_pass": false
+        },
+        "independent_total_native": {
+          "absolute": 0.044652493006721916,
+          "denominator": 0.6143992411628639,
+          "relative": 0.07267667343177188
+        },
+        "port_recovery_relative": 1.5258927770461562e-15,
+        "MPC_relative": 0.0,
+        "channel_definition_checks": {
+          "scattered": {
+            "absolute": 0.0,
+            "denominator": 0.251006646241148,
+            "relative": 0.0
+          },
+          "total": {
+            "absolute": 0.0,
+            "denominator": 0.4341039165704051,
+            "relative": 0.0
+          },
+          "outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9099442428338351,
+            "relative": 0.0
+          },
+          "boundary_outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9064077064329845,
+            "relative": 0.0
+          }
+        },
+        "A_volume": 0.15264228032709404,
+        "power_absolute_differences": {
+          "R_total": 0.005580534419916794,
+          "T_total": 0.00046264648235442435,
+          "A_balance": 0.006043180902271211,
+          "A_volume": 0.0024688245202876546
+        },
+        "energy_closure": 0.008512005422856461,
+        "max_per_mode_power_absolute": 0.0054862093111731625,
+        "original_equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "quadrature_pass": true,
+        "model_rebuild_pass": true,
+        "m5_full_discrete_numerical_gate": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "field_norm_errors": {
+          "scattered_E": {
+            "absolute": 0.12876362456284543,
+            "denominator": 4.924968765995545,
+            "relative": 0.026145064198557784
+          },
+          "total_E": {
+            "absolute": 0.12876362456284543,
+            "denominator": 7.181828746565669,
+            "relative": 0.017929085906485842
+          },
+          "scattered_curl": {
+            "absolute": 0.12929495016203144,
+            "denominator": 4.932148447613399,
+            "relative": 0.0262147320858916
+          },
+          "scattered_H_code": {
+            "absolute": 0.12929495016203144,
+            "denominator": 4.932148447613399,
+            "relative": 0.0262147320858916
+          },
+          "total_curl": {
+            "absolute": 0.12929495016203144,
+            "denominator": 7.212948437953144,
+            "relative": 0.017925395041188195
+          },
+          "total_H_code": {
+            "absolute": 0.12929495016203144,
+            "denominator": 7.212948437953144,
+            "relative": 0.017925395041188195
+          }
+        },
+        "complete_field_metric_count": 34,
+        "failed_field_metric_count": 34,
+        "worst_field_metric": "selected_scattered_H_code_3",
+        "worst_field_relative": 0.04723112389324663
+      },
+      "producer_checker": {
+        "equation_audit": {
+          "native_relative": 0.15342284826459662,
+          "augmented_relative": 0.15342284826459662,
+          "original_total_augmented_relative": 0.07267667343224629,
+          "port_absolute": 7.343469268527033e-18,
+          "port_full_rhs_relative": 2.5231647674061553e-17,
+          "port_operation_relative": 2.1026351047507967e-19,
+          "augmented_rhs_norm": 0.29104200262261154,
+          "native_rhs_norm": 0.29104200262261154,
+          "slave_storage_max": 0.0,
+          "interior_coefficient_norm": 10.420047057239906,
+          "full_coefficient_norm": 15.192549719404353,
+          "port_unknown_norm": 0.25100664624117164,
+          "strict_pass": false
+        },
+        "independent_total_native": {
+          "absolute": 0.04465249300699907,
+          "denominator": 0.6143992411628639,
+          "relative": 0.07267667343222298
+        },
+        "port_recovery_relative": 2.5231647674061553e-17,
+        "MPC_relative": 0.0,
+        "channel_definition_checks": {
+          "scattered": {
+            "absolute": 0.0,
+            "denominator": 0.25100664624117164,
+            "relative": 0.0
+          },
+          "total": {
+            "absolute": 0.0,
+            "denominator": 0.4341039165703848,
+            "relative": 0.0
+          },
+          "outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9099442428338343,
+            "relative": 0.0
+          },
+          "boundary_outgoing": {
+            "absolute": 0.0,
+            "denominator": 0.9064077064329845,
+            "relative": 0.0
+          }
+        },
+        "A_volume": 0.15264228032707564,
+        "power_absolute_differences": {
+          "R_total": 0.005580534419915906,
+          "T_total": 0.0004626464823612522,
+          "A_balance": 0.006043180902277151,
+          "A_volume": 0.0024688245203060566
+        },
+        "energy_closure": 0.008512005422880886,
+        "max_per_mode_power_absolute": 0.005486209311169277,
+        "original_equation_pass": false,
+        "field_pass": false,
+        "power_pass": false,
+        "quadrature_pass": true,
+        "model_rebuild_pass": true,
+        "m5_full_discrete_numerical_gate": false,
+        "pde_only_solver_qualified": false,
+        "official_candidate_results": false,
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true,
+        "benchmark_previously_seen": true,
+        "production_initialization_allowed": false,
+        "field_norm_errors": {
+          "scattered_E": {
+            "absolute": 0.1287636245630024,
+            "denominator": 4.924968765995545,
+            "relative": 0.026145064198589654
+          },
+          "total_E": {
+            "absolute": 0.1287636245630024,
+            "denominator": 7.181828746565669,
+            "relative": 0.0179290859065077
+          },
+          "scattered_curl": {
+            "absolute": 0.12929495016217896,
+            "denominator": 4.932148447613399,
+            "relative": 0.02621473208592151
+          },
+          "scattered_H_code": {
+            "absolute": 0.12929495016217896,
+            "denominator": 4.932148447613399,
+            "relative": 0.02621473208592151
+          },
+          "total_curl": {
+            "absolute": 0.12929495016217896,
+            "denominator": 7.212948437953144,
+            "relative": 0.017925395041208648
+          },
+          "total_H_code": {
+            "absolute": 0.12929495016217896,
+            "denominator": 7.212948437953144,
+            "relative": 0.017925395041208648
+          }
+        },
+        "complete_field_metric_count": 34,
+        "failed_field_metric_count": 34,
+        "worst_field_metric": "selected_scattered_H_code_3",
+        "worst_field_relative": 0.04723112389021192
+      }
+    }
+  },
+  "detailed_replacements_and_counters": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/replacement_visits_v33.json",
+    "bytes": 17336,
+    "sha256": "067477a080c9ed192191d54b8169cbd192a82afced093eb353643a8d411f0077"
+  },
+  "same_precision_NN_gain_qualified": false,
+  "comparison": "Same frozen fixed initial model/capacity/queues/caps; original deterministic control is stronger on terminal residual and field; fewer seconds on failed learned solve is not same-precision speedup",
+  "scientific_stop": "At second predeclared scalar node, residual not halved and both scattered E/H remain >=1%; closes tested configuration, not proof of mathematical impossibility",
+  "complete_cold_N1": "UNKNOWN",
+  "strictly_optimal_fixed_space": "UNKNOWN",
+  "new_direction_columns": 0
+}

@@ -1,3 +1,16 @@
+# V33依赖分组：研究opt-in，不授production/merge
+
+| 依赖组 | 本轮作用和审阅顺序 |
+|---|---|
+| research-only | src/solvers/neural_wave_backfit*.py、完整矩expm1差量、k0限幅；活动消元/真实梯度/稳定LS/完整点值重建；先看数学资格 |
+| reusable runner/watchdog | backfit store/schema/thin worker与最小V33角色注册；复用已有durable/单窗/资源门，定向实际writer/状态与依赖测试；普通默认不改 |
+| checker/benchmark | targeted tests、预登记设计、one-run dat；复用原完整FE verifier/纯数组checker，无新传统求解器 |
+| compact evidence/docs | response/topic/design/原量CSV/费用/run/provenance；随后看完整Gate和负结果 |
+| production numerical/core | 无新合格production solver，禁止以研究开关提升默认 |
+| do-not-merge | ignored U/Q/R/原参数/场/轨迹/环境/缓存；不含其他工作树 |
+
+[准确逐文件manifest](records/selective_merge_manifest_v33.json)、[测试](records/tests_v33.json)、[fresh完整终验](records/full_numerical_gates_v33.json)、[source/provenance](records/provenance_v33.json)。所有历史改动与坏态原文保留。
+
 # V32：显式多尺度支持及神经对照，普通默认不变
 
 |依赖组|变化与证据|生产边界|
