@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+from datetime import datetime
 from pathlib import Path
 from .independent_tetra_scope import TetraWindow
 from .fine_tetra_scope import implementation_hashes as parent_hashes
@@ -26,11 +27,32 @@ class PilotWindow(TetraWindow):
     def launcher_overhead(self):
         from .scattering_accuracy_scope import AccuracyWindow
         seconds=AccuracyWindow.launcher_overhead(self)
-        for r in self.ledger()['runs']:
-            receipts=[p for p in self.TMP.glob(r['role']+'_one_run*/receipt.json') if json.loads(p.read_text())['source_sha']==r['source_sha']]
-            summary=Path(r['folder'])/'run_summary.json'
-            if len(receipts)==1 and summary.exists():seconds+=max(0.,json.loads(receipts[0].read_text())['elapsed_seconds']-json.loads(summary.read_text())['launch_wall_seconds'])
-        return seconds
+        return seconds+one_run_overhead(self.TMP,self.ledger()['runs'])
+
+
+def one_run_overhead(folder,runs):
+    """Include rejected entry calls; match retries by their actual UTC interval."""
+    seconds=0.
+    for path in folder.glob('*_one_run*/receipt.json'):
+        receipt=json.loads(path.read_text());begin=datetime.fromisoformat(receipt['start_utc']);end=datetime.fromisoformat(receipt['end_utc'])
+        role=path.parent.name.split('_one_run')[0]
+        matched=[r for r in runs if r['role']==role and r['source_sha']==receipt['source_sha']
+            and begin<=datetime.fromisoformat(r['before_clock']['observed_utc'])<=end]
+        if len(matched)>1:raise ValueError('one-run receipt contains multiple stage entries')
+        if matched:
+            summary=Path(matched[0]['folder'])/'run_summary.json'
+            covered=json.loads(summary.read_text())['launch_wall_seconds'] if summary.exists() else matched[0]['elapsed_seconds']
+        else:
+            # The entry failed before begin(); its already-paid probe must not
+            # be charged twice, while storage/identity/startup work remains paid.
+            covered=0.
+            for probe in folder.glob('probe_*.json'):
+                p=json.loads(probe.read_text());observation=Path(p['receipt_path'])
+                if observation.exists():
+                    observed=json.loads(observation.read_text())
+                    if begin<=datetime.fromisoformat(observed['utc'])<=end:covered+=p['elapsed_seconds']
+        seconds+=max(0.,receipt['elapsed_seconds']-covered)
+    return seconds
 
 
 window=PilotWindow(ROOT/'tmp/task042/v64',label='V64',total=36000,component=36000,auxiliary=36000,probe=120,reserve=180,bootstrap=0)

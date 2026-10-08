@@ -1,5 +1,6 @@
 """Only new V64 contracts: actual ancestry, saved mesh, marking and role budgets."""
 import tempfile
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -9,6 +10,19 @@ from src.solvers.tetra_local_marking import freeze_marking
 
 
 class LocalHPilotTests(unittest.TestCase):
+    def test_rejected_entry_and_same_source_retry_costs_are_paid_once(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);first=root/'PREFLIGHT_one_run01';second=root/'PREFLIGHT_one_run02'
+            first.mkdir();second.mkdir();stage=root/'real_stage';stage.mkdir()
+            common=dict(source_sha='same-final-source')
+            (first/'receipt.json').write_text(json.dumps(dict(common,start_utc='2026-10-08T00:00:00+00:00',end_utc='2026-10-08T00:00:40+00:00',elapsed_seconds=40)))
+            (second/'receipt.json').write_text(json.dumps(dict(common,start_utc='2026-10-08T00:03:00+00:00',end_utc='2026-10-08T00:03:20+00:00',elapsed_seconds=20)))
+            observation=root/'failed_admission.json';observation.write_text(json.dumps(dict(utc='2026-10-08T00:00:38+00:00')))
+            (root/'probe_001.json').write_text(json.dumps(dict(receipt_path=str(observation),elapsed_seconds=1)))
+            (stage/'run_summary.json').write_text(json.dumps(dict(launch_wall_seconds=18)))
+            runs=[dict(role='PREFLIGHT',source_sha='same-final-source',folder=str(stage),elapsed_seconds=15,before_clock=dict(observed_utc='2026-10-08T00:03:04+00:00'))]
+            self.assertEqual(scope.one_run_overhead(root,runs),41.)
+
     def test_fixed_global_norm_and_minimum_prefix_geometry_tie(self):
         d=np.array([[3.,0.,100.],[3.,0.,0.],[0.,2.,0.],[0.,1.,0.]])
         keys=[(3,),(1,),(2,),(0,)]
