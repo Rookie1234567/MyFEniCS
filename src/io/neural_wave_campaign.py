@@ -31,7 +31,7 @@ STAGES = {
 
 
 def profile_paths(spec):
-    if spec.get("campaign_version") in (31, 32):
+    if spec.get("campaign_version") in (31, 32, 33):
         version = spec["campaign_version"]
         root = ROOT / f"tmp/task42extra/v{version}"
         return dict(
@@ -39,7 +39,7 @@ def profile_paths(spec):
             window=root / "batch_window.json",
             design=ROOT / f"input/task042extra_feinn_5nm/design_v{version}.json",
             artifacts=ROOT / f"benchmarks/artifacts/task42extra/v{version}",
-            reserve=3600,
+            reserve=1800 if version == 33 else 3600,
         )
     return dict(
         root=ROOT / "tmp/task42extra/v30",
@@ -67,6 +67,10 @@ def load_wave(path):
         data = tomllib.loads(raw.decode())
     except (UnicodeError, tomllib.TOMLDecodeError) as error:
         raise InputError(str(error)) from error
+    if data.get("schema_version") == 4:
+        from src.io.backfit_wave_campaign import load_backfit
+
+        return load_backfit(path, data, raw)
     if data.get("schema_version") == 3:
         from src.io.multiscale_wave_campaign import load_multiscale
 

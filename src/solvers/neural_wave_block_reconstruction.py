@@ -20,7 +20,9 @@ def frozen_models(directory):
         a, saved = (np.array(arrays[k]) for k in ("a", "c"))
     models = []
     covered = 0
-    block = boundary["schema"] == "neural-wave.complete-block-boundary.v1"
+    block = boundary["schema"] in (
+        "neural-wave.complete-block-boundary.v1", "neural-wave.backfit-boundary.v1"
+    )
     for i, entry in enumerate(boundary["chunks"]):
         file = directory / entry["path"]
         if sha(file) != entry["sha256"]:

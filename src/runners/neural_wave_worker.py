@@ -340,8 +340,10 @@ def main():
 
     try:
         atomic_json(directory / "abi.json", abi(spec["mode"]))
-        if spec.get("campaign_version") in (31,32):
-            if spec.get("campaign_version")==32:
+        if spec.get("campaign_version") in (31,32,33):
+            if spec.get("campaign_version")==33:
+                from src.runners.backfit_wave_worker import run_stage
+            elif spec.get("campaign_version")==32:
                 from src.runners.multiscale_wave_worker import run_stage
             else:
                 from src.runners.block_wave_worker import run_stage

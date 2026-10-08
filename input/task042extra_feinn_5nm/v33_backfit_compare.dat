@@ -1,0 +1,5 @@
+schema_version = 4
+
+[neural_wave]
+stage = "v33_backfit_compare"
+design_sha256 = "959761663c5dc2e2d2c613bc08d15a0c91184d1d912353fdade0797d4def47db"

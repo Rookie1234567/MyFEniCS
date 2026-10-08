@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -40,6 +40,12 @@ def window(spec=None):
 
 def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
+    if spec.get("campaign_version") == 33:
+        reserve = 5400 if spec["role"] in (
+            "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT"
+        ) else 1800
+        return min(allocation["deadline_monotonic"],
+                   campaign["deadline_monotonic"] - reserve), reserve
     training = spec["role"] in (
         "LEARNED_WAVE_GREEDY",
         "FIXED_WAVE_GREEDY_CONTROL",
@@ -118,6 +124,19 @@ def durable(spec, *, origin, attempt=1):
             raise ValueError("RECOVERY_REQUIRES_PRIOR_TREE_CLEARED")
         repairs = root / "repair_journal.jsonl"
         scalar_continuation = False
+        if spec.get("campaign_version") == 33 and spec["role"] in (
+            "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT"
+        ):
+            route_artifact = profile["artifacts"] / stage
+            result_file = route_artifact / "result.json"
+            if result_file.exists():
+                status = json.loads(result_file.read_text())["status"]
+                if status.startswith("INDEPENDENT_VALIDATION_REQUESTED_"):
+                    node = int(status[-1])
+                    scalar = route_artifact / f"validation_scalars_{node}.json"
+                    scalar_continuation = scalar.exists() and json.loads(
+                        scalar.read_text()
+                    )["boundary_sha256"] == digest(route_artifact / "basis/committed.json")
         if spec.get("campaign_version") == 32 and spec["role"] in (
             "FIXED_MULTISCALE_WAVE_BLOCK",
             "LEARNED_MULTISCALE_WAVE_BLOCK",
@@ -217,7 +236,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") == 32
+        if spec.get("campaign_version") in (32,33)
         else None,
     )
 
@@ -268,6 +287,15 @@ def launch(spec):
             "multiscale_reconstruct",
             "FIXED_MULTISCALE_WAVE_BLOCK",
             "LEARNED_MULTISCALE_WAVE_BLOCK",
+            "backfit_anchor_checks",
+            "backfit_math_checks",
+            "backfit_reconstruct",
+            "backfit_early_validate",
+            "backfit_transfer_prepare",
+            "backfit_transfer",
+            "backfit_transfer_compare",
+            "DETERMINISTIC_WAVE_BACKFIT",
+            "LEARNED_VARPRO_BACKFIT",
         )
         else 2
     ) * 2**30
@@ -285,7 +313,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") in (31, 32):
+            if spec.get("campaign_version") in (31, 32, 33):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -351,7 +379,7 @@ def launch(spec):
                             "src/solvers/neural_wave_block_qualification.py",
                             "src/postprocessing/neural_wave_roundoff.py",
                         )
-                        if spec.get("campaign_version") in (31, 32)
+                        if spec.get("campaign_version") in (31, 32, 33)
                         else ()
                     )
                 },
@@ -427,6 +455,23 @@ def launch(spec):
                     pde_only_solve=spec["role"]
                     in ("FIXED_MULTISCALE_WAVE_BLOCK", "LEARNED_MULTISCALE_WAVE_BLOCK"),
                 )
+            if spec.get("campaign_version") == 33:
+                manifest["binding_source_files"].update({
+                    path: digest(ROOT / path) for path in (
+                        "src/io/backfit_wave_campaign.py",
+                        "src/io/neural_wave_backfit_store.py",
+                        "src/solvers/neural_wave_backfit.py",
+                        "src/solvers/neural_wave_backfit_qualification.py",
+                        "src/solvers/neural_wave_backfit_state.py",
+                        "src/solvers/neural_wave_backfit_run.py",
+                        "src/runners/backfit_wave_worker.py",
+                        "src/solvers/neural_wave_multiscale.py",
+                    )
+                })
+                manifest.update(reference_used_for_validation=True,
+                                continuation_uses_validation_scalars=True,
+                                pde_only_solve=spec["role"] in (
+                                    "DETERMINISTIC_WAVE_BACKFIT", "LEARNED_VARPRO_BACKFIT"))
             atomic_json(directory / "run_manifest.json", manifest)
             atomic_json(artifact / f"run_manifest_{directory.name}.json", manifest)
             shutil.copyfile(ROOT / spec["input"], directory / "input_original.dat")

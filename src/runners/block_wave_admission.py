@@ -12,6 +12,10 @@ POOL = ROOT / "tmp/task42extra/v31/resource_rejected_wait.jsonl"
 
 
 def pool(directory=None):
+    if directory is not None and Path(directory).resolve().is_relative_to(
+        ROOT / "tmp/task42extra/v33"
+    ):
+        return ROOT / "tmp/task42extra/v33/resource_rejected_wait.jsonl"
     return (
         ROOT / "tmp/task42extra/v32/resource_rejected_wait.jsonl"
         if directory is not None

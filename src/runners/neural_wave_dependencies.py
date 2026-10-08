@@ -32,7 +32,7 @@ def resource_observation_cost(root=None):
 
 def fresh_admission(directory, hard, *, scope=None, prefix="admission", reserve_s=0):
     """At most eight foreground fresh samples; never waive a rejected core."""
-    if any(Path(directory).resolve().is_relative_to(ROOT/f"tmp/task42extra/v{v}") for v in (31,32)):
+    if any(Path(directory).resolve().is_relative_to(ROOT/f"tmp/task42extra/v{v}") for v in (31,32,33)):
         from src.runners.block_wave_admission import fresh_admission as fresh31
         return fresh31(directory,hard,scope=scope,prefix=prefix)
     from src.runners.feinn_resources import admission

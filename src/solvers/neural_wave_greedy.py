@@ -496,6 +496,7 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
                 * 2
                 * np.pi
                 / design["model"]["wavelength_nm"],
+                k0=2 * np.pi / design["model"]["wavelength_nm"],
             )
             width = len(preset_candidates[0][1])
         else:

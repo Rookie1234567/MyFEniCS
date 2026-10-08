@@ -10,6 +10,12 @@ class EvaluationLimit(Exception):
     pass
 
 
+def clip_wave_q(q, k0):
+    if not np.isfinite(k0) or k0 <= 0:
+        raise ValueError("POSITIVE_PHYSICAL_K0_REQUIRED")
+    return np.clip(q, -4*k0, 4*k0)
+
+
 def bounded_direction_optimize(
     objective, q0, seed_value, bound, maxiter=12, maxeval=18, denominator=1.0
 ):
@@ -139,6 +145,7 @@ class MultiscaleSupportPolicy:
         iteration,
         resolution_step,
         screen_seeds=8,
+        k0=2 * np.pi / 5.0,
     ):
         from src.solvers.neural_wave_greedy import variable_projection
 
@@ -200,7 +207,7 @@ class MultiscaleSupportPolicy:
                     for sign in (-1, 1):
                         q = base.copy()
                         q[:, axis] += sign * resolution_step
-                        q = np.clip(q, -4 * 2 * np.pi / 5.0, 4 * 2 * np.pi / 5.0)
+                        q = clip_wave_q(q, k0)
                         try:
                             v = variable_projection(
                                 action, space, moments, p, q, gradient=False
