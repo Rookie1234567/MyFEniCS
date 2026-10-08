@@ -109,7 +109,8 @@ def solve(role,folder,journal,state,*,scope_module=scope):
     scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
     factor=None
     try:
-        if scope.window.snapshot()['heavy_remaining_seconds']<(3000 if scope.NAMESPACE=='v63' else 1800):raise RuntimeError('full tetra audit/output reserve before numeric')
+        reserve=6600 if scope.NAMESPACE=='v64' else 3000 if scope.NAMESPACE=='v63' else 1800
+        if min(scope.window.snapshot()['heavy_remaining_seconds'],scope.window.total-scope.window.charged_wall())<reserve:raise RuntimeError('full tetra audit/output/compare reserve before numeric')
         factor=AnalyzedDirectFactor(matrix,journal,folder,planning_limit_bytes=budget['planning_gib']*2**30)
         r=PETSc.Vec().createSeq(len(rhs),comm=PETSc.COMM_SELF);sol=r.duplicate();r.array[:]=left*rhs
         try:

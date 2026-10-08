@@ -480,6 +480,7 @@ def refine_periodic_marked_tetra_mesh(
     marked_global_cell_ids: list[int] | np.ndarray,
     *,
     full_boundary_synchronization: bool = True,
+    return_parent_map: bool = False,
 ) -> tuple[AirBox3DMesh, dict[str, Any]]:
     """Refine a Dörfler cell set after fail-closed periodic-mate expansion."""
 
@@ -550,6 +551,25 @@ def refine_periodic_marked_tetra_mesh(
         "refined_mesh_audit": audit,
         "pass": passed,
     }
+    if return_parent_map:
+        # Compose BOTH actual mesh.refine ancestry and positive-order rebuild.
+        # Geometry keys identify cells; the returned physical coordinates are
+        # never rounded. This optional mapping preserves old caller behavior.
+        original_by_key = {record.key: record.local_index for record in current_records}
+        serial_to_original = np.asarray(
+            [original_by_key[record.key] for record in serial_records], dtype=np.int64
+        )
+        refined_records = owned_tetra_cell_geometry(refined_serial_mesh, tolerance=mesh_coordinate_tolerance(msh))
+        refined_input_order = np.asarray(refined_serial_mesh.topology.original_cell_index, dtype=np.int64)
+        parent_by_key = {
+            record.key: int(serial_to_original[int(parent_cells[refined_input_order[record.local_index]])])
+            for record in refined_records
+        }
+        report["original_parent_cells"] = np.asarray(
+            [parent_by_key[record.key] for record in owned_tetra_cell_geometry(oriented_mesh, tolerance=mesh_coordinate_tolerance(msh))],
+            dtype=np.int64,
+        )
+        report["parent_composition"] = "mesh.refine parent -> serial positive rebuild -> original physical parent; final positive rebuild keyed"
     return rebuilt, report
 
 

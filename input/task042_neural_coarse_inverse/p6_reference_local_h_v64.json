@@ -1,0 +1,208 @@
+{
+  "physical_descriptor": {
+    "geometry": {
+      "scale_fraction": "7/135",
+      "cells": 80,
+      "axes_nm": {
+        "x": [
+          0.0,
+          0.8555555555555555,
+          1.2962962962962963,
+          1.737037037037037,
+          2.5925925925925926
+        ],
+        "y": [
+          0.0,
+          0.32407407407407407,
+          0.6481481481481481,
+          0.9722222222222222,
+          1.2962962962962963
+        ],
+        "z": [
+          -0.5185185185185185,
+          0.0,
+          2.074074074074074,
+          4.148148148148148,
+          6.222222222222222,
+          6.7407407407407405
+        ]
+      },
+      "notch_box_nm": [
+        1.2962962962962963,
+        1.737037037037037,
+        0.32407407407407407,
+        0.9722222222222222,
+        2.074074074074074,
+        4.148148148148148
+      ],
+      "notch_expected_changed_cells": 2,
+      "notch_rule": "actual center in box and original Si grating; do not repeat along y"
+    },
+    "materials": {
+      "canonical_table": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "epsilon": "n*n",
+      "mu_r": [
+        1.0,
+        0.0
+      ]
+    },
+    "incidence": {
+      "wavelength_nm": 0.7,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "polarization": "s",
+      "amplitude": [
+        1.0,
+        0.0
+      ]
+    },
+    "discretization": {
+      "degree": "per explicit case",
+      "volume_form": "complete Ckappa trial/test",
+      "surface_quadrature_degree": 47,
+      "independent_surface_reference_q": 63
+    },
+    "boundary": {
+      "Floquet": "xy complex high order canonical moments",
+      "manual_m": [
+        -11,
+        11
+      ],
+      "manual_n": [
+        -4,
+        4
+      ],
+      "sides": [
+        "top",
+        "bottom"
+      ],
+      "polarizations": [
+        "s",
+        "p"
+      ],
+      "complete_modes": 828,
+      "all_q": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "memory_budget": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "schema": "task042.v64.p6-local-h.v1",
+  "batch": "V64_P6_REFERENCE_AND_LOCAL_H_PILOT",
+  "review_commit": "b2cf084ee0269b87acfacef314475a70702f4266",
+  "stages": [
+    "PREFLIGHT",
+    "P6",
+    "L4",
+    "VERIFY_COST"
+  ],
+  "new_storage_bytes": 42949672960,
+  "task_storage_bytes": 300647710720,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 536870912,
+  "total_loaded_seconds": 36000,
+  "assembly_row_cap": 1000000,
+  "maximum_new_solves": 3,
+  "historical_loaded_known_lower_seconds": 229211.7403489353,
+  "historical_cost_unknown": "preserved; control CPU/Git and past unobserved costs unknown",
+  "complete_solve_cap": 3,
+  "case_wall_seconds": {
+    "PREFLIGHT": 7200,
+    "P6": 18000,
+    "L4": 10800,
+    "VERIFY_COST": 7000
+  },
+  "forecast_case_seconds": {
+    "P6": 14000,
+    "L4": 6500
+  },
+  "local_numeric_closure": [],
+  "cases": {
+    "P6": {
+      "case": "NOTCH",
+      "degree": 6,
+      "h_ratio": 2,
+      "cells": 7680,
+      "independent": 980352,
+      "rows": 981180,
+      "complete_modes": 828,
+      "triangle_backend": "reachable_owner_support",
+      "assembly_row_cap": 1000000,
+      "memory_budget": {
+        "planning_gib": 192,
+        "warning_gib": 224,
+        "sampled_stop_gib": 256,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      }
+    },
+    "L4": {
+      "case": "NOTCH",
+      "degree": 4,
+      "h_ratio": 2,
+      "cells": 7680,
+      "independent": null,
+      "rows": null,
+      "complete_modes": 828,
+      "triangle_backend": "reachable_owner_support",
+      "assembly_row_cap": 800000,
+      "memory_budget": {
+        "planning_gib": 128,
+        "warning_gib": 160,
+        "sampled_stop_gib": 192,
+        "neighbor_growth_gib": 384,
+        "extra_cache_workspace_gib": 2
+      },
+      "local_mesh_pending": true
+    }
+  },
+  "memory_profiles": {
+    "default": {
+      "planning_gib": 64,
+      "warning_gib": 80,
+      "sampled_stop_gib": 96,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "P6": {
+      "planning_gib": 192,
+      "warning_gib": 224,
+      "sampled_stop_gib": 256,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    },
+    "L4": {
+      "planning_gib": 128,
+      "warning_gib": 160,
+      "sampled_stop_gib": 192,
+      "neighbor_growth_gib": 384,
+      "extra_cache_workspace_gib": 2
+    }
+  },
+  "marking": {
+    "theta": 0.5,
+    "parent_namespace": "v63",
+    "parents": [
+      "A",
+      "B"
+    ],
+    "second_scattered_denominator": true,
+    "maximum_cells": 19200,
+    "mesh_first_sync": false,
+    "maximum_sync_fallbacks": 1
+  }
+}

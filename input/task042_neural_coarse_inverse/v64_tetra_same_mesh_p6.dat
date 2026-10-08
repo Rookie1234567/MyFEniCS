@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v64]
+stage = "P6"
+run_id = "task042_v64_tetra_same_mesh_p6"

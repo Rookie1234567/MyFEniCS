@@ -39,7 +39,7 @@ def periodic_expansion(V, mpc):
     return P, masters
 
 
-def make_setup(spec, physical, journal):
+def make_setup(spec, physical, journal, *, mesh_override=None):
     from mpi4py import MPI
     from dolfinx import fem, mesh as dm, default_real_type
     from basix.ufl import element
@@ -47,26 +47,34 @@ def make_setup(spec, physical, journal):
     from src.constraints.floquet_3d import build_double_floquet_mpc
     cfg = configuration(spec, physical); kappa = carrier(cfg)
     with journal.measured('tetra_mesh_materials_full_periodic_space'):
-        mesh = _structured_tet_mesh_from_axes(MPI.COMM_SELF, *[np.asarray(physical['geometry']['axes_nm'][a]) for a in ('x','y','z')])
-        facets, _ = _mark_boundary_facets(mesh, cfg); tags = _mark_cells(mesh, cfg)
+        override=mesh_override if mesh_override is not None else spec.get('mesh_override')
+        if override:
+            from .tetra_mesh_override import load_mesh
+            mesh,tags,facets,original_parent,regular=load_mesh(override,cfg)
+        else:
+            mesh = _structured_tet_mesh_from_axes(MPI.COMM_SELF, *[np.asarray(physical['geometry']['axes_nm'][a]) for a in ('x','y','z')])
+            facets, _ = _mark_boundary_facets(mesh, cfg); tags = _mark_cells(mesh, cfg)
         centers = dm.compute_midpoints(mesh, 3, tags.indices)
-        regular = tags.values.copy(); values = regular.copy()
+        regular = regular.copy() if override else tags.values.copy(); values = regular.copy()
         if spec['case'] == 'FLAT': values[centers[:,2] > 0] = cfg.tags.air
         else:
             box = np.asarray(physical['geometry']['notch_box_nm']).reshape(3,2)
             hit = np.all((centers >= box[:,0]) & (centers <= box[:,1]), axis=1) & (regular == cfg.tags.grating)
-            if hit.sum() != 24*spec['h_ratio']**3: raise ValueError('tet inherited true NOTCH volume inventory')
+            expected=spec.get('notch_tetrahedra',24*spec['h_ratio']**3)
+            if hit.sum() != expected: raise ValueError('tet inherited true NOTCH volume inventory')
             values[hit] = cfg.tags.air
+        if override and not np.array_equal(values,tags.values):raise ValueError('inherited tags disagree with actual NOTCH geometry')
         tags = dm.meshtags(mesh, 3, tags.indices, values)
         V = fem.functionspace(mesh, element('N1curl', mesh.basix_cell(), spec['degree'], dtype=default_real_type))
         data = SimpleNamespace(mesh=mesh, cell_tags=tags, facet_tags=facets)
         floquet = build_double_floquet_mpc(V, data, envelope_configuration(cfg,kappa))
         P, masters = periodic_expansion(V, floquet.mpc)
-        if P.shape[1] != spec['independent'] or mesh.topology.index_map(3).size_local != spec['cells']:
+        if spec['independent'] is not None and P.shape[1] != spec['independent'] or mesh.topology.index_map(3).size_local != spec['cells']:
             raise ValueError('actual tetra FE/MPC inventory differs from planned topology')
+    extra=dict(original_parent_cell=original_parent) if override else {}
     return dict(cfg=cfg, mesh=mesh, data=data, V=V, floquet=floquet, P=P, masters=masters, kappa=kappa,
         physical=physical, spec=spec, geometry=dict(geometry_x=mesh.geometry.x.copy(),geometry_dofmap=mesh.geometry.dofmap.copy(),
-        cell_centers=centers,cell_tags=values,regular_tags=regular))
+        cell_centers=centers,cell_tags=values,regular_tags=regular,**extra))
 
 
 class TetraEvaluator:
