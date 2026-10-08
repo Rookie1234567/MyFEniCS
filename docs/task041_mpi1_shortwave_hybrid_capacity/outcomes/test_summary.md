@@ -1,5 +1,19 @@
 # Test and evidence summary
 
+## 2026-10-08：PETSc/MUMPS deferred阶段桥与W0.7预算合同
+
+这些测试验证“先分析矩阵结构、后在同一factor句柄上做数值分解”的小矩阵接口，及W0.7两侧pending factor的预算控制流。它们用于避免把PETSc `JOB_NULL`缓存读值错认成后端默认值；不证明64,966阶factor容量，也不是W0.7 FE资格。
+
+| attempt | 命令范围/结果 | 父wall与V5 | 证据 |
+|---|---|---:|---|
+| serial | test351两selector，2 passed；CPU22、native ABI | `3.040390633046627 s`，唯一计一次 | `results/task041_petsc_lu_stage_bridge_jobnull_tests_retry_20261008T081956Z/serial/`；stdout SHA `4d6c966920bd377194e5342a240f1c5d6682013ff514daf99e3b4ad3c944db7e` |
+| MPI2 | bridge三个selector，两rank各3 passed；CPU22/23、membind0、complex128/Int32、六线程变量为1 | `2.0312472369987518 s`，mpiexec父进程唯一计一次 | `.../mpi2/`；stdout SHA `5958c33fe6d221b2ef8c5af547462ce2fb271fbd46501e32c7f46d7eb3b591ae`，stderr SHA `abb5429681d2033e746316af70510781f39a6df4667879ed7127fc3f76068d1e` |
+| 汇总账目 | 两个成功pytest父wall | 共`5.071637870045379 s`；ledger 172→174项 | V5 ledger SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2`；receipt SHA `e718e233b6569d109d036a542ba9b2b802ba86fd98cb37582b201b1f01f38781` |
+
+MPI2中one-cell、bottom、top symbolic阶段的PETSc `MatLUFactorNum`事件增量为0，显式numeric正例为1；后symbolic的ICNTL7/28/14为0/1/40，INFOG7/32为0/1。pending solve拒绝，预算拒绝两rank一致且无numeric事件；同一handle numeric后的原A残差保留。单向量相对残差约`2.46e-16`，分布式两列全局Frobenius相对残差约`1.68e-16`。这些是8×8测试矩阵上的接口/生命周期证据。
+
+两次执行前错误均留档但不是pytest attempt：首次build脚本在编译器启动前因`NameError: shutil`失败；随后serial runner在pytest进程启动前因`NameError: TESTS`退出。它们无pytest父wall，不入V5。修正后的成功attempt raw保存在上表目录。扩展 `.so` SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`，绑定PETSc 3.19.6/MUMPS 5.6.2和词法`/usr/bin/mpicc`。`compileall`、`py_compile`与diff-check通过；Ruff相对HEAD无新增告警，相关文件23条baseline告警仍存在。
+
 ## Review V10-r2：PETSc LU桥与fixed-H6比较器合同测试（2026-10-08）
 
 三次PETSc桥pytest attempt均保留并按父`CLOCK_MONOTONIC` wall唯一入V5；第一次测试层MPI汇总不可pickle PETSc Mat，`-x`使第二selector未运行。后续修复后的serial与MPI2各自按批准selector运行并通过。这里是8×8复矩阵接口/生命周期证据，不是大因子内存预测，也没有运行FE。

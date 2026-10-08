@@ -1,5 +1,22 @@
 # Task041 outcomes summary
 
+## 2026-10-08：W0.7 deferred-AMD 阶段组件收口，待fresh production准入
+
+代码已普通提交并推送：HEAD `6caf43ebd52b14bf0c9423b33353e7fc8f38f27f`，parent `24b6431370f20510f795df75c38fa5d5a66f4296`。PETSc/MUMPS阶段桥把结构分析与数值分解分开，让预算可在大factor分配前检查；bottom/top仍须持有矩阵、端口及pending factor，因此tiny接口证据不能代替fresh容量门。
+
+| 项目 | 本轮结果 | 状态/限制 |
+|---|---|---|
+| PETSc/MUMPS路线 | W0.7 deferred P4明确使用MPI>1/MPIAIJ、PETSc 3.19.6/MUMPS 5.6.2；requested/cached、source-derived、post-symbolic measured分开；symbolic后核AMD控制及INFOG7/32 | 普通KSP/default与one-cell原设置未变；未知comm/type/版本/option不满足条件时拒绝 |
+| Stage预算 | symbolic `fresh B + Δ + W <= cap`；numeric `fresh_numeric_B + one INFOG(17)*1e6 + W <= cap`；`W=5,322,116,301 B`只加一次 | bottom/top source-counted Δ分别`1,382,983,004/1,925,986,076 B`，属于预测模型，不是RSS硬上界；numeric仍需同次真实INFOG(17)与新鲜B |
+| 测试 | serial 2 passed/父wall`3.040390633046627 s`；MPI2每rank 3 passed/父wall`2.0312472369987518 s` | 8×8生命周期/控制合同；不是大factor、FE或W0.7数值资格 |
+| V5计费 | 两个成功attempt唯一合计`5.071637870045379 s`；ledger 174项，SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2` | compile、ABI与static不计；早期脚手架在pytest启动前失败，没有wall、不入账 |
+| 既有pilot负结果 | 唯一warm consumer在top P4因子构造阶段`controlled_stop/absolute_memory_limit`；tree峰`53,541,888,000 B`对cap`53,221,163,008 B` | 保留原raw与`2,350.819163285 s`唯一账目；不是本轮tiny测试改写或数值门失败 |
+| 下一门 | ignored warm包需重绑最终clean HEAD/source/.so/packet/argv，之后fresh host/unit/resource门及MPI8 native ABI | 目前尚未dispatch、未跑QEP、未完成feedback/outer/五残差/recovery/physics；W2不执行 |
+
+本机扩展SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`，由词法`/usr/bin/mpicc`构建。serial/MPI2 raw与V5 receipt在`results/task041_petsc_lu_stage_bridge_jobnull_tests_retry_20261008T081956Z/`；准备包位于`results/task041_w0p7_deferred_amd_warm_preparation_20261008T082944Z/`。包在代码提交前生成，后续必须封存旧字节并重绑；其当前`started=false`不表示准入通过。Ruff相对HEAD无新增告警；相关文件存在23条原有baseline告警。
+
+当前研究模型限定为W0.7 reduced 10×5 nm、Hybrid接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29、fixed-H6与P4目标5e-13/max2。复用已完成packet，当前Invocation QEP=0；route-plan/leading-PH关闭。该缩减pilot及唯一旧warm场均不资格化50×25 nm目标、2 TB容量或48 h冷启动目标。
+
 ## Task041 Review V10-r2：W0.7 reduced-p6 matched-cell warm consumer受控停止（2026-10-07）
 
 唯一warm consumer Invocation `10d761079d90473dadce79d3f7eb6457`以`absolute_memory_limit`受控停止。service public-to-finalizer wall为`2350.819163285 s`，V5 ledger 160项中该Invocation恰一条。process-tree RSS峰`53,541,888,000 B`超过冻结cap`53,221,163,008 B`共`320,724,992 B`；dedicated cgroup峰`51,229,249,536 B`另列，不能替代tree资源权威。Finalizer `status=completed`、`result_classification=controlled_stop`，常规检查7/10；进程清场记录如原始检查表列示，不代表service正常完成。

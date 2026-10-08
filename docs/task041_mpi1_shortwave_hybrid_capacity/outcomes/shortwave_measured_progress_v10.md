@@ -1,5 +1,17 @@
 # Review V10-r2：W0.7 reduced-p6 warm consumer受控停止
 
+## 2026-10-08 更新：deferred-AMD组件通过，warm consumer尚待fresh准入
+
+原下文记录的Invocation `10d761079d90473dadce79d3f7eb6457`仍为`controlled_stop/absolute_memory_limit`，tree峰超过冻结cap；反馈门、outer、五项真实残差、recovery与physics未到达。以下新组件证据不改写该结果，也没有启动第二场。
+
+已提交并推送代码提交`6caf43ebd52b14bf0c9423b33353e7fc8f38f27f`。PETSc 3.19.6/MUMPS 5.6.2的W0.7 deferred P4路径现在把JOB_NULL缓存请求、source-derived控制输入和symbolic后实测控制分开。仅注册W0.7路径要求MPI>1/MPIAIJ并检查factor options冲突；symbolic后实际读取ICNTL7=0、ICNTL28=1、ICNTL14=40及INFOG7=0、INFOG32=1。普通KSP/default路径与one-cell既有排序保持不变。
+
+当前预算在同一生命周期内按阶段核算：symbolic使用`fresh B + Δ + W <= cap`；numeric使用`fresh_numeric_B + one INFOG(17) × 1,000,000 + W <= cap`。INFOG(17)是rank总和，取单份，不再乘MPI size。`W=5,322,116,301 B`只作为政策预留，不是内存估计误差界。bottom/top预测Δ分别为`1,382,983,004/1,925,986,076 B`，根据已绑定的源码计数模型；它们不是实际RSS增量保证。bottom与top的矩阵、端口和pending factor均计入fresh `B`，numeric在同一factor句柄上先bottom后top。
+
+serial两selector 2 passed，父wall`3.040390633046627 s`；MPI2三个selector每rank各3 passed，父wall`2.0312472369987518 s`。两条pytest唯一合计`5.071637870045379 s`计入V5；ledger 174项SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2`。MPI2 tiny中三个symbolic阶段的`MatLUFactorNum`增量为0、正例numeric为1；残差与清理通过。它们只证明8×8桥和预算控制合同，不证明W0.7大factor可支付。
+
+ignored warm准备目录为`results/task041_w0p7_deferred_amd_warm_preparation_20261008T082944Z/`。该包仍需先保存原字节，再重绑代码与后续文档提交后的clean HEAD、源码、精确`.so`、既有producer packet及argv；之后才做fresh unit/资源门与MPI8 native ABI。当前没有fresh production MPI8 ABI、dispatch或本轮FE；不存在可声称运行中的新Invocation。cap/warning/floor维持`53,221,163,008/47,899,046,707/412,316,860,416 B`，swap observe-only，W2不执行。完整小测试attempt与SHA见[Test summary](test_summary.md)，提交和资格边界见[Response V12](../response_v12.md)。
+
 **分类：`controlled_stop / absolute_memory_limit`。** 这是一个真实MPI8 consumer已经深入setup、在顶侧P4因子构造阶段越过process-tree cap后受控终止的记录；不是“setup未到达”，也不是数值残差失败。它尚未运行fixed-H6反馈门、outer solve、五项残差、recovery或physics。
 
 ## 身份、结果与服务终态
