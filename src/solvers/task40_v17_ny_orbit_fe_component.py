@@ -112,10 +112,13 @@ class NativeNy8OrbitComponent:
     geometry_audit: Mapping[str, Any]
 
     def audit(self) -> dict[str, Any]:
-        q_counts = [0] * 8
+        q_port_counts = [0] * 8
+        fe_q_coverage = sorted(
+            q for sector in self.sectors for q in sector.context.global_q_indices
+        )
         for sector in self.sectors:
             for branch, q in enumerate(sector.context.global_q_indices):
-                q_counts[int(q)] = int(sector.context.q_counts[branch])
+                q_port_counts[int(q)] = int(sector.context.q_counts[branch])
         return {
             "schema": "task40extra.review_v17_native_ny8_fe_maps.v1",
             "global_y_cells_Ny": int(self.entities.ny),
@@ -127,11 +130,10 @@ class NativeNy8OrbitComponent:
                 str(key): int(value) for key, value in self.entities.dimension_counts.items()
             },
             "mode_count": int(self.mode_count),
-            "global_q_counts": q_counts,
-            "global_q_coverage": sorted(
-                q for sector in self.sectors for q in sector.context.global_q_indices
-            ),
-            "all_global_q_nonempty": all(value > 0 for value in q_counts),
+            "actual_q_port_counts": q_port_counts,
+            "empty_port_q_indices": [q for q, count in enumerate(q_port_counts) if count == 0],
+            "global_q_coverage": fe_q_coverage,
+            "all_FE_q_covered": fe_q_coverage == list(range(8)),
             "all_ordered_modes_covered_once": True,
             "mapping_limit": MAPPING_LIMIT,
             "native_entity_transform_bank_shared": True,
@@ -209,8 +211,9 @@ def build_native_ny8_orbit_component(
         local_y_cells=2,
         tolerance=MAPPING_LIMIT,
     )
-    if len(sectors) != 4 or any(not count for sector in sectors for count in sector.q_counts):
-        raise ValueError("actual 532-mode Ny8 inventory must populate all eight global q branches")
+    fe_q_coverage = sorted(q for sector in sectors for q in sector.global_q_indices)
+    if len(sectors) != 4 or fe_q_coverage != list(range(8)):
+        raise ValueError("Ny8 FE orbit maps must retain all four twists and cover all eight q branches")
     local_width_reference = global_dy[:2]
     local_window_scale = float(global_axes["y"][2] - global_axes["y"][0])
     global_geometry_audit = {

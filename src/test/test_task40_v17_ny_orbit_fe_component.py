@@ -35,7 +35,10 @@ class _NativeMap:
         return np.asarray(values, dtype=np.complex128).copy()
 
 
-def _case_inputs(monkeypatch, *, length=8.0, shifted_local_twist=None, shifted_local_y=None):
+def _case_inputs(
+    monkeypatch, *, length=8.0, shifted_local_twist=None, shifted_local_y=None,
+    empty_port_q=None,
+):
     import src.solvers.task40_v10_p6_yorbit as legacy
 
     bank = object()
@@ -68,6 +71,8 @@ def _case_inputs(monkeypatch, *, length=8.0, shifted_local_twist=None, shifted_l
     }
     modes = []
     for q in range(8):
+        if q == empty_port_q:
+            continue
         gamma = cfg.ky.real + 2 * np.pi * q / cfg.period_y
         modes.extend([
             {"gamma": gamma, "side": "top", "m": q, "n": 0, "polarization": "s"},
@@ -109,7 +114,9 @@ def test_native_ny8_adapter_collects_all_four_twists_and_mode_keys(monkeypatch):
     assert audit["local_y_cells_ell"] == 2
     assert audit["translation_count_K"] == 4
     assert audit["global_q_coverage"] == list(range(8))
-    assert audit["global_q_counts"] == [2] * 8
+    assert audit["actual_q_port_counts"] == [2] * 8
+    assert audit["empty_port_q_indices"] == []
+    assert audit["all_FE_q_covered"] is True
     assert audit["all_ordered_modes_covered_once"] is True
     assert [sector.context.global_q_indices for sector in component.sectors] == [
         (0, 4), (1, 5), (2, 6), (3, 7)
@@ -118,6 +125,30 @@ def test_native_ny8_adapter_collects_all_four_twists_and_mode_keys(monkeypatch):
         sector.audit()["geometry_audit"]["first_window_y_coordinates"]["bitwise_equal"]
         for sector in component.sectors
     )
+
+
+def test_native_ny8_keeps_all_fe_q_branches_when_q4_has_no_port_modes(monkeypatch):
+    component, calls, bank = _case_inputs(monkeypatch, empty_port_q=4)
+    audit = component.audit()
+
+    assert len(calls) == 5
+    assert all(row[-1] is bank for row in calls)
+    assert audit["global_q_coverage"] == list(range(8))
+    assert audit["all_FE_q_covered"] is True
+    assert audit["actual_q_port_counts"] == [2, 2, 2, 2, 0, 2, 2, 2]
+    assert audit["empty_port_q_indices"] == [4]
+    assert audit["all_ordered_modes_covered_once"] is True
+    assert len(component.sectors) == 4
+    assert [sector.context.global_q_indices for sector in component.sectors] == [
+        (0, 4), (1, 5), (2, 6), (3, 7)
+    ]
+    # The q=4 port inventory is empty, but its twist and local FE basis remain.
+    sector = component.sectors[0]
+    assert sector.context.q_counts == (2, 0)
+    assert sector.entities.dimension_counts == {1: 2, 2: 2, 3: 2}
+    local_probe = np.arange(len(sector.entities.independent), dtype=np.float64).astype(np.complex128)
+    lifted = sector.transport.lift_primal(local_probe)
+    np.testing.assert_allclose(sector.transport.extract_primal(lifted), local_probe, atol=1e-14)
 
 
 def test_native_ny8_accepts_float_mesh_roundoff_and_rejects_shift_or_wrong_phase(monkeypatch):
