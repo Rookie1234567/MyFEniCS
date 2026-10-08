@@ -367,7 +367,9 @@ def run_greedy(action, packet, design, artifact, binding, deadline, marker):
             marker("complete_boundary_rank_repaired", repair)
     history = Path(artifact) / "basis_growth.jsonl"
     stop = None
-    if block_mode and previous and previous.get("rank_repair"):
+    if block_mode and previous and (
+        previous.get("rank_repair") or previous.get("original_action_qr_refresh")
+    ):
         pairing = space.retained_readout_pair_relative()
         if not np.isfinite(pairing) or pairing > 1e-10:
             # A diagnostic recovery preserves evidence; it is not an accepted

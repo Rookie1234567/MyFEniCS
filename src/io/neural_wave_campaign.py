@@ -136,9 +136,11 @@ def training_open_allowed(path, design):
         if (
             file not in allowed
             and not file.is_relative_to(active)
-            and file
-            != ROOT
-            / "benchmarks/artifacts/task42extra/v32/v32_multiscale_wave_checks/result.json"
+            and file not in {
+                ROOT / "benchmarks/artifacts/task42extra/v32" / stage / "result.json"
+                for stage in ("v32_multiscale_wave_checks", "v32_fixed_original_qr_checks",
+                              "v32_learned_original_qr_checks")
+            }
         ):
             return False
     if file.suffix in (".pt", ".pth"):
@@ -162,6 +164,8 @@ def training_open_allowed(path, design):
         )
         for part in file.parts
     ):
+        return False
+    if file.name.startswith("index_e3_reference") or file.name == "reference_state.npz":
         return False
     if file.suffix == ".npz":
         allowed = {

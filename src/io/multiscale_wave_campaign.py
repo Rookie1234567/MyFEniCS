@@ -15,6 +15,8 @@ STAGES = {
     "v32_learned_multiscale_wave": ("ml", 14400, "LEARNED_MULTISCALE_WAVE_BLOCK"),
     "v32_multiscale_reconstruct": ("fe", 7200, "multiscale_reconstruct"),
     "v32_multiscale_compare": ("pure", 3600, "multiscale_compare"),
+    "v32_fixed_original_qr_checks": ("ml", 1800, "readout_repair_checks"),
+    "v32_learned_original_qr_checks": ("ml", 1800, "readout_repair_checks"),
 }
 for route in ("fixed", "learned"):
     for node in (1, 2):

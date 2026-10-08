@@ -19,6 +19,7 @@ CHAIN = (
     "src/solvers/neural_wave_projection.py",
     "src/solvers/neural_wave_multiscale_validation.py",
     "src/solvers/neural_wave_multiscale_qualification.py",
+    "src/solvers/neural_wave_qr_refresh.py",
     "src/runners/multiscale_wave_worker.py",
 )
 ROUTES = [
@@ -162,10 +163,20 @@ def run_stage(manifest, artifact, marker):
         from src.postprocessing.neural_wave_support_audit import direction_witness
 
         return direction_witness(action, packet, design, artifact, marker)
-    if role == "multiscale_checks":
+    if role in ("multiscale_checks", "readout_repair_checks"):
         from src.solvers.neural_wave_multiscale_qualification import qualify
 
         result = qualify(action, packet, design, artifact, marker)
+        if role == "readout_repair_checks":
+            from src.solvers.neural_wave_qr_refresh import repair_saved_readout
+
+            route = "learned" if "learned" in spec["stage"] else "fixed"
+            result["saved_readout_refresh"] = repair_saved_readout(
+                action, packet, design,
+                profile["artifacts"] / f"v32_{route}_multiscale_wave/basis",
+                artifact, manifest["source_sha"], manifest["design_sha256"],
+                manifest["worker_stop_monotonic"], marker,
+            )
         result["bound_numerical_chain_sha256"] = {p: digest(ROOT / p) for p in CHAIN}
         return result
     if role == "early_validate":
@@ -203,7 +214,20 @@ def run_stage(manifest, artifact, marker):
             marker,
         )
     if training:
-        checkfile = profile["artifacts"] / "v32_multiscale_wave_checks/result.json"
+        expected_chain = {p: digest(ROOT / p) for p in CHAIN}
+        checkfile = None
+        for stage in ("v32_learned_original_qr_checks", "v32_fixed_original_qr_checks",
+                      "v32_multiscale_wave_checks"):
+            file = profile["artifacts"] / stage / "result.json"
+            if file.exists():
+                receipt = json.loads(file.read_text())
+                if receipt.get("implementation_qualified") and receipt.get(
+                    "bound_numerical_chain_sha256"
+                ) == expected_chain:
+                    checkfile = file
+                    break
+        if checkfile is None:
+            raise ValueError("MULTISCALE_IMPLEMENTATION_NOT_QUALIFIED")
         # Only a filtered numerical qualification receipt, never a field label.
         # The path is explicitly whitelisted for unlabelled training.
         check = json.loads(checkfile.read_text())

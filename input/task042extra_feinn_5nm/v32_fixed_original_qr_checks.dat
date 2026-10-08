@@ -1,0 +1,5 @@
+schema_version = 3
+
+[neural_wave]
+stage = "v32_fixed_original_qr_checks"
+design_sha256 = "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
