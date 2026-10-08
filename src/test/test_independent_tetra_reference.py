@@ -53,6 +53,18 @@ class TetraReferenceTests(unittest.TestCase):
                 self.assertEqual(s.execution['planning_memory_gib'],64)
                 self.assertEqual(s.geometry['cells'],scope.case_spec(role)['cells'])
                 self.assertEqual(len(s.geometry['axes_nm']['z']),21 if role=='TH3' else 11)
+                self.assertEqual(s.geometry['source80_macro_notch_cells'],2)
+                self.assertEqual(s.geometry['actual_mesh_expected_notch_tetrahedra'],0 if role in ('F4','F5') else (192 if role=='TH3' else 24))
+
+    def test_saved_consumer_cost_is_not_another_cold_numeric_solve(self):
+        from benchmarks.collect_independent_tetra import deployment_from_parts
+        parts=[dict(start_utc='2026-10-08T04:00:00+00:00',end_utc='2026-10-08T04:01:00+00:00',elapsed_seconds=60),
+            dict(start_utc='2026-10-08T04:03:00+00:00',end_utc='2026-10-08T04:03:20+00:00',elapsed_seconds=20)]
+        r=deployment_from_parts(parts,dict(deployment_complete=True,post_only=True))
+        self.assertEqual(r['T_N1_process_chain_seconds'],80)
+        self.assertEqual(r['T_N1_observed_start_to_final_cleanup_seconds'],200)
+        self.assertFalse(r['single_process_complete_N1'])
+        self.assertEqual(r['post_resume_new_numeric_factors'],0)
 
 
 if __name__=='__main__':unittest.main()

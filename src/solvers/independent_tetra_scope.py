@@ -45,7 +45,9 @@ def physical_for(role):
     for axis,factor in zip(('x','y','z'),(s['h_ratio'],s['h_ratio'],2*s['h_ratio']),strict=True):
         a=p['geometry']['axes_nm'][axis]
         p['geometry']['axes_nm'][axis]=[l+(r-l)*j/factor for l,r in zip(a[:-1],a[1:]) for j in range(factor)]+[a[-1]]
-    p['geometry'].update(case=s['case'],cells=s['cells'],mesh='periodic-compatible six-tet Freudenthal boxes',grid='Z2_H'+str(s['h_ratio']))
+    source_count=p['geometry'].pop('notch_expected_changed_cells')
+    p['geometry'].update(case=s['case'],cells=s['cells'],mesh='periodic-compatible six-tet Freudenthal boxes',grid='Z2_H'+str(s['h_ratio']),
+        source80_macro_notch_cells=source_count,actual_mesh_expected_notch_tetrahedra=0 if s['case']=='FLAT' else 24*s['h_ratio']**3)
     p['discretization'].update(degree=s['degree'],family='N1curl',cell_type='tetrahedron',FE=s['independent'],rows=s['rows'],
         representation='gVh complete uncondensed',static_condensation=False,production_body_q=2*s['degree']+3,oracle_body_q=2*s['degree']+5)
     return p
@@ -92,5 +94,9 @@ def implementation_hashes():
         'src/solvers/fullspace_dtn_action.py','src/solvers/dtn_port_3d.py','src/solvers/phase_explicit_accuracy.py',
         'src/solvers/phase_explicit_accuracy_capacity.py','src/solvers/fullspace_v17_p3_oracle.py','src/common/analytic_fields_3d.py',
         'src/common/config_3d.py','src/common/modes_3d.py','src/common/optical_material_table.py','input/materials/si_optical_constants_v1.json',
-        'benchmarks/subreaper_watchdog.py','src/solvers/scattering_accuracy_scope.py','src/solvers/face_trace_scope.py']
+        'benchmarks/subreaper_watchdog.py','src/solvers/scattering_accuracy_scope.py','src/solvers/face_trace_scope.py',
+        'src/solvers/phase_notch_hp.py','src/solvers/phase_notch_hp_fields.py','src/solvers/phase_explicit_accuracy_fields.py',
+        'src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py','src/adaptivity/target_uniform_tetra_control.py',
+        'benchmarks/collect_phase_explicit_accuracy.py','benchmarks/collect_phase_notch_hp.py',
+        'benchmarks/collect_phase_deployment.py','benchmarks/collect_common_weak_phase.py']
     return {n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in sorted(set(names))}

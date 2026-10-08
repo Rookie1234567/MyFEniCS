@@ -3,6 +3,7 @@ import gc
 import hashlib
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 import numpy as np
@@ -31,8 +32,11 @@ def saved_output_check(record):
     for k in ('E','H','curl'):
         for kind in ('total','scattered'):
             if f['selected_'+k+'_'+kind].shape!=(240,3) or not np.isfinite(f['selected_'+k+'_'+kind]).all():raise ValueError('tetra finite physical vector inventory')
+    if [item['q'] for item in output['integrals']]!=[23,31]:raise ValueError('complete tetra absorption quadrature inventory')
     for item in output['integrals']:
-        a=checked_arrays(item['arrays']);values.append(a['per_cell_volume_absorption'].sum(axis=0))
+        a=checked_arrays(item['arrays']);rows=a['per_cell_volume_absorption']
+        if rows.shape!=(record['spec']['cells'],2) or not np.isfinite(rows).all() or np.any(rows<0):raise ValueError('actual material/cell total-field absorption inventory')
+        values.append(rows.sum(axis=0))
     from src.common.modes_3d import incident_power_3d
     cfg=core.configuration(record['spec'],record['physical']);av=float(values[-1][1]*cfg.k0/(2*incident_power_3d(cfg)))
     pm=output['port_metrics'];vm=output['volume_metrics'];energy=pm['R_total']+pm['T_total']+av-1
@@ -112,22 +116,36 @@ def verify(folder,journal):
             prior=old.stage(role) if role=='FXY' else old.parent(role)
             key=role+'_T5';pairs[key]=comparison(prior,states['T5'],folder/key,journal,old_hex=True,old_scope=old)
             write_json(folder/'comparison_progress.json',pairs)
-    agreement=bool('T5_TH3' in pairs and pairs['T5_TH3']['pass_gate'])
+    modal_good=bool(modal.get('complete_inventory_checked') and all(r['pass_gate'] for r in modal.get('rows',[])))
+    agreement=bool('T5_TH3' in pairs and pairs['T5_TH3']['pass_gate'] and checks['T5']['pass_gate'] and checks['TH3']['pass_gate'] and modal_good)
     result=dict(status='COMPLETED',checks=checks,comparisons=pairs,modal=modal,
         classification='BOUNDED_INDEPENDENT_REFERENCE_AGREEMENT' if agreement else 'NO_CROSS_REFERENCE_AGREEMENT',
         new_numeric_factors=0,new_complete_solves=0,NN_training=0,NN20=False,target_qualified=False,source=journal.source_state)
     write_json(folder/'verification_scientific_result.json',result);return result
 
 
+def deployment_from_parts(parts,record):
+    """A saved-only repair is a charged recovery chain, not a fresh solve."""
+    parts=sorted(parts,key=lambda r:r['start_utc'])
+    seconds=sum(x['elapsed_seconds'] for x in parts)
+    envelope=(datetime.fromisoformat(parts[-1]['end_utc'])-datetime.fromisoformat(parts[0]['start_utc'])).total_seconds()
+    resumed=bool(len(parts)>1 or record.get('post_only'))
+    return dict(status='measured_complete' if record.get('deployment_complete') else 'partial',T_N1_process_chain_seconds=seconds,
+        T_N1_observed_start_to_final_cleanup_seconds=envelope,receipts=parts,
+        single_process_complete_N1=not resumed,saved_vector_resume=resumed,
+        initial_numerical_objects_fresh=True,post_resume_new_numeric_factors=0 if resumed else None,
+        recovery_chain_includes_intervening_repair_and_wait=resumed,
+        process_sum_excludes_intervening_control_CPU='unknown; observed elapsed envelope is separate',
+        OS_JIT_caches_not_cleared=True,full_N1_includes_independent_audit_outputs_IO_cleanup=True,
+        recovery_no_condensation='all native FE reconstructed with actual periodic P',research_comparisons_not_included=True,
+        speed_ratio_same_accuracy='not_granted_without_complete_matched_accuracy_control')
+
+
 def deployment(role):
     receipts=sorted(scope.window.TMP.glob(role+'_one_run*/receipt.json'))
     if not receipts:return dict(status='unknown',reason='missing outer process timing')
-    r=scope.stage(role);parts=[dict(path=str(p),sha256=digest(p),**json.loads(p.read_text())) for p in receipts]
-    seconds=sum(x['elapsed_seconds'] for x in parts)
-    return dict(status='measured_complete' if r.get('deployment_complete') else 'partial',T_N1_process_chain_seconds=seconds,receipts=parts,
-        numerical_objects_fresh_per_case=True,OS_JIT_caches_not_cleared=True,full_N1_includes_independent_audit_outputs_IO_cleanup=True,
-        recovery_no_condensation='all native FE reconstructed with actual periodic P',research_comparisons_not_included=True,
-        speed_ratio_same_accuracy='not_granted_without_complete_matched_accuracy_control')
+    parts=[dict(path=str(p),sha256=digest(p),**json.loads(p.read_text())) for p in receipts]
+    return deployment_from_parts(parts,scope.stage(role))
 
 
 def collect():
@@ -144,6 +162,8 @@ def collect():
             nominal_sampling_seconds=.5,sampled_peak_not_continuous_hard_peak=True,inclusive_N1_not_added_to_nested_timers=True),
         repair_journal_v62=dict(entries=[json.loads(x) for x in repairs.read_text().splitlines()] if repairs.exists() else [],failures_preserved=True),
         target_gap_v62=dict(new_representation='FULL_UNCONDENSED_TETRA_N1CURL_PHASE_UFL',global_finite_factor_present=True,
+            previous_target_planning=dict(path='docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v61.json',
+                sha256=digest(scope.ROOT/'docs/task042_neural_coarse_inverse/outcomes/records/target_gap_v61.json')),
             target_accuracy_mesh='unknown',target_modes='unknown',target_PC_factor_fill='unknown',target_iterations='unknown',target_N1='unknown',target_simultaneous_RSS='unknown',
             target_2TB48h_qualified=False,NN20=False,next_pilot_basis='actual independent field agreement, not fewer DOFs alone'))
     for name,value in data.items():write_json(out/(name+'.json'),value)
