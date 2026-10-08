@@ -7909,6 +7909,15 @@ def _run_task041_balh_candidate_setup(
             p4_inverse_backend=selected_backend,
             factor_stage_factory=factor_stage_factory,
             defer_p4_numeric=defer_p4_numeric,
+            compact_orientation=(
+                defer_p4_numeric
+                and factor_stage_factory is not None
+                and fixed_h6_modal_gmres_research
+                and selected_backend == "cell_condensed"
+                and isinstance(identity, Mapping)
+                and str(identity.get("model_id"))
+                == TASK041_BALH_W0P7NM_P6_PILOT_MODEL_ID
+            ),
             support_policy=selected_support_policy,
             reuse_primal_route_plan=reuse_primal_route_plan,
             reuse_leading_ph_dual=reuse_leading_ph_dual,

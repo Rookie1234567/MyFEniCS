@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import gc
 import json
+import weakref
 from types import SimpleNamespace
 
 import basix
@@ -1554,6 +1556,294 @@ def test_task041_h1b_entity_closure_owner_covers_nonzero_floquet(
         fine_probe.destroy()
         coarse.destroy()
         owner.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size not in (1, 2),
+    reason="compact orientation component test uses the existing serial/MPI2 fixture",
+)
+def test_task041_h1b_compact_orientation_preserves_complex_p_ph_and_releases(
+    small_fe_fixture,
+    monkeypatch,
+) -> None:
+    import src.solvers.physical_balanced_same_mesh_transfer as transfer_module
+
+    data = small_fe_fixture
+    support_policy = SUPPORT_POLICY_ENTITY_CLOSURE
+
+    def check_owner_lifecycle():
+        compact = None
+        dense = None
+        context_ref = None
+        reference_ref = None
+        vectors = []
+        try:
+            compact = build_same_mesh_hcurl_owner_transfer(
+                data["fine_space"],
+                data["fine_floquet"],
+                data["coarse_space"],
+                data["coarse_floquet"],
+                support_policy=support_policy,
+                compact_orientation=True,
+            )
+            dense = build_same_mesh_hcurl_owner_transfer(
+                data["fine_space"],
+                data["fine_floquet"],
+                data["coarse_space"],
+                data["coarse_floquet"],
+                support_policy=support_policy,
+            )
+            context = compact._compact_orientation_context
+            assert context is not None
+            context_ref = weakref.ref(context)
+            reference_ref = weakref.ref(context.reference_matrix)
+            cached = tuple(compact._compact_orientation_transfers)
+            cache_by_key = {
+                (item.coarse_cell_info, item.fine_cell_info): item
+                for item in cached
+            }
+            record_keys = {
+                (
+                    record["compact_transfer"].coarse_cell_info,
+                    record["compact_transfer"].fine_cell_info,
+                )
+                for record in compact._records
+            }
+            assert len(record_keys) > 1
+            assert all(item.matrix is None for item in cached)
+            assert all(
+                item.compact_orientation is not None
+                and item.compact_orientation.context is context
+                for item in cached
+            )
+            assert all(
+                record["compact_transfer"]
+                is cache_by_key[
+                    (
+                        record["compact_transfer"].coarse_cell_info,
+                        record["compact_transfer"].fine_cell_info,
+                    )
+                ]
+                for record in compact._records
+            )
+            assert dense.local_transfer.matrix is not None
+            storage = compact.audit["orientation_storage"]
+            assert storage["seed_included_in_unique_key_count"] is True
+            assert storage["unique_key_count_including_seed"] == len(
+                cached
+            )
+            assert storage["record_unique_key_count"] == len(record_keys)
+            assert storage["records_are_shared_references"] is True
+            assert storage["canonical_R_copies_per_adapter"] == 1
+            assert storage["canonical_R_bytes_local"] == (
+                context.reference_matrix.nbytes
+            )
+            assert storage["full_oriented_matrix_retained"] is False
+
+            fine_dim, coarse_dim = context.reference_matrix.shape
+            local_coarse = np.arange(coarse_dim, dtype=np.float64) * (
+                0.013 + 0.021j
+            ) + (0.37 - 0.19j)
+            local_fine = np.arange(fine_dim, dtype=np.float64) * (
+                0.017 - 0.011j
+            ) + (0.29 + 0.23j)
+            for item in cached:
+                dense_local = build_same_mesh_hcurl_transfer(
+                    6,
+                    4,
+                    coarse_cell_info=item.coarse_cell_info,
+                    fine_cell_info=item.fine_cell_info,
+                    support_policy=support_policy,
+                )
+                assert dense_local.matrix is not None
+                compact_map = item.compact_orientation
+                assert compact_map is not None
+                compact_p = item.apply(local_coarse)
+                dense_p = dense_local.matrix @ local_coarse
+                compact_ph = item.apply_adjoint(local_fine)
+                dense_ph = dense_local.matrix.conj().T @ local_fine
+                assert np.linalg.norm(compact_p) > 0.0
+                assert np.linalg.norm(compact_ph) > 0.0
+                np.testing.assert_allclose(
+                    compact_p, dense_p, rtol=1.0e-12, atol=1.0e-12
+                )
+                np.testing.assert_allclose(
+                    compact_ph, dense_ph, rtol=1.0e-12, atol=1.0e-12
+                )
+                lhs = np.vdot(compact_p, local_fine)
+                rhs = np.vdot(local_coarse, compact_ph)
+                scale = max(abs(lhs), abs(rhs))
+                assert scale > 0.0
+                assert abs(lhs - rhs) / scale <= 1.0e-12
+
+                fine_element = compact_map.context.fine_element
+                coarse_element = compact_map.context.coarse_element
+                # Directly exercise the compact actions on representative edge
+                # and face closures for every actual direction key.  No compact
+                # full matrix is reconstructed in these support checks.
+                for topological_dim in (1, 2):
+                    selected = None
+                    for entity, fine_rows in enumerate(
+                        fine_element.entity_dofs[topological_dim]
+                    ):
+                        if not fine_rows:
+                            continue
+                        allowed = np.asarray(
+                            coarse_element.entity_closure_dofs[
+                                topological_dim
+                            ][entity],
+                            dtype=np.intp,
+                        )
+                        outside = np.setdiff1d(
+                            np.arange(coarse_dim, dtype=np.intp), allowed
+                        )
+                        if outside.size:
+                            selected = (
+                                np.asarray(fine_rows, dtype=np.intp),
+                                outside,
+                            )
+                            break
+                    assert selected is not None
+                    fine_rows, outside = selected
+                    exterior_coarse = np.zeros(
+                        coarse_dim, dtype=np.complex128
+                    )
+                    exterior_coarse[outside] = 0.4 + 0.7j
+                    exterior_image = item.apply(exterior_coarse)
+                    np.testing.assert_array_equal(
+                        exterior_image[fine_rows],
+                        np.zeros(fine_rows.size, dtype=np.complex128),
+                    )
+
+                    entity_probe = np.zeros(
+                        fine_dim, dtype=np.complex128
+                    )
+                    entity_probe[fine_rows] = 0.2 - 0.6j
+                    adjoint_image = item.apply_adjoint(entity_probe)
+                    np.testing.assert_array_equal(
+                        adjoint_image[outside],
+                        np.zeros(outside.size, dtype=np.complex128),
+                    )
+
+                for topological_dim, entities in enumerate(
+                    fine_element.entity_dofs
+                ):
+                    if topological_dim >= 3:
+                        continue
+                    for entity, fine_rows in enumerate(entities):
+                        if not fine_rows:
+                            continue
+                        allowed = np.asarray(
+                            coarse_element.entity_closure_dofs[topological_dim][
+                                entity
+                            ],
+                            dtype=np.intp,
+                        )
+                        outside = np.setdiff1d(
+                            np.arange(coarse_dim, dtype=np.intp), allowed
+                        )
+                        np.testing.assert_array_equal(
+                            dense_local.matrix[
+                                np.ix_(np.asarray(fine_rows), outside)
+                            ],
+                            np.zeros(
+                                (len(fine_rows), outside.size),
+                                dtype=np.complex128,
+                            ),
+                        )
+
+            coarse = create_vector(
+                [(data["coarse_space"].dofmap.index_map, 1)]
+            )
+            vectors.append(coarse)
+            fine_probe = create_vector(
+                [(data["fine_space"].dofmap.index_map, 1)]
+            )
+            vectors.append(fine_probe)
+            _fill_algebraic_vector(coarse, compact._coarse_slaves, 0.375)
+            _fill_algebraic_vector(fine_probe, compact._fine_slaves, -0.625)
+            coarse_before = coarse.getArray(readonly=True).copy()
+            fine_before = fine_probe.getArray(readonly=True).copy()
+            compact_p = compact.apply_primal(coarse)
+            vectors.append(compact_p)
+            compact_ph = compact.apply_adjoint(fine_probe)
+            vectors.append(compact_ph)
+            dense_p = dense.apply_primal(coarse)
+            vectors.append(dense_p)
+            dense_ph = dense.apply_adjoint(fine_probe)
+            vectors.append(dense_ph)
+            np.testing.assert_allclose(
+                compact_p.getArray(readonly=True),
+                dense_p.getArray(readonly=True),
+                rtol=1.0e-12,
+                atol=1.0e-12,
+            )
+            np.testing.assert_array_equal(
+                coarse.getArray(readonly=True), coarse_before
+            )
+            np.testing.assert_array_equal(
+                fine_probe.getArray(readonly=True), fine_before
+            )
+            np.testing.assert_allclose(
+                compact_ph.getArray(readonly=True),
+                dense_ph.getArray(readonly=True),
+                rtol=1.0e-12,
+                atol=1.0e-12,
+            )
+            assert compact_p.norm() > 0.0
+            assert compact_ph.norm() > 0.0
+            lhs = compact_p.dot(fine_probe)
+            rhs = coarse.dot(compact_ph)
+            scale = max(abs(lhs), abs(rhs))
+            assert scale > 0.0
+            assert abs(lhs - rhs) / scale <= 1.0e-10
+        finally:
+            for vector in vectors:
+                vector.destroy()
+            if compact is not None:
+                compact.destroy()
+            if dense is not None:
+                dense.destroy()
+        assert context_ref is not None and reference_ref is not None
+        return context_ref, reference_ref
+
+    context_ref, reference_ref = check_owner_lifecycle()
+    gc.collect()
+    assert context_ref() is None
+    assert reference_ref() is None
+
+    failed_refs = []
+
+    def fail_compact_seed(context, **_kwargs):
+        failed_refs.append(
+            (weakref.ref(context), weakref.ref(context.reference_matrix))
+        )
+        raise RuntimeError("test-only compact seed construction failure")
+
+    monkeypatch.setattr(
+        transfer_module,
+        "_build_compact_same_mesh_hcurl_transfer",
+        fail_compact_seed,
+    )
+
+    def trigger_failed_build():
+        with pytest.raises(RuntimeError, match="test-only compact seed"):
+            build_same_mesh_hcurl_owner_transfer(
+                data["fine_space"],
+                data["fine_floquet"],
+                data["coarse_space"],
+                data["coarse_floquet"],
+                support_policy=support_policy,
+                compact_orientation=True,
+            )
+
+    trigger_failed_build()
+    monkeypatch.undo()
+    gc.collect()
+    assert failed_refs and all(
+        context_ref() is None and reference_ref() is None
+        for context_ref, reference_ref in failed_refs
+    )
 
 
 @pytest.mark.skipif(

@@ -1205,6 +1205,19 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     manifest_path = tmp_path / "pilot_packet_manifest.json"
     manifest_path.write_text("{}\n")
     captured = {}
+    stage_binding_calls = []
+    supervisor_binding = {
+        "schema": "task041.w0p7.supervisor_memory_binding.v1",
+        "invocation_id": "fixture-invocation",
+        "source_sha": source_sha,
+        "unit": "fixture.service",
+        "supervisor_root_pid": 1234,
+    }
+    stage_factory = lambda **_kwargs: None
+    stage_factory_binding = {
+        "schema": "task041.w0p7.factor_stage_factory_binding.fixture.v1",
+        "bridge_sha256": "a" * 64,
+    }
 
     class SetupBoundaryReached(Exception):
         pass
@@ -1212,6 +1225,19 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     class FakeComm:
         rank = 0
         size = 8
+
+        def __init__(self):
+            self.allgather_inputs = []
+            self.allgather_results = []
+
+        def allgather(self, value):
+            self.allgather_inputs.append(value)
+            records = [
+                {**value, "rank": rank}
+                for rank in range(self.size)
+            ]
+            self.allgather_results.append(records)
+            return records
 
     def capture_setup_boundary(**kwargs):
         captured.update(kwargs)
@@ -1223,6 +1249,35 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         return root
 
     monkeypatch.setattr(worker, "_collective_fresh_root", fresh_root)
+    monkeypatch.setenv(
+        worker.TASK041_W0P7_STAGE_BRIDGE_PATH_ENV,
+        str(tmp_path / "sentinel-stage-bridge.so"),
+    )
+    monkeypatch.setenv("INVOCATION_ID", "fixture-invocation")
+    def resolve_supervisor_binding(
+        _root,
+        *,
+        expected_invocation_id,
+        expected_source_sha,
+    ):
+        stage_binding_calls.append(
+            (expected_invocation_id, expected_source_sha)
+        )
+        return supervisor_binding
+
+    monkeypatch.setattr(
+        worker,
+        "_task041_resolve_supervisor_memory_binding",
+        resolve_supervisor_binding,
+    )
+
+    def fake_stage_factory(path, **kwargs):
+        stage_binding_calls.append((Path(path), kwargs))
+        return stage_factory, stage_factory_binding
+
+    monkeypatch.setattr(
+        worker, "_build_task041_w0p7_stage_factory", fake_stage_factory
+    )
     monkeypatch.setattr(worker, "_environment_snapshot", lambda: {"test": True})
     monkeypatch.setattr(worker, "_write_rank_pid_affinity", lambda *_a, **_k: None)
     monkeypatch.setattr(worker, "_memavailable_bytes", lambda: 10**15)
@@ -1250,6 +1305,7 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
         recovery, "release_frozen_m10_objects", lambda *_a, **_k: {"pass": True}
     )
 
+    comm = FakeComm()
     with pytest.raises(SetupBoundaryReached):
         worker.run_task041_consumer(
             input_path=pilot_path,
@@ -1259,7 +1315,7 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
             run_directory=tmp_path / "pilot_setup_boundary",
             source_sha=source_sha,
             candidate=True,
-            comm=FakeComm(),
+            comm=comm,
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
@@ -1271,7 +1327,24 @@ def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypat
     profile = captured["profile"]
     assert (profile.bottom_interface_nm, profile.top_interface_nm) == (2.0, 22.0)
     assert profile.top_interface_nm - profile.bottom_interface_nm == 20.0
+    assert captured["factor_stage_factory"] is stage_factory
     assert captured["exact_one_cell_strategy"] == "matched_uniform_axial_cell"
+    assert stage_binding_calls[0] == ("fixture-invocation", source_sha)
+    assert stage_binding_calls[1][0] == Path(
+        worker.os.environ[worker.TASK041_W0P7_STAGE_BRIDGE_PATH_ENV]
+    )
+    assert stage_binding_calls[1][1]["supervisor_memory_binding"] is supervisor_binding
+    assert stage_binding_calls[1][1]["expected_rank_cpus"] == tuple(range(10, 18))
+    assert stage_binding_calls[1][1]["comm"] is comm
+    assert comm.allgather_inputs == [
+        {"rank": 0, "error": None, "binding": stage_factory_binding}
+    ]
+    assert len(comm.allgather_results) == 1
+    assert [row["rank"] for row in comm.allgather_results[0]] == list(range(8))
+    assert all(
+        row["binding"] == stage_factory_binding
+        for row in comm.allgather_results[0]
+    )
     assert captured["cfg_override"].full3d_reference_plane_z == (
         2.0,
         7.0,
@@ -4683,6 +4756,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["fixed_h6_modal_gmres_research"] is True
     assert captured["reuse_leading_ph_dual"] is False
     assert "exact_one_cell_strategy" not in captured_setup_kwargs
+    assert "factor_stage_factory" not in captured_setup_kwargs
 
     captured.clear()
     with pytest.raises(

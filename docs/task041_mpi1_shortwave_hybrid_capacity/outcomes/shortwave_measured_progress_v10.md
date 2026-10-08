@@ -133,3 +133,19 @@ V5 append receipt见[reconciliation record](../../../results/task041_petsc_lu_st
 | `INFOG(18)` / `(19)` | numeric后实际已分配内部数据的rank最大值 / 总和 | numeric后实分配，不是analysis-only estimate |
 
 因此，旧symbolic-only raw里尚未解释的INFO值继续保持`unknown`，本段只是有精确MUMPS版本、原文哈希和页码支持的后续释义；没有matrix/factor运行，也没有从entries或estimate换算大因子RSS。
+
+## 2026-10-08：compact transfer接线进度（尚无新FE）
+
+方向缓存的compact表示把每个cell方向单独保留的完整稠密方向矩阵，收敛为每adapter共享一份canonical插值矩阵/元素，加按实体分块的`T_f`和`T_c^{-1}`。`P=T_f R T_c^{-1}`，伴随`PH=(T_c^{-1})^H R^H T_f^H`；已有tiny serial/MPI2节点覆盖复数P/PH、entity-closure支撑与释放。它减少重复存储的设计目标尚未在MPI8真实场测量，不能将理论payload字节当成RSS节省。
+
+| 阶段 | 实际证据 | 边界 |
+|---|---|---|
+| 组件serial/MPI2 | transfer SHA `af6d4009eb219f91184f436beeb83d6f7a34d47800c2a5a68c70cb1ee3c2955b`、test346 SHA `cc6f2400000d43b4a720d0e40553f51508dab7079a274767280bf9e095356e41`；serial 1 passed/`72.66264551295899 s`，MPI2每rank 1 passed/`75.71961162285879 s` | 小型组件合同，不是大矩阵RSS或FE资格 |
+| W0.7 consumer hookup initial | 生产SHA不变；test349 SHA `ae5eb4b0a160b5d22b5f0cdbbdba358499a24d19ff4644f564f5627cd24097e8`；selector 1 passed、selector 2 fixture失败，selectors 3–5因`-x`未运行；`4.063483553007245 s` | 失败是test fake把只读audit属性当作可写 |
+| 定向与剩余selectors | test349修正SHA `7c92ad0628dce1f825abfb408064307dde61dd732842b2e8903e7616b35c0efd`；selector 2为1 passed/`3.041036447044462 s`，selectors 3–5为3 passed/`8.140667369123548 s`；test351 SHA `cfd14262f0fb818243d03225bc4e42a17a7c453b8384e433038a112681127a8b` | 分批通过；不合并称为同一最终SHA上的一次全组通过 |
+
+接线限定在已注册W0.7 deferred fixed-H6路径。transfer建成后每侧只做一次标量汇总，inventory本身不含collective；K/seed口径、owned与owned+ghost cell数、canonical及方向块payload字节都只是对象库存描述，不代表进程树RSS，也不对共享records重复计数或把单rank值乘MPI大小。普通/default与其他注册模型保持原路径。
+
+上述三次consumer-hook pytest父wall合计`15.245187369175255 s`，各按attempt唯一计账；连同组件serial/MPI2，本阶段wall共`163.62744450499303 s`。V5 ledger从177项增至180项，累计`527353.9467369274 s`，SHA `634dd5925f164bd2a6e7190687d2203ffdeba2924cb3a33f3fd091c125a361e1`；ABI和静态检查未计。首次失败raw、两次后续attempt、组件compact均位于`results/task041_w0p7_compact_orientation_consumer_hook_serial_20261008T122800Z/`、`results/task041_w0p7_compact_orientation_consumer_hook_serial_fixture_retry_20261008T123300Z/`、`results/task041_w0p7_compact_orientation_consumer_hook_serial_remaining_20261008T123500Z/`及`results/task041_compact_orientation_serial_mpi2_20261008T1203Z/`。
+
+旧deferred-P4试算筛查差额`7,476,508,109 B`仍是未由本次测试或真实运行消除的历史预算缺口。compact表示及setup inventory还没有新MPI8真实驻留、factor numeric或RSS证据；W0.7 FE/五残差/恢复物理门均无新结果，不能登记pilot资格。下一步只是以最终clean源码准备独立warm静态包，fresh准入与真实运行另行审核。

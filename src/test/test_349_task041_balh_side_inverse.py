@@ -106,6 +106,7 @@ class _IdentityTransfer:
         self._execution_variant = default_variant
         self._variant_context_active = False
         self.on_apply = None
+        self._audit = {"pair_fine_to_coarse": [6, 4], "owner_local": True}
 
     @property
     def execution_variant(self) -> str:
@@ -180,7 +181,7 @@ class _IdentityTransfer:
 
     @property
     def audit(self) -> dict[str, object]:
-        return {"pair_fine_to_coarse": [6, 4], "owner_local": True}
+        return dict(self._audit)
 
     def destroy(self) -> None:
         self.destroy_count += 1
@@ -1141,8 +1142,18 @@ def _install_stub_side_builders(monkeypatch, captured):
         captured["p4"] = factor
         return factor
 
-    def fake_condensed_p4(_side_system, *, lifecycle_callback=None):
+    def fake_condensed_p4(
+        _side_system,
+        *,
+        lifecycle_callback=None,
+        stage_factory=None,
+        stage_identity=None,
+        defer_numeric=False,
+    ):
         captured["condensed_p4_callback"] = lifecycle_callback
+        captured["condensed_p4_stage_factory"] = stage_factory
+        captured["condensed_p4_stage_identity"] = stage_identity
+        captured["condensed_p4_defer_numeric"] = defer_numeric
         factor = _CellCondensedP4(2)
         captured["condensed_p4"] = factor
         return factor
@@ -1156,6 +1167,7 @@ def _install_stub_side_builders(monkeypatch, captured):
         optimization_profile=None,
         support_policy=SUPPORT_POLICY_LEGACY,
         reuse_primal_route_plan=False,
+        compact_orientation=False,
     ):
         transfer = _IdentityTransfer(
             default_variant=(
@@ -1169,10 +1181,74 @@ def _install_stub_side_builders(monkeypatch, captured):
             rank=int(captured.get("route_snapshot_rank", 0)),
             size=int(captured.get("route_snapshot_comm_size", 1)),
         )
+
+        def allgather(value):
+            captured.setdefault("compact_inventory_allgather_values", []).append(
+                value
+            )
+            if transfer.comm.size == 1:
+                records = [value]
+            else:
+                remote_payload = value.get("payload") or {
+                    "K_local": 1,
+                    "record_unique_key_count_local": 1,
+                    "record_count_local": 1,
+                    "canonical_R_bytes_local": 16,
+                    "nonidentity_transform_block_bytes_local": 24,
+                    "entity_index_payload_bytes_local": 10,
+                    "unique_numeric_array_payload_bytes_local": 50,
+                    "seed_key_coarse_fine": [0, 0],
+                    "seed_has_cell_record": True,
+                    "owned_cell_count_local": 3,
+                    "owned_plus_ghost_cell_count_local": 4,
+                }
+                records = [
+                    value,
+                    {"rank": 1, "error": None, "payload": remote_payload},
+                ]
+            captured.setdefault("compact_inventory_allgather_results", []).append(
+                records
+            )
+            return records
+
+        transfer.comm.allgather = allgather
         transfer._primal_route_plan = captured.get("route_plan")
+        if compact_orientation:
+            orientation_storage = {
+                "representation": "compact_entity_blocks",
+                "key_order": ["coarse_cell_info", "fine_cell_info"],
+                "seed_key": [0, 0],
+                "seed_included_in_unique_key_count": True,
+                "seed_key_has_cell_record": True,
+                "unique_key_count_including_seed": 1,
+                "record_unique_key_count": 1,
+                "record_count_local": 4,
+                "canonical_R_bytes_local": 16,
+                "nonidentity_transform_block_bytes_local": 24,
+                "entity_index_bytes_local": 10,
+                "unique_numeric_array_payload_bytes_local": 50,
+            }
+            if captured.get("invalid_compact_orientation_audit"):
+                orientation_storage["representation"] = "invalid"
+            transfer._audit = {
+                **transfer.audit,
+                "orientation_storage": orientation_storage,
+            }
+            transfer.mesh = SimpleNamespace(
+                topology=SimpleNamespace(
+                    dim=3,
+                    index_map=lambda _dimension: SimpleNamespace(
+                        size_local=3,
+                        num_ghosts=1,
+                    ),
+                )
+            )
         captured["transfer"] = transfer
         captured["optimization_profile"] = optimization_profile
         captured["support_policy"] = support_policy
+        captured.setdefault("compact_orientation_calls", []).append(
+            compact_orientation
+        )
         captured.setdefault("reuse_primal_route_plan_calls", []).append(
             reuse_primal_route_plan
         )
@@ -1300,6 +1376,7 @@ def test_side_inverse_builder_selects_explicit_cell_condensed_backend(monkeypatc
         assert "p4" not in captured
         assert captured["condensed_p4_callback"] is None
         assert captured["reuse_primal_route_plan_calls"] == [False]
+        assert captured["compact_orientation_calls"] == [False]
         assert inverse._reuse_leading_ph_dual is False
         assert inverse._coupling._reuse_leading_ph is False
     finally:
@@ -1329,6 +1406,7 @@ def test_side_inverse_builder_forwards_reuse_flags_independently(
         assert captured["reuse_primal_route_plan_calls"] == [
             reuse_primal_route_plan
         ]
+        assert captured["compact_orientation_calls"] == [False]
         assert captured["transfer"]._reuse_primal_route_plan is (
             reuse_primal_route_plan
         )
@@ -1348,6 +1426,241 @@ def test_side_inverse_builder_forwards_reuse_flags_independently(
             inverse.destroy()
         b.destroy()
         operator.destroy()
+
+
+def test_side_inverse_builder_forwards_compact_orientation_only_for_deferred_stage(
+    monkeypatch,
+):
+    captured = {}
+    side_system, operator, _operator_context, b = _builder_side_system()
+    _install_stub_side_builders(monkeypatch, captured)
+    inventory_owners = []
+    lifecycle_events = []
+    inventory_payloads = []
+
+    def capture_inventory(owner, *, compact_orientation_inventory=None):
+        inventory_owners.append(owner)
+        inventory_payloads.append(compact_orientation_inventory)
+        return {"fixture": True}
+
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_full_action_inventory",
+        lambda *_args, **_kwargs: {},
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_owner_transfer_inventory",
+        capture_inventory,
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_side_adapter_inventory",
+        lambda *_args, **_kwargs: {},
+    )
+    inverse = None
+    stage_factory = lambda **_kwargs: None
+    try:
+        with pytest.raises(ValueError, match="compact orientation is limited"):
+            side_inverse_module.build_side_balanced_inverse(
+                side_system,
+                p4_inverse_backend="cell_condensed",
+                compact_orientation=True,
+                lifecycle_callback=lambda event, detail: lifecycle_events.append(
+                    (event, detail)
+                ),
+            )
+
+        inverse = side_inverse_module.build_side_balanced_inverse(
+            side_system,
+            p4_inverse_backend="cell_condensed",
+            factor_stage_factory=stage_factory,
+            defer_p4_numeric=True,
+            compact_orientation=True,
+            lifecycle_callback=lambda event, detail: lifecycle_events.append(
+                (event, detail)
+            ),
+        )
+        assert captured["compact_orientation_calls"] == [True]
+        assert captured["condensed_p4_stage_factory"] is stage_factory
+        assert captured["condensed_p4_defer_numeric"] is True
+        assert len(inventory_owners) == 1
+        assert len(captured["compact_inventory_allgather_values"]) == 1
+        gathered_record = captured["compact_inventory_allgather_values"][0]
+        assert gathered_record["error"] is None
+        assert gathered_record["payload"]["K_local"] == 1
+        assert inventory_payloads[0]["rank_records"][0][
+            "owned_plus_ghost_cell_count_local"
+        ] == 4
+        assert inventory_payloads[0]["cross_rank_total"][
+            "rank_local_unique_numeric_array_payload_bytes_sum"
+        ] == 50
+        assert any(event == "transfer_ready" for event, _detail in lifecycle_events)
+
+        inverse.destroy()
+        inverse = None
+        captured["route_snapshot_comm_size"] = 2
+        captured["invalid_compact_orientation_audit"] = True
+        with pytest.raises(
+            RuntimeError,
+            match="rejected collectively after setup allgather",
+        ):
+            side_inverse_module.build_side_balanced_inverse(
+                side_system,
+                p4_inverse_backend="cell_condensed",
+                factor_stage_factory=stage_factory,
+                defer_p4_numeric=True,
+                compact_orientation=True,
+                lifecycle_callback=lambda event, detail: lifecycle_events.append(
+                    (event, detail)
+                ),
+            )
+        assert len(captured["compact_inventory_allgather_values"]) == 2
+        assert captured["compact_inventory_allgather_values"][-1][
+            "error"
+        ] is not None
+        gathered = captured["compact_inventory_allgather_results"][-1]
+        assert gathered[0]["error"] is not None
+        assert gathered[0]["payload"] is None
+        assert gathered[1]["error"] is None
+        assert isinstance(gathered[1]["payload"], dict)
+        assert captured["transfer"].destroy_count == 1
+    finally:
+        if inverse is not None:
+            inverse.destroy()
+        b.destroy()
+        operator.destroy()
+
+
+def test_compact_owner_transfer_inventory_uses_scalar_audit_without_matrix_access():
+    class MatrixMustNotBeRead:
+        @property
+        def matrix(self):
+            raise AssertionError("compact inventory accessed the absent dense matrix")
+
+    class InventoryComm:
+        rank = 0
+        size = 2
+
+        def __init__(self):
+            self.allgather_calls = 0
+
+        def allgather(self, local_record):
+            self.allgather_calls += 1
+            remote_record = dict(local_record)
+            remote_record.update(
+                {
+                    "rank": 1,
+                    "K_local": 2,
+                    "record_unique_key_count_local": 1,
+                    "record_count_local": 5,
+                    "canonical_R_bytes_local": 12,
+                    "nonidentity_transform_block_bytes_local": 20,
+                    "entity_index_payload_bytes_local": 8,
+                    "unique_numeric_array_payload_bytes_local": 40,
+                    "owned_cell_count_local": 3,
+                    "owned_plus_ghost_cell_count_local": 5,
+                }
+            )
+            return [local_record, remote_record]
+
+    comm = InventoryComm()
+    cell_map = SimpleNamespace(size_local=2, num_ghosts=1)
+    owner_transfer = SimpleNamespace(
+        audit={
+            "orientation_storage": {
+                "representation": "compact_entity_blocks",
+                "key_order": ["coarse_cell_info", "fine_cell_info"],
+                "seed_key": [0, 0],
+                "seed_included_in_unique_key_count": True,
+                "seed_key_has_cell_record": False,
+                "unique_key_count_including_seed": 3,
+                "record_unique_key_count": 2,
+                "record_count_local": 4,
+                "canonical_R_bytes_local": 16,
+                "nonidentity_transform_block_bytes_local": 24,
+                "entity_index_bytes_local": 10,
+                "unique_numeric_array_payload_bytes_local": 50,
+            }
+        },
+        local_transfer=MatrixMustNotBeRead(),
+        comm=comm,
+        mesh=SimpleNamespace(
+            topology=SimpleNamespace(
+                dim=3,
+                index_map=lambda _dimension: cell_map,
+            )
+        ),
+        _coarse_work=SimpleNamespace(
+            x=SimpleNamespace(array=np.zeros(2, dtype=np.complex128))
+        ),
+        _fine_work=SimpleNamespace(
+            x=SimpleNamespace(array=np.zeros(3, dtype=np.complex128))
+        ),
+        _dual_reduction_work=np.zeros(1, dtype=np.complex128),
+        fine_space=SimpleNamespace(
+            dofmap=SimpleNamespace(
+                index_map=SimpleNamespace(size_global=8)
+            )
+        ),
+        coarse_space=SimpleNamespace(
+            dofmap=SimpleNamespace(
+                index_map=SimpleNamespace(size_global=4)
+            )
+        ),
+        _fine_owned_size=5,
+        _coarse_owned_size=2,
+    )
+
+    local_record = side_inverse_module._compact_owner_transfer_storage_local_record(
+        owner_transfer
+    )
+    remote_record = dict(local_record)
+    remote_record.update(
+        {
+            "rank": 1,
+            "payload": {
+                **local_record["payload"],
+                "K_local": 2,
+                "record_unique_key_count_local": 1,
+                "record_count_local": 5,
+                "canonical_R_bytes_local": 12,
+                "nonidentity_transform_block_bytes_local": 20,
+                "entity_index_payload_bytes_local": 8,
+                "unique_numeric_array_payload_bytes_local": 40,
+                "owned_cell_count_local": 3,
+                "owned_plus_ghost_cell_count_local": 5,
+            },
+        }
+    )
+    storage_payload = side_inverse_module._aggregate_compact_owner_transfer_storage_records(
+        [local_record, remote_record], communicator_size=2
+    )
+    inventory = side_inverse_module._owner_transfer_inventory(
+        owner_transfer,
+        compact_orientation_inventory=storage_payload,
+    )
+    storage = inventory["compact_orientation_storage"]
+    assert comm.allgather_calls == 0
+    # The local inventory is collective-free; build_side_balanced_inverse owns it.
+    assert inventory["stage_scope"] == "rank_local_with_setup_scalar_allgather"
+    assert [record["K_local"] for record in storage["rank_records"]] == [3, 2]
+    assert storage["rank_records"][0]["seed_key_coarse_fine"] == [0, 0]
+    assert storage["rank_records"][0]["seed_has_cell_record"] is False
+    assert storage["rank_records"][0]["owned_cell_count_local"] == 2
+    assert storage["rank_records"][0]["owned_plus_ghost_cell_count_local"] == 3
+    totals = storage["cross_rank_total"]
+    assert totals["rank_local_K_sum"] == 5
+    assert totals["rank_local_canonical_R_bytes_sum"] == 28
+    assert totals["rank_local_nonidentity_transform_block_bytes_sum"] == 44
+    assert totals["rank_local_entity_index_payload_bytes_sum"] == 18
+    assert totals["rank_local_unique_numeric_array_payload_bytes_sum"] == 90
+    assert totals["rank_local_owned_cell_count_sum"] == 5
+    assert totals["rank_local_owned_plus_ghost_cell_count_sum"] == 8
+    assert not any(
+        record["label"] == "transfer.canonical_reference_map"
+        for record in inventory["owned_objects"]
+    )
 
 
 def test_side_inverse_route_plan_snapshot_is_local_and_released(monkeypatch):

@@ -287,32 +287,207 @@ def _owner_transfer_primal_route_plan_snapshot(
     }
 
 
-def _owner_transfer_inventory(owner_transfer: Any) -> dict[str, Any]:
-    local_map = owner_transfer.local_transfer.matrix
+def _compact_owner_transfer_storage_payload(owner_transfer: Any) -> dict[str, Any]:
+    owner_audit = owner_transfer.audit
+    orientation_storage = owner_audit.get("orientation_storage")
+    if not isinstance(orientation_storage, Mapping):
+        raise TypeError("compact owner-transfer storage audit is missing")
+    mesh = owner_transfer.mesh
+    cell_map = mesh.topology.index_map(mesh.topology.dim)
+    seed_key = orientation_storage.get("seed_key")
+    if (
+        orientation_storage.get("representation") != "compact_entity_blocks"
+        or orientation_storage.get("key_order")
+        != ["coarse_cell_info", "fine_cell_info"]
+        or orientation_storage.get("seed_included_in_unique_key_count") is not True
+        or not isinstance(seed_key, list)
+        or len(seed_key) != 2
+        or any(type(value) is not int for value in seed_key)
+        or type(orientation_storage.get("seed_key_has_cell_record")) is not bool
+    ):
+        raise RuntimeError("compact owner-transfer storage audit is incomplete")
+
+    scalar_fields = {
+        "K_local": orientation_storage.get("unique_key_count_including_seed"),
+        "record_unique_key_count_local": orientation_storage.get(
+            "record_unique_key_count"
+        ),
+        "record_count_local": orientation_storage.get("record_count_local"),
+        "canonical_R_bytes_local": orientation_storage.get(
+            "canonical_R_bytes_local"
+        ),
+        "nonidentity_transform_block_bytes_local": orientation_storage.get(
+            "nonidentity_transform_block_bytes_local"
+        ),
+        "entity_index_payload_bytes_local": orientation_storage.get(
+            "entity_index_bytes_local"
+        ),
+        "unique_numeric_array_payload_bytes_local": orientation_storage.get(
+            "unique_numeric_array_payload_bytes_local"
+        ),
+    }
+    if any(
+        type(value) is not int or value < 0
+        for value in scalar_fields.values()
+    ):
+        raise RuntimeError("compact owner-transfer payload counts are invalid")
+    if (
+        scalar_fields["record_unique_key_count_local"]
+        > scalar_fields["record_count_local"]
+        or scalar_fields["K_local"]
+        != scalar_fields["record_unique_key_count_local"]
+        + int(not orientation_storage["seed_key_has_cell_record"])
+        or scalar_fields["unique_numeric_array_payload_bytes_local"]
+        != scalar_fields["canonical_R_bytes_local"]
+        + scalar_fields["nonidentity_transform_block_bytes_local"]
+        + scalar_fields["entity_index_payload_bytes_local"]
+    ):
+        raise RuntimeError("compact owner-transfer storage totals are inconsistent")
+
     return {
-        "stage_scope": "rank_local",
-        "owned_objects": [
-            _payload_array_inventory(
-                owner_transfer._coarse_work.x.array,
-                label="transfer.coarse_work_array",
-                ownership="SameMeshHcurlOwnerTransfer until destroy",
+        **scalar_fields,
+        "seed_key_coarse_fine": [int(value) for value in seed_key],
+        "seed_has_cell_record": orientation_storage["seed_key_has_cell_record"],
+        "owned_cell_count_local": int(cell_map.size_local),
+        "owned_plus_ghost_cell_count_local": int(
+            cell_map.size_local + cell_map.num_ghosts
+        ),
+    }
+
+
+def _compact_owner_transfer_storage_local_record(
+    owner_transfer: Any,
+) -> dict[str, Any]:
+    """Capture local scalar facts without communicating or leaving a rank."""
+
+    rank = None
+    try:
+        rank = int(owner_transfer.comm.rank)
+        payload = _compact_owner_transfer_storage_payload(owner_transfer)
+    except Exception as exc:  # noqa: BLE001 - exchange rank-local schema errors
+        return {
+            "rank": rank,
+            "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+            "payload": None,
+        }
+    return {"rank": rank, "error": None, "payload": payload}
+
+
+def _aggregate_compact_owner_transfer_storage_records(
+    gathered: Any,
+    *,
+    communicator_size: int,
+) -> dict[str, Any]:
+    """Validate one already-completed setup gather and compute rank sums."""
+
+    if not isinstance(gathered, (tuple, list)) or len(gathered) != int(
+        communicator_size
+    ):
+        raise RuntimeError("compact transfer inventory gather is incomplete")
+    records = [dict(record) for record in gathered]
+    local_errors = [
+        {"rank": record["rank"], "error": record.get("error")}
+        for record in records
+        if record.get("error") is not None
+    ]
+    if local_errors:
+        raise RuntimeError(
+            "compact transfer inventory rejected collectively after setup "
+            f"allgather: {local_errors}"
+        )
+    if [record.get("rank") for record in records] != list(
+        range(int(communicator_size))
+    ):
+        raise RuntimeError("compact transfer inventory rank set is incomplete")
+    if any(not isinstance(record.get("payload"), Mapping) for record in records):
+        raise RuntimeError("compact transfer inventory payload is incomplete")
+    rank_records = [
+        {"rank": record["rank"], **dict(record["payload"])}
+        for record in records
+    ]
+
+    summed_fields = (
+        "K_local",
+        "owned_cell_count_local",
+        "owned_plus_ghost_cell_count_local",
+        "canonical_R_bytes_local",
+        "nonidentity_transform_block_bytes_local",
+        "entity_index_payload_bytes_local",
+        "unique_numeric_array_payload_bytes_local",
+    )
+    cross_rank_total = {
+        f"rank_local_{field.removesuffix('_local')}_sum": sum(
+            int(record[field]) for record in rank_records
+        )
+        for field in summed_fields
+    }
+    return {
+        "schema": "task041.bal_h.compact_orientation_storage_inventory.v1",
+        "aggregation": "one setup allgather of scalar rank records",
+        "K_definition": (
+            "per-rank unique (coarse_cell_info,fine_cell_info) keys; the local "
+            "seed key is included even when that rank owns no cell record"
+        ),
+        "rank_records": rank_records,
+        "cross_rank_total": {
+            "semantics": (
+                "sum of rank-local payloads; owned-plus-ghost cells can be "
+                "counted on multiple ranks"
             ),
-            _payload_array_inventory(
-                owner_transfer._fine_work.x.array,
-                label="transfer.fine_work_array",
-                ownership="SameMeshHcurlOwnerTransfer until destroy",
-            ),
-            _payload_array_inventory(
-                owner_transfer._dual_reduction_work,
-                label="transfer.dual_reduction_work",
-                ownership="SameMeshHcurlOwnerTransfer until destroy",
-            ),
+            **cross_rank_total,
+        },
+    }
+
+
+def _owner_transfer_inventory(
+    owner_transfer: Any,
+    *,
+    compact_orientation_inventory: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    owner_audit = owner_transfer.audit
+    orientation_storage = owner_audit.get("orientation_storage")
+    compact = isinstance(orientation_storage, Mapping)
+    if compact != (compact_orientation_inventory is not None):
+        raise RuntimeError(
+            "compact transfer inventory argument does not match owner representation"
+        )
+    if compact and compact_orientation_inventory.get("schema") != (
+        "task041.bal_h.compact_orientation_storage_inventory.v1"
+    ):
+        raise RuntimeError("compact transfer inventory has an unsupported schema")
+    # Compact owners expose no dense matrix. Do not touch local_transfer.matrix
+    # on that path; the scalar orientation audit is the storage authority.
+    local_map = None if compact else owner_transfer.local_transfer.matrix
+    if not compact and local_map is None:
+        raise RuntimeError("dense owner transfer has no canonical local matrix")
+    owned_objects = [
+        _payload_array_inventory(
+            owner_transfer._coarse_work.x.array,
+            label="transfer.coarse_work_array",
+            ownership="SameMeshHcurlOwnerTransfer until destroy",
+        ),
+        _payload_array_inventory(
+            owner_transfer._fine_work.x.array,
+            label="transfer.fine_work_array",
+            ownership="SameMeshHcurlOwnerTransfer until destroy",
+        ),
+        _payload_array_inventory(
+            owner_transfer._dual_reduction_work,
+            label="transfer.dual_reduction_work",
+            ownership="SameMeshHcurlOwnerTransfer until destroy",
+        ),
+    ]
+    if not compact:
+        owned_objects.append(
             _payload_array_inventory(
                 local_map,
                 label="transfer.canonical_reference_map",
                 ownership="local transfer cache until destroy",
-            ),
-        ],
+            )
+        )
+    inventory = {
+        "stage_scope": "rank_local",
+        "owned_objects": owned_objects,
         "borrowed_objects": [
             {
                 "label": "transfer.fine_coarse_spaces_mpc",
@@ -332,6 +507,16 @@ def _owner_transfer_inventory(owner_transfer: Any) -> dict[str, Any]:
         ),
         "native_workspace_bytes": "unknown",
     }
+    if compact:
+        inventory["stage_scope"] = "rank_local_with_setup_scalar_allgather"
+        inventory["canonical_map_cache"] = (
+            "compact adapter storage is listed once per unique orientation key; "
+            "per-cell record references are not expanded or summed"
+        )
+        inventory["compact_orientation_storage"] = dict(
+            compact_orientation_inventory
+        )
+    return inventory
 
 
 def _side_adapter_inventory(inverse: SideBalancedInverse) -> dict[str, Any]:
@@ -3049,6 +3234,7 @@ def build_side_balanced_inverse(
     volume_action_context_factory: Callable[..., Any] | None = None,
     reuse_primal_route_plan: bool = False,
     reuse_leading_ph_dual: bool = False,
+    compact_orientation: bool = False,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
@@ -3058,6 +3244,8 @@ def build_side_balanced_inverse(
         raise TypeError("reuse_leading_ph_dual must be a boolean")
     if type(defer_p4_numeric) is not bool:
         raise TypeError("defer_p4_numeric must be an exact bool")
+    if not isinstance(compact_orientation, bool):
+        raise TypeError("compact_orientation must be a boolean")
     if reuse_leading_ph_dual and diagnostic_callback is not None:
         raise ValueError(
             "leading PH reuse is incompatible with mutable vector diagnostics"
@@ -3082,6 +3270,17 @@ def build_side_balanced_inverse(
     ):
         raise ValueError(
             "pending P4 numeric is limited to explicitly staged cell-condensed bottom/top sides"
+        )
+    if compact_orientation and (
+        factor_stage_factory is None
+        or not defer_p4_numeric
+        or p4_inverse_backend != "cell_condensed"
+        or side_system.side not in {"bottom", "top"}
+        or lifecycle_callback is None
+    ):
+        raise ValueError(
+            "compact orientation is limited to staged deferred cell-condensed "
+            "BAL_H sides with a setup lifecycle inventory"
         )
     if performance_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
         raise ValueError("unsupported Task041 performance profile")
@@ -3180,13 +3379,39 @@ def build_side_balanced_inverse(
             optimization_profile=performance_profile,
             support_policy=support_policy,
             reuse_primal_route_plan=reuse_primal_route_plan,
+            compact_orientation=compact_orientation,
         )
+        compact_orientation_inventory = None
+        if compact_orientation:
+            transfer_comm = owner_transfer.comm
+            local_storage_record = _compact_owner_transfer_storage_local_record(
+                owner_transfer
+            )
+            gathered_storage_records = transfer_comm.allgather(
+                local_storage_record
+            )
+            compact_orientation_inventory = (
+                _aggregate_compact_owner_transfer_storage_records(
+                    gathered_storage_records,
+                    communicator_size=int(transfer_comm.size),
+                )
+            )
         if lifecycle_callback is None:
             emit("transfer_ready")
         else:
+            transfer_inventory = (
+                _owner_transfer_inventory(
+                    owner_transfer,
+                    compact_orientation_inventory=(
+                        compact_orientation_inventory
+                    ),
+                )
+                if compact_orientation
+                else _owner_transfer_inventory(owner_transfer)
+            )
             emit(
                 "transfer_ready",
-                {"object_inventory": _owner_transfer_inventory(owner_transfer)},
+                {"object_inventory": transfer_inventory},
             )
         h6 = build_balanced_h6(
             side_system,

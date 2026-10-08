@@ -362,3 +362,38 @@ R2h v1、R2h v2 和 R2g 原 index 均保留；未重跑已绑定测试、FE/MPI�
 12个批准的唯一case（pilot材料1、route5、phase3及其余3个合同节点）最终均在分批attempt中通过；不声称最终test SHA上一次整组通过。测试源曾按上表局部修正，最终`src/test/test_351_task041_balh_public_workflow.py` SHA为`f92641ffd227f108fd42071103d3ea820d9983db6bfd456230c3dc8405cb33af`，另外7个Python生产源均保持本轮固定SHA。最终源码上的`compileall`、scoped Ruff和`git diff --check`通过。
 
 这13个实际pytest parent wall各按attempt ID唯一入账，总计`65.0168370383326 s`；V5 ledger从131项增至144项，charged总量`519069.20739736536 s`，SHA `24a6f6917006275d5035aa220cfb83e5755be9afe0f8036cc9793cc4e3b8bca4`。每个attempt目录均含独立compact、ledger entry/receipt和原始stdout；本段没有重新运行ABI、MPI2、QEP或FE。通过边界仅是输入解析、注册路由和public合同fixture，不是实际MPI8 producer或0.7 nm求解资格。
+
+## 2026-10-08：compact orientation与W0.7 consumer接线
+
+### 组件验证
+
+compact orientation把每个方向各自保存的完整稠密方向化插值，改为共享canonical矩阵/元素加实体变换块；P和PH仍按复数方向变换及其共轭伴随计算。它是默认关闭的存储路径，MPI8真实节省尚未测量。
+
+| Attempt | 源码绑定 | 结果 | pytest父wall |
+|---|---|---|---:|
+| serial组件 | transfer `af6d4009eb219f91184f436beeb83d6f7a34d47800c2a5a68c70cb1ee3c2955b`；test346 `cc6f2400000d43b4a720d0e40553f51508dab7079a274767280bf9e095356e41` | 1 passed | `72.66264551295899 s` |
+| MPI2组件 | 同上 | 两rank各1 passed | `75.71961162285879 s` |
+
+两条父wall分别唯一入账，合计`148.38225713581778 s`。它们仅验证tiny复数P/PH、entity-closure与对象共享/释放合同，不测大规模内存、不构成FE资格。对应compact与attempt在`results/task041_compact_orientation_serial_mpi2_20261008T1203Z/`。
+
+### W0.7 consumer接线：三次独立attempt
+
+运行的五个selector为test349的builder默认/显式透传和compact inventory三个节点，以及test351的W0.7 setup boundary与worker转发节点。实际分批结果如下，保留首失败和不同测试SHA：
+
+| Attempt | 实际执行 | 结果/未执行 | test349 SHA | pytest父wall |
+|---|---|---|---|---:|
+| initial `...122800Z` | selectors 1–2 | selector 1 passed；selector 2因`_IdentityTransfer.audit`只读fixture属性被错误赋值而failed；`-x`后selectors 3–5未执行 | `ae5eb4b0a160b5d22b5f0cdbbdba358499a24d19ff4644f564f5627cd24097e8` | `4.063483553007245 s` |
+| selector-2 retry `...123300Z` | selector 2 | 1 passed，修正仅在test fake的audit backing storage | `7c92ad0628dce1f825abfb408064307dde61dd732842b2e8903e7616b35c0efd` | `3.041036447044462 s` |
+| remaining `...123500Z` | selectors 3–5 | 3 passed | `7c92ad0628dce1f825abfb408064307dde61dd732842b2e8903e7616b35c0efd` | `8.140667369123548 s` |
+
+三次attempt的生产接线SHA相同：exact-side `e8bd6dd96257a3144d16590e1db8970f249ac9f547860a054c876e3897ac3095`，side inverse `5eec9a47c5c80a70f1f1882d1c3ab85be5e7547c3a830ade736e88ef201d782f`，transfer `af6d4009eb219f91184f436beeb83d6f7a34d47800c2a5a68c70cb1ee3c2955b`，test346 `cc6f2400000d43b4a720d0e40553f51508dab7079a274767280bf9e095356e41`；test351为`cfd14262f0fb818243d03225bc4e42a17a7c453b8384e433038a112681127a8b`。所以selector 1在修fixture前通过，不能描述为最终test349 SHA上的通过。
+
+consumer接线pytest父wall总计`15.245187369175255 s`，三条按独立attempt ID计费一次；V5由177项增至180项，新增后累计`527353.9467369274 s`，最终SHA `634dd5925f164bd2a6e7190687d2203ffdeba2924cb3a33f3fd091c125a361e1`。ledger append receipt SHA `03c90cc851ee493a92ecf3311638f267d96bb9f299a171c2a6af03559ca2745d`；receipt记录首个追加脚本在写入后生成回执时遇到字段名错误，随后只读核实账本尾部并生成回执，没有重复追加。
+
+三次接线attempt目录分别为：
+
+- `results/task041_w0p7_compact_orientation_consumer_hook_serial_20261008T122800Z/`：stdout SHA `3b5bb524d5ce1755fb98100522f388eda7786375114824482c2eb423a1f544eb`；
+- `results/task041_w0p7_compact_orientation_consumer_hook_serial_fixture_retry_20261008T123300Z/`：stdout SHA `1bbba5ec997ff461971bdcf7b861294ae2f5d4835221d961c9e3378228f99f60`；
+- `results/task041_w0p7_compact_orientation_consumer_hook_serial_remaining_20261008T123500Z/`：stdout SHA `4f3393f232ee53a30fd9eb5b83c9b9258f22180e3ab07278b562f281f743ef09`。
+
+最终范围仅证明serial/MPI2组件合同和小型consumer注册接线。每侧setup标量allgather只传K/seed口径、owned及owned+ghost cell计数和compact payload字节；这些字节不是RSS，且不把records共享引用重复累加或rank0结果乘8。没有MPI8新warm场、没有FE资格；此前预算筛查差额`7,476,508,109 B`仍未由真实运行证明消除。route-plan和leading-PH仍关闭。

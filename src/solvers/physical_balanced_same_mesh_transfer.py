@@ -101,6 +101,214 @@ def _verify_entity_block_transform(
             )
 
 
+def _entity_block_indices(element: Any) -> tuple[tuple[tuple[int, int], np.ndarray], ...]:
+    labels = _entity_block_labels(element)
+    grouped: dict[tuple[int, int], list[int]] = {}
+    for index, label in enumerate(labels):
+        grouped.setdefault(label, []).append(index)
+    result = []
+    for label, indices in grouped.items():
+        dofs = np.asarray(indices, dtype=np.intp)
+        dofs.setflags(write=False)
+        result.append((label, dofs))
+    return tuple(result)
+
+
+def _verify_entity_closure_block_support(
+    fine_element: Any,
+    coarse_element: Any,
+    fine_blocks: tuple[tuple[tuple[int, int], np.ndarray], ...],
+    coarse_blocks: tuple[tuple[tuple[int, int], np.ndarray], ...],
+) -> None:
+    """Require each fine closure to select whole coarse entity blocks."""
+
+    coarse_closures = coarse_element.entity_closure_dofs
+    for (topological_dim, entity), _fine_indices in fine_blocks:
+        if topological_dim >= 3:
+            allowed = np.arange(int(coarse_element.dim), dtype=np.intp)
+        else:
+            if topological_dim >= len(coarse_closures) or entity >= len(
+                coarse_closures[topological_dim]
+            ):
+                raise ValueError("coarse entity closure metadata is incomplete")
+            allowed = np.asarray(
+                coarse_closures[topological_dim][entity],
+                dtype=np.intp,
+            )
+        allowed_set = {int(index) for index in allowed}
+        for _coarse_label, coarse_indices in coarse_blocks:
+            selected = [int(index) in allowed_set for index in coarse_indices]
+            if any(selected) and not all(selected):
+                raise ValueError(
+                    "entity-closure support cuts through a coarse entity block"
+                )
+
+
+@dataclass(frozen=True)
+class _CompactOrientationContext:
+    """One adapter's canonical N1E map, Basix elements, and entity layout."""
+
+    fine_degree: int
+    coarse_degree: int
+    fine_element: Any
+    coarse_element: Any
+    reference_matrix: np.ndarray
+    fine_blocks: tuple[tuple[tuple[int, int], np.ndarray], ...]
+    coarse_blocks: tuple[tuple[tuple[int, int], np.ndarray], ...]
+    support_policy: str
+    reference_entity_trace_v1: bool
+    reference_face_edge_map: tuple[tuple[int, ...], ...]
+
+    @property
+    def entity_index_payload_bytes(self) -> int:
+        return sum(
+            int(indices.nbytes)
+            for _label, indices in (*self.fine_blocks, *self.coarse_blocks)
+        )
+
+
+@dataclass(frozen=True)
+class _CompactCellOrientation:
+    """Blockwise ``T_f`` and ``T_c^-1`` for one cell-info key."""
+
+    context: _CompactOrientationContext
+    fine_transform_blocks: tuple[np.ndarray | None, ...]
+    coarse_inverse_blocks: tuple[np.ndarray | None, ...]
+    transform_payload_bytes: int
+
+
+def _split_entity_transform(
+    transform: np.ndarray,
+    blocks: tuple[tuple[tuple[int, int], np.ndarray], ...],
+) -> tuple[tuple[np.ndarray | None, ...], int]:
+    stored: list[np.ndarray | None] = []
+    payload_bytes = 0
+    for _label, indices in blocks:
+        values = np.ascontiguousarray(transform[np.ix_(indices, indices)])
+        identity = np.eye(values.shape[0], dtype=values.dtype)
+        if np.array_equal(values, identity):
+            stored.append(None)
+        else:
+            values.setflags(write=False)
+            stored.append(values)
+            payload_bytes += int(values.nbytes)
+    return tuple(stored), payload_bytes
+
+
+def _apply_entity_transform_blocks(
+    values: np.ndarray,
+    blocks: tuple[tuple[tuple[int, int], np.ndarray], ...],
+    transforms: tuple[np.ndarray | None, ...],
+) -> np.ndarray:
+    output = np.empty_like(values, dtype=np.complex128)
+    for (_label, indices), transform in zip(blocks, transforms, strict=True):
+        if transform is None:
+            output[indices] = values[indices]
+        else:
+            output[indices] = transform @ values[indices]
+    return output
+
+
+def _apply_entity_transform_blocks_adjoint(
+    values: np.ndarray,
+    blocks: tuple[tuple[tuple[int, int], np.ndarray], ...],
+    transforms: tuple[np.ndarray | None, ...],
+) -> np.ndarray:
+    output = np.empty_like(values, dtype=np.complex128)
+    for (_label, indices), transform in zip(blocks, transforms, strict=True):
+        if transform is None:
+            output[indices] = values[indices]
+        else:
+            output[indices] = transform.conj().T @ values[indices]
+    return output
+
+
+def _build_compact_orientation_context(
+    fine_degree: int,
+    coarse_degree: int,
+    support_policy: str,
+) -> _CompactOrientationContext:
+    coarse_element = _n1e(coarse_degree)
+    fine_element = _n1e(fine_degree)
+    reference = np.asarray(
+        basix.compute_interpolation_operator(coarse_element, fine_element),
+        dtype=np.complex128,
+    )
+    expected_shape = (int(fine_element.dim), int(coarse_element.dim))
+    if reference.shape != expected_shape:
+        raise RuntimeError(
+            f"Basix N1E interpolation shape {reference.shape} != {expected_shape}"
+        )
+    reference_entity_trace_v1 = False
+    reference_face_edge_map: tuple[tuple[int, ...], ...] = ()
+    if support_policy == SUPPORT_POLICY_ENTITY_CLOSURE:
+        reference_face_edge_map = _reference_entity_trace_v1(
+            reference,
+            fine_element,
+            coarse_element,
+        )
+        reference_entity_trace_v1 = True
+    fine_blocks = _entity_block_indices(fine_element)
+    coarse_blocks = _entity_block_indices(coarse_element)
+    if support_policy == SUPPORT_POLICY_ENTITY_CLOSURE:
+        # The support mask S can move before orientation only when T_f and
+        # T_c^-1 stay within exact entity blocks and each closure selects a
+        # union of whole coarse blocks: S(T_f R T_c^-1)=T_f S(R) T_c^-1.
+        _verify_entity_closure_block_support(
+            fine_element,
+            coarse_element,
+            fine_blocks,
+            coarse_blocks,
+        )
+        _apply_entity_closure_support(reference, fine_element, coarse_element)
+    reference.setflags(write=False)
+    return _CompactOrientationContext(
+        fine_degree=int(fine_degree),
+        coarse_degree=int(coarse_degree),
+        fine_element=fine_element,
+        coarse_element=coarse_element,
+        reference_matrix=reference,
+        fine_blocks=fine_blocks,
+        coarse_blocks=coarse_blocks,
+        support_policy=support_policy,
+        reference_entity_trace_v1=reference_entity_trace_v1,
+        reference_face_edge_map=reference_face_edge_map,
+    )
+
+
+def _build_compact_cell_orientation(
+    context: _CompactOrientationContext,
+    *,
+    coarse_cell_info: int,
+    fine_cell_info: int,
+) -> _CompactCellOrientation:
+    coarse_transform = _dof_transform(
+        context.coarse_element,
+        coarse_cell_info,
+    )
+    fine_transform = _dof_transform(context.fine_element, fine_cell_info)
+    _verify_entity_block_transform(coarse_transform, context.coarse_element)
+    _verify_entity_block_transform(fine_transform, context.fine_element)
+    coarse_inverse = np.linalg.inv(coarse_transform)
+    if not np.all(np.isfinite(coarse_inverse)):
+        raise ValueError("Basix inverse cell transform is non-finite")
+    _verify_entity_block_transform(coarse_inverse, context.coarse_element)
+    fine_blocks, fine_bytes = _split_entity_transform(
+        fine_transform,
+        context.fine_blocks,
+    )
+    coarse_blocks, coarse_bytes = _split_entity_transform(
+        coarse_inverse,
+        context.coarse_blocks,
+    )
+    return _CompactCellOrientation(
+        context=context,
+        fine_transform_blocks=fine_blocks,
+        coarse_inverse_blocks=coarse_blocks,
+        transform_payload_bytes=fine_bytes + coarse_bytes,
+    )
+
+
 def _apply_entity_closure_support(
     matrix: np.ndarray,
     fine_element: Any,
@@ -269,21 +477,68 @@ class SameMeshHcurlTransfer:
 
     fine_degree: int
     coarse_degree: int
-    matrix: np.ndarray
+    matrix: np.ndarray | None
     coarse_cell_info: int
     fine_cell_info: int
     audit: MappingProxyType
+    compact_orientation: _CompactCellOrientation | None = None
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        if self.matrix is not None:
+            return tuple(int(value) for value in self.matrix.shape)
+        if self.compact_orientation is None:
+            raise RuntimeError("same-mesh transfer has no matrix representation")
+        reference = self.compact_orientation.context.reference_matrix
+        return tuple(int(value) for value in reference.shape)
 
     def apply(self, values: np.ndarray) -> np.ndarray:
         vector = np.asarray(values, dtype=np.complex128)
-        if vector.shape != (self.matrix.shape[1],):
+        if vector.shape != (self.shape[1],):
             raise ValueError("coarse N1E vector has an unexpected local shape")
+        if self.compact_orientation is not None:
+            orientation = self.compact_orientation
+            context = orientation.context
+            # P = T_f R T_c^{-1}; keep only R and entity-local T blocks.
+            coarse_oriented = _apply_entity_transform_blocks(
+                vector,
+                context.coarse_blocks,
+                orientation.coarse_inverse_blocks,
+            )
+            reference_output = context.reference_matrix @ coarse_oriented
+            return _apply_entity_transform_blocks(
+                reference_output,
+                context.fine_blocks,
+                orientation.fine_transform_blocks,
+            )
+        if self.matrix is None:
+            raise RuntimeError("same-mesh transfer has no dense matrix")
         return np.ascontiguousarray(self.matrix @ vector)
 
     def apply_adjoint(self, values: np.ndarray) -> np.ndarray:
         vector = np.asarray(values, dtype=np.complex128)
-        if vector.shape != (self.matrix.shape[0],):
+        if vector.shape != (self.shape[0],):
             raise ValueError("fine N1E vector has an unexpected local shape")
+        if self.compact_orientation is not None:
+            orientation = self.compact_orientation
+            context = orientation.context
+            fine_adjoint = _apply_entity_transform_blocks_adjoint(
+                vector,
+                context.fine_blocks,
+                orientation.fine_transform_blocks,
+            )
+            # P^H = (T_c^{-1})^H R^H T_f^H.  This helper avoids a full R^H copy.
+            reference_adjoint = _apply_conjugate_transpose_vector(
+                context.reference_matrix,
+                fine_adjoint,
+            )
+            return _apply_entity_transform_blocks_adjoint(
+                reference_adjoint,
+                context.coarse_blocks,
+                orientation.coarse_inverse_blocks,
+            )
+        if self.matrix is None:
+            raise RuntimeError("same-mesh transfer has no dense matrix")
         return np.ascontiguousarray(self.matrix.conj().T @ vector)
 
     apply_primal = apply
@@ -372,6 +627,47 @@ def build_same_mesh_hcurl_transfer(
                 "orientation_entity_blocks_verified": (
                     orientation_blocks_verified
                 ),
+                "global_transfer_matrix": False,
+                "numeric_allgather": False,
+                "physical": False,
+                "pde": False,
+            }
+        ),
+    )
+
+
+def _build_compact_same_mesh_hcurl_transfer(
+    context: _CompactOrientationContext,
+    *,
+    coarse_cell_info: int,
+    fine_cell_info: int,
+) -> SameMeshHcurlTransfer:
+    orientation = _build_compact_cell_orientation(
+        context,
+        coarse_cell_info=coarse_cell_info,
+        fine_cell_info=fine_cell_info,
+    )
+    return SameMeshHcurlTransfer(
+        fine_degree=context.fine_degree,
+        coarse_degree=context.coarse_degree,
+        matrix=None,
+        coarse_cell_info=int(coarse_cell_info),
+        fine_cell_info=int(fine_cell_info),
+        compact_orientation=orientation,
+        audit=MappingProxyType(
+            {
+                "schema": "task041.bal_h.same_mesh_hcurl_transfer.v1",
+                "pair_fine_to_coarse": [context.fine_degree, context.coarse_degree],
+                "shape": list(context.reference_matrix.shape),
+                "fine_lagrange_variant": "legendre",
+                "coarse_lagrange_variant": "legendre",
+                "support_policy": context.support_policy,
+                "reference_entity_trace_v1": context.reference_entity_trace_v1,
+                "reference_face_edge_map": [list(edges) for edges in context.reference_face_edge_map],
+                "orientation_entity_blocks_verified": True,
+                "orientation_representation": "compact_entity_blocks",
+                "coarse_cell_info": int(coarse_cell_info),
+                "fine_cell_info": int(fine_cell_info),
                 "global_transfer_matrix": False,
                 "numeric_allgather": False,
                 "physical": False,
@@ -926,6 +1222,7 @@ class SameMeshHcurlOwnerTransfer:
         optimization_profile: str | None = None,
         support_policy: str = SUPPORT_POLICY_LEGACY,
         reuse_primal_route_plan: bool = False,
+        compact_orientation_context: _CompactOrientationContext | None = None,
     ) -> None:
         support_policy = _normalize_support_policy(support_policy)
         pair = (
@@ -946,6 +1243,26 @@ class SameMeshHcurlOwnerTransfer:
             raise ValueError(
                 "local transfer support policy does not match owner policy"
             )
+        if compact_orientation_context is None:
+            if local_transfer.compact_orientation is not None:
+                raise ValueError(
+                    "compact local transfer requires its owning context"
+                )
+        else:
+            if (
+                compact_orientation_context.support_policy != support_policy
+                or (
+                    compact_orientation_context.fine_degree,
+                    compact_orientation_context.coarse_degree,
+                )
+                != pair
+                or local_transfer.compact_orientation is None
+                or local_transfer.compact_orientation.context
+                is not compact_orientation_context
+            ):
+                raise ValueError(
+                    "compact local transfer/context does not match owner spaces"
+                )
         fine_variant = fine_space.element.basix_element.lagrange_variant.name
         coarse_variant = coarse_space.element.basix_element.lagrange_variant.name
         if (
@@ -977,6 +1294,10 @@ class SameMeshHcurlOwnerTransfer:
         self.comm = mesh.comm
         self.local_transfer = local_transfer
         self._support_policy = support_policy
+        self._compact_orientation_context = compact_orientation_context
+        self._compact_orientation_transfers: tuple[
+            SameMeshHcurlTransfer, ...
+        ] = ()
         if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
             raise ValueError("unsupported same-mesh transfer optimization profile")
         self._optimization_profile = optimization_profile
@@ -1034,16 +1355,23 @@ class SameMeshHcurlOwnerTransfer:
             cell_info = int(permutation_info[cell])
             key = (cell_info, cell_info)
             if key not in cache:
-                cache[key] = build_same_mesh_hcurl_transfer(
-                    pair[0],
-                    pair[1],
-                    coarse_cell_info=cell_info,
-                    fine_cell_info=cell_info,
-                    support_policy=support_policy,
-                )
+                if compact_orientation_context is None:
+                    cache[key] = build_same_mesh_hcurl_transfer(
+                        pair[0],
+                        pair[1],
+                        coarse_cell_info=cell_info,
+                        fine_cell_info=cell_info,
+                        support_policy=support_policy,
+                    )
+                else:
+                    cache[key] = _build_compact_same_mesh_hcurl_transfer(
+                        compact_orientation_context,
+                        coarse_cell_info=cell_info,
+                        fine_cell_info=cell_info,
+                    )
             fine_local, fine_global = _cell_global_dofs(fine_space, cell)
             coarse_local, coarse_global = _cell_global_dofs(coarse_space, cell)
-            if cache[key].matrix.shape != (fine_global.size, coarse_global.size):
+            if cache[key].shape != (fine_global.size, coarse_global.size):
                 raise ValueError("local map and cell dof layout have different shapes")
             fine_owners = _owner_ranks(fine_global, self.fine_ranges)
             coarse_owners = _owner_ranks(coarse_global, self.coarse_ranges)
@@ -1055,23 +1383,27 @@ class SameMeshHcurlOwnerTransfer:
                 for global_id, owner in zip(coarse_global, coarse_owners)
                 if int(owner) == int(self.comm.rank)
             )
-            records.append(
-                {
-                    "fine_local": fine_local,
-                    "fine_global": fine_global.astype(np.uint64, copy=False),
-                    "coarse_local": coarse_local,
-                    "coarse_global": coarse_global.astype(np.uint64, copy=False),
-                    "matrix": cache[key].matrix,
-                    "authority": np.asarray(
-                        [
-                            authority.get(int(global_id)) == (cell, position)
-                            and int(fine_owners[position]) == int(self.comm.rank)
-                            for position, global_id in enumerate(fine_global)
-                        ],
-                        dtype=bool,
-                    ),
-                }
-            )
+            record = {
+                "fine_local": fine_local,
+                "fine_global": fine_global.astype(np.uint64, copy=False),
+                "coarse_local": coarse_local,
+                "coarse_global": coarse_global.astype(np.uint64, copy=False),
+                "authority": np.asarray(
+                    [
+                        authority.get(int(global_id)) == (cell, position)
+                        and int(fine_owners[position]) == int(self.comm.rank)
+                        for position, global_id in enumerate(fine_global)
+                    ],
+                    dtype=bool,
+                ),
+            }
+            if cache[key].compact_orientation is None:
+                if cache[key].matrix is None:
+                    raise RuntimeError("dense same-mesh cache entry has no matrix")
+                record["matrix"] = cache[key].matrix
+            else:
+                record["compact_transfer"] = cache[key]
+            records.append(record)
 
         fine_first, fine_last = self.fine_ranges[self.comm.rank]
         coarse_first, coarse_last = self.coarse_ranges[self.comm.rank]
@@ -1081,6 +1413,8 @@ class SameMeshHcurlOwnerTransfer:
             raise ValueError("coarse owner columns do not have local cell coverage")
 
         self._records = tuple(records)
+        if compact_orientation_context is not None:
+            self._compact_orientation_transfers = tuple(cache.values())
         self._coarse_work = fem.Function(coarse_floquet.mpc.function_space)
         self._fine_work = fem.Function(fine_floquet.mpc.function_space)
         (
@@ -1094,8 +1428,7 @@ class SameMeshHcurlOwnerTransfer:
         self._dual_reduction_work = np.empty(
             self._dual_flat_slaves.size, dtype=np.complex128
         )
-        self._audit = MappingProxyType(
-            {
+        audit = {
                 "schema": "task041.bal_h.same_mesh_owner_transfer.v1",
                 "pair_fine_to_coarse": list(pair),
                 "fine_global_rows": int(fine_space.dofmap.index_map.size_global),
@@ -1150,7 +1483,69 @@ class SameMeshHcurlOwnerTransfer:
                     },
                 },
             }
-        )
+        if compact_orientation_context is not None:
+            compact_transfers = self._compact_orientation_transfers
+            record_keys = {
+                (
+                    int(record["compact_transfer"].coarse_cell_info),
+                    int(record["compact_transfer"].fine_cell_info),
+                )
+                for record in self._records
+                if "compact_transfer" in record
+            }
+            transform_bytes = sum(
+                int(transfer.compact_orientation.transform_payload_bytes)
+                for transfer in compact_transfers
+                if transfer.compact_orientation is not None
+            )
+            identity_blocks = sum(
+                sum(
+                    value is None
+                    for value in transfer.compact_orientation.fine_transform_blocks
+                )
+                + sum(
+                    value is None
+                    for value in transfer.compact_orientation.coarse_inverse_blocks
+                )
+                for transfer in compact_transfers
+                if transfer.compact_orientation is not None
+            )
+            canonical_bytes = int(
+                compact_orientation_context.reference_matrix.nbytes
+            )
+            entity_index_bytes = int(
+                compact_orientation_context.entity_index_payload_bytes
+            )
+            seed_key = (
+                int(local_transfer.coarse_cell_info),
+                int(local_transfer.fine_cell_info),
+            )
+            audit["orientation_storage"] = {
+                "representation": "compact_entity_blocks",
+                "key_order": ["coarse_cell_info", "fine_cell_info"],
+                "seed_key": list(seed_key),
+                "seed_included_in_unique_key_count": True,
+                "seed_key_has_cell_record": seed_key in record_keys,
+                "unique_key_count_including_seed": len(compact_transfers),
+                "record_unique_key_count": len(record_keys),
+                "record_count_local": len(self._records),
+                "records_are_shared_references": True,
+                "canonical_R_shape": list(compact_orientation_context.reference_matrix.shape),
+                "canonical_R_copies_per_adapter": 1,
+                "canonical_R_bytes_local": canonical_bytes,
+                "entity_index_bytes_local": entity_index_bytes,
+                "nonidentity_transform_block_bytes_local": transform_bytes,
+                "exact_identity_block_count": int(identity_blocks),
+                "unique_numeric_array_payload_bytes_local": canonical_bytes + entity_index_bytes + transform_bytes,
+                "full_oriented_matrix_retained": False,
+                "per_apply_scratch_bytes": "not_measured",
+                "excluded": [
+                    "Python metadata and per-cell record arrays",
+                    "Basix internal storage",
+                    "temporary full transforms/inverse and per-apply scratch",
+                ],
+            }
+        self._audit = MappingProxyType(audit)
 
     @property
     def audit(self) -> MappingProxyType:
@@ -1272,7 +1667,10 @@ class SameMeshHcurlOwnerTransfer:
                 self._coarse_work.x.array[record["coarse_local"]],
                 dtype=np.complex128,
             )
-            values.append(record["matrix"] @ local_values)
+            if "compact_transfer" in record:
+                values.append(record["compact_transfer"].apply(local_values))
+            else:
+                values.append(record["matrix"] @ local_values)
         return np.concatenate(values).astype(np.complex128, copy=False)
 
     def _current_primal_route_binding(self) -> _PrimalRouteBinding:
@@ -1714,7 +2112,11 @@ class SameMeshHcurlOwnerTransfer:
                     dtype=np.complex128,
                 )
                 masked_values = values * record["authority"]
-                if self._execution_variant == "optimized":
+                if "compact_transfer" in record:
+                    contribution = record["compact_transfer"].apply_adjoint(
+                        masked_values
+                    )
+                elif self._execution_variant == "optimized":
                     contribution = _apply_conjugate_transpose_vector(
                         record["matrix"], masked_values
                     )
@@ -1827,6 +2229,8 @@ class SameMeshHcurlOwnerTransfer:
         self._primal_route_plan = None
         self._dual_reduction_work = np.empty(0, dtype=np.complex128)
         self.local_transfer = None
+        self._compact_orientation_transfers = ()
+        self._compact_orientation_context = None
         self.coarse_floquet = None
         self.fine_floquet = None
         self.coarse_space = None
@@ -1844,6 +2248,7 @@ def build_same_mesh_hcurl_owner_transfer(
     optimization_profile: str | None = None,
     support_policy: str = SUPPORT_POLICY_LEGACY,
     reuse_primal_route_plan: bool = False,
+    compact_orientation: bool = False,
 ) -> SameMeshHcurlOwnerTransfer:
     """Build an owner-local adapter without a global matrix.
 
@@ -1867,7 +2272,26 @@ def build_same_mesh_hcurl_owner_transfer(
     support_policy = _normalize_support_policy(support_policy)
     if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
         raise ValueError("unsupported same-mesh transfer optimization profile")
-    if local_transfer is None:
+    if not isinstance(compact_orientation, bool):
+        raise TypeError("compact_orientation must be a boolean")
+    compact_context = None
+    if compact_orientation:
+        if local_transfer is not None:
+            raise ValueError(
+                "compact orientation owns its canonical reference map; "
+                "an external dense local_transfer is not accepted"
+            )
+        compact_context = _build_compact_orientation_context(
+            pair[0],
+            pair[1],
+            support_policy,
+        )
+        local_transfer = _build_compact_same_mesh_hcurl_transfer(
+            compact_context,
+            coarse_cell_info=0,
+            fine_cell_info=0,
+        )
+    elif local_transfer is None:
         local_transfer = build_same_mesh_hcurl_transfer(
             *pair,
             support_policy=support_policy,
@@ -1881,6 +2305,7 @@ def build_same_mesh_hcurl_owner_transfer(
         optimization_profile=optimization_profile,
         support_policy=support_policy,
         reuse_primal_route_plan=reuse_primal_route_plan,
+        compact_orientation_context=compact_context,
     )
 
 
