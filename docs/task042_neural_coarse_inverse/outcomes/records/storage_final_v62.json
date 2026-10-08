@@ -1,0 +1,19 @@
+{
+  "new_bytes": 1182790556,
+  "task_artifact_bytes": 104398510764,
+  "free_bytes": 3188680183808,
+  "reserve_bytes": 536870912,
+  "scope": "unique inode bytes of current V62 and Task042 artifact/TMP/results/docs; includes cache/raw/atomic residues; not resident RSS",
+  "observed_utc": "2026-10-08T07:24:59.817911+00:00",
+  "limits": {
+    "planning_gib": 64,
+    "warning_gib": 80,
+    "sampled_stop_gib": 96,
+    "neighbor_growth_gib": 384,
+    "extra_cache_workspace_gib": 2
+  },
+  "new_limit_bytes": 21474836480,
+  "task_limit_bytes": 214748364800,
+  "free_limit_bytes": 53687091200,
+  "same_accuracy_memory_improvement": "NOT_QUALIFIED"
+}

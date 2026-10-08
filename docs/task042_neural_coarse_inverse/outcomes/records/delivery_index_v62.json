@@ -1,5 +1,5 @@
 {
-  "status": "science complete; final-byte documentation and closure metadata to be sealed after single DOCS01",
+  "status": "FULL_DELIVERY_LOCAL_CHECKS_COMPLETE",
   "authority": "b39df0051e6a0501528de54bf02987021188702e",
   "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
   "current_clean_consumer_source": "fc5855eed95ae4298fadb6dc6646c8c83246ef8d",
@@ -26,5 +26,51 @@
   ],
   "final_cost": "resource_costs_final_v62.json",
   "final_live_tail": "final_settlement_tail_v62.json",
-  "GitHub_visual": "NOT_VERIFIED"
+  "GitHub_visual": "NOT_VERIFIED",
+  "document_source_sha": "c284202ec88a312a71735e3cc0c717661bcc2cd6",
+  "final_bytes": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v62.json",
+    "sha256": "9ec0a50c9b10678a2149112698242f6b33fe7d5885e0694490252590d3e42fab"
+  },
+  "scientific_queue_status": "frozen and closed",
+  "ledger_closed": true,
+  "active": null,
+  "own_lock_released": true,
+  "total_supervised_runs": 14,
+  "actual_new_complete_solves": 4,
+  "actual_numeric_factors": 4,
+  "new_storage": "storage_final_v62.json",
+  "final_source_bindings": "source_bindings_final_v62.json",
+  "metadata_control_script": {
+    "path": "tmp/task042/v62/seal_delivery.py",
+    "sha256": "fbaa76145e33a109ec1012edd8e12bed799ec77a5943e6eafe99661a10c4c391",
+    "not_scientific_producer": true
+  },
+  "final_record_paths": [
+    "array_inventory_v62.json",
+    "decision_and_not_run_v62.json",
+    "delivery_index_v62.json",
+    "documentation_checks_v62.json",
+    "final_settlement_tail_v62.json",
+    "independent_saved_pair_checks_v62.json",
+    "physical_error_regions_v62.json",
+    "raw_archive_index_v62.json",
+    "repair_journal_v62.json",
+    "resource_costs_final_v62.json",
+    "resource_costs_v62.json",
+    "run_index_v62.json",
+    "scientific_checks_v62.json",
+    "selective_merge_v62.json",
+    "source_bindings_final_v62.json",
+    "source_bindings_v62.json",
+    "storage_final_v62.json",
+    "storage_lifecycle_deployment_v62.json",
+    "target_gap_v62.json"
+  ],
+  "stop_reason": "ALL_FIXED_EXECUTABLE_PATHS_COMPLETED",
+  "raw_last_stream_tail_sha256": "8d20f0203c5e9df86f38673d9942031a8819aae1d6237621627acfea0506254c",
+  "final_cost_sha256": "cc3cedb331f1727b3100901f7a5ce70d4c881f289de121952b266e6f2da73717",
+  "final_metadata_fee_seconds": 45.95202162489295,
+  "final_local_settlement_UTC": "2026-10-08T07:32:40.226291+00:00",
+  "numeric_actor_active": false
 }

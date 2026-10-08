@@ -383,6 +383,70 @@
       "descendants_cleared": true,
       "peak_bytes": 125984768,
       "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/aux_post_COLLECT01",
+      "source_sha": "fc5855eed95ae4298fadb6dc6646c8c83246ef8d",
+      "before_clock": {
+        "start_utc": "2026-10-08T04:03:39Z",
+        "start_monotonic": 1357214.39,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "b39df0051e6a0501528de54bf02987021188702e",
+        "intake_HEAD": "400acdc53944e9da6cbca931da6e31cdf7d76dd6",
+        "contract_HEAD": "b39df0051e6a0501528de54bf02987021188702e",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T07:02:45.457058+00:00",
+        "observed_monotonic": 1367960.317924691,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 10746.457057714462,
+        "heavy_remaining_seconds": 21653.542942285538,
+        "total_remaining_seconds": 25253.542942285538
+      },
+      "elapsed_seconds": 76.54445780999959,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 205463552,
+      "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v62/aux_post_DOCS01",
+      "source_sha": "c284202ec88a312a71735e3cc0c717661bcc2cd6",
+      "before_clock": {
+        "start_utc": "2026-10-08T04:03:39Z",
+        "start_monotonic": 1357214.39,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "b39df0051e6a0501528de54bf02987021188702e",
+        "intake_HEAD": "400acdc53944e9da6cbca931da6e31cdf7d76dd6",
+        "contract_HEAD": "b39df0051e6a0501528de54bf02987021188702e",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T07:16:48.656217+00:00",
+        "observed_monotonic": 1368803.517083751,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 11589.656216859818,
+        "heavy_remaining_seconds": 20810.343783140182,
+        "total_remaining_seconds": 24410.343783140182
+      },
+      "elapsed_seconds": 48.99509066808969,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 130134016,
+      "swap_bytes": 0
     }
   ],
   "pointers": {
@@ -411,5 +475,8 @@
       "sha256": "64108ce78bf3560ef48e166773b81bf4fb616d2374ce4d2ceb488c10406a1cc0"
     }
   },
-  "old_windows_closed": true
+  "old_windows_closed": true,
+  "closed": true,
+  "active": null,
+  "all_known_supervised_runs": 14
 }
