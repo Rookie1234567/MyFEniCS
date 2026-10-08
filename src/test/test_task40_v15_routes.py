@@ -39,6 +39,21 @@ CASES = (
 )
 
 
+def _register_v15_fixture_profile(monkeypatch, name):
+    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+
+    profile = SimpleNamespace(
+        name=name,
+        q_count=4,
+        q_port_counts=(1, 1, 0, 0),
+        replication_count=2,
+        mode_count=2,
+        sector_port_counts=(1, 1),
+    )
+    monkeypatch.setitem(TASK40_P6_PERIODIC_PROFILES, name, profile)
+    return profile
+
+
 class _FakePETScVector:
     def __init__(self, values=None):
         self.array_r = np.asarray(
@@ -111,8 +126,12 @@ def _make_v15_pc_fixture(monkeypatch, *, first_call_needs_correction):
     pc.reference = {}
     pc.layout = SimpleNamespace(full_rows=2, independent=np.asarray([0, 1], dtype=np.int64))
     pc.profile = SimpleNamespace(
-        name="task40extra_v15_fixture_profile", q_count=4, mode_count=2
+        name="task40extra_v15_fixture_profile",
+        q_count=4,
+        mode_count=2,
+        replication_count=2,
     )
+    _register_v15_fixture_profile(monkeypatch, pc.profile.name)
     pc.inverse = inverse
     pc.PETSc = SimpleNamespace(Vec=_FakePETScVector, COMM_SELF="self")
     pc.target_condensed = SimpleNamespace(
@@ -495,7 +514,9 @@ def test_v15_pc_native_budget_receives_full_owner_and_uses_startup_checks(monkey
     pc = object.__new__(task40_v10_worker._P6ReferencePreconditioner)
     pc.owner = owner
     pc.layout = SimpleNamespace(full_rows=2)
-    pc.profile = SimpleNamespace(q_count=4, mode_count=2)
+    pc.profile = _register_v15_fixture_profile(
+        monkeypatch, "task40extra_v15_budget_fixture"
+    )
     pc.PETSc = SimpleNamespace(Vec=FakeVector, COMM_SELF="self")
     pc.allocation_gate = lambda *_args, **_kwargs: None
     pc._evaluate_complete_augmented_state = lambda *_args, **_kwargs: {
@@ -599,6 +620,7 @@ def test_v15_native_budget_uses_original_h_local_g_over_sqrt_two_and_signed_b_de
                     original_mode_indices=np.asarray([mode], dtype=np.int64),
                 ),
                 "transport": SimpleNamespace(
+                    K=2,
                     local=SimpleNamespace(independent=local_independent),
                     fold_dual=fold_dual,
                     lift_dual=lift_dual,
@@ -617,7 +639,7 @@ def test_v15_native_budget_uses_original_h_local_g_over_sqrt_two_and_signed_b_de
         "full_layout": SimpleNamespace(
             independent=np.asarray([0, 1], dtype=np.int64), full_rows=2
         ),
-        "profile": SimpleNamespace(mode_count=2),
+        "profile": SimpleNamespace(mode_count=2, replication_count=2),
         "global_bundle": {"dtn_action": global_action},
         "sectors": sectors,
     }
@@ -651,6 +673,8 @@ def test_v15_native_budget_uses_original_h_local_g_over_sqrt_two_and_signed_b_de
     assert result["budget_terms"]["B_delta_alpha"] == pytest.approx(np.sqrt(2.0))
     assert result["decomposition_closure_relative"] < 1e-14
     assert captured_allocation[0]["uses_original_global_H"] is True
+    assert captured_allocation[0]["replication_count_K"] == 2
+    assert captured_allocation[0]["uses_sector_H_equal_global_H_over_K"] is True
     assert captured_allocation[0]["uses_sector_H_equal_global_H_over_two"] is True
     assert captured_allocation[0]["uses_actual_primal_extract_and_dual_lift"] is True
 

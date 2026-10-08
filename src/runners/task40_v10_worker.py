@@ -32,6 +32,70 @@ _PORT_CLOSURE_LIMIT = 1.0e-8
 _IDENTITY_LIMIT = 1.0e-10
 
 
+def _task40_sector_port_vectors(
+    mode_indices: Any,
+    *,
+    replication_count: int,
+    global_h: Any | None = None,
+    global_port_rhs: Any | None = None,
+    global_alpha: Any | None = None,
+) -> dict[str, np.ndarray]:
+    """Convert global port vectors to one of the K normalized two-cell sectors."""
+
+    if type(replication_count) is not int or replication_count < 1:
+        raise ValueError("p6 sector replication count K must be a positive integer")
+    ids = np.asarray(mode_indices, dtype=np.int64)
+    if ids.ndim != 1 or (len(ids) and np.any(ids < 0)):
+        raise ValueError(
+            "p6 sector mode indices must be a one-dimensional nonnegative vector"
+        )
+    root_k = np.sqrt(float(replication_count))
+    result: dict[str, np.ndarray] = {}
+    for name, raw in (
+        ("local_h", global_h),
+        ("local_port_rhs", global_port_rhs),
+        ("local_alpha", global_alpha),
+    ):
+        if raw is None:
+            continue
+        dtype = np.float64 if name == "local_h" else np.complex128
+        vector = np.asarray(raw, dtype=dtype)
+        if (
+            vector.ndim != 1
+            or (len(ids) and int(ids.max()) >= len(vector))
+            or not np.isfinite(vector).all()
+            or (name == "local_h" and np.any(vector <= 0.0))
+        ):
+            raise ValueError(
+                f"global vector for {name} does not cover the selected p6 modes"
+            )
+        selected = vector[ids]
+        if name == "local_h":
+            result[name] = selected / float(replication_count)
+        elif name == "local_port_rhs":
+            result[name] = selected / root_k
+        else:
+            result[name] = selected * root_k
+    return result
+
+
+def _task40_reference_replication_count(reference: Mapping[str, Any]) -> int:
+    """Require the registered profile K to match every actual two-cell transport."""
+
+    profile = reference["profile"]
+    replication_count = int(profile.replication_count)
+    sectors = tuple(reference["sectors"])
+    if (
+        replication_count < 1
+        or not sectors
+        or any(int(sector["transport"].K) != replication_count for sector in sectors)
+    ):
+        raise ValueError(
+            "registered p6 profile K differs from its actual two-cell transports"
+        )
+    return replication_count
+
+
 def _single_side_diffraction_order_count_passed(
     output: Mapping[str, Any], total_port_mode_count: int
 ) -> bool:
@@ -877,6 +941,7 @@ def _v15_native_budget_facts(
     _sector_action, local_action_vectors, sector_action_facts = sector_action_data
     if sector_action_facts.get("all_modes_covered_once") is not True:
         raise ValueError("V15 local action mapping does not cover every retained mode")
+    replication_count = _task40_reference_replication_count(reference)
 
     max_local_rows = max(int(row["entities"].full_rows) for row in reference["sectors"])
     max_local_independent = max(
@@ -901,7 +966,12 @@ def _v15_native_budget_facts(
             "local_action_vector_equivalents": 6,
             "per_sector_folded_rhs_and_action_vector_equivalents": 4,
             "uses_original_global_H": True,
-            "uses_sector_H_equal_global_H_over_two": True,
+            "replication_count_K": replication_count,
+            "uses_sector_H_equal_global_H_over_K": True,
+            "uses_sector_H_equal_global_H_over_two": replication_count == 2,
+            "sector_port_normalization": (
+                "g_s=g/sqrt(K); H_s=H/K; alpha_s=sqrt(K)*alpha"
+            ),
             "uses_actual_primal_extract_and_dual_lift": True,
             "sector_action_source": "_sector_native_forward_action_on_E_s_u",
             "no_q_csr_action_used": True,
@@ -951,8 +1021,14 @@ def _v15_native_budget_facts(
             folded_rhs = np.asarray(transport.fold_dual(finite_rhs), dtype=np.complex128)
             if folded_rhs.shape != (len(local_independent),):
                 raise ValueError(f"V15 twist {twist} folded RHS has the wrong layout")
-            h_s = h[mode_ids] / 2.0
-            g_s = port_load_values[mode_ids] / np.sqrt(2.0)
+            local_port_vectors = _task40_sector_port_vectors(
+                mode_ids,
+                replication_count=replication_count,
+                global_h=h,
+                global_port_rhs=port_load_values,
+            )
+            h_s = local_port_vectors["local_h"]
+            g_s = local_port_vectors["local_port_rhs"]
             if not np.isfinite(h_s).all() or np.any(h_s <= 0.0):
                 raise ValueError(f"V15 twist {twist} original-H block is invalid")
             local_port_load = petsc.Vec().createSeq(
@@ -976,9 +1052,10 @@ def _v15_native_budget_facts(
             per_sector.append({
                 "twist_index": twist,
                 "mode_indices": mode_ids.tolist(),
-                "H_s_is_global_H_over_two": True,
-                "g_s_is_global_g_over_sqrt_two": True,
-                "alpha_scaling": "sqrt(2)*global_alpha[mode_ids]",
+                "replication_count_K": replication_count,
+                "H_s_is_global_H_over_K": True,
+                "g_s_is_global_g_over_sqrt_K": True,
+                "alpha_scaling": "sqrt(K)*global_alpha[mode_ids]",
                 "effective_rhs_norm": float(np.linalg.norm(local_effective_rhs)),
                 "native_action_norm": float(np.linalg.norm(local_action)),
             })
@@ -1031,6 +1108,7 @@ def _regular_local_recovery_facts(
     ports = np.asarray(port_rhs_global, dtype=np.complex128)
     sectors = tuple(reference["sectors"])
     profile = reference["profile"]
+    replication_count = _task40_reference_replication_count(reference)
     internal_residuals = []
     internal_scales = []
     internal_effective_rhs = []
@@ -1076,8 +1154,14 @@ def _regular_local_recovery_facts(
         local_storage[local_independent] = local_values
         local_rhs = np.zeros(local_full_rows, dtype=np.complex128)
         local_rhs[local_independent] = transport.fold_dual(fe_rhs)
-        local_ports = ports[mode_ids] / np.sqrt(2.0)
-        local_alpha = alpha[mode_ids] * np.sqrt(2.0)
+        local_port_vectors = _task40_sector_port_vectors(
+            mode_ids,
+            replication_count=replication_count,
+            global_port_rhs=ports,
+            global_alpha=alpha,
+        )
+        local_ports = local_port_vectors["local_port_rhs"]
+        local_alpha = local_port_vectors["local_alpha"]
         constraints = condensed.trace_constraints
         active_original = np.asarray(
             constraints.owned_active_original_dofs, dtype=np.int64
@@ -1184,6 +1268,10 @@ def _regular_local_recovery_facts(
             {
                 "twist_index": twist,
                 "global_q_indices": list(sector["context"].global_q_indices),
+                "replication_count_K": replication_count,
+                "local_port_normalization": (
+                    "g_s=g/sqrt(K); H_s=H/K; alpha_s=sqrt(K)*alpha"
+                ),
                 "internal_row_count": int(internal.size),
                 "internal_operation_scale": float(evaluated["internal_operation_scale"]),
                 "internal_residual_relative": float(
@@ -2213,7 +2301,10 @@ def _verify_regular_inverse(
                 "regular_recovery_limit": _REGULAR_RECOVERY_LIMIT,
                 "maximum_q_true_residual_relative": q_residual_max,
                 "q_true_residuals": q_rows,
-                "all_four_q_branches_exercised": q_coverage_passed,
+                "all_q_branches_exercised": q_coverage_passed,
+                "all_four_q_branches_exercised": (
+                    profile.q_count == 4 and q_coverage_passed
+                ),
                 "expected_port_mode_count": profile.mode_count,
                 "all_port_modes_exercised": recovery["port_mode_count"] == profile.mode_count,
                 "regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
@@ -5175,10 +5266,21 @@ def run_task40_v10_p6_reference_worker(
             allocation_gate=allocation_gate,
         )
         if is_v16:
+            live_q_indices = sorted(
+                int(q) for q in reference["factors"].factors
+            )
+            expected_q_indices = list(range(int(periodic_profile.q_count)))
+            all_q_factor_objects_live = live_q_indices == expected_q_indices
             startup_facts = {
                 "schema": "task40extra.review_v16_solver_startup_inventory.v1",
                 "q_matrix_audits": dict(reference.get("q_matrix_audits", {})),
-                "all_four_factor_objects_live": True,
+                "expected_q_count": int(periodic_profile.q_count),
+                "factor_live_count": len(live_q_indices),
+                "factor_q_indices": live_q_indices,
+                "all_q_factor_objects_live": all_q_factor_objects_live,
+                "all_four_factor_objects_live": (
+                    periodic_profile.q_count == 4 and all_q_factor_objects_live
+                ),
                 "target_reduced_rows": int(target_action.reduced_size),
                 "target_action_buffer_inventory": dict(target_action.buffer_inventory),
             }
