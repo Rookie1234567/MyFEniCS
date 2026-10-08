@@ -36,4 +36,4 @@
 
 [专题](outcomes/multiscale_neural_support_v32.md)、[设计](outcomes/design_multiscale_v32.md)、[覆盖与端口](outcomes/records/saved_space_coverage_v32.json)、[24列无标签见证](outcomes/records/unlabelled_direction_witness_v32.json)、[完整复通道](outcomes/records/complex_channels_v32.csv)、[逐级功率](outcomes/records/per_mode_power_v32.csv)、[区域](outcomes/records/material_interface_regions_v32.csv)、[逐块增长](outcomes/records/block_growth_v32.csv)、[依赖分组](outcomes/records/selective_merge_manifest_v32.json)。
 
-有限GitHub实际首屏目视：Review V31与本回执可见部分通过；专题第二公式的operatorname宏失败已保留，并在新页换为同义mathrm宏。受影响页仅复查一次，结果见[呈现记录](outcomes/records/render_check_v32.json)；未覆盖的全表/全页不授视觉PASS。本地结构检查不替代实际浏览器。
+有限GitHub实际首屏目视：Review V31与本回执可见部分通过；专题第二公式的operatorname宏失败已保留，并在新页换为同义mathrm宏。受影响页仅复查一次，实际首屏两条公式通过，原失败保留，见[呈现记录](outcomes/records/render_check_v32.json)；未覆盖的全表/全页不授视觉PASS。本地结构检查不替代实际浏览器。

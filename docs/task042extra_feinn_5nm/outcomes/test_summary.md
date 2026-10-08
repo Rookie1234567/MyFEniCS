@@ -19,6 +19,8 @@ V32分次本地JUnit实测如下。各行共享部分case，不能相加作为�
 | 真实M5完整矩资格 / 1377列原作用QR资格 | 均实际通过 | 非fixture；原1e-10作用/重建门、全部自由度族及MPC |
 | 最终独立FE与保存数组checker | 完成，联合FAIL | 136项指标、640复通道值、160逐级功率；不以实现测试替代数值门 |
 
+
+有限GitHub实际目视：Review V31和Response V32可见首屏通过；专题旧宏失败保留，同义宏修正后唯一复查的首屏两公式通过。全页/全表未覆盖，保持NOT_VERIFIED；[原截图与范围](records/render_check_v32.json)。最终metadata复核原CSV分子/分母、完整数量、所有旧正文hash及未改变数值source，不再次运行producer或旧FE Gate。
 # V31最终：完整保存场检查已完成，测试资格与求解失败分列
 
 writer、块代数、JSON事务、标签/预算、数值秩、诊断opt-in及严格新块guard的定向fixture通过；真实完整矩/非零方向FD和长缓存 qualification已执行。初始18项中的1个预期原因断言失败及其最小更正保留，不能抹成全程无失败。最终数学source c32723a6c176a75e69174bd7a9570b8c981c4160与文档HEAD分开，健康旧昂贵Gate未重复。

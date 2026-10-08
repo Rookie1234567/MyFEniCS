@@ -72,7 +72,26 @@
     "mathematical_result_changed": false,
     "verification": "One corrected-topic viewport attempt after publication; no repeated Review/Response or historical page sweep"
   },
-  "corrected_topic_visual": "NOT_VERIFIED_BEFORE_ONE_RECHECK",
+  "corrected_topic_visual": {
+    "status": "PASS_VISIBLE_FIRST_VIEWPORT_AND_TWO_FORMULAS_ONLY",
+    "observed": "Actual corrected GitHub screenshot viewed: both fenced formulas rendered, no prior operatorname error box or raw LaTeX; complete page/table not inspected",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8443a8708cc6138adcaea2ed6b0c402059158098/docs/task042extra_feinn_5nm/outcomes/multiscale_neural_support_v32.md",
+    "published_source_sha": "8443a8708cc6138adcaea2ed6b0c402059158098",
+    "published_git_blob_content_sha256": "5390d2024e84ab4c65b1f2dd0762a3150b593aef04364bb2cc2f18eb1a2c1b7d",
+    "screenshot": {
+      "path": "tmp/task42extra/v32/render_topic_recheck/page.png",
+      "bytes": 484983,
+      "sha256": "6a2cf1efdb35e9907740738cc2bbd052555012de0645e8dcafb5eceaa5d32743"
+    },
+    "summary": {
+      "path": "tmp/task42extra/v32/render_topic_recheck/watchdog/summary.json",
+      "bytes": 2321,
+      "sha256": "0043d74756cb3a424f57c98c65735abb792bbe3df5c6bfa9ae82c1b012a9a40f"
+    },
+    "original_failure_retained": true,
+    "attempts_after_macro_fix": 1,
+    "whole_page_visual": "NOT_VERIFIED"
+  },
   "whole_page_visual": "NOT_VERIFIED",
   "local_parser_is_not_visual_qualification": true
 }

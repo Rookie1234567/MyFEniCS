@@ -66,4 +66,4 @@ U/Q存储为32Nm字节。N=1e7、m4096时单此两对象1.31072e12B，是形状�
 
 source=a11c3ae2157f42a6874e54ec6cec29ab57fe0b81，完整固定前缀与读出修复source在[run index](records/run_index_v32.json)，文档HEAD另报；[targeted tests](records/tests_v32.json)、[selective依赖](records/selective_merge_manifest_v32.json)。生产默认不变、未获merge或初始化许可。GitHub有限新页视觉结果另绑定，不把Markdown解析通过当全页视觉PASS。
 
-有限GitHub首屏检查及公式宏原失败/最小修复见[呈现记录](records/render_check_v32.json)。只复查受影响的新专题页，不重渲染历史；未覆盖整页/全表保持NOT_VERIFIED。
+有限GitHub首屏检查及公式宏原失败/最小修复见[呈现记录](records/render_check_v32.json)。受影响新专题页仅复查一次，首屏两条公式已实际目视通过，旧宏失败保留；不重渲染历史，未覆盖整页/全表保持NOT_VERIFIED。

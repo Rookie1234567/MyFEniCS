@@ -312,6 +312,15 @@
       },
       "scope": "Lossless CSV/SVG normalization, preserved failed staged check, all compact data and history checks",
       "new_numeric_work": false
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/render_seal_checks/result.json",
+        "bytes": 4402,
+        "sha256": "55f50fcb3902e377457045e695116d2fbe73346a790620075c75e0224b6a3f94"
+      },
+      "scope": "After same-formula repair: actual Git verification of unchanged numerical source, compact figures/data/denominators, full preserved histories and local links",
+      "new_numeric_work": false
     }
   ],
   "later_delivery_check_and_exact_document_HEAD_in_receipt": true,
@@ -320,5 +329,6 @@
     "bytes": 4172,
     "sha256": "91bbc7e535ccb913921d2531a20fe7f25b41768fe4d4e8c01d53909ab718b822"
   },
-  "actual_visual_scope": "Review/Response first viewport only; topic macro failure retained and corrected-topic single recheck separate; no whole-page PASS inferred"
+  "actual_visual_scope": "Review/Response first viewport only; topic original macro failure retained, corrected-topic first viewport and two formulas passed; whole-page not verified",
+  "final_snapshot_check_and_all_closing_costs_in_delivery_receipt": true
 }

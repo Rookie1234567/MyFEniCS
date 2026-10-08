@@ -1642,8 +1642,8 @@
   },
   "campaign_continuous_limit_seconds": 57600,
   "final_delivery_reserve_seconds": 3600,
-  "record_snapshot_monotonic": 1369769.914306312,
-  "calendar_seconds": 30149.91430679499,
+  "record_snapshot_monotonic": 1370148.469950521,
+  "calendar_seconds": 30528.4699505209,
   "project_exact_cumulative_seconds": "UNKNOWN",
   "old_failures_lost_work_and_3284_seconds_retained": true,
   "publication_tail": "Metadata seal, bounded browser and exact Git/clearance costs remain in final delivery receipt; no overlapping costs summed",
@@ -1695,6 +1695,18 @@
       "sampled_process_tree_rss_peak_bytes": 85467136,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/render_seal_prep/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "fbe2644723f8705548b2189640ba289211b1097c5b2e6711d8221ce80cda4d11"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.0448201820254326,
+      "sampled_process_tree_rss_peak_bytes": 85745664,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
   "publication_final_calendar_is_in_delivery_receipt": true,
@@ -1734,6 +1746,22 @@
         "bytes": 453338,
         "sha256": "95dcad0e2585b21455f6092ed90cb4033419e85a641e4bdca0a0b71a8b0e6415"
       }
+    },
+    {
+      "name": "topic_single_macro_recheck",
+      "elapsed_supervised_seconds": 12.601698383921757,
+      "sampled_simultaneous_tree_peak_bytes": 861437952,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_topic_recheck/page.png",
+        "bytes": 484983,
+        "sha256": "6a2cf1efdb35e9907740738cc2bbd052555012de0645e8dcafb5eceaa5d32743"
+      }
     }
-  ]
+  ],
+  "final_metadata_Git_fetch_clearance_calendar_and_fee_receipt": "tmp/task42extra/v32/delivery_receipt.json",
+  "native_Linux_execution": true,
+  "legacy_watchdog_global_swap_label": "Original WSL-global text retained as a global diagnostic label; execution is native Linux, not WSL",
+  "prior_resource_stops_not_retroactively_qualified": true
 }
