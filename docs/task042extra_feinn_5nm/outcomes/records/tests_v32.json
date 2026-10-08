@@ -303,6 +303,15 @@
       },
       "scope": "Test-table addition and complete compact metadata; untracked CSV/SVG formatting was not covered until staging",
       "new_numeric_work": false
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_format_checks/result.json",
+        "bytes": 4274,
+        "sha256": "4e41421fd21a5aecbf87dc60e26fdd9078f529a373f089ee0a5f556151f373fd"
+      },
+      "scope": "Lossless CSV/SVG normalization, preserved failed staged check, all compact data and history checks",
+      "new_numeric_work": false
     }
   ],
   "later_delivery_check_and_exact_document_HEAD_in_receipt": true,
@@ -310,5 +319,6 @@
     "path": "tmp/task42extra/v32/publication_format_fix_receipt.json",
     "bytes": 4172,
     "sha256": "91bbc7e535ccb913921d2531a20fe7f25b41768fe4d4e8c01d53909ab718b822"
-  }
+  },
+  "actual_visual_scope": "Review/Response first viewport only; topic macro failure retained and corrected-topic single recheck separate; no whole-page PASS inferred"
 }

@@ -158,5 +158,21 @@
     "producer_repeated": false,
     "all_prior_raw_and_original_commit_retained": true,
     "monotonic": 1369165.113370665
+  },
+  "new_topic_visual_macro_repair": {
+    "kind": "documentation_macro_only",
+    "failure": "Actual GitHub topic viewport rejected operatorname{range}",
+    "hypothesis": "GitHub math macro allowlist; not a physical/numerical failure",
+    "change": "Replace operatorname{range} by same-meaning mathrm{range} in the new topic only",
+    "authority_or_historical_document_changed": false,
+    "numerical_source_changed": false,
+    "producer_repeated": false,
+    "retained_failed_screenshot": {
+      "path": "tmp/task42extra/v32/render_check/topic/page.png",
+      "bytes": 453338,
+      "sha256": "95dcad0e2585b21455f6092ed90cb4033419e85a641e4bdca0a0b71a8b0e6415"
+    },
+    "mathematical_result_changed": false,
+    "verification": "One corrected-topic viewport attempt after publication; no repeated Review/Response or historical page sweep"
   }
 }

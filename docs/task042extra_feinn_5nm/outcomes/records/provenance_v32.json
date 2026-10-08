@@ -58,13 +58,13 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v32.json",
-      "bytes": 7425,
-      "sha256": "d7b3ddfe2fc8582410721a2f23b614a42d3676b352fa6480fd1b3936aa16da07"
+      "bytes": 8276,
+      "sha256": "ffab68293222f839b42478ff8d0e7a1785b474af11ecaab979af06b5bf04138c"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v32.json",
-      "bytes": 81944,
-      "sha256": "9c39d8a02f7e1755bed696d5022fd3205bff070c0be17d03a037e2dca701b442"
+      "bytes": 83700,
+      "sha256": "e742ab6613264aebb04a1af40d76b5205bb262f6f8d25717f55b97cc42f841f7"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v32.json",
@@ -88,13 +88,18 @@
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v32.json",
-      "bytes": 21295,
-      "sha256": "3d40a843fa5a27f4df2e3ee0d9d042fce622c7c0278546ebedfc70cb3cedf852"
+      "bytes": 21837,
+      "sha256": "26774f03f551454ae43e62f82f58ac670e5bedff5db37ae6ac0c605ec9bec6d8"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/unlabelled_direction_witness_v32.json",
       "bytes": 5554,
       "sha256": "d9f9b27ac5c38f3bdf17e7cb27362143db3ac81794ba0d5a6c78b3aba1e75296"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v32.json",
+      "bytes": 4072,
+      "sha256": "167f1e41758c07c92889382791a8af77ed0c84a01688f4ce5b91b680672c05c8"
     }
   ],
   "numerical_chain": [
@@ -206,8 +211,8 @@
     },
     {
       "path": "tmp/task42extra/v32/final_delivery_checks.py",
-      "bytes": 6613,
-      "sha256": "74ec56d631df0180162b30de41fd380803f7d029d3ab69809e47c33c1b873f84"
+      "bytes": 6928,
+      "sha256": "91753e68c5b30bd9620416ca5ce1694ec727149451378379d5cfa1f529d19e41"
     },
     {
       "path": "tmp/task42extra/v32/publication_tail.py",
@@ -223,6 +228,16 @@
       "path": "tmp/task42extra/v32/publication_format_fix.py",
       "bytes": 4979,
       "sha256": "7d63e610c8ec5fc72a12094ddd86892fc7bf8ce800e59ac0e9e74fb23bf6cc91"
+    },
+    {
+      "path": "tmp/task42extra/v32/launch_render_check.py",
+      "bytes": 3067,
+      "sha256": "6f6b9c4f4fcf87c72cc2de6050f332852b5e857d37b8fa5d7446d793a7803c4a"
+    },
+    {
+      "path": "tmp/task42extra/v32/render_seal_prep.py",
+      "bytes": 6177,
+      "sha256": "d41c31e5d31533ea6e2072967ffac2fb37ea9941b960381fd448aecf1b4641fc"
     }
   ]
 }

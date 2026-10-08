@@ -1,0 +1,78 @@
+{
+  "numerical_source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+  "initial_actual_visual": [
+    {
+      "name": "review",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/2b841cb6910be14fcaf9fea98ea59b7f458a5c94/docs/task042extra_feinn_5nm/review_report_v31.md",
+      "published_source_sha": "2b841cb6910be14fcaf9fea98ea59b7f458a5c94",
+      "published_git_blob_content_sha256": "59b128ca9182398833851fc90772a719c70d8d2cbad5cc517f62ad5e83fb1963",
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_check/review/page.png",
+        "bytes": 442088,
+        "sha256": "d3c18b02b41739023826dee44cab158a0ca3a7a3590cffdd1066ec27f707eb9c"
+      },
+      "status": "PASS_VISIBLE_FIRST_VIEWPORT_ONLY",
+      "observed": "Correct Review V31 title, opening decision and identity block; no complete table or formula in inspected viewport",
+      "elapsed_supervised_seconds": 19.401110148988664,
+      "sampled_simultaneous_tree_peak_bytes": 898170880,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "whole_page_visual": "NOT_VERIFIED"
+    },
+    {
+      "name": "response",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/7ffa65a01d63f17b8bf87b5ef8c11ef91f3b8dc1/docs/task042extra_feinn_5nm/response_v32.md",
+      "published_source_sha": "7ffa65a01d63f17b8bf87b5ef8c11ef91f3b8dc1",
+      "published_git_blob_content_sha256": "2ca3357acf2c441b34de008434771ff40b18f050e37d803def47e8534025d4f5",
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_check/response/page.png",
+        "bytes": 335200,
+        "sha256": "7b447dc62b644549e8a02298e6e905cf38beec58d85129297ed2a948a70182cd"
+      },
+      "status": "PASS_VISIBLE_FIRST_VIEWPORT_ONLY",
+      "observed": "Correct Response V32 title, conclusions, table header and initial rows; remainder of table and page not visually qualified",
+      "elapsed_supervised_seconds": 6.531625383999199,
+      "sampled_simultaneous_tree_peak_bytes": 862019584,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "whole_page_visual": "NOT_VERIFIED"
+    },
+    {
+      "name": "topic",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/7ffa65a01d63f17b8bf87b5ef8c11ef91f3b8dc1/docs/task042extra_feinn_5nm/outcomes/multiscale_neural_support_v32.md",
+      "published_source_sha": "7ffa65a01d63f17b8bf87b5ef8c11ef91f3b8dc1",
+      "published_git_blob_content_sha256": "a800a10e15eeb1b82da071c797b389548dbea1970859cc9b6776256838eec128",
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_check/topic/page.png",
+        "bytes": 453338,
+        "sha256": "95dcad0e2585b21455f6092ed90cb4033419e85a641e4bdca0a0b71a8b0e6415"
+      },
+      "status": "FAIL_VISIBLE_FORMULA_MACRO",
+      "observed": "First formula rendered; second formula displayed operatorname rejection and raw LaTeX in actual GitHub page",
+      "elapsed_supervised_seconds": 12.74474707315676,
+      "sampled_simultaneous_tree_peak_bytes": 1109323776,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "whole_page_visual": "NOT_VERIFIED"
+    }
+  ],
+  "macro_repair": {
+    "kind": "documentation_macro_only",
+    "failure": "Actual GitHub topic viewport rejected operatorname{range}",
+    "hypothesis": "GitHub math macro allowlist; not a physical/numerical failure",
+    "change": "Replace operatorname{range} by same-meaning mathrm{range} in the new topic only",
+    "authority_or_historical_document_changed": false,
+    "numerical_source_changed": false,
+    "producer_repeated": false,
+    "retained_failed_screenshot": {
+      "path": "tmp/task42extra/v32/render_check/topic/page.png",
+      "bytes": 453338,
+      "sha256": "95dcad0e2585b21455f6092ed90cb4033419e85a641e4bdca0a0b71a8b0e6415"
+    },
+    "mathematical_result_changed": false,
+    "verification": "One corrected-topic viewport attempt after publication; no repeated Review/Response or historical page sweep"
+  },
+  "corrected_topic_visual": "NOT_VERIFIED_BEFORE_ONE_RECHECK",
+  "whole_page_visual": "NOT_VERIFIED",
+  "local_parser_is_not_visual_qualification": true
+}

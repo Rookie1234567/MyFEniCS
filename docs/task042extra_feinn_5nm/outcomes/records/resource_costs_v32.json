@@ -1642,8 +1642,8 @@
   },
   "campaign_continuous_limit_seconds": 57600,
   "final_delivery_reserve_seconds": 3600,
-  "record_snapshot_monotonic": 1368938.590845383,
-  "calendar_seconds": 29318.590845383005,
+  "record_snapshot_monotonic": 1369769.914306312,
+  "calendar_seconds": 30149.91430679499,
   "project_exact_cumulative_seconds": "UNKNOWN",
   "old_failures_lost_work_and_3284_seconds_retained": true,
   "publication_tail": "Metadata seal, bounded browser and exact Git/clearance costs remain in final delivery receipt; no overlapping costs summed",
@@ -1683,7 +1683,57 @@
       "sampled_process_tree_rss_peak_bytes": 86892544,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_format_fix/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "7df76bce84f61b5c0b35d909520282fe270ab8c0b7f5e11d093b3af6d7ae3aef"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.9538420021999627,
+      "sampled_process_tree_rss_peak_bytes": 85467136,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
     }
   ],
-  "publication_final_calendar_is_in_delivery_receipt": true
+  "publication_final_calendar_is_in_delivery_receipt": true,
+  "bounded_actual_browser_attempts": [
+    {
+      "name": "review",
+      "elapsed_supervised_seconds": 19.401110148988664,
+      "sampled_simultaneous_tree_peak_bytes": 898170880,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_check/review/page.png",
+        "bytes": 442088,
+        "sha256": "d3c18b02b41739023826dee44cab158a0ca3a7a3590cffdd1066ec27f707eb9c"
+      }
+    },
+    {
+      "name": "response",
+      "elapsed_supervised_seconds": 6.531625383999199,
+      "sampled_simultaneous_tree_peak_bytes": 862019584,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_check/response/page.png",
+        "bytes": 335200,
+        "sha256": "7b447dc62b644549e8a02298e6e905cf38beec58d85129297ed2a948a70182cd"
+      }
+    },
+    {
+      "name": "topic",
+      "elapsed_supervised_seconds": 12.74474707315676,
+      "sampled_simultaneous_tree_peak_bytes": 1109323776,
+      "own_swap_bytes": 0,
+      "descendants_cleared": true,
+      "screenshot": {
+        "path": "tmp/task42extra/v32/render_check/topic/page.png",
+        "bytes": 453338,
+        "sha256": "95dcad0e2585b21455f6092ed90cb4033419e85a641e4bdca0a0b71a8b0e6415"
+      }
+    }
+  ]
 }

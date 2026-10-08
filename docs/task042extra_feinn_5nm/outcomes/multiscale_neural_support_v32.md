@@ -13,7 +13,7 @@ E_\theta(x)=\sum_{j,\nu}\chi_j(x)p_{j\nu}\exp\{{\rm i}q_{j\nu}\cdot(x-x_j)\},\qq
 ```
 
 ```math
-r=f-Ac,\quad Z=(I-QQ^*)AC,\quad S(C)=\|P_{\operatorname{range}(Z)}r\|_2^2.
+r=f-Ac,\quad Z=(I-QQ^*)AC,\quad S(C)=\|P_{\mathrm{range}(Z)}r\|_2^2.
 ```
 
 这里Q是已保留神经函数经过原A作用后的正交列，不是全FE逆。每块保留独立复幅值方向，后续全部幅值共同重组合，旧q冻结；两遍投影、小QR/SVD、固定rcond1e-12和原A复算保护近相关块。新C固定seed4213201，零散射起点，不用旧3858列或监督权重。冻结设计含8窗口、方向界、12iter/18实际调用守卫、轮转和共同慢降扩宽规则，不扫描半径/损失/截断。
@@ -65,3 +65,5 @@ U/Q存储为32Nm字节。N=1e7、m4096时单此两对象1.31072e12B，是形状�
 本M5学习联合FAIL，因此长度×0.14、统一λ0.7材料的真实三维缩小pilot是NOT_RUN_M5_LEARNED_JOINT_GATE_FAILED；不拿解析平面波或另一个Si值替代。完整原目标仍未达。关闭的是这份有限预算、多尺度native-block greedy配置，而非所有神经研究；不自动追加第三路线/改loss/调权/加p/h/端口/长训练。原较好M3600、终态退化、D0成本否决/D1未运行和旧FAIL/UNKNOWN/费用保留。
 
 source=a11c3ae2157f42a6874e54ec6cec29ab57fe0b81，完整固定前缀与读出修复source在[run index](records/run_index_v32.json)，文档HEAD另报；[targeted tests](records/tests_v32.json)、[selective依赖](records/selective_merge_manifest_v32.json)。生产默认不变、未获merge或初始化许可。GitHub有限新页视觉结果另绑定，不把Markdown解析通过当全页视觉PASS。
+
+有限GitHub首屏检查及公式宏原失败/最小修复见[呈现记录](records/render_check_v32.json)。只复查受影响的新专题页，不重渲染历史；未覆盖整页/全表保持NOT_VERIFIED。
