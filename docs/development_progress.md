@@ -1,12 +1,16 @@
 # 项目开发进度：Task000–Task041
 
-## 2026-10-08：Task041 W0.7 deferred-AMD组件与warm准入准备
+## 2026-10-08：Task041 W0.7 deferred-AMD组件收口与唯一warm run进行中
 
 代码提交`6caf43ebd52b14bf0c9423b33353e7fc8f38f27f`已推送至Task041原分支。为避免在大因子数值分解前才发现内存不足，注册的W0.7 P4路径将MUMPS流程拆为symbolic结构分析和同句柄numeric分解，并将PETSc 3.19.6 JOB_NULL缓存请求、版本推导输入及symbolic后的实际控制值分开核验。仅W0.7 deferred P4 opt-in启用AMD候选（ICNTL7=0/28=1、14=40）；普通KSP/default和one-cell路径不变。
 
 serial两selector通过，父wall`3.040390633046627 s`；MPI2三个selector每rank各3 passed，父wall`2.0312472369987518 s`。两个pytest attempt合计`5.071637870045379 s`，各唯一记入V5；ledger 174项SHA `531d777d369c8d84e58120ec79eabb638dd7fb8e4c03b2fdac3a33f5290515d2`。这只证明8×8复矩阵桥接口、预算分支和同句柄生命周期，不是生产因子容量、完整FE或0.7 nm目标资格。扩展SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。
 
-准备包使用预测阶段门`sym: fresh B + Δ + W <= cap`和`numeric: fresh_numeric_B + one INFOG(17) × 1e6 + W <= cap`；INFOG(17)为rank总和，只取一份。`W=5,322,116,301 B`是政策预留而非误差上界，源码预测Δ也不是RSS保证。当前ignored warm包已保留原字节归档，正重绑最终clean HEAD、所有源码、编译扩展、旧producer packet和实际argv；随后fresh复核node0/host资源与unit并运行MPI8 native ABI，所有门通过后按用户授权唯一dispatch一次。此前唯一W0.7 warm场仍是top P4构造超cap的`controlled_stop`；该失败不改写，且本组件没有新production dispatch、QEP或FE。
+准备包使用预测阶段门`sym: fresh B + Δ + W <= cap`和`numeric: fresh_numeric_B + one INFOG(17) × 1e6 + W <= cap`；INFOG(17)为全rank总量，只取一份。`W=5,322,116,301 B`是政策预留而非误差上界，源码预测Δ也不是RSS保证。最终包和新MPI8 ABI均通过后，只dispatch一次；当前唯一新warm Invocation为`3d6b63c763414ad984beb60f1296458e`，unit `task041-v10r2-w0p7-deferred-amd-warm-20261008T082944Z.service`，源码HEAD `819ed980502783f4a11b8ea2c690dc8add44e81a`，rank map `[10,11,12,14,15,16,17,18]`，NRestarts=0。它复用已核producer packet，本次QEP调用0。
+
+Consumer已通过one-cell因子的分阶段门：实际factor source matrix为`15,120×15,120`；八个rank的`MatGetInfo.local_nnz_used`分别为`867,744/1,041,192/922,464/803,736/1,045,836/817,164/794,448/831,096`，一次求和为`7,123,680`。`one_cell_factor_ready`的`rows=17,280`是端口/输出行口径，`interior_rows=15,120`，不等同于factor source rows。symbolic后MUMPS `INFOG(17)=2630`按5.6.2手册解释为million bytes的全rank合计，预算只取一份；同一分析记录的`INFOG(7)=4/INFOG(32)=1`表示sequential PORD，公开控制回读为空，符合one-cell保留旧排序，不是AMD。`before_symbolic`使用当次`B=23,705,509,888 B`和已完成one-cell宽阶段窗口`Δ=10,972,278,784 B`，加`W`后的筛查值`39,999,904,973 B`低于cap；该Δ是阶段校准窗口，不是独立因子峰或RSS上界。symbolic后使用fresh `B=23,727,190,016 B`、`INFOG(17)×10^6=2,630,000,000 B`及`W`，筛查值`31,679,306,317 B`也低于cap。因子在consumer marker `one_cell_factor_ready`以`679.020 s`记录；800列lift于`872.206 s`结束，`872.249 s`进入forward 400列apply。apply marker给出的五个分布式PETSc dense缓冲payload下界为`525,312,000 B`；复制的输入和输出各`110,592,000 B/rank`（每项树总计`884,736,000 B`）。elapsed约`875.154 s`时process-tree authority为`28,463,132,672 B`，专属service cgroup current/peak为`26,493,710,336 B`，host `MemAvailable=2,105,552,044,032 B`。这些是不同scope的现场读数，不能相加；global swap仅观察，job/cgroup swap为0。
+
+本次仍在consumer setup并持续使用CPU；截至上述样本，bottom/top P4、固定反馈门、outer、五项真实残差、recovery/physics和finalizer均未到达，因此没有整场数值结论。此前top P4超cap的controlled-stop及原始wall照旧保留，不被本次one-cell门通过改写。运行中仅按V9 allowlist更新进度文档；W2不执行，50×25 nm、2 TB及48 h资格仍未达。
 
 cap/warning/floor保持`53,221,163,008/47,899,046,707/412,316,860,416 B`，swap仅观察，W2不执行。W0.7 reduced pilot尚未到outer、五真残差、recovery或physics；50×25 nm、2 TB及48 h目标均未达。详情见[Task041 Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)、[outcomes summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)和[测试摘要](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)。
 
