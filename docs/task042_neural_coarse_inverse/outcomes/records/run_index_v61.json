@@ -191,6 +191,70 @@
       "descendants_cleared": true,
       "peak_bytes": 1219809280,
       "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v61/aux_post_collect01",
+      "source_sha": "2681258fe60745bb06d30dea9f88d60fbebf751c",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T02:40:59.782841+00:00",
+        "observed_monotonic": 1352254.643708336,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 11742.264239549637,
+        "heavy_remaining_seconds": 20657.735760450363,
+        "total_remaining_seconds": 24257.735760450363
+      },
+      "elapsed_seconds": 193.23578162794,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 981426176,
+      "swap_bytes": 0
+    },
+    {
+      "role": "post",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v61/aux_post_docs01",
+      "source_sha": "3ab03408768b90357d797dd2d1a5ad77011c3456",
+      "before_clock": {
+        "start_utc": "2026-10-07T23:25:17.518602+00:00",
+        "start_monotonic": 1340512.38,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 32400,
+        "total_limit_seconds": 36000,
+        "scientific_loaded_limit_seconds": 28800,
+        "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+        "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "monotonic_observation_precision_seconds": 0.01,
+        "observed_utc": "2026-10-08T02:55:54.245558+00:00",
+        "observed_monotonic": 1353149.10642484,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 12636.726955890656,
+        "heavy_remaining_seconds": 19763.273044109344,
+        "total_remaining_seconds": 23363.273044109344
+      },
+      "elapsed_seconds": 71.2168287220411,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 120127488,
+      "swap_bytes": 0
     }
   ],
   "pointers": {
@@ -353,5 +417,29 @@
       "source_sha": "d42ac36b99bd758478da7ce42b34215826832676"
     }
   },
-  "old_window_closed": true
+  "old_window_closed": true,
+  "closed": true,
+  "active": null,
+  "final_snapshot_clock": {
+    "start_utc": "2026-10-07T23:25:17.518602+00:00",
+    "start_monotonic": 1340512.38,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+    "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "monotonic_observation_precision_seconds": 0.01,
+    "closed_utc": "2026-10-08T03:00:10.161041+00:00",
+    "observed_utc": "2026-10-08T03:01:58.476108+00:00",
+    "observed_monotonic": 1353513.336975377,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 13000.95750617981,
+    "heavy_remaining_seconds": 19399.04249382019,
+    "total_remaining_seconds": 22999.04249382019
+  }
 }

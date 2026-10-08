@@ -1,0 +1,40 @@
+{
+  "clock": {
+    "start_utc": "2026-10-07T23:25:17.518602+00:00",
+    "start_monotonic": 1340512.38,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+    "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "monotonic_observation_precision_seconds": 0.01,
+    "observed_utc": "2026-10-08T03:00:10.160974+00:00",
+    "observed_monotonic": 1353405.021841381,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12892.642372369766,
+    "heavy_remaining_seconds": 19507.357627630234,
+    "total_remaining_seconds": 23107.357627630234
+  },
+  "closed_utc": "2026-10-08T03:00:10.161041+00:00",
+  "ledger_closed": true,
+  "window_closed": true,
+  "active": null,
+  "own_actors": [],
+  "descendants_cleared_by_each_supervisor": true,
+  "own_lock_path": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+  "own_lock_obtained_and_released": true,
+  "new_global_solves": 2,
+  "new_numeric_factor_attempts": 2,
+  "stop": "all fixed authorized scientific paths completed",
+  "neighbor_processes_modified": 0,
+  "notification_sent": false,
+  "scientific_sources": [
+    "0881cb94ad8fb84915c9a1f5f1589c2124d73396",
+    "2681258fe60745bb06d30dea9f88d60fbebf751c"
+  ]
+}

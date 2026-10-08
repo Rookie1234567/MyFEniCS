@@ -6,6 +6,26 @@
       "bytes": 458618,
       "sha256": "6386e21bb56bfc0fe0993072739ff831364db07ff130c0f97f44ca38059eb86c"
     },
+    "closure_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/closure_v61.json",
+      "bytes": 1563,
+      "sha256": "524c942c49c60fbe769dca2352c2f2ff015cb52c415bd7ce5a16b8bb5d951a53"
+    },
+    "decision_and_not_run_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/decision_and_not_run_v61.json",
+      "bytes": 1061,
+      "sha256": "05c922d850f37ee8962aeebb7e17173a725349d1bcfc38fb869fb7ff8ffe4b53"
+    },
+    "disk_storage_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/disk_storage_v61.json",
+      "bytes": 1593,
+      "sha256": "c1964b3fc71d6cfb2680f50d8a5f86c330c36832499143288de26c1709b84315"
+    },
+    "documentation_checks_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v61.json",
+      "bytes": 7135,
+      "sha256": "c679e6e8c01378251f0db2ad4dfe7f42ef3934c2b7dd11a0839b5c108405e2b3"
+    },
     "face_inventory_and_action_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/face_inventory_and_action_v61.json",
       "bytes": 74939,
@@ -16,15 +36,20 @@
       "bytes": 23193,
       "sha256": "559eb95835cdc1913b1638117b6e4816725eed19000c3fed3a9850b62efbf254"
     },
+    "raw_tail_final_v61.json": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/raw_tail_final_v61.json",
+      "bytes": 42098,
+      "sha256": "548a4dac775cacafa8d455c335258650f607749b9669a25c1d304ac7250accc8"
+    },
     "repair_journal_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/repair_journal_v61.json",
-      "bytes": 297,
-      "sha256": "7d39b0e31d0dc422e137addc74083f8fbee6f91a158f9fef0c24cab13050f0f8"
+      "bytes": 1637,
+      "sha256": "b6d1348d0fd7fe3ff3cdea0ec4a12581cceb85c03e9aeafcede90b06c7136803"
     },
     "resource_costs_final_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v61.json",
-      "bytes": 72156,
-      "sha256": "a7db12021314f2dbc902fea0580f22693c5646d446df8f0aef1f636e5259f367"
+      "bytes": 99925,
+      "sha256": "a862136b0f7aeb76233e3ea4c8effbb0d5f2a4524650344288ac89f53597a882"
     },
     "resource_costs_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v61.json",
@@ -33,8 +58,8 @@
     },
     "run_index_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v61.json",
-      "bytes": 13939,
-      "sha256": "a66a81f80f8da94a4cae7cd3c1ee356cf9db157895cced3bddab316974f3091c"
+      "bytes": 17751,
+      "sha256": "bf60b2368f6f1896ea5325cf5dbf687fb628e2fb50ed74e5683dd4796dfc6830"
     },
     "scientific_checks_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/scientific_checks_v61.json",
@@ -48,8 +73,8 @@
     },
     "source_bindings_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_bindings_v61.json",
-      "bytes": 140492,
-      "sha256": "d29d59e52a705428d8690a5fba319ca350a72ced9b7816e58c66b60e4708a1b2"
+      "bytes": 210882,
+      "sha256": "1ed3a25002bdd06b94454ee6da2a50673c207c6e14eb327aaf2b7de07c1d75c1"
     },
     "storage_lifecycle_deployment_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/storage_lifecycle_deployment_v61.json",
@@ -63,8 +88,8 @@
     },
     "tests_v61.json": {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/tests_v61.json",
-      "bytes": 93927,
-      "sha256": "5326b38a0bd6cab3b8ce89b8ec69efcad5685fd37d48d3eb29620cd158fc41e8"
+      "bytes": 94112,
+      "sha256": "db5beb567ba2827cda4f365617861b129e9c044cac9fbe6bd64bfe9783f8588f"
     }
   },
   "parent": {
@@ -344,5 +369,44 @@
   "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
   "raw_archive_index": "raw_archive_index_v61.json",
   "array_inventory": "array_inventory_v61.json",
-  "documentation_and_cost_records_finalized_after_scientific_freeze": true
+  "documentation_and_cost_records_finalized_after_scientific_freeze": true,
+  "final_byte_documents": {
+    "docs/task042_neural_coarse_inverse/response_v61.md": {
+      "path": "docs/task042_neural_coarse_inverse/response_v61.md",
+      "bytes": 11281,
+      "sha256": "81adb4e087ce7be894221825508b5389822cdcb0f2e076dc9202750105eb1c94"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/face_trace_enrichment_v61.md": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/face_trace_enrichment_v61.md",
+      "bytes": 12293,
+      "sha256": "2acfcbdcf4b4e3d2247f7959096dac4be42a251898e2fe0ec1cc8dbb1d31a009"
+    }
+  },
+  "final_actor_state": {
+    "ledger_closed": true,
+    "active": null,
+    "all_descendants_cleared": true
+  },
+  "final_snapshot_clock": {
+    "start_utc": "2026-10-07T23:25:17.518602+00:00",
+    "start_monotonic": 1340512.38,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "intake_HEAD": "b733f988607c344cd7cebe164355e5e89dea0bc4",
+    "contract_HEAD": "9077e392a367afd7b90b61a85c1e0952f256b4ee",
+    "closed": true,
+    "first_work_start_never_refreshed": true,
+    "monotonic_observation_precision_seconds": 0.01,
+    "closed_utc": "2026-10-08T03:00:10.161041+00:00",
+    "observed_utc": "2026-10-08T03:05:25.772892+00:00",
+    "observed_monotonic": 1353720.633759345,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 13208.25429058075,
+    "heavy_remaining_seconds": 19191.74570941925,
+    "total_remaining_seconds": 22791.74570941925
+  }
 }

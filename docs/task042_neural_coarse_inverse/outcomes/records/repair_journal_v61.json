@@ -9,5 +9,38 @@
       "scientific_actor": false
     }
   ],
-  "failures_preserved": true
+  "failures_preserved": true,
+  "light_control_incidents": {
+    "entries": [
+      {
+        "label": "metadata inspect stdin indentation",
+        "exit_code": 1,
+        "stderr": "File \"<stdin>\", line 14\nIndentationError: unexpected indent\n",
+        "known_tool_wall_seconds": 0.629400987,
+        "action": "corrected only control stdin indentation; no scientific replay"
+      },
+      {
+        "label": "rg after qualification PATH narrowed",
+        "exit_code": 127,
+        "stderr": "/bin/bash: line 11: rg: command not found\n",
+        "known_tool_wall_seconds": 0.726681036,
+        "action": "file search performed outside activation; no numerical or environment change"
+      }
+    ],
+    "classification": "light_control_only",
+    "not_formal_scientific_actor_stderr": true,
+    "other_uncaptured_control_CPU": "unknown",
+    "no_case_replay": true,
+    "original_tool_return_excerpts": true,
+    "full_original_stderr_file": "not captured; original tool transcript retained"
+  },
+  "scientific_solver_replays": 0,
+  "scientific_root_cause_repairs": 0,
+  "planned_saved_checker_addition": {
+    "source_sha": "2681258fe60745bb06d30dea9f88d60fbebf751c",
+    "purpose": "independent partition of saved ambient vectors and one allowed R7 comparison",
+    "targeted_tests": 6,
+    "additional_PDE_solves": 0,
+    "additional_numeric_factors": 0
+  }
 }
