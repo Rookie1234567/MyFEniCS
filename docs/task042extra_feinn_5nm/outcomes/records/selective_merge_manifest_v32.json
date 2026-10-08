@@ -1,0 +1,103 @@
+{
+  "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+  "groups": {
+    "production numerical/core": {
+      "files": [],
+      "numerical_boundary": "No qualified production solver; ordinary default unchanged",
+      "dependencies": "Original M5 A/f/full moments/MPC/40 modes/material; source chains bound in checks and run index",
+      "tests": "tests_v32.json; multiscale_checks_v32.json; original-QR qualifications and full array checker",
+      "fresh_PDE_evidence": "full_numerical_gates_v32.json",
+      "merge_recommendation": "Research branch only; no production or merge approval"
+    },
+    "research-only": {
+      "files": [
+        "src/solvers/neural_wave_block.py",
+        "src/solvers/neural_wave_block_reconstruction.py",
+        "src/solvers/neural_wave_greedy.py",
+        "src/solvers/neural_wave_local_action.py",
+        "src/solvers/neural_wave_moments.py",
+        "src/solvers/neural_wave_multiscale.py",
+        "src/solvers/neural_wave_multiscale_qualification.py",
+        "src/solvers/neural_wave_multiscale_validation.py",
+        "src/solvers/neural_wave_qr_refresh.py",
+        "src/solvers/neural_wave_reconstruction.py"
+      ],
+      "numerical_boundary": "Opt-in research source and finite targeted qualification; joint M5 result remains authoritative",
+      "dependencies": "Original M5 A/f/full moments/MPC/40 modes/material; source chains bound in checks and run index",
+      "tests": "tests_v32.json; multiscale_checks_v32.json; original-QR qualifications and full array checker",
+      "fresh_PDE_evidence": "full_numerical_gates_v32.json",
+      "merge_recommendation": "Research branch only; no production or merge approval"
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "src/io/multiscale_wave_campaign.py",
+        "src/io/neural_wave_campaign.py",
+        "src/runners/block_wave_admission.py",
+        "src/runners/durable_terminal.py",
+        "src/runners/multiscale_wave_worker.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/runners/neural_wave_dependencies.py",
+        "src/runners/neural_wave_worker.py"
+      ],
+      "numerical_boundary": "Opt-in research source and finite targeted qualification; joint M5 result remains authoritative",
+      "dependencies": "Original M5 A/f/full moments/MPC/40 modes/material; source chains bound in checks and run index",
+      "tests": "tests_v32.json; multiscale_checks_v32.json; original-QR qualifications and full array checker",
+      "fresh_PDE_evidence": "full_numerical_gates_v32.json",
+      "merge_recommendation": "Research branch only; no production or merge approval"
+    },
+    "checker/benchmark": {
+      "files": [
+        "input/task042extra_feinn_5nm/design_v32.json",
+        "input/task042extra_feinn_5nm/v32_fixed_multiscale_wave.dat",
+        "input/task042extra_feinn_5nm/v32_fixed_original_qr_checks.dat",
+        "input/task042extra_feinn_5nm/v32_fixed_validate_1.dat",
+        "input/task042extra_feinn_5nm/v32_fixed_validate_2.dat",
+        "input/task042extra_feinn_5nm/v32_learned_multiscale_wave.dat",
+        "input/task042extra_feinn_5nm/v32_learned_original_qr_checks.dat",
+        "input/task042extra_feinn_5nm/v32_learned_validate_1.dat",
+        "input/task042extra_feinn_5nm/v32_learned_validate_2.dat",
+        "input/task042extra_feinn_5nm/v32_multiscale_compare.dat",
+        "input/task042extra_feinn_5nm/v32_multiscale_reconstruct.dat",
+        "input/task042extra_feinn_5nm/v32_multiscale_wave_checks.dat",
+        "input/task042extra_feinn_5nm/v32_saved_support_audit.dat",
+        "input/task042extra_feinn_5nm/v32_support_direction_witness.dat",
+        "input/task042extra_feinn_5nm/v32_support_reference_bound.dat",
+        "src/postprocessing/neural_wave_support_audit.py",
+        "src/test/test_neural_wave_multiscale.py",
+        "src/test/test_neural_wave_qr_refresh.py"
+      ],
+      "numerical_boundary": "Opt-in research source and finite targeted qualification; joint M5 result remains authoritative",
+      "dependencies": "Original M5 A/f/full moments/MPC/40 modes/material; source chains bound in checks and run index",
+      "tests": "tests_v32.json; multiscale_checks_v32.json; original-QR qualifications and full array checker",
+      "fresh_PDE_evidence": "full_numerical_gates_v32.json",
+      "merge_recommendation": "Research branch only; no production or merge approval"
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/task042extra_feinn_5nm/outcomes/design_multiscale_v32.md"
+      ],
+      "numerical_boundary": "Opt-in research source and finite targeted qualification; joint M5 result remains authoritative",
+      "dependencies": "Original M5 A/f/full moments/MPC/40 modes/material; source chains bound in checks and run index",
+      "tests": "tests_v32.json; multiscale_checks_v32.json; original-QR qualifications and full array checker",
+      "fresh_PDE_evidence": "full_numerical_gates_v32.json",
+      "merge_recommendation": "Research branch only; no production or merge approval"
+    },
+    "do-not-merge": {
+      "files": [],
+      "numerical_boundary": "Opt-in research source and finite targeted qualification; joint M5 result remains authoritative",
+      "dependencies": "Original M5 A/f/full moments/MPC/40 modes/material; source chains bound in checks and run index",
+      "tests": "tests_v32.json; multiscale_checks_v32.json; original-QR qualifications and full array checker",
+      "fresh_PDE_evidence": "full_numerical_gates_v32.json",
+      "merge_recommendation": "Research branch only; no production or merge approval"
+    }
+  },
+  "do_not_merge_artifacts": "Ignored complete U/Q/R/models/checkpoints/fields/logs/caches/environments; no other branch files",
+  "suggested_review_order": [
+    "research-only",
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs"
+  ],
+  "production_default_unchanged": true,
+  "merge_approved": false
+}

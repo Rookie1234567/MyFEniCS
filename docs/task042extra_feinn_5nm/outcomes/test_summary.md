@@ -1,3 +1,24 @@
+# V32：最小fixture、真实完整矩和最终保存数组Gate
+
+最小测试分次运行，JUnit原失败与重复case名称保留，不把次数相加冒充唯一测试数。最终多尺度/global/Piola/MPC/复导数/batch/轮转/标签隔离资格，QR强相消回滚与真实1377列修复，随后实际两路线与原数组独立审核均已完成；测试通过不等于M5联合通过。未full pytest/重装/CI；健康旧FE/材料/参考资格按同hash复用，不重跑V30/V31完整验收。
+
+[全部JUnit/source](records/tests_v32.json)、[真实12列资格](records/multiscale_checks_v32.json)、[完整数组指标](records/full_numerical_gates_v32.json)、[原失败/修复](records/repair_journal_v32.json)。
+
+
+V32分次本地JUnit实测如下。各行共享部分case，不能相加作为唯一测试总数；首次失败的原JUnit和费用继续保存。
+
+| 范围 / 原JUnit目录（均在tmp/task42extra/v32） | 实际结果 | 具体边界 |
+| --- | --- | --- |
+| targeted_tests_1 | 27通过 | 新多尺度调度、完整块、标签和事务fixture |
+| targeted_tests_final | 31通过 | 冻结实现前最终定向资格；后续改动只重验受影响项 |
+| socket_repair_tests | 14通过 | stage绑定的短socket、恢复与原窗口保护 |
+| qr_refresh_tests | 27通过 / 1失败 | 强相关fixture的真实作用配对须拒绝；修正预期而不放宽门 |
+| qr_refresh_tests_final | 28通过 / 1失败 | toy fixture遗漏route_seconds；补齐同一计时契约 |
+| qr_refresh_tests_qualified | 29通过 | 最终复数、强相消、回滚、原子重开和原AU配对 |
+| qr_resource_classification_tests | 1通过 / 7未选 | 只重验真实QR资格的numerical角色分类，不重跑无关旧测试 |
+| 真实M5完整矩资格 / 1377列原作用QR资格 | 均实际通过 | 非fixture；原1e-10作用/重建门、全部自由度族及MPC |
+| 最终独立FE与保存数组checker | 完成，联合FAIL | 136项指标、640复通道值、160逐级功率；不以实现测试替代数值门 |
+
 # V31最终：完整保存场检查已完成，测试资格与求解失败分列
 
 writer、块代数、JSON事务、标签/预算、数值秩、诊断opt-in及严格新块guard的定向fixture通过；真实完整矩/非零方向FD和长缓存 qualification已执行。初始18项中的1个预期原因断言失败及其最小更正保留，不能抹成全程无失败。最终数学source c32723a6c176a75e69174bd7a9570b8c981c4160与文档HEAD分开，健康旧昂贵Gate未重复。

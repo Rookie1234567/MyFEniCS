@@ -1,0 +1,56 @@
+{
+  "journal": {
+    "path": "tmp/task42extra/v32/repair_journal.jsonl",
+    "bytes": 2459,
+    "sha256": "045d7b1685fa49a5cae00d67b86d57a72860782c4d2b581b68bfc514445352ef"
+  },
+  "entries": [
+    {
+      "failure": "tmux new-session returned File name too long before server/worker creation",
+      "hypothesis": "Unix AF_UNIX sun_path length; existing long stage names cross platform limit",
+      "change": "V32 opt-in task-local short hash-bound socket; old defaults unchanged",
+      "test": "new socket fixture + affected stage contract",
+      "retry": "same original allocation, attempt2; no old A1/A2 producer replay"
+    },
+    {
+      "failure": "SMALL_R_COMPLETE_ACTION_PAIR_REJECTED",
+      "hypothesis": "incremental global QR accumulated roundoff while original full action remains the authority",
+      "change": "new transactional original AU economic QR refresh, original columns/order/rcond and 1e-10 retained",
+      "test": "qr_refresh_tests_qualified/junit.xml: 29 passed; prior two failed fixtures retained",
+      "resume": "same fixed boundary 1377 directions; original 4h deadline retained",
+      "source": "0ed98efb8fe9a6865e11a7aeee9f60041b0d5039",
+      "monotonic": 1354055.379525503
+    },
+    {
+      "failure": "readout_repair_checks attempt1 RESOURCE_CONTROLLED_STOP at configured 2GiB; peak 2549198848 B",
+      "hypothesis": "new real QR repair stage was omitted from numerical role classification",
+      "change": "classify only readout_repair_checks as numeric 16GiB; light stages remain 2GiB; no resource or PSI threshold changed",
+      "test": "qr_resource_classification_tests/junit.xml: actual role AST regression passed, 1 test; 7 deselected",
+      "resume": "fresh admission, same QR allocation and original fixed deadline; prior failed costs and arrays retained",
+      "monotonic": 1354055.379526613
+    },
+    {
+      "event": "ORIGINAL_AU_QR_REPAIR_QUALIFIED_AND_FIXED_FINAL_FROZEN",
+      "source": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "qualified_result": "benchmarks/artifacts/task42extra/v32/v32_fixed_original_qr_checks/result.json",
+      "qualified_sha256": "834fe8427167d2c3468e8127a192ed31fd819bcf21c8f522a7943986fc40073a",
+      "same_columns": 1377,
+      "same_rcond": 1e-12,
+      "same_U_q_order": true,
+      "full_original_action_pair_relative": 9.38940464418716e-11,
+      "actual_model_rebuild_relative": 8.914267609529682e-13,
+      "qualification_attempts_seconds": [
+        105.29373846598901,
+        306.7677441299893
+      ],
+      "qualification_peak_bytes": 5290643456,
+      "prior_resource_role_failure_preserved": true,
+      "fixed_resume_attempt_seconds": 77.34818126820028,
+      "numeric_role_qualification_not_global_Maxwell_or_Gram_factor": true,
+      "lost_trial_primitives": "NOT_RETAINED; costs use original attempt manifests/resources, no history replay",
+      "annotation_snapshot_monotonic": 1367690.43048714
+    }
+  ],
+  "ordinary_bug_handoff_limit_used": false,
+  "old_raw_failures_unchanged": true
+}

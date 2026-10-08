@@ -1,0 +1,268 @@
+{
+  "frozen_design": {
+    "schema": "neural-wave.unlabelled-design.v3",
+    "authority_sha": "2b841cb6910be14fcaf9fea98ea59b7f458a5c94",
+    "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "model": {
+      "wavelength_nm": 5.0,
+      "geometry": {
+        "bounds_nm": [
+          [
+            -5,
+            5
+          ],
+          [
+            -3.75,
+            3.75
+          ],
+          [
+            -1.25,
+            8.75
+          ]
+        ],
+        "substrate_z_nm": 0,
+        "block_bounds_nm": [
+          [
+            -2.5,
+            2.5
+          ],
+          [
+            -3.75,
+            3.75
+          ],
+          [
+            0,
+            7.5
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            0,
+            2.5
+          ],
+          [
+            -1.25,
+            1.25
+          ],
+          [
+            2.5,
+            5
+          ]
+        ],
+        "cells": [
+          8,
+          6,
+          8
+        ],
+        "step_nm": 1.25
+      },
+      "materials": {
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "si_n": [
+          0.99396854453,
+          0.00435380777
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "amplitude": 1.0,
+        "background": "layered"
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "cell": "hexahedron",
+        "degree": 3,
+        "operator_quadrature_degree": 15
+      },
+      "boundary": {
+        "floquet_xy": true,
+        "dtn": "complete original auto_propagating Fourier-DtN",
+        "pml": false
+      },
+      "near_zero": {
+        "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+        "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+        "scaled_curl_natural_scale": "same incident E scale",
+        "selected_E_scale": 1.0,
+        "selected_H_code_scale": 1.0,
+        "port_scale": "incident ordered amplitude norm",
+        "report_absolute_and_denominator": true,
+        "phase_fit": false
+      }
+    },
+    "files": {
+      "native": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+        "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+      },
+      "moments_q15": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q15.npz",
+        "sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e"
+      },
+      "moments_q30": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+        "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+      }
+    },
+    "native_identity": {
+      "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+      "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+    },
+    "strategy": {
+      "seed": 4213201,
+      "screen_seeds": 8,
+      "direction_resolutions": [
+        12,
+        48,
+        192,
+        768
+      ],
+      "local_refinement_steps_k0": [
+        0.5,
+        0.25,
+        0.125,
+        0.0625
+      ],
+      "q_component_bound_k0": 4.0,
+      "module_max_iterations": 12,
+      "module_max_evaluations": 18,
+      "width_sequence": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "width_column_thresholds": [
+        0,
+        256,
+        1024,
+        2048
+      ],
+      "support_sequence": [
+        "global chi=1",
+        "coarse 2x2x2",
+        "medium 4x3x4",
+        "fine 8x6x8"
+      ],
+      "support_column_thresholds": [],
+      "capacity_milestones": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096
+      ],
+      "max_columns": 4096,
+      "native_target": 1e-08,
+      "moment_quadrature_degree": 30,
+      "rcond": 1e-12,
+      "route_seconds": 14400,
+      "stagnant_modules_before_enrichment": 8,
+      "amplitude_method": "exact small SVD with nonzero seed-gradient witness",
+      "direction_method": "continuous bounded L-BFGS-B of variable-projected native residual score",
+      "control_method": "physical/Fibonacci seeds plus residual selection and fixed symmetric local refinement",
+      "initial_state": "independent zero scattering",
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "common_comparison_seconds": 14400,
+      "moment_kernel": "original oriented sparse full moment maps; every accepted column independently uses original point-value mapping",
+      "amplitude_gradient_objective": "unprojected amplitude seed witness of ||r-P A c_seed||^2, then exact tiny SVD",
+      "common_work_node_semantics": "not numerical completion; own original 4h allocation remains fixed across scalar validation and recoveries",
+      "block_rank_cap": 4096,
+      "conditional_rank_cap": 4096,
+      "rank_audit_interval": 64,
+      "slow_relative_decrease_per_64": 0.01,
+      "slow_enrichment_order": [
+        "direction_resolution",
+        "width",
+        "support"
+      ],
+      "maximum_enrichment_levels_per_64": 1,
+      "time_nodes_seconds": [
+        1800,
+        3600,
+        7200,
+        14400
+      ],
+      "early_validation_nodes": [
+        {
+          "rank": 512,
+          "seconds": 5400
+        },
+        {
+          "rank": 1024,
+          "seconds": 7200
+        }
+      ],
+      "q_complete_evaluation_hard_guard": true,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true
+    },
+    "resources": {
+      "numerical_rss_warn_gib": 12,
+      "numerical_rss_hard_gib": 16,
+      "light_rss_gib": 2,
+      "math_threads": 1,
+      "mpi": 1,
+      "own_swap_bytes": 0,
+      "ooc_bytes": 0,
+      "neighbor_growth_gib": 384,
+      "artifact_cap_gib": 20
+    },
+    "representation": "complete original master moments; raw windows are not Bloch-periodic, the FE field is expanded by the original MPC exactly once",
+    "ordinary_default_changed": false,
+    "campaign_version": 32,
+    "block_profile": true,
+    "mechanism": "persistent global/coarse/medium/fine candidates; AH preselection and exact original projected residual scoring; independent retained block amplitudes",
+    "multiscale_support_policy": true,
+    "multiscale_policy_definition": {
+      "initial_global_seeds": "k0 incident, reflected, +x,+y,+z,-x,-y and zero, in original dictionary",
+      "preselection_per_round": [
+        "global",
+        "coarse x2",
+        "medium",
+        "fine x2",
+        "fixed coverage rotation",
+        "port rotation"
+      ],
+      "preselection": "unique owner rows; ||AH r[I]||² / len(I), stable index ties",
+      "cheap_block_columns": 3,
+      "fully_scored_windows": 2,
+      "coverage_fully_scored_every_blocks": 8,
+      "final_selection": "exact projected original A score",
+      "reference_vectors_allowed": false
+    },
+    "support_audit": {
+      "identity_path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/result.json",
+      "identity_sha256": "6782f7486dd8ffeca56be351f1d9337e30a0cd731cfa054cac8ce72f2e256845",
+      "witness_roles": [
+        "global incident",
+        "global reflected",
+        "coarse AH",
+        "medium AH",
+        "fine AH",
+        "old residual fine",
+        "bottom rotation",
+        "top rotation"
+      ],
+      "v31_fixed_block_wave": "529f6bdf2fb396759f544caac42b345710072b5b3d64881478d0209ccacf5e5b",
+      "v31_learned_block_wave": "13618a48ce55af8c37d8f233a5c394c3a7c326655c1aca968aa7ec5f5f64a4c9"
+    }
+  },
+  "binding": {
+    "path": "input/task042extra_feinn_5nm/design_v32.json",
+    "bytes": 7457,
+    "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+  },
+  "q_learning_scope": "Both finalist windows receive full fixed scoring; bounded q optimization runs on the selected finalist only, not both windows",
+  "scientific_qualification_not_implied": true
+}

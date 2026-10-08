@@ -1,0 +1,249 @@
+{
+  "result_binding": {
+    "path": "benchmarks/artifacts/task42extra/v32/v32_support_direction_witness/result.json",
+    "bytes": 5333,
+    "sha256": "5afea5cca1fc6f3f755d773e32921b8dbf094753c024882f2cdc051b5f53121d"
+  },
+  "full_amplitude_columns": 24,
+  "accepted_updates": 0,
+  "reference_loaded": false,
+  "old_boundary_sha256": "13618a48ce55af8c37d8f233a5c394c3a7c326655c1aca968aa7ec5f5f64a4c9",
+  "directions": [
+    {
+      "role": "global incident",
+      "patch": {
+        "center": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "radius": [
+          10.0,
+          7.5,
+          10.0
+        ],
+        "level": -1,
+        "kind": "global"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 0.00012560070237636748,
+      "score_load_scaled": 0.0014827936855760524,
+      "AH_preselection": 0.12505413668197604,
+      "residual_preselection": 3.793923089728372e-07
+    },
+    {
+      "role": "global reflected",
+      "patch": {
+        "center": [
+          0.0,
+          0.0,
+          3.75
+        ],
+        "radius": [
+          10.0,
+          7.5,
+          10.0
+        ],
+        "level": -1,
+        "kind": "global"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          0.021931340740333236
+        ]
+      ],
+      "projected_score": 0.00011496493928836309,
+      "score_load_scaled": 0.0013572319486606138,
+      "AH_preselection": 0.12505413668197604,
+      "residual_preselection": 3.793923089728372e-07
+    },
+    {
+      "role": "coarse AH",
+      "patch": {
+        "center": [
+          -5.0,
+          3.75,
+          8.75
+        ],
+        "radius": [
+          5.0,
+          3.75,
+          5.0
+        ],
+        "level": 0,
+        "kind": "local"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 3.170044677241399e-05,
+      "score_load_scaled": 0.0003742433076785049,
+      "AH_preselection": 0.18061341508855894,
+      "residual_preselection": 4.916262511612065e-07
+    },
+    {
+      "role": "medium AH",
+      "patch": {
+        "center": [
+          -5.0,
+          3.75,
+          8.75
+        ],
+        "radius": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "level": 1,
+        "kind": "local"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 2.0530165973569376e-05,
+      "score_load_scaled": 0.0002423712598215919,
+      "AH_preselection": 0.28022795403505396,
+      "residual_preselection": 3.046582138924988e-07
+    },
+    {
+      "role": "fine AH",
+      "patch": {
+        "center": [
+          0.0,
+          0.0,
+          8.75
+        ],
+        "radius": [
+          1.25,
+          1.25,
+          1.25
+        ],
+        "level": 2,
+        "kind": "local"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 6.38497480650659e-07,
+      "score_load_scaled": 7.537856195485364e-06,
+      "AH_preselection": 0.48868159746219597,
+      "residual_preselection": 3.03064169055018e-07
+    },
+    {
+      "role": "old residual fine",
+      "patch": {
+        "center": [
+          1.25,
+          0.0,
+          6.25
+        ],
+        "radius": [
+          1.25,
+          1.25,
+          1.25
+        ],
+        "level": 2,
+        "kind": "local"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 1.7417753098154516e-06,
+      "score_load_scaled": 2.0562730798650162e-05,
+      "AH_preselection": 0.015861850421661203,
+      "residual_preselection": 8.279259360775044e-07
+    },
+    {
+      "role": "bottom rotation",
+      "patch": {
+        "center": [
+          -5.0,
+          -3.75,
+          -1.25
+        ],
+        "radius": [
+          5.0,
+          3.75,
+          5.0
+        ],
+        "level": 0,
+        "kind": "local"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 9.350227912570837e-06,
+      "score_load_scaled": 0.00011038520203423378,
+      "AH_preselection": 0.10348192593011053,
+      "residual_preselection": 2.9522313813939904e-07
+    },
+    {
+      "role": "top rotation",
+      "patch": {
+        "center": [
+          5.0,
+          3.75,
+          8.75
+        ],
+        "radius": [
+          1.25,
+          1.25,
+          1.25
+        ],
+        "level": 2,
+        "kind": "local"
+      },
+      "q": [
+        [
+          1.2564456695248023,
+          0.0,
+          -0.021931340740333236
+        ]
+      ],
+      "projected_score": 4.164086102907217e-06,
+      "score_load_scaled": 4.915960231722062e-05,
+      "AH_preselection": 0.3741983715336072,
+      "residual_preselection": 3.993063331268885e-07
+    }
+  ],
+  "counts": {
+    "A": 25,
+    "AH": 1,
+    "audit": 0,
+    "port_solve": 27
+  },
+  "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+  "input_sha256": "60daa4274d01827080ac36323110d5cb30fcdc57581f088585ee67e217dd841b",
+  "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+  "worker_elapsed_seconds": 49.636696161935106,
+  "route_elapsed_seconds": 378.2539733229205,
+  "full_size_0p7_target_qualified": false
+}

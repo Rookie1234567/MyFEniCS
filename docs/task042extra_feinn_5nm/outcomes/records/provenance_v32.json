@@ -1,0 +1,223 @@
+{
+  "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+  "records": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.csv",
+      "bytes": 59452,
+      "sha256": "e0e89a555dbe7b0f1210dd04182cdce7482c82428b66d2214333aeeb97147ce5"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/block_growth_v32.json",
+      "bytes": 55972,
+      "sha256": "0cfc4e47324906b593efe93b3473fcd56e4f3a71db2e3e4c12194f5d4f8aef50"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v32.csv",
+      "bytes": 67341,
+      "sha256": "89bb544db4b3ed444a56cabc56d9b37400149e5028dc17b07f14422dfd4e0c7f"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/cost_and_capacity_v32.json",
+      "bytes": 2468,
+      "sha256": "1b138409331f3a1f97c86ee0f1393c4d206100fb9641301bd57c7ebb580e7b78"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/design_v32.json",
+      "bytes": 8371,
+      "sha256": "6242999f5cb562e8eba1d915941cdf8177749b28218cd31944cee36b7486eaf7"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_v32.csv",
+      "bytes": 17653,
+      "sha256": "c1d41069b94ee5bef2902edadab7a06a3fd83259f82cab8af67cfd0605aa8348"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v32.json",
+      "bytes": 200229,
+      "sha256": "417a952a2796f11ab22647d9203f5440136a54379c72465f0f5349b5a63927d8"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_v32.csv",
+      "bytes": 22263,
+      "sha256": "2469a3c13743d46f085c80008c447e90ba53a82e7df1ed4d21a2093713f82a77"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/multiscale_checks_v32.json",
+      "bytes": 8297,
+      "sha256": "41ec467e577d2e10ee039e2bbfc47308150276cd38cbd1f6903ae93f26c1893b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/multiscale_growth_v32.svg",
+      "bytes": 122293,
+      "sha256": "4748afd1a6dca35857977da76ab0906b4f1b0c7e9a823fb99f8ef50edbabc40c"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v32.csv",
+      "bytes": 9382,
+      "sha256": "68166efd8674eb052a007c0f9e95ec43fa5266d283da310a8bbd00540fa0c416"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v32.json",
+      "bytes": 3011,
+      "sha256": "ed80352d05a471238eec2546bce80452a8eb6c83d96b4e1e9ed59ec9de9e09e5"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v32.json",
+      "bytes": 81497,
+      "sha256": "0717d018b1cd918ffd7043950af42e6b818b6236e0113b5d7f8192ba24b5de4b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v32.json",
+      "bytes": 218049,
+      "sha256": "b0db33c2b0eabf087f9e3f72557435e89b72b2865f220040098447c19230e7fe"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v32.json",
+      "bytes": 76709,
+      "sha256": "4cc5040d03eff27493d9a2a30741efdb25b5276f42056b305ead86fe6a2fd0b0"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/saved_space_coverage_v32.json",
+      "bytes": 15704,
+      "sha256": "6347a0289ed09a98346abbf7b2d167886ffac56d5cd64f22aea55d0e0fa79a1d"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v32.json",
+      "bytes": 5930,
+      "sha256": "54b63feb12565d38f8875db61afdc04c2d344215604823ce31f957bbdf4f7b40"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v32.json",
+      "bytes": 20681,
+      "sha256": "aec769485db884a3a5ddf2d81c166118fbad04addbd59fd09f3669788b80635b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/unlabelled_direction_witness_v32.json",
+      "bytes": 5554,
+      "sha256": "d9f9b27ac5c38f3bdf17e7cb27362143db3ac81794ba0d5a6c78b3aba1e75296"
+    }
+  ],
+  "numerical_chain": [
+    {
+      "path": "src/solvers/neural_wave_moments.py",
+      "bytes": 6674,
+      "sha256": "5ce7ba22b3fc7cdaf2890c56630f262cff9346c8ddf4a042c9ccdfc5ba54be3b"
+    },
+    {
+      "path": "src/solvers/neural_wave_greedy.py",
+      "bytes": 45692,
+      "sha256": "bc4bea0d1b5bc41b74ee0e9d5e85b4a205e9c55288fd492159ce7507e984b5eb"
+    },
+    {
+      "path": "src/solvers/neural_wave_block.py",
+      "bytes": 19564,
+      "sha256": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388"
+    },
+    {
+      "path": "src/solvers/neural_wave_block_reconstruction.py",
+      "bytes": 8072,
+      "sha256": "6a36e0ee5a6897d36230cd9040389c9df8daa96544c4a1e8cc6531395c56ac7e"
+    },
+    {
+      "path": "src/solvers/neural_wave_reconstruction.py",
+      "bytes": 4042,
+      "sha256": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075"
+    },
+    {
+      "path": "src/solvers/neural_wave_multiscale.py",
+      "bytes": 8300,
+      "sha256": "d92e24c97e4f8f6fbcb5bfe1a7883182a47ceb557f8a17405a7c3cd5fd1ec470"
+    },
+    {
+      "path": "src/solvers/neural_wave_local_action.py",
+      "bytes": 5499,
+      "sha256": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981"
+    },
+    {
+      "path": "src/solvers/neural_wave_projection.py",
+      "bytes": 3338,
+      "sha256": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50"
+    },
+    {
+      "path": "src/solvers/neural_wave_multiscale_validation.py",
+      "bytes": 1958,
+      "sha256": "362c8d3bb8fca43d585c0fe11fdb1f49e042e0f6ab36b9ef3bbcbabb9dbb79ba"
+    },
+    {
+      "path": "src/solvers/neural_wave_multiscale_qualification.py",
+      "bytes": 9085,
+      "sha256": "7974cf4d6b94ef992db9b7447dcd1dae1216234546d41b15cbe44a5431dfb6af"
+    },
+    {
+      "path": "src/solvers/neural_wave_qr_refresh.py",
+      "bytes": 9351,
+      "sha256": "0f8f22e38e6fb4e1beffd9ad4918833bfc0f7b2f1be80f5665ff3398233858ef"
+    },
+    {
+      "path": "src/runners/multiscale_wave_worker.py",
+      "bytes": 10481,
+      "sha256": "ab9b3e8bc4fc8a73c303d8e326a7e138016e65c67a33e06918143c7bd0cdebfe"
+    }
+  ],
+  "qualification_binding": {
+    "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_original_qr_checks/result.json",
+    "bytes": 10015,
+    "sha256": "834fe8427167d2c3468e8127a192ed31fd819bcf21c8f522a7943986fc40073a"
+  },
+  "source_not_document_HEAD": true,
+  "compact_aliases_copied_from_frozen_local_results": true,
+  "large_arrays_remain_ignored": true,
+  "ignored_plot_preview": {
+    "path": "tmp/task42extra/v32/final_records/multiscale_growth_v32.png",
+    "bytes": 127010,
+    "sha256": "201fc8d63b87b9892fd1c2481a55670c83011e679220bf3497621da4a311c291",
+    "tracked_scientific_plot": "docs/task042extra_feinn_5nm/outcomes/records/multiscale_growth_v32.svg"
+  },
+  "publication_helpers": [
+    {
+      "path": "tmp/task42extra/v32/collect_v32.py",
+      "bytes": 12915,
+      "sha256": "dd1fc00281949c713bce128f9082af97c415520f857123154388d8d0cc3efed5"
+    },
+    {
+      "path": "tmp/task42extra/v32/build_delivery_records.py",
+      "bytes": 16983,
+      "sha256": "c3ac0ed7e5c3c93ea1a13f50d3cd8e7b770e3b8a6d4eaeaf8d4858634831d934"
+    },
+    {
+      "path": "tmp/task42extra/v32/plot_frozen_growth.py",
+      "bytes": 2168,
+      "sha256": "a32c5e7a78c016017380caf90e5e092fe68b157ccb7ceb589e06aaac86d9c7f4"
+    },
+    {
+      "path": "tmp/task42extra/v32/publish_records.py",
+      "bytes": 2482,
+      "sha256": "b7aac40ec0cc21aee3b247d979bded2d6a46dae2f9edc43df8886e60811561fd"
+    },
+    {
+      "path": "tmp/task42extra/v32/write_docs.py",
+      "bytes": 19834,
+      "sha256": "dcda7f1f99004c517917140c447671e58435966decca457cd9247b7e0f14f2c2"
+    },
+    {
+      "path": "tmp/task42extra/v32/metadata_delivery.py",
+      "bytes": 614,
+      "sha256": "ebc352fdb28555f7b0da1b11f08411bde30629bddd9b974a2d82153c807e56f1"
+    },
+    {
+      "path": "tmp/task42extra/v32/final_delivery_checks.py",
+      "bytes": 6613,
+      "sha256": "74ec56d631df0180162b30de41fd380803f7d029d3ab69809e47c33c1b873f84"
+    },
+    {
+      "path": "tmp/task42extra/v32/publication_tail.py",
+      "bytes": 2432,
+      "sha256": "5f5fdf2c26b45c960e15de9b5186485899db90fe8ff9a239bee4060e4c82535f"
+    },
+    {
+      "path": "tmp/task42extra/v32/publication_seal_prep.py",
+      "bytes": 5043,
+      "sha256": "6843c8901b8f7978cf84f12a9cda4c8bcc1970e22fa460e0b0f13a805e47c9cf"
+    }
+  ]
+}

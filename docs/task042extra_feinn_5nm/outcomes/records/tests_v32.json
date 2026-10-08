@@ -1,0 +1,300 @@
+{
+  "junit_runs": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_refresh_tests/junit.xml",
+        "bytes": 6921,
+        "sha256": "53fb538e1b97e0c6f3b326bdfa1a714a2e3302fd41432009a3633ed0b81f5ec8"
+      },
+      "tests": 28,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[complex]",
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[scales]",
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[correlated]",
+        "src.test.test_neural_wave_qr_refresh::test_invalid_actual_action_rolls_back_all_readout_arrays",
+        "src.test.test_neural_wave_qr_refresh::test_save_reserve_is_checked_before_original_action",
+        "src.test.test_neural_wave_qr_refresh::test_actual_atomic_writer_reopen_and_restore",
+        "src.test.test_neural_wave_block::test_preserved_readout_pair_is_recomputed_from_original_residual",
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_neural_wave_multiscale::test_global_window_is_not_a_finite_bump",
+        "src.test.test_neural_wave_multiscale::test_hard_evaluation_guard_retains_evaluated_best_and_last_trial",
+        "src.test.test_neural_wave_multiscale::test_all_scales_persist_and_rotation_is_independent_of_residual",
+        "src.test.test_neural_wave_multiscale::test_nonhermitian_residual_location_can_miss_best_trial",
+        "src.test.test_neural_wave_multiscale::test_v32_schema_labels_and_legacy_states_are_rejected",
+        "src.test.test_neural_wave_multiscale::test_validation_threshold_requires_residual_and_both_field_failures",
+        "src.test.test_neural_wave_multiscale::test_actual_optimizer_never_forces_a_change_at_stationary_seed",
+        "src.test.test_neural_wave_multiscale::test_short_socket_is_opt_in_bound_to_unique_stage"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_refresh_tests_final/junit.xml",
+        "bytes": 7880,
+        "sha256": "5a701112a2a08f5b102a5522a5708a16d2f56f73d3f80940085a9302cbe6eb3b"
+      },
+      "tests": 29,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[complex]",
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[scales]",
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[correlated]",
+        "src.test.test_neural_wave_qr_refresh::test_invalid_actual_action_rolls_back_all_readout_arrays",
+        "src.test.test_neural_wave_qr_refresh::test_save_reserve_is_checked_before_original_action",
+        "src.test.test_neural_wave_qr_refresh::test_actual_atomic_writer_reopen_and_restore",
+        "src.test.test_neural_wave_qr_refresh::test_filtered_repair_receipt_allowed_but_labels_rejected",
+        "src.test.test_neural_wave_block::test_preserved_readout_pair_is_recomputed_from_original_residual",
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_neural_wave_multiscale::test_global_window_is_not_a_finite_bump",
+        "src.test.test_neural_wave_multiscale::test_hard_evaluation_guard_retains_evaluated_best_and_last_trial",
+        "src.test.test_neural_wave_multiscale::test_all_scales_persist_and_rotation_is_independent_of_residual",
+        "src.test.test_neural_wave_multiscale::test_nonhermitian_residual_location_can_miss_best_trial",
+        "src.test.test_neural_wave_multiscale::test_v32_schema_labels_and_legacy_states_are_rejected",
+        "src.test.test_neural_wave_multiscale::test_validation_threshold_requires_residual_and_both_field_failures",
+        "src.test.test_neural_wave_multiscale::test_actual_optimizer_never_forces_a_change_at_stationary_seed",
+        "src.test.test_neural_wave_multiscale::test_short_socket_is_opt_in_bound_to_unique_stage"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_refresh_tests_qualified/junit.xml",
+        "bytes": 4119,
+        "sha256": "e2af7062842b67ecc054651c3a041aee922aafcfbeaef764cf05aac208a0cb5c"
+      },
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[complex]",
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[scales]",
+        "src.test.test_neural_wave_qr_refresh::test_same_original_space_against_independent_svd[correlated]",
+        "src.test.test_neural_wave_qr_refresh::test_invalid_actual_action_rolls_back_all_readout_arrays",
+        "src.test.test_neural_wave_qr_refresh::test_save_reserve_is_checked_before_original_action",
+        "src.test.test_neural_wave_qr_refresh::test_actual_atomic_writer_reopen_and_restore",
+        "src.test.test_neural_wave_qr_refresh::test_filtered_repair_receipt_allowed_but_labels_rejected",
+        "src.test.test_neural_wave_block::test_preserved_readout_pair_is_recomputed_from_original_residual",
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_neural_wave_multiscale::test_global_window_is_not_a_finite_bump",
+        "src.test.test_neural_wave_multiscale::test_hard_evaluation_guard_retains_evaluated_best_and_last_trial",
+        "src.test.test_neural_wave_multiscale::test_all_scales_persist_and_rotation_is_independent_of_residual",
+        "src.test.test_neural_wave_multiscale::test_nonhermitian_residual_location_can_miss_best_trial",
+        "src.test.test_neural_wave_multiscale::test_v32_schema_labels_and_legacy_states_are_rejected",
+        "src.test.test_neural_wave_multiscale::test_validation_threshold_requires_residual_and_both_field_failures",
+        "src.test.test_neural_wave_multiscale::test_actual_optimizer_never_forces_a_change_at_stationary_seed",
+        "src.test.test_neural_wave_multiscale::test_short_socket_is_opt_in_bound_to_unique_stage"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_resource_classification_tests/junit.xml",
+        "bytes": 377,
+        "sha256": "3bbe8794a0b57772f6e4af05da19c16b9d25e0b9c9535bff1bbd3aa23c16ee0b"
+      },
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_qr_refresh::test_real_readout_stage_has_numeric_cap_while_pure_checker_keeps_light_cap"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/socket_repair_tests/junit.xml",
+        "bytes": 2152,
+        "sha256": "04a613aa35d8fb3d5c210e9339582ac2e1b94da2632d32e594b844b245c0e4bb"
+      },
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_multiscale::test_global_window_is_not_a_finite_bump",
+        "src.test.test_neural_wave_multiscale::test_hard_evaluation_guard_retains_evaluated_best_and_last_trial",
+        "src.test.test_neural_wave_multiscale::test_all_scales_persist_and_rotation_is_independent_of_residual",
+        "src.test.test_neural_wave_multiscale::test_nonhermitian_residual_location_can_miss_best_trial",
+        "src.test.test_neural_wave_multiscale::test_v32_schema_labels_and_legacy_states_are_rejected",
+        "src.test.test_neural_wave_multiscale::test_validation_threshold_requires_residual_and_both_field_failures",
+        "src.test.test_neural_wave_multiscale::test_actual_optimizer_never_forces_a_change_at_stationary_seed",
+        "src.test.test_neural_wave_multiscale::test_short_socket_is_opt_in_bound_to_unique_stage",
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/targeted_tests_1/junit.xml",
+        "bytes": 3856,
+        "sha256": "100d81005b1d470287c49579c25022ca88bb3d0925e9e4b9020f5f5880c8e4ce"
+      },
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_multiscale::test_global_window_is_not_a_finite_bump",
+        "src.test.test_neural_wave_multiscale::test_hard_evaluation_guard_retains_evaluated_best_and_last_trial",
+        "src.test.test_neural_wave_multiscale::test_all_scales_persist_and_rotation_is_independent_of_residual",
+        "src.test.test_neural_wave_multiscale::test_nonhermitian_residual_location_can_miss_best_trial",
+        "src.test.test_neural_wave_multiscale::test_v32_schema_labels_and_legacy_states_are_rejected",
+        "src.test.test_neural_wave_multiscale::test_validation_threshold_requires_residual_and_both_field_failures",
+        "src.test.test_neural_wave_multiscale::test_actual_optimizer_never_forces_a_change_at_stationary_seed",
+        "src.test.test_neural_wave_block::test_preserved_readout_pair_is_recomputed_from_original_residual",
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver"
+      ]
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/targeted_tests_final/junit.xml",
+        "bytes": 4447,
+        "sha256": "8f0a65e6770713b2be68d9be25b9b0a60e90da305ba2f973d060218b5d3b8923"
+      },
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "names": [
+        "src.test.test_neural_wave_multiscale::test_global_window_is_not_a_finite_bump",
+        "src.test.test_neural_wave_multiscale::test_hard_evaluation_guard_retains_evaluated_best_and_last_trial",
+        "src.test.test_neural_wave_multiscale::test_all_scales_persist_and_rotation_is_independent_of_residual",
+        "src.test.test_neural_wave_multiscale::test_nonhermitian_residual_location_can_miss_best_trial",
+        "src.test.test_neural_wave_multiscale::test_v32_schema_labels_and_legacy_states_are_rejected",
+        "src.test.test_neural_wave_multiscale::test_validation_threshold_requires_residual_and_both_field_failures",
+        "src.test.test_neural_wave_multiscale::test_actual_optimizer_never_forces_a_change_at_stationary_seed",
+        "src.test.test_neural_wave_block::test_preserved_readout_pair_is_recomputed_from_original_residual",
+        "src.test.test_neural_wave_block::test_immediate_equivalence_and_later_recombination",
+        "src.test.test_neural_wave_block::test_global_rank_is_not_sum_of_block_ranks_and_projection_matches_svd",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[full]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[duplicate]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[nearly_correlated]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[scales]",
+        "src.test.test_neural_wave_block::test_nonhermitian_against_independent_svd[zero]",
+        "src.test.test_neural_wave_block::test_whole_block_rolls_back_on_actual_action_failure",
+        "src.test.test_neural_wave_block::test_atomic_boundary_inverse_map_and_recovery",
+        "src.test.test_neural_wave_block::test_complex128_compensation_cancellation",
+        "src.test.test_neural_wave_block::test_invalid_true_residual_rolls_back_and_can_reselect",
+        "src.test.test_neural_wave_block::test_diagnostic_recovery_never_relaxes_new_block_acceptance",
+        "src.test.test_neural_wave_block::test_interrupted_block_publication_preserves_previous_complete_state",
+        "src.test.test_block_wave_contract::test_v30_default_and_v31_distinct_window_and_artifacts",
+        "src.test.test_block_wave_contract::test_both_new_routes_same_preserved_wall_and_verification_reserve",
+        "src.test.test_block_wave_contract::test_training_data_whitelist_and_own_boundary_only",
+        "src.test.test_block_wave_contract::test_successful_psi_checks_are_not_failed_wait_pool",
+        "src.test.test_block_wave_contract::test_new_six_hour_ceiling_reserves_verification_and_preserves_old_default",
+        "src.test.test_block_wave_contract::test_decimal_only_selected_binary_terms_no_field_solver",
+        "src.test.test_neural_wave_local_action::test_original_nonhermitian_mpc_ports_and_real_adjoint[support0]",
+        "src.test.test_neural_wave_local_action::test_original_nonhermitian_mpc_ports_and_real_adjoint[support1]",
+        "src.test.test_neural_wave_local_action::test_original_nonhermitian_mpc_ports_and_real_adjoint[support2]",
+        "src.test.test_neural_wave_local_action::test_support_validation_no_amplitude_threshold_or_truncated_output"
+      ]
+    }
+  ],
+  "full_pytest": "NOT_RUN_BY_CONTRACT",
+  "CI": "NOT_CLAIMED",
+  "actual_installed_iteration_guard": {
+    "kind": "read_only_installed_dependency_audit",
+    "scipy_version": "1.11.4",
+    "source_path": "/usr/lib/python3/dist-packages/scipy/optimize/_lbfgsb_py.py",
+    "source_sha256": "4345959040526bb7341f35835f09f5547f76e6068fb069521c087f4cc6839472",
+    "maxiter_guard": "n_iterations incremented on NEW_X; n_iterations >= maxiter explicitly stops",
+    "configured_maxiter": 12,
+    "own_complete_objective_gradient_guard": 18,
+    "actual_iteration_telemetry": "NOT_RETAINED; no replay",
+    "numerical_stage_started": false,
+    "mathematical_source_changed": false,
+    "monotonic": 1357071.807316975
+  },
+  "actual_installed_iteration_guard_binding": {
+    "path": "tmp/task42extra/v32/iteration_guard_dependency.json",
+    "bytes": 591,
+    "sha256": "5d330880d6a5bf434246d77c1adc3e06da5f48aa7fb924a7667c2c64b355f7a2"
+  },
+  "healthy_old_FE_qualifications": "Reused exact input/ABI/mathematical source bindings; no old full audit or reference replay",
+  "publication_checks": {
+    "binding": {
+      "path": "tmp/task42extra/v32/final_delivery_checks/result.json",
+      "bytes": 4274,
+      "sha256": "56885f119b441a9a65e58453fba444db9e8fbca465bea1207033988ca936b708"
+    },
+    "metric_rows": 136,
+    "complex_channel_rows": 640,
+    "power_rows": 160,
+    "mathematical_source_unmodified": true,
+    "full_old_FE_or_training_not_repeated": true
+  },
+  "publication_metadata_rechecks": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_tail_checks/result.json",
+        "bytes": 4274,
+        "sha256": "8cf2ddd5fdb235c9ae2eaabc2e1b8d49db464173cbdd5b2f847367b1c629bc60"
+      },
+      "scope": "prior corrected figure and records snapshot; final test-table addition checked separately",
+      "numerical_source_unmodified": true,
+      "new_numeric_work": false
+    }
+  ],
+  "later_delivery_check_and_exact_document_HEAD_in_receipt": true
+}

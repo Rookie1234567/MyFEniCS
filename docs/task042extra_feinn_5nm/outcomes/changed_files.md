@@ -1,3 +1,16 @@
+# V32：显式多尺度支持及神经对照，普通默认不变
+
+|依赖组|变化与证据|生产边界|
+|---|---|---|
+|research-only|global chi=1、AH同尺度预选/持续轮转、完整原评分、真实q调用守卫、原AU等价QR；src核心有targeted tests|M5联合失败，不升级生产|
+|reusable runner/watchdog|V32 opt-in stage/身份/原钟/标量继续/新鲜PSI及短socket|仅管理本任务树，不改邻任务/共享环境|
+|checker/benchmark|独立模型q30/q60及全字段保存checker；原分子/分母CSV与负控|不信producer状态、不重新求参考|
+|compact evidence/docs|设计/覆盖/24方向/增长/全部Gate/成本/source/修复与导航|旧历史逐字保留|
+|production numerical/core|无合格新生产求解器|NOT_APPROVED|
+|do-not-merge|ignored U/Q/R/模型/场/日志/缓存/环境|不入Git、不跨任务|
+
+[逐文件依赖](records/selective_merge_manifest_v32.json)、[source链](records/run_index_v32.json)。以下全部原文为历史。
+
 # V31最终：块保留、稳定映射及独立真实场负结果
 
 数值变化为opt-in保留独立块幅值、固定rcond小R SVD/反变换、原点值完整矩重建、已保存场补充物理检查与诊断用舍入归因。原ordinary默认、V30历史profile和其他任务源码不改。前缀source与恢复source/终态source逐项绑定，文档HEAD不代替运行源码。

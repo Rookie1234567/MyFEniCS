@@ -1,0 +1,383 @@
+{
+  "complete_audit": {
+    "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/result.json",
+    "bytes": 229596,
+    "sha256": "eb792cd1e6c57d12a18c7ed089091aeacbd715fb696623371762d9224a54cf7d"
+  },
+  "routes": {
+    "v31_fixed_block_wave": {
+      "columns": 2991,
+      "boundary_sha256": "529f6bdf2fb396759f544caac42b345710072b5b3d64881478d0209ccacf5e5b",
+      "state_sha256": "f7bb65210ae62ed34a1c14b75ae8fbb9ede9ac05df805de5efa45447c6060ed3",
+      "candidate_source": "fd096634feaca8460f3c35095ffc453b212339cd",
+      "exact_zero_cells": [],
+      "exact_zero_master_count": 0,
+      "local_family_nonzero_counts": {
+        "edge": 13824,
+        "face": 27648,
+        "interior": 13824
+      },
+      "bottom_PU_exactly_zero": false,
+      "bottom_PU_frobenius": 5.1506928946683e-32,
+      "bottom_singular_estimates": [
+        4.785583118989471e-32,
+        1.5890959886910703e-32,
+        6.165964948931435e-33,
+        5.3393144096022024e-33,
+        4.675994458372203e-33,
+        3.541268063073776e-33,
+        2.7458717231785355e-33,
+        8.701534836855097e-34,
+        6.6548090997254194e-34,
+        5.501927329261741e-34,
+        5.082249997925514e-34,
+        1.3437986098497248e-34,
+        8.457047987884786e-35,
+        3.0954736175166424e-35,
+        2.018270681988696e-35,
+        1.4660803059099299e-35,
+        9.812350287867782e-41,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "diagnostic_rank_rcond": 1e-12,
+      "diagnostic_rank": 17,
+      "rank_method": "small port Gram eigenspectrum; numerical diagnostic, not exact rank",
+      "scale_min": 0.03561722666722105,
+      "scale_max": 1.580212322435431,
+      "support_arrays": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/v31_fixed_block_wave_support.npz",
+        "sha256": "4058ecf89af67d02c6e6a2b406854ab797b510bc3d42da40c7d4be958e431b30"
+      },
+      "patch_scale_counts": {
+        "0": 11,
+        "1": 32,
+        "2": 297
+      },
+      "retained_direction_counts_by_scale": {
+        "0": 33,
+        "1": 96,
+        "2": 2862
+      },
+      "z_center_histogram": {
+        "3.75": 60,
+        "8.75": 4,
+        "6.25": 171,
+        "1.25": 39,
+        "5.0": 49,
+        "2.5": 17
+      },
+      "zero_scattering_T": 0.11325708686720473,
+      "candidate_T": 0.11325708686720473,
+      "expanded_support_by_material_and_z": {
+        "Si": {
+          "cells": 184,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 6624,
+          "face_nonzero": 13248,
+          "interior_nonzero": 6624,
+          "coefficient_column_energy_sum": 273.44454187063934,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "air": {
+          "cells": 200,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 7200,
+          "face_nonzero": 14400,
+          "interior_nonzero": 7200,
+          "coefficient_column_energy_sum": 25.184986238277183,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=-0.6249999999999993": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 0.4998492389319336,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=0.6250000000000001": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 22.297839939601662,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=1.8749999999999998": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 33.58385225185985,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=3.124999999999999": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 35.271744598449615,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=4.374999999999999": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 45.4016689700175,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=5.624999999999998": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 85.14371674149139,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=6.874999999999997": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 68.50700664335868,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=8.124999999999996": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 7.923849725205867,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        }
+      },
+      "material_classification_semantics": "Derived from saved cell centers and frozen geometry; original cell-tag hash remains separately bound",
+      "saved_support_binding": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/v31_fixed_block_wave_support.npz",
+        "bytes": 514906,
+        "sha256": "4058ecf89af67d02c6e6a2b406854ab797b510bc3d42da40c7d4be958e431b30"
+      },
+      "background_and_candidate_bottom_complex_channels": "Complete fields in complete audit binding; affine alpha(0) excluded from P*U",
+      "complete_complex_port_fields_binding": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/result.json",
+        "bytes": 229596,
+        "sha256": "eb792cd1e6c57d12a18c7ed089091aeacbd715fb696623371762d9224a54cf7d"
+      }
+    },
+    "v31_learned_block_wave": {
+      "columns": 3858,
+      "boundary_sha256": "13618a48ce55af8c37d8f233a5c394c3a7c326655c1aca968aa7ec5f5f64a4c9",
+      "state_sha256": "f789a0ed274b30860ef236e54310b59df848d0ad021baa95cea65b7f72987c89",
+      "candidate_source": "c32723a6c176a75e69174bd7a9570b8c981c4160",
+      "exact_zero_cells": [],
+      "exact_zero_master_count": 0,
+      "local_family_nonzero_counts": {
+        "edge": 13824,
+        "face": 27648,
+        "interior": 13824
+      },
+      "bottom_PU_exactly_zero": false,
+      "bottom_PU_frobenius": 5.012784295400581e-32,
+      "bottom_singular_estimates": [
+        4.549853246563029e-32,
+        1.8000797406602612e-32,
+        6.300918925198301e-33,
+        5.4819712625191755e-33,
+        4.8392012734896644e-33,
+        4.460757639660712e-33,
+        2.0522908096670767e-33,
+        7.564817277859219e-34,
+        6.418653820796973e-34,
+        5.14673250059531e-34,
+        3.4517935412486367e-34,
+        5.320081334214863e-35,
+        4.005227129200536e-35,
+        3.0850608333469985e-35,
+        7.499856895480879e-36,
+        3.767630264205461e-36,
+        3.070140040212949e-36,
+        1.640313407928742e-36,
+        8.784933367835632e-41,
+        0.0
+      ],
+      "diagnostic_rank_rcond": 1e-12,
+      "diagnostic_rank": 19,
+      "rank_method": "small port Gram eigenspectrum; numerical diagnostic, not exact rank",
+      "scale_min": 0.015332915773479498,
+      "scale_max": 1.5995960526948705,
+      "support_arrays": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/v31_learned_block_wave_support.npz",
+        "sha256": "25627523b6433c5514413138143ec055dd7e8e07807407d28ece22c921dacf25"
+      },
+      "patch_scale_counts": {
+        "0": 11,
+        "1": 32,
+        "2": 332
+      },
+      "retained_direction_counts_by_scale": {
+        "0": 33,
+        "1": 96,
+        "2": 3729
+      },
+      "z_center_histogram": {
+        "3.75": 81,
+        "8.75": 4,
+        "6.25": 194,
+        "1.25": 54,
+        "5.0": 27,
+        "2.5": 15
+      },
+      "zero_scattering_T": 0.11325708686720473,
+      "candidate_T": 0.11325708686720473,
+      "expanded_support_by_material_and_z": {
+        "Si": {
+          "cells": 184,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 6624,
+          "face_nonzero": 13248,
+          "interior_nonzero": 6624,
+          "coefficient_column_energy_sum": 179.74341400672972,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "air": {
+          "cells": 200,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 7200,
+          "face_nonzero": 14400,
+          "interior_nonzero": 7200,
+          "coefficient_column_energy_sum": 32.95035026866004,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=-0.6249999999999993": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 0.5819111460841295,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=0.6250000000000001": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 13.054932204794694,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=1.8749999999999998": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 19.514959143356393,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=3.124999999999999": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 30.61548097584623,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=4.374999999999999": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 33.57815867237305,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=5.624999999999998": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 55.395962730517475,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=6.874999999999997": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 51.12691142306126,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        },
+        "z_nm=8.124999999999996": {
+          "cells": 48,
+          "exactly_zero_cells": 0,
+          "edge_nonzero": 1728,
+          "face_nonzero": 3456,
+          "interior_nonzero": 1728,
+          "coefficient_column_energy_sum": 8.825447979356564,
+          "coefficient_column_energy_semantics": "Unthresholded coefficient scaling diagnostic, not physical field norm or error"
+        }
+      },
+      "material_classification_semantics": "Derived from saved cell centers and frozen geometry; original cell-tag hash remains separately bound",
+      "saved_support_binding": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/v31_learned_block_wave_support.npz",
+        "bytes": 514906,
+        "sha256": "25627523b6433c5514413138143ec055dd7e8e07807407d28ece22c921dacf25"
+      },
+      "background_and_candidate_bottom_complex_channels": "Complete fields in complete audit binding; affine alpha(0) excluded from P*U",
+      "complete_complex_port_fields_binding": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/result.json",
+        "bytes": 229596,
+        "sha256": "eb792cd1e6c57d12a18c7ed089091aeacbd715fb696623371762d9224a54cf7d"
+      }
+    }
+  },
+  "strict_zero_hypothesis": "NOT_PROVED_NO_STRICT_ZERO_CELLS",
+  "bottom_missing_support_hypothesis": "NOT_PROVED; bottom derivative nonzero at tiny floating scale; same T is a clue only",
+  "amplitude_threshold_used": false,
+  "reference_feedback": false,
+  "isolated_reference_bound": {
+    "reference_read_only_scoring_process": true,
+    "reference_samples_sha256": "b1e53887161a8b8171858d7d51ea52990e70441588df153d450c27c8fee0d7bc",
+    "routes": {
+      "v31_fixed_block_wave": {
+        "strict_zero_cells": [],
+        "squared_G_error_discrete_lower_bound": 0.0,
+        "reference_squared_G_norm": 984.6107903008674,
+        "does_not_prove_sufficiency": true
+      },
+      "v31_learned_block_wave": {
+        "strict_zero_cells": [],
+        "squared_G_error_discrete_lower_bound": 0.0,
+        "reference_squared_G_norm": 984.6107903008674,
+        "does_not_prove_sufficiency": true
+      }
+    },
+    "reference_feedback_to_training": false,
+    "source_sha": "b17144fd0f4f07e645e901ebf593e13d0fa967da",
+    "input_sha256": "84af8d98a683a3501c57be068ef1b3dfaf424ce1a9013f55368bfaf10a2f7a30",
+    "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+    "worker_elapsed_seconds": 0.8872787188738585,
+    "route_elapsed_seconds": 65.10768799507059,
+    "full_size_0p7_target_qualified": false
+  },
+  "reference_process_binding": {
+    "path": "benchmarks/artifacts/task42extra/v32/v32_support_reference_bound/result.json",
+    "bytes": 1007,
+    "sha256": "d3128d91153ca67dbceafce9c70c29d18724ffb73c3f33c244ffc831931624a0"
+  }
+}

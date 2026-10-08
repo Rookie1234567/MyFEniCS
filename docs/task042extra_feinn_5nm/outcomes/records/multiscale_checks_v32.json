@@ -1,0 +1,281 @@
+{
+  "result_binding": {
+    "path": "benchmarks/artifacts/task42extra/v32/v32_multiscale_wave_checks/result.json",
+    "bytes": 8079,
+    "sha256": "0f5c04ae460a7e802863c1431ef97247bbb9aadd59169b0c6f0f90fc4ec866e7"
+  },
+  "actual_native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+  "actual_moments_sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5",
+  "records": [
+    {
+      "kind": "global",
+      "level": -1,
+      "complete_mapping_relative": 2.352580539533303e-15,
+      "batch_relative": 0.0,
+      "real_complex_q_FD": [
+        {
+          "step": 0.0001,
+          "absolute": 1.0471526650235319e-06,
+          "relative": 5.623086559880672e-09
+        },
+        {
+          "step": 1e-05,
+          "absolute": 3.2813431971590035e-09,
+          "relative": 1.762042674986737e-11
+        },
+        {
+          "step": 1e-06,
+          "absolute": 1.6553374848626845e-07,
+          "relative": 8.88896745033344e-10
+        }
+      ],
+      "amplitude_gradient_relative": 4.8947815036471224e-15,
+      "original_A_AH_real_adjoint_relative": 1.4157385584711461e-14,
+      "projected_score_FD": [
+        5.217049325105152e-06,
+        5.248764614863313e-08,
+        1.8012292229995259e-09
+      ],
+      "local_complete_score_gradient_pair": 0.0,
+      "block_accepted": true,
+      "small_full_action_pair": 1.1165902632542578e-17
+    },
+    {
+      "kind": "local",
+      "level": 0,
+      "complete_mapping_relative": 2.075386368519378e-15,
+      "batch_relative": 0.0,
+      "real_complex_q_FD": [
+        {
+          "step": 0.0001,
+          "absolute": 3.3254096365453734e-08,
+          "relative": 3.757401507155086e-10
+        },
+        {
+          "step": 1e-05,
+          "absolute": 5.052271490058047e-09,
+          "relative": 5.708593703066861e-11
+        },
+        {
+          "step": 1e-06,
+          "absolute": 8.511250371157075e-09,
+          "relative": 9.616915949513737e-11
+        }
+      ],
+      "amplitude_gradient_relative": 5.55292699906331e-15,
+      "original_A_AH_real_adjoint_relative": 5.781139631977075e-14,
+      "projected_score_FD": [
+        4.783534699933506e-07,
+        5.530347872680388e-09,
+        1.0447014635967398e-08
+      ],
+      "local_complete_score_gradient_pair": 1.3019839284853812e-14,
+      "block_accepted": true,
+      "small_full_action_pair": 5.4400770741429365e-17
+    },
+    {
+      "kind": "local",
+      "level": 1,
+      "complete_mapping_relative": 2.1662081969985326e-15,
+      "batch_relative": 0.0,
+      "real_complex_q_FD": [
+        {
+          "step": 0.0001,
+          "absolute": 1.5214523862994156e-08,
+          "relative": 1.608030712297148e-08
+        },
+        {
+          "step": 1e-05,
+          "absolute": 1.0402434469369837e-09,
+          "relative": 1.0994385535843705e-09
+        },
+        {
+          "step": 1e-06,
+          "absolute": 4.825649213557881e-09,
+          "relative": 5.100253003296847e-09
+        }
+      ],
+      "amplitude_gradient_relative": 1.7188856593635251e-15,
+      "original_A_AH_real_adjoint_relative": 3.464775113033021e-15,
+      "projected_score_FD": [
+        2.2587816691556857e-09,
+        1.6104221270149484e-09,
+        3.646945262337887e-08
+      ],
+      "local_complete_score_gradient_pair": 5.976065100537623e-15,
+      "block_accepted": true,
+      "small_full_action_pair": 5.16220848819295e-17
+    },
+    {
+      "kind": "local",
+      "level": 2,
+      "complete_mapping_relative": 1.7834000971964863e-15,
+      "batch_relative": 0.0,
+      "real_complex_q_FD": [
+        {
+          "step": 0.0001,
+          "absolute": 2.749400263013513e-09,
+          "relative": 1.5320183111056443e-09
+        },
+        {
+          "step": 1e-05,
+          "absolute": 3.7799607888189257e-10,
+          "relative": 2.106266308923921e-10
+        },
+        {
+          "step": 1e-06,
+          "absolute": 6.170887134615555e-09,
+          "relative": 3.4385361102843564e-09
+        }
+      ],
+      "amplitude_gradient_relative": 2.2565761340154826e-15,
+      "original_A_AH_real_adjoint_relative": 2.3601621535412022e-15,
+      "projected_score_FD": [
+        4.709905823679845e-09,
+        4.225329137064554e-10,
+        4.6914007936274196e-09
+      ],
+      "local_complete_score_gradient_pair": 1.1656430980285896e-15,
+      "block_accepted": true,
+      "small_full_action_pair": 9.962456164377311e-17
+    }
+  ],
+  "complete_model_reconstruction_relative": 2.4026516079625768e-15,
+  "restored_coefficients_relative": 0.0,
+  "persistent_scale_selections": [
+    {
+      "iteration": 0,
+      "levels": [
+        -1,
+        0,
+        1,
+        2
+      ],
+      "count": 8
+    },
+    {
+      "iteration": 8,
+      "levels": [
+        -1,
+        0,
+        1,
+        2
+      ],
+      "count": 8
+    },
+    {
+      "iteration": 32,
+      "levels": [
+        -1,
+        0,
+        1,
+        2
+      ],
+      "count": 8
+    },
+    {
+      "iteration": 128,
+      "levels": [
+        -1,
+        0,
+        1,
+        2
+      ],
+      "count": 8
+    },
+    {
+      "iteration": 1024,
+      "levels": [
+        -1,
+        0,
+        1,
+        2
+      ],
+      "count": 8
+    },
+    {
+      "iteration": 4096,
+      "levels": [
+        -1,
+        0,
+        1,
+        2
+      ],
+      "count": 8
+    }
+  ],
+  "q_hard_limit_witness": {
+    "executed": true,
+    "function_calls": 2,
+    "actual_evaluation_limit": 2,
+    "scipy_status": -1,
+    "messages": "ACTUAL_EVALUATION_LIMIT",
+    "initial_gradient_norm": 1.5161794089091174,
+    "final_gradient_norm": 1.5161794089091174,
+    "last_trial": {
+      "score": -0.5747000000000001,
+      "gradient_norm": 1.5161794089091174,
+      "q": [
+        [
+          -0.16000000000000003,
+          -0.06000000000000005,
+          0.040000000000000036
+        ]
+      ]
+    },
+    "evaluated_trajectory": [
+      {
+        "score": -0.5747000000000001,
+        "gradient_norm": 1.5161794089091174,
+        "q": [
+          [
+            0.9,
+            0.8,
+            0.7
+          ]
+        ]
+      },
+      {
+        "score": -0.5747000000000001,
+        "gradient_norm": 1.5161794089091174,
+        "q": [
+          [
+            -0.16000000000000003,
+            -0.06000000000000005,
+            0.040000000000000036
+          ]
+        ]
+      }
+    ],
+    "extra_result_evaluation_count": 0
+  },
+  "R_vs_AH_fixture_scores": [
+    0.2,
+    1.0
+  ],
+  "label_isolation_pass": true,
+  "nonunit_floquet_coefficients": 1152,
+  "global_support_covers_cells": 384,
+  "global_local_cache_bypassed": true,
+  "reference_loaded": false,
+  "implementation_qualified": true,
+  "bound_numerical_chain_sha256": {
+    "src/solvers/neural_wave_moments.py": "5ce7ba22b3fc7cdaf2890c56630f262cff9346c8ddf4a042c9ccdfc5ba54be3b",
+    "src/solvers/neural_wave_greedy.py": "12fca4c56b791c84080859dda35b5b15ae40617e154468470ebe7c7f377d370f",
+    "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+    "src/solvers/neural_wave_block_reconstruction.py": "6a36e0ee5a6897d36230cd9040389c9df8daa96544c4a1e8cc6531395c56ac7e",
+    "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+    "src/solvers/neural_wave_multiscale.py": "d92e24c97e4f8f6fbcb5bfe1a7883182a47ceb557f8a17405a7c3cd5fd1ec470",
+    "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+    "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+    "src/solvers/neural_wave_multiscale_validation.py": "362c8d3bb8fca43d585c0fe11fdb1f49e042e0f6ab36b9ef3bbcbabb9dbb79ba",
+    "src/solvers/neural_wave_multiscale_qualification.py": "7974cf4d6b94ef992db9b7447dcd1dae1216234546d41b15cbe44a5431dfb6af",
+    "src/runners/multiscale_wave_worker.py": "570336a92a03d09a8b14566d4aafa01fe145e67e4e0ff3ffd52a4d5f9dca7dee"
+  },
+  "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+  "input_sha256": "199cda029cb370fb40d3bf6f9b65f9a7f5529071f312e33d0db399fa3bbc4ec2",
+  "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+  "worker_elapsed_seconds": 30.33198013692163,
+  "route_elapsed_seconds": 94.53956803283654,
+  "full_size_0p7_target_qualified": false
+}

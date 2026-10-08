@@ -1,0 +1,1677 @@
+{
+  "formal_runs": [
+    {
+      "name": "v32_fixed_multiscale_wave_attempt1",
+      "stage": "v32_fixed_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/run_summary.json",
+        "bytes": 11640,
+        "sha256": "ac0714b32df566b89c7901e7ddac35e07ac4fffa18e69be4b582dfca3ebbb463"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 2558.5357734290883,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 2558.5357734290883,
+      "supervised_nested_seconds": 2494.4634531999473,
+      "simultaneous_sampled_tree_rss_peak_bytes": 1081290752,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_multiscale_wave/result_previous_1349042879121.json",
+        "bytes": 11890,
+        "sha256": "36ddc284aa261d7e442e422ccb6fc38cc3d8cdfb78ce8a6320ad96a132c1531e"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/launch.json",
+          "bytes": 455,
+          "sha256": "d76018cb950627bd5675f1d7f614fbec6adbe7bb03bd19d5114cb46211791d61"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/input_original.dat",
+          "bytes": 153,
+          "sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/run_manifest.json",
+          "bytes": 7270,
+          "sha256": "ca5a44785a5039972860fdc332fd35eac0441337cc57588036e7ae7bfe130085"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "c2ebfce9d8c87662efa9ee63215512ad767b371b82a133dde9e8469df505f606"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/admission.json",
+          "bytes": 230081,
+          "sha256": "22dec358d2ec70b7dbc8d9b37bf81b7c19ab6d170dc44f9033696e05d5111a66"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/outer_admission.json",
+          "bytes": 308956,
+          "sha256": "bd9d8c8026d07468132de935d135759d0d8022c64ec6f6aa949767f105a24349"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "9167e776f989ddc35227f27570f34cc2ce3dceea935a5b13e707c8c6a33e0d2d"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt1/terminal_identity.json",
+          "bytes": 11432,
+          "sha256": "2254e46ddd5e97e212fc041e678246a1f0c0f740c1414d67a8d9707ccd6304ac"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_multiscale_wave_attempt2",
+      "stage": "v32_fixed_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/run_summary.json",
+        "bytes": 11638,
+        "sha256": "552dbed7608e433f8e72e73c05b89d1095d0946c40751bd905eaff920868b52d"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 4284.159875395941,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 7056.7811433989555,
+      "supervised_nested_seconds": 4220.093103671912,
+      "simultaneous_sampled_tree_rss_peak_bytes": 1744695296,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_multiscale_wave/result_previous_1354510215123.json",
+        "bytes": 8159,
+        "sha256": "1c47aa94bca6c5681d9c240e9b40f65bab95ba308e52e049b66adf4461de357b"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/launch.json",
+          "bytes": 456,
+          "sha256": "1596fc93d8cf47b2420261f91c0adab840ccba2d3dcfcb19c54283179cb09232"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/input_original.dat",
+          "bytes": 153,
+          "sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/run_manifest.json",
+          "bytes": 7270,
+          "sha256": "26d24d4adc697c4b33de978c505b21d0d4cd5903e4a5f025c0880580196e3ab7"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "90e2900bc0b41a26d70facfe2da8ed8c3495742fb8bc58b178fe2f13054f6515"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/admission.json",
+          "bytes": 229811,
+          "sha256": "8833ca6b67cd04b4e577244537d84b7a2b1636a4c10dac152dbd9af326e851fa"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/outer_admission.json",
+          "bytes": 305416,
+          "sha256": "326e94be1dac27888acfc4705fccbd8f0ab19d3b216394221ca5b4de5b7f9d17"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "a971a669cf22ddaa64797ed98c65edd5cf8bad232f285345e0211aa9b3273bd4"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt2/terminal_identity.json",
+          "bytes": 11432,
+          "sha256": "6563a90ed006ed2d4ab9d68d7cf0c58db3f581a8bb4ee1819a2aa8a76783aa90"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_multiscale_wave_attempt3",
+      "stage": "v32_fixed_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/run_summary.json",
+        "bytes": 11651,
+        "sha256": "ab4f86534e969b9036f02cef5cc8037a1b7526861f0d6cd1c6fb4d91cb4a0d3e"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "WORKER_FAILED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 2652.2055975571275,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 9948.003876557108,
+      "supervised_nested_seconds": 2588.232485147193,
+      "simultaneous_sampled_tree_rss_peak_bytes": 2309611520,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 7,
+      "result": null,
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/launch.json",
+          "bytes": 456,
+          "sha256": "980f6fdccc2019688511864820c07442df78bdae29592d32f413547eba0e5f08"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/input_original.dat",
+          "bytes": 153,
+          "sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/run_manifest.json",
+          "bytes": 7270,
+          "sha256": "5474486a6f57ecc9475fde6e3c24e4dc92ac7ebe395a31436e7386195cc28420"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/abi.json",
+          "bytes": 490,
+          "sha256": "90750cf041033b56df881616ebfb9463fc3abead54b2d5d9ae815cbd67ef41ab"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "e247c9a5df8b4fb235965dd37b71948452da1f92c9760e11a7175a3c6cc5d565"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/admission.json",
+          "bytes": 229520,
+          "sha256": "2c08f6a8548e062641b0bef1e2312c2ef180fd9d4cab75eb5736d450428e139f"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/outer_admission.json",
+          "bytes": 219867,
+          "sha256": "73a86c07a92853576d452da10517dce61bad3d8b1b44dcfa59d9c1b83a35bc27"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "13898343ad930ed23582a4717544ff341cf02edd726b6ee8a9a5bf4c9f570e71"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt3/terminal_identity.json",
+          "bytes": 11433,
+          "sha256": "cfb288545881d93d581cb984be6258c7413ad1a81e449e76a2c4e5178c7c4aa9"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_multiscale_wave_attempt4",
+      "stage": "v32_fixed_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/run_summary.json",
+        "bytes": 11635,
+        "sha256": "909f3fd5d3602236284eb37b81fab0da515e0442f864a3fe7728c5196cf525bd"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 77.34818126820028,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 12523.715450731106,
+      "supervised_nested_seconds": 10.526930376887321,
+      "simultaneous_sampled_tree_rss_peak_bytes": 1814433792,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 4,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_multiscale_wave/result.json",
+        "bytes": 2840,
+        "sha256": "d5aec8ca22790bf439cf113793b2cf8119ade42f2fc7da3e88cfd654b023b56e"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/launch.json",
+          "bytes": 456,
+          "sha256": "2a814f396db4559131af58f08aaf325bbb57eb4736b62b6b8832ddb602b28531"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/input_original.dat",
+          "bytes": 153,
+          "sha256": "f80d81df20f2eb1d17b6eb499121c50e5b6eeafbf4f15ac0ea46e9703e1bd3a5"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/run_manifest.json",
+          "bytes": 7270,
+          "sha256": "325e31d038056208c4d1ca4a408efffe7b6a2a83fec81406ee5663898dcfed47"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/abi.json",
+          "bytes": 490,
+          "sha256": "6d4f5b586b301dd34228e4d93a6ab600bb78f1f08e1b4ce051132a8def3d48be"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/pressure_stable_window.json",
+          "bytes": 11452,
+          "sha256": "37f5890162e3138d70eaa14b27d738a08bb8fb6c540eb0cafd13f666d8fac771"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/admission.json",
+          "bytes": 408580,
+          "sha256": "a53e5b5fcd912cb75a121ae3cceee649e7aa9a9ce81ade3eefd48547d177ac8e"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/outer_admission.json",
+          "bytes": 321791,
+          "sha256": "3b852890c3858403946e285f3da79c0d31e76f3a41a38b144776778cbb536ce5"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "ae754b14bd641aa166c79fd53342411ea4d94bc7ad86c803d0a61becc44361b9"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_multiscale_wave_attempt4/terminal_identity.json",
+          "bytes": 11431,
+          "sha256": "07f07c0ef7c5982c6073ed36dc263dff59f527f1827c4d4d707507e477110169"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_original_qr_checks_attempt1",
+      "stage": "v32_fixed_original_qr_checks",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/run_summary.json",
+        "bytes": 11951,
+        "sha256": "d408580854c34644711ba4dce56e2dcfba90743e3bb5e3b62bce2b55dde48c18"
+      },
+      "source_sha": "0ed98efb8fe9a6865e11a7aeee9f60041b0d5039",
+      "input_sha256": "1c00f6ea1f0ce606ace1b4ba00a5a2326e2959dd51495dc133e89a85c9bc3389",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "RESOURCE_CONTROLLED_STOP",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 105.29373846598901,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 105.29373846598901,
+      "supervised_nested_seconds": 41.24477971694432,
+      "simultaneous_sampled_tree_rss_peak_bytes": 2549198848,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 5,
+      "result": null,
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/launch.json",
+          "bytes": 468,
+          "sha256": "83f8c630b6b520769316b7ac99525f8cebad2ef69b41f70b6503cd231ef919bb"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/input_original.dat",
+          "bytes": 156,
+          "sha256": "1c00f6ea1f0ce606ace1b4ba00a5a2326e2959dd51495dc133e89a85c9bc3389"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/run_manifest.json",
+          "bytes": 7271,
+          "sha256": "016115f20a3ac16e650d85177575f842ad12036c7e3b511acbce36c2ce1b121b"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/abi.json",
+          "bytes": 490,
+          "sha256": "a6bdda815dbb18bc1807ecc3af8d3fc314097808c79b387432bbede6cdeb4b0e"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/pressure_stable_window.json",
+          "bytes": 11428,
+          "sha256": "46e1ef6e49c592d801f8f6e3c0291676a2089781c040b084882da54ebad76419"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/admission.json",
+          "bytes": 328968,
+          "sha256": "22f43f3ca7c633a958eba1978504144770db17131625026221ac9c1cd08bfd8b"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/outer_admission.json",
+          "bytes": 324170,
+          "sha256": "c141dde3e59c17e210a5878422add5f7e4442566a0448a941fb747ec23bbcd0f"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/attempt_identity.json",
+          "bytes": 306,
+          "sha256": "60129ae78c5856b5fa2d07763c758e245185be937b633068e25878c0f047d662"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt1/terminal_identity.json",
+          "bytes": 11437,
+          "sha256": "5d2a28a0fc6b85cb213685530f7b242caf5f4bd1acc35a90666fbdb72ed23865"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_original_qr_checks_attempt2",
+      "stage": "v32_fixed_original_qr_checks",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/run_summary.json",
+        "bytes": 11641,
+        "sha256": "af0596fe58a126bd2402a726ab1bfd81f2cdd91cff2345dd1c948ed02c8d9647"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "1c00f6ea1f0ce606ace1b4ba00a5a2326e2959dd51495dc133e89a85c9bc3389",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 306.7677441299893,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 1128.3121576600242,
+      "supervised_nested_seconds": 242.19163850788027,
+      "simultaneous_sampled_tree_rss_peak_bytes": 5290643456,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 17,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_original_qr_checks/result.json",
+        "bytes": 10015,
+        "sha256": "834fe8427167d2c3468e8127a192ed31fd819bcf21c8f522a7943986fc40073a"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/launch.json",
+          "bytes": 468,
+          "sha256": "fb31b821affece4e460a6ec129922e8d9027019f87878dfeb2b55021365277f1"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/input_original.dat",
+          "bytes": 156,
+          "sha256": "1c00f6ea1f0ce606ace1b4ba00a5a2326e2959dd51495dc133e89a85c9bc3389"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/run_manifest.json",
+          "bytes": 7274,
+          "sha256": "80d649cc0888162bdfa822770a98f5a32f19e99b64212a31cb706fdd45f647e0"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/abi.json",
+          "bytes": 491,
+          "sha256": "f277fd03856ee3d93f266a402399696a14a71fc9417a46e9ab6b012b4bfab5ec"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "f16167a1745ccd61ae08d3bf32dd0011b84010eb61f7063dee30f2a0a8081e07"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/admission.json",
+          "bytes": 418833,
+          "sha256": "72c2db244d4340d0a9832f75f5b94754ecc75feb6c0937e137a100fb54e506f2"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/outer_admission.json",
+          "bytes": 409104,
+          "sha256": "2bb8b6874ac9a38938d8eda5717e6cb00fe86cacf487296a73e0562e27ac260b"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/attempt_identity.json",
+          "bytes": 306,
+          "sha256": "3f5373ecc0f56c788452fa35d73ab51872d0f0648ecd26f65b17f6a53c18c589"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_original_qr_checks_attempt2/terminal_identity.json",
+          "bytes": 11439,
+          "sha256": "3d3cac105b113f34d4a0e8dc604d4da35541cc1e76e11d1230e0b525a6f63fe9"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_validate_1_attempt1",
+      "stage": "v32_fixed_validate_1",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/run_summary.json",
+        "bytes": 12900,
+        "sha256": "089171d9115be4e63a0fb01e20e5c3d0e64a93628f73f005cbb16cb5eba947d6"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "4a3e4ff21370cb615b51e572ca022e1de1fe3037c100d1cdf69b978a8b8263a8",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 92.92700847005472,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 92.92700847005472,
+      "supervised_nested_seconds": 29.00059311813675,
+      "simultaneous_sampled_tree_rss_peak_bytes": 444489728,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_validate_1/result.json",
+        "bytes": 1876,
+        "sha256": "a8c53f8591b98e9c1be0cc7c9f4c92d35cf590e9d6aaa8b62c234f479a31e8bf"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/launch.json",
+          "bytes": 435,
+          "sha256": "006a69b0cdbbd2768338de908f46ab101225a04ee8dc1f344acc7ef27f8e675d"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/input_original.dat",
+          "bytes": 148,
+          "sha256": "4a3e4ff21370cb615b51e572ca022e1de1fe3037c100d1cdf69b978a8b8263a8"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/run_manifest.json",
+          "bytes": 8524,
+          "sha256": "a06138f16f0e7a0b0d1aeb93e17a1f1bc8905d5285ceedb1930848f441c99572"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/abi.json",
+          "bytes": 462,
+          "sha256": "6cfd8318171bc81f1f77669ca305cfc1b6ae89532a1c604c478e1c83ad1ea1f2"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "d4dbc5224d3dd5d91cb4d6097602e9746dfadebe13821d2551f9c8b8cea4d2e6"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/admission.json",
+          "bytes": 230663,
+          "sha256": "c0eb325c4da7a8d671a4355c75181638796ad796f47e4d1a7479a248e81dbf1e"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/outer_admission.json",
+          "bytes": 297380,
+          "sha256": "885cff79d687cf0b262e4412af78aa6dca04cfa687f01c94118e223f3568baeb"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/attempt_identity.json",
+          "bytes": 295,
+          "sha256": "7c6e6289ae0bbba1b6c6e4c50ebc3332d213a3fe4359ea46eebeb35df5ea1b26"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_1_attempt1/terminal_identity.json",
+          "bytes": 11423,
+          "sha256": "8fbc860dbb2ba26c43a8aba048dc23fecb32e9de60b7bf1b84bac7ef13d89fea"
+        }
+      }
+    },
+    {
+      "name": "v32_fixed_validate_2_attempt1",
+      "stage": "v32_fixed_validate_2",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/run_summary.json",
+        "bytes": 12910,
+        "sha256": "a14be2e02011c16977f31956d3bbc74734fb565c0c46d1a479c7247631d3e322"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "0532ddf5ba42c65b0eb1449d93806f5228df554d0ff87ec2595239209465f129",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 108.94072277704254,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 108.94072277704254,
+      "supervised_nested_seconds": 44.80386112211272,
+      "simultaneous_sampled_tree_rss_peak_bytes": 444239872,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_validate_2/result.json",
+        "bytes": 1880,
+        "sha256": "1a0afca6eea3c2e7171957739b43052957d2fa297e483248bb0c5909b3a21fe3"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/launch.json",
+          "bytes": 436,
+          "sha256": "87645850c74bd5f4fd4ecdfc38b06f99c73df297d49eb0df93042bd768526c46"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/input_original.dat",
+          "bytes": 148,
+          "sha256": "0532ddf5ba42c65b0eb1449d93806f5228df554d0ff87ec2595239209465f129"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/run_manifest.json",
+          "bytes": 8530,
+          "sha256": "7887987b377f47019c3e01096670ba066b00ae0f09196eda8557a49cc18a4ca1"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "281bbf98702c4571bdccca91c11a6b675b466e04700c29aa4474fa1723066091"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/pressure_stable_window.json",
+          "bytes": 11459,
+          "sha256": "bcee9c0cd307eb519d5fffdaa53e060592c1432be22b37f018997f82682274e4"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/admission.json",
+          "bytes": 227455,
+          "sha256": "920d5d995acdc1c0b73d561cde405c738e9f247ccc598bc9786855e5958fb76d"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/outer_admission.json",
+          "bytes": 221805,
+          "sha256": "0c1bf05e402839b277612de5169e1cd27f09219c36ffa3b9e6dfbea3b983e90d"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/attempt_identity.json",
+          "bytes": 298,
+          "sha256": "5e0ee25f846ebd56b2ea4711bb8723d0b3a1ad3131d4f7868fc125b33c9f7121"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_fixed_validate_2_attempt1/terminal_identity.json",
+          "bytes": 11423,
+          "sha256": "92a7283013dd38da279a1eb2fed60c6169467c1c9311c6704edff83efedf37b1"
+        }
+      }
+    },
+    {
+      "name": "v32_learned_multiscale_wave_attempt1",
+      "stage": "v32_learned_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/run_summary.json",
+        "bytes": 11644,
+        "sha256": "a516d16e47eca3fd12b7228be67b66318a4a09848f2e7f2132a8a63c6d77ad66"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "8eb55948f6a090e2c54289565629797e8ee3f022d1d153f927269b2a32a385bd",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 3916.591592221055,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 3916.591592221055,
+      "supervised_nested_seconds": 3852.432825091062,
+      "simultaneous_sampled_tree_rss_peak_bytes": 1050173440,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_learned_multiscale_wave/result_previous_1361759835134.json",
+        "bytes": 12992,
+        "sha256": "31d53e9908c014576199d6254d9bc0b14356ca56cc67fa6fb31ec61d46f4e3b7"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/launch.json",
+          "bytes": 464,
+          "sha256": "bd44ec22fddc6b442f0dc826576370c3b07e72234b582ebc491b99cb39675369"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/input_original.dat",
+          "bytes": 155,
+          "sha256": "8eb55948f6a090e2c54289565629797e8ee3f022d1d153f927269b2a32a385bd"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/run_manifest.json",
+          "bytes": 7278,
+          "sha256": "2c8c0569189a0cb883873d865c38fd3e2cf0f2ceef1ee0470459ff4e8a44fc54"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/pressure_stable_window.json",
+          "bytes": 11452,
+          "sha256": "6fd981f86473e250a3b77fd90c0143b9aaf2f02b73d9d6b21e44a9bb2e6c84e6"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/admission.json",
+          "bytes": 315501,
+          "sha256": "debf4b4b835beb729fd56f60d4ac55c020c558753d70331e167826761ceaffe4"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/outer_admission.json",
+          "bytes": 398130,
+          "sha256": "4a93a33dde82c428395f6a5655a63c6573852b25d3cfa1127ff43b32f2780ccf"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/attempt_identity.json",
+          "bytes": 305,
+          "sha256": "8b17c2461653b54f8750da9924436f15fe420f1c249577f40228cba681dc3ea5"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt1/terminal_identity.json",
+          "bytes": 11437,
+          "sha256": "946e5bcc05da9f73e3d0c2aca175072679ab80abf4a714ffc10b7c8ae0bff639"
+        }
+      }
+    },
+    {
+      "name": "v32_learned_multiscale_wave_attempt2",
+      "stage": "v32_learned_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/run_summary.json",
+        "bytes": 11641,
+        "sha256": "4cddc83144c5fac6e4b50d7a1b09371b88cefc56f382b0c63ca658b4ead62db2"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "8eb55948f6a090e2c54289565629797e8ee3f022d1d153f927269b2a32a385bd",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 3000.638339612866,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 7233.302891186904,
+      "supervised_nested_seconds": 2936.7077595999,
+      "simultaneous_sampled_tree_rss_peak_bytes": 1429299200,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 4,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_learned_multiscale_wave/result_previous_1367008586222.json",
+        "bytes": 7020,
+        "sha256": "f0d14cbeac6163b9432f3537976f63b9fefea5509bd38030c2509d6ddcac111d"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/launch.json",
+          "bytes": 464,
+          "sha256": "12f9d8f6e701ea81d0690a99739e18cf2269cfef4b7a96f9318beebd2317bc30"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/input_original.dat",
+          "bytes": 155,
+          "sha256": "8eb55948f6a090e2c54289565629797e8ee3f022d1d153f927269b2a32a385bd"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/run_manifest.json",
+          "bytes": 7277,
+          "sha256": "3f6686c0d08acfb3f3ab72ec67eda6f5f81090685b19ebf686478b3e321b4e46"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/abi.json",
+          "bytes": 490,
+          "sha256": "6d4f5b586b301dd34228e4d93a6ab600bb78f1f08e1b4ce051132a8def3d48be"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "ecb04de89d987e9702fdbf14e6e72db71ad31079f68a731428931443f2214e18"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/admission.json",
+          "bytes": 322478,
+          "sha256": "b74312aec96d0b8efc13272773757fcaa8982a791f689a2b855d8cdcbec52027"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/outer_admission.json",
+          "bytes": 400575,
+          "sha256": "e9316ea091fed54caa6f756f92c74ed5f5027d09f634819b6d861373263cac6e"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/attempt_identity.json",
+          "bytes": 304,
+          "sha256": "6737f17d0430253901045edb6ad2101ab59aa49bd15f906ac5e05a06965b8f76"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt2/terminal_identity.json",
+          "bytes": 11436,
+          "sha256": "8bed1006594cfde6416cc2148258eeca74d6368adb180c0f554ced215a7283ea"
+        }
+      }
+    },
+    {
+      "name": "v32_learned_multiscale_wave_attempt3",
+      "stage": "v32_learned_multiscale_wave",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/run_summary.json",
+        "bytes": 11645,
+        "sha256": "806a47f2735c5eafcd2338ee714df464d3dc7736d41d64dfbb1fe741efdfb027"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "8eb55948f6a090e2c54289565629797e8ee3f022d1d153f927269b2a32a385bd",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 5065.455149054062,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 12482.117068856023,
+      "supervised_nested_seconds": 5001.535568584921,
+      "simultaneous_sampled_tree_rss_peak_bytes": 2288005120,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 1,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_learned_multiscale_wave/result.json",
+        "bytes": 11179,
+        "sha256": "37e39c072809bb3f6a931dabcbf34febf95c21d39d8bca6c6dc0f35faccae95f"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/launch.json",
+          "bytes": 464,
+          "sha256": "b4d044f34bf00358871ea593f24c0b464834d5790257843ffe9955379a708c27"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/input_original.dat",
+          "bytes": 155,
+          "sha256": "8eb55948f6a090e2c54289565629797e8ee3f022d1d153f927269b2a32a385bd"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/run_manifest.json",
+          "bytes": 7278,
+          "sha256": "f5f76aeddc7d8ddc9b6699e64ceae86d3fee45dd5f5e5a6d1e556cad1577c1ec"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/abi.json",
+          "bytes": 490,
+          "sha256": "8fba6ef271fc8c313f3b0f379e6c501285496adec4eb8147da07d7fc6c814420"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "81675929080d385035b0efe21925b132d071b10d3947e9491da8e5c83e31195c"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/admission.json",
+          "bytes": 318084,
+          "sha256": "70c6febaa9b7f02cf6fdeb90bc6f8c917607baa9eb0a18bd38ddc7eac785d7e6"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/outer_admission.json",
+          "bytes": 311901,
+          "sha256": "c80b5245ec2d9428e1c652f3a22a1d5e73a8127ffc3d6a0d815b9dbd841d044c"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/attempt_identity.json",
+          "bytes": 305,
+          "sha256": "a7f57b799a6f4b2811a16cc644ac0632c1572333f2937e800829831a3d85073a"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_multiscale_wave_attempt3/terminal_identity.json",
+          "bytes": 11435,
+          "sha256": "85bb67b0ea1da244c900cae6b8c23ff5f93a949afc0e9b77234d28aa1ce1f780"
+        }
+      }
+    },
+    {
+      "name": "v32_learned_validate_1_attempt1",
+      "stage": "v32_learned_validate_1",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/run_summary.json",
+        "bytes": 12911,
+        "sha256": "7953c086c77e607a4ae3848cf0c837cad0d67d2db7f9a97ff218cd31691d0f0b"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "b55836069c769d28377ae1b2e508b75157c180f7790858654eb8812e3872ba87",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 93.83003880782053,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 93.83003880782053,
+      "supervised_nested_seconds": 29.65991299180314,
+      "simultaneous_sampled_tree_rss_peak_bytes": 444465152,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_learned_validate_1/result.json",
+        "bytes": 1876,
+        "sha256": "37c5ddec45f45d8070ce1f082a81f4b297386a9b2c9096f818b0e7da0d558f0e"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/launch.json",
+          "bytes": 444,
+          "sha256": "cbf71daf7286b584f4d92f9d1f16b004539f430d259eed1b7f8730df96e0851e"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/input_original.dat",
+          "bytes": 150,
+          "sha256": "b55836069c769d28377ae1b2e508b75157c180f7790858654eb8812e3872ba87"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/run_manifest.json",
+          "bytes": 8535,
+          "sha256": "ed4739e9a2ddfa11597efd4636c56eb8be0ac0bde0fe9b8485083996cb15828f"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/abi.json",
+          "bytes": 462,
+          "sha256": "6cfd8318171bc81f1f77669ca305cfc1b6ae89532a1c604c478e1c83ad1ea1f2"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "795509a025ba168822154f8f078834e2632d60579f35b756f436ee9fc4d47f2b"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/admission.json",
+          "bytes": 318314,
+          "sha256": "abb295b95e5c3e2b3c0f8c9432cf8ec2c5d378c4292964baca1291d171a64fd6"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/outer_admission.json",
+          "bytes": 311319,
+          "sha256": "fed8af350599fcb858a8307a6d935822a3cf3ae374995321f2557e92aaa617ad"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/attempt_identity.json",
+          "bytes": 300,
+          "sha256": "6b93cef2fe2ba94b7ac205cc514b42f7e2838a5ec5c5e34f5f3b66baf1746abf"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_1_attempt1/terminal_identity.json",
+          "bytes": 11427,
+          "sha256": "98e2a4f9b08d19c66be9ebe1108b63ab25f2c8138330bdfe111bd318f1339a0d"
+        }
+      }
+    },
+    {
+      "name": "v32_learned_validate_2_attempt1",
+      "stage": "v32_learned_validate_2",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/run_summary.json",
+        "bytes": 12914,
+        "sha256": "1e7c5b241c35e7e1cd3542b3fc211e17fcaefc026cc456fb78d3544b524dd828"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "73969db5c94143402cf1bb4d3d050ef50fa3e621b06fc5d4ed865c1c543d91b0",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 103.54267600900494,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 103.54267600900494,
+      "supervised_nested_seconds": 39.581950020976365,
+      "simultaneous_sampled_tree_rss_peak_bytes": 443744256,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 24,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_learned_validate_2/result.json",
+        "bytes": 1877,
+        "sha256": "4bdc9e27c4686ffc6189aa4350af9115a5faef6b3427d9b3d833261bda167141"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/launch.json",
+          "bytes": 444,
+          "sha256": "682cd302e7bd6b39799eadc4c79c5ea2ebaba22feca10f29c0c97bc9ba662768"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/input_original.dat",
+          "bytes": 150,
+          "sha256": "73969db5c94143402cf1bb4d3d050ef50fa3e621b06fc5d4ed865c1c543d91b0"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/run_manifest.json",
+          "bytes": 8536,
+          "sha256": "9831c174e333b1fd595121af7afa6d847759e2cbdc2831db04b1d7fcbfb93ed4"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "bc66ee9ddde9e86b73d2618f1e865afcf8afe743c20e637888a7eb9fb2a577de"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/pressure_stable_window.json",
+          "bytes": 11454,
+          "sha256": "6a8080552b4cae5ead66f11341da9ce6ffa81d0adca4ea106387fdfc7a3ae6cf"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/admission.json",
+          "bytes": 315737,
+          "sha256": "e9a977e82ff9c196283d92d0471f89e41baa3a1fd41f6232e7aab9b6159a367b"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/outer_admission.json",
+          "bytes": 310972,
+          "sha256": "bf97e7621b33c306abb16f616c3534ad8bb7683e3c1d4c4b3b6e1f626c88df82"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/attempt_identity.json",
+          "bytes": 300,
+          "sha256": "48ae114723ad4b02f96d969a4671777a0bbb4cf6842609450ee4fa5e0dd58ee8"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_learned_validate_2_attempt1/terminal_identity.json",
+          "bytes": 11425,
+          "sha256": "417e1e084193b61bb5f4a209e01fe35db541088e6e09a1b8625ab0c33af17116"
+        }
+      }
+    },
+    {
+      "name": "v32_multiscale_compare_attempt1",
+      "stage": "v32_multiscale_compare",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/run_summary.json",
+        "bytes": 11608,
+        "sha256": "a6fe9d8837915afa8721ec34e1ec557c5816061f1c4bd892c38c633f7b2effa8"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "c87c7fe0b5c0e42c90ec160979f8c2e8f56f408f3cc7f2bc225024c1d173bdc2",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 67.67523440904915,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 67.67523440904915,
+      "supervised_nested_seconds": 3.73721073102206,
+      "simultaneous_sampled_tree_rss_peak_bytes": 353726464,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_multiscale_compare/result.json",
+        "bytes": 35044,
+        "sha256": "7b7a9ce5710dd8ac16f4e390e66a3fe86422fd8b014751a219aacd7c6eb5b1a4"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/launch.json",
+          "bytes": 446,
+          "sha256": "35ca8f48a13267b661412003e5069a320eec53333da67ada6ef4d64538d53f06"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/input_original.dat",
+          "bytes": 150,
+          "sha256": "c87c7fe0b5c0e42c90ec160979f8c2e8f56f408f3cc7f2bc225024c1d173bdc2"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/run_manifest.json",
+          "bytes": 7251,
+          "sha256": "ca2a52451808febc8da680cee24af7cfd703a928fd88ed2381fb42df25a17383"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/abi.json",
+          "bytes": 288,
+          "sha256": "3f04b240b1a3d2f62f8f55f8e887d4bbbb0391af3421c5fd851d339d52501f73"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/pressure_stable_window.json",
+          "bytes": 11429,
+          "sha256": "47d45f93a82b02057b8148dc6002032ba53eb0ad97e33e68422febbc9357a912"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/admission.json",
+          "bytes": 238752,
+          "sha256": "154a8b2e996e4230781ce1f2664cb8152c8120dc0d125f0e4107d94c0b783fc0"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/outer_admission.json",
+          "bytes": 326852,
+          "sha256": "35a2c87dcc1f8c85d7eec10182709f85db8b7d5ef2eb166624a5cb3991b46e7d"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/attempt_identity.json",
+          "bytes": 300,
+          "sha256": "d0de2bd2a1e6117dbab85f23d3de17486250358affd7debd0a2fa3c1cc236475"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_compare_attempt1/terminal_identity.json",
+          "bytes": 11426,
+          "sha256": "528ab7011650c9a16b4f0e00959f0fdded78a8b89742c6f136aa6593fbe41ff4"
+        }
+      }
+    },
+    {
+      "name": "v32_multiscale_reconstruct_attempt1",
+      "stage": "v32_multiscale_reconstruct",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/run_summary.json",
+        "bytes": 12933,
+        "sha256": "b9458be5c22cc8950ed30e489d3f1dbf4efe866b6a73bd2768f6960e0257b227"
+      },
+      "source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+      "input_sha256": "f50cb220861a4c272e0c5b91159820e9d179750c2e0b0628842b0398271bf3f3",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 732.8171012089588,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 732.8171012089588,
+      "supervised_nested_seconds": 669.0487086710054,
+      "simultaneous_sampled_tree_rss_peak_bytes": 659480576,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_multiscale_reconstruct/result.json",
+        "bytes": 407437,
+        "sha256": "dc00cda9d3dba5f1a877e51436c8cf473795caef91d8845d743a5dfa49ad0cc1"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/launch.json",
+          "bytes": 460,
+          "sha256": "67cf23a40b88b39215572366e5b52a39619a97f0824c681c2aa5c04519021a7f"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/input_original.dat",
+          "bytes": 154,
+          "sha256": "f50cb220861a4c272e0c5b91159820e9d179750c2e0b0628842b0398271bf3f3"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/run_manifest.json",
+          "bytes": 8556,
+          "sha256": "e34f125a7c90a861931e6f4b7dde2a95f28534397937f841c562f66cefcf6c29"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "281bbf98702c4571bdccca91c11a6b675b466e04700c29aa4474fa1723066091"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/pressure_stable_window.json",
+          "bytes": 11449,
+          "sha256": "c9bd9d958f04d35a248caf6c7f7246203cf626fca52c914f50c3da0b3d3dee75"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/admission.json",
+          "bytes": 234948,
+          "sha256": "c800ffb02f3198a62926f00fb04533c1de50f43052702c8c891ae753bf29452c"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/outer_admission.json",
+          "bytes": 229951,
+          "sha256": "9e4a3eb5009607d58f2000877b81d8dc9f5b81cf2fa4a1a4c1a8cbe14af8ca72"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/attempt_identity.json",
+          "bytes": 304,
+          "sha256": "b8187a90b6de702daf5d6f91f4c019f996ece87a6ee8a57737dc0dbc796ec0c5"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_reconstruct_attempt1/terminal_identity.json",
+          "bytes": 11435,
+          "sha256": "3102772b15b1a175e1be25b993f5e97d5475ae8d96d9ac482f0485a276b31616"
+        }
+      }
+    },
+    {
+      "name": "v32_multiscale_wave_checks_attempt1",
+      "stage": "v32_multiscale_wave_checks",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/run_summary.json",
+        "bytes": 11625,
+        "sha256": "0922011f1412230b2d3658bab7b983d6f87a2e38c584f0c60097b47338be9993"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "199cda029cb370fb40d3bf6f9b65f9a7f5529071f312e33d0db399fa3bbc4ec2",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 96.45366212492809,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 96.45366212492809,
+      "supervised_nested_seconds": 32.56274342001416,
+      "simultaneous_sampled_tree_rss_peak_bytes": 437985280,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 3,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_multiscale_wave_checks/result.json",
+        "bytes": 8079,
+        "sha256": "0f5c04ae460a7e802863c1431ef97247bbb9aadd59169b0c6f0f90fc4ec866e7"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/launch.json",
+          "bytes": 460,
+          "sha256": "0b1bf53f6a575b060be1ba4cc3dfd843b583c19a89795d99ec67f815b6657d07"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/input_original.dat",
+          "bytes": 154,
+          "sha256": "199cda029cb370fb40d3bf6f9b65f9a7f5529071f312e33d0db399fa3bbc4ec2"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/run_manifest.json",
+          "bytes": 7263,
+          "sha256": "d6de64cd1c623be95d8cf1654ace020cdc9de0e56262b0478adfddcac43bb308"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/abi.json",
+          "bytes": 490,
+          "sha256": "2bf1f541e7a6953c8a2d3f5f5fadb1510ae31f00918f7a0ec2895db66ecfb440"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/pressure_stable_window.json",
+          "bytes": 11457,
+          "sha256": "eb1a411be1595512b8309dad66e697b842a55ee57577495f7bd2a43235a83ec7"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/admission.json",
+          "bytes": 226227,
+          "sha256": "92a160801ed1f165491d05380e056365f6ff7e9ce2e4d65cf424f5377ff11eeb"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/outer_admission.json",
+          "bytes": 307099,
+          "sha256": "163e9e90ad476812ffb66409e307c471973cb8ba9c2315734f623a831a9a0fec"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/attempt_identity.json",
+          "bytes": 304,
+          "sha256": "08afd640ec39b09d7b1debd6ffe248999ae3d985dd961f6f07d6dab0b5fdaf37"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_multiscale_wave_checks_attempt1/terminal_identity.json",
+          "bytes": 11435,
+          "sha256": "a818ef5a00c6556969d9299c91e5b9df4429a072f7b2d1be8fdb70554cd64d65"
+        }
+      }
+    },
+    {
+      "name": "v32_saved_support_audit_attempt1",
+      "stage": "v32_saved_support_audit",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/run_summary.json",
+        "bytes": 11607,
+        "sha256": "55976263cc80f7acaa3709ba280d0d59343904d6fb46360a4666671d3179255c"
+      },
+      "source_sha": "b17144fd0f4f07e645e901ebf593e13d0fa967da",
+      "input_sha256": "df7a1198bf104f3a10d1d547b5bfd62914ec9e8e312cfe36257027531f2b7344",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 117.52019232604653,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 117.52019232604653,
+      "supervised_nested_seconds": 53.63421125896275,
+      "simultaneous_sampled_tree_rss_peak_bytes": 282181632,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_saved_support_audit/result.json",
+        "bytes": 229596,
+        "sha256": "eb792cd1e6c57d12a18c7ed089091aeacbd715fb696623371762d9224a54cf7d"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/launch.json",
+          "bytes": 450,
+          "sha256": "f68d9b37fb3160bd80c05ed2a325301340a44ac48ca695304b1a1f4268c7704d"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/input_original.dat",
+          "bytes": 151,
+          "sha256": "df7a1198bf104f3a10d1d547b5bfd62914ec9e8e312cfe36257027531f2b7344"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/run_manifest.json",
+          "bytes": 7245,
+          "sha256": "4cf0907f1a02ce6b50916190902734f596d083fdc4a658ac61fe7e0e6a6c5b34"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/abi.json",
+          "bytes": 289,
+          "sha256": "c3d16c50e876bdfefe80a54c579d753af71b5f8f33d08e7afa629a0556e7fabf"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/pressure_stable_window.json",
+          "bytes": 11425,
+          "sha256": "01c0a44204ab548b8aa2eb8932b7bd66a905ef594494b057331a16c47905bf9a"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/admission.json",
+          "bytes": 233393,
+          "sha256": "f04e630453633c2239822994379fb6834bef138cec5b577dfd038f86af9420a5"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/outer_admission.json",
+          "bytes": 318580,
+          "sha256": "d2a3a3d90eccd5c6dd7134175a1f9be277e6e8ebcf5a494a48971a12941fdfd0"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/attempt_identity.json",
+          "bytes": 298,
+          "sha256": "f2070349b793c0e6c436e03f0ee638697b1c20ee56323e9e90b3ddcc5a313005"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_saved_support_audit_attempt1/terminal_identity.json",
+          "bytes": 11442,
+          "sha256": "f781a7931cb0899cdf5b687355d6fba6125eefdb29c542aeea11a6e90c27db7f"
+        }
+      }
+    },
+    {
+      "name": "v32_support_direction_witness_attempt1",
+      "stage": "v32_support_direction_witness",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt1/run_summary.json",
+        "bytes": 501,
+        "sha256": "182a1dfbbe102526c156ee192c8fd8553b6d7a495ab7eb2997fc72e1a65183de"
+      },
+      "source_sha": "b17144fd0f4f07e645e901ebf593e13d0fa967da",
+      "input_sha256": null,
+      "design_sha256": null,
+      "classification": "STARTUP_FAILED_UNIX_SOCKET_PATH_LENGTH",
+      "cleared": true,
+      "worker_started": false,
+      "actual_attempt_seconds": 177.2417830438353,
+      "actual_cost_semantics": "Conservative launch-to-observed-failure receipt; actual worker absent",
+      "inherited_allocation_span_seconds": 177.2417830438353,
+      "supervised_nested_seconds": null,
+      "simultaneous_sampled_tree_rss_peak_bytes": "NOT_RETAINED",
+      "own_sampled_tree_swap_peak_bytes": "NOT_RETAINED",
+      "cpu": null,
+      "result": null,
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt1/launch.json",
+          "bytes": 472,
+          "sha256": "d718613bf08a16f69620731d6347eaea016daa8eb6fd13d23e807b27d40a9341"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt1/outer_admission.json",
+          "bytes": 311360,
+          "sha256": "c31808abaa6cd4fc62805a8945da17ecada8814554628eb33af0c0a046f148f0"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt1/attempt_identity.json",
+          "bytes": 307,
+          "sha256": "9d9071a1ebb720c924bade876b2e4675f1898e720cc06615bad84f31532da850"
+        }
+      }
+    },
+    {
+      "name": "v32_support_direction_witness_attempt2",
+      "stage": "v32_support_direction_witness",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/run_summary.json",
+        "bytes": 11635,
+        "sha256": "f2854be41bb1cfeca7cd4f82f6e2d1d400dc789803460c20f9da83db13e9a77a"
+      },
+      "source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+      "input_sha256": "60daa4274d01827080ac36323110d5cb30fcdc57581f088585ee67e217dd841b",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 115.88103968300857,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 380.2662797628436,
+      "supervised_nested_seconds": 51.97464307793416,
+      "simultaneous_sampled_tree_rss_peak_bytes": 4465475584,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_support_direction_witness/result.json",
+        "bytes": 5333,
+        "sha256": "5afea5cca1fc6f3f755d773e32921b8dbf094753c024882f2cdc051b5f53121d"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/launch.json",
+          "bytes": 471,
+          "sha256": "e3a28cbf515507da59feff0bcff46453fe50a425cf4374a9cfdaf038d196ff04"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/input_original.dat",
+          "bytes": 157,
+          "sha256": "60daa4274d01827080ac36323110d5cb30fcdc57581f088585ee67e217dd841b"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/run_manifest.json",
+          "bytes": 7270,
+          "sha256": "443f71de8d21474aa53c3736b7c9db13a6b4e25428ceeb9c5370093b66e63e90"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/pressure_stable_window.json",
+          "bytes": 11457,
+          "sha256": "2ccff3784f68cf089e2521c2784d29088cdc74cc939e25b82ba1fc55c954f3ee"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/admission.json",
+          "bytes": 228437,
+          "sha256": "0b9a3d522def3aea54388e23518ec3509b315fcf29e1abc27435a2c5884c5690"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/outer_admission.json",
+          "bytes": 220732,
+          "sha256": "086a650c786a7315e5136277209af5ca51ff41d23a4e113f0b8e902543e36d9c"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/attempt_identity.json",
+          "bytes": 307,
+          "sha256": "2e8ec9d30ccb9fb022a830a806b860636a320a259de68a2e570e911ce6ea0a35"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_direction_witness_attempt2/terminal_identity.json",
+          "bytes": 11440,
+          "sha256": "bd39bea94803c15778c9ae2ffd68185b170b99cc0ee46426e19322dc09e1c046"
+        }
+      }
+    },
+    {
+      "name": "v32_support_reference_bound_attempt1",
+      "stage": "v32_support_reference_bound",
+      "summary": {
+        "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/run_summary.json",
+        "bytes": 11619,
+        "sha256": "7bf429ab97b2704d4619144635a835ae4cbcea61307a6ef9323e953b4cb43b51"
+      },
+      "source_sha": "b17144fd0f4f07e645e901ebf593e13d0fa967da",
+      "input_sha256": "84af8d98a683a3501c57be068ef1b3dfaf424ce1a9013f55368bfaf10a2f7a30",
+      "design_sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "worker_started": true,
+      "actual_attempt_seconds": 66.85132283298299,
+      "actual_cost_semantics": "Actual attempt wall, including admission/import/setup/save; nested costs not added",
+      "inherited_allocation_span_seconds": 66.85132283298299,
+      "supervised_nested_seconds": 2.944076069863513,
+      "simultaneous_sampled_tree_rss_peak_bytes": 187174912,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 2,
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v32/v32_support_reference_bound/result.json",
+        "bytes": 1007,
+        "sha256": "d3128d91153ca67dbceafce9c70c29d18724ffb73c3f33c244ffc831931624a0"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/launch.json",
+          "bytes": 465,
+          "sha256": "7cebc8e39cb6f50d55d532973c2b0ca217b6b59b1f1a78d273e91a0a3ba9ffd9"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/input_original.dat",
+          "bytes": 155,
+          "sha256": "84af8d98a683a3501c57be068ef1b3dfaf424ce1a9013f55368bfaf10a2f7a30"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/resolved_config.json",
+          "bytes": 7457,
+          "sha256": "f2b834ea69f311d7a3014fea705e39d34b07919be21b887cdc045854a63a5d1d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/run_manifest.json",
+          "bytes": 7261,
+          "sha256": "42b37bcf63e47c53b9dfb199f5ede23851d151f2884d0a6596966ddb3b95eed2"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/abi.json",
+          "bytes": 288,
+          "sha256": "d9ba2c9cd7f209ffb33f7f3c0010a197acaee14eb677c502b25abdb1f8861927"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/pressure_stable_window.json",
+          "bytes": 11429,
+          "sha256": "8735d8cf3b5794c5f5942c03926580a914e7b75fae1831985b48ad9da42a0e32"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/admission.json",
+          "bytes": 226814,
+          "sha256": "3c1a682da3389e9d254dd4627b101e75604c4a1ad7bd48fbda0a11715aee00b9"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/outer_admission.json",
+          "bytes": 319985,
+          "sha256": "746e6b8cd72095dfab316358ee503b07054c1cb509f4622cc781dc20929b6bd9"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/attempt_identity.json",
+          "bytes": 305,
+          "sha256": "e50e97f527c80276c2bc31d45f5c064adf5f0d3206d699e6110a31955eb33153"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v32/durable/v32_support_reference_bound_attempt1/terminal_identity.json",
+          "bytes": 11454,
+          "sha256": "e118556f128a75a665d0fc7ea6b4516c4500f5a4b55951d23db596cfd3e831e7"
+        }
+      }
+    }
+  ],
+  "auxiliary_helpers": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/socket_repair_tests/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "39fb27b7db5aa352ed79cf02a0d117ef8af8c0c7e64364bb04f389f1f2ee801f"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.614476729882881,
+      "tree_rss_peak_bytes": 85811200,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_refresh_tests/watchdog/summary.json",
+        "bytes": 2057,
+        "sha256": "04b58aa8a6919d419a60ba9e526a38dfd39c0bb4d90b5d7d695b0ed6d3420e59"
+      },
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.6947399398777634,
+      "tree_rss_peak_bytes": 142479360,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_refresh_tests_final/watchdog/summary.json",
+        "bytes": 2057,
+        "sha256": "6a0bc606357b9ded12165f7963f6c15751463c8188ea757bd3ccbae40b585b1d"
+      },
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.9032399798743427,
+      "tree_rss_peak_bytes": 142086144,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_refresh_tests_qualified/watchdog/summary.json",
+        "bytes": 2053,
+        "sha256": "bf2339a449b357687c639cbdd5d3344a0039171a262a80c0ff49914af4b16833"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.9020647348370403,
+      "tree_rss_peak_bytes": 141402112,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/targeted_tests_final/watchdog/summary.json",
+        "bytes": 2053,
+        "sha256": "00e49504d6e0eac757839ebb8e99db68fc202e3a64dfcf859c3cf082ceef5232"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.7025664439424872,
+      "tree_rss_peak_bytes": 141791232,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/qr_resource_classification_tests/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "6ca22b8905f72555e153855565100eb0ae420c0940686293afb427e5e2a5c316"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.9620822621509433,
+      "tree_rss_peak_bytes": 86081536,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/targeted_tests_1/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "8bc86b81de6467ec5aae58388a15884baad77aa214048ca1950fbd9e01c8d45c"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.541606948012486,
+      "tree_rss_peak_bytes": 143876096,
+      "swap_peak_bytes": 0,
+      "cleared": true
+    }
+  ],
+  "unique_formal_actual_attempt_seconds": 23740.67677282705,
+  "unique_auxiliary_supervised_seconds": 18.320777038577944,
+  "auxiliary_admission_preparation_not_in_supervised_sum": true,
+  "all_preparation_wait_development_and_publish_charged_by_single_continuous_calendar": true,
+  "nested_parent_child_cost_not_added": true,
+  "simultaneous_sampled_formal_tree_peak_bytes": 5290643456,
+  "all_retained_formal_sampled_swap_zero": true,
+  "missing_peak_samples": "NOT_RETAINED individually; not imputed as measured zero",
+  "peak_semantics": "Maximum of separately measured simultaneous process-tree sample peaks; not sum or kernel continuous hard maximum",
+  "OOC_count": 0,
+  "numerical_warn_bytes": 12884901888,
+  "numerical_hard_bytes": 17179869184,
+  "pure_hard_bytes": 2147483648,
+  "neighbor_growth_reserve_bytes": 412316860416,
+  "successful_60s_PSI_checks_charged_to_campaign_wall": true,
+  "failed_extra_resource_wait_record": {
+    "path": "tmp/task42extra/v32/resource_rejected_wait.jsonl",
+    "bytes": 357,
+    "sha256": "c5d0a106422537ae1e9f09939e78eb66a850e4d1728aa6b51249e113161ff101"
+  },
+  "campaign_continuous_limit_seconds": 57600,
+  "final_delivery_reserve_seconds": 3600,
+  "record_snapshot_monotonic": 1368938.590845383,
+  "calendar_seconds": 29318.590845383005,
+  "project_exact_cumulative_seconds": "UNKNOWN",
+  "old_failures_lost_work_and_3284_seconds_retained": true,
+  "publication_tail": "Metadata seal, bounded browser and exact Git/clearance costs remain in final delivery receipt; no overlapping costs summed",
+  "publication_auxiliary": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_records/watchdog/summary.json",
+        "bytes": 2054,
+        "sha256": "10fed542ec641f2b7a0d431b66374ff2e310c2dfc433606dd356e77c272653d6"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.1132101661060005,
+      "sampled_process_tree_rss_peak_bytes": 159989760,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/v32/publication_tail/watchdog/summary.json",
+        "bytes": 2053,
+        "sha256": "46325c028d299c3dc5adb13586304aae80c58ed6e7fd80364dee61d30020d9f9"
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 3.2912259011063725,
+      "sampled_process_tree_rss_peak_bytes": 151764992,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "publication_final_calendar_is_in_delivery_receipt": true
+}

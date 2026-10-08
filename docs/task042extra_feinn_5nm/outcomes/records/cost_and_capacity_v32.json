@@ -1,0 +1,59 @@
+{
+  "historical_qualified_traditional_reference": {
+    "seconds": 672.462895,
+    "tree_peak_bytes": 1245822976,
+    "scope": "Historical; not a fresh same-precision cold denominator"
+  },
+  "routes": {
+    "fixed": {
+      "actual_learning_attempt_seconds": 9572.249427650357,
+      "actual_early_verification_seconds": 201.86773124709725,
+      "actual_readout_repair_qualification_seconds": 412.0614825959783,
+      "conservative_loaded_packet_seconds": 10186.178641493432,
+      "simultaneous_sampled_tree_peak_bytes": 5290643456,
+      "inherited_allocation_span_and_actual_attempt_costs_separate": true,
+      "inherited_origin_to_frozen_route_span_seconds": 12521.875823033042,
+      "conservative_route_span_plus_all_shared_verification_seconds": 13322.36815865105,
+      "conservative_complete_route_allocation_below_four_hours": true,
+      "other_candidate_serial_wait_excluded_from_own_cost_but_in_campaign_calendar": true
+    },
+    "learned": {
+      "actual_learning_attempt_seconds": 11982.685080887983,
+      "actual_early_verification_seconds": 197.37271481682546,
+      "actual_readout_repair_qualification_seconds": 0,
+      "conservative_loaded_packet_seconds": 12180.057795704808,
+      "simultaneous_sampled_tree_peak_bytes": 2288005120,
+      "inherited_allocation_span_and_actual_attempt_costs_separate": true,
+      "inherited_origin_to_frozen_route_span_seconds": 12480.1497182881,
+      "conservative_route_span_plus_all_shared_verification_seconds": 13280.642053906107,
+      "conservative_complete_route_allocation_below_four_hours": true,
+      "other_candidate_serial_wait_excluded_from_own_cost_but_in_campaign_calendar": true
+    }
+  },
+  "shared_independent_verification_seconds": 800.4923356180079,
+  "shared_verification_project_charge_once": true,
+  "same_precision_20_percent_gain_qualified": false,
+  "complete_cold_N1": {
+    "status": "UNKNOWN",
+    "reason": "Native/reference/moment cold preparation reused, not remeasured; failed/repair costs retained"
+  },
+  "dense_U_Q_bytes_formula": "32*N*m",
+  "shape_example_not_actual_target_DoF": {
+    "N": 10000000,
+    "m4096_U_Q_bytes": 1310720000000,
+    "operators_R_temporaries_system_reserve_excluded": true
+  },
+  "original_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "complete_cold_seconds": 172800,
+    "own_swap_bytes": 0,
+    "OOC_bytes": 0,
+    "qualified": false
+  }
+}

@@ -1,3 +1,9 @@
+# Task42extra V32：多尺度神经真实对照与完整联合负结果
+
+本轮查明：保存空间没有严格零支持cell，底部导数P·U也不是严格零；“缺底部覆盖”假设未证实。新神经路线实际发生241次非零已提交连续q更新，保留1350个复方向。但M5原native/增广残差0.111824065796、散射E相对差0.0423218706136，联合Gate仍失败，没有同精度20%神经资源收益。关闭本批FIXED_MULTISCALE_WAVE_BLOCK / LEARNED_MULTISCALE_WAVE_BLOCK的这份配置，不能推广为所有神经方法不可能。条件0.7nm真实缩小pilot未运行。
+
+[完整回执](task042extra_feinn_5nm/response_v32.md)、[原数组/source](task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v32.json)、[全部费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v32.json)。本支清场后暂停，不改其他工作树，不合并master，不发隔壁通知。全部旧阶段及费用保留。
+
 # Task42extra V31：块式神经对照与完整物理验收已完成，M5仍失败
 
 本支实际完成旧保存场补审、新块资格、两条从零对照及独立完整数组checker。学习375次连续q更新/3858有效方向，native0.3783958150、散射E0.9990517268；固定2988有效方向、native0.4766820076，读出/完整重建亦失败。块保留允许后续重组合，但没有验证精度或资源净增益。原40通道/六点/逐级功率/E/H/curl/体吸收/区域均已审，不再是NOT_RUN。
