@@ -4,7 +4,10 @@ import os
 
 import pytest
 
-from src.io.physical_intermediate_profile import TASK40_V15_P6_PROFILES
+from src.io.physical_intermediate_profile import (
+    TASK40_V15_P6_PROFILES,
+    TASK40_V18_P6_PROFILES,
+)
 from src.runners import fine_reference_preflight
 from src.runners.physical_p4_schur_v14 import _abi_facts
 from src.runners.task40_v10_abi import qualified_task40_v10_abi
@@ -19,9 +22,9 @@ def test_abi_facts_keeps_legacy_default_and_rejects_non_v10_profile(monkeypatch)
 
 @pytest.mark.parametrize(
     "profile_identity",
-    TASK40_V15_P6_PROFILES,
+    (*TASK40_V15_P6_PROFILES, *TASK40_V18_P6_PROFILES),
 )
-def test_v15_profiles_reuse_qualified_abi_without_fe(profile_identity):
+def test_v15_v18_profiles_reuse_qualified_abi_without_fe(profile_identity):
     if os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
         pytest.skip("requires the existing qualified local Task40 ABI activation")
 

@@ -469,6 +469,11 @@ class _V14Runtime:
                     "review_v17_row_tile_e1_full_p6_y_orbit_reference_inverse",
                     "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 ),
+                (
+                    "B0_CANDIDATE",
+                    "review_v18_ny8_row_tile_b0_y8_full_p6_y_orbit_reference_inverse",
+                    "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                ),
             }
             worker_identity = (
                 self.stage,

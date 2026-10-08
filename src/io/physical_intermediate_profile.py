@@ -29,6 +29,7 @@ from src.geometry.task40_nonseparable_plan import (
     TASK40_GX560_V16_RUN_ID,
     TASK40_E1_V16_RUN_ID,
     TASK40_B0_P6_V17_RUN_ID,
+    TASK40_B0_P6_V18_Y8_RUN_ID,
     TASK40_GX560_V17_RUN_ID,
     TASK40_E1_V17_RUN_ID,
 )
@@ -85,6 +86,8 @@ TASK40_V17_P6_PROFILES = (
     TASK40_V17_P6_GX560_PROFILE,
     TASK40_V17_P6_E1_PROFILE,
 )
+TASK40_V18_P6_B0_Y8_PROFILE = "task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+TASK40_V18_P6_PROFILES = (TASK40_V18_P6_B0_Y8_PROFILE,)
 TASK40_V10_P4_CONTROL_PROFILE = TASK40_B0_P4_CONTROL_PROFILE
 A4_TENSOR_H6_PROFILES = (
     A4_TENSOR_H6_PROFILE,
@@ -128,7 +131,7 @@ TASK40_PROFILES = (
 )
 A4_TENSOR_H6_PROFILES = (*A4_TENSOR_H6_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
 FUSED_KERNEL_PROFILES = (*FUSED_KERNEL_PROFILES, TASK40_V10_P4_CONTROL_PROFILE)
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE, CAPACITY_DUAL_CELL_CONDENSED_PROFILE, PHYSICAL_MEMORY_DUAL_CELL_CONDENSED_PROFILE, LAPTOP_SPEED_DUAL_CELL_CONDENSED_PROFILE, COARSE_DEGREE_SPEED_PROFILE, SETUP_EFFICIENCY_PROFILE, WORKINGSET_SETUP_PROFILE, FUSED_KERNEL_PROFILE, A4_TENSOR_H6_PROFILE, WORKSTATION_GUIDED_LOCAL_V30_PROFILE, PROJECTION_LAYOUT_V31_PROFILE, *TASK40_PROFILES, TASK40_V10_P6_REFERENCE_PROFILE, *TASK40_V11_P6_PROFILES, *TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES, *TASK40_V18_P6_PROFILES) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -143,7 +146,12 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
-    if identity in (*TASK40_V15_P6_PROFILES, *TASK40_V16_P6_PROFILES, *TASK40_V17_P6_PROFILES):
+    if identity in (
+        *TASK40_V15_P6_PROFILES,
+        *TASK40_V16_P6_PROFILES,
+        *TASK40_V17_P6_PROFILES,
+        *TASK40_V18_P6_PROFILES,
+    ):
         from src.geometry.task40_nonseparable_plan import (
             TASK40_COMPARISON_GROUP,
             TASK40_Q_ASSEMBLY_BOUNDED_V16,
@@ -160,10 +168,13 @@ def profile_facts(identity=PROFILE) -> dict:
             TASK40_V17_P6_B0_PROFILE as V17_B0_PERIODIC,
             TASK40_V17_P6_GX560_PROFILE as V17_GX560_PERIODIC,
             TASK40_V17_P6_E1_PROFILE as V17_E1_PERIODIC,
+            TASK40_V18_P6_B0_Y8_PROFILE as V18_B0_Y8_PERIODIC,
         )
 
         is_v16 = identity in TASK40_V16_P6_PROFILES
         is_v17 = identity in TASK40_V17_P6_PROFILES
+        is_v18 = identity in TASK40_V18_P6_PROFILES
+        is_row_tile = is_v17 or is_v18
         cases = {
             TASK40_V15_P6_B0_PROFILE: (
                 B0_PERIODIC, TASK40_B0_P6_V15_RUN_ID, "B0", "B0_CANDIDATE",
@@ -189,19 +200,28 @@ def profile_facts(identity=PROFILE) -> dict:
             TASK40_V17_P6_E1_PROFILE: (
                 V17_E1_PERIODIC, TASK40_E1_V17_RUN_ID, "E1", "Q4_ORIGINAL",
             ),
+            TASK40_V18_P6_B0_Y8_PROFILE: (
+                V18_B0_Y8_PERIODIC,
+                TASK40_B0_P6_V18_Y8_RUN_ID,
+                "B0_Y8",
+                "B0_CANDIDATE",
+            ),
         }
         case = cases[identity]
         periodic, run_id, grid_name, stage = case
         facts = profile_facts(TASK40_V10_P6_REFERENCE_PROFILE)
         facts.update(
             identity=identity,
-            scope=f"review_{'v17_row_tile' if is_v17 else 'v16' if is_v16 else 'v15'}_{grid_name.lower()}_full_p6_y_orbit_reference_inverse",
+            scope=f"review_{'v18_ny8_row_tile' if is_v18 else 'v17_row_tile' if is_v17 else 'v16' if is_v16 else 'v15'}_{grid_name.lower()}_full_p6_y_orbit_reference_inverse",
             run_id=run_id,
             comparison_group=TASK40_COMPARISON_GROUP,
             stage=stage,
             input_path=(
                 "input/task40extra_0p7nm_engineering/"
                 + (
+                    "b0_p6_reference_v18_ny8.dat"
+                    if is_v18
+                    else
                     {
                         "B0": "b0_p6_reference_v17.dat",
                         "GX560": "nonseparable_gx560_p6_reference_v17.dat",
@@ -223,15 +243,15 @@ def profile_facts(identity=PROFILE) -> dict:
             reference_pc_strategy=TASK40_V15_REFERENCE_PC_STRATEGY,
             q_assembly_strategy=(
                 TASK40_Q_ASSEMBLY_ROW_TILE_V17
-                if is_v17
+                if is_row_tile
                 else TASK40_Q_ASSEMBLY_BOUNDED_V16
                 if is_v16
                 else TASK40_Q_ASSEMBLY_LEGACY
             ),
             periodic_inventory=periodic.identity(),
             qualification=(
-                f"Review {'V17 row-tile CSR' if is_v17 else 'V16 bounded-CSR' if is_v16 else 'V15'} {grid_name} case; one full p6 target solve uses the "
-                "same live four-q factors, complete native residual admission, "
+                f"Review {'V18 Ny8 row-tile CSR' if is_v18 else 'V17 row-tile CSR' if is_v17 else 'V16 bounded-CSR' if is_v16 else 'V15'} {grid_name} case; one full p6 target solve uses the "
+                f"same live {periodic.q_count}-q factors, complete native residual admission, "
                 "and all retained modes and interior rows"
             ),
         )
@@ -283,7 +303,7 @@ def profile_facts(identity=PROFILE) -> dict:
             task40_reference_pc_strategy=TASK40_V15_REFERENCE_PC_STRATEGY,
             task40_q_assembly_strategy=(
                 TASK40_Q_ASSEMBLY_ROW_TILE_V17
-                if is_v17
+                if is_row_tile
                 else TASK40_Q_ASSEMBLY_BOUNDED_V16
                 if is_v16
                 else TASK40_Q_ASSEMBLY_LEGACY

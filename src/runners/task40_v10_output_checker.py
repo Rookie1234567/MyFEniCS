@@ -126,6 +126,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         TASK40_V15_P6_PROFILES,
         TASK40_V16_P6_PROFILES,
         TASK40_V17_P6_PROFILES,
+        TASK40_V18_P6_PROFILES,
     )
     from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
 
@@ -133,6 +134,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         *TASK40_V15_P6_PROFILES,
         *TASK40_V16_P6_PROFILES,
         *TASK40_V17_P6_PROFILES,
+        *TASK40_V18_P6_PROFILES,
     ):
         raise ValueError(f"unknown registered Task40 V15/V16/V17 profile identity: {identity!r}")
     profile = TASK40_P6_PERIODIC_PROFILES.get(identity)
@@ -159,21 +161,32 @@ def _verify_v17_row_tile_assembly_summary(
     if summary.get("q_assembly_strategy") != strategy:
         raise ValueError("V17 worker summary does not select the registered row-tile strategy")
     profile_identity = summary.get("profile")
-    from src.io.physical_intermediate_profile import TASK40_V17_P6_PROFILES
+    from src.io.physical_intermediate_profile import (
+        TASK40_V17_P6_PROFILES,
+        TASK40_V18_P6_PROFILES,
+    )
 
-    if not isinstance(profile_identity, str) or profile_identity not in TASK40_V17_P6_PROFILES:
-        raise ValueError("V17 row-tile summary is not bound to an exact registered V17 profile")
+    if not isinstance(profile_identity, str) or profile_identity not in (
+        *TASK40_V17_P6_PROFILES,
+        *TASK40_V18_P6_PROFILES,
+    ):
+        raise ValueError(
+            "V17 row-tile summary is not bound to an exact registered V17 profile or V18 profile"
+        )
     profile_inventory = _registered_v15_profile_inventory(profile_identity)
-    if int(profile_inventory["q_count"]) != 4:
-        raise ValueError("V17 row-tile profile does not match the registered four-q inventory")
+    q_count = int(profile_inventory["q_count"])
+    sector_count = len(profile_inventory["sector_port_counts"])
+    is_v18 = profile_identity in TASK40_V18_P6_PROFILES
+    if q_count != (8 if is_v18 else 4) or sector_count != q_count // 2:
+        raise ValueError("row-tile profile does not match its registered q/twist inventory")
     if not isinstance(summary.get("source_sha"), str) or len(summary["source_sha"]) != 40:
         raise ValueError("V17 row-tile worker summary omits its frozen source SHA")
     snapshot = summary.get("reference_audit_snapshot")
     if not isinstance(snapshot, Mapping):
         raise ValueError("V17 row-tile summary omits the pre-destroy reference audit snapshot")
     sectors = snapshot.get("sector_audits_before_destroy")
-    if not isinstance(sectors, list) or len(sectors) != 2:
-        raise ValueError("V17 row-tile summary must contain both physical p6 sector audits")
+    if not isinstance(sectors, list) or len(sectors) != sector_count:
+        raise ValueError("row-tile summary omits one or more physical p6 sector audits")
 
     block_keys = {"00", "01", "10", "11"}
     covered_q: set[int] = set()
@@ -184,7 +197,12 @@ def _verify_v17_row_tile_assembly_summary(
     for index, sector in enumerate(sectors):
         if not isinstance(sector, Mapping):
             raise ValueError(f"V17 sector audit {index} is not a mapping")
-        covered_q.update(int(q) for q in sector.get("global_q_indices", ()))
+        sector_q = [int(q) for q in sector.get("global_q_indices", ())]
+        if len(sector_q) != q_count // sector_count or len(set(sector_q)) != len(sector_q):
+            raise ValueError(f"row-tile sector audit {index} has an invalid q-count inventory")
+        if covered_q.intersection(sector_q):
+            raise ValueError(f"row-tile sector audit {index} duplicates a global q branch")
+        covered_q.update(sector_q)
         if sector.get("assembly_strategy") != strategy:
             raise ValueError(f"V17 sector audit {index} has a different assembly strategy")
         shapes = sector.get("block_shapes")
@@ -272,10 +290,14 @@ def _verify_v17_row_tile_assembly_summary(
                 "all_four_blocks_checked": True,
             }
         )
-    if covered_q != {0, 1, 2, 3}:
-        raise ValueError("V17 row-tile summary does not cover all four global q branches")
+    if covered_q != set(range(q_count)):
+        raise ValueError("row-tile summary does not cover every registered global q branch")
     return {
-        "schema": "task40extra.review_v17_row_tile_assembly_checker.v1",
+        "schema": (
+            "task40extra.review_v18_ny8_row_tile_assembly_checker.v1"
+            if is_v18
+            else "task40extra.review_v17_row_tile_assembly_checker.v1"
+        ),
         "profile": profile_identity,
         "sector_count": len(sectors),
         "covered_q": sorted(covered_q),
@@ -286,6 +308,213 @@ def _verify_v17_row_tile_assembly_summary(
         "off_diagonal_recomputed_from_saved_complete_csr_norms": True,
         "operator_reapplied_by_checker": False,
         "checker_scope": "recomputed off-diagonal ratios from saved complete-CSR Frobenius norms; did not reapply the numerical operator",
+        "passed": True,
+    }
+
+
+def _verify_v18_ny8_operator_qualification(
+    summary: Mapping[str, Any], profile_inventory: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Recompute saved Ny8 block-coverage and residual gates from the worker audit."""
+    snapshot = summary.get("reference_audit_snapshot")
+    if not isinstance(snapshot, Mapping):
+        raise ValueError("V18 worker summary omits its reference audit snapshot")
+    operator = snapshot.get("complete_operator_qualification")
+    if not isinstance(operator, Mapping):
+        raise ValueError("V18 reference snapshot omits the independent complete-operator record")
+    operator_sha256 = hashlib.sha256(
+        json.dumps(
+            operator, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    ).hexdigest()
+    if summary.get("complete_operator_qualification_sha256") != operator_sha256:
+        raise ValueError("V18 complete-operator snapshot differs from its saved identity hash")
+    q_count = int(profile_inventory["q_count"])
+    expected_ports = tuple(int(value) for value in profile_inventory["q_port_counts"])
+    if q_count != 8 or operator.get("schema") != (
+        "task40extra.review_v18_complete_ny_reference_operator.v1"
+    ):
+        raise ValueError("V18 complete-operator record has the wrong profile/schema")
+    if (
+        operator.get("status") != "PASS"
+        or operator.get("passed") is not True
+        or int(operator.get("ny", -1)) != q_count
+        or int(operator.get("translation_count_K", -1)) != 4
+        or int(operator.get("local_y_cells_ell", -1)) != 2
+        or tuple(int(value) for value in operator.get("q_port_counts", ()))
+        != expected_ports
+    ):
+        raise ValueError("V18 complete-operator identity differs from the registered Ny8 inventory")
+
+    block_keys = {f"{p}{q}" for p in range(q_count) for q in range(q_count)}
+    offdiagonal_keys = {
+        f"{p}{q}" for p in range(q_count) for q in range(q_count) if p != q
+    }
+    shapes = operator.get("complete_q_block_shapes")
+    if (
+        operator.get("full_q_block_coverage_count") != q_count**2
+        or operator.get("expected_full_q_block_coverage_count") != q_count**2
+        or operator.get("all_ordered_q_blocks_covered") is not True
+        or not isinstance(shapes, Mapping)
+        or set(shapes) != block_keys
+        or int(operator.get("native_independent_rows", -1))
+        != int(profile_inventory["global_independent_rows"])
+    ):
+        raise ValueError("V18 independent audit does not cover all 64 ordered q blocks")
+    width = int(profile_inventory["global_independent_rows"]) // q_count
+    for p in range(q_count):
+        for q in range(q_count):
+            expected_shape = [
+                width + expected_ports[p],
+                width + expected_ports[q],
+            ]
+            if shapes[f"{p}{q}"] != expected_shape:
+                raise ValueError(f"V18 q block {p}{q} shape differs from its registered inventory")
+
+    mapping_limit = float(operator.get("mapping_limit", np.nan))
+    mapping_defect = float(operator.get("q_dft_unitarity_frobenius_defect", np.nan))
+    operator_limit = float(operator.get("operator_limit", np.nan))
+    offdiagonal = operator.get("offdiagonal_frobenius_by_block")
+    offdiagonal_relative = operator.get("offdiagonal_relative_by_block")
+    diagonal_norms = operator.get("complete_augmented_diagonal_frobenius_by_q")
+    diagonal_scale = float(operator.get("offdiagonal_diagonal_frobenius_scale", np.nan))
+    expected_q_keys = {str(q) for q in range(q_count)}
+    if (
+        not isinstance(offdiagonal, Mapping)
+        or set(offdiagonal) != offdiagonal_keys
+        or not isinstance(offdiagonal_relative, Mapping)
+        or set(offdiagonal_relative) != offdiagonal_keys
+        or not isinstance(diagonal_norms, Mapping)
+        or set(diagonal_norms) != expected_q_keys
+        or not np.isfinite(mapping_limit)
+        or mapping_limit != 1.0e-12
+        or not np.isfinite(mapping_defect)
+        or mapping_defect > mapping_limit
+        or not np.isfinite(operator_limit)
+        or operator_limit != 1.0e-11
+        or not np.isfinite(diagonal_scale)
+        or diagonal_scale <= 0.0
+    ):
+        raise ValueError("V18 complete-operator record omits its mapping/offdiagonal gates")
+    checked_diagonal_norms = {
+        key: float(diagonal_norms[key]) for key in sorted(expected_q_keys, key=int)
+    }
+    if not all(np.isfinite(value) and value >= 0.0 for value in checked_diagonal_norms.values()):
+        raise ValueError("V18 saved complete diagonal block norms are invalid")
+    recomputed_diagonal_scale = max(
+        max(checked_diagonal_norms.values()), np.finfo(float).tiny
+    )
+    if not _close_float(diagonal_scale, recomputed_diagonal_scale):
+        raise ValueError("V18 offdiagonal diagonal scale differs from the eight saved q norms")
+    recomputed_offdiagonal = {}
+    for key in sorted(offdiagonal_keys):
+        norm = float(offdiagonal[key])
+        relative = norm / diagonal_scale
+        recorded = float(offdiagonal_relative[key])
+        if (
+            not np.isfinite(norm)
+            or norm < 0.0
+            or not np.isfinite(relative)
+            or relative > operator_limit
+            or not _close_float(recorded, relative)
+        ):
+            raise ValueError(f"V18 offdiagonal block {key} fails the saved 1e-11 gate")
+        recomputed_offdiagonal[key] = relative
+    maximum_offdiagonal = max(recomputed_offdiagonal.values(), default=0.0)
+    if not _close_float(
+        float(operator.get("maximum_complete_offdiagonal_relative", np.nan)),
+        maximum_offdiagonal,
+    ):
+        raise ValueError("V18 maximum offdiagonal ratio differs from its 56 saved blocks")
+
+    schur = operator.get("independent_schur_relative_by_q")
+    schur_norms = operator.get("independent_schur_norms_by_q")
+    if (
+        not isinstance(schur, Mapping)
+        or set(schur) != expected_q_keys
+        or not isinstance(schur_norms, Mapping)
+        or set(schur_norms) != expected_q_keys
+    ):
+        raise ValueError("V18 independent global Schur audit omits one or more q branches")
+    recomputed_schur = {}
+    for key in sorted(expected_q_keys, key=int):
+        norms = schur_norms[key]
+        if not isinstance(norms, Mapping):
+            raise ValueError(f"V18 q={key} Schur norms are malformed")
+        independent = float(norms.get("independent_schur_frobenius", np.nan))
+        candidate = float(norms.get("candidate_csr_frobenius", np.nan))
+        difference = float(norms.get("complete_difference_frobenius", np.nan))
+        relative = difference / max(independent, candidate, np.finfo(float).tiny)
+        if (
+            not all(np.isfinite(value) and value >= 0.0 for value in (independent, candidate, difference))
+            or not np.isfinite(relative)
+            or relative > operator_limit
+            or not _close_float(float(schur[key]), relative)
+        ):
+            raise ValueError(f"V18 q={key} candidate differs from its independent Schur oracle")
+        recomputed_schur[key] = relative
+    maximum_schur = max(recomputed_schur.values(), default=float("inf"))
+    if (
+        not np.isfinite(maximum_schur)
+        or maximum_schur > operator_limit
+        or not _close_float(
+            float(operator.get("maximum_independent_schur_relative", np.nan)),
+            maximum_schur,
+        )
+    ):
+        raise ValueError("V18 maximum independent Schur ratio differs from its q records")
+
+    q4_norm = float(operator.get("q4_nonzero_fe_rhs_norm", np.nan))
+    phase_distance = float(operator.get("global_y_phase_distance_from_one", np.nan))
+    phase = operator.get("global_y_phase")
+    nonhermitian = float(
+        operator.get("complex_nonhermitian_reference_witness_relative", np.nan)
+    )
+    if (
+        expected_ports[4] != 0
+        or operator.get("empty_port_q_indices") != [4]
+        or operator.get("q4_zero_port_nonzero_fe_gate_passed") is not True
+        or operator.get("q4_nonzero_fe_rhs_witness_passed") is not True
+        or not np.isfinite(q4_norm)
+        or q4_norm <= 0.0
+        or operator.get("mode_identities_covered_once") is not True
+        or operator.get("complex_material_volume_witness_passed") is not True
+        or int(operator.get("complex_material_volume_imaginary_nnz", 0)) <= 0
+        or operator.get("complex_nonhermitian_reference_witness_passed") is not True
+        or not np.isfinite(nonhermitian)
+        or nonhermitian <= 1.0e-12
+        or not np.isfinite(phase_distance)
+        or phase_distance <= mapping_limit
+        or not isinstance(phase, Sequence)
+        or isinstance(phase, (str, bytes))
+        or len(phase) != 2
+        or not np.isfinite(np.asarray(phase, dtype=np.float64)).all()
+        or not _close_float(
+            phase_distance,
+            abs(complex(float(phase[0]), float(phase[1])) - 1.0),
+        )
+        or int(operator.get("original_H_mode_count", -1)) != int(profile_inventory["mode_count"])
+        or not np.isfinite(float(operator.get("original_H_minimum", np.nan)))
+        or float(operator.get("original_H_minimum", np.nan)) <= 0.0
+        or not np.isfinite(float(operator.get("original_H_maximum", np.nan)))
+        or float(operator.get("original_H_maximum", np.nan)) < float(operator.get("original_H_minimum", np.nan))
+        or sum(expected_ports) != int(profile_inventory["mode_count"])
+    ):
+        raise ValueError("V18 zero-port, phase, complex-material, or physical witness gate failed")
+
+    return {
+        "schema": "task40extra.review_v18_ny8_operator_checker.v1",
+        "profile": profile_inventory["identity"],
+        "complete_operator_qualification_sha256": operator_sha256,
+        "complete_q_block_count": q_count**2,
+        "offdiagonal_block_count": len(offdiagonal_keys),
+        "independent_schur_q_count": q_count,
+        "maximum_offdiagonal_relative_recomputed": maximum_offdiagonal,
+        "maximum_independent_schur_relative_recomputed": maximum_schur,
+        "q4_zero_port_nonzero_fe_witness_passed": True,
+        "nonhermitian_complex_material_witness_passed": True,
+        "global_phase_witness_passed": True,
+        "operator_reapplied_by_checker": False,
         "passed": True,
     }
 
@@ -694,34 +923,53 @@ def verify_v10_regular_internal_witness(packet_json: str | Path) -> dict[str, An
         raise ValueError("V10 regular internal row identity arrays must be integers")
     if not np.isfinite(effective_rhs).all() or not np.isfinite(saved_action).all():
         raise ValueError("V10 regular internal raw action arrays contain non-finite values")
-    if not np.array_equal(np.unique(twists), np.array([0, 1], dtype=twists.dtype)):
-        raise ValueError("V10 regular internal raw arrays do not identify both twists")
+    sector_count = (
+        len(v15_inventory["sector_port_counts"]) if v15_inventory is not None else 2
+    )
+    if not np.array_equal(
+        np.unique(twists), np.arange(sector_count, dtype=twists.dtype)
+    ):
+        raise ValueError("V10 regular internal raw arrays do not identify every twist")
     ordered = np.lexsort((original_rows, twists))
     row_pairs = np.rec.fromarrays((twists, original_rows))
     if not np.array_equal(ordered, np.arange(expected_rows)) or np.unique(row_pairs).size != expected_rows:
         raise ValueError("V10 regular internal twist/row order is not unique and canonical")
 
     if v15_inventory is not None:
-        expected_per_twist = v15_inventory["global_interior_rows"] // 2
+        sector_count = len(v15_inventory["sector_port_counts"])
+        q_per_twist = v15_inventory["q_count"] // sector_count
+        if (
+            sector_count <= 0
+            or v15_inventory["global_interior_rows"] % sector_count
+            or v15_inventory["q_count"] % sector_count
+        ):
+            raise ValueError("registered profile has incompatible twist/q dimensions")
+        expected_per_twist = v15_inventory["global_interior_rows"] // sector_count
         twist_counts = {
-            twist: int(np.count_nonzero(twists == twist)) for twist in (0, 1)
+            twist: int(np.count_nonzero(twists == twist))
+            for twist in range(sector_count)
         }
-        if twist_counts != {0: expected_per_twist, 1: expected_per_twist}:
-            raise ValueError("V15 regular witness does not cover both complete interior sectors")
+        if twist_counts != {twist: expected_per_twist for twist in range(sector_count)}:
+            raise ValueError("regular witness does not cover every complete interior sector")
         if int(record.get("expected_port_mode_count", -1)) != v15_inventory["mode_count"]:
             raise ValueError("V15 regular witness mode count differs from registered profile")
         sectors = record.get("local_recovery_facts")
-        if not isinstance(sectors, Sequence) or isinstance(sectors, (str, bytes)) or len(sectors) != 2:
-            raise ValueError("V15 regular witness is missing both sector recovery facts")
+        if not isinstance(sectors, Sequence) or isinstance(sectors, (str, bytes)) or len(sectors) != sector_count:
+            raise ValueError("regular witness is missing one or more sector recovery facts")
         sector_by_twist = {}
         for sector in sectors:
             if not isinstance(sector, Mapping):
                 raise ValueError("V15 sector recovery facts must be mappings")
             twist = int(sector.get("twist_index", -1))
-            if twist in sector_by_twist or twist not in (0, 1):
+            if twist in sector_by_twist or twist not in range(sector_count):
                 raise ValueError("V15 regular witness sector identities are incomplete or duplicated")
             sector_by_twist[twist] = sector
-        expected_q_by_twist = {0: (0, 2), 1: (1, 3)}
+        expected_q_by_twist = {
+            twist: tuple(
+                twist + branch * sector_count for branch in range(q_per_twist)
+            )
+            for twist in range(sector_count)
+        }
         for twist, q_indices in expected_q_by_twist.items():
             sector = sector_by_twist.get(twist)
             expected_sector_modes = sum(
@@ -1292,16 +1540,25 @@ def verify_v10_output_bundle(
     v17_row_tile_assembly = None
     v17_row_tile_allocation_ledger = None
     v17_dispatch_binding = None
+    v18_ny8_operator_qualification = None
+    v18_ny8_row_tile_allocation_ledger = None
+    v18_ny8_dispatch_binding = None
     packet_identity_map = (
         packet_identity if isinstance(packet_identity, Mapping) else {}
     )
     packet_strategy = packet_identity_map.get("q_assembly_strategy")
     scientific_strategy = identity.get("q_assembly_strategy")
-    from src.io.physical_intermediate_profile import TASK40_V17_P6_PROFILES
+    from src.io.physical_intermediate_profile import (
+        TASK40_V17_P6_PROFILES,
+        TASK40_V18_P6_PROFILES,
+    )
 
     packet_profile = packet_identity_map.get("profile_identity")
     has_registered_v17_profile = (
         isinstance(packet_profile, str) and packet_profile in TASK40_V17_P6_PROFILES
+    )
+    has_registered_v18_profile = (
+        isinstance(packet_profile, str) and packet_profile in TASK40_V18_P6_PROFILES
     )
     if (
         packet_strategy is not None
@@ -1323,6 +1580,7 @@ def verify_v10_output_bundle(
         packet_strategy == "ROW_TILE_BOUNDED_CSR_V17"
         or scientific_strategy == "ROW_TILE_BOUNDED_CSR_V17"
         or has_registered_v17_profile
+        or has_registered_v18_profile
     ):
         if not isinstance(packet_identity, Mapping):
             raise ValueError("V17 row-tile output is missing its run identity")
@@ -1387,13 +1645,44 @@ def verify_v10_output_bundle(
             raise ValueError(
                 "V17 worker summary differs from the output source/profile/run/strategy identity"
             )
-        v17_row_tile_assembly = _verify_v17_row_tile_assembly_summary(
+        row_tile_assembly = _verify_v17_row_tile_assembly_summary(
             path.parent, worker_summary
         )
-        v17_row_tile_allocation_ledger = _verify_v17_row_tile_allocation_admission_ledger(
-            path.parent, worker_summary
-        )
-        v17_dispatch_binding = {
+        if has_registered_v18_profile:
+            inventory = _registered_v15_profile_inventory(profile_identity)
+            v18_ny8_operator_qualification = _verify_v18_ny8_operator_qualification(
+                worker_summary, inventory
+            )
+            if (
+                identity.get("complete_operator_qualification_sha256")
+                != v18_ny8_operator_qualification[
+                    "complete_operator_qualification_sha256"
+                ]
+            ):
+                raise ValueError(
+                    "V18 official output identity is not bound to the checked complete-operator record"
+                )
+            v18_ny8_row_tile_allocation_ledger = _verify_q_assembly_allocation_admission_ledger(
+                path.parent, worker_summary, version="v18_ny8_row_tile"
+            )
+            v18_ny8_dispatch_binding = {
+                "source_sha": source_sha,
+                "profile_identity": profile_identity,
+                "run_id": run_id,
+                "stage": stage,
+                "q_assembly_strategy": strategy,
+                "registered_profile_contract_passed": True,
+                "packet_scientific_identity_match_passed": True,
+                "worker_summary_binding_passed": True,
+                "run_manifest_binding_passed": True,
+                "complete_operator_checker_passed": True,
+            }
+        else:
+            v17_row_tile_assembly = row_tile_assembly
+            v17_row_tile_allocation_ledger = _verify_v17_row_tile_allocation_admission_ledger(
+                path.parent, worker_summary
+            )
+            v17_dispatch_binding = {
             "identity_source": (
                 "official_output.identity + adjacent run_manifest.json + "
                 "task40_v10_p6_candidate_summary.json"
@@ -1407,7 +1696,7 @@ def verify_v10_output_bundle(
             "packet_scientific_identity_match_passed": True,
             "worker_summary_binding_passed": True,
             "run_manifest_binding_passed": True,
-        }
+            }
     return {
         "schema": "task40extra.review_v10_output_packet_recheck.v1",
         "packet_json": str(path),
@@ -1423,6 +1712,12 @@ def verify_v10_output_bundle(
         "v17_row_tile_assembly": v17_row_tile_assembly,
         "v17_row_tile_allocation_admission_ledger": v17_row_tile_allocation_ledger,
         "v17_dispatch_binding": v17_dispatch_binding,
+        "v18_ny8_operator_qualification": v18_ny8_operator_qualification,
+        "v18_ny8_row_tile_assembly": (
+            row_tile_assembly if has_registered_v18_profile else None
+        ),
+        "v18_ny8_row_tile_allocation_admission_ledger": v18_ny8_row_tile_allocation_ledger,
+        "v18_ny8_dispatch_binding": v18_ny8_dispatch_binding,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }

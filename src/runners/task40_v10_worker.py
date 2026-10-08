@@ -431,7 +431,10 @@ def _mapping_identity(reference: Mapping[str, Any]) -> dict[str, Any]:
             }
         )
     dft_defect = float(
-        np.linalg.norm(layout.cell_dft.conj().T @ layout.cell_dft - np.eye(4))
+        np.linalg.norm(
+            layout.cell_dft.conj().T @ layout.cell_dft
+            - np.eye(profile.q_count)
+        )
     )
     if not np.isfinite(dft_defect) or dft_defect > _MAPPING_IDENTITY_LIMIT:
         raise ValueError(f"cell DFT unitarity identity failed: {dft_defect}")
@@ -627,17 +630,29 @@ def _sector_native_forward_action(
     if solution.shape != (layout.independent_rows,) or not np.isfinite(solution).all():
         raise ValueError("regular action witness needs the complete finite saved p6 solution")
     sectors = tuple(reference["sectors"])
-    if len(sectors) != 2 or [int(row["context"].twist_index) for row in sectors] != [0, 1]:
-        raise ValueError("regular action witness requires both ordered two-cell twists")
+    expected_twist_count = len(profile.sector_port_counts)
+    twist_indices = [int(row["context"].twist_index) for row in sectors]
+    if len(sectors) != expected_twist_count or twist_indices != list(
+        range(expected_twist_count)
+    ):
+        raise ValueError("regular action witness requires every ordered two-cell twist")
     max_local_rows = max(int(row["entities"].full_rows) for row in sectors)
     max_local_independent = max(len(row["entities"].independent) for row in sectors)
     allocation_gate(
         "task40_v10_regular_sector_forward_action",
         {
             "additional_payload_bytes": 16
-            * (2 * layout.independent_rows + 4 * max_local_rows + 2 * max_local_independent),
-            "workspace_bytes": 16 * (layout.independent_rows + 2 * max_local_rows),
-            "twist_count": 2,
+            * (
+                2 * layout.independent_rows
+                + sum(
+                    2 * int(row["entities"].full_rows)
+                    + len(row["entities"].independent)
+                    for row in sectors
+                )
+            ),
+            "workspace_bytes": 16
+            * (layout.independent_rows + 2 * max_local_rows),
+            "twist_count": expected_twist_count,
             "global_factor_count": 0,
             "global_matrix_count": 0,
         },
@@ -1287,7 +1302,7 @@ def _regular_inverse_gate_facts(
             np.isfinite(port_closure_relative)
             and port_closure_relative <= _REGULAR_RECOVERY_LIMIT
         ),
-        "all_four_q_true_residuals": bool(
+        "all_q_true_residuals": bool(
             q_coverage_passed
             and np.isfinite(q_residual_relative)
             and q_residual_relative <= _REFERENCE_RESIDUAL_LIMIT
@@ -1307,7 +1322,7 @@ def _regular_inverse_gate_facts(
             "schur_port_recovery_identity": _IDENTITY_LIMIT,
             "saved_field_local_recovery_identity": _REGULAR_RECOVERY_LIMIT,
             "global_alpha_port_closure": _REGULAR_RECOVERY_LIMIT,
-            "all_four_q_true_residuals": _REFERENCE_RESIDUAL_LIMIT,
+            "all_q_true_residuals": _REFERENCE_RESIDUAL_LIMIT,
         },
     }
 
@@ -1767,7 +1782,7 @@ def _verify_regular_inverse(
                     "independent_sector_action_consistency",
                     "two_local_original_equations",
                     "global_alpha_port_closure",
-                    "all_four_q_true_residuals",
+                    "all_q_true_residuals",
                     "complete_augmented_fe_equation",
                 }
                 candidate_structural_gates = {
@@ -1776,7 +1791,7 @@ def _verify_regular_inverse(
                     if name not in replaced_numeric_gates
                 }
                 candidate_structural_gates.update({
-                    "all_four_q_phases_covered": q_coverage_passed,
+                    "all_q_phases_covered": q_coverage_passed,
                     "all_retained_modes_mapped_once": bool(
                         sector_action_facts["all_modes_covered_once"]
                     ),
@@ -1869,14 +1884,14 @@ def _verify_regular_inverse(
                     "complete_augmented_fe_equation",
                     "two_local_original_equations",
                     "global_alpha_port_closure",
-                    "all_four_q_true_residuals",
+                    "all_q_true_residuals",
                 }
                 candidate_structural_gates = {
                     name: value
                     for name, value in gate_facts["gates"].items()
                     if name not in bounded_numeric_gates
                 }
-                candidate_structural_gates["all_four_q_phases_covered"] = q_coverage_passed
+                candidate_structural_gates["all_q_phases_covered"] = q_coverage_passed
                 reference_pc_candidate = {
                     "metrics": reference_pc_metrics,
                     "frozen_scale_metrics": frozen_scale_metrics,
@@ -2486,11 +2501,12 @@ def _verify_regular_inverse(
                     default=float("inf"),
                 )
                 row["q_true_residuals_selected"] = list(selected_q_rows)
-                row["all_four_q_used"] = bool(
-                    len(selected_q_rows) == 4
+                row["all_q_used"] = bool(
+                    len(selected_q_rows) == profile.q_count
                     and {int(q_row.get("q", -1)) for q_row in selected_q_rows}
-                    == {0, 1, 2, 3}
+                    == set(range(profile.q_count))
                 )
+                row["all_four_q_used"] = profile.q_count == 4 and row["all_q_used"]
                 row["selected_decomposition_closure_relative"] = (
                     selected_closure_norm / selected_closure_scale
                     if selected_closure_scale > 0.0
@@ -2526,7 +2542,8 @@ def _verify_regular_inverse(
         "profile": profile.identity(),
         "cases": records,
         "case_count": len(records),
-        "all_four_q_exercised_per_case": True,
+        "all_q_exercised_per_case": True,
+        "all_four_q_exercised_per_case": profile.q_count == 4,
         "interior_rows_exercised_per_case": profile.global_interior_rows,
         "all_port_modes_exercised_per_case": profile.mode_count,
         "regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
@@ -2827,7 +2844,7 @@ class _P6ReferencePreconditioner:
         }
         structural = {
             "startup_regular_inverse_gates_passed": startup_passed,
-            "all_four_q_phases_covered": q_coverage,
+            "all_q_phases_covered": q_coverage,
             "all_retained_modes_mapped_once": bool(
                 budget["all_modes_covered_once"]
             ),
@@ -3314,7 +3331,8 @@ class _P6ReferencePreconditioner:
                 "q_true_residuals_initial": initial_q_rows,
                 "q_true_residuals_correction": correction_q_rows,
                 "q_true_residuals_selected": selected_q_rows,
-                "all_four_q_used": q_coverage,
+                "all_q_used": q_coverage,
+                "all_four_q_used": self.profile.q_count == 4 and q_coverage,
                 "initial_factor_calls": {
                     "before": factor_calls_before,
                     "after": factor_calls_after,
@@ -3417,7 +3435,7 @@ class _P6ReferencePreconditioner:
             "metrics": initial_metrics,
             "frozen_scale_metrics": dict(initial_metrics),
             "structural_gates": {
-                "all_four_q_phases_covered": initial_q_coverage,
+                "all_q_phases_covered": initial_q_coverage,
                 "native_augmented_action_finite": True,
             },
             "state_label": "initial",
@@ -3532,7 +3550,7 @@ class _P6ReferencePreconditioner:
                     "q_solve": max(correction_q_frozen, default=float("inf")),
                 },
                 "structural_gates": {
-                    "all_four_q_phases_covered": correction_q_coverage,
+                    "all_q_phases_covered": correction_q_coverage,
                     "native_augmented_action_finite": True,
                 },
                 "state_label": "corrected_v13",
@@ -3627,7 +3645,8 @@ class _P6ReferencePreconditioner:
                 "q_true_residuals_initial": initial_q_rows,
                 "q_true_residuals_correction": correction_q_rows,
                 "q_true_residuals_selected": selected_q_rows,
-                "all_four_q_used": q_coverage,
+                "all_q_used": q_coverage,
+                "all_four_q_used": self.profile.q_count == 4 and q_coverage,
                 "initial_factor_calls": {
                     "before": factor_calls_before,
                     "after": factor_calls_after,
@@ -3769,7 +3788,8 @@ class _P6ReferencePreconditioner:
                 "q_strict_passed": bool(q_relative <= _REFERENCE_RESIDUAL_LIMIT),
                 "port_identity_relative": port_relative,
                 "q_true_residuals": q_rows,
-                "all_four_q_used": True,
+                "all_q_used": True,
+                "all_four_q_used": self.profile.q_count == 4,
             }
             self.runtime.marker("v10_p6_reference_pc_apply_complete", self.last_facts)
             self.runtime.sample(f"v10_p6_reference_pc_{self.calls}_after")
@@ -3841,6 +3861,7 @@ def _candidate_contract(
         TASK40_B0_P6_V17_RUN_ID,
         TASK40_GX560_V17_RUN_ID,
         TASK40_E1_V17_RUN_ID,
+        TASK40_B0_P6_V18_Y8_RUN_ID,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         TASK40_GX784_V11_P6_RUN_ID,
@@ -3861,6 +3882,7 @@ def _candidate_contract(
         TASK40_V16_P6_GX560_PROFILE,
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_B0_PROFILE,
+        TASK40_V18_P6_B0_Y8_PROFILE,
         TASK40_V17_P6_GX560_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
     )
@@ -3881,6 +3903,7 @@ def _candidate_contract(
     )
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+    is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
     is_v16 = q_assembly_strategy == TASK40_Q_ASSEMBLY_BOUNDED_V16
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
     case_identity = {
@@ -3920,6 +3943,7 @@ def _candidate_contract(
         TASK40_V17_P6_B0_PROFILE: (None, None, None, None),
         TASK40_V17_P6_GX560_PROFILE: (None, None, None, None),
         TASK40_V17_P6_E1_PROFILE: (None, None, None, None),
+        TASK40_V18_P6_B0_Y8_PROFILE: (None, None, None, None),
     }
     try:
         strict_identity, v13_identity, v15_identity, v16_identity = case_identity[profile_identity]
@@ -3936,8 +3960,15 @@ def _candidate_contract(
             TASK40_E1_V17_RUN_ID, "Q4_ORIGINAL", 16.0
         ),
     }.get(profile_identity)
+    v18_identity = (
+        (TASK40_B0_P6_V18_Y8_RUN_ID, "B0_CANDIDATE", 16.0)
+        if profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
+        else None
+    )
     expected_identity = (
-        v17_identity
+        v18_identity
+        if v18_identity is not None
+        else v17_identity
         if is_v17
         else v16_identity
         if is_v16
@@ -3960,7 +3991,7 @@ def _candidate_contract(
         "reference_pc_strategy": reference_pc_strategy
         == (
             TASK40_V15_REFERENCE_PC_STRATEGY
-            if is_v15
+            if is_v15 or is_v18
             else
             TASK40_V13_REFERENCE_PC_STRATEGY
             if is_v13
@@ -4003,6 +4034,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
+            "task40extra.review_v18_ny8_p6_reference_worker_contract.v1"
+            if v18_identity is not None
+            else
             "task40extra.review_v17_row_tile_p6_reference_worker_contract.v1"
             if is_v17
             else "task40extra.review_v16_p6_reference_worker_contract.v1"
@@ -4051,6 +4085,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_E1_PROFILE,
         TASK40_V16_P6_GX560_PROFILE,
         TASK40_V16_P6_E1_PROFILE,
+        TASK40_V18_P6_B0_Y8_PROFILE,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -4148,9 +4183,13 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_b0_reference_v1",
         "task40extra_v17_p6_y_orbit_gx560_reference_v1",
         "task40extra_v17_p6_y_orbit_e1_reference_v1",
+        TASK40_V18_P6_B0_Y8_PROFILE,
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
-    if is_v17 and not profile_identity.startswith("task40extra_v17_p6_y_orbit_"):
+    is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
+    if is_v17 and not (
+        profile_identity.startswith("task40extra_v17_p6_y_orbit_") or is_v18
+    ):
         raise ValueError("V17 row-tile CSR requires a registered V17 p6 profile")
     if type(share_transform_bank) is not bool:
         raise TypeError("V12 transform-bank selection must be an explicit boolean")
@@ -4169,10 +4208,13 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_b0_reference_v1": "b0",
         "task40extra_v17_p6_y_orbit_gx560_reference_v1": "gx560",
         "task40extra_v17_p6_y_orbit_e1_reference_v1": "e1",
+        TASK40_V18_P6_B0_Y8_PROFILE: "b0_y8",
     }
     case_label = case_labels[profile_identity]
     evidence_prefix = (
-        "v17_row_tile_p6_reference"
+        "v18_ny8_row_tile_p6_reference"
+        if is_v18
+        else "v17_row_tile_p6_reference"
         if is_v17
         else
         "v16_p6_reference"
@@ -4188,7 +4230,9 @@ def run_task40_v10_p6_reference_worker(
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
-            "task40extra.review_v17_row_tile_p6_reference_worker_summary.v1"
+            "task40extra.review_v18_ny8_row_tile_p6_reference_worker_summary.v1"
+            if is_v18
+            else "task40extra.review_v17_row_tile_p6_reference_worker_summary.v1"
             if is_v17
             else
             "task40extra.review_v16_p6_reference_worker_summary.v1"
@@ -4250,7 +4294,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v17_{case_label}_p6_reference"
+                f"task40_review_v18_ny8_{case_label}_p6_reference"
+                if is_v18
+                else f"task40_review_v17_{case_label}_p6_reference"
                 if is_v17
                 else f"task40_review_v16_{case_label}_p6_reference"
                 if is_v16
@@ -4379,8 +4425,12 @@ def run_task40_v10_p6_reference_worker(
             future_components: dict[str, int] = {}
             if label == "all_q_symbolic_before_any_numeric":
                 estimates = facts.get("q_symbolic_estimates_bytes", {})
-                if not isinstance(estimates, Mapping) or set(map(int, estimates)) != {0, 1, 2, 3}:
-                    raise ValueError("all-q numeric gate requires all four actual INFOG(16/17) estimates")
+                if not isinstance(estimates, Mapping) or set(map(int, estimates)) != set(
+                    range(periodic_profile.q_count)
+                ):
+                    raise ValueError(
+                        "all-q numeric gate requires every actual INFOG(16/17) estimate"
+                    )
                 mumps_estimate = int(sum(int(value) for value in estimates.values()))
                 stated_ksp_vectors = int(facts.get("future_retained_krylov_and_vector_bytes", 0))
                 inverse_payload = int(facts.get("future_inverse_payload_bytes", 0))
@@ -4948,7 +4998,25 @@ def run_task40_v10_p6_reference_worker(
             "retained_rhs_norm": reduced_rhs_norm,
             "reference_in_operator": False,
             "reference_in_initial_guess": False,
+            **(
+                {
+                    "complete_operator_qualification_sha256": hashlib.sha256(
+                        json.dumps(
+                            reference["complete_operator_qualification"],
+                            sort_keys=True,
+                            separators=(",", ":"),
+                            allow_nan=False,
+                        ).encode("utf-8")
+                    ).hexdigest()
+                }
+                if is_v18
+                else {}
+            ),
         }
+        if is_v18:
+            summary["complete_operator_qualification_sha256"] = identity[
+                "complete_operator_qualification_sha256"
+            ]
         identity_packet = _save_packet(runtime, "v10_candidate_operator_identity", identity)
         summary.update(
             identity_packet=identity_packet,
@@ -5235,6 +5303,15 @@ def run_task40_v10_p6_reference_worker(
                 reference.get("full_storage_dimensions", {})
             ),
             "transform_bank_final_receipt": copy.deepcopy(transform_bank_final_receipt),
+            **(
+                {
+                    "complete_operator_qualification": copy.deepcopy(
+                        reference.get("complete_operator_qualification")
+                    )
+                }
+                if is_v18
+                else {}
+            ),
         }
         pc_snapshot = pc.detach()
         summary["reference_audit_snapshot"] = reference_audit_snapshot
@@ -5665,6 +5742,15 @@ def run_task40_v10_p6_reference_worker(
                         "reference_layout": copy.deepcopy(
                             reference.get("full_layout").audit
                             if reference.get("full_layout") is not None
+                            else {}
+                        ),
+                        **(
+                            {
+                                "complete_operator_qualification": copy.deepcopy(
+                                    reference.get("complete_operator_qualification")
+                                )
+                            }
+                            if is_v18
                             else {}
                         ),
                         "snapshot_before_failure_cleanup": True,

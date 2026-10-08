@@ -50,6 +50,7 @@ def run_full3d_iterative(
         TASK40_E1_V16_RUN_ID,
         TASK40_GX560_V16_RUN_ID,
         TASK40_B0_P6_V17_RUN_ID,
+        TASK40_B0_P6_V18_Y8_RUN_ID,
         TASK40_E1_V17_RUN_ID,
         TASK40_GX560_V17_RUN_ID,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
@@ -70,6 +71,7 @@ def run_full3d_iterative(
         TASK40_V17_P6_B0_PROFILE,
         TASK40_V17_P6_GX560_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
+        TASK40_V18_P6_B0_Y8_PROFILE,
     )
     reference_pc_strategy = str(
         solver.get(
@@ -247,6 +249,28 @@ def run_full3d_iterative(
             ) != profile
         ):
             raise ValueError("Task40 V17 row-tile route requires its exact registered case identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=profile,
+            share_transform_bank=True,
+        )
+
+    if profile == TASK40_V18_P6_B0_Y8_PROFILE:
+        if (
+            reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
+            or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            or resolved_payload.get("run_id") != TASK40_B0_P6_V18_Y8_RUN_ID
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != "B0_CANDIDATE"
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            ) != profile
+        ):
+            raise ValueError("Task40 V18 Ny8 route requires its exact frozen B0 identity")
         from .task40_v10_worker import run_task40_v10_p6_reference_worker
 
         return run_task40_v10_p6_reference_worker(

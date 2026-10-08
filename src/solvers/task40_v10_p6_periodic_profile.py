@@ -32,15 +32,31 @@ class Task40V10P6PeriodicProfile:
     local_interior_rows: int = 18000
     local_trace_rows: int = 8496
     local_width_per_q: int = 13248
-    q_port_counts: tuple[int, int, int, int] = (76, 152, 152, 152)
-    sector_port_counts: tuple[int, int] = (228, 304)
+    q_port_counts: tuple[int, ...] = (76, 152, 152, 152)
+    sector_port_counts: tuple[int, ...] = (228, 304)
+
+    def __post_init__(self) -> None:
+        if (
+            self.q_count != len(self.q_port_counts)
+            or self.q_count != self.global_cell_axes[1]
+            or self.q_count != self.local_y_cells * self.replication_count
+            or self.replication_count != len(self.sector_port_counts)
+        ):
+            raise ValueError("Task40 p6 profile q, mesh, and twist inventory do not close")
+        expected_sectors = tuple(
+            sum(self.q_port_counts[twist + branch * self.replication_count]
+                for branch in range(self.local_y_cells))
+            for twist in range(self.replication_count)
+        )
+        if self.sector_port_counts != expected_sectors:
+            raise ValueError("Task40 p6 profile twist counts do not match its q inventory")
 
     @property
     def mode_count(self) -> int:
         return sum(self.q_port_counts)
 
     @property
-    def augmented_rows_per_q(self) -> tuple[int, int, int, int]:
+    def augmented_rows_per_q(self) -> tuple[int, ...]:
         return tuple(self.trace_rows_per_q + n for n in self.q_port_counts)
 
     def identity(self) -> dict[str, object]:
@@ -50,7 +66,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
-                "task40extra.review_v16_p6_periodic_profile.v1"
+                "task40extra.review_v18_ny8_p6_periodic_profile.v1"
+                if self.name.startswith("task40extra_v18_")
+                else "task40extra.review_v16_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v16_")
                 else "task40extra.review_v15_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v15_")
@@ -61,7 +79,8 @@ class Task40V10P6PeriodicProfile:
             mode_count=self.mode_count,
             augmented_rows_per_q=list(self.augmented_rows_per_q),
             status="DERIVED_EXPECTATIONS_RUNTIME_READBACK_REQUIRED",
-            all_four_q_required=True,
+            all_q_required=True,
+            all_four_q_required=self.q_count == 4,
             ordinary_default_changed=False,
         )
         return result
@@ -84,10 +103,10 @@ class Task40V10P6PeriodicProfile:
             "local_interior_rows": self.local_interior_rows,
             "local_trace_rows": self.local_trace_rows,
             "local_width_per_q": self.local_width_per_q,
-            "q_port_count_0": self.q_port_counts[0],
-            "q_port_count_1": self.q_port_counts[1],
-            "q_port_count_2": self.q_port_counts[2],
-            "q_port_count_3": self.q_port_counts[3],
+            **{
+                f"q_port_count_{q}": self.q_port_counts[q]
+                for q in range(self.q_count)
+            },
         }
         actual = {key: int(observed[key]) for key in expected if key in observed}
         mismatches = {
@@ -96,7 +115,8 @@ class Task40V10P6PeriodicProfile:
             if actual.get(key) != value
         }
         if mismatches:
-            raise ValueError(f"Task40 V10 p6 runtime inventory mismatch: {mismatches}")
+            label = "Task40 V18 Ny8" if self.name.startswith("task40extra_v18_") else "Task40 V10"
+            raise ValueError(f"{label} p6 runtime inventory mismatch: {mismatches}")
         return {"status": "RUNTIME_INVENTORY_MATCH", "observed": actual,
                 "profile": self.identity()}
 
@@ -208,6 +228,31 @@ TASK40_V17_P6_E1_PROFILE = replace(
     name="task40extra_v17_p6_y_orbit_e1_reference_v1",
 )
 
+
+TASK40_V18_P6_B0_Y8_PROFILE = replace(
+    TASK40_V17_P6_B0_PROFILE,
+    name="task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+    global_cell_axes=(4, 8, 5),
+    global_cell_count=160,
+    global_storage_rows=110406,
+    global_independent_rows=105984,
+    global_interior_rows=72000,
+    global_trace_rows=33984,
+    q_count=8,
+    rows_per_q=13248,
+    trace_rows_per_q=4248,
+    local_y_cells=2,
+    replication_count=4,
+    local_cell_count=40,
+    local_storage_rows=28722,
+    local_independent_rows=26496,
+    local_interior_rows=18000,
+    local_trace_rows=8496,
+    local_width_per_q=13248,
+    q_port_counts=(76, 76, 76, 76, 0, 76, 76, 76),
+    sector_port_counts=(76, 152, 152, 152),
+)
+
 TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V10_P6_PROFILE.name: TASK40_V10_P6_PROFILE,
     TASK40_V11_P6_GX560_PROFILE.name: TASK40_V11_P6_GX560_PROFILE,
@@ -220,4 +265,5 @@ TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V17_P6_B0_PROFILE.name: TASK40_V17_P6_B0_PROFILE,
     TASK40_V17_P6_GX560_PROFILE.name: TASK40_V17_P6_GX560_PROFILE,
     TASK40_V17_P6_E1_PROFILE.name: TASK40_V17_P6_E1_PROFILE,
+    TASK40_V18_P6_B0_Y8_PROFILE.name: TASK40_V18_P6_B0_Y8_PROFILE,
 }

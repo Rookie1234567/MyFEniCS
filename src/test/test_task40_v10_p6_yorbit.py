@@ -26,6 +26,10 @@ from src.solvers.task40_v10_p6_yorbit import (
     project_reduced_contribution,
     trace_layout_coordinates,
 )
+from src.solvers.task40_v18_ny8_operator_qualification import (
+    build_complete_q_primal_lift,
+    qualify_complete_ny_reference_operator,
+)
 
 
 class _IdentityEntities:
@@ -632,6 +636,97 @@ def test_sector_contexts_assign_all_runtime_modes_by_physical_phase():
     np.testing.assert_array_equal(np.sort(joined), np.arange(len(modes)))
 
 
+def test_ny8_two_cell_transport_uses_k_four_scaling_and_is_dual():
+    theta = 2.0
+    cfg = SimpleNamespace(
+        ky=0.25 + 0j,
+        period_y=8.0,
+        floquet_phase_y=np.exp(1j * theta),
+    )
+    full = _IdentityEntities(ny=8, width=2, full_rows=20)
+    local = _IdentityEntities(ny=2, width=2, full_rows=8)
+    twist = 3
+    eta = np.exp(1j * (theta + 2 * np.pi * twist) / 8)
+    transport = TwoCellNativeTransport(
+        full, local, twist_index=twist, eta=eta, cfg=cfg
+    )
+    assert transport.K == 4
+    assert transport.audit["fourier_normalization"] == "1/sqrt(K)"
+    rng = np.random.default_rng(20261008)
+    rhs = rng.normal(size=16) + 1j * rng.normal(size=16)
+    local_primal = rng.normal(size=4) + 1j * rng.normal(size=4)
+    folded = transport.fold_dual(rhs)
+    lifted = transport.lift_primal(local_primal)
+    np.testing.assert_allclose(
+        np.vdot(rhs, lifted), np.vdot(folded, local_primal), rtol=1e-13, atol=1e-13
+    )
+    np.testing.assert_allclose(np.linalg.norm(lifted), np.linalg.norm(local_primal), rtol=1e-13)
+
+
+def test_ny8_sector_contexts_cover_all_q_with_q4_empty():
+    cfg = SimpleNamespace(
+        ky=0.25 + 0j,
+        period_y=8.0,
+        floquet_phase_y=np.exp(2j),
+    )
+    axes = {
+        "x": (0.0, 1.0),
+        "y": tuple(float(value) for value in range(9)),
+        "z": (0.0, 1.0),
+    }
+    counts = (2, 1, 3, 1, 0, 2, 1, 2)
+    modes = []
+    for q, count in enumerate(counts):
+        gamma = (2.0 + 2 * np.pi * q) / 8
+        modes.extend(SimpleNamespace(gamma=gamma, mode_key=(q, i)) for i in range(count))
+    contexts = build_task40_v10_sector_contexts(
+        tuple(modes), cfg, axes, expected_q_counts=counts,
+        expected_sector_counts=(2, 3, 4, 3),
+    )
+    assert [ctx.global_q_indices for ctx in contexts] == [
+        (0, 4), (1, 5), (2, 6), (3, 7)
+    ]
+    assert [len(ctx.original_mode_indices) for ctx in contexts] == [2, 3, 4, 3]
+    assert [ctx.expected_alias_counts for ctx in contexts] == [
+        (2, 0), (1, 2), (3, 1), (1, 2)
+    ]
+    joined = np.concatenate([ctx.original_mode_indices for ctx in contexts])
+    np.testing.assert_array_equal(np.sort(joined), np.arange(len(modes)))
+
+
+def test_v18_ny8_profile_inventory_keeps_zero_port_q4_and_all_eight_factors():
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_V18_P6_B0_Y8_PROFILE,
+    )
+
+    profile = TASK40_V18_P6_B0_Y8_PROFILE
+    assert profile.q_count == profile.global_cell_axes[1] == 8
+    assert profile.replication_count == 4 and profile.local_y_cells == 2
+    assert profile.q_port_counts == (76, 76, 76, 76, 0, 76, 76, 76)
+    assert profile.augmented_rows_per_q == (4324, 4324, 4324, 4324, 4248, 4324, 4324, 4324)
+    assert profile.identity()["all_q_required"] is True
+    assert profile.identity()["all_four_q_required"] is False
+    observed = {
+        "degree": 6,
+        "global_cell_count": 160,
+        "global_storage_rows": 110406,
+        "global_independent_rows": 105984,
+        "global_interior_rows": 72000,
+        "global_trace_rows": 33984,
+        "q_count": 8,
+        "rows_per_q": 13248,
+        "trace_rows_per_q": 4248,
+        "local_cell_count": 40,
+        "local_storage_rows": 28722,
+        "local_independent_rows": 26496,
+        "local_interior_rows": 18000,
+        "local_trace_rows": 8496,
+        "local_width_per_q": 13248,
+        **{f"q_port_count_{q}": value for q, value in enumerate(profile.q_port_counts)},
+    }
+    assert profile.validate_runtime_inventory(observed)["status"] == "RUNTIME_INVENTORY_MATCH"
+
+
 def test_streamed_contribution_projection_matches_dense_congruence():
     rng = np.random.default_rng(23)
     left = sparse.csr_matrix(
@@ -787,3 +882,184 @@ def test_nonunitary_complex_native_entities_preserve_primal_dual_work_and_two_tw
         )
         recon += transport.lift_primal(transport.extract_primal(rhs))
     np.testing.assert_allclose(recon, rhs, rtol=3e-13, atol=3e-13)
+
+
+def test_complete_ny8_operator_oracle_covers_empty_q4_and_all_fe_port_blocks():
+    ny = 8
+    bases = (
+        (2, ((0, 0, 0),)),
+        (3, ((0, 0, 0),)),
+    )
+    entities = YOrbitEntities(
+        independent=np.arange(2 * ny, dtype=np.int64),
+        full_rows=2 * ny,
+        ny=ny,
+        width=2,
+        bases=bases,
+        records={
+            (orbit, base): (
+                np.asarray([2 * orbit + slot], dtype=np.int64),
+                np.ones((1, 1), dtype=np.complex128),
+            )
+            for orbit in range(ny)
+            for slot, base in enumerate(bases)
+        },
+        slots={bases[0]: (0, 1), bases[1]: (1, 1)},
+        dimension_counts={2: ny, 3: ny},
+        y_widths=np.ones(ny),
+    )
+    ky_period = 0.4
+    theta = (ky_period + 2.0 * np.pi * np.arange(ny)) / ny
+    cell_dft = np.exp(1j * np.arange(ny)[:, None] * theta[None, :]) / np.sqrt(ny)
+    layout = SimpleNamespace(
+        ny=ny,
+        width=2,
+        cell_dft=cell_dft,
+        phase_y=np.exp(1j * ky_period),
+    )
+
+    local_volume = np.asarray(
+        [[2.0 + 0.2j, 0.3 - 0.1j], [-0.2 + 0.15j, 3.0 + 0.5j]],
+        dtype=np.complex128,
+    )
+    c_trace = 0.2 + 0.03j
+    c_interior = -0.04 + 0.05j
+    d_trace = 0.07 - 0.02j
+    d_interior = -0.03 + 0.06j
+    entries = []
+    mode_index_by_q = {}
+    for q in tuple(range(4)) + tuple(range(5, 8)):
+        q_lift = build_complete_q_primal_lift(entities, layout, q)
+        dense_lift = q_lift.toarray()
+        h_value = 1.0 + 0.1 * q
+        c_raw = np.sqrt(h_value) * (
+            c_trace * dense_lift[:, 0] + c_interior * dense_lift[:, 1]
+        )
+        d_raw = np.sqrt(h_value) * (
+            d_trace * dense_lift[:, 0].conj()
+            + d_interior * dense_lift[:, 1].conj()
+        )
+        c_rows = np.flatnonzero(np.abs(c_raw) > 0.0).astype(np.int64)
+        d_rows = np.flatnonzero(np.abs(d_raw) > 0.0).astype(np.int64)
+        mode_index_by_q[q] = len(entries)
+        entries.append(
+            SimpleNamespace(
+                normalization_h=h_value,
+                coupling_rows=c_rows,
+                coupling_values=c_raw[c_rows],
+                projection_rows=d_rows,
+                projection_values=d_raw[d_rows],
+            )
+        )
+
+    sectors = []
+    for twist in range(4):
+        qids = (twist, twist + 4)
+        owned = [q for q in qids if q in mode_index_by_q]
+        sectors.append(
+            SimpleNamespace(
+                global_q_indices=qids,
+                original_mode_indices=np.asarray(
+                    [mode_index_by_q[q] for q in owned], dtype=np.int64
+                ),
+                local_branch_indices=np.asarray(
+                    [qids.index(q) for q in owned], dtype=np.int64
+                ),
+            )
+        )
+
+    volume = sparse.kron(
+        sparse.eye(ny, dtype=np.complex128, format="csr"),
+        sparse.csr_matrix(local_volume),
+        format="csr",
+    )
+    carrier = SimpleNamespace(entries=entries, global_rows=2 * ny)
+    candidate_q = {}
+    interior_inverse = 1.0 / local_volume[1, 1]
+    for q in range(ny):
+        s_trace = local_volume[0, 0] - (
+            local_volume[0, 1] * interior_inverse * local_volume[1, 0]
+        )
+        if q == 4:
+            candidate_q[q] = sparse.csr_matrix(
+                np.asarray([[s_trace]], dtype=np.complex128)
+            )
+        else:
+            candidate_q[q] = sparse.csr_matrix(
+                np.asarray(
+                    [
+                        [
+                            s_trace,
+                            c_trace - local_volume[0, 1] * interior_inverse * c_interior,
+                        ],
+                        [
+                            d_trace - d_interior * interior_inverse * local_volume[1, 0],
+                            -1.0 - d_interior * interior_inverse * c_interior,
+                        ],
+                    ],
+                    dtype=np.complex128,
+                )
+            )
+
+    audit = qualify_complete_ny_reference_operator(
+        volume_matrix=volume,
+        entities=entities,
+        layout=layout,
+        carrier=carrier,
+        sectors=sectors,
+        candidate_q_matrices=candidate_q,
+        expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
+    )
+    assert audit["passed"] is True
+    assert audit["full_q_block_coverage_count"] == 64
+    assert audit["empty_port_q_indices"] == [4]
+    assert audit["q4_nonzero_fe_rhs_witness_passed"] is True
+    assert audit["q4_zero_port_nonzero_fe_gate_passed"] is True
+    assert audit["complex_nonhermitian_reference_witness_passed"] is True
+    assert audit["complex_material_volume_witness_passed"] is True
+    assert audit["original_H_mode_count"] == 7
+    assert audit["global_y_phase_distance_from_one"] > 1.0e-12
+    assert audit["maximum_complete_offdiagonal_relative"] < 1.0e-11
+    assert audit["maximum_independent_schur_relative"] < 1.0e-11
+
+    bad_candidate = dict(candidate_q)
+    bad_candidate[0] = candidate_q[0].copy()
+    bad_candidate[0][0, 0] += 1.0e-4
+    failed_audit = qualify_complete_ny_reference_operator(
+        volume_matrix=volume,
+        entities=entities,
+        layout=layout,
+        carrier=carrier,
+        sectors=sectors,
+        candidate_q_matrices=bad_candidate,
+        expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
+    )
+    assert failed_audit["passed"] is False
+    assert failed_audit["independent_schur_relative_by_q"][0] > 1.0e-11
+    with pytest.raises(ValueError, match="every q matrix"):
+        qualify_complete_ny_reference_operator(
+            volume_matrix=volume,
+            entities=entities,
+            layout=layout,
+            carrier=carrier,
+            sectors=sectors,
+            candidate_q_matrices={q: value for q, value in candidate_q.items() if q != 7},
+            expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
+        )
+    missing_mode_sectors = list(sectors)
+    last = missing_mode_sectors[-1]
+    missing_mode_sectors[-1] = SimpleNamespace(
+        global_q_indices=last.global_q_indices,
+        original_mode_indices=last.original_mode_indices[:-1],
+        local_branch_indices=last.local_branch_indices[:-1],
+    )
+    with pytest.raises(ValueError, match="all ordered physical modes"):
+        qualify_complete_ny_reference_operator(
+            volume_matrix=volume,
+            entities=entities,
+            layout=layout,
+            carrier=carrier,
+            sectors=missing_mode_sectors,
+            candidate_q_matrices=candidate_q,
+            expected_q_port_counts=(1, 1, 1, 1, 0, 1, 1, 1),
+        )

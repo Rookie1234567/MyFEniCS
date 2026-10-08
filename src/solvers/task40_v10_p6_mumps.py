@@ -254,7 +254,7 @@ class AllQExactMumps:
         self.nq = profile.q_count
         self.row_counts = tuple(expected_shapes or profile.augmented_rows_per_q)
         if len(self.row_counts) != self.nq or set(matrices) != set(range(self.nq)):
-            raise ValueError("all four actual q matrices are required before factorization")
+            raise ValueError("every actual profile q matrix is required before factorization")
         self.matrices = {}
         self.factors = {}
         self.csr_matrices = {}
@@ -271,6 +271,10 @@ class AllQExactMumps:
             "factor_probe_true_residual_limit": self.factor_probe_limit,
             "q_true_residual_strict_limit": 1.0e-10,
             "all_q_required": list(range(self.nq)),
+            "all_q_factors_retained_simultaneously": False,
+            "all_q_factor_objects_live_simultaneously": False,
+            "all_q_numeric_factors_true_residual_passed": False,
+            "all_q_numeric_factors_strict_true_residual_passed": False,
             "factor_inputs": [],
             "factor_tests": [],
             "all_four_factors_retained_simultaneously": False,
@@ -489,7 +493,10 @@ class AllQExactMumps:
                     str(q): symbolic_estimates[q] for q in range(self.nq)
                 },
                 "all_q_symbolic_estimate_sum_bytes": int(sum(symbolic_estimates.values())),
-                "all_four_symbolic_q_completed": set(symbolic_estimates) == set(range(self.nq)),
+                "all_q_symbolic_q_completed": set(symbolic_estimates) == set(range(self.nq)),
+                "all_four_symbolic_q_completed": (
+                    self.nq == 4 and set(symbolic_estimates) == set(range(self.nq))
+                ),
                 "future_retained_krylov_and_vector_bytes": future_krylov_bytes,
                 "future_krylov_basis_bytes": future_krylov_basis_bytes,
                 "future_ksp_workspace_vector_bytes": future_ksp_workspace_bytes,
@@ -722,7 +729,7 @@ class AllQExactMumps:
                 })
             self.audit.update(
                 setup_seconds=perf_counter()-started,
-                all_four_factors_retained_simultaneously=(
+                all_q_factors_retained_simultaneously=(
                     self._max_simultaneous_factors == self.nq
                     and len(self.factors) == self.nq
                     and {int(row["q"]) for row in self.audit["factor_tests"]}
@@ -733,17 +740,17 @@ class AllQExactMumps:
                         for row in self.audit["factor_tests"]
                     )
                 ),
-                all_four_numeric_factors_true_residual_passed=(
+                all_q_numeric_factors_true_residual_passed=(
                     {int(row["q"]) for row in self.audit["factor_tests"]}
                     == set(range(self.nq))
                     and all(bool(row["admission_passed"]) for row in self.audit["factor_tests"])
                 ),
-                all_four_numeric_factors_strict_true_residual_passed=(
+                all_q_numeric_factors_strict_true_residual_passed=(
                     {int(row["q"]) for row in self.audit["factor_tests"]}
                     == set(range(self.nq))
                     and all(bool(row["strict_passed"]) for row in self.audit["factor_tests"])
                 ),
-                all_four_factor_objects_live_simultaneously=(
+                all_q_factor_objects_live_simultaneously=(
                     self._max_simultaneous_factors == self.nq
                 ),
                 factors_live_count_current=len(self.factors),
@@ -751,6 +758,20 @@ class AllQExactMumps:
                 factor_fill_bytes=None,
                 process_tree_peak_rss_bytes=None,
                 factor_factory="physical_p4_cell_condensed_v18._factor_factory_for_backend('exact')",
+            )
+            self.audit.update(
+                all_four_factors_retained_simultaneously=(
+                    self.nq == 4 and self.audit["all_q_factors_retained_simultaneously"]
+                ),
+                all_four_numeric_factors_true_residual_passed=(
+                    self.nq == 4 and self.audit["all_q_numeric_factors_true_residual_passed"]
+                ),
+                all_four_numeric_factors_strict_true_residual_passed=(
+                    self.nq == 4 and self.audit["all_q_numeric_factors_strict_true_residual_passed"]
+                ),
+                all_four_factor_objects_live_simultaneously=(
+                    self.nq == 4 and self.audit["all_q_factor_objects_live_simultaneously"]
+                ),
             )
         except BaseException:
             try:
@@ -765,7 +786,8 @@ class AllQExactMumps:
         self.audit["factors_live_count_current"] = count
         self.audit["max_simultaneous_factors"] = self._max_simultaneous_factors
         if count == self.nq:
-            self.audit["all_four_factor_objects_live_simultaneously"] = True
+            self.audit["all_q_factor_objects_live_simultaneously"] = True
+            self.audit["all_four_factor_objects_live_simultaneously"] = self.nq == 4
 
     def _resident_factor_evidence(self, *, exclude_q: int | None = None) -> dict[str, object]:
         result: dict[str, object] = {}
@@ -797,9 +819,9 @@ class AllQExactMumps:
 
     def solve(self, q: int, rhs: np.ndarray) -> np.ndarray:
         if self.destroyed or set(self.factors) != set(range(self.nq)):
-            raise RuntimeError("all four live p6 q factors are required")
+            raise RuntimeError("all live profile p6 q factors are required")
         if type(q) is not int or q not in range(self.nq):
-            raise ValueError("actual q branch index 0..3 is required")
+            raise ValueError(f"actual q branch index 0..{self.nq - 1} is required")
         values = np.asarray(rhs, dtype=np.complex128)
         if values.shape != (self.row_counts[q],) or not np.isfinite(values).all():
             raise ValueError("complete finite q-branch RHS required")
@@ -837,7 +859,7 @@ class AllQExactMumps:
         if (
             len(self.factors) == self.nq
             and len(self.matrices) == self.nq
-            and self.audit.get("all_four_numeric_factors_true_residual_passed") is True
+            and self.audit.get("all_q_numeric_factors_true_residual_passed") is True
         ):
             tests_by_q = {
                 int(row["q"]): row for row in self.audit.get("factor_tests", ())
@@ -899,10 +921,13 @@ class AllQExactMumps:
         self._input_bindings.clear()
         self.audit["factors_live_count_current"] = len(self.factors)
         self.audit["max_simultaneous_factors"] = self._max_simultaneous_factors
+        self.audit["all_q_factor_objects_live_simultaneously"] = (
+            self._max_simultaneous_factors == self.nq
+        )
         # Keep object-liveness historical, but never call a symbolic-only
         # object set a qualified four-q numeric factor set.
         self.audit["all_four_factor_objects_live_simultaneously"] = (
-            self._max_simultaneous_factors == self.nq
+            self.nq == 4 and self._max_simultaneous_factors == self.nq
         )
         if errors:
             raise RuntimeError(f"failed to destroy {len(errors)} PETSc/MUMPS objects") from errors[0]

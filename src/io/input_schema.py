@@ -1057,6 +1057,7 @@ FIELD_SPECS: Final = (
             "task40extra_v17_p6_y_orbit_b0_reference_v1",
             "task40extra_v17_p6_y_orbit_gx560_reference_v1",
             "task40extra_v17_p6_y_orbit_e1_reference_v1",
+            "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),
@@ -1095,7 +1096,7 @@ FIELD_SPECS: Final = (
             "ROW_TILE_BOUNDED_CSR_V17",
         ),
         constraints=(
-            "V17 row-tile CSR is an explicit B0 p6 candidate; V15 defaults to legacy CSR; V16 profiles retain bounded staging; PREALLOCATED_CSR_PATTERN_V13 is V13-only",
+            "V17 row-tile CSR remains explicit; V18 applies it to the exact Ny8 B0 candidate; V15 defaults to legacy CSR; V16 profiles retain bounded staging; PREALLOCATED_CSR_PATTERN_V13 is V13-only",
         ),
     ),
     _f(

@@ -7,7 +7,7 @@ the reference inverse; no global dense FE operator is formed here.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 from scipy import sparse
@@ -309,11 +309,11 @@ class Task40V10FullLayout:
             "interior_rows": int(self.entities.dimension_counts.get(3, 0)),
         }
         if (
-            actual["ny"] != 4
-            or actual["width"] * 4 != actual["independent_rows"]
+            actual["ny"] < 2
+            or actual["width"] * actual["ny"] != actual["independent_rows"]
             or actual["interior_rows"] <= 0
         ):
-            raise ValueError(f"four-cell full FE orbit inventory mismatch: {actual}")
+            raise ValueError(f"complete full FE q-orbit inventory mismatch: {actual}")
         if self.expected_inventory is not None:
             mismatches = {
                 key: {"expected": value, "actual": actual.get(key)}
@@ -371,7 +371,7 @@ class Task40V10FullLayout:
 
 
 class TwoCellNativeTransport:
-    """Dual fold and primal lift between four full cells and two local cells."""
+    """Dual fold and primal lift for ``Ny=K*2`` complete native FE maps."""
 
     def __init__(
         self,
@@ -382,12 +382,13 @@ class TwoCellNativeTransport:
         eta: complex,
         cfg: Any,
     ) -> None:
-        if type(twist_index) is not int or twist_index not in (0, 1):
-            raise ValueError("the two p6 twist sectors are explicitly indexed 0 and 1")
+        if local.ny != 2 or full.ny < local.ny or full.ny % local.ny:
+            raise ValueError("complete p6 maps must satisfy Ny=K*2")
+        K = full.ny // local.ny
+        if type(twist_index) is not int or not 0 <= twist_index < K:
+            raise ValueError("p6 twist index must be one of the K global sectors")
         if (
-            full.ny != 4
-            or local.ny != 2
-            or full.width != local.width
+            full.width != local.width
             or len(full.independent) != full.ny * full.width
             or len(local.independent) != local.ny * local.width
             or full.bases != local.bases
@@ -396,28 +397,43 @@ class TwoCellNativeTransport:
             or local.dimension_counts.get(3, 0) <= 0
         ):
             raise ValueError("complete full/two-cell entity orbit inventories do not match")
+        widths = np.asarray(full.y_widths, dtype=np.float64)
+        expected_widths = np.tile(np.asarray(local.y_widths, dtype=np.float64), K)
+        if (
+            widths.shape != (full.ny,)
+            or not np.isfinite(widths).all()
+            or not np.isfinite(expected_widths).all()
+            or np.any(widths <= 0.0)
+            or np.any(expected_widths <= 0.0)
+            or np.max(np.abs(widths - expected_widths) / expected_widths, initial=0.0)
+            > LIMITS["mapping"]
+        ):
+            raise ValueError("full p6 y cells are not exact translated repetitions of the local two-cell map")
         self.full, self.local = full, local
-        self.b, self.K = twist_index, 2
+        self.b, self.K, self.ell = twist_index, K, local.ny
         self.eta = complex(eta)
-        self.tau = self.eta**2
+        self.tau = self.eta**self.ell
         self.ny = full.ny
         expected_eta = np.exp(
             1j * (complex(cfg.ky).real * float(cfg.period_y) + 2 * np.pi * self.b) / self.ny
         )
         phase = complex(cfg.floquet_phase_y)
         if (
-            abs(complex(cfg.ky).imag) > 1e-12
-            or abs(self.eta - expected_eta) > 1e-12
-            or abs(self.tau**self.K - phase) > 1e-12
-            or abs(abs(self.eta) - 1.0) > 1e-12
-            or not np.array_equal(full.y_widths[:2], local.y_widths)
+            abs(complex(cfg.ky).imag) > LIMITS["mapping"]
+            or abs(self.eta - expected_eta) > LIMITS["mapping"]
+            or abs(self.tau**self.K - phase) > LIMITS["mapping"]
+            or abs(abs(self.eta) - 1.0) > LIMITS["mapping"]
         ):
-            raise ValueError("p6 twist must preserve the exact global Bloch phase and cell metrics")
+            raise ValueError("p6 twist must preserve the actual global Bloch phase")
         self.audit = {
+            "global_y_cells": self.ny,
+            "local_y_cells_ell": self.ell,
+            "translation_count_K": self.K,
             "twist_index": self.b,
             "global_q_branches": [self.b, self.b + self.K],
             "eta": [self.eta.real, self.eta.imag],
             "tau": [self.tau.real, self.tau.imag],
+            "fourier_normalization": "1/sqrt(K)",
             "all_internal_channels_retained": True,
         }
 
@@ -425,11 +441,12 @@ class TwoCellNativeTransport:
         array = np.asarray(values, dtype=np.complex128)
         if array.shape[0] != len(self.full.independent):
             raise ValueError("full vector does not cover all independent p6 FE rows")
-        panels = array.reshape((4, self.full.width) + array.shape[1:])
-        result = np.empty((2, self.local.width) + array.shape[1:], dtype=np.complex128)
+        panels = array.reshape((self.ny, self.full.width) + array.shape[1:])
+        result = np.zeros((self.ell, self.local.width) + array.shape[1:], dtype=np.complex128)
         phase = np.conj(self.tau) if dual else self.tau
-        for cell in range(2):
-            result[cell] = (panels[cell] + phase * panels[2 + cell]) / np.sqrt(2.0)
+        for copy in range(self.K):
+            result += phase**copy * panels[copy * self.ell : (copy + 1) * self.ell]
+        result /= np.sqrt(float(self.K))
         return result.reshape((len(self.local.independent),) + array.shape[1:])
 
     def fold_dual(self, full_native: Any) -> np.ndarray:
@@ -439,10 +456,12 @@ class TwoCellNativeTransport:
 
     def lift_primal(self, local_native: Any) -> np.ndarray:
         canonical = self.local.transform(local_native, direction="primal_to_canonical")
-        panels = canonical.reshape((2, self.local.width) + canonical.shape[1:])
-        full = np.empty((4, self.full.width) + canonical.shape[1:], dtype=np.complex128)
-        for copy in range(2):
-            full[2 * copy : 2 * copy + 2] = self.tau**copy * panels / np.sqrt(2.0)
+        panels = canonical.reshape((self.ell, self.local.width) + canonical.shape[1:])
+        full = np.empty((self.ny, self.full.width) + canonical.shape[1:], dtype=np.complex128)
+        for copy in range(self.K):
+            full[copy * self.ell : (copy + 1) * self.ell] = (
+                self.tau**copy * panels / np.sqrt(float(self.K))
+            )
         native = full.reshape((len(self.full.independent),) + canonical.shape[1:])
         return self.full.transform(native, direction="primal_from_canonical")
 
@@ -453,19 +472,14 @@ class TwoCellNativeTransport:
         return self.local.transform(folded, direction="primal_from_canonical")
 
     def lift_dual(self, local_native: Any) -> np.ndarray:
-        """Apply the adjoint of ``extract_primal`` to a local dual action.
-
-        Primal fields and dual residuals use different entity transforms.  In
-        canonical coordinates the two local cells fold with ``conj(tau)``;
-        the adjoint lift therefore contributes ``tau`` to the second global
-        copy, then converts the canonical result back with the full dual map.
-        """
+        """Apply the adjoint of ``extract_primal`` with ``1/sqrt(K)`` scaling."""
         canonical = self.local.transform(local_native, direction="dual_to_canonical")
-        panels = canonical.reshape((2, self.local.width) + canonical.shape[1:])
-        full = np.zeros((4, self.full.width) + canonical.shape[1:], dtype=np.complex128)
-        for cell in range(2):
-            full[cell] += panels[cell] / np.sqrt(2.0)
-            full[2 + cell] += self.tau * panels[cell] / np.sqrt(2.0)
+        panels = canonical.reshape((self.ell, self.local.width) + canonical.shape[1:])
+        full = np.zeros((self.ny, self.full.width) + canonical.shape[1:], dtype=np.complex128)
+        for copy in range(self.K):
+            full[copy * self.ell : (copy + 1) * self.ell] += (
+                self.tau**copy * panels / np.sqrt(float(self.K))
+            )
         native = full.reshape((len(self.full.independent),) + canonical.shape[1:])
         return self.full.transform(native, direction="dual_from_canonical")
 
@@ -475,11 +489,11 @@ class Task40V10SectorContext:
     twist_index: int
     eta: complex
     tau: complex
-    global_q_indices: tuple[int, int]
+    global_q_indices: tuple[int, ...]
     local_axes: Mapping[str, tuple[float, ...]]
     original_mode_indices: np.ndarray
     local_branch_indices: np.ndarray
-    expected_alias_counts: tuple[int, int] | None = None
+    expected_alias_counts: tuple[int, ...] | None = None
 
 
 class TwoCellBranchCoordinates:
@@ -512,7 +526,13 @@ class TwoCellBranchCoordinates:
             or len(context.original_mode_indices) != self.ports
         ):
             raise ValueError("two-cell trace/port dimensions do not match the runtime inventory")
-        expected_h = np.asarray(global_h, dtype=np.float64)[context.original_mode_indices] / 2.0
+        replication_count = int(context.global_q_indices[1] - context.global_q_indices[0])
+        if replication_count < 1:
+            raise ValueError("local q branches do not encode a positive replication count")
+        expected_h = (
+            np.asarray(global_h, dtype=np.float64)[context.original_mode_indices]
+            / float(replication_count)
+        )
         local_h = np.asarray(local_h, dtype=np.float64)
         if (
             not np.isfinite(local_h).all()
@@ -642,19 +662,20 @@ def project_reduced_contribution(
 
 
 class CompleteTwoCellInverse:
-    """All-q p6 reference inverse with full dual folding and storage recovery."""
+    """All-q p6 inverse for any ``Ny=K*2`` reference with full recovery."""
 
     def __init__(
         self,
-        sectors: tuple[Mapping[str, Any], Mapping[str, Any]],
+        sectors: Sequence[Mapping[str, Any]],
         full_layout: Task40V10FullLayout,
         factors: Any,
         *,
         allocation_gate: Callable[[str, Mapping[str, Any]], None],
         reference_pc_strategy: str = STRICT_ONLY,
     ) -> None:
-        if len(sectors) != 2 or [s["context"].twist_index for s in sectors] != [0, 1]:
-            raise ValueError("both ordered p6 twist sectors are required")
+        expected_twists = list(range(full_layout.ny // 2))
+        if [s["context"].twist_index for s in sectors] != expected_twists:
+            raise ValueError("all ordered p6 twist sectors are required")
         indices = sorted(
             int(mode)
             for sector in sectors
@@ -666,15 +687,19 @@ class CompleteTwoCellInverse:
             for sector in sectors
         ):
             raise ValueError("both p6 sectors must partition every physical mode exactly once")
-        if set(factors.factors) != set(range(4)):
-            raise ValueError("all four p6 q factors must remain live")
-        self.sectors = sectors
+        if set(factors.factors) != set(range(full_layout.ny)):
+            raise ValueError("all Ny p6 q factors must remain live")
+        self.sectors = tuple(sectors)
         self.layout = full_layout
         self.factors = factors
         self.gate = allocation_gate
         self.reference_pc_strategy = str(reference_pc_strategy)
         self.q_solve_limit = q_solve_limit(self.reference_pc_strategy)
         self.mode_count = mode_count
+        self.q_count = int(full_layout.ny)
+        self.replication_count = int(sectors[0]["transport"].K)
+        if any(int(sector["transport"].K) != self.replication_count for sector in sectors):
+            raise ValueError("p6 twist sectors disagree on the global replication count K")
         self.calls = 0
         self.last_port_solution = None
         self.last_local_solutions = None
@@ -722,7 +747,7 @@ class CompleteTwoCellInverse:
             local_rhs = np.zeros(condensed.full_rows, dtype=np.complex128)
             local_independent_rows = np.asarray(transport.local.independent, dtype=np.int64)
             local_rhs[local_independent_rows] = transport.fold_dual(full_rhs)
-            local_port_rhs = ports[ids] / np.sqrt(2.0)
+            local_port_rhs = ports[ids] / np.sqrt(float(self.replication_count))
             reduced_rhs = action.reduce_rhs(
                 local_rhs,
                 port_rhs=local_port_rhs,
@@ -730,7 +755,7 @@ class CompleteTwoCellInverse:
             )
             native_solution = np.zeros(action.reduced_size, dtype=np.complex128)
             q_residual_records = []
-            for branch in (0, 1):
+            for branch in range(len(context.global_q_indices)):
                 q = int(context.global_q_indices[branch])
                 q_map = coordinates.q_map(branch, allocation_gate=self.gate)
                 modal_rhs = np.asarray(q_map.conj().T @ reduced_rhs, dtype=np.complex128)
@@ -790,7 +815,9 @@ class CompleteTwoCellInverse:
             )
             local_independent = recovered[local_independent_rows]
             result += transport.lift_primal(local_independent)
-            alpha[ids] = native_solution[condensed.active_rows :] / np.sqrt(2.0)
+            alpha[ids] = native_solution[condensed.active_rows :] / np.sqrt(
+                float(self.replication_count)
+            )
             local_audit.append(
                 {
                     "twist": context.twist_index,
@@ -959,22 +986,24 @@ def build_task40_v10_sector_contexts(
     cfg: Any,
     axes: Mapping[str, tuple[float, ...]],
     *,
-    expected_q_counts: tuple[int, int, int, int] | None = None,
-    expected_sector_counts: tuple[int, int] | None = None,
-) -> tuple[Task40V10SectorContext, Task40V10SectorContext]:
-    """Assign every frozen global mode to one of the four physical q phases."""
+    expected_q_counts: tuple[int, ...] | None = None,
+    expected_sector_counts: tuple[int, ...] | None = None,
+) -> tuple[Task40V10SectorContext, ...]:
+    """Assign every frozen mode to q=b+jK for a two-cell local FE window."""
+    ny = len(axes["y"]) - 1
+    ell = 2
+    if ny < ell or ny % ell:
+        raise ValueError("p6 reference y-cell count must be a positive multiple of two")
+    K = ny // ell
     dy = float(axes["y"][1] - axes["y"][0])
     expected = np.asarray(
         [
             np.exp(
                 1j
-                * (
-                    complex(cfg.ky).real * float(cfg.period_y)
-                    + 2 * np.pi * q
-                )
-                / 4
+                * (complex(cfg.ky).real * float(cfg.period_y) + 2 * np.pi * q)
+                / ny
             )
-            for q in range(4)
+            for q in range(ny)
         ],
         dtype=np.complex128,
     )
@@ -983,36 +1012,37 @@ def build_task40_v10_sector_contexts(
         actual = np.exp(1j * complex(mode.gamma) * dy)
         errors = np.abs(expected - actual)
         q = int(np.argmin(errors))
-        if not np.isfinite(actual) or errors[q] > 1e-12:
+        if not np.isfinite(actual) or errors[q] > LIMITS["mapping"]:
             raise ValueError(
                 f"mode {getattr(mode, 'mode_key', None)!r} has no exact p6 cell q phase"
             )
         assignments.append(q)
-    assignments = np.asarray(assignments, dtype=np.int8)
-    counts = tuple(int(np.count_nonzero(assignments == q)) for q in range(4))
+    assignments = np.asarray(assignments, dtype=np.int64)
+    counts = tuple(int(np.count_nonzero(assignments == q)) for q in range(ny))
     if sum(counts) != len(modes):
         raise ValueError("global q phase assignment did not cover every physical mode")
-    if expected_q_counts is not None and counts != expected_q_counts:
+    if expected_q_counts is not None and counts != tuple(expected_q_counts):
         raise ValueError(f"global q alias inventory mismatch: {counts}")
     contexts = []
     local_axes = {
         "x": tuple(map(float, axes["x"])),
-        "y": tuple(map(float, axes["y"][:3])),
+        "y": tuple(map(float, axes["y"][: ell + 1])),
         "z": tuple(map(float, axes["z"])),
     }
-    for twist in (0, 1):
-        qids = (twist, twist + 2)
-        indices = np.flatnonzero((assignments == qids[0]) | (assignments == qids[1]))
-        branches = ((assignments[indices] - twist) // 2).astype(np.int8)
+    for twist in range(K):
+        qids = tuple(twist + branch * K for branch in range(ell))
+        selected = np.isin(assignments, qids)
+        indices = np.flatnonzero(selected)
+        branches = ((assignments[indices] - twist) // K).astype(np.int8)
         eta = complex(expected[twist])
-        alias_counts = None
-        if expected_q_counts is not None:
-            alias_counts = (expected_q_counts[qids[0]], expected_q_counts[qids[1]])
+        alias_counts = None if expected_q_counts is None else tuple(
+            expected_q_counts[q] for q in qids
+        )
         contexts.append(
             Task40V10SectorContext(
                 twist_index=twist,
                 eta=eta,
-                tau=eta**2,
+                tau=eta**ell,
                 global_q_indices=qids,
                 local_axes=local_axes,
                 original_mode_indices=indices,
@@ -1021,8 +1051,13 @@ def build_task40_v10_sector_contexts(
             )
         )
     actual_sector_counts = tuple(len(value.original_mode_indices) for value in contexts)
-    if expected_sector_counts is not None and actual_sector_counts != expected_sector_counts:
+    if expected_sector_counts is not None and actual_sector_counts != tuple(expected_sector_counts):
         raise ValueError(f"p6 twist-sector port counts differ: {actual_sector_counts}")
+    covered = np.concatenate([value.original_mode_indices for value in contexts])
+    if not np.array_equal(np.sort(covered), np.arange(len(modes), dtype=np.int64)):
+        raise ValueError("p6 twist contexts do not cover every ordered mode")
+    if len(np.unique(covered)) != len(modes):
+        raise ValueError("p6 twist contexts assign an ordered mode more than once")
     return tuple(contexts)
 
 
@@ -2958,7 +2993,7 @@ def assemble_task40_v10_sector_blocks(
         for branch in (0, 1)
     }
     for q, matrix in result.items():
-        if q not in range(4) or matrix.shape[0] != matrix.shape[1]:
+        if q not in context.global_q_indices or matrix.shape[0] != matrix.shape[1]:
             raise ValueError(f"global q={q} augmented matrix shape mismatch: {matrix.shape}")
         if not matrix.has_canonical_format or not np.isfinite(matrix.data).all():
             raise ValueError(f"global q={q} matrix is not finite canonical CSR")
@@ -3374,7 +3409,7 @@ def build_task40_v10_p6_reference_inverse(
         or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
         or np.dtype(PETSc.IntType) != np.dtype(np.int32)
         or int(cfg.nedelec_degree) != 6
-        or len(axes["y"]) != 5
+        or len(axes["y"]) != (int(profile.q_count) + 1 if profile is not None else 5)
     ):
         raise ValueError("Task40 V10 reference builder requires the qualified serial p6 profile")
 
@@ -3425,6 +3460,7 @@ def build_task40_v10_p6_reference_inverse(
         modes = tuple(global_bundle["modes"])
         from .task40_v10_p6_periodic_profile import (
             TASK40_V10_P6_PROFILE,
+            TASK40_V18_P6_B0_Y8_PROFILE,
             Task40V10P6PeriodicProfile,
         )
 
@@ -3432,6 +3468,11 @@ def build_task40_v10_p6_reference_inverse(
             profile = TASK40_V10_P6_PROFILE
         if not isinstance(profile, Task40V10P6PeriodicProfile):
             raise TypeError("p6 reference builder requires a Task40 periodic case profile")
+        if (
+            profile.name == TASK40_V18_P6_B0_Y8_PROFILE.name
+            and q_assembly_comparison_only
+        ):
+            raise ValueError("Task40 V18 Ny8 production qualification cannot use comparison-only q assembly")
         cell_axes = tuple(map(int, cfg.mesh_axis_cell_counts_requested or ()))
         if cell_axes != profile.global_cell_axes:
             raise ValueError(
@@ -3456,7 +3497,7 @@ def build_task40_v10_p6_reference_inverse(
             global_entities,
             regular_cfg,
             expected_inventory={
-                "ny": 4,
+                "ny": profile.q_count,
                 "width": profile.rows_per_q,
                 "independent_rows": profile.global_independent_rows,
                 "storage_rows": profile.global_storage_rows,
@@ -3743,8 +3784,9 @@ def build_task40_v10_p6_reference_inverse(
                 )
                 event(sector_ready_event, sector_facts)
             del compiled
-        if not q_assembly_comparison_only and set(all_q_matrices) != set(range(4)):
-            raise ValueError("two p6 twist sectors did not produce all four global q matrices")
+        required_q = set(range(profile.q_count))
+        if not q_assembly_comparison_only and set(all_q_matrices) != required_q:
+            raise ValueError("p6 twist sectors did not produce every profile q matrix")
         if (
             event is not None
             and not q_assembly_comparison_only
@@ -3760,7 +3802,11 @@ def build_task40_v10_p6_reference_inverse(
                 all_ready_event,
                 {
                     "q_count": len(all_q_matrices),
-                    "all_four_q_matrices": set(all_q_matrices) == set(range(4)),
+                    "all_q_matrices": set(all_q_matrices) == required_q,
+                    "all_four_q_matrices": (
+                        profile.q_count == 4 and set(all_q_matrices) == required_q
+                    ),
+                    "q_count": int(profile.q_count),
                     "_q_matrices": all_q_matrices,
                 },
             )
@@ -3855,6 +3901,27 @@ def build_task40_v10_p6_reference_inverse(
             },
         }
         inventory_audit = profile.validate_runtime_inventory(runtime_inventory)
+        if profile.name == TASK40_V18_P6_B0_Y8_PROFILE.name:
+            from .task40_v18_ny8_operator_qualification import (
+                assemble_and_qualify_complete_ny_reference_operator,
+            )
+
+            operator_qualification = assemble_and_qualify_complete_ny_reference_operator(
+                bundle=global_bundle,
+                entities=global_entities,
+                layout=full_layout,
+                sectors=contexts,
+                candidate_q_matrices=all_q_matrices,
+                expected_q_port_counts=profile.q_port_counts,
+                allocation_gate=allocation_gate,
+            )
+            owner["complete_operator_qualification"] = operator_qualification
+            if event is not None:
+                event("task40_v18_complete_ny_reference_operator", operator_qualification)
+            if not operator_qualification.get("passed"):
+                raise RuntimeError(
+                    "Task40 V18 Ny8 complete FE/C/D/H and independent Schur qualification failed"
+                )
         factors = AllQExactMumps(
             all_q_matrices,
             allocation_gate=allocation_gate,
@@ -3877,7 +3944,7 @@ def build_task40_v10_p6_reference_inverse(
         )
         owner["factors"] = factors
         owner["inverse"] = CompleteTwoCellInverse(
-            (sectors[0], sectors[1]),
+            sectors,
             full_layout,
             factors,
             allocation_gate=allocation_gate,
@@ -3900,8 +3967,10 @@ def build_task40_v10_p6_reference_inverse(
                     "global_p6_inventory": full_layout.audit,
                     "sector_count": len(sectors),
             "profile": profile.identity(),
-                    "all_four_q_matrices": owner["q_matrix_audits"],
-                    "all_four_mumps_factors_live": True,
+                    "q_count": profile.q_count,
+                    "q_matrices": owner["q_matrix_audits"],
+                    "all_q_mumps_factors_live": True,
+                    "all_four_mumps_factors_live": profile.q_count == 4,
                 },
             )
         return owner

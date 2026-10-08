@@ -28,6 +28,7 @@ TASK40_GEOMETRY_IDENTITY_BY_MESH = {
     "GZ528": TASK40_GEOMETRY_IDENTITY,
     "GX784": TASK40_GEOMETRY_IDENTITY,
     "B0": TASK40_GEOMETRY_IDENTITY,
+    "B0_Y8": TASK40_GEOMETRY_IDENTITY,
 }
 TASK40_F1_REFERENCE_METRIC_RUN_ID = (
     "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1"
@@ -51,6 +52,7 @@ TASK40_E1_V15_RUN_ID = "task40extra_0p7nm_nonseparable_e1_p6_reference_v15"
 TASK40_GX560_V16_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_reference_v16"
 TASK40_E1_V16_RUN_ID = "task40extra_0p7nm_nonseparable_e1_p6_reference_v16"
 TASK40_B0_P6_V17_RUN_ID = "task40extra_0p7nm_b0_p6_reference_v17"
+TASK40_B0_P6_V18_Y8_RUN_ID = "task40extra_0p7nm_b0_p6_reference_v18_ny8"
 TASK40_GX560_V17_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_reference_v17"
 TASK40_E1_V17_RUN_ID = "task40extra_0p7nm_nonseparable_e1_p6_reference_v17"
 TASK40_V13_RUN_IDS = frozenset(
@@ -63,6 +65,7 @@ TASK40_V16_RUN_IDS = frozenset({TASK40_GX560_V16_RUN_ID, TASK40_E1_V16_RUN_ID})
 TASK40_V17_RUN_IDS = frozenset(
     {TASK40_B0_P6_V17_RUN_ID, TASK40_GX560_V17_RUN_ID, TASK40_E1_V17_RUN_ID}
 )
+TASK40_V18_RUN_IDS = frozenset({TASK40_B0_P6_V18_Y8_RUN_ID})
 TASK40_V13_REFERENCE_PC_STRATEGY = "STRICT_THEN_BOUNDED_INEXACT_V13"
 TASK40_V15_REFERENCE_PC_STRATEGY = "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
 TASK40_STRICT_REFERENCE_PC_STRATEGY = "STRICT_ONLY"
@@ -125,6 +128,7 @@ TASK40_MANUAL_BOUNDS_BY_RUN_ID = {
     TASK40_GX560_V16_RUN_ID: (8, 2),
     TASK40_E1_V16_RUN_ID: (10, 3),
     TASK40_B0_P6_V17_RUN_ID: (9, 3),
+    TASK40_B0_P6_V18_Y8_RUN_ID: (9, 3),
     TASK40_GX560_V17_RUN_ID: (8, 2),
     TASK40_E1_V17_RUN_ID: (10, 3),
 }
@@ -159,6 +163,7 @@ TASK40_RUNS = {
     TASK40_GX560_V16_RUN_ID: "GX560",
     TASK40_E1_V16_RUN_ID: "E1",
     TASK40_B0_P6_V17_RUN_ID: "B0",
+    TASK40_B0_P6_V18_Y8_RUN_ID: "B0_Y8",
     TASK40_GX560_V17_RUN_ID: "GX560",
     TASK40_E1_V17_RUN_ID: "E1",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
@@ -213,14 +218,20 @@ def _to_nm(values: list[Fraction], shift: Fraction = Fraction(0)) -> list[float]
 
 
 def task40_mesh_plan(mesh_id: str) -> dict[str, Any]:
-    if mesh_id == "B0":
+    if mesh_id in {"B0", "B0_Y8"}:
         plane_points = {
             "x": [Fraction(0), Fraction(33, 2), Fraction(25), Fraction(67, 2), Fraction(50)],
             "y": [Fraction(0), Fraction(25, 4), Fraction(25, 2), Fraction(75, 4), Fraction(25)],
             "z": [Fraction(-10), Fraction(0), Fraction(40), Fraction(80), Fraction(120), Fraction(130)],
         }
+        if mesh_id == "B0_Y8":
+            plane_points["y"] = _subdivide_counts(plane_points["y"], [2, 2, 2, 2])
         axes = {axis: _to_nm(points) for axis, points in plane_points.items()}
-        segment_counts = {"x": [1, 1, 1, 1], "y": [1, 1, 1, 1], "z": [1, 1, 1, 1, 1]}
+        segment_counts = {
+            "x": [1, 1, 1, 1],
+            "y": [2, 2, 2, 2] if mesh_id == "B0_Y8" else [1, 1, 1, 1],
+            "z": [1, 1, 1, 1, 1],
+        }
         counts = {axis: sum(values) for axis, values in segment_counts.items()}
         payload = {
             "mesh_id": mesh_id,
@@ -232,7 +243,11 @@ def task40_mesh_plan(mesh_id: str) -> dict[str, Any]:
         }
         return {
             **payload,
-            "mesh_plan_id": "task40extra.b0.w0_80cell_exact_planes.v1",
+            "mesh_plan_id": (
+                "task40extra.b0.y8.w0_160cell_exact_planes.v1"
+                if mesh_id == "B0_Y8"
+                else "task40extra.b0.w0_80cell_exact_planes.v1"
+            ),
             "mesh_plan_sha256": _canonical_sha256(payload),
         }
     if mesh_id == "GX784":
@@ -467,7 +482,7 @@ def validate_task40_input(config: Mapping[str, Any]) -> None:
         raise ValueError("Task40 wavelength must be exactly 0.7 nm")
     if not _close(incidence.get("grazing_angle_deg"), 1.0):
         raise ValueError("Task40 incidence must be 1 degree grazing")
-    expected_azimuth = 5.0 if mesh_id == "B0" else 0.0
+    expected_azimuth = 5.0 if mesh_id in {"B0", "B0_Y8"} else 0.0
     if not _close(incidence.get("azimuth_deg"), expected_azimuth):
         raise ValueError(f"Task40 azimuth must be {expected_azimuth:g} degrees for {mesh_id}")
     if incidence.get("polarization") != "s":
