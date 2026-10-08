@@ -28,3 +28,13 @@ def side_supports(setup):
     fc=mesh.topology.connectivity(2,3);maps=dual_maps(V,setup['floquet'].mpc)
     return {side:reachable_support(V.dofmap.cell_dofs,[int(fc.links(int(f))[0]) for f in setup['data'].facet_tags.find(tag)],maps)
         for side,tag in (('top',setup['cfg'].tags.z_max),('bottom',setup['cfg'].tags.z_min))}
+
+
+def expanded_cell_graph(P,cell_dofs,cells,local_dim):
+    """Actual master connections, including multi-master moment transforms."""
+    counts=np.array([len(np.unique(P[cell_dofs(c)].indices)) for c in range(cells)],dtype=np.int64)
+    native_upper=cells*local_dim**2
+    pulled_upper=int(np.dot(counts,counts))
+    return dict(native_cell_contribution_upper=native_upper,pulled_cell_contribution_upper=pulled_upper,
+        body_upper=max(native_upper,pulled_upper),maximum_masters_per_native_row=int(np.max(np.diff(P.indptr))),
+        minimum_cell_master_columns=int(counts.min()),maximum_cell_master_columns=int(counts.max()))

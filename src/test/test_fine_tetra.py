@@ -11,6 +11,15 @@ from src.io.independent_tetra_reference import load_tetra_reference
 
 
 class FineTetraTests(unittest.TestCase):
+    def test_capacity_includes_multi_master_periodic_moments(self):
+        from scipy import sparse
+        from src.solvers.tetra_boundary_support import expanded_cell_graph
+        P=sparse.csr_matrix([[1,1j,0,0],[0,0,1,0],[0,0,1,1j]],dtype=complex)
+        graph=expanded_cell_graph(P,lambda c:np.array([0,1]),1,2)
+        self.assertEqual(graph['body_upper'],9)
+        self.assertEqual(graph['maximum_masters_per_native_row'],2)
+        self.assertGreater(graph['body_upper'],4)
+
     def test_exact_owner_support_tiny_nonzero_and_outside_rejection(self):
         maps=[(np.array([0]),np.array([1.])),(np.array([4,6]),np.array([1j,.5])),(np.array([2]),np.array([1.]))]
         rows=reachable_support(lambda cell:([0,1] if cell==0 else [2]),[0],maps)

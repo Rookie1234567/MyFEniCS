@@ -293,19 +293,20 @@ def assembly_capacity(s,journal):
     modes=s['spec']['complete_modes'];rows=n+modes
     compact=s['spec'].get('triangle_backend')=='reachable_owner_support'
     if compact:
-        from .tetra_boundary_support import side_supports
+        from .tetra_boundary_support import side_supports,expanded_cell_graph
         support=side_supports(s);sizes={k:len(v) for k,v in support.items()}
-        if np.max(np.diff(s['P'].indptr))!=1:raise ValueError('capacity requires actual one-master tetra MPC')
+        graph=expanded_cell_graph(s['P'],s['V'].dofmap.cell_dofs,cells,dim)
         coupling=sum(2*(modes//2)*v for v in sizes.values())
         triangle=sum((modes//4+1)*v*2*16 for v in sizes.values())*3
     else:
         sizes={'full_native':s['P'].shape[0]};coupling=4*n*modes;triangle=6*s['P'].shape[0]*modes*16
-    upper=cells*dim**2+coupling+modes
+        graph=dict(body_upper=cells*dim**2,native_cell_contribution_upper=cells*dim**2)
+    upper=graph['body_upper']+coupling+modes
     components=dict(four_full_csr_envelopes=4*(upper*24+(rows+1)*8),
         triangle_functionals_and_copies=triangle,bounded_basis_evaluation_workspace=2*2**30,runtime_mesh_MPC_JIT_reserve=2*2**30)
     budget=s['spec'].get('memory_budget',dict(planning_gib=64,warning_gib=80,sampled_stop_gib=96))
     total=sum(components.values());r=dict(rows=rows,native=s['P'].shape[0],independent=n,cells=cells,local_dim=dim,
-        graph_nnz_upper=upper,reachable_side_rows=sizes,body_cell_contribution_upper=cells*dim**2,boundary_coupling_upper=coupling,
+        graph_nnz_upper=upper,reachable_side_rows=sizes,body_cell_contribution_upper=graph['body_upper'],MPC_cell_graph=graph,boundary_coupling_upper=coupling,
         components=components,planned_bytes=total,memory_budget=budget,admitted=rows<=s['spec'].get('assembly_row_cap',200000) and total<=budget['planning_gib']*2**30,
         factor='SYMBOLIC_PENDING',condensation=False,compact_actual_allocation=compact)
     journal.event('full_tetra_assembly_capacity',**r);return r
