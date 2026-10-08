@@ -169,3 +169,11 @@ V5 append receipt见[reconciliation record](../../../results/task041_petsc_lu_st
 上述三次consumer-hook pytest父wall合计`15.245187369175255 s`，各按attempt唯一计账；连同组件serial/MPI2，本阶段wall共`163.62744450499303 s`。V5 ledger从177项增至180项，累计`527353.9467369274 s`，SHA `634dd5925f164bd2a6e7190687d2203ffdeba2924cb3a33f3fd091c125a361e1`；ABI和静态检查未计。首次失败raw、两次后续attempt、组件compact均位于`results/task041_w0p7_compact_orientation_consumer_hook_serial_20261008T122800Z/`、`results/task041_w0p7_compact_orientation_consumer_hook_serial_fixture_retry_20261008T123300Z/`、`results/task041_w0p7_compact_orientation_consumer_hook_serial_remaining_20261008T123500Z/`及`results/task041_compact_orientation_serial_mpi2_20261008T1203Z/`。
 
 旧deferred-P4试算筛查差额`7,476,508,109 B`仍是未由本次测试或真实运行消除的历史预算缺口。compact表示及setup inventory还没有新MPI8真实驻留、factor numeric或RSS证据；W0.7 FE/五残差/恢复物理门均无新结果，不能登记pilot资格。下一步只是以最终clean源码准备独立warm静态包，fresh准入与真实运行另行审核。
+
+## 2026-10-08：numeric前清理门合同更新（无新FE）
+
+在W0.7注册bottom/top P4各自symbolic完成、numeric开始前，现有rank入口都调用同一个collective heap cleanup；rank 0在前后采样并把清理后B交给既有numeric预算门。top pre-symbolic cleanup保持原样；默认路径及one-cell无新增清理。pending factor、源矩阵和恢复数据仍保持强引用，不主动销毁对象，不预扣潜在释放量。
+
+合成serial attempt `task041_w0p7_numeric_gate_cleanup_serial_retry3_20261008T143000Z:serial:two_selectors`在exact-side SHA `632c0a5e79e3a6c6441462d7556a85b8d161792efc7faaea87a171d01e06f7dd`、test351 SHA `90f1866734be47bad1610e1068e32f8ac81e06dc0911aa22cdfdf31df13edd1e`下两项通过，父wall `3.2357035228051245 s`，attempt SHA `7f32831ff60e0fe0bf1832c03602733f5adbbdaa4c263d44a1552581af4ea476`。该wall仅在V5记一次；账本182项，SHA `e0bf2619c9f0f851b06cab44caa9b702df168a1ac793328fa556bd7fdfb3e13b`。三个更早的启动前错误均未启动pytest且不计wall，原记录仍在各自attempt目录。
+
+这不是实际MPI8/PETSc清理或RSS回收实测，不证明历史numeric缺口已缩小，也不证明bottom/top numeric可支付。该记录没有启动新的W0.7 consumer、FE或dispatch；原停止raw、数值门和容量口径保持不变。

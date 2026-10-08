@@ -1127,6 +1127,9 @@ def test_task041_w0p7_pending_p4_factors_complete_bottom_top_before_admission():
             }
 
         def complete_staged_p4_numeric(self):
+            if self.side == "top":
+                assert side_inverses["bottom"].ready is True
+                order.append("top:gate_bottom_numeric_ready")
             order.append(f"{self.side}:numeric")
             self.state = "numeric_ready"
             self.ready = True
@@ -1154,6 +1157,7 @@ def test_task041_w0p7_pending_p4_factors_complete_bottom_top_before_admission():
         "top:symbolic_built",
         "bottom:symbolic_built",
         "bottom:numeric",
+        "top:gate_bottom_numeric_ready",
         "top:numeric",
         "bottom:admission",
         "top:admission",
@@ -1164,6 +1168,141 @@ def test_task041_w0p7_pending_p4_factors_complete_bottom_top_before_admission():
         if event == "p4_numeric_completion"
     ] == ["bottom", "top"]
 
+
+def test_task041_w0p7_numeric_gates_cleanup_and_use_post_cleanup_authority():
+    """The registered P4 gates budget the live sample taken after cleanup."""
+    from benchmarks import task041_exact_side_workflow as worker
+
+    class FakeComm:
+        size = 8
+
+        def __init__(self, rank=0):
+            self.rank = rank
+
+    samples = iter(
+        (
+            10_000_000_000,
+            28_000_000_000,
+            28_200_000_000,
+            29_000_000_000,
+            29_000_000_000,
+            27_500_000_000,
+            31_000_000_000,
+            32_300_000_000,
+        )
+    )
+    cleanup_calls = []
+    active_gate = {"stage": None, "identity": None, "rank": None}
+
+    def capture(_pid):
+        assert active_gate["rank"] == 0
+        return {"B_bytes": next(samples)}, 10**12
+
+    def cleanup(comm):
+        cleanup_calls.append(
+            (active_gate["stage"], active_gate["identity"], comm.rank)
+        )
+        return {"collective_call_completed": True}
+
+    def observe(stage, identity, rank=0):
+        active_gate.update(stage=stage, identity=identity, rank=rank)
+        return worker._task041_w0p7_gate_resource_cleanup(
+            stage=stage,
+            identity=identity,
+            comm=FakeComm(rank),
+            root_pid=1234 if rank == 0 else None,
+            capture_resource=capture,
+            cleanup_call=cleanup,
+            errors=[],
+        )
+
+    # The unchanged default and one-cell paths do not take the new cleanup.
+    default = observe("after_symbolic_before_numeric", "ordinary.default")
+    one_cell = observe(
+        "after_symbolic_before_numeric", "task041.w0p7.one_cell_traction"
+    )
+    assert default["resource"]["B_bytes"] == 10_000_000_000
+    assert default["cleanup"] is None
+    assert one_cell["resource"]["B_bytes"] == 28_000_000_000
+    assert one_cell["cleanup"] is None
+    assert cleanup_calls == []
+
+    # Keep the pre-existing top-symbolic cleanup record separate and unchanged.
+    top_symbolic = observe("before_symbolic", "task041.w0p7.p4.top")
+    assert top_symbolic["top_before_symbolic"] is True
+    assert top_symbolic["before_cleanup"]["B_bytes"] == 28_200_000_000
+    assert top_symbolic["resource"]["B_bytes"] == 29_000_000_000
+    assert top_symbolic["numeric_p4_cleanup"] is False
+
+    bottom = observe("after_symbolic_before_numeric", "task041.w0p7.p4.bottom")
+    top = observe("after_symbolic_before_numeric", "task041.w0p7.p4.top")
+    assert bottom["numeric_p4_cleanup"] is True
+    assert bottom["numeric_cleanup_before"]["B_bytes"] == 29_000_000_000
+    assert bottom["resource"]["B_bytes"] == 27_500_000_000
+    assert top["numeric_p4_cleanup"] is True
+    assert top["numeric_cleanup_before"]["B_bytes"] == 31_000_000_000
+    assert top["resource"]["B_bytes"] == 32_300_000_000
+
+    # The existing projection uses the post-cleanup B, not the pre-cleanup one.
+    cap = worker.TASK041_BALH_CELL_CONDENSED_MEMORY_CAP_BYTES
+    warning = worker.TASK041_BALH_CELL_CONDENSED_WARNING_MEMORY_BYTES
+
+    def numeric_projection(identity, b_live):
+        history = worker._TASK041_W0P7_STAGE_HISTORY[identity]
+        return worker._task041_w0p7_stage_budget_projection(
+            stage="after_symbolic_before_numeric",
+            identity=identity,
+            history=history,
+            global_rows=history["rows"],
+            b_live_bytes=b_live,
+            fresh_numeric_b_bytes=b_live,
+            info17_sum_ranks_raw=(
+                20_150 if identity.endswith("bottom") else 15_697
+            ),
+            bottom_calibration=None,
+            cap_bytes=cap,
+            warning_bytes=warning,
+            workspace_audit_complete=True,
+            global_nnz=history["nnz"],
+            mpi_size=8,
+        )
+
+    assert numeric_projection(
+        "task041.w0p7.p4.bottom", bottom["resource"]["B_bytes"]
+    )["pass"] is True
+    assert numeric_projection(
+        "task041.w0p7.p4.bottom", bottom["numeric_cleanup_before"]["B_bytes"]
+    )["pass"] is False
+    assert numeric_projection(
+        "task041.w0p7.p4.top", top["numeric_cleanup_before"]["B_bytes"]
+    )["pass"] is True
+    assert numeric_projection(
+        "task041.w0p7.p4.top", top["resource"]["B_bytes"]
+    )["pass"] is False
+    assert [identity for _stage, identity, _rank in cleanup_calls] == [
+        "task041.w0p7.p4.top",
+        "task041.w0p7.p4.bottom",
+        "task041.w0p7.p4.top",
+    ]
+    assert [stage for stage, _identity, _rank in cleanup_calls] == [
+        "before_symbolic",
+        "after_symbolic_before_numeric",
+        "after_symbolic_before_numeric",
+    ]
+
+    # A non-root rank has no authority sample of its own, but enters cleanup.
+    # This is an entry-path check, not a claim of arbitrary MPI exception safety.
+    rank_one = observe(
+        "after_symbolic_before_numeric", "task041.w0p7.p4.bottom", rank=1
+    )
+    assert rank_one["resource"] is None
+    assert rank_one["numeric_cleanup_before"] is None
+    assert rank_one["cleanup"]["collective_call_completed"] is True
+    assert cleanup_calls[-1] == (
+        "after_symbolic_before_numeric",
+        "task041.w0p7.p4.bottom",
+        1,
+    )
 
 def test_task041_w0p7_interfaces_reach_frozen_setup_boundary(tmp_path, monkeypatch):
     from benchmarks import run_task037b_hybrid_iterative as recovery

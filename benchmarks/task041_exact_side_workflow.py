@@ -2206,6 +2206,63 @@ def _task041_w0p7_stage_budget_projection(
     }
 
 
+def _task041_w0p7_gate_resource_cleanup(
+    *,
+    stage: Any,
+    identity: Any,
+    comm: Any,
+    root_pid: Any,
+    capture_resource: Callable[[int], tuple[dict[str, Any], int]],
+    cleanup_call: Callable[[Any], dict[str, Any]],
+    errors: list[str],
+) -> dict[str, Any]:
+    """Sample one registered gate before/after its existing collective cleanup."""
+    top_before_symbolic = (
+        stage == "before_symbolic" and identity == "task041.w0p7.p4.top"
+    )
+    numeric_p4_cleanup = (
+        stage == "after_symbolic_before_numeric"
+        and identity in _TASK041_W0P7_P4_STAGE_IDENTITIES
+    )
+    cleanup_required = top_before_symbolic or numeric_p4_cleanup
+    resource = before_cleanup = numeric_cleanup_before = cleanup = node0_free = None
+
+    if comm.rank == 0:
+        if type(root_pid) is not int:
+            if not errors:
+                errors.append(
+                    "bound supervisor root PID is unavailable for resource sample"
+                )
+        else:
+            try:
+                if numeric_p4_cleanup:
+                    numeric_cleanup_before, _ = capture_resource(root_pid)
+                elif top_before_symbolic:
+                    before_cleanup, _ = capture_resource(root_pid)
+                else:
+                    resource, node0_free = capture_resource(root_pid)
+            except Exception as exc:  # noqa: BLE001 - all ranks reject after consensus
+                errors.append(f"{type(exc).__name__}: {exc}")
+
+    if cleanup_required:
+        cleanup = cleanup_call(comm)
+        if comm.rank == 0 and type(root_pid) is int:
+            try:
+                resource, node0_free = capture_resource(root_pid)
+            except Exception as exc:  # noqa: BLE001 - all ranks reject after consensus
+                errors.append(f"{type(exc).__name__}: {exc}")
+
+    return {
+        "top_before_symbolic": top_before_symbolic,
+        "numeric_p4_cleanup": numeric_p4_cleanup,
+        "resource": resource,
+        "before_cleanup": before_cleanup,
+        "numeric_cleanup_before": numeric_cleanup_before,
+        "cleanup": cleanup,
+        "node0_free": node0_free,
+    }
+
+
 def _build_task041_w0p7_stage_factory(
     extension_path: str | Path,
     *,
@@ -2300,11 +2357,8 @@ def _build_task041_w0p7_stage_factory(
     def stage_gate(context: Mapping[str, Any]) -> bool:
         stage, identity = context.get("stage"), context.get("stage_identity")
         history = _TASK041_W0P7_STAGE_HISTORY.get(str(identity))
-        top_before_symbolic = (
-            stage == "before_symbolic" and identity == "task041.w0p7.p4.top"
-        )
         errors: list[str] = []
-        resource = before_cleanup = cleanup = monitor = None
+        monitor = None
         root_pid = sample_age = node0_free = None
 
         def capture_resource(pid: int) -> tuple[dict[str, Any], int]:
@@ -2320,20 +2374,25 @@ def _build_task041_w0p7_stage_factory(
                 )
                 root_pid = monitor["sample_root_pid"]
                 sample_age = monitor["file_age_seconds"]
-                if not top_before_symbolic:
-                    resource, node0_free = capture_resource(root_pid)
-                else:
-                    before_cleanup, _ = capture_resource(root_pid)
             except Exception as exc:  # noqa: BLE001 - all ranks reject after consensus
                 errors.append(f"{type(exc).__name__}: {exc}")
 
-        if top_before_symbolic:
-            cleanup = collective_heap_cleanup(comm)
-            if comm.rank == 0 and type(root_pid) is int:
-                try:
-                    resource, node0_free = capture_resource(root_pid)
-                except Exception as exc:  # noqa: BLE001 - all ranks reject after consensus
-                    errors.append(f"{type(exc).__name__}: {exc}")
+        resource_cleanup = _task041_w0p7_gate_resource_cleanup(
+            stage=stage,
+            identity=identity,
+            comm=comm,
+            root_pid=root_pid,
+            capture_resource=capture_resource,
+            cleanup_call=collective_heap_cleanup,
+            errors=errors,
+        )
+        top_before_symbolic = resource_cleanup["top_before_symbolic"]
+        numeric_p4_cleanup = resource_cleanup["numeric_p4_cleanup"]
+        resource = resource_cleanup["resource"]
+        before_cleanup = resource_cleanup["before_cleanup"]
+        numeric_cleanup_before = resource_cleanup["numeric_cleanup_before"]
+        cleanup = resource_cleanup["cleanup"]
+        node0_free = resource_cleanup["node0_free"]
 
         matrix = context.get("source_matrix_inventory")
         row_range = matrix.get("row_ownership") if isinstance(matrix, Mapping) else None
@@ -2445,7 +2504,21 @@ def _build_task041_w0p7_stage_factory(
                 else None
             ),
             "before_cleanup": before_cleanup if comm.rank == 0 else None,
-            "cleanup": cleanup if comm.rank == 0 else None,
+            "cleanup": (
+                cleanup
+                if comm.rank == 0 and top_before_symbolic
+                else None
+            ),
+            "numeric_cleanup_before": (
+                numeric_cleanup_before
+                if comm.rank == 0 and numeric_p4_cleanup
+                else None
+            ),
+            "numeric_cleanup": (
+                cleanup
+                if comm.rank == 0 and numeric_p4_cleanup
+                else None
+            ),
             "node0_free": node0_free if comm.rank == 0 else None,
             "errors": errors,
         }
@@ -2627,9 +2700,14 @@ def _build_task041_w0p7_stage_factory(
             and type(cgroup_headroom) is int
             and cgroup_headroom >= 0
         )
-        cleanup_pass = not top_before_symbolic or (
+        top_cleanup_pass = not top_before_symbolic or (
             isinstance(root_record.get("cleanup"), Mapping)
             and root_record["cleanup"].get("collective_call_completed") is True
+        )
+        numeric_cleanup_pass = not numeric_p4_cleanup or (
+            isinstance(root_record.get("numeric_cleanup"), Mapping)
+            and root_record["numeric_cleanup"].get("collective_call_completed")
+            is True
         )
 
         info17_values = [row.get("info17") for row in ranks]
@@ -2748,8 +2826,12 @@ def _build_task041_w0p7_stage_factory(
             reasons.append("factor_lifecycle_mismatch")
         if not resources_complete:
             reasons.append("fresh whole-job resource authority unknown")
-        if not cleanup_pass:
-            reasons.append("top heap cleanup was not confirmed")
+        if not top_cleanup_pass:
+            reasons.append("top pre-symbolic heap cleanup was not confirmed")
+        if not numeric_cleanup_pass:
+            reasons.append(
+                "post-symbolic pre-numeric heap cleanup was not confirmed"
+            )
         if budget.get("pass") is not True:
             reasons.extend(budget.get("reasons", ["stage budget is unknown or rejected"]))
         if (
@@ -2860,6 +2942,17 @@ def _build_task041_w0p7_stage_factory(
                     "cleanup": root_record.get("cleanup"),
                 }
                 if top_before_symbolic
+                else None
+            ),
+            "numeric_cleanup": (
+                {
+                    "phase_identity": identity,
+                    "stage": stage,
+                    "before": root_record.get("numeric_cleanup_before"),
+                    "after": resource,
+                    "cleanup": root_record.get("numeric_cleanup"),
+                }
+                if numeric_p4_cleanup
                 else None
             ),
             "stage_delta_bytes": estimate_bytes,

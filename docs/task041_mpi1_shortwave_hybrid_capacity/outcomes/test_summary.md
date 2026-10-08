@@ -397,3 +397,13 @@ consumer接线pytest父wall总计`15.245187369175255 s`，三条按独立attempt
 - `results/task041_w0p7_compact_orientation_consumer_hook_serial_remaining_20261008T123500Z/`：stdout SHA `4f3393f232ee53a30fd9eb5b83c9b9258f22180e3ab07278b562f281f743ef09`。
 
 最终范围仅证明serial/MPI2组件合同和小型consumer注册接线。每侧setup标量allgather只传K/seed口径、owned及owned+ghost cell计数和compact payload字节；这些字节不是RSS，且不把records共享引用重复累加或rank0结果乘8。没有MPI8新warm场、没有FE资格；此前预算筛查差额`7,476,508,109 B`仍未由真实运行证明消除。route-plan和leading-PH仍关闭。
+
+## 2026-10-08：W0.7 numeric前清理门（两selector）
+
+| Attempt | 源码绑定 | 结果 | pytest父wall | V5 |
+|---|---|---|---:|---|
+| `task041_w0p7_numeric_gate_cleanup_serial_retry3_20261008T143000Z:serial:two_selectors` | exact-side `632c0a5e79e3a6c6441462d7556a85b8d161792efc7faaea87a171d01e06f7dd`; test351 `90f1866734be47bad1610e1068e32f8ac81e06dc0911aa22cdfdf31df13edd1e`; HEAD `708f8ce8ab0631466930dddd395b8421f69a8b0a` | `test_task041_w0p7_numeric_gates_cleanup_and_use_post_cleanup_authority`、`test_task041_w0p7_pending_p4_factors_complete_bottom_top_before_admission`：`2 passed in 2.56s`；attempt SHA `7f32831ff60e0fe0bf1832c03602733f5adbbdaa4c263d44a1552581af4ea476` | `3.2357035228051245 s` | 唯一追加；181→182项，账本SHA `e0bf2619c9f0f851b06cab44caa9b702df168a1ac793328fa556bd7fdfb3e13b` |
+
+此前三个runner/preflight attempt均在pytest启动前退出，不计入pytest账目：首次源码路径identity不匹配；retry1缺`BLIS_NUM_THREADS=1`；retry2词法解释器/CPU ABI复用身份不匹配。它们的raw分别在`results/task041_w0p7_numeric_gate_cleanup_serial_20261008T142200Z/`、`results/task041_w0p7_numeric_gate_cleanup_serial_retry1_20261008T142000Z/`、`results/task041_w0p7_numeric_gate_cleanup_serial_retry2_20261008T142500Z/`，均保留。通过attempt raw位于`results/task041_w0p7_numeric_gate_cleanup_serial_retry3_20261008T143000Z/`。
+
+本节点只验证合成rank入口、清理调用顺序及清理后资源样本被预算逻辑采用；不证明真实PETSc pending factor清理、allocator/RSS释放或大因子容量。没有MPI2、FE或dispatch；不据此改变历史容量缺口。
