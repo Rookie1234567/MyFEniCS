@@ -1,3 +1,13 @@
+# Task042 V63：细四面体完整解、实际容量和单次成本
+
+两份同fine网格完整tetra p4/p5场和独立原式已完成，全部内部/828端口保留；边界按实际可写Γ精确压缩，比较仅简化同实载波差分分子。A/B散射E/H=4.89487e−4/5.08576e−4、240点2.32882e−3超过1e−4，p增量未闭合，M不准入；能量/通道通过不能覆盖场FAIL。没有NN训练/目标/2TB48h资格。
+
+A315452行/59971384nnz、N1=2270.2859s、采样峰18.120335GiB；B586748行/156995068nnz、N1=5645.9470s、峰40.259663GiB；symbolic/live准入分别33.49/73.05GiB，B仅在新有限128权限下运行。独立direct1e−10标签FAIL保留，没有配平同精度速度比。
+
+[回应](task042_neural_coarse_inverse/response_v63.md) · [专题](task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v63.json)。旧历史逐字保留，不通知邻窗。
+
+---
+
 # Task042 V62：独立完整四面体场已取得，准确性限制已实测
 
 用标准完整相位弱式和真实tetra Piola求F4/T4/T5/TH3，保留全部内部与828端口，仅压缩周期重复；绕开六面体15表/凝聚/宏迹链。解析FLAT约1e−7通过，formal原式均通过，T5/TH3散射E/H约8.82e−4/8.99e−4仍超1e−4；T5更近FXY但新空间仍不稳定。最高采样峰6.8138GiB，T4/T5/TH3完整N1=357.7613/985.8055/744.2074s，无同准确性性能比。无NN训练/邻支运行/目标资格。

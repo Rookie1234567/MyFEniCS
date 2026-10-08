@@ -1,0 +1,336 @@
+{
+  "pairs": {
+    "TH3_A": {
+      "regions": {
+        "air": {
+          "cells": 3840,
+          "error_squared": {
+            "E_total": 6.347469731053827e-07,
+            "H_total": 5.894017909238264e-07,
+            "curl_total": 4.748704089560594e-05,
+            "E_scattered": 6.347469731053827e-07,
+            "H_scattered": 5.894017909238264e-07,
+            "curl_scattered": 4.748704089560594e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.6343564331449062,
+            "H_total": 0.6184735609107297,
+            "curl_total": 0.6184735609107277,
+            "E_scattered": 0.6343564331449062,
+            "H_scattered": 0.6184735609107297,
+            "curl_scattered": 0.6184735609107277
+          }
+        },
+        "substrate": {
+          "cells": 1536,
+          "error_squared": {
+            "E_total": 1.4906037082877267e-08,
+            "H_total": 1.525548369353523e-08,
+            "curl_total": 1.2291068489996912e-06,
+            "E_scattered": 1.4906037082877267e-08,
+            "H_scattered": 1.525548369353523e-08,
+            "curl_scattered": 1.2291068489996912e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.014896865864455022,
+            "H_total": 0.016007948174992376,
+            "curl_total": 0.01600794817499237,
+            "E_scattered": 0.014896865864455022,
+            "H_scattered": 0.016007948174992376,
+            "curl_scattered": 0.01600794817499237
+          }
+        },
+        "Si_grating": {
+          "cells": 2112,
+          "error_squared": {
+            "E_total": 3.3037709292181967e-07,
+            "H_total": 3.2744978526239154e-07,
+            "curl_total": 2.638203952458339e-05,
+            "E_scattered": 3.3037709292181967e-07,
+            "H_scattered": 3.2744978526239154e-07,
+            "curl_scattered": 2.638203952458339e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.3301738222292777,
+            "H_total": 0.34360098294451635,
+            "curl_total": 0.34360098294451646,
+            "E_scattered": 0.3301738222292777,
+            "H_scattered": 0.34360098294451635,
+            "curl_scattered": 0.34360098294451646
+          }
+        },
+        "notch_air": {
+          "cells": 192,
+          "error_squared": {
+            "E_total": 2.0585544403004214e-08,
+            "H_total": 2.0887260614572253e-08,
+            "curl_total": 1.6828489737818911e-06,
+            "E_scattered": 2.0585544403004214e-08,
+            "H_scattered": 2.0887260614572253e-08,
+            "curl_scattered": 1.6828489737818911e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.02057287876135774,
+            "H_total": 0.02191750796976196,
+            "curl_total": 0.02191750796976185,
+            "E_scattered": 0.02057287876135774,
+            "H_scattered": 0.02191750796976196,
+            "curl_scattered": 0.02191750796976185
+          }
+        }
+      },
+      "physical_reference_cell_sha256": "8b62d15c074fe3c0c348630817ff54c9138121cf3664636a1b3164f33cca512e",
+      "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+    },
+    "T5_A": {
+      "regions": {
+        "air": {
+          "cells": 3840,
+          "error_squared": {
+            "E_total": 5.280622473473259e-07,
+            "H_total": 5.072125690484431e-07,
+            "curl_total": 4.086520329606839e-05,
+            "E_scattered": 5.280622473473259e-07,
+            "H_scattered": 5.072125690484431e-07,
+            "curl_scattered": 4.086520329606839e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.6183202779235752,
+            "H_total": 0.6079471549050801,
+            "curl_total": 0.6079471549050818,
+            "E_scattered": 0.6183202779235752,
+            "H_scattered": 0.6079471549050801,
+            "curl_scattered": 0.6079471549050818
+          }
+        },
+        "substrate": {
+          "cells": 1536,
+          "error_squared": {
+            "E_total": 3.9396295398306876e-08,
+            "H_total": 4.035313652710897e-08,
+            "curl_total": 3.251179541760917e-06,
+            "E_scattered": 3.9396295398306876e-08,
+            "H_scattered": 4.035313652710897e-08,
+            "curl_scattered": 3.251179541760917e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.04613003190856441,
+            "H_total": 0.04836744205526399,
+            "curl_total": 0.04836744205526365,
+            "E_scattered": 0.04613003190856441,
+            "H_scattered": 0.04836744205526399,
+            "curl_scattered": 0.04836744205526365
+          }
+        },
+        "Si_grating": {
+          "cells": 2112,
+          "error_squared": {
+            "E_total": 2.508461842608028e-07,
+            "H_total": 2.49477231554362e-07,
+            "curl_total": 2.0099931285881773e-05,
+            "E_scattered": 2.508461842608028e-07,
+            "H_scattered": 2.49477231554362e-07,
+            "curl_scattered": 2.0099931285881773e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.2937215889743219,
+            "H_total": 0.29902447690050155,
+            "curl_total": 0.29902447690050066,
+            "E_scattered": 0.2937215889743219,
+            "H_scattered": 0.29902447690050155,
+            "curl_scattered": 0.29902447690050066
+          }
+        },
+        "notch_air": {
+          "cells": 192,
+          "error_squared": {
+            "E_total": 3.5722330169576e-08,
+            "H_total": 3.7260776533544346e-08,
+            "curl_total": 3.0020336658243086e-06,
+            "E_scattered": 3.5722330169576e-08,
+            "H_scattered": 3.7260776533544346e-08,
+            "curl_scattered": 3.0020336658243086e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.04182810119353594,
+            "H_total": 0.0446609261391524,
+            "curl_total": 0.04466092613915249,
+            "E_scattered": 0.04182810119353594,
+            "H_scattered": 0.0446609261391524,
+            "curl_scattered": 0.04466092613915249
+          }
+        }
+      },
+      "physical_reference_cell_sha256": "8b62d15c074fe3c0c348630817ff54c9138121cf3664636a1b3164f33cca512e",
+      "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+    },
+    "A_B": {
+      "regions": {
+        "air": {
+          "cells": 3840,
+          "error_squared": {
+            "E_total": 1.1225484005041822e-07,
+            "H_total": 1.272691320759979e-07,
+            "curl_total": 1.025384478416398e-05,
+            "E_scattered": 1.1225484005041822e-07,
+            "H_scattered": 1.272691320759979e-07,
+            "curl_scattered": 1.025384478416398e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.5825378443896442,
+            "H_total": 0.6119320434537407,
+            "curl_total": 0.6119320434537413,
+            "E_scattered": 0.5825378443896442,
+            "H_scattered": 0.6119320434537407,
+            "curl_scattered": 0.6119320434537413
+          }
+        },
+        "substrate": {
+          "cells": 1536,
+          "error_squared": {
+            "E_total": 7.1554699952880205e-09,
+            "H_total": 7.278472511306699e-09,
+            "curl_total": 5.864134231085734e-07,
+            "E_scattered": 7.1554699952880205e-09,
+            "H_scattered": 7.278472511306699e-09,
+            "curl_scattered": 5.864134231085734e-07
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.037132760287019194,
+            "H_total": 0.034996157233209965,
+            "curl_total": 0.034996157233209986,
+            "E_scattered": 0.037132760287019194,
+            "H_scattered": 0.034996157233209965,
+            "curl_scattered": 0.034996157233209986
+          }
+        },
+        "Si_grating": {
+          "cells": 2112,
+          "error_squared": {
+            "E_total": 6.687412722256617e-08,
+            "H_total": 6.691970166800218e-08,
+            "curl_total": 5.391599853894695e-06,
+            "E_scattered": 6.687412722256617e-08,
+            "H_scattered": 6.691970166800218e-08,
+            "curl_scattered": 5.391599853894695e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.3470381312750121,
+            "H_total": 0.3217615231677865,
+            "curl_total": 0.32176152316778733,
+            "E_scattered": 0.3470381312750121,
+            "H_scattered": 0.3217615231677865,
+            "curl_scattered": 0.32176152316778733
+          }
+        },
+        "notch_air": {
+          "cells": 192,
+          "error_squared": {
+            "E_total": 6.415215005879989e-09,
+            "H_total": 6.511885940106265e-09,
+            "curl_total": 5.246509235417505e-07,
+            "E_scattered": 6.415215005879989e-09,
+            "H_scattered": 6.511885940106265e-09,
+            "curl_scattered": 5.246509235417505e-07
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.033291264048329154,
+            "H_total": 0.03131027614525882,
+            "curl_total": 0.03131027614525882,
+            "E_scattered": 0.033291264048329154,
+            "H_scattered": 0.03131027614525882,
+            "curl_scattered": 0.03131027614525882
+          }
+        }
+      },
+      "physical_reference_cell_sha256": "68933f0bee9cc1382be2a7c3bf45321bb1ce2d7fac5d0a444ef1659793862862",
+      "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+    },
+    "T5_B": {
+      "regions": {
+        "air": {
+          "cells": 3840,
+          "error_squared": {
+            "E_total": 4.064505505405827e-07,
+            "H_total": 3.982159216503033e-07,
+            "curl_total": 3.20835396971731e-05,
+            "E_scattered": 4.064505505405827e-07,
+            "H_scattered": 3.982159216503033e-07,
+            "curl_scattered": 3.20835396971731e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.612252494106464,
+            "H_total": 0.6058548298920275,
+            "curl_total": 0.6058548298920317,
+            "E_scattered": 0.612252494106464,
+            "H_scattered": 0.6058548298920275,
+            "curl_scattered": 0.6058548298920317
+          }
+        },
+        "substrate": {
+          "cells": 1536,
+          "error_squared": {
+            "E_total": 4.000259286964427e-08,
+            "H_total": 4.125500247407627e-08,
+            "curl_total": 3.323841257021179e-06,
+            "E_scattered": 4.000259286964427e-08,
+            "H_scattered": 4.125500247407627e-08,
+            "curl_scattered": 3.323841257021179e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.06025748328447581,
+            "H_total": 0.0627663062856533,
+            "curl_total": 0.0627663062856533,
+            "E_scattered": 0.06025748328447581,
+            "H_scattered": 0.0627663062856533,
+            "curl_scattered": 0.0627663062856533
+          }
+        },
+        "Si_grating": {
+          "cells": 2112,
+          "error_squared": {
+            "E_total": 1.8555396672365318e-07,
+            "H_total": 1.848496322105404e-07,
+            "curl_total": 1.4893001988611408e-05,
+            "E_scattered": 1.8555396672365318e-07,
+            "H_scattered": 1.848496322105404e-07,
+            "curl_scattered": 1.4893001988611408e-05
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.27950725805834853,
+            "H_total": 0.28123446700573557,
+            "curl_total": 0.2812344670057361,
+            "E_scattered": 0.27950725805834853,
+            "H_scattered": 0.28123446700573557,
+            "curl_scattered": 0.2812344670057361
+          }
+        },
+        "notch_air": {
+          "cells": 192,
+          "error_squared": {
+            "E_total": 3.185388586543679e-08,
+            "H_total": 3.2958880921148356e-08,
+            "curl_total": 2.655437683219145e-06,
+            "E_scattered": 3.185388586543679e-08,
+            "H_scattered": 3.2958880921148356e-08,
+            "curl_scattered": 2.655437683219145e-06
+          },
+          "fraction_of_global_error_squared": {
+            "E_total": 0.04798276455071265,
+            "H_total": 0.05014439681658248,
+            "curl_total": 0.05014439681658252,
+            "E_scattered": 0.04798276455071265,
+            "H_scattered": 0.05014439681658248,
+            "curl_scattered": 0.05014439681658252
+          }
+        }
+      },
+      "physical_reference_cell_sha256": "68933f0bee9cc1382be2a7c3bf45321bb1ce2d7fac5d0a444ef1659793862862",
+      "classification": "post-frozen locality diagnosis, not an error bound or solver input"
+    }
+  },
+  "new_FE": 0,
+  "new_numeric": 0,
+  "new_solve": 0,
+  "qualification": "post-frozen physical error locality and selected vector components; not a continuum bound or refinement choice"
+}

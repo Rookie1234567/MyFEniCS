@@ -1,0 +1,37 @@
+{
+  "status": "COMPLETED_SCIENCE_AND_SAVED_CHECKER_FINAL_DOC_CHECK_PENDING",
+  "review_commit": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "producer_sources": {
+    "A": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+    "B": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+    "PREFLIGHT": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+    "VERIFY_COST": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e"
+  },
+  "final_saved_consumer_source": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+  "new_numeric_factors": 2,
+  "new_complete_solves": 2,
+  "M": "not_run_complete_AB_increment_FAIL",
+  "records": [
+    "array_inventory_v63.json",
+    "decision_and_not_run_v63.json",
+    "final_settlement_tail_v63.json",
+    "independent_saved_pair_checks_v63.json",
+    "physical_error_regions_v63.json",
+    "raw_archive_index_v63.json",
+    "repair_journal_v63.json",
+    "report_version_ruling_v63.json",
+    "resource_costs_final_v63.json",
+    "resource_costs_v63.json",
+    "run_index_v63.json",
+    "scientific_checks_v63.json",
+    "selective_merge_v63.json",
+    "source_bindings_v63.json",
+    "storage_lifecycle_deployment_v63.json",
+    "target_gap_v63.json",
+    "tests_v63.json"
+  ],
+  "final_cost": "resource_costs_final_v63.json",
+  "final_streams": "final_settlement_tail_v63.json",
+  "GitHub_visual": "NOT_VERIFIED"
+}

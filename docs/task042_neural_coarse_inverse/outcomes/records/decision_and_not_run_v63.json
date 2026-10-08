@@ -1,0 +1,40 @@
+{
+  "status": "COMPLETED_AUTHORIZED_A_B_AND_UNIQUE_VERIFY",
+  "new_complete_solves": 2,
+  "new_numeric_factors": 2,
+  "failed_entry_without_numeric": 1,
+  "scientific_replay": 0,
+  "saved_vector_resume": 0,
+  "resource_reentries": 0,
+  "fine_p_increment_pass": false,
+  "M": {
+    "status": "not_run",
+    "reason": "A/B full fields and fixed 240 point increments FAIL; not admitted",
+    "new_solve": 0
+  },
+  "TC6": {
+    "status": "not_authorized",
+    "reason": "superseded attachment is not current authority"
+  },
+  "optional_old_hex_B_scores": {
+    "status": "not_run",
+    "reason": "mandatory A/B original audits and physical output prioritized; no safely reserved extra full high-q score"
+  },
+  "stop_reason": "ALL_FIXED_REACHABLE_STAGES_COMPLETE_AND_CONDITIONAL_M_NOT_ADMITTED",
+  "next_pilot": {
+    "name": "one same 7680tet/p6/828 finite p-increment reference",
+    "motivation": "fine p3/p4 scattered E/H increments about 1.12e-3/1.09e-3 and p4/p5 about 4.89e-4/5.09e-4 remain over 1e-4; p5 is not truth",
+    "derived_independent_FE": 980352,
+    "derived_rows": 981180,
+    "requires_new_authority": true,
+    "current_600000_row_permission": false,
+    "fill_RSS_N1": "unknown; no matrix/mesh/factor constructed",
+    "required_plan": "exact graph, independent original action, reliable symbolic, live host/cgroup allowance, complete output and comparison reserve",
+    "no_automatic_execution": true
+  },
+  "NN_training": 0,
+  "NN20": false,
+  "continuum_accuracy": false,
+  "target_qualified": false,
+  "merge_approved": false
+}

@@ -1,0 +1,24 @@
+{
+  "user_version_ruling": "current remote report explicitly selected; old attachment no longer authority",
+  "review_commit": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
+  "git_blob": "4a6048cfd4e01b5459e80f23d9d5666d84bbd182",
+  "sha256": "7a36d595b8d5edd2bc181dee58feb93886b9ac671d203e6e904761f65795df30",
+  "bytes": 23494,
+  "old_attachment_sha256": "3eff0f460e6bc3f11874da275e56d9aa936030a693b4fd5f3e6594fc3e0b2b01",
+  "old_mismatch_status": "FAIL_PRESERVED",
+  "batch": "V63_FINE_TETRA_ACCURACY_AND_BOUNDED_COST",
+  "TC6": "NOT_AUTHORIZED",
+  "clock": {
+    "start_utc": "2026-10-08T08:19:07.838593160Z",
+    "start_monotonic": 1372542.7,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
+    "intake_HEAD": "76f02f5ea7227462948777b10168cd2ebcf565f8",
+    "contract_HEAD": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
+    "closed": false,
+    "first_work_start_never_refreshed": true
+  }
+}

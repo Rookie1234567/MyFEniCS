@@ -1,3 +1,11 @@
+# V63最小opt-in依赖与行为
+
+新src数学核只负责真实三角owner/MPC可写支撑及同实κ多项式差分分子；既有tetra完整UFL、独立PUBLIC_BASIX与默认路径保留。薄scope/study/5dat接原runner和角色资源，不复制求解器；B128额度不向默认扩散。保存consumer独立重算四对FAIL及全成本/lifecycle，没有新PDE。完整raw/数组ignored、旧task/review/response不改。
+
+[依赖组/合入边界](records/selective_merge_v63.json) · [source](records/source_bindings_v63.json) · [repair](records/repair_journal_v63.json)。有限全局LU存在，未授production或merge approval。
+
+---
+
 # V62文件与依赖分组
 
 新的标准未凝聚tetra小核/物理求值/独立PUBLIC_BASIX在src/solvers；薄scope/study/dat/namespace接现有runner与监督。保存checker仅消费积分/240复向量/828物理模式，不重算PDE；轻量准入修复不改已返回物理解。主矩阵未用15表/raw/旧LU/宏迹。默认不变，有限reference全局LU存在，不授production资格。

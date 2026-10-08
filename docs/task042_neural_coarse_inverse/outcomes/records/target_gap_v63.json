@@ -1,0 +1,73 @@
+{
+  "physical_target": "original 50x25nm period and z -10..130nm, lambda .7nm, complete 3D fields and physical accuracy",
+  "current_scope": "finite s=7/135, full tetra authority",
+  "accuracy_qualified_mesh": "unknown",
+  "required_target_modes": "unknown",
+  "factor_fill_at_target": "unknown",
+  "iterations_at_target": "unknown",
+  "target_simultaneous_RSS": "unknown",
+  "target_complete_N1": "unknown",
+  "two_TB_48h": false,
+  "NN20": false,
+  "trace_vs_full_FE": "current all independent tetra FE + port enter finite direct factor; future trace-only V/Z inventory has different scope; no derived inventory is measured RSS",
+  "actual_current_FE_rows": {
+    "A": {
+      "FE": 314624,
+      "rows": 315452,
+      "nnz": 59971384
+    },
+    "B": {
+      "FE": 585920,
+      "rows": 586748,
+      "nnz": 156995068
+    }
+  },
+  "frozen_neighbor_refs": {
+    "task42extra": {
+      "frozen_ref": "d85532461b04f486a86c678c3eadaf745a442126",
+      "read_only_local_object_status": "present",
+      "commit_metadata": "d85532461b04f486a86c678c3eadaf745a442126\n2026-10-08T15:43:53+08:00\nSeal V32 numerical negative results and qualified limited presentation evidence",
+      "no_worktree_access": true,
+      "no_neighbor_actor_started": true
+    },
+    "engineering": {
+      "frozen_ref": "57f20cc66b3de65c696def2b9bf783ddcbfce55e",
+      "read_only_local_object_status": "unknown",
+      "commit_metadata": null,
+      "no_worktree_access": true,
+      "no_neighbor_actor_started": true
+    },
+    "dot": {
+      "frozen_ref": "15713d3e09b63f65511c7b7f61fa043fdb23dca5",
+      "read_only_local_object_status": "present",
+      "commit_metadata": "15713d3e09b63f65511c7b7f61fa043fdb23dca5\n2026-10-05T10:35:48+08:00\nArchive paired selected boundary route pass and 84-row compression negative",
+      "no_worktree_access": true,
+      "no_neighbor_actor_started": true
+    },
+    "NN-V3": {
+      "frozen_ref": "1f01ae46bbe21f17200350a46513ef5f33e5cf6a",
+      "read_only_local_object_status": "unknown",
+      "commit_metadata": null,
+      "no_worktree_access": true,
+      "no_neighbor_actor_started": true
+    }
+  },
+  "unique_next_pilot": {
+    "name": "one same 7680tet/p6/828 finite p-increment reference",
+    "motivation": "fine p3/p4 scattered E/H increments about 1.12e-3/1.09e-3 and p4/p5 about 4.89e-4/5.09e-4 remain over 1e-4; p5 is not truth",
+    "derived_independent_FE": 980352,
+    "derived_rows": 981180,
+    "requires_new_authority": true,
+    "current_600000_row_permission": false,
+    "fill_RSS_N1": "unknown; no matrix/mesh/factor constructed",
+    "required_plan": "exact graph, independent original action, reliable symbolic, live host/cgroup allowance, complete output and comparison reserve",
+    "no_automatic_execution": true
+  },
+  "no_same_accuracy_speed_ratio": true,
+  "NN_optimistic_necessary_bound": "f*V-H >= 0.2*T_B, same complete correctness and simultaneous peak compliance required",
+  "finite_delete_numeric_and_solve_upper_fraction": {
+    "A": 0.16633215419346717,
+    "B": 0.0892334228849884
+  },
+  "interpretation": "free removal of this limited factor+triangular-solve stage cannot reach 20%; not a universal NN impossibility theorem or target extrapolation"
+}

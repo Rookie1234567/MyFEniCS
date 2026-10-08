@@ -1,3 +1,18 @@
+# Task042 V63模型增量：完整fine tetra p4/p5
+
+两份同fine网格完整tetra p4/p5场和独立原式已完成，全部内部/828端口保留；边界按实际可写Γ精确压缩，比较仅简化同实载波差分分子。A/B散射E/H=4.89487e−4/5.08576e−4、240点2.32882e−3超过1e−4，p增量未闭合，M不准入；能量/通道通过不能覆盖场FAIL。没有NN训练/目标/2TB48h资格。
+
+| measured完整模型 | 独立FE / native / 含828行 | 实际nnz | 独立true/native | 完整成功进程T_N1/s | sampled树峰/GiB |
+|---|---|---|---|---|---|
+| A：7680tet/p4 | 314624 / 326288 / 315452 | 59971384 | 2.156588276e−10 | 2270.285876 | 18.120335 |
+| B：同7680tet/p5 | 585920 / 603700 / 586748 | 156995068 | 2.162758944e−10 | 5645.946988 | 40.259663 |
+
+R/T/A_volume分别A=.0762183993/.9056651118/.018116488914，B=.0762184946/.9056651868/.018116318613；完整828模式/六场/240点/共享周期与原式已保存。只有有限代数资格，M1188 not_run，原尺寸与NN20不授。
+
+[全场/功率](task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md) · [科学](task042_neural_coarse_inverse/outcomes/records/scientific_checks_v63.json) · [生命周期](task042_neural_coarse_inverse/outcomes/records/storage_lifecycle_deployment_v63.json)。旧历史逐字保留。
+
+---
+
 # Task042 V62：完整四面体参照完成，场精度仍未闭合
 
 标准完整相位弱式用另一四面体空间直接求解，全部内部+828端口留在系统，仅去周期重复；没有旧凝聚或局部因子形成新矩阵。四完整解/独立原式和全场输出完成，FLAT解析通过；新NOTCH跨空间仍FAIL，不能称原尺寸/2TB48h/NN20。

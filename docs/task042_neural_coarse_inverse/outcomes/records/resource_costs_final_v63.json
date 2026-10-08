@@ -1,0 +1,26 @@
+{
+  "status": "PRE_FINAL_DOCUMENT_SETTLEMENT",
+  "charged_known_lower_seconds": 9236.442461838014,
+  "historical_loaded_known_lower_seconds": 219887.34360818932,
+  "clock": {
+    "start_utc": "2026-10-08T08:19:07.838593160Z",
+    "start_monotonic": 1372542.7,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 32400,
+    "total_limit_seconds": 36000,
+    "scientific_loaded_limit_seconds": 28800,
+    "review_commit": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
+    "intake_HEAD": "76f02f5ea7227462948777b10168cd2ebcf565f8",
+    "contract_HEAD": "a3bbf90bf37810911bf1fa287cb77a30f2b50832",
+    "closed": false,
+    "first_work_start_never_refreshed": true,
+    "observed_utc": "2026-10-08T12:07:50.949209+00:00",
+    "observed_monotonic": 1386265.81007644,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 13723.110615730286,
+    "heavy_remaining_seconds": 18676.889384269714,
+    "total_remaining_seconds": 22276.889384269714
+  },
+  "same_accuracy_performance": "NOT_QUALIFIED"
+}

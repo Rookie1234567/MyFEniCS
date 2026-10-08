@@ -1,0 +1,631 @@
+{
+  "cases": {
+    "A": {
+      "nnz": 59971384,
+      "actual_FE": 314624,
+      "actual_rows": 315452,
+      "actual_native": 326288,
+      "capacity": {
+        "rows": 315452,
+        "native": 326288,
+        "independent": 314624,
+        "cells": 7680,
+        "local_dim": 84,
+        "graph_nnz_upper": 68604732,
+        "reachable_side_rows": {
+          "top": 8704,
+          "bottom": 8704
+        },
+        "body_cell_contribution_upper": 54190080,
+        "MPC_cell_graph": {
+          "native_cell_contribution_upper": 54190080,
+          "pulled_cell_contribution_upper": 54190080,
+          "body_upper": 54190080,
+          "maximum_masters_per_native_row": 6,
+          "minimum_cell_master_columns": 84,
+          "maximum_cell_master_columns": 84
+        },
+        "boundary_coupling_upper": 14413824,
+        "components": {
+          "four_full_csr_envelopes": 6596148768,
+          "triangle_functionals_and_copies": 347602944,
+          "bounded_basis_evaluation_workspace": 2147483648,
+          "runtime_mesh_MPC_JIT_reserve": 2147483648
+        },
+        "planned_bytes": 11238719008,
+        "memory_budget": {
+          "planning_gib": 64,
+          "warning_gib": 80,
+          "sampled_stop_gib": 96,
+          "neighbor_growth_gib": 384,
+          "extra_cache_workspace_gib": 2
+        },
+        "admitted": true,
+        "factor": "SYMBOLIC_PENDING",
+        "condensation": false,
+        "compact_actual_allocation": true
+      },
+      "symbolic": {
+        "info": {
+          "infog": {
+            "1": 0,
+            "2": 0,
+            "3": 618031000,
+            "4": 4444960,
+            "5": 5512,
+            "6": 10830,
+            "7": 4,
+            "8": 100,
+            "9": 0,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 13217,
+            "17": 13217,
+            "18": 0,
+            "19": 0,
+            "20": 618031000
+          },
+          "rinfog": {
+            "1": 1902277091754.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 9888.496,
+            "16": 0.0,
+            "17": 252.760926,
+            "18": 252.758621,
+            "19": 0.0,
+            "20": 0.0
+          }
+        },
+        "plan": {
+          "symbolic_estimate_mb": 13217,
+          "numeric_memory_allocation_cap_mb": 26434,
+          "current_whole_tree_rss_bytes": 7377051648,
+          "factor_workspace_estimate_times_two_bytes": 26434000000,
+          "future_workspace_reserve_bytes": 2147483648,
+          "planned_simultaneous_bytes": 35958535296,
+          "limit_bytes": 68719476736,
+          "admitted": true,
+          "estimate_units": "decimal MB",
+          "classification": "symbolic prediction plus bounded allocation, not measured peak"
+        },
+        "tree": {
+          "schema": "task038.v14.j3.process-sample.v1",
+          "root_pid": 3134041,
+          "stage": "V51-h-symbolic",
+          "timestamp_ns": 1791451849206152688,
+          "exit_code": null,
+          "members": [
+            {
+              "pid": 3134041,
+              "ppid": 3133971,
+              "comm": "python",
+              "state": "S",
+              "cmdline": "/home/fenics/Projects/NN-Lab/.venv/bin/python scripts/run_case.py input/task042_neural_coarse_inverse/v63_tetra_notch_h2_p4.dat",
+              "stage": "V51-h-symbolic",
+              "rss_bytes": 99729408,
+              "pss_bytes": null,
+              "swap_bytes": 0,
+              "timestamp_ns": 1791451849205947607,
+              "exit_code": null
+            },
+            {
+              "pid": 3134230,
+              "ppid": 3134041,
+              "comm": "python",
+              "state": "R",
+              "cmdline": "/home/fenics/Projects/NN-Lab/.venv/bin/python -m src.runners.port_preparation --worker /home/fenics/Projects/NN-Lab/results/task042/task042_v63_tetra_notch_h2_p4_20261008T091024797027Z v63",
+              "stage": "V51-h-symbolic",
+              "rss_bytes": 7252541440,
+              "pss_bytes": null,
+              "swap_bytes": 0,
+              "timestamp_ns": 1791451849206043368,
+              "exit_code": null
+            },
+            {
+              "pid": 3134233,
+              "ppid": 3134230,
+              "comm": "orted",
+              "state": "S",
+              "cmdline": "orted --hnp --set-sid --report-uri 8 --singleton-died-pipe 9 -mca state_novm_select 1 -mca ess hnp -mca pmix ^s1,s2,cray,isolated",
+              "stage": "V51-h-symbolic",
+              "rss_bytes": 24780800,
+              "pss_bytes": null,
+              "swap_bytes": 0,
+              "timestamp_ns": 1791451849206128724,
+              "exit_code": null
+            }
+          ],
+          "unreadable_pids": [],
+          "vanished_pids": [],
+          "all_status_readable": true,
+          "readability_retry_count": 0,
+          "compiler_descendant_count": 0,
+          "rss_bytes": 7377051648,
+          "swap_bytes": 0,
+          "pss_sampled": false,
+          "pss_all_readable": false,
+          "pss_bytes": null
+        },
+        "controls": {
+          "icntl": {
+            "7": 7,
+            "10": 0,
+            "14": 20,
+            "18": 0,
+            "22": 0,
+            "23": 0
+          },
+          "modified": false
+        },
+        "ordering": "external"
+      },
+      "numeric": {
+        "info": {
+          "infog": {
+            "1": 0,
+            "2": 0,
+            "3": 618031000,
+            "4": 4444960,
+            "5": 5512,
+            "6": 10830,
+            "7": 4,
+            "8": 100,
+            "9": 618044456,
+            "10": 4444972,
+            "11": 5512,
+            "12": 441,
+            "13": 6,
+            "14": 0,
+            "15": 0,
+            "16": 13217,
+            "17": 13217,
+            "18": 19826,
+            "19": 19826,
+            "20": 618031000
+          },
+          "rinfog": {
+            "1": 1902277091754.0,
+            "2": 1652768488.0,
+            "3": 1902360106418.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 9888.496,
+            "16": 0.0,
+            "17": 10164.42933,
+            "18": 18873.897013,
+            "19": 2.6969171561247873e-05,
+            "20": 2.6969171561247873e-05
+          }
+        },
+        "controls": {
+          "icntl": {
+            "7": 7,
+            "10": 0,
+            "14": 20,
+            "18": 0,
+            "22": 0,
+            "23": 26434
+          },
+          "modified": false
+        },
+        "icntl23_explicitly_bounded": true
+      },
+      "deployment": {
+        "status": "measured_complete",
+        "T_N1_process_chain_seconds": 2361.520471057156,
+        "T_N1_observed_start_to_final_cleanup_seconds": 2614.437543,
+        "receipts": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v63/A_one_run01/receipt.json",
+            "sha256": "da3c35ea47e16182d8ccdb1425f9f1255db587057f396722794d4f704a12e72f",
+            "command": [
+              "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v63_tetra_notch_h2_p4.dat"
+            ],
+            "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+            "start_utc": "2026-10-08T09:04:40.436862+00:00",
+            "end_utc": "2026-10-08T09:06:11.671424+00:00",
+            "elapsed_seconds": 91.23459545406513,
+            "exit_code": 3,
+            "input_sha256": "9712899777c6a3b0560030348d17d3f36bc3b2088466232deba8434782514b0a",
+            "wrapper_sha256": "5db1414f8ce15000168bd6d20bac01907ede4253c2aff2c5eac9004655371a21",
+            "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+            "cache": "OS/JIT not cleared; new numerical case objects"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v63/A_one_run02/receipt.json",
+            "sha256": "cc5f3ba3b60f66a8c7ca9e0d501cf3e8f58bb453fb5c5011e46e003d564cc126",
+            "command": [
+              "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v63_tetra_notch_h2_p4.dat"
+            ],
+            "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+            "start_utc": "2026-10-08T09:10:24.588552+00:00",
+            "end_utc": "2026-10-08T09:48:14.874405+00:00",
+            "elapsed_seconds": 2270.285875603091,
+            "exit_code": 0,
+            "input_sha256": "9712899777c6a3b0560030348d17d3f36bc3b2088466232deba8434782514b0a",
+            "wrapper_sha256": "5db1414f8ce15000168bd6d20bac01907ede4253c2aff2c5eac9004655371a21",
+            "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+            "cache": "OS/JIT not cleared; new numerical case objects"
+          }
+        ],
+        "single_process_complete_N1": false,
+        "saved_vector_resume": false,
+        "initial_numerical_objects_fresh": true,
+        "post_resume_new_numeric_factors": null,
+        "recovery_chain_includes_intervening_repair_and_wait": true,
+        "process_sum_excludes_intervening_control_CPU": "unknown; observed elapsed envelope is separate",
+        "OS_JIT_caches_not_cleared": true,
+        "full_N1_includes_independent_audit_outputs_IO_cleanup": true,
+        "recovery_no_condensation": "all native FE reconstructed with actual periodic P",
+        "research_comparisons_not_included": true,
+        "speed_ratio_same_accuracy": "not_granted_without_complete_matched_accuracy_control",
+        "prior_failed_process_count": 1,
+        "successful_final_process_complete_N1": true,
+        "successful_final_process_T_N1_seconds": 2270.285875603091,
+        "complete_process_and_failed_start_chain_are_distinct": true
+      },
+      "global_finite_LU_present": true,
+      "static_condensation": false,
+      "solution_bytes": 36227626,
+      "ownership_and_release": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 1009.6224052680191,
+          "RSS_bytes": 3887734784,
+          "owner_role": "production_full_sparse_and_boundary",
+          "unique_visible_numpy_owner_bytes": 2402620928,
+          "unique_owner_count": 12,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 1676.5407276072074,
+          "RSS_bytes": 6543683584
+        },
+        {
+          "event": "global_body_augmented_and_factor_released",
+          "elapsed_s": 1677.0518218660727,
+          "RSS_bytes": 1502523392
+        }
+      ],
+      "boundary_bytes": {
+        "q47": 293511820,
+        "q63": 293511820
+      }
+    },
+    "B": {
+      "nnz": 156995068,
+      "actual_FE": 585920,
+      "actual_rows": 586748,
+      "actual_native": 603700,
+      "capacity": {
+        "rows": 586748,
+        "native": 603700,
+        "independent": 585920,
+        "cells": 7680,
+        "local_dim": 140,
+        "graph_nnz_upper": 175435068,
+        "reachable_side_rows": {
+          "top": 15040,
+          "bottom": 15040
+        },
+        "body_cell_contribution_upper": 150528000,
+        "MPC_cell_graph": {
+          "native_cell_contribution_upper": 150528000,
+          "pulled_cell_contribution_upper": 150528000,
+          "body_upper": 150528000,
+          "maximum_masters_per_native_row": 8,
+          "minimum_cell_master_columns": 140,
+          "maximum_cell_master_columns": 140
+        },
+        "boundary_coupling_upper": 24906240,
+        "components": {
+          "four_full_csr_envelopes": 16860542496,
+          "triangle_functionals_and_copies": 600637440,
+          "bounded_basis_evaluation_workspace": 2147483648,
+          "runtime_mesh_MPC_JIT_reserve": 2147483648
+        },
+        "planned_bytes": 21756147232,
+        "memory_budget": {
+          "planning_gib": 128,
+          "warning_gib": 160,
+          "sampled_stop_gib": 192,
+          "neighbor_growth_gib": 384,
+          "extra_cache_workspace_gib": 2
+        },
+        "admitted": true,
+        "factor": "SYMBOLIC_PENDING",
+        "condensation": false,
+        "compact_actual_allocation": true
+      },
+      "symbolic": {
+        "info": {
+          "infog": {
+            "1": 0,
+            "2": 0,
+            "3": 1342851242,
+            "4": 7476044,
+            "5": 7980,
+            "6": 12873,
+            "7": 4,
+            "8": 100,
+            "9": 0,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 29230,
+            "17": 29230,
+            "18": 0,
+            "19": 0,
+            "20": 1342851242
+          },
+          "rinfog": {
+            "1": 5469281924013.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 21485.619872,
+            "16": 0.0,
+            "17": 651.74867,
+            "18": 651.746365,
+            "19": 0.0,
+            "20": 0.0
+          }
+        },
+        "plan": {
+          "symbolic_estimate_mb": 29230,
+          "numeric_memory_allocation_cap_mb": 58460,
+          "current_whole_tree_rss_bytes": 17832927232,
+          "factor_workspace_estimate_times_two_bytes": 58460000000,
+          "future_workspace_reserve_bytes": 2147483648,
+          "planned_simultaneous_bytes": 78440410880,
+          "limit_bytes": 137438953472,
+          "admitted": true,
+          "estimate_units": "decimal MB",
+          "classification": "symbolic prediction plus bounded allocation, not measured peak"
+        },
+        "tree": {
+          "schema": "task038.v14.j3.process-sample.v1",
+          "root_pid": 3156593,
+          "stage": "V51-h-symbolic",
+          "timestamp_ns": 1791457934145366278,
+          "exit_code": null,
+          "members": [
+            {
+              "pid": 3156593,
+              "ppid": 3156494,
+              "comm": "python",
+              "state": "S",
+              "cmdline": "/home/fenics/Projects/NN-Lab/.venv/bin/python scripts/run_case.py input/task042_neural_coarse_inverse/v63_tetra_notch_h2_p5.dat",
+              "stage": "V51-h-symbolic",
+              "rss_bytes": 99356672,
+              "pss_bytes": null,
+              "swap_bytes": 0,
+              "timestamp_ns": 1791457934145198797,
+              "exit_code": null
+            },
+            {
+              "pid": 3156828,
+              "ppid": 3156593,
+              "comm": "python",
+              "state": "R",
+              "cmdline": "/home/fenics/Projects/NN-Lab/.venv/bin/python -m src.runners.port_preparation --worker /home/fenics/Projects/NN-Lab/results/task042/task042_v63_tetra_notch_h2_p5_20261008T095857061986Z v63",
+              "stage": "V51-h-symbolic",
+              "rss_bytes": 17708814336,
+              "pss_bytes": null,
+              "swap_bytes": 0,
+              "timestamp_ns": 1791457934145281127,
+              "exit_code": null
+            },
+            {
+              "pid": 3156830,
+              "ppid": 3156828,
+              "comm": "orted",
+              "state": "S",
+              "cmdline": "orted --hnp --set-sid --report-uri 8 --singleton-died-pipe 9 -mca state_novm_select 1 -mca ess hnp -mca pmix ^s1,s2,cray,isolated",
+              "stage": "V51-h-symbolic",
+              "rss_bytes": 24756224,
+              "pss_bytes": null,
+              "swap_bytes": 0,
+              "timestamp_ns": 1791457934145356239,
+              "exit_code": null
+            }
+          ],
+          "unreadable_pids": [],
+          "vanished_pids": [],
+          "all_status_readable": true,
+          "readability_retry_count": 0,
+          "compiler_descendant_count": 0,
+          "rss_bytes": 17832927232,
+          "swap_bytes": 0,
+          "pss_sampled": false,
+          "pss_all_readable": false,
+          "pss_bytes": null
+        },
+        "controls": {
+          "icntl": {
+            "7": 7,
+            "10": 0,
+            "14": 20,
+            "18": 0,
+            "22": 0,
+            "23": 0
+          },
+          "modified": false
+        },
+        "ordering": "external"
+      },
+      "numeric": {
+        "info": {
+          "infog": {
+            "1": 0,
+            "2": 0,
+            "3": 1342851242,
+            "4": 7476044,
+            "5": 7980,
+            "6": 12873,
+            "7": 4,
+            "8": 100,
+            "9": 1342855542,
+            "10": 7476048,
+            "11": 7980,
+            "12": 699,
+            "13": 2,
+            "14": 0,
+            "15": 0,
+            "16": 29230,
+            "17": 29230,
+            "18": 43845,
+            "19": 43845,
+            "20": 1342851242
+          },
+          "rinfog": {
+            "1": 5469281924013.0,
+            "2": 3171568976.0,
+            "3": 5469317081243.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 21485.619872,
+            "16": 0.0,
+            "17": 22176.884054,
+            "18": 41347.447321,
+            "19": 1.0998489213647806e-05,
+            "20": 1.0998489213647806e-05
+          }
+        },
+        "controls": {
+          "icntl": {
+            "7": 7,
+            "10": 0,
+            "14": 20,
+            "18": 0,
+            "22": 0,
+            "23": 58460
+          },
+          "modified": false
+        },
+        "icntl23_explicitly_bounded": true
+      },
+      "deployment": {
+        "status": "measured_complete",
+        "T_N1_process_chain_seconds": 5645.946988187963,
+        "T_N1_observed_start_to_final_cleanup_seconds": 5645.946987,
+        "receipts": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v63/B_one_run01/receipt.json",
+            "sha256": "6823b2cb61e0efc8cf1a6d215be1b7e3df08c5a127b31ec4db712039479e1ecf",
+            "command": [
+              "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+              "scripts/run_case.py",
+              "input/task042_neural_coarse_inverse/v63_tetra_notch_h2_p5.dat"
+            ],
+            "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+            "start_utc": "2026-10-08T09:58:56.793014+00:00",
+            "end_utc": "2026-10-08T11:33:02.740001+00:00",
+            "elapsed_seconds": 5645.946988187963,
+            "exit_code": 0,
+            "input_sha256": "8999a5bd11e4e118610b3d0cc86fe7ba745ece53d99529181ebd320ad77e06e8",
+            "wrapper_sha256": "5db1414f8ce15000168bd6d20bac01907ede4253c2aff2c5eac9004655371a21",
+            "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+            "cache": "OS/JIT not cleared; new numerical case objects"
+          }
+        ],
+        "single_process_complete_N1": true,
+        "saved_vector_resume": false,
+        "initial_numerical_objects_fresh": true,
+        "post_resume_new_numeric_factors": null,
+        "recovery_chain_includes_intervening_repair_and_wait": false,
+        "process_sum_excludes_intervening_control_CPU": "unknown; observed elapsed envelope is separate",
+        "OS_JIT_caches_not_cleared": true,
+        "full_N1_includes_independent_audit_outputs_IO_cleanup": true,
+        "recovery_no_condensation": "all native FE reconstructed with actual periodic P",
+        "research_comparisons_not_included": true,
+        "speed_ratio_same_accuracy": "not_granted_without_complete_matched_accuracy_control",
+        "prior_failed_process_count": 0,
+        "successful_final_process_complete_N1": true,
+        "successful_final_process_T_N1_seconds": 5645.946988187963,
+        "complete_process_and_failed_start_chain_are_distinct": true
+      },
+      "global_finite_LU_present": true,
+      "static_condensation": false,
+      "solution_bytes": 66893482,
+      "ownership_and_release": [
+        {
+          "event": "object_owner_snapshot",
+          "elapsed_s": 3949.71443272382,
+          "RSS_bytes": 8909934592,
+          "owner_role": "production_full_sparse_and_boundary",
+          "unique_visible_numpy_owner_bytes": 6286823840,
+          "unique_owner_count": 12,
+          "opaque_factor_MPI_CFFI_PETSc_bytes": "unknown; included in tree RSS"
+        },
+        {
+          "event": "global_finite_factor_released",
+          "elapsed_s": 5093.907928818837,
+          "RSS_bytes": 15839154176
+        },
+        {
+          "event": "global_body_augmented_and_factor_released",
+          "elapsed_s": 5094.6099667148665,
+          "RSS_bytes": 2695651328
+        }
+      ],
+      "boundary_bytes": {
+        "q47": 507798732,
+        "q63": 507798732
+      }
+    }
+  },
+  "complete_cold_cost_and_research_separate": true
+}

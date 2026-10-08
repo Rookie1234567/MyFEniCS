@@ -1,0 +1,24 @@
+{
+  "entries": [
+    {
+      "utc": "2026-10-08T08:59:05Z",
+      "root_cause": "role-budget substitution leaked into legacy V62 execute",
+      "failure_source": "161f2496",
+      "evidence": "tmp/task042/v63/aux_qualify_01/command1.stdout",
+      "minimal_fix": "restore original V62 execute planning64; new V63 budget remains per-role",
+      "replay": "focused source qualification only",
+      "new_solve": 0,
+      "failed_elapsed_seconds": 2.6483591301366687
+    },
+    {
+      "utc": "2026-10-08T09:08:38Z",
+      "root_cause": "capacity wrongly assumes one master per high-order periodic moment",
+      "failure_source": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "evidence": "benchmarks/artifacts/task042/v63/task042_v63_tetra_notch_h2_p4_20261008T090440643875Z/result.json",
+      "minimal_fix": "count actual unique expanded master columns per cell; retain native and pulled sparse upper envelopes",
+      "new_numeric": 0,
+      "new_solve": 0
+    }
+  ],
+  "failures_preserved": true
+}

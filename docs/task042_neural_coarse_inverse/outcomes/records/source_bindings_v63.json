@@ -1,0 +1,2021 @@
+{
+  "files": [
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/check_independent_tetra.py",
+      "sha256": "c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/collect_common_weak_phase.py",
+      "sha256": "17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/collect_independent_tetra.py",
+      "sha256": "f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/collect_phase_deployment.py",
+      "sha256": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/qualify_independent_tetra.py",
+      "sha256": "7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json",
+      "sha256": "fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "scripts/run_case.py",
+      "sha256": "60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/adaptivity/target_uniform_tetra_control.py",
+      "sha256": "d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/io/independent_tetra_reference.py",
+      "sha256": "1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "db958ab454e645a49e52cefa9dbfeb2e7ed06f716fc6ba50a745046fde5161fe",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/db958ab454e645a49e52cefa9dbfeb2e7ed06f716fc6ba50a745046fde5161fe"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/runners/task042_shared.py",
+      "sha256": "59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/face_trace_scope.py",
+      "sha256": "4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/independent_tetra_fields.py",
+      "sha256": "59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/independent_tetra_reference.py",
+      "sha256": "9a2b66a973718dfeb5aa81b8a4eb580a2196b8f3732c9d73bfee5a8f32738e10",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9a2b66a973718dfeb5aa81b8a4eb580a2196b8f3732c9d73bfee5a8f32738e10"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/independent_tetra_scope.py",
+      "sha256": "817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/independent_tetra_study.py",
+      "sha256": "8813d5b0ac845307d84f7437fe204b90fd3268bf763ef4977d5d77d760ff69fe",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/8813d5b0ac845307d84f7437fe204b90fd3268bf763ef4977d5d77d760ff69fe"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/scattering_anchor.py",
+      "sha256": "c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/target_boundary_witness.py",
+      "sha256": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/test/test_independent_tetra_reference.py",
+      "sha256": "0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/test/test_independent_tetra_saved_checks.py",
+      "sha256": "b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/fine_tetra_scope.py",
+      "sha256": "488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/fine_tetra_study.py",
+      "sha256": "0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/tetra_boundary_support.py",
+      "sha256": "47d993b9dae72ea9f4d7a74f70abe19d49d5dc007bdb21902d4752aa50dc67f5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/47d993b9dae72ea9f4d7a74f70abe19d49d5dc007bdb21902d4752aa50dc67f5"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/solvers/tetra_polynomial_difference.py",
+      "sha256": "a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/qualify_fine_tetra.py",
+      "sha256": "0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "benchmarks/collect_fine_tetra.py",
+      "sha256": "1bdfae9c80f649eda81f36454c56b0342696462c635a203aa46e2122764cf7f0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1bdfae9c80f649eda81f36454c56b0342696462c635a203aa46e2122764cf7f0"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "src/test/test_fine_tetra.py",
+      "sha256": "8b65dbe555c3387a30ac47fcd2f2d7bdae1da4d4b8a7dc80c4871e7b602bb158",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/8b65dbe555c3387a30ac47fcd2f2d7bdae1da4d4b8a7dc80c4871e7b602bb158"
+    },
+    {
+      "source_sha": "161f24969ff2c2eadf5f8f996ce138476f10c485",
+      "path": "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json",
+      "sha256": "bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/check_independent_tetra.py",
+      "sha256": "c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/collect_common_weak_phase.py",
+      "sha256": "17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/collect_independent_tetra.py",
+      "sha256": "f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/collect_phase_deployment.py",
+      "sha256": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/qualify_independent_tetra.py",
+      "sha256": "7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json",
+      "sha256": "fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "scripts/run_case.py",
+      "sha256": "60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/adaptivity/target_uniform_tetra_control.py",
+      "sha256": "d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/io/independent_tetra_reference.py",
+      "sha256": "1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "db958ab454e645a49e52cefa9dbfeb2e7ed06f716fc6ba50a745046fde5161fe",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/db958ab454e645a49e52cefa9dbfeb2e7ed06f716fc6ba50a745046fde5161fe"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/runners/task042_shared.py",
+      "sha256": "59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/face_trace_scope.py",
+      "sha256": "4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/independent_tetra_fields.py",
+      "sha256": "59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/independent_tetra_reference.py",
+      "sha256": "9a2b66a973718dfeb5aa81b8a4eb580a2196b8f3732c9d73bfee5a8f32738e10",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9a2b66a973718dfeb5aa81b8a4eb580a2196b8f3732c9d73bfee5a8f32738e10"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/independent_tetra_scope.py",
+      "sha256": "817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/independent_tetra_study.py",
+      "sha256": "171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/scattering_anchor.py",
+      "sha256": "c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/target_boundary_witness.py",
+      "sha256": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/test/test_independent_tetra_reference.py",
+      "sha256": "0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/test/test_independent_tetra_saved_checks.py",
+      "sha256": "b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/fine_tetra_scope.py",
+      "sha256": "488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/fine_tetra_study.py",
+      "sha256": "0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/tetra_boundary_support.py",
+      "sha256": "47d993b9dae72ea9f4d7a74f70abe19d49d5dc007bdb21902d4752aa50dc67f5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/47d993b9dae72ea9f4d7a74f70abe19d49d5dc007bdb21902d4752aa50dc67f5"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/solvers/tetra_polynomial_difference.py",
+      "sha256": "a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/qualify_fine_tetra.py",
+      "sha256": "0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "benchmarks/collect_fine_tetra.py",
+      "sha256": "1bdfae9c80f649eda81f36454c56b0342696462c635a203aa46e2122764cf7f0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1bdfae9c80f649eda81f36454c56b0342696462c635a203aa46e2122764cf7f0"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "src/test/test_fine_tetra.py",
+      "sha256": "8b65dbe555c3387a30ac47fcd2f2d7bdae1da4d4b8a7dc80c4871e7b602bb158",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/8b65dbe555c3387a30ac47fcd2f2d7bdae1da4d4b8a7dc80c4871e7b602bb158"
+    },
+    {
+      "source_sha": "6953355e4447c837e89b6b9979d7f173ba0009a9",
+      "path": "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json",
+      "sha256": "bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/check_independent_tetra.py",
+      "sha256": "c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/collect_common_weak_phase.py",
+      "sha256": "17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/collect_independent_tetra.py",
+      "sha256": "f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/collect_phase_deployment.py",
+      "sha256": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/qualify_independent_tetra.py",
+      "sha256": "7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json",
+      "sha256": "fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "scripts/run_case.py",
+      "sha256": "60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/adaptivity/target_uniform_tetra_control.py",
+      "sha256": "d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/io/independent_tetra_reference.py",
+      "sha256": "1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "db958ab454e645a49e52cefa9dbfeb2e7ed06f716fc6ba50a745046fde5161fe",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/db958ab454e645a49e52cefa9dbfeb2e7ed06f716fc6ba50a745046fde5161fe"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/runners/task042_shared.py",
+      "sha256": "59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/face_trace_scope.py",
+      "sha256": "4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/independent_tetra_fields.py",
+      "sha256": "59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/independent_tetra_reference.py",
+      "sha256": "94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/independent_tetra_scope.py",
+      "sha256": "817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/independent_tetra_study.py",
+      "sha256": "171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/scattering_anchor.py",
+      "sha256": "c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/target_boundary_witness.py",
+      "sha256": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/test/test_independent_tetra_reference.py",
+      "sha256": "0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/test/test_independent_tetra_saved_checks.py",
+      "sha256": "b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/fine_tetra_scope.py",
+      "sha256": "488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/fine_tetra_study.py",
+      "sha256": "0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/tetra_boundary_support.py",
+      "sha256": "7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/solvers/tetra_polynomial_difference.py",
+      "sha256": "a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/qualify_fine_tetra.py",
+      "sha256": "0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "benchmarks/collect_fine_tetra.py",
+      "sha256": "1bdfae9c80f649eda81f36454c56b0342696462c635a203aa46e2122764cf7f0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1bdfae9c80f649eda81f36454c56b0342696462c635a203aa46e2122764cf7f0"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "src/test/test_fine_tetra.py",
+      "sha256": "26c05822a6ba2566567f9fd6be6aadc38966e0ecde56e6a90bbc5a76963386ae",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/26c05822a6ba2566567f9fd6be6aadc38966e0ecde56e6a90bbc5a76963386ae"
+    },
+    {
+      "source_sha": "f6f9432904bd3efc1d4c534b3fb2f6bf3ffd07ba",
+      "path": "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json",
+      "sha256": "bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/check_independent_tetra.py",
+      "sha256": "c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/collect_common_weak_phase.py",
+      "sha256": "17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/collect_independent_tetra.py",
+      "sha256": "f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/collect_phase_deployment.py",
+      "sha256": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/qualify_independent_tetra.py",
+      "sha256": "7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json",
+      "sha256": "fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "scripts/run_case.py",
+      "sha256": "60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/adaptivity/target_uniform_tetra_control.py",
+      "sha256": "d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/io/independent_tetra_reference.py",
+      "sha256": "1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "99545a3dcd842d20440c1c984ad7a1034f3f4863c9e27a371b9d72b262ba7068",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/99545a3dcd842d20440c1c984ad7a1034f3f4863c9e27a371b9d72b262ba7068"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/runners/task042_shared.py",
+      "sha256": "59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/face_trace_scope.py",
+      "sha256": "4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/independent_tetra_fields.py",
+      "sha256": "59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/independent_tetra_reference.py",
+      "sha256": "94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/independent_tetra_scope.py",
+      "sha256": "817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/independent_tetra_study.py",
+      "sha256": "171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/scattering_anchor.py",
+      "sha256": "c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/target_boundary_witness.py",
+      "sha256": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/test/test_independent_tetra_reference.py",
+      "sha256": "0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/test/test_independent_tetra_saved_checks.py",
+      "sha256": "b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/fine_tetra_scope.py",
+      "sha256": "488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/fine_tetra_study.py",
+      "sha256": "0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/tetra_boundary_support.py",
+      "sha256": "7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/solvers/tetra_polynomial_difference.py",
+      "sha256": "a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/qualify_fine_tetra.py",
+      "sha256": "0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0974e092d87ef666ae81befe4d54be6e4a5c6254fd37bd23006c3af91dc95f5c"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "benchmarks/collect_fine_tetra.py",
+      "sha256": "520c7c3f23ffe5c0894f86ecb07ea93df4b52a8dd70d29ff3879b1c01d72cf26",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/520c7c3f23ffe5c0894f86ecb07ea93df4b52a8dd70d29ff3879b1c01d72cf26"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "src/test/test_fine_tetra.py",
+      "sha256": "4ea179bdeada5a97f281e5ac3c0847afef809d6c7271458a458d3837cba5f4c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4ea179bdeada5a97f281e5ac3c0847afef809d6c7271458a458d3837cba5f4c3"
+    },
+    {
+      "source_sha": "62516c87b7ad35ffa15bff6413cb419bf35e686b",
+      "path": "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json",
+      "sha256": "bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/check_independent_tetra.py",
+      "sha256": "c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/collect_common_weak_phase.py",
+      "sha256": "17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/collect_independent_tetra.py",
+      "sha256": "f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/collect_phase_deployment.py",
+      "sha256": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/qualify_independent_tetra.py",
+      "sha256": "7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json",
+      "sha256": "fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "scripts/run_case.py",
+      "sha256": "60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/adaptivity/target_uniform_tetra_control.py",
+      "sha256": "d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/io/independent_tetra_reference.py",
+      "sha256": "1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "99545a3dcd842d20440c1c984ad7a1034f3f4863c9e27a371b9d72b262ba7068",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/99545a3dcd842d20440c1c984ad7a1034f3f4863c9e27a371b9d72b262ba7068"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/runners/task042_shared.py",
+      "sha256": "59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/face_trace_scope.py",
+      "sha256": "4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/independent_tetra_fields.py",
+      "sha256": "59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/independent_tetra_reference.py",
+      "sha256": "94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/independent_tetra_scope.py",
+      "sha256": "817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/independent_tetra_study.py",
+      "sha256": "171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/scattering_anchor.py",
+      "sha256": "c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/target_boundary_witness.py",
+      "sha256": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/test/test_independent_tetra_reference.py",
+      "sha256": "0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/test/test_independent_tetra_saved_checks.py",
+      "sha256": "b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/fine_tetra_scope.py",
+      "sha256": "488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/fine_tetra_study.py",
+      "sha256": "0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/tetra_boundary_support.py",
+      "sha256": "7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/solvers/tetra_polynomial_difference.py",
+      "sha256": "a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/qualify_fine_tetra.py",
+      "sha256": "9a17c356c177aca7d305b589d146fa4cc77d32345febaac089a633f2c2eac1c0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9a17c356c177aca7d305b589d146fa4cc77d32345febaac089a633f2c2eac1c0"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "benchmarks/collect_fine_tetra.py",
+      "sha256": "358c0433422076aab5e00d51a9069f3f3ea27f5fb01fedaae7f5ca915111c0be",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/358c0433422076aab5e00d51a9069f3f3ea27f5fb01fedaae7f5ca915111c0be"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "src/test/test_fine_tetra.py",
+      "sha256": "4ea179bdeada5a97f281e5ac3c0847afef809d6c7271458a458d3837cba5f4c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4ea179bdeada5a97f281e5ac3c0847afef809d6c7271458a458d3837cba5f4c3"
+    },
+    {
+      "source_sha": "55a2e4f6d55571cf9e367889ce9a1e5c49c4208e",
+      "path": "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json",
+      "sha256": "bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/check_independent_tetra.py",
+      "sha256": "c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c6287c6bdcfa51fa10f3100baf675825f81565e37cf04cd7d753e31bf8596487"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/collect_common_weak_phase.py",
+      "sha256": "17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/17f446200192fa0851bb743b4afe8bd48bde2b4fe07628bb917c2558c19fef65"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/collect_independent_tetra.py",
+      "sha256": "f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0681a3e737fe593c4d065ae090cd622cb48b7231eee04b4c05e9d3190045ff0"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/collect_phase_deployment.py",
+      "sha256": "36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/36f3ef6fdcd206ee44aa8a8bd391abcaa7c3e37bc06297f4c72084d177cad8f8"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/collect_phase_explicit_accuracy.py",
+      "sha256": "c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c97e75ad7ee1e680fbf14d9efceebb9063bd1262cb65c6b1e05b4a504dfc5e5e"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/collect_phase_notch_hp.py",
+      "sha256": "eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/eab9e084beac9bf38dcba5079001541f17d484e87f983a1dbd7b7e6732c9f499"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/qualify_independent_tetra.py",
+      "sha256": "7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7508d911e75f7944420f5729ca26b5ca497b31712b0df0a46e1faf0322950ab6"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "input/task042_neural_coarse_inverse/independent_tetra_reference_v62.json",
+      "sha256": "fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/fe329b7bfe40526cebd40ae2f06bb30f31b773fe9580ef7a5d38340e73ad84f1"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "scripts/activate_task042.sh",
+      "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "scripts/run_case.py",
+      "sha256": "60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/60c99677d03fc1123f32bebaf0e78124344ec988f197529badce5fb49ecdacb9"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/adaptivity/target_uniform_tetra_control.py",
+      "sha256": "d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d9884c2c4a6dfd7509a586e52b9a11841e9775e88d482159060a4adc26fc7c44"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/common/config_3d.py",
+      "sha256": "7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7e068d5c62876640b771eb57b64b0b00957c822f20891b8150dbf6aa8139b024"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/common/modes_3d.py",
+      "sha256": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/common/optical_material_table.py",
+      "sha256": "00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/00275252628c3d320c028ab59456d6e5787e8d4c5a84421c2da8cff6900255e5"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f004df2fdfe09946b25963f5821eb8f3bae207cee300ec808197c4dc3137fe89"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "sha256": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "sha256": "a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a0d8402b890f8bff76443a961b1076f9550e638bcf3fcfa8f4dc9be6f03c6a4c"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/io/independent_tetra_reference.py",
+      "sha256": "1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/1ac6418f739fe1d5e16234dfd0a2a273dde5d64229dd2cb59732b1012a7db6da"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/runners/port_preparation.py",
+      "sha256": "99545a3dcd842d20440c1c984ad7a1034f3f4863c9e27a371b9d72b262ba7068",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/99545a3dcd842d20440c1c984ad7a1034f3f4863c9e27a371b9d72b262ba7068"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/runners/task042_shared.py",
+      "sha256": "59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59b9a358e18a5a08e42c072edabf27b6097b33926a50a49ff42ca043ad9bc9ec"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/f97f2ecc110a50f7d1927fc2eb904ad1103f27bfe3e3f0abe782f06baef2e5dd"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/face_trace_scope.py",
+      "sha256": "4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/4addb97137d040120246f80a68c4c427a30c0de1312f5f7745f5a2cf3e30cdf9"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/e74cc6125c2ea10000cf9b0e6089c9ab12a0885e66948a34b7ab799f80cbafb5"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/fullspace_dtn_action.py",
+      "sha256": "3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3f4bba8dcefc4dc980a24e00fc9d5181c90a328fcaead63cb8483f03b11b409c"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/5e964de6e639b94778a7c699000104b059fd7278d73c91552f851f7962d96ef0"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/fullspace_v17_p3_oracle.py",
+      "sha256": "b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b04ca161605d42321d1428b3bc943a0b55220a03a628dfe040dfc578640e9f38"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/independent_tetra_fields.py",
+      "sha256": "59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/59be1305ae9ee70ffb8aa64fc592d4a3e535199aa6aceabecc140eb5e1277d41"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/independent_tetra_reference.py",
+      "sha256": "94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/94b05bcd8d167cf3b13e67ad78cba7134cad92649a6253531abb18e86867886e"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/independent_tetra_scope.py",
+      "sha256": "817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/817afc7d2bafaa60b9d65e451b4f9c546f0dab54a97dc1121e2367f9c0cd96b0"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/independent_tetra_study.py",
+      "sha256": "171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/171359d0636762da079c0c204de49d4b88bacb59075af698d9c9978824e036d7"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_evaluation_cache.py",
+      "sha256": "ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/ecd1adc2ad1e17b3fc8f16f2120959001f13f67aca9a5c05038cd0ba5d09cf0a"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_explicit_accuracy.py",
+      "sha256": "3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3c0ca3f7fb3569d84fe88eb58f7684a0beebef67fc1337e982ebac9441aa6dd6"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_explicit_accuracy_capacity.py",
+      "sha256": "733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/733afd5dc44f9a8af5136a2c18bead4400ee10daec6273a1a4ca0b14b2174d91"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_explicit_accuracy_fields.py",
+      "sha256": "45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/45f3f913e1aaa4c48c103582a527a3a8e26bb91d2ed59d375dfdb517a779945a"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_notch_hp.py",
+      "sha256": "bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bda5a29256d30efc946a99598246283233ccbe57d411bb4a88a943cb8a01630f"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_notch_hp_fields.py",
+      "sha256": "6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/6fffe196ed7750f683f80088a0bb0858c914aa1b05251ef5b297863907cfd459"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/phase_notch_hp_modes.py",
+      "sha256": "3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/3693826ceed26f7e07bf7b7f534523434bf3d42cc1bdb6f2db53b6671f76f406"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/scattering_accuracy_boundary.py",
+      "sha256": "810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/810ce5a2fa7c044afcc86e00fa48a62da45fb377bafdda3e81409bdae3b1b878"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/scattering_accuracy_fields.py",
+      "sha256": "d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/d95e2622ae9ca311f9dba4c3ba6c7a2b2631dcb875d65871ad5a424328d51aa6"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/scattering_accuracy_scope.py",
+      "sha256": "efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/efac6346f66e6289ac6567159b4b568afb56fdfb1bcd7fcd4442c8ec34505ce7"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/scattering_anchor.py",
+      "sha256": "c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/c03a25e4606f9543564647035fc096a435dd6e208bae1835ccfcc172a0e0e3c3"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/target_boundary_witness.py",
+      "sha256": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/test/test_independent_tetra_reference.py",
+      "sha256": "0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a229f5bc0db43adf1c430effec101141b2b741a089a04b8243c7624e4a1e848"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/test/test_independent_tetra_saved_checks.py",
+      "sha256": "b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/b27db12c27bf1aa5be2407bc788b8b9eac017ddff9d3d39f4e4bb5397aaf2675"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/fine_tetra_scope.py",
+      "sha256": "488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/488b7624f2eb0f43fd4e96ad4fa2eb5b07f4e4e2ea7261573cd5ea4d1aefa6bc"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/fine_tetra_study.py",
+      "sha256": "0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/0a16dba951e76288c8d6fc1f59274da3dfb6fcc121f517366cea2566e4edca81"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/tetra_boundary_support.py",
+      "sha256": "7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/7eef6c325bc22f41a284383c17ab18cc0fd457494efa99ce87d5880c29d3687d"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/solvers/tetra_polynomial_difference.py",
+      "sha256": "a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/a49fa940c14930dda45a4610c9d9f4b4af9b116ff425d543ce20fa5f0b65de7d"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/qualify_fine_tetra.py",
+      "sha256": "9a17c356c177aca7d305b589d146fa4cc77d32345febaac089a633f2c2eac1c0",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/9a17c356c177aca7d305b589d146fa4cc77d32345febaac089a633f2c2eac1c0"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "benchmarks/collect_fine_tetra.py",
+      "sha256": "90025f324abdd9d4b32b3b46e6e116886a7582fe4027a0ed8f0efbc6f3f5af00",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/90025f324abdd9d4b32b3b46e6e116886a7582fe4027a0ed8f0efbc6f3f5af00"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "src/test/test_fine_tetra.py",
+      "sha256": "def87c93dfbe46aaff563d7a727d9294cd6f9d4f168e384c0f0b2ab5a50c148c",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/def87c93dfbe46aaff563d7a727d9294cd6f9d4f168e384c0f0b2ab5a50c148c"
+    },
+    {
+      "source_sha": "7573da844f3b05e4cc002d057e7438eb8979e23e",
+      "path": "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json",
+      "sha256": "bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a",
+      "archived": "benchmarks/artifacts/task042/v63/source_archive/bcf4e285d3e2aaaf80f02974d7aafacaae5f353187b8a59c88c33eca5ffdc53a"
+    }
+  ],
+  "document_HEAD_is_not_run_source": true
+}

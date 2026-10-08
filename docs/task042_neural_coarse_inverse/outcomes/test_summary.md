@@ -1,3 +1,19 @@
+# V63最终定点与完整物理验收
+
+| actual本地检查 | 结果/边界 |
+|---|---|
+| 最终15个相关targeted方法 | 7573da84通过；QUAL01预算名字错误失败保留 |
+| 相关Ruff/compile与5dat真实validate | 最终QUAL06通过，无full pytest/CI |
+| support实际MPC/非零小项/外写入反例 | T5 q47/q63旧新逐位同一，A/B实际使用 |
+| 生产/独立复体作用与完整q63 | 两份formal≤1e−6通过；独立direct≤1e−10 FAIL保留 |
+| 共享/周期切向E与828库存功率 | A/B各15232面及全部模式通过 |
+| 保存四对场分子/分母/240点/功率checker | 四组FAIL与producer一致，无新FE/factor/solve |
+| 文档最终字节/历史保护 | 单次紧凑检查后封存；GitHub视觉NOT_VERIFIED |
+
+[source/test](records/tests_v63.json) · [科学](records/scientific_checks_v63.json) · [费用](records/resource_costs_final_v63.json)。旧历史不改。
+
+---
+
 # V62最终定点与物理验收
 
 | actual本地检查 | 结果与证据 |

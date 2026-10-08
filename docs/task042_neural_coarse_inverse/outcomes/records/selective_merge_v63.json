@@ -1,0 +1,83 @@
+{
+  "approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/tetra_boundary_support.py",
+        "src/solvers/tetra_polynomial_difference.py",
+        "src/solvers/independent_tetra_reference.py",
+        "src/solvers/independent_tetra_fields.py"
+      ],
+      "numerical_behavior": "explicit opt-in exact support and same-real-carrier difference; old default mathematics retained; not production qualification",
+      "suggested_order": 1,
+      "dependencies": "original qualified tetra/phase/MPC/ABI and scoped direct backend",
+      "tests": "tests_v63.json",
+      "fresh_PDE_evidence": "scientific_checks_v63.json A/B"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/io/independent_tetra_reference.py",
+        "scripts/run_case.py"
+      ],
+      "numerical_behavior": "role-bound V63 profile and scoped one-run namespace; B allowance isolated",
+      "suggested_order": 2,
+      "dependencies": "original qualified tetra/phase/MPC/ABI and scoped direct backend",
+      "tests": "tests_v63.json",
+      "fresh_PDE_evidence": "scientific_checks_v63.json A/B"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/collect_fine_tetra.py",
+        "benchmarks/qualify_fine_tetra.py",
+        "src/test/test_fine_tetra.py"
+      ],
+      "numerical_behavior": "independent saved consumers, fee/source/lifecycle audit; no new PDE",
+      "suggested_order": 3,
+      "dependencies": "original qualified tetra/phase/MPC/ABI and scoped direct backend",
+      "tests": "tests_v63.json",
+      "fresh_PDE_evidence": "scientific_checks_v63.json A/B"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v63.md",
+        "docs/task042_neural_coarse_inverse/outcomes/fine_tetra_accuracy_bounded_cost_v63.md"
+      ],
+      "numerical_behavior": "new increment and parent hashes; historical documents preserved",
+      "suggested_order": 4,
+      "dependencies": "original qualified tetra/phase/MPC/ABI and scoped direct backend",
+      "tests": "tests_v63.json",
+      "fresh_PDE_evidence": "scientific_checks_v63.json A/B"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/fine_tetra_scope.py",
+        "src/solvers/fine_tetra_study.py",
+        "input/task042_neural_coarse_inverse/fine_tetra_accuracy_v63.json"
+      ],
+      "numerical_behavior": "finite complete LU references and conditional queue, not scalable default",
+      "suggested_order": null,
+      "dependencies": "original qualified tetra/phase/MPC/ABI and scoped direct backend",
+      "tests": "tests_v63.json",
+      "fresh_PDE_evidence": "scientific_checks_v63.json A/B"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v63",
+        "tmp/task042/v63",
+        "results/task042/*v63*"
+      ],
+      "numerical_behavior": "large ignored arrays/cache/raw remain local; no merge approval",
+      "suggested_order": null,
+      "dependencies": "original qualified tetra/phase/MPC/ABI and scoped direct backend",
+      "tests": "tests_v63.json",
+      "fresh_PDE_evidence": "scientific_checks_v63.json A/B"
+    }
+  ]
+}
