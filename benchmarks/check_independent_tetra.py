@@ -39,7 +39,7 @@ def saved_pair(pair,first,second,*,expected_points):
     if previous['per_cell_integrals'].shape!=a['per_cell_integrals'].shape:raise ValueError('same common domain quadrature rows')
     qdef=float(np.max(np.abs(before[:,:2]-sums[:,:2])/np.maximum(sums[:,1,None],1e-24)))
     payloads=[json.loads(Path(r['mode_power_path'] if 'mode_power_path' in r else Path(r['output']['fields']['path']).with_name('port_power.json')).read_text()) for r in (first,second)]
-    modes,vectors=compare_payloads(*payloads,828)
+    modes,vectors=compare_payloads(*payloads,pair['modes'].get('mode_count',828))
     stored_modes=checked_arrays(pair['modes']['arrays'])
     for name,value in vectors.items():
         if not np.array_equal(stored_modes[name],value):raise ValueError('complete saved physical mode vector pairing')

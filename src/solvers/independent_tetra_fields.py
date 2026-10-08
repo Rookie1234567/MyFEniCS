@@ -58,13 +58,14 @@ def complete_output(s,b,x,folder,journal):
     integrals=[];flat=[]
     with journal.measured('complete_tetra_volume_and_analytic_q23_q31'):
         for q in (23,31):
-            ev=TetraEvaluator(s['V'],q,s['kappa']);cell=[];err=[]
+            ev=TetraEvaluator(s['V'],q,s['kappa']);cell=[];err=[];total=[]
             for c,tag in zip(s['data'].cell_tags.indices,s['data'].cell_tags.values,strict=True):
                 points,w,actual=ev.cell(f,int(c),cfg.k0);known=analytic(cfg,points)
                 eps={cfg.tags.air:cfg.eps_air,cfg.tags.substrate:cfg.eps_substrate,cfg.tags.grating:cfg.eps_grating}[int(tag)]
+                total.append([float(np.sum(w[:,None]*np.abs(actual[k])**2)) for k in ('E','H','curl')])
                 cell.append([float(np.sum(w)),float(np.sum(w[:,None]*np.abs(actual['E'])**2))*eps.imag])
                 err.append([[float(np.sum(w[:,None]*np.abs(actual[k]-known[k])**2)),float(np.sum(w[:,None]*np.abs(known[k])**2))] for k in ('E','H','curl')])
-            rec=save_arrays(folder/f'volume_q{q}.npz',per_cell_volume_absorption=np.asarray(cell),per_cell_analytic_squared=np.asarray(err))
+            rec=save_arrays(folder/f'volume_q{q}.npz',per_cell_volume_absorption=np.asarray(cell),per_cell_analytic_squared=np.asarray(err),per_cell_total_squared=np.asarray(total))
             integrals.append(dict(q=q,arrays=rec,sums=np.asarray(cell).sum(axis=0)));flat.append(np.asarray(err).sum(axis=0))
     scale=cfg.k0/(2*incident_power_3d(cfg));av=float(integrals[-1]['sums'][1]*scale)
     qdef=abs(integrals[0]['sums'][1]-integrals[1]['sums'][1])/max(abs(integrals[1]['sums'][1]),1e-30)
@@ -73,7 +74,7 @@ def complete_output(s,b,x,folder,journal):
         _write_port_outputs(folder,cfg,list(b['modes']),port,list(b['projections']),pm,s['mesh'].comm)
     energy=float(pm['R_total']+pm['T_total']+av-1)
     output=dict(fields=fields,port_metrics=pm,volume_metrics=dict(A_volume_total=av,energy_closure_error=energy,quadrature_relative=qdef),
-        integrals=integrals,native_evaluation_max=max(checks),mode_manifest_sha256=b['digest'],complete_modes=828,
+        integrals=integrals,native_evaluation_max=max(checks),mode_manifest_sha256=b['digest'],complete_modes=len(b['modes']),
         authoritative_field='full native envelope, actual tetra mesh/basis/MPC, kappa; physical gVh and complete curl',
         H_units='Hcode=curl(E)/(i*k0*mu); physical H=Hcode/eta0')
     accuracy=None

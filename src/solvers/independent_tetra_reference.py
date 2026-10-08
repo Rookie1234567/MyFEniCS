@@ -16,8 +16,11 @@ def configuration(spec, physical):
     from .scattering_anchor import configuration as base
     cfg = base(spec['case'], spec['degree'])
     axes = physical['geometry']['axes_nm']
+    modes=spec.get('complete_modes',828)
+    if modes not in (828,1188):raise ValueError('unknown complete tetra mode inventory')
+    mm,nn={828:(11,4),1188:(13,5)}[modes]
     return replace(cfg, case_name='task042_v62_'+spec['case'].lower()+'_p'+str(spec['degree']),
-        mesh_cell_type='tetrahedron', diffraction_order_max_m=11, diffraction_order_max_n=4,
+        mesh_cell_type='tetrahedron', diffraction_order_max_m=mm, diffraction_order_max_n=nn,
         mesh_axis_x_values=tuple(axes['x']), mesh_axis_y_values=tuple(axes['y']),
         mesh_axis_z_values=tuple(axes['z']), mesh_axis_cell_counts=tuple(len(axes[a])-1 for a in ('x','y','z')))
 
@@ -136,13 +139,16 @@ class CachedTetraEvaluator(TetraEvaluator):
 
 class TriangleComponents:
     """Fresh complete Fourier functionals on actual tetra boundary triangles."""
-    def __init__(self, setup, q, modes):
+    def __init__(self, setup, q, modes, *, compact=False):
         import basix
         from .target_boundary_witness import dual_maps
         self.s=setup;self.mpc=setup['floquet'].mpc;self.q=q;self.cache={}
         self.ev=TetraEvaluator(setup['V'],0,setup['kappa'],quadrature_tables=False)
         V=setup['V'];mesh=setup['mesh'];n=V.dofmap.index_map.size_local
         maps=dual_maps(V,self.mpc)
+        from .tetra_boundary_support import side_supports,compact_index,support_row
+        supports=side_supports(setup) if compact else {}
+        self.support_inventory={}
         xy,w=basix.make_quadrature(basix.CellType.triangle,q)
         verts=basix.cell.geometry(basix.CellType.tetrahedron);faces=basix.cell.topology(basix.CellType.tetrahedron)[2]
         mesh.topology.create_connectivity(2,3);mesh.topology.create_connectivity(3,2)
@@ -157,7 +163,10 @@ class TriangleComponents:
                 incident=SimpleNamespace(k_vector=cfg.wavevector)
                 selected[(complex(cfg.kx),complex(cfg.ky),complex(cfg.kz))]=incident
             keys=list(selected);wave=np.array([selected[key].k_vector for key in keys])-setup['kappa']
-            out=np.zeros((len(keys),n,2),complex)
+            support=supports[side] if compact else np.arange(n,dtype=np.int64)
+            index=compact_index(support,n)
+            out=np.zeros((len(keys),len(support),2),complex)
+            self.support_inventory[side]=dict(native=n,reachable_rows=len(support),keys=len(keys),buffer_bytes=out.nbytes,compact=compact)
             for facet in setup['data'].facet_tags.find(tag):
                 cell=int(fc.links(int(facet))[0]);local=int(np.flatnonzero(cf.links(cell)==facet)[0])
                 tri=verts[faces[local]];ref=tri[0]+xy[:,0,None]*(tri[1]-tri[0])+xy[:,1,None]*(tri[2]-tri[0])
@@ -169,9 +178,9 @@ class TriangleComponents:
                 val=np.einsum('ij,mjc->mic',self.ev.transform(cell),val)
                 for j,row in enumerate(V.dofmap.cell_dofs(cell)):
                     masters,co=maps[int(row)]
-                    for master,a in zip(masters,co,strict=True):out[:,master,:]+=a*val[:,j,:]
+                    for master,a in zip(masters,co,strict=True):out[:,support_row(index,int(master)),:]+=a*val[:,j,:]
             for i,key in enumerate(keys):
-                rows=np.flatnonzero(np.any(out[i]!=0,axis=1));self.cache[(side,*key)]=(rows,out[i,rows].copy())
+                rows=np.flatnonzero(np.any(out[i]!=0,axis=1));self.cache[(side,*key)]=(support[rows],out[i,rows].copy())
             self.side_data[side]=len(keys)
             del out
 
@@ -198,14 +207,14 @@ def boundary(setup,q,journal,folder):
     from .scattering_accuracy_boundary import pack_carrier
     from .dtn_port_3d import _incident_projection_onto_top_mode
     modes,ids,digest=build_dynamic_mode_inventory(setup['cfg'])
-    if len(modes)!=828:raise ValueError('tetra complete 828 inventory')
+    if len(modes)!=setup['spec']['complete_modes']:raise ValueError('tetra complete mode inventory mismatch')
     with journal.measured('fresh_triangle_all828_q'+str(q)):
-        source=TriangleComponents(setup,q,modes)
+        source=TriangleComponents(setup,q,modes,compact=setup['spec'].get('triangle_backend')=='reachable_owner_support')
         c=build_fullspace_dtn_carrier_from_surface(modes,source.assemblers(),setup['floquet'].mpc,setup['cfg'],retain_all_nonzero=True)
         incident=source.incident_traction()
     receipt=save_arrays(folder/('triangle_q'+str(q)+'.npz'),**pack_carrier(c),incident_traction=incident)
     projections=np.asarray([_incident_projection_onto_top_mode(m,setup['cfg']) for m in modes])
-    return dict(carrier=c,modes=modes,identities=ids,digest=digest,incident=incident,projections=projections,arrays=receipt,q=q)
+    return dict(carrier=c,modes=modes,identities=ids,digest=digest,incident=incident,projections=projections,arrays=receipt,q=q,support=source.support_inventory)
 
 
 def boundary_matrices(s,b):
@@ -239,8 +248,9 @@ def production_body(s,journal):
     try:
         ia,ja,va=K.getValuesCSR();native=sparse.csr_matrix((va.copy(),ja.copy(),ia.copy()),shape=K.getSize())
     finally:K.destroy()
-    P=s['P'];return (P.conj().T@native@P).tocsr(),dict(q=q,embedded_superdegree=V.element.basix_element.embedded_superdegree,
-        form='inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)',native_nnz=native.nnz,independent_nnz=(P.conj().T@native@P).nnz)
+    P=s['P'];pulled=(P.conj().T@native@P).tocsr()
+    return pulled,dict(q=q,embedded_superdegree=V.element.basix_element.embedded_superdegree,
+        form='inner(Ckappa(u),Ckappa(v))/mu-k0^2*eps*inner(u,v)',native_nnz=native.nnz,independent_nnz=pulled.nnz)
 
 
 def body_action(s,x,q):
@@ -279,16 +289,25 @@ def rhs_vector(s,b):
 
 
 def assembly_capacity(s,journal):
-    n=s['P'].shape[1];cells=s['spec']['cells'];dim=s['V'].element.space_dimension;rows=n+828
-    # Full cell contributions and native+pulled CSR+augmented+scaled copies.
-    # Boundary full-native envelope is deliberately conservative, no value drop.
-    upper=cells*dim**2+4*n*828+828
+    n=s['P'].shape[1];cells=s['spec']['cells'];dim=s['V'].element.space_dimension
+    modes=s['spec']['complete_modes'];rows=n+modes
+    compact=s['spec'].get('triangle_backend')=='reachable_owner_support'
+    if compact:
+        from .tetra_boundary_support import side_supports
+        support=side_supports(s);sizes={k:len(v) for k,v in support.items()}
+        if np.max(np.diff(s['P'].indptr))!=1:raise ValueError('capacity requires actual one-master tetra MPC')
+        coupling=sum(2*(modes//2)*v for v in sizes.values())
+        triangle=sum((modes//4+1)*v*2*16 for v in sizes.values())*3
+    else:
+        sizes={'full_native':s['P'].shape[0]};coupling=4*n*modes;triangle=6*s['P'].shape[0]*modes*16
+    upper=cells*dim**2+coupling+modes
     components=dict(four_full_csr_envelopes=4*(upper*24+(rows+1)*8),
-        triangle_functionals_and_copies=6*s['P'].shape[0]*828*16,
-        bounded_basis_evaluation_workspace=2*2**30,runtime_mesh_MPC_JIT_reserve=2*2**30)
+        triangle_functionals_and_copies=triangle,bounded_basis_evaluation_workspace=2*2**30,runtime_mesh_MPC_JIT_reserve=2*2**30)
+    budget=s['spec'].get('memory_budget',dict(planning_gib=64,warning_gib=80,sampled_stop_gib=96))
     total=sum(components.values());r=dict(rows=rows,native=s['P'].shape[0],independent=n,cells=cells,local_dim=dim,
-        graph_nnz_upper=upper,components=components,planned_bytes=total,admitted=rows<=200000 and total<=64*2**30,
-        factor='SYMBOLIC_PENDING',condensation=False)
+        graph_nnz_upper=upper,reachable_side_rows=sizes,body_cell_contribution_upper=cells*dim**2,boundary_coupling_upper=coupling,
+        components=components,planned_bytes=total,memory_budget=budget,admitted=rows<=s['spec'].get('assembly_row_cap',200000) and total<=budget['planning_gib']*2**30,
+        factor='SYMBOLIC_PENDING',condensation=False,compact_actual_allocation=compact)
     journal.event('full_tetra_assembly_capacity',**r);return r
 
 

@@ -51,7 +51,9 @@ def petsc_matrix(A):
     A=A.tocsr();return PETSc.Mat().createAIJ(size=A.shape,csr=(A.indptr.astype(PETSc.IntType),A.indices.astype(PETSc.IntType),A.data),comm=PETSc.COMM_SELF)
 
 
-def solve(role,folder,journal,state):
+def solve(role,folder,journal,state,*,scope_module=scope):
+    scope=scope_module
+    budget=scope.memory_budget(role) if hasattr(scope,"memory_budget") else scope.plan_record()["memory_budget"]
     from petsc4py import PETSc
     from .phase_explicit_accuracy_capacity import AnalyzedDirectFactor
     from .fixed_phase_fem import port_coordinate_scales
@@ -85,7 +87,7 @@ def solve(role,folder,journal,state):
     s=core.make_setup(scope.case_spec(role),scope.physical_for(role),journal);cap=core.assembly_capacity(s,journal)
     if not cap['admitted']:return dict(status='CAPACITY_BLOCKED',capacity=cap,role=role)
     b=core.boundary(s,47,journal,folder);oracle=core.boundary(s,63,journal,folder)
-    pair=carrier_pair(b['carrier'],oracle['carrier'],b['identities'],expected_modes=828)
+    pair=carrier_pair(b['carrier'],oracle['carrier'],b['identities'],expected_modes=s['spec']['complete_modes'])
     inc=relative(b['incident']-oracle['incident'],oracle['incident'])
     write_json(folder/'boundary_pair.json',dict(pair=pair,incident=inc))
     if not pair['pass'] or inc>1e-11:raise ValueError('complete fresh tetra q47/q63 boundary not qualified')
@@ -107,8 +109,8 @@ def solve(role,folder,journal,state):
     scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
     factor=None
     try:
-        if scope.window.snapshot()['heavy_remaining_seconds']<1800:raise RuntimeError('full tetra audit/output reserve before numeric')
-        factor=AnalyzedDirectFactor(matrix,journal,folder,planning_limit_bytes=64*2**30)
+        if scope.window.snapshot()['heavy_remaining_seconds']<(3000 if scope.NAMESPACE=='v63' else 1800):raise RuntimeError('full tetra audit/output reserve before numeric')
+        factor=AnalyzedDirectFactor(matrix,journal,folder,planning_limit_bytes=budget['planning_gib']*2**30)
         r=PETSc.Vec().createSeq(len(rhs),comm=PETSc.COMM_SELF);sol=r.duplicate();r.array[:]=left*rhs
         try:
             with journal.measured('full_uncondensed_tetra_direct_solve'):
@@ -161,7 +163,7 @@ def load_boundary(s,receipts,digest,q='q47'):
 
 
 def execute(role,folder,state):
-    journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=64*2**30);journal.source_state=state
+    journal=Journal(folder,window_scope=scope.window,planning_limit_bytes=budget['planning_gib']*2**30);journal.source_state=state
     if state.get('memory_budget')!=scope.plan_record()['memory_budget']:raise ValueError('V62 live memory propagation')
     if role=='PREFLIGHT':return preflight(folder,journal)
     if role in scope.SOLVES:return solve(role,folder,journal,state)

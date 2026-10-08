@@ -36,8 +36,12 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v51]',b'[task042_v52]',b'[task042_v53]',b'[task042_v54]',b'[task042_v55]',b'[task042_v56]',b'[task042_v57]',b'[task042_v58]',b'[task042_v59]',b'[task042_v60]',b'[task042_v61]',b'[task042_v62]')):
-            if b'[task042_v62]' in args.input_path.read_bytes():
+        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v51]',b'[task042_v52]',b'[task042_v53]',b'[task042_v54]',b'[task042_v55]',b'[task042_v56]',b'[task042_v57]',b'[task042_v58]',b'[task042_v59]',b'[task042_v60]',b'[task042_v61]',b'[task042_v62]',b'[task042_v63]')):
+            if b'[task042_v63]' in args.input_path.read_bytes():
+                from src.io.independent_tetra_reference import load_tetra_reference
+                from src.solvers import fine_tetra_scope
+                specification = load_tetra_reference(args.input_path,scope_module=fine_tetra_scope)
+            elif b'[task042_v62]' in args.input_path.read_bytes():
                 from src.io.independent_tetra_reference import load_tetra_reference
                 specification = load_tetra_reference(args.input_path)
             elif b'[task042_v61]' in args.input_path.read_bytes():
