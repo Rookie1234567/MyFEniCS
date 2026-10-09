@@ -764,6 +764,30 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                                 f"execution.{key}",
                                 "target V20 must bind the frozen original-size AUTO mode inventory",
                             )
+                    resume_path = execution.get(
+                        "task40_component_resume_manifest_path"
+                    )
+                    resume_sha256 = execution.get(
+                        "task40_component_resume_manifest_sha256"
+                    )
+                    if (resume_path is None) != (resume_sha256 is None):
+                        raise _error(
+                            "execution.task40_component_resume_manifest_path",
+                            "resume manifest path and SHA-256 must be supplied together",
+                        )
+                    if resume_path is not None:
+                        relative_path = Path(str(resume_path))
+                        if (
+                            stop_stage != "local_port_components"
+                            or relative_path.is_absolute()
+                            or ".." in relative_path.parts
+                            or not relative_path.parts
+                            or not re.fullmatch(r"[0-9a-f]{64}", str(resume_sha256))
+                        ):
+                            raise _error(
+                                "execution.task40_component_resume_manifest_path",
+                                "resume is restricted to a repo-relative manifest for the exact target local_port_components stage",
+                            )
                     if type(execution.get("task40_target_heavy_authorized")) is not bool:
                         raise _error(
                             "execution.task40_target_heavy_authorized",
@@ -779,6 +803,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "task40_target_inventory_identity_sha256",
                         "task40_target_ledger_path",
                         "task40_target_ledger_sha256",
+                        "task40_component_resume_manifest_path",
+                        "task40_component_resume_manifest_sha256",
                     )
                 ):
                     raise _error(

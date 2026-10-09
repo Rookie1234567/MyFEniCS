@@ -42,6 +42,255 @@ def test_v20_dat_profile_facts_and_checker_inventory_use_registry(filename):
     assert inventory["q_port_counts"] == tuple(periodic.q_port_counts)
 
 
+def test_target_component_resume_input_requires_hash_bound_local_port_manifest(tmp_path):
+    from scripts.task40_v20_service_workflow import render_stage_input
+
+    canonical = (INPUT_ROOT / "target_original_ny8_resource_pilot_v20.dat").read_text(
+        encoding="utf-8"
+    )
+    manifest_path = (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/"
+        "target_component_resume_manifest.json"
+    )
+    manifest_sha = "f" * 64
+    rendered = render_stage_input(
+        canonical,
+        "local_port_components",
+        component_resume_manifest_path=manifest_path,
+        component_resume_manifest_sha256=manifest_sha,
+    )
+    input_path = tmp_path / "target_component_resume.dat"
+    input_path.write_text(rendered, encoding="utf-8")
+    payload = load_and_resolve(input_path).as_jsonable()
+    assert payload["execution"]["task40_execution_stop_stage"] == "local_port_components"
+    assert payload["execution"]["task40_component_resume_manifest_path"] == manifest_path
+    assert payload["execution"]["task40_component_resume_manifest_sha256"] == manifest_sha
+
+    missing_hash = rendered.replace(
+        f'task40_component_resume_manifest_sha256 = "{manifest_sha}"\n', ""
+    )
+    input_path.write_text(missing_hash, encoding="utf-8")
+    with pytest.raises(ValueError, match="must be supplied together"):
+        load_and_resolve(input_path)
+
+    with pytest.raises(ValueError, match="restricted"):
+        render_stage_input(
+            canonical,
+            "geometry_inventory",
+            component_resume_manifest_path=manifest_path,
+            component_resume_manifest_sha256=manifest_sha,
+        )
+
+
+def test_component_resume_input_matches_original_except_manifest_bindings(tmp_path):
+    from src.runners.task40_v20_stage_runner import (
+        _validate_component_resume_input_identity,
+    )
+
+    manifest_path = "benchmarks/artifacts/component_resume.json"
+    manifest_sha = "a" * 64
+    original = tmp_path / "original.dat"
+    continuation = tmp_path / "continuation.dat"
+    original.write_text(
+        '[execution]\n'
+        'task40_execution_stop_stage = "local_port_components"\n'
+        '\n[physics]\nfrequency_hz = 1.0\n',
+        encoding="utf-8",
+    )
+    continuation.write_text(
+        '[execution]\n'
+        'task40_execution_stop_stage = "local_port_components"\n'
+        f'task40_component_resume_manifest_path = "{manifest_path}"\n'
+        f'task40_component_resume_manifest_sha256 = "{manifest_sha}"\n'
+        '\n[physics]\nfrequency_hz = 1.0\n',
+        encoding="utf-8",
+    )
+
+    _validate_component_resume_input_identity(
+        original,
+        continuation,
+        resume_manifest_path=manifest_path,
+        resume_manifest_sha256=manifest_sha,
+    )
+
+    continuation.write_text(
+        continuation.read_text(encoding="utf-8").replace("frequency_hz = 1.0", "frequency_hz = 2.0"),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="differs from the original"):
+        _validate_component_resume_input_identity(
+            original,
+            continuation,
+            resume_manifest_path=manifest_path,
+            resume_manifest_sha256=manifest_sha,
+        )
+
+
+def test_real_target_resume_path_reaches_minimal_component_fixture(tmp_path, monkeypatch):
+    import hashlib
+    import os
+    import subprocess
+
+    if os.environ.get("TASK40_V20_REAL_RESUME_FIXTURE") != "1":
+        pytest.skip("set TASK40_V20_REAL_RESUME_FIXTURE=1 to read the preserved target run")
+
+    from src.runners.task40_v20_stage_runner import (
+        _load_target_component_resume,
+        _preflight,
+        _write_json,
+    )
+    from src.solvers import task40_v20_local_components as local_components
+
+    resume_input = ROOT / (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/"
+        "stage_inputs/local_port_components_resume/"
+        "target_original_ny8_resource_pilot_v20.dat"
+    )
+    resolved = load_and_resolve(resume_input).as_jsonable()
+    source_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    preflight, _modes, mode_rows = _preflight(
+        resolved,
+        source_sha=source_sha,
+        profile=resolved["solver"]["preconditioner"],
+        mesh_id="TARGET_ORIGINAL_NY8",
+    )
+    manifest_path = ROOT / resolved["execution"][
+        "task40_component_resume_manifest_path"
+    ]
+    resume_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    campaign = resume_manifest["original_run"]
+    _write_json(
+        tmp_path / "run_manifest.json",
+        {
+            "schema": "component_fixture_current_run_envelope_only",
+            "run_id": resolved["run_id"],
+            "source_sha": source_sha,
+            "input_path": str(resume_input.resolve()),
+            "input_sha256": hashlib.sha256(resume_input.read_bytes()).hexdigest(),
+            "physical_model_sha256": preflight["physical_model_sha256"],
+            "task40_v20_campaign": {
+                "window_path": campaign["campaign_window_path"],
+                "window_sha256": campaign["campaign_window_sha256"],
+            },
+        },
+    )
+
+    geometry, cfg, classes, axes, c00_row, resume_receipt = (
+        _load_target_component_resume(
+            resolved,
+            tmp_path,
+            source_sha=source_sha,
+            preflight=preflight,
+        )
+    )
+    assert len(classes) == 60
+    assert [len(axis) - 1 for axis in axes] == [272, 8, 14]
+    assert c00_row["class_id"] == "c00"
+    assert resume_receipt["original_run"]["source_sha"] != source_sha
+
+    # Keep the fixture narrow: stub the next class kernel and port algebra, while
+    # passing the complete ordered mode table through each saved top/bottom face.
+    selected_faces = [
+        next(
+            row
+            for row in geometry["periodic_face_inventory"]["boundary_face_cells"]
+            if row["side"] == side
+        )
+        for side in ("top", "bottom")
+    ]
+    fixture_geometry = dict(geometry)
+    fixture_periodic = dict(geometry["periodic_face_inventory"])
+    fixture_periodic["boundary_face_cells"] = selected_faces
+    fixture_geometry["periodic_face_inventory"] = fixture_periodic
+    selected_local_class_ids = []
+    port_mode_rows = []
+
+    def measure_selected_class(item, _cfg, *, output_directory, resource_sample):
+        selected_local_class_ids.append(item["class_id"])
+        resource_sample()
+        return (
+            {
+                "class_id": item["class_id"],
+                "passed": True,
+                "status": "PASS",
+                "local_lu_factor_count": 1,
+                "representative_geometry_match": True,
+                "representative_cell_permutation_match": True,
+                "array_inventory": {
+                    "named_array_payload_bytes_with_aliases": 0,
+                    "unique_backing_bytes": 0,
+                },
+            },
+            object(),
+        )
+
+    class StubFacetPolynomial:
+        def __init__(self, _element):
+            pass
+
+    class StubBoundaryLayout:
+        rows = 4
+
+        def __init__(self, *_args):
+            pass
+
+    def check_full_port_rows(**kwargs):
+        actual_rows = kwargs["modes"]
+        assert actual_rows == list(mode_rows)
+        port_mode_rows.append(len(actual_rows))
+        return {
+            "local_recovery_equation_relative": 0.0,
+            "local_original_trace_equation_relative": 0.0,
+            "local_reduced_trace_equation_relative": 0.0,
+            "local_trace_elimination_identity_relative": 0.0,
+            "local_port_equation_relative": 0.0,
+            "local_reduced_port_equation_relative": 0.0,
+            "local_port_elimination_identity_relative": 0.0,
+            "known_interior_solution_relative": 0.0,
+            "small_key_native_carrier_witness": {
+                "direct_trace_B_relative": 0.0,
+                "direct_trace_D_relative": 0.0,
+                "full_dof_direct_q30_B_relative": 0.0,
+                "full_dof_direct_q30_D_relative": 0.0,
+                "full_dof_direct_q30_gate_pass": True,
+            },
+            "arrays": {"fixture_probe": np.zeros(1, dtype=np.complex128)},
+        }
+
+    from src.solvers import directional_boundary, task40_w1_local_probe
+
+    monkeypatch.setattr(local_components, "_local_class_measurement", measure_selected_class)
+    monkeypatch.setattr(directional_boundary, "FacetPolynomial", StubFacetPolynomial)
+    monkeypatch.setattr(directional_boundary, "BoundaryLayout", StubBoundaryLayout)
+    monkeypatch.setattr(task40_w1_local_probe, "stream_boundary_correction", check_full_port_rows)
+    report = local_components.run_v20_local_port_components(
+        resolved,
+        tmp_path,
+        axis_coordinates=axes,
+        cfg=cfg,
+        geometry_facts=fixture_geometry,
+        classes=classes[:2],
+        mode_rows=mode_rows,
+        resource_sample=lambda: {"sample_scope": "minimal resume fixture"},
+        completed_local_rows=[c00_row],
+        reused_packet_validation=c00_row["saved_packet_independent_readback"],
+    )
+    _write_json(tmp_path / "v20_local_port_components.json", report)
+
+    assert report["reused_local_class_ids"] == ["c00"]
+    assert [row["class_id"] for row in report["local_cell_classes"]] == ["c00", "c01"]
+    assert report["local_cell_classes"][1]["status"] == "PASS"
+    assert selected_local_class_ids == ["c01"]
+    assert {row["side"] for row in report["boundary_components"]} == {"top", "bottom"}
+    assert port_mode_rows == [32060, 32060]
+    assert all(row["target_mode_count_full_ordered"] == 32060 for row in report["boundary_components"])
+    assert report["global_p6_space_created"] is False
+    assert report["global_MPC_created"] is False
+    assert report["full_target_field_qualified"] is False
+
+
 @pytest.mark.parametrize("filename", V20_INPUTS)
 def test_v20_worker_contract_accepts_exact_registered_case(filename):
     from src.io.physical_intermediate_profile import profile_facts

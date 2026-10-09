@@ -104,8 +104,14 @@ def _read_case(path: Path) -> tuple[str, dict[str, Any]]:
     return raw, tomllib.loads(raw)
 
 
-def render_stage_input(canonical_text: str, stop_stage: str) -> str:
-    """Change only the V20 execution stop-stage line in a canonical .dat."""
+def render_stage_input(
+    canonical_text: str,
+    stop_stage: str,
+    *,
+    component_resume_manifest_path: str | None = None,
+    component_resume_manifest_sha256: str | None = None,
+) -> str:
+    """Render a V20 stage input, optionally binding one target component resume manifest."""
 
     matches = list(
         re.finditer(
@@ -119,9 +125,95 @@ def render_stage_input(canonical_text: str, stop_stage: str) -> str:
     original_data = tomllib.loads(canonical_text)
     changed_data = tomllib.loads(replaced)
     original_data["execution"]["task40_execution_stop_stage"] = stop_stage
+    if (component_resume_manifest_path is None) != (
+        component_resume_manifest_sha256 is None
+    ):
+        raise ValueError("component resume manifest path and SHA-256 must be supplied together")
+    if component_resume_manifest_path is not None:
+        if (
+            stop_stage != "local_port_components"
+            or Path(component_resume_manifest_path).is_absolute()
+            or ".." in Path(component_resume_manifest_path).parts
+            or not re.fullmatch(r"[0-9a-f]{64}", str(component_resume_manifest_sha256))
+        ):
+            raise ValueError("component resume input is restricted to a hash-bound target local-port stage")
+        replacement_line = (
+            f'task40_execution_stop_stage = "{stop_stage}"\n'
+            f'task40_component_resume_manifest_path = "{component_resume_manifest_path}"\n'
+            f'task40_component_resume_manifest_sha256 = "{component_resume_manifest_sha256}"'
+        )
+        replaced, count = re.subn(
+            r'(?m)^task40_execution_stop_stage = "[a-z_]+"\s*$',
+            replacement_line,
+            replaced,
+            count=1,
+        )
+        if count != 1:
+            raise ValueError("cannot insert the V20 component resume manifest into the execution block")
+        original_data["execution"]["task40_component_resume_manifest_path"] = (
+            component_resume_manifest_path
+        )
+        original_data["execution"]["task40_component_resume_manifest_sha256"] = (
+            component_resume_manifest_sha256
+        )
+        changed_data = tomllib.loads(replaced)
     if original_data != changed_data:
-        raise ValueError("stage input changes fields beyond execution.task40_execution_stop_stage")
+        raise ValueError("stage input changes fields beyond the explicit V20 stop/resume execution fields")
     return replaced
+
+
+def prepare_component_resume_input(
+    manifest_path: str,
+    manifest_sha256: str,
+    *,
+    repo_root: Path = ROOT,
+) -> dict[str, str]:
+    """Create one ignored local-port input bound to a prepared resume manifest."""
+
+    relative_manifest = Path(manifest_path)
+    if relative_manifest.is_absolute() or ".." in relative_manifest.parts:
+        raise ValueError("V20 component resume manifest path must be repo-relative")
+    manifest = repo_root / relative_manifest
+    if not manifest.is_file() or _sha256_file(manifest) != manifest_sha256:
+        raise ValueError("V20 component resume manifest is missing or has the wrong hash")
+    canonical = repo_root / V20_INPUTS[
+        "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+    ][0]
+    canonical_text = canonical.read_text(encoding="utf-8")
+    staged_text = render_stage_input(
+        canonical_text,
+        "local_port_components",
+        component_resume_manifest_path=manifest_path,
+        component_resume_manifest_sha256=manifest_sha256,
+    )
+    destination = (
+        repo_root
+        / ARTIFACT_ROOT
+        / "stage_inputs/local_port_components_resume/target_original_ny8_resource_pilot_v20.dat"
+    )
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    relative_destination = destination.relative_to(repo_root)
+    ignored = subprocess.run(
+        ["git", "check-ignore", "-q", str(relative_destination)],
+        cwd=repo_root,
+        check=False,
+    )
+    if ignored.returncode != 0:
+        raise RuntimeError(f"component resume input is not git-ignored: {relative_destination}")
+    if destination.exists():
+        if destination.read_text(encoding="utf-8") != staged_text:
+            raise FileExistsError(f"refusing to replace a different component resume input: {destination}")
+    else:
+        with destination.open("x", encoding="utf-8") as stream:
+            stream.write(staged_text)
+            stream.flush()
+            os.fsync(stream.fileno())
+    return {
+        "input_path": str(relative_destination),
+        "input_sha256": _sha256_bytes(staged_text.encode("utf-8")),
+        "resume_manifest_path": manifest_path,
+        "resume_manifest_sha256": manifest_sha256,
+    }
 
 
 def prepare_stage_inputs(repo_root: Path = ROOT) -> dict[str, Any]:
@@ -1157,6 +1249,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("prepare-inputs")
+    resume_input_parser = subparsers.add_parser("prepare-component-resume-input")
+    resume_input_parser.add_argument("--manifest", required=True)
+    resume_input_parser.add_argument("--sha256", required=True)
     service_parser = subparsers.add_parser("run-service")
     service_parser.add_argument("--unit", required=True)
     service_parser.add_argument("--runtime-prefix", type=Path, required=True)
@@ -1179,6 +1274,16 @@ def main(argv: list[str] | None = None) -> int:
         return _run_required_checker_supervision_request(args.request)
     if args.command == "prepare-inputs":
         print(json.dumps(prepare_stage_inputs(), ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "prepare-component-resume-input":
+        print(
+            json.dumps(
+                prepare_component_resume_input(args.manifest, args.sha256),
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+        )
         return 0
     if args.command == "check-partial":
         result = _check_partial_result(

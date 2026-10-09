@@ -132,6 +132,170 @@ def _readback_component_packet(
     }
 
 
+def verify_v20_saved_c00_packet(
+    run_directory: str | Path,
+    readback_receipt_path: str | Path,
+    *,
+    expected_json_sha256: str,
+    expected_npz_sha256: str,
+    expected_readback_receipt_sha256: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Verify the saved first target class before a V20 continuation skips it."""
+
+    from src.runners.physical_diagnosis_worker import _sha256_file
+
+    run_directory = Path(run_directory).resolve()
+    packet_json = run_directory / "v20_local_c00.json"
+    packet_npz = run_directory / "v20_local_c00.npz"
+    receipt_path = Path(readback_receipt_path).resolve()
+    for path, expected, label in (
+        (packet_json, expected_json_sha256, "c00 JSON"),
+        (packet_npz, expected_npz_sha256, "c00 NPZ"),
+        (receipt_path, expected_readback_receipt_sha256, "c00 readback receipt"),
+    ):
+        if not path.is_file() or _sha256_file(path) != expected:
+            raise RuntimeError(f"V20 saved c00 {label} hash differs")
+
+    record = json.loads(packet_json.read_text(encoding="utf-8"))
+    manifest = record.get("arrays")
+    if not isinstance(manifest, Mapping):
+        raise RuntimeError("V20 saved c00 omitted its NPZ manifest")
+    if Path(str(manifest.get("path", ""))).resolve() != packet_npz:
+        raise RuntimeError("V20 saved c00 NPZ path differs from the bound original run")
+    if manifest.get("sha256") != expected_npz_sha256:
+        raise RuntimeError("V20 saved c00 JSON/NPZ hash binding differs")
+
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if (
+        receipt.get("classification") != "SUPPLEMENTAL_ARTIFACT_READBACK_ONLY"
+        or receipt.get("json_sha256") != expected_json_sha256
+        or receipt.get("archive_sha256") != expected_npz_sha256
+        or receipt.get("per_array_expected_hash_basis")
+        != "loaded from preserved NPZ for key-mapping integrity replay; not an independent pre-save hash"
+    ):
+        raise RuntimeError("V20 saved c00 supplemental readback receipt has an unexpected scope")
+    readback_receipt = receipt.get("readback", {})
+    array_facts = readback_receipt.get("arrays", {})
+    descriptors = record.get("raw_arrays", {})
+    if not isinstance(array_facts, Mapping) or set(array_facts) != set(descriptors):
+        raise RuntimeError("V20 saved c00 receipt has an incomplete array inventory")
+    expected_array_hashes: dict[str, str] = {}
+    for name, facts in array_facts.items():
+        if not isinstance(facts, Mapping) or not isinstance(facts.get("sha256"), str):
+            raise RuntimeError(f"V20 saved c00 receipt omitted the {name} content hash")
+        expected_array_hashes[str(name)] = str(facts["sha256"])
+
+    packet_readback = _readback_component_packet(
+        run_directory, "v20_local_c00", expected_array_hashes
+    )
+    facts = record.get("facts", {})
+    if (
+        not isinstance(facts, Mapping)
+        or facts.get("class_id") != "c00"
+        or facts.get("status") != "PASS"
+        or facts.get("passed") is not True
+        or not isinstance(facts.get("gates"), Mapping)
+        or not all(facts["gates"].values())
+    ):
+        raise RuntimeError("V20 saved c00 component facts did not pass their original gates")
+
+    with np.load(packet_npz, allow_pickle=False) as archive:
+        arrays = {
+            name: np.asarray(archive[descriptor["array_key"]], dtype=np.complex128)
+            for name, descriptor in descriptors.items()
+        }
+    required = {
+        "Vii", "Vit", "Vti", "Vtt", "Schur", "known_xi", "known_xt",
+        "interior_rhs", "recovered_xi", "solved_Vit", "solved_Vit_xt",
+    }
+    if set(arrays) != required:
+        raise RuntimeError("V20 saved c00 omitted matrices or manufactured recovery arrays")
+
+    def relative(actual: np.ndarray, expected: np.ndarray) -> float:
+        return float(
+            np.linalg.norm(actual - expected)
+            / max(float(np.linalg.norm(expected)), np.finfo(float).tiny)
+        )
+
+    Vii, Vit, Vti, Vtt = (arrays[name] for name in ("Vii", "Vit", "Vti", "Vtt"))
+    Schur = arrays["Schur"]
+    xi, xt = arrays["known_xi"], arrays["known_xt"]
+    solved, solved_xt = arrays["solved_Vit"], arrays["solved_Vit_xt"]
+    recovered, rhs = arrays["recovered_xi"], arrays["interior_rhs"]
+    replay = {
+        "Vii_inverse_Vit_original_equation_relative": relative(Vii @ solved, Vit),
+        "Vii_inverse_Vit_xt_original_equation_relative": relative(
+            Vii @ solved_xt, Vit @ xt
+        ),
+        "recovery_reduced_original_equation_relative": relative(Vii @ recovered, rhs),
+        "recovery_full_original_equation_relative": relative(
+            Vii @ recovered + Vit @ xt, Vii @ xi + Vit @ xt
+        ),
+        "manufactured_solution_forward_relative": relative(recovered, xi),
+        "Schur_definition_relative": relative(Schur, Vtt - Vti @ solved),
+        "Schur_action_relative": relative(
+            Vtt @ xt - Vti @ solved_xt, Schur @ xt
+        ),
+    }
+    equation_checks = {
+        key: bool(np.isfinite(value) and value <= LOCAL_EQUATION_LIMIT)
+        for key, value in replay.items()
+        if key != "manufactured_solution_forward_relative"
+    }
+    forward_passed = bool(
+        np.isfinite(replay["manufactured_solution_forward_relative"])
+        and replay["manufactured_solution_forward_relative"] <= LOCAL_FORWARD_LIMIT
+    )
+    validation = {
+        "schema": "task40extra.review_v20_saved_c00_independent_readback.v1",
+        "status": "PASS" if all(equation_checks.values()) and forward_passed else "FAILED",
+        "packet_json_sha256": expected_json_sha256,
+        "packet_npz_sha256": expected_npz_sha256,
+        "readback_receipt_sha256": expected_readback_receipt_sha256,
+        "array_readback_integrity_passed": packet_readback["write_and_readback_hash_passed"],
+        "per_array_expected_hash_basis": receipt["per_array_expected_hash_basis"],
+        "independent_matrix_and_recovery_replay": replay,
+        "equation_limit": LOCAL_EQUATION_LIMIT,
+        "forward_limit": LOCAL_FORWARD_LIMIT,
+        "checks": {
+            **equation_checks,
+            "manufactured_solution_forward": forward_passed,
+        },
+        "passed": all(equation_checks.values()) and forward_passed,
+        "scope": (
+            "saved c00 matrices and recovered manufactured solution were re-applied; "
+            "this validates the preserved packet and original local algebra, not an independent pre-save hash"
+        ),
+    }
+    if not validation["passed"]:
+        raise RuntimeError("V20 saved c00 independent matrix/recovery replay failed")
+    row = dict(facts)
+    row["raw_packet"] = packet_readback
+    row["saved_packet_independent_readback"] = validation
+    return row, validation
+
+
+def _validate_reused_local_prefix(
+    classes: list[dict[str, Any]], completed_rows: list[Mapping[str, Any]]
+) -> None:
+    if len(completed_rows) > len(classes):
+        raise ValueError("V20 reused local rows exceed the geometry class inventory")
+    for index, row in enumerate(completed_rows):
+        expected = classes[index]
+        if (
+            row.get("class_id") != expected.get("class_id")
+            or row.get("metric_identity") != expected.get("metric_identity")
+            or row.get("material_tag") != expected.get("material_tag")
+            or row.get("target_cell_count") != expected.get("target_cell_count")
+            or row.get("filled_reference_cell_count")
+            != expected.get("filled_reference_cell_count")
+            or row.get("passed") is not True
+        ):
+            raise ValueError(
+                f"V20 reused local class prefix differs from geometry inventory at index {index}"
+            )
+
+
 def _save_component_packet(
     directory: Path, name: str, facts: Mapping[str, Any], arrays: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -375,23 +539,54 @@ def run_v20_local_port_components(
     resolved: Mapping[str, Any],
     output_directory: str | Path,
     *,
-    mesh_data: Any,
+    axis_coordinates: tuple[np.ndarray, np.ndarray, np.ndarray],
     cfg: Any,
     geometry_facts: Mapping[str, Any],
     classes: list[dict[str, Any]],
     mode_rows: tuple[Mapping[str, Any], ...],
     resource_sample: Callable[[], Mapping[str, Any]],
+    completed_local_rows: list[Mapping[str, Any]] | None = None,
+    reused_packet_validation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     from src.solvers.directional_boundary import BoundaryLayout, FacetPolynomial
     from src.solvers.task40_w1_local_probe import stream_boundary_correction
 
     output_directory = Path(output_directory)
     started = perf_counter()
-    local_rows = []
+    completed_local_rows = list(completed_local_rows or ())
+    _validate_reused_local_prefix(classes, completed_local_rows)
+    axis_coordinates = tuple(np.asarray(axis, dtype=np.float64) for axis in axis_coordinates)
+    if len(axis_coordinates) != 3 or any(axis.ndim != 1 for axis in axis_coordinates):
+        raise ValueError("V20 local/port stage requires three explicit one-dimensional axes")
+    axis_hashes = [
+        hashlib.sha256(np.ascontiguousarray(axis).tobytes()).hexdigest()
+        for axis in axis_coordinates
+    ]
+    if (
+        [int(len(axis) - 1) for axis in axis_coordinates]
+        != geometry_facts.get("actual_axes")
+        or [int(len(axis)) for axis in axis_coordinates]
+        != geometry_facts.get("vertex_axis_coordinate_counts")
+        or axis_hashes != geometry_facts.get("axis_coordinate_sha256")
+    ):
+        raise ValueError("V20 explicit axes do not match the hash-bound geometry inventory")
+    local_rows = [dict(row) for row in completed_local_rows]
     basix_element = None
-    max_class_payload = 0
-    max_class_backing = 0
-    for item in classes:
+    max_class_payload = max(
+        (
+            int(row.get("array_inventory", {}).get("named_array_payload_bytes_with_aliases", 0))
+            for row in local_rows
+        ),
+        default=0,
+    )
+    max_class_backing = max(
+        (
+            int(row.get("array_inventory", {}).get("unique_backing_bytes", 0))
+            for row in local_rows
+        ),
+        default=0,
+    )
+    for item in classes[len(completed_local_rows) :]:
         row, current_basix = _local_class_measurement(
             item,
             cfg,
@@ -407,10 +602,6 @@ def run_v20_local_port_components(
     if basix_element is None:
         raise RuntimeError("V20 geometry has no exact local metric classes")
 
-    axis_coordinates = [
-        np.unique(np.asarray(mesh_data.mesh.geometry.x[:, axis], dtype=np.float64))
-        for axis in range(3)
-    ]
     mode0 = mode_rows[0]
     from src.solvers.task40_v20_mode_inventory import _complex
 
@@ -564,6 +755,10 @@ def run_v20_local_port_components(
         "phase_y": {"real": float(phases[1].real), "imag": float(phases[1].imag)},
         "local_cell_class_count": len(local_rows),
         "local_cell_classes": local_rows,
+        "reused_local_class_ids": [str(row["class_id"]) for row in completed_local_rows],
+        "reused_packet_validation": (
+            None if reused_packet_validation is None else dict(reused_packet_validation)
+        ),
         "directional_mpc_qualification": {
             "status": "PARTIAL_CANONICAL_LOCAL_COMPONENTS",
             "representative_geometry_and_permutation_match_count": sum(
@@ -607,4 +802,4 @@ def run_v20_local_port_components(
     return report
 
 
-__all__ = ["run_v20_local_port_components"]
+__all__ = ["run_v20_local_port_components", "verify_v20_saved_c00_packet"]
