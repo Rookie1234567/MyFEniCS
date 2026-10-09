@@ -1,0 +1,329 @@
+{
+  "schema": "task40extra.review_v18_cost_and_readiness.v1",
+  "review": "V18",
+  "classification": "NY8_COMPLETED_E1_RESOURCE_CONTROLLED_STOP_ORIGINAL_SIZE_NOT_QUALIFIED",
+  "ny8_cost": {
+    "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+    "source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+    "run_case_full_workflow_monotonic_seconds": 2474.995817267103,
+    "resource_authority_elapsed_seconds": 2474.820380249992,
+    "intervals_are_distinct_and_not_added": true,
+    "retained_outer_solver_clock_seconds": 25.547952792,
+    "sampled_process_tree_rss_peak_bytes": 4869050368,
+    "dedicated_cgroup_memory_peak_bytes": 5899956224,
+    "task_swap_peak_bytes": 0,
+    "oom_or_oom_kill": 0,
+    "full_cold_critical_path": "unknown; launch/preparation/checker boundaries do not form a complete non-overlapping single-case ledger",
+    "all_q_live_factor_inventory": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v12_p6_all_q_live_before_destroy.json",
+      "sha256": "2607e2cec9314917c6f84c44c31844bbed0a61392a05f50fadeba3c6b513b6ff",
+      "factor_live_count": 8,
+      "allocated_upper_bytes_sum": 935000000,
+      "used_upper_bytes_sum": 840000000,
+      "all_q_live_process_tree_rss_bytes": 4869058560,
+      "watchdog_sampled_peak_bytes": 4869050368,
+      "samples_are_distinct": true,
+      "difference_bytes": 8192
+    },
+    "watchdog_peak_sample": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/watchdog/resources.jsonl",
+      "sha256": "7fe52f33e126528316e9d75931a994105da04f8a6ac5b21d50ed18e516bcc497",
+      "line": 9603,
+      "timestamp_ns": 1791493082343162958,
+      "stage": "workflow",
+      "worker_phase": "solve",
+      "active_pc": null,
+      "tree_rss_bytes": 4869050368,
+      "member_pids": [
+        2074703,
+        2074733,
+        2074734,
+        2074735
+      ],
+      "member_start_ticks": [
+        105314198,
+        105314236,
+        105314237,
+        105314237
+      ],
+      "member_rss_bytes": [
+        42061824,
+        5574656,
+        6545408,
+        4814868480
+      ],
+      "task_swap_bytes": 0,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "peak_is_not_pure_ksp_phase": true
+    },
+    "reference_pc_timing": {
+      "pc_apply_count": 3,
+      "initial_factor_call_deltas": [
+        8,
+        8,
+        8
+      ],
+      "correction_calls": 0,
+      "parent_seconds": [
+        4.252986487,
+        3.750249322,
+        3.690838304
+      ],
+      "native_evaluation_child_seconds": [
+        3.1346743209287524,
+        3.099261057097465,
+        3.023207491962239
+      ],
+      "children_included_in_parent": true,
+      "pre_pc_counter": 32,
+      "pre_pc_startup_subbreakdown": "unknown; no independently persisted MatSolve counter split"
+    }
+  },
+  "e1_cost": {
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z",
+    "source_sha": "168a727add276633e20000b718a4aa7eaa5f1e61",
+    "classification": "resource-controlled stop after four q symbolic; no numeric factor, KSP, new field, or official R/T/A",
+    "symbolic_estimates_mb": [
+      1613,
+      1666,
+      1626,
+      1621
+    ],
+    "four_q_symbolic_estimate_sum_mb": 6526,
+    "projected_future_reserve_bytes": 6994120640,
+    "measured_current_tree_rss_bytes": 12268249088,
+    "projected_tree_rss_bytes": 19396587456,
+    "dynamic_cap_bytes": 13544640512,
+    "projected_cap_excess_bytes": 5851946944,
+    "physical_available_bytes": 1410609152,
+    "incremental_headroom_bytes": 1276391424,
+    "observed_process_tree_peak_bytes": 12518109184,
+    "dedicated_cgroup_peak_bytes": 12710162432,
+    "task_swap_peak_bytes": 0,
+    "global_swap_delta_pages": {
+      "in": 758,
+      "out": 2612,
+      "attribution": "host-global, unassigned"
+    },
+    "workflow_monotonic_seconds": 5793.324598474894,
+    "conservative_wall_seconds": 6318.723884567858,
+    "time_gate_limit_seconds": 11471.90145745952,
+    "time_gate_exceeded": false,
+    "inventory": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_inventory.json",
+      "sha256": "2dcc233086e8ec88e27a5b17e8a741cb1281530b8a214bb91307ddd369d097ac",
+      "zero_rows_are_record_only": true,
+      "owner_backing_lifecycle": "unknown"
+    },
+    "worker_resource_peak_sample": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_worker_resources.jsonl",
+      "stage": "assembly",
+      "timestamp_ns": 1791500524254823815,
+      "sampled_tree_rss_bytes": 12268249088,
+      "root_pid": 2077771,
+      "member_pids": [
+        2077771,
+        2077801,
+        2077802,
+        2077803
+      ],
+      "member_count": 4,
+      "worker_pid": 2077803,
+      "scope": "maximum row in worker_resources ledger"
+    },
+    "watchdog_tree_peak_detail": {
+      "process_tree_peak_bytes": 12518109184,
+      "cgroup_peak_bytes": 12710162432,
+      "phase_and_member_sample": "resource_authority retains peak totals but not the corresponding phase/PID member row; worker_resources sample is a separate source and is labeled separately"
+    },
+    "numeric_factorization": {
+      "started": false,
+      "allocated_bytes": null,
+      "used_bytes": null,
+      "ksp_started": false
+    },
+    "symbolic_checkpoint_detail_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v18_sparse_capacity.json",
+    "sector_assembly_event": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_events.jsonl",
+      "sha256": "fc67144b6b1f1c1831a2b95ddb6914645b985afa75dc434112cd78dfebb53647",
+      "strategy": "LEGACY_GLOBAL_CSR_SUM",
+      "row_tile_route_used": false,
+      "twists": [
+        {
+          "twist": 0,
+          "global_q_indices": [
+            0,
+            2
+          ],
+          "local_inventory_counts": [
+            264282,
+            76680,
+            171000,
+            252
+          ],
+          "assembly_parent_seconds": 380.98811874189414,
+          "numeric_parent_seconds": 380.70822257502005,
+          "contribution_seconds": 17.808910578023642,
+          "projection_seconds": 87.60641617816873,
+          "sparse_accumulation_seconds": 275.25493556517176,
+          "numeric_contributions": 925,
+          "projection_and_accumulation_calls": 3700,
+          "global_csr_reallocation_count_upper": 3700
+        },
+        {
+          "twist": 1,
+          "global_q_indices": [
+            1,
+            3
+          ],
+          "local_inventory_counts": [
+            264282,
+            76680,
+            171000,
+            336
+          ],
+          "assembly_parent_seconds": 477.3949509309605,
+          "numeric_parent_seconds": 477.11441369797103,
+          "contribution_seconds": 23.263784788083285,
+          "projection_seconds": 95.57665973878466,
+          "sparse_accumulation_seconds": 358.22737074061297,
+          "numeric_contributions": 1093,
+          "projection_and_accumulation_calls": 4372,
+          "global_csr_reallocation_count_upper": 4372
+        }
+      ],
+      "timing_note": "children are non-overlapping and already included in numeric parent; parent also includes loop overhead",
+      "owner_backing_and_last_use_bytes": "not fully recorded"
+    },
+    "watchdog_peak_sample": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/watchdog/resources.jsonl",
+      "sha256": "02569d61742b49522967152f4ce2d61ec5a07cecf1d9d3edc5d45c2af39410df",
+      "line": 22497,
+      "timestamp_ns": 1791500523384826785,
+      "stage": "workflow",
+      "worker_phase": "assembly",
+      "active_pc": null,
+      "tree_rss_bytes": 12518109184,
+      "member_pids": [
+        2077771,
+        2077801,
+        2077802,
+        2077803
+      ],
+      "member_start_ticks": [
+        105664004,
+        105664034,
+        105664034,
+        105664034
+      ],
+      "member_rss_bytes": [
+        40747008,
+        5115904,
+        5976064,
+        12466270208
+      ],
+      "task_swap_bytes": 0,
+      "pss_status": "DISABLED_BY_PROFILE",
+      "cgroup_peak_bytes": 12710162432
+    }
+  },
+  "fixed_window": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/campaign_window_v17.json",
+    "sha256": "83f47e542dc28309d398a55c6b7e1b1ca76dab25dead854d88cc6feb6758ed24",
+    "t0_utc": "2026-10-08T00:38:07.073088478Z",
+    "deadline_utc": "2026-10-09T00:38:07.073088478Z",
+    "closeout_reserve_seconds": 600,
+    "remaining_budget_snapshot": 260.392590244257,
+    "t0_or_deadline_refreshed": false,
+    "cumulative_charged_seconds": 85539.60740975574,
+    "observation": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_review_v18_final_closeout_observation.json",
+      "sha256": "426bf1428279704e5576400899ec9fa476c02a7861041f3b3ebe8d4de11cafff",
+      "sequence": 133051,
+      "label": "controller_review_v18_final_closeout_observation",
+      "utc_ns": 1791505426669984286,
+      "as_of_only": true
+    }
+  },
+  "readiness": {
+    "ny8_b0_formal_small_model": "PASS_WITH_QUALIFICATIONS",
+    "e1_current_reference_route": "CONTROLLED_STOP_RESOURCE_GATE",
+    "original_size_2tb_decimal_memory": "NOT_QUALIFIED",
+    "original_size_48h_single_case": "NOT_QUALIFIED",
+    "ordinary_solver_default_changed": false,
+    "master_merge_or_approval": false,
+    "remote_or_other_host_work": false
+  },
+  "unknowns_and_next_evidence": [
+    "complete owner/backing/lifecycle overlap ledger for E1 live objects",
+    "post-destroy OS/cgroup release measurement",
+    "full cold critical path for a precision-qualified original-size grid",
+    "original-size final y/z grid and evanescent mode cutoff",
+    "frozen B0 significant-mode keys and selection rule"
+  ],
+  "ny8_clock_scope_comparison": {
+    "controller_clock_start_monotonic": 1053142.366994363,
+    "controller_clock_start_utc_ns": 1791490398349732477,
+    "controller_clock_start_boot_id": "not_recorded",
+    "checker_complete_campaign_sequence": 110500,
+    "checker_complete_monotonic": 1056484.445475415,
+    "checker_complete_utc_ns": 1791494044583378778,
+    "monotonic_span_seconds": 3342.078481052071,
+    "utc_span_seconds": 3646.233646301,
+    "scope": "watchdog start through required checker completion; excludes pre-watchdog external ABI/preparation boundary; start sample lacks boot_id; do not call the full cold start or subtract to infer component time",
+    "compare_with_run_summary_workflow_monotonic_seconds": 2474.995817267103,
+    "petsc_ksp_solve_only_seconds": 22.299832042,
+    "ksp_phase_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/ksp_solve_phase.jsonl",
+    "ksp_phase_sha256": "c83dee6d7a42e07771bf1ef9f3f8ce2027e33c821aff72996c4689851c143dc2",
+    "converged_reason": 2,
+    "iterations": 3,
+    "outer_pc_apply_count": 3,
+    "outer_matvec_count": 3,
+    "explicit_action_count": 2,
+    "retained_outer_solver_clock_seconds": 25.547952792,
+    "outer_solver_clock_is_not_pure_ksp": true
+  },
+  "latest_controller_window_snapshot": {
+    "observed_as_of_utc": "2026-10-09T00:06:45Z",
+    "remaining_numerical_seconds": 1866.7262854732544,
+    "closeout_reserve_seconds": 600,
+    "campaign_t0_and_deadline_refreshed": false,
+    "artifact_path_or_sha256": "not supplied with the controller observation",
+    "semantics": "as-of balance only; original V17 API window retained"
+  },
+  "branch": "task40extra_0p7nm_engineering",
+  "branch_identity": {
+    "review_v18_start_head": "33614413731d739d2c0f57106df180c359f4343f",
+    "current_source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "source_commits_after_start": 11,
+    "source_freeze_commit": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "production_numerical_source_changed": false
+  },
+  "preserved_previous_fixed_window_as_of_snapshot": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/campaign_window_v17.json",
+    "sha256": "83f47e542dc28309d398a55c6b7e1b1ca76dab25dead854d88cc6feb6758ed24",
+    "t0_utc": "2026-10-08T00:38:07.073088478Z",
+    "deadline_utc": "2026-10-09T00:38:07.073088478Z",
+    "closeout_reserve_seconds": 600,
+    "remaining_budget_snapshot": 2247.598257907259,
+    "t0_or_deadline_refreshed": false,
+    "cumulative_charged_seconds": 83552.40174209274,
+    "observation": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_campaign_closeout_observation_v18.json",
+      "sha256": "712ae4961e2dc0013f29bb63f05b0bf7fed163f4a1ca72436d217381245a7391",
+      "sequence": 133049,
+      "label": "review_v18_closeout_observation",
+      "utc_ns": 1791503439464316623,
+      "as_of_only": true
+    }
+  },
+  "main_final_closeout": {
+    "source_freeze_sha": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "window_refreshed": false,
+    "math_work_completed_before_this_observation": true,
+    "further_pde_started": false,
+    "post_observation_commit_push_cost_seconds": null,
+    "post_observation_cost_semantics": "not measured here; no policy reset or zero-cost claim",
+    "unknown_parent_phase_boundaries_preserved": true
+  }
+}

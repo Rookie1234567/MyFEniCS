@@ -1,0 +1,298 @@
+{
+  "schema": "task40extra.review_v18_sparse_capacity.v1",
+  "review": "V18",
+  "classification": "DERIVED_TARGET_BOUNDS_COMPLETE_E1_RESOURCE_GATE_CONTROLLED_STOP",
+  "p3_tracked_runner": {
+    "path": "benchmarks/task40_v18_p6_support_bounds.py",
+    "sha256": "13eb5b50d1c003ae174d9d97db7c25a0d78d7e6e650f408bc591b78fd86f88ab",
+    "output_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_p3_full_manifest_ny4_ny8_bounds_tracked_runner_v2.json",
+    "output_sha256": "b8af3fc45488b1927cab63be9f9d39116680cc29b665ec5d5633f16c7c0d72c6",
+    "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "native_calibration_receipt_sha256": "b96701fdde169d91ee8659a63c72528986adac20ec273ab84da7eae7f6ee189c",
+    "output_policy": "default uses a new v2 sidecar; existing output is rejected and exclusive creation prevents overwrite races",
+    "classification": "complete ordered-mode assignment and derived structural bounds; no target FE/CSR/factor/PDE built"
+  },
+  "ny4_target_bounds": {
+    "cell_axes": [
+      272,
+      4,
+      14
+    ],
+    "physical_cells": 15232,
+    "ordered_modes": 32060,
+    "q_mode_counts": [
+      7932,
+      8036,
+      8056,
+      8036
+    ],
+    "q_assignment_sha256": "511f2ae779740a315d7438cb2647648a09215f2bbb78b0dae7adc123c49e12a5",
+    "support_per_cell_upper": 348,
+    "boundary_support_upper_per_face": 78336,
+    "q_rows": [
+      781500,
+      781604,
+      781624,
+      781604
+    ],
+    "q_structural_nnz_upper": [
+      1766802960,
+      1784757520,
+      1788212800,
+      1784757520
+    ],
+    "distinct_q_csr_payload_upper_bytes": 142503121344,
+    "int32_structural_bound_pass": true,
+    "actual_numeric_nnz_or_peak_memory_measured": false
+  },
+  "ny8_target_bounds": {
+    "cell_axes": [
+      272,
+      8,
+      14
+    ],
+    "ordered_modes": 32060,
+    "q_mode_counts": [
+      4076,
+      4052,
+      4028,
+      3984,
+      3856,
+      3984,
+      4028,
+      4052
+    ],
+    "q_assignment_sha256": "935bc29d7812a96c318494f321eb9fd5cf2e87737054b5f58bdf6ac3bc560c24",
+    "per_cell_support": 432,
+    "support_choice": "full_432_fallback because native calibration permutation code sets do not match",
+    "boundary_support_upper_per_face": 117504,
+    "q_augmented_rows_upper": [
+      777644,
+      777620,
+      777596,
+      777552,
+      777424,
+      777552,
+      777596,
+      777620
+    ],
+    "q_structural_nnz_upper": [
+      1685170576,
+      1679335312,
+      1673501200,
+      1662808320,
+      1631723776,
+      1662808320,
+      1673501200,
+      1679335312
+    ],
+    "distinct_q_csr_payload_upper_bytes": 266988562768,
+    "int32_structural_bound_pass": true,
+    "actual_numeric_nnz_or_peak_memory_measured": false
+  },
+  "ny8_formal_finite_element_run_actual": {
+    "q_rows": [
+      4324,
+      4324,
+      4324,
+      4324,
+      4248,
+      4324,
+      4324,
+      4324
+    ],
+    "q_nnz": [
+      2274106,
+      2284104,
+      2285718,
+      2268512,
+      2203632,
+      2275424,
+      2284778,
+      2283164
+    ],
+    "these_are_small_b0_measured_values_not_original_size_target_values": true
+  },
+  "e1_current_build_resource_gate": {
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z",
+    "source_sha": "168a727add276633e20000b718a4aa7eaa5f1e61",
+    "input_sha256": "17f8434b396ae6bfb4a87ae802fbbc4c92edd1b7d6cb86b32ffcb7e02896f4ee",
+    "last_safe_stage": "four q symbolic factorizations complete; no numeric factorization or KSP started",
+    "classification": "CONTROLLED_STOP_RESOURCE_GATE",
+    "mumps_infog16_17_symbolic_estimates_mb": [
+      1613,
+      1666,
+      1626,
+      1621
+    ],
+    "sum_symbolic_estimates_mb": 6526,
+    "future_symbolic_reserve_bytes": 6530000000,
+    "other_future_reserves_bytes": {
+      "pending_transform_inverse": 273222720,
+      "selected_co_resident_phase": 190897920
+    },
+    "total_future_reserve_bytes": 6994120640,
+    "current_tree_rss_at_gate_bytes": 12268249088,
+    "effective_dynamic_cap_bytes": 13544640512,
+    "physical_available_bytes": 1410609152,
+    "incremental_headroom_bytes": 1276391424,
+    "projected_tree_rss_bytes": 19396587456,
+    "projected_excess_over_cap_bytes": 5851946944,
+    "observed_tree_rss_peak_bytes": 12518109184,
+    "dedicated_cgroup_memory_peak_bytes": 12710162432,
+    "task_swap_peak_bytes": 0,
+    "oom_or_oom_kill": 0,
+    "workflow_monotonic_seconds": 5793.324598474894,
+    "conservative_wall_seconds": 6318.723884567858,
+    "time_gate_limit_seconds": 11471.90145745952,
+    "time_gate_passed": true,
+    "inventory_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_inventory.json",
+    "inventory_sha256": "2dcc233086e8ec88e27a5b17e8a741cb1281530b8a214bb91307ddd369d097ac",
+    "inventory_interpretation": "empty entries/components and zero totals are a record-only empty ledger, not evidence of no live objects; ownership and backing remain unknown",
+    "run_summary_sha256": "43efe97f55b3351a5ec02d4c69627eca437f6d57234d324b1abe7a23962a0a5d",
+    "physical_model_sha256": "6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d",
+    "symbolic_checkpoints": [
+      {
+        "q": 0,
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/task40_v12_p6_q0_symbolic.json",
+        "checkpoint_sha256": "37d79f5cfde54b0f72d3fb0af3c5bae93e1b2825c5534463b5fbc016a80a1586",
+        "rows": 38424,
+        "nnz": 21010722,
+        "input_csr_sha256": "06c5aaf2f6af35d7cfc00b1d3857fe2f605a61663c3015fb077df2b93cff9ad1",
+        "symbolic_seconds": 0.31457290193066
+      },
+      {
+        "q": 1,
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/task40_v12_p6_q1_symbolic.json",
+        "checkpoint_sha256": "20a585c65ec0f1ab63d3473da51d34390a3b9a04672eaeddc538adb371280344",
+        "rows": 38508,
+        "nnz": 21303127,
+        "input_csr_sha256": "15c255e5f80f926e6dda1cec4c39aef946bd44ba3eb1093c0fade577102e9f17",
+        "symbolic_seconds": 0.3416060961317271
+      },
+      {
+        "q": 2,
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/task40_v12_p6_q2_symbolic.json",
+        "checkpoint_sha256": "cd3a94bb54d2a128f2a86f7b9017768622af6b1e8bf6e657887f35dedebfad37",
+        "rows": 38508,
+        "nnz": 21314038,
+        "input_csr_sha256": "b7b7bd4e287e045dc4116731d6ccfac4760a3b0982900d4f9c79eae74b64738f",
+        "symbolic_seconds": 0.3472924451343715
+      },
+      {
+        "q": 3,
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/task40_v12_p6_q3_symbolic.json",
+        "checkpoint_sha256": "ffbd018bae728e48c56a52de2c28612db769c8d7637581e04b8dce56a94ef70c",
+        "rows": 38508,
+        "nnz": 21307427,
+        "input_csr_sha256": "814e0620613779c472b237b7a4c18388d9abc5e66194132c66bf976d9131c3bb",
+        "symbolic_seconds": 0.354415972949937
+      }
+    ],
+    "numeric_factorization": {
+      "started": false,
+      "allocated_bytes": null,
+      "used_bytes": null,
+      "ksp_started": false
+    },
+    "reserve_formula": {
+      "symbolic_estimate_sum_mb": 6526,
+      "symbolic_reserve_bytes": 6530000000,
+      "formula": "6526 MB from INFOG16/17 plus 1 MB per each of four q = 6530 decimal MB reserved",
+      "transform_inverse_bytes": 273222720,
+      "co_resident_phase_bytes": 190897920,
+      "future_reserve_bytes": 6994120640,
+      "estimates_are_not_actual_factor_allocation": true
+    },
+    "worker_resource_peak_sample": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_worker_resources.jsonl",
+      "stage": "assembly",
+      "timestamp_ns": 1791500524254823815,
+      "sampled_tree_rss_bytes": 12268249088,
+      "root_pid": 2077771,
+      "member_pids": [
+        2077771,
+        2077801,
+        2077802,
+        2077803
+      ],
+      "member_count": 4,
+      "worker_pid": 2077803,
+      "classification": "maximum row in worker_resources ledger; distinct from resource_authority watchdog peak"
+    },
+    "watchdog_tree_peak": {
+      "process_tree_rss_peak_bytes": 12518109184,
+      "dedicated_cgroup_memory_peak_bytes": 12710162432,
+      "phase_sample_identity": "phase/PID-member peak detail is not present in the resource_authority summary; do not substitute worker_resources max sample"
+    },
+    "numeric_started_and_output_not_run": true
+  },
+  "resource_boundary": {
+    "MUMPS_INFOG_estimates_are_not_actual_factor_memory": true,
+    "distinct_q_payload_sum_is_not_simultaneous_memory": true,
+    "swap_is_task_tree_and_cgroup_scoped": true,
+    "global_swap_delta_is_unattributed": true,
+    "E1_not_numerical_solver_failure": true,
+    "original_size_2tb_capacity_not_qualified": true
+  },
+  "e1_assembly_evidence": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_events.jsonl",
+    "sha256": "fc67144b6b1f1c1831a2b95ddb6914645b985afa75dc434112cd78dfebb53647",
+    "event": "task40_v10_p6_sector_ready",
+    "assembly_strategy": "LEGACY_GLOBAL_CSR_SUM",
+    "row_tile_route_used": false,
+    "twist_0": {
+      "global_q_indices": [
+        0,
+        2
+      ],
+      "local_inventory_counts": [
+        264282,
+        76680,
+        171000,
+        252
+      ],
+      "assembly_parent_seconds": 380.98811874189414,
+      "numeric_parent_seconds": 380.70822257502005,
+      "contribution_generation_seconds": 17.808910578023642,
+      "projection_seconds": 87.60641617816873,
+      "sparse_accumulation_seconds": 275.25493556517176,
+      "numeric_contribution_count": 925,
+      "projection_call_count": 3700,
+      "sparse_accumulation_call_count": 3700,
+      "global_csr_reallocation_count_upper": 3700
+    },
+    "twist_1": {
+      "global_q_indices": [
+        1,
+        3
+      ],
+      "local_inventory_counts": [
+        264282,
+        76680,
+        171000,
+        336
+      ],
+      "assembly_parent_seconds": 477.3949509309605,
+      "numeric_parent_seconds": 477.11441369797103,
+      "contribution_generation_seconds": 23.263784788083285,
+      "projection_seconds": 95.57665973878466,
+      "sparse_accumulation_seconds": 358.22737074061297,
+      "numeric_contribution_count": 1093,
+      "projection_call_count": 4372,
+      "sparse_accumulation_call_count": 4372,
+      "global_csr_reallocation_count_upper": 4372
+    },
+    "timing_scope": "child contribution/projection/accumulation intervals are non-overlapping and already inside numeric parent; parent also includes loop overhead; do not add parent and children",
+    "live_owner_backing_and_last_use_bytes": "not fully recorded; integer local_inventory counts do not supply owner bytes or last-use events",
+    "do_not_attribute": "Ny8 row-tile release behavior was not used in E1"
+  },
+  "branch": "task40extra_0p7nm_engineering",
+  "branch_identity": {
+    "review_v18_start_head": "33614413731d739d2c0f57106df180c359f4343f",
+    "current_source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "source_commits_after_start": 11,
+    "source_freeze_commit": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "production_numerical_source_changed": false
+  }
+}

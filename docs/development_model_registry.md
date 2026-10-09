@@ -1,3 +1,29 @@
+# Task40extra 当前模型登记：Review V18 Ny=8 小模型正式解通过，E1 受控资源停止
+
+Ny=8 是沿器件 y 方向使用八层网格的小模型；它用于验证实际八个 Floquet 相位子问题、端口耦合和物理输出。E1 是 760-cell 的更大候选，用于测量当前 p6 reference route 能否安全进入数值因子阶段。两者都不是原尺寸全目标模型。
+
+| 模型 / 阶段 | source 与身份 | 数值结果与资源 | 资格边界 |
+|---|---|---|---|
+| B0 Ny=8 p6 Full3D | source 3b9457e57ceb15f21306a35baac07f42036840b1；160 cells（4×8×5）、p6、532 ordered modes、8 q；input SHA 33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017；physical SHA e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903 | 3 iterations；A6/native=1.2189184363e-8/1.2189186015e-8；R/T/A_balance/A_volume=0.9842736081/0.01424051811/0.001485873797/0.001485873844；R00_s/p/total=0.9842411413/0.000008453239/0.9842495946；q rows=4324/4324/4324/4324/4248/4324/4324/4324；q NNZ sum=18,159,438 | worker_exit0，official result/checker PASS；workflow monotonic 2474.996 s；tree RSS/cgroup peak 4,869,050,368/5,899,956,224 B；只证明该小离散模型，不代表原尺寸精度或连续极限 |
+| E1 p6 current resource attempt | source 168a727add276633e20000b718a4aa7eaa5f1e61；760 cells、588 ordered modes、4 q；input SHA 17f8434b396ae6bfb4a87ae802fbbc4c92edd1b7d6cb86b32ffcb7e02896f4ee | 四 q symbolic estimates 1613/1666/1626/1621 MB；projected tree 19,396,587,456 B；dynamic cap 13,544,640,512 B；超出 5,851,946,944 B；process tree/cgroup peak 12,518,109,184/12,710,162,432 B；task swap 0 | CONTROLLED_STOP_RESOURCE_GATE；numeric factor、KSP、new field、R/T/A 均 not_run；INFOG 是估计，不是实测因子 |
+| 原尺寸 Ny4 support bound | full target geometry axes 272×4×14=15,232 cells；32,060 ordered modes；manifest SHA 52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d | q NNZ upper 1,766,802,960 / 1,784,757,520 / 1,788,212,800 / 1,784,757,520；four-q CSR payload upper 142,503,121,344 B | topology + native calibration 推导，不是实际目标 FE/CSR/factor |
+| 原尺寸 Ny8 support bound | axes 272×8×14；32,060 modes；每 cell support fallback 432；现存校准只覆盖 Ny4，Ny8 目标方向排列/类型覆盖尚未实测 | 八 q NNZ upper sum 13,348,184,016; CSR payload upper 266,988,562,768 B | 派生结构界，不是 simultaneous owner peak 或 2 TB capacity qualification |
+| Ny4/Ny8 saved-field comparison | 原 Ny4 source 0201815c6b13f8456e9717ab93cc5023d4c946d1；Ny8 source 同上；y 为唯一细化维度 | shared 160 subcells；E/H/scaled curl max relative L2=4.9114215261e-8；incident amplitudes identical | tested agreement on a small model; no continuum convergence claim; significant-mode gate open because B0 key set/rule is not frozen |
+| Ny4 original worker / recovery | Original source 0201815c6b13f8456e9717ab93cc5023d4c946d1；recovery source 40dbe138f53b9a2ee39399eac66dc4b0867a2d50 | original worker WORKER_FAILED；saved-field postprocess recovery PASS | separate records; recovery does not rewrite the original worker classification |
+| 50×25×140 nm target | 0.7 nm wavelength; full 32,060-mode target; target FE/CSR/factor and precision-qualified grid not built | no full target official R/T/A or complete single-case cold path | 2 TB decimal memory and 48 h remain NOT_QUALIFIED; not a proof of mathematical infeasibility |
+
+Ny8 中的 q=4 端口行数为零，但其 FE sector 存在，原生每 q 有 13,248 行；因此它是一个有效空端口相位层，不是缺失映射。Ny8 全算子独立检查覆盖 64 个 q blocks 与 56 个 off-diagonal blocks，最大重算误差 8.296e-16；正式结果 checker 未重新作用数值算子。
+
+Ny8 modal supplement 中 bottom (1,2,p) 的 Ny4/Ny8 幅度分别约 1.387e-16/6.271e-16，绝对差 6.612e-16；以 Ny4 通道振幅作分母得到 4.766，仅为弱通道诊断。B0 review 未冻结显著模式名单或选择规则，所以 1% 显著模式门为 NOT_EVALUATED；没有移植 Gx560 的 11-key 集合。
+
+Ny4 原始 worker failure 与恢复 PASS 分开保留。E1 symbolic reserve 和空 inventory 记录的含义及限制、两级时间与 fixed-window observation 见 [V18 response](task40extra_0p7nm_engineering/response_v18.md)、[V18 formal results](task40extra_0p7nm_engineering/outcomes/records/review_v18_formal_results.json)、[V18 sparse/cost records](task40extra_0p7nm_engineering/outcomes/records/review_v18_sparse_capacity.json) 和 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。ordinary default 未改，master 未合并。
+
+六个正式 Ny8 成功前的 worker failure 均按独立 run 保留，完整 source、manifest 与 summary hash 见 run index。Ny8 q=4 有 FE sector（13,248 native rows/q）但没有端口通道；因此“q4 FE 缺失”的前提不成立，本轮不调整 mapping 门限。两个只读研究入口已由主控在代码 HEAD `ff8251dbcede1f736a0827fab8ffa8fb58daa9bd` 冻结；本轮收口只更新记录和项目账本。
+
+Ny8 的八个 q 因子在同一证据快照中同时存活，allocated/used upper 分别为 935,000,000/840,000,000 B；三种 MUMPS factor-entry 字段各记录 26,699,392 总项。参考 PC 有 3 次调用，每次增加 8 次 initial factor solve；pre-PC combined baseline 32 的 startup 细分未知。纯 KSP 为 22.299832042 s，较宽 outer-solver clock 为 25.547952792 s。E1 装配采用 `LEGACY_GLOBAL_CSR_SUM`，并未使用 Ny8 row-tile 路径；owner 生命周期仍未完整记录。逐项 raw identities、8,192 B 的双 RSS 采样差和时间范围见 [V18 cost/readiness compact](task40extra_0p7nm_engineering/outcomes/records/review_v18_cost_and_readiness.json)。
+
+---
+
 # Task40extra 当前模型登记：Review V17 Gx560 p6 正式解通过，Ny=8 组件部分通过，E1 未准入
 
 | 模型 / 阶段 | source 与身份 | 实测 / 派生结果 | 当前资格边界 |

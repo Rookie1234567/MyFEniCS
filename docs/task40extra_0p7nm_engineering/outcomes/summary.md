@@ -1,3 +1,85 @@
+# Task40extra Review V18 结果总账：Ny=8 小模型通过，E1 资源受控停止，原尺寸未资格化
+
+Task40 研究的是波长 0.7 nm 的三维、不可按单一方向拆开的 Maxwell 散射问题。有限元把空间切成网格单元，并在单元上近似电磁场；p6 表示使用六阶基函数。V18 在 160-cell 的 B0 小模型上完成 Ny=8 正式计算，验证了八个 y 相位分支的参考算子、真实有限元右端项、线性残差和官方功率输出。E1 更大的 760-cell 模型完成四个 q 的符号阶段后，被现场内存 Gate 安全停止。原尺寸 50×25×140 nm、2 TB 和 48 h 目标仍没有被证明可行。
+
+## 一级结果表：模型、方法、物理量与成本
+
+R 是反射功率占比，T 是透射功率占比，A_balance=1−R−T 是由端口功率差得到的吸收，A_volume 是在材料内部对损耗积分得到的吸收。R00_s、R00_p 分别是零级反射中 s/p 偏振，R00_total 是两者之和。A6 是完整目标方程的显式真残差，数值越小表示求解器输出越贴近离散方程；本任务规定限值为 1e-6。所有数字绑定对应运行的源码和输入身份。
+
+| 模型 / 阶段 | 模型与方法 | 实测结果 | 资源和成本 | 状态、比较目的与边界 | 证据 |
+|---|---|---|---|---|---|
+| B0 Ny=8 p6 正式解 | Ny=8，160 cells（4×8×5），532 个有序模式，八个 q；完整 Full3D iterative | q rows=[4324,4324,4324,4324,4248,4324,4324,4324]；q NNZ=[2274106,2284104,2285718,2268512,2203632,2275424,2284778,2283164]；3 次迭代；A6=1.2189184363e-8，native witness=1.2189186015e-8；R/T/A_balance/A_volume=0.9842736081/0.01424051811/0.001485873797/0.001485873844；R00_s/p/total=0.9842411413/0.000008453239/0.9842495946 | workflow monotonic=2474.996 s；resource-authority elapsed=2474.820 s（口径不同，不相加）；tree RSS/cgroup peak=4,869,050,368/5,899,956,224 B；任务 swap=0 | 官方输出 checker PASS；只资格化这个小模型，不是连续极限或原尺寸精度 | [formal compact](records/review_v18_formal_results.json) |
+| E1 p6 当前路线 | 原缺口 0.7 nm 几何，760 cells、p6、588 modes、四个 q；逐 q symbolic | 四 q symbolic 完成；numeric/KSP/新场/R/T/A 均未运行 | symbolic INFOG16/17 估计=[1613,1666,1626,1621] MB；future reserve=6,994,120,640 B；Gate 投影=19,396,587,456 B，超过 cap 5,851,946,944 B；tree/cgroup 峰=12,518,109,184/12,710,162,432 B；任务 swap=0；workflow monotonic=5793.325 s | CONTROLLED_STOP_RESOURCE_GATE；具体预算不够，不是数值不收敛、OOM 或模型不可计算证明 | [sparse/capacity compact](records/review_v18_sparse_capacity.json) |
+| 原尺寸 Ny=4 结构上界 | 272×4×14=15,232 cells；32,060 ordered modes；224-cell native p6/MPC calibration 推导 support 与 CSR | q rows upper=[781500,781604,781624,781604]；NNZ upper=[1766802960,1784757520,1788212800,1784757520]；payload upper sum=142,503,121,344 B | 这是不同 q 的结构载荷上界和，不是同时峰值；目标 FE/CSR/factor 未构造 | int32 结论仅覆盖当前结构形状/offset/support 上界；不代表实际数值非零或 2 TB 容量通过 | [sparse/capacity compact](records/review_v18_sparse_capacity.json) |
+| 原尺寸 Ny=8 结构上界 | 同一目标拓扑和 32,060 modes，重新按 Ny=8 q 分组；不能复制 Ny=4 上界 | q rows upper=[777644,777620,777596,777552,777424,777552,777596,777620]；NNZ upper=[1685170576,1679335312,1673501200,1662808320,1631723776,1662808320,1673501200,1679335312]；payload upper sum=266,988,562,768 B | Ny8 calibration permutation classes 不匹配，使用每 cell 432 的保守 support；目标矩阵未构造 | 推导界完整，不是目标数值 CSR 或容量通过 | [sparse/capacity compact](records/review_v18_sparse_capacity.json) |
+| Ny4/Ny8 保存场对照 | 仅 y 从 4 格到 8 格；同物理参数、同 x/z 轴、共同 160 个空间子单元 | E/H/scaled-curl 最大相对 L2 差=4.9114215261e-8；9 个界面面片通过检查；官方 R/T/A 的差值在原观察门内 | 离线读保存数组，不启动 PDE/factor | 小模型 y 方向 tested agreement；粗 x/z 以及未冻结 B0 显著模式集合意味着不能宣称原尺寸精度或连续收敛 | [formal compact](records/review_v18_formal_results.json) |
+
+行分块 CSR 是把输出行分段，再只写入该段确实存在的非零项；它解决的是全形状位图会随总行列数平方增长的问题。V18 对原尺寸 support 的计算调用既有可复用计数器，读取完整模式清单和实际小网格校准；只推导结构上界，没有分配目标大矩阵。Ny8 模态侧证把每个通道差值除以该通道 Ny4 振幅，便于发现弱通道的相对变化；分母极小会产生很大的比值，因此同时保留绝对振幅、绝对差和相对单位入射的量。
+
+## Ny4 失败与恢复、Ny8 正负证据
+
+Ny4 原始 worker 的分类为 WORKER_FAILED，不能改写为成功。后续在保存场上的恢复与输出复核是另一项 PASS，其恢复包 SHA 为 df8aadddbb3f2d2a311444e27b01528ac35eefbca0a418d28e518800efa620a7。Ny4 和 Ny8 的 input SHA 不同，因为 y 离散不同；物理配置与派生物理量相同。
+
+完整 532 个 incident amplitude 数组逐位一致，差值 L2=0，归一化量 ||incident_Ny4||₂=1。旧完整 outgoing 向量 L2 差约 3.482e-10。按各自 Ny4 通道振幅归一的最大差 4.766 出现在 bottom (1,2,p) 的弱通道：Ny4 复振幅为 2.7193e-17−1.3605e-16i，Ny8 为 5.9129e-16+2.0897e-16i；振幅大小分别 1.3874e-16 和 6.2713e-16，绝对差 6.6124e-16，按单位入射向量 L2 归一后仍是 6.6124e-16。该值是诊断，不以它判定显著模式门。
+
+B0 review 未冻结显著通道 key 列表和选择规则，因此显著模式 1% 门为 NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET。没有挪用 Gx560 的 V17 11-key 规则，也未事后调阈值。Ny8 代数残差、官方物理输出和 checker 已各自通过，模式门开放状态不覆盖这些结果。
+
+Ny8 q=4 的端口模式数为 0，但 FE q 存在且每 q 有 13,248 个 native rows；它在正式系统中有 4,248 个增广行。零端口不等于 FE q 缺失，q4 零端口非零 FE witness 已通过。因此 mapping 门限和数值源码保持原样。
+
+正式 Ny8 前有六次独立的 `WORKER_FAILED` attempt。每次均绑定自己的 source、manifest 和 run summary；后续八 q 正式成功不覆盖这些历史失败。六条身份和哈希都列在 [V18 run index](records/run_index.json) 与 component compact 中。
+
+## Ny8 因子同时库存与 PC 次数
+
+在 `task40_v12_p6_all_q_live_before_destroy.json` 的同一快照中，八个 q 因子确实同时存活。INFOG19 allocated-upper 按 q 为 `[120,117,117,117,113,117,117,117] MB`（转换后的字节和 `935,000,000 B`）；INFOG22 used-upper 为 `[108,105,105,105,102,105,105,105] MB`（总和 `840,000,000 B`）。INFOG9/20/29 三个字段给出的 factor-entry 向量均为 `[3498592,3344944,3344944,3344944,3131136,3344944,3344944,3344944]`，各自合计 26,699,392。上述 MUMPS 数字是因子字段，不是整个任务的 RSS。all-q-live 时树 RSS 为 `4,869,058,560 B`；watchdog 的独立峰值样本是 `4,869,050,368 B`，相差 `8,192 B`，两份观测按各自时刻保留。
+
+| 成本项 | 原始记录 | 解释 |
+|---|---|---|
+| Reference-PC 调用 | 3 次；每次 initial factor-call counter 增量为 8（32→40→48→56），合计 24；correction calls 为 0 | 进入首次 PC 前的 combined 计数为 32；没有保存细分 startup MatSolve 的独立计数，因此该拆分保持 unknown，不能从最终计数倒推 |
+| PC 用时 | parent=`4.252986487/3.750249322/3.690838304 s`；native-evaluation child=`3.134674321/3.099261057/3.023207492 s` | child 已包含在 parent 区间中，不重复相加 |
+| KSP / 外层 solver | `KSP.solve_only=22.299832042 s`；更宽 outer-solver clock=`25.547952792 s` | 3 次迭代、reason 2；外层时钟不是纯 KSP |
+| E1 sector assembly | 实际路线为 `LEGACY_GLOBAL_CSR_SUM`，没有使用 Ny8 row-tile 路线；twist0/twist1 parent assembly=`380.988/477.395 s` | numeric parent 分别为 `380.708/477.114 s`；contribution/projection/sparse accumulation 子区间分别为 `17.809/87.606/275.255 s` 和 `23.264/95.577/358.227 s`，均已包含在 numeric parent；owner bytes/last-use 未完整记录 |
+
+## E1 资源门的直观解释
+
+E1 的 resource Gate 要在当前已占用内存之上预留下一阶段必须分配的 factor 与恢复对象。四 q INFOG16/17 symbolic estimates 是估算值，不是实际 factor 占用；6,530,000,000 B 的 symbolic reserve 是四个 q 分别加 1 MB 余量。再加入 273,222,720 B pending transform inverse 与 190,897,920 B co-resident phase，未来总 reserve 为 6,994,120,640 B。Gate 时树 RSS=12,268,249,088 B，若继续投影为 19,396,587,456 B，而 dynamic cap 为 13,544,640,512 B，因此安全缺口为 5,851,946,944 B。任务树与 cgroup swap 都为 0，未发生 OOM。WSL 全局 swap 增量不能归到该任务。
+
+E1 inventory 是一个 entries/components 为空的记录文件，SHA-256 2dcc233086e8ec88e27a5b17e8a741cb1281530b8a214bb91307ddd369d097ac。它不是所有权审计，不能因为计数为零就声称没有 live objects；owner/backing/lifecycle 继续标为 unknown。更多资源明细见 [sparse capacity compact](records/review_v18_sparse_capacity.json)。
+
+## 计时、测试与未完成项
+
+Ny8 worker full-workflow monotonic 2474.995817 s、resource-authority elapsed 2474.820380 s、保留 solver clock 25.547953 s 分开报告；前两者不是可相加阶段。主控直接记录的 watchdog 至必需 checker 完成区间是 monotonic 3342.078481 s、UTC 3646.233646 s；它不含 watchdog 前外部 ABI/准备，起点没有记录 boot_id，因此不作为完整冷启动单场时间。完整冷启动关键路径仍 unknown。
+
+E1 的 worker workflow monotonic 5793.324598 s、conservative wall 6318.723885 s 也不是可相加值。全局 swap 为宿主诊断，不归因任务。campaign T0 与 deadline 固定。截至 2026-10-08T23:50:39.464316623Z 的 API snapshot 累计 charge=83552.401742 s、remaining numerical=2247.598258 s；这是历史 as-of 余额。控制端随后报告 2026-10-09T00:06:45Z 剩余 numerical=1866.726285 s、保留 600 s closeout reserve，但没有附带对应 artifact/hash；将其只视为控制端当时的余额快照。两者都没有刷新 T0 或 deadline。
+
+| 测试或检查 | 结果 | 边界 |
+|---|---|---|
+| Qualified C1 ABI preflight | PASS；Python 3.12.13、PETSc complex128/int32、MPICH 5.0.1、MPI1，Task40 runtime_prefix 内模块路径一致 | 只资格化本机轻量检查环境 |
+| 两个 V18 research entrypoint compileall | PASS | 语法编译，不是完整仓库 compileall |
+| P3 全模式清单 support bounds runner | DERIVED_BOUNDS_COMPLETE | 输出见 hash-bound JSON；未建目标 FE/CSR/factor |
+| modal-only saved-array comparison | SAVED_ARRAY_DIAGNOSTIC_COMPLETE；532 modes，incident arrays bitwise equal | 无场积分、PDE、operator、factor 或 KSP |
+| 文档合同测试与 JSON/Markdown 检查 | 文档合同测试在较早草稿得到 29 passed、134 subtests passed；最终 compact/index 更新后没有重跑该测试。当前交付另做 JSON 解析、`git diff --check` 与 whitespace 检查 | 文档测试日志和本轮轻量检查分开记录，均不是数值资格证据；见 [test summary](test_summary.md) 与 [run index](records/run_index.json) |
+| Full repository pytest / MPI4 / Ruff / CI | not_run | 不声称通过 |
+
+## 选择性合并分组与后续
+
+| 依赖组 | V18 内容 | 数值行为是否改变 | 建议与证据 |
+|---|---|---|---|
+| production numerical/core | V18 未修改 production solver；support counter 为既有 reusable module | 否 | 本轮没有新增 production default，旧数值证据仍按各自 source SHA |
+| reusable runner/watchdog | 无新 watchdog 或 production dispatcher | 否 | 不改变 run lifecycle |
+| checker/benchmark | 两个 Task40 V18 research entrypoints：全模式结构界 runner 与保存模态数组离线比较 runner | 不改 PDE 方程；只生成推导/诊断记录 | runner compileall、C1 ABI、P3 v2 output、modal v4 supplement、no-overwrite `PASS_NO_FE`；代码冻结在 `ff8251dbcede1f736a0827fab8ffa8fb58daa9bd` |
+| compact evidence/docs | 四份 V18 compact、response、summary、tests、run index、README 和项目账本 | 否 | 保留正结果、失败、受控停止和 unknown |
+| research-only | Ny8 小模型、E1 资源尝试、目标结构界、y 方向保存场观察 | 不升格 production default | 可以作为小模型/资源证据，不证明原尺寸 |
+| do-not-merge | 任何把 266.989 GB 结构和当作 simultaneous memory、把空 inventory 当零 live owner、或把 2 TB/48 h 宣称通过的结论 | — | 不作通过结论；master 未合并、ordinary default 未变 |
+
+## V18 证据入口
+
+- [Response V18](../response_v18.md)
+- [四份 compact records](records/review_v18_component_closure.json)、[sparse capacity](records/review_v18_sparse_capacity.json)、[formal results](records/review_v18_formal_results.json)、[cost/readiness](records/review_v18_cost_and_readiness.json)
+- [test summary](test_summary.md) 与 [run index](records/run_index.json)
+- [development progress](../../development_progress.md) 与 [model registry](../../development_model_registry.md)
+
+## V17 历史总账
+
 # Task40extra Review V17 结果总账：Gx560 p6 通过，Ny=8 组件部分通过，E1 保持证据未闭合
 
 V17 在既有 0.7 nm 非可分三维 Maxwell 几何上完成了 Gx560 p6 anchor，并补齐了保存局部恢复、两个端口的独立 D 读回、Ny=8 原生映射/RHS 组件及 B0 行分块稀疏构建证据。Gx560 是原尺寸 `50×25×140 nm` 几何按 `7/135` 缩小后的解析模型；冻结输入周期 x/y 为 `2.5925925926/1.2962962963 nm`，z 范围 `[-0.5185185185, 6.7407407407] nm`。因此这次是缩小模型的离散场，不是原尺寸模型的场。Gx560 的完整离散解和官方物理输出通过；Ny=8 的 mapping 与真实 FE 右端项通过，但 maps/action 仍部分资格；原尺寸目标的数值 CSR、因子、完整时间和 2 TB/48 h 能力仍未闭合。

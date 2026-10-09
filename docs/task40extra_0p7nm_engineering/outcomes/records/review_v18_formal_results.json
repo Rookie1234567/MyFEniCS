@@ -1,0 +1,350 @@
+{
+  "schema": "task40extra.review_v18_formal_results.v1",
+  "review": "V18",
+  "classification": "NY8_B0_FULL3D_SOLVE_AND_PHYSICAL_OUTPUT_PASS_WITH_QUALIFICATIONS",
+  "formal_run": {
+    "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z",
+    "source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+    "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+    "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903",
+    "run_manifest_sha256": "c1b6846cbb3e1136660e1efdbaacf814a6e7f42d27aac931070a6ffb4e5ef6bf",
+    "run_summary_sha256": "6aa1894a39a8df053add63cab2e8b81a3f77dd06c92cebdd25edd572eac8104a",
+    "mesh_cells": 160,
+    "mesh_axes": [
+      4,
+      8,
+      5
+    ],
+    "degree": 6,
+    "ordered_modes": 532,
+    "q_rows": [
+      4324,
+      4324,
+      4324,
+      4324,
+      4248,
+      4324,
+      4324,
+      4324
+    ],
+    "q_nnz": [
+      2274106,
+      2284104,
+      2285718,
+      2268512,
+      2203632,
+      2275424,
+      2284778,
+      2283164
+    ]
+  },
+  "numerical_and_physical_results": {
+    "worker_status": "worker_exit0",
+    "official_result": true,
+    "outer_iterations": 3,
+    "A6_true_residual": 1.2189184363208502e-08,
+    "A6_native_witness": 1.218918601504642e-08,
+    "A6_limit": 1e-06,
+    "R": 0.9842736080921147,
+    "T": 0.014240518110484091,
+    "A_balance": 0.001485873797401182,
+    "A_volume_total": 0.0014858738441830876,
+    "A_volume_grating": 0.001418908840712131,
+    "A_volume_substrate": 6.696500347095653e-05,
+    "R00_s": 0.9842411413335236,
+    "R00_p": 8.453238781901373e-06,
+    "R00_total": 0.9842495945723054,
+    "checker": {
+      "status": "PASS",
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_output_checker_frozen_recheck.json",
+      "sha256": "cff08f7d881f9890c7753257e7e49bfcabd6dd2b480194a7dda6d7f80aa7d3ff",
+      "official_output_sha256": "346efa3927fcf7b62f5348716c064921605bf2ba638c82944ac453516eb2c711",
+      "provenance": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_output_checker_frozen_recheck_provenance.json",
+        "sha256": "9bb5145a44e8af04f5233d5c338ea8922b32ac5279692d6451248a3ef836a397",
+        "checker_source_sha": "168a727add276633e20000b718a4aa7eaa5f1e61",
+        "role": "frozen checker provenance; distinguishes it from the byte-identical post-freeze readback alias"
+      },
+      "post_freeze_readback_alias": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_output_checker_recheck.json",
+        "sha256": "cff08f7d881f9890c7753257e7e49bfcabd6dd2b480194a7dda6d7f80aa7d3ff",
+        "role": "post-freeze readback alias; identical bytes, separate provenance role"
+      }
+    }
+  },
+  "ny4_original_failure_and_recovery": {
+    "original_run_id": "task40extra_0p7nm_b0_p6_reference_v15",
+    "original_source_sha": "0201815c6b13f8456e9717ab93cc5023d4c946d1",
+    "original_classification": "WORKER_FAILED",
+    "recovery_source_sha": "40dbe138f53b9a2ee39399eac66dc4b0867a2d50",
+    "recovery_status": "PASS",
+    "recovered_official_packet_sha256": "df8aadddbb3f2d2a311444e27b01528ac35eefbca0a418d28e518800efa620a7",
+    "classification_rule": "The Ny4 original worker failure remains a negative record; later postprocess recovery is reported as a separate PASS and does not rewrite the worker status."
+  },
+  "ny4_ny8_saved_field_common_subcell_comparison": {
+    "status": "PASS_WITHIN_SMALL_MODEL_ENGINEERING_OBSERVATION",
+    "classification": "tested_y_refinement_agreement_not_continuum_convergence",
+    "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_common_subcells.json",
+    "artifact_sha256": "4e5e6d9a643c38afabda6350fb6573885e9244e0a855a3d98d9e0de102f6296c",
+    "shared_physical_sections_and_derived_values": true,
+    "x_and_z_axes_equal": true,
+    "only_refinement_axis": "y: 4 to 8 cells",
+    "common_subcells": 160,
+    "max_E_H_scaled_curl_relative_L2_difference": 4.9114215261280976e-08,
+    "field_and_h_curl_engineering_gate": 0.01,
+    "interfaces_checked": 9,
+    "candidate_interface_face_tiles": 288,
+    "material_interface_face_tiles": 106
+  },
+  "saved_modal_supplement": {
+    "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v4.json",
+    "artifact_sha256": "8a45423765ecaaf353594ef2a0b3bb27834ff733fb8f57345255bc958eea362e",
+    "runner_path": "benchmarks/task40_v18_saved_field_comparison.py",
+    "runner_sha256": "b7c7e4f177a43a2570f171eb4cda9708ccd2e6bfcd56eed699ef6325717cce61",
+    "channels": 532,
+    "incident_arrays_bitwise_equal": true,
+    "incident_max_absolute_and_relative_L2_difference": 0.0,
+    "incident_L2_normalizer": 1.0,
+    "legacy_common_vector_relative_L2_to_ny4_ny8": [
+      3.4820770081820924e-10,
+      3.4820770082972763e-10
+    ],
+    "per_channel_relative_difference_max": 4.7661139626361395,
+    "maximum_relative_channel": [
+      "bottom",
+      1,
+      2,
+      "p"
+    ],
+    "significant_mode_gate": "NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET",
+    "interpretation": "The largest per-channel ratio is a diagnostic on a weak channel; the saved comparison does not assess the 1 percent significant-mode gate.",
+    "prior_sidecars_preserved": [
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v1.json",
+        "sha256": "8f2800dd132c208b54ee32da30cc8cc60176f5db226e523e5d97888ea407e580"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v2.json",
+        "sha256": "8ce265fc8e156e8b9f9fed5c41fede7d9dbfdd85dbf963ac09a69cc74fc37e89"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v3.json",
+        "sha256": "8e265035df87de3cd5878d45784bca6f8987839989e4ff36a2f48e05cf821512"
+      }
+    ],
+    "overwrite_guard": "default output is a new v4 name; existing targets are rejected before reading inputs and exclusive creation prevents overwrite races"
+  },
+  "e1": {
+    "status": "CONTROLLED_STOP_RESOURCE_GATE",
+    "numeric_factorization_started": false,
+    "ksp_started": false,
+    "new_field_or_official_output": false,
+    "note": "See the sparse-capacity record for the quantitative projection and owner-ledger limitation."
+  },
+  "qualification_limits": [
+    "small-model y-refinement agreement does not prove continuum convergence or original-size precision",
+    "Ny4 original worker failure and recovery PASS are distinct outcomes",
+    "B0 significant-mode relative gate is open because no frozen B0 significant-mode set/rule exists",
+    "original-size target 2 TB and 48 h remain NOT_QUALIFIED"
+  ],
+  "branch_identity": {
+    "branch": "task40extra_0p7nm_engineering",
+    "review_v18_start_head": "33614413731d739d2c0f57106df180c359f4343f",
+    "current_local_source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "local_source_commits_after_start": 11,
+    "source_freeze_commit": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "scientific_review_base_sha": "57f20cc66b3de65c696def2b9bf783ddcbfce55e"
+  },
+  "all_q_live_factor_inventory": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v12_p6_all_q_live_before_destroy.json",
+    "sha256": "2607e2cec9314917c6f84c44c31844bbed0a61392a05f50fadeba3c6b513b6ff",
+    "all_q_factors_live": true,
+    "factor_live_count": 8,
+    "q_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "infog19_decimal_mb_by_q": [
+      119,
+      116,
+      116,
+      116,
+      112,
+      116,
+      116,
+      116
+    ],
+    "allocated_upper_bytes_by_q": [
+      120000000,
+      117000000,
+      117000000,
+      117000000,
+      113000000,
+      117000000,
+      117000000,
+      117000000
+    ],
+    "allocated_upper_bytes_sum": 935000000,
+    "infog22_decimal_mb_by_q": [
+      107,
+      104,
+      104,
+      104,
+      101,
+      104,
+      104,
+      104
+    ],
+    "used_upper_bytes_by_q": [
+      108000000,
+      105000000,
+      105000000,
+      105000000,
+      102000000,
+      105000000,
+      105000000,
+      105000000
+    ],
+    "used_upper_bytes_sum": 840000000,
+    "mumps_factor_entries_infog9_by_q": [
+      3498592,
+      3344944,
+      3344944,
+      3344944,
+      3131136,
+      3344944,
+      3344944,
+      3344944
+    ],
+    "mumps_factor_entries_infog9_sum": 26699392,
+    "mumps_factor_entries_infog20_by_q": [
+      3498592,
+      3344944,
+      3344944,
+      3344944,
+      3131136,
+      3344944,
+      3344944,
+      3344944
+    ],
+    "mumps_factor_entries_infog20_sum": 26699392,
+    "mumps_factor_entries_infog29_by_q": [
+      3498592,
+      3344944,
+      3344944,
+      3344944,
+      3131136,
+      3344944,
+      3344944,
+      3344944
+    ],
+    "mumps_factor_entries_infog29_sum": 26699392,
+    "process_tree_rss_snapshot_bytes": 4869058560,
+    "process_tree_rss_snapshot_timestamp_ns": 1791493082347940919,
+    "memory_semantics": "one all-q-live factor inventory snapshot; MUMPS byte values are decimal-MB upper conversions, separate from whole-tree RSS"
+  },
+  "reference_pc_lifecycle": {
+    "candidate_summary_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_p6_candidate_summary.json",
+    "candidate_summary_sha256": "38e49ed5d4abe214ad2984a9dd15c3d5eadab5b64ddc6d0999c86f7be4ba33ec",
+    "events_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/v18_ny8_row_tile_p6_reference_events.jsonl",
+    "events_sha256": "4b1695087254bc32018af7f81d087c14a15f1abe835b543925eb9c498b71074f",
+    "audit_before_detach_pc_calls": 3,
+    "native_evaluation_count_cumulative": 3,
+    "pre_pc_combined_factor_call_counter": 32,
+    "pre_pc_startup_breakdown": "unknown; no independently persisted MatSolve counter split for startup subcomponents",
+    "startup_regular_inverse_gate": {
+      "status": "PASS",
+      "case_count": 4,
+      "cases": [
+        "generic_full_independent",
+        "interior_only_all_72000",
+        "nonzero_all_mode_port_rhs",
+        "physical_regular_incident_rhs"
+      ],
+      "each_case_q_residual_rows": 8,
+      "all_q_covered": true,
+      "q_residual_rows_are_not_substituted_for_an_unrecorded_startup_mat_solve_counter": true
+    },
+    "per_pc_call": [
+      {
+        "call": 1,
+        "initial_factor_calls_before": 32,
+        "initial_factor_calls_after": 40,
+        "initial_mat_solve_delta": 8,
+        "correction_factor_calls": null,
+        "parent_seconds": 4.252986487,
+        "native_evaluation_child_seconds": 3.1346743209287524
+      },
+      {
+        "call": 2,
+        "initial_factor_calls_before": 40,
+        "initial_factor_calls_after": 48,
+        "initial_mat_solve_delta": 8,
+        "correction_factor_calls": null,
+        "parent_seconds": 3.750249322,
+        "native_evaluation_child_seconds": 3.099261057097465
+      },
+      {
+        "call": 3,
+        "initial_factor_calls_before": 48,
+        "initial_factor_calls_after": 56,
+        "initial_mat_solve_delta": 8,
+        "correction_factor_calls": null,
+        "parent_seconds": 3.690838304,
+        "native_evaluation_child_seconds": 3.023207491962239
+      }
+    ],
+    "initial_mat_solve_delta_sum": 24,
+    "correction_mat_solve_count": 0,
+    "final_cumulative_factor_call_counter": 56,
+    "timing_scope": "native-evaluation child seconds are included inside each PC parent interval; do not add parent and child",
+    "ksp_solve_phase_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/ksp_solve_phase.jsonl",
+    "ksp_solve_phase_sha256": "c83dee6d7a42e07771bf1ef9f3f8ce2027e33c821aff72996c4689851c143dc2",
+    "petsc_ksp_solve_only_seconds": 22.299832042,
+    "ksp_converged_reason": 2,
+    "ksp_iteration_count": 3,
+    "outer_pc_apply_count": 3,
+    "outer_matvec_count": 3,
+    "explicit_action_count": 2,
+    "outer_solver_clock_seconds": 25.547952792,
+    "outer_solver_clock_is_not_pure_ksp": true
+  },
+  "watchdog_tree_peak": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/watchdog/resources.jsonl",
+    "sha256": "7fe52f33e126528316e9d75931a994105da04f8a6ac5b21d50ed18e516bcc497",
+    "line": 9603,
+    "timestamp_ns": 1791493082343162958,
+    "stage": "workflow",
+    "process_tree_rss_bytes": 4869050368,
+    "member_pids": [
+      2074703,
+      2074733,
+      2074734,
+      2074735
+    ],
+    "member_start_ticks": [
+      105314198,
+      105314236,
+      105314237,
+      105314237
+    ],
+    "member_rss_bytes": [
+      42061824,
+      5574656,
+      6545408,
+      4814868480
+    ],
+    "task_swap_bytes": 0,
+    "pss_status": "DISABLED_BY_PROFILE",
+    "semantics": "watchdog sampled tree peak; 8192 B differs from the all-q-live inventory's simultaneous snapshot",
+    "worker_phase": "solve",
+    "active_pc": null
+  }
+}

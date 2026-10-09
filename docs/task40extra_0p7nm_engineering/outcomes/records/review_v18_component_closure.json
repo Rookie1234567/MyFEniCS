@@ -1,0 +1,178 @@
+{
+  "schema": "task40extra.review_v18_component_closure.v1",
+  "review": "V18",
+  "classification": "NY8_COMPLETE_REFERENCE_OPERATOR_AND_FORMAL_SOLVE_PASS_WITH_QUALIFICATIONS",
+  "ny8_formal_run": {
+    "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z",
+    "source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+    "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+    "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903",
+    "p6_rows": 110406,
+    "ordered_modes": 532,
+    "ny": 8,
+    "global_q": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "mapping_identity_limit": 1E-12,
+    "maximum_mapping_identity_relative": 2.929458332060444E-15,
+    "mapping_covers_all_independent_rows": true
+  },
+  "q4_zero_port_semantics": {
+    "port_counts_by_global_q": [
+      76,
+      76,
+      76,
+      76,
+      0,
+      76,
+      76,
+      76
+    ],
+    "q4_port_rows": 0,
+    "q4_fe_sector_present": true,
+    "q4_native_rows_per_q": 13248,
+    "q4_zero_port_nonzero_fe_witness_passed": true,
+    "mapping_gate_changed": false,
+    "interpretation": "q4 has an FE sector with no port channels; zero port count does not mean the FE q is missing."
+  },
+  "complete_operator_qualification": {
+    "status": "PASS",
+    "reuse_status": "REUSED_AFTER_FRESH_Q_HASH_AND_INDEPENDENT_CHECKER_PASS",
+    "all_eight_fresh_q_hashes_match": true,
+    "complete_q_block_count": 64,
+    "offdiagonal_block_count": 56,
+    "independent_schur_q_count": 8,
+    "maximum_offdiagonal_relative_recomputed": 8.295647911548953E-16,
+    "maximum_independent_schur_relative_recomputed": 1.2566990957931308E-14,
+    "nonhermitian_complex_material_witness_passed": true,
+    "global_phase_witness_passed": true,
+    "checker_reapplied_numeric_operator": false,
+    "operator_reuse_receipt": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny8_operator_reuse_receipt.json",
+      "sha256": "2152ea90d4c43286d15c319a050d657123fd6d9139bddb1f376ef0718664474d"
+    },
+    "complete_operator_qualification_sha256": "d6f00c023c4f7664bba5138a45df2ca8c959da184f5af4bece96f34da1850b9a"
+  },
+  "preserved_earlier_failure": {
+    "run_root": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T153814.856800Z",
+    "source_sha": "b9dbe54403849807bec14c634fb358ab7d318092",
+    "classification": "WORKER_FAILED",
+    "exit_status": 4,
+    "error_type": "ValueError",
+    "error_message": "V15 candidate budget must contain both twist-sector lift terms",
+    "recovery": "The failed attempt remains recorded; a later frozen source completed fresh q-hash validation and independent operator checking."
+  },
+  "independent_output_checker": {
+    "status": "PASS",
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_output_checker_frozen_recheck.json",
+    "sha256": "cff08f7d881f9890c7753257e7e49bfcabd6dd2b480194a7dda6d7f80aa7d3ff",
+    "checker_reapplied_operator": false,
+    "provenance": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_output_checker_frozen_recheck_provenance.json",
+      "sha256": "9bb5145a44e8af04f5233d5c338ea8922b32ac5279692d6451248a3ef836a397",
+      "checker_source_sha": "168a727add276633e20000b718a4aa7eaa5f1e61"
+    },
+    "post_freeze_readback_alias": {
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z/task40_v10_output_checker_recheck.json",
+      "sha256": "cff08f7d881f9890c7753257e7e49bfcabd6dd2b480194a7dda6d7f80aa7d3ff",
+      "role": "byte-identical post-freeze readback; separate from frozen checker provenance"
+    }
+  },
+  "prior_v17_component_record_preserved": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v17_component_closure.json",
+    "ny8_maps_action_classification": "WORKER_FAILED",
+    "ny8_raw_classification": "PARTIAL_COMPONENT",
+    "note": "The V17 record remains unchanged as history; V18 fresh operator and full-run evidence are additive."
+  },
+  "not_qualified_by_this_record": [
+    "original-size target FE/CSR/factor or PDE",
+    "continuum convergence",
+    "B0 significant-mode precision gate; no frozen B0 mode-key set and selection rule exist"
+  ],
+  "branch_identity": {
+    "branch": "task40extra_0p7nm_engineering",
+    "review_v18_start_head": "33614413731d739d2c0f57106df180c359f4343f",
+    "current_source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "source_commits_after_start": 11,
+    "source_freeze_commit": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+    "production_numerical_source_changed": false
+  },
+  "preserved_ny8_worker_failures": [
+    {
+      "attempt": 1,
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+      "stage": "V18_NY8_FORMAL_ATTEMPT",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T094422.433891Z",
+      "source_sha": "4da30b9981fee6d552258b1a6e9c6cd344eb225a",
+      "status": "WORKER_FAILED",
+      "official_result": false,
+      "run_manifest_sha256": "2288a6a0fd8db1f2c3d9bc424a9f85dc6211d4957ea02f1f81ed2750854189ac",
+      "run_summary_sha256": "47f0415149d8d6146073222e1983b8797f4d9618dcb1fd54afffbddf3b1ed985"
+    },
+    {
+      "attempt": 2,
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+      "stage": "V18_NY8_FORMAL_ATTEMPT",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T110706.323690Z",
+      "source_sha": "aafa3efae3402b94cbd86dc603a7f0d7005b3e3c",
+      "status": "WORKER_FAILED",
+      "official_result": false,
+      "run_manifest_sha256": "e9da11ad10e18488a5050f9a52d399ccf7e3f3b940b321bfe35c82ace83af4d8",
+      "run_summary_sha256": "f09ec106a411182e63fda17e35e378c07ba2880b18c485ad4fa81bec7bc55e5a"
+    },
+    {
+      "attempt": 3,
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+      "stage": "V18_NY8_FORMAL_ATTEMPT",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T132911.470626Z",
+      "source_sha": "abc2ce2b77336aaaf7c28eeae3e49a8f4bb9f155",
+      "status": "WORKER_FAILED",
+      "official_result": false,
+      "run_manifest_sha256": "16897f2444d94c44ab95a2f3c6c3c923f5e6b45183250594a517066d8be48eb1",
+      "run_summary_sha256": "83d6ec681bd218c9aec24c2c0426001ba3d9eefd28e3e6fd01d2545f3c6d0cf6"
+    },
+    {
+      "attempt": 4,
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+      "stage": "V18_NY8_FORMAL_ATTEMPT",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T153814.856800Z",
+      "source_sha": "b9dbe54403849807bec14c634fb358ab7d318092",
+      "status": "WORKER_FAILED",
+      "official_result": false,
+      "exit_status": 4,
+      "failure": "V15 candidate budget must contain both twist-sector lift terms",
+      "run_manifest_sha256": "a310c488779f54848fb7af40d4a7fef84fbf7f4dbbf3c96fbeade0a6d408ff51",
+      "run_summary_sha256": "8e6933ae551d05b77e506fb005d5b2186c0c8b401481be739c1f2cf67c65b1de"
+    },
+    {
+      "attempt": 5,
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+      "stage": "V18_NY8_FORMAL_ATTEMPT",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T182923.341353Z",
+      "source_sha": "c411a4b39a912f19230ec02bfdb13bd37d931c06",
+      "status": "WORKER_FAILED",
+      "official_result": false,
+      "run_manifest_sha256": "e96b90915f454ec1f43de35f4dc7ee15d4d7dc6e77535237bcdc8bca2d0b98ba",
+      "run_summary_sha256": "6785adc30f6e2f8e6a7b9f6964457217a8339781a16e5094c7ba7253f1d5fd79"
+    },
+    {
+      "attempt": 6,
+      "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+      "stage": "V18_NY8_FORMAL_ATTEMPT",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T185827.588651Z",
+      "source_sha": "92144361cdd1266c742e1c41364d1d7825227757",
+      "status": "WORKER_FAILED",
+      "official_result": false,
+      "run_manifest_sha256": "eb53306f53b28340494691536139744f401fcbee6bcee83b502acb847b794021",
+      "run_summary_sha256": "d52aca1c00c42ca4498bce34d800c099bcc561264a5ff0dac22b99b6445710bd"
+    }
+  ]
+}

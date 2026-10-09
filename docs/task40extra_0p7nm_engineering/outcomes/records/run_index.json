@@ -3617,5 +3617,462 @@
       "master_merge": false,
       "ordinary_solver_default_changed": false
     }
+  },
+  "review_v18_evidence_index": {
+    "schema": "task40extra.review_v18_evidence_index.v1",
+    "branch_identity": {
+      "branch": "task40extra_0p7nm_engineering",
+      "review_start_head": "33614413731d739d2c0f57106df180c359f4343f",
+      "current_source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+      "source_commits_after_start": 11,
+      "source_freeze_commit": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+      "production_numerical_source_changed": false,
+      "closeout_documentation_committed": false,
+      "closeout_pushed": false
+    },
+    "compact_records": {
+      "component_closure": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v18_component_closure.json",
+        "sha256": "263bafa4ee11f0a5f0463340d2c6e477cc82e298d2dd91e58a49bbd1d50f1435"
+      },
+      "sparse_capacity": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v18_sparse_capacity.json",
+        "sha256": "455737533590bee30f7aad9dae1d8f527cbfe62e1f065965f82d320588684dc0"
+      },
+      "formal_results": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v18_formal_results.json",
+        "sha256": "e574bbee960c46ea406af9ec7d7de283d514cf650797fe41d9081d30261f3693"
+      },
+      "cost_and_readiness": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v18_cost_and_readiness.json",
+        "sha256": "9ef0d134f85b2f2c6a75a29fcfdf6838728b408f3ac00f737d0d91e35ff16028"
+      }
+    },
+    "documentation": {
+      "task_readme": {
+        "path": "docs/task40extra_0p7nm_engineering/README.md",
+        "sha256": "5139c8bd5839740f3b4f49320bdb43c0fdbe2401276ca6897014032fdf618bfa"
+      },
+      "response_v18": {
+        "path": "docs/task40extra_0p7nm_engineering/response_v18.md",
+        "sha256": "8c10b34b10789eec7c35ea54360b9249a1a27a80c21559a0a26f82ab75b1130a"
+      },
+      "outcomes_summary": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+        "sha256": "c4a7d82b3bb53f4cf8dbde4e945ea7dfb32dc58de540dfe5a24e5daeb963f6be"
+      },
+      "test_summary": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/test_summary.md",
+        "sha256": "1fd58a9885fa904db4e407e06877493300d062e1f38db5e0dc5284e4d34b2367"
+      },
+      "development_model_registry": {
+        "path": "docs/development_model_registry.md",
+        "sha256": "63120519ea09dc689ff3ff4515c1212eb382de24bb08ec214ccd38321211704d"
+      },
+      "development_progress": {
+        "path": "docs/development_progress.md",
+        "sha256": "191f6779c62e77461fd643865fd3769d0298b558d8e48934278fdb2a0324ca14"
+      }
+    },
+    "ny8_attempts": [
+      {
+        "attempt": 1,
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T094422.433891Z",
+        "source_sha": "4da30b9981fee6d552258b1a6e9c6cd344eb225a",
+        "status": "WORKER_FAILED",
+        "official_result": false,
+        "run_manifest_sha256": "2288a6a0fd8db1f2c3d9bc424a9f85dc6211d4957ea02f1f81ed2750854189ac",
+        "run_summary_sha256": "47f0415149d8d6146073222e1983b8797f4d9618dcb1fd54afffbddf3b1ed985",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903"
+      },
+      {
+        "attempt": 2,
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T110706.323690Z",
+        "source_sha": "aafa3efae3402b94cbd86dc603a7f0d7005b3e3c",
+        "status": "WORKER_FAILED",
+        "official_result": false,
+        "run_manifest_sha256": "e9da11ad10e18488a5050f9a52d399ccf7e3f3b940b321bfe35c82ace83af4d8",
+        "run_summary_sha256": "f09ec106a411182e63fda17e35e378c07ba2880b18c485ad4fa81bec7bc55e5a",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903"
+      },
+      {
+        "attempt": 3,
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T132911.470626Z",
+        "source_sha": "abc2ce2b77336aaaf7c28eeae3e49a8f4bb9f155",
+        "status": "WORKER_FAILED",
+        "official_result": false,
+        "run_manifest_sha256": "16897f2444d94c44ab95a2f3c6c3c923f5e6b45183250594a517066d8be48eb1",
+        "run_summary_sha256": "83d6ec681bd218c9aec24c2c0426001ba3d9eefd28e3e6fd01d2545f3c6d0cf6",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903"
+      },
+      {
+        "attempt": 4,
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T153814.856800Z",
+        "source_sha": "b9dbe54403849807bec14c634fb358ab7d318092",
+        "status": "WORKER_FAILED",
+        "official_result": false,
+        "exit_status": 4,
+        "failure": "V15 candidate budget must contain both twist-sector lift terms",
+        "run_manifest_sha256": "a310c488779f54848fb7af40d4a7fef84fbf7f4dbbf3c96fbeade0a6d408ff51",
+        "run_summary_sha256": "8e6933ae551d05b77e506fb005d5b2186c0c8b401481be739c1f2cf67c65b1de",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903"
+      },
+      {
+        "attempt": 5,
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T182923.341353Z",
+        "source_sha": "c411a4b39a912f19230ec02bfdb13bd37d931c06",
+        "status": "WORKER_FAILED",
+        "official_result": false,
+        "run_manifest_sha256": "e96b90915f454ec1f43de35f4dc7ee15d4d7dc6e77535237bcdc8bca2d0b98ba",
+        "run_summary_sha256": "6785adc30f6e2f8e6a7b9f6964457217a8339781a16e5094c7ba7253f1d5fd79",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903"
+      },
+      {
+        "attempt": 6,
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T185827.588651Z",
+        "source_sha": "92144361cdd1266c742e1c41364d1d7825227757",
+        "status": "WORKER_FAILED",
+        "official_result": false,
+        "run_manifest_sha256": "eb53306f53b28340494691536139744f401fcbee6bcee83b502acb847b794021",
+        "run_summary_sha256": "d52aca1c00c42ca4498bce34d800c099bcc561264a5ff0dac22b99b6445710bd",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903"
+      },
+      {
+        "run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+        "stage": "V18_NY8_FORMAL_ATTEMPT",
+        "attempt": 7,
+        "kind": "formal_worker",
+        "source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+        "input_sha256": "33038a200ca89040b2cff446e32f5bdcb98acdebc54acbacf4fbc08ec2210017",
+        "physical_model_sha256": "e8002d20258fa5c1e4f8f0888bca68f621b1006492f3f1b8aaff6b0d82099903",
+        "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_b0_p6_reference_v18_ny8__full3d_iterative__mpi1__Mna/20261008T201318.267171Z",
+        "status": "PASS",
+        "worker_exit_status": 0,
+        "official_result": true,
+        "run_manifest_sha256": "c1b6846cbb3e1136660e1efdbaacf814a6e7f42d27aac931070a6ffb4e5ef6bf",
+        "run_summary_sha256": "6aa1894a39a8df053add63cab2e8b81a3f77dd06c92cebdd25edd572eac8104a",
+        "a6_true_residual": 1.2189184363208502e-08,
+        "native_witness_residual": 1.218918601504642e-08,
+        "iterations": 3,
+        "rta": {
+          "R": 0.9842736080921147,
+          "T": 0.014240518110484091,
+          "A_balance": 0.001485873797401182,
+          "A_volume": 0.0014858738441830876,
+          "R00_s": 0.9842411413335236,
+          "R00_p": 8.453238781901373e-06,
+          "R00_total": 0.9842495945723054
+        },
+        "q_rows": [
+          4324,
+          4324,
+          4324,
+          4324,
+          4248,
+          4324,
+          4324,
+          4324
+        ],
+        "q_nnz": [
+          2274106,
+          2284104,
+          2285718,
+          2268512,
+          2203632,
+          2275424,
+          2284778,
+          2283164
+        ],
+        "independent_checker_sha256": "cff08f7d881f9890c7753257e7e49bfcabd6dd2b480194a7dda6d7f80aa7d3ff",
+        "official_output_sha256": "346efa3927fcf7b62f5348716c064921605bf2ba638c82944ac453516eb2c711"
+      }
+    ],
+    "e1_resource_stop": {
+      "run_id": "task40extra_0p7nm_nonseparable_e1_p6_reference_v15",
+      "stage": "V18_E1_RESOURCE_GATE",
+      "attempt": 1,
+      "kind": "formal_worker",
+      "source_sha": "168a727add276633e20000b718a4aa7eaa5f1e61",
+      "input_sha256": "17f8434b396ae6bfb4a87ae802fbbc4c92edd1b7d6cb86b32ffcb7e02896f4ee",
+      "physical_model_sha256": "6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z",
+      "status": "CONTROLLED_STOP_RESOURCE_GATE",
+      "official_result": false,
+      "symbolic_q_completed": 4,
+      "numeric_started": false,
+      "ksp_started": false,
+      "new_field_obtained": false,
+      "run_summary_sha256": "43efe97f55b3351a5ec02d4c69627eca437f6d57234d324b1abe7a23962a0a5d",
+      "event_ledger": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/v15_p6_reference_events.jsonl",
+        "sha256": "fc67144b6b1f1c1831a2b95ddb6914645b985afa75dc434112cd78dfebb53647"
+      },
+      "watchdog_resources": {
+        "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_p6_reference_v15__full3d_iterative__mpi1__Mna/20261008T211655.147839Z/watchdog/resources.jsonl",
+        "sha256": "02569d61742b49522967152f4ce2d61ec5a07cecf1d9d3edc5d45c2af39410df"
+      },
+      "classification": "resource-controlled stop after four-q symbolic; no numeric factor, KSP, new field, or official R/T/A",
+      "run_manifest_sha256": "4d41531dbd2120a2d2ffd359fa5d57ab71c57ceca7473b4f5757f1e9fb2fef66"
+    },
+    "source_freeze_chain": [
+      {
+        "source_sha": "4da30b9981fee6d552258b1a6e9c6cd344eb225a",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_source_freeze.json",
+        "receipt_sha256": "e13d5732d42ee812e90248e70448cf01f0977d5b241be01c0fa733d911dd9e00",
+        "targeted_result": "120 passed, 2 skipped; compileall/diff pass"
+      },
+      {
+        "source_sha": "aafa3efae3402b94cbd86dc603a7f0d7005b3e3c",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_preallocation_fix_source_freeze.json",
+        "receipt_sha256": "4b25c703d1b25876e3f7e41c7ddd63119e502289b0531c1882748e58f31d8ee3",
+        "targeted_result": "5 passed; compileall/diff pass"
+      },
+      {
+        "source_sha": "abc2ce2b77336aaaf7c28eeae3e49a8f4bb9f155",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_lifecycle_source_freeze.json",
+        "receipt_sha256": "1b8cb576fda3743a5ff74cdff47fcd472ca8e61d5bdef1bcceacd1dbb9ad841a",
+        "targeted_result": "21 passed; compileall/diff pass"
+      },
+      {
+        "source_sha": "b9dbe54403849807bec14c634fb358ab7d318092",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_augmented_sign_source_freeze.json",
+        "receipt_sha256": "16de216ecb00086168bc84781a636bf13181461bd92f31ec295b51b0ca0e2364",
+        "targeted_result": "22 passed; compileall/diff pass"
+      },
+      {
+        "source_sha": "b8d2ae5c7a4eb58be3be9ac3c006b49b0e53992f",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_budget_and_qualified_reuse_source_freeze.json",
+        "receipt_sha256": "f5287e2495a070e527179055f4da9772e6e04bbea6d35ec89511a91d70be7a78",
+        "targeted_result": "66 passed; compileall/diff pass"
+      },
+      {
+        "source_sha": "c411a4b39a912f19230ec02bfdb13bd37d931c06",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_startup_q_count_source_freeze.json",
+        "receipt_sha256": "c4b2e64623fe3ebb5a1ea2107d713cc0a8b32c8f0f1ec5251226ad3022a5c6b0",
+        "targeted_result": "66 passed; compileall/diff pass"
+      },
+      {
+        "source_sha": "92144361cdd1266c742e1c41364d1d7825227757",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_import_scope_source_freeze.json",
+        "receipt_sha256": "37ee1550af4fdff407b94855559066a191583818c6e8dae0a23a6709b542374b",
+        "targeted_result": "66 related passed; entrypoint 1 passed; compileall/diff pass"
+      },
+      {
+        "source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_ny8_K4_normalization_source_freeze.json",
+        "receipt_sha256": "f7af5c45e7e294cbecf8f016fabc0267c775658a5b14ff8bed3e08c1eb46aa19",
+        "targeted_result": "C1 related 116 passed/1 skipped; executor targeted 56 passed/1 skipped; compileall/diff pass"
+      },
+      {
+        "source_sha": "168a727add276633e20000b718a4aa7eaa5f1e61",
+        "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_checker_binding_source_freeze.json",
+        "receipt_sha256": "af8ea7e1edf3e15579b0542588feec62da59e96b970f260a3db8d14172258f2f",
+        "test_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_checker_identity_final_tests.log",
+        "test_log_sha256": "789bb14106dbaa237bc046777b955299e235901174eb4d81f6c72fc979cd0628",
+        "targeted_result": "34 passed; compileall/diff pass"
+      }
+    ],
+    "research_entrypoints": [
+      {
+        "path": "benchmarks/task40_v18_p6_support_bounds.py",
+        "source_sha256": "13eb5b50d1c003ae174d9d97db7c25a0d78d7e6e650f408bc591b78fd86f88ab",
+        "output_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_p3_full_manifest_ny4_ny8_bounds_tracked_runner_v2.json",
+        "output_sha256": "b8af3fc45488b1927cab63be9f9d39116680cc29b665ec5d5633f16c7c0d72c6",
+        "status": "DERIVED_BOUNDS_COMPLETE",
+        "no_overwrite": "C1 checked; existing output rejected and old bytes unchanged"
+      },
+      {
+        "path": "benchmarks/task40_v18_saved_field_comparison.py",
+        "source_sha256": "b7c7e4f177a43a2570f171eb4cda9708ccd2e6bfcd56eed699ef6325717cce61",
+        "output_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v4.json",
+        "output_sha256": "8a45423765ecaaf353594ef2a0b3bb27834ff733fb8f57345255bc958eea362e",
+        "status": "SAVED_ARRAY_DIAGNOSTIC_COMPLETE",
+        "no_overwrite": "C1 checked; existing output rejected and old bytes unchanged",
+        "significant_mode_gate": "NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET"
+      }
+    ],
+    "validation": {
+      "entrypoint_guard_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_research_entrypoint_guard_checks.json",
+      "entrypoint_guard_receipt_sha256": "385f7484ae4b9bd439bdb29c4ad92bbc705381294f8affdcec2c60b171b6d3c6",
+      "entrypoint_guard_status": "PASS_NO_FE",
+      "entrypoint_guard_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_modal_no_overwrite_guard.log",
+      "entrypoint_guard_log_sha256": "df547b9fd06af53a9ae20f16411b2fb73c093ff33f5b5fb6d93fda2dc93aa02d",
+      "research_entrypoint_compileall": {
+        "status": "PASS",
+        "source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+        "files": [
+          "benchmarks/task40_v18_p6_support_bounds.py",
+          "benchmarks/task40_v18_saved_field_comparison.py"
+        ],
+        "log_sha256": null,
+        "provenance": "controller reported final compileall passed; standalone log hash not supplied"
+      },
+      "documentation_contract_suite_prior_draft": {
+        "status": "29 passed, 134 subtests passed",
+        "source_head": "unknown",
+        "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_doc_closeout_pytest_attempt01.log",
+        "log_sha256": "385d889685e7f766b5cc81a77f2cd922f562b7c5217ed748c279c44f42eb8f35",
+        "rerun_after_final_compact_and_index_edits": false
+      },
+      "full_repository_pytest": "not_run",
+      "mpi4": "not_run",
+      "ruff": "not_run",
+      "ci": "not_run"
+    },
+    "campaign_window": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/campaign_window_v17.json",
+      "sha256": "83f47e542dc28309d398a55c6b7e1b1ca76dab25dead854d88cc6feb6758ed24",
+      "t0_utc": "2026-10-08T00:38:07.073088478Z",
+      "deadline_utc": "2026-10-09T00:38:07.073088478Z",
+      "closeout_reserve_seconds": 600,
+      "refreshed": false,
+      "v18_observation_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_campaign_closeout_observation_v18.json",
+      "v18_observation_sha256": "712ae4961e2dc0013f29bb63f05b0bf7fed163f4a1ca72436d217381245a7391",
+      "v18_observation_remaining_seconds": 2247.598257907259,
+      "latest_controller_as_of_utc": "2026-10-09T00:06:45Z",
+      "latest_controller_remaining_seconds": 1866.7262854732544,
+      "latest_observation_hash": "not supplied; controller-provided as-of only"
+    },
+    "final_checks": {
+      "jq_json_parse": "PASS",
+      "git_diff_check": "PASS",
+      "whitespace_scan": "PASS",
+      "indexed_doc_and_compact_hashes": "PASS"
+    },
+    "closeout": {
+      "documentation_only": true,
+      "source_freeze_commit": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+      "mapping_gate_changed": false,
+      "numerical_source_changed": false,
+      "no_commit_or_push_by_executor": true
+    },
+    "research_analysis_runs": [
+      {
+        "run_id": "task40extra_review_v18_p3_full_manifest_ny4_ny8",
+        "stage": "V18_P3_STRUCTURAL_BOUNDS",
+        "attempt": 2,
+        "kind": "derived_bounds_analysis",
+        "source_sha256": "13eb5b50d1c003ae174d9d97db7c25a0d78d7e6e650f408bc591b78fd86f88ab",
+        "status": "DERIVED_BOUNDS_COMPLETE",
+        "official_result": false,
+        "output_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_p3_full_manifest_ny4_ny8_bounds_tracked_runner_v2.json",
+        "output_sha256": "b8af3fc45488b1927cab63be9f9d39116680cc29b665ec5d5633f16c7c0d72c6",
+        "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_p3_bounds_v2_generation.log",
+        "log_sha256": "9281de7bf23c53b803e8bbfae4f7b4717901b7378b5fedb3c414c414a935b932",
+        "target_fe_csr_factor_or_pde_built": false
+      },
+      {
+        "run_id": "task40extra_review_v18_saved_modal_arrays_v4",
+        "stage": "V18_SAVED_FIELD_MODAL_DIAGNOSTIC",
+        "attempt": 1,
+        "kind": "saved_array_analysis",
+        "source_sha256": "b7c7e4f177a43a2570f171eb4cda9708ccd2e6bfcd56eed699ef6325717cce61",
+        "status": "SAVED_ARRAY_DIAGNOSTIC_COMPLETE",
+        "official_result": false,
+        "output_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v4.json",
+        "output_sha256": "8a45423765ecaaf353594ef2a0b3bb27834ff733fb8f57345255bc958eea362e",
+        "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_modal_v4_generation_attempt02.log",
+        "log_sha256": "593c68fbeeb37d6c3e93dd6f9120a3716ef1765f13a4389e6464f85c51fcfed5",
+        "channels": 532,
+        "incident_arrays_bitwise_equal": true,
+        "significant_mode_gate": "NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET",
+        "prior_sidecars_preserved": [
+          {
+            "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v1.json",
+            "sha256": "8f2800dd132c208b54ee32da30cc8cc60176f5db226e523e5d97888ea407e580"
+          },
+          {
+            "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v2.json",
+            "sha256": "8ce265fc8e156e8b9f9fed5c41fede7d9dbfdd85dbf963ac09a69cc74fc37e89"
+          },
+          {
+            "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_ny4_ny8_saved_field_modes_supplement_v3.json",
+            "sha256": "8e265035df87de3cd5878d45784bca6f8987839989e4ff36a2f48e05cf821512"
+          }
+        ]
+      }
+    ],
+    "output_guard_run": {
+      "run_id": "task40extra_review_v18_entrypoint_overwrite_guard",
+      "stage": "V18_RESEARCH_ENTRYPOINT_OUTPUT_GUARD",
+      "attempt": 1,
+      "kind": "targeted_safety_check",
+      "source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+      "status": "PASS_NO_FE",
+      "official_result": false,
+      "receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_research_entrypoint_guard_checks.json",
+      "receipt_sha256": "385f7484ae4b9bd439bdb29c4ad92bbc705381294f8affdcec2c60b171b6d3c6",
+      "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_modal_no_overwrite_guard.log",
+      "log_sha256": "df547b9fd06af53a9ae20f16411b2fb73c093ff33f5b5fb6d93fda2dc93aa02d",
+      "checks": [
+        "support-bounds runner rejects existing output; prior bytes unchanged",
+        "saved-modal runner rejects existing output; prior bytes unchanged"
+      ],
+      "pde_or_operator_started": false
+    },
+    "compileall_run": {
+      "run_id": "task40extra_review_v18_research_entrypoint_compileall",
+      "stage": "V18_RESEARCH_ENTRYPOINT_COMPILEALL",
+      "attempt": 1,
+      "kind": "static_compile_check",
+      "source_head": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+      "status": "PASS",
+      "official_result": false,
+      "files": [
+        "benchmarks/task40_v18_p6_support_bounds.py",
+        "benchmarks/task40_v18_saved_field_comparison.py"
+      ],
+      "compileall_log_sha256": null,
+      "evidence_note": "controller supplied that final compileall of both frozen entrypoints passed; no separate log hash was supplied"
+    },
+    "documentation_test_run": {
+      "run_id": "task40extra_review_v18_documentation_contract_tests_prior_draft",
+      "stage": "V18_DOCUMENTATION_CONTRACT_SUITE_PRIOR_DRAFT",
+      "attempt": 1,
+      "kind": "documentation_contract_suite",
+      "source_head": "unknown",
+      "status": "PASS_PRIOR_DRAFT_ONLY",
+      "official_result": false,
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "passed": 29,
+      "subtests_passed": 134,
+      "pytest_reported_seconds": 0.24,
+      "log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_doc_closeout_pytest_attempt01.log",
+      "log_sha256": "385d889685e7f766b5cc81a77f2cd922f562b7c5217ed748c279c44f42eb8f35",
+      "rerun_after_final_compact_and_index_edits": false,
+      "scope": "local documentation/model-registry/retrospective contracts only; no FE/PDE"
+    },
+    "main_final_audit": {
+      "observation": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_review_v18_final_closeout_observation.json",
+        "sha256": "426bf1428279704e5576400899ec9fa476c02a7861041f3b3ebe8d4de11cafff"
+      },
+      "tests": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_final_docs_and_counter_tests.log",
+        "sha256": "f9425bada13234e51394abbcdb4f5e4ed26f49c7169430a983a73941e81627b1",
+        "source_freeze_sha": "ff8251dbcede1f736a0827fab8ffa8fb58daa9bd",
+        "passed": 36,
+        "subtests_passed": 134,
+        "scope": "documentation and p6 support counter; no FE/PDE"
+      }
+    }
   }
 }

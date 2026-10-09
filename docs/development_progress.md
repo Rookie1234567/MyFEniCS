@@ -1,3 +1,24 @@
+# Task40extra Review V18 项目进展：Ny=8 小模型完整求解通过，E1 资源停止，原尺寸目标未资格化
+
+Review V18 在固定 campaign 窗口中完成了 Ny=8 B0 p6 小模型的完整八 q 参考算子、正式 Full3D 解和独立官方输出检查。此处的 Ny=8 是沿 y 方向使用八层网格；结果只说明这个小模型的离散方程和物理输出通过，不代表原尺寸精度或连续极限。E1 在四个 q 的 symbolic 阶段后，被当前可用内存 Gate 受控停止。
+
+| 对象 | 当前证据 | 状态与边界 |
+|---|---|---|
+| Ny=8 B0 p6 | 160 cells、532 modes、8 q；A6=1.2189184e-8；R/T/A_balance/A_volume=0.9842736081/0.0142405181/0.0014858738/0.0014858738；独立 checker PASS | 小模型正式解通过，source 3b9457e57ceb15f21306a35baac07f42036840b1 |
+| q=4 | 端口模式为 0；FE 子空间有 13,248 个 native 行，零端口非零 FE witness PASS | 不是缺失 q；不放宽 mapping gate |
+| E1 | 四 q symbolic 完成；投影 19.397 GB，dynamic cap 13.545 GB，缺口 5.852 GB；未开始 numeric/KSP | CONTROLLED_STOP_RESOURCE_GATE，不是数值失败或 OOM |
+| 原尺寸 Ny4/Ny8 support | 32,060 ordered modes；Ny4 四 q payload 上界 142.503 GB，Ny8 八 q payload 上界 266.989 GB | 结构推导和，不是实测同时内存 |
+| 原尺寸目标 | 2 TB 十进制内存、48 h 与 y/z/mode precision | NOT_QUALIFIED |
+
+Ny4/Ny8 保存场共同子单元对照的最大 E/H/scaled-curl 相对 L2 差为 4.911e-8。逐通道诊断的最大 Ny4-normalized ratio 为 4.766，位于弱 bottom (1,2,p) 通道；其绝对差约 6.612e-16，相对单位入射 L2 仍约 6.612e-16。B0 没有冻结显著模式 key set 与选择规则，所以该显著模式 Gate 明确为 NOT_EVALUATED；不把 Gx560 的模式名单移植，也不影响 Ny8 方程与物理输出 Gate 的已通过状态。
+
+Ny8 八个 q 因子同时存活时，MUMPS allocated/used 上界和分别为 935,000,000/840,000,000 B；INFOG9/20/29 的 factor-entry 向量各自合计 26,699,392。3 次 reference-PC 调用各新增 8 次 initial factor solve，合计 24；进入首次 PC 前 combined 计数为 32，但 startup 子项没有独立记录，仍是 unknown。`KSP.solve_only` 为 22.299832042 s；25.547952792 s 是较宽 outer-solver 时钟。all-q-live 树 RSS `4,869,058,560 B` 与 watchdog 独立样本 `4,869,050,368 B` 相差 8,192 B，按两个采样分别保留。E1 event ledger 显示使用 `LEGACY_GLOBAL_CSR_SUM`，不适用 Ny8 row-tile 的释放解释；twist0/twist1 assembly parent 为 380.988/477.395 s，owner bytes 与 last-use 仍未完整记录。详细分项见 [V18 response](task40extra_0p7nm_engineering/response_v18.md) 和 [cost/readiness compact](task40extra_0p7nm_engineering/outcomes/records/review_v18_cost_and_readiness.json)。
+
+Ny4 原始 worker WORKER_FAILED 与离线保存场恢复 PASS 分列保存。E1 的空 inventory 只是空记录，不证明当前进程没有 live objects；owner/backing/lifecycle 仍 unknown。E1 symbolic estimates 不是实际 factor memory。Ny8 和 E1 的 workflow、resource-authority 与 watchdog/UTC 时间采用各自口径报告，不相加成未经测量的完整冷启动总时长。
+
+campaign T0/deadline 与 ordinary solver default 均未改变。主控已在代码提交 `ff8251dbcede1f736a0827fab8ffa8fb58daa9bd` 冻结两个只读 research entrypoint；该提交不改变 production numerical source。执行者不提交或推送；材料由主控统一审查并提交推送。完整结果见 [Task40 V18 response](task40extra_0p7nm_engineering/response_v18.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[model registry](development_model_registry.md)。V17 原进展段保留为历史记录。
+
+---
 # Task40extra Review V17 项目进展：Gx560 p6 通过，Ny=8 得到部分组件资格，E1 保持待核验
 
 Task40 的目标仍是 0.7 nm 波长、50×25×140 nm 的真实非可分三维 Maxwell 问题，使用 p6 Nédélec 空间、x/y Floquet 周期和 z Fourier-DtN 边界；工程目标是让一场完整计算能在约 2 TB 十进制物理内存和 48 h 内完成。V16 已在较小 Gx560 网格上得到稳定完整解，但 E1 没有进入数值因子，原尺寸的 q 矩阵、同时存活对象、精度和完整耗时仍缺证据。V17 因此同时补构建方法、一般 Ny 组件和一个必要 Gx560 anchor。

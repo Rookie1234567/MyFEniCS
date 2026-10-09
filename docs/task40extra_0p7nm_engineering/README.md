@@ -1,6 +1,17 @@
 # Task40extra：0.7 nm工程方法（笔记本起步）
 
-## Review V17 当前交付
+## Review V18 当前交付
+
+V18 的 Ny=8 B0 p6 小模型正式解与独立输出检查通过；E1 在四 q symbolic 后受资源门控制停止，原尺寸目标仍未资格化。
+
+| 文件 | 内容 |
+|---|---|
+| [Response V18](response_v18.md) | 正式结果、q=4 解释、E1 资源停止与资格边界 |
+| [V18 outcomes summary](outcomes/summary.md) 与 [test summary](outcomes/test_summary.md) | 统一结果、source-bound 测试与未运行范围 |
+| [V18 run index](outcomes/records/run_index.json) | 六次失败、正式成功、E1、研究入口和收口证据 |
+| [V18 evidence records](outcomes/records/review_v18_component_closure.json) | [sparse capacity](outcomes/records/review_v18_sparse_capacity.json)、[formal results](outcomes/records/review_v18_formal_results.json)、[cost/readiness](outcomes/records/review_v18_cost_and_readiness.json) |
+
+## Review V17 历史交付
 
 V17 在 Gx560 p6 上完成必要的 Full3D 离散解，官方物理输出和 V16 同离散保存场比较通过。该 Gx560 几何是原尺寸 `50×25×140 nm` 按 `7/135` 缩小后的 0.7 nm 解析模型（x/y 周期约 `2.59259/1.29630 nm`，z=`[-0.51852,6.74074] nm`），不是原尺寸场。Ny=8 的映射和 FE RHS 有组件证据，但 maps/action 仍为部分资格；E1 与原尺寸目标仍 `NOT_QUALIFIED`。
 

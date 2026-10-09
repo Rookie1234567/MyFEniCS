@@ -1,3 +1,26 @@
+# Task40extra Review V18 测试摘要
+
+本节只登记 V18 新增或本轮重新检查的内容。正式 Ny8 PDE、E1 resource stop 与旧 Ny4 recovery 按各自原始 run/receipt 分类；它们不折算为 pytest 数。完整 historical tests 保留在下方 V17 及更早章节。
+
+| 测试 / 检查 | 命令或输入 | 结果 | 证据范围 |
+|---|---|---|---|
+| C1 ABI preflight | 在同一 shell source scripts/task40_fresh_c1/activate_local_wsl_complex.sh，并核验指定 runtime_prefix、PETSc scalar/int、MPI 和 module roots | PASS；Python 3.12.13，PETSc complex128/int32，MPICH 5.0.1，MPI1；petsc4py、mpi4py、DOLFINx、SLEPc、Basix、UFL 均来自 qualified runtime_prefix | Task40 专用 C1 路径；未加载 FE 计算对象 |
+| 初始 preflight path assertions | 两次本地检查脚本分别错误假设解释器必须位于仓库 `.venv`、且 activation 必须设置 `CONDA_PREFIX`；两次都在 compile/test/runner 前退出 | 失败的是本地断言条件；Task40 activation 用其显式 runtime_prefix 启动的 qualified Python 与 ABI 随后 PASS | 没有把这两次断言失败记作 ABI 或环境失败；原始 attempt01/02 log 保留 |
+| V18 source-freeze targeted qualifications | 读取各 source-freeze 收据：`4da30b9` 初始 focused 120 passed/2 skipped；`aafa3ef` 5 passed；`abc2ce2` 21 passed；`b9dbe54` 22 passed；`b8d2ae5` 与 `c411a4b` 各 66 passed；`9214436` final related 66 passed；`3b9457e` C1 related 116 passed/1 skipped、executor targeted 56 passed/1 skipped；`168a727` checker identity 34 passed | 每个冻结源码的 compileall/diff 和实际 worker 分类分开保留；总账不把这些不同阶段数字相加成覆盖率 | [run index](records/run_index.json) 列出 source SHA、收据/日志路径与 hash；Ruff 未运行，不声称 CI |
+| 两个研究入口 compileall | python -m compileall -q benchmarks/task40_v18_p6_support_bounds.py benchmarks/task40_v18_saved_field_comparison.py | PASS | 只验证两个新增入口语法，不等于 full repository compileall |
+| P3 全模式 support bounds | C1 activation 后运行 `benchmarks/task40_v18_p6_support_bounds.py`，输出到 v2 sidecar；runner SHA `13eb5b50d1c003ae174d9d97db7c25a0d78d7e6e650f408bc591b78fd86f88ab` | DERIVED_BOUNDS_COMPLETE；32,060 modes；Ny4/Ny8 分开推导 | 未建目标 FE/CSR/factor/PDE；v2 output SHA `b8af3fc45488b1927cab63be9f9d39116680cc29b665ec5d5633f16c7c0d72c6`；v1 保持原文件和身份 |
+| Saved modal arrays v4 | qualified C1 后运行 `python benchmarks/task40_v18_saved_field_comparison.py --modes-only`，输出至新 v4 sidecar | SAVED_ARRAY_DIAGNOSTIC_COMPLETE；532 channels；incident arrays bitwise equal；显著模式 Gate NOT_EVALUATED_NO_FROZEN_B0_SIGNIFICANT_MODE_SET | 只读 NPZ；runner SHA `b7c7e4f177a43a2570f171eb4cda9708ccd2e6bfcd56eed699ef6325717cce61`；artifact SHA `8a45423765ecaaf353594ef2a0b3bb27834ff733fb8f57345255bc958eea362e`；v1/v2/v3 保留 |
+| Research entrypoint no-overwrite guard | 主控用 qualified C1 检查两个 tracked runner，对各自已有输出路径尝试写入 | PASS_NO_FE；两个 runner 都拒绝现存目标，旧文件字节不变 | 收据 `controller_v18_research_entrypoint_guard_checks.json` SHA `385f7484ae4b9bd439bdb29c4ad92bbc705381294f8affdcec2c60b171b6d3c6`；无 PDE/operator/factor/KSP |
+| Ny4/Ny8 完整 E/H common-subcell artifact | 复用已有 v18_ny4_ny8_saved_field_common_subcells.json | 沿用已保存 PASS_WITHIN_SMALL_MODEL_ENGINEERING_OBSERVATION | 本轮不重算 field integration、不覆盖原结果；artifact SHA 4e5e6d9a643c38afabda6350fb6573885e9244e0a855a3d98d9e0de102f6296c |
+| 文档合同测试（早于最终 compact/index 更新） | qualified Task40 C1 activation；`python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_183_development_model_registry_markdown.py` | 29 passed、134 subtests passed in 0.24 s；日志 SHA `385d889685e7f766b5cc81a77f2cd922f562b7c5217ed748c279c44f42eb8f35` | 日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/v18_doc_closeout_pytest_attempt01.log`；没有在最后 compact/run-index edits 后重跑，因此不称最终文档复测；不涉及 FE/PDE |
+| 主控最终文档与计数器定向检查 | C1 activation；上述四份文档合同测试加 `src/test/test_task40_p6_support_bounds.py` | 36 passed、134 subtests passed；0.47 s | 源码冻结 `ff8251dbcede1f736a0827fab8ffa8fb58daa9bd`；日志 `benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/controller_v18_final_docs_and_counter_tests.log`，SHA `f9425bada13234e51394abbcdb4f5e4ed26f49c7169430a983a73941e81627b1`；无 FE/PDE |
+| JSON 与 whitespace | `jq empty` 四份 V18 compact 与 run index；`git diff --check`，并扫描两个 untracked entrypoint 的 trailing whitespace | 收口检查 PASS；结构与空白检查不代表 scientific qualification | 最终记录见 [run index](records/run_index.json) |
+| full repository pytest / MPI4 / Ruff / CI | 未运行 | not_run | 不外推，不声称 CI 通过 |
+
+V18 最后文档收口阶段没有新增 PDE 或 heavy case。六次 Ny8 worker failure、后续 Ny8 success、E1 resource controlled stop、Ny4 original worker failure 与离线 recovery PASS 均作为不同 evidence entries 保留，见 [run index](records/run_index.json) 与四份 [compact records](records/review_v18_component_closure.json)。
+
+---
+
 # Task40extra Review V17 测试与文档检查摘要
 
 | 阶段 / source | 收据与身份 | 结果 | 证据边界 |
