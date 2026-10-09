@@ -75,5 +75,22 @@ class LocalModeTests(unittest.TestCase):
         with patch.object(scope.window,'snapshot',return_value={'heavy_remaining_seconds':20000}),patch.object(scope.window,'charged_wall',return_value=0),patch.object(scope.window,'case_remaining',return_value=11699):
             with self.assertRaisesRegex(RuntimeError,'output reserve'):scope.numeric_guard('SOLVE_COMPLETE',j)
 
+    def test_auxiliary_rejection_and_returned_tail_are_paid_without_probe_recount(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);runs=[]
+            for tag,start,elapsed,probe in [('01',0,43.,1.),('02',60,51.,2.),('03',120,.3,0.)]:
+                outer=folder/('auxiliary_pre'+tag);outer.mkdir()
+                stamp=lambda n:f'2026-10-09T09:{n//60:02d}:{n%60:02d}+00:00'
+                receipt=dict(source_sha='source',start_utc=stamp(start),end_utc=stamp(start+int(elapsed)+1),elapsed_seconds=elapsed)
+                (outer/'receipt.json').write_text(json.dumps(receipt))
+                if probe:
+                    own=folder/('aux_pre_'+tag);own.mkdir()
+                    (own/'admission.json').write_text(json.dumps(dict(utc=stamp(start+1))))
+                    (folder/('probe_'+tag+'.json')).write_text(json.dumps(dict(receipt_path=str(own/'admission.json'),elapsed_seconds=probe)))
+                if tag=='02':
+                    (own/'summary.json').write_text(json.dumps(dict(launch_wall_seconds=50.)))
+                    runs.append(dict(source_sha='source',before_clock=dict(observed_utc=stamp(start+3)),folder=str(own),elapsed_seconds=47.))
+            self.assertAlmostEqual(scope.auxiliary_wrapper_overhead(folder,runs),43.3)
+
 
 if __name__=='__main__':unittest.main()

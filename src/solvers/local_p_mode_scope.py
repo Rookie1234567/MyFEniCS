@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import time
+from datetime import datetime
 from pathlib import Path
 from .independent_tetra_scope import TetraWindow
 from .local_h_pilot_scope import one_run_overhead
@@ -17,7 +18,8 @@ SOLVES=('SOLVE_COMPLETE','M4');GROUPS={'L5':('PREPARE','SOLVE_COMPLETE'),'M4':('
 class LocalModeWindow(TetraWindow):
     def launcher_overhead(self):
         from .scattering_accuracy_scope import AccuracyWindow
-        return AccuracyWindow.launcher_overhead(self)+one_run_overhead(self.TMP,self.ledger()['runs'])
+        runs=self.ledger()['runs']
+        return AccuracyWindow.launcher_overhead(self)+one_run_overhead(self.TMP,runs)+auxiliary_wrapper_overhead(self.TMP,runs)
 
     def case_used(self,case='L5',*,active=False):
         book=self.ledger();roles=GROUPS[case];used=0.
@@ -49,6 +51,27 @@ class LocalModeWindow(TetraWindow):
 
 
 window=LocalModeWindow(ROOT/'tmp/task042/v67',label='V67',total=39600,component=39600,auxiliary=39600,probe=120,reserve=180,bootstrap=0)
+
+
+def auxiliary_wrapper_overhead(folder,runs):
+    """Pay rejected launches and returned wrapper tails, excluding paid probes."""
+    seconds=0.
+    for path in folder.glob('auxiliary_*/receipt.json'):
+        receipt=json.loads(path.read_text());begin=datetime.fromisoformat(receipt['start_utc']);end=datetime.fromisoformat(receipt['end_utc'])
+        matched=[r for r in runs if r['source_sha']==receipt['source_sha']
+            and begin<=datetime.fromisoformat(r['before_clock']['observed_utc'])<=end]
+        if len(matched)>1:raise ValueError('auxiliary receipt contains multiple stages')
+        covered=0.
+        if matched:
+            summary=Path(matched[0]['folder'])/'summary.json'
+            covered=json.loads(summary.read_text())['launch_wall_seconds'] if summary.exists() else matched[0]['elapsed_seconds']
+        else:
+            for probe in folder.glob('probe_*.json'):
+                p=json.loads(probe.read_text());observation=Path(p['receipt_path'])
+                if observation.exists() and begin<=datetime.fromisoformat(json.loads(observation.read_text())['utc'])<=end:
+                    covered+=p['elapsed_seconds']
+        seconds+=max(0.,receipt['elapsed_seconds']-covered)
+    return seconds
 
 
 def memory_budget(role,p=None):
