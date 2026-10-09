@@ -1176,3 +1176,119 @@ def test_v20_run_case_real_launcher_rejects_run_identity_near_miss(
     assert return_code == 2
     assert called["run_id"].endswith("_near_miss")
     assert "Task40 V20 run/profile/model/stage/strategy/stop-stage identity is not registered" in captured.err
+
+
+def test_v20_e2_v14_runtime_uses_fixed_v10_campaign_view_without_fe(
+    monkeypatch, tmp_path: Path
+):
+    from src.io.physical_intermediate_profile import (
+        TASK40_V20_P6_E2_PROFILE,
+        profile_facts,
+    )
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+    from src.runners.task40_v10_campaign import (
+        load_fixed_campaign_window,
+        read_campaign_state,
+        time_namespace_identity,
+    )
+    from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+    window_path = ROOT / (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "local_w19_wsl/campaign_window_v19.json"
+    )
+    accounting_path = ROOT / (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+        "local_w19_wsl/campaign_accounting_v10.jsonl"
+    )
+    if not window_path.is_file() or not accounting_path.is_file():
+        pytest.skip("the fixed local Task40 V19 window is unavailable")
+    original_window = window_path.read_bytes()
+    original_accounting = accounting_path.read_bytes()
+    window = load_fixed_campaign_window(window_path)
+    try:
+        state = read_campaign_state(
+            window, accounting_path, namespace_identity=time_namespace_identity()
+        )
+    except (OSError, RuntimeError, ValueError) as exc:
+        pytest.skip(f"the fixed Task40 campaign state is unavailable: {exc}")
+    if state["remaining_numerical_seconds"] <= 0:
+        pytest.skip("the immutable Task40 campaign has reached its closeout reserve")
+
+    monkeypatch.setenv("TASK40_V10_CAMPAIGN_WINDOW", str(window_path))
+    monkeypatch.setenv("TASK40_V10_CAMPAIGN_WINDOW_SHA256", window.sha256)
+    monkeypatch.setenv("TASK40_V10_CAMPAIGN_ACCOUNTING", str(accounting_path))
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_PHASE_PATH", str(tmp_path / "workflow_phase.json")
+    )
+    contract = profile_facts(TASK40_V20_P6_E2_PROFILE)
+    resources = contract["resources"]
+    if "pss_sampling_policy" in resources:
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PSS_POLICY", resources["pss_sampling_policy"]
+        )
+    if "watchdog_memory_policy" in resources:
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_MEMORY_POLICY", resources["watchdog_memory_policy"]
+        )
+    case = TASK40_V20_CASES_BY_PROFILE[TASK40_V20_P6_E2_PROFILE]
+    runtime = _V14Runtime(
+        tmp_path,
+        case.solver_stage,
+        contract,
+        root=ROOT,
+        source_sha="a" * 40,
+        batch_identity="task40_review_v20_e2_p6_reference",
+        evidence_prefix="v20_e2_campaign_fixture",
+    )
+
+    assert runtime.campaign_context["read_only"] is True
+    assert runtime.campaign_context["window_sha256"] == window.sha256
+    assert (
+        runtime.shared_budget["schema"]
+        == "task40extra.review_v10_campaign_worker_view.v1"
+    )
+    assert (
+        runtime.workflow_clock_source
+        == "task40_v10_fixed_campaign_read_only_projection"
+    )
+    assert runtime.workflow_reserved_seconds > 0
+    assert window_path.read_bytes() == original_window
+    assert accounting_path.read_bytes() == original_accounting
+
+
+def test_v20_e2_v14_runtime_rejects_unregistered_campaign_scope_before_window_read(
+    monkeypatch, tmp_path: Path
+):
+    from src.io.physical_intermediate_profile import (
+        TASK40_V20_P6_E2_PROFILE,
+        profile_facts,
+    )
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+    from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+    contract = profile_facts(TASK40_V20_P6_E2_PROFILE)
+    contract["scope"] += "_unregistered"
+    monkeypatch.setenv(
+        "TASK40_V10_CAMPAIGN_WINDOW", str(tmp_path / "must_not_read.json")
+    )
+    resources = contract["resources"]
+    if "pss_sampling_policy" in resources:
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_PSS_POLICY", resources["pss_sampling_policy"]
+        )
+    if "watchdog_memory_policy" in resources:
+        monkeypatch.setenv(
+            "PHYSICAL_WATCHDOG_MEMORY_POLICY", resources["watchdog_memory_policy"]
+        )
+    case = TASK40_V20_CASES_BY_PROFILE[TASK40_V20_P6_E2_PROFILE]
+    with pytest.raises(RuntimeError, match="rejected this exact stage/profile/scope"):
+        _V14Runtime(
+            tmp_path,
+            case.solver_stage,
+            contract,
+            root=ROOT,
+            source_sha="b" * 40,
+            batch_identity="task40_review_v20_e2_wrong_scope",
+            evidence_prefix="v20_e2_wrong_scope_fixture",
+        )
