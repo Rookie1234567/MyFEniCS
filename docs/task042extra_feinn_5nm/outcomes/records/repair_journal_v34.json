@@ -1,0 +1,82 @@
+{
+  "entries": [
+    {
+      "monotonic": 1428410.069760468,
+      "phase": "precommit_targeted",
+      "failure": "targeted_01: 1failed/40pass, actual empty inactive complement SVD query zgesdd code-5",
+      "hypothesis": "qualified LAPACK rejects0x0 SVD workspace query",
+      "change": "exact empty-subspace solve branch; no mathematical or ABI change",
+      "test": "targeted_02 affected full small fixture/backfit suite",
+      "old_failure_retained": true
+    },
+    {
+      "monotonic": 1429296.28573967,
+      "failure": "qualified false despite original-RHS pairs <=1e-10",
+      "hypothesis": "additional saved-residual denominator was accidentally included in normative gate",
+      "change": "retain diagnostic, apply original RHS denominator and independently reclassify hash-bound saved 32 full witnesses",
+      "test": "targeted_04 corruption/denominator checks",
+      "retry": "checks attempt2: no new numerical trials or action; source rebinding only"
+    },
+    {
+      "monotonic": 1437164.171368008,
+      "phase": "read_only_monitor",
+      "failure": "last sampled members mislabelled live_pids after numerical completion",
+      "hypothesis": "watch helper used stale final resources.jsonl row and looked for wrong run_summary key",
+      "change": "rename last_sampled_members; completion is run_summary.json receipt plus native ps and lock check",
+      "test": "actual native PIDs absent; COMPLETED/0/cleared receipt; numerical.lock FREE; frozen result hash unchanged",
+      "retry": "independent validate_1, no rerun of healthy candidate",
+      "ordinary_numerical_stage_failure": false,
+      "individual_extra_observation_seconds": "NOT_RETAINED_SEPARATELY; charged full route/campaign span"
+    },
+    {
+      "failure": "V34 consumer only required learned actual-network gate; producer failure or stale claimed flag could be ignored",
+      "hypothesis": "Joint numerical eligibility must consume both independently recomputed records and strict reference/status booleans",
+      "change": "Small V34 opt-in paired gate and conditional pilot consumer, no numerical kernel change",
+      "test": "targeted_05 exact writer/reopen normal and damage fixtures; to be completed before E",
+      "resume": "Only independent frozen-field E stages; no healthy C replay",
+      "monotonic": 1448373.473624867
+    },
+    {
+      "closure": "paired consumer fix",
+      "test": "targeted_05:1passed/10unchanged tests deselected; writer/reopen + strict invalid flags/missing producer/reference failures",
+      "Ruff": "PASS",
+      "compileall": "PASS",
+      "diff_check": "PASS",
+      "numerical_core_changed": false,
+      "healthy_C_replayed": false,
+      "monotonic": 1448489.721860915
+    },
+    {
+      "resource_event": "compare attempt1 STARTUP_FAILED before worker; all original evidence preserved",
+      "new_window": "tmp/task42extra/v34/compare_resource_recheck_01/admission.json",
+      "new_cpu": 20,
+      "hypothesis": "Transient observed neighbor/desktop activity excluded all physical cores",
+      "policy_changed": false,
+      "healthy_FE_replayed": false,
+      "monotonic": 1450100.810150878
+    },
+    {
+      "closure": "checker re-admitted in new measured CPU window, original failure preserved",
+      "successful_attempt": "v34_complex_compare_attempt2",
+      "qualified_cpu": 20,
+      "scientific_fields_recomputed_from_saved_arrays": true,
+      "new_FE_or_training_replay": false
+    },
+    {
+      "failure": "publication_close_03 ModuleNotFoundError legacy_evidence; before any numerical or metadata write",
+      "hypothesis": "python -c/runpy lacked helper-directory sys.path, unlike the correctly executed pipeline script",
+      "change": "Explicit script entry publication_seal.py in same ignored helper directory",
+      "test": "publication_close_04 writer/hash/Markdown recheck",
+      "resume": "Only compact metadata; C/E and reference never replayed",
+      "old_failure_retained": true,
+      "monotonic": 1451010.676959116
+    }
+  ],
+  "raw_binding": {
+    "path": "tmp/task42extra/v34/repair_journal.jsonl",
+    "bytes": 3573,
+    "sha256": "16f45cf59c964be409fb952fa90840a604cf90a4db0508cfa8b9e09014193342"
+  },
+  "ordinary_bug_handoff_limit": false,
+  "old_failures_and_costs_preserved": true
+}

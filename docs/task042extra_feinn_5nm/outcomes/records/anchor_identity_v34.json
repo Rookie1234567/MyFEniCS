@@ -1,0 +1,40 @@
+{
+  "design_binding": {
+    "path": "input/task042extra_feinn_5nm/design_v34.json",
+    "bytes": 66008,
+    "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+  },
+  "original_anchor_boundary": {
+    "columns": 1377,
+    "blocks": 246,
+    "boundary_path": "benchmarks/artifacts/task42extra/v32/v32_fixed_multiscale_wave/basis/committed.json",
+    "boundary_sha256": "737dd067f2cc3ebe021f3c7f445992c87d993e562213c62cc7a40b148a33501e",
+    "state_sha256": "8895a928a05e46933f308a004b0fd678414cb46aa452a9bda7781b66c7e27d66",
+    "original_source_sha": "a11c3ae2157f42a6874e54ec6cec29ab57fe0b81",
+    "original_wave_prefix_source_sha": "716f6cf2980bafe72588a6b5534219f170d787ea",
+    "native_relative": 0.15743176704993547,
+    "final_result": {
+      "path": "benchmarks/artifacts/task42extra/v32/v32_fixed_multiscale_wave/result.json",
+      "sha256": "d5aec8ca22790bf439cf113793b2cf8119ade42f2fc7da3e88cfd654b023b56e"
+    },
+    "run_index": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v32.json",
+      "sha256": "4cc5040d03eff27493d9a2a30741efdb25b5276f42056b305ead86fe6a2fd0b0"
+    },
+    "provenance": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/provenance_v32.json",
+      "sha256": "9555aa2a412e53716e061a5506bcdf66e3fa428412d8eebce98776c842f5b182"
+    }
+  },
+  "actual_initial_checks": {
+    "native": 0.15743176704993547,
+    "columns": 1377,
+    "blocks": 246,
+    "residual_pair": 0.0,
+    "U_amplitude_pair": 0.0
+  },
+  "same_fixed_anchor_both_routes": true,
+  "q_kappa_explicit_real_arrays": true,
+  "kappa_initial_exact_zero": true,
+  "raw_original_files_already_hash_bound_in_frozen_design": true
+}

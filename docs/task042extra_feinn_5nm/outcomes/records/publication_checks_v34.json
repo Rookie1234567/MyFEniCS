@@ -1,0 +1,18 @@
+{
+  "all_passed": true,
+  "checks": 1643,
+  "scope": "Compact metadata/coverage/hash/document structure, no new numerical replay",
+  "current_source": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "authority": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "complete_assertions_ignored": {
+    "path": "tmp/task42extra/v34/publication_checks_v34.json",
+    "bytes": 141100,
+    "sha256": "081c5fec69d528306d0c511cbcd59afbfb7e00c63eec4b8a767705c1d208b580"
+  },
+  "check_implementation": {
+    "path": "tmp/task42extra/v34/check_publication_v34.py",
+    "bytes": 7057,
+    "sha256": "b2babe3a8c95d0824d65704f0271106c1907d811f28c3a943257d19fe93758b7"
+  }
+}

@@ -1,0 +1,516 @@
+{
+  "source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "source_not_document_HEAD": true,
+  "ledger_recording_HEAD": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "checker_source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "records": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/accepted_wave_parameters_v34.json",
+      "bytes": 85607,
+      "sha256": "2c7b384da29dae7bfeafd47a5bcb3f81b286675fd47d9a219cd5ac0de78e445a"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/anchor_identity_v34.json",
+      "bytes": 1684,
+      "sha256": "d8f691ae9927c4d93a659b50e285ecf33d5b812b5a1b74b2ff3f1da2610bfedf"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v34.csv",
+      "bytes": 187404,
+      "sha256": "19d3e8b52fa969bd4f844af41166757b43d97b7410c3648f67f599809b42a02d"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_moment_gradient_checks_v34.json",
+      "bytes": 31108,
+      "sha256": "60455e057556caa1383207ea424131cd56179b47398a8ff78ff3ec244ab3e18f"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_replacement_visits_v34.csv",
+      "bytes": 21690,
+      "sha256": "7c467a545deb098a52895b8a23702de6e4b2e5f0e219e61edef863a16fef0b09"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_replacement_visits_v34.json",
+      "bytes": 13600,
+      "sha256": "162ac64ec7e36f3d0e296f368e961947ce2aa80786bda22ca92c88090cdf98be"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/cost_and_capacity_v34.json",
+      "bytes": 2066,
+      "sha256": "c6a73e761b2862ca7b6bf7ec8e4d780e8df5fc45f4aab0df4a7051d2d8424be7"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/decay_calibration_v34.json",
+      "bytes": 13731,
+      "sha256": "f390455de8963e6fd19a419e30bb6da356f6edea749116535c47d8d5061b5dcf"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_v34.csv",
+      "bytes": 18103,
+      "sha256": "3db0ba55fadf757ac4743ab64804894a27464a9cf0973a36ef8cdaf749c44e69"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v34.json",
+      "bytes": 167000,
+      "sha256": "c934b8959129f127c9ce2b2b726ef9b3f78930c9268eb4c8b3408f7f5ceb330b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_v34.csv",
+      "bytes": 22707,
+      "sha256": "3944da002ca69a8791db70cb188c87445b12b3a6fbceeb8f9041ca61a945503b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v34.csv",
+      "bytes": 24403,
+      "sha256": "f4dd7f06edabdedbd836068220fab3b656e55810bf20636ddd5a06c22a36a171"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v34.json",
+      "bytes": 707,
+      "sha256": "377161fb120cd9fb286880cad97b925c9b660848d1ba68f0bf9efd21399bea9b"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v34.json",
+      "bytes": 52632,
+      "sha256": "8a45815b838e65f9f1228a8d2a625a8e26b98644e0f0cfea17f1eded6f1bb248"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v34.json",
+      "bytes": 4276,
+      "sha256": "7d98cc7243c002eb702dd2ec164723c9cbbab88dd24a4119ad7950f563b04b4e"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v34.json",
+      "bytes": 17952,
+      "sha256": "d37e52a1b04fd8b29eb0508792be9829f691ae981e95cfcd5e0eba20181beced"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v34.json",
+      "bytes": 14051,
+      "sha256": "9ade89b22f18cf35db7d90caa12086e5b0e1b4c3b35d17c2565b319ce0c9fb68"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v34.json",
+      "bytes": 163494,
+      "sha256": "4cefd0ad53f3857d0df1edfb257f5ec56725cf5f349ed6ab6f14e12f992d74fa"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v34.json",
+      "bytes": 7429,
+      "sha256": "c66993a4a3c455bf87bbc9c88634ff990b1497dc89943a777a37a6272143bebc"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/six_complex_field_points_v34.csv",
+      "bytes": 51869,
+      "sha256": "2907d1a7c4b2fd4d1d68d404178d8e6b3f9a953af210f72fe4f692e080f9465a"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v34.json",
+      "bytes": 27819,
+      "sha256": "19fb9f4405d9cee24c14206ebd0d0f979db4f21446a4f53d0a8db2a249e560e8"
+    }
+  ],
+  "actual_final_checker_numerical_dependency_closure": [
+    {
+      "path": "src/solvers/neural_wave_moments.py",
+      "bytes": 8899,
+      "sha256": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31"
+    },
+    {
+      "path": "src/solvers/neural_wave_factorized.py",
+      "bytes": 12041,
+      "sha256": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9"
+    },
+    {
+      "path": "src/solvers/neural_wave_qualification.py",
+      "bytes": 13603,
+      "sha256": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23"
+    },
+    {
+      "path": "src/solvers/neural_wave_reconstruction.py",
+      "bytes": 4042,
+      "sha256": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075"
+    },
+    {
+      "path": "src/postprocessing/neural_wave_audit.py",
+      "bytes": 20332,
+      "sha256": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524"
+    },
+    {
+      "path": "src/solvers/neural_wave_subspace.py",
+      "bytes": 8307,
+      "sha256": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6"
+    },
+    {
+      "path": "src/solvers/neural_wave_greedy.py",
+      "bytes": 45757,
+      "sha256": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142"
+    },
+    {
+      "path": "src/solvers/neural_wave_local_action.py",
+      "bytes": 5499,
+      "sha256": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981"
+    },
+    {
+      "path": "src/solvers/neural_wave_local_qualification.py",
+      "bytes": 5661,
+      "sha256": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd"
+    },
+    {
+      "path": "src/solvers/neural_wave_projection.py",
+      "bytes": 3338,
+      "sha256": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50"
+    },
+    {
+      "path": "src/solvers/neural_wave_projection_qualification.py",
+      "bytes": 7393,
+      "sha256": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e"
+    },
+    {
+      "path": "src/solvers/neural_wave_screening.py",
+      "bytes": 3104,
+      "sha256": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3"
+    },
+    {
+      "path": "src/solvers/neural_wave_screening_qualification.py",
+      "bytes": 12250,
+      "sha256": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98"
+    },
+    {
+      "path": "src/runners/neural_wave_campaign.py",
+      "bytes": 25254,
+      "sha256": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d"
+    },
+    {
+      "path": "src/runners/neural_wave_dependencies.py",
+      "bytes": 11139,
+      "sha256": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9"
+    },
+    {
+      "path": "src/runners/neural_wave_worker.py",
+      "bytes": 27614,
+      "sha256": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c"
+    },
+    {
+      "path": "src/io/neural_wave_campaign.py",
+      "bytes": 7543,
+      "sha256": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e"
+    },
+    {
+      "path": "src/runners/feinn_resources.py",
+      "bytes": 6277,
+      "sha256": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09"
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "bytes": 25684,
+      "sha256": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4"
+    },
+    {
+      "path": "src/runners/durable_terminal.py",
+      "bytes": 3580,
+      "sha256": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7"
+    },
+    {
+      "path": "src/runners/guarded_exec.py",
+      "bytes": 925,
+      "sha256": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200"
+    },
+    {
+      "path": "src/runners/fresh_component_receiver.py",
+      "bytes": 15660,
+      "sha256": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011"
+    },
+    {
+      "path": "src/runners/w1_admission_scope.py",
+      "bytes": 5199,
+      "sha256": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47"
+    },
+    {
+      "path": "src/solvers/feinn_native.py",
+      "bytes": 8409,
+      "sha256": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313"
+    },
+    {
+      "path": "src/solvers/feinn_reference.py",
+      "bytes": 53652,
+      "sha256": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0"
+    },
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "bytes": 33759,
+      "sha256": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b"
+    },
+    {
+      "path": "scripts/activate_task42extra.sh",
+      "bytes": 5418,
+      "sha256": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd"
+    },
+    {
+      "path": "scripts/launch_task42extra_durable.py",
+      "bytes": 7687,
+      "sha256": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89"
+    },
+    {
+      "path": "scripts/run_case.py",
+      "bytes": 12203,
+      "sha256": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc"
+    },
+    {
+      "path": "src/io/block_wave_campaign.py",
+      "bytes": 2627,
+      "sha256": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22"
+    },
+    {
+      "path": "src/runners/block_wave_admission.py",
+      "bytes": 3873,
+      "sha256": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157"
+    },
+    {
+      "path": "src/runners/block_wave_worker.py",
+      "bytes": 9004,
+      "sha256": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b"
+    },
+    {
+      "path": "src/solvers/neural_wave_block.py",
+      "bytes": 19564,
+      "sha256": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388"
+    },
+    {
+      "path": "src/solvers/neural_wave_block_reconstruction.py",
+      "bytes": 9311,
+      "sha256": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78"
+    },
+    {
+      "path": "src/solvers/neural_wave_block_qualification.py",
+      "bytes": 11340,
+      "sha256": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d"
+    },
+    {
+      "path": "src/postprocessing/neural_wave_roundoff.py",
+      "bytes": 4813,
+      "sha256": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26"
+    },
+    {
+      "path": "src/io/complex_wave_campaign.py",
+      "bytes": 3899,
+      "sha256": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f"
+    },
+    {
+      "path": "src/runners/complex_wave_worker.py",
+      "bytes": 10752,
+      "sha256": "91611a5c6367f5604c7e4aa9ea3811a03601a8030b934b8d81428dfc0c6d39c0"
+    },
+    {
+      "path": "src/io/neural_wave_backfit_store.py",
+      "bytes": 8109,
+      "sha256": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa"
+    },
+    {
+      "path": "src/solvers/neural_wave_decay.py",
+      "bytes": 5381,
+      "sha256": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe"
+    },
+    {
+      "path": "src/solvers/neural_wave_decay_qualification.py",
+      "bytes": 15079,
+      "sha256": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9"
+    },
+    {
+      "path": "src/solvers/neural_wave_decay_calibration.py",
+      "bytes": 4166,
+      "sha256": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285"
+    },
+    {
+      "path": "src/solvers/neural_wave_backfit.py",
+      "bytes": 14931,
+      "sha256": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9"
+    },
+    {
+      "path": "src/solvers/neural_wave_backfit_state.py",
+      "bytes": 5892,
+      "sha256": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f"
+    },
+    {
+      "path": "src/solvers/neural_wave_backfit_run.py",
+      "bytes": 16815,
+      "sha256": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892"
+    },
+    {
+      "path": "src/runners/backfit_wave_worker.py",
+      "bytes": 10109,
+      "sha256": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65"
+    },
+    {
+      "path": "src/solvers/neural_wave_multiscale.py",
+      "bytes": 8451,
+      "sha256": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+    }
+  ],
+  "changed_implementation_and_targeted_tests": [
+    {
+      "path": "input/task042extra_feinn_5nm/design_v34.json",
+      "bytes": 66008,
+      "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_0p7_complex_compare.dat",
+      "bytes": 172,
+      "sha256": "a8af6bea622993cf05c38a24481464735969711b4d32dd4182b538831510e53f"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_0p7_complex_prepare.dat",
+      "bytes": 172,
+      "sha256": "0f9afa842b39292d9811b6af1463d28e107673ae80fd03be7d95bb2694e3e737"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_0p7_complex_solve.dat",
+      "bytes": 170,
+      "sha256": "41d9ffca22e02ca000bad42b1e748c0e5ad03405bdbfe3f260500e3fa94bc638"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_complex_compare.dat",
+      "bytes": 168,
+      "sha256": "957afec9401c1b83a55e0febc6c00503b6a9b1641f1ffa981ff0eb4ea4a639a9"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_complex_reconstruct.dat",
+      "bytes": 172,
+      "sha256": "9c988078be062544498b6ed88cb88a443e9c52cbea181764dcdb0f5c8bd1bd86"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_complex_wave_calibration.dat",
+      "bytes": 177,
+      "sha256": "97669f044b42c1a5dd2b2be6831c34fed46bda3511e0e858d28566516957e4ad"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_complex_wave_checks.dat",
+      "bytes": 172,
+      "sha256": "452cf4d0b66e06648f9a766cb7237a75a5be179f25e4521f4ecf5183f90e8f1e"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_deterministic_complex_backfit.dat",
+      "bytes": 182,
+      "sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_deterministic_validate_1.dat",
+      "bytes": 177,
+      "sha256": "1690288755b8aa3141f2c7b81cbe90e2666ac3dee4f355e5f8ac90f1175f137a"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_deterministic_validate_2.dat",
+      "bytes": 177,
+      "sha256": "1150d0195c04b3bcb9eb9698055b10e80f30923fa2438defc46b5a3d4fa6e645"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_learned_complex_backfit.dat",
+      "bytes": 176,
+      "sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_learned_validate_1.dat",
+      "bytes": 171,
+      "sha256": "c3122843a987ebf83f9b01b44afb0741ae4df4b4091ba5d5148a0833da32b444"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v34_learned_validate_2.dat",
+      "bytes": 171,
+      "sha256": "36f5d2d099d50fc61e69458c95f22c79d49ba619702954a68d3191e518f395cb"
+    },
+    {
+      "path": "src/io/complex_wave_campaign.py",
+      "bytes": 3899,
+      "sha256": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f"
+    },
+    {
+      "path": "src/io/neural_wave_backfit_store.py",
+      "bytes": 8109,
+      "sha256": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa"
+    },
+    {
+      "path": "src/io/neural_wave_campaign.py",
+      "bytes": 7543,
+      "sha256": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e"
+    },
+    {
+      "path": "src/runners/backfit_wave_worker.py",
+      "bytes": 10109,
+      "sha256": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65"
+    },
+    {
+      "path": "src/runners/block_wave_admission.py",
+      "bytes": 3873,
+      "sha256": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157"
+    },
+    {
+      "path": "src/runners/complex_wave_worker.py",
+      "bytes": 10752,
+      "sha256": "91611a5c6367f5604c7e4aa9ea3811a03601a8030b934b8d81428dfc0c6d39c0"
+    },
+    {
+      "path": "src/runners/neural_wave_campaign.py",
+      "bytes": 25254,
+      "sha256": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d"
+    },
+    {
+      "path": "src/runners/neural_wave_dependencies.py",
+      "bytes": 11139,
+      "sha256": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9"
+    },
+    {
+      "path": "src/runners/neural_wave_worker.py",
+      "bytes": 27614,
+      "sha256": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c"
+    },
+    {
+      "path": "src/solvers/neural_wave_backfit.py",
+      "bytes": 14931,
+      "sha256": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9"
+    },
+    {
+      "path": "src/solvers/neural_wave_backfit_run.py",
+      "bytes": 16815,
+      "sha256": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892"
+    },
+    {
+      "path": "src/solvers/neural_wave_backfit_state.py",
+      "bytes": 5892,
+      "sha256": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f"
+    },
+    {
+      "path": "src/solvers/neural_wave_block_reconstruction.py",
+      "bytes": 9311,
+      "sha256": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78"
+    },
+    {
+      "path": "src/solvers/neural_wave_decay.py",
+      "bytes": 5381,
+      "sha256": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe"
+    },
+    {
+      "path": "src/solvers/neural_wave_decay_calibration.py",
+      "bytes": 4166,
+      "sha256": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285"
+    },
+    {
+      "path": "src/solvers/neural_wave_decay_qualification.py",
+      "bytes": 15079,
+      "sha256": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9"
+    },
+    {
+      "path": "src/solvers/neural_wave_moments.py",
+      "bytes": 8899,
+      "sha256": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31"
+    },
+    {
+      "path": "src/test/test_neural_wave_decay.py",
+      "bytes": 16976,
+      "sha256": "e55e0290fd4b8bc56b916fee7abb30ff9658bcc0d45e6b8b9b1505045b247bbf"
+    }
+  ],
+  "original_authority_sha": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+  "original_base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "compact_records_bound_to_frozen_originals": true,
+  "large_arrays_remain_ignored": true
+}

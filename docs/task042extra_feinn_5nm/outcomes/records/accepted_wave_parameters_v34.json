@@ -1,0 +1,2444 @@
+{
+  "routes": {
+    "deterministic": {
+      "accepted_parameter_records": [
+        {
+          "visit": 1,
+          "block_id": 138,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_002_001_1429919439024749_138.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565413654803597,
+              0.0,
+              0.010965670370166618
+            ],
+            [
+              0.8794276820761852,
+              0.0,
+              0.7330382858376183
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.025000000000000005,
+              -0.03333333333333334,
+              0.025
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.15707963267948966,
+          "decay_delta": 0.04859126579037751,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 3,
+          "block_id": 0,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_004_002_1429997615654016_000.npz",
+          "origin": "PHYSICAL_SEED_SELECTION",
+          "bitwise_actual_evaluated_seed_match": true,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": false,
+          "actual_q_real": [
+            [
+              1.2564456695248023,
+              0.0,
+              -0.021931340740333236
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.14417734398570922
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.14417734398570922,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 4,
+          "block_id": 2,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_005_003_1430176132517440_002.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2566370614359172,
+              0.0,
+              0.3141592653589793
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              -0.1941773439857092
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3141592653589793,
+          "decay_delta": 0.1941773439857092,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 5,
+          "block_id": 152,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_006_004_1430470423924942_152.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              2.584451264705419,
+              -1.1871730971350238,
+              0.36651914291880927
+            ],
+            [
+              4.869468613064179,
+              0.0,
+              -0.08772536296133294
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.05000000000000001,
+              0.06666666666666668,
+              -0.05
+            ],
+            [
+              0.05000000000000001,
+              0.0,
+              -0.025
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.3141592653589793,
+          "decay_delta": 0.11211353372561426,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 6,
+          "block_id": 153,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_007_005_1430739629110155_153.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              5.026548245743669,
+              0.0,
+              -0.08772536296133294
+            ],
+            [
+              -0.3141592653589793,
+              -0.15707963267948966,
+              -4.71238898038469
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.05000000000000001,
+              0.0,
+              -0.025
+            ],
+            [
+              -0.05000000000000001,
+              -0.06666666666666668,
+              -0.05
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.4712395199029139,
+          "decay_delta": 0.11211353372561428,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 7,
+          "block_id": 7,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_008_006_1430990758878619_007.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.15707963267948966,
+              0.0,
+              0.15707963267948966
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.05000000000000001,
+              0.0,
+              -0.16917734398570922
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.2221441469079183,
+          "decay_delta": 0.17641137638502508,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 8,
+          "block_id": 3,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_009_007_1431239592976888_003.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.15707963267948966,
+              1.2566370614359172,
+              0.0
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.07500000000000001,
+              0.10000000000000002,
+              0.06917734398570921
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.15707963267948966,
+          "decay_delta": 0.14286533841669624,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 9,
+          "block_id": 4,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_010_008_1431493843369073_004.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.15707963267948966,
+              0.0,
+              1.2566370614359172
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.10000000000000002,
+              0.06666666666666668,
+              -0.24417734398570923
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.15707963267948966,
+          "decay_delta": 0.2721525670655337,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 10,
+          "block_id": 5,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_011_009_1431743523349296_005.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -1.7278759594743862,
+              -0.0,
+              -0.15707963267948966
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.05000000000000001,
+              0.0,
+              0.05
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.496729413289805,
+          "decay_delta": 0.07071067811865477,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 11,
+          "block_id": 6,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_012_010_1431997684102036_006.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.0,
+              -1.0995574287564276,
+              -0.3141592653589793
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.05000000000000001,
+              0.10000000000000002,
+              -0.24417734398570923
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3512407365520363,
+          "decay_delta": 0.2685564657868348,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 12,
+          "block_id": 21,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_013_011_1432247286937234_021.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.6283185307179586,
+              -0.0,
+              -0.3141592653589793
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.10000000000000002,
+              0.0,
+              0.16917734398570922
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3141592653589793,
+          "decay_delta": 0.1965221965022246,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 13,
+          "block_id": 25,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_014_012_1432499651221629_025.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.884572808331646,
+              0.0,
+              0.04386268148066647
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              -0.16917734398570922
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.16917734398570922,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 14,
+          "block_id": 27,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_015_013_1432749423685982_027.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              4.240384514701761,
+              0.15707963267948966,
+              -0.4018846283203123
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.025000000000000005,
+              -0.03333333333333334,
+              -0.1941773439857092
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.38476494904855923,
+          "decay_delta": 0.1985974622910765,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 15,
+          "block_id": 32,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_016_014_1433002474112698_032.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -1.2273855240708542,
+              -0.10596651601318588,
+              0.15707963267948966
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.10000000000000002,
+              0.10000000000000002,
+              0.0
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.14142135623730953,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 16,
+          "block_id": 71,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_017_015_1433345635705686_071.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": false,
+          "decay_changed_beyond_physical_seed": false,
+          "actual_q_real": [
+            [
+              1.2565413654803597,
+              0.0,
+              -0.24658511938940111
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.23561944901923448,
+          "decay_delta": 0.0,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 17,
+          "block_id": 1,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_018_016_1433600973953143_001.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.942286404165823,
+              0.0,
+              0.021931340740333247
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.05000000000000001,
+              0.0,
+              0.037500000000000006
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3141592653589793,
+          "decay_delta": 0.06250000000000001,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 18,
+          "block_id": 43,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_019_017_1433851121530673_043.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2566370614359172,
+              0.0,
+              -0.7068583470577035
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.037500000000000006
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07853981633974483,
+          "decay_delta": 0.037500000000000006,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 19,
+          "block_id": 138,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_020_018_1434137331845344_138.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565413654803597,
+              0.0,
+              0.010965670370166618
+            ],
+            [
+              0.95796749841593,
+              0.0,
+              0.5759586531581287
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              -0.025
+            ],
+            [
+              0.05000000000000001,
+              -0.01666666666666667,
+              0.05
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.17562036827601815,
+          "decay_delta": 0.046398036356916854,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 20,
+          "block_id": 140,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_021_019_1434419094787426_140.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2564456695248023,
+              0.0,
+              -0.6849270063173704
+            ],
+            [
+              0.5022183027164531,
+              0.0,
+              0.44505895925855393
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              -0.11917734398570921
+            ],
+            [
+              0.025000000000000005,
+              0.01666666666666667,
+              -0.11917734398570921
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.11107207345395918,
+          "decay_delta": 0.17119946383313792,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 21,
+          "block_id": 0,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_022_020_1434671920365780_000.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2564456695248023,
+              0.0,
+              -0.021931340740333236
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.19417734398570924
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.05000000000000002,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 22,
+          "block_id": 75,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_023_021_1434922075519646_075.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.884572808331646,
+              0.0,
+              -0.04386268148066647
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.012500000000000002,
+              0.0,
+              -0.025
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.027950849718747374,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 23,
+          "block_id": 209,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_024_022_1435205248487096_209.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.8849555921538759,
+              0.0,
+              0.0
+            ],
+            [
+              -2.0111814397531838,
+              0.96583825911475,
+              2.0420352248333655
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.012500000000000002,
+              0.0,
+              0.025
+            ],
+            [
+              0.025000000000000005,
+              0.03333333333333334,
+              0.025
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.2720699046351327,
+          "decay_delta": 0.05605676686280713,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 24,
+          "block_id": 34,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_025_023_1435455891811297_034.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -1.198133986705791,
+              -0.2904728483661166,
+              0.23561944901923448
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.037500000000000006,
+              0.06666666666666668,
+              -0.0125
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.11107207345395916,
+          "decay_delta": 0.07750448015724283,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 25,
+          "block_id": 35,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_026_024_1435708609535697_035.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              3.219749686107308,
+              0.0,
+              -0.04386268148066647
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.05000000000000001,
+              -0.01666666666666667,
+              -0.037500000000000006
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07853981633974483,
+          "decay_delta": 0.06468406123441678,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 26,
+          "block_id": 42,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_027_025_1435959429045732_042.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -1.1000499278179565,
+              0.11618404688127908,
+              -0.052359877559829855
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              -0.06666666666666668,
+              -0.14417734398570922
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.32382795858537977,
+          "decay_delta": 0.1588444237712422,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 27,
+          "block_id": 51,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_028_026_1436212744915610_051.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.7068583470577035,
+              0.0,
+              0.0
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.05000000000000001,
+              0.0,
+              0.0
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07853981633974483,
+          "decay_delta": 0.05000000000000001,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 28,
+          "block_id": 53,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_029_027_1436466093246272_053.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.08192671546352716,
+              0.4752187915262191,
+              0.05235987755982985
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.025000000000000005,
+              0.06666666666666668,
+              0.025
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.2831793349784745,
+          "decay_delta": 0.07546154281781182,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 29,
+          "block_id": 62,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_030_028_1436715894553734_062.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.235161438724441,
+              -0.021903917094649072,
+              0.05235987755982991
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.037500000000000006,
+              0.03333333333333334,
+              0.025
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.32382795858537977,
+          "decay_delta": 0.05605676686280713,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 30,
+          "block_id": 65,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_031_029_1436966928928477_065.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.1351459996732198,
+              -0.04380783418929812,
+              0.10471975511965982
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.037500000000000006,
+              0.0,
+              0.0125
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07853981633974483,
+          "decay_delta": 0.03952847075210474,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 31,
+          "block_id": 80,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_032_030_1437845634202393_080.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.6282228347624011,
+              0.0,
+              -0.71782401742787
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.037500000000000006,
+              0.0,
+              -0.037500000000000006
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07853981633974483,
+          "decay_delta": 0.05303300858899107,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 32,
+          "block_id": 71,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_033_031_1438178804370967_071.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565413654803597,
+              0.0,
+              -0.4036647520688907
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.1254273439857092
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.15707963267948957,
+          "decay_delta": 0.1254273439857092,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 33,
+          "block_id": 138,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_034_032_1438457050410754_138.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565413654803597,
+              0.0,
+              0.010965670370166618
+            ],
+            [
+              0.8794276820761852,
+              -0.039269908169872414,
+              0.6544984694978735
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              -0.03125
+            ],
+            [
+              0.06250000000000001,
+              0.0,
+              0.0625
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.11780972450961724,
+          "decay_delta": 0.025086655372483953,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 34,
+          "block_id": 0,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_035_033_1438704335065889_000.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2564456695248023,
+              0.0,
+              -0.10047115708007807
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.20667734398570925
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07853981633974484,
+          "decay_delta": 0.012500000000000011,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 35,
+          "block_id": 75,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_036_034_1438952397826159_075.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.884572808331646,
+              0.0,
+              -0.04386268148066647
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.012500000000000002,
+              0.0,
+              -0.012500000000000004
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.012499999999999997,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 36,
+          "block_id": 43,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_037_035_1439199164466868_043.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2566370614359172,
+              0.0,
+              -0.7068583470577035
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              0.16917734398570924
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0,
+          "decay_delta": 0.13167734398570924,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 37,
+          "block_id": 2,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/replacement_038_036_1439447957186693_002.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2566370614359172,
+              0.0,
+              0.43196898986859655
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0,
+              0.0,
+              -0.16917734398570927
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.11780972450961724,
+          "decay_delta": 0.02499999999999994,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        }
+      ],
+      "physical_seed_selections": 1,
+      "nonlinear_search_proposals": 35,
+      "unchanged_parameter_accepts": 0,
+      "committed_decay_changes_beyond_physical_seed": 34,
+      "complete_model_parameter_layout": {
+        "raw_neuron_count": 468,
+        "structurally_active_neuron_count": 459,
+        "structural_rule": "exact nonzero in the three polarization rows of fixed T; no amplitude cutoff",
+        "nominal_real_q_parameters": 1404,
+        "nominal_real_decay_parameters": 1404,
+        "retained_complex_amplitude_slots": 1377,
+        "real_amplitude_parameters": 2754,
+        "decay_components_positive": 35,
+        "decay_components_negative": 35,
+        "decay_components_exactly_zero": 1334
+      },
+      "operator_actions": 0,
+      "new_network_forward_count": 0,
+      "reference_read_count": 0
+    },
+    "learned": {
+      "accepted_parameter_records": [
+        {
+          "visit": 3,
+          "block_id": 0,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_004_001_1440289759944274_000.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2569903050538194,
+              -3.05347052003036e-05,
+              -0.021935882962194054
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -2.2294760898305497e-05,
+              5.640412174964386e-05,
+              0.14417745822314576
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0005455097244493481,
+          "decay_delta": 0.14417747097992895,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 4,
+          "block_id": 2,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_005_002_1440456873924477_002.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565512536703165,
+              -1.304962370522386e-05,
+              0.0045424385169298585
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0005693498244953443,
+              -4.4251163185270784e-05,
+              -0.14428528667079993
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.004543267650645752,
+          "decay_delta": 0.14428641677948417,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 5,
+          "block_id": 152,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_006_003_1440679377586299_152.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              2.7415251459281214,
+              -1.3442525675684016,
+              0.20944130666593616
+            ],
+            [
+              5.026526985324527,
+              1.740074758005628e-05,
+              -0.0874059860323247
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -6.714556515090157e-08,
+              2.9115888504127135e-08,
+              -7.624850139659705e-08
+            ],
+            [
+              -9.707948370509008e-05,
+              2.289518760960312e-05,
+              0.0002717121347573312
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.00032061307981541136,
+          "decay_delta": 0.00028944103219241,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 6,
+          "block_id": 153,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_007_004_1440919178884337_153.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              4.79467842852652,
+              0.001225402143163438,
+              -0.02632772919988209
+            ],
+            [
+              -0.045727602452726016,
+              -0.04518769988095242,
+              -5.026548245743669
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.059653972696750254,
+              -0.004550354822165323,
+              -0.06575633504031354
+            ],
+            [
+              -0.0003170691674414089,
+              0.008511455751607158,
+              -0.0026079845882658655
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.24761519957199518,
+          "decay_delta": 0.08934508817460161,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 7,
+          "block_id": 7,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_008_005_1441084893263549_007.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.01469530190432117,
+              -0.009460205452973932,
+              -0.08213609465330521
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.021454730043431992,
+              -0.007746748340595142,
+              -0.09841234369783
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0839749095275984,
+          "decay_delta": 0.10102131925088326,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 8,
+          "block_id": 3,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_009_006_1441253739152795_003.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.01722765751876758,
+              1.604667811197369,
+              0.1537108595387876
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.11959486460422057,
+              0.09043401162238865,
+              0.26814194868750224
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3808532831724771,
+          "decay_delta": 0.307215472826079,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 9,
+          "block_id": 4,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_010_007_1441466744058902_004.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.7544633404414245,
+              0.0319008428869148,
+              1.1345138836592124
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.09664192752069052,
+              0.014899790361560883,
+              -0.005007367046367599
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.7649487998534341,
+          "decay_delta": 0.09791189729787647,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 10,
+          "block_id": 5,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_011_008_1441625629377418_005.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.8138978669972954,
+              0.03201515101698463,
+              -0.2051556314711858
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.2176408799371572,
+              0.004186029695391012,
+              -0.08994381123350709
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.4890110400708159,
+          "decay_delta": 0.23553123920966304,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 11,
+          "block_id": 6,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_012_009_1441863713122236_006.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.1691613826949072,
+              -2.1347086751487834,
+              0.24674735768882775
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.29096427822381155,
+              0.04207445592979272,
+              -0.2759477088048434
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.9276365617686638,
+          "decay_delta": 0.40320913808932246,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 12,
+          "block_id": 21,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_013_010_1442016633233359_021.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.6401181260638075,
+              -0.03944751714021633,
+              -0.06357824754663646
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.007867275614867216,
+              0.03201857124524876,
+              0.11913624935591194
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.07574648915926616,
+          "decay_delta": 0.12361443621511763,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 13,
+          "block_id": 25,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_014_011_1442200895704278_025.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.8618079286047988,
+              -0.00047719884705023396,
+              -0.06951232900238243
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.022110568439403497,
+              -0.0015101637356691392,
+              -0.1081711665978074
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.11563892281472053,
+          "decay_delta": 0.11041811044549114,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 14,
+          "block_id": 27,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_015_012_1442378427231576_027.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              4.473253081997747,
+              0.06591949222768605,
+              -0.3616642426809584
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.03129379675324075,
+              0.004083821896862323,
+              -0.34221508705366444
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.29177363124158934,
+          "decay_delta": 0.34366720111710625,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 15,
+          "block_id": 32,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_016_013_1442562623176446_032.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -1.6476453320530136,
+              0.017260566517493584,
+              -0.0905735572027842
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.037426641001222165,
+              -0.022764951582573027,
+              0.034764510064468505
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.503125553448729,
+          "decay_delta": 0.055924660367442466,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 16,
+          "block_id": 1,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_017_014_1442880254168287_001.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2567602692955473,
+              1.788309144713592e-05,
+              0.02205080937290858
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.00038929263318882474,
+              9.044767992332113e-05,
+              0.1441721686626479
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.00033699491818413546,
+          "decay_delta": 0.14417272261571554,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 17,
+          "block_id": 138,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_018_015_1443071877649017_138.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565309884009772,
+              -2.0120569094117635e-06,
+              0.010965913905108348
+            ],
+            [
+              0.8794275317791094,
+              -2.3085109473995114e-08,
+              0.5759585441555948
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              9.529657230893541e-06,
+              -6.603221647714817e-07,
+              -1.1839901405058956e-09
+            ],
+            [
+              -2.186390095247085e-10,
+              -1.1803062164199347e-09,
+              4.459008894317498e-09
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 1.057480318823504e-05,
+          "decay_delta": 9.552508310654789e-06,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 18,
+          "block_id": 71,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_019_016_1443218892660086_071.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565442856432059,
+              1.842378326697499e-07,
+              -0.010965593034717176
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              1.533219731810118e-06,
+              4.5345080955211084e-07,
+              -4.6676322203622264e-09
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 2.9269908436898817e-06,
+          "decay_delta": 1.5988752826552481e-06,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 19,
+          "block_id": 43,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_020_017_1443409062096972_043.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.256700240327593,
+              0.0032568868759701003,
+              -0.8252594401688375
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.006610809288276079,
+              -0.001568661646785418,
+              0.144552465826313
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.19696784793218022,
+          "decay_delta": 0.14471205504475237,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 20,
+          "block_id": 0,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_021_018_1443615296576163_000.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2569261848623854,
+              -3.0314503349998382e-05,
+              -0.021956708941268714
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.00012631650463501126,
+              5.814270918846098e-05,
+              0.1441771859979172
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 6.741786738545936e-05,
+          "decay_delta": 0.0001040366279868891,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 21,
+          "block_id": 140,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_022_019_1443823150124890_140.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.255823272152948,
+              0.00033157312635848064,
+              -0.61643590740763
+            ],
+            [
+              0.7158855614036869,
+              0.0015142088304986696,
+              0.5514999408974753
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.0004499041992141819,
+              6.500695688141878e-05,
+              0.14518528692737856
+            ],
+            [
+              -0.0013428186907920598,
+              0.007453935335801623,
+              0.14120986639963595
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.2157219027580795,
+          "decay_delta": 0.20267354258143278,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 22,
+          "block_id": 2,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_023_020_1444003538506387_002.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2567083610008858,
+              -8.003342459846343e-05,
+              0.010617463028597547
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0006419235218263061,
+              6.1376382371628e-07,
+              -0.14442689526450367
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.006077424813213566,
+          "decay_delta": 0.00016532633495773986,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 23,
+          "block_id": 75,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_024_021_1444173802544080_075.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.897158980003181,
+              -0.00014532243460165832,
+              -0.07370806537200268
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0077171295059922295,
+              0.00014641052498420135,
+              0.011621064975087629
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.032391044681772445,
+          "decay_delta": 0.013950794780559652,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 24,
+          "block_id": 34,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_025_022_1444340616085644_034.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.8397063519451066,
+              -0.3027004994835138,
+              0.49306675950729395
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.18740644046494617,
+              0.4279453532408675,
+              -0.06103395055977955
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.41075174250531327,
+          "decay_delta": 0.47115129460622934,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 25,
+          "block_id": 35,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_026_023_1444498520974007_035.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              3.469136743128385,
+              -0.008701415391262093,
+              0.02206446142369531
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.17413716535052032,
+              0.011811211028439923,
+              -0.10567317316854424
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3346014600589002,
+          "decay_delta": 0.20403449852851338,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 26,
+          "block_id": 42,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_027_024_1444733376094238_042.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -1.2423137521813556,
+              -0.21121200026858614,
+              -0.3866481167371019
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.5333333333333334,
+              -0.0474358945491806,
+              -0.05013337831074891
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.43061362795031566,
+          "decay_delta": 0.5377805910935929,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 27,
+          "block_id": 51,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_028_025_1444884302965341_051.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.7390022375595565,
+              -0.00843120578588033,
+              0.04083616469734615
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.12214489826810633,
+              0.008598786392408641,
+              0.006209014848242646
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.11827747265810776,
+          "decay_delta": 0.1226045152746587,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 28,
+          "block_id": 53,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_029_026_1445070552221440_053.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              -0.0901852874220091,
+              0.11584955433675496,
+              0.09963690463248646
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.11304430341279878,
+              -0.06995221193572691,
+              -0.15330317500732105
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.21186280767023075,
+          "decay_delta": 0.20291424286163617,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 29,
+          "block_id": 62,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_030_027_1445268598586904_062.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.1119229436483336,
+              -0.034417111341116365,
+              0.041206508851624996
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.017771676823428586,
+              -0.06572026265248354,
+              0.02273922907539452
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.3051437722319307,
+          "decay_delta": 0.07177783752086071,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 30,
+          "block_id": 65,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_031_028_1445431734792402_065.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.9105831626062758,
+              -0.05353550459847004,
+              0.12364639147504093
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.003869690081475421,
+              0.03119485440752896,
+              -0.02729523776602999
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.1475654692589508,
+          "decay_delta": 0.04163079926614078,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 31,
+          "block_id": 80,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_032_029_1445563325822367_080.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              0.6069944222376372,
+              -0.013985586505615651,
+              -0.6907881304639171
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.016370128597629464,
+              0.007686291984783606,
+              -0.04616614531410295
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.05743602414316443,
+          "decay_delta": 0.04958198430822575,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 32,
+          "block_id": 71,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_033_030_1446463819520250_071.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2565438704028769,
+              -5.668136280030407e-08,
+              -0.010965528067161785
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              1.0742674075394197e-07,
+              -1.1874739423673652e-06,
+              -6.344111898797433e-09
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 4.844454281299417e-07,
+          "decay_delta": 2.1738266962642223e-06,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 33,
+          "block_id": 138,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_034_031_1446651783722880_138.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.256532733843925,
+              -1.8502922375147769e-06,
+              0.010965984661875976
+            ],
+            [
+              0.8794274762073977,
+              -4.551108649215829e-08,
+              0.5759585715880277
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              9.027504031503677e-06,
+              -3.8797391563951746e-08,
+              -2.7264569265872334e-09
+            ],
+            [
+              1.6398954994450415e-09,
+              4.768355782187489e-09,
+              5.177023334408901e-09
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 1.7555879616192036e-06,
+          "decay_delta": 7.990573288862108e-07,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 34,
+          "block_id": 1,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_035_032_1446791022153589_001.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2567597371033046,
+              1.9992635380275816e-05,
+              0.022048542172580725
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.00040063079704543493,
+              8.850365115563155e-05,
+              0.14417210704610076
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 3.1422287497387616e-06,
+          "decay_delta": 1.1503782164480873e-05,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 35,
+          "block_id": 2,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_036_033_1446975840270171_002.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2566661428595323,
+              -0.00010774048347177648,
+              0.006254564649843797
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.0006375624408990833,
+              -2.105833931823308e-06,
+              -0.14427312455062022
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.004363190611914962,
+          "decay_delta": 0.00015385658155253392,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 36,
+          "block_id": 0,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_037_034_1447121815336260_000.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2569188309395838,
+              -2.9796216421331205e-05,
+              -0.021955285707315503
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.00012121371540452159,
+              5.7241714266999425e-05,
+              0.14417719833668974
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 7.508288539867298e-06,
+          "decay_delta": 5.181737355811125e-06,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 37,
+          "block_id": 140,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_038_035_1447318738880277_140.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2559954056151956,
+              0.0007364866783038684,
+              -0.605185197122485
+            ],
+            [
+              0.7334168632398858,
+              0.0003070036952581633,
+              0.5706768999482559
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              0.00014688514310649982,
+              -4.6497228909859945e-05,
+              0.14555113960283234
+            ],
+            [
+              0.0010620267585198773,
+              0.0052041138937967135,
+              0.14577743630743345
+            ]
+          ],
+          "retained_map_shape": [
+            6,
+            6
+          ],
+          "q_delta": 0.02834310698528687,
+          "decay_delta": 0.005675395307931584,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 38,
+          "block_id": 43,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_039_036_1447483020484746_043.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.2594522932305803,
+              0.0021591865629652716,
+              -0.8779352185474497
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.011388598027260914,
+              -0.0034194021091897317,
+              0.15248759642645476
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.052759040637133325,
+          "decay_delta": 0.009445570556343161,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        },
+        {
+          "visit": 39,
+          "block_id": 75,
+          "file": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/replacement_040_037_1447721937248299_075.npz",
+          "origin": "NONLINEAR_SEARCH_PROPOSAL",
+          "bitwise_actual_evaluated_seed_match": false,
+          "provenance_roundoff_comparison": "64*eps*max(1,abs(a),abs(b)); metadata only",
+          "committed_nonzero_decay": true,
+          "decay_changed_beyond_physical_seed": true,
+          "actual_q_real": [
+            [
+              1.8927253692938515,
+              9.559283577498122e-05,
+              -0.054921578659034465
+            ]
+          ],
+          "actual_decay_kappa": [
+            [
+              -0.0028637817701773678,
+              -0.0005905519964352862,
+              0.013906328508159038
+            ]
+          ],
+          "retained_map_shape": [
+            3,
+            3
+          ],
+          "q_delta": 0.0193040676310956,
+          "decay_delta": 0.010849941318170155,
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5"
+        }
+      ],
+      "physical_seed_selections": 0,
+      "nonlinear_search_proposals": 37,
+      "unchanged_parameter_accepts": 0,
+      "committed_decay_changes_beyond_physical_seed": 37,
+      "complete_model_parameter_layout": {
+        "raw_neuron_count": 468,
+        "structurally_active_neuron_count": 459,
+        "structural_rule": "exact nonzero in the three polarization rows of fixed T; no amplitude cutoff",
+        "nominal_real_q_parameters": 1404,
+        "nominal_real_decay_parameters": 1404,
+        "retained_complex_amplitude_slots": 1377,
+        "real_amplitude_parameters": 2754,
+        "decay_components_positive": 45,
+        "decay_components_negative": 48,
+        "decay_components_exactly_zero": 1311
+      },
+      "operator_actions": 0,
+      "new_network_forward_count": 0,
+      "reference_read_count": 0
+    }
+  },
+  "physical_seed_selection_distinguished_from_gradient_learning": true
+}

@@ -1,0 +1,2278 @@
+{
+  "authority": "review_report_v33.md",
+  "review_sha": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+  "frozen_base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "campaign_window": {
+    "single_window": true,
+    "origin_monotonic": 1427175.072380687,
+    "deadline_monotonic": 1484775.072380687,
+    "budget_s": 57600,
+    "origin_semantics": "First native read-only inspection minus180s, conservative includes initial Git/document preparation; never reset",
+    "review_publish_SHA": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+    "reviewed_base_SHA": "427c1762ea8838f35a13bf2a0ebc1ad3ab46c63c",
+    "old_costs_retained": true
+  },
+  "runs": [
+    {
+      "name": "v34_complex_compare_attempt1",
+      "stage": "v34_complex_compare",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt1/run_summary.json",
+        "bytes": 555,
+        "sha256": "9eb974e53f83d6ef9b96b45409804a1ba55a2d674df54ea82a85b47355d51b3b"
+      },
+      "source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+      "input_sha256": null,
+      "design_sha256": null,
+      "classification": "STARTUP_FAILED",
+      "cleared": true,
+      "startup_reason": "RuntimeError('RESOURCE_WINDOW_UNAVAILABLE: bounded fresh CPU samples exhausted')",
+      "worker_started": false,
+      "actual_attempt_seconds": 82.12305016210303,
+      "inherited_allocation_span_seconds": 82.12305016210303,
+      "supervised_nested_seconds": null,
+      "simultaneous_sampled_tree_rss_peak_bytes": "NOT_RETAINED",
+      "own_sampled_tree_swap_peak_bytes": "NOT_RETAINED",
+      "cpu": null,
+      "role": null,
+      "environment": null,
+      "numerical_source_files": null,
+      "result": null,
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt1/launch.json",
+          "bytes": 433,
+          "sha256": "a3822d2f637179e88a0ea9b4bf7b8bcc35502ea56b76445eb722357ef8ec601f"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt1/pressure_stable_window.json",
+          "bytes": 11425,
+          "sha256": "7706cf1acad978f51c45967c8e96e3dbafea6a15b5d014ce55ccb56d68b7cad6"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt1/outer_admission.json",
+          "bytes": 249634,
+          "sha256": "4573c0dc63302c65c8e0314e5a37b476ede14d94a90b22ed6f1afff3ef869bce"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt1/attempt_identity.json",
+          "bytes": 297,
+          "sha256": "779d1029400b10fca9b3c7b93e6c5b0dd7e5cdd95600d636e03793ee79c32b32"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt1/terminal_identity.json",
+          "bytes": 11421,
+          "sha256": "4381b72de382a31683d8a523059c5128ed600cd8c1ac0059819ddc3e95964d69"
+        }
+      }
+    },
+    {
+      "name": "v34_complex_compare_attempt2",
+      "stage": "v34_complex_compare",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/run_summary.json",
+        "bytes": 12456,
+        "sha256": "e55858f2c8e0a74b3bb91b6b9030d2657e2d843d7241d3d7dcd4a9e1c893300f"
+      },
+      "source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+      "input_sha256": "957afec9401c1b83a55e0febc6c00503b6a9b1641f1ffa981ff0eb4ea4a639a9",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 75.58569823508151,
+      "inherited_allocation_span_seconds": 312.69967008708045,
+      "supervised_nested_seconds": 7.904622073052451,
+      "simultaneous_sampled_tree_rss_peak_bytes": 354828288,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 6,
+      "role": "complex_compare",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "pure",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "91611a5c6367f5604c7e4aa9ea3811a03601a8030b934b8d81428dfc0c6d39c0",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_complex_compare/result.json",
+        "bytes": 35140,
+        "sha256": "6e615ca910f3e086a90fa78a7737c927bc5963119a504218ecb7fa8e10d14fe3"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/launch.json",
+          "bytes": 434,
+          "sha256": "88ac3a287470a572ccaae8ce042711221bf9ea614a85f55cafe4ec1121d6bd8c"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/input_original.dat",
+          "bytes": 168,
+          "sha256": "957afec9401c1b83a55e0febc6c00503b6a9b1641f1ffa981ff0eb4ea4a639a9"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/run_manifest.json",
+          "bytes": 8079,
+          "sha256": "18a54c9b788dc1826200e77acad41d01625d162286be7331df0041154c722e69"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/abi.json",
+          "bytes": 288,
+          "sha256": "6b45a1cdd84b86269bc5879c827e3ad02a478cb7f570dfeda3f3b070084e0ca9"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/pressure_stable_window.json",
+          "bytes": 11431,
+          "sha256": "64080d00ee0c5d843cc8a40d3b01051baafcc915fac122c0380275f14867dc47"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/admission.json",
+          "bytes": 257176,
+          "sha256": "06a741437b341abfdac5de46610be5aa00b090c84e4ff2ec1e22a660cbe0d316"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/outer_admission.json",
+          "bytes": 250046,
+          "sha256": "e9c76ef7cb091e4d1a1f2e6f17ab445d4615001bd3fe90f097904528cc950adb"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/attempt_identity.json",
+          "bytes": 297,
+          "sha256": "c45118f73a2aa510a54a31124d0e4c75ab36c71f90844c94f8dceb6b8755da79"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/terminal_identity.json",
+          "bytes": 11421,
+          "sha256": "5eb8f4d07f64324146f51fc33914426499177cfd31a1aa8974e4c0593b29143b"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/payload_summary.json",
+          "bytes": 12456,
+          "sha256": "e55858f2c8e0a74b3bb91b6b9030d2657e2d843d7241d3d7dcd4a9e1c893300f"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_compare_attempt2/events.jsonl",
+          "bytes": 26263,
+          "sha256": "19280f28280b2c8d922e3c79f886e30e567e4e31edbbe08437866b6212a03bf1"
+        }
+      }
+    },
+    {
+      "name": "v34_complex_reconstruct_attempt1",
+      "stage": "v34_complex_reconstruct",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/run_summary.json",
+        "bytes": 13781,
+        "sha256": "fa333b2ab94ca203af6b8ae24746a516ac903ee28dea37d91c929288f2ac4ca5"
+      },
+      "source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+      "input_sha256": "9c988078be062544498b6ed88cb88a443e9c52cbea181764dcdb0f5c8bd1bd86",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 1354.3552013169974,
+      "inherited_allocation_span_seconds": 1354.3552013169974,
+      "supervised_nested_seconds": 1284.4739262359217,
+      "simultaneous_sampled_tree_rss_peak_bytes": 652046336,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 34,
+      "role": "complex_reconstruct",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "91611a5c6367f5604c7e4aa9ea3811a03601a8030b934b8d81428dfc0c6d39c0",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_complex_reconstruct/result.json",
+        "bytes": 407648,
+        "sha256": "5e747986943853c5b00040bdb7cf57c780fd891a17e5719608feaf10728aa7cf"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/launch.json",
+          "bytes": 448,
+          "sha256": "31bdaf03ed98452b6387cf39f2922ff28cde2ff7880d2c0101b132092d320e38"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/input_original.dat",
+          "bytes": 172,
+          "sha256": "9c988078be062544498b6ed88cb88a443e9c52cbea181764dcdb0f5c8bd1bd86"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/run_manifest.json",
+          "bytes": 9384,
+          "sha256": "cc71764457ab2375eff456c5db0ec5c798a827606bffcc01f32f3d4e6f735157"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "d6aa4572d6d09b00c22afc82b992153af9f4efb5b48fa6e80de62f7937dc8d70"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "95f6b46a10aa75e786fbc0dcd038082129d1e4d3073a63f4e21f50bc0261ae16"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/admission.json",
+          "bytes": 258406,
+          "sha256": "3ad8cf6302801e8d1517157de64a23f0b19fd39eeb66dba38081dc7637e92f56"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/outer_admission.json",
+          "bytes": 244694,
+          "sha256": "ffa24b5749b0e839d9bcb97cc1e7b31d6b396ea01aaacac4df5147d9afe4ff30"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/attempt_identity.json",
+          "bytes": 301,
+          "sha256": "b91d6399b5923ddd70161960107213dd0321937f9b351db6fe70d75d30b07f92"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/terminal_identity.json",
+          "bytes": 11429,
+          "sha256": "152667b165062f6e45dbb69453cbdd0d7a0d1d0ca01b2a3d99d63be86f925466"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/payload_summary.json",
+          "bytes": 13781,
+          "sha256": "fa333b2ab94ca203af6b8ae24746a516ac903ee28dea37d91c929288f2ac4ca5"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_reconstruct_attempt1/events.jsonl",
+          "bytes": 59013,
+          "sha256": "67f94f49bcfadbf8a2d15646d4097e24f08c846e7ff44a9c4fcb7a3b0bc555a3"
+        }
+      }
+    },
+    {
+      "name": "v34_complex_wave_calibration_attempt1",
+      "stage": "v34_complex_wave_calibration",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/run_summary.json",
+        "bytes": 13798,
+        "sha256": "650e8a03915eaddfd578a7ad793a31715c8a539aa659ed0b941f7e2860322099"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "97669f044b42c1a5dd2b2be6831c34fed46bda3511e0e858d28566516957e4ad",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 81.16861407691613,
+      "inherited_allocation_span_seconds": 81.16861407691613,
+      "supervised_nested_seconds": 10.896304543828592,
+      "simultaneous_sampled_tree_rss_peak_bytes": 1058840576,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "role": "complex_wave_calibration",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_complex_wave_calibration/result.json",
+        "bytes": 13410,
+        "sha256": "014f5e68ab2862bbde8055d30766fac839d7a4d1b4030684e7a3bf4a43d6a91e"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/launch.json",
+          "bytes": 467,
+          "sha256": "05da660f45b4ed393921e7b9190cf3b17df0e24e7283cff2bc705820dfd655e8"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/input_original.dat",
+          "bytes": 177,
+          "sha256": "97669f044b42c1a5dd2b2be6831c34fed46bda3511e0e858d28566516957e4ad"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/run_manifest.json",
+          "bytes": 9404,
+          "sha256": "ac503afb9cc7a040b34b415c5e360b53001e2635d6c9ea9dd1b2d70a103d1f50"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "281bbf98702c4571bdccca91c11a6b675b466e04700c29aa4474fa1723066091"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/pressure_stable_window.json",
+          "bytes": 11457,
+          "sha256": "b25d1c74eff4758ecfdf6344695729fc039ca78c7fb6cadb66ad88c2a3301d76"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/admission.json",
+          "bytes": 257166,
+          "sha256": "8f9d1e955e71e11cf401994b2ac3a179363a787d2bd67577c6646f7bc81b5776"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/outer_admission.json",
+          "bytes": 249774,
+          "sha256": "7ca3d37b8879396265f4f7bc9208703da74e85cf19ffa9b8ed95a49667debffd"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/attempt_identity.json",
+          "bytes": 306,
+          "sha256": "71c7bcd775db0a0ea3ff273846a569a90de846391aeee98485f2016c42b11c14"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/terminal_identity.json",
+          "bytes": 11438,
+          "sha256": "d48d3a3bda20ae0bf98e45b381487b97e017258abcaa57bc5cda587d18125774"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/payload_summary.json",
+          "bytes": 13798,
+          "sha256": "650e8a03915eaddfd578a7ad793a31715c8a539aa659ed0b941f7e2860322099"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_calibration_attempt1/events.jsonl",
+          "bytes": 8500,
+          "sha256": "3789868bce0c3513475be676c151d20e78af10fb3048cf566a4c8c19a037319b"
+        }
+      }
+    },
+    {
+      "name": "v34_complex_wave_checks_attempt1",
+      "stage": "v34_complex_wave_checks",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/run_summary.json",
+        "bytes": 12478,
+        "sha256": "3a37079fcd805d073ffd6495c7ee8c263343514c9ed1f437ff9403d7b611e524"
+      },
+      "source_sha": "7c0dcc1985af1be6d5b0c919e982ba778d857537",
+      "input_sha256": "452cf4d0b66e06648f9a766cb7237a75a5be179f25e4521f4ecf5183f90e8f1e",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 496.3649505581707,
+      "inherited_allocation_span_seconds": 496.3649505581707,
+      "supervised_nested_seconds": 429.40391344577074,
+      "simultaneous_sampled_tree_rss_peak_bytes": 5061799936,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 35,
+      "role": "complex_wave_checks",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "04cd86601f03e70a4ba3f1d1f5fe3ad2f7fe42f00b6e306dbfbc73cb938d7b55",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "c1bbb48ca3ee0a33fd8d3df9bf4c0bbd4ea01adaadb51ffe13fd5292496efaac",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_complex_wave_checks/qualification_original_attempt1.json",
+        "bytes": 28013,
+        "sha256": "677be31dbaba15f3805ee46dbbecd93e6b5d54dc78be21f72fc2da1d99b023ff"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/launch.json",
+          "bytes": 448,
+          "sha256": "d6242838d711eeaa65181bd618d1960908b6bb39b0395357241da56b7d90693f"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/input_original.dat",
+          "bytes": 172,
+          "sha256": "452cf4d0b66e06648f9a766cb7237a75a5be179f25e4521f4ecf5183f90e8f1e"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/run_manifest.json",
+          "bytes": 8097,
+          "sha256": "40ffa092f0ac42f5b663802eb9bf7c96cc0f677d18384d85ddb55ad763872e9d"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/abi.json",
+          "bytes": 491,
+          "sha256": "ae262d6dd1249c14414507370d8e09e6ee28eaf5051c72dd964e72ab8a1d1ad8"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "a47d7cf9cdef5465428d6537ffaf2397fbd03076307e8ffeeb50146394f2a3e8"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/admission.json",
+          "bytes": 346094,
+          "sha256": "97104f8d032adfa4adb932932b2a949352409a952c5f22153fccb643ce98c249"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/outer_admission.json",
+          "bytes": 336469,
+          "sha256": "5c6f1689518f06d926a1c4f086f8f9fd644b9f907fccd1644a84076623ddf058"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/attempt_identity.json",
+          "bytes": 301,
+          "sha256": "671e1a4d4a339d114c617d0e786ab3af84c9f621894146cd9eed919021a13c90"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/terminal_identity.json",
+          "bytes": 11428,
+          "sha256": "66b1963ed3c55d712db0395154aa821060dc6293373e7fd9a3656396ff4072a5"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/payload_summary.json",
+          "bytes": 12478,
+          "sha256": "3a37079fcd805d073ffd6495c7ee8c263343514c9ed1f437ff9403d7b611e524"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt1/events.jsonl",
+          "bytes": 29185,
+          "sha256": "20a76121b53689bd8110df6984dba664596e77b394e2c928f98bbd12edd9a81f"
+        }
+      }
+    },
+    {
+      "name": "v34_complex_wave_checks_attempt2",
+      "stage": "v34_complex_wave_checks",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/run_summary.json",
+        "bytes": 12476,
+        "sha256": "5a073629fa00a2499ad88358ae25f26fa836ea7d2a6f4420764735a350c0cffd"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "452cf4d0b66e06648f9a766cb7237a75a5be179f25e4521f4ecf5183f90e8f1e",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 83.94958674698137,
+      "inherited_allocation_span_seconds": 775.2911742911674,
+      "supervised_nested_seconds": 18.239577991887927,
+      "simultaneous_sampled_tree_rss_peak_bytes": 321118208,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 39,
+      "role": "complex_wave_checks",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_complex_wave_checks/result.json",
+        "bytes": 28603,
+        "sha256": "79cf6b90c4eef39e6dd3482c0dacf10a291094b0b9e6fe304396184674f4daf8"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/launch.json",
+          "bytes": 448,
+          "sha256": "83ed0d80c7449cc2da6da076550e4ad7aadae302e590771ed25868b11c2a4bef"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/input_original.dat",
+          "bytes": 172,
+          "sha256": "452cf4d0b66e06648f9a766cb7237a75a5be179f25e4521f4ecf5183f90e8f1e"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/run_manifest.json",
+          "bytes": 8097,
+          "sha256": "ad217e564a811ba6d08bdf3af69a19990c557351a0032b9001d5eef20b0a07d4"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/abi.json",
+          "bytes": 491,
+          "sha256": "0d40480dbb09d6413a1c11f4dc18243482e5950f1f8115d4fcdaed89831e47a0"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/pressure_stable_window.json",
+          "bytes": 11457,
+          "sha256": "0384866d49272f4fbe5ba865de5e19f42cd9a98d9af788a4514048c9eefad99e"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/admission.json",
+          "bytes": 257527,
+          "sha256": "a468fdd737043cd3cf919f62e9c9ed743bd42424fa0f20697666d5f65ef30e49"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/outer_admission.json",
+          "bytes": 340363,
+          "sha256": "fe62caf8d0d99b482c7c0fc17f81a05f07b43aa09cba4c46a56634810a21293f"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/attempt_identity.json",
+          "bytes": 301,
+          "sha256": "f9fd554457ddf7cf77693db9f4c889a80710a5d98861d2e7050008f11d05d859"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/terminal_identity.json",
+          "bytes": 11429,
+          "sha256": "1304927047fe9a528c6a70330e821afc92c816d80b0ae538586f89c60cb2a6ec"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/payload_summary.json",
+          "bytes": 12476,
+          "sha256": "5a073629fa00a2499ad88358ae25f26fa836ea7d2a6f4420764735a350c0cffd"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_complex_wave_checks_attempt2/events.jsonl",
+          "bytes": 495,
+          "sha256": "fd15c400837fc773ae4e785b441ed920c68b02507efe056d97a10c1b2246c3c5"
+        }
+      }
+    },
+    {
+      "name": "v34_deterministic_complex_backfit_attempt1",
+      "stage": "v34_deterministic_complex_backfit",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/run_summary.json",
+        "bytes": 12525,
+        "sha256": "be75d16d2ec614f43c6b83b9cdb58fed4b8edd94da819af95515c79793338a9b"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 7361.680367793189,
+      "inherited_allocation_span_seconds": 7361.680367793189,
+      "supervised_nested_seconds": 7293.201269396115,
+      "simultaneous_sampled_tree_rss_peak_bytes": 4196245504,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 46,
+      "role": "DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/result_attempt1.json",
+        "bytes": 2959,
+        "sha256": "8217f00450adf24eed494cc22c22aa27775951b0e1db3853188c36ed29a0ef34"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/launch.json",
+          "bytes": 488,
+          "sha256": "c9b417b5a575d70e945bd3905b72b58f24a2c22fd7e561a878d177429ff94473"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/input_original.dat",
+          "bytes": 182,
+          "sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/run_manifest.json",
+          "bytes": 8142,
+          "sha256": "ecd2afe13df8c28d5ebcfc5c0bbca5b5165d2e8159d5ecc534eafcadaa28dfcc"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/abi.json",
+          "bytes": 491,
+          "sha256": "4254a574a4f17c59f5ae11f16bec5cc76449c6c67b1bc3e17ea72d8f88b76b9a"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/pressure_stable_window.json",
+          "bytes": 11460,
+          "sha256": "42074cfeac7c9d47f8d648ed292198725df8c3abfba72a0331f29645da6336e6"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/admission.json",
+          "bytes": 256944,
+          "sha256": "1042a34ad25e0d602b93d880ffe0ff6a45e91de429dcaa76f6ea0a4322091a78"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/outer_admission.json",
+          "bytes": 249834,
+          "sha256": "4d4d89eeef2f153ead558b9c558888349314c0af7f7849d0cc1b1168f2e68aa4"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/attempt_identity.json",
+          "bytes": 311,
+          "sha256": "554cda4eebc75fbf092ecdafce22ccfc8947363c517dbe86adab546cf193ed14"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/terminal_identity.json",
+          "bytes": 11449,
+          "sha256": "309837e433bb651cf6f287f4abc26b43a9feaf15ee2dedcb098bdac43b6e0a66"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/payload_summary.json",
+          "bytes": 12525,
+          "sha256": "be75d16d2ec614f43c6b83b9cdb58fed4b8edd94da819af95515c79793338a9b"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt1/events.jsonl",
+          "bytes": 701957,
+          "sha256": "90733168bd5f0fb57a40566c793c7b0d44a32ab17a0299d5aaaf1451c4a33f68"
+        }
+      }
+    },
+    {
+      "name": "v34_deterministic_complex_backfit_attempt2",
+      "stage": "v34_deterministic_complex_backfit",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/run_summary.json",
+        "bytes": 12519,
+        "sha256": "8f1ca5805193f238d728252adeafc22ede1574245b069b56b70e5a16b4f40488"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 2084.815906089032,
+      "inherited_allocation_span_seconds": 9842.27371366811,
+      "supervised_nested_seconds": 2020.819483297877,
+      "simultaneous_sampled_tree_rss_peak_bytes": 4189253632,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 3,
+      "role": "DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/result_attempt2.json",
+        "bytes": 3154,
+        "sha256": "a9817c00bb5ea595229f3110788bface7e7bcfd57668602f8c2723d1eddda5c7"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/launch.json",
+          "bytes": 488,
+          "sha256": "df0de692839b88f398785e9051e05688c6d82f45bf59a3ac90d917959def4bcb"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/input_original.dat",
+          "bytes": 182,
+          "sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/run_manifest.json",
+          "bytes": 8141,
+          "sha256": "d2fce3ffbe1a3f44c072fd4664b267eff5a73f5dbd3baa7035ccc75239c887fa"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/abi.json",
+          "bytes": 490,
+          "sha256": "2bf1f541e7a6953c8a2d3f5f5fadb1510ae31f00918f7a0ec2895db66ecfb440"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "e0e48b6b2d4077b4b3258c481e4dcaed2703609810e56765e06f61cbe787453e"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/admission.json",
+          "bytes": 231658,
+          "sha256": "a291b2e9ae470e4504af52c893ba99f3a05bd41df9b49e8fda35466288dac8b1"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/outer_admission.json",
+          "bytes": 217686,
+          "sha256": "4d9ebc43322faf024ff7e5e100b7016da4da48d3a66c0483ade8036923f5ee03"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/attempt_identity.json",
+          "bytes": 311,
+          "sha256": "68c0eea5179e01a5a9427c645d6745dda8a04e193ddabcc7cafbdf05d599b52e"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/terminal_identity.json",
+          "bytes": 11447,
+          "sha256": "0db6c60fb386aa053f8646e55a63e2b76baa4d36f746f82142e4884935e26b77"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/payload_summary.json",
+          "bytes": 12519,
+          "sha256": "8f1ca5805193f238d728252adeafc22ede1574245b069b56b70e5a16b4f40488"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt2/events.jsonl",
+          "bytes": 176730,
+          "sha256": "aa51bb0803d00373105abe4d1d54d39e00bfdca8e79381923742dfe472484f69"
+        }
+      }
+    },
+    {
+      "name": "v34_deterministic_complex_backfit_attempt3",
+      "stage": "v34_deterministic_complex_backfit",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/run_summary.json",
+        "bytes": 12523,
+        "sha256": "66b00f8bc182324e298c8f08fd56adb15e8e6911ef715a7ac504f78b7b50d509"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 267.81861821515486,
+      "inherited_allocation_span_seconds": 10295.123846683186,
+      "supervised_nested_seconds": 203.7713382721413,
+      "simultaneous_sampled_tree_rss_peak_bytes": 3344891904,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "role": "DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/result_attempt3.json",
+        "bytes": 3160,
+        "sha256": "49d4c435b22eddd91026fd1f6c5b6d51dc2299be079553b0ac055838a4729068"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/launch.json",
+          "bytes": 488,
+          "sha256": "af81f62f2a20ee46852d3398b27b8ca305c05a3667be391b83dba6d62cd7b7f7"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/input_original.dat",
+          "bytes": 182,
+          "sha256": "f0fcf6d1d349f4c427fb73e96c09f613cf8fc7fc29fdafbe76b51dc06101cf5a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/run_manifest.json",
+          "bytes": 8141,
+          "sha256": "f81aea4ac2dd7f3263e35ae08619e0a8b359f599daf8207c2042e700b55570ec"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "6a58e977b9cc4d500d75c8628221ed79939cd7a921ee87a7dab9658f5f1a8838"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/admission.json",
+          "bytes": 230888,
+          "sha256": "e2391f0cd2a4af64b8cf58d06216d7c99f897f2fc3cb1bd8529cd85fb4f8c084"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/outer_admission.json",
+          "bytes": 224216,
+          "sha256": "c843bb214f197afc6f02319164bbdbb1d16487195f2876c35dd605c5d931efc5"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/attempt_identity.json",
+          "bytes": 311,
+          "sha256": "9a39a7e83a01c17bd55ce278aa21482ac599c3225d706cf28b080b96d000ee45"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/terminal_identity.json",
+          "bytes": 11447,
+          "sha256": "53586584169b7322cf2c449c316bde926a7de3271f37d7a2ef2fb1f359142ce4"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/payload_summary.json",
+          "bytes": 12523,
+          "sha256": "66b00f8bc182324e298c8f08fd56adb15e8e6911ef715a7ac504f78b7b50d509"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_complex_backfit_attempt3/events.jsonl",
+          "bytes": 291,
+          "sha256": "ede293ae0201eb2611606f7f646a97df0bfc1bac3359b1adc15c0733062a9263"
+        }
+      }
+    },
+    {
+      "name": "v34_deterministic_validate_1_attempt1",
+      "stage": "v34_deterministic_validate_1",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/run_summary.json",
+        "bytes": 13790,
+        "sha256": "3c40778ae808e2963089f040ff19940c5dc83d3f5be62f1b38e3ea77a6c941ed"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "1690288755b8aa3141f2c7b81cbe90e2666ac3dee4f355e5f8ac90f1175f137a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 123.88655389100313,
+      "inherited_allocation_span_seconds": 123.88655389100313,
+      "supervised_nested_seconds": 59.7639793548733,
+      "simultaneous_sampled_tree_rss_peak_bytes": 445231104,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 2,
+      "role": "complex_early_validate",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_validate_1/result.json",
+        "bytes": 1833,
+        "sha256": "cb44224d27cce778b397f332f91dc8e1a13f4a602b4515e33ced38316e543de4"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/launch.json",
+          "bytes": 468,
+          "sha256": "0716bc0a6540dccfacf29fa7ed603005f5bd2986fd86e2c218662428873cb4ec"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/input_original.dat",
+          "bytes": 177,
+          "sha256": "1690288755b8aa3141f2c7b81cbe90e2666ac3dee4f355e5f8ac90f1175f137a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/run_manifest.json",
+          "bytes": 9396,
+          "sha256": "35163b24b3dd42f35ff1133e02d7ef0fa3e1d4a7fd8ead968808843f2b4a9157"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/abi.json",
+          "bytes": 462,
+          "sha256": "c3178f7df514f67dd1ae9a9b40c5edd9dd20ca04db809c72442e2f447fb0c21f"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/pressure_stable_window.json",
+          "bytes": 11454,
+          "sha256": "efcdeee548e6fd502ca909b1938ae170e48c0cf5f4700c417c7f99762262e3db"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/admission.json",
+          "bytes": 225613,
+          "sha256": "28e8cb3b670cf92166f7df5ea31c633c069716f1c061052dc3da688ea82735ec"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/outer_admission.json",
+          "bytes": 301634,
+          "sha256": "f367cdf684180dabcbb95a0dbe6d2b2b6ecf7cd0dbf1c504173ccfa90974d932"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "c12fd58901f62aacb59b632325925ee141ea218ef30a3296467cfec13424e28d"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/terminal_identity.json",
+          "bytes": 11437,
+          "sha256": "b9c07df7cb805f91aab9b064bb8afee6822d9641eebfd8b8bf123a736f188005"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/payload_summary.json",
+          "bytes": 13790,
+          "sha256": "3c40778ae808e2963089f040ff19940c5dc83d3f5be62f1b38e3ea77a6c941ed"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_1_attempt1/events.jsonl",
+          "bytes": 51504,
+          "sha256": "ea6d42732b64b1265820bc7ba40c1db9ff2cd5403282855503a61ac85a9f945a"
+        }
+      }
+    },
+    {
+      "name": "v34_deterministic_validate_2_attempt1",
+      "stage": "v34_deterministic_validate_2",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/run_summary.json",
+        "bytes": 13798,
+        "sha256": "2b6230ff21971c8f7e60f0fe1213c6bd0802ce024673e3eb13abbfb4458203fc"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "1150d0195c04b3bcb9eb9698055b10e80f30923fa2438defc46b5a3d4fa6e645",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 126.01339583704248,
+      "inherited_allocation_span_seconds": 126.01339583704248,
+      "supervised_nested_seconds": 60.654479909921065,
+      "simultaneous_sampled_tree_rss_peak_bytes": 445181952,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "role": "complex_early_validate",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_validate_2/result.json",
+        "bytes": 1831,
+        "sha256": "2c0be67cf63aae168e2941d2717313fa0f2f48bda73a7e5f4a8f97c4b775a07f"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/launch.json",
+          "bytes": 468,
+          "sha256": "9d34e50edbb721c22b1865061ca85687a573c71d94bc46648faf3bcc4a7fffc7"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/input_original.dat",
+          "bytes": 177,
+          "sha256": "1150d0195c04b3bcb9eb9698055b10e80f30923fa2438defc46b5a3d4fa6e645"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/run_manifest.json",
+          "bytes": 9402,
+          "sha256": "a47b0bcb653981688081806e64963305f05af9ced2e1ec59a81f19005022c261"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "281bbf98702c4571bdccca91c11a6b675b466e04700c29aa4474fa1723066091"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/pressure_stable_window.json",
+          "bytes": 11456,
+          "sha256": "152b72c926f7338f59b4bdbafcf52e8cee4d4fb8ac0886a51db0e0e10afa1cf0"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/admission.json",
+          "bytes": 230904,
+          "sha256": "2aad392a9badfd6870efea96faa93795ee2580e21bae6a07c4ef3206495693d1"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/outer_admission.json",
+          "bytes": 224877,
+          "sha256": "fe539e235b5d852f54928d2d78b6a05cae2331834004c2bb867cfafcfd794ad8"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/attempt_identity.json",
+          "bytes": 306,
+          "sha256": "6e78e8c1be5c2633d7b3e29a16bce49054ae3969b6815139ed90bbc701f4e9ee"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/terminal_identity.json",
+          "bytes": 11437,
+          "sha256": "384dd8cea7e25e2011b2061a9a1e2db51a57cf30ea108925868a8df0a492f8ac"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/payload_summary.json",
+          "bytes": 13798,
+          "sha256": "2b6230ff21971c8f7e60f0fe1213c6bd0802ce024673e3eb13abbfb4458203fc"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_deterministic_validate_2_attempt1/events.jsonl",
+          "bytes": 51504,
+          "sha256": "1a1ba5101b8bab29bd33c68ecc167c796db7a99cd30ad89f83888b0bd26fb217"
+        }
+      }
+    },
+    {
+      "name": "v34_learned_complex_backfit_attempt1",
+      "stage": "v34_learned_complex_backfit",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/run_summary.json",
+        "bytes": 12510,
+        "sha256": "52bb45abbc4b67e48fad33ca1ee1739029e3860cb825e75a6422cc0b669640a6"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 5631.044505184982,
+      "inherited_allocation_span_seconds": 5631.044505184982,
+      "supervised_nested_seconds": 5567.011647863081,
+      "simultaneous_sampled_tree_rss_peak_bytes": 4188233728,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "role": "LEARNED_COMPLEX_WAVE_BACKFIT",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/result_attempt1.json",
+        "bytes": 2933,
+        "sha256": "be14a0126a23e412f90b5b4f5267317c4ba1977fd53e9e01f7f615dbdda799a4"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/launch.json",
+          "bytes": 464,
+          "sha256": "843c491948cccf4b3f0c3da83e19fd4d385098b8e01514a0197835fa0cc209fc"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/input_original.dat",
+          "bytes": 176,
+          "sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/run_manifest.json",
+          "bytes": 8118,
+          "sha256": "166870fe802824d876c81154e82653562195ecd135c76398f7f1ebbd0bb43272"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/abi.json",
+          "bytes": 491,
+          "sha256": "d2b31b828ef96cddbfcebea152d57e6db7d392d9558fca72572e851812994d45"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/pressure_stable_window.json",
+          "bytes": 11452,
+          "sha256": "81905e6608b3de865f7b73fe4e9345de4ff8c0467d96cfd6e203ab62286348d6"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/admission.json",
+          "bytes": 236294,
+          "sha256": "085d54e89c7655fe56d41a4b200511ab0f42f77b61d2cda90df4a1f5a85b5ace"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/outer_admission.json",
+          "bytes": 228937,
+          "sha256": "4b6573275af711b8ccebea567b75aace977c93e9d3fc56bccd8dd5817c9f1c38"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/attempt_identity.json",
+          "bytes": 305,
+          "sha256": "3789c628eac7c2dcc3af45b89f1055deeda46b3ac589a912b9b4f6d2bbf6f13f"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/terminal_identity.json",
+          "bytes": 11436,
+          "sha256": "6f4deacb2ca401852e1a18f8374e04badbc935cd7226eed4289be76b2ace330f"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/payload_summary.json",
+          "bytes": 12510,
+          "sha256": "52bb45abbc4b67e48fad33ca1ee1739029e3860cb825e75a6422cc0b669640a6"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt1/events.jsonl",
+          "bytes": 548031,
+          "sha256": "83035b1948ebcdd6eabf90bb6fdf429bc9d2448da68d64506397a9a039c9c064"
+        }
+      }
+    },
+    {
+      "name": "v34_learned_complex_backfit_attempt2",
+      "stage": "v34_learned_complex_backfit",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/run_summary.json",
+        "bytes": 12500,
+        "sha256": "ded51d9cb03041a4c298047853eda3efbd8ce593804a3cd2e93d85dd919215c4"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 1774.4667946570553,
+      "inherited_allocation_span_seconds": 7792.097657011123,
+      "supervised_nested_seconds": 1710.5641800470185,
+      "simultaneous_sampled_tree_rss_peak_bytes": 4197736448,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 0,
+      "role": "LEARNED_COMPLEX_WAVE_BACKFIT",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/result_attempt2.json",
+        "bytes": 3128,
+        "sha256": "68d8c953b628bbd895b9c2490f82ded5839edcfa91bcbeb5acb793a980ca8f66"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/launch.json",
+          "bytes": 464,
+          "sha256": "f83f8b702e6453f9bed1d227075845aaa9591ff971cb3cee19cebe8c0ac44acc"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/input_original.dat",
+          "bytes": 176,
+          "sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/run_manifest.json",
+          "bytes": 8117,
+          "sha256": "1b4bfd8b66ccf72863c509a3fece0659689a704040f3ec7eaf668139dbe4f219"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/pressure_stable_window.json",
+          "bytes": 11458,
+          "sha256": "8e8b7bd4144879beb3369389a5eb07856aa08735345bdc71be663ef1e47a5470"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/admission.json",
+          "bytes": 304499,
+          "sha256": "29cfb1aedb2015123fafbd1d1067084cc16b7b946e08ed8740e6ca3a7a1da712"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/outer_admission.json",
+          "bytes": 211734,
+          "sha256": "e28453c2b9b95acbf6cdd315f9729cdec7cb4eb973fe556910951b9935ce4f3b"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/attempt_identity.json",
+          "bytes": 305,
+          "sha256": "e375e6f39a12375fdc715955c20eb4522ce77eca4eeb9e00d7c8498b2264dac8"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/terminal_identity.json",
+          "bytes": 11437,
+          "sha256": "a34b94e631e21ed707a9a3e13ac13276adb372f203509d792304e7097dde9800"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/payload_summary.json",
+          "bytes": 12500,
+          "sha256": "ded51d9cb03041a4c298047853eda3efbd8ce593804a3cd2e93d85dd919215c4"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt2/events.jsonl",
+          "bytes": 152738,
+          "sha256": "a4237974ae9fc4d52492150b1ddd541c79006db827f13ccdd48c883be6040d5b"
+        }
+      }
+    },
+    {
+      "name": "v34_learned_complex_backfit_attempt3",
+      "stage": "v34_learned_complex_backfit",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/run_summary.json",
+        "bytes": 12500,
+        "sha256": "61092d2a4e0e4264de0f01e4407b352c22a1905746a0a20b8a3da941174c286d"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 322.96233574091457,
+      "inherited_allocation_span_seconds": 8370.467863542028,
+      "supervised_nested_seconds": 250.72307764692232,
+      "simultaneous_sampled_tree_rss_peak_bytes": 3333480448,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 36,
+      "role": "LEARNED_COMPLEX_WAVE_BACKFIT",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/result_attempt3.json",
+        "bytes": 3133,
+        "sha256": "295bac034ccc230cb143a74c3a08c01e535ef83319a9eaa4def4d2176b9699cc"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/launch.json",
+          "bytes": 464,
+          "sha256": "014bf71be2ea89cf2eff17d54e011f3bcb6e58fcf1dffe2d56544f845f557e54"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/input_original.dat",
+          "bytes": 176,
+          "sha256": "fce354a2dcf7af8df736dda5963f8708d4fddf7053df03000ddc2420831e3a2a"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/run_manifest.json",
+          "bytes": 8118,
+          "sha256": "5bae39c2decddd888a10008770b20fb7b2f29afb3357554dbeea2503c84e7ede"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/abi.json",
+          "bytes": 491,
+          "sha256": "6f4bfeb6d6de667b392c59c916b57774416e11c7f08df47ad0b6f320bd113442"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "7691847bdec5a467caaa4d31d20c2330c831d228caec1999f0c2c17cf7e3cc80"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/admission.json",
+          "bytes": 257705,
+          "sha256": "000a4d3f7f72d7146181deae9ddaae6389b4500f64f2f3fa0f544a3c75263092"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/outer_admission.json",
+          "bytes": 331671,
+          "sha256": "9a76fb867fd8f9aff38cda104d6669a9d742b6e5b2651d5b4f210c76c929160c"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/attempt_identity.json",
+          "bytes": 305,
+          "sha256": "37f5fe25d5e90b6816dc6eb63c2f03ec03243b9dc95dd3ecc938a2a5c60e6416"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/terminal_identity.json",
+          "bytes": 11437,
+          "sha256": "74133d6a287ceae82055cc20269cd6045a8e508e26dc0a99b53aa8ec8d13995a"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/payload_summary.json",
+          "bytes": 12500,
+          "sha256": "61092d2a4e0e4264de0f01e4407b352c22a1905746a0a20b8a3da941174c286d"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_complex_backfit_attempt3/events.jsonl",
+          "bytes": 285,
+          "sha256": "9301b45bfd7722f0b32a723935609234976cd8a3f06276637b3240afc535ed9e"
+        }
+      }
+    },
+    {
+      "name": "v34_learned_validate_1_attempt1",
+      "stage": "v34_learned_validate_1",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/run_summary.json",
+        "bytes": 13774,
+        "sha256": "e84ac7dc42f542a31b1662470558cf83d1b0c949e1fca83f8f28bd9bef2b754f"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "c3122843a987ebf83f9b01b44afb0741ae4df4b4091ba5d5148a0833da32b444",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 123.41748773003928,
+      "inherited_allocation_span_seconds": 123.41748773003928,
+      "supervised_nested_seconds": 59.43467995407991,
+      "simultaneous_sampled_tree_rss_peak_bytes": 445325312,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 12,
+      "role": "complex_early_validate",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_validate_1/result.json",
+        "bytes": 1828,
+        "sha256": "65f6c0e566e8ddab615b80fd7688ef1e7913e4a7baba1295d0a21d2c1e7c4a1b"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/launch.json",
+          "bytes": 443,
+          "sha256": "3b83364e24a5b101b68bd15ebd045763ec731e6b6e4315e0add4b151c2ccfbb3"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/input_original.dat",
+          "bytes": 171,
+          "sha256": "c3122843a987ebf83f9b01b44afb0741ae4df4b4091ba5d5148a0833da32b444"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/run_manifest.json",
+          "bytes": 9379,
+          "sha256": "ceca269fd2a8bd0e703f3f7e02a1a15812289c16e5b98bf2a584ee4f2599f372"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "281bbf98702c4571bdccca91c11a6b675b466e04700c29aa4474fa1723066091"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "30ed9be2262464fc9a3da5bcf908bebcae733e0e17776e62dae25ebeda957183"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/admission.json",
+          "bytes": 316793,
+          "sha256": "acef1c7b0995177a822902dc4bb4dc5b210899affa861069f586013c21dec500"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/outer_admission.json",
+          "bytes": 223541,
+          "sha256": "9f4adf3f42966a751c46d7dca81096ad6af53f3a2b014db5d71a10ffcb4b10ce"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/attempt_identity.json",
+          "bytes": 297,
+          "sha256": "6a75b2c822b2c4701728fe6be56cf4f7c37d804c450d6784248e83a6a4ced752"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/terminal_identity.json",
+          "bytes": 11426,
+          "sha256": "ff4ce67811d079af64a4de36006177beb73df16dd0c149b3e598b86d0588a320"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/payload_summary.json",
+          "bytes": 13774,
+          "sha256": "e84ac7dc42f542a31b1662470558cf83d1b0c949e1fca83f8f28bd9bef2b754f"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_1_attempt1/events.jsonl",
+          "bytes": 51498,
+          "sha256": "003d624d6ff560ed8f9c5e674402d9700ef6bcfc64ab836f5eb4eb202115f0b8"
+        }
+      }
+    },
+    {
+      "name": "v34_learned_validate_2_attempt1",
+      "stage": "v34_learned_validate_2",
+      "summary": {
+        "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/run_summary.json",
+        "bytes": 13777,
+        "sha256": "231ff0e063cdfc306e9406f97793619b18ca3543160475593bf07afd90b45b9b"
+      },
+      "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "input_sha256": "36f5d2d099d50fc61e69458c95f22c79d49ba619702954a68d3191e518f395cb",
+      "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+      "classification": "COMPLETED",
+      "cleared": true,
+      "startup_reason": null,
+      "worker_started": true,
+      "actual_attempt_seconds": 143.9329076539725,
+      "inherited_allocation_span_seconds": 143.9329076539725,
+      "supervised_nested_seconds": 77.96753094997257,
+      "simultaneous_sampled_tree_rss_peak_bytes": 445427712,
+      "own_sampled_tree_swap_peak_bytes": 0,
+      "cpu": 37,
+      "role": "complex_early_validate",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "numerical_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "9e780dd71914e86915f694c93202496a78f65d642f1aa857d81eff602df53d7d",
+        "src/runners/neural_wave_dependencies.py": "4e897c5c12d1b962cc1f4611dee1074c268d3d58fe680756e37a7192983552a9",
+        "src/runners/neural_wave_worker.py": "c3921bdf77e8806cb2169a01e79e0260b278a522be960608c435af8b7236bc4c",
+        "src/io/neural_wave_campaign.py": "88ebb8026aa52fda78e8eb5097036db732bb192d8ffca4673e6618d1c216378e",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "fda10d0bbeff7de3902065f1f772743ccf8e54ffffbcc6fa87da0bb4fd60a157",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+        "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+        "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+        "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+        "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+        "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+        "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+        "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+        "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+        "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+        "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_validate_2/result.json",
+        "bytes": 1825,
+        "sha256": "0e9160c1bd1b5f54a81a4949bbc90b8f7b6de84f022ff6d17245f627aa6e2906"
+      },
+      "identities": {
+        "launch.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/launch.json",
+          "bytes": 444,
+          "sha256": "fcfe8d34350da40d1fd37de365a5e13e849bba4ff5f577e94520213c80ecee25"
+        },
+        "input_original.dat": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/input_original.dat",
+          "bytes": 171,
+          "sha256": "36f5d2d099d50fc61e69458c95f22c79d49ba619702954a68d3191e518f395cb"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/resolved_config.json",
+          "bytes": 66008,
+          "sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/run_manifest.json",
+          "bytes": 9384,
+          "sha256": "a8b475c38e8d63e1346e9dd8f611ca41f9f6de5802ae0a87cc294a388af218a7"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/abi.json",
+          "bytes": 463,
+          "sha256": "1b260c22aab982760077330103fec0c5b4a41ca2aafe99bb0430f7909d4fd075"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "024c6825e8d5a12086b102d278f31b66fe8e1e927605675f9b5f3eb718c8a02a"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/admission.json",
+          "bytes": 252147,
+          "sha256": "20ff735268a77b64ac27df9aea9e564e84fc01ba3a6d3aac86e56b114776b2ce"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/outer_admission.json",
+          "bytes": 245937,
+          "sha256": "2a27137872615f6a684369bbbd471ef6be8696a22975b94541e31d8dd6f17961"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/attempt_identity.json",
+          "bytes": 300,
+          "sha256": "9d1ff7d9bc00db94ff125be73911ecd1d2dc9c3d64b5ea6db1cff8b9e3108f09"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/terminal_identity.json",
+          "bytes": 11427,
+          "sha256": "4da6b0e05fc5f065159622bea663b5334b72bff2b0f4ffa845ca13ab59d8d179"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/payload_summary.json",
+          "bytes": 13777,
+          "sha256": "231ff0e063cdfc306e9406f97793619b18ca3543160475593bf07afd90b45b9b"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v34/durable/v34_learned_validate_2_attempt1/events.jsonl",
+          "bytes": 51498,
+          "sha256": "bc58b1aebc98a89308c65365641a95ba07b3bdfe071f2df27e7564ffe924b8c0"
+        }
+      }
+    }
+  ],
+  "source_not_document_HEAD": true,
+  "unique_actual_attempt_seconds": 20133.585973888636,
+  "calendar_seconds": 23243.51316404692
+}

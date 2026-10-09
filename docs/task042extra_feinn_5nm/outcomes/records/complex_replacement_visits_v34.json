@@ -1,0 +1,297 @@
+{
+  "routes": {
+    "deterministic": {
+      "route": "DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
+      "status": "COMPLEX_WAVE_NO_USEFUL_PROGRESS",
+      "terminal_source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "result_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/result.json",
+        "bytes": 3160,
+        "sha256": "49d4c435b22eddd91026fd1f6c5b6d51dc2299be079553b0ac055838a4729068"
+      },
+      "boundary_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+        "bytes": 284302,
+        "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+      },
+      "state_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/state_038_036_1439901148638129.npz",
+        "bytes": 31384030,
+        "sha256": "c6f0f74c6a15a5ec9ca9eb19d6558c8fed6c2907b90b93ca4b3778feb8f3bb4a"
+      },
+      "columns": 1377,
+      "blocks": 246,
+      "visits": 38,
+      "accepted": 36,
+      "nonzero_q_updates": 29,
+      "nonzero_decay_updates": 35,
+      "complete_trial_calls": 1641,
+      "zero_audits": 38,
+      "action_counts": {
+        "A": 9321,
+        "AH": 41,
+        "audit": 7,
+        "port_solve": 9379
+      },
+      "action_seconds": {
+        "A": 273.7432468777988,
+        "AH": 2.0520641561597586,
+        "audit": 0.5091952804941684,
+        "port_solve": 0.1496155911590904
+      },
+      "cumulative_moments_counts": {
+        "forward": 1679,
+        "vjp": 776,
+        "cells": 644736
+      },
+      "cumulative_moments_seconds": {
+        "forward": 1421.5631574918516,
+        "vjp": 315.60227502323687
+      },
+      "counters_restored_without_dropping_paid_prefix": true,
+      "new_route_span_seconds": 10293.04502707813,
+      "required_prefix_attributed_seconds": 10186.178641493432,
+      "final_original_audit": {
+        "native_relative": 0.14440693778835326,
+        "augmented_relative": 0.14440693778835326,
+        "original_total_augmented_relative": 0.06840582076077999,
+        "port_absolute": 1.7902482057952205e-15,
+        "port_full_rhs_relative": 6.151167837161292e-15,
+        "port_operation_relative": 5.1417876400458133e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 10.384032439225292,
+        "full_coefficient_norm": 15.140085326133276,
+        "port_unknown_norm": 0.2501477986190372,
+        "strict_pass": false
+      },
+      "continuation_scalars": [
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/validation_scalars_1.json",
+            "bytes": 542,
+            "sha256": "3ea1839792acf92088af6839a13e43979a059b1de4775b480ee73f8d4ef2ba30"
+          },
+          "values": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 1,
+            "boundary_sha256": "11b5fe3406813c09f852daf721bb1f2f29f63a218138ab64f10ead0050e3da76",
+            "native_relative": 0.14515262911700388,
+            "augmented_relative": 0.14515262911700388,
+            "scattered_E_relative": 0.019850979621273135,
+            "scattered_H_relative": 0.01996277371797603,
+            "continuation_allowed": true,
+            "ineffective": true,
+            "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+            "scoring_result_sha256": "27168f3df0f432306971c0dd519e16b6936db83db10d06397c77da159c3f11a4"
+          }
+        },
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/validation_scalars_2.json",
+            "bytes": 543,
+            "sha256": "01c651a63dd07176b2ac52fdf20223354320df2543c2493babf521296a64df6a"
+          },
+          "values": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 2,
+            "boundary_sha256": "0acbb656920cfb265e8cab7b4ddb739964888309ab8fe4b1d2f62562caed490f",
+            "native_relative": 0.14440693778925023,
+            "augmented_relative": 0.14440693778925023,
+            "scattered_E_relative": 0.019606287833000443,
+            "scattered_H_relative": 0.01971677925426272,
+            "continuation_allowed": false,
+            "ineffective": true,
+            "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+            "scoring_result_sha256": "01da97bb01dd3cc41629960837cc1b2dc6ee5892f97a061f1358e8ca7fda741a"
+          }
+        }
+      ],
+      "actual_optimizer_trajectory_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/visit_history.jsonl",
+        "bytes": 427250,
+        "sha256": "dbd73b8f37090134dc6e1e65f2f164c762e0c52a574c88e0c4b2c5248c258039"
+      },
+      "trial_failures": {
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.17795027537383e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.178504812009517e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.1182074002624496e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.3113258893516406e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.259453032287098e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.118674115060756e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.262810758906967e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.1548536862833891e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.760162261303566e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.0674262917154278e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.0242549504268794e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.0522797723820143e-10": 1
+      },
+      "reference_used_for_training": false,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true,
+      "benchmark_previously_seen": true,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "new_global_Gram_factor_count": 0,
+      "new_global_Maxwell_factor_count": 0,
+      "counter_tail_boundary": {
+        "semantics": "Persisted action counters exclude the separate final returned audit in each completed candidate process; wall clock includes it. No history replay.",
+        "separately_derived_return_audits": 3,
+        "separately_derived_return_port_solves": 6,
+        "exact_final_return_audit_seconds": "NOT_RETAINED_SEPARATELY",
+        "complete_trial_and_visit_counters_not_affected": true
+      }
+    },
+    "learned": {
+      "route": "LEARNED_COMPLEX_WAVE_BACKFIT",
+      "status": "COMPLEX_WAVE_NO_USEFUL_PROGRESS",
+      "terminal_source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+      "result_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/result.json",
+        "bytes": 3133,
+        "sha256": "295bac034ccc230cb143a74c3a08c01e535ef83319a9eaa4def4d2176b9699cc"
+      },
+      "boundary_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+        "bytes": 284435,
+        "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+      },
+      "state_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/state_040_037_1448303394924463.npz",
+        "bytes": 31384030,
+        "sha256": "1e25b3989508ca18f5511f5593ddb4163bb261ab8cc9640492abf0cf3b4f27a5"
+      },
+      "columns": 1377,
+      "blocks": 246,
+      "visits": 40,
+      "accepted": 37,
+      "nonzero_q_updates": 37,
+      "nonzero_decay_updates": 37,
+      "complete_trial_calls": 1001,
+      "zero_audits": 40,
+      "action_counts": {
+        "A": 5720,
+        "AH": 1033,
+        "audit": 7,
+        "port_solve": 6770
+      },
+      "action_seconds": {
+        "A": 164.1312651007902,
+        "AH": 56.72830497240648,
+        "audit": 0.39870385243557394,
+        "port_solve": 0.1095895953476429
+      },
+      "cumulative_moments_counts": {
+        "forward": 1041,
+        "vjp": 1768,
+        "cells": 399744
+      },
+      "cumulative_moments_seconds": {
+        "forward": 839.5986736726481,
+        "vjp": 1278.3196612347383
+      },
+      "counters_restored_without_dropping_paid_prefix": true,
+      "new_route_span_seconds": 8368.395087365992,
+      "required_prefix_attributed_seconds": 10186.178641493432,
+      "final_original_audit": {
+        "native_relative": 0.1431877042819365,
+        "augmented_relative": 0.1431877042819365,
+        "original_total_augmented_relative": 0.06782826770146622,
+        "port_absolute": 1.776358025163263e-15,
+        "port_full_rhs_relative": 6.103442146344188e-15,
+        "port_operation_relative": 5.105434941469754e-17,
+        "augmented_rhs_norm": 0.29104200262261154,
+        "native_rhs_norm": 0.29104200262261154,
+        "slave_storage_max": 0.0,
+        "interior_coefficient_norm": 10.378540263663073,
+        "full_coefficient_norm": 15.131982651469128,
+        "port_unknown_norm": 0.24998032248059476,
+        "strict_pass": false
+      },
+      "continuation_scalars": [
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/validation_scalars_1.json",
+            "bytes": 543,
+            "sha256": "fb117943b2f4c1727e9b4400e90becbba71e42e5a55920bb8829fa0ab61c33c2"
+          },
+          "values": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 1,
+            "boundary_sha256": "3987d8ed8e1575e4e22a253b4cec36fca65017848f9184edcae15f450c5d254c",
+            "native_relative": 0.14340833594331884,
+            "augmented_relative": 0.14340833594331884,
+            "scattered_E_relative": 0.018012893623765576,
+            "scattered_H_relative": 0.018133418655919036,
+            "continuation_allowed": true,
+            "ineffective": true,
+            "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+            "scoring_result_sha256": "9aca2a173ad19ea35f070b0e4d0884ae0e38aaa0686e24f6f9283c304170e5b7"
+          }
+        },
+        {
+          "binding": {
+            "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/validation_scalars_2.json",
+            "bytes": 541,
+            "sha256": "c877e66ecb0ebbca30f5e0152a209b594e781e504aa17e4b61430c9c1f45b9ea"
+          },
+          "values": {
+            "schema": "backfit.validation.scalars.v1",
+            "node": 2,
+            "boundary_sha256": "92161f9664da152adb7ed94ed7de568980bb5a2743fdc2ae6ba744284a3c8da6",
+            "native_relative": 0.1431877042831041,
+            "augmented_relative": 0.1431877042831041,
+            "scattered_E_relative": 0.018068704439263603,
+            "scattered_H_relative": 0.01818714686784777,
+            "continuation_allowed": false,
+            "ineffective": true,
+            "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+            "scoring_result_sha256": "6241c8e72bd1690f27c4d1a676aec71e199c05ae92d7dd8e58b56104a5f750ba"
+          }
+        }
+      ],
+      "actual_optimizer_trajectory_binding": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/visit_history.jsonl",
+        "bytes": 339511,
+        "sha256": "4d616bcc80f3db8f561f1377e8bd3a722477be3ccc758afa98f64b163099a644"
+      },
+      "trial_failures": {
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.17795027537383e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.178504812009517e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 8.71813850911849e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.3113258893516406e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.259453032287098e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.141167673843833e-09": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.2286563405275777e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.1455737878852013e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 2.216232832724014e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.0574553390209298e-10": 1,
+        "REDUCED_COMPLETE_ORIGINAL_ACTION_PAIR_FAILED: 1.0064265769881435e-10": 1
+      },
+      "reference_used_for_training": false,
+      "reference_used_for_validation": true,
+      "continuation_uses_validation_scalars": true,
+      "benchmark_previously_seen": true,
+      "pde_only_solve": true,
+      "production_initialization_allowed": false,
+      "new_global_Gram_factor_count": 0,
+      "new_global_Maxwell_factor_count": 0,
+      "counter_tail_boundary": {
+        "semantics": "Persisted action counters exclude the separate final returned audit in each completed candidate process; wall clock includes it. No history replay.",
+        "separately_derived_return_audits": 3,
+        "separately_derived_return_port_solves": 6,
+        "exact_final_return_audit_seconds": "NOT_RETAINED_SEPARATELY",
+        "complete_trial_and_visit_counters_not_affected": true
+      }
+    }
+  },
+  "compact_visits": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/complex_replacement_visits_v34.csv",
+    "bytes": 21690,
+    "sha256": "7c467a545deb098a52895b8a23702de6e4b2e5f0e219e61edef863a16fef0b09"
+  },
+  "evaluation_limit48_held": true,
+  "all_actual_trials_retained": true,
+  "detailed_large_trajectory_remains_ignored": true
+}

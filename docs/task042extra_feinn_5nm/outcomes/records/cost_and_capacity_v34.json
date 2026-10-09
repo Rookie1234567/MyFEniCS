@@ -1,0 +1,56 @@
+{
+  "routes": {
+    "deterministic": {
+      "actual_candidate_attempt_seconds": 9714.314892097376,
+      "actual_early_scoring_seconds": 249.8999497280456,
+      "new_C_allocation_span_seconds": 10293.04502707813,
+      "new_C_within14400": true,
+      "inherited_prefix_attributed_seconds": 10186.178641493432,
+      "loaded_packet_prefix_new_common_and_final_conservative_attribution_seconds": 22652.77076966781,
+      "sampled_simultaneous_tree_peak_bytes": 4196245504,
+      "historical_prefix_project_not_charged_again": true
+    },
+    "learned": {
+      "actual_candidate_attempt_seconds": 7728.473635582952,
+      "actual_early_scoring_seconds": 267.3503953840118,
+      "new_C_allocation_span_seconds": 8368.395087365992,
+      "new_C_within14400": true,
+      "inherited_prefix_attributed_seconds": 10186.178641493432,
+      "loaded_packet_prefix_new_common_and_final_conservative_attribution_seconds": 20728.120829955675,
+      "sampled_simultaneous_tree_peak_bytes": 4197736448,
+      "historical_prefix_project_not_charged_again": true
+    }
+  },
+  "common_qualification_seconds": 661.4831513820682,
+  "shared_independent_verification_seconds": 1512.063949714182,
+  "shared_project_charge_once": true,
+  "historical_fixed_prefix_project_charged_once": true,
+  "complete_cold_N1": "UNKNOWN",
+  "historical_qualified_traditional_reference": {
+    "seconds": 672.462895,
+    "tree_peak_bytes": 1245822976,
+    "scope": "Historical saved reference, no new solve and no fresh same-cost baseline"
+  },
+  "same_precision_20_percent_gain_qualified": false,
+  "project_exact_cumulative_seconds": "UNKNOWN",
+  "temporary_capacity_derived": {
+    "N": 31968,
+    "m": 1377,
+    "bytes": 8024739968,
+    "limit": 12884901888,
+    "formula": "128*N*m+128*m*m+2GiB; conservative plan, not measured RSS"
+  },
+  "original_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "cold_process_seconds": 172800,
+    "ownswap_bytes": 0,
+    "OOC_bytes": 0,
+    "qualified": false
+  }
+}

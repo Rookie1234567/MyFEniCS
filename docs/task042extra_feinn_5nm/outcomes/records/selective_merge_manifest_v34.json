@@ -1,0 +1,129 @@
+{
+  "manifest_recording_HEAD": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "checker_source_sha": "b035eea4c6fb6d697743569ecc158be356c0abc5",
+  "groups": {
+    "production numerical/core": {
+      "files": [],
+      "numerical_behavior": "Explicit V34 signed-decay research opt-in only; ordinary defaults unchanged",
+      "dependency_evidence": "run_index/provenance; original complete M5 native/moments/MPC/ports",
+      "tests": "tests_v34.json and full_numerical_gates_v34.json",
+      "fresh_PDE": "Same-p3 unlabelled backfit and frozen FE compare-only; no new reference solve",
+      "production_qualification": false
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "src/io/complex_wave_campaign.py",
+        "src/io/neural_wave_backfit_store.py",
+        "src/io/neural_wave_campaign.py",
+        "src/runners/backfit_wave_worker.py",
+        "src/runners/block_wave_admission.py",
+        "src/runners/complex_wave_worker.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/runners/neural_wave_dependencies.py",
+        "src/runners/neural_wave_worker.py"
+      ],
+      "numerical_behavior": "Explicit V34 signed-decay research opt-in only; ordinary defaults unchanged",
+      "dependency_evidence": "run_index/provenance; original complete M5 native/moments/MPC/ports",
+      "tests": "tests_v34.json and full_numerical_gates_v34.json",
+      "fresh_PDE": "Same-p3 unlabelled backfit and frozen FE compare-only; no new reference solve",
+      "production_qualification": false
+    },
+    "checker/benchmark": {
+      "files": [
+        "src/test/test_neural_wave_decay.py"
+      ],
+      "numerical_behavior": "Explicit V34 signed-decay research opt-in only; ordinary defaults unchanged",
+      "dependency_evidence": "run_index/provenance; original complete M5 native/moments/MPC/ports",
+      "tests": "tests_v34.json and full_numerical_gates_v34.json",
+      "fresh_PDE": "Same-p3 unlabelled backfit and frozen FE compare-only; no new reference solve",
+      "production_qualification": false
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042extra_feinn_5nm/README.md",
+        "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "docs/task042extra_feinn_5nm/outcomes/complex_wave_neural_v34.md",
+        "docs/task042extra_feinn_5nm/outcomes/design_complex_wave_v34.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/accepted_wave_parameters_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/anchor_identity_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/complex_channels_v34.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/complex_moment_gradient_checks_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/complex_replacement_visits_v34.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/complex_replacement_visits_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/cost_and_capacity_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/decay_calibration_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/full_metric_index_v34.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/full_numerical_gates_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/material_interface_regions_v34.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/per_mode_power_v34.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/provenance_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/run_index_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/six_complex_field_points_v34.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/tests_v34.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/tests_v34_precommit.json",
+        "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "docs/task042extra_feinn_5nm/response_v34.md"
+      ],
+      "numerical_behavior": "Explicit V34 signed-decay research opt-in only; ordinary defaults unchanged",
+      "dependency_evidence": "run_index/provenance; original complete M5 native/moments/MPC/ports",
+      "tests": "tests_v34.json and full_numerical_gates_v34.json",
+      "fresh_PDE": "Same-p3 unlabelled backfit and frozen FE compare-only; no new reference solve",
+      "production_qualification": false
+    },
+    "research-only": {
+      "files": [
+        "input/task042extra_feinn_5nm/design_v34.json",
+        "input/task042extra_feinn_5nm/v34_0p7_complex_compare.dat",
+        "input/task042extra_feinn_5nm/v34_0p7_complex_prepare.dat",
+        "input/task042extra_feinn_5nm/v34_0p7_complex_solve.dat",
+        "input/task042extra_feinn_5nm/v34_complex_compare.dat",
+        "input/task042extra_feinn_5nm/v34_complex_reconstruct.dat",
+        "input/task042extra_feinn_5nm/v34_complex_wave_calibration.dat",
+        "input/task042extra_feinn_5nm/v34_complex_wave_checks.dat",
+        "input/task042extra_feinn_5nm/v34_deterministic_complex_backfit.dat",
+        "input/task042extra_feinn_5nm/v34_deterministic_validate_1.dat",
+        "input/task042extra_feinn_5nm/v34_deterministic_validate_2.dat",
+        "input/task042extra_feinn_5nm/v34_learned_complex_backfit.dat",
+        "input/task042extra_feinn_5nm/v34_learned_validate_1.dat",
+        "input/task042extra_feinn_5nm/v34_learned_validate_2.dat",
+        "src/solvers/neural_wave_backfit.py",
+        "src/solvers/neural_wave_backfit_run.py",
+        "src/solvers/neural_wave_backfit_state.py",
+        "src/solvers/neural_wave_block_reconstruction.py",
+        "src/solvers/neural_wave_decay.py",
+        "src/solvers/neural_wave_decay_calibration.py",
+        "src/solvers/neural_wave_decay_qualification.py",
+        "src/solvers/neural_wave_moments.py"
+      ],
+      "numerical_behavior": "Explicit V34 signed-decay research opt-in only; ordinary defaults unchanged",
+      "dependency_evidence": "run_index/provenance; original complete M5 native/moments/MPC/ports",
+      "tests": "tests_v34.json and full_numerical_gates_v34.json",
+      "fresh_PDE": "Same-p3 unlabelled backfit and frozen FE compare-only; no new reference solve",
+      "production_qualification": false
+    },
+    "do-not-merge": {
+      "files": [],
+      "numerical_behavior": "Explicit V34 signed-decay research opt-in only; ordinary defaults unchanged",
+      "dependency_evidence": "run_index/provenance; original complete M5 native/moments/MPC/ports",
+      "tests": "tests_v34.json and full_numerical_gates_v34.json",
+      "fresh_PDE": "Same-p3 unlabelled backfit and frozen FE compare-only; no new reference solve",
+      "production_qualification": false
+    }
+  },
+  "recommended_review_order": [
+    "research-only",
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs"
+  ],
+  "ordinary_default_unchanged": true,
+  "merge_approved": false
+}

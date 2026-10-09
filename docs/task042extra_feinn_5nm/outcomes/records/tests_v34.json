@@ -1,0 +1,539 @@
+{
+  "targeted_runs": [
+    {
+      "name": "targeted_01",
+      "junit": {
+        "path": "tmp/task42extra/v34/targeted_01/junit.xml",
+        "bytes": 9636,
+        "sha256": "175c6ffd6ac9cc2a4a6e3a87b908e085cf2acfa68072b2144aeaa7325835cf54"
+      },
+      "tests": 41,
+      "failures": 1,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[global-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-1]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-2]",
+        "src.test.test_neural_wave_decay::test_support_true_global_extent_units_signed_seeds_and_exponent_limits",
+        "src.test.test_neural_wave_decay::test_decay_envelope_nonhermitian_against_independent_full_ls",
+        "src.test.test_neural_wave_decay::test_actual_decay_writer_reopen_rollback_and_corrupted_consumer",
+        "src.test.test_neural_wave_decay::test_v34_stage_role_budget_and_actual_label_firewall",
+        "src.test.test_neural_wave_backfit::test_complete_complex_cancellation_including_active_slot",
+        "src.test.test_neural_wave_backfit::test_stable_phase_difference_all_entity_moments_and_derivative[local]",
+        "src.test.test_neural_wave_backfit::test_stable_phase_difference_all_entity_moments_and_derivative[global]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_centered_full_ls_and_stable_original_loss_difference",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[None]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[c]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[chunks]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[rng_state]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[node]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[hash]",
+        "src.test.test_neural_wave_backfit::test_qualification_reuse_is_bound_to_every_actual_mathematical_dependency"
+      ],
+      "watchdog_summary_binding": {
+        "path": "tmp/task42extra/v34/targeted_01/watchdog/summary.json",
+        "bytes": 2057,
+        "sha256": "d579a000c9fa77b4e0c2b88cae76603c1c465d42d19b6e345b6c8609f406edbc"
+      },
+      "watchdog": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 1800,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "measured_tree_rss_only_v3",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": 628626898944,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          3329398
+        ],
+        "sampled_process_tree_rss_peak_bytes": 145219584,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2099272036352,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2099272036352,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 2.6034399301279336,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+          "purpose": "V34 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+        }
+      },
+      "raw_log": {
+        "path": "tmp/task42extra/v34/targeted_01/watchdog/worker.log",
+        "bytes": 4146,
+        "sha256": "79a9f5662e4f4d8404eb147236e178cea0b551b8706f08cdc7653af1d05d0176"
+      },
+      "tested_source_receipt": "See bound precommit receipt"
+    },
+    {
+      "name": "targeted_02",
+      "junit": {
+        "path": "tmp/task42extra/v34/targeted_02/junit.xml",
+        "bytes": 5949,
+        "sha256": "d16a0f6610cb97b38632a788e319c05692660df5f5178a45504859b69a3cf93e"
+      },
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[global-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-1]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-2]",
+        "src.test.test_neural_wave_decay::test_support_true_global_extent_units_signed_seeds_and_exponent_limits",
+        "src.test.test_neural_wave_decay::test_decay_envelope_nonhermitian_against_independent_full_ls",
+        "src.test.test_neural_wave_decay::test_actual_decay_writer_reopen_rollback_and_corrupted_consumer",
+        "src.test.test_neural_wave_decay::test_v34_stage_role_budget_and_actual_label_firewall",
+        "src.test.test_neural_wave_backfit::test_complete_complex_cancellation_including_active_slot",
+        "src.test.test_neural_wave_backfit::test_stable_phase_difference_all_entity_moments_and_derivative[local]",
+        "src.test.test_neural_wave_backfit::test_stable_phase_difference_all_entity_moments_and_derivative[global]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[complex-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[permuted-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[scaled-5-7]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-0-2]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-3-5]",
+        "src.test.test_neural_wave_backfit::test_deleted_complement_full_ls_and_insert[duplicate-5-7]",
+        "src.test.test_neural_wave_backfit::test_full_Q_is_an_explicit_negative_control",
+        "src.test.test_neural_wave_backfit::test_nonzero_complex_envelope_derivative_and_k0_chain",
+        "src.test.test_neural_wave_backfit::test_centered_full_ls_and_stable_original_loss_difference",
+        "src.test.test_neural_wave_backfit::test_trial_calls_are_actually_guarded_and_no_result_replay",
+        "src.test.test_neural_wave_backfit::test_queue_uses_scores_and_persistent_all_scale_rotation",
+        "src.test.test_neural_wave_backfit::test_complete_state_rolls_back_when_real_writer_fails",
+        "src.test.test_neural_wave_backfit::test_numeric_roles_and_new_clock_do_not_use_old_light_or_wait_cap",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[5.0]",
+        "src.test.test_neural_wave_backfit::test_wave_component_bound_uses_actual_wavelength[0.7]",
+        "src.test.test_neural_wave_backfit::test_training_actual_whitelist_rejects_hidden_reference_and_other_route",
+        "src.test.test_neural_wave_backfit::test_real_writer_reopen_exact_qr_restore_and_corrupt_state",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[None]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[c]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[chunks]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[rng_state]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[node]",
+        "src.test.test_neural_wave_backfit::test_scored_boundary_survives_only_exact_timed_metadata_update[hash]",
+        "src.test.test_neural_wave_backfit::test_qualification_reuse_is_bound_to_every_actual_mathematical_dependency"
+      ],
+      "watchdog_summary_binding": {
+        "path": "tmp/task42extra/v34/targeted_02/watchdog_summary.json",
+        "bytes": 2053,
+        "sha256": "ca2283c0f3f438f9dc868ac58c31552377fdec9e593eed7c0a14a1935f2cc61f"
+      },
+      "watchdog": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 1800,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "measured_tree_rss_only_v3",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": 628626898944,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          3330225
+        ],
+        "sampled_process_tree_rss_peak_bytes": 146604032,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2098803351552,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2098803351552,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 2.5984144639223814,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+          "purpose": "V34 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+        }
+      },
+      "raw_log": {
+        "path": "tmp/task42extra/v34/targeted_02/watchdog/worker.log",
+        "bytes": 197,
+        "sha256": "a8a36de60a753832aa4aee2bf46a6b1f75a1c2e0871bbae4233d417ef6dce34b"
+      },
+      "tested_source_receipt": "See bound precommit receipt"
+    },
+    {
+      "name": "targeted_03",
+      "junit": {
+        "path": "tmp/task42extra/v34/targeted_03/junit.xml",
+        "bytes": 1520,
+        "sha256": "15e1c2a521ab1c78ab1114f5aa124a7fd3350d72fc7cd6eb9e6608713df3336a"
+      },
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[global-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-1]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-2]",
+        "src.test.test_neural_wave_decay::test_support_true_global_extent_units_signed_seeds_and_exponent_limits",
+        "src.test.test_neural_wave_decay::test_decay_envelope_nonhermitian_against_independent_full_ls",
+        "src.test.test_neural_wave_decay::test_actual_decay_writer_reopen_rollback_and_corrupted_consumer",
+        "src.test.test_neural_wave_decay::test_actual_nonzero_decay_network_reconstruction_and_complete_resume",
+        "src.test.test_neural_wave_decay::test_v34_stage_role_budget_and_actual_label_firewall"
+      ],
+      "watchdog_summary_binding": {
+        "path": "tmp/task42extra/v34/targeted_03/watchdog_summary.json",
+        "bytes": 2053,
+        "sha256": "93b97dd352cf52fc5418366a069bedae2e84bd9e9246cb587c00d277eddb4aa8"
+      },
+      "watchdog": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 1800,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "measured_tree_rss_only_v3",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": 628626898944,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          3331085
+        ],
+        "sampled_process_tree_rss_peak_bytes": 144183296,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2094468141056,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2094468141056,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 2.6241522869095206,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "3733eb71183da58317f1fb471ee8fc08c5700f42",
+          "purpose": "V34 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+        }
+      },
+      "raw_log": {
+        "path": "tmp/task42extra/v34/targeted_03/watchdog/worker.log",
+        "bytes": 196,
+        "sha256": "69272f7dd79850de8b3072b0631a9eab66067bab6a35bf786b7a6ea5c0b8d9bc"
+      },
+      "tested_source_receipt": "See bound precommit receipt"
+    },
+    {
+      "name": "targeted_04",
+      "junit": {
+        "path": "tmp/task42extra/v34/targeted_04/junit.xml",
+        "bytes": 1680,
+        "sha256": "2b3b2a6b1b3d8ffba87e8f50daa63a82211f93a442dc8502df75963f8fd9f35e"
+      },
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_decay::test_saved_witness_gate_preserves_original_residual_denominator_and_rejects_damage",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[global-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-0]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-1]",
+        "src.test.test_neural_wave_decay::test_all_moments_zero_and_decay_signs_and_three_real_derivatives[local-2]",
+        "src.test.test_neural_wave_decay::test_support_true_global_extent_units_signed_seeds_and_exponent_limits",
+        "src.test.test_neural_wave_decay::test_decay_envelope_nonhermitian_against_independent_full_ls",
+        "src.test.test_neural_wave_decay::test_actual_decay_writer_reopen_rollback_and_corrupted_consumer",
+        "src.test.test_neural_wave_decay::test_actual_nonzero_decay_network_reconstruction_and_complete_resume",
+        "src.test.test_neural_wave_decay::test_v34_stage_role_budget_and_actual_label_firewall"
+      ],
+      "watchdog_summary_binding": {
+        "path": "tmp/task42extra/v34/targeted_04/watchdog_summary.json",
+        "bytes": 2053,
+        "sha256": "a60fb9ee43ea58a95cec9070da5222ed7df29e94ca654472bd0b74628fadddd8"
+      },
+      "watchdog": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 1800,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "measured_tree_rss_only_v3",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": 628626898944,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          3334534
+        ],
+        "sampled_process_tree_rss_peak_bytes": 144330752,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139295,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2071406559232,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2071406559232,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 6,
+        "elapsed_seconds": 3.5727229851763695,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "7c0dcc1985af1be6d5b0c919e982ba778d857537",
+          "purpose": "V34 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+        }
+      },
+      "raw_log": {
+        "path": "tmp/task42extra/v34/targeted_04/watchdog/worker.log",
+        "bytes": 197,
+        "sha256": "8427326833fefe0af850d09709ea4c636b55d5c85c242a152231863833afb11e"
+      },
+      "tested_source_receipt": "See bound precommit receipt"
+    },
+    {
+      "name": "targeted_05",
+      "junit": {
+        "path": "tmp/task42extra/v34/targeted_05/junit.xml",
+        "bytes": 363,
+        "sha256": "50dfb4a133c6e6bb9b6842d3695027272d0aa2463284c58122b712e8b33e74a2"
+      },
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "names": [
+        "src.test.test_neural_wave_decay::test_independent_actual_and_producer_joint_consumer_writer_reopen"
+      ],
+      "watchdog_summary_binding": {
+        "path": "tmp/task42extra/v34/targeted_05/watchdog_summary.json",
+        "bytes": 2051,
+        "sha256": "bc7fab1fec2218fcfc134720fc8da7609237f9d80d487fb96cb91a875d6807a8"
+      },
+      "watchdog": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 1800,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "measured_tree_rss_only_v3",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": 628626898944,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          3433721
+        ],
+        "sampled_process_tree_rss_peak_bytes": 91451392,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139381,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139381,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "no_task_or_global_swap_observed",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2017483870208,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2017483870208,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 3.037139622028917,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": {
+          "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+          "purpose": "V34 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+        }
+      },
+      "raw_log": {
+        "path": "tmp/task42extra/v34/targeted_05/watchdog/worker.log",
+        "bytes": 211,
+        "sha256": "519aef5d430d95e56294ad98034a8eb4bd313b8bb45e3408a1f465a8a0d419e5"
+      },
+      "tested_source_receipt": {
+        "path": "tmp/task42extra/v34/targeted_05_source.json",
+        "bytes": 217,
+        "sha256": "b30261f336addb060924b5c1c1e9213420da6ef1e067408dc437018254da93ce"
+      }
+    }
+  ],
+  "full_pytest": "NOT_RUN_BY_CONTRACT",
+  "CI": "NOT_CLAIMED",
+  "old_failures_retained": true,
+  "no_old_expensive_suite_replay": true,
+  "precommit_receipt": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v34_precommit.json",
+    "bytes": 1740,
+    "sha256": "217cd15e492b1afe64407ee2a870d2a5be7a0b4b7145e409409cb6cb7b4f8400"
+  }
+}

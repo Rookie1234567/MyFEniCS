@@ -1,0 +1,404 @@
+{
+  "binding": {
+    "path": "benchmarks/artifacts/task42extra/v34/v34_complex_wave_calibration/result.json",
+    "bytes": 13410,
+    "sha256": "014f5e68ab2862bbde8055d30766fac839d7a4d1b4030684e7a3bf4a43d6a91e"
+  },
+  "calibration_qualified": true,
+  "rows": [
+    {
+      "wavelength_nm": 5.0,
+      "propagation_z_sign": 1,
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "5.0",
+        "nominal_wavelength_nm": "5",
+        "source_wavelength_nm": "5",
+        "delta": "0.00603145547",
+        "beta": "0.00435380777",
+        "n_decimal": [
+          "0.99396854453",
+          "0.00435380777"
+        ],
+        "epsilon_decimal": [
+          "0.9879545118729884805480",
+          "0.0086550959446206099962"
+        ],
+        "source_kind": "repository_input/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "exact registered wavelength",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.99396854453,
+          0.00435380777
+        ],
+        "epsilon_loaded": [
+          0.9879545118729887,
+          0.00865509594462061
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "K": [
+        {
+          "real": 1.2564456695248023,
+          "imag": 0.0
+        },
+        {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        {
+          "real": 0.04739850002249743,
+          "imag": 0.14417734398570922
+        }
+      ],
+      "q_real": [
+        1.2564456695248023,
+        0.0,
+        0.04739850002249743
+      ],
+      "decay_kappa": [
+        0.0,
+        0.0,
+        0.14417734398570922
+      ],
+      "beta_si_nm_inverse": {
+        "real": 0.04739850002249743,
+        "imag": 0.14417734398570922
+      },
+      "amplitude_1e_depth_nm": 6.93590249588118,
+      "dispersion_relative": 1.4232031077036498e-16,
+      "transverse_absolute": 0.0,
+      "raw_neuron_relative": 0.0,
+      "exact_curl_identity": "curl(E)=i K cross E; nonconjugate K dot K/K dot p",
+      "FE_E_L2_relative": 0.0019618712198150494,
+      "FE_H_scaled_curl_relative": 0.011765282453078537,
+      "FE_1e_4": false,
+      "h_nm": 1.25,
+      "degree": 3,
+      "moment_quadrature": 60,
+      "field_quadrature": 60,
+      "separate_from_M5_gate": true,
+      "reduced_0p7_pilot": false,
+      "pde_solve_count": 0
+    },
+    {
+      "wavelength_nm": 5.0,
+      "propagation_z_sign": -1,
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "5.0",
+        "nominal_wavelength_nm": "5",
+        "source_wavelength_nm": "5",
+        "delta": "0.00603145547",
+        "beta": "0.00435380777",
+        "n_decimal": [
+          "0.99396854453",
+          "0.00435380777"
+        ],
+        "epsilon_decimal": [
+          "0.9879545118729884805480",
+          "0.0086550959446206099962"
+        ],
+        "source_kind": "repository_input/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "exact registered wavelength",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.99396854453,
+          0.00435380777
+        ],
+        "epsilon_loaded": [
+          0.9879545118729887,
+          0.00865509594462061
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "K": [
+        {
+          "real": 1.2564456695248023,
+          "imag": 0.0
+        },
+        {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        {
+          "real": -0.04739850002249743,
+          "imag": -0.14417734398570922
+        }
+      ],
+      "q_real": [
+        1.2564456695248023,
+        0.0,
+        -0.04739850002249743
+      ],
+      "decay_kappa": [
+        0.0,
+        0.0,
+        -0.14417734398570922
+      ],
+      "beta_si_nm_inverse": {
+        "real": 0.04739850002249743,
+        "imag": 0.14417734398570922
+      },
+      "amplitude_1e_depth_nm": 6.93590249588118,
+      "dispersion_relative": 1.4232031077036498e-16,
+      "transverse_absolute": 0.0,
+      "raw_neuron_relative": 0.0,
+      "exact_curl_identity": "curl(E)=i K cross E; nonconjugate K dot K/K dot p",
+      "FE_E_L2_relative": 0.0019618712198150646,
+      "FE_H_scaled_curl_relative": 0.011765282453078526,
+      "FE_1e_4": false,
+      "h_nm": 1.25,
+      "degree": 3,
+      "moment_quadrature": 60,
+      "field_quadrature": 60,
+      "separate_from_M5_gate": true,
+      "reduced_0p7_pilot": false,
+      "pde_solve_count": 0
+    },
+    {
+      "wavelength_nm": 0.7,
+      "propagation_z_sign": 1,
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "0.7",
+        "nominal_wavelength_nm": "0.7",
+        "source_wavelength_nm": "0.699999988",
+        "delta": "0.000114859526",
+        "beta": "4.32477054E-06",
+        "n_decimal": [
+          "0.999885140474",
+          "0.00000432477054"
+        ],
+        "epsilon_decimal": [
+          "0.9997702941220070727210241084",
+          "0.00000864854759781143367192"
+        ],
+        "source_kind": "user_supplied/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.999885140474,
+          4.32477054e-06
+        ],
+        "epsilon_loaded": [
+          0.9997702941220071,
+          8.648547597811433e-06
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "K": [
+        {
+          "real": 8.97461192517716,
+          "imag": 0.0
+        },
+        {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        {
+          "real": 0.07780134385932345,
+          "imag": 0.00447805828937079
+        }
+      ],
+      "q_real": [
+        8.97461192517716,
+        0.0,
+        0.07780134385932345
+      ],
+      "decay_kappa": [
+        0.0,
+        0.0,
+        0.00447805828937079
+      ],
+      "beta_si_nm_inverse": {
+        "real": 0.07780134385932345,
+        "imag": 0.00447805828937079
+      },
+      "amplitude_1e_depth_nm": 223.31107265254232,
+      "dispersion_relative": 1.3460041159487466e-21,
+      "transverse_absolute": 0.0,
+      "raw_neuron_relative": 0.0,
+      "exact_curl_identity": "curl(E)=i K cross E; nonconjugate K dot K/K dot p",
+      "FE_E_L2_relative": 1.0330634699388805,
+      "FE_H_scaled_curl_relative": 0.9530165673415789,
+      "FE_1e_4": false,
+      "h_nm": 1.25,
+      "degree": 3,
+      "moment_quadrature": 60,
+      "field_quadrature": 60,
+      "separate_from_M5_gate": true,
+      "reduced_0p7_pilot": false,
+      "pde_solve_count": 0
+    },
+    {
+      "wavelength_nm": 0.7,
+      "propagation_z_sign": -1,
+      "material": {
+        "status": "MATERIAL_READY_USER_SUPPLIED",
+        "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+        "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "query_wavelength_nm": "0.7",
+        "nominal_wavelength_nm": "0.7",
+        "source_wavelength_nm": "0.699999988",
+        "delta": "0.000114859526",
+        "beta": "4.32477054E-06",
+        "n_decimal": [
+          "0.999885140474",
+          "0.00000432477054"
+        ],
+        "epsilon_decimal": [
+          "0.9997702941220070727210241084",
+          "0.00000864854759781143367192"
+        ],
+        "source_kind": "user_supplied/user_authorized",
+        "source": {
+          "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+          "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+          "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+        },
+        "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+        "time_convention": "exp(-i omega t)",
+        "external_dataset_version": "not_provided",
+        "n_loaded": [
+          0.999885140474,
+          4.32477054e-06
+        ],
+        "epsilon_loaded": [
+          0.9997702941220071,
+          8.648547597811433e-06
+        ],
+        "air_n": [
+          1.0,
+          0.0
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ]
+      },
+      "K": [
+        {
+          "real": 8.97461192517716,
+          "imag": 0.0
+        },
+        {
+          "real": 0.0,
+          "imag": 0.0
+        },
+        {
+          "real": -0.07780134385932345,
+          "imag": -0.00447805828937079
+        }
+      ],
+      "q_real": [
+        8.97461192517716,
+        0.0,
+        -0.07780134385932345
+      ],
+      "decay_kappa": [
+        0.0,
+        0.0,
+        -0.00447805828937079
+      ],
+      "beta_si_nm_inverse": {
+        "real": 0.07780134385932345,
+        "imag": 0.00447805828937079
+      },
+      "amplitude_1e_depth_nm": 223.31107265254232,
+      "dispersion_relative": 1.3460041159487466e-21,
+      "transverse_absolute": 0.0,
+      "raw_neuron_relative": 0.0,
+      "exact_curl_identity": "curl(E)=i K cross E; nonconjugate K dot K/K dot p",
+      "FE_E_L2_relative": 1.0330634699388803,
+      "FE_H_scaled_curl_relative": 0.9530165673415789,
+      "FE_1e_4": false,
+      "h_nm": 1.25,
+      "degree": 3,
+      "moment_quadrature": 60,
+      "field_quadrature": 60,
+      "separate_from_M5_gate": true,
+      "reduced_0p7_pilot": false,
+      "pde_solve_count": 0
+    }
+  ],
+  "finite_element_interpolation_is_separate_diagnostic": true,
+  "reference_solve_count": 0,
+  "global_Maxwell_factor_count": 0,
+  "global_Gram_factor_count": 0,
+  "local_Maxwell_factor_count": 0,
+  "polynomial_moment_reconstruction": "qualified full_moment_element density conversion; small algebra, not a PDE factor",
+  "physical_model": "one uniform Si cell, both z signs, not the nonseparable M5 scattering case",
+  "bound_numerical_chain": {
+    "src/io/complex_wave_campaign.py": "5b020f4431a168fe07e8916242b0b1ebd70fc4a84168799666db62e46d892e2f",
+    "src/runners/complex_wave_worker.py": "afbaffe762a702b8e072e767e1e4772e295524195cd07b3650cffdacecdef6a3",
+    "src/io/neural_wave_backfit_store.py": "8facbe75756ac677e7a535173369b8900e2fb457a51cda3b3c049f69b0cddefa",
+    "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+    "src/solvers/neural_wave_decay.py": "d615c7c6cdb7edc8fe0902a84ce2da4841ef2d53acd3a0cf8cb7b677f3e51efe",
+    "src/solvers/neural_wave_decay_qualification.py": "ad2dbf7abb2967e8dbf742fa5b034588d99d983a7ccba18125d08dd75c2ef5e9",
+    "src/solvers/neural_wave_decay_calibration.py": "22d7b8691c2e727b03912d72c8549e0c0ac0ff0af8ec582e78310f77a6b1b285",
+    "src/solvers/neural_wave_backfit.py": "87cd4fabf76e21430d1ef925ab114db099763b81555390994b83a0b5749b2fd9",
+    "src/solvers/neural_wave_backfit_state.py": "6e07e6baac5c0f829a75421a1de484259ffa079b165181cc032066c2ea15dc0f",
+    "src/solvers/neural_wave_backfit_run.py": "7814942d5d4d6a33c8cfa766ee1730821c7de7b5b909626d5ea605223a02d892",
+    "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+    "src/runners/backfit_wave_worker.py": "755638b9cf6f8eddfe875e06c26f99c1696bafb4e1cbb5218193e95207596e65",
+    "src/solvers/neural_wave_multiscale.py": "03696ee480c40e7ccd9e3fc5d620885f8991f877c677f2a0382f2fac994c04db"
+  },
+  "source_sha": "e1e9eaa4238d33a88a2b3adbc356d5a5f7cbcee5",
+  "input_sha256": "97669f044b42c1a5dd2b2be6831c34fed46bda3511e0e858d28566516957e4ad",
+  "design_sha256": "7495dae65daae283eddbd896e7940f68c2b8316342951d5edb383f975861530d",
+  "worker_elapsed_seconds": 8.679431691998616,
+  "route_elapsed_seconds": 79.42719661211595,
+  "full_size_0p7_target_qualified": false,
+  "analytic_neuron_and_FE_interpolation_errors_separate": true,
+  "is_0p7_three_dimensional_pilot": false
+}
