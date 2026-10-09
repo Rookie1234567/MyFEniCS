@@ -1013,6 +1013,10 @@ class OneQRefactorV19Mumps:
         self._input_bindings: dict[int, dict[str, str]] = {}
         self.matrices: dict[int, Any] = {}
         self.factors: dict[int, Any] = {}
+        # Probe Vecs are short-lived, but a failed native destroy means their
+        # ownership cannot be treated as released. Keep both the owner and the
+        # original exception reachable and refuse another factor slot.
+        self._probe_cleanup_owners: list[tuple[str, Any, BaseException]] = []
         self.calls = 0  # Actual PC/startup RHS solves; probes are a separate category.
         self.destroyed = False
         self._max_simultaneous_factors = 0
@@ -1056,6 +1060,8 @@ class OneQRefactorV19Mumps:
             "eviction_count": 0,
             "factor_probe_mat_solve_count": 0,
             "factor_probe_mat_solve_completed_count": 0,
+            "factor_probe_vec_cleanup_failures": [],
+            "factor_probe_vec_cleanup_owner_count": 0,
             "rhs_mat_solve_count_by_category": {
                 "pc_initial_rhs_mat_solve_count": 0,
                 "pc_augmentation_rhs_mat_solve_count": 0,
@@ -1566,9 +1572,11 @@ class OneQRefactorV19Mumps:
 
     def _solve_probe(self, q: int, rhs: np.ndarray) -> None:
         PETSc = self.PETSc
-        b = PETSc.Vec().createSeq(len(rhs), comm=PETSc.COMM_SELF)
-        x = b.duplicate()
+        b = x = None
         try:
+            b = PETSc.Vec()
+            b.createSeq(len(rhs), comm=PETSc.COMM_SELF)
+            x = b.duplicate()
             b.array[:] = rhs
             category = "factor_probe_mat_solve_count"
             self._record_mat_solve_invocation(category)
@@ -1579,9 +1587,47 @@ class OneQRefactorV19Mumps:
                 raise
             self._record_mat_solve_completion(category)
             self._last_probe_solution = x.array.copy()
-        finally:
-            x.destroy()
-            b.destroy()
+        except BaseException as primary_error:
+            cleanup_errors = self._destroy_probe_vectors(x=x, b=b)
+            if cleanup_errors:
+                primary_error.probe_cleanup_errors = tuple(cleanup_errors)
+                primary_error.one_q_backend = self
+                primary_error.add_note(
+                    "one or more probe Vec owners could not be confirmed destroyed; "
+                    "the backend retains them and will refuse another q slot"
+                )
+            raise
+        else:
+            cleanup_errors = self._destroy_probe_vectors(x=x, b=b)
+            if cleanup_errors:
+                error = RuntimeError(
+                    "failed to destroy a probe Vec; its native owner is retained and "
+                    "no new q slot may be created"
+                )
+                error.probe_cleanup_errors = tuple(cleanup_errors)
+                error.one_q_backend = self
+                raise error from cleanup_errors[0]
+
+    def _destroy_probe_vectors(self, *, x: Any, b: Any) -> list[BaseException]:
+        errors: list[BaseException] = []
+        for label, vector in (("x", x), ("b", b)):
+            if vector is None:
+                continue
+            try:
+                vector.destroy()
+            except BaseException as exc:
+                errors.append(exc)
+                self._probe_cleanup_owners.append((label, vector, exc))
+                self.audit["factor_probe_vec_cleanup_failures"].append({
+                    "vector": label,
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "owner_retained": True,
+                })
+        self.audit["factor_probe_vec_cleanup_owner_count"] = len(
+            self._probe_cleanup_owners
+        )
+        return errors
 
     def _resource_sample(self, *, q: int, stage: str, reason: str) -> dict[str, Any]:
         facts = {
@@ -1694,6 +1740,14 @@ class OneQRefactorV19Mumps:
             raise RuntimeError("ONE_Q_REFACTOR_V19 exceeded its single live matrix/factor slot")
 
     def _create_slot(self, q: int) -> tuple[Any, Any, int, float]:
+        if self._probe_cleanup_owners:
+            label, _owner, owner_error = self._probe_cleanup_owners[0]
+            error = RuntimeError(
+                f"cannot create q={q} factor slot while a probe Vec {label} "
+                "has an unconfirmed native destroy"
+            )
+            error.one_q_backend = self
+            raise error from owner_error
         csr = self.csr_matrices[q]
         PETSc = self.PETSc
         conversion_started = perf_counter()
@@ -1894,6 +1948,13 @@ class OneQRefactorV19Mumps:
             "destroy_not_yet_started": True,
         }
         self._evict_slot(reason="backend_close")
+        if self._probe_cleanup_owners:
+            label, _owner, owner_error = self._probe_cleanup_owners[0]
+            error = RuntimeError(
+                f"cannot confirm probe Vec {label} destruction; backend close is incomplete"
+            )
+            error.one_q_backend = self
+            raise error from owner_error
         self.destroyed = True
         self.source_matrices.clear()
         self.csr_matrices.clear()

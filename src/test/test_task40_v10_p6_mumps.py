@@ -523,3 +523,126 @@ def test_one_q_symbolic_numeric_and_probe_failures_release_slot(failure_stage, m
         assert np.linalg.norm(matrices[1] @ solution - rhs) / np.linalg.norm(rhs) < 1.0e-10
     finally:
         backend.destroy()
+
+
+def test_one_q_probe_duplicate_failure_destroys_created_rhs_vector(monkeypatch):
+    matrices = _one_q_test_matrices()
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+
+    class _Vector:
+        def __init__(self):
+            self.array = np.zeros(3, dtype=np.complex128)
+            self.destroy_calls = 0
+
+        def createSeq(self, _size, *, comm):
+            assert comm == "self"
+            return self
+
+        def duplicate(self):
+            raise RuntimeError("synthetic probe Vec duplicate failure")
+
+        def destroy(self):
+            self.destroy_calls += 1
+
+    vector = _Vector()
+
+    monkeypatch.setattr(
+        backend,
+        "PETSc",
+        SimpleNamespace(Vec=lambda: vector, COMM_SELF="self"),
+    )
+    try:
+        with pytest.raises(RuntimeError, match="synthetic probe Vec duplicate failure"):
+            backend._solve_probe(0, rhs)
+        assert vector.destroy_calls == 1
+        assert backend._probe_cleanup_owners == []
+        assert backend.audit["factor_probe_vec_cleanup_owner_count"] == 0
+    finally:
+        backend.destroy()
+
+
+def test_one_q_probe_vec_cleanup_is_independent_and_blocks_new_slot(monkeypatch):
+    matrices = _one_q_test_matrices()
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+    cleanup_error = RuntimeError("synthetic probe solution Vec destroy failure")
+    vectors = []
+
+    class _Vector:
+        def __init__(self):
+            self.array = np.zeros(3, dtype=np.complex128)
+            self.destroy_calls = 0
+
+        def createSeq(self, _size, *, comm):
+            assert comm == "self"
+            return self
+
+        def duplicate(self):
+            vector = _Vector()
+            vectors.append(vector)
+            return vector
+
+        def destroy(self):
+            self.destroy_calls += 1
+            if self is vectors[1]:
+                raise cleanup_error
+
+    b = _Vector()
+    vectors.append(b)
+
+    class _Factor:
+        def solve(self, probe_rhs, solution):
+            solution.array[:] = probe_rhs.array
+
+        def destroy(self):
+            return None
+
+    backend.factors[0] = _Factor()
+    monkeypatch.setattr(
+        backend,
+        "PETSc",
+        SimpleNamespace(Vec=lambda: b, COMM_SELF="self"),
+    )
+    try:
+        with pytest.raises(RuntimeError, match="failed to destroy a probe Vec") as caught:
+            backend._solve_probe(0, rhs)
+        assert caught.value.__cause__ is cleanup_error
+        assert caught.value.one_q_backend is backend
+        assert vectors[1].destroy_calls == 1
+        assert b.destroy_calls == 1
+        assert backend._probe_cleanup_owners == [("x", vectors[1], cleanup_error)]
+        assert backend.audit["factor_probe_vec_cleanup_owner_count"] == 1
+        assert backend.audit["factor_probe_vec_cleanup_failures"] == [{
+            "vector": "x",
+            "type": "RuntimeError",
+            "message": str(cleanup_error),
+            "owner_retained": True,
+        }]
+
+        with pytest.raises(RuntimeError, match="unconfirmed native destroy"):
+            backend._create_slot(1)
+        with pytest.raises(RuntimeError, match="backend close is incomplete"):
+            backend.destroy()
+        assert backend.destroyed is False
+
+        # The fixture is fake PETSc state; explicitly release it for teardown.
+        backend._probe_cleanup_owners.clear()
+        backend.audit["factor_probe_vec_cleanup_owner_count"] = 0
+        backend.destroy()
+        assert backend.destroyed is True
+    finally:
+        if not backend.destroyed:
+            backend._probe_cleanup_owners.clear()
+            backend.audit["factor_probe_vec_cleanup_owner_count"] = 0
+            backend.destroy()
