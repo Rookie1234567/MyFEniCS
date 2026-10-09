@@ -200,3 +200,51 @@ def compare(action, packet, design, artifact, marker, manifest):
         cold_N1="UNKNOWN",
         full_original_target_qualified=False,
     )
+
+
+def compare_blocked(action, packet, design, artifact, marker, manifest):
+    """One independently frozen V36 space, using the existing full verifier."""
+    from src.runners.neural_wave_worker import verify
+    from src.runners.blocked_oracle_worker import space_name, bound_path
+    from src.io.neural_space_campaign import POLICY, require_oracle_policy
+    from benchmarks.subreaper_watchdog import supervise
+
+    profile = profile_paths(manifest["spec"])
+    name = space_name(manifest["spec"]["stage"])
+    stem = "learned" if name.startswith("LEARNED") else "control"
+    stage = f"v36_{stem}_space_oracle"
+    oracle_file = profile["artifacts"] / stage / "result.json"
+    oracle = json.loads(oracle_file.read_text())
+    record = oracle["records"][name]
+    require_oracle_policy(record)
+    bound_path(record["model"])
+    route = stage + "/" + name
+    (artifact / (route + "_rebuild.npz")).parent.mkdir(parents=True, exist_ok=True)
+    result = verify(design, action, packet, artifact, marker,
+                    include_producer=True, routes=[(route,name+"_ORACLE")],
+                    route_root=profile["artifacts"],stable_rebuild=True,
+                    reference_exposed=True)
+    for comp in result["comparisons"].values():
+        comp.update(POLICY)
+        comp["qualified"] = False
+    for key, rec in result["physics"]["records"].items():
+        if key != "REFERENCE":
+            rec.update(POLICY)
+    atomic_json(artifact/"verifier_result.json",result)
+    del result
+    gc.collect()
+    command=["bash","-lc", "source scripts/activate_task42extra.sh pure && exec python -m src.postprocessing.neural_space_saved "
+             +str(artifact.relative_to(ROOT))+" "+str(profile["design"].relative_to(ROOT))
+             +" "+str(oracle_file.relative_to(ROOT))]
+    summary=supervise(command,artifact/"independent_pure_checker",
+        wall_seconds=max(1,manifest["worker_stop_monotonic"]-monotonic()),
+        rss_hard_limit_bytes=2*2**30,rss_warning_bytes=int(1.875*2**30),
+        hard_stop_immediate=True,resource_stop_policy="measured_tree_rss_only_v3",
+        source_state=dict(source_sha=manifest["source_sha"],role="independent_saved_field_checker"))
+    if summary["classification"]!="COMPLETED" or summary["leader_exit_code"]!=0 or not summary["descendants_cleared"]:
+        raise ValueError("INDEPENDENT_BLOCKED_ORACLE_CHECKER_FAILED")
+    checked=json.loads((artifact/"saved_checker.json").read_text())
+    return dict(new_fields=checked,independent_checker_summary=summary,
+        oracle_result=dict(path=str(oracle_file.relative_to(ROOT)),sha256=digest(oracle_file)),
+        verifier_result=dict(path=str((artifact/"verifier_result.json").relative_to(ROOT)),sha256=digest(artifact/"verifier_result.json")),
+        candidate_decision="NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE",**POLICY)

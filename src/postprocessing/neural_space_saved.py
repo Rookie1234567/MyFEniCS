@@ -20,13 +20,13 @@ def integral_energy(E, curl, weights, ell=5.0):
     )
 
 
-def main(directory):
+def main(directory, design_file=None, oracle_file=None):
     from src.runners.block_wave_worker import saved_checker
     from src.solvers.feinn_native import load_native
 
     directory = ROOT / Path(directory)
     design = json.loads(
-        (ROOT / "input/task042extra_feinn_5nm/design_v35.json").read_text()
+        (ROOT / (design_file or "input/task042extra_feinn_5nm/design_v35.json")).read_text()
     )
     file = directory / "verifier_result.json"
     frozen = json.loads(file.read_text())
@@ -42,7 +42,7 @@ def main(directory):
         oracle = json.loads(
             (
                 ROOT
-                / "benchmarks/artifacts/task42extra/v35/v35_labelled_field_oracle/result.json"
+                / (oracle_file or "benchmarks/artifacts/task42extra/v35/v35_labelled_field_oracle/result.json")
             ).read_text()
         )
         identities = {}
@@ -93,4 +93,4 @@ def main(directory):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(*sys.argv[1:])

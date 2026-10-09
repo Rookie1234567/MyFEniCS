@@ -30,7 +30,7 @@ def source_gate():
 def window(spec=None):
     profile = profile_paths(spec or {})
     data = json.loads(profile["window"].read_text())
-    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400}.get((spec or {}).get("campaign_version"), 172800)
+    budget = {31: 86400, 32: 57600, 33: 43200, 34: 57600, 35: 14400, 36: 21600}.get((spec or {}).get("campaign_version"), 172800)
     if data["budget_s"] != budget or not data["single_window"]:
         raise ValueError("V30_SINGLE_48H_WINDOW_IDENTITY_FAILED")
     if abs(data["deadline_monotonic"] - data["origin_monotonic"] - budget) > 1e-5:
@@ -40,6 +40,8 @@ def window(spec=None):
 
 def stage_deadline(spec, allocation, campaign):
     """Preserve the original window and leave time for full frozen-field gates."""
+    if spec.get("campaign_version") == 36:
+        return min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800), 1800
     if spec.get("campaign_version") == 35:
         deadline = min(allocation["deadline_monotonic"], campaign["deadline_monotonic"]-1800)
         if spec["role"] in ("space_unlabelled", "space_oracle"):
@@ -257,7 +259,7 @@ def durable(spec, *, origin, attempt=1):
         management_supervised=True,
         allowed_scope=scope,
         socket_directory=root / "sockets"
-        if spec.get("campaign_version") in (32,33,34,35)
+        if spec.get("campaign_version") in (32,33,34,35,36)
         else None,
     )
 
@@ -329,6 +331,8 @@ def launch(spec):
             "space_unlabelled",
             "space_oracle",
             "space_compare",
+            "blocked_oracle",
+            "blocked_verify",
         )
         else 2
     ) * 2**30
@@ -346,7 +350,7 @@ def launch(spec):
                 resource_observation_cost,
             )
 
-            if spec.get("campaign_version") in (31, 32, 33, 34, 35):
+            if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36):
                 from src.runners.block_wave_admission import (
                     stable_window as qualified_stability,
                 )
@@ -412,7 +416,7 @@ def launch(spec):
                             "src/solvers/neural_wave_block_qualification.py",
                             "src/postprocessing/neural_wave_roundoff.py",
                         )
-                        if spec.get("campaign_version") in (31, 32, 33, 34, 35)
+                        if spec.get("campaign_version") in (31, 32, 33, 34, 35, 36)
                         else ()
                     )
                 },
@@ -516,6 +520,11 @@ def launch(spec):
                     continuation_uses_validation_scalars=True,
                     pde_only_solve=spec["role"] in (
                         "DETERMINISTIC_COMPLEX_WAVE_BACKFIT", "LEARNED_COMPLEX_WAVE_BACKFIT"))
+            if spec.get("campaign_version") == 36:
+                from src.runners.blocked_oracle_worker import CHAIN
+                from src.io.neural_space_campaign import POLICY
+                manifest["binding_source_files"].update({p:digest(ROOT/p) for p in CHAIN})
+                manifest.update(POLICY, reference_basis_selection=False)
             if spec.get("campaign_version") == 35:
                 from src.runners.neural_space_worker import CHAIN
                 from src.io.neural_space_campaign import POLICY
@@ -556,7 +565,7 @@ def launch(spec):
                 memory_envelope_provider=lambda: envelope(hard),
                 health_check=Health(
                     directory, hard, [], artifact_root=profile["artifacts"],
-                    artifact_cap_bytes=(8 if spec.get("campaign_version") == 35 else 20)*2**30
+                    artifact_cap_bytes=(12 if spec.get("campaign_version") == 36 else 8 if spec.get("campaign_version") == 35 else 20)*2**30
                 ),
                 sampled_root_identity=terminal["server"],
             )

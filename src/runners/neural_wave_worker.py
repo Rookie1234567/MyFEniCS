@@ -343,8 +343,10 @@ def main():
 
     try:
         atomic_json(directory / "abi.json", abi(spec["mode"]))
-        if spec.get("campaign_version") in (31,32,33,34,35):
-            if spec.get("campaign_version")==35:
+        if spec.get("campaign_version") in (31,32,33,34,35,36):
+            if spec.get("campaign_version")==36:
+                from src.runners.blocked_oracle_worker import run_stage
+            elif spec.get("campaign_version")==35:
                 from src.runners.neural_space_worker import run_stage
             elif spec.get("campaign_version")==34:
                 from src.runners.complex_wave_worker import run_stage

@@ -1,0 +1,5 @@
+schema_version = 7
+
+[neural_wave]
+stage = "v36_neural_route_decision"
+design_sha256 = "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
