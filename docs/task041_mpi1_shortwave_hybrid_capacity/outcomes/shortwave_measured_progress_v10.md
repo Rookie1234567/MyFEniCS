@@ -1,5 +1,24 @@
 # Review V10-r2：W0.7现场证据
 
+## 2026-10-09：W0.7 PORD warm场终态（Invocation `12180bdec9824ec49d60b26aefe3655b`）
+
+本次复用既有producer packet、QEP=0；对象为10×5 nm缩减pilot，p6/h0.70/M400/MPI8，matched L20/N29/h20/29，接口2/22 nm。PORD是因子分解前的稀疏消元排序选择，本次记录只说明该候选完成到哪里，不改变原方程。
+
+| 阶段 | 记录 | 状态 |
+|---|---|---|
+| one-cell | 15,120²，8-rank NNZ总和7,123,680；PORD numeric后销毁 | 完成 |
+| bottom P4 | 64,966² / NNZ 27,929,686；INFOG16/17=2,685/11,842 MB；numeric INFOG18/19=2,685/11,842 MB | numeric完成 |
+| top P4 | 64,966² / NNZ 39,242,250；INFOG7/32=4/1；INFOG16/17=2,211/9,647 MB | symbolic完成，numeric=0 |
+| top预算门 | fresh B 38,544,203,776 + INFOG17 9,647,000,000 + W 5,322,116,301 = 53,513,320,077 B | 比cap 53,221,163,008 B高292,157,069 B；numeric前拒绝，不是实测RSS超限 |
+| 终态/资源 | `IMPLEMENTATION_FAILURE`；public rc3；finalizer `failed/service_boundary_failure`，8/10且两项false；`controlled_stop.active=false`；tree RSS峰40,494,215,168 B、job cgroup峰37,709,873,152 B | 无outer、物理门或官方R/T/A；两种峰值scope分列 |
+| 唯一wall | 3,241.567376339 s；V5 189项，SHA `ffa1a15cc639cf30c064057e9a9749032337882fbaade8b5f0445312ecc424cf` | runroot唯一匹配；Invocation由launch/finalizer绑定，父wall不重复计 |
+
+INFOG18是最大rank的allocated memory，INFOG19是rank间allocated memory总和，单位为百万字节；它们不是RSS，且全局INFOG值不应再跨rank求和。
+
+PORD场和前一AMD场是不同Invocation，不是同矩阵排序隔离对照；各自INFOG估计只能分别报告，不能据差异宣称RSS收益。top数值因子没有执行，故没有数值求解失败结论，也没有W0.7完整数值资格。
+
+P4 Bi记录仍是rank-local：bottom/top所记录term数0/16，非全局cell数；每侧global owned cells=720、nᵢ=108、ports=646。Bi单项满646列时1,116,288 B；720个cell全满的单侧条件量803,727,360 B、两侧同假设为1,607,454,720 B。实际全rank列数与payload未持久化，条件尺寸不代表已节省内存；Bi虽在xiB预热后无后续数学乘用，但`_port_data`仍读取它作每次term验证，直接释放会破坏现有合同。Di/ports/xiB分别仍用于RHS、索引和恢复。详情与源码路径见[Response V12](../response_v12.md)，原始指标绑定在[终态compact](../../../results/task041_w0p7_pord_numeric_cleanup_warm_run_20261009T043645Z/terminal_compact_20261009.json)。
+
 ## 2026-10-09：W0.7 identity-sharing warm场终态与payload更正
 
 本场是唯一Invocation `a598ab0a491649eda4060eef6a102b56`，source HEAD `6e072bd640b5c140ba64745c350ddf9916a566dc`，W0.7 reduced-p6/M400/MPI8，matched L20/N29/h20/29，复用producer、QEP=0。程序把多几何类共用的内部identity矩阵改为只读共享以避免重复数组；这些数组payload不等于RSS收益。

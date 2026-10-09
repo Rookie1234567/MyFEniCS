@@ -1,5 +1,17 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V10-r2：W0.7 PORD warm场终态（2026-10-09）
+
+| 模型/阶段 | 当前记录 | 资格边界与证据 |
+|---|---|---|
+| W0.7 reduced p6/h0.70/M400/MPI8，matched L20/N29/h20/29 | Invocation `12180bdec9824ec49d60b26aefe3655b`；source `6ffa7768329b637d96a9dccc2eb5aa00d510bb28`；复用producer、QEP=0 | 独立warm场；不是50×25 nm、2 TB或48 h资格 |
+| bottom P4 | PORD；64,966²/NNZ27,929,686；numeric INFOG18/19=2,685/11,842 MB | numeric完成；18为最大rank、19为rank-sum allocated memory，均为百万字节而非RSS，INFOG全局值只取一份 |
+| top P4 | PORD；64,966²/NNZ39,242,250；INFOG7/32=4/1；INFOG17=9,647 MB | symbolic完成；fresh B+INFOG17+W超cap292,157,069 B，numeric未调用 |
+| 终态与资源 | `IMPLEMENTATION_FAILURE`/public rc3；finalizer `failed/service_boundary_failure`；8/10、两项false、`controlled_stop.active=false`；tree RSS峰40,494,215,168 B，job cgroup峰37,709,873,152 B | top numeric前预算门拒绝；无outer/物理/官方结果；唯一wall3,241.567376339 s，V5 189项SHA `ffa1a15cc639cf30c064057e9a9749032337882fbaade8b5f0445312ecc424cf` |
+| Bi候选 | rank-local term计数0/16；单侧满shape条件值803,727,360 B | 全rank实际Bi字节未持久化，条件数组payload不是RSS回收量；Bi审计与最后使用点见[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md) |
+
+本PORD场与前一AMD场为不同Invocation；可分别记录INFOG估计，不宣称排序的同矩阵对照或RSS净收益。详见[Task041 outcomes](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)及[terminal compact](../results/task041_w0p7_pord_numeric_cleanup_warm_run_20261009T043645Z/terminal_compact_20261009.json)。
+
 ## Task041 Review V10-r2：W0.7 identity-sharing warm场终态（2026-10-09）
 
 | 模型/阶段 | 当前实测 | 资格边界与证据 |

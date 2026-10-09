@@ -1,5 +1,15 @@
 # 项目开发进度：Task000–Task041
 
+## 2026-10-09：Task041 W0.7 PORD warm场终态
+
+本次是W0.7缩减pilot（10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29）的独立warm consumer；复用producer packet，QEP=0。source `6ffa7768329b637d96a9dccc2eb5aa00d510bb28`，Invocation `12180bdec9824ec49d60b26aefe3655b`。PORD调整因子分解使用的消元顺序，不改方程；本场bottom P4 numeric完成，top仅完成symbolic，numeric前预算筛查拒绝。
+
+Top门使用cleanup后fresh B 38,544,203,776 B、单份INFOG17 9,647,000,000 B和政策W 5,322,116,301 B，合计53,513,320,077 B，比cap 53,221,163,008 B高292,157,069 B。该估计拒绝不等同RSS越cap或数值失败。进程树RSS峰40,494,215,168 B，专属job cgroup峰37,709,873,152 B，口径分开。
+
+终态原样为consumer `IMPLEMENTATION_FAILURE`、public rc3、finalizer `failed/service_boundary_failure`、`controlled_stop.active=false`；finalizer 8/10，只有public结果完成和service正常终止两项false。bottom numeric完成并清理，top numeric=0；outer、物理门、恢复和official R/T/A均未运行。唯一service wall为3,241.567376339 s，V5共189项、SHA `ffa1a15cc639cf30c064057e9a9749032337882fbaade8b5f0445312ecc424cf`；父层wall不另计。
+
+P4 Bi全rank字节未持久化。raw只给rank-local term数bottom/top=0/16；基于每侧720 owned cells、nᵢ=108、最多646个port的满矩阵条件式大小为803,727,360 B/side，但不是实际payload或RSS收益。Bi预热xiB后不再参与数学乘法，可是现有`_port_data`仍读Bi作校验；Di、ports、xiB仍支撑RHS与恢复。现有证据不能确定足量释放，也不能证明总潜在量不足。细节见[Response V12](task041_mpi1_shortwave_hybrid_capacity/response_v12.md)与[本场compact](../results/task041_w0p7_pord_numeric_cleanup_warm_run_20261009T043645Z/terminal_compact_20261009.json)。此前AMD结果只作不同Invocation的INFOG记录，不据此归因排序收益。保护stash、raw和ledger均未改；无新测试或计算。
+
 ## 2026-10-09：Task041 W0.7 identity-sharing warm场终态
 
 **对象和方法。** 本场是W0.7缩减pilot（10×5 nm、接口2/22 nm、p6/h0.70/M400/MPI8、matched L20/N29/h20/29），复用既有producer packet，当前QEP=0。identity-sharing让同一个局部单位矩阵由多个几何类只读共用，从而减少重复数组；它不更改离散或方程，数组字节也不能等同进程RSS下降。

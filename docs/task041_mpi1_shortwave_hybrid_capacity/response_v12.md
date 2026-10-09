@@ -1,5 +1,33 @@
 # Task041 Response V12：Review V10-r2现场进度
 
+## 2026-10-09：W0.7 PORD warm场终态与Bi驻留审计（Invocation `12180bdec9824ec49d60b26aefe3655b`）
+
+本节记录PORD候选这一次独立warm运行，并保留此前AMD场为另一Invocation的历史结果。PORD改变稀疏矩阵消元的行列顺序，可能改变因子填充量；它不改变Maxwell方程或网格。本场复用已合格producer packet，QEP=0，模型仍是W0.7缩减pilot（10×5 nm、接口z=2/22 nm、p6/h0.70/M400/MPI8、matched L=20 nm/N=29/h=20/29 nm、fixed-H6）。
+
+| 阶段/身份 | 本场证据 | 结论 |
+|---|---|---|
+| 运行身份 | source `6ffa7768329b637d96a9dccc2eb5aa00d510bb28`；runroot `results/task041_w0p7_pord_numeric_cleanup_warm_run_20261009T043645Z`；unit `task041-v10r2-w0p7-pord-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261009T043645Z.service`；consumer Invocation `12180bdec9824ec49d60b26aefe3655b` | 单次复用packet warm运行；不代表冷启动、W2或50×25 nm资格 |
+| one-cell | source矩阵15,120×15,120、8-rank NNZ一次合计7,123,680；PORD numeric完成并销毁 | one-cell阶段完成 |
+| bottom P4 | 64,966×64,966、NNZ 27,929,686；INFOG(16/17)=2,685/11,842 million bytes；numeric INFOG(18/19)=2,685/11,842 million bytes | PORD symbolic与numeric完成；当次numeric预算筛查通过 |
+| top P4 | 64,966×64,966、NNZ 39,242,250；INFOG(7/32)=4/1，INFOG(16/17)=2,211/9,647 million bytes | PORD symbolic完成；numeric未调用，INFOG(18/19)=not_run |
+| top numeric预算门 | cleanup后fresh B=38,544,203,776 B；单份INFOG(17)=9,647,000,000 B；政策W=5,322,116,301 B；合计53,513,320,077 B | cap=53,221,163,008 B，预测筛查超292,157,069 B；这是numeric前拒绝，不是实测RSS超cap或数值求解失败 |
+| 资源与服务终态 | process-tree RSS峰40,494,215,168 B；专属job cgroup峰37,709,873,152 B。consumer=`IMPLEMENTATION_FAILURE`；public rc=3 / `task041_public_command_nonzero`；finalizer=`failed/service_boundary_failure`；`controlled_stop.active=false` | finalizer 8/10；仅`public_result_completed`、`service_terminal_normal`为false；清理完成；未进入feedback、outer、五真残差、recovery、physics或official R/T/A |
+| 唯一wall | V5 service wall 3,241.567376339 s；ledger 189项，SHA `ffa1a15cc639cf30c064057e9a9749032337882fbaade8b5f0445312ecc424cf` | runroot匹配唯一一项；ledger row自身没有Invocation字段，由launch/finalizer/runroot绑定；父层两个wall不另计 |
+
+bottom数值因子完成后的INFOG(18)=2,685是最大rank的allocated memory，INFOG(19)=11,842是各rank allocated memory总和，单位均为百万字节。INFOG全局字段在各rank返回的是同一全局值，只取一份，不再跨rank求和；两者都是MUMPS allocated-memory统计，不是RSS。
+
+**与前一AMD场的边界。** 两场不是隔离变量的同矩阵排序对照。这里只能分别引用各自运行的INFOG估计；不能把跨场INFOG差异解释成排序导致的因子节省，也不能解释成RSS净收益。
+
+**Bi数组的现有生命周期。** 本场`p4_condensed_port_ready.port_audit.cells_with_port_terms`记录bottom=0、top=16，且字段标为`resource_scope=rank_local`；marker没有保存对应MPI rank编号，因此不是全局cell总数。两侧各自的P4 build audit记录global owned cells=720、local interior dimension=108、appended ports=646。每个Bi由该侧物理action按cell创建，形状为`(n_i, local_ports)`、dtype complex128；单项若有646列，payload为1,116,288 B。top这份rank-local的16项，在每项均达到646列的条件下最多对应17,860,608 B；该rank-local值不能代替其他rank。
+
+按每侧720个owned cell、每个cell都持有满646列Bi这一极端形状假设，单侧条件式数组量为803,727,360 B；两侧都满足同一假设时为1,607,454,720 B。该量可能大于本场292,157,069 B的预算缺口，但raw没有保存全rank每个term的实际列数、逐rank总量或唯一buffer字节，因此不能据此认定当前Bi足量，也不能声称能回收同量RSS。缺失项为`not_persisted`，不是0。
+
+源码读取链（只读核对）：[`physical_balanced_physical_operator.py`](../../src/solvers/physical_balanced_physical_operator.py)的`_prepare_physical_p4_port_terms`为每个term新建Bi/Di数组；`assemble_port_condensed_terms`读取Bi并计算局部Schur块；`P4CellCondensedInverse.__init__`通过`_port_data`验证term并预热`xiB=LU^{-1}Bi`。inverse浅拷贝term字典，数组对象本身没有第二份Bi副本。后续`_reduce_storage_rhs`需要Di与ports，interior recovery需要预热xiB与ports；但两条运行路径仍通过`_port_data`调用`_validate_term`读取/验证Bi，故直接删除Bi会破坏当前验证合同。仓库内未发现对这些Bi数组的原地写；本物理构造路径的Bi仍可写，且term字典通过`inverse.port_terms`可见，外部持有者的别名语义尚需审查。Bi在数学上的最后使用是xiB预热；若未来要释放，应先把预热后运行时校验改为不依赖Bi的已验证元数据，同时保留Di、ports、xiB和恢复路径，并评估公开term对象/可写数组合同。不得据此释放Di、xiB、P6对象或矩阵。
+
+最小验证可复用[`test_task041_p4_condensed_inverse.py`](../../src/test/test_task041_p4_condensed_inverse.py)已有production RHS/recovery fixture（`test_production_apply_shared_fixture_covers_rhs_and_recovery_contract`），对比优化前后凝聚解、内部恢复解和原方程显式残差；任何新内存计量只能按唯一数组对象计payload，不能把它当RSS。当前没有足量可回收Bi字节的全rank实测证据；本审计不支持据此重建同一大场试运气。
+
+原始绑定：consumer markers SHA `863581d14ff02749d004f00593d03dbf271c75b05fa0fdeaaae611887f4c5415`；service markers SHA `217c5709b9cbd1baccc12bb957861268b0edd1a92b1cfdb642dd973c44a0b1c0`；service memory stages SHA `2e77655ee84df162834bac6536182ccd1cc8c23b963ad25e78cc75a72efa16fa`；service summary SHA `5ee084267a39ff4b6951c8490309800ac1f026c0f6a3557ea01088d36e15e58f`；finalizer SHA `d272414ff73dbb910e0266507d824e8a9b8898b3266d7e7d63aa06b4800bb92a`。唯一V5 wall如上，raw、ledger和protected stash均未修改。完整派生compact：[PORD终态与Bi审计](../../results/task041_w0p7_pord_numeric_cleanup_warm_run_20261009T043645Z/terminal_compact_20261009.json)。
+
 ## 2026-10-09：W0.7 identity-sharing warm场终态、转录更正与top预算审计（Invocation a598ab0a491649eda4060eef6a102b56）
 
 本节是新一场独立warm consumer的终态记录。模型为W0.7缩减pilot：10×5 nm、接口z=2/22 nm、p6/h0.70、M400、MPI8，matched传播L=20 nm、N=29、h=20/29 nm，fixed-H6；复用已有producer packet，本Invocation没有重跑QEP。把同一内部单位矩阵在多个局部几何类之间改为只读共享，目的是减少重复数组；这不改变方程、因子或RTA计算。

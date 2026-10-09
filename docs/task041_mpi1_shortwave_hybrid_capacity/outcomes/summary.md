@@ -1,5 +1,22 @@
 # Task041 outcomes summary
 
+## 2026-10-09：W0.7 PORD warm场终态（top numeric前预算拒绝）
+
+| 模型/阶段 | 实测或派生结果 | 状态、原因与证据 |
+|---|---|---|
+| 身份 | Invocation `12180bdec9824ec49d60b26aefe3655b`；source `6ffa7768329b637d96a9dccc2eb5aa00d510bb28`；M400/MPI8/p6/h0.70、接口2/22 nm、matched L20/N29/h20/29；producer复用、QEP=0 | unit `task041-v10r2-w0p7-pord-numeric-cleanup-warm-cpu10-11-14-15-16-17-18-19-20261009T043645Z.service` |
+| one-cell | source 15,120²、NNZ 7,123,680、PORD | numeric完成并销毁 |
+| bottom P4 | 64,966²/NNZ 27,929,686；INFOG16/17=2,685/11,842 MB；numeric INFOG18/19=2,685/11,842 MB | PORD numeric完成 |
+| top P4 | 64,966²/NNZ 39,242,250；INFOG7/32=4/1；INFOG16/17=2,211/9,647 MB | symbolic完成；numeric未调用 |
+| top预算门 | fresh B 38,544,203,776 B + 单份INFOG17 9,647,000,000 B + W 5,322,116,301 B =53,513,320,077 B | cap 53,221,163,008 B；超292,157,069 B，属于numeric前预测筛查拒绝，不是RSS实测超限 |
+| 服务终态 | consumer `IMPLEMENTATION_FAILURE`；public rc3 `task041_public_command_nonzero`；finalizer `failed/service_boundary_failure`；`controlled_stop.active=false` | finalizer 8/10，仅`public_result_completed`、`service_terminal_normal`为false；无outer/物理门/官方RTA |
+| 资源与wall | tree RSS峰40,494,215,168 B；专属job cgroup峰37,709,873,152 B；service wall3,241.567376339 s | 两个峰值scope分列；唯一V5计费，父wall不另计 |
+| 账本 | V5共189项，SHA `ffa1a15cc639cf30c064057e9a9749032337882fbaade8b5f0445312ecc424cf` | runroot唯一匹配；ledger row无Invocation字段，由launch/finalizer/runroot关联 |
+
+bottom numeric后的INFOG18=2,685是最大rank allocated memory，INFOG19=11,842是rank-sum allocated memory，单位为百万字节。它们不是RSS；INFOG全局结果在rank间复制返回，只记录一次、不再次求和。
+
+本PORD场与前一AMD warm场是不同Invocation，不能作为同矩阵排序隔离实验；只分别记录INFOG估计，不推断RSS收益。完整Bi生命周期及条件尺寸说明见[Response V12](../response_v12.md)和[终态compact](../../../results/task041_w0p7_pord_numeric_cleanup_warm_run_20261009T043645Z/terminal_compact_20261009.json)：Bi全rank逐term payload未持久化，803,727,360 B仅是一侧720个cell均为108×646 complex128满矩阵的条件尺寸，非观测量或RSS节省。当前未形成W0.7数值资格，也不外推到50×25 nm、2 TB或48 h。
+
 ## 2026-10-09：W0.7 identity-sharing warm场终态（top numeric前预算拒绝）
 
 同一identity矩阵由多个几何类复用只读数组，减少数组重复；它不改变方程。该payload节省与RSS分别记录。本场继续使用既有W0.7缩减pilot与MUMPS分阶段门，没有启动第二次计算。
