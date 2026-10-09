@@ -126,6 +126,125 @@ def test_component_resume_input_matches_original_except_manifest_bindings(tmp_pa
         )
 
 
+def test_user_service_prevalidation_accepts_only_exact_target_resume_variant(tmp_path):
+    from scripts.task40_v20_service_workflow import (
+        ARTIFACT_ROOT,
+        _validate_service_stage_input_variant,
+        render_stage_input,
+    )
+
+    canonical_source = INPUT_ROOT / "target_original_ny8_resource_pilot_v20.dat"
+    canonical_text = canonical_source.read_text(encoding="utf-8")
+    canonical_path = (
+        tmp_path / "input/task40extra_0p7nm_engineering" / canonical_source.name
+    )
+    canonical_path.parent.mkdir(parents=True)
+    canonical_path.write_text(canonical_text, encoding="utf-8")
+    stage_root = tmp_path / ARTIFACT_ROOT / "stage_inputs"
+    resume_path = stage_root / "local_port_components_resume" / canonical_source.name
+    resume_path.parent.mkdir(parents=True)
+    manifest_path = (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/local_v20_wsl/"
+        "component_resume/target_original_ny8_from_c00_manifest_v1.json"
+    )
+    manifest_sha256 = "f" * 64
+    resume_text = render_stage_input(
+        canonical_text,
+        "local_port_components",
+        component_resume_manifest_path=manifest_path,
+        component_resume_manifest_sha256=manifest_sha256,
+    )
+    resume_path.write_text(resume_text, encoding="utf-8")
+    resume_data = load_and_resolve(resume_path).as_jsonable()
+
+    _validate_service_stage_input_variant(
+        resume_path.resolve(),
+        canonical_path.resolve(),
+        canonical_text,
+        "local_port_components",
+        resume_data,
+        repo_root=tmp_path,
+    )
+
+    ordinary_path = stage_root / "local_port_components" / canonical_source.name
+    ordinary_path.parent.mkdir(parents=True)
+    ordinary_text = render_stage_input(canonical_text, "local_port_components")
+    ordinary_path.write_text(ordinary_text, encoding="utf-8")
+    ordinary_data = load_and_resolve(ordinary_path).as_jsonable()
+    _validate_service_stage_input_variant(
+        ordinary_path.resolve(),
+        canonical_path.resolve(),
+        canonical_text,
+        "local_port_components",
+        ordinary_data,
+        repo_root=tmp_path,
+    )
+
+    physical_change = resume_text.replace(
+        "period_x_nm = 50.0", "period_x_nm = 50.01", 1
+    )
+    assert physical_change != resume_text
+    resume_path.write_text(physical_change, encoding="utf-8")
+    with pytest.raises(ValueError, match="same-basename variant"):
+        _validate_service_stage_input_variant(
+            resume_path.resolve(),
+            canonical_path.resolve(),
+            canonical_text,
+            "local_port_components",
+            resume_data,
+            repo_root=tmp_path,
+        )
+
+    missing_hash = resume_text.replace(
+        f'task40_component_resume_manifest_sha256 = "{manifest_sha256}"\n', ""
+    )
+    resume_path.write_text(missing_hash, encoding="utf-8")
+    missing_hash_data = {
+        **resume_data,
+        "execution": dict(resume_data["execution"]),
+    }
+    missing_hash_data["execution"].pop(
+        "task40_component_resume_manifest_sha256"
+    )
+    with pytest.raises(ValueError, match="must be supplied together"):
+        _validate_service_stage_input_variant(
+            resume_path.resolve(),
+            canonical_path.resolve(),
+            canonical_text,
+            "local_port_components",
+            missing_hash_data,
+            repo_root=tmp_path,
+        )
+
+    resume_path.write_text(resume_text, encoding="utf-8")
+    wrong_profile_data = {
+        **resume_data,
+        "solver": dict(resume_data["solver"]),
+    }
+    wrong_profile_data["solver"]["preconditioner"] = (
+        "task40extra_v20_p6_y_orbit_e2_reference_v1"
+    )
+    with pytest.raises(ValueError, match="restricted to the exact target"):
+        _validate_service_stage_input_variant(
+            resume_path.resolve(),
+            canonical_path.resolve(),
+            canonical_text,
+            "local_port_components",
+            wrong_profile_data,
+            repo_root=tmp_path,
+        )
+
+    with pytest.raises(ValueError, match="restricted to the exact target"):
+        _validate_service_stage_input_variant(
+            resume_path.resolve(),
+            canonical_path.resolve(),
+            canonical_text,
+            "geometry_inventory",
+            resume_data,
+            repo_root=tmp_path,
+        )
+
+
 def test_real_target_resume_path_reaches_minimal_component_fixture(tmp_path, monkeypatch):
     import hashlib
     import os

@@ -216,6 +216,56 @@ def prepare_component_resume_input(
     }
 
 
+def _validate_service_stage_input_variant(
+    input_path: Path,
+    canonical_path: Path,
+    canonical_text: str,
+    stop_stage: str,
+    data: dict[str, Any],
+    *,
+    repo_root: Path,
+) -> None:
+    """Validate the exact pre-run input variant accepted by ``run_service``."""
+
+    execution = data.get("execution", {})
+    resume_path = execution.get("task40_component_resume_manifest_path")
+    resume_sha256 = execution.get("task40_component_resume_manifest_sha256")
+    if (resume_path is None) != (resume_sha256 is None):
+        raise ValueError("component resume manifest path and SHA-256 must be supplied together")
+    if resume_path is None and resume_sha256 is None:
+        expected_text = render_stage_input(canonical_text, stop_stage)
+    else:
+        if (
+            data.get("run_id")
+            != "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+            or data.get("solver", {}).get("preconditioner")
+            != "task40extra_v20_p6_y_orbit_target_original_ny8_v1"
+            or stop_stage != "local_port_components"
+        ):
+            raise ValueError(
+                "component resume input is restricted to the exact target local_port_components case"
+            )
+        expected_text = render_stage_input(
+            canonical_text,
+            stop_stage,
+            component_resume_manifest_path=resume_path,
+            component_resume_manifest_sha256=resume_sha256,
+        )
+
+    if input_path == canonical_path:
+        if stop_stage != "preflight":
+            raise ValueError("canonical V20 inputs are immutable preflight inputs")
+        return
+    if input_path.name != canonical_path.name or input_path.read_text(encoding="utf-8") != expected_text:
+        raise ValueError(
+            "stage input is not an exact same-basename variant of the canonical input"
+        )
+    if not input_path.is_relative_to(
+        (repo_root / ARTIFACT_ROOT / "stage_inputs").resolve()
+    ):
+        raise ValueError("noncanonical V20 stage input must live in the ignored stage_inputs artifact")
+
+
 def prepare_stage_inputs(repo_root: Path = ROOT) -> dict[str, Any]:
     artifact_root = repo_root / ARTIFACT_ROOT
     stage_root = artifact_root / "stage_inputs"
@@ -947,14 +997,14 @@ def run_service(
     canonical_relative, _supported = V20_INPUTS[data["solver"]["preconditioner"]]
     canonical_path = repo_root / canonical_relative
     canonical_text = canonical_path.read_text(encoding="utf-8")
-    if input_path != canonical_path:
-        expected_text = render_stage_input(canonical_text, stop_stage)
-        if input_path.name != canonical_path.name or input_path.read_text(encoding="utf-8") != expected_text:
-            raise ValueError("stage input is not an exact same-basename, one-field variant of the canonical input")
-        if not input_path.is_relative_to((repo_root / ARTIFACT_ROOT / "stage_inputs").resolve()):
-            raise ValueError("noncanonical V20 stage input must live in the ignored stage_inputs artifact")
-    elif stop_stage != "preflight":
-        raise ValueError("canonical V20 inputs are immutable preflight inputs")
+    _validate_service_stage_input_variant(
+        input_path,
+        canonical_path,
+        canonical_text,
+        stop_stage,
+        data,
+        repo_root=repo_root,
+    )
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", unit):
         raise ValueError("invalid systemd user-service unit name")
     fixed_campaign = repo_root / CAMPAIGN_RELATIVE
