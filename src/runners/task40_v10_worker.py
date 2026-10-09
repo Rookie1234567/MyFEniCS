@@ -4420,6 +4420,7 @@ def _candidate_contract(
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_B0_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
+        TASK40_V20_P6_PROFILES,
         TASK40_V17_P6_GX560_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
     )
@@ -4447,6 +4448,7 @@ def _candidate_contract(
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
     is_v19 = factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
+    is_v20 = profile_identity in TASK40_V20_P6_PROFILES
     is_v16 = q_assembly_strategy == TASK40_Q_ASSEMBLY_BOUNDED_V16
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
     case_identity = {
@@ -4487,6 +4489,7 @@ def _candidate_contract(
         TASK40_V17_P6_GX560_PROFILE: (None, None, None, None),
         TASK40_V17_P6_E1_PROFILE: (None, None, None, None),
         TASK40_V18_P6_B0_Y8_PROFILE: (None, None, None, None),
+        **{profile: (None, None, None, None) for profile in TASK40_V20_P6_PROFILES},
     }
     try:
         strict_identity, v13_identity, v15_identity, v16_identity = case_identity[profile_identity]
@@ -4508,8 +4511,15 @@ def _candidate_contract(
         if profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
         else None
     )
+    v20_case = None
+    if is_v20:
+        from src.solvers.task40_v20_registry import task40_v20_case
+
+        v20_case = task40_v20_case(profile=profile_identity)
     v19_identity = (
-        (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL", 16.0)
+        (v20_case.run_id, v20_case.solver_stage, 16.0)
+        if v20_case is not None
+        else (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL", 16.0)
         if profile_identity == TASK40_V17_P6_E1_PROFILE
         else (TASK40_B0_P6_V19_Y8_RUN_ID, "B0_CANDIDATE", 16.0)
         if profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
@@ -4560,10 +4570,13 @@ def _candidate_contract(
         "v19_exact_scope": (
             not is_v19
             or (
-                profile_identity in {
-                    TASK40_V17_P6_E1_PROFILE,
-                    TASK40_V18_P6_B0_Y8_PROFILE,
-                }
+                (
+                    profile_identity in {
+                        TASK40_V17_P6_E1_PROFILE,
+                        TASK40_V18_P6_B0_Y8_PROFILE,
+                    }
+                    or is_v20
+                )
                 and q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
                 and reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
             )
@@ -4602,7 +4615,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
-            "task40extra.review_v19_one_q_p6_reference_worker_contract.v1"
+            "task40extra.review_v20_one_q_p6_reference_worker_contract.v1"
+            if is_v20
+            else "task40extra.review_v19_one_q_p6_reference_worker_contract.v1"
             if is_v19
             else "task40extra.review_v18_ny8_p6_reference_worker_contract.v1"
             if v18_identity is not None
@@ -4640,6 +4655,7 @@ def run_task40_v10_p6_reference_worker(
     source_sha: str,
     profile_identity: str | None = None,
     share_transform_bank: bool = False,
+    stop_after_stage: str | None = None,
 ) -> dict[str, Any]:
     """Run a frozen Task40 p6 case with one live four-q periodic reference."""
 
@@ -4658,6 +4674,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V16_P6_E1_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
+        TASK40_V20_P6_PROFILES,
         profile_facts,
     )
     from src.runners.physical_p4_schur_v14 import (
@@ -4720,6 +4737,7 @@ def run_task40_v10_p6_reference_worker(
     from src.solvers.task40_v10_p6_mumps import (
         ALL_Q_RESIDENT,
         ONE_Q_REFACTOR_V19,
+        _sparse_content_sha256,
         full_p6_pre_release_output_inventory,
     )
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
@@ -4772,14 +4790,32 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_gx560_reference_v1",
         "task40extra_v17_p6_y_orbit_e1_reference_v1",
         TASK40_V18_P6_B0_Y8_PROFILE,
+        *TASK40_V20_P6_PROFILES,
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
+    is_v20 = profile_identity in TASK40_V20_P6_PROFILES
+    v20_case = None
+    if is_v20:
+        from src.solvers.task40_v20_registry import task40_v20_case
+
+        v20_case = task40_v20_case(profile=profile_identity)
+    if stop_after_stage is not None:
+        from src.solvers.task40_v20_registry import V20_STOP_STAGES
+
+        if (
+            not is_v20
+            or stop_after_stage not in V20_STOP_STAGES
+            or stop_after_stage not in {"build_and_symbolic", "one_q_numeric"}
+        ):
+            raise ValueError("V20 worker stage stops require an exact registered staged V20 case")
     if is_v19:
         expected_v19 = {
             TASK40_V17_P6_E1_PROFILE: (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL"),
             TASK40_V18_P6_B0_Y8_PROFILE: (TASK40_B0_P6_V19_Y8_RUN_ID, "B0_CANDIDATE"),
         }.get(profile_identity)
+        if is_v20:
+            expected_v19 = (v20_case.run_id, v20_case.solver_stage)
         if (
             expected_v19 is None
             or resolved_payload.get("run_id") != expected_v19[0]
@@ -4789,7 +4825,7 @@ def run_task40_v10_p6_reference_worker(
         ):
             raise ValueError("ONE_Q_REFACTOR_V19 worker requires an exact V19 E1 or B0-Y8 input")
     if is_v17 and not (
-        profile_identity.startswith("task40extra_v17_p6_y_orbit_") or is_v18
+        profile_identity.startswith("task40extra_v17_p6_y_orbit_") or is_v18 or is_v20
     ):
         raise ValueError("V17 row-tile CSR requires a registered V17 p6 profile")
     if type(share_transform_bank) is not bool:
@@ -4811,9 +4847,13 @@ def run_task40_v10_p6_reference_worker(
         "task40extra_v17_p6_y_orbit_e1_reference_v1": "e1",
         TASK40_V18_P6_B0_Y8_PROFILE: "b0_y8",
     }
+    if is_v20:
+        case_labels[profile_identity] = v20_case.mesh_id.lower()
     case_label = case_labels[profile_identity]
     evidence_prefix = (
-        "v19_one_q_row_tile_p6_reference"
+        "v20_one_q_row_tile_p6_reference"
+        if is_v20
+        else "v19_one_q_row_tile_p6_reference"
         if is_v19
         else
         "v18_ny8_row_tile_p6_reference"
@@ -4834,7 +4874,9 @@ def run_task40_v10_p6_reference_worker(
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
-            "task40extra.review_v19_one_q_row_tile_p6_reference_worker_summary.v1"
+            "task40extra.review_v20_one_q_row_tile_p6_reference_worker_summary.v1"
+            if is_v20
+            else "task40extra.review_v19_one_q_row_tile_p6_reference_worker_summary.v1"
             if is_v19
             else "task40extra.review_v18_ny8_row_tile_p6_reference_worker_summary.v1"
             if is_v18
@@ -4893,6 +4935,8 @@ def run_task40_v10_p6_reference_worker(
     outer_started = False
     result: dict[str, Any] | None = None
     worker_result: dict[str, Any] | None = None
+    v20_stage_facts: dict[str, Any] | None = None
+    v20_stage_factors: Any | None = None
     try:
         runtime = _V14Runtime(
             directory,
@@ -4901,7 +4945,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v19_one_q_{case_label}_p6_reference"
+                f"task40_review_v20_one_q_{case_label}_p6_reference"
+                if is_v20
+                else f"task40_review_v19_one_q_{case_label}_p6_reference"
                 if is_v19
                 else f"task40_review_v18_ny8_{case_label}_p6_reference"
                 if is_v18
@@ -4937,6 +4983,15 @@ def run_task40_v10_p6_reference_worker(
         runtime.sample("v10_candidate_preflight")
 
         cfg = simulation_config_3d_from_normalized(resolved_payload)
+        v20_mode_inventory = None
+        v20_mode_metadata = None
+        if is_v20 and v20_case.mesh_id == "TARGET_ORIGINAL_NY8":
+            from src.solvers.task40_v20_mode_inventory import load_v20_target_mode_inventory
+
+            frozen_modes, frozen_rows, frozen_sha, v20_mode_metadata = (
+                load_v20_target_mode_inventory(resolved_payload)
+            )
+            v20_mode_inventory = (frozen_modes, frozen_rows, frozen_sha)
         axis_plan = _stage4_axis_plan(cfg, MPI.COMM_SELF.Get_size())
         axes = {
             "x": tuple(map(float, axis_plan.x_values)),
@@ -4961,6 +5016,7 @@ def run_task40_v10_p6_reference_worker(
             target_levels,
             cfg,
             6,
+            mode_inventory=v20_mode_inventory,
             jit_options=SAME_MESH_JIT_OPTIONS,
             dtn_phase_gauge=BOUNDARY_PLANE,
             verify_dtn_quadrature=True,
@@ -4979,8 +5035,12 @@ def run_task40_v10_p6_reference_worker(
             cell_notch=None,
             geometry_identity=f"{cfg.geometry_identity}.regular_reference_identity_probe",
         )
-        target_inventory = build_dynamic_mode_inventory(cfg)
-        reference_inventory = build_dynamic_mode_inventory(regular_cfg)
+        if v20_mode_inventory is None:
+            target_inventory = build_dynamic_mode_inventory(cfg)
+            reference_inventory = build_dynamic_mode_inventory(regular_cfg)
+        else:
+            target_inventory = v20_mode_inventory
+            reference_inventory = v20_mode_inventory
         target_inventory_keys = tuple(
             (index, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
             for index, mode in enumerate(target_inventory[0])
@@ -5002,6 +5062,11 @@ def run_task40_v10_p6_reference_worker(
             ),
             "target_carrier_assembly_manifest_sha256": str(
                 target_bundle["dtn_action"].carrier.mode_manifest_sha256
+            ),
+            **(
+                {"frozen_mode_source_lineage": v20_mode_metadata}
+                if v20_mode_metadata is not None
+                else {}
             ),
         }
         if not (
@@ -5656,7 +5721,154 @@ def run_task40_v10_p6_reference_worker(
             q_assembly_strategy=q_assembly_strategy,
             factor_lifecycle_strategy=factor_lifecycle_strategy,
             operator_qualification_reuse=operator_qualification_reuse,
+            mode_inventory=v20_mode_inventory,
         )
+        if stop_after_stage is not None:
+            factors = reference["factors"]
+            v20_stage_factors = factors
+            factor_audit = copy.deepcopy(factors.audit)
+            q_matrices = factors.csr_matrices
+            q_inventory = {
+                str(q): {
+                    "shape": list(matrix.shape),
+                    "nnz": int(matrix.nnz),
+                    "csr_sha256": _sparse_content_sha256(matrix),
+                }
+                for q, matrix in sorted(q_matrices.items())
+            }
+            if stop_after_stage == "build_and_symbolic":
+                if (
+                    factor_audit.get("all_q_symbolic_covered") is not True
+                    or set(q_matrices) != set(range(int(periodic_profile.q_count)))
+                    or int(factor_audit.get("numeric_factor_build_attempt_count", 0)) != 0
+                ):
+                    raise RuntimeError("V20 build_and_symbolic stop failed its all-q symbolic contract")
+                stage_facts = {
+                    "schema": "task40extra.review_v20_worker_stage_result.v1",
+                    "requested_stage": stop_after_stage,
+                    "completed_stage": stop_after_stage,
+                    "run_id": resolved_payload.get("run_id"),
+                    "profile": profile_identity,
+                    "source_sha": source_sha,
+                    "input_sha256": resolved_payload.get("provenance", {}).get("input_sha256"),
+                    "all_q_symbolic_covered": True,
+                    "numeric_factor_build_attempt_count": 0,
+                    "q_csr_inventory": q_inventory,
+                    "factor_audit": factor_audit,
+                    "official_result": False,
+                    "full_field_release_allowed": False,
+                }
+            else:
+                from src.solvers.task40_v20_local_components import _save_component_packet
+                from src.solvers.task40_v20_numeric_stage import (
+                    run_v20_one_q_physical_rhs,
+                )
+
+                v20_physical_rhs, physical_rhs_facts = build_physical_rhs(
+                    reference["global_bundle"]
+                )
+                full_storage_rhs = None
+                physical_rhs_values = None
+                one_q_arrays = None
+                try:
+                    full_storage_rhs = np.asarray(
+                        v20_physical_rhs.array_r, dtype=np.complex128
+                    ).copy()
+                    layout = reference["full_layout"]
+                    independent = np.asarray(layout.independent, dtype=np.int64)
+                    if full_storage_rhs.shape != (int(layout.full_rows),):
+                        raise ValueError(
+                            "V20 regular physical RHS differs from the full reference storage layout"
+                        )
+                    if independent.shape != (int(layout.independent_rows),):
+                        raise ValueError(
+                            "V20 regular physical RHS independent-row map is incomplete"
+                        )
+                    physical_rhs_values = full_storage_rhs[independent].copy()
+                    physical_rhs_facts = {
+                        **dict(physical_rhs_facts),
+                        "case": "regular_reference_physical_startup_rhs",
+                        "input_rhs_is_production_maxwell_source": True,
+                        "port_rhs_is_zero_as_in_the_existing_physical_incident_witness": True,
+                        "full_storage_rows": int(layout.full_rows),
+                        "independent_rows": int(layout.independent_rows),
+                        "mode_manifest_sha256": str(
+                            reference["global_bundle"]["mode_sha256"]
+                        ),
+                    }
+                    one_q_facts, one_q_arrays = run_v20_one_q_physical_rhs(
+                        reference["inverse"],
+                        factors,
+                        physical_rhs_values,
+                        physical_rhs_facts=physical_rhs_facts,
+                        q_count=int(periodic_profile.q_count),
+                    )
+                    one_q_facts["q_csr_inventory"] = q_inventory
+                    one_q_facts["selected_q_csr_sha256"] = q_inventory["0"][
+                        "csr_sha256"
+                    ]
+                    one_q_facts["raw_packet"] = _save_component_packet(
+                        directory,
+                        "v20_one_q_numeric",
+                        one_q_facts,
+                        one_q_arrays,
+                    )
+                finally:
+                    try:
+                        v20_physical_rhs.destroy()
+                    finally:
+                        if full_storage_rhs is not None:
+                            del full_storage_rhs
+                        if physical_rhs_values is not None:
+                            del physical_rhs_values
+                        if one_q_arrays is not None:
+                            del one_q_arrays
+
+                factor_audit = copy.deepcopy(factors.audit)
+                stage_facts = {
+                    "schema": "task40extra.review_v20_worker_stage_result.v1",
+                    "requested_stage": stop_after_stage,
+                    "completed_stage": stop_after_stage,
+                    "run_id": resolved_payload.get("run_id"),
+                    "profile": profile_identity,
+                    "source_sha": source_sha,
+                    "input_sha256": resolved_payload.get("provenance", {}).get("input_sha256"),
+                    "all_q_symbolic_covered": one_q_facts["all_q_symbolic_covered"],
+                    "selected_q": one_q_facts["selected_q"],
+                    "selected_q_numeric_coverage": one_q_facts[
+                        "selected_q_numeric_coverage"
+                    ],
+                    "numeric_factor_build_attempt_count": one_q_facts[
+                        "numeric_factor_build_attempt_count"
+                    ],
+                    "factor_probe_mat_solve_count": one_q_facts[
+                        "factor_probe_mat_solve_count"
+                    ],
+                    "startup_rhs_mat_solve_count": one_q_facts[
+                        "startup_rhs_mat_solve_count"
+                    ],
+                    "physical_rhs_stage": one_q_facts,
+                    "factor_audit": factor_audit,
+                    "official_result": False,
+                    "full_field_release_allowed": False,
+                }
+            v20_stage_facts = stage_facts
+            summary.update(
+                status="CONTROLLED_STOP",
+                official_result=False,
+                result_classification="CONTROLLED_STOP_AT_REQUESTED_V20_STAGE",
+                v20_stage_result=stage_facts,
+            )
+            runtime.marker("task40_v20_worker_stage_complete", stage_facts)
+            worker_result = {
+                "passed": True,
+                "errors": [],
+                "status": "controlled_stop",
+                "official_result": False,
+                "summary": summary,
+                "numerical_output_directory": str(output_directory),
+            }
+            return worker_result
         if not mode_identity:
             raise RuntimeError("regular p6 physical identity callback did not run before q factors")
         mapping_identity = _mapping_identity(reference)
@@ -6516,10 +6728,40 @@ def run_task40_v10_p6_reference_worker(
                     }
                     summary["reference_audit_snapshot"] = reference_audit_snapshot
                 destroy_task40_v10_p6_reference_inverse(reference)
+                if v20_stage_factors is not None and v20_stage_facts is not None:
+                    from src.solvers.task40_v20_numeric_stage import (
+                        v20_factor_cleanup_facts,
+                    )
+
+                    cleanup = v20_factor_cleanup_facts(v20_stage_factors)
+                    v20_stage_facts["cleanup"] = cleanup
+                    v20_stage_facts["cleanup_gate_passed"] = cleanup["passed"]
+                    summary["v20_stage_result"] = v20_stage_facts
+                    if not cleanup["passed"]:
+                        cleanup_error = {
+                            "type": "RuntimeError",
+                            "message": "V20 stage did not release the one-q factor slot",
+                        }
+                        summary.setdefault("cleanup_errors", []).append(cleanup_error)
+                        if worker_result is not None:
+                            worker_result["passed"] = False
+                            worker_result["status"] = "failed"
+                            worker_result["errors"] = [cleanup_error["message"]]
             except Exception as exc:
                 summary.setdefault(
                     "cleanup_errors", []
                 ).append({"type": type(exc).__name__, "message": str(exc)})
+                if v20_stage_facts is not None:
+                    v20_stage_facts["cleanup"] = {
+                        "passed": False,
+                        "error": {"type": type(exc).__name__, "message": str(exc)},
+                    }
+                    v20_stage_facts["cleanup_gate_passed"] = False
+                    summary["v20_stage_result"] = v20_stage_facts
+                    if worker_result is not None:
+                        worker_result["passed"] = False
+                        worker_result["status"] = "failed"
+                        worker_result["errors"] = [str(exc)]
         if target_fast_bundle is not None:
             try:
                 target_fast_bundle["physical_action"].destroy()

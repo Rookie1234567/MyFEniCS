@@ -333,6 +333,32 @@ def main(argv: list[str] | None = None) -> int:
                 str(specification.solver.get('task40_q_assembly_strategy')),
             )
         )
+        from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+        v20_case = TASK40_V20_CASES_BY_PROFILE.get(
+            specification.solver.get('preconditioner')
+        )
+        v20_case_identity = (
+            v20_case is not None
+            and specification.identity.get('model_id') == v20_case.model_id
+            and specification.identity.get('run_id') == v20_case.run_id
+            and specification.solver.get('stage') == v20_case.solver_stage
+            and specification.execution.get("task40_execution_stop_stage", "preflight")
+            in v20_case.allowed_stop_stages
+        )
+        v20_campaign_identity = (
+            v20_case_identity
+            and specification.solver.get('task40_factor_lifecycle_strategy')
+            == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+            and specification.solver.get('task40_reference_pc_strategy')
+            == TASK40_V15_REFERENCE_PC_STRATEGY
+            and specification.solver.get('task40_q_assembly_strategy')
+            == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            and task40_q_assembly_strategy_is_allowed(
+                str(specification.solver.get('task40_reference_pc_strategy')),
+                str(specification.solver.get('task40_q_assembly_strategy')),
+            )
+        )
         requested_factor_lifecycle = specification.solver.get(
             'task40_factor_lifecycle_strategy', TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
         )
@@ -343,8 +369,10 @@ def main(argv: list[str] | None = None) -> int:
             raise InputError(
                 f'unsupported Task40 factor lifecycle strategy: {requested_factor_lifecycle!r}'
             )
-        if requested_factor_lifecycle == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY and not v19_campaign_identity:
-            raise InputError('ONE_Q_REFACTOR_V19 is restricted to the exact reviewed V19 run/profile/strategy combinations')
+        if requested_factor_lifecycle == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY and not (
+            v19_campaign_identity or v20_campaign_identity
+        ):
+            raise InputError('ONE_Q_REFACTOR_V19 is restricted to exact reviewed V19/V20 run/profile/strategy combinations')
         v15_b0_candidate_identity = (
             v15_campaign_identity
             and specification.identity.get('run_id') == TASK40_B0_P6_V15_RUN_ID
@@ -354,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
             v10_identity or v11_grid_identity or v13_campaign_identity
             or v15_campaign_identity or v16_campaign_identity or v17_campaign_identity
             or v18_campaign_identity or v19_campaign_identity
+            or v20_campaign_identity
         )
         from src.runners.task038_launcher import _validate_task40_v10_postprocess_request
 
@@ -364,12 +393,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.task40_v10_campaign_window is not None and not task40_campaign_identity:
             raise InputError(
-                '--task40-v10-campaign-window is restricted to reviewed Task40 V10/V11 identities or exact V13/V15/V16/V17/V18/V19 p6 run/profile/strategy combinations'
+                '--task40-v10-campaign-window is restricted to reviewed Task40 V10/V11 identities or exact V13/V15/V16/V17/V18/V19/V20 p6 run/profile/strategy combinations'
             )
         if task40_campaign_identity and not args.task40_v10_campaign_window and not (
             args.validate_only or args.dry_run
         ):
-            raise InputError('Task40 V10/V11/V13/V15/V16/V17/V18/V19 p6 launches require --task40-v10-campaign-window')
+            raise InputError('Task40 V10/V11/V13/V15/V16/V17/V18/V19/V20 p6 launches require --task40-v10-campaign-window')
         if args.task40_v10_campaign_window is not None and (args.validate_only or args.dry_run):
             from src.runners.task40_v10_campaign import load_fixed_campaign_window
             load_fixed_campaign_window(args.task40_v10_campaign_window)

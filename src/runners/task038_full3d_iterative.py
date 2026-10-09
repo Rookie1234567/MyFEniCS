@@ -102,6 +102,27 @@ def run_full3d_iterative(
             "Task40 dispatcher rejected q assembly for the selected reference-PC strategy"
         )
 
+    from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+    v20_case = TASK40_V20_CASES_BY_PROFILE.get(profile)
+    if v20_case is not None:
+        if (
+            resolved_payload.get("run_id") != v20_case.run_id
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != v20_case.solver_stage
+            or reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
+            or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            or factor_lifecycle_strategy != TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+        ):
+            raise ValueError("Task40 V20 dispatcher rejected a mismatched case/profile/strategy")
+        from .task40_v20_stage_runner import run_task40_v20_stage
+
+        return run_task40_v20_stage(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+        )
+
     if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY:
         v19_cases = {
             TASK40_V17_P6_E1_PROFILE: (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL"),

@@ -159,6 +159,23 @@ def test_v19_complete_augmented_apply_routes_each_q_and_records_capabilities():
     assert inverse.last_factor_capabilities["all_q_solve_coverage"] is True
     assert inverse.calls == 1
 
+    prepared = list(
+        inverse.iter_q_modal_rhs(
+            rhs,
+            np.asarray([0.3 - 0.1j], dtype=np.complex128),
+            q_index=0,
+        )
+    )
+    assert len(prepared) == 1
+    assert prepared[0]["q"] == 0
+    assert prepared[0]["twist_index"] == 0
+    np.testing.assert_allclose(prepared[0]["rhs"], rhs[:1])
+    # Preparing a physical q RHS does not create another numeric factor or solve.
+    assert factors.calls == [
+        (0, "startup_rhs_mat_solve_count"),
+        (1, "startup_rhs_mat_solve_count"),
+    ]
+
 
 class _ContributionAction:
     def __init__(self, matrix):

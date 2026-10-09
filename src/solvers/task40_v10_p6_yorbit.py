@@ -733,13 +733,7 @@ class CompleteTwoCellInverse:
         self.last_factor_capabilities = None
         self.destroyed = False
 
-    def apply_augmented(
-        self,
-        rhs: Any,
-        port_rhs: Any | None = None,
-        *,
-        rhs_category: str = "other_validation_rhs_mat_solve_count",
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def _validate_rhs(self, rhs: Any, port_rhs: Any | None) -> tuple[np.ndarray, np.ndarray]:
         if self.destroyed:
             raise RuntimeError("p6 complete two-cell inverse has been destroyed")
         full_rhs = np.asarray(rhs, dtype=np.complex128)
@@ -766,25 +760,100 @@ class CompleteTwoCellInverse:
                 "all_interior_and_alias_channels": True,
             },
         )
+        return full_rhs, ports
+
+    def _prepare_sector_rhs(
+        self, sector: Mapping[str, Any], full_rhs: np.ndarray, ports: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        transport = sector["transport"]
+        action = sector["action"]
+        context = sector["context"]
+        condensed = action.condensed
+        ids = np.asarray(context.original_mode_indices, dtype=np.int64)
+        local_rhs = np.zeros(condensed.full_rows, dtype=np.complex128)
+        local_independent_rows = np.asarray(transport.local.independent, dtype=np.int64)
+        local_rhs[local_independent_rows] = transport.fold_dual(full_rhs)
+        local_port_rhs = ports[ids] / np.sqrt(float(self.replication_count))
+        reduced_rhs = action.reduce_rhs(
+            local_rhs,
+            port_rhs=local_port_rhs,
+            rhs_is_mpc_dual=True,
+        )
+        return ids, local_rhs, local_port_rhs, np.asarray(reduced_rhs, dtype=np.complex128)
+
+    def iter_q_modal_rhs(
+        self,
+        rhs: Any,
+        port_rhs: Any | None = None,
+        *,
+        q_index: int,
+    ):
+        """Yield one selected q's production-folded modal RHS per matching sector."""
+
+        if type(q_index) is not int or q_index not in range(self.q_count):
+            raise ValueError("an actual q branch index in the complete profile is required")
+        selected = []
+        for sector_index, sector in enumerate(self.sectors):
+            branches = [
+                branch
+                for branch, q_value in enumerate(sector["context"].global_q_indices)
+                if int(q_value) == q_index
+            ]
+            if len(branches) > 1:
+                raise RuntimeError("one p6 sector maps the selected q more than once")
+            if branches:
+                selected.append((sector_index, sector, branches[0]))
+        if not selected:
+            raise ValueError(f"selected q={q_index} is absent from every p6 sector")
+
+        full_rhs, ports = self._validate_rhs(rhs, port_rhs)
+        for sector_index, sector, branch in selected:
+            ids, local_rhs, local_port_rhs, reduced_rhs = self._prepare_sector_rhs(
+                sector, full_rhs, ports
+            )
+            coordinates = sector["coordinates"]
+            context = sector["context"]
+            q_map = coordinates.q_map(branch, allocation_gate=self.gate)
+            modal_rhs = np.asarray(q_map.conj().T @ reduced_rhs, dtype=np.complex128)
+            q = int(context.global_q_indices[branch])
+            if modal_rhs.shape != self.factors.csr_matrices[q].shape[:1]:
+                raise ValueError("folded production modal RHS differs from the selected q rows")
+            record = {
+                "q": q,
+                "sector_index": int(sector_index),
+                "twist_index": int(context.twist_index),
+                "branch": int(branch),
+                "mode_indices": ids.copy(),
+                "fe_rhs_norm": float(np.linalg.norm(local_rhs)),
+                "port_rhs_norm": float(np.linalg.norm(local_port_rhs)),
+                "rhs": modal_rhs,
+            }
+            del q_map, local_rhs, local_port_rhs, reduced_rhs, ids
+            yield record
+
+    def apply_augmented(
+        self,
+        rhs: Any,
+        port_rhs: Any | None = None,
+        *,
+        rhs_category: str = "other_validation_rhs_mat_solve_count",
+    ) -> tuple[np.ndarray, np.ndarray]:
+        full_rhs, ports = self._validate_rhs(rhs, port_rhs)
         result = np.zeros(self.layout.independent_rows, dtype=np.complex128)
         mode_count = len(ports)
         alpha = np.empty(mode_count, dtype=np.complex128)
         local_audit = []
         for sector in self.sectors:
-            transport = sector["transport"]
             action = sector["action"]
             coordinates = sector["coordinates"]
             context = sector["context"]
+            transport = sector["transport"]
             condensed = action.condensed
-            ids = np.asarray(context.original_mode_indices, dtype=np.int64)
-            local_rhs = np.zeros(condensed.full_rows, dtype=np.complex128)
-            local_independent_rows = np.asarray(transport.local.independent, dtype=np.int64)
-            local_rhs[local_independent_rows] = transport.fold_dual(full_rhs)
-            local_port_rhs = ports[ids] / np.sqrt(float(self.replication_count))
-            reduced_rhs = action.reduce_rhs(
-                local_rhs,
-                port_rhs=local_port_rhs,
-                rhs_is_mpc_dual=True,
+            ids, local_rhs, local_port_rhs, reduced_rhs = self._prepare_sector_rhs(
+                sector, full_rhs, ports
+            )
+            local_independent_rows = np.asarray(
+                transport.local.independent, dtype=np.int64
             )
             native_solution = np.zeros(action.reduced_size, dtype=np.complex128)
             q_residual_records = []
@@ -3429,6 +3498,7 @@ def build_task40_v10_p6_reference_inverse(
     factor_lifecycle_strategy: str = "ALL_Q_RESIDENT",
     q_assembly_comparison_only: bool = False,
     operator_qualification_reuse: Callable[..., tuple[Mapping[str, Any], Mapping[str, Any]]] | None = None,
+    mode_inventory: tuple[Any, Any, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -3456,6 +3526,8 @@ def build_task40_v10_p6_reference_inverse(
         TASK40_V10_P6_PROFILE,
         TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
+        TASK40_V20_P6_E2_PROFILE,
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
         Task40V10P6PeriodicProfile,
     )
     if not callable(allocation_gate):
@@ -3469,12 +3541,14 @@ def build_task40_v10_p6_reference_inverse(
         and profile.name in {
             TASK40_V17_P6_E1_PROFILE.name,
             TASK40_V18_P6_B0_Y8_PROFILE.name,
+            TASK40_V20_P6_E2_PROFILE.name,
+            TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name,
         }
         and q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
         and reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
     ):
         raise ValueError(
-            "ONE_Q_REFACTOR_V19 is restricted to V17 E1 or V18 B0-Y8 with "
+            "ONE_Q_REFACTOR_V19 is restricted to registered V19/V20 cases with "
             "ROW_TILE_BOUNDED_CSR_V17 and the existing V15 PC contract"
         )
     if type(q_assembly_comparison_only) is not bool:
@@ -3536,6 +3610,7 @@ def build_task40_v10_p6_reference_inverse(
             global_levels,
             regular_cfg,
             6,
+            mode_inventory=mode_inventory,
             jit_options=jit_options,
             dtn_phase_gauge=BOUNDARY_PLANE,
             verify_dtn_quadrature=True,

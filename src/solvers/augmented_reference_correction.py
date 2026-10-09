@@ -113,12 +113,16 @@ def _zero_safe_relative(numerator: float, denominator: float) -> float:
 def _registered_v15_profile_inventory(profile_identity: Any) -> dict[str, Any]:
     """Resolve q, twist, and mode counts from the registered periodic profile."""
 
-    from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
+    from src.solvers.task40_v10_p6_periodic_profile import (
+        TASK40_P6_PERIODIC_PROFILES,
+        TASK40_V15_SELECTOR_PROFILE_IDENTITIES,
+    )
 
-    if not isinstance(profile_identity, str) or not profile_identity.startswith(
-        ("task40extra_v15_", "task40extra_v16_", "task40extra_v17_", "task40extra_v18_")
+    if (
+        not isinstance(profile_identity, str)
+        or profile_identity not in TASK40_V15_SELECTOR_PROFILE_IDENTITIES
     ):
-        raise ValueError("V15 candidate must name a registered V15-V18 profile")
+        raise ValueError("V15 candidate must name an explicitly admitted V15/V16/V17/V18/V20 profile")
     profile = TASK40_P6_PERIODIC_PROFILES.get(profile_identity)
     if profile is None:
         raise ValueError(f"V15 candidate profile is not registered: {profile_identity!r}")

@@ -12,11 +12,15 @@ TASK40_COMPARISON_GROUP = "task40extra_0p7nm_nonseparable_n0_n6"
 TASK40_GEOMETRY_IDENTITY = "task40extra_nonseparable_0p7nm_v1"
 TASK40_E1_GEOMETRY_IDENTITY = "task40extra_nonseparable_0p7nm_e1_q1p25_v1"
 TASK40_E2_GEOMETRY_IDENTITY = "task40extra_nonseparable_0p7nm_e2_q1p5_v1"
+TASK40_TARGET_ORIGINAL_V20_GEOMETRY_IDENTITY = (
+    "task40extra_nonseparable_0p7nm_target_original_v20_v1"
+)
 TASK40_GEOMETRY_IDENTITIES = frozenset(
     {
         TASK40_GEOMETRY_IDENTITY,
         TASK40_E1_GEOMETRY_IDENTITY,
         TASK40_E2_GEOMETRY_IDENTITY,
+        TASK40_TARGET_ORIGINAL_V20_GEOMETRY_IDENTITY,
     }
 )
 TASK40_GEOMETRY_IDENTITY_BY_MESH = {
@@ -24,6 +28,7 @@ TASK40_GEOMETRY_IDENTITY_BY_MESH = {
     "G1": TASK40_GEOMETRY_IDENTITY,
     "E1": TASK40_E1_GEOMETRY_IDENTITY,
     "E2": TASK40_E2_GEOMETRY_IDENTITY,
+    "TARGET_ORIGINAL_NY8": TASK40_TARGET_ORIGINAL_V20_GEOMETRY_IDENTITY,
     "GX560": TASK40_GEOMETRY_IDENTITY,
     "GZ528": TASK40_GEOMETRY_IDENTITY,
     "GX784": TASK40_GEOMETRY_IDENTITY,
@@ -57,6 +62,10 @@ TASK40_B0_P6_V19_Y8_RUN_ID = "task40extra_0p7nm_b0_p6_reference_v19_ny8"
 TASK40_GX560_V17_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_p6_reference_v17"
 TASK40_E1_V17_RUN_ID = "task40extra_0p7nm_nonseparable_e1_p6_reference_v17"
 TASK40_E1_V19_RUN_ID = "task40extra_0p7nm_nonseparable_e1_p6_reference_v19"
+TASK40_E2_P6_V20_RUN_ID = "task40extra_0p7nm_nonseparable_e2_p6_reference_v20"
+TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID = (
+    "task40extra_0p7nm_target_original_ny8_resource_pilot_v20"
+)
 TASK40_V13_RUN_IDS = frozenset(
     {TASK40_B0_P6_V13_RUN_ID, TASK40_GX560_V13_RUN_ID, TASK40_GX784_V13_RUN_ID}
 )
@@ -117,6 +126,7 @@ TASK40_MANUAL_BOUNDS_BY_RUN_ID = {
     TASK40_F5_G1_M2_RUN_ID: (8, 2),
     TASK40_E1_RUN_ID: (10, 3),
     TASK40_E2_RUN_ID: (12, 3),
+    TASK40_E2_P6_V20_RUN_ID: (12, 3),
     TASK40_GX560_RUN_ID: (8, 2),
     TASK40_GX560_V11_P6_RUN_ID: (8, 2),
     TASK40_GZ528_RUN_ID: (8, 2),
@@ -154,6 +164,8 @@ TASK40_RUNS = {
     TASK40_F5_G1_M2_RUN_ID: "G1",
     TASK40_E1_RUN_ID: "E1",
     TASK40_E2_RUN_ID: "E2",
+    TASK40_E2_P6_V20_RUN_ID: "E2",
+    TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID: "TARGET_ORIGINAL_NY8",
     TASK40_GX560_RUN_ID: "GX560",
     TASK40_GX560_V11_P6_RUN_ID: "GX560",
     TASK40_GZ528_RUN_ID: "GZ528",
@@ -227,6 +239,41 @@ def _to_nm(values: list[Fraction], shift: Fraction = Fraction(0)) -> list[float]
 
 
 def task40_mesh_plan(mesh_id: str) -> dict[str, Any]:
+    if mesh_id == "TARGET_ORIGINAL_NY8":
+        # The original-size pilot uses the frozen V16 x/z recipe at physical
+        # scale one and Ny=8. This is an independent identity; it does not
+        # modify the repository-wide SCALE or borrow an E1 mesh identity.
+        plane_points = {
+            "x": [Fraction(0), Fraction(33, 2), Fraction(25), Fraction(67, 2), Fraction(50)],
+            "y": [Fraction(0), Fraction(25, 4), Fraction(25, 2), Fraction(75, 4), Fraction(25)],
+            "z": [Fraction(-10), Fraction(0), Fraction(40), Fraction(80), Fraction(120), Fraction(130)],
+        }
+        segment_counts = {
+            "x": [78, 58, 58, 78],
+            "y": [2, 2, 2, 2],
+            "z": [1, 4, 4, 4, 1],
+        }
+        axes = {
+            axis: [float(value) for value in _subdivide_counts(plane_points[axis], segment_counts[axis])]
+            for axis in ("x", "y", "z")
+        }
+        counts = {axis: sum(values) for axis, values in segment_counts.items()}
+        payload = {
+            "mesh_id": mesh_id,
+            "geometry_identity": TASK40_TARGET_ORIGINAL_V20_GEOMETRY_IDENTITY,
+            "geometry_scale": 1.0,
+            "target_h_nm": 10.0,
+            "axis_segment_interval_counts": segment_counts,
+            "axis_interval_counts": counts,
+            "axis_coordinates_nm": axes,
+            "expected_hexahedra": math.prod(counts.values()),
+            "recipe_source": "V16 target x/z count recipe plus V20 Ny8 subdivision",
+        }
+        return {
+            **payload,
+            "mesh_plan_id": "task40extra.target.original_size.ny8.v20.exact_planes.v1",
+            "mesh_plan_sha256": _canonical_sha256(payload),
+        }
     if mesh_id in {"B0", "B0_Y8"}:
         plane_points = {
             "x": [Fraction(0), Fraction(33, 2), Fraction(25), Fraction(67, 2), Fraction(50)],
@@ -455,7 +502,11 @@ def validate_task40_input(config: Mapping[str, Any]) -> None:
     if geometry.get("geometry_identity") != expected_geometry_identity:
         raise ValueError("Task40 geometry_identity differs from the frozen run geometry")
 
-    s = float(SCALE)
+    s = (
+        1.0
+        if mesh_id == "TARGET_ORIGINAL_NY8"
+        else float(SCALE)
+    )
     scale = float(ELECTRICAL_SIZE_SCALE.get(mesh_id, Fraction(1)))
     expected_geometry = {
         "period_x_nm": 50 * s * scale,

@@ -576,6 +576,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 TASK40_Q_ASSEMBLY_BOUNDED_V16,
                 TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
                 TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+                TASK40_E2_P6_V20_RUN_ID,
+                TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID,
                 task40_q_assembly_strategy_is_allowed,
             )
 
@@ -603,6 +605,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v17_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
             }
             v15_profiles = {
                 "task40extra_v15_p6_y_orbit_b0_reference_v1",
@@ -612,12 +616,16 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v17_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
             }
             v17_profiles = {
                 "task40extra_v17_p6_y_orbit_b0_reference_v1",
                 "task40extra_v17_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
             }
             v16_profiles = {
                 "task40extra_v16_p6_y_orbit_gx560_reference_v1",
@@ -685,13 +693,102 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 preconditioner in {
                     "task40extra_v17_p6_y_orbit_e1_reference_v1",
                     "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                    "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                    "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
                 }
                 and reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
                 and q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
             ):
                 raise _error(
                     "solver.task40_factor_lifecycle_strategy",
-                    "ONE_Q_REFACTOR_V19 requires V17 E1 or V18 B0-Y8, V15 PC, and V17 row-tile CSR",
+                    "ONE_Q_REFACTOR_V19 requires an exact V19/V20 run/profile, V15 PC, and V17 row-tile CSR",
+                )
+            from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+            v20_cases = {
+                profile: (
+                    case.run_id,
+                    case.solver_stage,
+                    set(case.allowed_stop_stages),
+                )
+                for profile, case in TASK40_V20_CASES_BY_PROFILE.items()
+            }
+            stop_stage = execution.get("task40_execution_stop_stage")
+            if preconditioner in v20_cases:
+                expected_run, expected_solver_stage, allowed_stop_stages = v20_cases[
+                    preconditioner
+                ]
+                if (
+                    config.get("run_id") != expected_run
+                    or solver.get("stage") != expected_solver_stage
+                ):
+                    raise _error("identity", f"{preconditioner} requires its exact V20 run/stage")
+                if stop_stage not in allowed_stop_stages:
+                    raise _error(
+                        "execution.task40_execution_stop_stage",
+                        f"{preconditioner} permits only its qualified V20 stop stages",
+                    )
+                if factor_lifecycle_strategy != TASK40_V19_FACTOR_LIFECYCLE_STRATEGY:
+                    raise _error(
+                        "solver.task40_factor_lifecycle_strategy",
+                        "V20 requires the explicit ONE_Q_REFACTOR_V19 route",
+                    )
+                v20_case = TASK40_V20_CASES_BY_PROFILE[preconditioner]
+                if v20_case.mesh_id == "TARGET_ORIGINAL_NY8":
+                    from src.solvers.task40_v20_mode_inventory import (
+                        TARGET_MODE_KEY_SHA256,
+                        TARGET_MODE_LEDGER_SHA256,
+                        TARGET_MODE_MANIFEST_PATH,
+                        TARGET_MODE_MANIFEST_SHA256,
+                        TARGET_MODE_LEDGER_PATH,
+                        TARGET_MODE_PHYSICAL_IDENTITY_SHA256,
+                        TARGET_MODE_INVENTORY_IDENTITY_SHA256,
+                    )
+
+                    expected_mode_identity = {
+                        "task40_mode_manifest_path": TARGET_MODE_MANIFEST_PATH,
+                        "task40_mode_manifest_sha256": TARGET_MODE_MANIFEST_SHA256,
+                        "task40_mode_key_sha256": TARGET_MODE_KEY_SHA256,
+                        "task40_target_physical_identity_sha256": (
+                            TARGET_MODE_PHYSICAL_IDENTITY_SHA256
+                        ),
+                        "task40_target_inventory_identity_sha256": (
+                            TARGET_MODE_INVENTORY_IDENTITY_SHA256
+                        ),
+                        "task40_target_ledger_path": TARGET_MODE_LEDGER_PATH,
+                        "task40_target_ledger_sha256": TARGET_MODE_LEDGER_SHA256,
+                    }
+                    for key, expected in expected_mode_identity.items():
+                        if execution.get(key) != expected:
+                            raise _error(
+                                f"execution.{key}",
+                                "target V20 must bind the frozen original-size AUTO mode inventory",
+                            )
+                    if type(execution.get("task40_target_heavy_authorized")) is not bool:
+                        raise _error(
+                            "execution.task40_target_heavy_authorized",
+                            "target V20 requires an explicit boolean heavy-stage gate",
+                        )
+                elif any(
+                    execution.get(key) is not None
+                    for key in (
+                        "task40_mode_manifest_path",
+                        "task40_mode_manifest_sha256",
+                        "task40_mode_key_sha256",
+                        "task40_target_physical_identity_sha256",
+                        "task40_target_inventory_identity_sha256",
+                        "task40_target_ledger_path",
+                        "task40_target_ledger_sha256",
+                    )
+                ):
+                    raise _error(
+                        "execution",
+                        "frozen original-size AUTO mode identity fields are target-only",
+                    )
+            elif stop_stage is not None:
+                raise _error(
+                    "execution.task40_execution_stop_stage",
+                    "the Task40 stop-stage selector is reserved for exact V20 profiles",
                 )
             if preconditioner not in {
                 "full3d_scalable_v1",
@@ -739,6 +836,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v17_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -1294,6 +1393,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v17_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
             }:
                 from src.geometry.task40_nonseparable_plan import (
                     TASK40_B0_P6_V15_RUN_ID,
@@ -1301,9 +1402,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     TASK40_B0_P6_V18_Y8_RUN_ID,
                     TASK40_B0_P6_V19_Y8_RUN_ID,
                     TASK40_COMPARISON_GROUP,
+                    TASK40_E2_P6_V20_RUN_ID,
                     TASK40_E1_V15_RUN_ID,
                     TASK40_E1_V17_RUN_ID,
                     TASK40_E1_V19_RUN_ID,
+                    TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID,
                     TASK40_GX560_V15_RUN_ID,
                     TASK40_GX560_V17_RUN_ID,
                     TASK40_Q_ASSEMBLY_LEGACY,
@@ -1334,6 +1437,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "task40extra_v18_p6_y_orbit_b0_y8_reference_v1": (
                         TASK40_B0_P6_V18_Y8_RUN_ID, "B0_CANDIDATE", None,
                     ),
+                    "task40extra_v20_p6_y_orbit_e2_reference_v1": (
+                        TASK40_E2_P6_V20_RUN_ID, "V20_E2_REFERENCE", 4,
+                    ),
+                    "task40extra_v20_p6_y_orbit_target_original_ny8_v1": (
+                        TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID,
+                        "V20_TARGET_NY8_RESOURCE_PILOT",
+                        4,
+                    ),
                 }
                 expected_run, expected_stage, expected_coarse_degree = cases[
                     preconditioner
@@ -1342,11 +1453,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     expected_run = {
                         "task40extra_v17_p6_y_orbit_e1_reference_v1": TASK40_E1_V19_RUN_ID,
                         "task40extra_v18_p6_y_orbit_b0_y8_reference_v1": TASK40_B0_P6_V19_Y8_RUN_ID,
+                        "task40extra_v20_p6_y_orbit_e2_reference_v1": TASK40_E2_P6_V20_RUN_ID,
+                        "task40extra_v20_p6_y_orbit_target_original_ny8_v1": TASK40_TARGET_ORIGINAL_NY8_V20_RUN_ID,
                     }.get(preconditioner)
                 expected_q_assembly_strategy = (
                     TASK40_Q_ASSEMBLY_ROW_TILE_V17
                     if preconditioner.startswith("task40extra_v17_")
                     or preconditioner == "task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+                    or preconditioner.startswith("task40extra_v20_")
                     else TASK40_Q_ASSEMBLY_LEGACY
                 )
                 if (
@@ -1387,7 +1501,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     fixed.append(("solver", "coarse_degree", solver.get("coarse_degree"), expected_coarse_degree))
                 for section, key, actual, expected in fixed:
                     if actual != expected:
-                        raise _error(f"{section}.{key}", f"V15/V17/V18 p6 profile fixes {key}={expected}")
+                        raise _error(f"{section}.{key}", f"V15/V17/V18/V20 p6 profile fixes {key}={expected}")
                 if geometry.get("model_variant") != "original" or geometry.get("cell_notch") is not None:
                     raise _error("geometry", f"{preconditioner} requires the original Task40 geometry")
                 try:
@@ -1890,6 +2004,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_v17_p6_y_orbit_gx560_reference_v1",
                 "task40extra_v17_p6_y_orbit_e1_reference_v1",
                 "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_v20_p6_y_orbit_e2_reference_v1",
+                "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
             }
             if task40_0p7nm:
                 if not isclose(

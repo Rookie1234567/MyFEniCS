@@ -127,6 +127,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         TASK40_V16_P6_PROFILES,
         TASK40_V17_P6_PROFILES,
         TASK40_V18_P6_PROFILES,
+        TASK40_V20_P6_PROFILES,
     )
     from src.solvers.task40_v10_p6_periodic_profile import TASK40_P6_PERIODIC_PROFILES
 
@@ -135,6 +136,7 @@ def _registered_v15_profile_inventory(identity: Any) -> dict[str, Any]:
         *TASK40_V16_P6_PROFILES,
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
+        *TASK40_V20_P6_PROFILES,
     ):
         raise ValueError(f"unknown registered Task40 V15/V16/V17 profile identity: {identity!r}")
     profile = TASK40_P6_PERIODIC_PROFILES.get(identity)
@@ -165,11 +167,13 @@ def _verify_v17_row_tile_assembly_summary(
     from src.io.physical_intermediate_profile import (
         TASK40_V17_P6_PROFILES,
         TASK40_V18_P6_PROFILES,
+        TASK40_V20_P6_PROFILES,
     )
 
     if not isinstance(profile_identity, str) or profile_identity not in (
         *TASK40_V17_P6_PROFILES,
         *TASK40_V18_P6_PROFILES,
+        *TASK40_V20_P6_PROFILES,
     ):
         raise ValueError(
             "V17 row-tile summary is not bound to an exact registered V17 profile or V18 profile"
@@ -177,8 +181,12 @@ def _verify_v17_row_tile_assembly_summary(
     profile_inventory = _registered_v15_profile_inventory(profile_identity)
     q_count = int(profile_inventory["q_count"])
     sector_count = len(profile_inventory["sector_port_counts"])
-    is_v18 = profile_identity in TASK40_V18_P6_PROFILES
-    if q_count != (8 if is_v18 else 4) or sector_count != q_count // 2:
+    is_ny8 = profile_identity in TASK40_V18_P6_PROFILES
+    if profile_identity in TASK40_V20_P6_PROFILES:
+        from src.solvers.task40_v20_registry import task40_v20_case
+
+        is_ny8 = task40_v20_case(profile=profile_identity).mesh_id == "TARGET_ORIGINAL_NY8"
+    if q_count != (8 if is_ny8 else 4) or sector_count != q_count // 2:
         raise ValueError("row-tile profile does not match its registered q/twist inventory")
     if not isinstance(summary.get("source_sha"), str) or len(summary["source_sha"]) != 40:
         raise ValueError("V17 row-tile worker summary omits its frozen source SHA")
@@ -743,6 +751,14 @@ def _verify_v19_run_lifecycle_binding(
             "nonseparable_e1_p6_reference_v19.dat",
         ),
     }
+    from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
+    for case in TASK40_V20_CASES_BY_PROFILE.values():
+        v19_runs[case.run_id] = (
+            case.profile,
+            case.solver_stage,
+            Path(case.input_path).name,
+        )
     manifest_solver = run_manifest.get("solver")
     manifest_strategy = (
         manifest_solver.get("task40_factor_lifecycle_strategy")
@@ -2105,6 +2121,21 @@ def verify_v10_output_bundle(
     has_registered_v18_profile = (
         isinstance(packet_profile, str) and packet_profile in TASK40_V18_P6_PROFILES
     )
+    from src.io.physical_intermediate_profile import TASK40_V20_P6_PROFILES
+
+    has_registered_v20_profile = (
+        isinstance(packet_profile, str) and packet_profile in TASK40_V20_P6_PROFILES
+    )
+    if has_registered_v20_profile:
+        from src.solvers.task40_v20_registry import task40_v20_case
+
+        case = task40_v20_case(profile=packet_profile)
+        if case.mesh_id == "TARGET_ORIGINAL_NY8":
+            raise ValueError(
+                "V20 original-size resource pilot is not qualified for official full-field output"
+            )
+        if (run_id, stage) != (case.run_id, case.solver_stage):
+            raise ValueError("V20 output identity differs from the central case registry")
     if (
         packet_strategy is not None
         and scientific_strategy is not None
@@ -2126,6 +2157,7 @@ def verify_v10_output_bundle(
         or scientific_strategy == "ROW_TILE_BOUNDED_CSR_V17"
         or has_registered_v17_profile
         or has_registered_v18_profile
+        or has_registered_v20_profile
     ):
         if not isinstance(packet_identity, Mapping):
             raise ValueError("V17 row-tile output is missing its run identity")

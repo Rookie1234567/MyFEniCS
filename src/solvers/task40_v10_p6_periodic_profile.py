@@ -66,6 +66,9 @@ class Task40V10P6PeriodicProfile:
                 result[key] = list(value)
         result.update(
             schema=(
+                "task40extra.review_v20_p6_periodic_profile.v1"
+                if self.name.startswith("task40extra_v20_")
+                else
                 "task40extra.review_v18_ny8_p6_periodic_profile.v1"
                 if self.name.startswith("task40extra_v18_")
                 else "task40extra.review_v16_p6_periodic_profile.v1"
@@ -115,7 +118,13 @@ class Task40V10P6PeriodicProfile:
             if actual.get(key) != value
         }
         if mismatches:
-            label = "Task40 V18 Ny8" if self.name.startswith("task40extra_v18_") else "Task40 V10"
+            label = (
+                "Task40 V20"
+                if self.name.startswith("task40extra_v20_")
+                else "Task40 V18 Ny8"
+                if self.name.startswith("task40extra_v18_")
+                else "Task40 V10"
+            )
             raise ValueError(f"{label} p6 runtime inventory mismatch: {mismatches}")
         return {"status": "RUNTIME_INVENTORY_MATCH", "observed": actual,
                 "profile": self.identity()}
@@ -253,6 +262,51 @@ TASK40_V18_P6_B0_Y8_PROFILE = replace(
     sector_port_counts=(76, 152, 152, 152),
 )
 
+TASK40_V20_P6_E2_PROFILE = Task40V10P6PeriodicProfile(
+    name="task40extra_v20_p6_y_orbit_e2_reference_v1",
+    global_cell_axes=(10, 4, 22),
+    global_cell_count=880,
+    global_storage_rows=595512,
+    global_independent_rows=573120,
+    global_interior_rows=396000,
+    global_trace_rows=177120,
+    rows_per_q=143280,
+    trace_rows_per_q=44280,
+    local_y_cells=2,
+    replication_count=2,
+    local_cell_count=440,
+    local_storage_rows=305772,
+    local_independent_rows=286560,
+    local_interior_rows=198000,
+    local_trace_rows=88560,
+    local_width_per_q=143280,
+    q_port_counts=(100, 200, 200, 200),
+    sector_port_counts=(300, 400),
+)
+
+TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE = Task40V10P6PeriodicProfile(
+    name="task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+    global_cell_axes=(272, 8, 14),
+    global_cell_count=30464,
+    global_storage_rows=20181348,
+    global_independent_rows=19897344,
+    global_interior_rows=13708800,
+    global_trace_rows=6188544,
+    q_count=8,
+    rows_per_q=2487168,
+    trace_rows_per_q=773568,
+    local_y_cells=2,
+    replication_count=4,
+    local_cell_count=7616,
+    local_storage_rows=5252256,
+    local_independent_rows=4974336,
+    local_interior_rows=3427200,
+    local_trace_rows=1547136,
+    local_width_per_q=2487168,
+    q_port_counts=(4076, 4052, 4028, 3984, 3856, 3984, 4028, 4052),
+    sector_port_counts=(7932, 8036, 8056, 8036),
+)
+
 TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V10_P6_PROFILE.name: TASK40_V10_P6_PROFILE,
     TASK40_V11_P6_GX560_PROFILE.name: TASK40_V11_P6_GX560_PROFILE,
@@ -266,4 +320,22 @@ TASK40_P6_PERIODIC_PROFILES = {
     TASK40_V17_P6_GX560_PROFILE.name: TASK40_V17_P6_GX560_PROFILE,
     TASK40_V17_P6_E1_PROFILE.name: TASK40_V17_P6_E1_PROFILE,
     TASK40_V18_P6_B0_Y8_PROFILE.name: TASK40_V18_P6_B0_Y8_PROFILE,
+    TASK40_V20_P6_E2_PROFILE.name: TASK40_V20_P6_E2_PROFILE,
+    TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name: TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE,
 }
+
+TASK40_V15_SELECTOR_PROFILE_IDENTITIES = frozenset(
+    {
+        "task40extra_v15_p6_y_orbit_b0_reference_v1",
+        "task40extra_v15_p6_y_orbit_gx560_reference_v1",
+        "task40extra_v15_p6_y_orbit_e1_reference_v1",
+        "task40extra_v16_p6_y_orbit_gx560_reference_v1",
+        "task40extra_v16_p6_y_orbit_e1_reference_v1",
+        "task40extra_v17_p6_y_orbit_b0_reference_v1",
+        "task40extra_v17_p6_y_orbit_gx560_reference_v1",
+        "task40extra_v17_p6_y_orbit_e1_reference_v1",
+        "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+        TASK40_V20_P6_E2_PROFILE.name,
+        TASK40_V20_P6_TARGET_ORIGINAL_NY8_PROFILE.name,
+    }
+)

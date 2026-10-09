@@ -5623,6 +5623,8 @@ def launch_specification(
         TASK40_V17_P6_GX560_PROFILE,
     )
 
+    from src.solvers.task40_v20_registry import TASK40_V20_CASES_BY_PROFILE
+
     run_id = str(specification.identity.get("run_id", ""))
     preconditioner = str(specification.solver.get("preconditioner", ""))
     task40_v13_profile = run_id in {
@@ -5718,6 +5720,29 @@ def launch_specification(
             TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         )
     )
+    task40_v20_case = TASK40_V20_CASES_BY_PROFILE.get(preconditioner)
+    task40_v20_profile = bool(
+        task40_v20_case is not None
+        and specification.identity.get("model_id") == task40_v20_case.model_id
+        and run_id == task40_v20_case.run_id
+        and specification.solver.get("stage") == task40_v20_case.solver_stage
+        and specification.solver.get("task40_factor_lifecycle_strategy")
+        == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+        and specification.solver.get("task40_reference_pc_strategy")
+        == TASK40_V15_REFERENCE_PC_STRATEGY
+        and specification.solver.get("task40_q_assembly_strategy")
+        == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+        and task40_q_assembly_strategy_is_allowed(
+            TASK40_V15_REFERENCE_PC_STRATEGY,
+            TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+        )
+        and specification.execution.get("task40_execution_stop_stage", "preflight")
+        in task40_v20_case.allowed_stop_stages
+    )
+    if task40_v20_case is not None and not task40_v20_profile:
+        raise InputError(
+            "Task40 V20 run/profile/model/stage/strategy/stop-stage identity is not registered"
+        )
     factor_lifecycle_strategy = specification.solver.get(
         "task40_factor_lifecycle_strategy", TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
     )
@@ -5726,9 +5751,11 @@ def launch_specification(
         TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
     }:
         raise InputError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
-    if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY and not task40_v19_profile:
+    if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY and not (
+        task40_v19_profile or task40_v20_profile
+    ):
         raise InputError(
-            "ONE_Q_REFACTOR_V19 is restricted to the exact reviewed V19 run/profile/strategy combinations"
+            "ONE_Q_REFACTOR_V19 is restricted to exact registered V19/V20 run/profile/strategy combinations"
         )
     task40_v15_b0_candidate_profile = (
         task40_v15_profile
@@ -5755,9 +5782,12 @@ def launch_specification(
         or task40_v17_profile
         or task40_v18_profile
         or task40_v19_profile
+        or task40_v20_profile
     )
     campaign_evidence_key = (
-        "task40_v19_campaign"
+        "task40_v20_campaign"
+        if task40_v20_profile
+        else "task40_v19_campaign"
         if task40_v19_profile
         else
         "task40_v18_campaign"
@@ -5775,9 +5805,9 @@ def launch_specification(
         else "task40_v11_campaign"
     )
     if task40_v10_campaign_window is not None and not task40_campaign_profile:
-        raise InputError("Task40 fixed campaign window is restricted to reviewed p6 cases")
+        raise InputError("Task40 fixed campaign window is restricted to exact reviewed V10/V11/V13-V20 p6 cases")
     if task40_campaign_profile and task40_v10_campaign_window is None:
-        raise InputError("Task40 V10/V11/V13/V15/V16/V17/V18 p6 launch requires the existing fixed campaign window")
+        raise InputError("Task40 V10/V11/V13-V20 p6 launch requires the existing fixed campaign window")
     _validate_task40_v10_postprocess_request(
         candidate_identity=(
             (
@@ -6017,6 +6047,23 @@ def launch_specification(
     joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
     light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
+    task40_v20_stage_budget = None
+    if task40_v20_profile:
+        v20_resources = profile_facts(preconditioner).get("resources", {})
+        v20_stage_budgets = v20_resources.get("stage_budgets", {})
+        task40_v20_stage_budget = (
+            v20_stage_budgets.get(task40_v20_case.solver_stage)
+            if isinstance(v20_stage_budgets, Mapping)
+            else None
+        )
+        if not isinstance(task40_v20_stage_budget, Mapping) or any(
+            not (
+                float(task40_v20_stage_budget.get(key, 0.0)) > 0.0
+                and float(task40_v20_stage_budget.get(key, 0.0)) < float("inf")
+            )
+            for key in ("workflow_seconds", "solve_seconds")
+        ):
+            raise InputError("Task40 V20 fixed stage workflow/solve budget is missing or invalid")
     from src.geometry.task40_nonseparable_plan import (
         TASK40_GX784_RUN_ID,
         TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
@@ -6095,6 +6142,13 @@ def launch_specification(
         if cell_stage_budget is not None
         else physical_resources.get('solve_seconds', 3600)
     )
+    if task40_v20_profile:
+        workflow_limit = min(
+            float(workflow_limit), float(task40_v20_stage_budget["workflow_seconds"])
+        )
+        solve_limit = min(
+            float(solve_limit), float(task40_v20_stage_budget["solve_seconds"])
+        )
     if task40_campaign_profile:
         admitted_campaign_seconds = float(
             campaign_start_state["remaining_numerical_seconds"]
@@ -6326,8 +6380,30 @@ def launch_specification(
                 "accounting_writer_while_worker_active": "subreaper_watchdog_only",
                 "worker_accounting_access": "read_only_projection",
                 "launcher_entry_observation": campaign_start_state,
-                "effective_window_scope": "shared_V11_fixed_deadline_and_remaining_budget",
+                "effective_window_scope": (
+                    "shared_V20_fixed_deadline_and_remaining_budget"
+                    if task40_v20_profile
+                    else "shared_V11_fixed_deadline_and_remaining_budget"
+                ),
             }
+            if task40_v20_profile:
+                manifest["task40_v20_budget_admission"] = {
+                    "model_id": task40_v20_case.model_id,
+                    "run_id": task40_v20_case.run_id,
+                    "profile": task40_v20_case.profile,
+                    "solver_stage": task40_v20_case.solver_stage,
+                    "execution_stop_stage": specification.execution.get(
+                        "task40_execution_stop_stage", "preflight"
+                    ),
+                    "configured_stage_budget": dict(task40_v20_stage_budget),
+                    "campaign_window_sha256": campaign_window.sha256,
+                    "campaign_remaining_numerical_seconds": float(
+                        campaign_start_state["remaining_numerical_seconds"]
+                    ),
+                    "effective_workflow_seconds_at_entry": float(workflow_limit),
+                    "effective_solve_seconds_at_entry": float(solve_limit),
+                    "contract_probe": bool(contract_probe),
+                }
             _write_json(run_directory / "run_manifest.json", manifest)
         if coarse_degree_v25_profile or setup_efficiency_profile:
             manifest.update(

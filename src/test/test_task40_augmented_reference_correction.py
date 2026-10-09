@@ -1268,3 +1268,45 @@ def test_parent_final_gate_keeps_legacy_pc_thresholds_at_one_e_minus_ten():
     assert result["passed"] is True
     assert result["port_identity_limit"] == 1e-10
     assert result["q_true_residual_limit"] == 1e-10
+
+
+@pytest.mark.parametrize(
+    "profile_identity",
+    (
+        "task40extra_v20_p6_y_orbit_e2_reference_v1",
+        "task40extra_v20_p6_y_orbit_target_original_ny8_v1",
+    ),
+)
+def test_v15_candidate_selector_admits_and_rejects_v20_profile_fixtures(
+    profile_identity,
+):
+    """Exercise the production V15 selector on small manufactured profile evidence."""
+
+    metrics = {
+        "eliminated_fe": 2.0e-10,
+        "complete_augmented_fe": 3.0e-10,
+        "noncancelling_budget": 5.0e-10,
+        "alpha_closure": 1.0e-11,
+        "q_solve": 3.0e-11,
+    }
+    candidate = _v15_candidate(
+        metrics,
+        state=f"fixture-{profile_identity}",
+        profile_identity=profile_identity,
+    )
+    accepted = select_v15_reference_pc_candidate(
+        [candidate], profile_identity=profile_identity
+    )
+    assert accepted["admitted"] is True
+    assert accepted["candidate_facts"][0]["q_phase_coverage"] is True
+    assert accepted["candidate_facts"][0]["structural_passed"] is True
+    assert accepted["candidate_facts"][0]["raw_facts_consistent"] is True
+
+    raw = dict(candidate["raw_facts"])
+    raw["q_true_residuals"] = raw["q_true_residuals"][:-1]
+    incomplete = {**candidate, "raw_facts": raw}
+    rejected = select_v15_reference_pc_candidate(
+        [incomplete], profile_identity=profile_identity
+    )
+    assert rejected["admitted"] is False
+    assert rejected["candidate_facts"][0]["q_phase_coverage"] is False
