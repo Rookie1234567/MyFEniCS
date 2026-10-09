@@ -1,0 +1,328 @@
+{
+  "scope": "Finite actual published GitHub viewports; visible ranges only",
+  "publication_source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+  "attempts": {
+    "attempts": [
+      {
+        "name": "review",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/2d7a44f12e00dd39d7a438311e00a0e53c34862a/docs/task042extra_feinn_5nm/review_report_v35.md",
+        "published_source_sha": "2d7a44f12e00dd39d7a438311e00a0e53c34862a",
+        "summary": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 180,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "measured_tree_rss_only_v3",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": 628626898944,
+          "swap_policy": "observe_only",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            3547960,
+            3548083,
+            3548129,
+            3548165,
+            3548167,
+            3548173,
+            3548192,
+            3548255,
+            3548260,
+            3548265,
+            3548339
+          ],
+          "sampled_process_tree_rss_peak_bytes": 1087201280,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139381,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139381,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "no_task_or_global_swap_observed",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 1893997731840,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 1893997731840,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 80,
+          "elapsed_seconds": 52.781361639034,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": {
+            "source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+            "published_source_sha": "2d7a44f12e00dd39d7a438311e00a0e53c34862a",
+            "url": "https://github.com/Rookie1234567/MyFEniCS/blob/2d7a44f12e00dd39d7a438311e00a0e53c34862a/docs/task042extra_feinn_5nm/review_report_v35.md",
+            "purpose": "Actual finite GitHub viewport; visual inspection separate, no whole-page claim"
+          }
+        },
+        "screenshot": "tmp/task42extra/v36/render_check/review/page.png",
+        "visual_inspection": "PENDING"
+      },
+      {
+        "name": "response",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5a23e67bc56b5d6563730eda6e7a36232f070f84/docs/task042extra_feinn_5nm/response_v36.md",
+        "published_source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+        "summary": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 180,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "measured_tree_rss_only_v3",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": 628626898944,
+          "swap_policy": "observe_only",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            3548697,
+            3548820,
+            3548863,
+            3548902,
+            3548910,
+            3548929,
+            3548975,
+            3548978,
+            3548987,
+            3549051
+          ],
+          "sampled_process_tree_rss_peak_bytes": 894009344,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139381,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139381,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "no_task_or_global_swap_observed",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 1890818195456,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 1890818195456,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 7,
+          "elapsed_seconds": 6.997473136056215,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": {
+            "source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+            "published_source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+            "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5a23e67bc56b5d6563730eda6e7a36232f070f84/docs/task042extra_feinn_5nm/response_v36.md",
+            "purpose": "Actual finite GitHub viewport; visual inspection separate, no whole-page claim"
+          }
+        },
+        "screenshot": "tmp/task42extra/v36/render_check/response/page.png",
+        "visual_inspection": "PENDING"
+      },
+      {
+        "name": "completion",
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5a23e67bc56b5d6563730eda6e7a36232f070f84/docs/task042extra_feinn_5nm/outcomes/oracle_completion_v36.md",
+        "published_source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+        "summary": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 180,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "measured_tree_rss_only_v3",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": 628626898944,
+          "swap_policy": "observe_only",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            3549388,
+            3549511,
+            3549583,
+            3549620,
+            3549626,
+            3549630,
+            3549652,
+            3549715,
+            3549718,
+            3549723,
+            3549842
+          ],
+          "sampled_process_tree_rss_peak_bytes": 963047424,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139381,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139381,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "no_task_or_global_swap_observed",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 1886706745344,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 1886706745344,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 12,
+          "elapsed_seconds": 9.256175666116178,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": {
+            "source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+            "published_source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+            "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5a23e67bc56b5d6563730eda6e7a36232f070f84/docs/task042extra_feinn_5nm/outcomes/oracle_completion_v36.md",
+            "purpose": "Actual finite GitHub viewport; visual inspection separate, no whole-page claim"
+          }
+        },
+        "screenshot": "tmp/task42extra/v36/render_check/completion/page.png",
+        "visual_inspection": "PENDING"
+      }
+    ],
+    "monotonic_s": 1476804.079347063,
+    "scope": "Only finite actual published viewports; no historical rerender"
+  },
+  "attempt_record": {
+    "path": "tmp/task42extra/v36/render_check/attempts.json",
+    "bytes": 9764,
+    "sha256": "15c35ef23758f4f6d22dbc0a81656f007294199bba2e84d800e94b624f04fa85"
+  },
+  "visual": {
+    "status": "PARTIAL_VISIBLE_RANGE_CHECK_WITH_FORMULA_CAPTURE_FAILURE",
+    "whole_page_visual_pass": false,
+    "inspection_method": "Actual local Firefox screenshot inspected with view_image at original resolution",
+    "pages": [
+      {
+        "name": "review",
+        "status": "VISIBLE_TEXT_TABLE_PASS_FORMULA_CAPTURE_FAIL",
+        "source_sha": "2d7a44f12e00dd39d7a438311e00a0e53c34862a",
+        "viewport_px": [
+          1440,
+          2600
+        ],
+        "visible_scope": "Title, section 0, code identity block, complete section 1 eight-row table, section 2, start of section 3 and section 3.1 heading",
+        "title_text_table_layout": "VISIBLE_RANGE_PASS",
+        "formula": "Section 3 first objective visibly displays literal $$a_G=...$$ rather than typeset math in this captured viewport",
+        "formula_status": "CAPTURED_FORMULA_NOT_RENDERED",
+        "cause": "UNKNOWN; no inference about source correctness or later browser initialization",
+        "unseen": "Remainder of section 3.1, subsequent sections, remaining formulas and tables NOT_VISUALLY_VERIFIED",
+        "authority_modified": false
+      },
+      {
+        "name": "response",
+        "status": "VISIBLE_RANGE_PASS",
+        "source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+        "viewport_px": [
+          1440,
+          2600
+        ],
+        "visible_scope": "Title, introductory explanation, complete 33-row four-column numerical table, scientific qualification and production closure paragraph, start of actual execution/source section",
+        "table_complete_and_readable": true,
+        "unseen": "Later cost/repair/links and later metadata seal NOT_VISUALLY_VERIFIED"
+      },
+      {
+        "name": "completion",
+        "status": "VISIBLE_RANGE_PASS",
+        "source_sha": "5a23e67bc56b5d6563730eda6e7a36232f070f84",
+        "viewport_px": [
+          1440,
+          2600
+        ],
+        "visible_scope": "Title, explanation, complete 33-row four-column numerical table, production closure paragraph, method/numerical-limit introduction and learned gap figures; control gap paragraph begins at bottom",
+        "table_complete_and_readable": true,
+        "unseen": "Remainder of method, costs, permanent flags, provenance links and later metadata seal NOT_VISUALLY_VERIFIED"
+      }
+    ],
+    "no_unbounded_retry": true,
+    "historical_failed_render_evidence_preserved": true,
+    "scientific_source_and_outputs_unchanged": true,
+    "no_full_page_or_final_seal_visual_pass_claim": true
+  },
+  "visual_source": {
+    "path": "tmp/task42extra/v36/render_check/visual_scope.json",
+    "bytes": 2355,
+    "sha256": "456d13a7fdf462ef9c4109ecd8d498b0ecba0a97d058186343b7c7883299084c"
+  },
+  "screenshots": [
+    {
+      "path": "tmp/task42extra/v36/render_check/review/page.png",
+      "bytes": 1063950,
+      "sha256": "232af630714d62ea98da54eaafafdb7b6163525d29b7296493a71ca9933e8d9e"
+    },
+    {
+      "path": "tmp/task42extra/v36/render_check/response/page.png",
+      "bytes": 769892,
+      "sha256": "f112eb2781a03892e7814e266f7eb823c9d50ac16d2c5fb4e2963bbd5226ae56"
+    },
+    {
+      "path": "tmp/task42extra/v36/render_check/completion/page.png",
+      "bytes": 757806,
+      "sha256": "217dabe1f63e3c87c29dad41531710d339ba59f9e0c88ab863642467aa718bfa"
+    }
+  ],
+  "whole_page_visual_pass": false,
+  "historical_visual_failures_preserved": true,
+  "later_seal_only_presentation_cost_metadata": true,
+  "healthy_numerical_work_replayed": 0
+}

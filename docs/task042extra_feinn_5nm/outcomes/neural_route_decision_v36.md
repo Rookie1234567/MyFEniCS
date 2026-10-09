@@ -51,3 +51,5 @@ CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIE
 必要旧前缀10186.178641493432s、V34学习加载packet归属20728.120829955675s、V35未完成B的5110.947981953854s及其整批11282.676698175957s均保留，不在项目账重复收费。完整冷N=1和项目精确累计仍UNKNOWN。本批是确定性审计核提效与完成证据，不授同精度20%NN资源收益，不捏造旧瓶颈百分比或旧未完成算法的加速倍数。
 
 [投影与秩/误差](records/field_oracle_v36.json)、[完整Gate/原分子与分母](records/joint_gates_v36.json)、[数值source及运行索引](records/run_index_v36.json)、[费用](records/cost_capacity_v36.json)、[保全/恢复](records/fallback_recovery_v36.json)、[测试](records/tests_v36.json)。
+
+最终呈现封存：PARTIAL_VISIBLE_RANGE_CHECK_WITH_FORMULA_CAPTURE_FAILURE，仅限[有限可见范围](records/render_check_v36.json)，不授全页视觉PASS；发布封存不改变数值source、场或投入决定。

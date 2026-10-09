@@ -61,3 +61,7 @@ CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIE
 [完整投影专题](outcomes/oracle_completion_v36.md)、[投入决定](outcomes/neural_route_decision_v36.md)、[所有Gate](outcomes/records/joint_gates_v36.json)、[source/输入/资源索引](outcomes/records/run_index_v36.json)、[唯一新大数组索引](outcomes/records/raw_artifact_index_v36.json)、[测试](outcomes/records/tests_v36.json)。
 
 历史M3600较好态、最终退化、D0成本否决/D1未运行、全部负结果/UNKNOWN/旧费用完整保留。原0.7nm目标未达，未注册新计算。最终完整HEAD、显式tracking/ahead-behind、clean和自身清场见本轮交付收据与最终消息。有限GitHub rendered view另列实际范围/失败，网页错误不触发健康数值重跑。
+
+## 最终发布尾段
+
+本批数值投影和独立验收已全部完成。发布尾段在同一21600s窗口内；最终元数据快照为5036.957977s，提交、精确fetch和清场尾段另由本地delivery_receipt.json记录，不把先前费用快照冒称最终费用。有限GitHub实际呈现结果为PARTIAL_VISIBLE_RANGE_CHECK_WITH_FORMULA_CAPTURE_FAILURE，只覆盖[render记录](outcomes/records/render_check_v36.json)所列可见范围，没有全页视觉PASS；截图绑定页面发布5a23e67bc56b5d6563730eda6e7a36232f070f84（review绑定2d7a44f12e00dd39d7a438311e00a0e53c34862a）。后续seal只补呈现/成本记录，全部实际数值source、场hash、原门和失败保持。

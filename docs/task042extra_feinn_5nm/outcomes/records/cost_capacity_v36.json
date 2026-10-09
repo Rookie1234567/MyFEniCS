@@ -69,5 +69,17 @@
   "new_global_Gram_factor_count": 0,
   "new_Maxwell_factor_count": 0,
   "original_project_exact_cumulative": "UNKNOWN",
-  "publication_and_final_tail": "Final ignored delivery receipt; never a second campaign window"
+  "publication_and_final_tail": "Final ignored delivery receipt; never a second campaign window",
+  "final_metadata_snapshot_monotonic_s": 1477026.957976575,
+  "calendar_seconds_at_final_metadata_snapshot": 5036.9579765750095,
+  "browser_supervised_nested_seconds": 69.0350104412064,
+  "browser_sampled_simultaneous_tree_peak_bytes": 1087201280,
+  "browser_own_sampled_swap_zero": true,
+  "browser_trees_cleared": true,
+  "browser_cost_not_added_twice_to_calendar": true,
+  "old_publication_snapshot_and_all_failed_costs_preserved": true,
+  "final_publish_fetch_and_cleanup_tail": "tmp/task42extra/v36/delivery_receipt.json: final measured continuous calendar, not a new window",
+  "render_record": "render_check_v36.json",
+  "final_metadata_argument_failure_supervised_seconds": 1.5496582451742142,
+  "final_metadata_argument_failure_in_calendar": true
 }

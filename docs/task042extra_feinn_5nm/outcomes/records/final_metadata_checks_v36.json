@@ -1,0 +1,46 @@
+{
+  "status": "FINAL_METADATA_CHECKS_PASS",
+  "checks": [
+    "JSON parsed: field_oracle_v36.json",
+    "JSON parsed: actual_model_pair_v36.json",
+    "JSON parsed: kernel_checks_v36.json",
+    "JSON parsed: selective_merge_manifest_v36.json",
+    "JSON parsed: tests_v36.json",
+    "JSON parsed: fallback_recovery_v36.json",
+    "JSON parsed: design_v36.json",
+    "JSON parsed: neural_route_decision_v36.json",
+    "JSON parsed: render_check_v36.json",
+    "JSON parsed: cost_capacity_v36.json",
+    "JSON parsed: snapshot_identity_v36.json",
+    "JSON parsed: publication_checks_v36.json",
+    "JSON parsed: raw_artifact_index_v36.json",
+    "JSON parsed: kernel_profile_v36.json",
+    "JSON parsed: joint_gates_v36.json",
+    "JSON parsed: run_index_v36.json",
+    "JSON parsed: repair_journal_v36.json",
+    "Changed final document fences/table layout: response_v36.md",
+    "Changed final document fences/table layout: oracle_completion_v36.md",
+    "Changed final document fences/table layout: neural_route_decision_v36.md",
+    "Published scientific bytes unchanged: field_oracle_v36.json",
+    "Published scientific bytes unchanged: joint_gates_v36.json",
+    "Published scientific bytes unchanged: run_index_v36.json",
+    "Published scientific bytes unchanged: actual_model_pair_v36.json",
+    "Published scientific bytes unchanged: neural_route_decision_v36.json",
+    "Published scientific bytes unchanged: rank_spectra_v36.csv",
+    "Published scientific bytes unchanged: raw_artifact_index_v36.json",
+    "git diff --check"
+  ],
+  "source": {
+    "path": "tmp/task42extra/v36/close_metadata.py",
+    "bytes": 9072,
+    "sha256": "4a6ace804b2c390e7dd78052432a5aa2fa9fe76eb4f590d539ec6cbb1be50564"
+  },
+  "earlier_690_checks": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v36.json",
+    "bytes": 50691,
+    "sha256": "ebf2c2bd67a27a7ab140016c7d47ddb92bc5ecd94eeb4b4724e5105bcf19ef3e"
+  },
+  "no_FE_forward_matrix_action_or_projection": true,
+  "numerical_QA_reused_same_code_data": true,
+  "calendar_seconds_at_check": 5036.9982895439025
+}

@@ -232,5 +232,9 @@
     "path": "docs/task042extra_feinn_5nm/outcomes/records/publication_checks_v36.json",
     "bytes": 50691,
     "sha256": "ebf2c2bd67a27a7ab140016c7d47ddb92bc5ecd94eeb4b4724e5105bcf19ef3e"
-  }
+  },
+  "final_presentation_metadata_only": true,
+  "numerical_code_and_qualified_data_unchanged_after_targeted_tests": true,
+  "render_check": "render_check_v36.json",
+  "final_metadata_checks": "final_metadata_checks_v36.json"
 }

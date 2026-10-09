@@ -60,5 +60,24 @@
         "sha256": "b46562963c43e111543069948078cb1281729442ba4745f8b8ff1c06c109fe2d"
       }
     }
-  ]
+  ],
+  "final_presentation_metadata_argument_failure": {
+    "failure": "Python received python-does-not-exist as filename; exit2 before metadata writer started",
+    "hypothesis": "Incorrect command argument, no scientific implementation or numerical-data change",
+    "change": "Use tmp/task42extra/v36/close_metadata.py under qualified pure/native supervision",
+    "test": "final_metadata_checks_v36.json",
+    "resume": "Metadata only; no repeated projection, network forward or FE processing",
+    "summary": {
+      "path": "tmp/task42extra/v36/final_metadata/watchdog/summary.json",
+      "bytes": 2038,
+      "sha256": "c7aa0a5be03013475cf8f14207a3b2efa4cbe9794c328dc082b933afcae7aa7d"
+    },
+    "log": {
+      "path": "tmp/task42extra/v36/final_metadata/watchdog/worker.log",
+      "bytes": 159,
+      "sha256": "f51c95c7d63848c0a7458ba7be537a580a2215d535e8bb65d8fca2bffa8601b7"
+    },
+    "failed_attempt_sandbox_process_visibility": "NOT_A_FORMAL_NATIVE_RESOURCE_QUALIFICATION",
+    "original_failure_preserved": true
+  }
 }

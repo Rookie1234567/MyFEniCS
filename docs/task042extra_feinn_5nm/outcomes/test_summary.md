@@ -2,6 +2,8 @@
 
 正式S0新核资格完成；本地targeted_3为8项通过，checker补丁targeted_5为2项通过。各批有重复case，不能相加宣称唯一测试总数；targeted_2未用导入Ruff失败、targeted_4监督内存契约漏项测试失败及费用保留。源文件最终受影响测试/Ruff/compile均通过，未full pytest、重装或声称CI。两份真实1377列投影及独立保存物理checker完成，联合数值门FAIL，不能用测试数替代物理成功。
 
+最终轻量元数据检查见[封存检查](records/final_metadata_checks_v36.json)；GitHub实际呈现为PARTIAL_VISIBLE_RANGE_CHECK_WITH_FORMULA_CAPTURE_FAILURE，范围与限制见[render记录](records/render_check_v36.json)。数值source和已资格化数据未改变，没有重跑昂贵数值测试。
+
 [实际JUnit/source/峰值](records/tests_v36.json)、[保全/后备资格](records/fallback_recovery_v36.json)、[完整物理Gate](records/joint_gates_v36.json)。
 
 # 当前V35测试与验收

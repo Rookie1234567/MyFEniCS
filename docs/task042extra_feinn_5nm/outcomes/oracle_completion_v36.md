@@ -63,3 +63,5 @@ V34确定性强控制空间：E_G=0.00310153077713；数值最优误差下/上�
 两空间启动即建立目录，保存LOADED、EUCLIDEAN_QR、GRAM_REDUCED、G_BASIS_QUALIFIED、ORACLE_FIELD_FROZEN；成功fsync/原子替换后才发布committed。实际均一次白化通过，不需要后备。32列两遍G重正交后备已提前接通，真实panel中断/重开小测试通过；V35日志930仍是NOT_RETAINED，不冒称从它恢复。保证限于已成功落盘的完整边界，不能承诺SIGKILL执行finally。
 
 [投影与秩/误差](records/field_oracle_v36.json)、[完整Gate/原分子与分母](records/joint_gates_v36.json)、[数值source及运行索引](records/run_index_v36.json)、[费用](records/cost_capacity_v36.json)、[保全/恢复](records/fallback_recovery_v36.json)、[测试](records/tests_v36.json)。
+
+最终呈现封存：PARTIAL_VISIBLE_RANGE_CHECK_WITH_FORMULA_CAPTURE_FAILURE，仅限[有限可见范围](records/render_check_v36.json)，不授全页视觉PASS；发布封存不改变数值source、场或投入决定。

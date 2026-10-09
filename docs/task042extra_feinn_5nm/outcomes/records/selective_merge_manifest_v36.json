@@ -227,8 +227,8 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/outcomes/neural_route_decision_v36.md",
-          "bytes": 6698,
-          "sha256": "326194efd5367d93047f743f233b5dc0aabbba2be5e39b293fbaeeeecbd573a0"
+          "bytes": 6922,
+          "sha256": "2c523256499a3ac102a843b4ff8811f2a312d8734a5a92ac03322a18ef101a07"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -236,8 +236,8 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/outcomes/oracle_completion_v36.md",
-          "bytes": 8607,
-          "sha256": "83d908321d1f90b8ad59df805d0ae01f1398434d5287493384da4821eb104ef6"
+          "bytes": 8831,
+          "sha256": "4307e3ffd72fda7da56928b77971aad4447c2526c6c16925117acad507e655be"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -272,8 +272,8 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/cost_capacity_v36.json",
-          "bytes": 2564,
-          "sha256": "d7a52a7c0f04126318240a89b954623d17283354ea74b0d6071453ae816140e4"
+          "bytes": 3321,
+          "sha256": "e108d30aabca3778cd41af5798cc08bfcdc56866119c95ce4e94acd604a49166"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -425,8 +425,8 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_journal_v36.json",
-          "bytes": 2094,
-          "sha256": "6984165ea859bed4edac38ec51513e899b5ed9f3ae63040a8f629ddab87196ea"
+          "bytes": 3926,
+          "sha256": "fa28a8a3ed31d91ce128df862a43ec601278f8610d662f1918c8271156a100a0"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -470,8 +470,8 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/tests_v36.json",
-          "bytes": 8652,
-          "sha256": "e6d85db1cb69ab2d1c29ab7a9e9d204444b55c6d8b1b20cb4b2e8edb28d84b83"
+          "bytes": 8876,
+          "sha256": "514e33888b9783a2f793a12ae552d0f02fae8955a011d7fee2515f3a35ed98a0"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -488,8 +488,8 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
-          "bytes": 58784,
-          "sha256": "f796a30293a8a99dcdf75dd71d3800b2f0c68de27df7957f73b94ec010c11482"
+          "bytes": 59097,
+          "sha256": "09f193a00dbd772891993b0d1bc107ba05fef4b84db9928f487e177c948b6d76"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -497,8 +497,26 @@
       {
         "file": {
           "path": "docs/task042extra_feinn_5nm/response_v36.md",
-          "bytes": 8434,
-          "sha256": "1272058b030a96bb7b852872db451a18ec31139ad7b72853ee6a7c0bc0a99549"
+          "bytes": 9135,
+          "sha256": "628b47455ac5ebce19d39969116e1bc7760e141d2e0de0f94b86e9e59c286b29"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v36.json",
+          "bytes": 14095,
+          "sha256": "4b5413738011b889d0caa3f44b16ec3be8bfa269fcea236b1cfa0ca354c00fe3"
+        },
+        "numerical_behavior": "none",
+        "production_default_changed": false
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/final_metadata_checks_v36.json",
+          "bytes": 2087,
+          "sha256": "0c1456f9fb0a20d80167989562c0027929fe59cfb440718c30e93419ee6e8c71"
         },
         "numerical_behavior": "none",
         "production_default_changed": false
@@ -522,5 +540,6 @@
   "tests": "tests_v36.json",
   "fresh_FE_evidence": "joint_gates_v36.json: compare-only; no new PDE solve",
   "no_production_candidate": true,
-  "original_defaults_unchanged": true
+  "original_defaults_unchanged": true,
+  "final_presentation_only_seal": true
 }
