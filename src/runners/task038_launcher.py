@@ -5592,7 +5592,9 @@ def launch_specification(
         TASK40_GX560_V16_RUN_ID,
         TASK40_B0_P6_V17_RUN_ID,
         TASK40_B0_P6_V18_Y8_RUN_ID,
+        TASK40_B0_P6_V19_Y8_RUN_ID,
         TASK40_E1_V17_RUN_ID,
+        TASK40_E1_V19_RUN_ID,
         TASK40_GX560_V17_RUN_ID,
         TASK40_GX560_V13_RUN_ID,
         TASK40_GX784_V13_RUN_ID,
@@ -5600,6 +5602,8 @@ def launch_specification(
         TASK40_GX560_V11_P6_RUN_ID,
         TASK40_GX784_V11_P6_RUN_ID,
         TASK40_V15_REFERENCE_PC_STRATEGY,
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         task40_q_assembly_strategy_is_allowed,
@@ -5695,6 +5699,37 @@ def launch_specification(
             TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         )
     )
+    task40_v19_expected_stage = {
+        (TASK40_B0_P6_V19_Y8_RUN_ID, TASK40_V18_P6_B0_Y8_PROFILE): "B0_CANDIDATE",
+        (TASK40_E1_V19_RUN_ID, TASK40_V17_P6_E1_PROFILE): "Q4_ORIGINAL",
+    }.get((run_id, preconditioner))
+    task40_v19_profile = (
+        task40_v19_expected_stage is not None
+        and specification.identity.get("model_id") == "task40extra_nonseparable_0p7nm"
+        and specification.solver.get("stage") == task40_v19_expected_stage
+        and specification.solver.get("task40_reference_pc_strategy")
+        == TASK40_V15_REFERENCE_PC_STRATEGY
+        and specification.solver.get("task40_q_assembly_strategy")
+        == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+        and specification.solver.get("task40_factor_lifecycle_strategy")
+        == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+        and task40_q_assembly_strategy_is_allowed(
+            TASK40_V15_REFERENCE_PC_STRATEGY,
+            TASK40_Q_ASSEMBLY_ROW_TILE_V17,
+        )
+    )
+    factor_lifecycle_strategy = specification.solver.get(
+        "task40_factor_lifecycle_strategy", TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+    )
+    if factor_lifecycle_strategy not in {
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+    }:
+        raise InputError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
+    if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY and not task40_v19_profile:
+        raise InputError(
+            "ONE_Q_REFACTOR_V19 is restricted to the exact reviewed V19 run/profile/strategy combinations"
+        )
     task40_v15_b0_candidate_profile = (
         task40_v15_profile
         and run_id == TASK40_B0_P6_V15_RUN_ID
@@ -5719,8 +5754,12 @@ def launch_specification(
         or task40_v13_profile or task40_v15_profile or task40_v16_profile
         or task40_v17_profile
         or task40_v18_profile
+        or task40_v19_profile
     )
     campaign_evidence_key = (
+        "task40_v19_campaign"
+        if task40_v19_profile
+        else
         "task40_v18_campaign"
         if task40_v18_profile
         else

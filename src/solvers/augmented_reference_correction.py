@@ -634,6 +634,7 @@ def apply_one_augmented_residual_correction(
     allocation_gate: Callable[[str, Mapping[str, Any]], Any] | None = None,
     require_verified_solve_counter: bool = False,
     expected_q_count: int = MAX_EXTRA_MAT_SOLVES,
+    factor_capabilities: Mapping[str, Any] | None = None,
 ) -> AugmentedCorrectionResult:
     """Apply one raw profile-sized inverse to both rows of an augmented error.
 
@@ -659,6 +660,37 @@ def apply_one_augmented_residual_correction(
         raise TypeError("a raw non-recursive augmented inverse is required")
     if type(expected_q_count) is not int or expected_q_count <= 0:
         raise ValueError("expected_q_count must be a positive integer")
+    lifecycle_facts = dict(factor_capabilities) if factor_capabilities is not None else None
+    if lifecycle_facts is not None:
+        expected_qs = set(range(expected_q_count))
+        input_qs = lifecycle_facts.get("input_q_coverage")
+        max_live_factors = lifecycle_facts.get("max_live_factors")
+        max_live_matrices = lifecycle_facts.get("max_live_matrices")
+        if (
+            lifecycle_facts.get("factor_lifecycle_strategy") != "ONE_Q_REFACTOR_V19"
+            or lifecycle_facts.get("all_q_source_csr_covered") is not True
+            or not isinstance(input_qs, Sequence)
+            or isinstance(input_qs, (str, bytes))
+            or any(type(q) is not int for q in input_qs)
+            or set(input_qs) != expected_qs
+            or lifecycle_facts.get("all_q_solve_coverage") is not True
+            or lifecycle_facts.get("all_q_fresh_factor_probe_covered") is not True
+            or lifecycle_facts.get("all_q_factors_simultaneously_resident") is not False
+            or lifecycle_facts.get("all_q_factors_reused") is not False
+            or type(max_live_factors) is not int
+            or not 1 <= max_live_factors <= 1
+            or type(max_live_matrices) is not int
+            or not 1 <= max_live_matrices <= 1
+        ):
+            raise ValueError(
+                "V19 augmented correction requires verified all-q input/probe/solve "
+                "coverage and max-live factor/matrix <= 1"
+            )
+    all_q_factors_reused = (
+        True if lifecycle_facts is None
+        else lifecycle_facts.get("all_q_factors_reused") is True
+    )
+    all_four_q_factors_reused = expected_q_count == 4 and all_q_factors_reused
 
     input_array_bytes = int(
         state_fe_view.nbytes + state_port_view.nbytes
@@ -692,8 +724,9 @@ def apply_one_augmented_residual_correction(
                 "finite_element_and_port_updated_together": True,
                 "maximum_correction_calls": 1,
                 "maximum_extra_mat_solves": expected_q_count,
-                "all_q_factors_reused": True,
-                "all_four_q_factors_reused": expected_q_count == 4,
+                "all_q_factors_reused": all_q_factors_reused,
+                "all_four_q_factors_reused": all_four_q_factors_reused,
+                "factor_lifecycle_capabilities": lifecycle_facts,
             },
         )
 
@@ -731,6 +764,9 @@ def apply_one_augmented_residual_correction(
                 "additional_payload_bytes": additional_payload_bytes,
                 "simultaneous_live_array_bytes": simultaneous_live_array_bytes,
                 "maximum_corrections": 1,
+                "factor_lifecycle_capabilities": lifecycle_facts,
+                "all_q_factors_reused": all_q_factors_reused,
+                "all_four_q_factors_reused": all_four_q_factors_reused,
             },
         )
 
@@ -809,6 +845,9 @@ def apply_one_augmented_residual_correction(
             "maximum_corrections": 1,
             "nonrecursive_raw_inverse": True,
             "full_fe_and_port_updated_together": True,
+            "factor_lifecycle_capabilities": lifecycle_facts,
+            "all_q_factors_reused": all_q_factors_reused,
+            "all_four_q_factors_reused": all_four_q_factors_reused,
         },
     )
 

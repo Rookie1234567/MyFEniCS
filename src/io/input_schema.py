@@ -1100,6 +1100,20 @@ FIELD_SPECS: Final = (
         ),
     ),
     _f(
+        "solver.task40_factor_lifecycle_strategy",
+        "enum",
+        "none",
+        ("full3d_iterative",),
+        "Task40参考逆的q因子驻留策略",
+        "task40_factor_lifecycle_strategy",
+        '"ALL_Q_RESIDENT"',
+        default="ALL_Q_RESIDENT",
+        allowed=("ALL_Q_RESIDENT", "ONE_Q_REFACTOR_V19"),
+        constraints=(
+            "ONE_Q_REFACTOR_V19 is research-only and restricted to exact V19 run/profile/assembly combinations",
+        ),
+    ),
+    _f(
         "solver.memory_policy",
         "enum",
         "none",

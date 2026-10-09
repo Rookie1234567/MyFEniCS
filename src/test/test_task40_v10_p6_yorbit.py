@@ -19,6 +19,7 @@ from src.solvers.task40_v10_p6_yorbit import (
     _assemble_v16_bitset_pattern,
     _project_accumulate_v16,
     TwoCellNativeTransport,
+    CompleteTwoCellInverse,
     YOrbitEntities,
     assemble_task40_v10_sector_blocks,
     build_task40_v10_sector_contexts,
@@ -65,6 +66,98 @@ class _TwoBranchCoordinates:
     def q_map(self, branch, *, allocation_gate):
         allocation_gate("fixture_q_map", {"branch": branch})
         return self.maps[branch]
+
+
+def test_v19_complete_augmented_apply_routes_each_q_and_records_capabilities():
+    class _OneQFactors:
+        factor_lifecycle_strategy = "ONE_Q_REFACTOR_V19"
+
+        def __init__(self):
+            self.factors = {}
+            self.matrices = {}
+            self.audit = {"all_q_symbolic_covered": True}
+            self.csr_matrices = {
+                q: sparse.eye(1, dtype=np.complex128, format="csr") for q in range(2)
+            }
+            self.calls = []
+            self.solved = set()
+
+        def capabilities(self):
+            return {
+                "all_q_source_csr_covered": True,
+                "input_q_coverage": [0, 1],
+                "all_q_factors_simultaneously_resident": False,
+                "all_q_solve_coverage": self.solved == {0, 1},
+            }
+
+        def solve(self, q, rhs, *, category):
+            self.calls.append((q, category))
+            self.solved.add(q)
+            return np.asarray(rhs, dtype=np.complex128).copy()
+
+    class _Coordinates:
+        maps = (
+            sparse.csr_matrix(np.asarray([[1.0], [0.0]], dtype=np.complex128)),
+            sparse.csr_matrix(np.asarray([[0.0], [1.0]], dtype=np.complex128)),
+        )
+
+        def q_map(self, branch, *, allocation_gate):
+            allocation_gate("v19_fixture_q_map", {"branch": branch})
+            return self.maps[branch]
+
+    class _Action:
+        reduced_size = 2
+        condensed = SimpleNamespace(full_rows=2, active_rows=1)
+
+        @staticmethod
+        def reduce_rhs(values, **_kwargs):
+            return np.asarray(values, dtype=np.complex128).copy()
+
+        @staticmethod
+        def recover_storage(values, **_kwargs):
+            return np.asarray(values, dtype=np.complex128).copy()
+
+    factors = _OneQFactors()
+    transport = SimpleNamespace(
+        K=1,
+        local=SimpleNamespace(independent=np.asarray([0, 1], dtype=np.int64)),
+        fold_dual=lambda values: np.asarray(values, dtype=np.complex128).copy(),
+        lift_primal=lambda values: np.asarray(values, dtype=np.complex128).copy(),
+    )
+    context = SimpleNamespace(
+        twist_index=0,
+        original_mode_indices=(0,),
+        global_q_indices=(0, 1),
+    )
+    sector = {
+        "context": context,
+        "bundle": {"modes": (object(),)},
+        "transport": transport,
+        "action": _Action(),
+        "coordinates": _Coordinates(),
+    }
+    inverse = CompleteTwoCellInverse(
+        [sector],
+        SimpleNamespace(ny=2, independent_rows=2),
+        factors,
+        allocation_gate=lambda *_args, **_kwargs: None,
+    )
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j], dtype=np.complex128)
+
+    recovered, alpha = inverse.apply_augmented(
+        rhs,
+        np.asarray([0.3 - 0.1j], dtype=np.complex128),
+        rhs_category="startup_rhs_mat_solve_count",
+    )
+
+    np.testing.assert_allclose(recovered, rhs)
+    np.testing.assert_allclose(alpha, rhs[1:])
+    assert factors.calls == [
+        (0, "startup_rhs_mat_solve_count"),
+        (1, "startup_rhs_mat_solve_count"),
+    ]
+    assert inverse.last_factor_capabilities["all_q_solve_coverage"] is True
+    assert inverse.calls == 1
 
 
 class _ContributionAction:

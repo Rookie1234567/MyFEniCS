@@ -574,6 +574,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 TASK40_V13_REFERENCE_PC_STRATEGY,
                 TASK40_V15_REFERENCE_PC_STRATEGY,
                 TASK40_Q_ASSEMBLY_BOUNDED_V16,
+                TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+                TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
                 task40_q_assembly_strategy_is_allowed,
             )
 
@@ -583,6 +585,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
             q_assembly_strategy = solver.get(
                 "task40_q_assembly_strategy", TASK40_Q_ASSEMBLY_LEGACY
+            )
+            factor_lifecycle_strategy = solver.get(
+                "task40_factor_lifecycle_strategy",
+                TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
             )
             task40_reference_profiles = {
                 "task40extra_v10_p6_y_orbit_reference_v1",
@@ -666,6 +672,26 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(
                     "solver.task40_q_assembly_strategy",
                     "q assembly strategy is not authorized for the selected Task40 reference-PC strategy",
+                )
+            if factor_lifecycle_strategy not in {
+                TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+                TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+            }:
+                raise _error(
+                    "solver.task40_factor_lifecycle_strategy",
+                    "unsupported Task40 factor lifecycle strategy",
+                )
+            if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY and not (
+                preconditioner in {
+                    "task40extra_v17_p6_y_orbit_e1_reference_v1",
+                    "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                }
+                and reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+                and q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            ):
+                raise _error(
+                    "solver.task40_factor_lifecycle_strategy",
+                    "ONE_Q_REFACTOR_V19 requires V17 E1 or V18 B0-Y8, V15 PC, and V17 row-tile CSR",
                 )
             if preconditioner not in {
                 "full3d_scalable_v1",
@@ -1273,9 +1299,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     TASK40_B0_P6_V15_RUN_ID,
                     TASK40_B0_P6_V17_RUN_ID,
                     TASK40_B0_P6_V18_Y8_RUN_ID,
+                    TASK40_B0_P6_V19_Y8_RUN_ID,
                     TASK40_COMPARISON_GROUP,
                     TASK40_E1_V15_RUN_ID,
                     TASK40_E1_V17_RUN_ID,
+                    TASK40_E1_V19_RUN_ID,
                     TASK40_GX560_V15_RUN_ID,
                     TASK40_GX560_V17_RUN_ID,
                     TASK40_Q_ASSEMBLY_LEGACY,
@@ -1310,6 +1338,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 expected_run, expected_stage, expected_coarse_degree = cases[
                     preconditioner
                 ]
+                if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY:
+                    expected_run = {
+                        "task40extra_v17_p6_y_orbit_e1_reference_v1": TASK40_E1_V19_RUN_ID,
+                        "task40extra_v18_p6_y_orbit_b0_y8_reference_v1": TASK40_B0_P6_V19_Y8_RUN_ID,
+                    }.get(preconditioner)
                 expected_q_assembly_strategy = (
                     TASK40_Q_ASSEMBLY_ROW_TILE_V17
                     if preconditioner.startswith("task40extra_v17_")

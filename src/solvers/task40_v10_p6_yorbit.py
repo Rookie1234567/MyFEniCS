@@ -19,7 +19,12 @@ from src.geometry.task40_nonseparable_plan import (
     TASK40_Q_ASSEMBLY_PREALLOCATED_V13,
     TASK40_V13_Q_ASSEMBLY_STRATEGIES,
 )
-from .augmented_reference_correction import STRICT_ONLY, q_solve_limit
+from .augmented_reference_correction import (
+    NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15,
+    STRICT_ONLY,
+    q_solve_limit,
+)
+from .task40_v10_p6_mumps import ONE_Q_REFACTOR_V19
 
 SCHEMA = "task40extra.y-orbit-full3d-reference.v1"
 LIMITS = {"mapping": 1e-12, "operator": 1e-11, "residual": 1e-10}
@@ -673,6 +678,8 @@ class CompleteTwoCellInverse:
         allocation_gate: Callable[[str, Mapping[str, Any]], None],
         reference_pc_strategy: str = STRICT_ONLY,
     ) -> None:
+        from .task40_v10_p6_mumps import ALL_Q_RESIDENT
+
         expected_twists = list(range(full_layout.ny // 2))
         if [s["context"].twist_index for s in sectors] != expected_twists:
             raise ValueError("all ordered p6 twist sectors are required")
@@ -687,8 +694,27 @@ class CompleteTwoCellInverse:
             for sector in sectors
         ):
             raise ValueError("both p6 sectors must partition every physical mode exactly once")
-        if set(factors.factors) != set(range(full_layout.ny)):
-            raise ValueError("all Ny p6 q factors must remain live")
+        self.factor_lifecycle_strategy = getattr(
+            factors, "factor_lifecycle_strategy", ALL_Q_RESIDENT
+        )
+        if self.factor_lifecycle_strategy == ONE_Q_REFACTOR_V19:
+            capabilities = factors.capabilities()
+            if (
+                capabilities.get("all_q_source_csr_covered") is not True
+                or set(capabilities.get("input_q_coverage", ())) != set(range(full_layout.ny))
+                or factors.audit.get("all_q_symbolic_covered") is not True
+                or factors.factors
+                or factors.matrices
+                or capabilities.get("all_q_factors_simultaneously_resident") is not False
+            ):
+                raise ValueError("V19 requires complete q input/symbolic coverage with an empty one-q slot")
+        elif self.factor_lifecycle_strategy == ALL_Q_RESIDENT:
+            if set(factors.factors) != set(range(full_layout.ny)):
+                raise ValueError("all Ny p6 q factors must remain live")
+        else:
+            raise ValueError(
+                f"unsupported p6 factor lifecycle: {self.factor_lifecycle_strategy!r}"
+            )
         self.sectors = tuple(sectors)
         self.layout = full_layout
         self.factors = factors
@@ -704,9 +730,16 @@ class CompleteTwoCellInverse:
         self.last_port_solution = None
         self.last_local_solutions = None
         self.last_solve_audit = None
+        self.last_factor_capabilities = None
         self.destroyed = False
 
-    def apply_augmented(self, rhs: Any, port_rhs: Any | None = None) -> tuple[np.ndarray, np.ndarray]:
+    def apply_augmented(
+        self,
+        rhs: Any,
+        port_rhs: Any | None = None,
+        *,
+        rhs_category: str = "other_validation_rhs_mat_solve_count",
+    ) -> tuple[np.ndarray, np.ndarray]:
         if self.destroyed:
             raise RuntimeError("p6 complete two-cell inverse has been destroyed")
         full_rhs = np.asarray(rhs, dtype=np.complex128)
@@ -759,7 +792,12 @@ class CompleteTwoCellInverse:
                 q = int(context.global_q_indices[branch])
                 q_map = coordinates.q_map(branch, allocation_gate=self.gate)
                 modal_rhs = np.asarray(q_map.conj().T @ reduced_rhs, dtype=np.complex128)
-                modal_solution = self.factors.solve(q, modal_rhs)
+                if self.factor_lifecycle_strategy == ONE_Q_REFACTOR_V19:
+                    modal_solution = self.factors.solve(
+                        q, modal_rhs, category=rhs_category
+                    )
+                else:
+                    modal_solution = self.factors.solve(q, modal_rhs)
                 modal_residual = np.asarray(
                     self.factors.csr_matrices[q] @ modal_solution - modal_rhs,
                     dtype=np.complex128,
@@ -838,6 +876,21 @@ class CompleteTwoCellInverse:
         self.last_port_solution = alpha.copy()
         self.last_local_solutions = None
         self.last_solve_audit = local_audit
+        actual_qs = {
+            int(row["q"])
+            for sector_audit in local_audit
+            for row in sector_audit["q_true_residuals"]
+        }
+        if self.factor_lifecycle_strategy == ONE_Q_REFACTOR_V19:
+            expected_qs = set(range(self.q_count))
+            if actual_qs != expected_qs:
+                raise RuntimeError(
+                    f"V19 augmented action covered q={sorted(actual_qs)}, "
+                    f"expected {sorted(expected_qs)}"
+                )
+            self.last_factor_capabilities = self.factors.capabilities()
+            if self.last_factor_capabilities.get("all_q_solve_coverage") is not True:
+                raise RuntimeError("V19 factor capability did not record all-q solve coverage")
         self.calls += 1
         return result, alpha
 
@@ -3373,6 +3426,7 @@ def build_task40_v10_p6_reference_inverse(
     target_full_storage_rows: int | None = None,
     reference_pc_strategy: str = STRICT_ONLY,
     q_assembly_strategy: str = Q_ASSEMBLY_LEGACY,
+    factor_lifecycle_strategy: str = "ALL_Q_RESIDENT",
     q_assembly_comparison_only: bool = False,
     operator_qualification_reuse: Callable[..., tuple[Mapping[str, Any], Mapping[str, Any]]] | None = None,
 ) -> dict[str, Any]:
@@ -3392,9 +3446,15 @@ def build_task40_v10_p6_reference_inverse(
     from .p6_cell_condensed_action import build_p6_cell_condensed_action_from_carrier
     from .retained_port_block_layout import RESEARCH_PORT_LAYOUT
     from .fresh_c1_p6_component import _boundary_support
-    from .task40_v10_p6_mumps import AllQExactMumps
+    from .task40_v10_p6_mumps import (
+        ALL_Q_RESIDENT,
+        ONE_Q_REFACTOR_V19,
+        AllQExactMumps,
+        OneQRefactorV19Mumps,
+    )
     from .task40_v10_p6_periodic_profile import (
         TASK40_V10_P6_PROFILE,
+        TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
         Task40V10P6PeriodicProfile,
     )
@@ -3402,6 +3462,21 @@ def build_task40_v10_p6_reference_inverse(
         raise TypeError("p6 reference construction requires a live allocation gate")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
         raise ValueError(f"unknown Task40 q assembly strategy: {q_assembly_strategy!r}")
+    if factor_lifecycle_strategy not in {ALL_Q_RESIDENT, ONE_Q_REFACTOR_V19}:
+        raise ValueError(f"unknown Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
+    if factor_lifecycle_strategy == ONE_Q_REFACTOR_V19 and not (
+        profile is not None
+        and profile.name in {
+            TASK40_V17_P6_E1_PROFILE.name,
+            TASK40_V18_P6_B0_Y8_PROFILE.name,
+        }
+        and q_assembly_strategy == Q_ASSEMBLY_ROW_TILE_V17
+        and reference_pc_strategy == NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15
+    ):
+        raise ValueError(
+            "ONE_Q_REFACTOR_V19 is restricted to V17 E1 or V18 B0-Y8 with "
+            "ROW_TILE_BOUNDED_CSR_V17 and the existing V15 PC contract"
+        )
     if type(q_assembly_comparison_only) is not bool:
         raise TypeError("q-assembly comparison-only selection must be an explicit boolean")
     if q_assembly_comparison_only and q_assembly_strategy not in {
@@ -3948,7 +4023,12 @@ def build_task40_v10_p6_reference_inverse(
                 raise RuntimeError(
                     "Task40 V18 Ny8 complete FE/C/D/H and independent Schur qualification failed"
                 )
-        factors = AllQExactMumps(
+        factor_backend = (
+            OneQRefactorV19Mumps
+            if factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
+            else AllQExactMumps
+        )
+        factors = factor_backend(
             all_q_matrices,
             allocation_gate=allocation_gate,
             event=event,
@@ -3995,8 +4075,20 @@ def build_task40_v10_p6_reference_inverse(
             "profile": profile.identity(),
                     "q_count": profile.q_count,
                     "q_matrices": owner["q_matrix_audits"],
-                    "all_q_mumps_factors_live": True,
-                    "all_four_mumps_factors_live": profile.q_count == 4,
+                    "factor_lifecycle_strategy": factor_lifecycle_strategy,
+                    "factor_capabilities": (
+                        factors.capabilities()
+                        if factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
+                        else {
+                            "all_q_source_csr_covered": True,
+                            "all_q_factors_simultaneously_resident": True,
+                            "all_q_solve_coverage": True,
+                        }
+                    ),
+                    "all_q_mumps_factors_live": factor_lifecycle_strategy == ALL_Q_RESIDENT,
+                    "all_four_mumps_factors_live": (
+                        factor_lifecycle_strategy == ALL_Q_RESIDENT and profile.q_count == 4
+                    ),
                 },
             )
         return owner

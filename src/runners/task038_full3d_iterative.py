@@ -51,7 +51,9 @@ def run_full3d_iterative(
         TASK40_GX560_V16_RUN_ID,
         TASK40_B0_P6_V17_RUN_ID,
         TASK40_B0_P6_V18_Y8_RUN_ID,
+        TASK40_B0_P6_V19_Y8_RUN_ID,
         TASK40_E1_V17_RUN_ID,
+        TASK40_E1_V19_RUN_ID,
         TASK40_GX560_V17_RUN_ID,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_Q_ASSEMBLY_ROW_TILE_V17,
@@ -62,6 +64,8 @@ def run_full3d_iterative(
         TASK40_STRICT_REFERENCE_PC_STRATEGY,
         TASK40_V13_REFERENCE_PC_STRATEGY,
         TASK40_V15_REFERENCE_PC_STRATEGY,
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
     from src.io.physical_intermediate_profile import (
@@ -81,11 +85,50 @@ def run_full3d_iterative(
     q_assembly_strategy = str(
         solver.get("task40_q_assembly_strategy", TASK40_Q_ASSEMBLY_LEGACY)
     )
+    factor_lifecycle_strategy = str(
+        solver.get(
+            "task40_factor_lifecycle_strategy", TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        )
+    )
+    if factor_lifecycle_strategy not in {
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
+    }:
+        raise ValueError("Task40 dispatcher rejected an unknown factor lifecycle strategy")
     if not task40_q_assembly_strategy_is_allowed(
         reference_pc_strategy, q_assembly_strategy
     ):
         raise ValueError(
             "Task40 dispatcher rejected q assembly for the selected reference-PC strategy"
+        )
+
+    if factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY:
+        v19_cases = {
+            TASK40_V17_P6_E1_PROFILE: (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL"),
+            TASK40_V18_P6_B0_Y8_PROFILE: (TASK40_B0_P6_V19_Y8_RUN_ID, "B0_CANDIDATE"),
+        }
+        expected_run_id_stage = v19_cases.get(profile)
+        expected_run_id, expected_stage = expected_run_id_stage or (None, None)
+        if (
+            expected_run_id is None
+            or reference_pc_strategy != TASK40_V15_REFERENCE_PC_STRATEGY
+            or q_assembly_strategy != TASK40_Q_ASSEMBLY_ROW_TILE_V17
+            or resolved_payload.get("run_id") != expected_run_id
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or stage != expected_stage
+            or resolved_payload.get("derived", {}).get("physical_intermediate_profile", {}).get(
+                "identity"
+            ) != profile
+        ):
+            raise ValueError("Task40 V19 one-q route requires an exact E1 or B0-Y8 identity")
+        from .task40_v10_worker import run_task40_v10_p6_reference_worker
+
+        return run_task40_v10_p6_reference_worker(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+            profile_identity=profile,
+            share_transform_bank=True,
         )
 
     if profile == TASK40_V10_P6_REFERENCE_PROFILE:

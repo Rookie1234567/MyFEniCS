@@ -351,6 +351,7 @@ def _verify_v18_ny8_operator_qualification(
     offdiagonal_keys = {
         f"{p}{q}" for p in range(q_count) for q in range(q_count) if p != q
     }
+
     shapes = operator.get("complete_q_block_shapes")
     if (
         operator.get("full_q_block_coverage_count") != q_count**2
@@ -519,6 +520,469 @@ def _verify_v18_ny8_operator_qualification(
         "passed": True,
     }
 
+
+def _verify_v19_one_q_factor_lifecycle(
+    factor_audit: Mapping[str, Any], *, expected_q_count: int
+) -> dict[str, Any]:
+    """Recompute V19 one-slot coverage and disjoint MatSolve counters."""
+    from src.solvers.task40_v10_p6_mumps import ONE_Q_REFACTOR_V19
+
+    if type(expected_q_count) is not int or expected_q_count <= 0:
+        raise ValueError("V19 lifecycle checker requires a positive registered q count")
+    expected_qs = list(range(expected_q_count))
+    expected_q_keys = {str(q) for q in expected_qs}
+    rhs_categories = {
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+        "startup_rhs_mat_solve_count",
+        "other_validation_rhs_mat_solve_count",
+    }
+    categories = rhs_categories | {"factor_probe_mat_solve_count"}
+    if not isinstance(factor_audit, Mapping):
+        raise ValueError("V19 worker summary omits its factor lifecycle audit")
+    if factor_audit.get("factor_lifecycle_strategy") != ONE_Q_REFACTOR_V19:
+        raise ValueError("V19 factor lifecycle audit has the wrong strategy")
+
+    input_coverage = factor_audit.get("input_q_coverage")
+    solve_coverage = factor_audit.get("solve_q_coverage")
+    if (
+        input_coverage != expected_qs
+        or factor_audit.get("all_q_source_csr_covered") is not True
+        or factor_audit.get("all_q_symbolic_covered") is not True
+        or factor_audit.get("all_q_fresh_factor_probe_covered") is not True
+        or factor_audit.get("all_q_solve_coverage") is not True
+        or solve_coverage != expected_qs
+        or factor_audit.get("all_q_factors_simultaneously_resident") is not False
+        or factor_audit.get("all_q_factors_retained_simultaneously") is not False
+        or factor_audit.get("all_q_factors_reused") is not False
+        or factor_audit.get("all_q_numeric_factors_strict_true_residual_passed") is not True
+    ):
+        raise ValueError("V19 factor audit lacks complete all-q input, symbolic, probe, or solve coverage")
+
+    for key in (
+        "max_simultaneous_factors", "max_simultaneous_matrices",
+        "factors_live_count_current", "matrices_live_count_current",
+    ):
+        value = factor_audit.get(key)
+        if type(value) is not int or value < 0 or value > 1:
+            raise ValueError(f"V19 factor audit {key} exceeds the one-slot lifecycle")
+    if (
+        factor_audit["max_simultaneous_factors"] != 1
+        or factor_audit["max_simultaneous_matrices"] != 1
+        or factor_audit["factors_live_count_current"] != factor_audit["matrices_live_count_current"]
+    ):
+        raise ValueError("V19 factor audit has an inconsistent one-slot matrix/factor inventory")
+
+    input_rows = factor_audit.get("factor_inputs")
+    factor_tests = factor_audit.get("factor_tests")
+    build_history = factor_audit.get("factor_build_history")
+    numeric_builds = factor_audit.get("numeric_factor_build_count")
+    numeric_attempts = factor_audit.get("numeric_factor_build_attempt_count")
+    cache_misses = factor_audit.get("cache_miss_count")
+    if (
+        not isinstance(input_rows, list)
+        or not isinstance(factor_tests, list)
+        or not isinstance(build_history, list)
+        or type(numeric_builds) is not int
+        or type(numeric_attempts) is not int
+        or type(cache_misses) is not int
+        or numeric_builds < expected_q_count
+        or numeric_attempts != numeric_builds
+        or cache_misses != numeric_builds
+        or len(input_rows) != numeric_builds
+        or len(factor_tests) != numeric_builds
+        or len(build_history) != numeric_builds
+    ):
+        raise ValueError("V19 refactor records do not agree on the number of fresh factor builds")
+
+    input_qs = []
+    test_qs = []
+    build_indices = []
+    hashes_by_q: dict[int, tuple[Any, ...]] = {}
+    for index, row in enumerate(input_rows):
+        if not isinstance(row, Mapping) or type(row.get("q")) is not int:
+            raise ValueError("V19 factor input identity is malformed")
+        q = row["q"]
+        if q not in expected_qs or row.get("build_index") != index:
+            raise ValueError("V19 repeated factor inputs have invalid q or build-index coverage")
+        before = row.get("caller_input_sha256_before")
+        after = row.get("caller_input_sha256_after")
+        csr_before = row.get("factor_csr_sha256_before")
+        csr_after = row.get("factor_csr_sha256_after")
+        if (
+            row.get("input_identity_unchanged") is not True
+            or not isinstance(before, str)
+            or len(before) != 64
+            or any(character not in "0123456789abcdef" for character in before)
+            or before != after
+            or before != csr_before
+            or csr_before != csr_after
+            or type(row.get("nnz")) is not int
+            or row["nnz"] < 0
+            or not isinstance(row.get("shape"), list)
+            or len(row["shape"]) != 2
+        ):
+            raise ValueError(f"V19 q={q} repeated CSR input identity is invalid")
+        identity = (tuple(row["shape"]), row["nnz"], before)
+        if q in hashes_by_q and hashes_by_q[q] != identity:
+            raise ValueError(f"V19 q={q} CSR identity changed between refactors")
+        hashes_by_q[q] = identity
+        input_qs.append(q)
+
+    for index, row in enumerate(factor_tests):
+        if not isinstance(row, Mapping) or type(row.get("q")) is not int:
+            raise ValueError("V19 factor probe record is malformed")
+        q = row["q"]
+        residual = row.get("relative_true_residual")
+        if (
+            q != input_qs[index]
+            or row.get("factor_lifecycle_strategy") != ONE_Q_REFACTOR_V19
+            or row.get("strict_passed") is not True
+            or row.get("admission_passed") is not True
+            or row.get("strict_limit") != 1.0e-10
+            or not isinstance(residual, (int, float))
+            or not np.isfinite(residual)
+            or residual > 1.0e-10
+        ):
+            raise ValueError(f"V19 q={q} strict fresh-factor probe did not pass")
+        test_qs.append(q)
+
+    for index, row in enumerate(build_history):
+        if (
+            not isinstance(row, Mapping)
+            or row.get("build_index") != index
+            or row.get("q") != input_qs[index]
+            or row.get("factor_probe_mat_solve_count") != 1
+            or row.get("factor_probe_passed") is not True
+            or row.get("probe_true_residual_relative") != factor_tests[index]["relative_true_residual"]
+        ):
+            raise ValueError("V19 factor build history does not match its strict probe records")
+    if set(input_qs) != set(expected_qs) or set(test_qs) != set(expected_qs):
+        raise ValueError("V19 repeated refactor records do not cover every q branch")
+
+    q_rhs = factor_audit.get("q_rhs_solve_counts")
+    q_invoked = factor_audit.get("q_rhs_mat_solve_invoked_counts")
+    invoked = factor_audit.get("mat_solve_invoked_count_by_category")
+    completed = factor_audit.get("mat_solve_completed_count_by_category")
+    failed = factor_audit.get("mat_solve_failed_count_by_category")
+    rhs_completed = factor_audit.get("rhs_mat_solve_count_by_category")
+    totals = (
+        factor_audit.get("backend_mat_solve_invoked_total"),
+        factor_audit.get("backend_mat_solve_completed_total"),
+        factor_audit.get("backend_mat_solve_failed_total"),
+    )
+    if any(not isinstance(mapping, Mapping) for mapping in (q_rhs, q_invoked, invoked, completed, failed, rhs_completed)):
+        raise ValueError("V19 MatSolve counter maps are missing")
+    if (
+        set(q_rhs) != expected_q_keys
+        or set(q_invoked) != expected_q_keys
+        or set(invoked) != categories
+        or set(completed) != categories
+        or set(failed) != categories
+        or set(rhs_completed) != rhs_categories
+        or any(type(value) is not int or value < 0 for mapping in (q_rhs, q_invoked, invoked, completed, failed, rhs_completed) for value in mapping.values())
+        or any(type(value) is not int or value < 0 for value in totals)
+    ):
+        raise ValueError("V19 MatSolve counter categories or values are invalid")
+    if (
+        any(q_rhs[str(q)] <= 0 for q in expected_qs)
+        or any(q_invoked[str(q)] < q_rhs[str(q)] for q in expected_qs)
+        or sum(q_rhs.values()) != sum(rhs_completed.values())
+        or sum(q_invoked.values()) != sum(invoked[name] for name in rhs_categories)
+        or sum(q_invoked.values()) - sum(q_rhs.values()) != sum(failed[name] for name in rhs_categories)
+        or any(rhs_completed[name] != completed[name] for name in rhs_categories)
+        or factor_audit.get("factor_probe_mat_solve_count") != numeric_builds
+        or factor_audit.get("factor_probe_mat_solve_completed_count") != numeric_builds
+        or invoked["factor_probe_mat_solve_count"] != numeric_builds
+        or completed["factor_probe_mat_solve_count"] != numeric_builds
+        or failed["factor_probe_mat_solve_count"] != 0
+        or totals[0] != sum(invoked.values())
+        or totals[1] != sum(completed.values())
+        or totals[2] != sum(failed.values())
+        or totals[0] != totals[1] + totals[2]
+        or factor_audit.get("rhs_mat_solve_count") != sum(rhs_completed.values())
+        or factor_audit.get("rhs_mat_solve_count") != factor_audit.get("calls")
+        or factor_audit.get("mat_solve_total_identity_passed") is not True
+    ):
+        raise ValueError("V19 disjoint MatSolve counters do not reconcile")
+
+    return {
+        "schema": "task40extra.review_v19_one_q_factor_lifecycle_checker.v1",
+        "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+        "expected_q_count": expected_q_count,
+        "input_q_coverage": expected_qs,
+        "factor_build_count": numeric_builds,
+        "factor_probe_q_coverage": expected_qs,
+        "solve_q_coverage": expected_qs,
+        "max_simultaneous_factors": factor_audit["max_simultaneous_factors"],
+        "max_simultaneous_matrices": factor_audit["max_simultaneous_matrices"],
+        "mat_solve_counters_disjoint_and_reconciled": True,
+        "passed": True,
+    }
+
+
+def _verify_v19_run_lifecycle_binding(
+    *,
+    run_id: Any,
+    profile_identity: Any,
+    stage: Any,
+    run_manifest: Mapping[str, Any],
+    worker_summary: Mapping[str, Any],
+    expected_input_sha256: Any,
+) -> dict[str, Any] | None:
+    """Require the one-q audit for exact V19 run/input identities."""
+    v19_runs = {
+        "task40extra_0p7nm_b0_p6_reference_v19_ny8": (
+            "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+            "B0_CANDIDATE",
+            "b0_p6_reference_v19_ny8.dat",
+        ),
+        "task40extra_0p7nm_nonseparable_e1_p6_reference_v19": (
+            "task40extra_v17_p6_y_orbit_e1_reference_v1",
+            "Q4_ORIGINAL",
+            "nonseparable_e1_p6_reference_v19.dat",
+        ),
+    }
+    manifest_solver = run_manifest.get("solver")
+    manifest_strategy = (
+        manifest_solver.get("task40_factor_lifecycle_strategy")
+        if isinstance(manifest_solver, Mapping)
+        else None
+    )
+    summary_strategy = worker_summary.get("factor_lifecycle_strategy")
+    is_v19 = (
+        (isinstance(run_id, str) and run_id in v19_runs)
+        or manifest_strategy == "ONE_Q_REFACTOR_V19"
+        or summary_strategy == "ONE_Q_REFACTOR_V19"
+    )
+    if not is_v19:
+        return None
+    expected = v19_runs.get(run_id) if isinstance(run_id, str) else None
+    if (
+        expected is None
+        or (profile_identity, stage) != expected[:2]
+        or manifest_strategy != "ONE_Q_REFACTOR_V19"
+        or summary_strategy != "ONE_Q_REFACTOR_V19"
+        or not isinstance(expected_input_sha256, str)
+        or run_manifest.get("input_sha256") != expected_input_sha256
+        or not isinstance(manifest_solver, Mapping)
+    ):
+        raise ValueError("V19 run identity/input does not require the registered one-q factor lifecycle")
+    input_path_value = run_manifest.get("input_path")
+    if not isinstance(input_path_value, str) or not input_path_value:
+        raise ValueError("V19 run manifest omits its exact lifecycle input path")
+    input_path = Path(input_path_value).resolve()
+    if (
+        input_path.name != expected[2]
+        or not input_path.is_file()
+        or _file_sha256(input_path) != expected_input_sha256
+    ):
+        raise ValueError("V19 run manifest input file differs from its frozen run identity")
+    snapshot = worker_summary.get("reference_audit_snapshot")
+    factor_audit = (
+        snapshot.get("factor_audit_before_destroy")
+        if isinstance(snapshot, Mapping)
+        else None
+    )
+    if not isinstance(factor_audit, Mapping):
+        raise ValueError("official V19 run is missing its required one-q factor audit")
+    inventory = _registered_v15_profile_inventory(profile_identity)
+    lifecycle = _verify_v19_one_q_factor_lifecycle(
+        factor_audit, expected_q_count=int(inventory["q_count"])
+    )
+    saved_v18_startup_comparison = (
+        _verify_v19_saved_v18_startup_comparison(
+            worker_summary, expected_input_sha256=expected_input_sha256
+        )
+        if run_id == "task40extra_0p7nm_b0_p6_reference_v19_ny8"
+        else None
+    )
+    return {
+        **lifecycle,
+        "run_id": run_id,
+        "profile_identity": profile_identity,
+        "stage": stage,
+        "input_sha256": expected_input_sha256,
+        "input_path": str(input_path),
+        "manifest_strategy_bound": True,
+        "worker_summary_strategy_bound": True,
+        "saved_v18_startup_comparison": saved_v18_startup_comparison,
+    }
+
+
+def _verify_v19_saved_v18_startup_comparison(
+    worker_summary: Mapping[str, Any], *, expected_input_sha256: str
+) -> dict[str, Any]:
+    """Require both saved V18 startup witnesses in the exact B0 V19 run."""
+
+    required_cases = ("generic_full_independent", "nonzero_all_mode_port_rhs")
+    checks = worker_summary.get("regular_inverse_checks")
+    aggregate = (
+        checks.get("v19_saved_v18_startup_comparison")
+        if isinstance(checks, Mapping)
+        else None
+    )
+    cases = aggregate.get("cases") if isinstance(aggregate, Mapping) else None
+    case_rows = checks.get("cases") if isinstance(checks, Mapping) else None
+    if (
+        aggregate is None
+        or aggregate.get("required_cases") != list(required_cases)
+        or aggregate.get("all_required_cases_compared") is not True
+        or aggregate.get("delta_gate")
+        != "none; current existing equation and q strict residual gates remain decisive"
+        or checks.get("passed") is not True
+        or not isinstance(cases, Mapping)
+        or set(cases) != set(required_cases)
+        or not isinstance(case_rows, list)
+    ):
+        raise ValueError("B0 V19 worker summary omits both required saved V18 startup comparisons")
+    rows_by_name = {
+        row.get("name"): row
+        for row in case_rows
+        if isinstance(row, Mapping) and isinstance(row.get("name"), str)
+    }
+    if not set(required_cases).issubset(rows_by_name):
+        raise ValueError("B0 V19 startup comparison rows are missing a required RHS case")
+
+    profile = worker_summary.get("profile")
+    source_sha = worker_summary.get("source_sha")
+    identity = worker_summary.get("scientific_identity")
+    physical_model_sha256 = (
+        identity.get("physical_model_sha256") if isinstance(identity, Mapping) else None
+    )
+    mode_sha256 = (
+        identity.get("ordered_physical_mode_sha256")
+        if isinstance(identity, Mapping)
+        else None
+    )
+    if not isinstance(profile, str) or not isinstance(identity, Mapping):
+        raise ValueError("B0 V19 startup comparison lacks its worker scientific identity")
+
+    def is_sha256(value: Any) -> bool:
+        return (
+            isinstance(value, str)
+            and len(value) == 64
+            and all(character in "0123456789abcdef" for character in value)
+        )
+
+    if (
+        not isinstance(source_sha, str)
+        or len(source_sha) != 40
+        or any(character not in "0123456789abcdef" for character in source_sha)
+        or not is_sha256(physical_model_sha256)
+        or not is_sha256(mode_sha256)
+        or not is_sha256(expected_input_sha256)
+    ):
+        raise ValueError("B0 V19 startup comparison source or scientific hashes are malformed")
+    inventory = _registered_v15_profile_inventory(profile)
+    expected_q_keys = {str(q) for q in range(int(inventory["q_count"]))}
+    expected_mode_count = int(inventory["mode_count"])
+    checked = {}
+    for case in required_cases:
+        comparison = cases[case]
+        row = rows_by_name[case]
+        if row.get("v19_saved_v18_startup_comparison") != comparison:
+            raise ValueError(f"B0 V19 {case} summary differs from its startup witness record")
+        q_hashes = comparison.get("fresh_q_matrix_sha256")
+        residuals = comparison.get("per_q_true_residuals")
+        if (
+            comparison.get("schema")
+            != "task40extra.review_v19_saved_v18_startup_comparison.v1"
+            or comparison.get("case") != case
+            or comparison.get("status") != "SAME_INPUT_COMPARISON_RECORDED"
+            or comparison.get("old_run_id")
+            != "task40extra_0p7nm_b0_p6_reference_v18_ny8"
+            or comparison.get("old_source_sha")
+            != "3b9457e57ceb15f21306a35baac07f42036840b1"
+            or comparison.get("current_source_sha") != source_sha
+            or comparison.get("current_input_sha256") != expected_input_sha256
+            or comparison.get("profile_identity") != profile
+            or comparison.get("physical_model_sha256") != physical_model_sha256
+            or comparison.get("target_mode_sha256") != mode_sha256
+            or comparison.get("input_differences_are_run_id_and_factor_lifecycle_only")
+            is not True
+            or comparison.get("same_independent_row_order") is not True
+            or comparison.get("same_fe_rhs_storage") is not True
+            or comparison.get("same_port_rhs") is not True
+            or comparison.get("current_existing_regular_gate_passed") is not True
+            or comparison.get("all_old_q_strict_passed") is not True
+            or comparison.get("all_current_q_strict_passed") is not True
+            or comparison.get("field_and_alpha_deltas_are_diagnostic_only") is not True
+            or comparison.get("no_new_floating_delta_threshold_applied") is not True
+            or not is_sha256(comparison.get("old_input_sha256"))
+            or not is_sha256(comparison.get("old_candidate_summary_sha256"))
+            or not is_sha256(comparison.get("old_run_manifest_sha256"))
+            or not is_sha256(comparison.get("old_witness_json_sha256"))
+            or not is_sha256(comparison.get("old_witness_npz_sha256"))
+            or not isinstance(q_hashes, Mapping)
+            or set(q_hashes) != expected_q_keys
+            or not all(is_sha256(value) for value in q_hashes.values())
+            or not isinstance(residuals, Mapping)
+            or set(residuals) != expected_q_keys
+        ):
+            raise ValueError(f"B0 V19 {case} startup comparison is not fully identity-bound")
+        if case == "generic_full_independent":
+            rhs_channels_match = (
+                int(row.get("fe_rhs_nonzero_count", 0)) > 0
+                and int(row.get("port_rhs_nonzero_count", -1)) == 0
+            )
+        else:
+            rhs_channels_match = (
+                int(row.get("fe_rhs_nonzero_count", -1)) == 0
+                and int(row.get("port_rhs_nonzero_count", 0)) == expected_mode_count
+            )
+        if not rhs_channels_match or row.get("passed") is not True:
+            raise ValueError(f"B0 V19 {case} did not exercise and pass its existing RHS gates")
+        for q_key, q_row in residuals.items():
+            if (
+                not isinstance(q_row, Mapping)
+                or q_row.get("old_strict_passed") is not True
+                or q_row.get("current_strict_passed") is not True
+                or not all(
+                    np.isfinite(float(q_row[field]))
+                    for field in (
+                        "old_rhs_norm",
+                        "current_rhs_norm",
+                        "old_true_residual_relative",
+                        "current_true_residual_relative",
+                    )
+                )
+                or float(q_row["old_rhs_norm"]) <= 0.0
+                or float(q_row["current_rhs_norm"]) <= 0.0
+                or float(q_row["old_true_residual_relative"]) < 0.0
+                or float(q_row["current_true_residual_relative"]) < 0.0
+            ):
+                raise ValueError(f"B0 V19 {case} q={q_key} residual comparison is incomplete")
+        for field in (
+            "full_solution_absolute_l2_delta",
+            "full_solution_relative_to_v18_l2_delta",
+            "returned_alpha_absolute_l2_delta",
+            "returned_alpha_relative_to_v18_l2_delta",
+            "old_original_fe_equation_relative_residual",
+            "current_original_fe_equation_relative_residual",
+        ):
+            value = float(comparison.get(field, np.nan))
+            if not np.isfinite(value) or value < 0.0:
+                raise ValueError(f"B0 V19 {case} comparison field {field} is invalid")
+        checked[case] = {
+            "old_witness_json_sha256": comparison["old_witness_json_sha256"],
+            "old_witness_npz_sha256": comparison["old_witness_npz_sha256"],
+            "full_solution_relative_to_v18_l2_delta": comparison[
+                "full_solution_relative_to_v18_l2_delta"
+            ],
+            "returned_alpha_relative_to_v18_l2_delta": comparison[
+                "returned_alpha_relative_to_v18_l2_delta"
+            ],
+            "all_q_true_residuals_present": True,
+            "delta_gate": "none; existing startup residual gates remain decisive",
+        }
+    return {
+        "schema": "task40extra.review_v19_saved_v18_startup_comparison_checker.v1",
+        "cases": checked,
+        "q_count": len(expected_q_keys),
+        "required_rhs_case_count": len(required_cases),
+        "passed": True,
+    }
 
 def _verify_v18_packet_operator_qualification_binding(
     packet_identity: Mapping[str, Any] | None,
@@ -1601,6 +2065,7 @@ def verify_v10_output_bundle(
     v18_ny8_packet_operator_binding = None
     v18_ny8_row_tile_allocation_ledger = None
     v18_ny8_dispatch_binding = None
+    v19_one_q_factor_lifecycle = None
     packet_identity_map = (
         packet_identity if isinstance(packet_identity, Mapping) else {}
     )
@@ -1706,6 +2171,14 @@ def verify_v10_output_bundle(
         row_tile_assembly = _verify_v17_row_tile_assembly_summary(
             path.parent, worker_summary
         )
+        v19_one_q_factor_lifecycle = _verify_v19_run_lifecycle_binding(
+            run_id=run_id,
+            profile_identity=profile_identity,
+            stage=stage,
+            run_manifest=run_manifest,
+            worker_summary=worker_summary,
+            expected_input_sha256=identity.get("input_sha256"),
+        )
         if has_registered_v18_profile:
             inventory = _registered_v15_profile_inventory(profile_identity)
             v18_ny8_operator_qualification = _verify_v18_ny8_operator_qualification(
@@ -1774,6 +2247,7 @@ def verify_v10_output_bundle(
         "v18_ny8_packet_operator_binding": v18_ny8_packet_operator_binding,
         "v18_ny8_row_tile_allocation_admission_ledger": v18_ny8_row_tile_allocation_ledger,
         "v18_ny8_dispatch_binding": v18_ny8_dispatch_binding,
+        "v19_one_q_factor_lifecycle": v19_one_q_factor_lifecycle,
         "operator_reapplied_by_checker": False,
         "status": "PASS",
     }

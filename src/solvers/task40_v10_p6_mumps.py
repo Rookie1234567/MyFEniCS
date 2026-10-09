@@ -7,6 +7,7 @@ statistics and process-tree RSS remain separate evidence channels.
 from __future__ import annotations
 
 from hashlib import sha256
+import gc
 from time import perf_counter
 from typing import Any, Callable, Mapping, Sequence
 
@@ -22,6 +23,10 @@ from .task40_v10_p6_periodic_profile import (
     TASK40_V10_P6_PROFILE,
     Task40V10P6PeriodicProfile,
 )
+
+
+ALL_Q_RESIDENT = "ALL_Q_RESIDENT"
+ONE_Q_REFACTOR_V19 = "ONE_Q_REFACTOR_V19"
 
 
 def _sparse_content_sha256(matrix: sparse.spmatrix) -> str:
@@ -214,6 +219,8 @@ def _mumps_native_evidence(raw: Mapping[str, object], *, numeric_complete: bool)
 
 
 class AllQExactMumps:
+    factor_lifecycle_strategy = ALL_Q_RESIDENT
+
     def __init__(self, matrices: Mapping[int, sparse.spmatrix], *,
                  allocation_gate: Callable[[str, Mapping[str, object]], object | None],
                  event: Callable[[str, Mapping[str, object]], None] | None = None,
@@ -931,6 +938,969 @@ class AllQExactMumps:
         )
         if errors:
             raise RuntimeError(f"failed to destroy {len(errors)} PETSc/MUMPS objects") from errors[0]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        self.destroy()
+
+
+class OneQRefactorV19Mumps:
+    """Exact q factors with one live PETSc input matrix/factor slot.
+
+    All immutable q CSR inputs are retained and hashed.  Symbolic analysis is
+    first covered one q at a time, with each temporary PETSc/MUMPS object
+    destroyed before the next q.  A factor cache miss rebuilds the symbolic
+    and numeric factor from that retained CSR; it never rebuilds FE or Schur
+    data.  This is a research-only lifecycle selected explicitly by V19.
+    """
+
+    factor_lifecycle_strategy = ONE_Q_REFACTOR_V19
+    _SYMBOLIC_GUARD_MULTIPLIER = 4
+    _FIXED_HEADROOM_BYTES = 128 << 20
+
+    def __init__(
+        self,
+        matrices: Mapping[int, sparse.spmatrix],
+        *,
+        allocation_gate: Callable[[str, Mapping[str, object]], object | None],
+        event: Callable[[str, Mapping[str, object]], None] | None = None,
+        expected_shapes: Sequence[int] | None = None,
+        profile: Task40V10P6PeriodicProfile = TASK40_V10_P6_PROFILE,
+        reference_pc_strategy: str = STRICT_ONLY,
+        transform_bank=None,
+        inverse_borrowers: Mapping[str, object] | None = None,
+        full_storage_rows: int | None = None,
+        target_reference_rows_match: bool = False,
+    ) -> None:
+        self._setup_started = perf_counter()
+        from petsc4py import PETSc
+        from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
+
+        if not isinstance(profile, Task40V10P6PeriodicProfile):
+            raise TypeError("one-q factors require an explicit Task40 p6 periodic profile")
+        if not callable(allocation_gate):
+            raise TypeError("one-q factors require an active process-tree allocation gate")
+        self.PETSc = PETSc
+        self.profile = profile
+        self.reference_pc_strategy = str(reference_pc_strategy)
+        self.q_solve_limit = q_solve_limit(self.reference_pc_strategy)
+        # V19 probes every newly built factor against the strict original
+        # operator, even when the later PC-RHS admission is bounded-inexact.
+        self.factor_probe_limit = 1.0e-10
+        self.event = event or (lambda _name, _facts: None)
+        self.gate = allocation_gate
+        self.transform_bank = transform_bank
+        self.inverse_borrowers = dict(inverse_borrowers or {})
+        self.full_storage_rows = None if full_storage_rows is None else int(full_storage_rows)
+        self.target_reference_rows_match = bool(target_reference_rows_match)
+        if self.full_storage_rows is not None and self.full_storage_rows < 0:
+            raise ValueError("future full-storage row count cannot be negative")
+        for label, borrower in self.inverse_borrowers.items():
+            if not callable(getattr(borrower, "future_legacy_inverse_reserve", None)):
+                raise TypeError(f"inverse borrower {label!r} has no legacy inverse inventory")
+            if transform_bank is not None and getattr(borrower, "_transform_bank", None) is not transform_bank:
+                raise ValueError(f"inverse borrower {label!r} does not share the supplied run-local bank")
+
+        self.nq = int(profile.q_count)
+        self.row_counts = tuple(map(int, expected_shapes or profile.augmented_rows_per_q))
+        required_q = set(range(self.nq))
+        if len(self.row_counts) != self.nq or set(matrices) != required_q:
+            raise ValueError("every actual profile q CSR input is required before one-q factorization")
+        self.source_matrices: dict[int, sparse.spmatrix] = {}
+        self.csr_matrices: dict[int, sparse.csr_matrix] = {}
+        self._input_bindings: dict[int, dict[str, str]] = {}
+        self.matrices: dict[int, Any] = {}
+        self.factors: dict[int, Any] = {}
+        self.calls = 0  # Actual PC/startup RHS solves; probes are a separate category.
+        self.destroyed = False
+        self._max_simultaneous_factors = 0
+        self._max_simultaneous_matrices = 0
+        self._symbolic_estimates: dict[int, int] = {}
+        self._symbolic_reports: dict[int, dict[str, Any]] = {}
+        self._passed_factor_qs: set[int] = set()
+        self._solved_qs: set[int] = set()
+        self._factor_factory = _factor_factory_for_backend("exact")
+        self.audit: dict[str, Any] = {
+            "schema": "task40extra.review_v19_one_q_factor_lifecycle.v1",
+            "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+            "reference_pc_strategy": self.reference_pc_strategy,
+            "profile": profile.name,
+            "backend": "PETSc MUMPS exact",
+            "q_true_residual_admission_limit": self.q_solve_limit,
+            "factor_probe_true_residual_limit": self.factor_probe_limit,
+            "all_q_required": list(range(self.nq)),
+            "input_q_coverage": [],
+            "all_q_source_csr_covered": False,
+            "all_q_symbolic_covered": False,
+            "all_q_fresh_factor_probe_covered": False,
+            "all_q_factors_simultaneously_resident": False,
+            "all_q_factors_retained_simultaneously": False,
+            "all_q_factor_objects_live_simultaneously": False,
+            "all_q_factors_reused": False,
+            "all_q_numeric_factors_strict_true_residual_passed": False,
+            "solve_q_coverage": [],
+            "all_q_solve_coverage": False,
+            "q_rhs_solve_counts": {str(q): 0 for q in range(self.nq)},
+            "q_rhs_mat_solve_invoked_counts": {str(q): 0 for q in range(self.nq)},
+            "max_simultaneous_factors": 0,
+            "max_simultaneous_matrices": 0,
+            "factors_live_count_current": 0,
+            "matrices_live_count_current": 0,
+            "symbolic_build_count": 0,
+            "numeric_factor_build_attempt_count": 0,
+            "numeric_factor_build_count": 0,
+            "cache_miss_count": 0,
+            "cache_hit_count": 0,
+            "eviction_count": 0,
+            "factor_probe_mat_solve_count": 0,
+            "factor_probe_mat_solve_completed_count": 0,
+            "rhs_mat_solve_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+            },
+            "mat_solve_invoked_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+                "factor_probe_mat_solve_count": 0,
+            },
+            "mat_solve_completed_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+                "factor_probe_mat_solve_count": 0,
+            },
+            "mat_solve_failed_count_by_category": {
+                "pc_initial_rhs_mat_solve_count": 0,
+                "pc_augmentation_rhs_mat_solve_count": 0,
+                "startup_rhs_mat_solve_count": 0,
+                "other_validation_rhs_mat_solve_count": 0,
+                "factor_probe_mat_solve_count": 0,
+            },
+            "backend_mat_solve_invoked_total": 0,
+            "backend_mat_solve_completed_total": 0,
+            "backend_mat_solve_failed_total": 0,
+            "factor_tests": [],
+            "factor_inputs": [],
+            "symbolic_reports_by_q": {},
+            "factor_build_history": [],
+            "all_q_factors_reused_semantics": (
+                "false: the one-q policy rebuilds each factor after eviction"
+            ),
+            "native_memory_source": "MUMPS INFOG(19/22), raw and upper-bound decoded",
+            "native_factor_entries_source": "MUMPS INFOG(9), negative million-entry encoding only",
+        }
+
+        try:
+            self._retain_and_validate_inputs(matrices)
+            self.audit["input_q_coverage"] = sorted(self.csr_matrices)
+            self.audit["all_q_source_csr_covered"] = set(self.csr_matrices) == required_q
+            for q in range(self.nq):
+                self._symbolic_preflight_one_q(q)
+                self._evict_slot(reason="bounded_symbolic_complete")
+                next_q = q + 1 if q + 1 < self.nq else None
+                self._sample_after_eviction(q, next_q=next_q)
+            self.audit["all_q_symbolic_covered"] = (
+                set(self._symbolic_estimates) == required_q
+                and set(self._symbolic_reports) == required_q
+                and not self.factors
+                and not self.matrices
+            )
+            self._require_one_q_coverage_gate()
+            self._update_total_mat_solve_count()
+            self.audit["setup_seconds"] = perf_counter() - self._setup_started
+        except BaseException:
+            try:
+                self.destroy()
+            except BaseException as cleanup_error:
+                # Keep the still-live backend reachable from the propagated
+                # error so callers cannot mistake failed destroy for release.
+                cleanup_error.one_q_backend = self
+                raise
+            raise
+
+    def _retain_and_validate_inputs(self, matrices: Mapping[int, sparse.spmatrix]) -> None:
+        PETSc = self.PETSc
+        for q in range(self.nq):
+            source = matrices[q]
+            caller_hash = _sparse_content_sha256(source)
+            if (
+                not sparse.isspmatrix_csr(source)
+                or not source.has_canonical_format
+                or not source.has_sorted_indices
+            ):
+                raise ValueError(
+                    f"V19 q={q} source must be canonical sorted CSR before factor lifecycle setup"
+                )
+            # The formal q builder owns this canonical CSR. Share its backing
+            # and freeze the arrays so refactors do not retain a second payload.
+            csr = source
+            n = self.row_counts[q]
+            if not csr.has_canonical_format or not csr.has_sorted_indices:
+                raise ValueError(f"q={q} CSR must be canonical and sorted")
+            if csr.shape != (n, n):
+                raise ValueError(f"q={q} matrix shape {csr.shape} != {(n, n)}")
+            if (
+                csr.dtype != np.dtype(np.complex128)
+                or not np.isfinite(csr.data).all()
+                or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
+            ):
+                raise ValueError("ONE_Q_REFACTOR_V19 requires finite complex128 CSR and PETSc")
+            csr.data.flags.writeable = False
+            csr.indices.flags.writeable = False
+            csr.indptr.flags.writeable = False
+            int_facts = _petsc_csr_int_preflight(
+                csr.shape, csr.nnz, csr.indptr, csr.indices, PETSc.IntType
+            )
+            csr_hash = _sparse_content_sha256(csr)
+            self.source_matrices[q] = source
+            self.csr_matrices[q] = csr
+            self._input_bindings[q] = {
+                "caller_input_sha256_before": caller_hash,
+                "factor_csr_sha256_before": csr_hash,
+            }
+            self.event("task40_v19_one_q_input_identity", {
+                "q": q,
+                "shape": list(csr.shape),
+                "nnz": int(csr.nnz),
+                "csr_payload_bytes": _payload_bytes(csr),
+                "petsc_int_preflight": int_facts,
+                **self._input_bindings[q],
+                "canonicalization_copy": False,
+                "source_and_retained_csr_shared_backing": csr is source,
+                "retained_csr_arrays_write_protected": True,
+            })
+    def _symbolic_preflight_one_q(self, q: int) -> None:
+        csr = self.csr_matrices[q]
+        matrix_payload, conversion = self._matrix_payload_and_conversion_bytes(q)
+        symbolic_guard = max(
+            self._FIXED_HEADROOM_BYTES,
+            self._SYMBOLIC_GUARD_MULTIPLIER * int(_payload_bytes(csr)),
+        )
+        self._admission(
+            q,
+            "symbolic_admission",
+            symbolic_guard=symbolic_guard,
+            matrix_payload=matrix_payload,
+            conversion_workspace=conversion,
+        )
+        matrix = factor = None
+        try:
+            matrix, factor, conversion, conversion_seconds = self._create_slot(q)
+            symbolic_started = perf_counter()
+            factor.symbolic(matrix)
+            elapsed = perf_counter() - symbolic_started
+            self.audit["symbolic_build_count"] += 1
+            self._assert_input_identity(q, "after_v19_symbolic_preflight")
+            info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
+            estimate = self._symbolic_estimate(q, info)
+            report = {
+                "q": q,
+                "shape": list(csr.shape),
+                "nnz": int(csr.nnz),
+                "caller_input_sha256": self._input_bindings[q]["caller_input_sha256_before"],
+                "factor_csr_sha256": self._input_bindings[q]["factor_csr_sha256_before"],
+                "symbolic_elapsed_seconds": float(elapsed),
+                "symbolic_estimate_bytes_from_INFOG16_17": estimate,
+                "raw_mumps_info": info,
+                "native_metrics": _mumps_native_evidence(info, numeric_complete=False),
+                "petsc_matrix_info": _petsc_matrix_info(matrix),
+                "csr_to_petsc_conversion_workspace_peak_bytes": int(conversion),
+                "csr_to_petsc_conversion_seconds": float(conversion_seconds),
+                "factor_or_matrix_live_count_during_symbolic": 1,
+            }
+            self._symbolic_estimates[q] = estimate
+            self._symbolic_reports[q] = report
+            self.audit["symbolic_reports_by_q"][str(q)] = report
+            self.event("task40_v19_one_q_symbolic_q_complete", report)
+            self._admission(
+                q,
+                "symbolic_complete",
+                factor_reserve=estimate,
+            )
+        except BaseException:
+            self._evict_slot(reason="symbolic_exception")
+            raise
+
+
+
+
+    def _assert_input_identity(self, q: int, stage: str) -> None:
+        binding = self._input_bindings[q]
+        if _sparse_content_sha256(self.source_matrices[q]) != binding["caller_input_sha256_before"]:
+            raise RuntimeError(f"q={q} caller sparse input changed during {stage}")
+        if _sparse_content_sha256(self.csr_matrices[q]) != binding["factor_csr_sha256_before"]:
+            raise RuntimeError(f"q={q} retained factor CSR changed during {stage}")
+
+
+    def _resident_factor_evidence(self) -> dict[str, Any]:
+        result = {}
+        for q, factor in sorted(self.factors.items()):
+            if getattr(factor, "numeric_calls", 0) != 1:
+                continue
+            raw = factor.info(extra_indices=(9, 19, 22, 29), include_local=True)
+            result[str(q)] = _mumps_native_evidence(raw, numeric_complete=True)
+        return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def _sample_after_eviction(self, evicted_q: int, *, next_q: int | None) -> None:
+        if self.factors or self.matrices:
+            raise RuntimeError("symbolic lifecycle advanced before successful destroy")
+        if next_q is None:
+            return
+        payload, conversion = self._matrix_payload_and_conversion_bytes(next_q)
+        guard = max(
+            self._FIXED_HEADROOM_BYTES,
+            self._SYMBOLIC_GUARD_MULTIPLIER * _payload_bytes(self.csr_matrices[next_q]),
+        )
+        self._admission(
+            next_q,
+            "post_eviction_next_symbolic_admission",
+            symbolic_guard=guard,
+            matrix_payload=payload,
+            conversion_workspace=conversion,
+        )
+        self.event("task40_v19_one_q_post_destroy_sample", {
+            "evicted_q": int(evicted_q), "next_q": int(next_q),
+            "factor_live_count": 0, "matrix_live_count": 0,
+            "resource_admission_after_destroy": True,
+        })
+
+
+
+
+
+
+    def _update_total_mat_solve_count(self) -> None:
+        invoked = self.audit["mat_solve_invoked_count_by_category"]
+        completed = self.audit["mat_solve_completed_count_by_category"]
+        failed = self.audit["mat_solve_failed_count_by_category"]
+        self.audit["rhs_mat_solve_count"] = int(sum(
+            self.audit["rhs_mat_solve_count_by_category"].values()
+        ))
+        self.audit["calls"] = int(self.calls)
+        self.audit["actual_backend_mat_solve_total"] = int(
+            self.audit["backend_mat_solve_invoked_total"]
+        )
+        self.audit["mat_solve_count_by_disjoint_category"] = {
+            **{key: int(value) for key, value in invoked.items()},
+        }
+        self.audit["mat_solve_total_identity_passed"] = bool(
+            self.audit["backend_mat_solve_invoked_total"] == sum(invoked.values())
+            and self.audit["backend_mat_solve_completed_total"] == sum(completed.values())
+            and self.audit["backend_mat_solve_failed_total"] == sum(failed.values())
+            and self.audit["backend_mat_solve_invoked_total"]
+            == self.audit["backend_mat_solve_completed_total"]
+            + self.audit["backend_mat_solve_failed_total"]
+            and self.audit["rhs_mat_solve_count"] == self.calls
+        )
+
+    def _record_mat_solve_invocation(self, category: str, *, q: int | None = None) -> None:
+        counts = self.audit["mat_solve_invoked_count_by_category"]
+        if category not in counts:
+            raise ValueError(f"unknown backend MatSolve category: {category!r}")
+        counts[category] += 1
+        self.audit["backend_mat_solve_invoked_total"] += 1
+        if category == "factor_probe_mat_solve_count":
+            self.audit["factor_probe_mat_solve_count"] += 1
+        elif q is not None:
+            self.audit["q_rhs_mat_solve_invoked_counts"][str(q)] += 1
+        self._update_total_mat_solve_count()
+
+    def _record_mat_solve_completion(self, category: str, *, q: int | None = None) -> None:
+        counts = self.audit["mat_solve_completed_count_by_category"]
+        if category not in counts:
+            raise ValueError(f"unknown backend MatSolve category: {category!r}")
+        counts[category] += 1
+        self.audit["backend_mat_solve_completed_total"] += 1
+        if category == "factor_probe_mat_solve_count":
+            self.audit["factor_probe_mat_solve_completed_count"] += 1
+        else:
+            self.audit["rhs_mat_solve_count_by_category"][category] += 1
+            self.calls += 1
+            if q is not None:
+                self.audit["q_rhs_solve_counts"][str(q)] += 1
+                self._solved_qs.add(q)
+                self.audit["solve_q_coverage"] = sorted(self._solved_qs)
+                self.audit["all_q_solve_coverage"] = self._solved_qs == set(range(self.nq))
+        self._update_total_mat_solve_count()
+
+    def _record_mat_solve_failure(self, category: str) -> None:
+        counts = self.audit["mat_solve_failed_count_by_category"]
+        if category not in counts:
+            raise ValueError(f"unknown backend MatSolve category: {category!r}")
+        counts[category] += 1
+        self.audit["backend_mat_solve_failed_total"] += 1
+        self._update_total_mat_solve_count()
+
+
+    def _resident_q(self) -> int | None:
+        return next(iter(self.factors), None)
+
+    def solve(
+        self,
+        q: int,
+        rhs: np.ndarray,
+        *,
+        category: str = "other_validation_rhs_mat_solve_count",
+    ) -> np.ndarray:
+        categories = self.audit["rhs_mat_solve_count_by_category"]
+        if category not in categories:
+            raise ValueError(f"unknown V19 MatSolve RHS category: {category!r}")
+        if self.destroyed:
+            raise RuntimeError("one-q factor backend has been destroyed")
+        if type(q) is not int or q not in range(self.nq):
+            raise ValueError(f"actual q branch index 0..{self.nq - 1} is required")
+        values = np.asarray(rhs, dtype=np.complex128)
+        if values.shape != (self.row_counts[q],) or not np.isfinite(values).all():
+            raise ValueError("complete finite q-branch RHS required")
+        try:
+            if self._resident_q() != q or set(self.matrices) != {q}:
+                if self.factors or self.matrices:
+                    self._evict_slot(reason=f"q_switch_to_{q}")
+            self._ensure_factor(q, rhs_category=category)
+        except BaseException:
+            if self.factors or self.matrices:
+                try:
+                    self._evict_slot(reason=f"q{q}_factor_admission_failed")
+                except BaseException as cleanup_error:
+                    cleanup_error.one_q_backend = self
+                    raise
+            raise
+        try:
+            PETSc = self.PETSc
+            b = x = None
+            try:
+                b = PETSc.Vec().createSeq(len(values), comm=PETSc.COMM_SELF)
+                x = b.duplicate()
+                b.array[:] = values
+                self._record_mat_solve_invocation(category, q=q)
+                try:
+                    self.factors[q].solve_repeated(b, x)
+                except BaseException:
+                    self._record_mat_solve_failure(category)
+                    raise
+                self._record_mat_solve_completion(category, q=q)
+                solution = x.array.copy()
+            finally:
+                if x is not None:
+                    x.destroy()
+                if b is not None:
+                    b.destroy()
+        except BaseException:
+            try:
+                self._evict_slot(reason=f"rhs_solve_failed_q{q}")
+            except BaseException as cleanup_error:
+                cleanup_error.one_q_backend = self
+                raise
+            raise
+        return solution
+
+    def _ensure_factor(self, q: int, *, rhs_category: str) -> None:
+        if self.destroyed:
+            raise RuntimeError("one-q factor backend has been destroyed")
+        if self._resident_q() == q and set(self.matrices) == {q}:
+            self.audit["cache_hit_count"] += 1
+            return
+        if self.factors or self.matrices:
+            raise RuntimeError("a different q still owns the one-q slot")
+        self._assert_input_identity(q, "before_v19_factor_cache_miss")
+        matrix_payload, conversion = self._matrix_payload_and_conversion_bytes(q)
+        estimate = int(self._symbolic_estimates[q])
+        self.audit["cache_miss_count"] += 1
+        self._admission(
+            q,
+            "factor_cache_miss_admission_v19",
+            factor_reserve=estimate,
+            matrix_payload=matrix_payload,
+            conversion_workspace=conversion,
+        )
+        build_index = int(self.audit["numeric_factor_build_attempt_count"])
+        build_row: dict[str, Any] = {
+            "build_index": build_index,
+            "q": q,
+            "rhs_category_context": rhs_category,
+            "source_csr_sha256": self._input_bindings[q]["factor_csr_sha256_before"],
+            "preflight_symbolic_estimate_bytes": estimate,
+            "symbolic_elapsed_seconds": None,
+            "numeric_elapsed_seconds": None,
+            "csr_to_petsc_conversion_workspace_bytes": None,
+            "csr_to_petsc_conversion_seconds": None,
+            "factor_probe_elapsed_seconds": None,
+            "cache_miss_parent_seconds": None,
+            "factor_probe_mat_solve_count": 0,
+            "probe_true_residual_relative": None,
+            "factor_probe_passed": False,
+        }
+        self.audit["factor_build_history"].append(build_row)
+        cache_miss_started = perf_counter()
+        try:
+            matrix, factor, conversion, conversion_seconds = self._create_slot(q)
+            build_row["csr_to_petsc_conversion_workspace_bytes"] = int(conversion)
+            build_row["csr_to_petsc_conversion_seconds"] = float(conversion_seconds)
+            symbolic_started = perf_counter()
+            factor.symbolic(matrix)
+            symbolic_elapsed = perf_counter() - symbolic_started
+            self.audit["symbolic_build_count"] += 1
+            build_row["symbolic_elapsed_seconds"] = float(symbolic_elapsed)
+            symbolic_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
+            estimate = max(estimate, self._symbolic_estimate(q, symbolic_info))
+            build_row["fresh_symbolic_estimate_bytes"] = estimate
+            self._assert_input_identity(q, "after_v19_fresh_symbolic")
+            self._admission(q, "fresh_symbolic_before_numeric_gate_v19", factor_reserve=estimate)
+            self.audit["numeric_factor_build_attempt_count"] += 1
+            numeric_started = perf_counter()
+            factor.numeric(matrix)
+            numeric_elapsed = perf_counter() - numeric_started
+            self.audit["numeric_factor_build_count"] += 1
+            build_row["numeric_elapsed_seconds"] = float(numeric_elapsed)
+            self._assert_input_identity(q, "after_v19_numeric_factor")
+            if factor.get_icntl(10) != 0 or factor.get_icntl(35) != 0:
+                raise ValueError("exact MUMPS refinement/storage controls changed")
+            numeric_info = factor.info(extra_indices=(16, 17, 22, 29), include_local=True)
+            native = _mumps_native_evidence(numeric_info, numeric_complete=True)
+            self.event("task40_v19_one_q_numeric_q_complete", {
+                "q": q,
+                "shape": list(self.csr_matrices[q].shape),
+                "nnz": int(self.csr_matrices[q].nnz),
+                "fresh_symbolic_elapsed_seconds": float(symbolic_elapsed),
+                "numeric_elapsed_seconds": float(numeric_elapsed),
+                "raw_mumps_info": numeric_info,
+                "native_metrics": native,
+                "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+                "max_live_factor_count": self._max_simultaneous_factors,
+                "max_live_matrix_count": self._max_simultaneous_matrices,
+            })
+            self._admission(q, "numeric_factor_resident_gate_v19")
+            n = self.row_counts[q]
+            probe_rhs = np.cos(.23 * np.arange(n)) + 1j * np.sin(.37 * np.arange(n))
+            probe_started = perf_counter()
+            self._solve_probe(q, probe_rhs)
+            probe_elapsed = perf_counter() - probe_started
+            build_row["factor_probe_elapsed_seconds"] = float(probe_elapsed)
+            build_row["factor_probe_mat_solve_count"] = 1
+            self._assert_input_identity(q, "after_v19_factor_probe")
+            probe_solution = self._last_probe_solution
+            residual = float(
+                np.linalg.norm(self.csr_matrices[q] @ probe_solution - probe_rhs)
+                / np.linalg.norm(probe_rhs)
+            )
+            del probe_solution
+            del self._last_probe_solution
+            passed = bool(np.isfinite(residual) and residual <= self.factor_probe_limit)
+            build_row["probe_true_residual_relative"] = residual
+            build_row["factor_probe_passed"] = passed
+            test = {
+                "q": q, "rows": int(n), "relative_true_residual": residual,
+                "strict_limit": 1.0e-10, "strict_passed": passed,
+                "limit": 1.0e-10, "admission_passed": passed,
+                "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+                "symbolic_seconds": float(symbolic_elapsed),
+                "numeric_seconds": float(numeric_elapsed),
+                "factor_probe_elapsed_seconds": float(probe_elapsed),
+                "process_tree_rss_bytes": None,
+            }
+            self.audit["factor_tests"].append(test)
+            self.event("task40_v19_one_q_numeric_q_probe_complete", {
+                **test, "native_metrics": native, "raw_mumps_info": numeric_info,
+                "probe_rhs_category": "factor_probe_mat_solve_count",
+            })
+            if not passed:
+                raise ValueError(f"q={q} fresh V19 factor probe failed: {residual} > 1e-10")
+            self._passed_factor_qs.add(q)
+            self.audit["all_q_fresh_factor_probe_covered"] = self._passed_factor_qs == set(range(self.nq))
+            self.audit["all_q_numeric_factors_strict_true_residual_passed"] = (
+                self.audit["all_q_fresh_factor_probe_covered"]
+            )
+            binding = self._input_bindings[q]
+            binding["caller_input_sha256_after"] = _sparse_content_sha256(self.source_matrices[q])
+            binding["factor_csr_sha256_after"] = _sparse_content_sha256(self.csr_matrices[q])
+            self.audit["factor_inputs"].append({
+                "build_index": build_index, "q": q,
+                "shape": list(self.csr_matrices[q].shape),
+                "nnz": int(self.csr_matrices[q].nnz),
+                **binding, "input_identity_unchanged": True,
+                "symbolic_estimate_bytes_from_INFOG16_17": int(estimate),
+                "native_memory_observation": native["memory_observation"],
+                "native_allocated_bytes_upper": native["INFOG_19_allocated_bytes_upper"],
+                "native_used_bytes_upper": native["INFOG_22_used_bytes_upper"],
+                "native_factor_entries": native["INFOG_9_corrected_entries_if_negative"],
+                "mumps_info_raw": numeric_info,
+                "process_tree_rss_bytes": None,
+                "factor_and_matrix_live_during_probe": True,
+            })
+            build_row["cache_miss_parent_seconds"] = float(
+                perf_counter() - cache_miss_started
+            )
+        except BaseException:
+            try:
+                self._evict_slot(reason=f"factor_build_or_probe_failed_q{q}")
+            except BaseException as cleanup_error:
+                build_row["cache_miss_parent_seconds"] = float(
+                    perf_counter() - cache_miss_started
+                )
+                cleanup_error.one_q_backend = self
+                raise
+            build_row["cache_miss_parent_seconds"] = float(
+                perf_counter() - cache_miss_started
+            )
+            raise
+
+    def _solve_probe(self, q: int, rhs: np.ndarray) -> None:
+        PETSc = self.PETSc
+        b = PETSc.Vec().createSeq(len(rhs), comm=PETSc.COMM_SELF)
+        x = b.duplicate()
+        try:
+            b.array[:] = rhs
+            category = "factor_probe_mat_solve_count"
+            self._record_mat_solve_invocation(category)
+            try:
+                self.factors[q].solve(b, x)
+            except BaseException:
+                self._record_mat_solve_failure(category)
+                raise
+            self._record_mat_solve_completion(category)
+            self._last_probe_solution = x.array.copy()
+        finally:
+            x.destroy()
+            b.destroy()
+
+    def _resource_sample(self, *, q: int, stage: str, reason: str) -> dict[str, Any]:
+        facts = {
+            "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+            "resource_sample_only": True,
+            "q": int(q),
+            "sample_stage": str(stage),
+            "reason": str(reason),
+            "factor_q_indices": sorted(self.factors),
+            "matrix_q_indices": sorted(self.matrices),
+            "factors_live_count_current": len(self.factors),
+            "matrices_live_count_current": len(self.matrices),
+            "current_work_arrays_already_live": True,
+        }
+        result = self.gate(f"one_q_resource_sample_v19_{stage}", facts)
+        return {**facts, **(dict(result) if isinstance(result, Mapping) else {"gate_return": result})}
+
+    def _evict_slot(self, *, reason: str) -> None:
+        if len(self.factors) > 1 or len(self.matrices) > 1:
+            raise RuntimeError("one-q slot inventory is already inconsistent")
+        resident_qs = sorted(set(self.factors).union(self.matrices))
+        if not resident_qs:
+            self._note_live_counts()
+            return
+        q = resident_qs[0]
+        sample_errors = []
+        try:
+            before_sample = self._resource_sample(q=q, stage="before_destroy", reason=reason)
+        except BaseException as exc:
+            sample_errors.append(exc)
+            before_sample = {
+                "sample_failed": True,
+                "sample_error_type": type(exc).__name__,
+                "sample_error_message": str(exc),
+            }
+        errors = []
+        for q in list(self.factors):
+            factor = self.factors[q]
+            try:
+                destroy = getattr(factor, "destroy", None)
+                if not callable(destroy):
+                    raise RuntimeError("MUMPS factor has no callable destroy method")
+                destroy()
+            except BaseException as exc:
+                self.audit["last_destroy_failure"] = {
+                    "kind": "factor", "q": q, "reason": reason,
+                    "type": type(exc).__name__, "message": str(exc), "still_live": True,
+                }
+                errors.append(exc)
+            else:
+                del self.factors[q]
+                self.audit["eviction_count"] += 1
+                del factor
+                gc.collect()
+        if not errors:
+            for q in list(self.matrices):
+                matrix = self.matrices[q]
+                try:
+                    matrix.destroy()
+                except BaseException as exc:
+                    self.audit["last_destroy_failure"] = {
+                        "kind": "matrix", "q": q, "reason": reason,
+                        "type": type(exc).__name__, "message": str(exc), "still_live": True,
+                    }
+                    errors.append(exc)
+                else:
+                    del self.matrices[q]
+                    del matrix
+                    gc.collect()
+        self._note_live_counts()
+        try:
+            after_sample = self._resource_sample(q=q, stage="after_destroy", reason=reason)
+        except BaseException as exc:
+            sample_errors.append(exc)
+            after_sample = {
+                "sample_failed": True,
+                "sample_error_type": type(exc).__name__,
+                "sample_error_message": str(exc),
+            }
+        succeeded = not errors and not self.factors and not self.matrices
+        if getattr(self, "_ever_had_slot", False):
+            self.event("task40_v19_one_q_slot_destroyed", {
+                "reason": str(reason),
+                "q": int(q),
+                "factor_live_count_after_destroy": len(self.factors),
+                "matrix_live_count_after_destroy": len(self.matrices),
+                "destroy_succeeded_before_slot_reuse": succeeded,
+                "resource_sample_before_destroy": before_sample,
+                "resource_sample_after_destroy": after_sample,
+            })
+        if errors:
+            kind = "factor" if self.factors else "PETSc input matrix"
+            raise RuntimeError(f"failed to destroy the live q {kind}; no new q may be created") from errors[0]
+        if sample_errors:
+            raise RuntimeError(
+                "q slot was destroyed, but required before/after resource sampling failed; "
+                "no next q may be created"
+            ) from sample_errors[0]
+        self._ever_had_slot = False
+
+    def _note_live_counts(self) -> None:
+        factor_count, matrix_count = len(self.factors), len(self.matrices)
+        self._max_simultaneous_factors = max(self._max_simultaneous_factors, factor_count)
+        self._max_simultaneous_matrices = max(self._max_simultaneous_matrices, matrix_count)
+        self.audit["factors_live_count_current"] = factor_count
+        self.audit["matrices_live_count_current"] = matrix_count
+        self.audit["max_simultaneous_factors"] = self._max_simultaneous_factors
+        self.audit["max_simultaneous_matrices"] = self._max_simultaneous_matrices
+        if factor_count > 1 or matrix_count > 1:
+            raise RuntimeError("ONE_Q_REFACTOR_V19 exceeded its single live matrix/factor slot")
+
+    def _create_slot(self, q: int) -> tuple[Any, Any, int, float]:
+        csr = self.csr_matrices[q]
+        PETSc = self.PETSc
+        conversion_started = perf_counter()
+        indptr = np.asarray(csr.indptr, dtype=PETSc.IntType).copy()
+        indices = np.asarray(csr.indices, dtype=PETSc.IntType).copy()
+        values = np.asarray(csr.data, dtype=PETSc.ScalarType).copy()
+        conversion_bytes = int(indptr.nbytes + indices.nbytes + values.nbytes)
+        matrix = PETSc.Mat().createAIJ(size=csr.shape, csr=(indptr, indices, values), comm=PETSc.COMM_SELF)
+        conversion_seconds = perf_counter() - conversion_started
+        self.matrices[q] = matrix
+        self._ever_had_slot = True
+        self._note_live_counts()
+        try:
+            matrix.assemble()
+            factor = self._factor_factory(matrix)
+            self.factors[q] = factor
+            self._note_live_counts()
+        finally:
+            del indptr, indices, values
+        return matrix, self.factors[q], conversion_bytes, float(conversion_seconds)
+
+    def _matrix_payload_and_conversion_bytes(self, q: int) -> tuple[int, int]:
+        csr = self.csr_matrices[q]
+        index_itemsize = np.dtype(self.PETSc.IntType).itemsize
+        value_itemsize = np.dtype(self.PETSc.ScalarType).itemsize
+        payload = int(
+            (csr.indptr.size + csr.indices.size) * index_itemsize
+            + csr.data.size * value_itemsize
+        )
+        return payload, payload
+
+    def _admission(self, q: int, stage: str, *, symbolic_guard: int = 0,
+                   factor_reserve: int = 0, matrix_payload: int = 0,
+                   conversion_workspace: int = 0) -> dict[str, Any]:
+        future = self._static_future_reserve()
+        components = {
+            "persistent_pending_transform_inverse_payload_bytes": int(future["future_inverse_payload_bytes"]),
+            "selected_maximum_co_resident_phase_bytes": int(future["selected_future_nonfactor_co_resident_phase_bytes"]),
+            "one_q_symbolic_guard_bytes": int(symbolic_guard),
+            "one_q_numeric_factor_reserve_bytes": int(factor_reserve),
+        }
+        facts = {
+            "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+            "q": int(q), "stage": str(stage),
+            "additional_payload_bytes": int(matrix_payload),
+            "workspace_bytes": int(conversion_workspace),
+            "future_reserve_components": components,
+            "future_co_resident_reserve_bytes": sum(components.values()),
+            "current_work_arrays_already_live": True,
+            "current_work_array_scope": (
+                "allocation callback samples current process-tree/cgroup RSS; during solve this "
+                "includes the folded RHS, native FE/port vectors and active PC state"
+            ),
+            "all_q_source_csr_retained": True,
+            "all_q_symbolic_covered_before_numeric": bool(self.audit.get("all_q_symbolic_covered")),
+            "numeric_factors_to_be_retained_simultaneously": 1,
+            **future,
+        }
+        self.event("task40_v19_one_q_admission_request", facts)
+        admitted = self.gate(f"one_q_{stage}_v19", facts)
+        return dict(admitted) if isinstance(admitted, Mapping) else {"gate_return": admitted}
+
+    def _static_future_reserve(self) -> dict[str, Any]:
+        rows = int(sum(self.row_counts))
+        krylov_count, ksp_count = 2 * (32 + 1), 6
+        future_krylov = rows * (krylov_count + ksp_count) * np.dtype(np.complex128).itemsize
+        output_rows = int(self.full_storage_rows or 0)
+        output_inventory = full_p6_pre_release_output_inventory(output_rows)
+        future_output = int(output_inventory["pre_release_peak_bytes"])
+        bank = self.transform_bank.future_inverse_reserve() if self.transform_bank is not None else {
+            "future_unique_inverse_payload_bytes": 0,
+            "future_single_inverse_workspace_bytes": 0,
+            "future_unique_inverse_template_count": 0,
+        }
+        legacy = {
+            str(label): borrower.future_legacy_inverse_reserve()
+            for label, borrower in self.inverse_borrowers.items()
+        }
+        inverse_payload = int(bank["future_unique_inverse_payload_bytes"]) + sum(
+            int(row["future_legacy_inverse_payload_bytes"]) for row in legacy.values()
+        )
+        inverse_workspace = max(
+            [int(bank["future_single_inverse_workspace_bytes"])]
+            + [int(row["future_legacy_single_inverse_workspace_bytes"]) for row in legacy.values()]
+        )
+        ksp_phase = future_krylov + inverse_workspace
+        recovery_phase = future_output + inverse_workspace
+        return {
+            "retained_vector_rows": rows,
+            "krylov_basis_vector_count": krylov_count,
+            "ksp_workspace_vector_count": ksp_count,
+            "future_krylov_and_vector_bytes": int(future_krylov),
+            "full_storage_rows_for_recovery": output_rows,
+            "future_full_p6_recovery_output_bytes": future_output,
+            "pre_release_recovery_output_inventory": {
+                **output_inventory,
+                "actual_target_and_reference_full_rows_match_required": self.target_reference_rows_match,
+            },
+            "future_inverse_payload_bytes": inverse_payload,
+            "future_inverse_single_operation_workspace_bytes": inverse_workspace,
+            "future_bank_inverse_reserve": bank,
+            "future_legacy_inverse_reserves_by_collection": legacy,
+            "selected_future_nonfactor_co_resident_phase": (
+                "KSP_with_inverse_workspace" if ksp_phase >= recovery_phase
+                else "pre_release_full_p6_recovery_output_with_inverse_workspace"
+            ),
+            "selected_future_nonfactor_co_resident_phase_bytes": int(max(ksp_phase, recovery_phase)),
+            "future_nonfactor_co_resident_reserve_bytes": int(
+                inverse_payload + max(ksp_phase, recovery_phase)
+            ),
+        }
+
+    def _symbolic_estimate(self, q: int, info: Mapping[str, Any]) -> int:
+        infog = info.get("infog")
+        if not isinstance(infog, Mapping):
+            raise RuntimeError(f"q={q} symbolic MUMPS INFOG is unavailable")
+        info16, info17 = infog.get("16"), infog.get("17")
+        if type(info16) is not int or type(info17) is not int or min(info16, info17) < 0 or info16 != info17:
+            raise RuntimeError(f"q={q} symbolic INFOG(16/17) estimates are unsupported")
+        return int(1_000_000 * (1 + max(info16, info17)))
+
+    def _require_one_q_coverage_gate(self) -> None:
+        required = set(range(self.nq))
+        if (
+            set(self._symbolic_estimates) != required
+            or set(self._symbolic_reports) != required
+            or not self.audit["all_q_source_csr_covered"]
+            or self.factors
+            or self.matrices
+        ):
+            raise RuntimeError("ONE_Q_REFACTOR_V19 symbolic coverage is incomplete or retains a slot")
+        self._admission(0, "symbolic_coverage_gate_v19", factor_reserve=max(self._symbolic_estimates.values()))
+        self.audit["all_q_symbolic_covered"] = True
+        self.event("task40_v19_one_q_symbolic_coverage_complete", {
+            "q_symbolic_estimates_bytes": {str(q): self._symbolic_estimates[q] for q in range(self.nq)},
+            "all_q_symbolic_covered": True,
+            "numeric_factors_to_be_retained_simultaneously": 1,
+            "all_q_source_csr_covered": True,
+            "all_symbolic_objects_destroyed_before_next_q": True,
+        })
+
+    def capabilities(self) -> dict[str, Any]:
+        return {
+            "factor_lifecycle_strategy": ONE_Q_REFACTOR_V19,
+            "input_q_coverage": sorted(self.csr_matrices),
+            "all_q_source_csr_covered": set(self.csr_matrices) == set(range(self.nq)),
+            "solve_q_coverage": sorted(self._solved_qs),
+            "all_q_solve_coverage": self._solved_qs == set(range(self.nq)),
+            "all_q_factors_simultaneously_resident": False,
+            "all_q_factors_retained_simultaneously": False,
+            "max_live_factors": self._max_simultaneous_factors,
+            "max_live_matrices": self._max_simultaneous_matrices,
+            "all_q_fresh_factor_probe_covered": self.audit["all_q_fresh_factor_probe_covered"],
+            "all_q_factors_reused": False,
+        }
+
+    def verify_all_input_identities(self, *, stage: str = "final") -> dict[int, bool]:
+        if self.destroyed:
+            raise RuntimeError("cannot verify q CSR identity after cleanup")
+        verified = {}
+        for q in range(self.nq):
+            binding = self._input_bindings[q]
+            if _sparse_content_sha256(self.source_matrices[q]) != binding["caller_input_sha256_before"]:
+                raise RuntimeError(f"q={q} caller sparse input changed during {stage}")
+            if _sparse_content_sha256(self.csr_matrices[q]) != binding["factor_csr_sha256_before"]:
+                raise RuntimeError(f"q={q} retained factor CSR changed during {stage}")
+            verified[q] = True
+        self.audit["final_input_identity_checks"] = {
+            "stage": str(stage), "q": sorted(verified),
+            "passed": len(verified) == self.nq,
+            "identity_scope": "all retained q CSR, including evicted and never-built factors",
+        }
+        return verified
+
+    def destroy(self) -> None:
+        if self.destroyed:
+            return
+        native_inventory = None
+        native_inventory_error = None
+        try:
+            native_inventory = self._resident_factor_evidence()
+        except Exception as exc:
+            native_inventory_error = {
+                "type": type(exc).__name__,
+                "message": str(exc),
+                "cleanup_continued": True,
+            }
+        self.audit["pre_destroy_live_inventory"] = {
+            "factor_q_indices": sorted(self.factors),
+            "matrix_q_indices": sorted(self.matrices),
+            "factor_live_count": len(self.factors),
+            "matrix_live_count": len(self.matrices),
+            "max_simultaneous_factors": self._max_simultaneous_factors,
+            "max_simultaneous_matrices": self._max_simultaneous_matrices,
+            "all_q_factors_live": False,
+            "current_native_factor_inventory_by_q": native_inventory,
+            "native_factor_inventory_error": native_inventory_error,
+            "destroy_not_yet_started": True,
+        }
+        self._evict_slot(reason="backend_close")
+        self.destroyed = True
+        self.source_matrices.clear()
+        self.csr_matrices.clear()
+        self._input_bindings.clear()
+        self.audit["factors_live_count_current"] = 0
+        self.audit["matrices_live_count_current"] = 0
+        self.audit["close_succeeded"] = True
 
     def __enter__(self):
         return self

@@ -168,7 +168,11 @@ def test_native_ny8_accepts_float_mesh_roundoff_and_rejects_shift_or_wrong_phase
 
 
 def test_native_ny8_combined_matrix_free_action_closes_and_rejects_wrong_local_action(monkeypatch):
-    component, _calls, _bank = _case_inputs(monkeypatch)
+    component, _calls, _bank = _case_inputs(monkeypatch, empty_port_q=4)
+    audit = component.audit()
+    assert audit["global_q_coverage"] == list(range(8))
+    assert audit["actual_q_port_counts"] == [2, 2, 2, 2, 0, 2, 2, 2]
+    assert audit["all_FE_q_covered"] is True
     rng = np.random.default_rng(20261008)
     vector = np.asarray(rng.normal(size=24) + 1j * rng.normal(size=24), dtype=np.complex128)
     identity = lambda values: np.asarray(values, dtype=np.complex128).copy()

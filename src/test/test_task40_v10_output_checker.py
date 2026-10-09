@@ -11,6 +11,8 @@ from src.runners.physical_diagnosis_worker import save_packet
 from src.runners.task40_v10_worker import _save_packet
 from src.runners.task40_v10_output_checker import (
     _verify_v18_packet_operator_qualification_binding,
+    _verify_v19_one_q_factor_lifecycle,
+    _verify_v19_run_lifecycle_binding,
     main as output_checker_main,
     verify_v10_dtn_port_mode_table,
     verify_v10_output_bundle,
@@ -23,6 +25,94 @@ from src.solvers.augmented_reference_correction import (
     select_v15_reference_pc_candidate,
     stable_euclidean_norm,
 )
+
+
+def _v19_one_q_lifecycle_audit(q_count=2, *, refactors_per_q=2):
+    builds = q_count * refactors_per_q
+    factor_inputs = []
+    factor_tests = []
+    build_history = []
+    for build_index in range(builds):
+        q = build_index % q_count
+        identity = hashlib.sha256(f"q{q}".encode()).hexdigest()
+        residual = 1.0e-15
+        factor_inputs.append({
+            "build_index": build_index,
+            "q": q,
+            "shape": [2, 2],
+            "nnz": 3,
+            "input_identity_unchanged": True,
+            "caller_input_sha256_before": identity,
+            "caller_input_sha256_after": identity,
+            "factor_csr_sha256_before": identity,
+            "factor_csr_sha256_after": identity,
+        })
+        factor_tests.append({
+            "q": q,
+            "relative_true_residual": residual,
+            "strict_limit": 1.0e-10,
+            "strict_passed": True,
+            "admission_passed": True,
+            "factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19",
+        })
+        build_history.append({
+            "build_index": build_index,
+            "q": q,
+            "factor_probe_mat_solve_count": 1,
+            "factor_probe_passed": True,
+            "probe_true_residual_relative": residual,
+        })
+    rhs_categories = (
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+        "startup_rhs_mat_solve_count",
+        "other_validation_rhs_mat_solve_count",
+    )
+    invoked = {name: 0 for name in (*rhs_categories, "factor_probe_mat_solve_count")}
+    invoked["startup_rhs_mat_solve_count"] = q_count
+    invoked["factor_probe_mat_solve_count"] = builds
+    completed = dict(invoked)
+    failed = {name: 0 for name in invoked}
+    rhs_completed = {name: 0 for name in rhs_categories}
+    rhs_completed["startup_rhs_mat_solve_count"] = q_count
+    q_solve_counts = {str(q): 1 for q in range(q_count)}
+    return {
+        "factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19",
+        "input_q_coverage": list(range(q_count)),
+        "all_q_source_csr_covered": True,
+        "all_q_symbolic_covered": True,
+        "all_q_fresh_factor_probe_covered": True,
+        "all_q_solve_coverage": True,
+        "solve_q_coverage": list(range(q_count)),
+        "all_q_factors_simultaneously_resident": False,
+        "all_q_factors_retained_simultaneously": False,
+        "all_q_factors_reused": False,
+        "all_q_numeric_factors_strict_true_residual_passed": True,
+        "max_simultaneous_factors": 1,
+        "max_simultaneous_matrices": 1,
+        "factors_live_count_current": 1,
+        "matrices_live_count_current": 1,
+        "factor_inputs": factor_inputs,
+        "factor_tests": factor_tests,
+        "factor_build_history": build_history,
+        "numeric_factor_build_count": builds,
+        "numeric_factor_build_attempt_count": builds,
+        "cache_miss_count": builds,
+        "q_rhs_solve_counts": q_solve_counts,
+        "q_rhs_mat_solve_invoked_counts": dict(q_solve_counts),
+        "mat_solve_invoked_count_by_category": invoked,
+        "mat_solve_completed_count_by_category": completed,
+        "mat_solve_failed_count_by_category": failed,
+        "rhs_mat_solve_count_by_category": rhs_completed,
+        "rhs_mat_solve_count": q_count,
+        "calls": q_count,
+        "factor_probe_mat_solve_count": builds,
+        "factor_probe_mat_solve_completed_count": builds,
+        "backend_mat_solve_invoked_total": builds + q_count,
+        "backend_mat_solve_completed_total": builds + q_count,
+        "backend_mat_solve_failed_total": 0,
+        "mat_solve_total_identity_passed": True,
+    }
 
 
 @pytest.mark.parametrize(
@@ -930,3 +1020,173 @@ def test_v17_output_bundle_rejects_missing_route_identity_fields(
 
     with pytest.raises(ValueError, match=error_match):
         verify_v10_output_bundle(output_path, expected_channel_count=340)
+
+
+def test_v19_output_checker_accepts_repeated_one_slot_refactors_and_disjoint_counts():
+    audit = _v19_one_q_lifecycle_audit()
+
+    result = _verify_v19_one_q_factor_lifecycle(audit, expected_q_count=2)
+
+    assert result["passed"] is True
+    assert result["factor_build_count"] == 4
+    assert result["input_q_coverage"] == [0, 1]
+    assert result["mat_solve_counters_disjoint_and_reconciled"] is True
+
+
+@pytest.mark.parametrize(
+    ("change", "error_match"),
+    (
+        (lambda audit: audit.update(input_q_coverage=[0]), "all-q input, symbolic, probe, or solve coverage"),
+        (lambda audit: audit.update(max_simultaneous_factors=2), "exceeds the one-slot lifecycle"),
+        (lambda audit: audit.update(backend_mat_solve_invoked_total=999), "disjoint MatSolve counters"),
+    ),
+)
+def test_v19_output_checker_rejects_missing_q_coverage_live_slot_or_counter_overlap(
+    change, error_match
+):
+    audit = _v19_one_q_lifecycle_audit()
+    change(audit)
+
+    with pytest.raises(ValueError, match=error_match):
+        _verify_v19_one_q_factor_lifecycle(audit, expected_q_count=2)
+
+
+def test_v19_output_checker_binds_exact_input_and_requires_lifecycle_audit(tmp_path):
+    input_path = tmp_path / "b0_p6_reference_v19_ny8.dat"
+    input_path.write_text("V19 input identity fixture\n", encoding="utf-8")
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    run_id = "task40extra_0p7nm_b0_p6_reference_v19_ny8"
+    profile = "task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+    source_sha = "b" * 40
+    physical_model_sha256 = "a" * 64
+    mode_sha256 = "c" * 64
+    factor_audit = _v19_one_q_lifecycle_audit(q_count=8)
+    comparison_cases = {}
+    case_rows = []
+    for case in ("generic_full_independent", "nonzero_all_mode_port_rhs"):
+        per_q = {
+            str(q): {
+                "old_rhs_norm": 1.0,
+                "current_rhs_norm": 1.0,
+                "old_true_residual_relative": 1.0e-12,
+                "current_true_residual_relative": 1.0e-12,
+                "old_strict_passed": True,
+                "current_strict_passed": True,
+            }
+            for q in range(8)
+        }
+        comparison_cases[case] = {
+            "schema": "task40extra.review_v19_saved_v18_startup_comparison.v1",
+            "case": case,
+            "status": "SAME_INPUT_COMPARISON_RECORDED",
+            "old_run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+            "old_source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+            "old_input_sha256": "d" * 64,
+            "current_source_sha": source_sha,
+            "current_input_sha256": input_sha,
+            "physical_model_sha256": physical_model_sha256,
+            "target_mode_sha256": mode_sha256,
+            "profile_identity": profile,
+            "old_candidate_summary_sha256": "e" * 64,
+            "old_run_manifest_sha256": "f" * 64,
+            "old_witness_json_sha256": "1" * 64,
+            "old_witness_npz_sha256": "2" * 64,
+            "fresh_q_matrix_sha256": {str(q): "3" * 64 for q in range(8)},
+            "same_independent_row_order": True,
+            "same_fe_rhs_storage": True,
+            "same_port_rhs": True,
+            "input_differences_are_run_id_and_factor_lifecycle_only": True,
+            "current_existing_regular_gate_passed": True,
+            "all_old_q_strict_passed": True,
+            "all_current_q_strict_passed": True,
+            "field_and_alpha_deltas_are_diagnostic_only": True,
+            "no_new_floating_delta_threshold_applied": True,
+            "full_solution_absolute_l2_delta": 0.0,
+            "full_solution_relative_to_v18_l2_delta": 0.0,
+            "returned_alpha_absolute_l2_delta": 0.0,
+            "returned_alpha_relative_to_v18_l2_delta": 0.0,
+            "old_original_fe_equation_relative_residual": 1.0e-12,
+            "current_original_fe_equation_relative_residual": 1.0e-12,
+            "per_q_true_residuals": per_q,
+        }
+        case_rows.append({
+            "name": case,
+            "passed": True,
+            "fe_rhs_nonzero_count": 10 if case == "generic_full_independent" else 0,
+            "port_rhs_nonzero_count": 0 if case == "generic_full_independent" else 532,
+            "v19_saved_v18_startup_comparison": comparison_cases[case],
+        })
+    worker_summary = {
+        "source_sha": source_sha,
+        "profile": profile,
+        "scientific_identity": {
+            "physical_model_sha256": physical_model_sha256,
+            "ordered_physical_mode_sha256": mode_sha256,
+        },
+        "factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19",
+        "reference_audit_snapshot": {"factor_audit_before_destroy": factor_audit},
+        "regular_inverse_checks": {
+            "passed": True,
+            "cases": case_rows,
+            "v19_saved_v18_startup_comparison": {
+                "required_cases": [
+                    "generic_full_independent",
+                    "nonzero_all_mode_port_rhs",
+                ],
+                "cases": comparison_cases,
+                "all_required_cases_compared": True,
+                "delta_gate": "none; current existing equation and q strict residual gates remain decisive",
+            },
+        },
+    }
+    manifest = {
+        "input_path": str(input_path),
+        "input_sha256": input_sha,
+        "solver": {"task40_factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19"},
+    }
+
+    result = _verify_v19_run_lifecycle_binding(
+        run_id=run_id,
+        profile_identity=profile,
+        stage="B0_CANDIDATE",
+        run_manifest=manifest,
+        worker_summary=worker_summary,
+        expected_input_sha256=input_sha,
+    )
+    assert result["passed"] is True
+    assert result["input_sha256"] == input_sha
+    assert result["saved_v18_startup_comparison"]["passed"] is True
+    assert result["saved_v18_startup_comparison"]["required_rhs_case_count"] == 2
+
+    with pytest.raises(ValueError, match="does not require the registered one-q"):
+        _verify_v19_run_lifecycle_binding(
+            run_id=run_id,
+            profile_identity=profile,
+            stage="B0_CANDIDATE",
+            run_manifest={**manifest, "solver": {}},
+            worker_summary=worker_summary,
+            expected_input_sha256=input_sha,
+        )
+
+    with pytest.raises(ValueError, match="missing its required one-q factor audit"):
+        _verify_v19_run_lifecycle_binding(
+            run_id=run_id,
+            profile_identity=profile,
+            stage="B0_CANDIDATE",
+            run_manifest=manifest,
+            worker_summary={"factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19"},
+            expected_input_sha256=input_sha,
+        )
+
+    incomplete_summary = json.loads(json.dumps(worker_summary))
+    del incomplete_summary["regular_inverse_checks"]["v19_saved_v18_startup_comparison"][
+        "cases"]["nonzero_all_mode_port_rhs"]
+    with pytest.raises(ValueError, match="omits both required saved V18 startup comparisons"):
+        _verify_v19_run_lifecycle_binding(
+            run_id=run_id,
+            profile_identity=profile,
+            stage="B0_CANDIDATE",
+            run_manifest=manifest,
+            worker_summary=incomplete_summary,
+            expected_input_sha256=input_sha,
+        )

@@ -350,6 +350,302 @@ def _regular_inverse_sample_label(case: str, candidate_label: str) -> str:
     return f"v13_regular_inverse_{case}_{candidate_label}"
 
 
+def _v19_factor_capabilities(inverse: Any) -> Mapping[str, Any] | None:
+    factors = getattr(inverse, "factors", None)
+    if getattr(factors, "factor_lifecycle_strategy", None) != "ONE_Q_REFACTOR_V19":
+        return None
+    capabilities = getattr(factors, "capabilities", None)
+    if not callable(capabilities):
+        raise TypeError("V19 factor backend must expose its explicit lifecycle capability")
+    return capabilities()
+
+
+def _v19_sha256_path(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _v19_prepare_saved_v18_startup_reference(
+    reference: Mapping[str, Any], profile: Any
+) -> dict[str, Any]:
+    """Bind the two existing V18 startup witnesses before comparing V19 outputs."""
+
+    reuse = reference.get("complete_operator_qualification_reuse")
+    if not isinstance(reuse, Mapping) or reuse.get("status") != (
+        "REUSED_AFTER_FRESH_Q_HASH_AND_INDEPENDENT_CHECKER_PASS"
+    ):
+        raise ValueError("V19 startup comparison requires the qualified V18 Ny8 reuse receipt")
+    if (
+        reuse.get("qualified_source_sha") != "3b9457e57ceb15f21306a35baac07f42036840b1"
+        or reuse.get("qualified_status") != "PASS"
+        or reuse.get("input_differences_are_run_id_and_factor_lifecycle_only") is not True
+        or reuse.get("all_eight_fresh_q_hashes_match") is not True
+    ):
+        raise ValueError("V19 startup comparison is not bound to the passed V18 Ny8 attempt")
+    q_hashes = reuse.get("fresh_q_matrix_sha256")
+    expected_qs = {str(q) for q in range(int(profile.q_count))}
+    if not isinstance(q_hashes, Mapping) or set(q_hashes) != expected_qs:
+        raise ValueError("V19 startup comparison lacks the exact all-q CSR identity map")
+
+    repo_root = Path(__file__).resolve().parents[2]
+    run_root = Path(str(reuse.get("qualified_run_root", ""))).resolve(strict=True)
+    if not run_root.is_relative_to(repo_root):
+        raise ValueError("qualified V18 startup evidence must remain inside the repository")
+    summary_path = Path(str(reuse.get("qualified_candidate_summary_path", ""))).resolve(strict=True)
+    manifest_path = Path(str(reuse.get("qualified_run_manifest_path", ""))).resolve(strict=True)
+    if (
+        summary_path.parent != run_root
+        or summary_path.name != "task40_v10_p6_candidate_summary.json"
+        or manifest_path != run_root / "run_manifest.json"
+    ):
+        raise ValueError("V18 candidate summary and run manifest are not from the qualified run root")
+    summary_sha256 = _v19_sha256_path(summary_path)
+    manifest_sha256 = _v19_sha256_path(manifest_path)
+    if (
+        summary_sha256 != reuse.get("qualified_candidate_summary_sha256")
+        or manifest_sha256 != reuse.get("qualified_run_manifest_sha256")
+    ):
+        raise ValueError("V18 startup comparison run identities differ from the qualified hashes")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    old_input_path = run_root / "input_original.dat"
+    old_input_sha256 = _v19_sha256_path(old_input_path)
+    if (
+        manifest.get("run_id") != "task40extra_0p7nm_b0_p6_reference_v18_ny8"
+        or manifest.get("source_sha") != reuse.get("qualified_source_sha")
+        or manifest.get("physical_model_sha256") != reuse.get("physical_model_sha256")
+        or manifest.get("input_sha256") != old_input_sha256
+    ):
+        raise ValueError("V18 saved startup witness does not bind its original run/input identity")
+    if (
+        int(profile.q_count) != 8
+        or reuse.get("profile_identity") != profile.name
+        or not isinstance(reuse.get("input_sha256"), str)
+        or len(reuse["input_sha256"]) != 64
+    ):
+        raise ValueError("V19 startup comparison is outside the registered Ny8 input identity")
+    return {
+        "run_root": run_root,
+        "old_source_sha": str(manifest["source_sha"]),
+        "old_input_sha256": old_input_sha256,
+        "current_input_sha256": str(reuse["input_sha256"]),
+        "physical_model_sha256": str(manifest["physical_model_sha256"]),
+        "candidate_summary_sha256": summary_sha256,
+        "run_manifest_sha256": manifest_sha256,
+        "fresh_q_matrix_sha256": dict(q_hashes),
+        "current_source_sha": reuse.get("current_source_sha"),
+        "target_mode_sha256": reuse.get("target_mode_sha256"),
+        "profile_identity": profile.name,
+    }
+
+
+def _v19_compare_saved_v18_startup_case(
+    prepared: Mapping[str, Any],
+    *,
+    case: str,
+    profile: Any,
+    independent_rows: Any,
+    current_rhs_storage: Any,
+    current_port_rhs: Any,
+    current_solution_storage: Any,
+    current_alpha: Any,
+    current_q_rows: Any,
+    current_regular_residual: float,
+    current_regular_gate_passed: bool,
+    allocation_gate: Any,
+) -> dict[str, Any]:
+    """Read back an existing V18 witness and record the V19 same-input deltas."""
+
+    if case not in {"generic_full_independent", "nonzero_all_mode_port_rhs"}:
+        raise ValueError(f"unsupported V19 saved V18 comparison case: {case!r}")
+    run_root = Path(prepared["run_root"])
+    stem = f"v10_regular_inverse_{case}"
+    witness_json_path = (run_root / f"{stem}.json").resolve(strict=True)
+    witness_npz_path = (run_root / f"{stem}.npz").resolve(strict=True)
+    if not witness_json_path.is_relative_to(run_root) or not witness_npz_path.is_relative_to(run_root):
+        raise ValueError("V18 startup witness paths escaped their qualified run root")
+    witness_json_bytes = witness_json_path.read_bytes()
+    witness_json_sha256 = hashlib.sha256(witness_json_bytes).hexdigest()
+    witness = json.loads(witness_json_bytes)
+    witness_npz_sha256 = _v19_sha256_path(witness_npz_path)
+    archive_facts = witness.get("arrays")
+    if (
+        witness.get("schema") != "task40extra.review_v15_regular_inverse_full_witness.v1"
+        or witness.get("case") != case
+        or witness.get("profile_identity") != profile.name
+        or witness.get("passed") is not True
+        or witness.get("reference_pc_strategy") != "NATIVE_AUGMENTED_RESIDUAL_QUALIFIED_V15"
+        or witness.get("full_storage_rows") != len(current_rhs_storage)
+        or not isinstance(archive_facts, Mapping)
+        or Path(str(archive_facts.get("path", ""))).resolve() != witness_npz_path
+        or archive_facts.get("sha256") != witness_npz_sha256
+    ):
+        raise ValueError("V18 saved startup witness failed its schema, identity, or NPZ hash check")
+
+    old_full_rows = np.asarray(independent_rows, dtype=np.int64)
+    current_rhs = np.asarray(current_rhs_storage, dtype=np.complex128)
+    current_ports = np.asarray(current_port_rhs, dtype=np.complex128)
+    current_solution = np.asarray(current_solution_storage, dtype=np.complex128)
+    current_amplitudes = np.asarray(current_alpha, dtype=np.complex128)
+    allocation_gate(
+        "task40_v19_saved_v18_startup_witness_readback",
+        {
+            "additional_payload_bytes": int(
+                3 * current_rhs.size * np.dtype(np.complex128).itemsize
+                + old_full_rows.size * np.dtype(np.int64).itemsize
+                + 3 * current_ports.size * np.dtype(np.complex128).itemsize
+                + (1 << 20)
+            ),
+            "workspace_bytes": 0,
+            "qualified_v18_witness_npz_bytes": int(witness_npz_path.stat().st_size),
+            "loads_only_full_solution_rhs_alpha_and_row_index_arrays": True,
+        },
+    )
+
+    def read_array(archive: Any, field: str, dtype: Any, shape: tuple[int, ...]) -> np.ndarray:
+        facts = witness.get(field)
+        if not isinstance(facts, Mapping):
+            raise ValueError(f"V18 witness is missing array reference {field!r}")
+        key = facts.get("array_key")
+        if not isinstance(key, str) or key not in archive.files:
+            raise ValueError(f"V18 witness array reference {field!r} is not in its NPZ")
+        value = np.asarray(archive[key])
+        if value.dtype != np.dtype(dtype) or value.shape != shape:
+            raise ValueError(f"V18 witness array {field!r} has a mismatched dtype or shape")
+        if facts.get("dtype") != value.dtype.name or facts.get("shape") != list(value.shape):
+            raise ValueError(f"V18 witness array metadata differs for {field!r}")
+        if not np.isfinite(value).all():
+            raise ValueError(f"V18 witness array {field!r} contains a non-finite value")
+        return value
+
+    with np.load(witness_npz_path, allow_pickle=False) as archive:
+        old_independent = read_array(
+            archive, "independent_storage_rows", np.int64, old_full_rows.shape
+        )
+        old_rhs_storage = read_array(
+            archive, "physical_rhs_storage", np.complex128, current_rhs.shape
+        )
+        old_port_rhs = read_array(
+            archive, "port_rhs", np.complex128, current_ports.shape
+        )
+        old_solution = read_array(
+            archive, "full_solution_storage", np.complex128, current_solution.shape
+        )
+        old_alpha = read_array(
+            archive, "returned_alpha", np.complex128, current_amplitudes.shape
+        )
+        if (
+            not np.array_equal(old_independent, old_full_rows)
+            or not np.array_equal(old_rhs_storage, current_rhs)
+            or not np.array_equal(old_port_rhs, current_ports)
+        ):
+            raise ValueError("V19 startup comparison does not reproduce the exact V18 FE/port RHS")
+        field_difference = current_solution - old_solution
+        alpha_difference = current_amplitudes - old_alpha
+        field_delta_norm = float(np.linalg.norm(field_difference))
+        alpha_delta_norm = float(np.linalg.norm(alpha_difference))
+        old_field_norm = float(np.linalg.norm(old_solution))
+        old_alpha_norm = float(np.linalg.norm(old_alpha))
+
+        def reference_relative(delta: float, reference_norm: float) -> float:
+            if reference_norm > 0.0:
+                return delta / reference_norm
+            return 0.0 if delta == 0.0 else float("inf")
+
+        old_q_rows = witness.get("q_true_residuals")
+        if not isinstance(old_q_rows, list) or len(old_q_rows) != int(profile.q_count):
+            raise ValueError("V18 saved startup witness omits its complete q residual list")
+        current_q_rows = list(current_q_rows)
+
+        def by_q(rows: list[Mapping[str, Any]], label: str) -> dict[int, Mapping[str, Any]]:
+            result: dict[int, Mapping[str, Any]] = {}
+            for row in rows:
+                if not isinstance(row, Mapping) or type(row.get("q")) is not int:
+                    raise ValueError(f"{label} q residual rows are malformed")
+                q = int(row["q"])
+                if q in result:
+                    raise ValueError(f"{label} q residual rows contain duplicate q={q}")
+                result[q] = row
+            if set(result) != set(range(int(profile.q_count))):
+                raise ValueError(f"{label} q residual rows do not cover every Ny8 phase")
+            return result
+
+        old_by_q = by_q(old_q_rows, "V18")
+        current_by_q = by_q(current_q_rows, "V19")
+        per_q = {
+            str(q): {
+                "old_rhs_norm": float(old_by_q[q]["rhs_norm"]),
+                "current_rhs_norm": float(current_by_q[q]["rhs_norm"]),
+                "old_true_residual_relative": float(
+                    old_by_q[q]["true_residual_relative"]
+                ),
+                "current_true_residual_relative": float(
+                    current_by_q[q]["true_residual_relative"]
+                ),
+                "old_strict_passed": old_by_q[q].get("strict_passed"),
+                "current_strict_passed": current_by_q[q].get("strict_passed"),
+            }
+            for q in range(int(profile.q_count))
+        }
+        rhs_digest = lambda value: hashlib.sha256(
+            np.ascontiguousarray(value).view(np.uint8)
+        ).hexdigest()
+        return {
+            "schema": "task40extra.review_v19_saved_v18_startup_comparison.v1",
+            "case": case,
+            "status": "SAME_INPUT_COMPARISON_RECORDED",
+            "old_run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+            "old_source_sha": prepared["old_source_sha"],
+            "old_input_sha256": prepared["old_input_sha256"],
+            "current_source_sha": prepared["current_source_sha"],
+            "current_input_sha256": prepared["current_input_sha256"],
+            "physical_model_sha256": prepared["physical_model_sha256"],
+            "target_mode_sha256": prepared["target_mode_sha256"],
+            "profile_identity": prepared["profile_identity"],
+            "old_candidate_summary_sha256": prepared["candidate_summary_sha256"],
+            "old_run_manifest_sha256": prepared["run_manifest_sha256"],
+            "old_witness_json_path": str(witness_json_path),
+            "old_witness_json_sha256": witness_json_sha256,
+            "old_witness_npz_path": str(witness_npz_path),
+            "old_witness_npz_sha256": witness_npz_sha256,
+            "fresh_q_matrix_sha256": dict(prepared["fresh_q_matrix_sha256"]),
+            "same_independent_row_order": True,
+            "same_fe_rhs_storage": True,
+            "same_port_rhs": True,
+            "input_differences_are_run_id_and_factor_lifecycle_only": True,
+            "old_fe_rhs_storage_sha256": rhs_digest(old_rhs_storage),
+            "current_fe_rhs_storage_sha256": rhs_digest(current_rhs),
+            "old_port_rhs_sha256": rhs_digest(old_port_rhs),
+            "current_port_rhs_sha256": rhs_digest(current_ports),
+            "full_solution_absolute_l2_delta": field_delta_norm,
+            "full_solution_relative_to_v18_l2_delta": reference_relative(
+                field_delta_norm, old_field_norm
+            ),
+            "returned_alpha_absolute_l2_delta": alpha_delta_norm,
+            "returned_alpha_relative_to_v18_l2_delta": reference_relative(
+                alpha_delta_norm, old_alpha_norm
+            ),
+            "old_original_fe_equation_relative_residual": float(
+                witness["original_regular_equation_relative_residual"]
+            ),
+            "current_original_fe_equation_relative_residual": float(
+                current_regular_residual
+            ),
+            "current_existing_regular_gate_passed": bool(current_regular_gate_passed),
+            "per_q_true_residuals": per_q,
+            "all_old_q_strict_passed": all(
+                row.get("strict_passed") is True for row in old_by_q.values()
+            ),
+            "all_current_q_strict_passed": all(
+                row.get("strict_passed") is True for row in current_by_q.values()
+            ),
+            "field_and_alpha_deltas_are_diagnostic_only": True,
+            "no_new_floating_delta_threshold_applied": True,
+        }
+
+
 def _append_jsonl(path: Path, row: Mapping[str, Any]) -> None:
     from .physical_p4_schur_v14 import _append_jsonl as append
 
@@ -1610,12 +1906,25 @@ def _verify_regular_inverse(
             cases = tuple(row for row in cases if row[0] == _case_filter)
             if len(cases) != 1:
                 raise ValueError(f"regular inverse witness case not uniquely found: {_case_filter!r}")
+    v19_saved_v18_reference = None
+    if (
+        _candidate_state is None
+        and getattr(inverse.factors, "factor_lifecycle_strategy", None)
+        == "ONE_Q_REFACTOR_V19"
+    ):
+        v19_saved_v18_reference = _v19_prepare_saved_v18_startup_reference(
+            reference, profile
+        )
     records = []
     for name, fe_rhs, g_rhs, full_rhs_values in cases:
         sample_label = _regular_inverse_sample_label(name, _candidate_label)
         runtime.sample(f"{sample_label}_before")
         if _candidate_state is None:
-            solution_values, alpha = inverse.apply_augmented(fe_rhs, port_rhs=g_rhs)
+            solution_values, alpha = inverse.apply_augmented(
+                fe_rhs,
+                port_rhs=g_rhs,
+                rhs_category="startup_rhs_mat_solve_count",
+            )
         else:
             solution_values = np.asarray(_candidate_state[0], dtype=np.complex128)
             alpha = np.asarray(_candidate_state[1], dtype=np.complex128)
@@ -2043,6 +2352,25 @@ def _verify_regular_inverse(
                     "frozen_denominators": frozen_scales,
                 }
                 v15_selection = None
+            v19_saved_v18_comparison = None
+            if (
+                v19_saved_v18_reference is not None
+                and name in {"generic_full_independent", "nonzero_all_mode_port_rhs"}
+            ):
+                v19_saved_v18_comparison = _v19_compare_saved_v18_startup_case(
+                    v19_saved_v18_reference,
+                    case=name,
+                    profile=profile,
+                    independent_rows=independent,
+                    current_rhs_storage=expected_storage,
+                    current_port_rhs=g_rhs,
+                    current_solution_storage=np.asarray(solution.array_r),
+                    current_alpha=alpha,
+                    current_q_rows=q_rows,
+                    current_regular_residual=equation_relative,
+                    current_regular_gate_passed=passed,
+                    allocation_gate=allocation_gate,
+                )
             builder_action_storage = np.zeros(layout.full_rows, dtype=np.complex128)
             builder_action_storage[independent] = sector_action
             packet = _save_packet(
@@ -2058,6 +2386,7 @@ def _verify_regular_inverse(
                     "reference_pc_strategy": reference_pc_strategy,
                     "case": name,
                     "passed": passed,
+                    "v19_saved_v18_startup_comparison": v19_saved_v18_comparison,
                     "legacy_gate_passed": passed,
                     "full_storage_rows": int(layout.full_rows),
                     "independent_storage_rows": independent.copy(),
@@ -2228,6 +2557,7 @@ def _verify_regular_inverse(
                 "fe_rhs_norm": float(np.linalg.norm(fe_rhs)),
                 "port_rhs_nonzero_count": int(np.count_nonzero(g_rhs)),
                 "port_rhs_norm": float(np.linalg.norm(g_rhs)),
+                "v19_saved_v18_startup_comparison": v19_saved_v18_comparison,
                 "original_regular_equation_relative_residual": equation_relative,
                 "original_regular_equation_limit": _REFERENCE_RESIDUAL_LIMIT,
                 "sector_native_action_consistency_relative": action_relative,
@@ -2340,7 +2670,9 @@ def _verify_regular_inverse(
                     def raw_v15_nonrecursive_inverse(fe_error, port_error):
                         calls_before = int(inverse.factors.calls)
                         delta_fe, delta_port = inverse.apply_augmented(
-                            fe_error, port_rhs=port_error
+                            fe_error,
+                            port_rhs=port_error,
+                            rhs_category="startup_rhs_mat_solve_count",
                         )
                         calls_after = int(inverse.factors.calls)
                         correction_rows = [
@@ -2364,6 +2696,7 @@ def _verify_regular_inverse(
                         allocation_gate=allocation_gate,
                         require_verified_solve_counter=True,
                         expected_q_count=profile.q_count,
+                        factor_capabilities=_v19_factor_capabilities(inverse),
                     )
                     correction_packet = _save_packet(
                         runtime,
@@ -2482,7 +2815,9 @@ def _verify_regular_inverse(
                     def raw_nonrecursive_inverse(fe_error, port_error):
                         calls_before = int(inverse.factors.calls)
                         delta_fe, delta_port = inverse.apply_augmented(
-                            fe_error, port_rhs=port_error
+                            fe_error,
+                            port_rhs=port_error,
+                            rhs_category="startup_rhs_mat_solve_count",
                         )
                         calls_after = int(inverse.factors.calls)
                         solve_audit = inverse.last_solve_audit
@@ -2506,6 +2841,7 @@ def _verify_regular_inverse(
                         raw_inverse=raw_nonrecursive_inverse,
                         allocation_gate=allocation_gate,
                         require_verified_solve_counter=True,
+                        factor_capabilities=_v19_factor_capabilities(inverse),
                     )
                     correction_packet = _save_packet(
                         runtime,
@@ -2686,6 +3022,11 @@ def _verify_regular_inverse(
             solution.destroy()
         runtime.sample(f"v10_regular_inverse_{name}_after")
 
+    v19_comparison_cases = {
+        str(row["name"]): row["v19_saved_v18_startup_comparison"]
+        for row in records
+        if row.get("v19_saved_v18_startup_comparison") is not None
+    }
     return {
         "schema": _regular_inverse_checks_schema(profile, reference_pc_strategy),
         "profile": profile.identity(),
@@ -2708,6 +3049,20 @@ def _verify_regular_inverse(
         ),
         "factor_probe_true_residual_limit": float(inverse.factors.factor_probe_limit),
         "physical_rhs_facts": dict(physical_rhs_facts),
+        "v19_saved_v18_startup_comparison": (
+            {
+                "required_cases": [
+                    "generic_full_independent",
+                    "nonzero_all_mode_port_rhs",
+                ],
+                "cases": v19_comparison_cases,
+                "all_required_cases_compared": set(v19_comparison_cases)
+                == {"generic_full_independent", "nonzero_all_mode_port_rhs"},
+                "delta_gate": "none; current existing equation and q strict residual gates remain decisive",
+            }
+            if v19_saved_v18_reference is not None
+            else None
+        ),
         "passed": len(records) == 4 and all(row["passed"] for row in records),
     }
 
@@ -3227,7 +3582,9 @@ class _P6ReferencePreconditioner:
         factor_calls_before = int(self.inverse.factors.calls)
         try:
             initial_fe, initial_alpha = self.inverse.apply_augmented(
-                fe_rhs, port_rhs=port_rhs
+                fe_rhs,
+                port_rhs=port_rhs,
+                rhs_category="pc_initial_rhs_mat_solve_count",
             )
         except Exception as exc:
             self._record_v15_pc_failure(
@@ -3290,7 +3647,9 @@ class _P6ReferencePreconditioner:
             def raw_nonrecursive_inverse(fe_error, port_error):
                 calls_before = int(self.inverse.factors.calls)
                 delta_fe, delta_port = self.inverse.apply_augmented(
-                    fe_error, port_rhs=port_error
+                    fe_error,
+                    port_rhs=port_error,
+                    rhs_category="pc_augmentation_rhs_mat_solve_count",
                 )
                 calls_after = int(self.inverse.factors.calls)
                 rows = [
@@ -3315,6 +3674,7 @@ class _P6ReferencePreconditioner:
                     allocation_gate=self.allocation_gate,
                     require_verified_solve_counter=True,
                     expected_q_count=self.profile.q_count,
+                    factor_capabilities=_v19_factor_capabilities(self.inverse),
                 )
             except Exception as exc:
                 self._record_v15_pc_failure(
@@ -3546,7 +3906,9 @@ class _P6ReferencePreconditioner:
         ).copy()
         factor_calls_before = int(self.inverse.factors.calls)
         initial_fe, initial_alpha = self.inverse.apply_augmented(
-            fe_rhs, port_rhs=port_rhs
+            fe_rhs,
+            port_rhs=port_rhs,
+            rhs_category="pc_initial_rhs_mat_solve_count",
         )
         factor_calls_after = int(self.inverse.factors.calls)
         if factor_calls_after - factor_calls_before != self.profile.q_count:
@@ -3630,7 +3992,9 @@ class _P6ReferencePreconditioner:
             def raw_nonrecursive_inverse(fe_error, port_error):
                 calls_before = int(self.inverse.factors.calls)
                 delta_fe, delta_port = self.inverse.apply_augmented(
-                    fe_error, port_rhs=port_error
+                    fe_error,
+                    port_rhs=port_error,
+                    rhs_category="pc_augmentation_rhs_mat_solve_count",
                 )
                 calls_after = int(self.inverse.factors.calls)
                 q_rows = [
@@ -3653,6 +4017,7 @@ class _P6ReferencePreconditioner:
                 raw_inverse=raw_nonrecursive_inverse,
                 allocation_gate=self.allocation_gate,
                 require_verified_solve_counter=True,
+                factor_capabilities=_v19_factor_capabilities(self.inverse),
             )
             correction_audit = dict(correction.audit)
             correction_q_rows = list(correction_audit["q_true_residuals"])
@@ -3886,7 +4251,9 @@ class _P6ReferencePreconditioner:
         injected = self.target_action.inject_trace_port(source_values)
         port_rhs = source_values[self.target_condensed.active_rows :].copy()
         solution_values, alpha = self.inverse.apply_augmented(
-            injected[self.independent], port_rhs=port_rhs
+            injected[self.independent],
+            port_rhs=port_rhs,
+            rhs_category="pc_initial_rhs_mat_solve_count",
         )
         reference_solution = self.PETSc.Vec().createSeq(
             self.layout.full_rows, comm=self.PETSc.COMM_SELF
@@ -4019,6 +4386,8 @@ def _candidate_contract(
         TASK40_GX560_V17_RUN_ID,
         TASK40_E1_V17_RUN_ID,
         TASK40_B0_P6_V18_Y8_RUN_ID,
+        TASK40_E1_V19_RUN_ID,
+        TASK40_B0_P6_V19_Y8_RUN_ID,
         TASK40_Q_ASSEMBLY_BOUNDED_V16,
         TASK40_Q_ASSEMBLY_ROW_TILE_V17,
         TASK40_GX784_V11_P6_RUN_ID,
@@ -4027,6 +4396,8 @@ def _candidate_contract(
         TASK40_V13_REFERENCE_PC_STRATEGY,
         TASK40_V15_REFERENCE_PC_STRATEGY,
         TASK40_STRICT_REFERENCE_PC_STRATEGY,
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
     from src.io.physical_intermediate_profile import (
@@ -4058,8 +4429,14 @@ def _candidate_contract(
     q_assembly_strategy = str(
         solver.get("task40_q_assembly_strategy", "LEGACY_GLOBAL_CSR_SUM")
     )
+    factor_lifecycle_strategy = str(
+        solver.get(
+            "task40_factor_lifecycle_strategy", TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        )
+    )
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+    is_v19 = factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
     is_v16 = q_assembly_strategy == TASK40_Q_ASSEMBLY_BOUNDED_V16
     is_v17 = q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
@@ -4122,8 +4499,17 @@ def _candidate_contract(
         if profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
         else None
     )
+    v19_identity = (
+        (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL", 16.0)
+        if profile_identity == TASK40_V17_P6_E1_PROFILE
+        else (TASK40_B0_P6_V19_Y8_RUN_ID, "B0_CANDIDATE", 16.0)
+        if profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
+        else None
+    )
     expected_identity = (
-        v18_identity
+        v19_identity
+        if is_v19
+        else v18_identity
         if v18_identity is not None
         else v17_identity
         if is_v17
@@ -4148,7 +4534,7 @@ def _candidate_contract(
         "reference_pc_strategy": reference_pc_strategy
         == (
             TASK40_V15_REFERENCE_PC_STRATEGY
-            if is_v15 or is_v18
+            if is_v15 or is_v18 or is_v19
             else
             TASK40_V13_REFERENCE_PC_STRATEGY
             if is_v13
@@ -4156,6 +4542,22 @@ def _candidate_contract(
         ),
         "q_assembly_strategy": task40_q_assembly_strategy_is_allowed(
             reference_pc_strategy, q_assembly_strategy
+        ),
+        "factor_lifecycle_strategy": (
+            factor_lifecycle_strategy == TASK40_V19_FACTOR_LIFECYCLE_STRATEGY
+            if is_v19
+            else factor_lifecycle_strategy == TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        ),
+        "v19_exact_scope": (
+            not is_v19
+            or (
+                profile_identity in {
+                    TASK40_V17_P6_E1_PROFILE,
+                    TASK40_V18_P6_B0_Y8_PROFILE,
+                }
+                and q_assembly_strategy == TASK40_Q_ASSEMBLY_ROW_TILE_V17
+                and reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+            )
         ),
         "comparison_group": resolved.get("comparison_group") == TASK40_COMPARISON_GROUP,
         "profile": solver.get("preconditioner") == profile_identity,
@@ -4191,7 +4593,9 @@ def _candidate_contract(
         raise ValueError(f"Task40 p6 reference worker contract failed: {failed}")
     return {
         "schema": (
-            "task40extra.review_v18_ny8_p6_reference_worker_contract.v1"
+            "task40extra.review_v19_one_q_p6_reference_worker_contract.v1"
+            if is_v19
+            else "task40extra.review_v18_ny8_p6_reference_worker_contract.v1"
             if v18_identity is not None
             else
             "task40extra.review_v17_row_tile_p6_reference_worker_contract.v1"
@@ -4216,6 +4620,7 @@ def _candidate_contract(
         "effective_wall_clock_authority": "existing_V11_fixed_deadline_and_cumulative_remaining",
         "campaign_writer": "subreaper_watchdog_only",
         "worker_accounting_access": "read_only_projection",
+        "factor_lifecycle_strategy": factor_lifecycle_strategy,
     }
 
 
@@ -4242,6 +4647,7 @@ def run_task40_v10_p6_reference_worker(
         TASK40_V15_P6_E1_PROFILE,
         TASK40_V16_P6_GX560_PROFILE,
         TASK40_V16_P6_E1_PROFILE,
+        TASK40_V17_P6_E1_PROFILE,
         TASK40_V18_P6_B0_Y8_PROFILE,
         profile_facts,
     )
@@ -4289,6 +4695,10 @@ def run_task40_v10_p6_reference_worker(
     from src.geometry.task40_nonseparable_plan import (
         TASK40_V13_REFERENCE_PC_STRATEGY,
         TASK40_V15_REFERENCE_PC_STRATEGY,
+        TASK40_B0_P6_V19_Y8_RUN_ID,
+        TASK40_E1_V19_RUN_ID,
+        TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT,
+        TASK40_V19_FACTOR_LIFECYCLE_STRATEGY,
         task40_q_assembly_strategy_is_allowed,
     )
     from src.solvers.task40_v10_p6_periodic_profile import (
@@ -4298,7 +4708,11 @@ def run_task40_v10_p6_reference_worker(
         TASK40_Q_ASSEMBLY_ROW_TILE_V17,
     )
     from src.solvers.physical_retained_fgmres import run_retained_fgmres
-    from src.solvers.task40_v10_p6_mumps import full_p6_pre_release_output_inventory
+    from src.solvers.task40_v10_p6_mumps import (
+        ALL_Q_RESIDENT,
+        ONE_Q_REFACTOR_V19,
+        full_p6_pre_release_output_inventory,
+    )
     from src.geometry.mesh_builder_3d import _stage4_axis_plan
 
     directory = Path(run_directory).resolve()
@@ -4311,6 +4725,14 @@ def run_task40_v10_p6_reference_worker(
         raise ValueError(f"unsupported Task40 reference-PC strategy: {reference_pc_strategy!r}")
     is_v13 = reference_pc_strategy == TASK40_V13_REFERENCE_PC_STRATEGY
     is_v15 = reference_pc_strategy == TASK40_V15_REFERENCE_PC_STRATEGY
+    factor_lifecycle_strategy = str(
+        resolved_payload.get("solver", {}).get(
+            "task40_factor_lifecycle_strategy", TASK40_FACTOR_LIFECYCLE_ALL_Q_RESIDENT
+        )
+    )
+    if factor_lifecycle_strategy not in {ALL_Q_RESIDENT, ONE_Q_REFACTOR_V19}:
+        raise ValueError(f"unsupported Task40 factor lifecycle strategy: {factor_lifecycle_strategy!r}")
+    is_v19 = factor_lifecycle_strategy == ONE_Q_REFACTOR_V19
     q_assembly_strategy = str(
         resolved_payload.get("solver", {}).get(
             "task40_q_assembly_strategy", Q_ASSEMBLY_LEGACY
@@ -4344,6 +4766,19 @@ def run_task40_v10_p6_reference_worker(
     ):
         raise ValueError(f"unsupported Task40 p6 reference profile: {profile_identity}")
     is_v18 = profile_identity == TASK40_V18_P6_B0_Y8_PROFILE
+    if is_v19:
+        expected_v19 = {
+            TASK40_V17_P6_E1_PROFILE: (TASK40_E1_V19_RUN_ID, "Q4_ORIGINAL"),
+            TASK40_V18_P6_B0_Y8_PROFILE: (TASK40_B0_P6_V19_Y8_RUN_ID, "B0_CANDIDATE"),
+        }.get(profile_identity)
+        if (
+            expected_v19 is None
+            or resolved_payload.get("run_id") != expected_v19[0]
+            or stage != expected_v19[1]
+            or not is_v15
+            or not is_v17
+        ):
+            raise ValueError("ONE_Q_REFACTOR_V19 worker requires an exact V19 E1 or B0-Y8 input")
     if is_v17 and not (
         profile_identity.startswith("task40extra_v17_p6_y_orbit_") or is_v18
     ):
@@ -4369,6 +4804,9 @@ def run_task40_v10_p6_reference_worker(
     }
     case_label = case_labels[profile_identity]
     evidence_prefix = (
+        "v19_one_q_row_tile_p6_reference"
+        if is_v19
+        else
         "v18_ny8_row_tile_p6_reference"
         if is_v18
         else "v17_row_tile_p6_reference"
@@ -4387,7 +4825,9 @@ def run_task40_v10_p6_reference_worker(
     contract = profile_facts(profile_identity)
     summary: dict[str, Any] = {
         "schema": (
-            "task40extra.review_v18_ny8_row_tile_p6_reference_worker_summary.v1"
+            "task40extra.review_v19_one_q_row_tile_p6_reference_worker_summary.v1"
+            if is_v19
+            else "task40extra.review_v18_ny8_row_tile_p6_reference_worker_summary.v1"
             if is_v18
             else "task40extra.review_v17_row_tile_p6_reference_worker_summary.v1"
             if is_v17
@@ -4406,6 +4846,7 @@ def run_task40_v10_p6_reference_worker(
         "profile": profile_identity,
         "reference_pc_strategy": reference_pc_strategy,
         "q_assembly_strategy": q_assembly_strategy,
+        "factor_lifecycle_strategy": factor_lifecycle_strategy,
         "periodic_inventory_expectations": periodic_profile.identity(),
         "stage": stage,
         "source_sha": source_sha,
@@ -4451,7 +4892,9 @@ def run_task40_v10_p6_reference_worker(
             root=_repo_root(),
             source_sha=source_sha,
             batch_identity=(
-                f"task40_review_v18_ny8_{case_label}_p6_reference"
+                f"task40_review_v19_one_q_{case_label}_p6_reference"
+                if is_v19
+                else f"task40_review_v18_ny8_{case_label}_p6_reference"
                 if is_v18
                 else f"task40_review_v17_{case_label}_p6_reference"
                 if is_v17
@@ -4570,6 +5013,22 @@ def run_task40_v10_p6_reference_worker(
         def allocation_gate(label: str, facts: Mapping[str, Any]) -> dict[str, Any]:
             nonlocal allocation_gate_invocation_count
             allocation_gate_invocation_count += 1
+            if facts.get("resource_sample_only") is True and label.startswith(
+                "one_q_resource_sample_v19_"
+            ):
+                sample = runtime.sample(f"v10_{label}", enforce=False)
+                record = {
+                    "schema": "task40extra.review_v19_one_q_resource_sample.v1",
+                    "label": str(label),
+                    **dict(facts),
+                    "current_process_tree_rss_bytes": int(sample["rss_bytes"]),
+                    "resource_sample": sample,
+                    "resource_sample_only": True,
+                }
+                allocation_gate_records.append(record)
+                runtime.marker("v10_strict_allocation_admission", record)
+                runtime.marker("v10_strict_allocation_admission_complete", record)
+                return record
             amount = int(facts.get(
                 "additional_payload_bytes",
                 facts.get("matrix_payload_bytes", facts.get("workspace_bytes", 0)),
@@ -4595,7 +5054,33 @@ def run_task40_v10_p6_reference_worker(
                 )
             future = 0
             future_components: dict[str, int] = {}
-            if label == "all_q_symbolic_before_any_numeric":
+            if facts.get("factor_lifecycle_strategy") == "ONE_Q_REFACTOR_V19":
+                components = facts.get("future_reserve_components")
+                required_components = {
+                    "persistent_pending_transform_inverse_payload_bytes",
+                    "selected_maximum_co_resident_phase_bytes",
+                    "one_q_symbolic_guard_bytes",
+                    "one_q_numeric_factor_reserve_bytes",
+                }
+                if not isinstance(components, Mapping) or set(components) != required_components:
+                    raise ValueError("V19 one-q admission lacks its exact future-reserve components")
+                future_components = {str(key): int(value) for key, value in components.items()}
+                if any(value < 0 for value in future_components.values()):
+                    raise ValueError("V19 one-q future-reserve components cannot be negative")
+                future = sum(future_components.values())
+                if int(facts.get("future_co_resident_reserve_bytes", -1)) != future:
+                    raise ValueError("V19 one-q future-reserve total differs from its components")
+                if (
+                    facts.get("all_q_source_csr_retained") is not True
+                    or facts.get("numeric_factors_to_be_retained_simultaneously") != 1
+                    or facts.get("current_work_arrays_already_live") is not True
+                    or future_components["persistent_pending_transform_inverse_payload_bytes"]
+                    != int(facts.get("future_inverse_payload_bytes", -1))
+                    or future_components["selected_maximum_co_resident_phase_bytes"]
+                    != int(facts.get("selected_future_nonfactor_co_resident_phase_bytes", -1))
+                ):
+                    raise ValueError("V19 one-q admission facts do not match the active lifecycle contract")
+            elif label == "all_q_symbolic_before_any_numeric":
                 estimates = facts.get("q_symbolic_estimates_bytes", {})
                 if not isinstance(estimates, Mapping) or set(map(int, estimates)) != set(
                     range(periodic_profile.q_count)
@@ -5099,15 +5584,28 @@ def run_task40_v10_p6_reference_worker(
 
         operator_qualification_reuse = None
         if is_v18:
-            from src.solvers.task40_v18_ny8_operator_reuse import (
-                reuse_v18_ny8_operator_qualification,
-            )
+            if is_v19:
+                from src.solvers.task40_v18_ny8_operator_reuse import (
+                    reuse_ny8_operator_qualification_certificate,
+                )
 
-            operator_reuse_receipt_path = (
-                Path(_repo_root())
-                / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/"
-                "v18_ny8_operator_reuse_receipt.json"
-            )
+                reuse_function = reuse_ny8_operator_qualification_certificate
+                operator_reuse_receipt_path = (
+                    Path(_repo_root())
+                    / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w19_wsl/"
+                    "v19_ny8_operator_reuse_receipt.json"
+                )
+            else:
+                from src.solvers.task40_v18_ny8_operator_reuse import (
+                    reuse_v18_ny8_operator_qualification,
+                )
+
+                reuse_function = reuse_v18_ny8_operator_qualification
+                operator_reuse_receipt_path = (
+                    Path(_repo_root())
+                    / "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w17_wsl/"
+                    "v18_ny8_operator_reuse_receipt.json"
+                )
             operator_reuse_receipt_sha256_path = operator_reuse_receipt_path.with_suffix(
                 ".sha256"
             )
@@ -5116,7 +5614,7 @@ def run_task40_v10_p6_reference_worker(
                 expected_receipt_sha256 = (
                     operator_reuse_receipt_sha256_path.read_text(encoding="ascii").strip()
                 )
-                return reuse_v18_ny8_operator_qualification(
+                return reuse_function(
                     repo_root=_repo_root(),
                     receipt_path=operator_reuse_receipt_path,
                     candidate_q_matrices=candidate_q_matrices,
@@ -5147,6 +5645,7 @@ def run_task40_v10_p6_reference_worker(
             target_full_storage_rows=int(target_action.condensed.full_rows),
             reference_pc_strategy=reference_pc_strategy,
             q_assembly_strategy=q_assembly_strategy,
+            factor_lifecycle_strategy=factor_lifecycle_strategy,
             operator_qualification_reuse=operator_qualification_reuse,
         )
         if not mode_identity:

@@ -10,7 +10,11 @@ import pytest
 from scipy import sparse
 
 from src.solvers.task40_v10_p6_periodic_profile import TASK40_V10_P6_PROFILE
-from src.solvers.task40_v10_p6_mumps import AllQExactMumps, full_p6_pre_release_output_inventory
+from src.solvers.task40_v10_p6_mumps import (
+    AllQExactMumps,
+    OneQRefactorV19Mumps,
+    full_p6_pre_release_output_inventory,
+)
 
 
 def test_task40_v10_p6_profile_inventory_arithmetic():
@@ -194,3 +198,328 @@ def test_all_four_exact_mumps_factors_and_repeated_solve():
         assert record["process_tree_rss_bytes"] is None
         assert record["native_memory_observation"] is not None
         assert record["native_factor_entries_raw_infog_9"] is not None
+
+
+def _one_q_test_matrices():
+    base = np.asarray(
+        [
+            [4.0 + 0.2j, 1.0 - 0.1j, 0.0],
+            [0.5 + 0.3j, 3.5 + 0.4j, 0.2 - 0.1j],
+            [0.0, 0.7 + 0.2j, 2.5 - 0.3j],
+        ],
+        dtype=np.complex128,
+    )
+    return {
+        q: sparse.csr_matrix(base + q * np.eye(3, dtype=np.complex128))
+        for q in range(TASK40_V10_P6_PROFILE.q_count)
+    }
+
+
+def test_one_q_refactor_rebuilds_on_switch_and_keeps_full_q_solve_coverage():
+    matrices = _one_q_test_matrices()
+    gates = []
+    events = []
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda name, facts: gates.append((name, facts)) or {},
+        event=lambda name, facts: events.append((name, facts)),
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+    categories = (
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+        "startup_rhs_mat_solve_count",
+        "other_validation_rhs_mat_solve_count",
+        "pc_initial_rhs_mat_solve_count",
+        "pc_augmentation_rhs_mat_solve_count",
+    )
+    try:
+        for q in range(backend.nq):
+            assert backend.source_matrices[q] is matrices[q]
+            assert backend.csr_matrices[q] is matrices[q]
+            assert matrices[q].data.flags.writeable is False
+            assert matrices[q].indices.flags.writeable is False
+            assert matrices[q].indptr.flags.writeable is False
+
+        for q, category in zip((0, 0, 1, 0, 2, 3), categories, strict=True):
+            solution = backend.solve(q, rhs, category=category)
+            relative = np.linalg.norm(matrices[q] @ solution - rhs) / np.linalg.norm(rhs)
+            assert relative < 1.0e-10
+
+        audit = backend.audit
+        assert audit["all_q_source_csr_covered"] is True
+        assert audit["all_q_symbolic_covered"] is True
+        assert audit["all_q_fresh_factor_probe_covered"] is True
+        assert audit["all_q_solve_coverage"] is True
+        assert audit["solve_q_coverage"] == [0, 1, 2, 3]
+        assert audit["all_q_factors_retained_simultaneously"] is False
+        assert audit["all_q_factors_reused"] is False
+        assert audit["max_simultaneous_factors"] == 1
+        assert audit["max_simultaneous_matrices"] == 1
+        assert audit["cache_hit_count"] == 1
+        assert audit["cache_miss_count"] == 5
+        assert audit["numeric_factor_build_count"] == 5
+        assert audit["factor_probe_mat_solve_count"] == 5
+        assert audit["factor_probe_mat_solve_completed_count"] == 5
+        assert audit["rhs_mat_solve_count"] == backend.calls == 6
+        assert audit["mat_solve_total_identity_passed"] is True
+        assert audit["backend_mat_solve_invoked_total"] == 11
+        assert audit["backend_mat_solve_completed_total"] == 11
+        assert audit["backend_mat_solve_failed_total"] == 0
+        assert all(
+            row["factor_probe_passed"] is True
+            and row["factor_probe_elapsed_seconds"] >= 0.0
+            and row["csr_to_petsc_conversion_seconds"] >= 0.0
+            and row["cache_miss_parent_seconds"] >= row["factor_probe_elapsed_seconds"]
+            for row in audit["factor_build_history"]
+        )
+        from src.runners.task40_v10_output_checker import (
+            _verify_v19_one_q_factor_lifecycle,
+        )
+
+        checked_lifecycle = _verify_v19_one_q_factor_lifecycle(
+            audit, expected_q_count=backend.nq
+        )
+        assert checked_lifecycle["passed"] is True
+        assert checked_lifecycle["factor_build_count"] == audit["numeric_factor_build_count"]
+        assert any(name == "task40_v19_one_q_slot_destroyed" for name, _facts in events)
+        assert all("resource_sample_before_destroy" in facts and
+                   "resource_sample_after_destroy" in facts
+                   for name, facts in events if name == "task40_v19_one_q_slot_destroyed")
+        backend.verify_all_input_identities(stage="test_complete")
+    finally:
+        backend.destroy()
+
+
+def test_one_q_refactor_rhs_failure_is_counted_and_releases_slot():
+    matrices = _one_q_test_matrices()
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    real_factory = backend._factor_factory
+
+    class _FailingRepeatedSolve:
+        def __init__(self, factor):
+            self.factor = factor
+
+        def __getattr__(self, name):
+            return getattr(self.factor, name)
+
+        def solve_repeated(self, _rhs, _solution):
+            raise RuntimeError("synthetic repeated MatSolve failure")
+
+    backend._factor_factory = lambda matrix: _FailingRepeatedSolve(real_factory(matrix))
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+    try:
+        with pytest.raises(RuntimeError, match="synthetic repeated MatSolve failure"):
+            backend.solve(0, rhs, category="pc_augmentation_rhs_mat_solve_count")
+        assert backend.factors == {}
+        assert backend.matrices == {}
+        assert backend.audit["factors_live_count_current"] == 0
+        assert backend.audit["matrices_live_count_current"] == 0
+        assert backend.audit["mat_solve_invoked_count_by_category"][
+            "pc_augmentation_rhs_mat_solve_count"
+        ] == 1
+        assert backend.audit["mat_solve_failed_count_by_category"][
+            "pc_augmentation_rhs_mat_solve_count"
+        ] == 1
+        assert backend.audit["mat_solve_completed_count_by_category"][
+            "pc_augmentation_rhs_mat_solve_count"
+        ] == 0
+        assert backend.audit["mat_solve_total_identity_passed"] is True
+        assert backend.audit["backend_mat_solve_invoked_total"] == 2
+        assert backend.audit["backend_mat_solve_completed_total"] == 1
+        assert backend.audit["backend_mat_solve_failed_total"] == 1
+
+        backend._factor_factory = real_factory
+        solution = backend.solve(1, rhs, category="startup_rhs_mat_solve_count")
+        assert np.linalg.norm(matrices[1] @ solution - rhs) / np.linalg.norm(rhs) < 1.0e-10
+        assert backend.audit["mat_solve_total_identity_passed"] is True
+        assert backend.audit["backend_mat_solve_invoked_total"] == 4
+        assert backend.audit["backend_mat_solve_completed_total"] == 3
+        assert backend.audit["backend_mat_solve_failed_total"] == 1
+    finally:
+        backend.destroy()
+
+
+def test_one_q_destroy_failure_keeps_live_owner_and_blocks_the_next_q():
+    matrices = _one_q_test_matrices()
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+
+    class _DestroyFails:
+        def __init__(self, factor):
+            self.factor = factor
+            self.allow_destroy = False
+
+        def __getattr__(self, name):
+            return getattr(self.factor, name)
+
+        def destroy(self):
+            if not self.allow_destroy:
+                raise RuntimeError("synthetic native factor destroy failure")
+            return self.factor.destroy()
+
+    try:
+        backend.solve(0, rhs, category="startup_rhs_mat_solve_count")
+        resident_factor = _DestroyFails(backend.factors[0])
+        resident_matrix = backend.matrices[0]
+        backend.factors[0] = resident_factor
+        numeric_builds_before = backend.audit["numeric_factor_build_count"]
+
+        with pytest.raises(RuntimeError, match="failed to destroy the live q factor"):
+            backend._evict_slot(reason="synthetic_destroy_failure")
+        assert backend.factors == {0: resident_factor}
+        assert backend.matrices == {0: resident_matrix}
+
+        with pytest.raises(RuntimeError, match="failed to destroy the live q factor"):
+            backend.solve(1, rhs, category="startup_rhs_mat_solve_count")
+        assert backend.factors == {0: resident_factor}
+        assert backend.matrices == {0: resident_matrix}
+        assert backend.audit["numeric_factor_build_count"] == numeric_builds_before
+
+        resident_factor.allow_destroy = True
+        backend.destroy()
+        assert backend.destroyed is True
+        assert backend.factors == {}
+        assert backend.matrices == {}
+        assert backend.audit["close_succeeded"] is True
+    finally:
+        if not backend.destroyed:
+            resident = backend.factors.get(0)
+            if isinstance(resident, _DestroyFails):
+                resident.allow_destroy = True
+            backend.destroy()
+
+
+def test_one_q_destroy_continues_when_native_inventory_read_fails():
+    matrices = _one_q_test_matrices()
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+
+    class _InfoFails:
+        def __init__(self, factor):
+            self.factor = factor
+
+        def __getattr__(self, name):
+            return getattr(self.factor, name)
+
+        def info(self, *_args, **_kwargs):
+            raise RuntimeError("synthetic native inventory read failure")
+
+    try:
+        backend.solve(0, rhs, category="startup_rhs_mat_solve_count")
+        backend.factors[0] = _InfoFails(backend.factors[0])
+
+        backend.destroy()
+
+        evidence = backend.audit["pre_destroy_live_inventory"]
+        assert evidence["native_factor_inventory_error"] == {
+            "type": "RuntimeError",
+            "message": "synthetic native inventory read failure",
+            "cleanup_continued": True,
+        }
+        assert backend.destroyed is True
+        assert backend.factors == {}
+        assert backend.matrices == {}
+        assert backend.audit["close_succeeded"] is True
+    finally:
+        if not backend.destroyed:
+            backend.destroy()
+
+
+@pytest.mark.parametrize("failure_stage", ("symbolic", "numeric", "probe"))
+def test_one_q_symbolic_numeric_and_probe_failures_release_slot(failure_stage, monkeypatch):
+    from src.runners.physical_p4_cell_condensed_v18 import _factor_factory_for_backend
+
+    matrices = _one_q_test_matrices()
+    real_factory = _factor_factory_for_backend("exact")
+    wrappers = []
+
+    class _LifecycleFailure:
+        def __init__(self, factor):
+            self.factor = factor
+            self.destroy_calls = 0
+            wrappers.append(self)
+
+        def __getattr__(self, name):
+            return getattr(self.factor, name)
+
+        def symbolic(self, matrix):
+            if failure_stage == "symbolic":
+                raise RuntimeError("synthetic symbolic failure")
+            return self.factor.symbolic(matrix)
+
+        def numeric(self, matrix):
+            if failure_stage == "numeric":
+                raise RuntimeError("synthetic numeric failure")
+            return self.factor.numeric(matrix)
+
+        def solve(self, rhs, solution):
+            if failure_stage == "probe":
+                raise RuntimeError("synthetic factor probe failure")
+            return self.factor.solve(rhs, solution)
+
+        def destroy(self):
+            self.destroy_calls += 1
+            return self.factor.destroy()
+
+    def wrapped_factory(matrix):
+        return _LifecycleFailure(real_factory(matrix))
+
+    backend = None
+    if failure_stage == "symbolic":
+        monkeypatch.setattr(
+            "src.runners.physical_p4_cell_condensed_v18._factor_factory_for_backend",
+            lambda _backend: wrapped_factory,
+        )
+        with pytest.raises(RuntimeError, match="synthetic symbolic failure"):
+            OneQRefactorV19Mumps(
+                matrices,
+                allocation_gate=lambda _name, _facts: {},
+                expected_shapes=(3, 3, 3, 3),
+                profile=TASK40_V10_P6_PROFILE,
+            )
+        assert wrappers and wrappers[0].destroy_calls == 1
+        return
+
+    backend = OneQRefactorV19Mumps(
+        matrices,
+        allocation_gate=lambda _name, _facts: {},
+        expected_shapes=(3, 3, 3, 3),
+        profile=TASK40_V10_P6_PROFILE,
+    )
+    backend._factor_factory = wrapped_factory
+    rhs = np.asarray([1.0 + 0.5j, -0.2 + 0.8j, 0.7 - 0.1j], dtype=np.complex128)
+    try:
+        expected_error = (
+            "synthetic factor probe failure"
+            if failure_stage == "probe"
+            else f"synthetic {failure_stage} failure"
+        )
+        with pytest.raises(RuntimeError, match=expected_error):
+            backend.solve(0, rhs, category="startup_rhs_mat_solve_count")
+        assert wrappers and wrappers[-1].destroy_calls == 1
+        assert backend.factors == {}
+        assert backend.matrices == {}
+
+        backend._factor_factory = real_factory
+        solution = backend.solve(1, rhs, category="startup_rhs_mat_solve_count")
+        assert np.linalg.norm(matrices[1] @ solution - rhs) / np.linalg.norm(rhs) < 1.0e-10
+    finally:
+        backend.destroy()
