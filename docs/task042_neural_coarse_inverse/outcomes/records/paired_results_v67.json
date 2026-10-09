@@ -1,0 +1,861 @@
+{
+  "pairs": {
+    "L4F_M4": {
+      "fields": {
+        "E_total": {
+          "difference_squared": 4.061226998975014e-11,
+          "reference_squared": 38.97403191214886,
+          "incident_squared": 35.33215395950629,
+          "relative": 1.0208007116414273e-06
+        },
+        "H_total": {
+          "difference_squared": 4.966824626319194e-11,
+          "reference_squared": 38.966943321699176,
+          "incident_squared": 35.327175453516645,
+          "relative": 1.128992983750687e-06
+        },
+        "curl_total": {
+          "difference_squared": 4.0016811584779934e-09,
+          "reference_squared": 3139.496451468084,
+          "incident_squared": 2846.246908849645,
+          "relative": 1.1289929837506488e-06
+        },
+        "E_scattered": {
+          "difference_squared": 4.061226998975014e-11,
+          "reference_squared": 0.804264732878267,
+          "incident_squared": 35.33215395950629,
+          "relative": 7.106064083971999e-06
+        },
+        "H_scattered": {
+          "difference_squared": 4.966824626319194e-11,
+          "reference_squared": 0.8040966229993278,
+          "incident_squared": 35.327175453516645,
+          "relative": 7.859325825665282e-06
+        },
+        "curl_scattered": {
+          "difference_squared": 4.0016811584779934e-09,
+          "reference_squared": 64.78461689187982,
+          "incident_squared": 2846.246908849645,
+          "relative": 7.85932582566499e-06
+        }
+      },
+      "selected": {
+        "E_total": 1.6017541490234722e-06,
+        "H_total": 3.066330707260166e-06,
+        "curl_total": 3.066330707256584e-06,
+        "E_scattered": 1.1070968128078636e-05,
+        "H_scattered": 2.1193119526258955e-05,
+        "curl_scattered": 2.1193119526234645e-05
+      },
+      "modes": {
+        "auxiliary_amplitude_total_projection_relative": 0.5692244762153813,
+        "auxiliary_amplitude_total_projection_max_absolute": 6.09051708404028e+123,
+        "outgoing_amplitude_relative": 0.5692244762153813,
+        "outgoing_amplitude_max_absolute": 6.09051708404028e+123,
+        "outgoing_amplitude_at_boundary_relative": 2.1880170992966495e-06,
+        "outgoing_amplitude_at_boundary_max_absolute": 1.7299703580022523e-06,
+        "mode_count": 1188,
+        "mode_power_max_absolute": 1.0980956144379661e-09,
+        "pairing": "side,m,n,polarization,physical reference plane; independent of auxiliary index",
+        "partitions": {
+          "common828": {
+            "count": 828,
+            "physical_amplitude_relative": 1.6340220680967898e-06,
+            "physical_amplitude_difference_norm": 2.25220589484589e-06,
+            "reference_norm": 1.378320365935524,
+            "power_max_absolute": 1.0980956144379661e-09
+          },
+          "added360": {
+            "count": 360,
+            "physical_amplitude_relative": 0.1934789769190634,
+            "physical_amplitude_difference_norm": 2.0056293424353222e-06,
+            "reference_norm": 1.0366135765098249e-05,
+            "power_max_absolute": 2.184851174661072e-15
+          }
+        },
+        "arrays": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_compare_verify_cost_20261009T141945547981Z/L4F_M4/physical_mode_comparison.npz",
+          "sha256": "941a912f4c238230f725f737d277b0dfa9ddb668a9fde5f886021280fbf6ef7d",
+          "members": {
+            "auxiliary_amplitude_total_projection_first": {
+              "shape": [
+                1188
+              ],
+              "dtype": "complex128",
+              "sha256": "ca05408699933399e83ea2c5ae5e18fd6ad84d8fcb8d70b2d51e9f0be80e967d"
+            },
+            "auxiliary_amplitude_total_projection_second": {
+              "shape": [
+                1188
+              ],
+              "dtype": "complex128",
+              "sha256": "9db7a1ced7eec598649cd5d6312d7c34a90f1a86a6c6eb282c97aae28617b2fd"
+            },
+            "outgoing_amplitude_first": {
+              "shape": [
+                1188
+              ],
+              "dtype": "complex128",
+              "sha256": "10eb89f7db734a3a6bbe4897f0b1e7a1a9f8085603e06800a6a311daa4e1045d"
+            },
+            "outgoing_amplitude_second": {
+              "shape": [
+                1188
+              ],
+              "dtype": "complex128",
+              "sha256": "de2356a7e7922bbc2468cf88318178d9d164ddc41c250829e807eeda7ed2c0a0"
+            },
+            "outgoing_amplitude_at_boundary_first": {
+              "shape": [
+                1188
+              ],
+              "dtype": "complex128",
+              "sha256": "dfa363392aae642924b93354e7559a1c71af4b72a1f142a87277bfda6c5a88f7"
+            },
+            "outgoing_amplitude_at_boundary_second": {
+              "shape": [
+                1188
+              ],
+              "dtype": "complex128",
+              "sha256": "8e6406e07d48a85023405c0e7da9500ee3793b30c9a7496ddc9513ab996a1965"
+            },
+            "power_first": {
+              "shape": [
+                1188
+              ],
+              "dtype": "float64",
+              "sha256": "856002f2b84373dd63e0df22e721c92e2e936abb2d09d367ffef2f5a11012fb8"
+            },
+            "power_second": {
+              "shape": [
+                1188
+              ],
+              "dtype": "float64",
+              "sha256": "adfa2dc90f359edbf9960bfd1538fb113ce1563ce3222b33ab476113f7e678bb"
+            },
+            "physical_keys_json_utf8": {
+              "shape": [
+                51360
+              ],
+              "dtype": "uint8",
+              "sha256": "2a5a1c4fc78f83e83d72500d67dcba3e902d3f398a70173f404f0dbe17ce3035"
+            }
+          }
+        }
+      },
+      "power_differences": {
+        "R_total": 1.8974398441340412e-10,
+        "T_total": 3.00291125299168e-10,
+        "A_balance": 1.1054712700797609e-10,
+        "A_volume": 1.1054535759003059e-10
+      },
+      "energies": [
+        1.7326140522300193e-12,
+        1.7434942378713458e-12
+      ],
+      "original_second_denominator_pass": true,
+      "first_denominator": {
+        "fields": {
+          "E_total": {
+            "difference_squared": 4.061226998975014e-11,
+            "reference_squared": 38.974031931196606,
+            "relative": 1.0208007113919797e-06
+          },
+          "H_total": {
+            "difference_squared": 4.966824626319194e-11,
+            "reference_squared": 38.96694334075961,
+            "relative": 1.1289929834745671e-06
+          },
+          "curl_total": {
+            "difference_squared": 4.0016811584779934e-09,
+            "reference_squared": 3139.4964530037596,
+            "relative": 1.1289929834745269e-06
+          },
+          "E_scattered": {
+            "difference_squared": 4.061226998975014e-11,
+            "reference_squared": 0.8042647414391387,
+            "relative": 7.106064046152299e-06
+          },
+          "H_scattered": {
+            "difference_squared": 4.966824626319194e-11,
+            "reference_squared": 0.8040966315874012,
+            "relative": 7.859325783694911e-06
+          },
+          "curl_scattered": {
+            "difference_squared": 4.0016811584779934e-09,
+            "reference_squared": 64.7846175838054,
+            "relative": 7.859325783694622e-06
+          }
+        },
+        "selected": {
+          "E_total": {
+            "difference_norm": 3.105378375712737e-05,
+            "reference_norm": 19.38736179064256,
+            "relative": 1.6017539721219668e-06
+          },
+          "H_total": {
+            "difference_norm": 5.9447370640688044e-05,
+            "reference_norm": 19.387127691616065,
+            "relative": 3.066332031556999e-06
+          },
+          "curl_total": {
+            "difference_norm": 0.0005335983510851339,
+            "reference_norm": 174.01845122910936,
+            "relative": 3.0663320315534158e-06
+          },
+          "E_scattered": {
+            "difference_norm": 3.1053783757128556e-05,
+            "reference_norm": 2.804970656990566,
+            "relative": 1.1070983462781016e-05
+          },
+          "H_scattered": {
+            "difference_norm": 5.94473706406881e-05,
+            "reference_norm": 2.8050326906104446,
+            "relative": 2.1193111524041055e-05
+          },
+          "curl_scattered": {
+            "difference_norm": 0.000533598351085146,
+            "reference_norm": 25.177914554002815,
+            "relative": 2.1193111524016745e-05
+          }
+        },
+        "field_and_selected_pass": true,
+        "selected_denominator": "first saved vector",
+        "integration_not_repeated": true,
+        "denominator": "L4F",
+        "parent_sha256": "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+        "common_numerator": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_compare_verify_cost_20261009T141945547981Z/L4F_M4/common_polynomial.npz",
+          "sha256": "1539b42570564b3068f586c436f30cbf9de3d4810e679e1a9ba7fff6dfa89271",
+          "members": {
+            "per_cell_integrals": {
+              "shape": [
+                25576,
+                6,
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "abd5175abf66d238d0bd57a98c0903735440177fa40d522f0500e8b35438bb0f"
+            },
+            "per_cell_difference": {
+              "shape": [
+                25576,
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "36042b28cddcb08496d7e5a5ddaf7fbec22e8ed82cf634f6d7069174a4b1ed18"
+            },
+            "common_parent_first": {
+              "shape": [
+                25576
+              ],
+              "dtype": "int32",
+              "sha256": "6d13f5f713c9b9b0817c1bf12197dd7c818dd309817b278c6257bff383bc13dc"
+            },
+            "selected_points": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "float64",
+              "sha256": "9a43247ceca2a3758e1a11194793ccf8774d682dc877e670796b0ef21992e044"
+            },
+            "selected_parent_first": {
+              "shape": [
+                240
+              ],
+              "dtype": "int32",
+              "sha256": "8c7a18097adc501e7629f1a1abc52c10c3530828dcb3647e9e892d21417e863a"
+            },
+            "selected_parent_second": {
+              "shape": [
+                240
+              ],
+              "dtype": "int32",
+              "sha256": "8c7a18097adc501e7629f1a1abc52c10c3530828dcb3647e9e892d21417e863a"
+            },
+            "selected_E_total_first": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "3948e641fbbe1d354b98d12fb7a684d46ab822b6c6366511ef4bb295b8106339"
+            },
+            "selected_E_total_second": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "640c6a29d39233511e6bfd9591bad5e3beb1028d31894d45600bc0ae19fe07ac"
+            },
+            "selected_H_total_first": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "dcb84635772f83f1a1b36e1540878913ba09e83d8ba2c4352f94520fac2bbfb7"
+            },
+            "selected_H_total_second": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "cacebbb8ed7412ad119c790c1b4164b53509a2e12bd4a0554ad830e80887b181"
+            },
+            "selected_curl_total_first": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "9cfa989d875d02d601351a63764876da1ace8ef552f41fdd66a6652ec498b7bb"
+            },
+            "selected_curl_total_second": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "e92a5431ec59c7e3153be1d1b05aee80128aaa90e509d1391d6309b4b388cdee"
+            },
+            "selected_E_scattered_first": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "9310c418c288eba4fa964c0ca4c5975d9e6979240a66f7cf780d6375a1514186"
+            },
+            "selected_E_scattered_second": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "5ff8e73e9550d2a6792ebc1134e44ab2d23688ac22498aba13eb04aa1760003e"
+            },
+            "selected_H_scattered_first": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "8765329baba4c14b8097761d17f3522f1f2c3aa9e4b62a003b9e6ada0ea0e703"
+            },
+            "selected_H_scattered_second": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "5d3736b5ab9186d9b580505c31c4b5642e30496aac39d4322f0827efb5d7d1a0"
+            },
+            "selected_curl_scattered_first": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "14f3eb9c8c39882c69493f83a9a23d120544a8d4cc755ceed99a72f9c9f90824"
+            },
+            "selected_curl_scattered_second": {
+              "shape": [
+                240,
+                3
+              ],
+              "dtype": "complex128",
+              "sha256": "5da0da4da1ebbe2658c34f37fc2650fef79e71acce9a9356b07ca6db931006da"
+            }
+          }
+        },
+        "reference_packets": [
+          {
+            "q": 23,
+            "reference": [
+              38.97403193119658,
+              38.96694334075959,
+              3139.4964530037582,
+              0.804264741439138,
+              0.8040966315874006,
+              64.78461758380531
+            ],
+            "arrays": {
+              "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/volume_q23.npz",
+              "sha256": "42f7b017f0515ba29621984deece9504f732b6daa5e1ed439e253a04197860d8",
+              "members": {
+                "per_cell_volume_absorption": {
+                  "shape": [
+                    25576,
+                    2
+                  ],
+                  "dtype": "float64",
+                  "sha256": "567df4c2ca9e173a5358ac0ae69826cd6d12e7c9f74b69e308231f046dfe5291"
+                },
+                "per_cell_analytic_squared": {
+                  "shape": [
+                    25576,
+                    3,
+                    2
+                  ],
+                  "dtype": "float64",
+                  "sha256": "3207c605e4d2f9f39873dbc2509c8557191414921120501a415a0587825769b2"
+                },
+                "per_cell_total_squared": {
+                  "shape": [
+                    25576,
+                    3
+                  ],
+                  "dtype": "float64",
+                  "sha256": "ca643e493faccd802aa6c71b5d5b12ceaf6339faa3a6933e124cdbe5d35c5be9"
+                }
+              }
+            }
+          },
+          {
+            "q": 31,
+            "reference": [
+              38.974031931196606,
+              38.96694334075961,
+              3139.4964530037596,
+              0.8042647414391387,
+              0.8040966315874012,
+              64.7846175838054
+            ],
+            "arrays": {
+              "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v66/task042_v66_local_p4_solve_complete_20261009T071858612995Z/volume_q31.npz",
+              "sha256": "637721c79a358bc29eeac6cbd7353dfc6cb7cb25aed463aeac918b9f5e848e0f",
+              "members": {
+                "per_cell_volume_absorption": {
+                  "shape": [
+                    25576,
+                    2
+                  ],
+                  "dtype": "float64",
+                  "sha256": "5f72d3eb7f8699d430242ba0665fd322c5860cef92d76bdea3f495eb0f46ff03"
+                },
+                "per_cell_analytic_squared": {
+                  "shape": [
+                    25576,
+                    3,
+                    2
+                  ],
+                  "dtype": "float64",
+                  "sha256": "7a42c59e8ab8b0cd86ee7a9d39799074dd88ca6478b69ff4012f6db0875aa7ef"
+                },
+                "per_cell_total_squared": {
+                  "shape": [
+                    25576,
+                    3
+                  ],
+                  "dtype": "float64",
+                  "sha256": "9ba1ed1127a599692cf1b4bcade8a9c26e2992231d4c865da2b7d17d2ecb51b4"
+                }
+              }
+            }
+          }
+        ],
+        "quadrature_operation_scaled": 1.316132308428201e-15,
+        "pass_gate": true
+      },
+      "independent_checker": {
+        "fields": {
+          "E_total": 1.0208007116414273e-06,
+          "H_total": 1.128992983750687e-06,
+          "curl_total": 1.1289929837506488e-06,
+          "E_scattered": 7.106064083971999e-06,
+          "H_scattered": 7.859325825665282e-06,
+          "curl_scattered": 7.85932582566499e-06
+        },
+        "selected": {
+          "E_total": 1.6017541490234726e-06,
+          "H_total": 3.066330707260167e-06,
+          "curl_total": 3.0663307072565835e-06,
+          "E_scattered": 1.1070968128078638e-05,
+          "H_scattered": 2.1193119526258952e-05,
+          "curl_scattered": 2.119311952623465e-05
+        },
+        "selected_component_error_fractions": {
+          "E_total": [
+            0.006691073803604806,
+            0.9590683544537971,
+            0.034240571742598
+          ],
+          "H_total": [
+            0.16889682662415476,
+            0.01800577059138024,
+            0.8130974027844651
+          ],
+          "curl_total": [
+            0.1688968266245399,
+            0.018005770591421968,
+            0.8130974027840382
+          ],
+          "E_scattered": [
+            0.0066910738036061145,
+            0.9590683544537986,
+            0.03424057174259538
+          ],
+          "H_scattered": [
+            0.16889682662415428,
+            0.018005770591380206,
+            0.8130974027844654
+          ],
+          "curl_scattered": [
+            0.1688968266245324,
+            0.01800577059142114,
+            0.8130974027840465
+          ]
+        },
+        "quadrature_operation_scaled": 9.662939147615706e-16,
+        "mode_amplitude_relative": 2.1880170992966495e-06,
+        "mode_power_max_absolute": 1.0980956144379661e-09,
+        "power_differences": {
+          "R_total": 1.8974398441340412e-10,
+          "T_total": 3.00291125299168e-10,
+          "A_balance": 1.1054712700797609e-10,
+          "A_volume": 1.1054535759003059e-10
+        },
+        "energies": [
+          1.7326140522300193e-12,
+          1.7434942378713458e-12
+        ],
+        "worst_modes": {
+          "outgoing_amplitude_at_boundary": {
+            "physical_key": [
+              "bottom",
+              -7,
+              0,
+              "s",
+              -0.5185185185185185
+            ],
+            "absolute": 1.7299703580022525e-06,
+            "difference": [
+              1.4300111104936471e-06,
+              -9.735839272662463e-07
+            ]
+          },
+          "power": {
+            "physical_key": [
+              "bottom",
+              0,
+              0,
+              "s",
+              -0.5185185185185185
+            ],
+            "absolute": 1.0980956144379661e-09,
+            "difference": [
+              1.0980956144379661e-09,
+              0.0
+            ]
+          }
+        },
+        "pass_gate": true,
+        "published_gate_matches_recalculation": true,
+        "classification": "SPACE_INCREMENT_PASS",
+        "full_integral_rows": 25576,
+        "parent_array_sha256": [
+          "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+          "c4e2869919b2f01052db5f7b919bf2af26ac4458490fc5d257e44539e0c06358"
+        ],
+        "new_FE_calls": 0,
+        "new_factor": 0,
+        "new_solve": 0
+      },
+      "common_integrals": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_compare_verify_cost_20261009T141945547981Z/L4F_M4/common_polynomial.npz",
+        "sha256": "1539b42570564b3068f586c436f30cbf9de3d4810e679e1a9ba7fff6dfa89271",
+        "members": {
+          "per_cell_integrals": {
+            "shape": [
+              25576,
+              6,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "abd5175abf66d238d0bd57a98c0903735440177fa40d522f0500e8b35438bb0f"
+          },
+          "per_cell_difference": {
+            "shape": [
+              25576,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "36042b28cddcb08496d7e5a5ddaf7fbec22e8ed82cf634f6d7069174a4b1ed18"
+          },
+          "common_parent_first": {
+            "shape": [
+              25576
+            ],
+            "dtype": "int32",
+            "sha256": "6d13f5f713c9b9b0817c1bf12197dd7c818dd309817b278c6257bff383bc13dc"
+          },
+          "selected_points": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "9a43247ceca2a3758e1a11194793ccf8774d682dc877e670796b0ef21992e044"
+          },
+          "selected_parent_first": {
+            "shape": [
+              240
+            ],
+            "dtype": "int32",
+            "sha256": "8c7a18097adc501e7629f1a1abc52c10c3530828dcb3647e9e892d21417e863a"
+          },
+          "selected_parent_second": {
+            "shape": [
+              240
+            ],
+            "dtype": "int32",
+            "sha256": "8c7a18097adc501e7629f1a1abc52c10c3530828dcb3647e9e892d21417e863a"
+          },
+          "selected_E_total_first": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "3948e641fbbe1d354b98d12fb7a684d46ab822b6c6366511ef4bb295b8106339"
+          },
+          "selected_E_total_second": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "640c6a29d39233511e6bfd9591bad5e3beb1028d31894d45600bc0ae19fe07ac"
+          },
+          "selected_H_total_first": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "dcb84635772f83f1a1b36e1540878913ba09e83d8ba2c4352f94520fac2bbfb7"
+          },
+          "selected_H_total_second": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "cacebbb8ed7412ad119c790c1b4164b53509a2e12bd4a0554ad830e80887b181"
+          },
+          "selected_curl_total_first": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "9cfa989d875d02d601351a63764876da1ace8ef552f41fdd66a6652ec498b7bb"
+          },
+          "selected_curl_total_second": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "e92a5431ec59c7e3153be1d1b05aee80128aaa90e509d1391d6309b4b388cdee"
+          },
+          "selected_E_scattered_first": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "9310c418c288eba4fa964c0ca4c5975d9e6979240a66f7cf780d6375a1514186"
+          },
+          "selected_E_scattered_second": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "5ff8e73e9550d2a6792ebc1134e44ab2d23688ac22498aba13eb04aa1760003e"
+          },
+          "selected_H_scattered_first": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "8765329baba4c14b8097761d17f3522f1f2c3aa9e4b62a003b9e6ada0ea0e703"
+          },
+          "selected_H_scattered_second": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "5d3736b5ab9186d9b580505c31c4b5642e30496aac39d4322f0827efb5d7d1a0"
+          },
+          "selected_curl_scattered_first": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "14f3eb9c8c39882c69493f83a9a23d120544a8d4cc755ceed99a72f9c9f90824"
+          },
+          "selected_curl_scattered_second": {
+            "shape": [
+              240,
+              3
+            ],
+            "dtype": "complex128",
+            "sha256": "5da0da4da1ebbe2658c34f37fc2650fef79e71acce9a9356b07ca6db931006da"
+          }
+        }
+      },
+      "q23": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_compare_verify_cost_20261009T141945547981Z/L4F_M4/common_denominator_q23.npz",
+        "sha256": "9743bd606e408da29c30e7fbd548f51978369bc1291186eae16edcd536cfedde",
+        "members": {
+          "per_cell_integrals": {
+            "shape": [
+              25576,
+              6,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "c1e3350b52f62815353b91b953a5f1d550ae6cfebd828181c9c5c7324d24930a"
+          }
+        }
+      },
+      "numerator_certificate": {
+        "q": 11,
+        "actual_superdegrees": [
+          4,
+          4
+        ],
+        "spot_q31": [
+          {
+            "cell": 0,
+            "polynomial": [
+              1.3763542010836667e-14,
+              1.0432376335814574e-13,
+              8.405177746752873e-12
+            ],
+            "q31": [
+              1.3763542011318727e-14,
+              1.0432376337143945e-13,
+              8.405177747829058e-12
+            ],
+            "relative_squared": 1.280382910913844e-10
+          },
+          {
+            "cell": 3653,
+            "polynomial": [
+              1.5868215656518738e-15,
+              1.5958710699467375e-15,
+              1.2857645824755204e-13
+            ],
+            "q31": [
+              1.5868215657129154e-15,
+              1.5958710698986782e-15,
+              1.285764582453928e-13
+            ],
+            "relative_squared": 3.846788053206533e-11
+          },
+          {
+            "cell": 7307,
+            "polynomial": [
+              8.334885471225869e-16,
+              7.488760216593456e-16,
+              6.033559248278909e-14
+            ],
+            "q31": [
+              8.334885470587701e-16,
+              7.488760226689071e-16,
+              6.033559256510121e-14
+            ],
+            "relative_squared": 1.3642381924988922e-09
+          },
+          {
+            "cell": 10960,
+            "polynomial": [
+              4.253852675463445e-16,
+              4.511487530525788e-16,
+              3.634824260161672e-14
+            ],
+            "q31": [
+              4.253852675548432e-16,
+              4.511487527810811e-16,
+              3.634824257954458e-14
+            ],
+            "relative_squared": 6.07240879752685e-10
+          },
+          {
+            "cell": 14614,
+            "polynomial": [
+              9.031505916353765e-16,
+              1.0873022949345087e-15,
+              8.760198788144675e-14
+            ],
+            "q31": [
+              9.031505917122938e-16,
+              1.0873022939349996e-15,
+              8.760198780022897e-14
+            ],
+            "relative_squared": 9.271225011072746e-10
+          },
+          {
+            "cell": 18267,
+            "polynomial": [
+              8.344628408531576e-16,
+              7.898999446861091e-16,
+              6.364081608585657e-14
+            ],
+            "q31": [
+              8.344628410016385e-16,
+              7.898999440674868e-16,
+              6.364081603573955e-14
+            ],
+            "relative_squared": 7.874979927405105e-10
+          },
+          {
+            "cell": 21921,
+            "polynomial": [
+              6.979998383689781e-15,
+              5.781379492535249e-15,
+              4.657953345653629e-13
+            ],
+            "q31": [
+              6.979998384203842e-15,
+              5.781379489933109e-15,
+              4.657953343529363e-13
+            ],
+            "relative_squared": 4.5605155381240045e-10
+          },
+          {
+            "cell": 25575,
+            "polynomial": [
+              1.6731235581789223e-15,
+              2.5160930526754786e-15,
+              2.0271708625390017e-13
+            ],
+            "q31": [
+              1.67312355795166e-15,
+              2.516093054053762e-15,
+              2.0271708636639598e-13
+            ],
+            "relative_squared": 5.549399313949047e-10
+          }
+        ]
+      },
+      "parent_array_sha256": [
+        "91d6dbc5fd875aee088e768e8086591409a60a9181277336d9b11502d05208a3",
+        "c4e2869919b2f01052db5f7b919bf2af26ac4458490fc5d257e44539e0c06358"
+      ]
+    }
+  },
+  "one_numerator_two_fixed_denominators": true,
+  "held_physical_units_floors_and_carriers": true,
+  "no_projection_no_phase_fit": true
+}

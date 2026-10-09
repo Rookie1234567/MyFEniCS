@@ -1,0 +1,22 @@
+{
+  "checkpoint": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/body_K/manifest.json",
+    "sha256": "4516d89efe3d919e8e658b8fe497b606cac5c355bf5c753b6b2cb503130cd0bf",
+    "status": "ASSEMBLED_NOT_YET_ORACLE_VERIFIED",
+    "bytes": 8863726552,
+    "nnz": 439529923
+  },
+  "immutable_assembled_status": "ASSEMBLED_NOT_YET_ORACLE_VERIFIED",
+  "independent_qualification": {
+    "path": "benchmarks/artifacts/task042/v67/task042_v67_local_p5_solve_complete_20261009T130237983420Z/body_original_action_qualification.json",
+    "sha256": "06315a299808ff828299522b59282591add67c7e85ef1dcf49e7f2e33e62c7a6"
+  },
+  "original_pairs": {
+    "path": "benchmarks/artifacts/task042/v67/task042_v67_local_p5_solve_complete_20261009T130237983420Z/original_operator_pairs.json",
+    "sha256": "b7dfbdb3480ad44e6d9607c0b609c8a9c1c8e8cb30f959ffaff28e386c902ae3"
+  },
+  "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+  "new_builds": 1,
+  "no_factor_no_solution_asset": true,
+  "readable_verified_K_does_not_equal_complete_physical_solve": true
+}

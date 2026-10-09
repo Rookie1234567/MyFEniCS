@@ -1,0 +1,22 @@
+{
+  "status": "FIXED_EXPERIMENT_CLOSED_PARTIAL_SPATIAL_EVIDENCE",
+  "full_field_returned": {
+    "L5": false,
+    "M4": true
+  },
+  "p4_mode_increment_pass": true,
+  "local_p5_spatial_increment": "not_run_no_returned_field",
+  "continuum_accuracy": false,
+  "target_2TB48h": false,
+  "NN20": false,
+  "inherited_target_scenario": null,
+  "target_MPI_replication_DtN_Krylov_recovery_system_margin_required": true,
+  "target_factor_fill_iterations_peak_complete_N1": "unknown",
+  "no_new_target_mesh_vectors_or_operator": true,
+  "unique_next_pilot": "identify the external termination chain; new bounded contract completes existing healthy L5 K with unchanged physics/space, no p/h/M expansion",
+  "derived_triangle_bounds": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/mode_error_attribution_v67.json",
+    "sha256": "a5c2800ff3c0b26f726b5755599bf3cd77721a0c3787d979086ac1efef98ad5e"
+  },
+  "existing_operator_alone_does_not_qualify_p5_solution": true
+}

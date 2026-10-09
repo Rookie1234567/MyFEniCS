@@ -1,3 +1,14 @@
+# 新模型：Task042 V67 L5与M4
+
+| 模型身份 | 实际方法 | 资格 | 成本口径 |
+|---|---|---|---|
+| 0.7nm/s7/135/真实NOTCH/25576tet/p5/828 | 全部内部UFL、K checkpoint、独立q15原作用 | 体作用PASS；numeric中断未返回场，空间精度unknown | PREPARE12095.119184s及失败计界保留，完整T_N1未得 |
+| 同物理同mesh/p4/1188 | 只读父体K＋新边界/因子，物理零初值 | formal PASS/direct FAIL；有限模式增量PASS，非连续真值 | prepared-start2118.530273s；55.455608GiB采样峰；fresh匹配N1 unknown |
+
+[全物理](task042_neural_coarse_inverse/outcomes/records/complete_physics_v67.json) · [可消费离散契约](task042_neural_coarse_inverse/outcomes/records/discrete_reference_contract_v67.json) · [全费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_final_v67.json)。没有同精度生产比/NN收益，未授原尺寸2TB48h。
+
+---
+
 # 新模型：Task042 V66 L4F
 
 | 身份 | 方法/空间 | 结论 | 成本口径 |

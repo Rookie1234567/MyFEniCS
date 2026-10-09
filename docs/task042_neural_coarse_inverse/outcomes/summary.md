@@ -1,3 +1,19 @@
+# V67正式结果
+
+本轮将场空间的阶数与开放边界的模式数分开检查。全部内部自由度进入完整tetra UFL方程，未静态凝聚；M4只读复用父体K，新边界/RHS/factor独立生成。
+
+| 完整模型 | 实际规模/存储 | 原方程与物理 | 费用/精度结论 |
+|---|---|---|---|
+| NOTCH 0.7nm L5/p5/828 | 25576tet；FE1943745；1944573行；K nnz439529923 | 两列原作用约2.67e-15通过；numeric SIGTERM未返回场 | 新PREPARE12095.119184s；失败调用按1432.073909–2057.882138s计界；空间比较NOT_RUN |
+| NOTCH 0.7nm M4/p4/1188 | FE1042964；1044152行；aug nnz172232926 | formal2.2723991e-10；R/T/Av=0.076218473079/0.905665213511/0.0181163134122；能量1.7435e-12 | prepared-start2118.530273s；采样峰55.455608GiB；direct1e-10 FAIL |
+| L4F/M4，旧场实际投影新增360模式 | 散射E/H=7.1061e-6/7.8593e-6；240点最大2.1193e-5 | 物理复通道2.1880e-6；最大mode功率1.0981e-9 | 一次分子/两固定分母均PASS；不是连续或p5精度资格 |
+
+L5中断不能称OOM、容量或不收敛；采样树峰89.290936GiB仅为最后可见下界，尾部unknown。旧P6/L4F空间FAIL保持，当前模式变化不足以消除它；不将传统结果归NN，不授同精度生产比或2TB48h。
+
+[回应](../response_v67.md) · [双分母比较](records/paired_results_v67.json) · [误差来源](records/mode_error_attribution_v67.json) · [完整账](records/resource_costs_final_v67.json) · [有限参照](records/discrete_reference_contract_v67.json)。
+
+---
+
 # V66正式结果
 
 | 完整模型/方法 | 实际空间/存储 | 原方程与物理 | 成本/准确性 |

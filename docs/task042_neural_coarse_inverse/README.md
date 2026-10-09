@@ -1,3 +1,11 @@
+# 当前入口：V67局部p5与独立模式对照
+
+M4已完成25576tet/p4/1188全部物理输出及独立审核，formal2.2723991e-10；828→1188双分母模式增量PASS。L5已保存p5 K及两列原作用见证，但numeric外部SIGTERM未返回场，原因unknown，本轮两次numeric额度已用完。未授连续/原尺寸/2TB48h/NN20。
+
+[完整回应](response_v67.md) · [结果](outcomes/local_p5_independent_dtn_v67.md) · [离散参照契约](outcomes/records/discrete_reference_contract_v67.json) · [完整成本](outcomes/records/resource_costs_final_v67.json)。本轮已收口，不自动通知邻窗口或启动新批。
+
+---
+
 # 当前入口：V66
 
 V66已实际消费V64原样保存的25576个四面体局部细化网格，完成p4、1043792行、828模式的0.7nm完整有限问题。全部内部未知量进入标准UFL/FFCx系统，没有静态凝聚。独立原式残差为2.27244591e-10，通过formal1e-6门；空间交叉结论为SPACE_INCREMENT_FAIL。它是有限模型的完整方程、场和费用链，不授连续真解、原尺寸0.7nm或2TB/48h资格；本批没有NN训练或NN收益。

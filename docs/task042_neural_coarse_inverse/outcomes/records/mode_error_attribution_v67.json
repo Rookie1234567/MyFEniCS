@@ -1,0 +1,65 @@
+{
+  "bounds": {
+    "E_total": {
+      "P6_L4_difference_norm": 0.0003052946044229462,
+      "L4_M4_difference_norm": 6.372775689583789e-06,
+      "fixed_P6_norm": 6.242918747538952,
+      "P6_M4_relative_lower": 4.788174263059273e-05,
+      "P6_M4_relative_upper": 4.992334398639959e-05,
+      "classification": "DERIVED_TRIANGLE_BOUND_NOT_NEW_FIELD_COMPARISON"
+    },
+    "H_total": {
+      "P6_L4_difference_norm": 0.00031380486819062876,
+      "L4_M4_difference_norm": 7.047570238258853e-06,
+      "fixed_P6_norm": 6.242350991497469,
+      "P6_M4_relative_lower": 4.914130883864035e-05,
+      "P6_M4_relative_upper": 5.139929473140996e-05,
+      "classification": "DERIVED_TRIANGLE_BOUND_NOT_NEW_FIELD_COMPARISON"
+    },
+    "curl_total": {
+      "P6_L4_difference_norm": 0.002816705910195411,
+      "L4_M4_difference_norm": 6.325884253191797e-05,
+      "fixed_P6_norm": 56.03121147433539,
+      "P6_M4_relative_lower": 4.91413088386405e-05,
+      "P6_M4_relative_upper": 5.139929473141004e-05,
+      "classification": "DERIVED_TRIANGLE_BOUND_NOT_NEW_FIELD_COMPARISON"
+    },
+    "E_scattered": {
+      "P6_L4_difference_norm": 0.0003052946044229462,
+      "L4_M4_difference_norm": 6.372775689583789e-06,
+      "fixed_P6_norm": 0.8968069994108039,
+      "P6_M4_relative_lower": 0.00033331790332786435,
+      "P6_M4_relative_upper": 0.0003475300486250591,
+      "classification": "DERIVED_TRIANGLE_BOUND_NOT_NEW_FIELD_COMPARISON"
+    },
+    "H_scattered": {
+      "P6_L4_difference_norm": 0.00031380486819062876,
+      "L4_M4_difference_norm": 7.047570238258853e-06,
+      "fixed_P6_norm": 0.8967132694922748,
+      "P6_M4_relative_lower": 0.0003420907311052261,
+      "P6_M4_relative_upper": 0.000357809401672573,
+      "classification": "DERIVED_TRIANGLE_BOUND_NOT_NEW_FIELD_COMPARISON"
+    },
+    "curl_scattered": {
+      "P6_L4_difference_norm": 0.002816705910195411,
+      "L4_M4_difference_norm": 6.325884253191797e-05,
+      "fixed_P6_norm": 8.04887948518116,
+      "P6_M4_relative_lower": 0.0003420907311052278,
+      "P6_M4_relative_upper": 0.0003578094016725743,
+      "classification": "DERIVED_TRIANGLE_BOUND_NOT_NEW_FIELD_COMPARISON"
+    }
+  },
+  "inherited_pair": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_comparison_v66.json",
+    "sha256": "6a8062f55332582d8e526afc8991b8fb09a1d73552c8a5876731da86bc90110c"
+  },
+  "new_pair": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_results_v67.json",
+    "sha256": "5670150ed9ec1ddb5860895618746e19d7add85a52402a2f1f49000c861332f6"
+  },
+  "identical_saved_L4_field": true,
+  "same_physical_fields_units_and_common_L4_domain": true,
+  "new_old_integrations": 0,
+  "no_P6_M4_solve_or_direct_comparison": true,
+  "finite_p4_mode_insensitivity_does_not_qualify_p5_or_continuum": true
+}

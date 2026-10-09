@@ -1,3 +1,13 @@
+# V67增量与依赖组
+
+薄local_p_mode_scope/study及5个dat扩展现有完整tetra prepare/solve/保存消费者；p5/q13-q15由真实spec取得，M4明确指向V66 p4体K。runner接线只新增opt-in namespace，数学核和默认资源门不变。
+
+新preparation_interruption仅重算标量收费上下界与严格PID缺席库存，不恢复数值向量、不授权重放。collect_local_p_modes复用原独立原式、模式投影、一次分子双分母及保存checker。
+
+[按依赖分组的清单](records/selective_merge_manifest_v67.json) · [源字节](records/source_bindings_v67.json) · [实际身份](records/authority_identity_v67.json)。研究输入/失败数据不升production，merge未批准。
+
+---
+
 # V66薄接入与依赖
 
 复用完整tetra装配、系数收缩独立作用、atomic K、MUMPS、监督及输出；新增固定网格scope、参数化p4准备身份、同分子双分母纯数组评分、条件M消费与six dat。没有复制大型runner或改变数学默认。

@@ -1,0 +1,35 @@
+{
+  "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+  "review_blob": "bf44a3a309db42425f21e6dc037ee882b7dbe0fd",
+  "review_sha256": "1d5043b7fd57b6a9cd29f8cc932da9b4fd7de8783f0c3c0a87ef0fa899588bbd",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "previous_result": "d1939336d5e8ab0c623a4786cdf5616d41443d0d",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "run_sources": {
+    "pre": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+    "PREFLIGHT": "53c01f124f090351747324b711599b2d8793e456",
+    "PREPARE": "53c01f124f090351747324b711599b2d8793e456",
+    "SOLVE_COMPLETE": "53c01f124f090351747324b711599b2d8793e456",
+    "M4": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+    "VERIFY_COST": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+    "post": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce"
+  },
+  "frozen_clock": {
+    "start_utc": "2026-10-09T08:54:57.938096+00:00",
+    "start_monotonic": 1461092.79901077,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 46800,
+    "total_limit_seconds": 50400,
+    "scientific_loaded_limit_seconds": 39600,
+    "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+    "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+    "closed": false,
+    "first_work_start_never_refreshed": true
+  },
+  "plan": {
+    "path": "input/task042_neural_coarse_inverse/local_p_modes_v67.json",
+    "sha256": "ff6479348a28c0f6ba527d81403b2c8e415be6dc9a8db9b51155f88a1a690383"
+  },
+  "final_document_source_before_delivery": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce"
+}

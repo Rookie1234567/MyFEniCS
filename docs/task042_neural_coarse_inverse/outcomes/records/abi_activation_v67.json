@@ -1,0 +1,23 @@
+{
+  "intake": {
+    "utc": "2026-10-09T09:12:55.846941+00:00",
+    "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "scalar": "<class 'numpy.complex128'>",
+    "integer": "<class 'numpy.int64'>",
+    "libraries": {
+      "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+      "basix": "/usr/lib/python3/dist-packages/basix/__init__.py"
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "CUDA_VISIBLE_DEVICES": ""
+    }
+  },
+  "qualified_activation": "scripts/activate_task042.sh fe",
+  "unchanged_environment": true,
+  "new_packages_system_ABI_or_neighbor_configuration_changes": false
+}

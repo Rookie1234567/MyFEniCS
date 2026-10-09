@@ -1,0 +1,37 @@
+{
+  "entries": [
+    {
+      "utc": "2026-10-09T09:22:12.682360+00:00",
+      "id": "F1",
+      "cause": "rejected supervised auxiliary wrappers were absent from live charge before begin()",
+      "evidence": "auxiliary_pre01/receipt.json and auxiliary_pre02/receipt.json",
+      "change": "V67-only disjoint wrapper overhead including rejected launches; paid probes and successful launch summaries excluded",
+      "test": "test_auxiliary_rejection_and_returned_tail_are_paid_without_probe_recount",
+      "science_replay": 0,
+      "old_records_unchanged": true
+    },
+    {
+      "number": "F2",
+      "root_cause": "lost launcher receipt after unknown external SIGTERM",
+      "observed_cause_of_SIGTERM": "unknown; no saved resource gate failure",
+      "fix": "conservative bounds and verified owned absence, no numerical reconstruction",
+      "source": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "original_run_source": "53c01f124f090351747324b711599b2d8793e456",
+      "test": "F2_targeted_receipt.json",
+      "reconciliation": "interruption_reconciliation.json",
+      "full_numeric_replay": 0,
+      "second_attempt_reserved_for_independent_M4": true,
+      "repair_cost_covered_by_failed_launch_conservative_upper": true
+    },
+    {
+      "number": "F3",
+      "root_cause": "control command used unsupported auxiliary flags",
+      "evidence": "auxiliary_pre07/receipt.json and aux_pre_07/summary.json",
+      "fix": "use original --aux role attempt plus command; no source or numerical change",
+      "new_numeric": 0,
+      "new_solve": 0,
+      "failure_fee_retained": 79.26591761689633
+    }
+  ],
+  "historical_failures_preserved": true
+}

@@ -1,3 +1,19 @@
+# V67定点验证
+
+最终数值source f179d6430f7f2f3216ca5765c0eef19c5bfddcce：11项新增参数/独立parent/完整模式/收费和中断计界targeted测试、相关Ruff/compile及5项dat validate通过。仅本地测试，CI NOT_RUN；没有全库pytest或历史PDE重放。
+
+| 验证 | 实际结果 | 限制 |
+|---|---|---|
+| L5两列全域生产/独立原式 | 2.66634e-15 / 2.66985e-15 | 原作用资格，不是求解通过 |
+| M4两列原式与完整q47/q63边界 | 1.37337e-14 / 1.37416e-14；边界最大4.71115e-15 | q63独立包未由q47代替 |
+| M4新进程原式/切向场 | formal2.2723991e-10；51024共享/周期面最大1.13789e-14 | direct1e-10 FAIL单列 |
+| 完整1188模式独立复算 | 最大操作差7.10543e-15；全库存PASS | 不把新增近零子集相对差代替完整门 |
+| L4F/M4保存数组checker | 六场/240点/物理复通道/逐mode功率/能量PASS；两分母PASS | 仅有限模式增量 |
+
+pre07错误aux参数没有启动子命令，费用保留；L5 SIGTERM费用保留上下界。一次紧凑15项文档合同的最终结果见[文档检查](records/documentation_checks_v67.json)。[原始增量](records/raw_archive_index_v67.json) · [修复](records/repair_journal_v67.json)。GitHub视觉NOT_VERIFIED。
+
+---
+
 # V66必要定点验证
 
 10项相关测试、Ruff/compile、六one-run dat真实validate；新p4身份、复MPC、checkpoint/body fingerprint、live预算与双分母库存回归通过。保存p4一次作用、新L4两列全域独立作用及完整原式/场/828功率消费实际执行。完整准确性结论另列，不用测试数替代物理资格。一次15文档合同、无full pytest/CI/历史扫描。

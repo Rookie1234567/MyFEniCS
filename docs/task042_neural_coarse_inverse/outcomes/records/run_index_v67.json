@@ -1,0 +1,617 @@
+{
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_06",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T09:29:35.517781+00:00",
+        "observed_monotonic": 1463170.378648921,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 2077.579684972763,
+        "heavy_remaining_seconds": 44722.42031502724,
+        "total_remaining_seconds": 48322.42031502724
+      },
+      "elapsed_seconds": 4.323887541890144,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 236683264,
+      "swap_bytes": 0
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_local_p5_mode_preflight_20261009T093656387404Z",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T09:37:40.982657+00:00",
+        "observed_monotonic": 1463655.843540542,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 2563.0445606708527,
+        "heavy_remaining_seconds": 44236.95543932915,
+        "total_remaining_seconds": 47836.95543932915
+      },
+      "elapsed_seconds": 73.45921952999197,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 1448235008,
+      "swap_bytes": 0
+    },
+    {
+      "role": "PREPARE",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_local_p5_prepare_20261009T094017059090Z",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T09:41:00.966697+00:00",
+        "observed_monotonic": 1463855.82756471,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 2763.0286009311676,
+        "heavy_remaining_seconds": 44036.97139906883,
+        "total_remaining_seconds": 47636.97139906883
+      },
+      "elapsed_seconds": 12010.310956401983,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 41385975808,
+      "swap_bytes": 0
+    },
+    {
+      "role": "SOLVE_COMPLETE",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_local_p5_solve_complete_20261009T130237983420Z",
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T13:03:18.448108+00:00",
+        "observed_monotonic": 1475993.308975063,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 14900.51001214981,
+        "heavy_remaining_seconds": 31899.48998785019,
+        "total_remaining_seconds": 35499.48998785019
+      },
+      "elapsed_seconds": 1970.727970290929,
+      "classification": "INTERRUPTED_NO_RETURN_UNKNOWN_CAUSE",
+      "exit_code": null,
+      "descendants_cleared": true,
+      "peak_bytes": 95875411968,
+      "swap_bytes": 0
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_07",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T13:39:02.670708+00:00",
+        "observed_monotonic": 1478137.531574533,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17044.73261165619,
+        "heavy_remaining_seconds": 29755.26738834381,
+        "total_remaining_seconds": 33355.26738834381
+      },
+      "elapsed_seconds": 0.022480475017800927,
+      "classification": "MONITORING_FAILED",
+      "exit_code": null,
+      "descendants_cleared": true,
+      "peak_bytes": null,
+      "swap_bytes": null
+    },
+    {
+      "role": "pre",
+      "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_08",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T13:41:14.355782+00:00",
+        "observed_monotonic": 1478269.21664877,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17176.417685747147,
+        "heavy_remaining_seconds": 29623.582314252853,
+        "total_remaining_seconds": 33223.58231425285
+      },
+      "elapsed_seconds": 3.7740405790973455,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 235827200,
+      "swap_bytes": 0
+    },
+    {
+      "role": "M4",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_local_p4_m1188_20261009T134236751115Z",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T13:43:17.641548+00:00",
+        "observed_monotonic": 1478392.502414665,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 17299.703451633453,
+        "heavy_remaining_seconds": 29500.296548366547,
+        "total_remaining_seconds": 33100.29654836655
+      },
+      "elapsed_seconds": 2037.327948359074,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 59545006080,
+      "swap_bytes": 0
+    },
+    {
+      "role": "VERIFY_COST",
+      "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_compare_verify_cost_20261009T141945547981Z",
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "before_clock": {
+        "start_utc": "2026-10-09T08:54:57.938096+00:00",
+        "start_monotonic": 1461092.79901077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "heavy_limit_seconds": 46800,
+        "total_limit_seconds": 50400,
+        "scientific_loaded_limit_seconds": 39600,
+        "review_commit": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "contract_HEAD": "067da63d90a7c659f8c7c159a9a16644e5049b48",
+        "closed": false,
+        "first_work_start_never_refreshed": true,
+        "observed_utc": "2026-10-09T14:20:26.712157+00:00",
+        "observed_monotonic": 1480621.573023618,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 19528.774060487747,
+        "heavy_remaining_seconds": 27271.225939512253,
+        "total_remaining_seconds": 30871.225939512253
+      },
+      "elapsed_seconds": 252.39889478008263,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "descendants_cleared": true,
+      "peak_bytes": 3224354816,
+      "swap_bytes": 0
+    }
+  ],
+  "pointers": {
+    "PREFLIGHT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_local_p5_mode_preflight_20261009T093656387404Z/result.json",
+      "sha256": "59034d75ba38160fd88096b210cba76011f3c04bc70952fe6772825c9dabb423"
+    },
+    "PREPARE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_local_p5_prepare_20261009T094017059090Z/result.json",
+      "sha256": "109aa7e7b01d1f117f61bd016d671a220c7a0edcc7abc12846b41d86ae9c6d67"
+    },
+    "M4": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_local_p4_m1188_20261009T134236751115Z/result.json",
+      "sha256": "3e787b6f87a129209aa4331f2b7bbcbec02f030e04ed4e11f40e20dccfd41d28"
+    },
+    "VERIFY_COST": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v67/task042_v67_compare_verify_cost_20261009T141945547981Z/result.json",
+      "sha256": "7ef5f27bb32ecbd3337c3f1f00d5483a9b44cff60853c775e9d0488631ce9edc"
+    }
+  },
+  "entry_attempts": {
+    "PREPARE_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_local_p5_prepare.dat"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:40:16.174643+00:00",
+      "end_utc": "2026-10-09T13:01:51.293923+00:00",
+      "elapsed_seconds": 12095.119183719857,
+      "exit_code": 0,
+      "input_sha256": "a2c04af51bc422f254c716e297cc656dbe87726d35cdce6934df2b9a54e0c7a8",
+      "wrapper_sha256": "82a88934b5ca9eb8aead1d141894d1ec2af22f35acbdd9b14a80ff315cd894e8",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "PREFLIGHT_one_run02": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_local_p5_mode_preflight.dat"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:33:58.224574+00:00",
+      "end_utc": "2026-10-09T09:34:43.760600+00:00",
+      "elapsed_seconds": 45.536157448776066,
+      "exit_code": 1,
+      "input_sha256": "46423445fcd7078e0d3b54dd75133501b7742a6c6191fdaafd3b068e40c0f22e",
+      "wrapper_sha256": "82a88934b5ca9eb8aead1d141894d1ec2af22f35acbdd9b14a80ff315cd894e8",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "M4_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_local_p4_m1188.dat"
+      ],
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "start_utc": "2026-10-09T13:42:35.715081+00:00",
+      "end_utc": "2026-10-09T14:17:54.245341+00:00",
+      "elapsed_seconds": 2118.5302728288807,
+      "exit_code": 0,
+      "input_sha256": "652374da092598acdcae0a308b59cae04330aad34ddf98b3357362f34d319828",
+      "wrapper_sha256": "56db7e396853ea306d04d098e54d54730ea5e29fc11a50fd94ae619306036389",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "VERIFY_COST_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_compare_verify_cost.dat"
+      ],
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "start_utc": "2026-10-09T14:19:44.414732+00:00",
+      "end_utc": "2026-10-09T14:25:17.335488+00:00",
+      "elapsed_seconds": 332.92077226610854,
+      "exit_code": 0,
+      "input_sha256": "ca3428730da7d57d9ed559031a3f878a5044ea2ea70bcced052aee92d3d6457a",
+      "wrapper_sha256": "56db7e396853ea306d04d098e54d54730ea5e29fc11a50fd94ae619306036389",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "PREFLIGHT_one_run03": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_local_p5_mode_preflight.dat"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:36:55.674118+00:00",
+      "end_utc": "2026-10-09T09:39:37.937024+00:00",
+      "elapsed_seconds": 162.2628677180037,
+      "exit_code": 0,
+      "input_sha256": "46423445fcd7078e0d3b54dd75133501b7742a6c6191fdaafd3b068e40c0f22e",
+      "wrapper_sha256": "82a88934b5ca9eb8aead1d141894d1ec2af22f35acbdd9b14a80ff315cd894e8",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "PREFLIGHT_one_run01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_local_p5_mode_preflight.dat"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:30:42.213762+00:00",
+      "end_utc": "2026-10-09T09:31:31.708003+00:00",
+      "elapsed_seconds": 49.49433381995186,
+      "exit_code": 1,
+      "input_sha256": "46423445fcd7078e0d3b54dd75133501b7742a6c6191fdaafd3b068e40c0f22e",
+      "wrapper_sha256": "82a88934b5ca9eb8aead1d141894d1ec2af22f35acbdd9b14a80ff315cd894e8",
+      "scope": "case Python startup through run_case return after descendant cleanup; activation already completed",
+      "cache": "OS/JIT not cleared; new numerical case objects"
+    },
+    "SOLVE_COMPLETE_one_run01": {
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T13:01:51.293923+00:00",
+      "end_utc": "2026-10-09T13:36:09.176061+00:00",
+      "elapsed_seconds": 2057.882138,
+      "exit_code": 143,
+      "elapsed_seconds_is_conservative_upper_not_measured_exact": true,
+      "exact_outer_start_unknown": true,
+      "original_entry_receipt_was_missing": true,
+      "command": [
+        "python",
+        "scripts/run_case.py",
+        "input/task042_neural_coarse_inverse/v67_local_p5_solve_complete.dat"
+      ],
+      "input_sha256": "051e98ca75753454651b22726c03ff771b098034d96a663a6890e3889baf41c0",
+      "wrapper_sha256": "82a88934b5ca9eb8aead1d141894d1ec2af22f35acbdd9b14a80ff315cd894e8",
+      "scope": "conservative bound including lost launcher, failed work and reconciliation; no fee rollback"
+    }
+  },
+  "auxiliary_attempts": {
+    "auxiliary_pre05": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "05",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:25:41.553705+00:00",
+      "end_utc": "2026-10-09T09:26:26.064860+00:00",
+      "elapsed_seconds": 44.51117477589287,
+      "exit_code": 1,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre06": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "06",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:28:51.462835+00:00",
+      "end_utc": "2026-10-09T09:30:30.289848+00:00",
+      "elapsed_seconds": 98.82701602694578,
+      "exit_code": 0,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre04": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "04",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "53c01f124f090351747324b711599b2d8793e456",
+      "start_utc": "2026-10-09T09:22:45.900552+00:00",
+      "end_utc": "2026-10-09T09:23:33.770928+00:00",
+      "elapsed_seconds": 47.87032787594944,
+      "exit_code": 1,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre08": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "08",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "start_utc": "2026-10-09T13:40:32.355318+00:00",
+      "end_utc": "2026-10-09T13:41:56.505973+00:00",
+      "elapsed_seconds": 84.15066618216224,
+      "exit_code": 0,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre02": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "02",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "7d1e53592525c6eaba25dad7e807994182be35cb",
+      "start_utc": "2026-10-09T09:18:54.756368+00:00",
+      "end_utc": "2026-10-09T09:19:40.948975+00:00",
+      "elapsed_seconds": 46.192597900051624,
+      "exit_code": 1,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre03": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "03",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "7d1e53592525c6eaba25dad7e807994182be35cb",
+      "start_utc": "2026-10-09T09:20:43.114965+00:00",
+      "end_utc": "2026-10-09T09:20:43.406038+00:00",
+      "elapsed_seconds": 0.2910720808431506,
+      "exit_code": 1,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre07": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "07",
+        "--fe",
+        "--wall-seconds",
+        "360",
+        "--",
+        "python",
+        "-m",
+        "benchmarks.qualify_local_p_modes"
+      ],
+      "source_sha": "f179d6430f7f2f3216ca5765c0eef19c5bfddcce",
+      "start_utc": "2026-10-09T13:38:21.547003+00:00",
+      "end_utc": "2026-10-09T13:39:40.812909+00:00",
+      "elapsed_seconds": 79.26591761689633,
+      "exit_code": 1,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    },
+    "auxiliary_pre01": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "src.runners.port_preparation",
+        "--aux",
+        "pre",
+        "01",
+        "python",
+        "benchmarks/qualify_local_p_modes.py"
+      ],
+      "source_sha": "7d1e53592525c6eaba25dad7e807994182be35cb",
+      "start_utc": "2026-10-09T09:14:14.408295+00:00",
+      "end_utc": "2026-10-09T09:15:00.504894+00:00",
+      "elapsed_seconds": 46.096825449028984,
+      "exit_code": 1,
+      "wrapper_sha256": "f666c92fc7ad8c651b67c137ef46f8cd8bdf15b5910a9b0493602f63ebabd23f",
+      "scope": "full supervised auxiliary launch through cleanup; activation already completed"
+    }
+  },
+  "rejected_entries": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_04/admission.json",
+      "utc": "2026-10-09T09:23:32.310149+00:00",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_02/admission.json",
+      "utc": "2026-10-09T09:19:39.558873+00:00",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_01/admission.json",
+      "utc": "2026-10-09T09:14:58.896200+00:00",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v67/aux_pre_05/admission.json",
+      "utc": "2026-10-09T09:26:24.516985+00:00",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_local_p5_mode_preflight_20261009T093358819298Z/admission.json",
+      "utc": "2026-10-09T09:34:42.047792+00:00",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v67_local_p5_mode_preflight_20261009T093042944487Z/admission.json",
+      "utc": "2026-10-09T09:31:29.912690+00:00",
+      "status": "REJECTED",
+      "error": "RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      }
+    }
+  ]
+}

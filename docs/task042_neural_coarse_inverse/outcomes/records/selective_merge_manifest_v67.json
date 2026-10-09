@@ -1,0 +1,71 @@
+{
+  "production_default_unchanged": true,
+  "merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "paths": [
+        "src/solvers/local_p_mode_scope.py",
+        "src/solvers/local_p_mode_study.py"
+      ],
+      "behavior": "opt-in parameterized full tetra cases; mathematical core unchanged",
+      "qualification": "M4 full physical and saved independent audit; L5 operator-only, no full field",
+      "production_promotion": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "paths": [
+        "src/runners/preparation_interruption.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "behavior": "strict interrupted bounds and explicit v67 role/parent/resource binding; original resource thresholds unchanged",
+      "tests": "11 targeted checks plus explicit M4 dat execution",
+      "production_promotion": "separate review required"
+    },
+    {
+      "group": "checker/benchmark",
+      "paths": [
+        "benchmarks/collect_local_p_modes.py",
+        "benchmarks/qualify_local_p_modes.py",
+        "benchmarks/collect_frozen_local_h.py",
+        "src/test/test_local_p_modes.py"
+      ],
+      "behavior": "existing q-based independent oracle and saved-array score; no solver reimplementation",
+      "tests": "M4 VERIFY_COST and complete all-mode recalculation"
+    },
+    {
+      "group": "compact evidence/docs",
+      "paths": [
+        "docs/task042_neural_coarse_inverse/response_v67.md",
+        "docs/task042_neural_coarse_inverse/outcomes/local_p5_independent_dtn_v67.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v67.json"
+      ],
+      "old_suffix_preserved": true
+    },
+    {
+      "group": "research-only",
+      "paths": [
+        "input/task042_neural_coarse_inverse/local_p_modes_v67.json",
+        "input/task042_neural_coarse_inverse/v67_*.dat"
+      ],
+      "physical_qualification": "finite p4 mode increment only; no continuum/target qualification"
+    },
+    {
+      "group": "do-not-merge",
+      "paths": [
+        "tmp/task042/v67",
+        "benchmarks/artifacts/task042/v67",
+        "results/task042/task042_v67_*"
+      ],
+      "reason": "large arrays, raw/interrupted state and local control remain ignored"
+    }
+  ],
+  "suggested_review_order": [
+    "runner guard and explicit case identity",
+    "checker and thin opt-in case adapters",
+    "evidence/docs",
+    "research inputs"
+  ],
+  "no_other_branch_integration": true
+}
