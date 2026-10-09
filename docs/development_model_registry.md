@@ -1,3 +1,16 @@
+<!-- TASK42EXTRA_V37_CURRENT_BEGIN -->
+# Task42extra V37模型决定：旧稠密波库关闭，FTTNN仅候选说明
+
+| 模型 / 证据性质 | 实际数值或设计状态 | 资格与下一步 |
+|---|---|---|
+| 原M5/5nm/384hex/p3/31968复FE/40端口，两份冻结1377列空间 | V36学习/控制最佳G误差0.00317624280631/0.00310153077713；最佳native0.143187704283/0.144406937790，旧measured复用 | 全场联合FAIL；当前求解族CLOSED，不重复幅值/训练/投影审计 |
+| FTTNN / PROPOSAL_ONLY_NOT_QUALIFIED | 三核rank链(1,8,8,1)、9072实参数，仅derived设计；要求rank、真精度、冷N=1成本UNKNOWN | EVIDENCE_INSUFFICIENT；不是正式运行模型，无stage/训练/生产或初值许可 |
+| 同秩固定Chebyshev核控制 / 待审设计 | 9120实参数、同M5完整矩和原残差，非NN系数优化；NOT_RUN | 只属于可证伪pilot说明，不是新传统求解器任务 |
+| 原尺寸λ0.7/50×25×140nm、Si17/120nm | 完整3D FE/双Floquet/全部内部与端口、decimal2e12B/172800s原门仍未达到 | FULL_TARGET_NOT_QUALIFIED / NO_VERIFIED_NN_INCREMENT / FEINN_MAIN_SOLVER_ON_HOLD |
+
+[本支回执](task042extra_feinn_5nm/response_v37.md)、[单场准入与完整内存/成本](task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md)、[唯一compact记录](task042extra_feinn_5nm/outcomes/records/neural_restart_admission_v37.json)。不授production或master合并，保持空闲等待明确新机制授权。M3600较好态、最终退化、旧UNKNOWN、所有失败及费用、D0成本否决/D1未运行与下方历史完整保留；不更新其他任务的资格。
+<!-- TASK42EXTRA_V37_CURRENT_END -->
+
 # 当前V36：冻结神经空间的最佳场数值闭环完成
 
 本轮补完V35未完成的科学问题：已经学出的1377个波形，即使由准确答案指导组合，究竟能表示多准。先把互相接近的函数换成稳定坐标，再用原电场与curl内积选择幅值；只改变组合，不训练波矢/衰减，不增加容量。参考只在完整基冻结后读取，因此这是参考暴露的表示诊断，永远不是无标签前向求解。

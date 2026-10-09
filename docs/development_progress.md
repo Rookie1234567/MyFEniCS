@@ -1,3 +1,13 @@
+<!-- TASK42EXTRA_V37_CURRENT_BEGIN -->
+# Task42extra V37：旧神经空间判别闭环；FTTNN只完成准入分析
+
+V36已得到当前两份1377列冻结空间的最佳场答案，学习/控制G误差0.00317624280631/0.00310153077713，原残差最小值0.143187704283/0.144406937790，均不能过原门。本轮接受该数值排除，当前稠密波库求解族关闭；不重复训练、oracle或大数组封存。
+
+唯一新机制用三个小网络的矩阵输出连乘直接给出场，潜在删除旧U/Q及全列QR，但原完整FE矩、A/A*、c/r与物理验收仍保留。具体9072参数、同秩确定性控制、生命周期与冷N=1必要成本门已列；所需秩、真精度与20%机会未测，准入为EVIDENCE_INSUFFICIENT，而不是已批准的新求解器。最小pilot只写设计，未实现/注册/运行。
+
+[Response V37](task042extra_feinn_5nm/response_v37.md)、[准入说明](task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md)、[紧凑原文/接口/形状/资源记录](task042extra_feinn_5nm/outcomes/records/neural_restart_admission_v37.json)。本批pure2GiB/单核math1/ownswap0，只有文本与轻一致性检查。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED保持，原0.7nm完整3D/decimal2e12B/172800s原门未达。保留全部旧改善、退化、负结果、UNKNOWN、D0否决/D1未运行及费用；不修改或安排其他支线，交付后等待明确授权。下方所有历史原文保留。
+<!-- TASK42EXTRA_V37_CURRENT_END -->
+
 # 当前V36：冻结神经空间的最佳场数值闭环完成
 
 本轮补完V35未完成的科学问题：已经学出的1377个波形，即使由准确答案指导组合，究竟能表示多准。先把互相接近的函数换成稳定坐标，再用原电场与curl内积选择幅值；只改变组合，不训练波矢/衰减，不增加容量。参考只在完整基冻结后读取，因此这是参考暴露的表示诊断，永远不是无标签前向求解。

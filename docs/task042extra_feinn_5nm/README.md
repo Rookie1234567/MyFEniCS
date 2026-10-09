@@ -1,3 +1,19 @@
+<!-- TASK42EXTRA_V37_CURRENT_BEGIN -->
+# 当前V37：旧数值闭环已完成；只做神经机制准入
+
+本支只做神经。V36 已完成两份冻结1377列空间的判别：学习/控制最佳G场误差0.00317624280631/0.00310153077713，最佳原残差0.143187704283/0.144406937790，原门未过。当前稠密波库求解族关闭，不再续训或重算oracle；这是固定空间的数值排除，不是所有NN不可能。
+
+| 当前范围 / 数据性质 | 决定及入口 |
+|---|---|
+| V36旧measured结论直接接受 | [Review V36](review_report_v36.md)、[原完整Gate](outcomes/records/joint_gates_v36.json)；大数组/旧失败及UNKNOWN不改 |
+| 唯一新机制FTTNN / proposal与形状推导 | [准入说明](outcomes/neural_restart_admission_v37.md)：三个小核、9072实参数、完整矩及O(N)算子保留；所需秩/冷单场收益UNKNOWN |
+| 准入决定 | EVIDENCE_INSUFFICIENT / PROPOSAL_ONLY_NOT_QUALIFIED；待审最小pilot未实现、未注册、未运行，不授训练或生产初值 |
+| 本轮交付 / 轻检查 | [Response V37](response_v37.md)、[唯一compact记录](outcomes/records/neural_restart_admission_v37.json)、[summary](outcomes/summary.md)；无新FE/网络前向/矩阵作用/因子 |
+| 原目标及停止 | 原50×25×140nm、Si17/120nm、λ0.7完整3D FE、decimal2e12B/ownswap OOC0/172800s及原门未达；等待新机制明确授权 |
+
+FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED / NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE保持。M3600较好态、最终退化、D0成本否决/D1未运行和全部费用保留。下方历史全文保留，旧“当前/下一步”不授新运行；本支不转入W0/W1、全口面、传统PC、存储或其他支线工作。
+<!-- TASK42EXTRA_V37_CURRENT_END -->
+
 # 当前V36：两空间最佳场已实际完成，当前稠密波库求解族关闭
 
 本轮补完V35未完成的科学问题：已经学出的1377个波形，即使由准确答案指导组合，究竟能表示多准。先把互相接近的函数换成稳定坐标，再用原电场与curl内积选择幅值；只改变组合，不训练波矢/衰减，不增加容量。参考只在完整基冻结后读取，因此这是参考暴露的表示诊断，永远不是无标签前向求解。

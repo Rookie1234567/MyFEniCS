@@ -1,0 +1,686 @@
+{
+  "schema": 1,
+  "campaign": "V37_NEURAL_RESTART_ADMISSION_ONLY",
+  "authority_sha": "e5e282d830f377c86e119db56d5d84f6daed0b9c",
+  "frozen_base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "result_baseline_sha": "4543797060bac8f4d8341d8d5d797be285a1cd2d",
+  "source_scope": "Documentation plus pure integer/metadata/link checks; numerical source unchanged",
+  "decision": "EVIDENCE_INSUFFICIENT",
+  "mechanism": "FTTNN",
+  "mechanism_status": "PROPOSAL_ONLY_NOT_QUALIFIED",
+  "implementation_authorized": false,
+  "training_authorized": false,
+  "new_PDE_authorized": false,
+  "production_initialization_allowed": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false,
+  "current_dense_wave_solver_family": "CLOSED",
+  "FEINN_MAIN_SOLVER_ON_HOLD": true,
+  "NO_VERIFIED_NN_INCREMENT": true,
+  "FULL_TARGET_NOT_QUALIFIED": true,
+  "NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE": true,
+  "reused_measured_v35_v36": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "original_columns": 1377,
+      "retained_rank": 1377,
+      "actual_E_G": 0.0031762428063071215,
+      "retained_optimality": 7.537701614441646e-14,
+      "G_orthogonality_F": 1.7385571996067255e-12,
+      "source_identity": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+        "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+      },
+      "numerical_source_sha": "a4e14e889861ea7b3a4725e0f2bfe07490b34baa",
+      "actual_and_producer_joint_gate": false,
+      "best_native_v35": 0.14318770428345817,
+      "reference_exposed_oracle_not_a_solver": true
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "original_columns": 1377,
+      "retained_rank": 1377,
+      "actual_E_G": 0.003101530777126289,
+      "retained_optimality": 2.601108714272106e-14,
+      "G_orthogonality_F": 1.898814876037591e-12,
+      "source_identity": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+        "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+      },
+      "numerical_source_sha": "67cca36b3b344afb61943378582483f8f88e7e97",
+      "actual_and_producer_joint_gate": false,
+      "best_native_v35": 0.1444069377900675,
+      "reference_exposed_oracle_not_a_solver": true
+    }
+  },
+  "reused_evidence_bindings": {
+    "docs/task042extra_feinn_5nm/README.md": {
+      "bytes": 43279,
+      "sha256": "6d974e45e05c32a8a7453af90ff26087608a76463ea5a31e3e4efda4e22f958e"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": {
+      "bytes": 137955,
+      "sha256": "2e1dce972df11f224046c7c7008b82902beb5a7884f1e293476fa9b998475db2"
+    },
+    "docs/task042extra_feinn_5nm/response_v36.md": {
+      "bytes": 9135,
+      "sha256": "628b47455ac5ebce19d39969116e1bc7760e141d2e0de0f94b86e9e59c286b29"
+    },
+    "docs/task042extra_feinn_5nm/review_report_v35.md": {
+      "bytes": 23218,
+      "sha256": "63395954bee128f87f7674aa086228dccbf8b893acc1fc3a28b260414e6cb390"
+    },
+    "docs/task042extra_feinn_5nm/review_report_v36.md": {
+      "bytes": 19039,
+      "sha256": "f7e2b6d42862581bb39917a9d150ce443431900c0b966ea2f62299ede015475a"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/records/field_oracle_v36.json": {
+      "bytes": 11831,
+      "sha256": "89106e26bbdb149aecfdc6e5f28d6c1a80e92ed4caf4d6910df1f5f31a9ccaea"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/records/joint_gates_v36.json": {
+      "bytes": 132966,
+      "sha256": "e304c0fcf7b344e14bbd38790c379029705811bd86a90d9cb4ab28a5dfcbe32e"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/records/cost_capacity_v36.json": {
+      "bytes": 3321,
+      "sha256": "e108d30aabca3778cd41af5798cc08bfcdc56866119c95ce4e94acd604a49166"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/records/run_index_v36.json": {
+      "bytes": 69231,
+      "sha256": "cf0847a2078ac89fbf42a9bbe615e87760e0c76a7483e225b1f35ea4b409cdf0"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/records/raw_artifact_index_v36.json": {
+      "bytes": 43177,
+      "sha256": "8b5f2523ccf1b09f82f56fc7c02cd610f6a2cdbc61e531c81f1af2531b1e222e"
+    },
+    "docs/task042extra_feinn_5nm/outcomes/records/unlabelled_optimality_v35.json": {
+      "bytes": 6697,
+      "sha256": "88ed1483bc684b589a503152d84be64dcdba0e4dd8fec8f0adb329be6d6c9b6a"
+    },
+    "src/solvers/feinn_interpolation.py": {
+      "bytes": 11393,
+      "sha256": "00712ceebab7e3ee05e1c8ea5c35b0f0a0ad9717112cd714beef6cfb917eb218"
+    },
+    "src/solvers/feinn_torch.py": {
+      "bytes": 5084,
+      "sha256": "27dee583fd30825bee19f661bf9a8226648de36ce9abf9ca8c802356ae3b6bc3"
+    },
+    "src/solvers/feinn_native.py": {
+      "bytes": 8409,
+      "sha256": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313"
+    },
+    "src/solvers/feinn_optimization.py": {
+      "bytes": 18435,
+      "sha256": "e58d5e46cd5fc21f77033ac03e51c0f3d7d4ad8123bf0197c237b0dca2953082"
+    },
+    "src/runners/neural_space_verification.py": {
+      "bytes": 15109,
+      "sha256": "ec259dab0e29ca8d1dc5bec9e98bd0eb5bd123c194cd6fb72d1c67e838386a2b"
+    },
+    "src/postprocessing/neural_space_saved.py": {
+      "bytes": 3570,
+      "sha256": "6f591fad6f9c93dc2a971a0d02ee671ea113c19cc6591f159c7e63ab7a926866"
+    }
+  },
+  "proposed_case_metadata_binding": {
+    "path": "input/task042extra_feinn_5nm/design_v36.json",
+    "bytes": 79263,
+    "sha256": "f25e1f84493e69807c5c08143766302c0894b9d0f9c399bfde4a3ca16b0afc11"
+  },
+  "proposed_case": {
+    "model": {
+      "wavelength_nm": 5.0,
+      "geometry": {
+        "bounds_nm": [
+          [
+            -5,
+            5
+          ],
+          [
+            -3.75,
+            3.75
+          ],
+          [
+            -1.25,
+            8.75
+          ]
+        ],
+        "substrate_z_nm": 0,
+        "block_bounds_nm": [
+          [
+            -2.5,
+            2.5
+          ],
+          [
+            -3.75,
+            3.75
+          ],
+          [
+            0,
+            7.5
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            0,
+            2.5
+          ],
+          [
+            -1.25,
+            1.25
+          ],
+          [
+            2.5,
+            5
+          ]
+        ],
+        "cells": [
+          8,
+          6,
+          8
+        ],
+        "step_nm": 1.25
+      },
+      "materials": {
+        "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "si_n": [
+          0.99396854453,
+          0.00435380777
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "amplitude": 1.0,
+        "background": "layered"
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "cell": "hexahedron",
+        "degree": 3,
+        "operator_quadrature_degree": 15
+      },
+      "boundary": {
+        "floquet_xy": true,
+        "dtn": "complete original auto_propagating Fourier-DtN",
+        "pml": false
+      },
+      "near_zero": {
+        "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+        "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+        "scaled_curl_natural_scale": "same incident E scale",
+        "selected_E_scale": 1.0,
+        "selected_H_code_scale": 1.0,
+        "port_scale": "incident ordered amplitude norm",
+        "report_absolute_and_denominator": true,
+        "phase_fit": false
+      }
+    },
+    "native_identity": {
+      "mesh_coordinates_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+      "mode_manifest_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e"
+    },
+    "files": {
+      "native": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+        "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+      },
+      "moments_q15": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q15.npz",
+        "sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e"
+      },
+      "moments_q30": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q30.npz",
+        "sha256": "22715fac468c4e364c3947e99672117f0f855dfe424914f9fce16be090a693f5"
+      }
+    },
+    "reference_for_future_isolated_checker_only": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+      "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+    },
+    "identity_scope": "Copied from accepted design metadata; no array opened or rehashed"
+  },
+  "primary_sources": [
+    {
+      "url": "https://arxiv.org/html/2510.13386v1",
+      "version": "v1",
+      "read_scope": "HTML methods 2.1-2.2, approximation theorem, experimental body 4.1-4.5 and conclusion; PDF/figure values not checked; no reproduction",
+      "supported": "Neural matrix-valued one-dimensional cores, tensor contraction; separable loss integration assumptions",
+      "limitation": "Scalar examples, FTT coefficients/source and lower-wavenumber initialization do not certify arbitrary lossy 3D H(curl) or cold N=1"
+    },
+    {
+      "url": "https://arxiv.org/abs/2512.15631v1",
+      "version": "v1",
+      "read_scope": "ABSTRACT_ONLY",
+      "limitation": "Constant-material space-time spectral collocation TT; not NN training or this frequency-domain FE scattering"
+    }
+  ],
+  "proposed_shapes_derived": {
+    "rank_chain": [
+      1,
+      8,
+      8,
+      1
+    ],
+    "hidden_width": 16,
+    "hidden_layers": 2,
+    "components": 3,
+    "axis_real_outputs": [
+      48,
+      384,
+      48
+    ],
+    "axis_real_parameters": [
+      1120,
+      6832,
+      1120
+    ],
+    "real_parameters": 9072,
+    "weight_bytes_fp64": 72576,
+    "deterministic_control_degree": 18,
+    "deterministic_control_real_parameters": 9120,
+    "required_rank": "UNKNOWN",
+    "actual_target_N": "UNKNOWN",
+    "target_Q": "UNKNOWN"
+  },
+  "cost_gate": {
+    "cold_N1_baseline_seconds": "UNKNOWN",
+    "removable_baseline_seconds": "UNKNOWN",
+    "learning_and_mapping_seconds": "UNKNOWN",
+    "same_precision_peak": "UNKNOWN",
+    "necessary_time_condition": "added <= removable - 0.2*baseline",
+    "opportunity": "UNKNOWN",
+    "inference_only_or_future_queries_amortization_allowed": false
+  },
+  "future_single_pilot": {
+    "status": "PROPOSED_NOT_AUTHORIZED_NOT_RUN",
+    "wavelength_nm": 5,
+    "hex_cells": 384,
+    "p": 3,
+    "independent_complex_FE": 31968,
+    "ports": 40,
+    "seed": 4213701,
+    "objective": "original native Euclidean residual, explicitly a proposed choice",
+    "rank": 8,
+    "NN_real_parameters": 9072,
+    "fixed_Chebyshev_control_real_parameters": 9120,
+    "proposed_total_seconds": 14400,
+    "proposed_each_route_closures": 1000,
+    "proposed_each_route_seconds": 3600,
+    "from_zero_scattering": true,
+    "no_rank_or_width_or_seed_scan": true,
+    "training_reference_access_allowed": false,
+    "not_a_0p7_stage": true,
+    "files_or_stages_created": false
+  },
+  "new_execution_counts": {
+    "FE_assembly": 0,
+    "network_forward": 0,
+    "training_closure": 0,
+    "A_action": 0,
+    "AH_action": 0,
+    "G_matvec": 0,
+    "Gsolve": 0,
+    "Gram_factor": 0,
+    "Maxwell_factor": 0,
+    "oracle": 0,
+    "rank_scan": 0,
+    "dataset": 0,
+    "GPU": 0,
+    "durable_PDE_worker": 0,
+    "reference_array_read": 0,
+    "large_array_rehash": 0
+  },
+  "unresolved": [
+    "actual required rank and field precision",
+    "full complex moment/MPC compatibility of new cores",
+    "product-core gradient/gauge stability",
+    "closure cost and convergence",
+    "complete same-precision cold N=1 baseline/opportunity"
+  ],
+  "historical_preservation": {
+    "M3600_better_state": true,
+    "final_degradation": true,
+    "D0": "COST_DENIED",
+    "D1": "NOT_RUN",
+    "prior_FAILURE_UNKNOWN_and_costs": true,
+    "old_V35_log930": "NOT_RETAINED_NO_RECOVERY",
+    "necessary_prefix_seconds": 10186.178641493432,
+    "V34_loaded_learned_path_seconds": 20728.120829955675,
+    "V35_failed_oracle_seconds": 5110.947981953854,
+    "exact_project_cumulative_seconds": "UNKNOWN",
+    "cold_N1_seconds": "UNKNOWN"
+  },
+  "final_goal": {
+    "dimensions_nm": [
+      50,
+      25,
+      140
+    ],
+    "Si_nm": [
+      17,
+      120
+    ],
+    "wavelength_nm": 0.7,
+    "model": "full 3D complex Nedelec double-Floquet Fourier-DtN complete fields and original precision gates",
+    "whole_machine_decimal_bytes": 2000000000000,
+    "continuous_complete_cold_seconds": 172800,
+    "ownswap_OOC": 0,
+    "qualified": false
+  },
+  "repairs": [
+    {
+      "failure": "Light metadata guard Health rejected tmp as artifact_root before child launch",
+      "hypothesis": "Original Health requires task-owned ignored benchmark artifact scope",
+      "change": "Only ignored light wrapper points to benchmarks/artifacts/task42extra/v37_light",
+      "test_resume": "Fresh original PSI/CPU/2GiB admission; intake completed, descendants cleared",
+      "original_failed_directory": "tmp/task42extra/v37/intake_resource"
+    },
+    {
+      "failure": "First documentation patch context did not match historical header; patch applied no changes",
+      "change": "Read exact header and prepend current decision while preserving entire old byte suffix",
+      "test_resume": "History suffix check below; no numerical work"
+    },
+    {
+      "failure": "Readonly compact schema probe treated records dict as list; AttributeError",
+      "change": "Use actual dict.items schema",
+      "test_resume": "Metadata fields read; no artifact/numerical change"
+    }
+  ],
+  "resource_policy": {
+    "tree_hard_bytes": 2147483648,
+    "tree_warn_bytes": 1879048192,
+    "MPI": 1,
+    "math_threads": 1,
+    "new_numerical_window_requested": false,
+    "own_swap_required_bytes": 0,
+    "original_PSI_CPU_SMT_and_neighbor_growth_reserve_preserved": true
+  },
+  "time_window": {
+    "campaign": "V37_NEURAL_RESTART_ADMISSION_ONLY",
+    "origin_monotonic_s": 1480030.0,
+    "deadline_monotonic_s": 1487230.0,
+    "continuous_cap_s": 7200,
+    "local_consistency_shape_cap_s": 1800,
+    "origin_basis": "conservative monotonic origin preceding first readonly preparation; initial uptime 1480035.94",
+    "reference_numeric_work_reused": true,
+    "new_training_or_PDE_authorized": false
+  },
+  "rendered_view": {
+    "status": "PENDING_FINITE_ACTUAL_GITHUB_CHECK",
+    "local_structure_is_visual_PASS": false
+  },
+  "history_preservation": {
+    "docs/task042extra_feinn_5nm/README.md": {
+      "original_bytes": 43279,
+      "original_sha256": "6d974e45e05c32a8a7453af90ff26087608a76463ea5a31e3e4efda4e22f958e",
+      "entire_byte_suffix_unchanged": true
+    },
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": {
+      "original_bytes": 137955,
+      "original_sha256": "2e1dce972df11f224046c7c7008b82902beb5a7884f1e293476fa9b998475db2",
+      "entire_byte_suffix_unchanged": true
+    },
+    "docs/development_progress.md": {
+      "original_bytes": 252981,
+      "original_sha256": "951003e99419e6e7856e48dec359bef669fc2e454a059588044b481098cde173",
+      "entire_byte_suffix_unchanged": true
+    },
+    "docs/development_model_registry.md": {
+      "original_bytes": 295604,
+      "original_sha256": "156ac32c1f6e26cb3f3c3bdc0acc128a29fd92ee3a1023894acf0c0c1a3d1010",
+      "entire_byte_suffix_unchanged": true
+    }
+  },
+  "local_checks": {
+    "status": "PASS",
+    "assertion_count": 129,
+    "document_count": 6,
+    "links_checked": 39,
+    "table_count": 10,
+    "math_fence_count": 3,
+    "original_numerical_tests_replayed": 0,
+    "checked_names": [
+      "actual_layer_parameter_sum",
+      "parameter_bytes_and_control_coefficients",
+      "no_hidden_UQ_shape_claim",
+      "cold_cost_inequality_has_negative_and_positive_examples",
+      "rank_and_full_target_not_fabricated",
+      "all_new_numerical_and_array_counts_zero",
+      "decision_does_not_authorize_training",
+      "old_identity_rank_gate_LEARNED_COMPLEX_WAVE_BACKFIT",
+      "old_identity_rank_gate_DETERMINISTIC_COMPLEX_WAVE_BACKFIT",
+      "historical_entire_byte_suffix_docs/task042extra_feinn_5nm/README.md",
+      "historical_entire_byte_suffix_docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "historical_entire_byte_suffix_docs/development_progress.md",
+      "historical_entire_byte_suffix_docs/development_model_registry.md",
+      "exact_change_allowlist_src_input_review_unchanged",
+      "closed_fences_docs/task042extra_feinn_5nm/README.md",
+      "local_link_docs/task042extra_feinn_5nm/README.md:review_report_v36.md",
+      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/records/joint_gates_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/neural_restart_admission_v37.md",
+      "local_link_docs/task042extra_feinn_5nm/README.md:response_v37.md",
+      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/records/neural_restart_admission_v37.json",
+      "local_link_docs/task042extra_feinn_5nm/README.md:outcomes/summary.md",
+      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/README.md:None",
+      "closed_fences_docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:records/field_oracle_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:records/joint_gates_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:../review_report_v36.md",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:neural_restart_admission_v37.md",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:records/neural_restart_admission_v37.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/summary.md:../response_v37.md",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/summary.md:None",
+      "closed_fences_docs/development_progress.md",
+      "local_link_docs/development_progress.md:task042extra_feinn_5nm/response_v37.md",
+      "local_link_docs/development_progress.md:task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+      "local_link_docs/development_progress.md:task042extra_feinn_5nm/outcomes/records/neural_restart_admission_v37.json",
+      "closed_fences_docs/development_model_registry.md",
+      "local_link_docs/development_model_registry.md:task042extra_feinn_5nm/response_v37.md",
+      "local_link_docs/development_model_registry.md:task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+      "local_link_docs/development_model_registry.md:task042extra_feinn_5nm/outcomes/records/neural_restart_admission_v37.json",
+      "table_row_arity_docs/development_model_registry.md:None",
+      "table_row_arity_docs/development_model_registry.md:None",
+      "table_row_arity_docs/development_model_registry.md:None",
+      "table_row_arity_docs/development_model_registry.md:None",
+      "table_row_arity_docs/development_model_registry.md:None",
+      "closed_fences_docs/task042extra_feinn_5nm/response_v37.md",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:review_report_v36.md",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/joint_gates_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/field_oracle_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/unlabelled_optimality_v35.json",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/cost_capacity_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/neural_restart_admission_v37.md",
+      "local_link_docs/task042extra_feinn_5nm/response_v37.md:outcomes/records/neural_restart_admission_v37.json",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/response_v37.md:None",
+      "closed_fences_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../review_report_v36.md",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/neural_restart_admission_v37.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/joint_gates_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/field_oracle_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../response_v36.md",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/unlabelled_optimality_v35.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_interpolation.py",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_torch.py",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_native.py",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/solvers/feinn_optimization.py",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/runners/neural_space_verification.py",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:../../../src/postprocessing/neural_space_saved.py",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/cost_capacity_v36.json",
+      "local_link_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:records/neural_restart_admission_v37.json",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "table_row_arity_docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md:None",
+      "planned_shapes_and_scope_appear_in_proposal"
+    ],
+    "scope": "Current navigation prefixes and both complete new pages; old historical rendering/negative records preserved"
+  },
+  "document_bindings": [
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "bytes": 45079,
+      "sha256": "669e77b6c9ce2084438e44da138fbe9d4eeca5873d029a0afd4a657cd5d22b0f"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "bytes": 140131,
+      "sha256": "f3f32c24446b3833a61d17d2197d05998c3fc864d3def749785a3763d87507ba"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 254511,
+      "sha256": "d7b0aca7be6c5bcafd8459a7e0a7bdbea240e476320a194f2e6fdb96d16781dd"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 297273,
+      "sha256": "c9a9709aaf62edbe6397be4dbfb48db599c64b40adf7762817fced9a27aa8e3c"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v37.md",
+      "bytes": 5178,
+      "sha256": "c829aae639009d3b4a2c36dd021069021a1efba775108ab7fc4dd7a152a4be1d"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/neural_restart_admission_v37.md",
+      "bytes": 18476,
+      "sha256": "56c64419f287fc26d6cbb211469acdf9783e9ccf7a55ce4dff4cebeb59f7124d"
+    }
+  ],
+  "pure_check_tool_binding": {
+    "path": "tmp/task42extra/v37/assemble_record.py",
+    "bytes": 16265,
+    "sha256": "71bc24b0d561909fb60795803267fa15c4321cd8d9490dc4d492bb73d1a8c49c"
+  },
+  "pure_environment": {
+    "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "activation": "scripts/activate_task42extra.sh pure",
+    "cpu_affinity": [
+      12
+    ],
+    "math_threads": 1,
+    "numpy_Torch_FE_imported": false
+  },
+  "measured_light_resources": {
+    "stages": [
+      {
+        "name": "intake_resource_retry1",
+        "summary_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/intake_resource_retry1/summary.json",
+          "bytes": 2020,
+          "sha256": "e37c41b77fa5f4a9125260bab3cb4d6970a98f60e7df1847a222bdb24deb6305"
+        },
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_worker_and_supervision_seconds": 1.957812855951488,
+        "sampled_simultaneous_tree_peak_bytes": 39354368,
+        "sampled_tree_swap_peak_bytes": 0,
+        "cpu": 0,
+        "PSI60_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/intake_resource_retry1/pressure_stable_window.json",
+          "bytes": 11429,
+          "sha256": "81ee15b2092d7aa014b0ec98bbab7f6910488f2ef9ff9e1da2aaad948815ac7d"
+        },
+        "startup_system_and_neighbor_reserve_bytes": 628626898944
+      },
+      {
+        "name": "checks_resource",
+        "summary_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_resource/summary.json",
+          "bytes": 2016,
+          "sha256": "a7e2321175f8105fc4b0855e9ab83f345f51e303c0e57e2c9776333f8b7a700e"
+        },
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "elapsed_worker_and_supervision_seconds": 1.5361745809204876,
+        "sampled_simultaneous_tree_peak_bytes": 45551616,
+        "sampled_tree_swap_peak_bytes": 0,
+        "cpu": 12,
+        "PSI60_binding": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/checks_resource/pressure_stable_window.json",
+          "bytes": 11430,
+          "sha256": "63b3ccb804b51bb0d4040e1bda50f89d56abfaa3c73af1ebab7077ebc43a86bb"
+        },
+        "startup_system_and_neighbor_reserve_bytes": 628626898944
+      }
+    ],
+    "sampled_simultaneous_peak_of_these_sequential_stages_bytes": 45551616,
+    "every_measured_tree_swap_zero": true,
+    "every_finished_tree_cleared": true,
+    "whole_calendar_tree_peak": "NOT_FULLY_SAMPLED",
+    "unmeasured_scope": "Doc editing, shell/read-only metadata intake and prelaunch scopes; sampled stage peak is not a whole-session peak",
+    "PSI_successful_checks_charged_to_continuous_calendar": true,
+    "initial_failed_prelaunch_PSI_binding": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v37/intake_resource/pressure_stable_window.json",
+      "bytes": 11429,
+      "sha256": "7377526fab3565935e97ca5eb99b8b8b71db850f28c28560ffa8d2ab208ea5f5"
+    }
+  },
+  "calendar_snapshot": {
+    "monotonic_s": 1482344.338904624,
+    "elapsed_from_conservative_origin_s": 2314.3389050539117,
+    "not_final": true,
+    "final_receipt": "tmp/task42extra/v37/delivery_receipt.json"
+  }
+}

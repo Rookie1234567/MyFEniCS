@@ -1,3 +1,18 @@
+<!-- TASK42EXTRA_V37_CURRENT_BEGIN -->
+# 当前V37：数值问题已回答，新机制准入证据不足
+
+| 当前对象 / measured复用、derived或not_run | 实际结论与边界 | 证据 |
+|---|---|---|
+| V36两份1377列/满秩冻结空间 | 学习/控制最佳native0.143187704283/0.144406937790；最佳G场0.00317624280631/0.00310153077713；原联合门FAIL | [原oracle](records/field_oracle_v36.json)、[完整Gate](records/joint_gates_v36.json)；不重复审计 |
+| 旧求解族投入决定 | CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED；只排除这两个冻结空间，不证明所有FEINN无解 | [Review V36](../review_report_v36.md)，旧UNKNOWN/失败/数组保留 |
+| 唯一FTTNN准入 / proposal | 9072实参数三核连乘；可避免旧U/Q，但原A、完整c/r、MPC/DtN与物理验收仍有O(N)成本；所需秩和冷N=1均UNKNOWN | [完整说明](neural_restart_admission_v37.md)、[原文与接口/整数形状/资源记录](records/neural_restart_admission_v37.json) |
+| 新机制判定 | EVIDENCE_INSUFFICIENT / PROPOSAL_ONLY_NOT_QUALIFIED；具体最小pilot待明确审阅，不自动实现/训练 | [Response V37](../response_v37.md)；没有新PDE或16GiB数值窗口 |
+| 本批实际工作 / 新数值次数 | 只读文本/紧凑记录/原论文、本地轻一致性与形状；新FE、NN前向、A/G作用、因子及训练均0 | 唯一compact记录及ignored交付收据；采样峰与未测部分分别列 |
+| 原目标/生产/神经增益 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED / NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE | 原50×25×140nm、Si17/120nm、λ0.7完整3D、decimal2e12B、ownswap OOC0、172800s与原门未达 |
+
+冷单场完整成本机会未验证，不以权重小、推理快或删去失败波库授NN收益。必要旧前缀10186.178641493432s、全部失联/失败/尾段费用、M3600较好/Mfinal退化、D0成本否决/D1未运行不改；项目精确累计仍UNKNOWN。提交推送本分支后保持空闲等待新机制明确授权。以下完整历史与旧UNKNOWN原样保留，不再把V35 B未知当作当前未完成项。
+<!-- TASK42EXTRA_V37_CURRENT_END -->
+
 # 当前V36：两空间最佳场已实际完成，当前稠密波库求解族关闭
 
 本轮补完V35未完成的科学问题：已经学出的1377个波形，即使由准确答案指导组合，究竟能表示多准。先把互相接近的函数换成稳定坐标，再用原电场与curl内积选择幅值；只改变组合，不训练波矢/衰减，不增加容量。参考只在完整基冻结后读取，因此这是参考暴露的表示诊断，永远不是无标签前向求解。
