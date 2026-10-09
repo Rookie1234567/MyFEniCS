@@ -1,3 +1,15 @@
+# 当前V35变更边界
+
+| 依赖组 | 变更和行为 | 合入边界 |
+|---|---|---|
+| research-only数值 | src/solvers/neural_space_audit.py、feinn_gqr.py流式opt-in；固定列小QR/SVD和G投影，无训练/逆 | 普通默认不变，不授生产候选 |
+| runner/watchdog接线 | neural_space_campaign/worker/verification、既有neural_wave入口与现代资源/计时角色 | 新schema/stage显式V35，原健康昂贵证据复用 |
+| checker/benchmark | src/postprocessing/neural_space_saved.py及小资格/targeted tests | 新场完整数组独立检查，oracle永久diagnostic |
+| compact evidence/docs | V35设计、四dat、回执/专题/当前导航、records | 历史不覆盖，大数组ignored |
+| do-not-merge | oracle模型/幅值、未资格化研究路径、历史负态 | 不作生产初始化；master merge未授权 |
+
+[实际源码与输入绑定](records/run_index_v35.json)、[原数组索引](records/raw_artifact_index_v35.json)、[测试](records/tests_v35.json)、[投入决定](neural_route_decision_v35.md)。下方旧changed_files全文保留。
+
 # V33依赖分组：研究opt-in，不授production/merge
 
 | 依赖组 | 本轮作用和审阅顺序 |

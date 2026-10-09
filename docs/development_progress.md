@@ -1,3 +1,15 @@
+# 当前V35：神经固定空间审计与当前稠密波库关闭
+
+本轮不再训练，而是把固定波形的幅值读出和最佳场表示分开测。两份V34最终1377列/246块的无标签全秩原残差数值最小值为0.143187704283/0.14440693779，各高于1e-6；旧c/r逐位未变，复用健康原Gate。B参考暴露只诊断固定空间，不授PDE-only或生产初值。
+
+V34学习冻结空间：CONTROLLED_STOP_NUMERICAL_BUDGET；原A最佳残差仍FAIL，但B最佳场精度和表示归因保留UNKNOWN。
+
+V34确定性强控制空间：NOT_RUN_NUMERICAL_BUDGET；原A最佳残差仍FAIL，但B最佳场精度和表示归因保留UNKNOWN。
+
+新oracle场未保存，新场独立FE/保存数组核验NOT_RUN；旧两态actual与producer原Gate分别复用；秩、最优性和积分限定不能当严格区间证明或所有NN无解。NO_SUPPORTED_NEXT_NEURAL_PRODUCTION_CANDIDATE / CURRENT_DENSE_WAVE_SOLVER_FAMILY_CLOSED / FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。必要前缀10186.178641493432s和所有新增/失败费用保留；冷N=1及精确累计UNKNOWN，未运行或注册0.7nm。原50×25×140nm、Si17/120nm、lambda0.7完整3D、decimal2e12B/ownswap OOC0/172800s目标未达。
+
+[回执](task042extra_feinn_5nm/response_v35.md)、[专题](task042extra_feinn_5nm/outcomes/neural_space_feasibility_v35.md)、[全部Gate](task042extra_feinn_5nm/outcomes/records/joint_gates_v35.json)、[费用](task042extra_feinn_5nm/outcomes/records/cost_capacity_v35.json)。下方全部旧原文、中期较好态、最终退化、D0成本否决/D1未运行及负结果/UNKNOWN保留；不修改其他支线或合并master。
+
 # 当前V33最终：本支只做神经，固定容量回拟合完整负结果
 
 本轮实际重新学习了已有波矢，并在每次试探中重求全部幅值，列数始终1377。学习路线提交16次非零q更新，确定性强控制提交26次。两条都在第二个预登记独立标量检查点触发BACKFIT_NO_USEFUL_PROGRESS，随后完成实际网络与producer的完整独立验收，M5联合门均失败。

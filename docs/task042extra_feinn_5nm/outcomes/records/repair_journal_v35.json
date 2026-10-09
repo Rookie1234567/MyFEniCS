@@ -1,0 +1,47 @@
+{
+  "raw": {
+    "path": "tmp/task42extra/v35/repair_journal.jsonl",
+    "bytes": 2608,
+    "sha256": "0278964045c4d82796652590222736883e7bc7252ece7d293883c0c55fd2f1f7"
+  },
+  "entries": [
+    {
+      "kind": "SVD_AMPLITUDE_ROUNDING",
+      "failure": "Initial new SVD-amplitude original optimality above 1e-9; original QR is healthy",
+      "hypothesis": "SVD amplitude reconstruction loses accuracy for ill-conditioned full-rank small R",
+      "change": "Keep fixed SVD rank; use original qualified triangular QR back substitution, preserve all initial arrays and results; reuse healthy 6 complete-moment witnesses",
+      "initial_result_sha256": "0fa2cce6ec845cfc111d5435386ddb31848f2c8c0f37a70ed3c4f8e8149cd9c5",
+      "initial_source": "00e226cf61f613e38f831e16f66dc20d247598ac",
+      "monotonic": 1456953.321546084,
+      "test": "Final affected qualifications in repair_qa; real original-A residual and optimality rechecked in attempt2 without labels"
+    },
+    {
+      "monotonic": 1459221.595088675,
+      "kind": "METADATA_READER_ONLY",
+      "failure": "Sandbox metadata interpreter remained runnable but had no CPU progress; no numerical worker interruption",
+      "hypothesis": "Execution context of the read-only metadata process",
+      "change": "Terminated only own verified metadata reader pid 3483195; reran small JSON/clock read through approved native exec",
+      "test": "Native metadata read exited 0 and returned remaining original deadline; scientific worker remained same pid 3477490",
+      "resume": "Same unique B job; no source/input/numerical state changed",
+      "cost": "Included in continuous V35 wall; no budget reset"
+    },
+    {
+      "monotonic": 1463146.589985452,
+      "failure": "Original B ReadoutStop reached save window, then FileNotFoundError writing per-space space_record.json.tmp; worker exit1 and full tree cleared",
+      "hypothesis": "Per-space directory was created only on successful model write, absent on budget-only record path",
+      "change": "Create each oracle space directory before work; C performs tightly evidenced metadata-only recovery from original summary/log/events and sealed A hash",
+      "test": "Actual atomic writer/reopen and invalid-log/changed-A/healthy-state negative fixtures; original B log retained",
+      "resume": "No second G projection or recovered partial parameters; C resumes record consumption only after clean repair source commit",
+      "cost": "Original B actual attempt5110.947981953854s retained, A/B deadline not reset"
+    },
+    {
+      "failure": "Budget-record repair QA Ruff E701 in four fixture statements",
+      "hypothesis": "Fixture syntax style only, producer and original failure remain unchanged",
+      "change": "Expand four one-line fixture branches",
+      "test": "budget_repair_qa_retry: Ruff/compile passed; 5 targeted budget writer and recovery/corruption fixtures passed; tree cleared, swap0",
+      "resume": "Clean commit then unique C metadata recovery; no projection restart"
+    }
+  ],
+  "ordinary_bug_handoff_card": false,
+  "original_data_and_first_SVD_failure_preserved": true
+}

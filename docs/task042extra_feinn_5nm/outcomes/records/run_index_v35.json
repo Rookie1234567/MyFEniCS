@@ -1,0 +1,685 @@
+{
+  "authority": "936fdcff435a772619ae720119e2a22de0dabccd",
+  "frozen_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "runs": [
+    {
+      "name": "v35_labelled_field_oracle_attempt1",
+      "stage": "v35_labelled_field_oracle",
+      "summary": {
+        "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/run_summary.json",
+        "bytes": 11949,
+        "sha256": "3b50a516ec62c7fb1b12e8c4bd91b45779bc0fbf130d1cf5596e789745435b78"
+      },
+      "source_sha": "520cb681dc7c6b69f13caeaa11af98d3d90a7b4b",
+      "input_sha256": "4a3ab422be93177e16a0ba16acf11ac871caadd5639864f63a7aa618c2a2b896",
+      "design_sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 0,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 5110.947981953854,
+      "supervised_nested_seconds": 5046.908579678973,
+      "sampled_simultaneous_tree_peak_bytes": 5029191680,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1462997.346299796,
+      "worker_stop_monotonic": 1462847.346299796,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "392515c928033a414f2febd70926a15c72d505500f98c09d37e598fb1ba896e4",
+        "src/runners/neural_wave_dependencies.py": "98da5e70fd853374cd937ef9819608a5048fc3cf6ef0f82af94824ffb9ea09b5",
+        "src/runners/neural_wave_worker.py": "51ae5a65547cdf341caaff669ac659ede285fd39cb0bb72a9d378616c19e42cf",
+        "src/io/neural_wave_campaign.py": "245d61257fbcaac200785b41fe238e61ea66e3b6f753a7d6b2056362f8dd03be",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "3c1c9a2343a0f8c00e18e2048e6734df44d9f3ed6f7f25aabbb7512353213a58",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/neural_space_campaign.py": "9d5a14398a5016e81c1d1acf195b838c2de25946fae1ce519c207ee2f100fd79",
+        "src/runners/neural_space_worker.py": "c838002411666b0f55de88c5a221d00ab7ac4354c0566f8ea18d9ceeadee287e",
+        "src/solvers/neural_space_audit.py": "8cd6a6fd02b872c4fab0393ebeccca049c3f4453035ce00a91462d4c92bc928e",
+        "src/solvers/feinn_gqr.py": "cd3890bbd704d35b156bb6a195e3092d3b4e0dbb2ebdef83a3dd882550a126fe",
+        "src/runners/neural_space_verification.py": "b1f2038f0fe7c535557b08ca2be2ada1988fe3168b2235ae78b78851c3253efc",
+        "src/postprocessing/neural_space_saved.py": "7aa7840868cc9546379941706c81ee184ed6394e5988473369ea10d4610f443b",
+        "src/solvers/neural_space_qualification.py": "3c2d08a0b44d41db93501ea1b213b87ddcae2b8710cb5e31bef2828b3833f615"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/input_original.dat",
+          "bytes": 153,
+          "sha256": "4a3ab422be93177e16a0ba16acf11ac871caadd5639864f63a7aa618c2a2b896"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/resolved_config.json",
+          "bytes": 78754,
+          "sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/run_manifest.json",
+          "bytes": 7571,
+          "sha256": "4b961084b79f09d26a97d711925caad97f8550a196a8177080bf76c9d2fe7b69"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/abi.json",
+          "bytes": 490,
+          "sha256": "cdedd98996232bd29e35117e5c773bb83be07eb374de5fe5dbb005d3c0872a08"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "2cf94096db40b7a7c612451ea1881d690fd8c226ea1164d311216d4d49348319"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/admission.json",
+          "bytes": 229282,
+          "sha256": "42ba4ba5516b1345ccfe31c03d9706885b415183466819af4495295542e73a0b"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/outer_admission.json",
+          "bytes": 225430,
+          "sha256": "9298f5fc6f17d30ac3a4b4b96910a84daeb71653d99ac3ba87996285a5b3edba"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/attempt_identity.json",
+          "bytes": 303,
+          "sha256": "6d6df3bf533a58b2ef3a4fe9fa85fb34e6a26a9fc3dba0e8ebef4a3efebec189"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/terminal_identity.json",
+          "bytes": 11432,
+          "sha256": "1a8c929e5ac8b4fa954bada7f578b37c96c82c0693893b6ad48bce2abc2fd1fb"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/events.jsonl",
+          "bytes": 5906,
+          "sha256": "058f9aa4733952f6f64e19f264f1cb26f02f7525c471254d68685cea58be63ea"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/payload_summary.json",
+          "bytes": 11949,
+          "sha256": "3b50a516ec62c7fb1b12e8c4bd91b45779bc0fbf130d1cf5596e789745435b78"
+        }
+      }
+    },
+    {
+      "name": "v35_space_audit_checks_attempt1",
+      "stage": "v35_space_audit_checks",
+      "summary": {
+        "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/run_summary.json",
+        "bytes": 11814,
+        "sha256": "666908f2c84c4e1723b29a9eca3ef230af11012f1e1de673b77589dc200b1e3d"
+      },
+      "source_sha": "00e226cf61f613e38f831e16f66dc20d247598ac",
+      "input_sha256": "a8a1a1de063053d9b7d7e7778d2da5f21c29517f398f99da213fe704199b2ab0",
+      "design_sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "pure",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 4,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 66.0017268739175,
+      "supervised_nested_seconds": 1.8600501480977982,
+      "sampled_simultaneous_tree_peak_bytes": 94494720,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1456594.46902788,
+      "worker_stop_monotonic": 1456444.46902788,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "392515c928033a414f2febd70926a15c72d505500f98c09d37e598fb1ba896e4",
+        "src/runners/neural_wave_dependencies.py": "98da5e70fd853374cd937ef9819608a5048fc3cf6ef0f82af94824ffb9ea09b5",
+        "src/runners/neural_wave_worker.py": "51ae5a65547cdf341caaff669ac659ede285fd39cb0bb72a9d378616c19e42cf",
+        "src/io/neural_wave_campaign.py": "245d61257fbcaac200785b41fe238e61ea66e3b6f753a7d6b2056362f8dd03be",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "3c1c9a2343a0f8c00e18e2048e6734df44d9f3ed6f7f25aabbb7512353213a58",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/neural_space_campaign.py": "9d5a14398a5016e81c1d1acf195b838c2de25946fae1ce519c207ee2f100fd79",
+        "src/runners/neural_space_worker.py": "051746d8a8b7b874e19956c2dc507ec6e78f99c0e42454817d9d1b5b82c0045d",
+        "src/solvers/neural_space_audit.py": "8eb9af745bca4fe494413d821feff48d76f2718aed9a1c7eb2e730e5ee8bceab",
+        "src/solvers/feinn_gqr.py": "cd3890bbd704d35b156bb6a195e3092d3b4e0dbb2ebdef83a3dd882550a126fe",
+        "src/runners/neural_space_verification.py": "2938c3f9a9e74956c381780b82282c0d4b6aa4a210635cd75cd6a63e62af67e3",
+        "src/postprocessing/neural_space_saved.py": "7aa7840868cc9546379941706c81ee184ed6394e5988473369ea10d4610f443b",
+        "src/solvers/neural_space_qualification.py": "3c2d08a0b44d41db93501ea1b213b87ddcae2b8710cb5e31bef2828b3833f615"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/input_original.dat",
+          "bytes": 150,
+          "sha256": "a8a1a1de063053d9b7d7e7778d2da5f21c29517f398f99da213fe704199b2ab0"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/resolved_config.json",
+          "bytes": 78754,
+          "sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/run_manifest.json",
+          "bytes": 7458,
+          "sha256": "86f20c73826d39760fd8b4075c9f54331f0f1ace97ec0bbc8b9fa24bc5f8038f"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/abi.json",
+          "bytes": 288,
+          "sha256": "6e51758fc365f91b148c0372f0a487d9bca5614290cf393fd83ebc2f16b357c4"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/pressure_stable_window.json",
+          "bytes": 11429,
+          "sha256": "f41ea101c51bfc1a4f8a89a82ec9b3c286fc38c470a31c0c3ea02e0c4bb52284"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/admission.json",
+          "bytes": 225336,
+          "sha256": "ae8cd4269fcf0d3943e67d1030d66086e27963cd1f9e81132e5a9ae177a66c26"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/outer_admission.json",
+          "bytes": 309638,
+          "sha256": "a20d6f82572966720a299710306a42a4efc05cba305321949c9383265a25a2f4"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/attempt_identity.json",
+          "bytes": 297,
+          "sha256": "4e0049181bc05c7a32d338576fe8f8da415bedd8d05150b5ca69966115222041"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/terminal_identity.json",
+          "bytes": 11426,
+          "sha256": "43839d46e839d37458916272741a45e0549176e0446cd30009ecb511b9a7ecef"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/events.jsonl",
+          "bytes": 158,
+          "sha256": "398ba600c0253db3004be68f107f6e569a3d5f598c59b0e2d19b10113ec52eb8"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_audit_checks_attempt1/payload_summary.json",
+          "bytes": 11814,
+          "sha256": "666908f2c84c4e1723b29a9eca3ef230af11012f1e1de673b77589dc200b1e3d"
+        }
+      }
+    },
+    {
+      "name": "v35_space_decision_compare_attempt1",
+      "stage": "v35_space_decision_compare",
+      "summary": {
+        "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/run_summary.json",
+        "bytes": 13143,
+        "sha256": "41fe9284fbde2746cc1566f6deb7ff698cd27e189f88e8919e622d17ab4a2b02"
+      },
+      "source_sha": "2c1546c2f195a9d6b89703b7e509e899e0db75dc",
+      "input_sha256": "6d27c33aea9f823ecb7a1083d869a5341d0e8b635104fe5fe427047725c4656d",
+      "design_sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "fe",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+        "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 6,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 69.73868656810373,
+      "supervised_nested_seconds": 4.064333790214732,
+      "sampled_simultaneous_tree_peak_bytes": 225513472,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1466246.417614845,
+      "worker_stop_monotonic": 1466096.417614845,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "392515c928033a414f2febd70926a15c72d505500f98c09d37e598fb1ba896e4",
+        "src/runners/neural_wave_dependencies.py": "98da5e70fd853374cd937ef9819608a5048fc3cf6ef0f82af94824ffb9ea09b5",
+        "src/runners/neural_wave_worker.py": "51ae5a65547cdf341caaff669ac659ede285fd39cb0bb72a9d378616c19e42cf",
+        "src/io/neural_wave_campaign.py": "245d61257fbcaac200785b41fe238e61ea66e3b6f753a7d6b2056362f8dd03be",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "3c1c9a2343a0f8c00e18e2048e6734df44d9f3ed6f7f25aabbb7512353213a58",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/neural_space_campaign.py": "9d5a14398a5016e81c1d1acf195b838c2de25946fae1ce519c207ee2f100fd79",
+        "src/runners/neural_space_worker.py": "fe1570f4bb5530d5257f4e9841357281f3e913d15a32944a79a799475ef0b018",
+        "src/solvers/neural_space_audit.py": "8cd6a6fd02b872c4fab0393ebeccca049c3f4453035ce00a91462d4c92bc928e",
+        "src/solvers/feinn_gqr.py": "cd3890bbd704d35b156bb6a195e3092d3b4e0dbb2ebdef83a3dd882550a126fe",
+        "src/runners/neural_space_verification.py": "0425bcd4d6f82f0a98848a3b56299ad2d40171f6225c1394b6df9371f8bb2d6d",
+        "src/postprocessing/neural_space_saved.py": "7aa7840868cc9546379941706c81ee184ed6394e5988473369ea10d4610f443b",
+        "src/solvers/neural_space_qualification.py": "3c2d08a0b44d41db93501ea1b213b87ddcae2b8710cb5e31bef2828b3833f615"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/input_original.dat",
+          "bytes": 154,
+          "sha256": "6d27c33aea9f823ecb7a1083d869a5341d0e8b635104fe5fe427047725c4656d"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/resolved_config.json",
+          "bytes": 78754,
+          "sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/run_manifest.json",
+          "bytes": 8765,
+          "sha256": "313286a9e1bed3211011bdcd271173a9052931dffde963a970dd9641c4d3ac37"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/abi.json",
+          "bytes": 462,
+          "sha256": "9509425864e6e1d1932dc9d7a2f6f562f25b601230f28fd828062bb9a488851c"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/pressure_stable_window.json",
+          "bytes": 11454,
+          "sha256": "01b7aadbb646cf16f88a750ba6a2e21919c5334614189153cf6d506f6cfdea33"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/admission.json",
+          "bytes": 260060,
+          "sha256": "ba89f80e0715ac3419e783f66eb48c390813bec0421c2eb275f5cf1f58d553b7"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/outer_admission.json",
+          "bytes": 340466,
+          "sha256": "0e356af581d44db492dba8055a84e29adf3e66e5711bf7be733358dee307d037"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/attempt_identity.json",
+          "bytes": 304,
+          "sha256": "e408aedc4a2dfabf1501a284e9948dd1d2833e6caec8ea7812da8c838522b14a"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/terminal_identity.json",
+          "bytes": 11435,
+          "sha256": "735d26d4f9afb4e6190929a1b60942bcf0b2a36fe134504f26df5004b55a207c"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/events.jsonl",
+          "bytes": 311,
+          "sha256": "3c421d21b6816dd76f17e5a6bbc05fc57c8ab21a0b2dbf27c0bfb7fbd828ee99"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v35/durable/v35_space_decision_compare_attempt1/payload_summary.json",
+          "bytes": 13143,
+          "sha256": "41fe9284fbde2746cc1566f6deb7ff698cd27e189f88e8919e622d17ab4a2b02"
+        }
+      }
+    },
+    {
+      "name": "v35_unlabelled_readout_audit_attempt1",
+      "stage": "v35_unlabelled_readout_audit",
+      "summary": {
+        "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/run_summary.json",
+        "bytes": 11857,
+        "sha256": "d8559ed0b47eb496206c06fcf6af4e9d3489c7d61f5f612cd517c411ef338b7c"
+      },
+      "source_sha": "00e226cf61f613e38f831e16f66dc20d247598ac",
+      "input_sha256": "afadfa90d8a19c37b2d79f76861feb0f080d950290a16eae2f66f44d641119b9",
+      "design_sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 12,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 1063.699442567071,
+      "supervised_nested_seconds": 999.6159311141819,
+      "sampled_simultaneous_tree_peak_bytes": 2632237056,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1458797.346299796,
+      "worker_stop_monotonic": 1458647.346299796,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "392515c928033a414f2febd70926a15c72d505500f98c09d37e598fb1ba896e4",
+        "src/runners/neural_wave_dependencies.py": "98da5e70fd853374cd937ef9819608a5048fc3cf6ef0f82af94824ffb9ea09b5",
+        "src/runners/neural_wave_worker.py": "51ae5a65547cdf341caaff669ac659ede285fd39cb0bb72a9d378616c19e42cf",
+        "src/io/neural_wave_campaign.py": "245d61257fbcaac200785b41fe238e61ea66e3b6f753a7d6b2056362f8dd03be",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "3c1c9a2343a0f8c00e18e2048e6734df44d9f3ed6f7f25aabbb7512353213a58",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/neural_space_campaign.py": "9d5a14398a5016e81c1d1acf195b838c2de25946fae1ce519c207ee2f100fd79",
+        "src/runners/neural_space_worker.py": "051746d8a8b7b874e19956c2dc507ec6e78f99c0e42454817d9d1b5b82c0045d",
+        "src/solvers/neural_space_audit.py": "8eb9af745bca4fe494413d821feff48d76f2718aed9a1c7eb2e730e5ee8bceab",
+        "src/solvers/feinn_gqr.py": "cd3890bbd704d35b156bb6a195e3092d3b4e0dbb2ebdef83a3dd882550a126fe",
+        "src/runners/neural_space_verification.py": "2938c3f9a9e74956c381780b82282c0d4b6aa4a210635cd75cd6a63e62af67e3",
+        "src/postprocessing/neural_space_saved.py": "7aa7840868cc9546379941706c81ee184ed6394e5988473369ea10d4610f443b",
+        "src/solvers/neural_space_qualification.py": "3c2d08a0b44d41db93501ea1b213b87ddcae2b8710cb5e31bef2828b3833f615"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/input_original.dat",
+          "bytes": 156,
+          "sha256": "afadfa90d8a19c37b2d79f76861feb0f080d950290a16eae2f66f44d641119b9"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/resolved_config.json",
+          "bytes": 78754,
+          "sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/run_manifest.json",
+          "bytes": 7487,
+          "sha256": "44634f9ea5f016b91b866c7632c6fd9a83a26d0e1881c05dcef47782a4b8c5db"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/abi.json",
+          "bytes": 491,
+          "sha256": "d2b31b828ef96cddbfcebea152d57e6db7d392d9558fca72572e851812994d45"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/pressure_stable_window.json",
+          "bytes": 11455,
+          "sha256": "1a4508a3a537b1fb12284358a09c2be4ba830e3fe9b119c127eac6cc57c33d8d"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/admission.json",
+          "bytes": 228836,
+          "sha256": "211619d83f94c9c86b5e7bc974d6d5944718336c2f6a0a48cccd1db5258b16ae"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/outer_admission.json",
+          "bytes": 217850,
+          "sha256": "ba621dde551e13bc93b84bd263ea62e39df3ef8f0d69472abd458754ef79d5ea"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/attempt_identity.json",
+          "bytes": 306,
+          "sha256": "4643c3f911d5aba660606a84967e556ea79173068bb94fc3fc5c9e7c86ee9b6a"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/terminal_identity.json",
+          "bytes": 11438,
+          "sha256": "65e38450672618bfd3edd2f847d6558d1c1dc2e0fa8e5e1c95472de8b2e246d4"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/events.jsonl",
+          "bytes": 13536,
+          "sha256": "937cf74aabfd78d3b945ad9ff508052cec69ee1869929425b7056bae5c944b05"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt1/payload_summary.json",
+          "bytes": 11857,
+          "sha256": "d8559ed0b47eb496206c06fcf6af4e9d3489c7d61f5f612cd517c411ef338b7c"
+        }
+      }
+    },
+    {
+      "name": "v35_unlabelled_readout_audit_attempt2",
+      "stage": "v35_unlabelled_readout_audit",
+      "summary": {
+        "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/run_summary.json",
+        "bytes": 11858,
+        "sha256": "7028806be5c2f7062d0cefe6966e27a3e401432c2793cc50ad1d5ea296b6176d"
+      },
+      "source_sha": "520cb681dc7c6b69f13caeaa11af98d3d90a7b4b",
+      "input_sha256": "afadfa90d8a19c37b2d79f76861feb0f080d950290a16eae2f66f44d641119b9",
+      "design_sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1",
+      "environment": {
+        "TASK42EXTRA_ENV_MODE": "ml",
+        "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2",
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "cpu": 6,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "actual_attempt_seconds": 615.1461587150116,
+      "supervised_nested_seconds": 551.1214643209241,
+      "sampled_simultaneous_tree_peak_bytes": 2628124672,
+      "own_sampled_swap_peak_bytes": 0,
+      "stage_deadline_monotonic": 1458797.346299796,
+      "worker_stop_monotonic": 1458647.346299796,
+      "bound_source_files": {
+        "src/solvers/neural_wave_moments.py": "0312c2cc567fe7c8908ee68e5d9c2074c9b1d8b1151ab179b386172e19eacd31",
+        "src/solvers/neural_wave_factorized.py": "9043cf81df584e4330e5ee061dcf4e95bb5fb0f9b174f6f837421069288938e9",
+        "src/solvers/neural_wave_qualification.py": "cbe90f680a6cb0b3afd76908e323b0fa2ac9463d5258a2aba829158f3f48ce23",
+        "src/solvers/neural_wave_reconstruction.py": "3ea30c548d93953c511dde96d930c41f786d846f2a32405cda201ee558db0075",
+        "src/postprocessing/neural_wave_audit.py": "d039898ac1f9fff692e93c6875fafacab0e82862f59694e90568920e48c03524",
+        "src/solvers/neural_wave_subspace.py": "d5a730412ce2e0ad27afda5965f8cab4c889ebaae2cb8e3051927731d6a4c3b6",
+        "src/solvers/neural_wave_greedy.py": "bb2a57b5ad72c65fb24fb1843044aab3a76654afdd0a9dc8cb6e2bd80c7fe142",
+        "src/solvers/neural_wave_local_action.py": "da44a296bf1626800acc87518b7c576de106c93442804ff43a956e3a6eb87981",
+        "src/solvers/neural_wave_local_qualification.py": "aebda85a3cf21cc4129a4d89a01cd05be1bcffee46b17a03a84e3e8c8fa895dd",
+        "src/solvers/neural_wave_projection.py": "b60c8cf6121abdbd3a02f49600e37884bd0929728bcb7d014f375911ad118c50",
+        "src/solvers/neural_wave_projection_qualification.py": "35c4a4fac9a713edcbea0afc2ffab7b816d0cd845ad7234359fdbe776eb3a46e",
+        "src/solvers/neural_wave_screening.py": "84f084788e453617dd37f85fdf17b971edfdbc98c6f11eda5d2d9e2a3a1ba7d3",
+        "src/solvers/neural_wave_screening_qualification.py": "307a4b4ced603106d5cc1d32cb677308235cea16b1c1b31ee3bc92f629da6c98",
+        "src/runners/neural_wave_campaign.py": "392515c928033a414f2febd70926a15c72d505500f98c09d37e598fb1ba896e4",
+        "src/runners/neural_wave_dependencies.py": "98da5e70fd853374cd937ef9819608a5048fc3cf6ef0f82af94824ffb9ea09b5",
+        "src/runners/neural_wave_worker.py": "51ae5a65547cdf341caaff669ac659ede285fd39cb0bb72a9d378616c19e42cf",
+        "src/io/neural_wave_campaign.py": "245d61257fbcaac200785b41fe238e61ea66e3b6f753a7d6b2056362f8dd03be",
+        "src/runners/feinn_resources.py": "aceda46ec5f6503346e91339d6dc3a9d6979b732d4bd789acd5aac7ed6080f09",
+        "src/runners/task042_shared.py": "4f54737595b29853319f78fa5fb8c8310f77318c83685d3385e5f8e0783741f4",
+        "src/runners/durable_terminal.py": "ec0f7cc5b5e9e819b8016a2466824cecdd913e1379e8a9b20dba4bee2f8b4ef7",
+        "src/runners/guarded_exec.py": "f39dcb9563e07027928cf8b7abeff707f8ab270620f6afe55687b0a2f0305200",
+        "src/runners/fresh_component_receiver.py": "5ce563c68a953e9616cd901bc436bf16d771da5f04f2e5d6dbeaeecc53985011",
+        "src/runners/w1_admission_scope.py": "4ba12ffe1e07f0621fbc3f6bac296c0e96f3929682e76c2905740e39f2f1ec47",
+        "src/solvers/feinn_native.py": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+        "src/solvers/feinn_reference.py": "65256b19832b22ef8c239efe9cb9c6075047fc64520fcb4979f26ac1d9a972e0",
+        "benchmarks/subreaper_watchdog.py": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+        "scripts/activate_task42extra.sh": "00dfc5ff0c607888c73f5406a87c77eba73968871d8b1f0a2476946e697bf4bd",
+        "scripts/launch_task42extra_durable.py": "c536e27cc3153f0b6780787cab3049de12a9950fe66875899d5701305d8e5c89",
+        "scripts/run_case.py": "9217907c3f64ca0ce1a3287252c349c06ed095b2e89e02b137b49ff2660299cc",
+        "src/io/block_wave_campaign.py": "46a2ce6532eca338be7e6c6332be470778201f0795e0a3468dc787c8a56edb22",
+        "src/runners/block_wave_admission.py": "3c1c9a2343a0f8c00e18e2048e6734df44d9f3ed6f7f25aabbb7512353213a58",
+        "src/runners/block_wave_worker.py": "a55439a5b26c45851111f600144e98db294ac763c608f52e3aad0c846d5f5c8b",
+        "src/solvers/neural_wave_block.py": "811b878e4039edc6610740139a1f1746590a9f096f9cb0d8624158cc6741b388",
+        "src/solvers/neural_wave_block_reconstruction.py": "357737e6a1546145c5000cc2b8faaacb1095db54dc19d9a09a1f2cb0e0695f78",
+        "src/solvers/neural_wave_block_qualification.py": "1d0286009344d91110d5433a17d0e0405249856c67e2cd539b110192d453563d",
+        "src/postprocessing/neural_wave_roundoff.py": "0545be975bb6e6744615ec606d2ed6c86814e145feb44a3a83af811451ec0e26",
+        "src/io/neural_space_campaign.py": "9d5a14398a5016e81c1d1acf195b838c2de25946fae1ce519c207ee2f100fd79",
+        "src/runners/neural_space_worker.py": "c838002411666b0f55de88c5a221d00ab7ac4354c0566f8ea18d9ceeadee287e",
+        "src/solvers/neural_space_audit.py": "8cd6a6fd02b872c4fab0393ebeccca049c3f4453035ce00a91462d4c92bc928e",
+        "src/solvers/feinn_gqr.py": "cd3890bbd704d35b156bb6a195e3092d3b4e0dbb2ebdef83a3dd882550a126fe",
+        "src/runners/neural_space_verification.py": "b1f2038f0fe7c535557b08ca2be2ada1988fe3168b2235ae78b78851c3253efc",
+        "src/postprocessing/neural_space_saved.py": "7aa7840868cc9546379941706c81ee184ed6394e5988473369ea10d4610f443b",
+        "src/solvers/neural_space_qualification.py": "3c2d08a0b44d41db93501ea1b213b87ddcae2b8710cb5e31bef2828b3833f615"
+      },
+      "identities": {
+        "input_original.dat": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/input_original.dat",
+          "bytes": 156,
+          "sha256": "afadfa90d8a19c37b2d79f76861feb0f080d950290a16eae2f66f44d641119b9"
+        },
+        "resolved_config.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/resolved_config.json",
+          "bytes": 78754,
+          "sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
+        },
+        "run_manifest.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/run_manifest.json",
+          "bytes": 7486,
+          "sha256": "ed3b83ea8a8ade09aff578ca7429641989bc9e1d3a46d743a9e19875416d8967"
+        },
+        "abi.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/abi.json",
+          "bytes": 490,
+          "sha256": "8664cb70301d7c3d1bb82e9ebacef3ae652d608129de6da4fe16bb26b1b66380"
+        },
+        "pressure_stable_window.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/pressure_stable_window.json",
+          "bytes": 11453,
+          "sha256": "149e158645a8e6d42b79a998f93e817cb5b7a0cf1c0b1562e0734dbc4b0eeaaa"
+        },
+        "admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/admission.json",
+          "bytes": 309475,
+          "sha256": "4710a0244503bed114c90a503a13c8f758da7cb5a1c92950ee7ab47e4ef59ed9"
+        },
+        "outer_admission.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/outer_admission.json",
+          "bytes": 217538,
+          "sha256": "2c9f9b01ecbcba2a574caa5d022fe462db67c973151c5793c457a3129e533e0a"
+        },
+        "attempt_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/attempt_identity.json",
+          "bytes": 306,
+          "sha256": "548b241a45375ebde735ed2c0856d25baac93f6eb0b56e04e304a6feec11145c"
+        },
+        "terminal_identity.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/terminal_identity.json",
+          "bytes": 11438,
+          "sha256": "a20cb91e46b6cbe90f3b025f11a0f9d1f6274450142d120932b2cfb57804c57e"
+        },
+        "events.jsonl": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/events.jsonl",
+          "bytes": 1794,
+          "sha256": "3254148d7a44b71ff026bef6ff733aa72cb85654a4f8c2417608b77160f4abb5"
+        },
+        "payload_summary.json": {
+          "path": "tmp/task42extra/v35/durable/v35_unlabelled_readout_audit_attempt2/payload_summary.json",
+          "bytes": 11858,
+          "sha256": "7028806be5c2f7062d0cefe6966e27a3e401432c2793cc50ad1d5ea296b6176d"
+        }
+      }
+    }
+  ],
+  "continuous_window": {
+    "origin_monotonic": 1453646.417614845,
+    "deadline_monotonic": 1468046.417614845,
+    "wall_limit_seconds": 14400,
+    "formal_numeric_limit_seconds": 7200,
+    "final_reserve_seconds": 1800,
+    "origin_semantics": "First preparation, conservative 180-second allowance before initial native capture; never reset",
+    "budget_s": 14400,
+    "single_window": true
+  },
+  "numeric_window": {
+    "origin_monotonic": 1455797.346299796,
+    "deadline_monotonic": 1462997.346299796,
+    "shared_formal_limit_seconds": 7200,
+    "never_reset": true
+  },
+  "actual_attempt_sum_seconds": 6925.5339966779575,
+  "later_document_HEAD_not_source": true,
+  "nested_workers_not_double_charged": true
+}

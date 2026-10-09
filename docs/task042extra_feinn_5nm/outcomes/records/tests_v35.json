@@ -1,0 +1,306 @@
+{
+  "batches": [
+    {
+      "name": "budget_repair_qa",
+      "summary": {
+        "path": "tmp/task42extra/v35/budget_repair_qa/watchdog/summary.json",
+        "bytes": 2055,
+        "sha256": "955fd7545ef891b46fde4eb3b193dba3df43cf62055ead74875ea6a816276d97"
+      },
+      "source_state": {
+        "source_sha": "520cb681dc7c6b69f13caeaa11af98d3d90a7b4b",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "cleared": true,
+      "supervised_seconds": 2.322440791875124,
+      "peak_bytes": 83386368,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "NOT_APPLICABLE_OR_NOT_RETAINED",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/budget_repair_qa/watchdog/worker.log",
+        "bytes": 2846,
+        "sha256": "463c55f78f9bfe16441e0e847fcd49a3d17d51f968c7d65742b1270c64b2880c"
+      }
+    },
+    {
+      "name": "budget_repair_qa_retry",
+      "summary": {
+        "path": "tmp/task42extra/v35/budget_repair_qa_retry/watchdog/summary.json",
+        "bytes": 2051,
+        "sha256": "25d9bd163b245257253fba9f1c797105adeedb5add326265b4d891b112d1db12"
+      },
+      "source_state": {
+        "source_sha": "520cb681dc7c6b69f13caeaa11af98d3d90a7b4b",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 2.821598151931539,
+      "peak_bytes": 84742144,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "5 passed, 16 deselected in 0.34s",
+      "preserved_local_junit": [
+        {
+          "path": "tmp/task42extra/v35/budget_repair_qa_retry/junit.xml",
+          "bytes": 888,
+          "sha256": "ed41390ce3d30cbe6f2c7daca47d850786bcd6553e9c908b7887dff5aa5a887c"
+        }
+      ],
+      "junit_testcase_count": 5,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/budget_repair_qa_retry/watchdog/worker.log",
+        "bytes": 241,
+        "sha256": "c85572e096fdc98f4ae9dcb9d21ddae5a196f6777cb6944353c8f00f5c113f25"
+      }
+    },
+    {
+      "name": "final_qa",
+      "summary": {
+        "path": "tmp/task42extra/v35/final_qa/watchdog/summary.json",
+        "bytes": 2055,
+        "sha256": "cc9be6e040d682f214b6fff8c45f66c9a552205c6b1a3616e8b5cb0f499faead"
+      },
+      "source_state": {
+        "source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 2,
+      "cleared": true,
+      "supervised_seconds": 1.916437054052949,
+      "peak_bytes": 65605632,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "NOT_APPLICABLE_OR_NOT_RETAINED",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/final_qa/watchdog/worker.log",
+        "bytes": 149,
+        "sha256": "da4a631d291deb18d5b0898ce7f3d5b1aa98ab07708f4795c8813271d6235551"
+      }
+    },
+    {
+      "name": "final_qa_final",
+      "summary": {
+        "path": "tmp/task42extra/v35/final_qa_final/watchdog/summary.json",
+        "bytes": 2066,
+        "sha256": "a9fdd2079ca24583986c5c8c45ab76b20ed97b5aa14bbc26c0bc59d972b3a14d"
+      },
+      "source_state": {
+        "source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 2.6672153510153294,
+      "peak_bytes": 157634560,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "49 passed in 0.43s",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/final_qa_final/watchdog/worker.log",
+        "bytes": 207,
+        "sha256": "8d704135ca80289adfa9bdc28831e8af93e70e9d7849ebbff9742064b0f7898b"
+      }
+    },
+    {
+      "name": "final_qa_retry",
+      "summary": {
+        "path": "tmp/task42extra/v35/final_qa_retry/watchdog/summary.json",
+        "bytes": 2055,
+        "sha256": "190fe45ae2b562a5941a1ff3c2a1bd0de8bb437151f9af06d728abde05e1ed64"
+      },
+      "source_state": {
+        "source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "cleared": true,
+      "supervised_seconds": 2.041591208195314,
+      "peak_bytes": 88043520,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "NOT_APPLICABLE_OR_NOT_RETAINED",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/final_qa_retry/watchdog/worker.log",
+        "bytes": 1981,
+        "sha256": "985377998a1965943686aceb231f385195c27eb90f0bf36727df2f8e69c23853"
+      }
+    },
+    {
+      "name": "metadata_close",
+      "summary": {
+        "path": "tmp/task42extra/v35/metadata_close/watchdog/summary.json",
+        "bytes": 2050,
+        "sha256": "a9498cefbaa746981c85ea3ebedbe88ab0ebb6458c214465202b372ba18c5294"
+      },
+      "source_state": {
+        "source_sha": "2c1546c2f195a9d6b89703b7e509e899e0db75dc",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 3.84930672403425,
+      "peak_bytes": 88821760,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "NOT_APPLICABLE_OR_NOT_RETAINED",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/metadata_close/watchdog/worker.log",
+        "bytes": 488,
+        "sha256": "3abf794632d497c35c6d51dc5f7404aadb4d291d50996bffb8b781b898584750"
+      }
+    },
+    {
+      "name": "repair_qa",
+      "summary": {
+        "path": "tmp/task42extra/v35/repair_qa/watchdog/summary.json",
+        "bytes": 2065,
+        "sha256": "d3d411deaf2fec051ffeb6842efbf8dd5dc76d02e61d5dbc8c180ac21d953fdc"
+      },
+      "source_state": {
+        "source_sha": "00e226cf61f613e38f831e16f66dc20d247598ac",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 2.612292944919318,
+      "peak_bytes": 158113792,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "51 passed in 0.46s",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/repair_qa/watchdog/worker.log",
+        "bytes": 207,
+        "sha256": "dfe74e2e91860b9015e10e7a30eee3426576b3e20b1904470c3d2d2b0cfb6e04"
+      }
+    },
+    {
+      "name": "targeted_01",
+      "summary": {
+        "path": "tmp/task42extra/v35/targeted_01/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "d3a4abfad5a594458a42c8346f5d64a2fb0711e43e2e80628f621b95b0818c80"
+      },
+      "source_state": {
+        "source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 1.9695137050002813,
+      "peak_bytes": 85458944,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "8 passed in 0.23s",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/targeted_01/watchdog/worker.log",
+        "bytes": 190,
+        "sha256": "e972baf1d7f31f91c9bc692b1d01ab013107f91efbb35ad63961f8bf63f76b62"
+      }
+    },
+    {
+      "name": "targeted_02",
+      "summary": {
+        "path": "tmp/task42extra/v35/targeted_02/watchdog/summary.json",
+        "bytes": 2056,
+        "sha256": "621e490919797892749b4dd01a10baf5ce46147a1fdd0b5f75051d6ce9a03b25"
+      },
+      "source_state": {
+        "source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "cleared": true,
+      "supervised_seconds": 2.6539968990255147,
+      "peak_bytes": 86073344,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "1 failed, 40 passed in 0.41s",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/targeted_02/watchdog/worker.log",
+        "bytes": 2348,
+        "sha256": "910c8169e8b10acac24f168eb3f3978fbf6dcf0ed97aa23b54646a2a47fe2670"
+      }
+    },
+    {
+      "name": "targeted_03",
+      "summary": {
+        "path": "tmp/task42extra/v35/targeted_03/watchdog/summary.json",
+        "bytes": 2052,
+        "sha256": "e72f17c40ef8c2ca950c7ff6f77260730edd21c00cf9d6cbd64d9fe7e259ac0b"
+      },
+      "source_state": {
+        "source_sha": "936fdcff435a772619ae720119e2a22de0dabccd",
+        "purpose": "V35 targeted qualifications; tracked implementation edits are recorded, not formal PDE source"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "cleared": true,
+      "supervised_seconds": 2.5547739209141582,
+      "peak_bytes": 85757952,
+      "swap_bytes": 0,
+      "actual_pytest_summary": "42 passed in 0.39s",
+      "preserved_local_junit": [],
+      "junit_testcase_count": 0,
+      "junit_failures": 0,
+      "actual_log": {
+        "path": "tmp/task42extra/v35/targeted_03/watchdog/worker.log",
+        "bytes": 191,
+        "sha256": "9f5154aba48a87c583aaff10705b7b78bc28b65b4c3ed7475aa8be9ea1d5b890"
+      }
+    }
+  ],
+  "final_51_test_junit": {
+    "path": "tmp/task42extra/v35/final_qa.xml",
+    "bytes": 7205,
+    "sha256": "24bdb1f507a51fe8ff46a468454c764d4b3a5d17ff5afc19b46ec5e5c0dc6026"
+  },
+  "budget_repair_5_test_junit": {
+    "path": "tmp/task42extra/v35/budget_repair_qa_retry/junit.xml",
+    "bytes": 888,
+    "sha256": "ed41390ce3d30cbe6f2c7daca47d850786bcd6553e9c908b7887dff5aa5a887c"
+  },
+  "budget_repair_actual_tested_bytes": {
+    "path": "tmp/task42extra/v35/budget_repair_tested_source.json",
+    "bytes": 542,
+    "sha256": "10750a53c122da39ca6e7f1f67999373ba2ec1ca8e63088d7ad52333a36f52b3"
+  },
+  "earlier_49_test_xml_overwritten_by_51": true,
+  "earlier_stdout_and_all_failures_retained": true,
+  "full_pytest": "NOT_RUN_BY_CONTRACT",
+  "CI": "NOT_CLAIMED",
+  "expensive_old_tests": "REUSED_HASH_BOUND_UNCHANGED",
+  "scope_note": "51 implementation qualifications retained; 5 affected writer/recovery tests separately passed; no full old rerun",
+  "final_source_qualification": {
+    "path": "tmp/task42extra/v35/budget_repair_tested_source.json",
+    "bytes": 542,
+    "sha256": "10750a53c122da39ca6e7f1f67999373ba2ec1ca8e63088d7ad52333a36f52b3"
+  }
+}

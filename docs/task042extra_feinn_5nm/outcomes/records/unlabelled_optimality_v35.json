@@ -1,0 +1,149 @@
+{
+  "records": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "singular_min": 7.124095567003747e-07,
+      "singular_max": 783.8857613400269,
+      "singular_count": 1377,
+      "scale_min": 0.5103800396459539,
+      "scale_max": 783.8007405611205,
+      "scale_count": 1377,
+      "original_columns": 1377,
+      "retained_rank": 1377,
+      "full_column_rank": true,
+      "SVD_rcond": 1e-12,
+      "amplitude_solver": "SVD_RANK_QUALIFIED_QR_BACK_SUBSTITUTION",
+      "small_R_triangular_relative": 0.0,
+      "QR_orthogonality_F": 1.4458802472255963e-13,
+      "original_small_action_pair_relative": 1.922065804847788e-11,
+      "normalized_first_order_optimality": 2.3644609152217098e-11,
+      "native_relative": 0.14318770428345817,
+      "coefficient_norm": 1823.969156336516,
+      "coefficient_max": 974.9848175082772,
+      "floating_numerical_qualified": true,
+      "conclusion": "FULL_SPACE_NUMERICAL_MINIMUM",
+      "truncated_minimum_is_full_space_upper_bound": true,
+      "exact_interval_certificate": false,
+      "global_FE_inverse_count": 0,
+      "Gram_inverse_count": 0,
+      "nonlinear_training_count": 0,
+      "nonzero_combinations": [
+        {
+          "index": 0,
+          "complete_network_moment_relative": 2.8142239262718074e-15,
+          "original_A_QR_relative": 2.056074253910224e-14,
+          "denominator_definition": "nonzero ||AUa|| for combination witness; original ||f|| for minimum residual"
+        },
+        {
+          "index": 1,
+          "complete_network_moment_relative": 2.061551963590578e-15,
+          "original_A_QR_relative": 2.0945524774021614e-14,
+          "denominator_definition": "nonzero ||AUa|| for combination witness; original ||f|| for minimum residual"
+        },
+        {
+          "index": 2,
+          "complete_network_moment_relative": 2.514992846832921e-15,
+          "original_A_QR_relative": 1.8005594351076183e-14,
+          "denominator_definition": "nonzero ||AUa|| for combination witness; original ||f|| for minimum residual"
+        }
+      ],
+      "old_field_bitwise_reused": true,
+      "old_normalized_first_order_optimality": 2.7368937840024515e-10,
+      "old_saved_residual_recomputed_pair": 0.0,
+      "retained_field_arrays_bitwise_equal": true,
+      "retained_native": 0.1431877042819365,
+      "source_identity": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_learned_complex_backfit/basis/committed.json",
+        "sha256": "bae90dbfbf9a6c0ac53e62eb125c130a5792b3618c4ac49ecb64cce39acbf134"
+      },
+      "model": {
+        "path": "benchmarks/artifacts/task42extra/v35/v35_unlabelled_readout_audit/LEARNED_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+        "sha256": "cc8f39267bcceb03943ffcd0a5c0584ef8348e64c16014ba06882919d4bf3d33"
+      },
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "combination_evidence_source_sha": "00e226cf61f613e38f831e16f66dc20d247598ac"
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "singular_min": 2.2225536345936255e-06,
+      "singular_max": 408.30475595047574,
+      "singular_count": 1377,
+      "scale_min": 0.23028709006220158,
+      "scale_max": 376.78173727825947,
+      "scale_count": 1377,
+      "original_columns": 1377,
+      "retained_rank": 1377,
+      "full_column_rank": true,
+      "SVD_rcond": 1e-12,
+      "amplitude_solver": "SVD_RANK_QUALIFIED_QR_BACK_SUBSTITUTION",
+      "small_R_triangular_relative": 0.0,
+      "QR_orthogonality_F": 1.3599711972503544e-13,
+      "original_small_action_pair_relative": 1.2082573430895515e-11,
+      "normalized_first_order_optimality": 1.9570159667614414e-11,
+      "native_relative": 0.1444069377900675,
+      "coefficient_norm": 1138.5327534499731,
+      "coefficient_max": 679.8328664880171,
+      "floating_numerical_qualified": true,
+      "conclusion": "FULL_SPACE_NUMERICAL_MINIMUM",
+      "truncated_minimum_is_full_space_upper_bound": true,
+      "exact_interval_certificate": false,
+      "global_FE_inverse_count": 0,
+      "Gram_inverse_count": 0,
+      "nonlinear_training_count": 0,
+      "nonzero_combinations": [
+        {
+          "index": 0,
+          "complete_network_moment_relative": 2.759863193980544e-15,
+          "original_A_QR_relative": 2.353005962661231e-14,
+          "denominator_definition": "nonzero ||AUa|| for combination witness; original ||f|| for minimum residual"
+        },
+        {
+          "index": 1,
+          "complete_network_moment_relative": 2.5109766325279713e-15,
+          "original_A_QR_relative": 5.122722361204983e-14,
+          "denominator_definition": "nonzero ||AUa|| for combination witness; original ||f|| for minimum residual"
+        },
+        {
+          "index": 2,
+          "complete_network_moment_relative": 2.636516376862337e-15,
+          "original_A_QR_relative": 2.7951513650193092e-14,
+          "denominator_definition": "nonzero ||AUa|| for combination witness; original ||f|| for minimum residual"
+        }
+      ],
+      "old_field_bitwise_reused": true,
+      "old_normalized_first_order_optimality": 1.7662336910175624e-13,
+      "old_saved_residual_recomputed_pair": 0.0,
+      "retained_field_arrays_bitwise_equal": true,
+      "retained_native": 0.14440693778835326,
+      "source_identity": {
+        "path": "benchmarks/artifacts/task42extra/v34/v34_deterministic_complex_backfit/basis/committed.json",
+        "sha256": "555b64c8207e0ac8db23bf099856800626f6438e808f0c7813facdd26e475e6e"
+      },
+      "model": {
+        "path": "benchmarks/artifacts/task42extra/v35/v35_unlabelled_readout_audit/DETERMINISTIC_COMPLEX_WAVE_BACKFIT/basis/committed.json",
+        "sha256": "97aeaaf7f7fbaad916a0a9df68e53bc931b595d3d1fe2aa2aab18e3781bc5f91"
+      },
+      "reference_used_for_training": false,
+      "pde_only_solve": true,
+      "combination_evidence_source_sha": "00e226cf61f613e38f831e16f66dc20d247598ac"
+    }
+  },
+  "raw_binding": {
+    "path": "benchmarks/artifacts/task42extra/v35/v35_unlabelled_readout_audit/result.json",
+    "bytes": 159518,
+    "sha256": "f9a1381ebff9fde3186a0331e4175b043b77acd5235025123be2dff6a31150a4"
+  },
+  "reference_read_count": 0,
+  "original_failed_SVD_binding": {
+    "path": "benchmarks/artifacts/task42extra/v35/v35_unlabelled_readout_audit/initial_SVD_result.json",
+    "bytes": 159130,
+    "sha256": "0fa2cce6ec845cfc111d5435386ddb31848f2c8c0f37a70ed3c4f8e8149cd9c5"
+  },
+  "old_fields_bitwise_unchanged": true,
+  "spectra_scales": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/rank_spectra_scales_v35.csv",
+    "bytes": 447848,
+    "sha256": "3e8baf1e80cf22c0233c010f495f4ffb38ed2bb6501772ba57df794fae951d36"
+  },
+  "floating_not_interval": true,
+  "truncated_minimum_is_full_space_upper_bound": true
+}

@@ -1,3 +1,9 @@
+# 当前V35测试与验收
+
+最小相关fixture、复数/秩亏/不同尺度独立白化配对、标签隔离、实际writer/seal/reopen及用途损坏测试完成。初次mock/API/脚本路径/lint失败保留，最小修复后affected targeted suite 51 passed、Ruff/compileall通过；随后预算writer/元数据恢复的5项最小测试、损坏反例和Ruff/compileall另行通过；无full pytest、环境重装或CI声明。A六个真实完整矩/A复组合健康见证复用，B无保存新场，C只核对旧场身份/绑定并复用原完整Gate；新FE/q15-q30/保存数组数值checker NOT_RUN。
+
+[实际测试与失败](records/tests_v35.json)、[修复](records/repair_journal_v35.json)、[run/source/资源](records/run_index_v35.json)、[完整Gate](records/joint_gates_v35.json)。本地Markdown/链接/compact字段和有限GitHub视觉另记，旧失败不冒称通过；数值source与后续文档HEAD分开。下方旧测试原文保留。
+
 # V32：最小fixture、真实完整矩和最终保存数组Gate
 
 最小测试分次运行，JUnit原失败与重复case名称保留，不把次数相加冒充唯一测试数。最终多尺度/global/Piola/MPC/复导数/batch/轮转/标签隔离资格，QR强相消回滚与真实1377列修复，随后实际两路线与原数组独立审核均已完成；测试通过不等于M5联合通过。未full pytest/重装/CI；健康旧FE/材料/参考资格按同hash复用，不重跑V30/V31完整验收。

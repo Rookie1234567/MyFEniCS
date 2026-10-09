@@ -1,0 +1,123 @@
+{
+  "authority": "936fdcff435a772619ae720119e2a22de0dabccd",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "design": {
+    "path": "input/task042extra_feinn_5nm/design_v35.json",
+    "bytes": 78754,
+    "sha256": "bfee2c3d17ed9d6971f46e991028bdcd494a1d5f1b8cfbbe423592aa254552f1"
+  },
+  "preregistration": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/design_v35.md",
+    "bytes": 2957,
+    "sha256": "a1e1cd3bb99d19872aaa5ab37c727938e5d886cef6bf1ccdc7aff75ef37deb02"
+  },
+  "total_window": {
+    "origin_monotonic": 1453646.417614845,
+    "deadline_monotonic": 1468046.417614845,
+    "wall_limit_seconds": 14400,
+    "formal_numeric_limit_seconds": 7200,
+    "final_reserve_seconds": 1800,
+    "origin_semantics": "First preparation, conservative 180-second allowance before initial native capture; never reset",
+    "budget_s": 14400,
+    "single_window": true
+  },
+  "shared_numeric_window": {
+    "origin_monotonic": 1455797.346299796,
+    "deadline_monotonic": 1462997.346299796,
+    "shared_formal_limit_seconds": 7200,
+    "never_reset": true
+  },
+  "unchanged_M5": {
+    "wavelength_nm": 5.0,
+    "geometry": {
+      "bounds_nm": [
+        [
+          -5,
+          5
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          -1.25,
+          8.75
+        ]
+      ],
+      "substrate_z_nm": 0,
+      "block_bounds_nm": [
+        [
+          -2.5,
+          2.5
+        ],
+        [
+          -3.75,
+          3.75
+        ],
+        [
+          0,
+          7.5
+        ]
+      ],
+      "notch_bounds_nm": [
+        [
+          0,
+          2.5
+        ],
+        [
+          -1.25,
+          1.25
+        ],
+        [
+          2.5,
+          5
+        ]
+      ],
+      "cells": [
+        8,
+        6,
+        8
+      ],
+      "step_nm": 1.25
+    },
+    "materials": {
+      "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "si_n": [
+        0.99396854453,
+        0.00435380777
+      ]
+    },
+    "incidence": {
+      "grazing_deg": 1.0,
+      "azimuth_deg": 0.0,
+      "polarization": "s",
+      "amplitude": 1.0,
+      "background": "layered"
+    },
+    "finite_element": {
+      "family": "N1curl",
+      "cell": "hexahedron",
+      "degree": 3,
+      "operator_quadrature_degree": 15
+    },
+    "boundary": {
+      "floquet_xy": true,
+      "dtn": "complete original auto_propagating Fourier-DtN",
+      "pml": false
+    },
+    "near_zero": {
+      "vector_denominator": "max(norm(reference), 1e-12*nonzero natural scale)",
+      "E_natural_scale": "incident amplitude 1 times sqrt(domain volume in nm^3)",
+      "scaled_curl_natural_scale": "same incident E scale",
+      "selected_E_scale": 1.0,
+      "selected_H_code_scale": 1.0,
+      "port_scale": "incident ordered amplitude norm",
+      "report_absolute_and_denominator": true,
+      "phase_fit": false
+    }
+  },
+  "new_training": 0,
+  "new_global_FE_factor": 0,
+  "new_Gram_factor": 0,
+  "new_Gsolve": 0
+}

@@ -1,0 +1,97 @@
+{
+  "records": {
+    "LEARNED_COMPLEX_WAVE_BACKFIT": {
+      "singular_min": "NOT_RETAINED",
+      "singular_max": "NOT_RETAINED",
+      "singular_count": 0,
+      "scale_min": "NOT_RETAINED",
+      "scale_max": "NOT_RETAINED",
+      "scale_count": 0,
+      "status": "CONTROLLED_STOP_NUMERICAL_BUDGET",
+      "reason": "READOUT_SAVE_WINDOW_REACHED",
+      "oracle_field": "NOT_RETAINED_NO_COMMITTED_STATE",
+      "final_rank": "UNKNOWN",
+      "reference_used_for_coefficient_fit": true,
+      "reference_used_for_training": true,
+      "pde_only_solve": false,
+      "production_initialization_allowed": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "scope": "FROZEN_NEURAL_SPACE_ORACLE_DIAGNOSTIC",
+      "last_retained_progress_not_final_rank": {
+        "rank": 930,
+        "G_columns": 4167
+      },
+      "exact_final_partial_G_count": "NOT_RETAINED_LOG_COUNTER_IS_LOWER_BOUND",
+      "partial_basis_weights_field": "NOT_RETAINED_NO_COMMITTED_ORACLE"
+    },
+    "DETERMINISTIC_COMPLEX_WAVE_BACKFIT": {
+      "singular_min": "NOT_RETAINED",
+      "singular_max": "NOT_RETAINED",
+      "singular_count": 0,
+      "scale_min": "NOT_RETAINED",
+      "scale_max": "NOT_RETAINED",
+      "scale_count": 0,
+      "status": "NOT_RUN_NUMERICAL_BUDGET",
+      "reason": "READOUT_SAVE_WINDOW_REACHED",
+      "oracle_field": "NOT_RETAINED_NO_COMMITTED_STATE",
+      "final_rank": "UNKNOWN",
+      "reference_used_for_coefficient_fit": true,
+      "reference_used_for_training": true,
+      "pde_only_solve": false,
+      "production_initialization_allowed": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false,
+      "scope": "FROZEN_NEURAL_SPACE_ORACLE_DIAGNOSTIC"
+    }
+  },
+  "raw_binding": {
+    "path": "benchmarks/artifacts/task42extra/v35/v35_labelled_field_oracle/result.json",
+    "bytes": 3036,
+    "sha256": "47545387eef1957935ff0da8edf4310a6aa0eb6afd47b1fb67a7a72260310199"
+  },
+  "A_frozen_before_B": true,
+  "A_hash_unchanged": "f9a1381ebff9fde3186a0331e4175b043b77acd5235025123be2dff6a31150a4",
+  "spectra_scales": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/rank_spectra_scales_v35.csv",
+    "bytes": 447848,
+    "sha256": "3e8baf1e80cf22c0233c010f495f4ffb38ed2bb6501772ba57df794fae951d36"
+  },
+  "scope": "FROZEN_NEURAL_SPACE_ORACLE_DIAGNOSTIC",
+  "reference_used_for_training": true,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "pde_only_solver_qualified": false,
+  "production_initialization_allowed": false,
+  "failure_and_metadata_recovery": {
+    "source_sha": "520cb681dc7c6b69f13caeaa11af98d3d90a7b4b",
+    "metadata_recovery_source_sha": "2c1546c2f195a9d6b89703b7e509e899e0db75dc",
+    "original_worker_classification": "WORKER_FAILED",
+    "original_failure": "Budget stop followed by missing per-space directory during record write",
+    "last_logged_progress_not_final_rank": {
+      "rank": 930,
+      "G_columns": 4167
+    },
+    "partial_basis_and_weights": "NOT_RETAINED",
+    "new_projection_count": 0,
+    "reference_coefficients_read_count_during_recovery": 0,
+    "original_failure_bindings": {
+      "summary": {
+        "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/run_summary.json",
+        "sha256": "3b50a516ec62c7fb1b12e8c4bd91b45779bc0fbf130d1cf5596e789745435b78"
+      },
+      "manifest": {
+        "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/run_manifest.json",
+        "sha256": "4b961084b79f09d26a97d711925caad97f8550a196a8177080bf76c9d2fe7b69"
+      },
+      "log": {
+        "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/supervised/worker.log",
+        "sha256": "d9840fc70dbbb0833cdb64750775a0d69bc99455860279c2202623c296b52e11"
+      },
+      "events": {
+        "path": "tmp/task42extra/v35/durable/v35_labelled_field_oracle_attempt1/events.jsonl",
+        "sha256": "058f9aa4733952f6f64e19f264f1cb26f02f7525c471254d68685cea58be63ea"
+      }
+    }
+  }
+}

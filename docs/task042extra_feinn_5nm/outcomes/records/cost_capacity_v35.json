@@ -1,0 +1,71 @@
+{
+  "continuous_window": {
+    "origin_monotonic": 1453646.417614845,
+    "deadline_monotonic": 1468046.417614845,
+    "wall_limit_seconds": 14400,
+    "formal_numeric_limit_seconds": 7200,
+    "final_reserve_seconds": 1800,
+    "origin_semantics": "First preparation, conservative 180-second allowance before initial native capture; never reset",
+    "budget_s": 14400,
+    "single_window": true
+  },
+  "shared_numeric_window": {
+    "origin_monotonic": 1455797.346299796,
+    "deadline_monotonic": 1462997.346299796,
+    "shared_formal_limit_seconds": 7200,
+    "never_reset": true
+  },
+  "snapshot_monotonic": 1463928.89486725,
+  "total_calendar_seconds": 10282.477252404904,
+  "formal_attempt_sum_seconds": 6925.5339966779575,
+  "light_supervised_nested_seconds": 25.409166750963777,
+  "successful_PSI60_and_preparation_in_calendar_not_nested_sum": true,
+  "sampled_simultaneous_formal_tree_peak_bytes": 5029191680,
+  "sampled_own_swap_zero": true,
+  "peak_scope": "simultaneous process-tree sampled; not continuous kernel peak; no addition of stage maxima",
+  "resident_bank_planning_bytes": 11667687104,
+  "planning_limit_bytes": 12884901888,
+  "numeric_warn_bytes": 12884901888,
+  "numeric_hard_bytes": 17179869184,
+  "pure_hard_bytes": 2147483648,
+  "neighbor_growth_reserve_bytes": 412316860416,
+  "historical_required_prefix_attributed_seconds": 10186.178641493432,
+  "historical_prefix_project_not_charged_again": true,
+  "historical_V34_learned_loaded_packet_total_seconds": 20728.120829955675,
+  "complete_cold_N1": "UNKNOWN",
+  "project_exact_cumulative_seconds": "UNKNOWN",
+  "historical_reference": {
+    "seconds": 672.462895,
+    "tree_peak_bytes": 1245822976,
+    "no_new_same_precision_baseline": true
+  },
+  "same_precision_20percent_neural_gain_qualified": false,
+  "ownswap_OOC_bytes": 0,
+  "U_plus_Q_derived": [
+    {
+      "N": 10000000,
+      "m": 1377,
+      "bytes": 440640000000
+    },
+    {
+      "N": 100000000,
+      "m": 1377,
+      "bytes": 4406400000000
+    }
+  ],
+  "target_N_and_RSS": "UNKNOWN_NOT_INFERRED_FROM_SHAPE_EXAMPLES",
+  "target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "complete_cold_process_seconds": 172800,
+    "qualified": false
+  },
+  "all_old_failed_interrupted_replay_fees_preserved": true,
+  "publication_tail": "Final delivery receipt, no second batch window",
+  "formal_A_B_attempt_sum_seconds": 6789.793583235936
+}

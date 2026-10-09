@@ -1,0 +1,88 @@
+{
+  "authority": "936fdcff435a772619ae720119e2a22de0dabccd",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "default_behavior_changed": false,
+      "fresh_PDE_pass": false,
+      "merge": "NOT_REQUESTED"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/neural_space_audit.py",
+        "src/solvers/feinn_gqr.py",
+        "src/io/neural_space_campaign.py",
+        "src/runners/neural_space_worker.py",
+        "src/solvers/neural_space_qualification.py"
+      ],
+      "behavior": "Opt-in fixed-space numerical readout and G-matvec projection; no new training or inverse",
+      "tests": "Bound 51 fixtures plus five budget writer/recovery tests",
+      "fresh_PDE_pass": false,
+      "merge": "KEEP_RESEARCH_NO_PRODUCTION_CANDIDATE"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/neural_space_verification.py",
+        "src/runners/block_wave_admission.py",
+        "src/runners/neural_wave_campaign.py",
+        "src/runners/neural_wave_dependencies.py",
+        "src/io/neural_wave_campaign.py"
+      ],
+      "behavior": "Explicit V35 stages and immutable budget; existing durable supervision",
+      "dependencies": [
+        "research-only"
+      ],
+      "fresh_PDE_pass": false,
+      "merge": "REVIEW_REQUIRED_NO_DEFAULT_PROMOTION"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/postprocessing/neural_space_saved.py",
+        "src/test/test_neural_space_audit.py"
+      ],
+      "behavior": "New-field physical checker implemented but not exercised without oracle; original gates reused",
+      "dependencies": [
+        "research-only"
+      ],
+      "tests": "Targeted fixtures/source receipts",
+      "fresh_PDE_pass": false,
+      "merge": "REVIEW_REQUIRED"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v35.md",
+        "docs/task042extra_feinn_5nm/outcomes/neural_space_feasibility_v35.md",
+        "docs/task042extra_feinn_5nm/outcomes/neural_route_decision_v35.md"
+      ],
+      "behavior": "Partial audit and unsupported-production decision; historical evidence retained",
+      "dependencies": [
+        "research-only",
+        "checker/benchmark"
+      ],
+      "merge": "EVIDENCE_ONLY_AFTER_REVIEW"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "Ignored oracle artifacts and diagnostic weights",
+        "Unqualified research paths as production defaults"
+      ],
+      "behavior": "Oracle cannot enter PDE-only solve or production initialization",
+      "merge": "PROHIBITED_AS_PRODUCTION"
+    }
+  ],
+  "ordering": [
+    "research-only",
+    "checker/benchmark",
+    "reusable runner/watchdog",
+    "compact evidence/docs"
+  ],
+  "master_unchanged": true
+}
