@@ -934,23 +934,45 @@ def _verify_v19_saved_v18_startup_comparison(
         if not rhs_channels_match or row.get("passed") is not True:
             raise ValueError(f"B0 V19 {case} did not exercise and pass its existing RHS gates")
         for q_key, q_row in residuals.items():
-            if (
-                not isinstance(q_row, Mapping)
-                or q_row.get("old_strict_passed") is not True
-                or q_row.get("current_strict_passed") is not True
-                or not all(
-                    np.isfinite(float(q_row[field]))
+            if not isinstance(q_row, Mapping):
+                raise ValueError(f"B0 V19 {case} q={q_key} residual comparison is incomplete")
+            try:
+                q_values = {
+                    field: float(q_row[field])
                     for field in (
                         "old_rhs_norm",
                         "current_rhs_norm",
                         "old_true_residual_relative",
                         "current_true_residual_relative",
                     )
-                )
-                or float(q_row["old_rhs_norm"]) <= 0.0
-                or float(q_row["current_rhs_norm"]) <= 0.0
-                or float(q_row["old_true_residual_relative"]) < 0.0
-                or float(q_row["current_true_residual_relative"]) < 0.0
+                }
+            except (KeyError, TypeError, ValueError, OverflowError) as exc:
+                raise ValueError(
+                    f"B0 V19 {case} q={q_key} residual comparison is incomplete"
+                ) from exc
+            if not all(
+                np.isfinite(value) and value >= 0.0 for value in q_values.values()
+            ):
+                raise ValueError(f"B0 V19 {case} q={q_key} residual comparison is incomplete")
+            q_index = int(q_key)
+            zero_port_rhs_q = (
+                case == "nonzero_all_mode_port_rhs"
+                and int(inventory["q_port_counts"][q_index]) == 0
+            )
+            rhs_norms_match_contract = (
+                q_values["old_rhs_norm"] > 0.0
+                and q_values["current_rhs_norm"] > 0.0
+            ) or (
+                zero_port_rhs_q
+                and q_values["old_rhs_norm"] == 0.0
+                and q_values["current_rhs_norm"] == 0.0
+                and q_values["old_true_residual_relative"] == 0.0
+                and q_values["current_true_residual_relative"] == 0.0
+            )
+            if (
+                q_row.get("old_strict_passed") is not True
+                or q_row.get("current_strict_passed") is not True
+                or not rhs_norms_match_contract
             ):
                 raise ValueError(f"B0 V19 {case} q={q_key} residual comparison is incomplete")
         for field in (
@@ -2127,9 +2149,27 @@ def verify_v10_output_bundle(
         from src.io.physical_intermediate_profile import profile_facts
 
         profile_contract = profile_facts(profile_identity)
+        # V19 reuses the V18 B0-Y8 scientific profile for a lifecycle-only
+        # run. The V19 lifecycle binder below checks this exact run/profile/
+        # stage tuple and then binds its frozen input, manifest, and audit.
+        v19_profile_run_alias = (profile_identity, run_id, stage) in {
+            (
+                "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+                "task40extra_0p7nm_b0_p6_reference_v19_ny8",
+                "B0_CANDIDATE",
+            ),
+            (
+                "task40extra_v17_p6_y_orbit_e1_reference_v1",
+                "task40extra_0p7nm_nonseparable_e1_p6_reference_v19",
+                "Q4_ORIGINAL",
+            ),
+        }
         if (
             profile_contract.get("q_assembly_strategy") != strategy
-            or profile_contract.get("run_id") != run_id
+            or (
+                profile_contract.get("run_id") != run_id
+                and not v19_profile_run_alias
+            )
             or profile_contract.get("stage") != stage
         ):
             raise ValueError(

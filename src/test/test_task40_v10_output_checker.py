@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+import src.runners.task40_v10_output_checker as output_checker
 from src.runners.physical_diagnosis_worker import save_packet
 from src.runners.task40_v10_worker import _save_packet
 from src.runners.task40_v10_output_checker import (
@@ -112,6 +113,84 @@ def _v19_one_q_lifecycle_audit(q_count=2, *, refactors_per_q=2):
         "backend_mat_solve_completed_total": builds + q_count,
         "backend_mat_solve_failed_total": 0,
         "mat_solve_total_identity_passed": True,
+    }
+
+
+def _v19_saved_v18_startup_checks(
+    *, input_sha, profile, source_sha, physical_model_sha256, mode_sha256
+):
+    from src.io.physical_intermediate_profile import profile_facts
+
+    inventory = profile_facts(profile)["periodic_inventory"]
+    q_port_counts = inventory["q_port_counts"]
+    mode_count = int(inventory["mode_count"])
+    required_cases = ("generic_full_independent", "nonzero_all_mode_port_rhs")
+    comparisons = {}
+    rows = []
+    for case in required_cases:
+        per_q = {}
+        for q, port_count in enumerate(q_port_counts):
+            zero_port_rhs = case == "nonzero_all_mode_port_rhs" and int(port_count) == 0
+            per_q[str(q)] = {
+                "old_rhs_norm": 0.0 if zero_port_rhs else 1.0,
+                "current_rhs_norm": 0.0 if zero_port_rhs else 1.0,
+                "old_true_residual_relative": 0.0 if zero_port_rhs else 1.0e-12,
+                "current_true_residual_relative": 0.0 if zero_port_rhs else 1.0e-12,
+                "old_strict_passed": True,
+                "current_strict_passed": True,
+            }
+        comparisons[case] = {
+            "schema": "task40extra.review_v19_saved_v18_startup_comparison.v1",
+            "case": case,
+            "status": "SAME_INPUT_COMPARISON_RECORDED",
+            "old_run_id": "task40extra_0p7nm_b0_p6_reference_v18_ny8",
+            "old_source_sha": "3b9457e57ceb15f21306a35baac07f42036840b1",
+            "old_input_sha256": "d" * 64,
+            "current_source_sha": source_sha,
+            "current_input_sha256": input_sha,
+            "physical_model_sha256": physical_model_sha256,
+            "target_mode_sha256": mode_sha256,
+            "profile_identity": profile,
+            "old_candidate_summary_sha256": "e" * 64,
+            "old_run_manifest_sha256": "f" * 64,
+            "old_witness_json_sha256": "1" * 64,
+            "old_witness_npz_sha256": "2" * 64,
+            "fresh_q_matrix_sha256": {str(q): "3" * 64 for q in range(8)},
+            "same_independent_row_order": True,
+            "same_fe_rhs_storage": True,
+            "same_port_rhs": True,
+            "input_differences_are_run_id_and_factor_lifecycle_only": True,
+            "current_existing_regular_gate_passed": True,
+            "all_old_q_strict_passed": True,
+            "all_current_q_strict_passed": True,
+            "field_and_alpha_deltas_are_diagnostic_only": True,
+            "no_new_floating_delta_threshold_applied": True,
+            "full_solution_absolute_l2_delta": 0.0,
+            "full_solution_relative_to_v18_l2_delta": 0.0,
+            "returned_alpha_absolute_l2_delta": 0.0,
+            "returned_alpha_relative_to_v18_l2_delta": 0.0,
+            "old_original_fe_equation_relative_residual": 1.0e-12,
+            "current_original_fe_equation_relative_residual": 1.0e-12,
+            "per_q_true_residuals": per_q,
+        }
+        rows.append(
+            {
+                "name": case,
+                "passed": True,
+                "fe_rhs_nonzero_count": 10 if case == "generic_full_independent" else 0,
+                "port_rhs_nonzero_count": 0 if case == "generic_full_independent" else mode_count,
+                "v19_saved_v18_startup_comparison": comparisons[case],
+            }
+        )
+    return {
+        "passed": True,
+        "cases": rows,
+        "v19_saved_v18_startup_comparison": {
+            "required_cases": list(required_cases),
+            "cases": comparisons,
+            "all_required_cases_compared": True,
+            "delta_gate": "none; current existing equation and q strict residual gates remain decisive",
+        },
     }
 
 
@@ -1022,6 +1101,231 @@ def test_v17_output_bundle_rejects_missing_route_identity_fields(
         verify_v10_output_bundle(output_path, expected_channel_count=340)
 
 
+@pytest.mark.parametrize(
+    ("route", "profile", "run_id", "stage", "input_name", "mode_count"),
+    (
+        (
+            "b0",
+            "task40extra_v18_p6_y_orbit_b0_y8_reference_v1",
+            "task40extra_0p7nm_b0_p6_reference_v19_ny8",
+            "B0_CANDIDATE",
+            "b0_p6_reference_v19_ny8.dat",
+            532,
+        ),
+        (
+            "e1",
+            "task40extra_v17_p6_y_orbit_e1_reference_v1",
+            "task40extra_0p7nm_nonseparable_e1_p6_reference_v19",
+            "Q4_ORIGINAL",
+            "nonseparable_e1_p6_reference_v19.dat",
+            588,
+        ),
+    ),
+)
+def test_v19_output_bundle_dispatches_exact_registered_profile_run(
+    tmp_path, monkeypatch, route, profile, run_id, stage, input_name, mode_count
+):
+    from src.io.physical_intermediate_profile import profile_facts
+
+    output_path, summary_path, _identity = _make_v17_output_bundle_fixture(tmp_path)
+    input_path = tmp_path / input_name
+    input_path.write_text("V19 input identity fixture\n", encoding="utf-8")
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+
+    output = json.loads(output_path.read_text(encoding="utf-8"))
+    identity = output["identity"]
+    identity.update(
+        profile_identity=profile,
+        run_id=run_id,
+        stage=stage,
+        input_sha256=input_sha,
+    )
+    scientific_identity = output["scientific_identity"]
+    scientific_identity["input_sha256"] = input_sha
+    scientific_identity["q_assembly_strategy"] = _V17_OUTPUT_STRATEGY
+    port_table = next(
+        Path(item["path"])
+        for item in scientific_identity["field_mode_and_diffraction_files"]
+        if Path(item["path"]).name == "dtn_port_diffraction_orders_3d.csv"
+    )
+    with port_table.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(
+            stream, fieldnames=("side", "m", "n", "polarization")
+        )
+        writer.writeheader()
+        for side in ("top", "bottom"):
+            for mode_index in range(mode_count // 2):
+                writer.writerow(
+                    {"side": side, "m": mode_index, "n": 0, "polarization": "s"}
+                )
+    for item in scientific_identity["field_mode_and_diffraction_files"]:
+        if Path(item["path"]) == port_table:
+            item["sha256"] = hashlib.sha256(port_table.read_bytes()).hexdigest()
+    output_path.write_text(json.dumps(output), encoding="utf-8")
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary.update(
+        profile=profile,
+        stage=stage,
+        factor_lifecycle_strategy="ONE_Q_REFACTOR_V19",
+    )
+    mode_sha = scientific_identity["ordered_physical_mode_sha256"]
+    physical_model_sha256 = summary["scientific_identity"]["physical_model_sha256"]
+    source_sha = summary["source_sha"]
+    summary["scientific_identity"].update(
+        input_sha256=input_sha,
+        ordered_physical_mode_sha256=mode_sha,
+    )
+    summary["reference_audit_snapshot"] = {
+        "factor_audit_before_destroy": _v19_one_q_lifecycle_audit(
+            q_count=profile_facts(profile)["periodic_inventory"]["q_count"]
+        )
+    }
+    if route == "b0":
+        summary["regular_inverse_checks"] = _v19_saved_v18_startup_checks(
+            input_sha=input_sha,
+            profile=profile,
+            source_sha=source_sha,
+            physical_model_sha256=physical_model_sha256,
+            mode_sha256=mode_sha,
+        )
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    (tmp_path / "run_manifest.json").write_text(
+        json.dumps(
+            {
+                "source_sha": identity["source_sha"],
+                "run_id": run_id,
+                "input_path": str(input_path),
+                "input_sha256": input_sha,
+                "solver": {
+                    "task40_factor_lifecycle_strategy": "ONE_Q_REFACTOR_V19"
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        output_checker,
+        "_verify_v17_row_tile_assembly_summary",
+        lambda *_args, **_kwargs: {"passed": True},
+    )
+    if route == "b0":
+        monkeypatch.setattr(
+            output_checker,
+            "_verify_v18_ny8_operator_qualification",
+            lambda *_args, **_kwargs: {"passed": True},
+        )
+        monkeypatch.setattr(
+            output_checker,
+            "_verify_v18_packet_operator_qualification_binding",
+            lambda *_args, **_kwargs: {"passed": True},
+        )
+        monkeypatch.setattr(
+            output_checker,
+            "_verify_q_assembly_allocation_admission_ledger",
+            lambda *_args, **_kwargs: {"passed": True},
+        )
+    else:
+        monkeypatch.setattr(
+            output_checker,
+            "_verify_v17_row_tile_allocation_admission_ledger",
+            lambda *_args, **_kwargs: {"passed": True},
+        )
+
+    result = verify_v10_output_bundle(
+        output_path, expected_channel_count=mode_count
+    )
+    assert result["status"] == "PASS"
+    assert result["v19_one_q_factor_lifecycle"]["passed"] is True
+    assert result["v19_one_q_factor_lifecycle"]["run_id"] == run_id
+    if route == "b0":
+        assert result["v19_one_q_factor_lifecycle"][
+            "saved_v18_startup_comparison"
+        ]["passed"] is True
+        assert result["v18_ny8_dispatch_binding"][
+            "registered_profile_contract_passed"
+        ] is True
+    else:
+        assert result["v17_dispatch_binding"][
+            "registered_profile_contract_passed"
+        ] is True
+
+    if route == "b0":
+        invalid_cases = (
+            (
+                "nonzero_all_mode_port_rhs",
+                "4",
+                {
+                    "old_true_residual_relative": 1.0e-12,
+                    "current_true_residual_relative": 1.0e-12,
+                },
+            ),
+            (
+                "nonzero_all_mode_port_rhs",
+                "0",
+                {
+                    "old_rhs_norm": 0.0,
+                    "current_rhs_norm": 0.0,
+                    "old_true_residual_relative": 0.0,
+                    "current_true_residual_relative": 0.0,
+                },
+            ),
+            (
+                "generic_full_independent",
+                "4",
+                {
+                    "old_rhs_norm": 0.0,
+                    "current_rhs_norm": 0.0,
+                    "old_true_residual_relative": 0.0,
+                    "current_true_residual_relative": 0.0,
+                },
+            ),
+        )
+        valid_summary = json.loads(json.dumps(summary))
+        for case, q_key, changes in invalid_cases:
+            invalid_summary = json.loads(json.dumps(valid_summary))
+            comparison = invalid_summary["regular_inverse_checks"][
+                "v19_saved_v18_startup_comparison"
+            ]["cases"][case]
+            comparison["per_q_true_residuals"][q_key].update(changes)
+            row = next(
+                item
+                for item in invalid_summary["regular_inverse_checks"]["cases"]
+                if item["name"] == case
+            )
+            row["v19_saved_v18_startup_comparison"] = json.loads(
+                json.dumps(comparison)
+            )
+            summary_path.write_text(json.dumps(invalid_summary), encoding="utf-8")
+            with pytest.raises(
+                ValueError,
+                match=f"B0 V19 {case} q={q_key} residual comparison is incomplete",
+            ):
+                verify_v10_output_bundle(output_path, expected_channel_count=mode_count)
+
+    valid_output = json.loads(json.dumps(output))
+    wrong_profile = (
+        "task40extra_v17_p6_y_orbit_e1_reference_v1"
+        if route == "b0"
+        else "task40extra_v18_p6_y_orbit_b0_y8_reference_v1"
+    )
+    wrong_stage = "Q4_ORIGINAL" if stage == "B0_CANDIDATE" else "B0_CANDIDATE"
+    for field, bad_value in (
+        ("run_id", f"{run_id}_near_miss"),
+        ("profile_identity", wrong_profile),
+        ("stage", wrong_stage),
+    ):
+        invalid_output = json.loads(json.dumps(valid_output))
+        invalid_output["identity"][field] = bad_value
+        output_path.write_text(json.dumps(invalid_output), encoding="utf-8")
+        with pytest.raises(
+            ValueError,
+            match="V17 output identity does not match its registered profile/run/stage contract",
+        ):
+            verify_v10_output_bundle(output_path, expected_channel_count=mode_count)
+
+
 def test_v19_output_checker_accepts_repeated_one_slot_refactors_and_disjoint_counts():
     audit = _v19_one_q_lifecycle_audit()
 
@@ -1075,6 +1379,15 @@ def test_v19_output_checker_binds_exact_input_and_requires_lifecycle_audit(tmp_p
             }
             for q in range(8)
         }
+        if case == "nonzero_all_mode_port_rhs":
+            per_q["4"] = {
+                "old_rhs_norm": 0.0,
+                "current_rhs_norm": 0.0,
+                "old_true_residual_relative": 0.0,
+                "current_true_residual_relative": 0.0,
+                "old_strict_passed": True,
+                "current_strict_passed": True,
+            }
         comparison_cases[case] = {
             "schema": "task40extra.review_v19_saved_v18_startup_comparison.v1",
             "case": case,
