@@ -1,5 +1,18 @@
 # Test and evidence summary
 
+## 2026-10-09：Review V11 P0 W0.7 资源合同与 public-route serial attempts
+
+七个批准 selector 验证了 pilot 独立资源常量、lower parent/headroom 拒绝、旧 producer resource identity 的兼容、DAT/public route、frozen setup 接线及清理后的预算来源。它们是输入/路由/预算合同测试，不运行 QEP、factorization 或 FE。
+
+| attempt | 源码与实际结果 | parent `CLOCK_MONOTONIC` wall | evidence |
+|---|---|---:|---|
+| `task041_v11_p0_resource_contract_serial_20261009T072725Z` | test351 初始 SHA `ef84f11829906c9e5dd73de70cb9a5f8dcdac7ad22a8702174301ab07cf2c6e8`；`-x`下运行2项：1 passed、stage-budget fixture 因 `cap_headroom_bytes` key 不存在失败 | `4.291536791017279 s` | stdout `results/task041_v11_p0_resource_contract_serial_20261009T072725Z/serial/pytest.stdout.log` SHA `e7857bb4712a8acc1c7d11697a548320b628fa93e48ffd08b799eab50c47e83c` |
+| `task041_v11_p0_stage_budget_retry_20261009T073055Z` | 修正后的最终 test351 SHA `dbd840cc89427483dacca71412d1d80a63b81d2a02ab5204171bbcee9770e116`；预算 selector 1 passed | `3.2227331469766796 s` | stdout SHA `cf686c05bfe0139c25a206ee55ec21e7cde334ccb5bbab67376ece2414185475` |
+| `task041_v11_p0_serial_remaining_20261009T073150Z` | 同一最终 test351 SHA；余下参数化节点 10 passed | `8.533090129029006 s` | stdout SHA `c30d645302cb5ef96b0e8966a6f2c0f00258fdb8da6ff6f17443d22016133651` |
+| 唯一账目 | 12个唯一参数 case 跨上述三次 attempt 通过；含失败后重试的实际执行次数不等于唯一case数 | 合计 `16.047360067022964 s`，V5只按三个父attempt各计一次；ledger 192项 | ledger SHA `710b71f59d0109ace55963b2ac909eca5e4fccdcb8ef237259f9abff679ef774`；compact `results/task041_v11_p0_serial_accounting_20261009T073252Z/serial_results_compact.json` |
+
+不能称最终四文件/最终 test351 SHA 在一次完整运行中 12 passed：首次错误 test SHA 与修后重试、剩余 selector 的 attempt 分开绑定。ABI/preflight/static 不入上述 pytest wall。Delayed `complete_numeric` failure-classification propagation 保持 `not_covered`。
+
 ## 2026-10-08：PETSc/MUMPS deferred阶段桥与W0.7预算合同
 
 这些测试验证“先分析矩阵结构、后在同一factor句柄上做数值分解”的小矩阵接口，及W0.7两侧pending factor的预算控制流。它们用于避免把PETSc `JOB_NULL`缓存读值错认成后端默认值；不证明64,966阶factor容量，也不是W0.7 FE资格。

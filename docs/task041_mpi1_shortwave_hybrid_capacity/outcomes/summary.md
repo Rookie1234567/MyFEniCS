@@ -1,5 +1,22 @@
 # Task041 outcomes summary
 
+## 2026-10-09：Review V11 P0 完成 / W0.7 P1 准备待审
+
+P0 为注册的缩减 W0.7 pilot 单独设定资源限制，避免改动其他模型共享上限；P1 将已核 producer packet、当前 consumer 源码、CPU map、PETSc 原生扩展与启动命令绑定在一份 ignored 包里。该包未启动 FE。
+
+| 范围 | 实际记录 | 当前结论与边界 |
+|---|---|---|
+| P0 四文件 | commit `a3332dc12de1ddfec824a8b64ab5dcc23f68261b`，parent `cd43819dc91112b8ca49d1dd2c2066d0074eda44`；仅 DAT、input_validation、exact-side workflow、test351 | 独立 cap `85,899,345,920 B`、warning `77,309,411,328 B`、W `8,589,934,592 B`；node0 floor `412,316,860,416 B` 未变。W5/13.5/W2 共享合同未变 |
+| P0 serial 合同 | 12 个唯一参数 case 在三个 pytest attempt 里通过；首次 test-only fixture 失败保留，受影响 selector 单独 retry，余项另跑 | 唯一 parent wall 合计 `16.047360067022964 s`；V5 ledger 192 项 SHA `710b71f59d0109ace55963b2ac909eca5e4fccdcb8ef237259f9abff679ef774`；没有最终 SHA 全组单轮通过 |
+| P1 package | ignored 根 `results/task041_v11_w0p7_pilot80gib_pord_warm_preparation_20261009T074322Z/`；runroot `results/task041_v11_w0p7_pilot80gib_pord_warm_run_20261009T074322Z/` | 26项内容 checksum 与39行源码/测试 blob 绑定通过；目标 unit 未加载、runroot/log/dispatch marker 不存在 |
+| Fresh host | post-ABI 样本 `2026-10-09T07:54:18.523917Z` 与 `07:54:23.603283Z` | node0 MemFree `719,097,163,776 B`，扣384 GiB floor后 `306,780,303,360 B`，再扣80 GiB cap后 `220,880,957,440 B`；host/cgroup/disk门通过。Task039/Task042未被干预，performance_not_isolated 保留 |
+| Native MPI8 ABI | CPU map `[10,11,14,15,16,17,18,19]`；PETSc 3.19.6、MUMPS 5.6.2、OpenMPI 4.1.6；complex128/Int32，membind0，六线程变量均为1 | rc0、parent wall `1.8218492951709777 s`；只证明 ABI 与 rank 放置，不证明矩阵、factor、FE 或数值结果 |
+| 仍未运行 | QEP重算、packet完整validator/shard hydration、factorization、FE、fixed-H6反馈、outer、恢复/物理/最终化、dispatch | 包等待主控审阅；W5弱显著通道按用户决定延期处理，W2不延误当前主线 |
+
+注册 case 是 W 材料 10×5 nm、p6/h0.70、M400/MPI8、接口2/22 nm与 matched L20/N29/h20/29，fixed-H6/P4 target `5e-13`、最多两次同因子修正。producer 复用 source `2708214386d38bd69f73e6b196c8ed843bb53d81`，manifest SHA `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`，packet identity SHA `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`；准备时只核11个小封套文件，未读 shards。当前 MPI8 bridge SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。完整 attempt/raw/hash 见[Response V13](../response_v13.md)、[V11交付进度](shortwave_delivery_v11.md)和 package 的 `post_abi_current_admission.json`。
+
+P1的 PORD source-counted Δ bottom/top 为 `3,962,155,812/5,500,664,516 B`，只是后续 symbolic 筛查值，不是 RSS 上界；真实 numeric 仍需各自 fresh B + 当场单份 INFOG(17)×1e6 + W。当前没有 dispatch，不能登记 pilot 数值通过或资源资格。
+
 ## 2026-10-09：W0.7 PORD warm场终态（top numeric前预算拒绝）
 
 | 模型/阶段 | 实测或派生结果 | 状态、原因与证据 |

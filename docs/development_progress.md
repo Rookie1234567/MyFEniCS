@@ -2968,3 +2968,18 @@ Task041 H0/H1详细记录见[outcomes summary](task041_mpi1_shortwave_hybrid_cap
 ## 2026-10-07：Review V9 W0.7 reduced-p6 pilot public-contract测试
 
 当前独立pilot输入为`input/official/task041/side_balh/w0p7nm_p6h0p70_m400_mpi8_cell_condensed_pilot.dat`，材料候选record SHA `fe3bf4e5df2f369907f21033a4aa84e62fdf7b3a0961e05ec29743c9cafd70d2`。输入可枚举1292个external-mode候选；尚无producer packet，本阶段未运行QEP/FE。六个批准selector的12个唯一case最终在13个分批serial attempt中通过；局部测试fixture失败和重试均保留，最终test351 SHA `f92641ffd227f108fd42071103d3ea820d9983db6bfd456230c3dc8405cb33af`没有一次性整组通过。V5对各pytest parent wall各记一次，共`65.0168370383326 s`；ledger为144项、SHA `24a6f6917006275d5035aa220cfb83e5755be9afe0f8036cc9793cc4e3b8bca4`。逐attempt记录见[测试摘要](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)。当前仅serial public-contract/输入解析证据，不是MPI8 producer或数值结果；下一步等待新的ignored冷运行包静态审查和单独准入。
+
+## 2026-10-09：Review V11 P0 资源合同与 P1 W0.7 准备（进行中）
+
+**背景和基线。** 近期 W0.7 warm 场在 P4 数值分解前被资源预算门拒绝，没有到 fixed-H6 feedback、outer、五项真残差或完整物理输出。为避免继续复用旧 49.566 GiB 上限，Review V11 给注册的缩减 pilot 单独设 80 GiB case cap，同时保留 node0 384 GiB floor，并继续由父级 host/cgroup 可用量限制。该 cap 是允许的运行上限，不是内存峰值预测。
+
+**改动与验证。** P0 只改 pilot DAT、输入校验、Task041 exact-side 合同和 test351。W5、13.5 nm 与 W2 的共享上限未改，也没有增加 CLI/runner。7 个批准 selector 的12个唯一参数 case分布在三次pytest parent attempt；首轮含一个fixture断言错误（期望键不存在），保留失败后只重跑该预算节点，其他参数化项另跑。三个父wall唯一合计`16.047360067022964 s`，V5 ledger 192项SHA `710b71f59d0109ace55963b2ac909eca5e4fccdcb8ef237259f9abff679ef774`。最终四路径普通提交为`a3332dc12de1ddfec824a8b64ab5dcc23f68261b`，parent `cd43819dc91112b8ca49d1dd2c2066d0074eda44`，原分支upstream同步；这些是合同测试，不能当作一次整组同SHA测试或pilot求解。
+
+| P1 准备/准入 | 当前证据 | 含义和边界 |
+|---|---|---|
+| 运行包 | ignored package `results/task041_v11_w0p7_pilot80gib_pord_warm_preparation_20261009T074322Z/`；config `b4bf3edc0c7acfca3aa7b1d00c6b2f8a69c19f2caa220e44c05460ef83c22385`；argv `363dbb74f6e23f46665c900dd0e31b4d4fcab48048fe764e5e28b47e30f42236` | 26项内容hash通过；34 runtime + 5 test源码绑定与HEAD blob/工作树匹配；目标unit未加载，runroot/log/dispatch marker不存在 |
+| 宿主门 | 真实host双样本 `07:54:18.523917Z` / `07:54:23.603283Z`；node0 MemFree `719,097,163,776 B` | 扣384 GiB floor后 `306,780,303,360 B`，扣80 GiB case cap后余 `220,880,957,440 B`；host/cgroup/disk通过。Task039/Task042进程被观察但未干预；宽affinity使 `performance_not_isolated=true` |
+| 原生MPI8 ABI | rank map `[10,11,14,15,16,17,18,19]`，PETSc 3.19.6/MUMPS 5.6.2/OpenMPI 4.1.6 | rc0；complex128、Int32、membind0、六线程变量均为1；精确加载已审 .so SHA `7c0e7458e928de1c66fe66622b19afa200f4fdb2f83cadf368cda3ffd675ef9b`。无factor或矩阵求解 |
+| 数值包身份 | W0.7 p6/h0.70/M400/MPI8、接口2/22、matched L20/N29/h20/29、fixed-H6；复用 producer source `2708214386d38bd69f73e6b196c8ed843bb53d81`，本次QEP=0 | manifest SHA `63b7635e99dd476a94c97a07aa469be8c5087ef55fadeb7e8f908b1ded0d84e2`；packet identity SHA `73111acd2d48344e4ef36a0d838371f8ccc0efcddc1b7d9d3a46173f4ad2fbc6`。只复核11份小封套，不读全shards、不声称完整validator已运行 |
+
+**结论和下一步。** PORD source-counted bottom/top Δ为`3,962,155,812/5,500,664,516 B`，仅是symbolic预算筛查量，不是RSS上界；numeric门仍按当场fresh B + 单份INFOG(17)×1,000,000 + W判定，不能预扣历史收益。当前只完成准备、宿主准入和MPI8 ABI，等待主控审阅后再决定是否dispatch；没有QEP、FE、outer、五门或物理结果。W5弱显著衍射通道明确为“用户决定延期处理”，保留原失败工件且不作0.7前置；W2本阶段不推进以免延误0.7。
