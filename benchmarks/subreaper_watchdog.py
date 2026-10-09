@@ -84,12 +84,16 @@ def _children() -> dict[int, tuple[int, int]]:
     return {pid: records[pid] for pid in descendants}
 
 
-def _signal_children(signum: int) -> None:
+def _signal_children(signum: int, *, stop_events=None, reason=None) -> None:
     # Re-discover every pass: no stale PID may target an unrelated process.
     for pid, identity in _children().items():
         try:
             fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
             if int(fields[19]) == identity[1]:
+                if stop_events is not None:
+                    from src.runners.durable_stop_events import process_identity
+                    stop_events.append('before_send', signal=signal.Signals(signum).name,
+                                       reason=reason, target=process_identity(pid))
                 os.kill(pid, signum)
         except ProcessLookupError:
             pass
@@ -106,7 +110,7 @@ def _reap_adopted(leader_pid: int) -> None:
                 pass
 
 
-def _request_cooperative_stop(phase: dict, leader_pid: int) -> dict:
+def _request_cooperative_stop(phase: dict, leader_pid: int, *, stop_events=None) -> dict:
     """Signal the registered application once, never its MPI launcher."""
     worker = phase.get('application_worker', {})
     pid, ticks = worker.get('pid'), worker.get('start_ticks')
@@ -117,6 +121,10 @@ def _request_cooperative_stop(phase: dict, leader_pid: int) -> dict:
     current = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
     if int(current[19]) != ticks:
         raise RuntimeError('cooperative application identity changed before signal')
+    if stop_events is not None:
+        from src.runners.durable_stop_events import process_identity
+        stop_events.append('before_send', signal='SIGTERM', reason='PERFORMANCE_CONTROLLED_STOP',
+                           target=process_identity(pid))
     os.kill(pid, signal.SIGTERM)
     return dict(worker_pid=pid, start_ticks=ticks, signal='SIGTERM', request_count=1,
                 monotonic=time.monotonic(), timestamp_ns=time.time_ns())
@@ -199,7 +207,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               rss_warning_bytes: int | None = None,
               startup_headroom_bytes: int | None = None,
               memory_envelope_provider=None, health_check=None,
-              include_pss: bool | None = None) -> dict:
+              include_pss: bool | None = None,
+              durable_stop_events: bool = False) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
     if (not command or interval <= 0 or grace_seconds <= 0 or
             (wall_seconds is not None and wall_seconds <= 0)):
@@ -249,8 +258,21 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     if cap <= 0:
         raise RuntimeError('no safe launch memory budget')
     requested_signal = []
+    stop_events = None
+    if durable_stop_events:
+        from src.runners.durable_stop_events import StopEvents
+        stop_events = StopEvents(directory/'stop_events.jsonl', dict(
+            workflow_seconds=wall_seconds, solve_seconds=solve_seconds,
+            grace_seconds=grace_seconds, rss_hard_limit_bytes=int(cap),
+            source=source_state))
+        stop_events.append('controller_ready', policy='unchanged stop/cleanup; sender unknown on reception')
+    def received(value, _frame):
+        if stop_events is not None:
+            stop_events.append('received_signal', signal=signal.Signals(value).name,
+                               original_sender='unknown')
+        requested_signal.append(value)
     for signum in (signal.SIGTERM, signal.SIGINT):
-        signal.signal(signum, lambda value, _frame: requested_signal.append(value))
+        signal.signal(signum, received)
     started = time.monotonic()
     stop_started = None
     classification = None
@@ -447,10 +469,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 timeline.flush()
                 samples += 1
                 if reason and classification is None:
+                    if durable_stop_events and reason == 'USER_CONTROLLED_STOP':
+                        reason = 'SIGNAL_STOP_SENDER_UNKNOWN'
                     classification, stop_started = reason, time.monotonic()
                     stop_clock = clock_sample() if timebase_guard else None
                     summary['stop_event'] = dict(reason=reason, monotonic=stop_started,
                         timestamp_ns=time.time_ns(), grace_seconds=grace_seconds)
+                    if stop_events is not None:
+                        stop_events.append('stop_decision', reason=reason,
+                                           requested_signals=requested_signal)
                 if classification is not None and children:
                     signum = stop_signal(classification, hard_stop_immediate=hard_stop_immediate,
                         elapsed=budget_elapsed(stop_clock, clock_sample()) if timebase_guard
@@ -459,14 +486,14 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                             and signum == signal.SIGTERM):
                         if 'cooperative_stop_request' not in summary:
                             stage = 'cooperative_stop_identity_and_signal'
-                            request = _request_cooperative_stop(phase, leader.pid)
+                            request = _request_cooperative_stop(phase, leader.pid, stop_events=stop_events)
                             summary['cooperative_stop_request'] = request
                             summary['first_SIGTERM'] = dict(monotonic=request['monotonic'],
                                 timestamp_ns=request['timestamp_ns'], scope='registered application only')
                     else:
                         summary.setdefault('first_'+signal.Signals(signum).name, dict(
                             monotonic=time.monotonic(), timestamp_ns=time.time_ns(), scope='whole child tree'))
-                        _signal_children(signum)
+                        _signal_children(signum, stop_events=stop_events, reason=classification)
                 if exit_code is not None and not children:
                     stage = 'cache_stability'
                     stamp = _cache_stamp(cache_path)
@@ -495,13 +522,16 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             )
         summary.update({'exception_stage': stage, 'exception_type': type(exc).__name__,
                         'exception_message': str(exc), 'cache_metadata_stable': False})
+        if stop_events is not None:
+            stop_events.append('exception_before_cleanup', reason=classification,
+                               exception_type=type(exc).__name__, exception_message=str(exc))
     finally:
         # Also close the tree if sampling, JSON writing, or the parent fails.
         deadline = time.monotonic() + grace_seconds + 10
         cleanup_clock = clock_sample() if timebase_guard else None
         while leader is not None and _children() and (budget_elapsed(cleanup_clock, clock_sample())
                 < grace_seconds + 10 if timebase_guard else time.monotonic() < deadline):
-            _signal_children(signal.SIGKILL)
+            _signal_children(signal.SIGKILL, stop_events=stop_events, reason=classification or 'final_cleanup')
             leader.poll()
             _reap_adopted(leader.pid)
             time.sleep(.02)
@@ -562,6 +592,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 if summary['classification'] in (None, 'COMPLETED'):
                     summary['classification'] = 'TIMEBASE_INCONSISTENCY'
         (directory / 'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
+        if stop_events is not None:
+            stop_events.append('controller_settled', classification=summary['classification'],
+                               descendants_cleared=summary['descendants_cleared'])
     return summary
 
 
@@ -573,12 +606,14 @@ def main() -> int:
     parser.add_argument('--grace-seconds', type=float, default=2)
     parser.add_argument('--cache-path', type=Path)
     parser.add_argument('--timebase-guard', action='store_true')
+    parser.add_argument('--durable-stop-events', action='store_true')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     summary = supervise(command, args.directory, wall_seconds=args.wall_seconds,
                         interval=args.interval, grace_seconds=args.grace_seconds,
-                        cache_path=args.cache_path, timebase_guard=args.timebase_guard)
+                        cache_path=args.cache_path, timebase_guard=args.timebase_guard,
+                        durable_stop_events=args.durable_stop_events)
     print(json.dumps(summary, allow_nan=False), flush=True)
     return 0 if summary['classification'] == 'COMPLETED' else 2
 

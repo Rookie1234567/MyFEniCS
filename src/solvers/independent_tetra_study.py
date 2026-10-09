@@ -115,20 +115,31 @@ def solve(role,folder,journal,state,*,scope_module=scope,prepared_provider=None,
     # Two nonzero complex vectors certify all interior/edge/face and all ports.
     rng=np.random.default_rng(6207);columns=[];errors=[]
     independent=action_factory(s,oracle) if action_factory is not None else None
-    with journal.measured('two_standard_UFL_PUBLIC_BASIX_operator_pairs'):
-        inputs=[rng.normal(size=A.shape[0])+1j*rng.normal(size=A.shape[0]) for _ in range(2)]
-        originals=independent(np.column_stack(inputs)) if independent is not None else None
-        for i,z in enumerate(inputs):
-            original=originals[:,i] if originals is not None else core.full_action(s,oracle,z,q=2*s['spec']['degree']+5)
-            production=A@z
-            err=relative(production-original,original);errors.append(err);columns.append((z,production,original))
-            journal.calls['A']+=1
-    identity=save_arrays(folder/'full_operator_witness.npz',**{f'{name}{i}':col[j] for i,col in enumerate(columns) for j,name in enumerate(('input','production','original'))})
-    write_json(folder/'original_operator_pairs.json',dict(errors=errors,arrays=identity,form=form))
-    if max(errors)>1e-10:raise ValueError('independent complete original action gate')
-    if prepared is not None:
-        from .tetra_body_checkpoint import qualification_receipt
-        prepared['qualification']=qualification_receipt(prepared['checkpoint'],errors,identity,state,folder/'body_original_action_qualification.json')
+    if prepared is not None and 'reuse_original_pairs' in prepared:
+        # Explicit opt-in provider has checked the original bytes, exact body
+        # identity and unchanged numerical closure. Scope/log changes do not
+        # demand another pair of costly full-space experiments.
+        pairs=prepared['reuse_original_pairs'];errors=pairs['errors'];identity=pairs['arrays']
+        if len(errors)!=2 or not all(np.isfinite(e) and e<=1e-10 for e in errors):
+            raise ValueError('reused independent original action gate')
+        journal.event('same_bytes_original_action_qualification_reused',
+                      qualification=prepared['qualification'],new_full_body_actions=0)
+        write_json(folder/'original_operator_pairs.json',dict(pairs,reused=True))
+    else:
+        with journal.measured('two_standard_UFL_PUBLIC_BASIX_operator_pairs'):
+            inputs=[rng.normal(size=A.shape[0])+1j*rng.normal(size=A.shape[0]) for _ in range(2)]
+            originals=independent(np.column_stack(inputs)) if independent is not None else None
+            for i,z in enumerate(inputs):
+                original=originals[:,i] if originals is not None else core.full_action(s,oracle,z,q=2*s['spec']['degree']+5)
+                production=A@z
+                err=relative(production-original,original);errors.append(err);columns.append((z,production,original))
+                journal.calls['A']+=1
+        identity=save_arrays(folder/'full_operator_witness.npz',**{f'{name}{i}':col[j] for i,col in enumerate(columns) for j,name in enumerate(('input','production','original'))})
+        write_json(folder/'original_operator_pairs.json',dict(errors=errors,arrays=identity,form=form))
+        if max(errors)>1e-10:raise ValueError('independent complete original action gate')
+        if prepared is not None:
+            from .tetra_body_checkpoint import qualification_receipt
+            prepared['qualification']=qualification_receipt(prepared['checkpoint'],errors,identity,state,folder/'body_original_action_qualification.json')
     phases=[_mode_boundary_phase(m,s['cfg']) for m in b['modes']];left,right=port_coordinate_scales(n,H,phases)
     scaled=(sparse.diags(left)@A@sparse.diags(right)).tocsr();matrix=petsc_matrix(scaled)
     factor=None
