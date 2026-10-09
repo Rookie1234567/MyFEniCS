@@ -456,31 +456,74 @@ def test_v20_service_accepts_only_the_official_checker_pass_marker():
     assert _official_checker_passed(1, {"status": "PASS"}) is False
 
 
-def test_v20_service_reads_campaign_identity_from_v20_run_manifest(tmp_path):
+def test_v20_service_validates_actual_target_manifest_campaign_identity():
+    import copy
+
     from scripts.task40_v20_service_workflow import (
+        CAMPAIGN_RELATIVE,
+        CAMPAIGN_SHA256,
         _campaign_accounting_path_from_manifest,
     )
 
-    accounting = tmp_path / "campaign_accounting.jsonl"
-    accounting.write_text("{}\n", encoding="utf-8")
-    manifest = {
-        "task40_v20_campaign": {
-            "accounting_path": str(accounting),
-            "window_sha256": "a" * 64,
-        }
+    manifest_path = ROOT / (
+        "results/task40extra_nonseparable_0p7nm/"
+        "task40extra_0p7nm_target_original_ny8_resource_pilot_v20__"
+        "full3d_iterative__mpi1__Mna/20261009T153003.130200Z/run_manifest.json"
+    )
+    if not manifest_path.is_file():
+        pytest.skip("the saved V20 target preflight manifest is unavailable")
+    actual_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    case_data = load_and_resolve(INPUT_ROOT / V20_INPUTS[1]).as_jsonable()
+    expected_accounting = ROOT / CAMPAIGN_RELATIVE.parent / "campaign_accounting_v10.jsonl"
+    expected = {
+        "expected_window_sha256": CAMPAIGN_SHA256,
+        "expected_accounting_path": expected_accounting,
+        "expected_run_id": case_data["run_id"],
+        "expected_profile": case_data["solver"]["preconditioner"],
     }
 
-    assert _campaign_accounting_path_from_manifest(manifest, "a" * 64) == accounting
+    assert actual_manifest["source_sha"] == "776b0d9c990faca42d5669dcb170f35ad2f35849"
+    assert _campaign_accounting_path_from_manifest(actual_manifest, **expected) == (
+        expected_accounting.resolve()
+    )
+
+    missing_identity = copy.deepcopy(actual_manifest)
+    missing_identity.pop("task40_v20_campaign")
+    wrong_window = copy.deepcopy(actual_manifest)
+    wrong_window["task40_v20_campaign"]["window_sha256"] = "0" * 64
+    wrong_accounting = copy.deepcopy(actual_manifest)
+    wrong_accounting["task40_v20_campaign"]["accounting_path"] = str(
+        expected_accounting.with_name("other_campaign_accounting.jsonl")
+    )
+    wrong_case = copy.deepcopy(actual_manifest)
+    wrong_case["run_id"] += "_near_miss"
+    wrong_profile = copy.deepcopy(actual_manifest)
+    wrong_profile["solver"]["preconditioner"] += "_near_miss"
+
+    for invalid_manifest in (
+        missing_identity,
+        wrong_window,
+        wrong_accounting,
+        wrong_case,
+        wrong_profile,
+    ):
+        with pytest.raises(ValueError):
+            _campaign_accounting_path_from_manifest(invalid_manifest, **expected)
 
 
-def test_v20_service_rejects_legacy_campaign_field_for_v20_run():
+def test_v20_service_rejects_legacy_campaign_field_for_v20_run(tmp_path):
     from scripts.task40_v20_service_workflow import (
+        CAMPAIGN_SHA256,
         _campaign_accounting_path_from_manifest,
     )
 
     with pytest.raises(ValueError, match="Task40 V20 campaign accounting identity"):
         _campaign_accounting_path_from_manifest(
-            {"task40_v10_campaign": {"accounting_path": "ignored"}}, "a" * 64
+            {"task40_v10_campaign": {"accounting_path": "ignored"}},
+            expected_window_sha256=CAMPAIGN_SHA256,
+            expected_accounting_path=tmp_path / "campaign_accounting_v10.jsonl",
+            expected_run_id="target_v20",
+            expected_profile="target_profile_v20",
         )
 
 

@@ -530,20 +530,33 @@ def _supervise_required_checker(
 
 
 def _campaign_accounting_path_from_manifest(
-    run_manifest: dict[str, Any], expected_window_sha256: str
+    run_manifest: dict[str, Any],
+    *,
+    expected_window_sha256: str,
+    expected_accounting_path: Path,
+    expected_run_id: str,
+    expected_profile: str,
 ) -> Path:
-    """Read the fixed campaign identity emitted by the V20 run_case wrapper."""
+    """Validate this V20 case's identity and its fixed campaign ledger."""
 
     campaign_evidence = run_manifest.get("task40_v20_campaign")
     if not isinstance(campaign_evidence, dict):
         raise ValueError("run manifest has no Task40 V20 campaign accounting identity")
+    solver = run_manifest.get("solver")
+    if (
+        run_manifest.get("run_id") != expected_run_id
+        or not isinstance(solver, dict)
+        or solver.get("preconditioner") != expected_profile
+    ):
+        raise ValueError("run manifest does not match the requested Task40 V20 case/profile")
     accounting_path = Path(str(campaign_evidence.get("accounting_path", ""))).resolve()
     if (
         campaign_evidence.get("window_sha256") != expected_window_sha256
+        or accounting_path != expected_accounting_path.resolve()
         or not accounting_path.is_file()
     ):
         raise ValueError(
-            "run manifest Task40 V20 campaign identity or accounting file is invalid"
+            "run manifest Task40 V20 campaign window/accounting identity is invalid"
         )
     return accounting_path
 
@@ -839,7 +852,13 @@ def run_service(
             ]
             record["partial_checker_result_path"] = str(checker_output)
         campaign_accounting = _campaign_accounting_path_from_manifest(
-            run_manifest, CAMPAIGN_SHA256
+            run_manifest,
+            expected_window_sha256=CAMPAIGN_SHA256,
+            expected_accounting_path=fixed_campaign.with_name(
+                "campaign_accounting_v10.jsonl"
+            ),
+            expected_run_id=str(data["run_id"]),
+            expected_profile=str(data["solver"]["preconditioner"]),
         )
         checker_code, checker_payload, checker_details = _supervise_required_checker(
             command=checker_command,
