@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,15 @@ SURFACE_COMPONENT_PAIR_BACKEND = (
     "q160_affine_hex_pointwise_weighted_legendre_component_pair_v1"
 )
 SURFACE_WEIGHTED_MOMENT_CONTRACTION = "q160_weighted_moment_x_then_y_v1"
+SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE = (
+    "q160_weighted_moment_six_lane_x_then_y_v1"
+)
+SURFACE_WEIGHTED_MOMENT_CONTRACTIONS = frozenset(
+    {
+        SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+        SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE,
+    }
+)
 SURFACE_GEOMETRY_CACHE_MAX_BYTES = 4 * 1024**3
 
 
@@ -63,7 +73,7 @@ def validate_weighted_moment_contraction(
 
     if algorithm is None:
         return
-    if algorithm != SURFACE_WEIGHTED_MOMENT_CONTRACTION:
+    if algorithm not in SURFACE_WEIGHTED_MOMENT_CONTRACTIONS:
         raise ValueError("unsupported weighted-moment contraction selection")
     if (
         backend != SURFACE_COMPONENT_PAIR_BACKEND
@@ -74,6 +84,102 @@ def validate_weighted_moment_contraction(
         raise ValueError(
             "weighted-moment contraction requires cached p6 q160 component-pair assembly"
         )
+
+
+def validate_weighted_moment_profile_selection(
+    selected_algorithm: str | None,
+    profile_algorithm: str | None,
+    *,
+    allow_six_lane_optin: bool,
+) -> None:
+    """Allow the six-lane trial only as an explicit p6 profile override."""
+
+    if selected_algorithm == profile_algorithm:
+        return
+    if (
+        allow_six_lane_optin
+        and profile_algorithm == SURFACE_WEIGHTED_MOMENT_CONTRACTION
+        and selected_algorithm == SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+    ):
+        return
+    raise ValueError(
+        "weighted-moment contraction must match the profile or its explicit six-lane opt-in"
+    )
+
+
+def validate_prepared_trace_contraction(
+    enabled: bool,
+    *,
+    backend: str,
+    degree: int,
+    quadrature_degree: int,
+    reuse_geometry_cache: bool,
+    weighted_moment_contraction: str | None,
+) -> None:
+    """Keep prepared trace plans on the explicit p6 weighted q160 route."""
+
+    if not enabled:
+        return
+    if (
+        backend != SURFACE_COMPONENT_PAIR_BACKEND
+        or int(degree) != 6
+        or int(quadrature_degree) != 160
+        or not reuse_geometry_cache
+        or weighted_moment_contraction not in SURFACE_WEIGHTED_MOMENT_CONTRACTIONS
+    ):
+        raise ValueError(
+            "prepared trace contraction requires the explicit cached p6 weighted q160 route"
+        )
+
+
+class Q160SixLaneWeightedMomentWorkspace:
+    """One reusable W/T scratch set for the explicit p6 six-lane route."""
+
+    __slots__ = ("_released", "_weighted_values", "_x_contractions")
+
+    def __init__(self) -> None:
+        self._weighted_values: np.ndarray | None = None
+        self._x_contractions: np.ndarray | None = None
+        self._released = False
+        try:
+            self._weighted_values = np.empty(
+                (2, 3, 81, 81), dtype=np.complex128
+            )
+            self._x_contractions = np.empty(
+                (2, 3, 7, 81), dtype=np.complex128
+            )
+        except BaseException:
+            self.release()
+            raise
+
+    @property
+    def payload_bytes(self) -> int:
+        weighted_values, x_contractions = self.require_active()
+        return int(weighted_values.nbytes + x_contractions.nbytes)
+
+    def require_active(self) -> tuple[np.ndarray, np.ndarray]:
+        weighted_values = self._weighted_values
+        x_contractions = self._x_contractions
+        if (
+            self._released
+            or weighted_values is None
+            or x_contractions is None
+            or weighted_values.shape != (2, 3, 81, 81)
+            or x_contractions.shape != (2, 3, 7, 81)
+            or weighted_values.dtype != np.dtype(np.complex128)
+            or x_contractions.dtype != np.dtype(np.complex128)
+            or not weighted_values.flags.c_contiguous
+            or not x_contractions.flags.c_contiguous
+            or not weighted_values.flags.writeable
+            or not x_contractions.flags.writeable
+        ):
+            raise RuntimeError("six-lane q160 weighted-moment workspace is inactive or malformed")
+        return weighted_values, x_contractions
+
+    def release(self) -> None:
+        self._weighted_values = None
+        self._x_contractions = None
+        self._released = True
 
 
 SURFACE_RELATIVE_GATE = 1.0e-11
@@ -1110,6 +1216,98 @@ def pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y(
     return moments
 
 
+def pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y(
+    physical_coordinates: np.ndarray,
+    quadrature_weights: np.ndarray,
+    polynomial_values: np.ndarray,
+    determinant: np.ndarray,
+    cofactors: np.ndarray,
+    surface_measure: np.ndarray,
+    *,
+    alpha: complex,
+    gamma: complex,
+    kz: complex,
+    workspace: Q160SixLaneWeightedMomentWorkspace,
+) -> np.ndarray:
+    """Build all p6 paired pointwise lanes before batched x/y contractions.
+
+    The six W lanes preserve the baseline pointwise operation order and
+    x-major/y-minor storage. Only the two matrix contractions are batched;
+    each lane still uses its own complete inverse-Piola, phase, measure, and
+    quadrature-weight values.
+    """
+
+    physical_coordinates = np.asarray(physical_coordinates)
+    quadrature_weights = np.asarray(quadrature_weights)
+    polynomial_values = np.asarray(polynomial_values)
+    determinant = np.asarray(determinant)
+    cofactors = np.asarray(cofactors)
+    surface_measure = np.asarray(surface_measure)
+    interval_count = 81
+    width = 7
+    point_count = interval_count * interval_count
+    if (
+        physical_coordinates.dtype != np.dtype(np.float64)
+        or physical_coordinates.shape != (point_count, 3)
+        or quadrature_weights.dtype != np.dtype(np.float64)
+        or quadrature_weights.shape != (point_count,)
+        or polynomial_values.dtype != np.dtype(np.float64)
+        or polynomial_values.shape != (interval_count, width)
+        or determinant.dtype != np.dtype(np.float64)
+        or determinant.shape != (point_count,)
+        or cofactors.dtype != np.dtype(np.float64)
+        or cofactors.shape != (point_count, 3, 3)
+        or surface_measure.dtype != np.dtype(np.float64)
+        or surface_measure.shape != (point_count,)
+    ):
+        raise ValueError("cached q160 six-lane weighted-moment inputs have incompatible shapes")
+    if not all(
+        np.isfinite(array).all()
+        for array in (
+            physical_coordinates,
+            quadrature_weights,
+            polynomial_values,
+            determinant,
+            cofactors,
+            surface_measure,
+        )
+    ):
+        raise ValueError("cached q160 six-lane weighted-moment input is non-finite")
+
+    weighted_values_by_lane, x_contractions = workspace.require_active()
+    phase = _pointwise_surface_phase(physical_coordinates, alpha, gamma, kz)
+    if not np.isfinite(phase).all():
+        raise ValueError("cached q160 phase is non-finite")
+    inverse_values = np.empty(point_count, dtype=np.float64)
+    # This is a caller-owned output, not a view into the reusable W/T scratch.
+    moments = np.empty((2, 3, width, width), dtype=np.complex128)
+    for physical_component in (0, 1):
+        for reference_component in range(3):
+            np.divide(
+                cofactors[:, reference_component, physical_component],
+                determinant,
+                out=inverse_values,
+            )
+            if not np.isfinite(inverse_values).all():
+                raise ValueError("q160 inverse Piola entries are non-finite")
+            lane = weighted_values_by_lane[
+                physical_component, reference_component
+            ].reshape(point_count)
+            # Keep the per-point arithmetic grouping used by the current
+            # weighted route, including the order of the two final products.
+            np.multiply(inverse_values, phase, out=lane)
+            lane *= surface_measure
+            lane *= quadrature_weights
+            if not np.isfinite(lane.real).all() or not np.isfinite(lane.imag).all():
+                raise ValueError("q160 pointwise weighted values are non-finite")
+
+    np.matmul(polynomial_values.T, weighted_values_by_lane, out=x_contractions)
+    np.matmul(x_contractions, polynomial_values, out=moments)
+    if not np.isfinite(moments.real).all() or not np.isfinite(moments.imag).all():
+        raise ValueError("q160 six-lane weighted moments are non-finite")
+    return moments
+
+
 def assemble_face_from_weighted_moments(
     trace_tensor: np.ndarray, moments: np.ndarray
 ) -> np.ndarray:
@@ -1130,6 +1328,70 @@ def assemble_face_from_weighted_moments(
     if not np.isfinite(result).all():
         raise ValueError("pointwise face functional contains non-finite values")
     return np.asarray(result, dtype=np.complex128)
+
+
+@dataclass(frozen=True)
+class PreparedFaceTraceContraction:
+    """One-time validated immutable trace and its exact einsum plan.
+
+    The trace array is borrowed from the owning surface context; this object
+    does not duplicate the coefficient tensor. Variable moments are still
+    shape/dtype/finite-checked on each call, and the result is still checked
+    for finiteness. The contraction expression and operand order are exactly
+    those of :func:`assemble_face_from_weighted_moments`.
+    """
+
+    trace_tensor: np.ndarray
+    einsum_path: tuple[Any, ...]
+
+    @classmethod
+    def prepare(cls, trace_tensor: np.ndarray) -> PreparedFaceTraceContraction:
+        trace = np.asarray(trace_tensor)
+        if (
+            trace.dtype != np.dtype(np.float64)
+            or trace.ndim != 4
+            or trace.shape[1:] != (3, 7, 7)
+            or not trace.flags.c_contiguous
+            or trace.flags.writeable
+        ):
+            raise ValueError(
+                "prepared q160 trace must be immutable contiguous float64 (ndof,3,7,7)"
+            )
+        if not np.isfinite(trace).all():
+            raise ValueError("prepared q160 trace contains non-finite coefficients")
+        # Path planning is done once per context/side. Keep this same operand
+        # order and expression; do not rewrite the contraction algebra.
+        path, _path_info = np.einsum_path(
+            "ikab,kab->i",
+            trace,
+            np.empty((3, 7, 7), dtype=np.complex128),
+            optimize=True,
+        )
+        return cls(trace, tuple(path))
+
+    def apply(self, moments: np.ndarray) -> np.ndarray:
+        trace = self.trace_tensor
+        if trace.flags.writeable:
+            raise ValueError("prepared q160 trace became writeable")
+        values = np.asarray(moments, dtype=np.complex128)
+        if values.shape != (3, 7, 7):
+            raise ValueError("prepared q160 moments have an incompatible shape")
+        if not np.isfinite(values).all():
+            raise ValueError("prepared q160 moments contain non-finite values")
+        result = np.einsum(
+            "ikab,kab->i", trace, values, optimize=list(self.einsum_path)
+        )
+        if not np.isfinite(result).all():
+            raise ValueError("prepared q160 contraction contains non-finite output")
+        return np.asarray(result, dtype=np.complex128)
+
+
+def prepare_face_trace_contraction(
+    trace_tensor: np.ndarray,
+) -> PreparedFaceTraceContraction:
+    """Prepare one immutable p6 q160 trace contraction plan."""
+
+    return PreparedFaceTraceContraction.prepare(trace_tensor)
 
 
 def fourier_legendre_moment(

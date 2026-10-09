@@ -16,6 +16,8 @@ from src.solvers.fullspace_surface_legendre import (
     SURFACE_RELATIVE_GATE,
     SURFACE_SUPPORT_RELATIVE_CUTOFF,
     SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+    SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE,
+    Q160SixLaneWeightedMomentWorkspace,
     _pointwise_surface_geometry_terms,
     add_complex_mpc_cell_contribution,
     apply_standard_dof_transform,
@@ -33,6 +35,7 @@ from src.solvers.fullspace_surface_legendre import (
     pointwise_weighted_legendre_moments,
     pointwise_weighted_legendre_moments_pair,
     pointwise_weighted_legendre_moments_pair_from_geometry,
+    pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y,
     pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y,
     relative_vector_defect,
     roundtrip_ffcx_float64_array,
@@ -43,6 +46,7 @@ from src.solvers.fullspace_surface_legendre import (
     validate_component_pair_degree,
     validate_q160_expanded_interval_tables,
     validate_weighted_moment_contraction,
+    validate_weighted_moment_profile_selection,
 )
 
 
@@ -446,6 +450,276 @@ def test_q160_weighted_x_then_y_matches_full_q_nonseparable_complex_reference():
         )
         separable_relative_values.append(wrong_separable_relative)
     assert min(separable_relative_values) > SURFACE_RELATIVE_GATE
+
+
+def test_q160_six_lane_candidate_matches_current_weighted_route_and_reuses_scratch():
+    (
+        physical,
+        weights,
+        interval_values,
+        _polynomial_x,
+        _polynomial_y,
+        determinant,
+        cofactors,
+        surface_measure,
+    ) = _weighted_q160_nonseparable_fixture()
+    cofactors = cofactors.copy()
+    for physical_component in (0, 1):
+        for reference_component in range(3):
+            if (physical_component, reference_component) == (1, 2):
+                cofactors[:, reference_component, physical_component] = 0.0
+            else:
+                lane_scale = 1.0 + 0.031 * (3 * physical_component + reference_component)
+                cofactors[:, reference_component, physical_component] *= lane_scale
+                cofactors[:, reference_component, physical_component] += (
+                    1.0e-4 * (1 + 3 * physical_component + reference_component)
+                )
+    kwargs = {
+        "alpha": 7.25 - 0.019j,
+        "gamma": -3.5 + 0.013j,
+        "kz": 2.75 - 0.007j,
+    }
+    expected = pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y(
+        physical,
+        weights,
+        interval_values,
+        determinant,
+        cofactors,
+        surface_measure,
+        **kwargs,
+    )
+    workspace = Q160SixLaneWeightedMomentWorkspace()
+    assert workspace.payload_bytes == 684288
+    first = pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y(
+        physical,
+        weights,
+        interval_values,
+        determinant,
+        cofactors,
+        surface_measure,
+        workspace=workspace,
+        **kwargs,
+    )
+    weighted_lanes, x_lanes = workspace.require_active()
+    assert weighted_lanes.shape == (2, 3, 81, 81)
+    assert x_lanes.shape == (2, 3, 7, 81)
+    assert np.count_nonzero(weighted_lanes[1, 2]) == 0
+    assert np.any(weighted_lanes.imag != 0.0)
+    lane_values = [weighted_lanes[p, k].copy() for p in (0, 1) for k in range(3)]
+    assert all(
+        not np.array_equal(lane_values[left], lane_values[right])
+        for left in range(6)
+        for right in range(left + 1, 6)
+    )
+    absolute, relative = relative_vector_defect(first.ravel(), expected.ravel())
+    assert np.isfinite(absolute)
+    assert relative <= SURFACE_RELATIVE_GATE
+    assert not np.shares_memory(first, weighted_lanes)
+    first_saved = first.copy()
+    second = pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y(
+        physical,
+        weights,
+        interval_values,
+        determinant,
+        cofactors,
+        surface_measure,
+        workspace=workspace,
+        alpha=kwargs["alpha"] + 0.17j,
+        gamma=kwargs["gamma"] - 0.11j,
+        kz=kwargs["kz"] + 0.09j,
+    )
+    assert id(workspace._weighted_values) == id(weighted_lanes)
+    assert id(workspace._x_contractions) == id(x_lanes)
+    assert not np.shares_memory(second, x_lanes)
+    assert np.array_equal(first, first_saved)
+    assert not np.array_equal(second, first)
+    workspace.release()
+    assert workspace._weighted_values is None
+    with pytest.raises(RuntimeError, match="inactive or malformed"):
+        pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y(
+            physical,
+            weights,
+            interval_values,
+            determinant,
+            cofactors,
+            surface_measure,
+            workspace=workspace,
+            **kwargs,
+        )
+
+
+@pytest.mark.parametrize("bad_input", ["shape", "dtype", "nonfinite"])
+def test_q160_six_lane_rejects_malformed_inputs_without_fallback(bad_input):
+    (
+        physical,
+        weights,
+        interval_values,
+        _polynomial_x,
+        _polynomial_y,
+        determinant,
+        cofactors,
+        surface_measure,
+    ) = _weighted_q160_nonseparable_fixture()
+    if bad_input == "shape":
+        weights = weights[:-1]
+    elif bad_input == "dtype":
+        interval_values = interval_values.astype(np.float32)
+    else:
+        cofactors = cofactors.copy()
+        cofactors[0, 1, 0] = np.nan
+    workspace = Q160SixLaneWeightedMomentWorkspace()
+    with pytest.raises(ValueError, match="incompatible shapes|non-finite"):
+        pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y(
+            physical,
+            weights,
+            interval_values,
+            determinant,
+            cofactors,
+            surface_measure,
+            alpha=7.25 - 0.019j,
+            gamma=-3.5 + 0.013j,
+            kz=2.75 - 0.007j,
+            workspace=workspace,
+        )
+    workspace.release()
+
+
+def test_six_lane_route_selection_is_only_an_explicit_profile_optin():
+    validate_weighted_moment_profile_selection(
+        SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+        SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+        allow_six_lane_optin=False,
+    )
+    validate_weighted_moment_profile_selection(
+        SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE,
+        SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+        allow_six_lane_optin=True,
+    )
+    with pytest.raises(ValueError, match="explicit six-lane opt-in"):
+        validate_weighted_moment_profile_selection(
+            SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE,
+            SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+            allow_six_lane_optin=False,
+        )
+
+
+def test_context_dispatches_six_lane_route_without_fallback(monkeypatch):
+    from src.solvers import fullspace_surface_legendre as legendre_module
+    from src.solvers.dtn_port_3d import _SurfaceLegendreMomentContext
+
+    context = object.__new__(_SurfaceLegendreMomentContext)
+    context.backend = SURFACE_COMPONENT_PAIR_BACKEND
+    context._geometry_face_local_facets = {"bottom": 0, "top": 1}
+    context._geometry_cache = SimpleNamespace(
+        get=lambda *_args: (
+            np.zeros((6561, 3), dtype=np.float64),
+            np.ones(6561, dtype=np.float64),
+            np.zeros((6561, 3, 3), dtype=np.float64),
+            np.ones(6561, dtype=np.float64),
+        )
+    )
+    context._weighted_moment_contraction = SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+    context._six_lane_moment_workspace = object()
+    context.quadrilateral_weights = np.ones(6561, dtype=np.float64)
+    context.polynomial_values = np.ones((81, 7), dtype=np.float64)
+    context._polynomial_x = np.ones((6561, 7), dtype=np.float64)
+    context._polynomial_y = np.ones((6561, 7), dtype=np.float64)
+    called = []
+
+    def six_lane_spy(*args, **kwargs):
+        called.append((args, kwargs))
+        return np.zeros((2, 3, 7, 7), dtype=np.complex128)
+
+    def forbidden_baseline(*_args, **_kwargs):
+        raise AssertionError("six-lane route silently fell back to baseline")
+
+    monkeypatch.setattr(
+        legendre_module,
+        "pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y",
+        six_lane_spy,
+    )
+    monkeypatch.setattr(
+        legendre_module,
+        "pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y",
+        forbidden_baseline,
+    )
+    mode = SimpleNamespace(
+        side="bottom",
+        alpha=1.0 + 0.2j,
+        gamma=-0.7 + 0.1j,
+        k_vector=(0.0, 0.0, 2.0 - 0.3j),
+    )
+    record = SimpleNamespace(
+        zeta_face=0.0,
+        local_facet=0,
+        geometry_dofs=np.arange(8, dtype=np.int32),
+    )
+    result = context.pointwise_moments_pair(mode, record, record_position=2)
+    assert result.shape == (2, 3, 7, 7)
+    assert len(called) == 1
+    assert called[0][1]["workspace"] is context._six_lane_moment_workspace
+    with pytest.raises(RuntimeError, match="active cached workspace"):
+        context._geometry_cache = None
+        context.pointwise_moments_pair(mode, record, record_position=2)
+
+
+def test_six_lane_context_releases_workspace_on_success_and_cache_error(monkeypatch):
+    import src.solvers.dtn_port_3d as dtn_module
+
+    class FakeCache:
+        def __init__(self, context, *, max_bytes):
+            self.context = context
+            self.max_bytes = max_bytes
+            self.release_calls = 0
+
+        def release(self):
+            self.release_calls += 1
+            return {"released": True}
+
+    def make_context():
+        context = object.__new__(dtn_module._SurfaceLegendreMomentContext)
+        context._geometry_cache_enabled = True
+        context._geometry_cache_limit_bytes = SURFACE_GEOMETRY_CACHE_MAX_BYTES
+        context._geometry_cache = None
+        context._geometry_cache_last_facts = None
+        context._weighted_moment_contraction = (
+            SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+        )
+        context._six_lane_moment_workspace = None
+        context._prepared_trace_contractions = {}
+        context._prepared_trace_release_count = 0
+        return context
+
+    monkeypatch.setattr(dtn_module, "_SurfacePointwiseGeometryCache", FakeCache)
+    context = make_context()
+    context.begin_geometry_cache()
+    workspace = context._six_lane_moment_workspace
+    assert workspace is not None and workspace.payload_bytes == 684288
+    with pytest.raises(RuntimeError, match="fixture carrier failure"):
+        try:
+            raise RuntimeError("fixture carrier failure")
+        finally:
+            context.end_geometry_cache()
+    assert workspace._weighted_values is None
+    assert workspace._x_contractions is None
+    assert context._six_lane_moment_workspace is None
+    assert context.geometry_cache_facts() == {"released": True}
+
+    class FailingCache(FakeCache):
+        def release(self):
+            self.release_calls += 1
+            raise RuntimeError("fixture cache release failure")
+
+    monkeypatch.setattr(dtn_module, "_SurfacePointwiseGeometryCache", FailingCache)
+    context = make_context()
+    context.begin_geometry_cache()
+    workspace = context._six_lane_moment_workspace
+    with pytest.raises(RuntimeError, match="fixture cache release failure"):
+        context.end_geometry_cache()
+    assert workspace is not None
+    assert workspace._weighted_values is None
+    assert workspace._x_contractions is None
+    assert context._six_lane_moment_workspace is None
 
 
 @pytest.mark.parametrize("bad_axis", ["x", "y"])

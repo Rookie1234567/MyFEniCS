@@ -39,6 +39,7 @@ def _surface_assemblers(
     reuse_surface_geometry_cache: bool = False,
     surface_geometry_cache_limit_bytes: int = 0,
     surface_weighted_moment_contraction: str | None = None,
+    prepare_surface_trace_contraction: bool = False,
     jit_options: Mapping[str, Any] | None = None,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
@@ -78,6 +79,7 @@ def _surface_assemblers(
             reuse_geometry_cache=reuse_surface_geometry_cache,
             geometry_cache_limit_bytes=surface_geometry_cache_limit_bytes,
             weighted_moment_contraction=surface_weighted_moment_contraction,
+            prepare_trace_contraction=prepare_surface_trace_contraction,
         )
         return {
             (side, component): _SurfaceLegendreMomentAssembler(
@@ -153,6 +155,8 @@ def build_same_mesh_physical_action(
     reuse_surface_geometry_cache: bool = False,
     surface_geometry_cache_limit_bytes: int = 0,
     surface_weighted_moment_contraction: str | None = None,
+    prepare_surface_trace_contraction: bool = False,
+    functional_store_config: Mapping[str, Any] | None = None,
     surface_assembly_backend: str | None = None,
     collect_surface_timings: bool = False,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
@@ -171,6 +175,7 @@ def build_same_mesh_physical_action(
     from .common_3d_forms import _validate_physical_split_profile
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
+    from .fullspace_surface_legendre import SURFACE_WEIGHTED_MOMENT_CONTRACTIONS
     from .fullspace_dtn_action import (
         build_dynamic_mode_inventory,
         build_fullspace_dtn_action,
@@ -196,6 +201,49 @@ def build_same_mesh_physical_action(
         )
     if not reuse_surface_geometry_cache and int(surface_geometry_cache_limit_bytes) != 0:
         raise ValueError("surface geometry cache limit requires its explicit p6 opt-in")
+    if prepare_surface_trace_contraction and (
+        degree != 6
+        or not reuse_surface_geometry_cache
+        or surface_assembly_backend
+        != "q160_affine_hex_pointwise_weighted_legendre_component_pair_v1"
+        or surface_weighted_moment_contraction
+        not in SURFACE_WEIGHTED_MOMENT_CONTRACTIONS
+    ):
+        raise ValueError(
+            "prepared trace contraction requires the explicit cached p6 weighted q160 route"
+        )
+    if functional_store_config is not None:
+        if (
+            degree not in (3, 6)
+            or not reuse_surface_vector
+            or (
+                degree == 6
+                and (
+                    not prepare_surface_trace_contraction
+                    or not reuse_surface_geometry_cache
+                )
+            )
+        ):
+            raise ValueError(
+                "functional-store opt-in requires the explicit p6 prepared route or p3 native route"
+            )
+        required_store_keys = {
+            "root",
+            "source_sha256",
+            "resolved_config_sha256",
+            "input_sha256",
+            "physical_model_sha256",
+            "max_shard_working_bytes",
+            "max_total_disk_bytes",
+            "disk_reserve_bytes",
+            "producer_provenance",
+        }
+        if required_store_keys.difference(functional_store_config):
+            raise ValueError("functional-store configuration is incomplete")
+        from pathlib import Path
+
+        if not Path(functional_store_config["root"]).is_absolute():
+            raise ValueError("functional-store root must be an absolute path")
     if int(surface_progress_interval) <= 0:
         raise ValueError("surface progress interval must be positive")
     _validate_physical_split_profile(cfg)
@@ -272,6 +320,7 @@ def build_same_mesh_physical_action(
         reuse_surface_geometry_cache=reuse_surface_geometry_cache,
         surface_geometry_cache_limit_bytes=surface_geometry_cache_limit_bytes,
         surface_weighted_moment_contraction=surface_weighted_moment_contraction,
+        prepare_surface_trace_contraction=prepare_surface_trace_contraction,
         jit_options=options,
     )
     if (
@@ -320,6 +369,8 @@ def build_same_mesh_physical_action(
             stage_callback=stage_callback if reuse_surface_vector else None,
             degree=degree,
             progress_interval=surface_progress_interval,
+            quadrature_degree=qdegree,
+            functional_store_config=functional_store_config,
         )
         if reuse_surface_vector and stage_callback is not None:
             completion_facts = {

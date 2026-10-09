@@ -48,8 +48,10 @@ from .condensed_dtn import (
 )
 from .condensed_reference_preflight import CondensedPreflightExit
 from .fullspace_surface_legendre import (
+    Q160SixLaneWeightedMomentWorkspace,
     SURFACE_COMPONENT_PAIR_BACKEND,
     SURFACE_WEIGHTED_MOMENT_CONTRACTION,
+    SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE,
 )
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
@@ -1871,6 +1873,7 @@ class _SurfaceLegendreMomentContext:
         reuse_geometry_cache: bool = False,
         geometry_cache_limit_bytes: int = 0,
         weighted_moment_contraction: str | None = None,
+        prepare_trace_contraction: bool = False,
     ) -> None:
         import basix
         from basix import polynomials
@@ -1883,7 +1886,6 @@ class _SurfaceLegendreMomentContext:
             SURFACE_LEGENDRE_BACKEND,
             SURFACE_MOMENT_CACHE_LIMIT,
             SURFACE_POINTWISE_WEIGHTED_BACKEND,
-            SURFACE_WEIGHTED_MOMENT_CONTRACTION,
             borrow_readonly_array_view,
             clamp_ffcx_coordinate_table,
             face_trace_reference_tensor,
@@ -1891,8 +1893,9 @@ class _SurfaceLegendreMomentContext:
             ffcx_float64_formatter_facts,
             roundtrip_ffcx_float64_array,
             scalar_hex_coordinate_basix_element,
-            validate_q160_expanded_interval_tables,
             validate_component_pair_degree,
+            validate_prepared_trace_contraction,
+            validate_q160_expanded_interval_tables,
             validate_weighted_moment_contraction,
         )
 
@@ -1934,6 +1937,14 @@ class _SurfaceLegendreMomentContext:
             quadrature_degree=int(quadrature_degree),
             reuse_geometry_cache=bool(reuse_geometry_cache),
         )
+        validate_prepared_trace_contraction(
+            bool(prepare_trace_contraction),
+            backend=backend,
+            degree=degree,
+            quadrature_degree=int(quadrature_degree),
+            reuse_geometry_cache=bool(reuse_geometry_cache),
+            weighted_moment_contraction=weighted_moment_contraction,
+        )
         if reuse_geometry_cache and (
             backend != SURFACE_COMPONENT_PAIR_BACKEND
             or degree != 6
@@ -1956,6 +1967,8 @@ class _SurfaceLegendreMomentContext:
         if not np.isfinite(coefficient_matrix).all():
             raise ValueError("live Basix C matrix contains non-finite values")
         coefficient_matrix_sha256 = _surface_array_sha256(coefficient_matrix)
+        coefficient_matrix_shape = tuple(int(item) for item in coefficient_matrix.shape)
+        coefficient_matrix_dtype = coefficient_matrix.dtype.str
 
         interval_points, interval_weights = basix.make_quadrature(
             basix.CellType.interval,
@@ -2036,6 +2049,10 @@ class _SurfaceLegendreMomentContext:
         self._geometry_cache: _SurfacePointwiseGeometryCache | None = None
         self._geometry_cache_last_facts: dict[str, Any] | None = None
         self._weighted_moment_contraction = weighted_moment_contraction
+        self._six_lane_moment_workspace: Q160SixLaneWeightedMomentWorkspace | None = None
+        self._prepare_trace_contraction = bool(prepare_trace_contraction)
+        self._prepared_trace_contractions: dict[str, Any] = {}
+        self._prepared_trace_release_count = 0
         self._weighted_moment_basis_validation: dict[str, Any] | None = None
         self.function_space = function_space
         self.mesh_data = mesh_data
@@ -2218,10 +2235,12 @@ class _SurfaceLegendreMomentContext:
             )
         if self._geometry_cache_enabled:
             for array in (
+                self.interval_points,
+                self.interval_weights,
                 self.quadrilateral_points,
                 self.quadrilateral_weights,
                 self._polynomial_x,
-                    self._polynomial_y,
+                self._polynomial_y,
             ):
                 array.flags.writeable = False
         if self._weighted_moment_contraction is not None:
@@ -2258,6 +2277,13 @@ class _SurfaceLegendreMomentContext:
                     )
                     table.flags.writeable = False
                     self._trace_tables[(side, component)] = table
+        if self._prepare_trace_contraction:
+            from .fullspace_surface_legendre import prepare_face_trace_contraction
+
+            for side in ("bottom", "top"):
+                self._prepared_trace_contractions[side] = (
+                    prepare_face_trace_contraction(self._trace_tables[(side, 0)])
+                )
         coefficient_matrix_bytes = int(coefficient_matrix.nbytes)
         coefficient_property_owns_array = bool(coefficient_matrix.flags.owndata)
         coefficient_property_aliases_basix_return = bool(
@@ -2446,7 +2472,17 @@ class _SurfaceLegendreMomentContext:
                         "quadrature_array_hashes"
                     ]["quadrilateral_weights_sha256"],
                 },
-                "named_array_payload_bytes": {
+                "existing_single_lane_weighted_route_preserved": True,
+                "ordinary_default_and_p3_routes_changed": False,
+                "existing_numerical_gates_changed": False,
+            }
+            if (
+                self._weighted_moment_contraction
+                == SURFACE_WEIGHTED_MOMENT_CONTRACTION
+            ):
+                self.facts["weighted_moment_contraction"][
+                    "named_array_payload_bytes"
+                ] = {
                     "inverse_piola_values": 81 * 81 * 8,
                     "weighted_q_values": 81 * 81 * 16,
                     "x_contraction": 7 * 81 * 16,
@@ -2454,10 +2490,37 @@ class _SurfaceLegendreMomentContext:
                     "pair_output": 2 * 3 * 7 * 7 * 16,
                     "named_total": 276_216,
                     "scope": "named arrays only; finite-check masks, other temporaries, and BLAS workspace are not included; not RSS",
-                },
-                "legacy_full_q_path_preserved": True,
+                }
+            elif (
+                self._weighted_moment_contraction
+                == SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+            ):
+                self.facts["weighted_moment_contraction"][
+                    "known_array_payload_per_active_call"
+                ] = {
+                    "W_shape": [2, 3, 81, 81],
+                    "W_bytes": 2 * 3 * 81 * 81 * 16,
+                    "T_shape": [2, 3, 7, 81],
+                    "T_bytes": 2 * 3 * 7 * 81 * 16,
+                    "W_plus_T_reused_workspace_bytes": 2 * 3 * 81 * 81 * 16
+                    + 2 * 3 * 7 * 81 * 16,
+                    "phase_inverse_and_owned_output_bytes": 6561 * 16
+                    + 6561 * 8
+                    + 2 * 3 * 7 * 7 * 16,
+                    "all_known_numeric_arrays_bytes": 846456,
+                    "qualification": "typed-array payload only; NumPy/BLAS temporaries and process RSS are not included",
+                }
+        if self._prepare_trace_contraction:
+            self.facts["prepared_trace_contraction"] = {
+                "explicit_profile_opt_in": True,
+                "enabled_only_for_cached_p6_weighted_q160": True,
+                "prepared_side_count": len(self._prepared_trace_contractions),
+                "trace_array_payload_is_borrowed": True,
+                "additional_trace_numeric_payload_bytes": 0,
+                "per_call_trace_finite_scan": False,
+                "per_call_moment_and_output_finite_checks": True,
+                "expression": "ikab,kab->i; operand order unchanged",
                 "ordinary_default_and_p3_routes_changed": False,
-                "existing_numerical_gates_changed": False,
             }
         if self._geometry_cache_enabled:
             from .fullspace_surface_legendre import (
@@ -2603,6 +2666,229 @@ class _SurfaceLegendreMomentContext:
                     else "not_applicable"
                 ),
             )
+
+        if backend == SURFACE_COMPONENT_PAIR_BACKEND:
+            self._functional_store_identity_seed = {
+                "element": element,
+                "coefficient_matrix_shape": coefficient_matrix_shape,
+                "coefficient_matrix_dtype": coefficient_matrix_dtype,
+                "coefficient_matrix_sha256": coefficient_matrix_sha256,
+                "endpoint_polynomial_table_sha256": _surface_array_sha256(
+                    endpoint_table
+                ),
+            }
+
+    def _initialize_functional_store_identity(
+        self,
+        *,
+        element: Any,
+        coefficient_matrix_shape: tuple[int, ...],
+        coefficient_matrix_dtype: str,
+        coefficient_matrix_sha256: str,
+        endpoint_polynomial_table_sha256: str,
+    ) -> None:
+        """Snapshot the bounded immutable p6 numerical context once.
+
+        The store identity deliberately excludes the mutable ``facts`` tree,
+        paths, timers, cache counters, and Python object IDs.  Arrays remain
+        owned by this live context and are checked by reference/read-only state
+        when a store is opened; their content digests are computed only here,
+        never in the per-mode carrier loop.
+        """
+
+        import copy
+
+        from .fullspace_surface_legendre import (
+            SURFACE_COMPONENT_PAIR_BACKEND,
+            SURFACE_WEIGHTED_MOMENT_CONTRACTIONS,
+        )
+
+        if (
+            self.backend != SURFACE_COMPONENT_PAIR_BACKEND
+            or self.degree != 6
+            or self.quadrature_degree != 160
+            or not self._geometry_cache_enabled
+            or self._weighted_moment_contraction
+            not in SURFACE_WEIGHTED_MOMENT_CONTRACTIONS
+            or not self._prepare_trace_contraction
+            or set(self._geometry_face_tables) != {"bottom", "top"}
+            or set(self._facet_jacobians_by_side) != {"bottom", "top"}
+        ):
+            raise ValueError(
+                "p6 functional-store identity requires the prepared cached q160 context"
+            )
+
+        arrays: dict[str, np.ndarray] = {
+            "interval_points": self.interval_points,
+            "interval_weights": self.interval_weights,
+            "quadrilateral_points": self.quadrilateral_points,
+            "quadrilateral_weights": self.quadrilateral_weights,
+            "polynomial_values": self.polynomial_values,
+            "expanded_polynomial_x": self._polynomial_x,
+            "expanded_polynomial_y": self._polynomial_y,
+        }
+        for side in ("bottom", "top"):
+            values, derivatives = self._geometry_face_tables[side]
+            arrays[f"coordinate_values_{side}"] = values
+            arrays[f"coordinate_derivatives_{side}"] = derivatives
+            arrays[f"facet_jacobian_{side}"] = self._facet_jacobians_by_side[side]
+            for component in (0, 1):
+                arrays[f"trace_{side}_{component}"] = self._trace_tables[
+                    (side, component)
+                ]
+
+        descriptors: dict[str, dict[str, Any]] = {}
+        for name, array in arrays.items():
+            value = np.asarray(array)
+            if (
+                not isinstance(array, np.ndarray)
+                or value is not array
+                or value.dtype.hasobject
+                or not value.flags.c_contiguous
+                or value.flags.writeable
+            ):
+                raise ValueError(
+                    f"p6 functional-store context array {name} is not immutable contiguous data"
+                )
+            descriptors[name] = {
+                "dtype": value.dtype.str,
+                "shape": [int(item) for item in value.shape],
+                "nbytes": int(value.nbytes),
+                "sha256": _surface_array_sha256(value),
+            }
+
+        coordinate_options = dict(self._ffcx_coordinate_table_options)
+        formatter_identity = dict(coordinate_options.pop("formatter_identity", {}))
+        formatter_identity.pop("module_path", None)
+        if not formatter_identity.get("module_sha256"):
+            raise ValueError("p6 functional-store FFCx formatter identity is missing")
+        coordinate_options["formatter_identity"] = formatter_identity
+
+        prepared_trace: dict[str, Any] = {}
+        for side in ("bottom", "top"):
+            trace = self._trace_tables[(side, 0)]
+            if self._trace_tables[(side, 1)] is not trace:
+                raise ValueError("p6 paired components do not share the live trace table")
+            plan = self._prepared_trace_contractions.get(side)
+            if plan is None or plan.trace_tensor is not trace:
+                raise ValueError("p6 prepared trace plan does not bind its live trace table")
+            prepared_trace[side] = {
+                "expression": "ikab,kab->i",
+                "einsum_path": copy.deepcopy(plan.einsum_path),
+                "trace_sha256": descriptors[f"trace_{side}_0"]["sha256"],
+            }
+
+        basix_hash = getattr(element, "hash", None)
+        if not callable(basix_hash):
+            raise ValueError("p6 functional-store Basix element hash is unavailable")
+        self._functional_store_identity_descriptor = {
+            "schema": "task39extra.p6-paired-surface-context-numerical-provider.v1",
+            "backend": self.backend,
+            "degree": int(self.degree),
+            "quadrature_degree": int(self.quadrature_degree),
+            "weighted_moment_contraction": str(self._weighted_moment_contraction),
+            "prepared_trace_contraction": {
+                "enabled": True,
+                "expression": "ikab,kab->i",
+                "side_plans": prepared_trace,
+            },
+            "element": {
+                "basix_hash": int(basix_hash()),
+                "family": str(element.family),
+                "degree": int(element.degree),
+                "cell_type": str(element.cell_type),
+                "value_size": int(element.value_size),
+                "map_type": str(element.map_type),
+                "polyset_type": str(element.polyset_type),
+                "lagrange_variant": str(
+                    getattr(getattr(element, "lagrange_variant", None), "name", "unknown")
+                ).lower(),
+                "coefficient_matrix": {
+                    "dtype": str(coefficient_matrix_dtype),
+                    "shape": [int(item) for item in coefficient_matrix_shape],
+                    "sha256": str(coefficient_matrix_sha256),
+                },
+                "endpoint_polynomial_table_sha256": str(
+                    endpoint_polynomial_table_sha256
+                ),
+            },
+            "quadrature_and_basis_arrays": {
+                name: descriptors[name]
+                for name in (
+                    "interval_points",
+                    "interval_weights",
+                    "quadrilateral_points",
+                    "quadrilateral_weights",
+                    "polynomial_values",
+                    "expanded_polynomial_x",
+                    "expanded_polynomial_y",
+                )
+            },
+            "coordinate_element": {
+                **copy.deepcopy(self._coordinate_element_identity),
+                "ffcx_table_options": coordinate_options,
+                "consumed_tables_by_side": {
+                    side: {
+                        "values": descriptors[f"coordinate_values_{side}"],
+                        "derivatives": descriptors[
+                            f"coordinate_derivatives_{side}"
+                        ],
+                        "facet_jacobian": descriptors[f"facet_jacobian_{side}"],
+                        "local_facet": int(self._geometry_face_local_facets[side]),
+                    }
+                    for side in ("bottom", "top")
+                },
+            },
+            "trace_reference_tensors": {
+                side: descriptors[f"trace_{side}_0"]
+                for side in ("bottom", "top")
+                },
+            }
+        self._functional_store_identity_array_refs = arrays
+
+    def functional_store_identity_descriptor(self) -> dict[str, Any]:
+        """Return the p6 numerical context descriptor after cheap lineage checks."""
+
+        import copy
+
+        descriptor = getattr(self, "_functional_store_identity_descriptor", None)
+        references = getattr(self, "_functional_store_identity_array_refs", None)
+        if descriptor is None or references is None:
+            seed = getattr(self, "_functional_store_identity_seed", None)
+            if not isinstance(seed, dict):
+                raise ValueError("p6 functional-store numerical identity is unavailable")
+            self._initialize_functional_store_identity(**seed)
+            descriptor = getattr(self, "_functional_store_identity_descriptor", None)
+            references = getattr(self, "_functional_store_identity_array_refs", None)
+        if not isinstance(descriptor, dict) or not isinstance(references, dict):
+            raise ValueError("p6 functional-store numerical identity is unavailable")
+        current: dict[str, np.ndarray] = {
+            "interval_points": self.interval_points,
+            "interval_weights": self.interval_weights,
+            "quadrilateral_points": self.quadrilateral_points,
+            "quadrilateral_weights": self.quadrilateral_weights,
+            "polynomial_values": self.polynomial_values,
+            "expanded_polynomial_x": self._polynomial_x,
+            "expanded_polynomial_y": self._polynomial_y,
+        }
+        for side in ("bottom", "top"):
+            values, derivatives = self._geometry_face_tables[side]
+            current[f"coordinate_values_{side}"] = values
+            current[f"coordinate_derivatives_{side}"] = derivatives
+            current[f"facet_jacobian_{side}"] = self._facet_jacobians_by_side[side]
+            for component in (0, 1):
+                current[f"trace_{side}_{component}"] = self._trace_tables[
+                    (side, component)
+                ]
+        if set(current) != set(references):
+            raise ValueError("p6 functional-store numerical context layout changed")
+        for name, expected in references.items():
+            actual = current[name]
+            if actual is not expected or actual.flags.writeable:
+                raise ValueError(
+                    f"p6 functional-store immutable context lineage changed: {name}"
+                )
+        return copy.deepcopy(descriptor)
 
     def _cell_mpc_plan(self, cell: int) -> _SurfaceCellMpcPlan:
         from .fullspace_surface_legendre import validate_boundary_mpc_row
@@ -2800,6 +3086,19 @@ class _SurfaceLegendreMomentContext:
         except KeyError as exc:
             raise ValueError("unsupported Legendre surface side/component") from exc
 
+    def prepared_trace_contraction(self, side: str) -> Any:
+        if not self._prepare_trace_contraction:
+            raise RuntimeError("prepared trace contraction is not enabled")
+        try:
+            return self._prepared_trace_contractions[str(side)]
+        except KeyError as exc:
+            raise ValueError("unsupported prepared trace side") from exc
+
+    def release_prepared_trace_contractions(self) -> None:
+        if self._prepared_trace_contractions:
+            self._prepared_trace_contractions.clear()
+            self._prepared_trace_release_count += 1
+
     def records(self, side: str) -> tuple[_SurfaceFacetRecord, ...]:
         return self._records_by_side[str(side)]
 
@@ -2817,15 +3116,38 @@ class _SurfaceLegendreMomentContext:
         self._geometry_cache = _SurfacePointwiseGeometryCache(
             self, max_bytes=limit
         )
+        if (
+            self._weighted_moment_contraction
+            == SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+        ):
+            try:
+                from .fullspace_surface_legendre import (
+                    Q160SixLaneWeightedMomentWorkspace,
+                )
+
+                self._six_lane_moment_workspace = (
+                    Q160SixLaneWeightedMomentWorkspace()
+                )
+            except BaseException:
+                self.end_geometry_cache()
+                raise
 
     def end_geometry_cache(self) -> None:
         cache = self._geometry_cache
-        if cache is None:
-            return
         try:
-            self._geometry_cache_last_facts = cache.release()
+            if cache is not None:
+                self._geometry_cache_last_facts = cache.release()
         finally:
             self._geometry_cache = None
+            try:
+                self.release_prepared_trace_contractions()
+            finally:
+                workspace, self._six_lane_moment_workspace = (
+                    self._six_lane_moment_workspace,
+                    None,
+                )
+                if workspace is not None:
+                    workspace.release()
 
     def geometry_cache_facts(self) -> dict[str, Any] | str:
         if self._geometry_cache is not None:
@@ -2953,9 +3275,10 @@ class _SurfaceLegendreMomentContext:
         from .fullspace_surface_legendre import (
             SURFACE_COMPONENT_PAIR_BACKEND,
             map_coordinate_quadrature,
+            pointwise_weighted_legendre_moments_pair,
             pointwise_weighted_legendre_moments_pair_from_geometry,
             pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y,
-            pointwise_weighted_legendre_moments_pair,
+            pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y,
         )
 
         if self.backend != SURFACE_COMPONENT_PAIR_BACKEND:
@@ -2969,20 +3292,21 @@ class _SurfaceLegendreMomentContext:
             )
         if record.geometry_dofs is None:
             raise RuntimeError("pointwise surface record has no geometry DOF map")
+        if (
+            self._weighted_moment_contraction
+            == SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+            and self._geometry_cache is None
+        ):
+            raise RuntimeError(
+                "six-lane weighted moments require their active cached workspace"
+            )
         if self._geometry_cache is not None:
             if record_position is None:
                 raise ValueError("cached geometry access requires the ordered record position")
             physical, determinant, cofactors, surface_measure = self._geometry_cache.get(
                 self, side, record_position, record
             )
-            if self._weighted_moment_contraction is not None:
-                if (
-                    self._weighted_moment_contraction
-                    != SURFACE_WEIGHTED_MOMENT_CONTRACTION
-                ):
-                    raise RuntimeError(
-                        "bound weighted-moment contraction identity changed"
-                    )
+            if self._weighted_moment_contraction == SURFACE_WEIGHTED_MOMENT_CONTRACTION:
                 return pointwise_weighted_legendre_moments_pair_from_geometry_x_then_y(
                     physical,
                     self.quadrilateral_weights,
@@ -2994,6 +3318,27 @@ class _SurfaceLegendreMomentContext:
                     gamma=complex(mode.gamma),
                     kz=complex(mode.k_vector[2]),
                 )
+            if (
+                self._weighted_moment_contraction
+                == SURFACE_WEIGHTED_MOMENT_CONTRACTION_SIX_LANE
+            ):
+                workspace = self._six_lane_moment_workspace
+                if workspace is None:
+                    raise RuntimeError("six-lane weighted-moment workspace is not active")
+                return pointwise_weighted_legendre_moments_pair_from_geometry_six_lane_x_then_y(
+                    physical,
+                    self.quadrilateral_weights,
+                    self.polynomial_values,
+                    determinant,
+                    cofactors,
+                    surface_measure,
+                    alpha=complex(mode.alpha),
+                    gamma=complex(mode.gamma),
+                    kz=complex(mode.k_vector[2]),
+                    workspace=workspace,
+                )
+            if self._weighted_moment_contraction is not None:
+                raise RuntimeError("bound weighted-moment contraction identity changed")
             return pointwise_weighted_legendre_moments_pair_from_geometry(
                 physical,
                 self.quadrilateral_weights,
@@ -3383,6 +3728,11 @@ class _SurfaceLegendreMomentAssembler:
         element = self.function_space.element
         cell_info = self.context._cell_permutations
         trace_table = self.context.trace_table(self.side, 0)
+        prepared_trace = (
+            self.context.prepared_trace_contraction(self.side)
+            if self.context._prepare_trace_contraction
+            else None
+        )
         with vector.localForm() as local_form:
             local_values = local_form.array_w
             for position, record in enumerate(records):
@@ -3390,12 +3740,16 @@ class _SurfaceLegendreMomentAssembler:
                 pair_moments = self.context.pointwise_moments_pair(
                     mode, record, record_position=position
                 )
-                local_primary = assemble_face_from_weighted_moments(
-                    trace_table, pair_moments[0]
-                )
-                local_companion = assemble_face_from_weighted_moments(
-                    trace_table, pair_moments[1]
-                )
+                if prepared_trace is None:
+                    local_primary = assemble_face_from_weighted_moments(
+                        trace_table, pair_moments[0]
+                    )
+                    local_companion = assemble_face_from_weighted_moments(
+                        trace_table, pair_moments[1]
+                    )
+                else:
+                    local_primary = prepared_trace.apply(pair_moments[0])
+                    local_companion = prepared_trace.apply(pair_moments[1])
                 if (
                     local_primary.shape != plan.cell_dofs.shape
                     or local_companion.shape != plan.cell_dofs.shape

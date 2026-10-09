@@ -631,6 +631,8 @@ def build_fullspace_dtn_carrier_from_surface(
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     degree: int | None = None,
     progress_interval: int = 1024,
+    quadrature_degree: int | None = None,
+    functional_store_config: Mapping[str, Any] | None = None,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
@@ -657,15 +659,15 @@ def build_fullspace_dtn_carrier_from_surface(
     owned_start = int(index_map.local_range[0])
     owned_end = owned_start + int(index_map.size_local)
     global_rows = int(index_map.size_global)
+    functional_store = None
+    store_slave_rows = None
+    entries: list[FullspaceDtnModeFunctional] = []
+    resume_prefix_count = 0
+    remaining_uses = None
     component_cache: dict[
         tuple[str, int, int, complex, complex, complex],
         tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
     ] = {}
-    remaining_uses = (
-        Counter(_dtn_component_phase_key(mode) for mode in modes)
-        if reuse_surface_vector
-        else None
-    )
     surface_contexts = {
         id(context): context
         for assembler in surface_assemblers.values()
@@ -694,6 +696,111 @@ def build_fullspace_dtn_carrier_from_surface(
             raise ValueError(
                 "all four p6 surface assemblers must share the opted-in paired context"
             )
+    if functional_store_config is not None:
+        if degree not in (3, 6) or quadrature_degree is None:
+            raise ValueError("functional store requires an explicit p3/p6 quadrature identity")
+        required_store_keys = {
+            "root",
+            "source_sha256",
+            "resolved_config_sha256",
+            "input_sha256",
+            "physical_model_sha256",
+            "max_shard_working_bytes",
+            "max_total_disk_bytes",
+            "disk_reserve_bytes",
+        }
+        missing_store_keys = required_store_keys.difference(functional_store_config)
+        if missing_store_keys:
+            raise ValueError(
+                "functional-store configuration lacks: "
+                + ", ".join(sorted(missing_store_keys))
+            )
+        from pathlib import Path
+
+        from .fullspace_dtn_functional_store import PortFunctionalShardStore
+
+        configured_root = Path(functional_store_config["root"])
+        if not configured_root.is_absolute():
+            raise ValueError("functional-store root must be an absolute path")
+
+        all_slaves = np.asarray(mpc.slaves).reshape(-1)
+        if not np.issubdtype(all_slaves.dtype, np.integer):
+            raise ValueError("functional-store MPC slave indices must be integers")
+        owned_slaves = all_slaves[all_slaves < int(index_map.size_local)]
+        store_slave_rows = np.asarray(
+            index_map.local_to_global(owned_slaves), dtype=PETSc.IntType
+        )
+        if store_slave_rows.size:
+            store_slave_rows = np.unique(store_slave_rows)
+        backend_identity = getattr(
+            surface_assemblers[("bottom", 0)], "surface_backend", None
+        )
+        if backend_identity is None and int(degree) == 3:
+            backend_identity = "native_ffcx"
+        compiled_surface_assemblers = functional_store_config.get(
+            "compiled_surface_assemblers"
+        )
+        if int(degree) == 6 and compiled_surface_assemblers is not None:
+            raise ValueError(
+                "p6 functional-store route uses its live paired context, not injected native Forms"
+            )
+        store_root = configured_root / f"p{int(degree)}"
+        functional_store = PortFunctionalShardStore.for_surface(
+            store_root,
+            source_sha256=str(functional_store_config["source_sha256"]),
+            resolved_config_sha256=str(
+                functional_store_config["resolved_config_sha256"]
+            ),
+            input_sha256=str(functional_store_config["input_sha256"]),
+            physical_model_sha256=str(
+                functional_store_config["physical_model_sha256"]
+            ),
+            degree=int(degree),
+            backend=str(backend_identity),
+            quadrature_degree=int(quadrature_degree),
+            mode_identities=manifest_rows,
+            mode_manifest_sha256=manifest_sha,
+            surface_assemblers=surface_assemblers,
+            compiled_surface_assemblers=(
+                None if int(degree) == 6 else compiled_surface_assemblers
+            ),
+            mpc=mpc,
+            ownership_range=(owned_start, owned_end),
+            slave_rows=store_slave_rows,
+            row_dtype=PETSc.IntType,
+            producer_provenance=functional_store_config.get(
+                "producer_provenance", {}
+            ),
+            max_shard_working_bytes=int(
+                functional_store_config["max_shard_working_bytes"]
+            ),
+            max_total_disk_bytes=int(
+                functional_store_config["max_total_disk_bytes"]
+            ),
+            disk_reserve_bytes=int(functional_store_config["disk_reserve_bytes"]),
+        )
+        try:
+            for stored in functional_store.restore_prefix():
+                entries.append(
+                    FullspaceDtnModeFunctional(
+                        mode_key=tuple(stored["mode_key"]),
+                        coupling_rows=stored["coupling_rows"],
+                        coupling_values=stored["coupling_values"],
+                        projection_rows=stored["projection_rows"],
+                        projection_values=stored["projection_values"],
+                        normalization_h=float(stored["normalization_h"]),
+                        mode_identity=stored["mode_identity"],
+                    )
+                )
+        except Exception:
+            functional_store.close()
+            raise
+    resume_prefix_count = len(entries)
+    remaining_uses = (
+        _remaining_dtn_component_phase_uses(modes, resume_prefix_count)
+        if reuse_surface_vector
+        else None
+    )
     workspace = None
 
     def notify(name: str, facts: Mapping[str, Any]) -> None:
@@ -753,11 +860,11 @@ def build_fullspace_dtn_carrier_from_surface(
             component_cache[key] = components
         return components
 
-    entries: list[FullspaceDtnModeFunctional] = []
     try:
-        if geometry_cache_context is not None:
+        has_missing_modes = resume_prefix_count < len(modes)
+        if geometry_cache_context is not None and has_missing_modes:
             geometry_cache_context.begin_geometry_cache()
-        if reuse_surface_vector:
+        if reuse_surface_vector and has_missing_modes:
             from .dtn_port_3d import _SurfaceMpcVectorWorkspace
 
             first_assembler = next(iter(surface_assemblers.values()))
@@ -772,14 +879,19 @@ def build_fullspace_dtn_carrier_from_surface(
             notify("surface_carrier_workspace_ready", workspace.facts)
         notify(
             "surface_carrier_assembly_started",
-            {"mode_count": len(modes), "mode_sha256": manifest_sha},
+            {
+                "mode_count": len(modes),
+                "mode_sha256": manifest_sha,
+                "restored_functional_prefix_count": resume_prefix_count,
+            },
         )
         last_progress_time = (
             time.monotonic()
             if workspace is not None and stage_callback is not None
             else None
         )
-        for index, mode in enumerate(modes):
+        for index in range(resume_prefix_count, len(modes)):
+            mode = modes[index]
             key = _dtn_component_phase_key(mode)
             components = components_for(mode)
             combine_started = (
@@ -818,6 +930,8 @@ def build_fullspace_dtn_carrier_from_surface(
                     mode_identity=manifest_rows[index],
                 )
             )
+            if functional_store is not None:
+                functional_store.commit(entries[-1], mode_index=index)
             if remaining_uses is not None:
                 remaining_uses[key] -= 1
                 if remaining_uses[key] == 0:
@@ -866,11 +980,14 @@ def build_fullspace_dtn_carrier_from_surface(
                 },
             },
         )
-        slaves = np.asarray(mpc.slaves, dtype=np.int32)
-        owned_slaves = slaves[slaves < int(index_map.size_local)]
-        slave_rows = np.asarray(
-            index_map.local_to_global(owned_slaves), dtype=PETSc.IntType
-        )
+        if store_slave_rows is None:
+            slaves = np.asarray(mpc.slaves, dtype=np.int32)
+            owned_slaves = slaves[slaves < int(index_map.size_local)]
+            slave_rows = np.asarray(
+                index_map.local_to_global(owned_slaves), dtype=PETSc.IntType
+            )
+        else:
+            slave_rows = store_slave_rows
         normalization_started = (
             time.perf_counter()
             if workspace is not None and workspace.timing_totals is not None
@@ -903,6 +1020,11 @@ def build_fullspace_dtn_carrier_from_surface(
                     if workspace is not None and workspace.timing_totals is not None
                     else {}
                 ),
+                **(
+                    {"functional_store": functional_store.audit}
+                    if functional_store is not None
+                    else {}
+                ),
             },
         )
         return carrier
@@ -911,8 +1033,20 @@ def build_fullspace_dtn_carrier_from_surface(
             if geometry_cache_context is not None:
                 geometry_cache_context.end_geometry_cache()
         finally:
-            if workspace is not None:
-                workspace.destroy()
+            try:
+                for context in surface_contexts.values():
+                    release = getattr(
+                        context, "release_prepared_trace_contractions", None
+                    )
+                    if callable(release):
+                        release()
+            finally:
+                try:
+                    if workspace is not None:
+                        workspace.destroy()
+                finally:
+                    if functional_store is not None:
+                        functional_store.close()
 
 
 def _dtn_component_phase_key(mode: Any) -> tuple[str, int, int, complex, complex, complex]:
@@ -926,6 +1060,17 @@ def _dtn_component_phase_key(mode: Any) -> tuple[str, int, int, complex, complex
         complex(mode.gamma),
         complex(mode.k_vector[2]),
     )
+
+
+def _remaining_dtn_component_phase_uses(
+    modes: Sequence[Any], completed_prefix_count: int
+) -> Counter:
+    """Rebuild only the shared phase-cache uses after a durable mode prefix."""
+
+    prefix = int(completed_prefix_count)
+    if prefix < 0 or prefix > len(modes):
+        raise ValueError("functional-store prefix is outside the ordered mode manifest")
+    return Counter(_dtn_component_phase_key(mode) for mode in modes[prefix:])
 
 
 __all__ = (

@@ -223,6 +223,7 @@ def native_profile_facts(identity):
                 dtn_surface_weighted_moment_contraction=(
                     'q160_weighted_moment_x_then_y_v1'
                 ),
+                dtn_surface_prepare_trace_contraction=True,
                 dtn_component_cache_last_use_release=True,
                 dtn_mode_progress_interval=1024,
                 dtn_surface_assembly_backend_by_degree={

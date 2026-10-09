@@ -209,6 +209,7 @@ class RetainedCondensedRuntime:
         geometry_identity_policy: str = "raw_unrounded",
         component_options: Mapping[str, Any] | None = None,
         profile_identity: str | None = None,
+        functional_store_config: Mapping[str, Any] | None = None,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -240,6 +241,9 @@ class RetainedCondensedRuntime:
         surface_weighted_moment_contraction = options.get(
             'dtn_surface_weighted_moment_contraction'
         )
+        prepare_surface_trace_contraction = bool(
+            options.get('dtn_surface_prepare_trace_contraction', False)
+        )
         surface_geometry_cache_limit_bytes = int(
             options.get('dtn_surface_geometry_cache_limit_bytes', 0)
         )
@@ -255,6 +259,8 @@ class RetainedCondensedRuntime:
             or release_component_cache
             or reuse_surface_geometry_cache
             or surface_weighted_moment_contraction is not None
+            or prepare_surface_trace_contraction
+            or functional_store_config is not None
         ):
             from src.io.native_capacity_profile import (
                 V6_0P7_P3_HP_OPTIN_PROFILES,
@@ -267,6 +273,7 @@ class RetainedCondensedRuntime:
                 or not reuse_surface_vector
                 or not release_component_cache
                 or not reuse_surface_geometry_cache
+                or not prepare_surface_trace_contraction
             ):
                 raise ValueError(
                     'reused DtN surface vectors and last-use cache release are '
@@ -282,10 +289,43 @@ class RetainedCondensedRuntime:
             expected_moment_contraction = expected_component_options.get(
                 'dtn_surface_weighted_moment_contraction'
             )
-            if surface_weighted_moment_contraction != expected_moment_contraction:
-                raise ValueError(
-                    'weighted-moment contraction must match the resolved explicit profile'
+            from src.solvers.fullspace_surface_legendre import (
+                validate_weighted_moment_profile_selection,
+            )
+
+            # The component option value itself is the explicit experimental
+            # opt-in. The resolved profile remains bound to the existing route.
+            validate_weighted_moment_profile_selection(
+                surface_weighted_moment_contraction,
+                expected_moment_contraction,
+                allow_six_lane_optin=True,
+            )
+            if prepare_surface_trace_contraction is not bool(
+                expected_component_options.get(
+                    'dtn_surface_prepare_trace_contraction', False
                 )
+            ):
+                raise ValueError(
+                    'prepared trace contraction must match the resolved explicit profile'
+                )
+            if functional_store_config is not None:
+                required_store_keys = {
+                    'root',
+                    'source_sha256',
+                    'resolved_config_sha256',
+                    'input_sha256',
+                    'physical_model_sha256',
+                    'max_shard_working_bytes',
+                    'max_total_disk_bytes',
+                    'disk_reserve_bytes',
+                    'producer_provenance',
+                }
+                if required_store_keys.difference(functional_store_config):
+                    raise ValueError('functional-store configuration is incomplete')
+                from pathlib import Path
+
+                if not Path(functional_store_config['root']).is_absolute():
+                    raise ValueError('functional-store root must be an absolute path')
             if (
                 expected_component_options.get(
                     'reuse_dtn_surface_geometry_cache'
@@ -429,6 +469,8 @@ class RetainedCondensedRuntime:
             reuse_surface_geometry_cache=reuse_surface_geometry_cache,
             surface_geometry_cache_limit_bytes=surface_geometry_cache_limit_bytes,
             surface_weighted_moment_contraction=surface_weighted_moment_contraction,
+            prepare_surface_trace_contraction=prepare_surface_trace_contraction,
+            functional_store_config=functional_store_config,
             collect_surface_timings=False,
             stage_callback=notify if reuse_surface_vector else None,
             surface_progress_interval=surface_progress_interval,
@@ -447,6 +489,8 @@ class RetainedCondensedRuntime:
                 surface_assembly_backend=surface_backend_by_degree[coarse_degree],
                 reuse_surface_geometry_cache=False,
                 surface_geometry_cache_limit_bytes=0,
+                prepare_surface_trace_contraction=False,
+                functional_store_config=functional_store_config,
                 collect_surface_timings=False,
                 stage_callback=notify if reuse_surface_vector else None,
                 surface_progress_interval=surface_progress_interval,
@@ -1502,6 +1546,33 @@ def run_retained_condensed_workflow(
             },
         )
         coarse_degree = int(payload["solver"].get("coarse_degree", 4))
+        provenance = payload["provenance"]
+        store_config = contract.get("functional_store_config")
+        if store_config is not None:
+            store_config = dict(store_config)
+            from src.io.resolved_config import canonical_json_bytes
+
+            actual_resolved_sha = hashlib.sha256(
+                canonical_json_bytes(payload) + b"\n"
+            ).hexdigest()
+            if store_config.get("resolved_config_sha256") != actual_resolved_sha:
+                raise ValueError(
+                    "functional-store resolved configuration identity differs"
+                )
+            store_config.update(
+                source_sha256=str(source_sha),
+                input_sha256=str(provenance["input_sha256"]),
+                physical_model_sha256=str(provenance["physical_model_sha256"]),
+                producer_provenance={
+                    "run_id": str(payload.get("run_id", directory.name)),
+                    "output_directory": str(directory.resolve()),
+                    "source_sha256": str(source_sha),
+                    "input_sha256": str(provenance["input_sha256"]),
+                    "physical_model_sha256": str(
+                        provenance["physical_model_sha256"]
+                    ),
+                },
+            )
         runtime = RetainedCondensedRuntime.build(
             cfg,
             MPI.COMM_WORLD,
@@ -1511,8 +1582,8 @@ def run_retained_condensed_workflow(
             marker=ledger.marker,
             component_options=contract.get("component_options"),
             profile_identity=profile_identity,
+            functional_store_config=store_config,
         )
-        provenance = payload["provenance"]
         if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
             summary["provenance"] = {
                 "input_sha256": provenance["input_sha256"],

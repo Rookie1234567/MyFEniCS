@@ -243,12 +243,95 @@ def run_physical_intermediate(
     bundle, result, rhs, outcome = {}, None, None, None
     monitor = None
     contract = profile_facts(identity)
+    functional_store_config = None
+    functional_store_config_sha256 = None
+    functional_store_config_path = os.environ.get(
+        'TASK39EXTRA_FUNCTIONAL_STORE_CONFIG'
+    )
+    if functional_store_config_path:
+        from src.io.native_capacity_profile import V6_0P7_P3_HP_OPTIN_PROFILES
+        from src.io.resolved_config import canonical_json_bytes
+
+        if identity not in V6_0P7_P3_HP_OPTIN_PROFILES:
+            raise ValueError(
+                'functional-store persistence is restricted to the explicit 0.7 nm p3 profile'
+            )
+        config_path = Path(functional_store_config_path)
+        if not config_path.is_absolute() or config_path.is_symlink() or not config_path.is_file():
+            raise ValueError('functional-store config must be an absolute regular file')
+        if config_path.stat().st_size > 1024**2:
+            raise ValueError('functional-store config exceeds the 1 MiB metadata bound')
+        config_bytes = config_path.read_bytes()
+        functional_store_config_sha256 = hashlib.sha256(config_bytes).hexdigest()
+        try:
+            store_document = json.loads(config_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError('functional-store config is not valid UTF-8 JSON') from exc
+        required_store_config_keys = {
+            'schema',
+            'root',
+            'max_shard_working_bytes',
+            'max_total_disk_bytes',
+            'disk_reserve_bytes',
+        }
+        if (
+            not isinstance(store_document, dict)
+            or set(store_document) != required_store_config_keys
+            or store_document.get('schema')
+            != 'task39extra.port-functional-store-config.v1'
+        ):
+            raise ValueError('functional-store config schema or fields differ')
+        store_root = Path(store_document['root'])
+        if not store_root.is_absolute() or store_root.is_symlink():
+            raise ValueError('functional-store root must be absolute and not a symlink')
+        output_root = directory.resolve()
+        if store_root.resolve(strict=False).is_relative_to(output_root):
+            raise ValueError('functional-store root must persist outside this run output')
+        for key in (
+            'max_shard_working_bytes',
+            'max_total_disk_bytes',
+            'disk_reserve_bytes',
+        ):
+            value = store_document[key]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f'functional-store {key} must be a nonnegative integer')
+        if (
+            store_document['max_shard_working_bytes'] <= 16 * 1024**2
+            or store_document['max_total_disk_bytes'] <= 0
+        ):
+            raise ValueError('functional-store budgets are below the supported minimum')
+        functional_store_config = {
+            key: value for key, value in store_document.items() if key != 'schema'
+        }
+        functional_store_config['resolved_config_sha256'] = hashlib.sha256(
+            canonical_json_bytes(payload) + b'\n'
+        ).hexdigest()
+        contract['functional_store_config'] = functional_store_config
     resource_policy = contract['resources'].get('resource_stop_policy', 'legacy')
     observe_only_resources = resource_policy == 'measured_tree_rss_only_v3'
     workflow_limit, solve_limit = contract['resources']['workflow_seconds'], contract['resources']['solve_seconds']
     summary = {'profile': profile_facts(identity), 'source_sha': source_sha,
                'official_result': None, 'status': 'STARTED',
                'time_limit_mode': 'none' if workflow_limit is None and solve_limit is None else 'bounded'}
+    if functional_store_config is not None:
+        summary['functional_store_request'] = {
+            'schema': 'task39extra.port-functional-store-config.v1',
+            'config_path': str(config_path),
+            'config_sha256': functional_store_config_sha256,
+            'root': str(functional_store_config['root']),
+            'max_shard_working_bytes': int(
+                functional_store_config['max_shard_working_bytes']
+            ),
+            'max_total_disk_bytes': int(
+                functional_store_config['max_total_disk_bytes']
+            ),
+            'disk_reserve_bytes': int(functional_store_config['disk_reserve_bytes']),
+            'producer_output_directory': str(directory.resolve()),
+            'numerical_identity_source': 'actual run source/input/physical identity',
+            'resolved_config_sha256': functional_store_config[
+                'resolved_config_sha256'
+            ],
+        }
     import petsc4py
     import slepc4py
     import dolfinx
