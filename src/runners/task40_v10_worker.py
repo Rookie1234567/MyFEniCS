@@ -370,8 +370,17 @@ def _v19_sha256_path(path: Path) -> str:
 
 def _v19_prepare_saved_v18_startup_reference(
     reference: Mapping[str, Any], profile: Any
-) -> dict[str, Any]:
-    """Bind the two existing V18 startup witnesses before comparing V19 outputs."""
+) -> dict[str, Any] | None:
+    """Bind V18 startup witnesses except for the registered V19 E1 q4 route."""
+
+    # E1 has four Floquet q blocks and no same-discrete V18 Ny8 witness.
+    # Keep this exception limited to its exact registered profile and q count.
+    if (
+        getattr(profile, "name", None)
+        == "task40extra_v17_p6_y_orbit_e1_reference_v1"
+        and int(profile.q_count) == 4
+    ):
+        return None
 
     reuse = reference.get("complete_operator_qualification_reuse")
     if not isinstance(reuse, Mapping) or reuse.get("status") != (
