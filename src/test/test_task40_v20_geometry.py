@@ -185,4 +185,3 @@ def test_facet_pair_inventory_keeps_duplicate_facet_ids_and_actual_boundary_adja
     assert [row["facet_id"] for row in inventory["boundary_face_cells"]] == [8, 10]
     assert [row["cell_id"] for row in inventory["boundary_face_cells"]] == [0, 0]
     assert [row["cell_permutation"] for row in inventory["boundary_face_cells"]] == [7, 7]
-
